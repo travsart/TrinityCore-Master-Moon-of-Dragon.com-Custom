@@ -458,10 +458,9 @@ bool CombatStateAnalyzer::CheckForBurstNeed() const
             continue;
 
         if (enemy->GetTypeId() == TYPEID_UNIT)
-                                        }
         {
             Creature* creature = enemy->ToCreature();
-                                    if (creature->IsDungeonBoss() && creature->GetHealthPct() < 30.0f)
+            if (creature->IsDungeonBoss() && creature->GetHealthPct() < 30.0f)
                 return true;
         }
     }
