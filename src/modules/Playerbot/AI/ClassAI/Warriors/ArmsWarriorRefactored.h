@@ -19,6 +19,10 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+// Phase 5 Integration
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
 #include <unordered_map>
 #include <queue>
 
@@ -455,8 +459,202 @@ private:
 
     void InitializeArmsRotation()
     {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
         // Setup any Arms-specific initialization
         _tacticalMasteryRage = 0;
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // Emergency spells
+            queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_EXECUTE,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 20.0f;
+                },
+                "Target HP < 20% (Execute range)");
+
+            // Critical cooldowns
+            queue->RegisterSpell(SPELL_COLOSSUS_SMASH, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->RegisterSpell(SPELL_BLADESTORM, SpellPriority::CRITICAL, SpellCategory::DAMAGE_AOE);
+            queue->RegisterSpell(SPELL_AVATAR, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+
+            // High priority core rotation
+            queue->RegisterSpell(SPELL_MORTAL_STRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(SPELL_OVERPOWER, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_OVERPOWER,
+                [](Player* bot, Unit*) {
+                    return bot->HasAura(SPELL_OVERPOWER_PROC);
+                },
+                "Overpower proc active");
+
+            // Medium priority
+            queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_WHIRLWIND,
+                [this](Player* bot, Unit* target) {
+                    // Capture 'this' for member access if needed
+                    return bot->GetAttackersCount() >= 3;
+                },
+                "3+ targets (AoE)");
+
+            queue->RegisterSpell(SPELL_REND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_REND,
+                [](Player* bot, Unit* target) {
+                    return target && !target->HasAura(SPELL_REND);
+                },
+                "Rend not active on target");
+
+            // Low priority fillers
+            queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(SPELL_CLEAVE, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+
+            TC_LOG_INFO("module.playerbot", "⚔️  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Arms Warrior Combat", {
+                // ============================================================
+                // 1. EXECUTE PHASE (Target < 20% HP)
+                // ============================================================
+                Sequence("Execute Phase", {
+                    Condition("Target < 20% HP", [](Player* bot, Unit* target) {
+                        return target && target->GetHealthPct() < 20.0f;
+                    }),
+                    Selector("Execute Priority", {
+                        Action("Cast Execute", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_EXECUTE))
+                            {
+                                this->CastSpell(target, SPELL_EXECUTE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_MORTAL_STRIKE))
+                            {
+                                this->CastSpell(target, SPELL_MORTAL_STRIKE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ============================================================
+                // 2. COOLDOWN USAGE (Boss fights, burst windows)
+                // ============================================================
+                Sequence("Use Major Cooldowns", {
+                    Condition("Should use cooldowns", [](Player* bot, Unit* target) {
+                        // Use cooldowns on bosses or high HP targets
+                        return target && (target->GetCreatureType() == CREATURE_TYPE_HUMANOID ||
+                                        target->GetMaxHealth() > 500000);
+                    }),
+                    Selector("Cooldown Priority", {
+                        Action("Cast Avatar", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_AVATAR))
+                            {
+                                this->CastSpell(bot, SPELL_AVATAR);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_BLADESTORM))
+                            {
+                                this->CastSpell(bot, SPELL_BLADESTORM);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ============================================================
+                // 3. STANDARD ROTATION
+                // ============================================================
+                Sequence("Standard Rotation", {
+                    // Maintain Colossus Smash debuff
+                    Selector("Maintain Colossus Smash", {
+                        Condition("CS Active", [](Player* bot, Unit* target) {
+                            return target && target->HasAura(SPELL_COLOSSUS_SMASH);
+                        }),
+                        Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_COLOSSUS_SMASH))
+                            {
+                                this->CastSpell(target, SPELL_COLOSSUS_SMASH);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    }),
+
+                    // Cast Mortal Strike on cooldown
+                    Selector("Mortal Strike", {
+                        Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_MORTAL_STRIKE))
+                            {
+                                this->CastSpell(target, SPELL_MORTAL_STRIKE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    }),
+
+                    // Cast Overpower on proc
+                    Sequence("Overpower on Proc", {
+                        Condition("Has Overpower Proc", [](Player* bot, Unit*) {
+                            return bot->HasAura(SPELL_OVERPOWER_PROC);
+                        }),
+                        Action("Cast Overpower", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_OVERPOWER))
+                            {
+                                this->CastSpell(target, SPELL_OVERPOWER);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    }),
+
+                    // Filler spells
+                    Selector("Filler", {
+                        Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
+                            if (bot->GetAttackersCount() >= 3 && this->CanCastSpell(target, SPELL_WHIRLWIND))
+                            {
+                                this->CastSpell(target, SPELL_WHIRLWIND);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                            {
+                                this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+        }
     }
 
     // ========================================================================
