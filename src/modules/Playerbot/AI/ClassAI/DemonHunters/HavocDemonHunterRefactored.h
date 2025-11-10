@@ -29,6 +29,9 @@
 #include <unordered_map>
 #include <deque>
 #include <chrono>
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -269,6 +272,9 @@ public:
         _resource = 0;      // Start with no fury
 
         // Setup Havoc-specific cooldown tracking
+
+        // Phase 5: Initialize decision systems
+        InitializeHavocMechanics();
     }
 
     // ========================================================================
@@ -758,7 +764,406 @@ private:
         _resource = std::min<uint32>(_resource + amount, _maxResource);
     }
 
-    
+    // ========================================================================
+    // PHASE 5: DECISION SYSTEM INTEGRATION
+    // ========================================================================
+
+    void InitializeHavocMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(SPELL_BLUR, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_BLUR, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 40.0f && !this->_metamorphosisActive;
+            }, "HP < 40% (dodge + dmg reduction)");
+
+            queue->RegisterSpell(SPELL_DARKNESS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_DARKNESS, [this](Player*, Unit*) {
+                return this->IsGroupTakingHeavyDamage();
+            }, "Group heavy damage (smoke bomb)");
+
+            // CRITICAL: Major burst cooldowns
+            queue->RegisterSpell(SPELL_METAMORPHOSIS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_METAMORPHOSIS, [this](Player*, Unit* target) {
+                return target && this->ShouldUseMetamorphosis() && !this->_metamorphosisActive;
+            }, "Burst window (30s transform)");
+
+            queue->RegisterSpell(SPELL_FEL_BARRAGE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_FEL_BARRAGE, [this](Player*, Unit*) {
+                return this->_resource >= 60 && this->GetEnemiesInRange(8.0f) >= 5;
+            }, "5+ enemies, 60 fury (heavy AoE)");
+
+            // HIGH: Priority damage abilities
+            queue->RegisterSpell(SPELL_EYE_BEAM, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_EYE_BEAM, [this](Player* bot, Unit* target) {
+                return target && this->_resource >= 30 && !this->_eyeBeamChanneling &&
+                       bot->GetDistance(target) <= 20.0f && this->GetEnemiesInRange(20.0f) >= 1;
+            }, "30 fury, not channeling (2s channel + Demonic)");
+
+            queue->RegisterSpell(SPELL_BLADE_DANCE, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_BLADE_DANCE, [this](Player*, Unit* target) {
+                uint32 cost = this->GetSpellResourceCost(SPELL_BLADE_DANCE);
+                return target && this->_resource >= cost &&
+                       (this->GetEnemiesInRange(8.0f) >= 2 || this->GetBot()->GetHealthPct() < 70.0f);
+            }, "15-35 fury, 2+ enemies or defensive");
+
+            queue->RegisterSpell(SPELL_DEATH_SWEEP, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_DEATH_SWEEP, [this](Player*, Unit*) {
+                return this->_metamorphosisActive && this->_resource >= 15;
+            }, "Meta only, 15 fury (AoE)");
+
+            // MEDIUM: Core rotation abilities
+            queue->RegisterSpell(SPELL_CHAOS_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_CHAOS_STRIKE, [this](Player*, Unit* target) {
+                uint32 cost = this->GetSpellResourceCost(SPELL_CHAOS_STRIKE);
+                return target && this->_resource >= cost && !this->_metamorphosisActive;
+            }, "40 fury (25 in Meta), fury spender");
+
+            queue->RegisterSpell(SPELL_ANNIHILATION, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_ANNIHILATION, [this](Player*, Unit* target) {
+                return target && this->_metamorphosisActive && this->_resource >= 25;
+            }, "Meta only, 25 fury (enhanced Chaos Strike)");
+
+            queue->RegisterSpell(SPELL_IMMOLATION_AURA, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_IMMOLATION_AURA, [this](Player*, Unit*) {
+                return !this->_immolationAuraActive && this->GetEnemiesInRange(8.0f) >= 1;
+            }, "Not active (6s AoE aura)");
+
+            queue->RegisterSpell(SPELL_FEL_RUSH, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_FEL_RUSH, [this](Player* bot, Unit* target) {
+                return target && this->_momentumTracker.CanUseFelRush() &&
+                       bot->GetDistance(target) > 5.0f && bot->GetDistance(target) < 20.0f &&
+                       this->GetBot()->HasSpell(SPELL_MOMENTUM) && !this->_momentumTracker.HasMomentum();
+            }, "Momentum: 5-20yd gap (40 fury + buff)");
+
+            queue->RegisterSpell(SPELL_VENGEFUL_RETREAT, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_VENGEFUL_RETREAT, [this](Player* bot, Unit* target) {
+                return target && this->_momentumTracker.CanUseVengefulRetreat() &&
+                       bot->GetDistance(target) < 5.0f &&
+                       this->GetBot()->HasSpell(SPELL_MOMENTUM) && !this->_momentumTracker.HasMomentum();
+            }, "Momentum: melee range (backward leap)");
+
+            // LOW: Fury generators
+            queue->RegisterSpell(SPELL_DEMONS_BITE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_DEMONS_BITE, [this](Player*, Unit* target) {
+                return target && this->_resource < 80;
+            }, "Fury < 80 (generates 20-30 fury)");
+
+            // UTILITY: Interrupts and CC
+            queue->RegisterSpell(SPELL_DISRUPT, SpellPriority::HIGH, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(SPELL_DISRUPT, [](Player*, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            queue->RegisterSpell(SPELL_CONSUME_MAGIC, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_CONSUME_MAGIC, [](Player*, Unit* target) {
+                return target && target->HasAura(118);
+            }, "Has dispellable magic buff");
+
+            queue->RegisterSpell(SPELL_CHAOS_NOVA, SpellPriority::MEDIUM, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(SPELL_CHAOS_NOVA, [this](Player*, Unit*) {
+                return this->_resource >= 30 && this->GetEnemiesInRange(8.0f) >= 3;
+            }, "3+ enemies, 30 fury (AoE stun)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Havoc Demon Hunter DPS", {
+                // Tier 1: Emergency Defense
+                Sequence("Emergency Defense", {
+                    Condition("Low HP", [this](Player* bot) {
+                        return bot && bot->GetHealthPct() < 40.0f;
+                    }),
+                    Selector("Use defensive", {
+                        Sequence("Blur", {
+                            Condition("Not in Meta", [this](Player*) {
+                                return !this->_metamorphosisActive;
+                            }),
+                            Condition("Can cast", [this](Player* bot) {
+                                return this->CanCastSpell(SPELL_BLUR, bot);
+                            }),
+                            Action("Cast Blur", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_BLUR, bot)) {
+                                    this->CastSpell(bot, SPELL_BLUR);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Darkness", {
+                            Condition("Group heavy damage", [this](Player*) {
+                                return this->IsGroupTakingHeavyDamage();
+                            }),
+                            Action("Cast Darkness", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
+                                    this->CastSpell(bot, SPELL_DARKNESS);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Burst Cooldowns
+                Sequence("Burst Phase", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Use cooldowns", {
+                        Sequence("Metamorphosis", {
+                            Condition("Should use Meta", [this](Player*) {
+                                return this->ShouldUseMetamorphosis() && !this->_metamorphosisActive;
+                            }),
+                            Condition("High fury", [this](Player*) {
+                                return this->_resource > 80;
+                            }),
+                            Action("Cast Metamorphosis", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
+                                    this->CastSpell(bot, SPELL_METAMORPHOSIS);
+                                    this->_metamorphosisActive = true;
+                                    this->_metamorphosisEndTime = getMSTime() + 30000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Fel Barrage AoE", {
+                            Condition("5+ enemies", [this](Player*) {
+                                return this->GetEnemiesInRange(8.0f) >= 5;
+                            }),
+                            Condition("60 fury", [this](Player*) {
+                                return this->_resource >= 60;
+                            }),
+                            Action("Cast Fel Barrage", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SPELL_FEL_BARRAGE, target)) {
+                                    this->CastSpell(target, SPELL_FEL_BARRAGE);
+                                    this->ConsumeResource(SPELL_FEL_BARRAGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Priority Abilities
+                Sequence("Priority Rotation", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Use abilities", {
+                        Sequence("Eye Beam", {
+                            Condition("30 fury", [this](Player*) {
+                                return this->_resource >= 30;
+                            }),
+                            Condition("Not channeling", [this](Player*) {
+                                return !this->_eyeBeamChanneling;
+                            }),
+                            Condition("In range", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                return target && bot->GetDistance(target) <= 20.0f;
+                            }),
+                            Action("Cast Eye Beam", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SPELL_EYE_BEAM, target)) {
+                                    this->CastSpell(target, SPELL_EYE_BEAM);
+                                    this->_eyeBeamChanneling = true;
+                                    this->_eyeBeamEndTime = getMSTime() + 2000;
+                                    this->ConsumeResource(SPELL_EYE_BEAM);
+                                    uint32 furyGen = this->GetBot()->HasSpell(SPELL_BLIND_FURY) ? 50 : 30;
+                                    this->GenerateFury(furyGen);
+                                    this->_furiousGazeActive = true;
+                                    this->_furiousGazeEndTime = getMSTime() + 10000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Death Sweep (Meta)", {
+                            Condition("In Metamorphosis", [this](Player*) {
+                                return this->_metamorphosisActive;
+                            }),
+                            Condition("15 fury", [this](Player*) {
+                                return this->_resource >= 15;
+                            }),
+                            Action("Cast Death Sweep", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
+                                    this->CastSpell(bot, SPELL_DEATH_SWEEP);
+                                    this->ConsumeResource(SPELL_BLADE_DANCE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Blade Dance", {
+                            Condition("Not in Meta", [this](Player*) {
+                                return !this->_metamorphosisActive;
+                            }),
+                            Condition("Enough fury", [this](Player*) {
+                                uint32 cost = this->GetSpellResourceCost(SPELL_BLADE_DANCE);
+                                return this->_resource >= cost;
+                            }),
+                            Condition("AoE or defensive", [this](Player* bot) {
+                                return this->GetEnemiesInRange(8.0f) >= 2 || bot->GetHealthPct() < 70.0f;
+                            }),
+                            Action("Cast Blade Dance", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
+                                    this->CastSpell(bot, SPELL_BLADE_DANCE);
+                                    this->_lastBladeDance = getMSTime();
+                                    this->ConsumeResource(SPELL_BLADE_DANCE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Immolation Aura", {
+                            Condition("Not active", [this](Player*) {
+                                return !this->_immolationAuraActive;
+                            }),
+                            Action("Cast Immolation Aura", [this](Player* bot) {
+                                if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
+                                    this->CastSpell(bot, SPELL_IMMOLATION_AURA);
+                                    this->_immolationAuraActive = true;
+                                    this->_immolationAuraEndTime = getMSTime() + 6000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Build Momentum", {
+                            Condition("Has Momentum talent", [this](Player* bot) {
+                                return bot->HasSpell(SPELL_MOMENTUM);
+                            }),
+                            Condition("No Momentum buff", [this](Player*) {
+                                return !this->_momentumTracker.HasMomentum();
+                            }),
+                            Selector("Use movement", {
+                                Sequence("Fel Rush", {
+                                    Condition("Can use", [this](Player*) {
+                                        return this->_momentumTracker.CanUseFelRush();
+                                    }),
+                                    Condition("5-20yd range", [this](Player* bot) {
+                                        Unit* target = bot->GetVictim();
+                                        return target && bot->GetDistance(target) > 5.0f && bot->GetDistance(target) < 20.0f;
+                                    }),
+                                    Action("Cast Fel Rush", [this](Player* bot) {
+                                        Unit* target = bot->GetVictim();
+                                        if (target && this->CanCastSpell(SPELL_FEL_RUSH, target)) {
+                                            this->CastSpell(target, SPELL_FEL_RUSH);
+                                            this->_momentumTracker.UseFelRush();
+                                            this->GenerateFury(40);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                }),
+                                Sequence("Vengeful Retreat", {
+                                    Condition("Can use", [this](Player*) {
+                                        return this->_momentumTracker.CanUseVengefulRetreat();
+                                    }),
+                                    Condition("Melee range", [this](Player* bot) {
+                                        Unit* target = bot->GetVictim();
+                                        return target && bot->GetDistance(target) < 5.0f;
+                                    }),
+                                    Action("Cast Vengeful Retreat", [this](Player* bot) {
+                                        if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
+                                            this->CastSpell(bot, SPELL_VENGEFUL_RETREAT);
+                                            this->_momentumTracker.UseVengefulRetreat();
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                        return NodeStatus::FAILURE;
+                                    })
+                                })
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Fury Spenders
+                Sequence("Fury Spenders", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Use spenders", {
+                        Sequence("Annihilation (Meta)", {
+                            Condition("In Metamorphosis", [this](Player*) {
+                                return this->_metamorphosisActive;
+                            }),
+                            Condition("25 fury", [this](Player*) {
+                                return this->_resource >= 25;
+                            }),
+                            Action("Cast Annihilation", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SPELL_ANNIHILATION, target)) {
+                                    this->CastSpell(target, SPELL_ANNIHILATION);
+                                    this->_lastChaosStrike = getMSTime();
+                                    this->ConsumeResource(SPELL_CHAOS_STRIKE);
+                                    if (rand() % 100 < 40) this->GenerateFury(20);
+                                    if (rand() % 100 < 25) this->_soulFragments.GenerateFragments(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Chaos Strike", {
+                            Condition("Not in Meta", [this](Player*) {
+                                return !this->_metamorphosisActive;
+                            }),
+                            Condition("Enough fury", [this](Player*) {
+                                uint32 cost = this->GetSpellResourceCost(SPELL_CHAOS_STRIKE);
+                                return this->_resource >= cost;
+                            }),
+                            Action("Cast Chaos Strike", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(SPELL_CHAOS_STRIKE, target)) {
+                                    this->CastSpell(target, SPELL_CHAOS_STRIKE);
+                                    this->_lastChaosStrike = getMSTime();
+                                    this->ConsumeResource(SPELL_CHAOS_STRIKE);
+                                    if (rand() % 100 < 40) this->GenerateFury(20);
+                                    if (rand() % 100 < 25) this->_soulFragments.GenerateFragments(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 5: Fury Generators
+                Sequence("Fury Generators", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Condition("Low fury", [this](Player*) {
+                        return this->_resource < 80;
+                    }),
+                    Action("Cast Demon's Bite", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        if (target && this->CanCastSpell(SPELL_DEMONS_BITE, target)) {
+                            this->CastSpell(target, SPELL_DEMONS_BITE);
+                            this->_lastDemonsBite = getMSTime();
+                            this->GenerateFury(rand() % 11 + 20);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
 
 private:
     HavocSoulFragmentTracker _soulFragments;
