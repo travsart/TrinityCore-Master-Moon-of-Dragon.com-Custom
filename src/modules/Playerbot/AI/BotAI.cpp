@@ -40,6 +40,7 @@
 #include "Core/Managers/ManagerRegistry.h"
 #include "Decision/DecisionFusionSystem.h"
 #include "Decision/ActionPriorityQueue.h"
+#include "Decision/BehaviorTree.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/Arbiter/MovementArbiter.h"
 #include "Movement/Arbiter/MovementRequest.h"
@@ -138,6 +139,12 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     _actionPriorityQueue = std::make_unique<bot::ai::ActionPriorityQueue>();
 
     TC_LOG_INFO("module.playerbot", "📋 ACTION PRIORITY QUEUE: {} - Phase 5 spell priority system ready",
+                _bot->GetName());
+
+    // Phase 5 Enhancement: Initialize behavior tree for hierarchical combat decisions
+    _behaviorTree = std::make_unique<bot::ai::BehaviorTree>("DefaultTree");
+
+    TC_LOG_INFO("module.playerbot", "🌲 BEHAVIOR TREE: {} - Phase 5 hierarchical decision system ready",
                 _bot->GetName());
 
     // Phase 7.3: Legacy Phase 6 observer system removed (dead code)

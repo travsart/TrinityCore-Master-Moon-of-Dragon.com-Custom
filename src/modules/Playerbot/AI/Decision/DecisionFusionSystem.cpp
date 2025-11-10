@@ -8,6 +8,7 @@
 #include "BotAI.h"
 #include "BehaviorPriorityManager.h"
 #include "ActionPriorityQueue.h"
+#include "BehaviorTree.h"
 #include "Common/ActionScoringEngine.h"
 #include "Combat/AdaptiveBehaviorManager.h"
 #include "Log.h"
@@ -151,11 +152,23 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     }
 
     // ========================================================================
-    // 3. BEHAVIOR TREE - Hierarchical decisions (currently not implemented)
+    // 3. BEHAVIOR TREE - Hierarchical combat decisions
     // ========================================================================
-    // Note: Behavior Trees are not yet implemented in the codebase
-    // When implemented, they should provide structured decision paths
-    // based on combat flow and state machines
+    if (auto behaviorTree = ai->GetBehaviorTree())
+    {
+        // Tick the behavior tree to execute current frame
+        behaviorTree->Tick(bot, ai->GetCurrentTarget());
+
+        // Get vote from tree if it has a recommendation
+        DecisionVote vote = behaviorTree->GetVote(bot, ai->GetCurrentTarget(), context);
+        if (vote.actionId != 0)
+        {
+            votes.push_back(vote);
+
+            if (_debugLogging)
+                LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_TREE)]));
+        }
+    }
 
     // ========================================================================
     // 4. ADAPTIVE BEHAVIOR MANAGER - Role-specific recommendations

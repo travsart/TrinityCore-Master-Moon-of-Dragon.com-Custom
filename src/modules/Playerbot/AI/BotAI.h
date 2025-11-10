@@ -89,6 +89,7 @@ class ManagerRegistry;
 namespace bot { namespace ai {
     class DecisionFusionSystem;
     class ActionPriorityQueue;
+    class BehaviorTree;
 }}
 
 // TriggerResult comparator for priority queue
@@ -461,6 +462,30 @@ public:
     bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _actionPriorityQueue.get(); }
     bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _actionPriorityQueue.get(); }
 
+    /**
+     * @brief Get Behavior Tree for hierarchical combat flow
+     *
+     * The BehaviorTree provides structured decision-making through hierarchical
+     * node execution (Sequences, Selectors, Conditions, Actions).
+     *
+     * @return Pointer to BehaviorTree, or nullptr if not initialized
+     *
+     * Example usage:
+     * @code
+     * if (auto tree = GetBehaviorTree())
+     * {
+     *     // Execute one tick of the tree
+     *     NodeStatus status = tree->Tick(GetBot(), target);
+     *
+     *     // Tree can span multiple ticks if RUNNING
+     *     if (status == NodeStatus::RUNNING)
+     *         return; // Continue next frame
+     * }
+     * @endcode
+     */
+    bot::ai::BehaviorTree* GetBehaviorTree() { return _behaviorTree.get(); }
+    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _behaviorTree.get(); }
+
     // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
     // ========================================================================
@@ -770,6 +795,9 @@ protected:
 
     // Phase 5 Enhancement: Action priority queue - Spell priority management
     std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
+
+    // Phase 5 Enhancement: Behavior tree - Hierarchical combat flow
+    std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
