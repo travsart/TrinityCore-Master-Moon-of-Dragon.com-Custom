@@ -27,6 +27,11 @@
 #include <unordered_map>
 #include "Log.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -186,9 +191,9 @@ public:
         , _shieldTracker()
         , _raptureActive(false)
         , _raptureEndTime(0)
-        
+
         , _lastEvangelismTime(0)
-        
+
         , _lastPainSuppressionTime(0)
         , _cooldowns()
     {
@@ -200,6 +205,10 @@ public:
             {DISC_EVANGELISM, 90000, 1},
             {DISC_SHADOW_FIEND, 180000, 1}
         });
+
+        // Initialize Phase 5 systems
+        InitializeDisciplineMechanics();
+
         TC_LOG_DEBUG("playerbot", "DisciplinePriestRefactored initialized for {}", this->GetBot()->GetName());
     }
 
@@ -653,8 +662,477 @@ private:
         return false;
     }
 
+    void InitializeDisciplineMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue (Disc Healer + Atonement)
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // ====================================================================
+            // EMERGENCY TIER - Life-saving abilities
+            // ====================================================================
+            queue->RegisterSpell(DISC_PAIN_SUPPRESSION,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DISC_PAIN_SUPPRESSION,
+                [this](Player* bot, Unit* target) {
+                    // Tank save < 20%
+                    return target && target->GetHealthPct() < 20.0f &&
+                           this->IsTankRole(target);
+                },
+                "Tank < 20% (Pain Suppression)");
+
+            queue->RegisterSpell(DISC_DESPERATE_PRAYER,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DISC_DESPERATE_PRAYER,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 30.0f;
+                },
+                "Self HP < 30%");
+
+            queue->RegisterSpell(DISC_POWER_WORD_SHIELD,
+                SpellPriority::EMERGENCY,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DISC_POWER_WORD_SHIELD,
+                [this](Player* bot, Unit* target) {
+                    // Emergency shield for critical HP
+                    return target && target->GetHealthPct() < 20.0f &&
+                           !this->_shieldTracker.HasShield(target->GetGUID());
+                },
+                "Target < 20% and no shield");
+
+            // ====================================================================
+            // CRITICAL TIER - Fast heals and major cooldowns
+            // ====================================================================
+            queue->RegisterSpell(DISC_SHADOW_MEND,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(DISC_SHADOW_MEND,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 50.0f;
+                },
+                "Target < 50% (fast heal)");
+
+            queue->RegisterSpell(DISC_PENANCE,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(DISC_PENANCE,
+                [](Player* bot, Unit* target) {
+                    // Penance for healing or damage
+                    return target && (target->IsHostileTo(bot) ||
+                           target->GetHealthPct() < 60.0f);
+                },
+                "Target < 60% or hostile");
+
+            queue->RegisterSpell(DISC_POWER_WORD_RADIANCE,
+                SpellPriority::CRITICAL,
+                SpellCategory::HEALING);
+            queue->AddCondition(DISC_POWER_WORD_RADIANCE,
+                [this](Player* bot, Unit* target) {
+                    // AoE Atonement application
+                    return this->_atonementTracker.GetActiveAtonementCount() < 3;
+                },
+                "< 3 active Atonements (AoE)");
+
+            queue->RegisterSpell(DISC_RAPTURE,
+                SpellPriority::CRITICAL,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DISC_RAPTURE,
+                [](Player* bot, Unit*) {
+                    // Heavy damage - spam shields
+                    Group* group = bot->GetGroup();
+                    if (!group)
+                        return false;
+
+                    uint32 injured = 0;
+                    for (GroupReference const& ref : group->GetMembers())
+                    {
+                        if (Player* member = ref.GetSource())
+                        {
+                            if (member->IsAlive() && member->GetHealthPct() < 50.0f)
+                                injured++;
+                        }
+                    }
+                    return injured >= 4;
+                },
+                "4+ injured (mass shields)");
+
+            // ====================================================================
+            // HIGH TIER - Atonement application and maintenance
+            // ====================================================================
+            queue->RegisterSpell(DISC_SCHISM,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISC_SCHISM,
+                [this](Player* bot, Unit* target) {
+                    // Damage amplification for Atonement
+                    return target && this->_atonementTracker.GetActiveAtonementCount() >= 2;
+                },
+                "2+ Atonements active (amp damage)");
+
+            queue->RegisterSpell(DISC_EVANGELISM,
+                SpellPriority::HIGH,
+                SpellCategory::UTILITY);
+            queue->AddCondition(DISC_EVANGELISM,
+                [this](Player* bot, Unit*) {
+                    // Extend all Atonements
+                    return this->_atonementTracker.GetActiveAtonementCount() >= 4;
+                },
+                "4+ Atonements (extend)");
+
+            queue->RegisterSpell(DISC_MINDGAMES,
+                SpellPriority::HIGH,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISC_MINDGAMES,
+                [this](Player* bot, Unit* target) {
+                    // Burst damage for Atonement
+                    return target && this->_atonementTracker.GetActiveAtonementCount() >= 2;
+                },
+                "2+ Atonements (burst)");
+
+            // ====================================================================
+            // MEDIUM TIER - Standard rotation
+            // ====================================================================
+            queue->RegisterSpell(DISC_PURGE_WICKED,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISC_PURGE_WICKED,
+                [](Player* bot, Unit* target) {
+                    return target && !target->HasAura(DISC_PURGE_WICKED);
+                },
+                "DoT not active");
+
+            queue->RegisterSpell(DISC_SHADOW_WORD_PAIN,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISC_SHADOW_WORD_PAIN,
+                [](Player* bot, Unit* target) {
+                    return target && !target->HasAura(DISC_SHADOW_WORD_PAIN);
+                },
+                "DoT not active");
+
+            queue->RegisterSpell(DISC_SMITE,
+                SpellPriority::MEDIUM,
+                SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DISC_SMITE,
+                [this](Player* bot, Unit* target) {
+                    // Filler damage for Atonement
+                    return target && this->_atonementTracker.GetActiveAtonementCount() > 0;
+                },
+                "Atonement active (filler)");
+
+            // ====================================================================
+            // LOW TIER - Utility
+            // ====================================================================
+            queue->RegisterSpell(DISC_PURIFY,
+                SpellPriority::LOW,
+                SpellCategory::UTILITY);
+
+            queue->RegisterSpell(DISC_FADE,
+                SpellPriority::LOW,
+                SpellCategory::DEFENSIVE);
+            queue->AddCondition(DISC_FADE,
+                [](Player* bot, Unit*) {
+                    return bot->GetThreatManager().GetThreatListSize() > 0 &&
+                           bot->GetHealthPct() < 50.0f;
+                },
+                "Has threat and HP < 50%");
+
+            TC_LOG_INFO("module.playerbot", "✨ DISCIPLINE PRIEST: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree (Disc Healer + Atonement Flow)
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Discipline Priest Healer", {
+                // ================================================================
+                // TIER 1: EMERGENCY HEALING (HP < 30%)
+                // ================================================================
+                Sequence("Emergency Healing", {
+                    Condition("Critical HP < 30%", [](Player* bot, Unit*) {
+                        // Check self or group for critical HP
+                        if (bot->GetHealthPct() < 30.0f)
+                            return true;
+
+                        Group* group = bot->GetGroup();
+                        if (!group)
+                            return false;
+
+                        for (GroupReference const& ref : group->GetMembers())
+                        {
+                            if (Player* member = ref.GetSource())
+                            {
+                                if (member->IsAlive() && member->GetHealthPct() < 30.0f)
+                                    return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    Selector("Emergency Response", {
+                        // Pain Suppression for tank
+                        Action("Cast Pain Suppression", [this](Player* bot, Unit* target) {
+                            Group* group = bot->GetGroup();
+                            if (!group)
+                                return NodeStatus::FAILURE;
+
+                            for (GroupReference const& ref : group->GetMembers())
+                            {
+                                if (Player* member = ref.GetSource())
+                                {
+                                    if (member->IsAlive() && member->GetHealthPct() < 20.0f &&
+                                        this->IsTankRole(member) &&
+                                        this->CanCastSpell(DISC_PAIN_SUPPRESSION, member))
+                                    {
+                                        this->CastSpell(member, DISC_PAIN_SUPPRESSION);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Desperate Prayer for self
+                        Action("Cast Desperate Prayer", [this](Player* bot, Unit* target) {
+                            if (bot->GetHealthPct() < 30.0f &&
+                                this->CanCastSpell(DISC_DESPERATE_PRAYER, bot))
+                            {
+                                this->CastSpell(bot, DISC_DESPERATE_PRAYER);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Shadow Mend emergency spam
+                        Action("Cast Shadow Mend", [this](Player* bot, Unit* target) {
+                            Group* group = bot->GetGroup();
+                            if (!group)
+                                return NodeStatus::FAILURE;
+
+                            for (GroupReference const& ref : group->GetMembers())
+                            {
+                                if (Player* member = ref.GetSource())
+                                {
+                                    if (member->IsAlive() && member->GetHealthPct() < 40.0f &&
+                                        this->CanCastSpell(DISC_SHADOW_MEND, member))
+                                    {
+                                        this->CastSpell(member, DISC_SHADOW_MEND);
+                                        this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 2: ATONEMENT MAINTENANCE
+                // ================================================================
+                Sequence("Atonement Maintenance", {
+                    Condition("Has group", [](Player* bot, Unit*) {
+                        return bot->GetGroup() != nullptr;
+                    }),
+                    Selector("Atonement Priority", {
+                        // Evangelism - extend all Atonements
+                        Sequence("Evangelism", {
+                            Condition("4+ Atonements", [this](Player* bot, Unit*) {
+                                return this->_atonementTracker.GetActiveAtonementCount() >= 4;
+                            }),
+                            Action("Cast Evangelism", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(DISC_EVANGELISM, bot))
+                                {
+                                    this->CastSpell(bot, DISC_EVANGELISM);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Power Word: Radiance - AoE Atonement
+                        Sequence("Power Word: Radiance", {
+                            Condition("< 3 Atonements", [this](Player* bot, Unit*) {
+                                return this->_atonementTracker.GetActiveAtonementCount() < 3;
+                            }),
+                            Action("Cast Radiance", [this](Player* bot, Unit* target) {
+                                Group* group = bot->GetGroup();
+                                if (!group)
+                                    return NodeStatus::FAILURE;
+
+                                for (GroupReference const& ref : group->GetMembers())
+                                {
+                                    if (Player* member = ref.GetSource())
+                                    {
+                                        if (member->IsAlive() && member->GetHealthPct() < 90.0f &&
+                                            this->CanCastSpell(DISC_POWER_WORD_RADIANCE, member))
+                                        {
+                                            this->CastSpell(member, DISC_POWER_WORD_RADIANCE);
+                                            this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Power Word: Shield - Single target Atonement
+                        Action("Cast Shield", [this](Player* bot, Unit* target) {
+                            Group* group = bot->GetGroup();
+                            if (!group)
+                                return NodeStatus::FAILURE;
+
+                            for (GroupReference const& ref : group->GetMembers())
+                            {
+                                if (Player* member = ref.GetSource())
+                                {
+                                    if (member->IsAlive() && member->GetHealthPct() < 85.0f &&
+                                        this->_atonementTracker.NeedsAtonementRefresh(member->GetGUID()) &&
+                                        !this->_shieldTracker.HasShield(member->GetGUID()) &&
+                                        this->CanCastSpell(DISC_POWER_WORD_SHIELD, member))
+                                    {
+                                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                                        this->_shieldTracker.ApplyShield(member->GetGUID(), 15000);
+                                        this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 3: DIRECT HEALING (When Atonement isn't enough)
+                // ================================================================
+                Sequence("Direct Healing", {
+                    Condition("Injured allies", [](Player* bot, Unit*) {
+                        Group* group = bot->GetGroup();
+                        if (!group)
+                            return false;
+
+                        for (GroupReference const& ref : group->GetMembers())
+                        {
+                            if (Player* member = ref.GetSource())
+                            {
+                                if (member->IsAlive() && member->GetHealthPct() < 70.0f)
+                                    return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    Selector("Healing Priority", {
+                        // Penance for moderate damage
+                        Action("Cast Penance Heal", [this](Player* bot, Unit* target) {
+                            Group* group = bot->GetGroup();
+                            if (!group)
+                                return NodeStatus::FAILURE;
+
+                            for (GroupReference const& ref : group->GetMembers())
+                            {
+                                if (Player* member = ref.GetSource())
+                                {
+                                    if (member->IsAlive() && member->GetHealthPct() < 60.0f &&
+                                        this->CanCastSpell(DISC_PENANCE, member))
+                                    {
+                                        this->CastSpell(member, DISC_PENANCE);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ================================================================
+                // TIER 4: ATONEMENT DAMAGE ROTATION
+                // ================================================================
+                Sequence("Atonement Damage", {
+                    Condition("Has Atonements", [this](Player* bot, Unit*) {
+                        return this->_atonementTracker.GetActiveAtonementCount() > 0;
+                    }),
+                    Condition("Has hostile target", [](Player* bot, Unit* target) {
+                        return target && target->IsHostileTo(bot);
+                    }),
+                    Selector("Damage Priority", {
+                        // Schism - damage amplification
+                        Sequence("Schism", {
+                            Condition("2+ Atonements", [this](Player* bot, Unit*) {
+                                return this->_atonementTracker.GetActiveAtonementCount() >= 2;
+                            }),
+                            Action("Cast Schism", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(DISC_SCHISM, target))
+                                {
+                                    this->CastSpell(target, DISC_SCHISM);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Mindgames - burst damage
+                        Action("Cast Mindgames", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(DISC_MINDGAMES, target))
+                            {
+                                this->CastSpell(target, DISC_MINDGAMES);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Penance (offensive)
+                        Action("Cast Penance Damage", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(DISC_PENANCE, target))
+                            {
+                                this->CastSpell(target, DISC_PENANCE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Purge the Wicked (DoT)
+                        Sequence("Purge the Wicked", {
+                            Condition("DoT not active", [](Player* bot, Unit* target) {
+                                return target && !target->HasAura(DISC_PURGE_WICKED);
+                            }),
+                            Action("Cast Purge the Wicked", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(DISC_PURGE_WICKED, target))
+                                {
+                                    this->CastSpell(target, DISC_PURGE_WICKED);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Smite (filler)
+                        Action("Cast Smite", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(DISC_SMITE, target))
+                            {
+                                this->CastSpell(target, DISC_SMITE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 DISCIPLINE PRIEST: BehaviorTree initialized with Atonement flow");
+        }
+    }
+
     // Member variables
-    BuffTracker _atonementTracker;
+    AtonementTracker _atonementTracker;
     PowerWordShieldTracker _shieldTracker;
 
     bool _raptureActive;
