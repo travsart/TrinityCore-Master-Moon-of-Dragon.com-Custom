@@ -24,6 +24,12 @@ class Unit;
 class Group;
 class SpellInfo;
 
+// Forward declarations for DecisionFusion integration
+namespace bot { namespace ai {
+    struct DecisionVote;
+    enum class CombatContext : uint8;
+}} // namespace bot::ai
+
 namespace Playerbot
 {
     // Bot roles for behavior adaptation
@@ -200,6 +206,23 @@ namespace Playerbot
         bool ShouldSpread() const { return IsStrategyActive(STRATEGY_SPREAD); }
         bool ShouldInterruptFocus() const { return IsStrategyActive(STRATEGY_INTERRUPT_FOCUS); }
         bool ShouldUseCrowdControl() const { return IsStrategyActive(STRATEGY_CROWD_CONTROL); }
+
+        /**
+         * @brief Get recommended action for DecisionFusion integration
+         * @param target Current combat target
+         * @param context Current combat context (dungeon, raid, PvP, etc.)
+         * @return DecisionVote with role-based action recommendation
+         *
+         * This method provides intelligent action recommendations based on:
+         * - Bot's primary and secondary roles (tank/healer/DPS)
+         * - Active behavior strategies (defensive, aggressive, AoE, etc.)
+         * - Group composition and role effectiveness
+         * - Emergency conditions (low health, emergency tanking/healing)
+         * - Combat context (boss fight, trash, arena, etc.)
+         *
+         * Integrates with Phase 5 DecisionFusion system for unified action arbitration.
+         */
+        bot::ai::DecisionVote GetRecommendedAction(Unit* target, bot::ai::CombatContext context) const;
 
         // Resource management
         bool ShouldConserveMana() const { return IsStrategyActive(STRATEGY_CONSERVE_MANA); }

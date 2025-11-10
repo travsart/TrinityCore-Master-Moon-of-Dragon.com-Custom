@@ -173,23 +173,19 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     // ========================================================================
     // 4. ADAPTIVE BEHAVIOR MANAGER - Role-specific recommendations
     // ========================================================================
-    // Note: AdaptiveBehaviorManager exists but needs GetRecommendedAction() method
-    // For now, provide a basic vote if in combat
-    if (bot->IsInCombat())
-    {
-        // Adaptive behavior would recommend actions based on role
-        // For now, provide a moderate confidence vote
-        DecisionVote vote(
-            DecisionSource::ADAPTIVE_BEHAVIOR,
-            0, // TODO: Get recommended action from AdaptiveBehaviorManager
-            nullptr,
-            0.6f, // Moderate confidence
-            0.5f, // Medium urgency
-            "AdaptiveBehavior: Role-based recommendation (stub)"
-        );
-        // Only add if we have a valid action (currently 0, so skip)
-        // votes.push_back(vote);
-    }
+    // Note: AdaptiveBehaviorManager::GetRecommendedAction() is implemented (Phase 5)
+    // but AdaptiveBehaviorManager is currently nested in CombatBehaviorIntegration
+    // which is not directly accessible from BotAI. Future work will either:
+    // a) Add AdaptiveBehaviorManager to BotAI directly, or
+    // b) Add CombatBehaviorIntegration accessor to BotAI
+    //
+    // When integrated, it will provide:
+    // - Role-based action recommendations (tank/healer/DPS)
+    // - Emergency condition detection (emergency heal/tank)
+    // - Strategy-based confidence/urgency adjustments
+    // - Context-aware reasoning (raid/dungeon/PvP)
+    //
+    // For now, this vote source is disabled pending architectural integration.
 
     // ========================================================================
     // 5. ACTION SCORING ENGINE - Utility-based scoring
