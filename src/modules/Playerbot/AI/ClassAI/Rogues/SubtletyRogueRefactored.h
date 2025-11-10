@@ -20,6 +20,11 @@
 #include "SpellAuraEffects.h"
 #include "Log.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -205,6 +210,10 @@ public:
         this->_resource.maxEnergy = 100;
         this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeSubtletyMechanics();
+
         TC_LOG_DEBUG("playerbot", "SubtletyRogueRefactored initialized for {}", bot->GetName());
     }
 
@@ -489,7 +498,314 @@ private:
         return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());
     }
 
-    
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeSubtletyMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "🗡️ SUBTLETY ROGUE: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Subtlety Rogue spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Defensive cooldowns
+            queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 30.0f;
+            }, "Bot HP < 30% (spell immunity)");
+
+            queue->RegisterSpell(RogueAI::EVASION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(RogueAI::EVASION, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "Bot HP < 50% (dodge boost)");
+
+            // CRITICAL: Burst cooldowns and Shadow Dance
+            queue->RegisterSpell(RogueAI::SYMBOLS_OF_DEATH, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::SYMBOLS_OF_DEATH, [this](Player* bot, Unit* target) {
+                return target && !this->_symbolsOfDeathActive;
+            }, "Not active (10s burst, 15% damage increase)");
+
+            queue->RegisterSpell(RogueAI::SHADOW_BLADES, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::SHADOW_BLADES, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(RogueAI::SHADOW_BLADES) &&
+                       target && !this->_shadowBladesActive;
+            }, "Has talent, not active (20s burst, all attacks give CP)");
+
+            queue->RegisterSpell(RogueAI::SHADOW_DANCE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(RogueAI::SHADOW_DANCE, [this](Player* bot, Unit* target) {
+                return target && this->_shadowDanceTracker.ShouldUse(this->_resource.comboPoints);
+            }, "Should use (3 charges, 8s duration, enables Shadowstrike)");
+
+            // HIGH: Stealth abilities and finishers
+            queue->RegisterSpell(SHADOWSTRIKE_SUB, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOWSTRIKE_SUB, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 40 && this->_inStealth;
+            }, "40+ Energy, in stealth/Shadow Dance (generates 2 CP)");
+
+            queue->RegisterSpell(SECRET_TECHNIQUE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SECRET_TECHNIQUE, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SECRET_TECHNIQUE) &&
+                       target && this->_resource.energy >= 30 &&
+                       this->_resource.comboPoints >= this->_resource.maxComboPoints;
+            }, "Has talent, 30+ Energy, max CP (finisher, teleport attacks)");
+
+            queue->RegisterSpell(EVISCERATE_SUB, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(EVISCERATE_SUB, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
+            }, "35+ Energy, 4-5+ CP (finisher damage)");
+
+            queue->RegisterSpell(RogueAI::RUPTURE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::RUPTURE, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 25 &&
+                       this->_resource.comboPoints >= 4 &&
+                       !this->HasRupture(target);
+            }, "25+ Energy, 4+ CP, DoT not active (finisher bleed)");
+
+            // MEDIUM: Combo builders
+            queue->RegisterSpell(RogueAI::BACKSTAB, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RogueAI::BACKSTAB, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints &&
+                       this->IsBehindTarget(target);
+            }, "35+ Energy, not max CP, behind target (generates 1 CP)");
+
+            queue->RegisterSpell(SHADOWSTRIKE_SUB, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOWSTRIKE_SUB, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 40 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints &&
+                       !this->_inStealth;
+            }, "40+ Energy, not max CP, not in stealth (fallback builder)");
+
+            queue->RegisterSpell(RogueAI::KICK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(RogueAI::KICK, [this](Player* bot, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (interrupt)");
+
+            // LOW: AoE abilities
+            queue->RegisterSpell(SHURIKEN_STORM, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SHURIKEN_STORM, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->GetEnemiesInRange(10.0f) >= 3 &&
+                       this->_resource.comboPoints < this->_resource.maxComboPoints;
+            }, "35+ Energy, 3+ enemies, not max CP (AoE combo builder)");
+
+            queue->RegisterSpell(BLACK_POWDER, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(BLACK_POWDER, [this](Player* bot, Unit* target) {
+                return target && this->_resource.energy >= 35 &&
+                       this->GetEnemiesInRange(10.0f) >= 3 &&
+                       this->_resource.comboPoints >= 5;
+            }, "35+ Energy, 3+ enemies, 5+ CP (AoE finisher)");
+
+            TC_LOG_INFO("module.playerbot", "🗡️ SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Subtlety Rogue DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Subtlety Rogue DPS", {
+                // Tier 1: Burst Cooldowns (Symbols of Death, Shadow Blades)
+                Sequence("Burst Cooldowns", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Use Burst", {
+                        Sequence("Cast Symbols of Death", {
+                            Condition("Not active", [this](Player* bot, Unit* target) {
+                                return !this->_symbolsOfDeathActive;
+                            }),
+                            Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, bot))
+                                {
+                                    this->CastSpell(bot, RogueAI::SYMBOLS_OF_DEATH);
+                                    this->_symbolsOfDeathActive = true;
+                                    this->_symbolsOfDeathEndTime = getMSTime() + 10000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Cast Shadow Blades", {
+                            Condition("Has talent and not active", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(RogueAI::SHADOW_BLADES) &&
+                                       !this->_shadowBladesActive;
+                            }),
+                            Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::SHADOW_BLADES, bot))
+                                {
+                                    this->CastSpell(bot, RogueAI::SHADOW_BLADES);
+                                    this->_shadowBladesActive = true;
+                                    this->_shadowBladesEndTime = getMSTime() + 20000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Shadow Dance (enable stealth abilities)
+                Sequence("Shadow Dance", {
+                    Condition("Target exists and should use", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               this->_shadowDanceTracker.ShouldUse(this->_resource.comboPoints);
+                    }),
+                    Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(RogueAI::SHADOW_DANCE, bot))
+                        {
+                            this->CastSpell(bot, RogueAI::SHADOW_DANCE);
+                            this->_shadowDanceTracker.Use();
+                            this->_inStealth = true;
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 3: Finishers (Secret Technique, Eviscerate, Rupture at 4-5+ CP)
+                Sequence("Finishers", {
+                    Condition("Target exists and has CP", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
+                    }),
+                    Selector("Choose Finisher", {
+                        // Rupture if not active
+                        Sequence("Cast Rupture", {
+                            Condition("Rupture missing and 4+ CP", [this](Player* bot, Unit* target) {
+                                return this->_resource.comboPoints >= 4 &&
+                                       !this->HasRupture(target) &&
+                                       this->_resource.energy >= 25;
+                            }),
+                            Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::RUPTURE, target))
+                                {
+                                    this->CastSpell(target, RogueAI::RUPTURE);
+                                    this->ConsumeEnergy(25);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Secret Technique at max CP
+                        Sequence("Cast Secret Technique", {
+                            Condition("Has talent and max CP", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(SECRET_TECHNIQUE) &&
+                                       this->_resource.comboPoints >= this->_resource.maxComboPoints &&
+                                       this->_resource.energy >= 30;
+                            }),
+                            Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SECRET_TECHNIQUE, target))
+                                {
+                                    this->CastSpell(target, SECRET_TECHNIQUE);
+                                    this->ConsumeEnergy(30);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Eviscerate at 4-5+ CP
+                        Sequence("Cast Eviscerate", {
+                            Condition("35+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 35;
+                            }),
+                            Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(EVISCERATE_SUB, target))
+                                {
+                                    this->CastSpell(target, EVISCERATE_SUB);
+                                    this->_lastEviscerateTime = getMSTime();
+                                    this->ConsumeEnergy(35);
+                                    this->_resource.comboPoints = 0;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Combo Builders (Shadowstrike in stealth, Backstab from behind)
+                Sequence("Combo Builders", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr &&
+                               this->_resource.comboPoints < this->_resource.maxComboPoints;
+                    }),
+                    Selector("Build Combo Points", {
+                        // Shadowstrike from stealth/Shadow Dance
+                        Sequence("Cast Shadowstrike in stealth", {
+                            Condition("In stealth and 40+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_inStealth && this->_resource.energy >= 40;
+                            }),
+                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
+                                {
+                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->_lastShadowstrikeTime = getMSTime();
+                                    this->ConsumeEnergy(40);
+                                    this->GenerateComboPoints(2);
+                                    if (this->_shadowBladesActive)
+                                        this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Backstab from behind
+                        Sequence("Cast Backstab", {
+                            Condition("Behind target and 35+ Energy", [this](Player* bot, Unit* target) {
+                                return this->IsBehindTarget(target) && this->_resource.energy >= 35;
+                            }),
+                            Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(RogueAI::BACKSTAB, target))
+                                {
+                                    this->CastSpell(target, RogueAI::BACKSTAB);
+                                    this->_lastBackstabTime = getMSTime();
+                                    this->ConsumeEnergy(35);
+                                    this->GenerateComboPoints(1);
+                                    if (this->_shadowBladesActive)
+                                        this->GenerateComboPoints(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Shadowstrike fallback
+                        Sequence("Cast Shadowstrike fallback", {
+                            Condition("40+ Energy", [this](Player* bot, Unit* target) {
+                                return this->_resource.energy >= 40;
+                            }),
+                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
+                                {
+                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->ConsumeEnergy(40);
+                                    this->GenerateComboPoints(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+        }
+    }
 
 private:
     ShadowDanceTracker _shadowDanceTracker;
