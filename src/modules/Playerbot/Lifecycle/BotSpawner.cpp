@@ -1696,14 +1696,14 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         // Update character count for account - with safe statement access to prevent memory corruption
         TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
-        LoginDatabasePreparedStatement* stmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
-        if (!stmt) {
+        LoginDatabasePreparedStatement* charCountStmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
+        if (!charCountStmt) {
             return ObjectGuid::Empty;
         }
-        stmt->setUInt32(0, 1); // Increment by 1
-        stmt->setUInt32(1, accountId);
-        stmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
-        loginTransaction->Append(stmt);
+        charCountStmt->setUInt32(0, 1); // Increment by 1
+        charCountStmt->setUInt32(1, accountId);
+        charCountStmt->setUInt32(2, sRealmList->GetCurrentRealmId().Realm);
+        loginTransaction->Append(charCountStmt);
 
         // Commit transactions with proper error handling
         TC_LOG_TRACE("module.playerbot.spawner", "Committing database transactions");

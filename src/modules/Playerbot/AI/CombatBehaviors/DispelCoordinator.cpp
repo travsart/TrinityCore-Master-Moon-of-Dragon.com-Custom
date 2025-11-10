@@ -1208,6 +1208,12 @@ if (!unit)
     return;
 }
 {
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsTank");
+        return false;
+    }
+
     Player* player = unit->ToPlayer();
     if (!player)
         return false;
@@ -1222,6 +1228,12 @@ if (!unit)
     return;
 }
 {
+    if (!unit)
+    {
+        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsHealer");
+        return false;
+    }
+
     Player* player = unit->ToPlayer();
     if (!player)
         return false;
