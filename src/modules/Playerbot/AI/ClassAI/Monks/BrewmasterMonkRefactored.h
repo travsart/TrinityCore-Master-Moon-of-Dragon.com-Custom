@@ -20,6 +20,9 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -265,6 +268,10 @@ public:
         , _lastKegSmashTime(0)
     {        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
+
+        // Phase 5: Initialize decision systems
+        InitializeBrewmasterMechanics();
+
         TC_LOG_DEBUG("playerbot", "BrewmasterMonkRefactored initialized for {}", bot->GetName());
     }
 
@@ -581,7 +588,317 @@ private:
         this->_resource.chi = (this->_resource.chi > amount) ? this->_resource.chi - amount : 0;
     }
 
-    
+    // ========================================================================
+    // PHASE 5: DECISION SYSTEM INTEGRATION
+    // ========================================================================
+
+    void InitializeBrewmasterMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Major defensive cooldowns
+            queue->RegisterSpell(ZEN_MEDITATION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(ZEN_MEDITATION, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 20.0f;
+            }, "HP < 20% (channel 60% DR)");
+
+            queue->RegisterSpell(FORTIFYING_BREW_BREW, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FORTIFYING_BREW_BREW, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 35.0f;
+            }, "HP < 35% (20% DR + 20% HP, 6min CD)");
+
+            // CRITICAL: Active mitigation
+            queue->RegisterSpell(PURIFYING_BREW, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(PURIFYING_BREW, [this](Player*, Unit*) {
+                return this->_staggerTracker.ShouldPurify();
+            }, "Stagger > 4% max HP (clear stagger)");
+
+            queue->RegisterSpell(CELESTIAL_BREW, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(CELESTIAL_BREW, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 60.0f;
+            }, "HP < 60% (absorb shield, 1min CD)");
+
+            queue->RegisterSpell(IRONSKIN_BREW, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(IRONSKIN_BREW, [this](Player*, Unit*) {
+                return !this->_ironskinBrewActive || this->GetIronskinTimeRemaining() < 3000;
+            }, "Ironskin down or < 3s (increases stagger)");
+
+            // HIGH: Shuffle maintenance + threat
+            queue->RegisterSpell(BLACKOUT_KICK_BREW, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(BLACKOUT_KICK_BREW, [this](Player*, Unit* target) {
+                return target && this->_resource.chi >= 1 && this->_shuffleTracker.NeedsRefresh();
+            }, "1 chi, Shuffle < 2s (maintain buff)");
+
+            queue->RegisterSpell(KEG_SMASH, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(KEG_SMASH, [this](Player*, Unit* target) {
+                return target && this->_resource.energy >= 40 && this->_resource.chi < 5;
+            }, "40 energy, chi < 5 (generates 2 chi + threat)");
+
+            queue->RegisterSpell(PROVOKE, SpellPriority::HIGH, SpellCategory::UTILITY);
+            queue->AddCondition(PROVOKE, [](Player*, Unit* target) {
+                return target != nullptr;
+            }, "Taunt (ThreatAssistant determines need)");
+
+            // MEDIUM: Chi spenders and threat
+            queue->RegisterSpell(BREATH_OF_FIRE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(BREATH_OF_FIRE, [this](Player*, Unit* target) {
+                return target && this->_resource.chi >= 2 && (getMSTime() - this->_lastKegSmashTime) < 2000;
+            }, "2 chi, after Keg Smash (cone + DoT)");
+
+            queue->RegisterSpell(SPINNING_CRANE_KICK_BREW, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPINNING_CRANE_KICK_BREW, [this](Player*, Unit*) {
+                return this->_resource.chi >= 2 && this->GetEnemiesInRange(8.0f) >= 3;
+            }, "2 chi, 3+ enemies (AoE channel)");
+
+            queue->RegisterSpell(RISING_SUN_KICK_BREW, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(RISING_SUN_KICK_BREW, [this](Player*, Unit* target) {
+                return target && this->_resource.chi >= 2;
+            }, "2 chi (high threat)");
+
+            // LOW: Chi generators
+            queue->RegisterSpell(TIGER_PALM_BREW, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(TIGER_PALM_BREW, [this](Player*, Unit* target) {
+                return target && this->_resource.energy >= 25 && this->_resource.chi < 5;
+            }, "25 energy, chi < 5 (generates 2 chi)");
+
+            queue->RegisterSpell(EXPEL_HARM_BREW, SpellPriority::LOW, SpellCategory::HEALING);
+            queue->AddCondition(EXPEL_HARM_BREW, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 90.0f && this->_resource.energy >= 15 && this->_resource.chi < 5;
+            }, "HP < 90%, 15 energy (heal + 1 chi)");
+
+            // UTILITY: Major cooldowns
+            queue->RegisterSpell(INVOKE_NIUZAO, SpellPriority::HIGH, SpellCategory::OFFENSIVE);
+            queue->AddCondition(INVOKE_NIUZAO, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(INVOKE_NIUZAO) && this->GetEnemiesInRange(10.0f) >= 2;
+            }, "2+ enemies (summon statue, 3min CD)");
+
+            queue->RegisterSpell(WEAPONS_OF_ORDER, SpellPriority::HIGH, SpellCategory::OFFENSIVE);
+            queue->AddCondition(WEAPONS_OF_ORDER, [this](Player* bot, Unit* target) {
+                return bot && target && bot->HasSpell(WEAPONS_OF_ORDER);
+            }, "Burst window (damage/defense, 2min CD)");
+
+            queue->RegisterSpell(DAMPEN_HARM, SpellPriority::HIGH, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DAMPEN_HARM, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "HP < 50% (damage reduction, 2min CD)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Brewmaster Tank", {
+                // Tier 1: Emergency Defensives
+                Sequence("Emergency Defense", {
+                    Condition("Critical HP", [](Player* bot) {
+                        return bot && bot->GetHealthPct() < 35.0f;
+                    }),
+                    Selector("Use emergency", {
+                        Sequence("Zen Meditation", {
+                            Condition("HP < 20%", [](Player* bot) {
+                                return bot->GetHealthPct() < 20.0f;
+                            }),
+                            Action("Cast Zen Meditation", [this](Player* bot) {
+                                if (this->CanCastSpell(ZEN_MEDITATION, bot)) {
+                                    this->CastSpell(bot, ZEN_MEDITATION);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Fortifying Brew", {
+                            Action("Cast Fortifying Brew", [this](Player* bot) {
+                                if (this->CanCastSpell(FORTIFYING_BREW_BREW, bot)) {
+                                    this->CastSpell(bot, FORTIFYING_BREW_BREW);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Active Mitigation (Stagger Management)
+                Sequence("Stagger Management", {
+                    Selector("Manage stagger", {
+                        Sequence("Purifying Brew", {
+                            Condition("Should purify", [this](Player*) {
+                                return this->_staggerTracker.ShouldPurify();
+                            }),
+                            Action("Cast Purifying Brew", [this](Player* bot) {
+                                if (this->CanCastSpell(PURIFYING_BREW, bot)) {
+                                    this->CastSpell(bot, PURIFYING_BREW);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Celestial Brew", {
+                            Condition("HP < 60%", [](Player* bot) {
+                                return bot && bot->GetHealthPct() < 60.0f;
+                            }),
+                            Action("Cast Celestial Brew", [this](Player* bot) {
+                                if (this->CanCastSpell(CELESTIAL_BREW, bot)) {
+                                    this->CastSpell(bot, CELESTIAL_BREW);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Ironskin Brew", {
+                            Condition("Needs refresh", [this](Player*) {
+                                return !this->_ironskinBrewActive || this->GetIronskinTimeRemaining() < 3000;
+                            }),
+                            Action("Cast Ironskin Brew", [this](Player* bot) {
+                                if (this->CanCastSpell(IRONSKIN_BREW, bot)) {
+                                    this->CastSpell(bot, IRONSKIN_BREW);
+                                    this->_ironskinBrewActive = true;
+                                    this->_ironskinEndTime = getMSTime() + 7000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Shuffle Maintenance
+                Sequence("Maintain Shuffle", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Condition("Shuffle needs refresh", [this](Player*) {
+                        return this->_shuffleTracker.NeedsRefresh();
+                    }),
+                    Condition("Has chi", [this](Player*) {
+                        return this->_resource.chi >= 1;
+                    }),
+                    Action("Cast Blackout Kick", [this](Player* bot) {
+                        Unit* target = bot->GetVictim();
+                        if (target && this->CanCastSpell(BLACKOUT_KICK_BREW, target)) {
+                            this->CastSpell(target, BLACKOUT_KICK_BREW);
+                            this->_shuffleTracker.ApplyShuffle();
+                            this->ConsumeChi(1);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // Tier 4: Chi Generation
+                Sequence("Generate Chi", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Condition("Chi < 5", [this](Player*) {
+                        return this->_resource.chi < 5;
+                    }),
+                    Selector("Generate", {
+                        Sequence("Keg Smash", {
+                            Condition("40 energy", [this](Player*) {
+                                return this->_resource.energy >= 40;
+                            }),
+                            Action("Cast Keg Smash", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(KEG_SMASH, target)) {
+                                    this->CastSpell(target, KEG_SMASH);
+                                    this->_lastKegSmashTime = getMSTime();
+                                    this->GenerateChi(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Tiger Palm", {
+                            Condition("25 energy", [this](Player*) {
+                                return this->_resource.energy >= 25;
+                            }),
+                            Action("Cast Tiger Palm", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(TIGER_PALM_BREW, target)) {
+                                    this->CastSpell(target, TIGER_PALM_BREW);
+                                    this->GenerateChi(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Expel Harm", {
+                            Condition("15 energy + low HP", [this](Player* bot) {
+                                return bot && this->_resource.energy >= 15 && bot->GetHealthPct() < 90.0f;
+                            }),
+                            Action("Cast Expel Harm", [this](Player* bot) {
+                                if (this->CanCastSpell(EXPEL_HARM_BREW, bot)) {
+                                    this->CastSpell(bot, EXPEL_HARM_BREW);
+                                    this->GenerateChi(1);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 5: Chi Spenders (Threat + Damage)
+                Sequence("Spend Chi", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Condition("Has chi", [this](Player*) {
+                        return this->_resource.chi >= 2;
+                    }),
+                    Selector("Spend", {
+                        Sequence("Breath of Fire", {
+                            Condition("After Keg Smash", [this](Player*) {
+                                return (getMSTime() - this->_lastKegSmashTime) < 2000;
+                            }),
+                            Action("Cast BoF", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(BREATH_OF_FIRE, target)) {
+                                    this->CastSpell(target, BREATH_OF_FIRE);
+                                    this->ConsumeChi(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Spinning Crane Kick", {
+                            Condition("3+ enemies", [this](Player*) {
+                                return this->GetEnemiesInRange(8.0f) >= 3;
+                            }),
+                            Action("Cast SCK", [this](Player* bot) {
+                                if (this->CanCastSpell(SPINNING_CRANE_KICK_BREW, bot)) {
+                                    this->CastSpell(bot, SPINNING_CRANE_KICK_BREW);
+                                    this->ConsumeChi(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Rising Sun Kick", {
+                            Action("Cast RSK", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(RISING_SUN_KICK_BREW, target)) {
+                                    this->CastSpell(target, RISING_SUN_KICK_BREW);
+                                    this->ConsumeChi(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
 
 private:
     BrewmasterStaggerTracker _staggerTracker;
