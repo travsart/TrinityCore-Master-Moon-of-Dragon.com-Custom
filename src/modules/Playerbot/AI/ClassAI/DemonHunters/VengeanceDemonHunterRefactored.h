@@ -23,6 +23,9 @@
 #include "ObjectAccessor.h"
 #include "Log.h"
 #include "DemonHunterAI.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -292,7 +295,12 @@ public:
         _resource = 0;      // Start with no Pain
 
         // Setup Vengeance-specific cooldown tracking
-        InitializeCooldowns();        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
+        InitializeCooldowns();
+
+        // Phase 5: Initialize decision systems
+        InitializeVengeanceMechanics();
+
+        TC_LOG_DEBUG("playerbot", "VengeanceDemonHunterRefactored initialized for {}", bot->GetName());
     }
 
     // ========================================================================    // CORE ROTATION - Vengeance specific logic
@@ -709,7 +717,356 @@ private:
         _resource = std::min<uint32>(_resource + amount, _maxResource);
     }
 
-    
+    float GetDistanceToTarget(::Unit* target) const
+    {
+        if (!target) return 999.0f;
+        return this->GetBot()->GetDistance(target);
+    }
+
+    void InitializeCooldowns()
+    {
+        // Register cooldowns using CooldownManager
+        _cooldowns.RegisterBatch({
+            {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+            {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
+            {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
+            {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
+            {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
+            {SIGIL_OF_MISERY, 90000, 1},
+            {SIGIL_OF_CHAINS, 90000, 1},
+            {INFERNAL_STRIKE, 20000, 1},
+            {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
+            {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
+            {TORMENT, CooldownPresets::DISPEL, 1},
+        });
+    }
+
+    // ========================================================================
+    // PHASE 5: DECISION SYSTEM INTEGRATION
+    // ========================================================================
+
+    void InitializeVengeanceMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Major defensive cooldowns
+            queue->RegisterSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 35.0f && !this->_metamorphosisActive;
+            }, "HP < 35% (15s, armor + HP)");
+
+            queue->RegisterSpell(SOUL_BARRIER, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SOUL_BARRIER, [this](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 50.0f && this->_soulFragments.HasMinFragments(5) &&
+                       this->GetBot()->HasSpell(SOUL_BARRIER_TALENT);
+            }, "HP < 50%, 5 fragments (absorb shield)");
+
+            // CRITICAL: Active mitigation
+            queue->RegisterSpell(DemonHunterSpells::DEMON_SPIKES, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DemonHunterSpells::DEMON_SPIKES, [this](Player* bot, Unit*) {
+                return bot && this->_demonSpikes.CanUse() &&
+                       (bot->GetHealthPct() < 80.0f || this->_demonSpikes.GetCharges() == 2);
+            }, "HP < 80% or 2 charges (6s armor)");
+
+            queue->RegisterSpell(DemonHunterSpells::FIERY_BRAND, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DemonHunterSpells::FIERY_BRAND, [this](Player*, Unit* target) {
+                return target && this->ShouldUseFieryBrand();
+            }, "Heavy damage (40% dmg reduction)");
+
+            // HIGH: Threat generation
+            queue->RegisterSpell(DemonHunterSpells::SIGIL_OF_FLAME, SpellPriority::HIGH, SpellCategory::OFFENSIVE);
+            queue->AddCondition(DemonHunterSpells::SIGIL_OF_FLAME, [](Player*, Unit* target) {
+                return target != nullptr;
+            }, "AoE threat + damage");
+
+            queue->RegisterSpell(INFERNAL_STRIKE, SpellPriority::HIGH, SpellCategory::UTILITY);
+            queue->AddCondition(INFERNAL_STRIKE, [this](Player* bot, Unit* target) {
+                if (!target) return false;
+                float dist = bot->GetDistance(target);
+                return dist > 10.0f && dist <= 30.0f;
+            }, "10-30yd gap (leap + damage)");
+
+            queue->RegisterSpell(TORMENT, SpellPriority::HIGH, SpellCategory::UTILITY);
+            queue->AddCondition(TORMENT, [](Player*, Unit* target) {
+                return target != nullptr; // ThreatAssistant determines need
+            }, "Taunt");
+
+            // MEDIUM: Pain spenders (healing/damage)
+            queue->RegisterSpell(DemonHunterSpells::SOUL_CLEAVE, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(DemonHunterSpells::SOUL_CLEAVE, [this](Player*, Unit* target) {
+                return target && this->_resource >= 30 && this->ShouldUseSoulCleave(this->_resource);
+            }, "30 pain, low HP or high pain (heals)");
+
+            queue->RegisterSpell(DemonHunterSpells::SPIRIT_BOMB, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(DemonHunterSpells::SPIRIT_BOMB, [this](Player*, Unit*) {
+                return this->GetBot()->HasSpell(SPIRIT_BOMB_TALENT) &&
+                       this->_resource >= 40 && this->_soulFragments.HasMinFragments(3);
+            }, "40 pain, 3+ fragments (AoE + Frailty)");
+
+            queue->RegisterSpell(FEL_DEVASTATION, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FEL_DEVASTATION, [this](Player* bot, Unit*) {
+                return bot && this->_resource >= 50 && bot->GetHealthPct() < 60.0f &&
+                       this->GetEnemiesInRange(8.0f) >= 2;
+            }, "50 pain, HP < 60%, 2+ enemies (channel)");
+
+            // LOW: Pain generators
+            queue->RegisterSpell(FRACTURE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FRACTURE, [this](Player*, Unit* target) {
+                return target && this->GetBot()->HasSpell(FRACTURE_TALENT) && this->_resource < 80;
+            }, "Pain < 80 (generates 25 pain + 2 fragments)");
+
+            queue->RegisterSpell(DemonHunterSpells::SHEAR, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(DemonHunterSpells::SHEAR, [this](Player*, Unit* target) {
+                return target && this->_resource < 90;
+            }, "Pain < 90 (generates 10 pain)");
+
+            queue->RegisterSpell(THROW_GLAIVE_TANK, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(THROW_GLAIVE_TANK, [this](Player* bot, Unit* target) {
+                if (!target) return false;
+                float dist = bot->GetDistance(target);
+                return dist > 5.0f && dist <= 30.0f;
+            }, "5-30yd range (ranged threat)");
+
+            // UTILITY: Crowd control
+            queue->RegisterSpell(SIGIL_OF_SILENCE, SpellPriority::HIGH, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(SIGIL_OF_SILENCE, [](Player*, Unit* target) {
+                return target && target->IsNonMeleeSpellCast(false);
+            }, "Target casting (AoE interrupt)");
+
+            queue->RegisterSpell(SIGIL_OF_MISERY, SpellPriority::MEDIUM, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(SIGIL_OF_MISERY, [this](Player*, Unit*) {
+                return this->GetEnemiesInRange(8.0f) >= 4;
+            }, "4+ enemies (AoE fear)");
+
+            queue->RegisterSpell(SIGIL_OF_CHAINS, SpellPriority::MEDIUM, SpellCategory::CROWD_CONTROL);
+            queue->AddCondition(SIGIL_OF_CHAINS, [this](Player*, Unit*) {
+                return this->GetEnemiesInRange(8.0f) >= 3;
+            }, "3+ enemies (AoE slow)");
+
+            queue->RegisterSpell(CONSUME_MAGIC_TANK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(CONSUME_MAGIC_TANK, [](Player*, Unit* target) {
+                return target && target->HasAura(118); // Magic buff detection
+            }, "Has dispellable magic");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Vengeance Tank", {
+                // Tier 1: Emergency Defensives
+                Sequence("Emergency Defense", {
+                    Condition("Critical HP", [this](Player* bot) {
+                        return bot && bot->GetHealthPct() < 35.0f;
+                    }),
+                    Selector("Use emergency", {
+                        Sequence("Metamorphosis", {
+                            Condition("Not active", [this](Player*) {
+                                return !this->_metamorphosisActive;
+                            }),
+                            Action("Cast Meta", [this](Player* bot) {
+                                if (this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot)) {
+                                    this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
+                                    this->_metamorphosisActive = true;
+                                    this->_metamorphosisEndTime = getMSTime() + 15000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Soul Barrier", {
+                            Condition("5 fragments", [this](Player*) {
+                                return this->_soulFragments.HasMinFragments(5);
+                            }),
+                            Condition("Has talent", [this](Player* bot) {
+                                return bot->HasSpell(SOUL_BARRIER_TALENT);
+                            }),
+                            Action("Cast Barrier", [this](Player* bot) {
+                                if (this->CanCastSpell(SOUL_BARRIER, bot)) {
+                                    this->CastSpell(bot, SOUL_BARRIER);
+                                    this->_soulFragments.ConsumeAllFragments();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Active Mitigation
+                Sequence("Active Mitigation", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Use mitigation", {
+                        Sequence("Demon Spikes", {
+                            Condition("Can use", [this](Player*) {
+                                return this->_demonSpikes.CanUse();
+                            }),
+                            Condition("Should use", [this](Player* bot) {
+                                return bot->GetHealthPct() < 80.0f || this->_demonSpikes.GetCharges() == 2;
+                            }),
+                            Action("Cast Demon Spikes", [this](Player* bot) {
+                                if (this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, bot)) {
+                                    this->CastSpell(bot, DemonHunterSpells::DEMON_SPIKES);
+                                    this->_demonSpikes.Use();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Fiery Brand", {
+                            Condition("Should use", [this](Player*) {
+                                return this->ShouldUseFieryBrand();
+                            }),
+                            Action("Cast Fiery Brand", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target)) {
+                                    this->CastSpell(target, DemonHunterSpells::FIERY_BRAND);
+                                    this->_fieryBrandActive = true;
+                                    this->_fieryBrandEndTime = getMSTime() + 8000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Threat Generation
+                Sequence("Threat Generation", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Generate threat", {
+                        Sequence("Sigil of Flame", {
+                            Action("Cast Sigil", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target)) {
+                                    this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Infernal Strike", {
+                            Condition("Gap 10-30yd", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (!target) return false;
+                                float dist = bot->GetDistance(target);
+                                return dist > 10.0f && dist <= 30.0f;
+                            }),
+                            Action("Cast Strike", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(INFERNAL_STRIKE, target)) {
+                                    this->CastSpell(target, INFERNAL_STRIKE);
+                                    this->GeneratePain(20);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Pain Spenders
+                Sequence("Pain Spenders", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Selector("Spend pain", {
+                        Sequence("Soul Cleave Heal", {
+                            Condition("30 pain", [this](Player*) {
+                                return this->_resource >= 30;
+                            }),
+                            Condition("Should use", [this](Player*) {
+                                return this->ShouldUseSoulCleave(this->_resource);
+                            }),
+                            Action("Cast Soul Cleave", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target)) {
+                                    this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
+                                    this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
+                                    this->_soulFragments.ConsumeFragments(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Spirit Bomb AoE", {
+                            Condition("Has talent", [this](Player* bot) {
+                                return bot->HasSpell(SPIRIT_BOMB_TALENT);
+                            }),
+                            Condition("40 pain", [this](Player*) {
+                                return this->_resource >= 40;
+                            }),
+                            Condition("3+ fragments", [this](Player*) {
+                                return this->_soulFragments.HasMinFragments(3);
+                            }),
+                            Action("Cast Spirit Bomb", [this](Player* bot) {
+                                if (this->CanCastSpell(DemonHunterSpells::SPIRIT_BOMB, bot)) {
+                                    this->CastSpell(bot, DemonHunterSpells::SPIRIT_BOMB);
+                                    this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
+                                    this->_soulFragments.ConsumeAllFragments();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 5: Pain Generators
+                Sequence("Pain Generators", {
+                    Condition("Has target", [this](Player* bot) {
+                        return bot && bot->GetVictim();
+                    }),
+                    Condition("Low pain", [this](Player*) {
+                        return this->_resource < 90;
+                    }),
+                    Selector("Generate pain", {
+                        Sequence("Fracture", {
+                            Condition("Has talent", [this](Player* bot) {
+                                return bot->HasSpell(FRACTURE_TALENT);
+                            }),
+                            Condition("Pain < 80", [this](Player*) {
+                                return this->_resource < 80;
+                            }),
+                            Action("Cast Fracture", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(FRACTURE, target)) {
+                                    this->CastSpell(target, FRACTURE);
+                                    this->GeneratePain(25);
+                                    this->_soulFragments.GenerateFragments(2);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Shear", {
+                            Action("Cast Shear", [this](Player* bot) {
+                                Unit* target = bot->GetVictim();
+                                if (target && this->CanCastSpell(DemonHunterSpells::SHEAR, target)) {
+                                    this->CastSpell(target, DemonHunterSpells::SHEAR);
+                                    this->GeneratePain(10);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
 
 private:
     VengeanceSoulFragmentManager _soulFragments;
