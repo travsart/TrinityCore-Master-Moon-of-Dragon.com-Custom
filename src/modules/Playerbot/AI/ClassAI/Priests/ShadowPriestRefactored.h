@@ -27,6 +27,11 @@
 #include <unordered_map>
 #include "Log.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -274,6 +279,10 @@ public:
             {SHADOW_VOID_TORRENT, 45000, 1},
             {SHADOW_SHADOWFIEND, 180000, 1}
         });
+
+        // Phase 5 Integration: Initialize decision systems
+        InitializeShadowMechanics();
+
         TC_LOG_DEBUG("playerbot", "ShadowPriestRefactored initialized for {}", bot->GetName());
     }
 
@@ -605,6 +614,326 @@ private:
             this->CastSpell(target, SHADOW_MIND_FLAY);
             _insanityTracker.GenerateInsanity(3);
             return;
+        }
+    }
+
+    // Phase 5 Integration: Decision Systems Initialization
+    void InitializeShadowMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+        {
+            TC_LOG_ERROR("playerbot", "💀 SHADOW PRIEST: BotAI is null, skipping Phase 5 initialization");
+            return;
+        }
+
+        // ========================================================================
+        // ActionPriorityQueue: Register Shadow Priest spells with priorities
+        // ========================================================================
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Survival cooldowns (HP < 30%)
+            queue->RegisterSpell(SHADOW_DISPERSION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SHADOW_DISPERSION, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 25.0f;
+            }, "Bot HP < 25% (immune + heal)");
+
+            queue->RegisterSpell(SHADOW_DESPERATE_PRAYER, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SHADOW_DESPERATE_PRAYER, [this](Player* bot, Unit* target) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "Bot HP < 40% (instant heal)");
+
+            // CRITICAL: Voidform entry and Insanity spenders
+            queue->RegisterSpell(SHADOW_VOID_ERUPTION, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SHADOW_VOID_ERUPTION, [this](Player* bot, Unit* target) {
+                return this->_insanityTracker.GetInsanity() >= 60 && !this->_voidformTracker.IsActive();
+            }, "60+ Insanity and not in Voidform (enter Voidform)");
+
+            queue->RegisterSpell(SHADOW_DARK_ASCENSION, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SHADOW_DARK_ASCENSION, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
+                       this->_insanityTracker.GetInsanity() >= 60 &&
+                       (getMSTime() - this->_lastDarkAscensionTime) >= 60000;
+            }, "60+ Insanity and Dark Ascension off CD (alternative burst)");
+
+            queue->RegisterSpell(SHADOW_DEVOURING_PLAGUE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_DEVOURING_PLAGUE, [this](Player* bot, Unit* target) {
+                return target && this->_insanityTracker.GetInsanity() >= 50;
+            }, "50+ Insanity (primary Insanity spender)");
+
+            // HIGH: Insanity generators and execute
+            queue->RegisterSpell(SHADOW_MIND_BLAST, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_MIND_BLAST, [this](Player* bot, Unit* target) {
+                return target && !this->_voidformTracker.IsActive();
+            }, "Not in Voidform (primary Insanity generator)");
+
+            queue->RegisterSpell(SHADOW_VOID_BOLT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_VOID_BOLT, [this](Player* bot, Unit* target) {
+                return target && this->_voidformTracker.IsActive();
+            }, "In Voidform (replaces Mind Blast, refreshes DoTs)");
+
+            queue->RegisterSpell(SHADOW_SHADOW_WORD_DEATH, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_SHADOW_WORD_DEATH, [this](Player* bot, Unit* target) {
+                return target && target->GetHealthPct() < 20.0f;
+            }, "Target HP < 20% (execute + Insanity on kill)");
+
+            queue->RegisterSpell(SHADOW_SHADOW_CRASH, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SHADOW_SHADOW_CRASH, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SHADOW_SHADOW_CRASH) &&
+                       target && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "3+ enemies (AoE DoT application)");
+
+            // MEDIUM: DoT maintenance and cooldown abilities
+            queue->RegisterSpell(SHADOW_VAMPIRIC_TOUCH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_VAMPIRIC_TOUCH, [this](Player* bot, Unit* target) {
+                return target && (!this->_dotTracker.HasVampiricTouch(target->GetGUID()) ||
+                                  this->_dotTracker.NeedsVampiricTouchRefresh(target->GetGUID()));
+            }, "Vampiric Touch missing or needs pandemic refresh");
+
+            queue->RegisterSpell(SHADOW_SHADOW_WORD_PAIN, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_SHADOW_WORD_PAIN, [this](Player* bot, Unit* target) {
+                return target && (!this->_dotTracker.HasShadowWordPain(target->GetGUID()) ||
+                                  this->_dotTracker.NeedsShadowWordPainRefresh(target->GetGUID()));
+            }, "Shadow Word: Pain missing or needs pandemic refresh");
+
+            queue->RegisterSpell(SHADOW_MINDGAMES, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_MINDGAMES, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SHADOW_MINDGAMES) &&
+                       target && (getMSTime() - this->_lastMindgamesTime) >= 45000;
+            }, "Mindgames off CD (damage + Insanity gen)");
+
+            queue->RegisterSpell(SHADOW_VOID_TORRENT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_VOID_TORRENT, [this](Player* bot, Unit* target) {
+                return bot && bot->HasSpell(SHADOW_VOID_TORRENT) &&
+                       target && (getMSTime() - this->_lastVoidTorrentTime) >= 30000;
+            }, "Void Torrent off CD (channeled damage + Insanity)");
+
+            // LOW: Filler spells
+            queue->RegisterSpell(SHADOW_MIND_FLAY, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SHADOW_MIND_FLAY, [this](Player* bot, Unit* target) {
+                return target && this->GetEnemiesInRange(40.0f) < 3;
+            }, "< 3 enemies (single target filler)");
+
+            queue->RegisterSpell(SHADOW_MIND_SEAR, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SHADOW_MIND_SEAR, [this](Player* bot, Unit* target) {
+                return target && this->GetEnemiesInRange(40.0f) >= 3;
+            }, "3+ enemies (AoE filler)");
+
+            TC_LOG_INFO("module.playerbot", "💀 SHADOW PRIEST: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // BehaviorTree: Shadow Priest DPS rotation logic
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Shadow Priest DPS", {
+                // Tier 1: Voidform Entry (60+ Insanity)
+                Sequence("Voidform Entry", {
+                    Condition("Has 60+ Insanity", [this](Player* bot, Unit* target) {
+                        return this->_insanityTracker.GetInsanity() >= 60 && !this->_voidformTracker.IsActive();
+                    }),
+                    Selector("Choose Voidform Ability", {
+                        // Option 1: Dark Ascension (if talented and off CD)
+                        Sequence("Cast Dark Ascension", {
+                            Condition("Has Dark Ascension talent", [this](Player* bot, Unit* target) {
+                                return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
+                                       (getMSTime() - this->_lastDarkAscensionTime) >= 60000;
+                            }),
+                            Action("Cast Dark Ascension", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
+                                {
+                                    this->CastSpell(bot, SHADOW_DARK_ASCENSION);
+                                    this->_darkAscensionActive = true;
+                                    this->_darkAscensionEndTime = getMSTime() + 15000;
+                                    this->_lastDarkAscensionTime = getMSTime();
+                                    this->_insanityTracker.SpendInsanity(50);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Option 2: Void Eruption (default Voidform entry)
+                        Sequence("Cast Void Eruption", {
+                            Condition("Void Eruption available", [this](Player* bot, Unit* target) {
+                                return target && this->CanCastSpell(SHADOW_VOID_ERUPTION, target);
+                            }),
+                            Action("Cast Void Eruption", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
+                                {
+                                    this->CastSpell(target, SHADOW_VOID_ERUPTION);
+                                    this->_voidformTracker.ActivateVoidform();
+                                    this->_insanityTracker.Reset();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: DoT Maintenance (Vampiric Touch, Shadow Word: Pain)
+                Sequence("DoT Maintenance", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Apply or Refresh DoTs", {
+                        // Vampiric Touch maintenance
+                        Sequence("Maintain Vampiric Touch", {
+                            Condition("VT missing or needs refresh", [this](Player* bot, Unit* target) {
+                                return !this->_dotTracker.HasVampiricTouch(target->GetGUID()) ||
+                                       this->_dotTracker.NeedsVampiricTouchRefresh(target->GetGUID());
+                            }),
+                            Action("Cast Vampiric Touch", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
+                                {
+                                    this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);
+                                    this->_dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                                    this->_insanityTracker.GenerateInsanity(5);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Shadow Word: Pain maintenance
+                        Sequence("Maintain Shadow Word: Pain", {
+                            Condition("SWP missing or needs refresh", [this](Player* bot, Unit* target) {
+                                return !this->_dotTracker.HasShadowWordPain(target->GetGUID()) ||
+                                       this->_dotTracker.NeedsShadowWordPainRefresh(target->GetGUID());
+                            }),
+                            Action("Cast Shadow Word: Pain", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
+                                {
+                                    this->CastSpell(target, SHADOW_SHADOW_WORD_PAIN);
+                                    this->_dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
+                                    this->_insanityTracker.GenerateInsanity(4);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: Insanity Management (Spend at 50+ with Devouring Plague, Generate with Mind Blast/Void Bolt)
+                Sequence("Insanity Management", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Spend or Generate Insanity", {
+                        // Spend Insanity (50+)
+                        Sequence("Spend Insanity", {
+                            Condition("Has 50+ Insanity", [this](Player* bot, Unit* target) {
+                                return this->_insanityTracker.GetInsanity() >= 50;
+                            }),
+                            Action("Cast Devouring Plague", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_DEVOURING_PLAGUE, target))
+                                {
+                                    this->CastSpell(target, SHADOW_DEVOURING_PLAGUE);
+                                    this->_insanityTracker.SpendInsanity(50);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Generate Insanity (Voidform: Void Bolt, Normal: Mind Blast)
+                        Selector("Generate Insanity", {
+                            // In Voidform: Void Bolt
+                            Sequence("Cast Void Bolt", {
+                                Condition("In Voidform", [this](Player* bot, Unit* target) {
+                                    return this->_voidformTracker.IsActive();
+                                }),
+                                Action("Cast Void Bolt", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    if (this->CanCastSpell(SHADOW_VOID_BOLT, target))
+                                    {
+                                        this->CastSpell(target, SHADOW_VOID_BOLT);
+                                        this->_voidformTracker.IncrementStack();
+                                        // Void Bolt refreshes DoTs
+                                        this->_dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                                        this->_dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            }),
+                            // Outside Voidform: Mind Blast
+                            Sequence("Cast Mind Blast", {
+                                Condition("Not in Voidform", [this](Player* bot, Unit* target) {
+                                    return !this->_voidformTracker.IsActive();
+                                }),
+                                Action("Cast Mind Blast", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
+                                    {
+                                        this->CastSpell(target, SHADOW_MIND_BLAST);
+                                        this->_insanityTracker.GenerateInsanity(12);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            }),
+                            // Execute: Shadow Word: Death (target < 20%)
+                            Sequence("Execute Phase", {
+                                Condition("Target HP < 20%", [this](Player* bot, Unit* target) {
+                                    return target && target->GetHealthPct() < 20.0f;
+                                }),
+                                Action("Cast Shadow Word: Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    if (this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
+                                    {
+                                        this->CastSpell(target, SHADOW_SHADOW_WORD_DEATH);
+                                        this->_insanityTracker.GenerateInsanity(15);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                    return NodeStatus::FAILURE;
+                                })
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Filler Rotation (Mind Flay single target, Mind Sear AoE)
+                Sequence("Filler Rotation", {
+                    Condition("Target exists", [this](Player* bot, Unit* target) {
+                        return target != nullptr;
+                    }),
+                    Selector("Choose Filler", {
+                        // AoE filler (3+ enemies)
+                        Sequence("AoE Filler", {
+                            Condition("3+ enemies", [this](Player* bot, Unit* target) {
+                                return this->GetEnemiesInRange(40.0f) >= 3;
+                            }),
+                            Action("Cast Mind Sear", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_MIND_SEAR, target))
+                                {
+                                    this->CastSpell(target, SHADOW_MIND_SEAR);
+                                    this->_insanityTracker.GenerateInsanity(5);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Single target filler
+                        Sequence("Single Target Filler", {
+                            Action("Cast Mind Flay", [this](Player* bot, Unit* target) -> NodeStatus {
+                                if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
+                                {
+                                    this->CastSpell(target, SHADOW_MIND_FLAY);
+                                    this->_insanityTracker.GenerateInsanity(3);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 SHADOW PRIEST: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

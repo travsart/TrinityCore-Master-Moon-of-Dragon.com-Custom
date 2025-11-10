@@ -19,6 +19,10 @@
 #include "WarriorAI.h"
 #include "../CombatSpecializationTemplates.h"
 #include "../ResourceTypes.h"
+// Phase 5 Integration
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
 #include "Item.h"
 #include "ItemDefines.h"
 #include "UnitDefines.h"
@@ -389,8 +393,303 @@ private:
 
     void InitializeFuryMechanics()
     {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
         // Setup Fury-specific mechanics
         CheckDualWieldStatus();
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: ActionPriorityQueue
+        // ========================================================================
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // Emergency spells
+            queue->RegisterSpell(SPELL_ENRAGED_REGENERATION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(SPELL_ENRAGED_REGENERATION,
+                [](Player* bot, Unit*) {
+                    return bot->GetHealthPct() < 30.0f;
+                },
+                "Emergency: HP < 30%");
+
+            queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_EXECUTE,
+                [](Player* bot, Unit* target) {
+                    return target && target->GetHealthPct() < 20.0f;
+                },
+                "Target HP < 20% (Execute range)");
+
+            // Critical cooldowns
+            queue->RegisterSpell(SPELL_RECKLESSNESS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_RECKLESSNESS,
+                [](Player* bot, Unit* target) {
+                    // Use on bosses or high HP targets
+                    return target && (target->GetMaxHealth() > 500000 || target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
+                },
+                "Boss fight or high HP target");
+
+            queue->RegisterSpell(SPELL_RAMPAGE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(SPELL_RAMPAGE,
+                [](Player* bot, Unit*) {
+                    // Rampage to trigger/maintain Enrage
+                    return !bot->HasAura(SPELL_ENRAGE) || bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                },
+                "Trigger or refresh Enrage");
+
+            // High priority core rotation
+            queue->RegisterSpell(SPELL_BLOODTHIRST, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(SPELL_RAGING_BLOW, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_RAGING_BLOW,
+                [](Player* bot, Unit*) {
+                    return bot->HasAura(SPELL_ENRAGE);
+                },
+                "While Enraged");
+
+            // Medium priority
+            queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(SPELL_WHIRLWIND,
+                [](Player* bot, Unit*) {
+                    return bot->GetAttackersCount() >= 2; // Use for 2+ targets
+                },
+                "2+ targets (AoE)");
+
+            queue->RegisterSpell(SPELL_FURIOUS_SLASH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+
+            // Low priority fillers
+            queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(SPELL_HEROIC_STRIKE,
+                [this](Player* bot, Unit*) {
+                    return this->_resource >= 80; // Rage dump
+                },
+                "Rage >= 80 (rage dump)");
+
+            queue->RegisterSpell(SPELL_BERSERKER_RAGE, SpellPriority::LOW, SpellCategory::UTILITY);
+            queue->AddCondition(SPELL_BERSERKER_RAGE,
+                [](Player* bot, Unit*) {
+                    return !bot->HasAura(SPELL_ENRAGE);
+                },
+                "Enrage not active");
+
+            TC_LOG_INFO("module.playerbot", "⚔️  FURY WARRIOR: Registered {} spells in ActionPriorityQueue",
+                queue->GetSpellCount());
+        }
+
+        // ========================================================================
+        // PHASE 5 INTEGRATION: BehaviorTree
+        // ========================================================================
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Fury Warrior Combat", {
+                // ============================================================
+                // 1. EMERGENCY SURVIVAL
+                // ============================================================
+                Sequence("Emergency Survival", {
+                    Condition("HP < 30%", [](Player* bot, Unit*) {
+                        return bot->GetHealthPct() < 30.0f;
+                    }),
+                    Action("Cast Enraged Regeneration", [this](Player* bot, Unit* target) {
+                        if (this->CanCastSpell(bot, SPELL_ENRAGED_REGENERATION))
+                        {
+                            this->CastSpell(bot, SPELL_ENRAGED_REGENERATION);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+
+                // ============================================================
+                // 2. EXECUTE PHASE (Target < 20% HP)
+                // ============================================================
+                Sequence("Execute Phase", {
+                    Condition("Target < 20% HP", [](Player* bot, Unit* target) {
+                        return target && target->GetHealthPct() < 20.0f;
+                    }),
+                    Selector("Execute Priority", {
+                        // Maintain Enrage
+                        Sequence("Rampage for Enrage", {
+                            Condition("No Enrage", [](Player* bot, Unit*) {
+                                return !bot->HasAura(SPELL_ENRAGE);
+                            }),
+                            Condition("Has Rage for Rampage", [this](Player* bot, Unit*) {
+                                return this->_resource >= 85;
+                            }),
+                            Action("Cast Rampage", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_RAMPAGE))
+                                {
+                                    this->CastSpell(target, SPELL_RAMPAGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Execute spam
+                        Action("Cast Execute", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_EXECUTE))
+                            {
+                                this->CastSpell(target, SPELL_EXECUTE);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Bloodthirst for Enrage proc
+                        Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_BLOODTHIRST))
+                            {
+                                this->CastSpell(target, SPELL_BLOODTHIRST);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        // Raging Blow while Enraged
+                        Sequence("Raging Blow (Enraged)", {
+                            Condition("Is Enraged", [](Player* bot, Unit*) {
+                                return bot->HasAura(SPELL_ENRAGE);
+                            }),
+                            Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_RAGING_BLOW))
+                                {
+                                    this->CastSpell(target, SPELL_RAGING_BLOW);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // ============================================================
+                // 3. COOLDOWN USAGE (Boss fights, burst windows)
+                // ============================================================
+                Sequence("Use Major Cooldowns", {
+                    Condition("Should use cooldowns", [](Player* bot, Unit* target) {
+                        return target && (target->GetMaxHealth() > 500000 ||
+                                        target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
+                    }),
+                    Selector("Cooldown Priority", {
+                        Action("Cast Recklessness", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(bot, SPELL_RECKLESSNESS))
+                            {
+                                this->CastSpell(bot, SPELL_RECKLESSNESS);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                // ============================================================
+                // 4. STANDARD ROTATION - Maintain Enrage
+                // ============================================================
+                Sequence("Standard Rotation", {
+                    Selector("Maintain Enrage", {
+                        // Rampage if no Enrage
+                        Sequence("Rampage for Enrage", {
+                            Condition("No Enrage or expiring soon", [](Player* bot, Unit*) {
+                                return !bot->HasAura(SPELL_ENRAGE) ||
+                                       bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                            }),
+                            Condition("Has Rage", [this](Player* bot, Unit*) {
+                                return this->_resource >= 85;
+                            }),
+                            Action("Cast Rampage", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_RAMPAGE))
+                                {
+                                    this->CastSpell(target, SPELL_RAMPAGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        // Berserker Rage if no other way to get Enrage
+                        Sequence("Berserker Rage for Enrage", {
+                            Condition("No Enrage", [](Player* bot, Unit*) {
+                                return !bot->HasAura(SPELL_ENRAGE);
+                            }),
+                            Action("Cast Berserker Rage", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_BERSERKER_RAGE))
+                                {
+                                    this->CastSpell(bot, SPELL_BERSERKER_RAGE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    }),
+
+                    // Core rotation - Bloodthirst > Raging Blow (Enraged) > Whirlwind (AoE)
+                    Selector("Core Abilities", {
+                        Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_BLOODTHIRST))
+                            {
+                                this->CastSpell(target, SPELL_BLOODTHIRST);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Sequence("Raging Blow (Enraged)", {
+                            Condition("Is Enraged", [](Player* bot, Unit*) {
+                                return bot->HasAura(SPELL_ENRAGE);
+                            }),
+                            Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_RAGING_BLOW))
+                                {
+                                    this->CastSpell(target, SPELL_RAGING_BLOW);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Whirlwind (AoE)", {
+                            Condition("2+ targets", [](Player* bot, Unit*) {
+                                return bot->GetAttackersCount() >= 2;
+                            }),
+                            Action("Cast Whirlwind", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(bot, SPELL_WHIRLWIND))
+                                {
+                                    this->CastSpell(bot, SPELL_WHIRLWIND);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    }),
+
+                    // Filler spells
+                    Selector("Filler", {
+                        Sequence("Heroic Strike (Rage Dump)", {
+                            Condition("High Rage", [this](Player* bot, Unit*) {
+                                return this->_resource >= 80;
+                            }),
+                            Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                                {
+                                    this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Action("Cast Furious Slash", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(target, SPELL_FURIOUS_SLASH))
+                            {
+                                this->CastSpell(target, SPELL_FURIOUS_SLASH);
+                                return NodeStatus::SUCCESS;
+                            }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 FURY WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+        }
     }
 
     // ========================================================================
