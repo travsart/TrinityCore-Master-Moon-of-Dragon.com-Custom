@@ -943,9 +943,28 @@ bool TargetSelector::IsCaster(Unit* target) const
             return nullptr;
         }
     {
-        // TODO: Fix type_flags API - currently not available
-        // return creature->GetCreatureTemplate()->type_flags & CREATURE_TYPE_FLAG_SPELL_CASTER;
-        return true; // Stub implementation
+        // ========================================================================
+        // HIGH PRIORITY TODO FIXED: Use unit_class instead of type_flags
+        // ========================================================================
+        // Check creature's unit class to determine if it's a caster
+        // UNIT_CLASS_PALADIN (2) and UNIT_CLASS_MAGE (8) are considered casters
+        CreatureTemplate const* creatureTemplate = creature->GetCreatureTemplate();
+        if (!creatureTemplate)
+            return false;
+
+        uint8 unitClass = creatureTemplate->unit_class;
+
+        // Caster unit classes: Paladin (2) and Mage (8)
+        // Non-caster unit classes: Warrior (1) and Rogue (4)
+        if (unitClass == UNIT_CLASS_PALADIN || unitClass == UNIT_CLASS_MAGE)
+            return true;
+
+        // Additional heuristic: Check if creature has ranged attack vs melee only
+        // Casters typically have ranged attack range > melee range
+        if (creature->GetAttackDistance(nullptr) > ATTACK_DISTANCE)
+            return true;
+
+        return false;
     }
 
     if (Player* player = target->ToPlayer())

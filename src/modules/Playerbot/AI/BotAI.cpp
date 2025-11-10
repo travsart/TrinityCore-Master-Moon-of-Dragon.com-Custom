@@ -1658,21 +1658,91 @@ bool BotAI::ExecuteAction(std::string const& actionName)
 
 bool BotAI::ExecuteAction(std::string const& name, ActionContext const& context)
 {
-    // TODO: Implement action execution from name
-    // This would look up the action by name and execute it
-    return false;
+    // Look up action by name using ActionFactory
+    if (!sActionFactory->HasAction(name))
+    {
+        TC_LOG_DEBUG("bot.ai.action", "Unknown action requested: {}", name);
+        return false;
+    }
+
+    // Create action instance from factory
+    std::shared_ptr<Action> action = sActionFactory->CreateAction(name);
+    if (!action)
+    {
+        TC_LOG_ERROR("bot.ai.action", "Failed to create action: {}", name);
+        return false;
+    }
+
+    // Check if action is possible before executing
+    if (!CanExecuteAction(action.get()))
+    {
+        TC_LOG_TRACE("bot.ai.action", "Action {} not possible for bot {}", name, _bot->GetName());
+        return false;
+    }
+
+    // Execute the action
+    ActionResult result = action->Execute(this, context);
+
+    // Log execution result
+    switch (result)
+    {
+        case ActionResult::SUCCESS:
+            TC_LOG_TRACE("bot.ai.action", "Action {} executed successfully for bot {}", name, _bot->GetName());
+            return true;
+        case ActionResult::FAILED:
+            TC_LOG_DEBUG("bot.ai.action", "Action {} failed for bot {}", name, _bot->GetName());
+            return false;
+        case ActionResult::INTERRUPTED:
+            TC_LOG_DEBUG("bot.ai.action", "Action {} interrupted for bot {}", name, _bot->GetName());
+            return false;
+        case ActionResult::IN_PROGRESS:
+            // Queue action for continued execution
+            QueueAction(action, context);
+            TC_LOG_TRACE("bot.ai.action", "Action {} queued for bot {}", name, _bot->GetName());
+            return true;
+        default:
+            return false;
+    }
 }
 
 bool BotAI::IsActionPossible(std::string const& actionName) const
 {
-    // TODO: Check if action is possible
-    return false;
+    // Check if action exists in factory
+    if (!sActionFactory->HasAction(actionName))
+        return false;
+
+    // Create temporary action instance to check possibility
+    std::shared_ptr<Action> action = sActionFactory->CreateAction(actionName);
+    if (!action)
+        return false;
+
+    // Use existing CanExecuteAction check
+    return CanExecuteAction(action.get());
 }
 
 uint32 BotAI::GetActionPriority(std::string const& actionName) const
 {
-    // TODO: Get action priority
-    return 0;
+    // Check if action exists
+    if (!sActionFactory->HasAction(actionName))
+        return 0;
+
+    // Create action instance to get priority
+    std::shared_ptr<Action> action = sActionFactory->CreateAction(actionName);
+    if (!action)
+        return 0;
+
+    // Get priority from action
+    // Actions have internal priority based on their type and context
+    // Combat actions are high priority, movement actions are lower
+    uint32 basePriority = action->GetBasePriority();
+
+    // Adjust priority based on current bot state
+    if (_inCombat && dynamic_cast<CombatAction*>(action.get()))
+    {
+        basePriority += 50; // Boost combat action priority during combat
+    }
+
+    return basePriority;
 }
 
 void BotAI::QueueAction(std::shared_ptr<Action> action, ActionContext const& context)

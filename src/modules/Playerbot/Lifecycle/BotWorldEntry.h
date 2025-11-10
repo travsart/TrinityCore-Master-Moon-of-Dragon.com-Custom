@@ -198,6 +198,13 @@ private:
      */
     void Cleanup();
 
+    /**
+     * Get current process memory usage in bytes
+     * Platform-specific implementation (Windows/Linux/macOS)
+     * @return Memory usage in bytes, or 0 if unsupported
+     */
+    size_t GetCurrentMemoryUsage() const;
+
 private:
     // Core components
     std::shared_ptr<BotSession> _session;
