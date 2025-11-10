@@ -638,6 +638,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionAuctionBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
+
+    # Banking System - Personal Bank Automation
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.h
 
     # Economy Systems - Advanced Auction House Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/Economy/AuctionManager.cpp

@@ -808,6 +808,9 @@ protected:
     // Profession automation timer (check every 15 seconds)
     uint32 _professionCheckTimer = 0;
 
+    // Banking automation timer (check every 5 minutes)
+    uint32 _bankingCheckTimer = 0;
+
     // CRITICAL FIX #19: ObjectAccessor Deadlock Resolution
     // Cache for all ObjectAccessor results to eliminate recursive TrinityCore
     // std::shared_mutex acquisitions. Refreshed once per UpdateAI() cycle.

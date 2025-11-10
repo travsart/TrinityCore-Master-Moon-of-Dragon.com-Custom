@@ -31,6 +31,10 @@
 #include "Combat/CombatStateManager.h"
 #include "Equipment/EquipmentManager.h"
 #include "Professions/ProfessionManager.h"
+#include "Professions/ProfessionAuctionBridge.h"
+#include "Professions/GatheringMaterialsBridge.h"
+#include "Professions/AuctionMaterialsBridge.h"
+#include "Banking/BankingManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Coordination/GroupCoordinator.h"
 #include "Spatial/SpatialGridManager.h"
@@ -3127,6 +3131,9 @@ void BotAI::UpdateManagers(uint32 diff)
         // TC_LOG_ERROR("module.playerbot", "✅ Returned from GatheringManager->Update() for bot {}", _bot->GetName());
     }
 
+    // Gathering materials bridge coordinates gathering with crafting needs
+    GatheringMaterialsBridge::instance()->Update(_bot, diff);
+
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
     {
@@ -3144,6 +3151,12 @@ void BotAI::UpdateManagers(uint32 diff)
         }
         // TC_LOG_ERROR("module.playerbot", "✅ Returned from AuctionManager->Update() for bot {}", _bot->GetName());
     }
+
+    // Profession auction bridge coordinates profession materials with auction house
+    ProfessionAuctionBridge::instance()->Update(_bot, diff);
+
+    // Auction materials bridge provides smart material sourcing decisions
+    AuctionMaterialsBridge::instance()->Update(_bot, diff);
 
     // Group coordinator handles group/raid mechanics, role assignment, and coordination
     if (_groupCoordinator)
@@ -3177,6 +3190,20 @@ void BotAI::UpdateManagers(uint32 diff)
 
         // Update profession automation (auto-learn, auto-level, crafting)
         ProfessionManager::instance()->Update(_bot, diff);
+    }
+
+    // ========================================================================
+    // BANKING AUTOMATION - Check every 5 minutes
+    // ========================================================================
+    // BankingManager handles personal bank automation
+    // Less frequent checks to avoid excessive bank travel
+    _bankingCheckTimer += diff;
+    if (_bankingCheckTimer >= 300000) // 5 minutes
+    {
+        _bankingCheckTimer = 0;
+
+        // Update banking automation (auto-deposit gold/items, auto-withdraw materials)
+        BankingManager::instance()->Update(_bot, diff);
     }
 
     if (!bot)
