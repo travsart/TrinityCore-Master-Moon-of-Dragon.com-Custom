@@ -25,6 +25,10 @@
 #include "SpellInfo.h"
 #include <unordered_map>
 #include "Log.h"
+// Phase 5 Integration
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -175,6 +179,7 @@ public:
         });
 
         // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
+        InitializeEnhancementMechanics();
     }
 
     void UpdateRotation(::Unit* target) override
@@ -528,6 +533,58 @@ private:
         uint32 count = 0;
         // Simplified enemy counting
         return std::min(count, 10u);
+    }
+
+    void InitializeEnhancementMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            queue->RegisterSpell(ENH_ASTRAL_SHIFT, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(ENH_ASTRAL_SHIFT, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(ENH_FERAL_SPIRIT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ENH_FERAL_SPIRIT, [this](Player*, Unit*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }, "5 MW stacks");
+
+            queue->RegisterSpell(ENH_ASCENDANCE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(ENH_ASCENDANCE, [this](Player* bot, Unit*) { return bot->HasSpell(ENH_ASCENDANCE) && !this->_ascendanceActive; }, "Ascendance burst");
+
+            queue->RegisterSpell(ENH_WINDSTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_WINDSTRIKE, [this](Player*, Unit* target) { return target && this->_ascendanceActive; }, "Ascendance active");
+
+            queue->RegisterSpell(ENH_LIGHTNING_BOLT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_LIGHTNING_BOLT, [this](Player*, Unit* target) { return target && this->_maelstromWeaponTracker.GetStacks() >= 5; }, "5 MW instant");
+
+            queue->RegisterSpell(ENH_STORMSTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_STORMSTRIKE, [this](Player*, Unit* target) { return target && this->_stormbringerActive; }, "Stormbringer proc");
+
+            queue->RegisterSpell(ENH_LAVA_LASH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(ENH_LAVA_LASH, [](Player*, Unit* target) { return target != nullptr; }, "Builder");
+
+            queue->RegisterSpell(ENH_CRASH_LIGHTNING, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(ENH_CRASH_LIGHTNING, [this](Player*, Unit*) { return this->GetEnemiesInRange(8.0f) >= 2; }, "AoE 2+");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree)
+        {
+            auto root = Selector("Enhancement Shaman", {
+                Sequence("Burst", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                    Action("Feral Spirit/Ascendance", [this](Player* bot) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(bot, ENH_FERAL_SPIRIT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("MW Spender", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                    Action("Lightning Bolt", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(t, ENH_LIGHTNING_BOLT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("SS", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(t, ENH_STORMSTRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Builder", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("Lava Lash", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(t, ENH_LAVA_LASH); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
     }
 
     // Member variables
