@@ -572,11 +572,6 @@ float DispelCoordinator::CalculateDispellerScore(const DispellerCapability& disp
 // ============================================================================
 // Dispeller Capability Management
 // ============================================================================
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
 void DispelCoordinator::UpdateDispellerCapabilities()
 {
     if (!m_group)
@@ -934,11 +929,6 @@ bool DispelCoordinator::ExecutePurge()
 
     ++m_statistics.failedPurges;
     return false;
-if (!aura)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: aura in method GetStackAmount");
-    return;
-}
 }
 
 // ============================================================================
@@ -960,11 +950,6 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
 
         // Check all auras
         Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
         for (auto const& [auraId, aurApp] : auras)
         {
             Aura* aura = aurApp->GetBase();
@@ -1007,11 +992,6 @@ if (!member)
 }
 
 std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
-    return;
-}
 {
     std::vector<PurgeTarget> targets;
 
@@ -1112,11 +1092,6 @@ if (!center)
 // ============================================================================
 
 bool DispelCoordinator::IsTank(Unit* unit) const
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return;
-}
 {
     Player* player = unit->ToPlayer();
     if (!player)
@@ -1126,11 +1101,6 @@ if (!unit)
 }
 
 bool DispelCoordinator::IsHealer(Unit* unit) const
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return;
-}
 {
     Player* player = unit->ToPlayer();
     if (!player)

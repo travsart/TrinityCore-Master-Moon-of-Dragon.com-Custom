@@ -51,15 +51,6 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
     if (_enableCaching)
     {
         ValidationResult cached = GetCachedValidation(questId, bot->GetGUID().GetCounter());
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-
-    return;
-
-}
         if (cached.cacheExpiry > GameTime::GetGameTimeMS())
         {
             _metrics.cacheHits++;
@@ -185,11 +176,6 @@ if (!bot)
     _metrics.averageValidationTime.store(currentAvg * 0.9f + duration * 0.1f);
 
     return valid;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return;
-}
 }
 
 QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player* bot)
@@ -244,11 +230,6 @@ QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player*
 }
 
 std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-    return nullptr;
-}
 {
     std::vector<std::string> errors;
 
@@ -333,11 +314,6 @@ bool QuestValidation::CanQuestBeStarted(uint32 questId, Player* bot)
 // ========== Requirement Validation ==========
 
 bool QuestValidation::ValidateLevelRequirements(uint32 questId, Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetRace");
-    return nullptr;
-}
 {
     if (!bot)
         return false;
@@ -754,11 +730,6 @@ bool QuestValidation::ValidateSeasonalAvailability(uint32 questId)
 }
 
 bool QuestValidation::ValidateDailyQuestLimits(uint32 questId, Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 {
     if (!bot)
         return false;
@@ -812,11 +783,6 @@ bool QuestValidation::ValidateAreaRequirements(uint32 questId, Player* bot)
 }
 
 bool QuestValidation::IsInCorrectZone(uint32 questId, Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 {
     return ValidateZoneRequirements(questId, bot);
 }
