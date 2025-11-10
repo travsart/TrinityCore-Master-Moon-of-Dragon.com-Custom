@@ -25,6 +25,9 @@
 #include "Log.h"
 #include <unordered_map>
 #include "../CombatSpecializationTemplates.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -173,6 +176,7 @@ public:
             {FIRE_MIRROR_IMAGE, 120000, 1}  // 2 min defensive decoy
         });
 
+        InitializeFireMechanics();
         TC_LOG_DEBUG("playerbot", "FireMageRefactored initialized for {}", bot->GetName());
     }
 
@@ -463,6 +467,97 @@ private:
             }
 
             return;
+        }
+    }
+
+    void InitializeFireMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            queue->RegisterSpell(FIRE_ICE_BLOCK, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FIRE_ICE_BLOCK, [this](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 20.0f; }, "HP < 20%");
+
+            queue->RegisterSpell(FIRE_COMBUSTION, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(FIRE_COMBUSTION, [this](Player* bot, Unit* target) { return target && !this->_combustionActive; }, "Major burst");
+
+            queue->RegisterSpell(FIRE_PYROBLAST, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FIRE_PYROBLAST, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }, "Hot Streak proc");
+
+            queue->RegisterSpell(FIRE_FLAMESTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(FIRE_FLAMESTRIKE, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsActive() && this->GetEnemiesInRange(8.0f) >= 3; }, "Hot Streak + 3+ enemies");
+
+            queue->RegisterSpell(FIRE_FIREBLAST, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FIRE_FIREBLAST, [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }, "Has charge");
+
+            queue->RegisterSpell(FIRE_PHOENIX_FLAMES, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FIRE_PHOENIX_FLAMES, [this](Player* bot, Unit* target) { return bot->HasSpell(FIRE_PHOENIX_FLAMES) && target; }, "Charge builder");
+
+            queue->RegisterSpell(FIRE_FIREBALL, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(FIRE_FIREBALL, [this](Player*, Unit* target) { return target; }, "Filler");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree)
+        {
+            auto root = Selector("Fire Mage DPS", {
+                Sequence("Burst", {
+                    Condition("Has target", [this](Player*, Unit* target) { return target; }),
+                    Selector("Use Combustion", {
+                        Sequence("Cast Combustion", {
+                            Condition("Not active", [this](Player*, Unit*) { return !this->_combustionActive; }),
+                            Action("Combustion", [this](Player* bot, Unit*) -> NodeStatus {
+                                if (this->CanCastSpell(FIRE_COMBUSTION, bot)) {
+                                    this->CastSpell(bot, FIRE_COMBUSTION);
+                                    this->_combustionActive = true;
+                                    this->_combustionEndTime = getMSTime() + 10000;
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+                Sequence("Hot Streak", {
+                    Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }),
+                    Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(FIRE_PYROBLAST, target)) {
+                            this->CastSpell(target, FIRE_PYROBLAST);
+                            this->_hotStreakTracker.ConsumeProc();
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+                Sequence("Fire Blast", {
+                    Condition("Has charge", [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }),
+                    Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
+                        if (this->_fireBlastTracker.HasCharge()) {
+                            this->CastSpell(target, FIRE_FIREBLAST);
+                            this->_fireBlastTracker.UseCharge();
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                }),
+                Sequence("Fireball", {
+                    Condition("Has target", [this](Player*, Unit* target) { return target; }),
+                    Action("Fireball", [this](Player*, Unit* target) -> NodeStatus {
+                        if (this->CanCastSpell(FIRE_FIREBALL, target)) {
+                            this->CastSpell(target, FIRE_FIREBALL);
+                            return NodeStatus::SUCCESS;
+                        }
+                        return NodeStatus::FAILURE;
+                    })
+                })
+            });
+            tree->SetRoot(root);
         }
     }
 
