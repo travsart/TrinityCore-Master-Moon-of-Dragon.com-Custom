@@ -716,9 +716,111 @@ float RoleAssignment::CalculateClassRoleEffectiveness(uint8 playerClass, uint8 p
 
 float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 {
-    // TODO: Implement gear scoring based on role appropriateness
-    // This would analyze equipped items and their stats
-    return 0.7f; // Placeholder
+    if (!player)
+        return 0.0f;
+
+    float gearScore = 0.0f;
+    uint32 itemCount = 0;
+    float totalItemLevel = 0.0f;
+
+    // Analyze equipped items
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!item)
+            continue;
+
+        ItemTemplate const* itemTemplate = item->GetTemplate();
+        if (!itemTemplate)
+            continue;
+
+        itemCount++;
+        totalItemLevel += itemTemplate->ItemLevel;
+
+        // Analyze item stats for role appropriateness
+        float roleBonus = 0.0f;
+
+        // Get item's primary stats
+        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+        {
+            if (itemTemplate->ItemStat[i].ItemStatValue == 0)
+                continue;
+
+            uint32 statType = itemTemplate->ItemStat[i].ItemStatType;
+            int32 statValue = itemTemplate->ItemStat[i].ItemStatValue;
+
+            switch (role)
+            {
+                case GroupRole::TANK:
+                    // Tanks need Stamina, Armor, Avoidance
+                    if (statType == ITEM_MOD_STAMINA)
+                        roleBonus += statValue * 0.4f;
+                    else if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
+                        roleBonus += statValue * 0.3f;
+                    else if (statType == ITEM_MOD_ARMOR)
+                        roleBonus += statValue * 0.2f;
+                    else if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
+                        roleBonus += statValue * 0.1f;
+                    break;
+
+                case GroupRole::HEALER:
+                    // Healers need Intellect, Spirit, Mana Regen
+                    if (statType == ITEM_MOD_INTELLECT)
+                        roleBonus += statValue * 0.5f;
+                    else if (statType == ITEM_MOD_SPIRIT || statType == ITEM_MOD_MANA_REGENERATION)
+                        roleBonus += statValue * 0.3f;
+                    else if (statType == ITEM_MOD_STAMINA)
+                        roleBonus += statValue * 0.2f;
+                    break;
+
+                case GroupRole::MELEE_DPS:
+                    // Melee DPS need Strength/Agility, Crit, Haste
+                    if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
+                        roleBonus += statValue * 0.4f;
+                    else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING)
+                        roleBonus += statValue * 0.3f;
+                    else if (statType == ITEM_MOD_ATTACK_POWER)
+                        roleBonus += statValue * 0.2f;
+                    else if (statType == ITEM_MOD_STAMINA)
+                        roleBonus += statValue * 0.1f;
+                    break;
+
+                case GroupRole::RANGED_DPS:
+                    // Ranged DPS need Intellect/Agility, Crit, Mastery
+                    if (statType == ITEM_MOD_INTELLECT || statType == ITEM_MOD_AGILITY)
+                        roleBonus += statValue * 0.4f;
+                    else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_MASTERY_RATING)
+                        roleBonus += statValue * 0.3f;
+                    else if (statType == ITEM_MOD_SPELL_POWER || statType == ITEM_MOD_RANGED_ATTACK_POWER)
+                        roleBonus += statValue * 0.2f;
+                    else if (statType == ITEM_MOD_STAMINA)
+                        roleBonus += statValue * 0.1f;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        gearScore += roleBonus;
+    }
+
+    if (itemCount == 0)
+        return 0.0f;
+
+    // Normalize score to 0.0 - 1.0 range
+    float averageItemLevel = totalItemLevel / itemCount;
+    float itemLevelScore = std::min(1.0f, averageItemLevel / 300.0f); // Normalize around ilvl 300
+
+    float roleAppropriateness = std::min(1.0f, gearScore / (itemCount * 50.0f)); // Normalize based on stats
+
+    // Combined score (70% item level, 30% role-appropriate stats)
+    float finalScore = (itemLevelScore * 0.7f) + (roleAppropriateness * 0.3f);
+
+    TC_LOG_DEBUG("playerbot", "RoleAssignment: Gear score for player {} in role {}: {:.2f} (iLvl: {:.1f}, appropriateness: {:.2f})",
+                 player->GetName(), static_cast<uint8>(role), finalScore, averageItemLevel, roleAppropriateness);
+
+    return finalScore;
 }
 
 float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role)
@@ -738,9 +840,217 @@ float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role
 
 float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Group* group)
 {
-    // TODO: Implement synergy calculation based on group composition
-    // This would consider class interactions, buff/debuff synergies, etc.
-    return 0.6f; // Placeholder
+    if (!player || !group)
+        return 0.5f;
+
+    float synergyScore = 0.5f; // Base score
+    uint8 playerClass = player->getClass();
+
+    // Get group composition
+    std::unordered_map<uint8, uint32> classCounts; // class -> count
+    std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
+
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        if (Player* member = itr.GetSource())
+        {
+            if (member->GetGUID() == player->GetGUID())
+                continue; // Skip the player we're evaluating
+
+            uint8 memberClass = member->getClass();
+            classCounts[memberClass]++;
+
+            // Determine member's role (simplified)
+            ChrSpecialization spec = member->GetPrimarySpecialization();
+            uint32 specId = static_cast<uint32>(spec);
+
+            GroupRole memberRole = GroupRole::NONE;
+            if (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581)
+                memberRole = GroupRole::TANK;
+            else if (specId == 65 || specId == 256 || specId == 257 || specId == 264 || specId == 270 || specId == 105 || specId == 1468)
+                memberRole = GroupRole::HEALER;
+            else
+                memberRole = GroupRole::MELEE_DPS; // Simplified
+
+            roleCounts[memberRole]++;
+        }
+    }
+
+    // Calculate class-specific synergies
+    switch (playerClass)
+    {
+        case CLASS_WARRIOR:
+            // Warriors synergize with healers (more risk taking)
+            if (roleCounts[GroupRole::HEALER] > 0)
+                synergyScore += 0.1f;
+            // Battle Shout benefits physical DPS
+            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+                synergyScore += 0.15f;
+            break;
+
+        case CLASS_PALADIN:
+            // Paladins provide great utility and buffs
+            synergyScore += 0.1f; // Always valuable
+            // Blessings benefit all roles
+            if (group->GetMembersCount() >= 4)
+                synergyScore += 0.1f;
+            // Auras benefit everyone
+            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_PRIEST:
+            // Priests provide Power Word: Fortitude (stamina buff)
+            synergyScore += 0.15f;
+            // Shadow priests benefit from having other casters
+            if (role == GroupRole::RANGED_DPS && roleCounts[GroupRole::RANGED_DPS] > 0)
+                synergyScore += 0.2f;
+            break;
+
+        case CLASS_MAGE:
+            // Mages provide Arcane Intellect (intellect buff)
+            synergyScore += 0.15f;
+            // Benefits from having tank for aggro control
+            if (roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.1f;
+            // Food/water utility always valuable
+            synergyScore += 0.05f;
+            break;
+
+        case CLASS_WARLOCK:
+            // Warlocks provide healthstones and soulstones
+            synergyScore += 0.1f;
+            // Summons provide utility
+            synergyScore += 0.05f;
+            // Benefits from having tank
+            if (roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_DRUID:
+            // Druids are extremely flexible and synergize with everything
+            synergyScore += 0.15f;
+            // Mark of the Wild benefits all
+            if (group->GetMembersCount() >= 4)
+                synergyScore += 0.1f;
+            // Battle res is invaluable
+            synergyScore += 0.1f;
+            break;
+
+        case CLASS_SHAMAN:
+            // Totems benefit the entire group
+            synergyScore += 0.2f;
+            // Bloodlust/Heroism is extremely valuable
+            synergyScore += 0.15f;
+            // Benefits melee groups especially
+            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_ROGUE:
+            // Rogues benefit from having a tank
+            if (roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.15f;
+            // Tricks of the Trade benefits tanks
+            if (role == GroupRole::MELEE_DPS && roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_HUNTER:
+            // Hunters are self-sufficient
+            synergyScore += 0.05f;
+            // Aspect of the Pack helps with travel
+            synergyScore += 0.05f;
+            // Misdirection benefits tanks
+            if (roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_DEATH_KNIGHT:
+            // Death Grip utility
+            synergyScore += 0.1f;
+            // Battle res
+            synergyScore += 0.1f;
+            // Horn of Winter benefits physical DPS
+            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_MONK:
+            // Monks are versatile
+            synergyScore += 0.1f;
+            // Legacy of the White Tiger benefits all
+            if (group->GetMembersCount() >= 4)
+                synergyScore += 0.1f;
+            break;
+
+        case CLASS_DEMON_HUNTER:
+            // Chaos Brand debuff benefits all damage dealers
+            if (roleCounts[GroupRole::MELEE_DPS] + roleCounts[GroupRole::RANGED_DPS] > 2)
+                synergyScore += 0.2f;
+            break;
+
+        case CLASS_EVOKER:
+            // Evokers provide unique buffs
+            synergyScore += 0.15f;
+            // Blessing of the Bronze is valuable
+            if (group->GetMembersCount() >= 4)
+                synergyScore += 0.1f;
+            break;
+
+        default:
+            break;
+    }
+
+    // Role-specific synergies
+    switch (role)
+    {
+        case GroupRole::TANK:
+            // Tanks synergize with healers
+            if (roleCounts[GroupRole::HEALER] > 0)
+                synergyScore += 0.2f;
+            // Multiple tanks have anti-synergy unless needed
+            if (roleCounts[GroupRole::TANK] >= 2)
+                synergyScore -= 0.3f;
+            break;
+
+        case GroupRole::HEALER:
+            // Healers synergize with tanks
+            if (roleCounts[GroupRole::TANK] > 0)
+                synergyScore += 0.2f;
+            // Multiple healers can be redundant in 5-man
+            if (roleCounts[GroupRole::HEALER] >= 2 && group->GetMembersCount() < 10)
+                synergyScore -= 0.2f;
+            break;
+
+        case GroupRole::MELEE_DPS:
+            // Melee DPS benefit from other melee (cleave synergy)
+            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+                synergyScore += 0.1f;
+            // Too many melee can be problematic
+            if (roleCounts[GroupRole::MELEE_DPS] >= 4)
+                synergyScore -= 0.2f;
+            break;
+
+        case GroupRole::RANGED_DPS:
+            // Ranged DPS are safe and flexible
+            synergyScore += 0.1f;
+            // Balance with melee is good
+            if (roleCounts[GroupRole::MELEE_DPS] > 0 && roleCounts[GroupRole::RANGED_DPS] > 0)
+                synergyScore += 0.1f;
+            break;
+
+        default:
+            break;
+    }
+
+    // Cap synergy score between 0.0 and 1.0
+    synergyScore = std::max(0.0f, std::min(1.0f, synergyScore));
+
+    TC_LOG_DEBUG("playerbot", "RoleAssignment: Synergy score for player {} (class {}) in role {}: {:.2f}",
+                 player->GetName(), playerClass, static_cast<uint8>(role), synergyScore);
+
+    return synergyScore;
 }
 
 GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, RoleAssignmentStrategy strategy)
@@ -876,12 +1186,213 @@ void RoleAssignment::ExecutePvPStrategy(Group* group) { ExecuteOptimalStrategy(g
 
 void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* player)
 {
-    // TODO: Implement gear analysis for role scoring
+    if (!player)
+        return;
+
+    // Analyze gear for each possible role
+    std::vector<GroupRole> roles = {
+        GroupRole::TANK,
+        GroupRole::HEALER,
+        GroupRole::MELEE_DPS,
+        GroupRole::RANGED_DPS,
+        GroupRole::SUPPORT
+    };
+
+    for (GroupRole role : roles)
+    {
+        // Calculate gear score for this role
+        float gearScore = CalculateGearScore(player, role);
+
+        // Update role score with gear information
+        auto& roleScore = profile.roleScores[role];
+        roleScore.gearScore = gearScore;
+
+        TC_LOG_DEBUG("playerbot", "RoleAssignment: Player {} gear score for role {}: {:.2f}",
+                     player->GetName(), static_cast<uint8>(role), gearScore);
+    }
+
+    // Analyze overall gear quality
+    uint32 totalItemLevel = 0;
+    uint32 itemCount = 0;
+    bool hasTankGear = false;
+    bool hasHealerGear = false;
+    bool hasDPSGear = false;
+
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!item)
+            continue;
+
+        ItemTemplate const* itemTemplate = item->GetTemplate();
+        if (!itemTemplate)
+            continue;
+
+        itemCount++;
+        totalItemLevel += itemTemplate->ItemLevel;
+
+        // Detect gear type based on primary stats
+        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+        {
+            if (itemTemplate->ItemStat[i].ItemStatValue == 0)
+                continue;
+
+            uint32 statType = itemTemplate->ItemStat[i].ItemStatType;
+
+            // Tank stats
+            if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
+                hasTankGear = true;
+
+            // Healer stats
+            if (statType == ITEM_MOD_SPIRIT && player->GetPowerType() == POWER_MANA)
+                hasHealerGear = true;
+
+            // DPS stats
+            if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING ||
+                statType == ITEM_MOD_MASTERY_RATING)
+                hasDPSGear = true;
+        }
+    }
+
+    if (itemCount > 0)
+    {
+        float averageItemLevel = static_cast<float>(totalItemLevel) / itemCount;
+        profile.overallRating = averageItemLevel / 30.0f; // Normalize to 0-10 scale
+
+        TC_LOG_DEBUG("playerbot", "RoleAssignment: Player {} average item level: {:.1f}, overall rating: {:.1f}",
+                     player->GetName(), averageItemLevel, profile.overallRating);
+    }
+
+    // Update role capabilities based on gear
+    if (hasTankGear)
+    {
+        if (profile.roleCapabilities[GroupRole::TANK] == RoleCapability::INCAPABLE)
+            profile.roleCapabilities[GroupRole::TANK] = RoleCapability::EMERGENCY;
+    }
+
+    if (hasHealerGear)
+    {
+        if (profile.roleCapabilities[GroupRole::HEALER] == RoleCapability::INCAPABLE)
+            profile.roleCapabilities[GroupRole::HEALER] = RoleCapability::EMERGENCY;
+    }
+
+    if (hasDPSGear)
+    {
+        if (profile.roleCapabilities[GroupRole::MELEE_DPS] == RoleCapability::INCAPABLE)
+            profile.roleCapabilities[GroupRole::MELEE_DPS] = RoleCapability::EMERGENCY;
+        if (profile.roleCapabilities[GroupRole::RANGED_DPS] == RoleCapability::INCAPABLE)
+            profile.roleCapabilities[GroupRole::RANGED_DPS] = RoleCapability::EMERGENCY;
+    }
+
+    profile.lastRoleUpdate = getMSTime();
 }
 
 void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* player)
 {
-    // TODO: Update experience scores based on performance history
+    if (!player)
+        return;
+
+    std::lock_guard<std::recursive_mutex> lock(_performanceMutex);
+
+    uint32 playerGuid = player->GetGUID().GetCounter();
+
+    // Get performance data
+    auto playerIt = _rolePerformance.find(playerGuid);
+    if (playerIt == _rolePerformance.end())
+        return; // No performance data yet
+
+    // Update experience scores for each role based on performance history
+    for (auto& rolePair : playerIt->second)
+    {
+        GroupRole role = rolePair.first;
+        auto& performance = rolePair.second;
+
+        // Calculate experience score based on:
+        // 1. Number of encounters (more experience = higher score)
+        // 2. Average effectiveness (better performance = higher score)
+        // 3. Recent performance trend (improving = bonus)
+
+        uint32 encounterCount = performance.encountersCompleted.load();
+        float avgEffectiveness = performance.averageEffectiveness.load();
+        uint32 successCount = performance.successfulEncounters.load();
+        uint32 failCount = performance.failedEncounters.load();
+
+        // Base experience from encounter count (logarithmic growth)
+        float experienceBase = std::min(1.0f, std::log10(static_cast<float>(encounterCount) + 1.0f) / 2.0f);
+
+        // Performance modifier (50% weight)
+        float performanceMod = avgEffectiveness * 0.5f;
+
+        // Success rate modifier (20% weight)
+        float successRate = (encounterCount > 0) ?
+                            static_cast<float>(successCount) / encounterCount : 0.5f;
+        float successMod = successRate * 0.2f;
+
+        // Consistency bonus (10% weight) - reward players with stable performance
+        float consistencyMod = (avgEffectiveness > 0.6f) ? 0.1f : 0.0f;
+
+        // Calculate final experience score
+        float experienceScore = experienceBase + performanceMod + successMod + consistencyMod;
+        experienceScore = std::max(0.0f, std::min(1.0f, experienceScore)); // Clamp to [0, 1]
+
+        // Update role score
+        auto& roleScore = profile.roleScores[role];
+        roleScore.experienceScore = experienceScore;
+
+        // Update effectiveness
+        roleScore.effectiveness = avgEffectiveness;
+
+        TC_LOG_DEBUG("playerbot", "RoleAssignment: Player {} experience for role {}: {:.2f} (encounters: {}, effectiveness: {:.2f}, success rate: {:.2f})",
+                     player->GetName(), static_cast<uint8>(role), experienceScore,
+                     encounterCount, avgEffectiveness, successRate);
+
+        // Update role capability based on experience
+        if (experienceScore >= 0.8f && avgEffectiveness >= 0.7f)
+        {
+            // Very experienced and effective - upgrade to PRIMARY if currently SECONDARY
+            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+                profile.roleCapabilities[role] = RoleCapability::PRIMARY;
+        }
+        else if (experienceScore >= 0.5f && avgEffectiveness >= 0.5f)
+        {
+            // Moderately experienced - upgrade to SECONDARY if currently EMERGENCY
+            if (profile.roleCapabilities[role] == RoleCapability::EMERGENCY)
+                profile.roleCapabilities[role] = RoleCapability::SECONDARY;
+        }
+        else if (experienceScore < 0.2f && avgEffectiveness < 0.3f && encounterCount >= 5)
+        {
+            // Poor experience after many encounters - downgrade
+            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+                profile.roleCapabilities[role] = RoleCapability::EMERGENCY;
+        }
+    }
+
+    // Update alternative roles based on experience
+    profile.alternativeRoles.clear();
+    for (auto& roleScorePair : profile.roleScores)
+    {
+        GroupRole role = roleScorePair.first;
+        const RoleScore& score = roleScorePair.second;
+
+        // Add to alternatives if capable and experienced enough
+        if (role != profile.preferredRole &&
+            profile.roleCapabilities[role] != RoleCapability::INCAPABLE &&
+            score.experienceScore >= 0.4f)
+        {
+            profile.alternativeRoles.push_back(role);
+        }
+    }
+
+    // Sort alternative roles by experience score (descending)
+    std::sort(profile.alternativeRoles.begin(), profile.alternativeRoles.end(),
+              [&profile](GroupRole a, GroupRole b) {
+                  return profile.roleScores[a].experienceScore > profile.roleScores[b].experienceScore;
+              });
+
+    profile.lastRoleUpdate = getMSTime();
+
+    TC_LOG_DEBUG("playerbot", "RoleAssignment: Player {} role experience updated, {} alternative roles available",
+                 player->GetName(), profile.alternativeRoles.size());
 }
 
 bool RoleAssignment::ValidateRoleAssignment(Group* group)

@@ -396,9 +396,17 @@ public:
         // Priority 1: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
         {
-            // TODO: Find secondary target CastSpell(HAVOC, target);
-            _havocTracker.ApplyHavoc(target->GetGUID());
-            TC_LOG_DEBUG("playerbot", "Destruction: Havoc applied");
+            // Find best secondary target for Havoc (not the primary target)
+            ::Unit* secondaryTarget = FindBestHavocTarget(target);
+            if (secondaryTarget)
+            {
+                if (this->CastSpell(secondaryTarget, HAVOC))
+                {
+                    _havocTracker.ApplyHavoc(secondaryTarget->GetGUID());
+                    TC_LOG_DEBUG("playerbot", "Destruction: Havoc applied to {} (secondary target, primary: {})",
+                                 secondaryTarget->GetName(), target->GetName());
+                }
+            }
         }
 
         // Priority 2: Maintain Immolate on primary
@@ -580,6 +588,91 @@ private:
     void ConsumeSoulShard(uint32 amount)
     {
         this->_resource.soulShards = (this->_resource.soulShards > amount) ? this->_resource.soulShards - amount : 0;
+    }
+
+    ::Unit* FindBestHavocTarget(::Unit* primaryTarget)
+    {
+        if (!primaryTarget || !this->GetBot())
+            return nullptr;
+
+        Player* bot = this->GetBot();
+        ObjectGuid primaryGuid = primaryTarget->GetGUID();
+
+        // Get all nearby enemies within 40 yards
+        std::list<::Unit*> nearbyEnemies;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, nearbyEnemies, u_check);
+        Cell::VisitAllObjects(bot, searcher, 40.0f);
+
+        ::Unit* bestTarget = nullptr;
+        float bestScore = 0.0f;
+
+        for (::Unit* enemy : nearbyEnemies)
+        {
+            // Skip invalid targets, dead targets, or the primary target
+            if (!enemy || !enemy->IsAlive() || !bot->IsValidAttackTarget(enemy))
+                continue;
+
+            if (enemy->GetGUID() == primaryGuid)
+                continue; // Don't Havoc the primary target
+
+            // Calculate target priority score
+            float score = 100.0f;
+
+            // Prefer targets with high health (long-lived targets)
+            float healthPct = enemy->GetHealthPct();
+            if (healthPct > 80.0f)
+                score += 50.0f;
+            else if (healthPct > 50.0f)
+                score += 30.0f;
+            else if (healthPct < 20.0f)
+                score -= 20.0f; // Deprioritize targets about to die
+
+            // Prefer targets close to the primary target (for cleave efficiency)
+            float distanceToPrimary = enemy->GetDistance(primaryTarget);
+            if (distanceToPrimary < 10.0f)
+                score += 40.0f;
+            else if (distanceToPrimary < 20.0f)
+                score += 20.0f;
+            else if (distanceToPrimary > 30.0f)
+                score -= 30.0f; // Deprioritize far targets
+
+            // Prefer targets without Havoc already applied
+            if (_havocTracker.GetHavocTarget() == enemy->GetGUID())
+                score -= 100.0f;
+
+            // Prefer elite/boss targets over normal mobs
+            if (enemy->GetTypeId() == TYPEID_UNIT)
+            {
+                Creature* creature = enemy->ToCreature();
+                if (creature)
+                {
+                    if (creature->IsWorldBoss() || creature->IsDungeonBoss())
+                        score += 100.0f; // Highest priority for bosses
+                    else if (creature->GetCreatureTemplate()->rank >= CREATURE_ELITE_ELITE)
+                        score += 50.0f; // High priority for elites
+                }
+            }
+
+            // Update best target if this one has a higher score
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestTarget = enemy;
+            }
+        }
+
+        if (bestTarget)
+        {
+            TC_LOG_DEBUG("playerbot", "Destruction: Found best Havoc target: {} (score: {:.1f})",
+                         bestTarget->GetName(), bestScore);
+        }
+        else
+        {
+            TC_LOG_DEBUG("playerbot", "Destruction: No suitable Havoc target found");
+        }
+
+        return bestTarget;
     }
 
     void InitializeDestructionMechanics()

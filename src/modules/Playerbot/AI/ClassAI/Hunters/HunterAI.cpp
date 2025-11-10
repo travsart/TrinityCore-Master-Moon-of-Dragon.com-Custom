@@ -1227,7 +1227,180 @@ void HunterAI::ManageAspects()
 
 void HunterAI::UpdateTracking()
 {
-    // TODO: Implement tracking management based on situation
+    if (!_bot)
+        return;
+
+    // Check if we already have tracking active - don't spam tracking changes
+    uint32 currentTracking = 0;
+    if (_bot->HasAura(TRACK_BEASTS)) currentTracking = TRACK_BEASTS;
+    else if (_bot->HasAura(TRACK_DEMONS)) currentTracking = TRACK_DEMONS;
+    else if (_bot->HasAura(TRACK_DRAGONKIN)) currentTracking = TRACK_DRAGONKIN;
+    else if (_bot->HasAura(TRACK_ELEMENTALS)) currentTracking = TRACK_ELEMENTALS;
+    else if (_bot->HasAura(TRACK_GIANTS)) currentTracking = TRACK_GIANTS;
+    else if (_bot->HasAura(TRACK_HUMANOIDS)) currentTracking = TRACK_HUMANOIDS;
+    else if (_bot->HasAura(TRACK_UNDEAD)) currentTracking = TRACK_UNDEAD;
+    else if (_bot->HasAura(TRACK_HIDDEN)) currentTracking = TRACK_HIDDEN;
+
+    // Determine the best tracking based on current target and nearby enemies
+    uint32 optimalTracking = 0;
+
+    // Priority 1: If we have a current target, use tracking appropriate for its creature type
+    if (Unit* target = _bot->GetSelectedUnit())
+    {
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            Creature* creature = target->ToCreature();
+            if (creature)
+            {
+                CreatureType creatureType = creature->GetCreatureTemplate()->type;
+
+                switch (creatureType)
+                {
+                    case CREATURE_TYPE_BEAST:
+                        if (_bot->HasSpell(TRACK_BEASTS))
+                            optimalTracking = TRACK_BEASTS;
+                        break;
+                    case CREATURE_TYPE_DEMON:
+                        if (_bot->HasSpell(TRACK_DEMONS))
+                            optimalTracking = TRACK_DEMONS;
+                        break;
+                    case CREATURE_TYPE_DRAGONKIN:
+                        if (_bot->HasSpell(TRACK_DRAGONKIN))
+                            optimalTracking = TRACK_DRAGONKIN;
+                        break;
+                    case CREATURE_TYPE_ELEMENTAL:
+                        if (_bot->HasSpell(TRACK_ELEMENTALS))
+                            optimalTracking = TRACK_ELEMENTALS;
+                        break;
+                    case CREATURE_TYPE_GIANT:
+                        if (_bot->HasSpell(TRACK_GIANTS))
+                            optimalTracking = TRACK_GIANTS;
+                        break;
+                    case CREATURE_TYPE_HUMANOID:
+                        if (_bot->HasSpell(TRACK_HUMANOIDS))
+                            optimalTracking = TRACK_HUMANOIDS;
+                        break;
+                    case CREATURE_TYPE_UNDEAD:
+                        if (_bot->HasSpell(TRACK_UNDEAD))
+                            optimalTracking = TRACK_UNDEAD;
+                        break;
+                    default:
+                        // For other types, default to humanoid tracking if in PvP zone
+                        if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
+                            optimalTracking = TRACK_HUMANOIDS;
+                        break;
+                }
+            }
+        }
+        else if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            // Tracking players with Track Humanoids
+            if (_bot->HasSpell(TRACK_HUMANOIDS))
+                optimalTracking = TRACK_HUMANOIDS;
+        }
+    }
+
+    // Priority 2: If no specific target, analyze nearby creatures
+    if (optimalTracking == 0)
+    {
+        std::unordered_map<CreatureType, uint32> creatureTypeCounts;
+
+        // Count nearby creature types within 40 yards
+        std::list<Creature*> nearbyCreatures;
+        Trinity::AllCreaturesInRange check(_bot, 40.0f);
+        Trinity::CreatureListSearcher<Trinity::AllCreaturesInRange> searcher(_bot, nearbyCreatures, check);
+        Cell::VisitGridObjects(_bot, searcher, 40.0f);
+
+        for (Creature* creature : nearbyCreatures)
+        {
+            if (!creature || creature->IsFriendlyTo(_bot))
+                continue;
+
+            CreatureType type = creature->GetCreatureTemplate()->type;
+            creatureTypeCounts[type]++;
+        }
+
+        // Select tracking for the most common nearby creature type
+        uint32 maxCount = 0;
+        CreatureType mostCommonType = CREATURE_TYPE_NON_COMBAT_PET;
+
+        for (const auto& [type, count] : creatureTypeCounts)
+        {
+            if (count > maxCount)
+            {
+                maxCount = count;
+                mostCommonType = type;
+            }
+        }
+
+        // Apply tracking for most common type
+        if (maxCount > 0)
+        {
+            switch (mostCommonType)
+            {
+                case CREATURE_TYPE_BEAST:
+                    if (_bot->HasSpell(TRACK_BEASTS))
+                        optimalTracking = TRACK_BEASTS;
+                    break;
+                case CREATURE_TYPE_DEMON:
+                    if (_bot->HasSpell(TRACK_DEMONS))
+                        optimalTracking = TRACK_DEMONS;
+                    break;
+                case CREATURE_TYPE_DRAGONKIN:
+                    if (_bot->HasSpell(TRACK_DRAGONKIN))
+                        optimalTracking = TRACK_DRAGONKIN;
+                    break;
+                case CREATURE_TYPE_ELEMENTAL:
+                    if (_bot->HasSpell(TRACK_ELEMENTALS))
+                        optimalTracking = TRACK_ELEMENTALS;
+                    break;
+                case CREATURE_TYPE_GIANT:
+                    if (_bot->HasSpell(TRACK_GIANTS))
+                        optimalTracking = TRACK_GIANTS;
+                    break;
+                case CREATURE_TYPE_HUMANOID:
+                    if (_bot->HasSpell(TRACK_HUMANOIDS))
+                        optimalTracking = TRACK_HUMANOIDS;
+                    break;
+                case CREATURE_TYPE_UNDEAD:
+                    if (_bot->HasSpell(TRACK_UNDEAD))
+                        optimalTracking = TRACK_UNDEAD;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    // Priority 3: Default to appropriate tracking based on zone type
+    if (optimalTracking == 0)
+    {
+        // In dungeons/raids, prioritize Track Hidden for stealth detection
+        if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
+        {
+            optimalTracking = TRACK_HIDDEN;
+        }
+        // In PvP zones, track humanoids
+        else if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
+        {
+            optimalTracking = TRACK_HUMANOIDS;
+        }
+        // Default to beast tracking in open world
+        else if (_bot->HasSpell(TRACK_BEASTS))
+        {
+            optimalTracking = TRACK_BEASTS;
+        }
+    }
+
+    // Apply the optimal tracking if it's different from current
+    if (optimalTracking != 0 && optimalTracking != currentTracking)
+    {
+        if (CastSpell(_bot, optimalTracking))
+        {
+            TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched tracking to spell {}",
+                         _bot->GetName(), optimalTracking);
+        }
+    }
 }
 
 bool HunterAI::HasAnyAspect()

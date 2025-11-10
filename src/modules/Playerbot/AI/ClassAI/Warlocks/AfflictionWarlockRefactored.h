@@ -446,8 +446,82 @@ protected:
             return;
         }
 
-        // Priority 4: Apply Agony on all targets
-        // TODO: Implement multi-target DoT tracking
+        // Priority 4: Apply Agony on all targets (multi-target DoT tracking)
+        {
+            Player* bot = this->GetBot();
+            if (!bot) return;
+
+            // Get all nearby enemies within 40 yards
+            std::list<::Unit*> nearbyEnemies;
+            Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+            Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, nearbyEnemies, u_check);
+            Cell::VisitAllObjects(bot, searcher, 40.0f);
+
+            // Limit DoT spreading to prevent excessive target count
+            uint32 dotTargetsProcessed = 0;
+            const uint32 MAX_DOT_TARGETS = 8; // Limit to 8 targets for performance
+
+            for (::Unit* enemy : nearbyEnemies)
+            {
+                if (!enemy || !enemy->IsAlive() || !bot->IsValidAttackTarget(enemy))
+                    continue;
+
+                if (dotTargetsProcessed >= MAX_DOT_TARGETS)
+                    break;
+
+                ObjectGuid enemyGuid = enemy->GetGUID();
+
+                // Priority: Apply Agony if missing or needs refresh
+                if (_dotTracker.NeedsRefresh(enemyGuid, AGONY, 5000)) // Refresh with 5s remaining
+                {
+                    if (this->CanCastSpell(AGONY, enemy))
+                    {
+                        if (this->CastSpell(enemy, AGONY))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, AGONY, 18000, 1); // 18s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Agony to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update to avoid ability spam
+                        }
+                    }
+                }
+
+                // Apply Corruption if missing (secondary priority)
+                if (!_dotTracker.HasDoT(enemyGuid, CORRUPTION))
+                {
+                    if (this->CanCastSpell(CORRUPTION, enemy))
+                    {
+                        if (this->CastSpell(enemy, CORRUPTION))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, CORRUPTION, 14000); // 14s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Corruption to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update
+                        }
+                    }
+                }
+
+                // Apply Siphon Life if talented and missing (tertiary priority)
+                if (bot->HasSpell(SIPHON_LIFE) && !_dotTracker.HasDoT(enemyGuid, SIPHON_LIFE))
+                {
+                    if (this->CanCastSpell(SIPHON_LIFE, enemy))
+                    {
+                        if (this->CastSpell(enemy, SIPHON_LIFE))
+                        {
+                            _dotTracker.ApplyDoT(enemyGuid, SIPHON_LIFE, 15000); // 15s duration
+                            TC_LOG_DEBUG("playerbot", "Affliction: Applied Siphon Life to {} in AoE rotation",
+                                         enemy->GetName());
+                            dotTargetsProcessed++;
+                            return; // Return after applying one DoT per update
+                        }
+                    }
+                }
+
+                dotTargetsProcessed++;
+            }
+        }
 
         // Priority 5: Malefic Rapture (AoE shard spender)
         if (shards >= 2 && this->CanCastSpell(MALEFIC_RAPTURE, target))

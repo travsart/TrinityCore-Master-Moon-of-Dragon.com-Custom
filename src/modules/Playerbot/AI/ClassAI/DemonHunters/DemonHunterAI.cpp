@@ -647,8 +647,88 @@ void DemonHunterAI::UpdateBuffs()
         static BaselineRotationManager baselineManager;
         baselineManager.ApplyBaselineBuffs(_bot);
         return;
-    }    // Apply Demon Hunter buffs based on specialization
-    // TODO: Add spec-specific buff logic here if needed
+    }
+
+    // Apply Demon Hunter buffs based on specialization
+    ChrSpecialization spec = _bot->GetPrimarySpecialization();
+
+    // Maintain Immolation Aura (both specs)
+    if (!_bot->HasAura(IMMOLATION_AURA) && CanUseAbility(IMMOLATION_AURA))
+    {
+        if (CastSpell(IMMOLATION_AURA))
+        {
+            RecordAbilityUsage(IMMOLATION_AURA);
+            TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} activated Immolation Aura buff",
+                         _bot->GetName());
+        }
+    }
+
+    // Havoc-specific buffs
+    if (spec == ChrSpecialization::DemonHunterHavoc)
+    {
+        // Maintain Momentum buff through movement abilities if talented
+        if (_bot->HasSpell(MOMENTUM_TALENT) && !_bot->HasAura(BUFF_MOMENTUM))
+        {
+            // Fel Rush for momentum
+            if (CanUseAbility(FEL_RUSH))
+            {
+                Unit* target = _bot->GetSelectedUnit();
+                if (target && _bot->GetDistance(target) > 5.0f && _bot->GetDistance(target) < 20.0f)
+                {
+                    if (CastSpell(target, FEL_RUSH))
+                    {
+                        RecordAbilityUsage(FEL_RUSH);
+                        TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} using Fel Rush for Momentum buff",
+                                     _bot->GetName());
+                    }
+                }
+            }
+        }
+
+        // Refresh Prepared buff from Vengeful Retreat if talented
+        if (_bot->HasSpell(203650) && !_bot->HasAura(BUFF_PREPARED) && CanUseAbility(VENGEFUL_RETREAT))
+        {
+            Unit* target = _bot->GetSelectedUnit();
+            if (target && _bot->GetDistance(target) < 3.0f)
+            {
+                if (CastSpell(VENGEFUL_RETREAT))
+                {
+                    RecordAbilityUsage(VENGEFUL_RETREAT);
+                    TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} using Vengeful Retreat for Prepared buff",
+                                 _bot->GetName());
+                }
+            }
+        }
+    }
+    // Vengeance-specific buffs
+    else if (spec == ChrSpecialization::DemonHunterVengeance)
+    {
+        // Maintain Demon Spikes uptime when tanking
+        if (!_bot->HasAura(DEMON_SPIKES) && CanUseAbility(DEMON_SPIKES))
+        {
+            if (_bot->GetHealthPct() < 90.0f || _bot->IsInCombat())
+            {
+                if (CastSpell(DEMON_SPIKES))
+                {
+                    RecordAbilityUsage(DEMON_SPIKES);
+                    TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} activated Demon Spikes buff",
+                                 _bot->GetName());
+                }
+            }
+        }
+
+        // Apply Fiery Brand on primary target for damage reduction
+        Unit* target = _bot->GetVictim();
+        if (target && !target->HasAura(FIERY_BRAND) && _bot->GetHealthPct() < 80.0f && CanUseAbility(FIERY_BRAND))
+        {
+            if (CastSpell(target, FIERY_BRAND))
+            {
+                RecordAbilityUsage(FIERY_BRAND);
+                TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} applied Fiery Brand debuff",
+                             _bot->GetName());
+            }
+        }
+    }
 }
 
 void DemonHunterAI::UpdateCooldowns(uint32 diff)

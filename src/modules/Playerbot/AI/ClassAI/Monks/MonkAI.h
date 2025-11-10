@@ -404,13 +404,69 @@ private:
             uint32 priority = 100;
             float healthPct = target->GetHealthPct();
 
+            // Critical health = highest priority
             if (healthPct < 20.0f) priority = 1000;
             else if (healthPct < 40.0f) priority = 500;
             else if (healthPct < 60.0f) priority = 200;
 
-            // Tank priority boost
-            if (target->GetTypeId() == TYPEID_PLAYER) {                Player* player = target->ToPlayer();                if (player) // TODO: Implement role detection
-                    priority += 50; // Generic player boost
+            // Role-based priority boost
+            if (target->GetTypeId() == TYPEID_PLAYER)
+            {
+                Player* player = target->ToPlayer();
+                if (player)
+                {
+                    // Detect role based on specialization
+                    ChrSpecialization spec = player->GetPrimarySpecialization();
+                    uint32 specId = static_cast<uint32>(spec);
+
+                    // Tank specs (highest priority after health)
+                    if (specId == 66 ||   // Protection Paladin
+                        specId == 73 ||   // Protection Warrior
+                        specId == 104 ||  // Guardian Druid
+                        specId == 250 ||  // Blood Death Knight
+                        specId == 268 ||  // Brewmaster Monk
+                        specId == 581)    // Vengeance Demon Hunter
+                    {
+                        priority += 200; // Tank priority boost
+                        TC_LOG_DEBUG("module.playerbot.monk", "Healing priority: {} is tank, priority boost +200",
+                                     player->GetName());
+                    }
+                    // Healer specs (second priority)
+                    else if (specId == 65 ||   // Holy Paladin
+                             specId == 256 ||  // Discipline Priest
+                             specId == 257 ||  // Holy Priest
+                             specId == 264 ||  // Restoration Shaman
+                             specId == 270 ||  // Mistweaver Monk
+                             specId == 105 ||  // Restoration Druid
+                             specId == 1468)   // Preservation Evoker
+                    {
+                        priority += 100; // Healer priority boost
+                        TC_LOG_DEBUG("module.playerbot.monk", "Healing priority: {} is healer, priority boost +100",
+                                     player->GetName());
+                    }
+                    // DPS specs (normal priority)
+                    else
+                    {
+                        priority += 50; // Generic DPS boost
+                    }
+
+                    // Additional priority for group leader
+                    if (player->GetGroup() && player->GetGroup()->IsLeader(player->GetGUID()))
+                    {
+                        priority += 75;
+                        TC_LOG_DEBUG("module.playerbot.monk", "Healing priority: {} is leader, priority boost +75",
+                                     player->GetName());
+                    }
+                }
+            }
+            // NPCs and pets get lower priority
+            else if (target->GetTypeId() == TYPEID_UNIT)
+            {
+                Creature* creature = target->ToCreature();
+                if (creature && creature->IsPet())
+                {
+                    priority -= 50; // Lower priority for pets
+                }
             }
 
             return priority;
