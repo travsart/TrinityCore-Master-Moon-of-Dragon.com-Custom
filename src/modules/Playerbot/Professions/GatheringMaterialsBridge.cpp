@@ -12,6 +12,8 @@
 #include "GatheringManager.h"
 #include "Player.h"
 #include "Log.h"
+#include "Session/BotSession.h"
+#include "AI/BotAI.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -445,9 +447,19 @@ GatheringManager* GatheringMaterialsBridge::GetGatheringManager(::Player* player
     if (!player)
         return nullptr;
 
-    // GatheringManager is typically managed by BotAI
-    // For now, return nullptr - would need BotAI integration
-    return nullptr;
+    // Get the player's session
+    WorldSession* session = player->GetSession();
+    if (!session || !session->IsBot())
+        return nullptr;
+
+    // Cast to BotSession and get BotAI
+    BotSession* botSession = static_cast<BotSession*>(session);
+    BotAI* ai = botSession->GetAI();
+    if (!ai)
+        return nullptr;
+
+    // Return the GatheringManager from BotAI
+    return ai->GetGatheringManager();
 }
 
 void GatheringMaterialsBridge::SynchronizeWithGatheringManager(::Player* player)
