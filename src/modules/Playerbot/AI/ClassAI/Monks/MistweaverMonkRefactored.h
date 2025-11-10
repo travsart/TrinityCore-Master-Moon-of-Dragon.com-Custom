@@ -21,6 +21,9 @@
 #include "Group.h"
 #include "Log.h"
 #include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -217,6 +220,10 @@ public:
     {
         // Initialize mana resources
         this->_resource.Initialize(bot);
+
+        // Phase 5: Initialize decision systems
+        InitializeMistweaverMechanics();
+
         TC_LOG_DEBUG("playerbot", "MistweaverMonkRefactored initialized for {}", bot->GetName());
     }
 
@@ -525,7 +532,313 @@ private:
         return bot::ai::HealingTargetSelector::SelectTarget(this->GetBot(), 40.0f, 95.0f);
     }
 
-    
+    // ========================================================================
+    // PHASE 5: DECISION SYSTEM INTEGRATION
+    // ========================================================================
+
+    void InitializeMistweaverMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY: Major healing cooldowns
+            queue->RegisterSpell(REVIVAL, SpellPriority::EMERGENCY, SpellCategory::HEALING);
+            queue->AddCondition(REVIVAL, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                uint32 low = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) low++;
+                return low >= 3;
+            }, "3+ allies < 50% HP (instant raid heal, 3min CD)");
+
+            queue->RegisterSpell(LIFE_COCOON, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(LIFE_COCOON, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) if (m && m->GetHealthPct() < 30.0f) return true;
+                return false;
+            }, "Ally < 30% HP (absorb shield, 2min CD)");
+
+            // CRITICAL: Major healing spells
+            queue->RegisterSpell(INVOKE_YULON, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(INVOKE_YULON, [this](Player* bot, Unit*) {
+                if (!bot->HasSpell(INVOKE_YULON)) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 70.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 70% HP (celestial, 3min CD)");
+
+            queue->RegisterSpell(ESSENCE_FONT, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(ESSENCE_FONT, [this](Player* bot, Unit*) {
+                if (!bot || bot->GetPowerPct(POWER_MANA) < 10.0f) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 85.0f) injured++;
+                return injured >= 4;
+            }, "4+ allies < 85% HP, 5% mana (AoE HoT, 12s CD)");
+
+            // HIGH: Core HoT maintenance
+            queue->RegisterSpell(RENEWING_MIST, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->AddCondition(RENEWING_MIST, [this](Player*, Unit*) {
+                uint32 active = this->_renewingMistTracker.GetActiveCount();
+                auto group = this->GetGroupMembers();
+                return active < group.size() && active < 3;
+            }, "< 3 active (bouncing HoT, 8.5s CD, 2 charges)");
+
+            queue->RegisterSpell(ENVELOPING_MIST, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->AddCondition(ENVELOPING_MIST, [this](Player* bot, Unit*) {
+                if (!bot || bot->GetPowerPct(POWER_MANA) < 10.0f) return false;
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) {
+                    if (m && m->GetHealthPct() < 65.0f && !m->HasAura(ENVELOPING_MIST))
+                        return true;
+                }
+                return false;
+            }, "Ally < 65% HP without HoT (6% mana)");
+
+            queue->RegisterSpell(VIVIFY, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->AddCondition(VIVIFY, [this](Player* bot, Unit*) {
+                if (!bot || bot->GetPowerPct(POWER_MANA) < 10.0f) return false;
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) if (m && m->GetHealthPct() < 75.0f) return true;
+                return false;
+            }, "Ally < 75% HP (smart cleave heal, 5% mana)");
+
+            // MEDIUM: Soothing Mist channel
+            queue->RegisterSpell(SOOTHING_MIST, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->AddCondition(SOOTHING_MIST, [this](Player*, Unit*) {
+                if (this->_soothingMistTracker.IsChanneling()) return false;
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) return true;
+                return false;
+            }, "Ally < 80% HP, not channeling (enables instant Vivify)");
+
+            queue->RegisterSpell(THUNDER_FOCUS_TEA, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(THUNDER_FOCUS_TEA, [this](Player*, Unit*) {
+                return !this->_thunderFocusTeaActive;
+            }, "Not active (empower next spell, 30s CD)");
+
+            // LOW: AoE healing
+            queue->RegisterSpell(REFRESHING_JADE_WIND, SpellPriority::LOW, SpellCategory::HEALING);
+            queue->AddCondition(REFRESHING_JADE_WIND, [this](Player* bot, Unit*) {
+                if (!bot || !bot->HasSpell(REFRESHING_JADE_WIND) || bot->GetPowerPct(POWER_MANA) < 25.0f) return false;
+                auto group = this->GetGroupMembers();
+                uint32 stacked = 0;
+                for (auto* m : group)
+                    if (m && m->GetHealthPct() < 90.0f && m->GetDistance(bot) <= 10.0f)
+                        stacked++;
+                return stacked >= 3;
+            }, "3+ stacked allies < 90% HP (AoE HoT, 25% mana)");
+
+            queue->RegisterSpell(CHI_BURST_MIST, SpellPriority::LOW, SpellCategory::HEALING);
+            queue->AddCondition(CHI_BURST_MIST, [this](Player* bot, Unit*) {
+                if (!bot || !bot->HasSpell(CHI_BURST_MIST)) return false;
+                auto group = this->GetGroupMembers();
+                uint32 injured = 0;
+                for (auto* m : group) if (m && m->GetHealthPct() < 85.0f) injured++;
+                return injured >= 3;
+            }, "3+ allies < 85% HP (AoE line heal, 30s CD)");
+
+            // UTILITY: Defensive and mana
+            queue->RegisterSpell(FORTIFYING_BREW_MIST, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(FORTIFYING_BREW_MIST, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 40.0f;
+            }, "HP < 40% (20% DR, 6min CD)");
+
+            queue->RegisterSpell(DIFFUSE_MAGIC_MIST, SpellPriority::HIGH, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DIFFUSE_MAGIC_MIST, [](Player* bot, Unit*) {
+                return bot && bot->GetHealthPct() < 50.0f;
+            }, "HP < 50% (magic immunity, 1.5min CD)");
+
+            queue->RegisterSpell(MANA_TEA, SpellPriority::LOW, SpellCategory::UTILITY);
+            queue->AddCondition(MANA_TEA, [](Player* bot, Unit*) {
+                return bot && bot->HasSpell(MANA_TEA) && bot->GetPowerPct(POWER_MANA) < 50.0f;
+            }, "Mana < 50% (channel regen)");
+
+            queue->RegisterSpell(DETOX_MIST, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+            queue->AddCondition(DETOX_MIST, [this](Player*, Unit*) {
+                auto group = this->GetGroupMembers();
+                for (auto* m : group) {
+                    if (m && (m->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE) ||
+                               m->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED)))
+                        return true;
+                }
+                return false;
+            }, "Ally has poison/disease (dispel)");
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Mistweaver Monk Healing", {
+                // Tier 1: Emergency Healing
+                Sequence("Emergency Healing", {
+                    Condition("3+ critical", [this](Player*) {
+                        auto group = this->GetGroupMembers();
+                        uint32 low = 0;
+                        for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) low++;
+                        return low >= 3;
+                    }),
+                    Selector("Use emergency", {
+                        Sequence("Revival", {
+                            Action("Cast Revival", [this](Player* bot) {
+                                if (this->CanCastSpell(REVIVAL, bot)) {
+                                    this->CastSpell(bot, REVIVAL);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Life Cocoon", {
+                            Condition("Ally < 30%", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) if (m && m->GetHealthPct() < 30.0f) return true;
+                                return false;
+                            }),
+                            Action("Cast Life Cocoon", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 30.0f && this->CanCastSpell(LIFE_COCOON, m)) {
+                                        this->CastSpell(m, LIFE_COCOON);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 2: Major Cooldowns
+                Sequence("Major Cooldowns", {
+                    Condition("3+ injured", [this](Player*) {
+                        auto group = this->GetGroupMembers();
+                        uint32 injured = 0;
+                        for (auto* m : group) if (m && m->GetHealthPct() < 70.0f) injured++;
+                        return injured >= 3;
+                    }),
+                    Selector("Use cooldowns", {
+                        Sequence("Invoke Yu'lon", {
+                            Condition("Has spell", [this](Player* bot) {
+                                return bot->HasSpell(INVOKE_YULON);
+                            }),
+                            Action("Cast Yu'lon", [this](Player* bot) {
+                                if (this->CanCastSpell(INVOKE_YULON, bot)) {
+                                    this->CastSpell(bot, INVOKE_YULON);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Essence Font", {
+                            Condition("4+ injured", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                uint32 injured = 0;
+                                for (auto* m : group) if (m && m->GetHealthPct() < 85.0f) injured++;
+                                return injured >= 4;
+                            }),
+                            Condition("Has mana", [this](Player* bot) {
+                                return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
+                            }),
+                            Action("Cast Essence Font", [this](Player* bot) {
+                                Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
+                                if (target && this->CanCastSpell(ESSENCE_FONT, target)) {
+                                    this->CastSpell(target, ESSENCE_FONT);
+                                    this->_lastEssenceFontTime = getMSTime();
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 3: HoT Maintenance
+                Sequence("Maintain HoTs", {
+                    Selector("Apply HoTs", {
+                        Sequence("Renewing Mist", {
+                            Condition("< 3 active", [this](Player*) {
+                                uint32 active = this->_renewingMistTracker.GetActiveCount();
+                                auto group = this->GetGroupMembers();
+                                return active < group.size() && active < 3;
+                            }),
+                            Action("Cast Renewing Mist", [this](Player*) {
+                                Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
+                                if (target && this->CanCastSpell(RENEWING_MIST, target)) {
+                                    this->CastSpell(target, RENEWING_MIST);
+                                    this->_renewingMistTracker.AddTarget(target->GetGUID());
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Enveloping Mist", {
+                            Condition("Has mana", [this](Player* bot) {
+                                return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
+                            }),
+                            Action("Cast Enveloping Mist", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) {
+                                    if (m && m->GetHealthPct() < 65.0f && !m->HasAura(ENVELOPING_MIST)) {
+                                        if (this->CanCastSpell(ENVELOPING_MIST, m)) {
+                                            this->CastSpell(m, ENVELOPING_MIST);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                                    }
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                }),
+
+                // Tier 4: Direct Healing
+                Sequence("Direct Healing", {
+                    Condition("Has mana", [this](Player* bot) {
+                        return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
+                    }),
+                    Selector("Cast heals", {
+                        Sequence("Vivify", {
+                            Condition("Ally < 75%", [this](Player*) {
+                                auto group = this->GetGroupMembers();
+                                for (auto* m : group) if (m && m->GetHealthPct() < 75.0f) return true;
+                                return false;
+                            }),
+                            Action("Cast Vivify", [this](Player*) {
+                                Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
+                                if (target && this->CanCastSpell(VIVIFY, target)) {
+                                    this->CastSpell(target, VIVIFY);
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        }),
+                        Sequence("Soothing Mist", {
+                            Condition("Not channeling", [this](Player*) {
+                                return !this->_soothingMistTracker.IsChanneling();
+                            }),
+                            Action("Cast Soothing Mist", [this](Player*) {
+                                Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
+                                if (target && this->CanCastSpell(SOOTHING_MIST, target)) {
+                                    this->CastSpell(target, SOOTHING_MIST);
+                                    this->_soothingMistTracker.StartChannel(target->GetGUID());
+                                    return NodeStatus::SUCCESS;
+                                }
+                                return NodeStatus::FAILURE;
+                            })
+                        })
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+        }
+    }
 
 private:
     MistweaverReNewingMistTracker _renewingMistTracker;
