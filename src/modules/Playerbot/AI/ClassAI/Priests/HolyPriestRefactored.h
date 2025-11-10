@@ -27,6 +27,11 @@
 #include <unordered_map>
 #include "Log.h"
 
+// Phase 5 Integration: Decision Systems
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
+#include "../../BotAI.h"
+
 namespace Playerbot
 {
 
@@ -199,8 +204,8 @@ public:
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
-        
-        
+
+
         , _lastSalvationTime(0)
         , _lastSymbolOfHopeTime(0)
         , _cooldowns()
@@ -213,6 +218,10 @@ public:
             {HOLY_GUARDIAN_SPIRIT, 180000, 1},
             {HOLY_SYMBOL_OF_HOPE, 300000, 1}
         });
+
+        // Initialize Phase 5 systems
+        InitializeHolyMechanics();
+
         TC_LOG_DEBUG("playerbot", "HolyPriestRefactored initialized for {}", bot->GetName());
     }
 
@@ -709,8 +718,165 @@ private:
         return false;
     }
 
+    void InitializeHolyMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai)
+            return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue)
+        {
+            // EMERGENCY
+            queue->RegisterSpell(HOLY_GUARDIAN_SPIRIT, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(HOLY_GUARDIAN_SPIRIT, [this](Player* bot, Unit* target) {
+                return target && target->GetHealthPct() < 25.0f && this->IsTankRole(target);
+            }, "Tank < 25%");
+
+            queue->RegisterSpell(HOLY_DESPERATE_PRAYER, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(HOLY_DESPERATE_PRAYER, [](Player* bot, Unit*) {
+                return bot->GetHealthPct() < 30.0f;
+            }, "Self < 30%");
+
+            queue->RegisterSpell(HOLY_HOLY_WORD_SALVATION, SpellPriority::EMERGENCY, SpellCategory::HEALING);
+
+            // CRITICAL
+            queue->RegisterSpell(HOLY_HOLY_WORD_SERENITY, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(HOLY_HOLY_WORD_SERENITY, [](Player* bot, Unit* target) {
+                return target && target->GetHealthPct() < 50.0f;
+            }, "Target < 50%");
+
+            queue->RegisterSpell(HOLY_FLASH_HEAL, SpellPriority::CRITICAL, SpellCategory::HEALING);
+            queue->AddCondition(HOLY_FLASH_HEAL, [](Player* bot, Unit* target) {
+                return target && target->GetHealthPct() < 60.0f;
+            }, "Target < 60%");
+
+            queue->RegisterSpell(HOLY_DIVINE_HYMN, SpellPriority::CRITICAL, SpellCategory::HEALING);
+
+            // HIGH
+            queue->RegisterSpell(HOLY_HOLY_WORD_SANCTIFY, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_PRAYER_OF_MENDING, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_RENEW, SpellPriority::HIGH, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_APOTHEOSIS, SpellPriority::HIGH, SpellCategory::OFFENSIVE);
+
+            // MEDIUM
+            queue->RegisterSpell(HOLY_CIRCLE_OF_HEALING, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_PRAYER_OF_HEALING, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_HEAL, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_DIVINE_STAR, SpellPriority::MEDIUM, SpellCategory::HEALING);
+            queue->RegisterSpell(HOLY_HALO, SpellPriority::MEDIUM, SpellCategory::HEALING);
+
+            // LOW
+            queue->RegisterSpell(HOLY_HOLY_FIRE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(HOLY_SMITE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->RegisterSpell(HOLY_PURIFY, SpellPriority::LOW, SpellCategory::UTILITY);
+
+            TC_LOG_INFO("module.playerbot", "✨ HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
+        }
+
+        auto* behaviorTree = ai->GetBehaviorTree();
+        if (behaviorTree)
+        {
+            auto root = Selector("Holy Priest Healer", {
+                Sequence("Emergency", {
+                    Condition("Critical", [](Player* bot, Unit*) {
+                        if (bot->GetHealthPct() < 30.0f) return true;
+                        Group* g = bot->GetGroup();
+                        if (!g) return false;
+                        for (GroupReference const& r : g->GetMembers())
+                            if (Player* m = r.GetSource())
+                                if (m->IsAlive() && m->GetHealthPct() < 30.0f) return true;
+                        return false;
+                    }),
+                    Selector("Response", {
+                        Action("Guardian Spirit", [this](Player* bot, Unit*) {
+                            Group* g = bot->GetGroup();
+                            if (!g) return NodeStatus::FAILURE;
+                            for (GroupReference const& r : g->GetMembers())
+                                if (Player* m = r.GetSource())
+                                    if (m->IsAlive() && m->GetHealthPct() < 25.0f && this->IsTankRole(m) &&
+                                        this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m)) {
+                                        this->CastSpell(m, HOLY_GUARDIAN_SPIRIT);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Flash Heal", [this](Player* bot, Unit*) {
+                            Group* g = bot->GetGroup();
+                            if (!g) return NodeStatus::FAILURE;
+                            for (GroupReference const& r : g->GetMembers())
+                                if (Player* m = r.GetSource())
+                                    if (m->IsAlive() && m->GetHealthPct() < 50.0f &&
+                                        this->CanCastSpell(HOLY_FLASH_HEAL, m)) {
+                                        this->CastSpell(m, HOLY_FLASH_HEAL);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                Sequence("HoT Maintenance", {
+                    Condition("Has group", [](Player* bot, Unit*) { return bot->GetGroup() != nullptr; }),
+                    Selector("HoT Priority", {
+                        Action("Prayer of Mending", [this](Player* bot, Unit*) {
+                            if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
+                                Group* g = bot->GetGroup();
+                                if (!g) return NodeStatus::FAILURE;
+                                for (GroupReference const& r : g->GetMembers())
+                                    if (Player* m = r.GetSource())
+                                        if (m->IsAlive() && m->GetHealthPct() < 95.0f &&
+                                            this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m)) {
+                                            this->CastSpell(m, HOLY_PRAYER_OF_MENDING);
+                                            this->_pomTracker.ApplyPoM(m->GetGUID(), 30000);
+                                            return NodeStatus::SUCCESS;
+                                        }
+                            }
+                            return NodeStatus::FAILURE;
+                        }),
+                        Action("Renew", [this](Player* bot, Unit*) {
+                            Group* g = bot->GetGroup();
+                            if (!g) return NodeStatus::FAILURE;
+                            for (GroupReference const& r : g->GetMembers())
+                                if (Player* m = r.GetSource())
+                                    if (m->IsAlive() && m->GetHealthPct() < 90.0f &&
+                                        this->_renewTracker.NeedsRenewRefresh(m->GetGUID()) &&
+                                        this->CanCastSpell(HOLY_RENEW, m)) {
+                                        this->CastSpell(m, HOLY_RENEW);
+                                        this->_renewTracker.ApplyRenew(m->GetGUID(), 15000);
+                                        return NodeStatus::SUCCESS;
+                                    }
+                            return NodeStatus::FAILURE;
+                        })
+                    })
+                }),
+
+                Sequence("Direct Healing", {
+                    Action("Heal", [this](Player* bot, Unit*) {
+                        Group* g = bot->GetGroup();
+                        if (!g) return NodeStatus::FAILURE;
+                        for (GroupReference const& r : g->GetMembers())
+                            if (Player* m = r.GetSource())
+                                if (m->IsAlive() && m->GetHealthPct() < 80.0f &&
+                                    this->CanCastSpell(HOLY_HEAL, m)) {
+                                    this->CastSpell(m, HOLY_HEAL);
+                                    return NodeStatus::SUCCESS;
+                                }
+                        return NodeStatus::FAILURE;
+                    })
+                })
+            });
+
+            behaviorTree->SetRoot(root);
+            TC_LOG_INFO("module.playerbot", "🌲 HOLY PRIEST: BehaviorTree initialized");
+        }
+    }
+
     // Member variables
-    HotTracker _renewTracker;
+    RenewTracker _renewTracker;
     HotTracker _pomTracker;
 
     bool _apotheosisActive;
