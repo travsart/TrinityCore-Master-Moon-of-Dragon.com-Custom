@@ -14,6 +14,8 @@
 #include "Item.h"
 #include "Bag.h"
 #include "Log.h"
+#include "ObjectMgr.h"
+#include "ItemTemplate.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -402,13 +404,79 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
     if (!player || !_auctionHouse)
         return false;
 
-    // In full implementation, search for specific auctions and buyout
-    // For now, this is a placeholder - actual purchase would use AuctionHouse::BuyoutAuction
+    // Get similar auctions for this item
+    std::vector<AuctionItem> auctions = _auctionHouse->GetSimilarAuctions(itemId, 50);
+    if (auctions.empty())
+    {
+        TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: No auctions found for item {}", itemId);
+        return false;
+    }
 
-    TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Purchased {} x {} for player {}",
-        quantity, itemId, player->GetName());
+    // Sort by price per item (lowest first)
+    std::sort(auctions.begin(), auctions.end(),
+        [](const AuctionItem& a, const AuctionItem& b) {
+            return a.pricePerItem < b.pricePerItem;
+        });
 
-    return true; // Simplified for now
+    uint32 totalBought = 0;
+    uint32 totalGoldSpent = 0;
+    std::vector<uint32> boughtAuctionIds;
+
+    for (const AuctionItem& auction : auctions)
+    {
+        if (totalBought >= quantity)
+            break;
+
+        // Skip if price too high
+        if (auction.buyoutPrice > 0)
+        {
+            uint32 pricePerUnit = auction.buyoutPrice / auction.stackCount;
+            if (pricePerUnit > maxPricePerUnit)
+                continue;
+        }
+        else
+        {
+            // No buyout, skip (we only use buyout for automation)
+            continue;
+        }
+
+        // Calculate how many we can buy from this auction
+        uint32 buyAmount = std::min(quantity - totalBought, auction.stackCount);
+        uint32 cost = (auction.buyoutPrice / auction.stackCount) * buyAmount;
+
+        // Check if player has enough gold
+        if (player->GetMoney() < totalGoldSpent + cost)
+        {
+            TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} insufficient gold for material purchase",
+                player->GetName());
+            break;
+        }
+
+        // Buyout the auction
+        if (_auctionHouse->BuyoutAuction(player, auction.auctionId))
+        {
+            totalBought += buyAmount;
+            totalGoldSpent += cost;
+            boughtAuctionIds.push_back(auction.auctionId);
+
+            TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Player {} bought {} x {} for {} gold (auction {})",
+                player->GetName(), buyAmount, itemId, cost, auction.auctionId);
+        }
+        else
+        {
+            TC_LOG_WARN("playerbots", "ProfessionAuctionBridge: Failed to buyout auction {} for player {}",
+                auction.auctionId, player->GetName());
+        }
+    }
+
+    if (totalBought > 0)
+    {
+        TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Player {} purchased total {} x {} for {} gold from {} auctions",
+            player->GetName(), totalBought, itemId, totalGoldSpent, boughtAuctionIds.size());
+        return true;
+    }
+
+    return false;
 }
 
 // ============================================================================
@@ -591,23 +659,120 @@ uint32 ProfessionAuctionBridge::CalculateMaterialCost(::Player* player, uint32 i
     if (!player || !_auctionHouse)
         return 0;
 
-    // In full implementation, get recipe from ProfessionManager
-    // and calculate sum of reagent market prices
-    return 0; // Simplified
+    // Search all production professions for recipe that creates this item
+    static const std::vector<ProfessionType> productionProfessions = {
+        ProfessionType::ALCHEMY,
+        ProfessionType::BLACKSMITHING,
+        ProfessionType::ENCHANTING,
+        ProfessionType::ENGINEERING,
+        ProfessionType::INSCRIPTION,
+        ProfessionType::JEWELCRAFTING,
+        ProfessionType::LEATHERWORKING,
+        ProfessionType::TAILORING
+    };
+
+    for (ProfessionType profession : productionProfessions)
+    {
+        // Get all recipes for this profession
+        std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
+
+        for (const RecipeInfo& recipe : recipes)
+        {
+            if (recipe.productItemId == itemId)
+            {
+                // Found the recipe! Calculate total material cost
+                uint32 totalCost = 0;
+
+                for (const RecipeInfo::Reagent& reagent : recipe.reagents)
+                {
+                    // Get market price for reagent
+                    uint32 reagentPrice = static_cast<uint32>(_auctionHouse->GetMarketPrice(reagent.itemId, reagent.quantity));
+                    totalCost += reagentPrice;
+                }
+
+                TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Calculated material cost for item {}: {} gold (from {} reagents)",
+                    itemId, totalCost, recipe.reagents.size());
+
+                return totalCost;
+            }
+        }
+    }
+
+    // No recipe found for this item - might be gathered or vendor-bought
+    TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: No recipe found for item {} (not a crafted item)",
+        itemId);
+
+    return 0;
 }
 
 bool ProfessionAuctionBridge::IsProfessionMaterial(uint32 itemId) const
 {
-    // In full implementation, check against profession material database
-    // For now, simplified logic
-    return true; // Assume all items could be materials
+    // Get item template to check class/subclass
+    ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
+    if (!itemTemplate)
+        return false;
+
+    // Check if item is a profession material based on item class
+    uint32 itemClass = itemTemplate->GetClass();
+    uint32 itemSubClass = itemTemplate->GetSubClass();
+
+    // Trade goods are profession materials
+    if (itemClass == ITEM_CLASS_TRADE_GOODS)
+        return true;
+
+    // Reagents are profession materials
+    if (itemClass == ITEM_CLASS_REAGENT)
+        return true;
+
+    // Some consumables are used for professions (e.g., vials, threads)
+    if (itemClass == ITEM_CLASS_CONSUMABLE)
+    {
+        // Check specific subclasses that are profession-related
+        // ITEM_SUBCLASS_CONSUMABLE (various crafting reagents like thread, vials, etc.)
+        return true; // Conservative: include all consumables
+    }
+
+    // Quest items sometimes used in profession quests
+    if (itemClass == ITEM_CLASS_QUEST)
+        return false; // Don't auto-sell quest items
+
+    // Not a profession material
+    return false;
 }
 
 bool ProfessionAuctionBridge::IsCraftedItem(uint32 itemId, ProfessionType& outProfession) const
 {
-    // In full implementation, check against crafted item database
+    // Search all production professions for recipe that creates this item
+    static const std::vector<ProfessionType> productionProfessions = {
+        ProfessionType::ALCHEMY,
+        ProfessionType::BLACKSMITHING,
+        ProfessionType::ENCHANTING,
+        ProfessionType::ENGINEERING,
+        ProfessionType::INSCRIPTION,
+        ProfessionType::JEWELCRAFTING,
+        ProfessionType::LEATHERWORKING,
+        ProfessionType::TAILORING,
+        ProfessionType::COOKING // Cooking also creates items
+    };
+
+    for (ProfessionType profession : productionProfessions)
+    {
+        // Get all recipes for this profession
+        std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
+
+        for (const RecipeInfo& recipe : recipes)
+        {
+            if (recipe.productItemId == itemId)
+            {
+                outProfession = profession;
+                return true;
+            }
+        }
+    }
+
+    // Not a crafted item
     outProfession = ProfessionType::NONE;
-    return false; // Simplified
+    return false;
 }
 
 bool ProfessionAuctionBridge::CanAccessAuctionHouse(::Player* player) const
@@ -615,9 +780,56 @@ bool ProfessionAuctionBridge::CanAccessAuctionHouse(::Player* player) const
     if (!player)
         return false;
 
-    // Check if player is near auction house
-    // In full implementation, verify proximity to auctioneer NPC
-    return true; // Simplified
+    // For automated bot trading, we'll use a relaxed check:
+    // 1. Player must be in a city (safe zone)
+    // 2. Or have recently interacted with auction house
+
+    // Check if player is in a rest area (cities have rest areas)
+    if (player->HasRestFlag(REST_FLAG_IN_CITY))
+    {
+        TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} has access (in city)",
+            player->GetName());
+        return true;
+    }
+
+    // Alternative: Check if player is in a zone with an auction house
+    // Major cities with auction houses:
+    // - Stormwind, Ironforge, Darnassus (Alliance)
+    // - Orgrimmar, Undercity, Thunder Bluff (Horde)
+    // - Neutral: Booty Bay, Gadgetzan, Everlook, etc.
+    uint32 zoneId = player->GetZoneId();
+
+    // Alliance cities
+    if (zoneId == 1519 ||  // Stormwind
+        zoneId == 1537 ||  // Ironforge
+        zoneId == 1657)    // Darnassus
+    {
+        return true;
+    }
+
+    // Horde cities
+    if (zoneId == 1637 ||  // Orgrimmar
+        zoneId == 1497 ||  // Undercity
+        zoneId == 1638)    // Thunder Bluff
+    {
+        return true;
+    }
+
+    // Neutral auction houses
+    if (zoneId == 33 ||    // Booty Bay
+        zoneId == 1938 ||  // Gadgetzan
+        zoneId == 2057 ||  // Everlook
+        zoneId == 3487)    // Shattrath
+    {
+        return true;
+    }
+
+    // For bots, allow access from anywhere (they can teleport/travel)
+    // In a real implementation, you might want to trigger bot travel to AH
+    TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} not near auction house (zone {}), allowing anyway for automation",
+        player->GetName(), zoneId);
+
+    return true; // Allow for automation purposes
 }
 
 } // namespace Playerbot
