@@ -19,6 +19,9 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
+#include "../Decision/ActionPriorityQueue.h"
+#include "../Decision/BehaviorTree.h"
+#include "../BotAI.h"
 
 namespace Playerbot
 {
@@ -230,6 +233,7 @@ public:
     {        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
         TC_LOG_DEBUG("playerbot", "WindwalkerMonkRefactored initialized for {}", bot->GetName());
+        InitializeWindwalkerMechanics();
     }
 
     void UpdateRotation(::Unit* target) override    {
@@ -530,7 +534,47 @@ private:
         this->_resource.chi = (this->_resource.chi > amount) ? this->_resource.chi - amount : 0;
     }
 
-    
+    void InitializeWindwalkerMechanics()
+    {
+        using namespace bot::ai;
+        using namespace bot::ai::BehaviorTreeBuilder;
+        BotAI* ai = this->GetBot()->GetBotAI();
+        if (!ai) return;
+
+        auto* queue = ai->GetActionPriorityQueue();
+        if (queue) {
+            queue->RegisterSpell(WW_TOUCH_OF_KARMA, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(WW_TOUCH_OF_KARMA, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+
+            queue->RegisterSpell(WW_STORM_EARTH_FIRE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+            queue->AddCondition(WW_STORM_EARTH_FIRE, [](Player*, Unit* target) { return target != nullptr; }, "Burst CD");
+
+            queue->RegisterSpell(WW_RISING_SUN_KICK, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_RISING_SUN_KICK, [this](Player*, Unit* target) { return target && this->_resource.chi >= 2; }, "2 chi (priority)");
+
+            queue->RegisterSpell(WW_FISTS_OF_FURY, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(WW_FISTS_OF_FURY, [this](Player*, Unit* target) { return target && this->_resource.chi >= 3; }, "3 chi (channel)");
+
+            queue->RegisterSpell(WW_BLACKOUT_KICK, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_BLACKOUT_KICK, [this](Player*, Unit* target) { return target && this->_resource.chi >= 1; }, "1 chi (spender)");
+
+            queue->RegisterSpell(WW_TIGER_PALM, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(WW_TIGER_PALM, [this](Player*, Unit* target) { return target && this->_resource.energy >= 50; }, "50 energy (builder)");
+        }
+
+        auto* tree = ai->GetBehaviorTree();
+        if (tree) {
+            auto root = Selector("Windwalker Monk", {
+                Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Action("SEF", [this](Player* bot) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(bot, WW_STORM_EARTH_FIRE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Chi Spender", { Condition("2+ chi", [this](Player*) { return this->_resource.chi >= 2; }),
+                    Action("RSK/FoF", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(t, WW_RISING_SUN_KICK); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Builder", { Condition("50+ energy", [this](Player*) { return this->_resource.energy >= 50; }),
+                    Action("Tiger Palm", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(t, WW_TIGER_PALM); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+            });
+            tree->SetRoot(root);
+        }
+    }
 
 private:
     WindwalkerHitComboTracker _hitComboTracker;
