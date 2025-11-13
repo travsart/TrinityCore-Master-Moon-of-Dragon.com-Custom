@@ -428,7 +428,6 @@ namespace Playerbot
 
     uint8 TargetScanner::GetTargetPriority(Unit* target) const
     {
-    {
         if (!target || !target->IsAlive())
             return false;
 

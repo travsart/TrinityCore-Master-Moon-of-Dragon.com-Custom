@@ -91,7 +91,6 @@ public:
     using Base::CanUseAbility;
     explicit ArmsWarriorRefactored(Player* bot)
         : MeleeDpsSpecialization<RageResource>(bot)
-        
         , _deepWoundsTracking()
         , _colossusSmashActive(false)
         , _overpowerReady(false)

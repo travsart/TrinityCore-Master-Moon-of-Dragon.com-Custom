@@ -472,7 +472,7 @@ bool WarlockAI::HandlePetManagement()
     // Update pet status
     _petActive = true;
     _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());    // Heal pet if needed
-    if (_petHealthPercent < 50)
+    if (_petHealthPercent.load() < 50)
     {
         // Health Funnel
         if (bot->HasSpell(HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))        {
@@ -782,12 +782,12 @@ void WarlockAI::HandleSoulShardManagement()
 
     // Update soul shard count
     _currentSoulShards = bot->GetItemCount(6265);    // Track soul shard history for optimization
-    _soulShardHistory.push(_currentSoulShards);
+    _soulShardHistory.push(_currentSoulShards.load());
     if (_soulShardHistory.size() > 10)
         _soulShardHistory.pop();
 
     // Determine if we should conserve shards
-    bool shouldConserve = (_currentSoulShards < 3);
+    bool shouldConserve = (_currentSoulShards.load() < 3);
 
     if (shouldConserve)
     {
@@ -797,7 +797,7 @@ void WarlockAI::HandleSoulShardManagement()
     }
 
     // Create healthstone if we don't have one
-    if (!HasHealthstone() && _currentSoulShards > 5)
+    if (!HasHealthstone() && _currentSoulShards.load() > 5)
     {
         if (bot->HasSpell(CREATE_HEALTHSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_HEALTHSTONE))
         {
@@ -806,7 +806,7 @@ void WarlockAI::HandleSoulShardManagement()
         }
     }
 
-    // Create soulstone if needed    if (!HasSoulstone() && _currentSoulShards > 3)
+    // Create soulstone if needed    if (!HasSoulstone() && _currentSoulShards.load() > 3)
     {        if (bot->HasSpell(CREATE_SOULSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_SOULSTONE))
         {
 
@@ -1161,7 +1161,7 @@ void WarlockAI::UpdateCombatMetrics()
     {
         _warlockMetrics.manaEfficiency = static_cast<float>(_warlockMetrics.damageDealt) / _warlockMetrics.manaSpent;
     }    // Update pet uptime
-    if (_petActive)
+    if (_petActive.load())
     {        auto now = std::chrono::steady_clock::now();
         auto combatDuration = std::chrono::duration_cast<std::chrono::seconds>(now - _warlockMetrics.combatStartTime).count();        if (combatDuration > 0)
         {
@@ -1397,7 +1397,7 @@ void WarlockAI::UpdateWarlockBuffs()
 
     // Soul Link for Demonology (266)
     if (static_cast<uint32>(bot->GetPrimarySpecialization()) == 266)    {
-        if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive)
+        if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive.load())
         {
 
             bot->CastSpell(bot, SOUL_LINK, false);
@@ -1426,7 +1426,7 @@ void WarlockAI::UpdatePetCheck()
     Pet* pet = bot->GetPet();
     _petActive = (pet && pet->IsAlive());
 
-    if (_petActive && pet)
+    if (_petActive.load() && pet)
     {
         _petHealthPercent = static_cast<uint32>(pet->GetHealthPct());
     }
@@ -1445,7 +1445,7 @@ void WarlockAI::UpdateSoulShardCheck()
     _currentSoulShards = bot->GetItemCount(6265);
 
     // Track soul shard history for optimization
-    _soulShardHistory.push(_currentSoulShards);
+    _soulShardHistory.push(_currentSoulShards.load());
     if (_soulShardHistory.size() > 10)
         _soulShardHistory.pop();
 }
@@ -1502,7 +1502,7 @@ void WarlockAI::ManageLifeTapTiming()
 
 void WarlockAI::OptimizePetPositioning()
 {
-    if (!_petActive || !_positionManager)
+    if (!_petActive.load() || !_positionManager)
         return;
 
     Player* bot = GetBot();
@@ -1548,7 +1548,7 @@ void WarlockAI::OptimizePetPositioning()
 
 void WarlockAI::HandlePetSpecialAbilities()
 {
-    if (!_petActive)
+    if (!_petActive.load())
         return;
 
     Player* bot = GetBot();
@@ -1632,7 +1632,7 @@ void WarlockAI::ManageWarlockCooldowns(){
         return;
 
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());    // Demonic Empowerment for Demonology (266)
-    if (static_cast<uint32>(spec) == 266 && _petActive)
+    if (static_cast<uint32>(spec) == 266 && _petActive.load())
     {
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
@@ -1665,7 +1665,7 @@ void WarlockAI::OptimizeSoulShardUsage()
     std::lock_guard lock(_soulShardMutex);
 
     // Determine conservation mode based on shard count
-    bool shouldConserve = (_currentSoulShards < 5);
+    bool shouldConserve = (_currentSoulShards.load() < 5);
 
     if (shouldConserve)
     {
