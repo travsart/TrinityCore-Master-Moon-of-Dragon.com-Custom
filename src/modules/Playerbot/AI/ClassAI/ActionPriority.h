@@ -16,6 +16,7 @@
 #include <mutex>
 #include <memory>
 #include <vector>
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -29,6 +29,7 @@
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "UnitAI.h"
 #include <unordered_map>  // For distance map in PrioritizeLootTargets
+#include "GameTime.h"
 
 namespace Playerbot
 {

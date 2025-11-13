@@ -22,6 +22,7 @@
 #include "ObjectMgr.h"
 #include <algorithm>
 #include <random>
+#include "GameTime.h"
 
 namespace Playerbot
 {

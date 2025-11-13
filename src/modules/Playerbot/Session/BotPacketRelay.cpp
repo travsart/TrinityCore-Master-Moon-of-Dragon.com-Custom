@@ -66,6 +66,7 @@
 #include "Log.h"
 #include "Chat.h"
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot {
 

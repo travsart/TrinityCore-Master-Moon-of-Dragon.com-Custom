@@ -26,6 +26,7 @@
 #include "../../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../../BotAI.h"
 #include "UnitAI.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

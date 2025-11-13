@@ -26,6 +26,7 @@
 #include "Core/Services/BotNpcLocationService.h"
 #include <algorithm>
 #include <cmath>
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -30,6 +30,7 @@
 #include "../Decision/ActionPriorityQueue.h"
 #include "../Decision/BehaviorTree.h"
 #include "../BotAI.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

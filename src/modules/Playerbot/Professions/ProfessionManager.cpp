@@ -17,6 +17,7 @@
 #include "DB2Stores.h"
 #include "SkillDiscovery.h"
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot
 {

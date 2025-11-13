@@ -17,6 +17,7 @@
 #include "ObjectMgr.h"
 #include "ItemTemplate.h"
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot
 {

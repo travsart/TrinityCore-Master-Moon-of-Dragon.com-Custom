@@ -12,6 +12,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ItemTemplate.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

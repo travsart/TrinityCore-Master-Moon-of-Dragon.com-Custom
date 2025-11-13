@@ -12,6 +12,7 @@
 #include "Timer.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
+#include "GameTime.h"
 
 // Forward declarations
 class Player;
