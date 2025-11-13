@@ -28,15 +28,6 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
     {
         // Bot is already moving via MovePoint - check if it's the same destination
         float distToDestination = bot->GetExactDist2d(destination.GetPositionX(), destination.GetPositionY());
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
         if (distToDestination > minDistanceChange)
         {
             // Different destination - issue new movement
@@ -63,11 +54,6 @@ if (!bot)
 }
 
 bool BotMovementUtil::MoveToTarget(Player* bot, WorldObject* target, uint32 pointId, float minDistanceChange)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     if (!bot || !target)
         return false;

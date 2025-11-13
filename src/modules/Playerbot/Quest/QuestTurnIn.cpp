@@ -64,11 +64,6 @@ bool QuestTurnIn::TurnInQuest(uint32 questId, Player* bot)
         return false;
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
-    if (!quest)
-    {
-        TC_LOG_ERROR("playerbot", "QuestTurnIn::TurnInQuest - Quest %u not found", questId);
-        return false;
-    }
 
     // Validate quest is ready for turn-in
     if (!IsQuestReadyForTurnIn(questId, bot))
@@ -798,11 +793,6 @@ void QuestTurnIn::HandleTurnInDialog(Player* bot, uint32 questId)
     // Select optimal reward
     RewardSelectionStrategy strategy = GetRewardSelectionStrategy(bot->GetGUID().GetCounter());
     uint32 rewardIndex = SelectOptimalReward(turnInIt->availableRewards, bot, strategy);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
 
     // Complete the turn-in
     SelectQuestReward(bot, questId, rewardIndex);
@@ -902,11 +892,6 @@ TurnInStrategy QuestTurnIn::GetTurnInStrategy(uint32 botGuid)
 /**
  * @brief Set reward selection strategy for bot
  * @param botGuid Bot GUID
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
  * @param strategy Reward selection strategy
  */
 void QuestTurnIn::SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy)

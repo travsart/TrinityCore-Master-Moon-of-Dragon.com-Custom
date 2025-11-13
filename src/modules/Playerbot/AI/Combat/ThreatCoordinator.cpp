@@ -302,11 +302,6 @@ bool ThreatCoordinator::ExecuteTaunt(ObjectGuid tankGuid, Unit* target)
         auto result = SpellPacketBuilder::BuildCastSpellPacket(
 
             dynamic_cast<Player*>(tank), tauntSpell, target, options);
-if (!tank)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetName");
-    return nullptr;
-}
         if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
 
         {
@@ -317,11 +312,6 @@ if (!tank)
                          tank->GetName(), tauntSpell, target->GetName());
 
         }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method HasSpell");
-    return nullptr;
-}
 
         _metrics.tauntExecutions++;
 
@@ -371,23 +361,8 @@ bool ThreatCoordinator::ExecuteThreatReduction(ObjectGuid botGuid, float reducti
 
 
                 auto result = SpellPacketBuilder::BuildCastSpellPacket(
-if (!from)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetClass");
-    return nullptr;
-}
 
                     dynamic_cast<Player*>(bot), ability.spellId, bot, options);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-if (!from)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method HasSpell");
-    return;
-}
-}
                 if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
 
                 {
@@ -413,11 +388,6 @@ if (!from)
 }
 
 bool ThreatCoordinator::ExecuteThreatTransfer(ObjectGuid fromBot, ObjectGuid toBot, Unit* target)
-if (!from)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetName");
-    return;
-}
 {
     if (!target)
         return false;
@@ -456,11 +426,6 @@ if (!from)
                 auto result = SpellPacketBuilder::BuildCastSpellPacket(
 
                     dynamic_cast<Player*>(from), ability.spellId, to, options);
-if (!from)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: from in method GetName");
-    return nullptr;
-}
                 if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
 
                 {
@@ -538,11 +503,6 @@ void ThreatCoordinator::ProtectHealer(ObjectGuid healerGuid, Unit* attacker)
         return;
 
     std::lock_guard lock(_coordinatorMutex);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-    return nullptr;
-}
 
     // Priority 1: Tank taunt
     HandleEmergencyThreat(attacker);
@@ -569,20 +529,10 @@ GroupThreatStatus ThreatCoordinator::GetGroupThreatStatus() const
     std::lock_guard lock(_coordinatorMutex);
     return _groupStatus;
 }
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-    return;
-}
 bool ThreatCoordinator::IsGroupThreatStable() const
 {
     std::lock_guard lock(_coordinatorMutex);
     return _groupStatus.state == ThreatState::STABLE;
-if (!victimPlayer)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victimPlayer in method GetGUID");
-    return;
-}
 }
 
 float ThreatCoordinator::GetGroupThreatStability() const
@@ -754,11 +704,6 @@ void ThreatCoordinator::GenerateThreatResponses()
                     action.abilityType = ThreatAbilityType::TAUNT;
                     action.executeTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
                     action.priority = 2;
-if (!victim)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method IsPlayer");
-    return;
-}
 
                     QueueThreatResponse(action);
                 }

@@ -360,11 +360,6 @@ bool GroupEventBus::PublishEvent(GroupEvent const& event)
 
 bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> const& types)
 {
-    if (!subscriber)
-    {
-        TC_LOG_ERROR("module.playerbot.group", "GroupEventBus: Null subscriber attempted to subscribe");
-        return false;
-    }
 
     std::lock_guard lock(_subscriberMutex);
 
@@ -399,11 +394,6 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> con
 
 bool GroupEventBus::SubscribeAll(BotAI* subscriber)
 {
-    if (!subscriber)
-    {
-        TC_LOG_ERROR("module.playerbot.group", "GroupEventBus: Null subscriber attempted to subscribe to all");
-        return false;
-    }
 
     std::lock_guard lock(_subscriberMutex);
 

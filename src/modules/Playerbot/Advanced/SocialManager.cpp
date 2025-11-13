@@ -405,11 +405,6 @@ bool SocialManager::RespondWithEmote(Player* trigger, EmoteType triggerEmote)
     return PerformEmote(response);
 }
 SocialManager::EmoteType SocialManager::SelectContextualEmote(std::string const& context)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-    return nullptr;
-}
 {
     if (context.find("victory") != std::string::npos || context.find("win") != std::string::npos)
         return EmoteType::VICTORY;
@@ -489,11 +484,6 @@ bool SocialManager::RemoveFriend(ObjectGuid playerGuid)
 bool SocialManager::IsFriend(ObjectGuid playerGuid) const
 {
     return m_friends.find(playerGuid) != m_friends.end();
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return;
-}
 }
 
 std::vector<SocialManager::FriendInfo> SocialManager::GetFriends() const
@@ -585,11 +575,6 @@ bool SocialManager::UnignorePlayer(ObjectGuid playerGuid)
         return false;
 
     PlayerSocial* social = m_bot->GetSocial();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
     if (!social)
         return false;
 
@@ -642,11 +627,6 @@ bool SocialManager::LeaveGuild()
 }
 
 bool SocialManager::InviteToGuild(Player* target)
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGuildId");
-        return nullptr;
-    }
 {
     if (!m_bot || !target || !m_guild)
         return false;
@@ -751,11 +731,6 @@ void SocialManager::AcceptGuildInvite(Player* inviter)
 }
 
 bool SocialManager::ShouldAcceptGuildInvite(Player* inviter) const
-        if (!inviter)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGUID");
-            return nullptr;
-        }
 {
     if (!m_bot || !inviter)
         return false;
@@ -829,11 +804,6 @@ std::vector<SocialManager::SocialReputation> SocialManager::GetTopFriendlyPlayer
 // RESPONSE TEMPLATES
 // ============================================================================
 void SocialManager::LoadResponseTemplates()
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     // Pre-defined response templates for common scenarios
     AddResponseTemplate({

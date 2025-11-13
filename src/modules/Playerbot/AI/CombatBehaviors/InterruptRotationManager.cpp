@@ -237,11 +237,6 @@ bool InterruptRotationManager::IsTrackingCast(ObjectGuid caster, uint32 spellId)
     for (const auto& cast : _activeCasts)
     {
         if (cast.casterGuid == caster)
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
-    return;
-}
         {
             if (spellId == 0 || cast.spellId == spellId)
                 return true;

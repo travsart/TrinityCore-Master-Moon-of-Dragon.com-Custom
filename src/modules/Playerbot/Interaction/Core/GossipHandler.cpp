@@ -205,15 +205,6 @@ namespace Playerbot
     }
 
     int32 GossipHandler::ProcessGossipMenu(::Player* bot, uint32 menuId, ::WorldObject* target, InteractionType desiredType)
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
     {
         if (!bot || !target)
             return -1;
@@ -229,11 +220,6 @@ if (!bot)
 
         // Parse menu options
         session.options = ParseGossipMenu(bot, menuId);
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return;
-            }
 
         if (session.options.empty())
             return -1;

@@ -679,12 +679,6 @@ namespace Playerbot
             " items to group");
         return distributedCount > 0;
     }
-
-    if (!owner)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: owner in method GetItemByPos");
-        return;
-    }
     bool TradeManager::SendItemToPlayer(Item* item, Player* recipient)
     {
         if (!item || !recipient || !GetBot())
@@ -719,11 +713,6 @@ namespace Playerbot
         for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
             if (Item* item = owner->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-            if (!owner)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: owner in method GetItemByPos");
-                return nullptr;
-            }
             {
                 if (item->GetEntry() == itemEntry)
                 {

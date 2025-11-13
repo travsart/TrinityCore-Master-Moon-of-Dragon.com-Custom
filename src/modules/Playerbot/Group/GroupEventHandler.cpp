@@ -355,15 +355,6 @@ bool ReadyCheckHandler::HandleEvent(GroupEvent const& event)
         return true;
 
     Player* bot = GetBotPlayer();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method SendDirectMessage");
-
-    return;
-
-}
     if (!bot)
         return false;
 

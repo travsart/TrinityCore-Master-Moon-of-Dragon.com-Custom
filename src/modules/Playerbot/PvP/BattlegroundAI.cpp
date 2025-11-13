@@ -257,15 +257,6 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 // ============================================================================
 
 void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return;
@@ -659,11 +650,6 @@ bool BattlegroundAI::DefendFlagRoom(::Player* player)
 
 // ============================================================================
 // ARATHI BASIN / BATTLE FOR GILNEAS STRATEGY
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 // ============================================================================
 
 void BattlegroundAI::ExecuteABStrategy(::Player* player)
@@ -842,11 +828,6 @@ void BattlegroundAI::ExecuteAVStrategy(::Player* player)
 }
 
 bool BattlegroundAI::CaptureGraveyard(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     if (!player)
         return false;
@@ -906,15 +887,6 @@ void BattlegroundAI::ExecuteEOTSStrategy(::Player* player)
 
     // Check if team is winning
     bool isWinning = IsTeamWinning(player);
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 
     if (isWinning && strategy.prioritizeFlagWhenLeading)
     {
@@ -978,11 +950,6 @@ bool BattlegroundAI::CaptureBaseEOTS(::Player* player)
 
     // Similar to AB strategy - find and capture bases
     Position bestBase = FindBestBaseToCapture(player);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
     if (bestBase.GetPositionX() != 0.0f)
         return CaptureBase(player, bestBase);
 
@@ -1020,11 +987,6 @@ void BattlegroundAI::ExecuteSiegeStrategy(::Player* player)
 }
 
 bool BattlegroundAI::OperateSiegeWeapon(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     if (!player)
         return false;
@@ -1065,11 +1027,6 @@ bool BattlegroundAI::DefendGate(::Player* player)
 // ============================================================================
 
 void BattlegroundAI::ExecuteKotmoguStrategy(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     if (!player)
         return;
@@ -1092,11 +1049,6 @@ bool BattlegroundAI::PickupOrb(::Player* player)
 }
 
 bool BattlegroundAI::DefendOrbCarrier(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     if (!player)
         return false;

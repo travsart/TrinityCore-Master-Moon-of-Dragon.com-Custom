@@ -135,11 +135,6 @@ void BotChatCommandHandler::LoadConfiguration()
 
 CommandResult BotChatCommandHandler::ProcessChatMessage(CommandContext const& context)
 {
-    if (!_initialized)
-    {
-        TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Not initialized");
-        return CommandResult::INTERNAL_ERROR;
-    }
 
     if (!context.sender || !context.bot || !context.botSession)
     {
@@ -433,11 +428,6 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
 
 bool BotChatCommandHandler::RegisterCommand(ChatCommand const& command)
 {
-    if (!_initialized)
-    {
-        TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Cannot register command - not initialized");
-        return false;
-    }
 
     if (command.name.empty())
     {
@@ -550,15 +540,6 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
 
     // Check if bot owner (compare account IDs)
     if (player->GetSession()->GetAccountId() == bot->GetSession()->GetAccountId())
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGuildId");
-
-    return nullptr;
-
-}
         return CommandPermission::OWNER;
 
     // TODO: Check if bot admin (requires admin list implementation)

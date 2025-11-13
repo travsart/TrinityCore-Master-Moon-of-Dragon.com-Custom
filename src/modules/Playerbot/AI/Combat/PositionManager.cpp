@@ -36,11 +36,6 @@ PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
       _lastUpdate(0), _positionTolerance(POSITION_TOLERANCE), _maxCandidates(MAX_CANDIDATES),
       _lastZoneUpdate(0), _lastMovePointTime(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "PositionManager: Bot player is null!");
-        return;
-    }
 
     if (!_threatManager)
     {
@@ -64,11 +59,6 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
         {
             result.failureReason = "Bot is casting, movement would interrupt spell";
             TC_LOG_DEBUG("playerbot.position", "⏸️ Bot {} - Movement blocked, currently casting",
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
                          _bot->GetName());
             return result;
         }
@@ -385,11 +375,6 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
         case PositionType::TANKING:
             {
                 float targetAngle = context.target->GetOrientation();
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetOrientation");
-                    return;
-                }
                 float frontAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
                 candidates = GenerateArcPositions(targetPos, 5.0f, frontAngle - M_PI/6, frontAngle + M_PI/6, 6);
             }
@@ -526,11 +511,6 @@ bool PositionManager::IsPositionSafe(const Position& pos, const MovementContext&
             continue;
 
         float distance = pos.GetExactDist(enemy);
-        if (!enemy)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsHostileTo");
-            return;
-        }
         if (distance < 5.0f && enemy->IsHostileTo(_bot))
         {
             return false;
@@ -583,11 +563,6 @@ void PositionManager::RegisterAoEZone(const AoEZone& zone)
     _activeZones.push_back(zone);
 
     TC_LOG_DEBUG("playerbot.position", "Registered AoE zone for bot {} at ({:.2f}, {:.2f}) radius {:.2f}",
-               if (!bot)
-               {
-                   TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                   return;
-               }
                _bot->GetName(), zone.center.GetPositionX(), zone.center.GetPositionY(), zone.radius);
 }
 
@@ -776,11 +751,6 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
 }
 
 float PositionManager::CalculateGroupScore(const Position& pos, const MovementContext& context)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return nullptr;
-}
 {
     if (context.groupMembers.empty())
         return 50.0f;
@@ -951,15 +921,6 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
         {
             Player* member = itr.GetSource();
             if (member && member != _bot && member->IsInWorld())
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return nullptr;
-
-}
             {
                 if (_bot->IsWithinLOSInMap(member))
                     score += 5.0f;

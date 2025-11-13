@@ -140,12 +140,6 @@ void BotCharacterDistribution::LoadGenderDistribution()
         "FROM playerbots_gender_distribution"
     );
 
-    if (!result)
-    {
-        TC_LOG_ERROR("module.playerbot.character", "No gender distribution data found!");
-        return;
-    }
-
     do
     {
         Field* fields = result->Fetch();
@@ -173,12 +167,6 @@ void BotCharacterDistribution::LoadClassPopularity()
         "FROM playerbots_class_popularity "
         "WHERE enabled = 1"
     );
-
-    if (!result)
-    {
-        TC_LOG_ERROR("module.playerbot.character", "No class popularity data found!");
-        return;
-    }
 
     do
     {

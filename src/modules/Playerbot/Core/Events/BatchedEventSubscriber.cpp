@@ -150,11 +150,6 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
     IManagerBase* tradeManager,
     IManagerBase* auctionManager)
 {
-    if (!dispatcher)
-    {
-        TC_LOG_ERROR("module.playerbot.batch", "SubscribeAllManagers called with null dispatcher");
-        return 0;
-    }
 
     size_t totalSubscriptions = 0;
     auto startTime = std::chrono::steady_clock::now();
@@ -265,17 +260,6 @@ size_t BatchedEventSubscriber::BatchOperation(
     bool subscribe)
 {
     // Validate inputs
-    if (!dispatcher)
-    {
-        TC_LOG_ERROR("module.playerbot.batch", "BatchOperation called with null dispatcher");
-        return 0;
-    }
-
-    if (!manager)
-    {
-        TC_LOG_ERROR("module.playerbot.batch", "BatchOperation called with null manager");
-        return 0;
-    }
 
     if (eventTypes.empty())
     {

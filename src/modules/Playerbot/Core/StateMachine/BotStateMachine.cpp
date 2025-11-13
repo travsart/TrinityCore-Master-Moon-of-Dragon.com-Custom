@@ -111,11 +111,6 @@ TransitionValidation BotStateMachine::TransitionOnEvent(EventType event, BotInit
 }
 
 TransitionValidation BotStateMachine::ForceTransition(BotInitState newState, std::string_view reason)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return "";
-}
 {
     if (m_loggingEnabled)
     {
@@ -235,11 +230,6 @@ void BotStateMachine::SetFlags(StateFlags flags)
 }
 
 void BotStateMachine::ClearFlags(StateFlags flags)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     std::lock_guard lock(m_stateMutex);
     StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
@@ -354,11 +344,6 @@ void BotStateMachine::DumpState() const
     if (!history.empty())
     {
         TC_LOG_INFO("bot.statemachine", "=== Last {} Transitions ===", history.size());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
         for (const auto& event : history)
         {
             auto timeSinceTransition = std::chrono::duration_cast<std::chrono::seconds>(
@@ -404,11 +389,6 @@ void BotStateMachine::OnEnter(BotInitState newState, BotInitState previousState)
     if (m_loggingEnabled)
     {
         TC_LOG_DEBUG("bot.statemachine", "Bot {} entered state {} from {}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot ? m_bot->GetName() : "null",
             GetStateName(newState), GetStateName(previousState));
     }

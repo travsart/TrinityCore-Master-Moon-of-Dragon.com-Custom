@@ -314,11 +314,6 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             {
                 result.result = ValidationResult::INVALID_TARGET;
                 result.failureReason = fmt::format("GameObject {} (entry {}) not in world",
-                    if (!goTarget)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: goTarget in method GetGUID");
-                        return;
-                    }
                     goTarget->GetGUID().ToString(), goTarget->GetEntry());
                 if (options.logFailures)
                     LogValidationFailure(caster, spellId, result.result, result.failureReason);
@@ -661,11 +656,6 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidatePlayer(Player c
 }
 
 SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateSpellId(uint32 spellId, Player const* caster)
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
-    return nullptr;
-}
 {
     if (spellId == 0)
         return ValidationResult::INVALID_SPELL_ID;
@@ -834,11 +824,6 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTarget(
     if (!options.skipRangeCheck)
     {
         ValidationResult losCheck = ValidateTargetLOS(caster, target);
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetGUID");
-    return nullptr;
-}
         if (losCheck != ValidationResult::SUCCESS)
             return losCheck;
     }

@@ -624,11 +624,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "💀 SHADOW PRIEST: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         // ========================================================================
         // ActionPriorityQueue: Register Shadow Priest spells with priorities

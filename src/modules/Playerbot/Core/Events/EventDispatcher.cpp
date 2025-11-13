@@ -50,11 +50,6 @@ EventDispatcher::~EventDispatcher()
 
 void EventDispatcher::Subscribe(StateMachine::EventType eventType, IManagerBase* manager)
 {
-    if (!manager)
-    {
-        TC_LOG_ERROR("module.playerbot", "EventDispatcher::Subscribe: Null manager pointer!");
-        return;
-    }
 
     std::lock_guard lock(_subscriptionMutex);
 

@@ -107,11 +107,6 @@ namespace Playerbot
         else
         {
             state.targetCreatureGuid = questGiver->GetGUID();
-            if (!questGiver)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetGUID");
-                return;
-            }
             state.targetCreatureEntry = questGiver->GetEntry();
             state.destination = *questGiver;
             TC_LOG_DEBUG("playerbot.pathfinding",

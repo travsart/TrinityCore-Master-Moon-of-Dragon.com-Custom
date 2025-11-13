@@ -176,18 +176,7 @@ void WarlockAI::UpdateRotation(::Unit* target)
     // CRITICAL: Use module.playerbot logger to prove function entry
     TC_LOG_ERROR("module.playerbot", "🔥🔥🔥 WARLOCK UpdateRotation() ENTERED! 🔥🔥🔥");
 
-    if (!target)
-    {
-        TC_LOG_ERROR("module.playerbot", "❌ WarlockAI::UpdateRotation - target is NULL");
-        return;
-    }
-
     Player* bot = GetBot();
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot", "❌ WarlockAI::UpdateRotation - bot is NULL");
-        return;
-    }
 
     float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance    TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
                  bot->GetName(), bot->GetLevel(), target->GetName(), distance);

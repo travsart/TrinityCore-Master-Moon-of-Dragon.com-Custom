@@ -154,11 +154,6 @@ bool CleaveMechanic::IsPositionSafe(const Position& pos) const
     float targetAngle = source->GetRelativeAngle(&pos);
     float sourceface = source->GetOrientation();
     float angleDiff = std::abs(Position::NormalizeOrientation(targetAngle - sourceface));
-if (!source)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: source in method GetOrientation");
-    return;
-}
 
     return angleDiff > (angle / 2.0f * M_PI / 180.0f);
 }
@@ -603,11 +598,6 @@ void MechanicAwareness::UpdateAOEZones(uint32 currentTime)
             }),
         _activeAOEZones.end()
     );
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return;
-}
 }
 
 void MechanicAwareness::RemoveExpiredZones(uint32 currentTime)
@@ -622,11 +612,6 @@ std::vector<AOEZone> MechanicAwareness::GetActiveAOEZones() const
 }
 
 std::vector<AOEZone> MechanicAwareness::GetUpcomingAOEZones(uint32 timeWindow) const
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return nullptr;
-}
 {
     std::lock_guard lock(_mutex);
     std::vector<AOEZone> upcoming;
@@ -668,11 +653,6 @@ void MechanicAwareness::UpdateProjectiles(uint32 currentTime)
 }
 
 std::vector<ProjectileInfo> MechanicAwareness::GetIncomingProjectiles(Player* target) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
 {
     if (!target)
         return {};
@@ -682,11 +662,6 @@ if (!bot)
     for (const ProjectileInfo& proj : _trackedProjectiles)
     {
         if (proj.targetGuid == target->GetGUID() ||
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
             proj.WillHitPosition(target->GetPosition()))
         {
             incoming.push_back(proj);
@@ -702,11 +677,6 @@ bool MechanicAwareness::WillProjectileHit(const ProjectileInfo& projectile, Play
         return false;
 
     return projectile.targetGuid == target->GetGUID() ||
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return;
-}
            projectile.WillHitPosition(target->GetPosition(), tolerance);
 }
 
@@ -1208,11 +1178,6 @@ std::vector<MechanicInfo> MechanicAwareness::ScanForThreats(Player* bot, float s
     }
 
     return threats;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 float MechanicAwareness::EvaluatePositionSafety(const Position& pos, const std::vector<MechanicInfo>& threats)
@@ -1272,11 +1237,6 @@ float MechanicAwareness::CalculateDangerScore(const Position& pos, const AOEZone
         danger = std::min(100.0f, expectedDamage / 1000.0f * 10.0f);
 
     return danger;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
 }
 
 bool MechanicAwareness::ValidateSafePosition(const Position& pos, Player* bot)

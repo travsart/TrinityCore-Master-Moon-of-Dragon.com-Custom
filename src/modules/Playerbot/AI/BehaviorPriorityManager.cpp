@@ -135,12 +135,6 @@ void BehaviorPriorityManager::RegisterStrategy(
     BehaviorPriority priority,
     bool exclusive)
 {
-    if (!strategy)
-    {
-        TC_LOG_ERROR("module.playerbot.priority",
-            "Attempted to register null strategy");
-        return;
-    }
 
     BehaviorMetadata metadata;
     metadata.strategy = strategy;
@@ -441,15 +435,6 @@ void BehaviorPriorityManager::UpdateContext()
         return;
 
     Player* bot = m_ai->GetBot();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-
-    return;
-
-}
     // Check if bot is dead
     if (!bot->IsAlive())
     {
@@ -496,11 +481,6 @@ if (!bot)
         {
             TC_LOG_DEBUG("module.playerbot.priority",
                 "Bot {} entering CASTING priority",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 bot->GetName());
             m_activePriority = BehaviorPriority::CASTING;
         }

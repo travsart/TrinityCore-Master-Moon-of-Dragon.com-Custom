@@ -311,11 +311,6 @@ namespace Playerbot
             soldAny = true;
 
             TC_LOG_DEBUG("bot.playerbot", "Bot %s sold item %u for %u copper",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
                 m_bot->GetName().c_str(), item->GetEntry(), sellPrice);
         }
 
@@ -360,11 +355,6 @@ namespace Playerbot
         if (purchasedCount > 0)
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Restocked reagents/consumables (%u items purchased)",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
                 m_bot->GetName().c_str(), purchasedCount);
             return true;
         }
@@ -407,11 +397,6 @@ namespace Playerbot
                 break;
 
             // Learn the spell
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method LearnSpell");
-                return;
-            }
             m_bot->LearnSpell(spellInfo.spellId, false);
             m_bot->ModifyMoney(-static_cast<int32>(spellInfo.cost));
 

@@ -47,15 +47,6 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
     ObjectiveState state(objective.questId, objective.objectiveIndex);
     state.status = ObjectiveStatus::IN_PROGRESS;
     state.requiredProgress = objective.requiredCount;
@@ -63,15 +54,6 @@ if (!bot)
     // CRITICAL FIX: Set objective position to actual quest target location, NOT bot's current position!
     // Get the spawn location of the quest target (creature/object/etc)
     Position targetPosition = FindObjectiveTargetLocation(bot, objective);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
 
     // If we found a valid target location, use it. Otherwise, use bot's position as fallback.
     if (targetPosition.GetExactDist2d(0.0f, 0.0f) > 0.1f)
@@ -231,15 +213,6 @@ bool ObjectiveTracker::HasProgressStalled(Player* bot, uint32 questId, uint32 ob
         return false;
 
     ObjectiveState state = GetObjectiveState(bot, questId, objectiveIndex);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionZ");
-
-    return nullptr;
-
-}
     if (state.questId == 0)
         return false;
 
@@ -519,11 +492,6 @@ ObjectiveTracker::ObjectivePriority ObjectiveTracker::GetHighestPriorityObjectiv
 }
 
 void ObjectiveTracker::OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities)
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetSession");
-    return;
-}
 {
     if (!bot || priorities.empty())
         return;
@@ -581,11 +549,6 @@ bool ObjectiveTracker::IsTargetAvailable(uint32 targetId, const Position& locati
     }
 
     return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 uint32 ObjectiveTracker::GetTargetRespawnTime(uint32 targetId)
@@ -783,11 +746,6 @@ const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAna
     std::lock_guard lock(_trackingMutex);
     auto it = _botAnalytics.find(botGuid);
     if (it != _botAnalytics.end())
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
         return it->second;
 
     // Create a new analytics entry if it doesn't exist
@@ -1014,11 +972,6 @@ void ObjectiveTracker::OptimizeObjectiveExecution(Player* bot, ObjectiveState& s
 }
 
 float ObjectiveTracker::CalculateUrgencyFactor(Player* bot, const ObjectiveState& state)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     if (!bot)
         return 0.5f;

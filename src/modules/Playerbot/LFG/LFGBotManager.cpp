@@ -126,12 +126,6 @@ void LFGBotManager::OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::Lfg
     if (!_enabled || !_initialized)
         return;
 
-    if (!player)
-    {
-        TC_LOG_ERROR("module.playerbot", "LFGBotManager::OnPlayerJoinQueue - Null player pointer");
-        return;
-    }
-
     // Only process human players
     if (Playerbot::PlayerBotHooks::IsPlayerBot(player))
         return;
@@ -626,24 +620,6 @@ void LFGBotManager::CalculateNeededRoles(uint8 humanRoles,
 }
 
 bool LFGBotManager::QueueBot(Player* bot, uint8 role, lfg::LfgDungeonSet const& dungeons)
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
 {
     if (!bot)
         return false;

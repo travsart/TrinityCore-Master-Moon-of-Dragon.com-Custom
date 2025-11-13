@@ -38,15 +38,6 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 
     BotInterruptInfo info;
     info.botGuid = bot->GetGUID();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return;
-
-}
     info.available = true;
 
     // Find interrupt spells

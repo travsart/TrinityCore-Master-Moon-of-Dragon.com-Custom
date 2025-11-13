@@ -260,15 +260,6 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotRegistration)
     // Verify bot was registered
     // Note: Need public getter for testing
     // auto info = sUnifiedInterruptSystem->GetBotInfo(bot->GetGUID());
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
     // EXPECT_NE(info.spellId, 0);
     */
 }
@@ -292,15 +283,6 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_BotUnregistration)
 
     // Verify bot was unregistered
     // auto info = sUnifiedInterruptSystem->GetBotInfo(botGuid);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
     // EXPECT_EQ(info.spellId, 0);
     */
 }
@@ -665,11 +647,6 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_FallbackMethodSelection)
 
     /*
     Player* bot = CreateMockBot(1);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return nullptr;
-}
     Unit* target = CreateMockCaster(1);
     uint32 failedSpellId = 1766;
 

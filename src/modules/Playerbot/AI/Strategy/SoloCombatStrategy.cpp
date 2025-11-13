@@ -106,11 +106,6 @@ float SoloCombatStrategy::GetRelevance(BotAI* ai) const
 
 // ============================================================================
 // MAIN UPDATE LOGIC
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 // ============================================================================
 
 void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
@@ -166,11 +161,6 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     {
         TC_LOG_TRACE("module.playerbot.strategy",
             "SoloCombatStrategy: Bot {} has spell movement state (casting/charging/jumping), skipping movement management",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             bot->GetName());
         return;
     }
@@ -228,11 +218,6 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
         TC_LOG_ERROR("module.playerbot.strategy",
             "⚔️ SoloCombatStrategy: Bot {} STARTED CHASING {} at {:.1f}yd range (was motion type {})",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             bot->GetName(), target->GetName(), optimalRange, static_cast<uint32>(currentMotion));
     }
     else

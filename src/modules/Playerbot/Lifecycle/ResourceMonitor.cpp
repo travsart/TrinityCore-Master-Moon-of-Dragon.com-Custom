@@ -141,11 +141,6 @@ bool ResourceMonitor::Initialize()
 #ifdef _WIN32
     // Windows: Open process handle for CPU monitoring
     _processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
-    if (!_processHandle)
-    {
-        TC_LOG_ERROR("module.playerbot.resource", "Failed to open process handle for resource monitoring");
-        return false;
-    }
 
     // Initialize CPU time tracking
     FILETIME creationTime, exitTime, kernelTime, userTime;

@@ -40,11 +40,6 @@ ObstacleAvoidanceManager::ObstacleAvoidanceManager(Player* bot)
       _collisionTolerance(DEFAULT_COLLISION_TOLERANCE), _predictiveAvoidance(true),
       _emergencyMode(false), _lastCleanup(0), _lastCacheCleanup(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "ObstacleAvoidanceManager: Bot player is null!");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot.obstacle", "ObstacleAvoidanceManager initialized for bot {}", _bot->GetName());
 }
@@ -329,11 +324,6 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::ScanForObstacles(const Detec
         ScanEnvironmentalHazards(context, obstacles);
 
     return obstacles;
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsMoving");
-    return;
-}
 }
 std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const DetectionContext& context)
 {
@@ -341,11 +331,6 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
     if (!map)
         return unitObstacles;
 
@@ -503,11 +488,6 @@ CollisionPrediction ObstacleAvoidanceManager::PredictCollisionWithObstacle(const
 }
 
 AvoidanceManeuver ObstacleAvoidanceManager::GenerateDirectAvoidance(const CollisionPrediction& collision)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return nullptr;
-}
 {
     AvoidanceManeuver maneuver;
     maneuver.behavior = AvoidanceBehavior::DIRECT_AVOIDANCE;
@@ -904,11 +884,6 @@ void ObstacleAvoidanceManager::ScanGameObjects(const DetectionContext& context, 
         obstacle.isMoving = false;
         obstacle.priority = AssessObstaclePriority(obstacle, context);
         obstacle.name = obj->GetName();
-    if (!obj)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
-        return;
-    }
         obstacle.firstDetected = GameTime::GetGameTimeMS();
         obstacle.lastSeen = obstacle.firstDetected;
         obstacle.avoidanceRadius = ObstacleUtils::CalculateAvoidanceRadius(obstacle.radius, GetBotRadius());

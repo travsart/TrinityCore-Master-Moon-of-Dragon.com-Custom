@@ -56,11 +56,6 @@ DungeonBehavior::DungeonBehavior()
 
 bool DungeonBehavior::EnterDungeon(Group* group, uint32 dungeonId)
 {
-    if (!group)
-    {
-        TC_LOG_ERROR("module.playerbot", "DungeonBehavior::EnterDungeon - Invalid group");
-        return false;
-    }
 
     std::lock_guard lock(_dungeonMutex);
 
@@ -563,11 +558,6 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
         dps->GetName(), encounter.encounterName);
 }
 void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEncounter& encounter)
-    if (!cc)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: cc in method GetGroup");
-        return nullptr;
-    }
 {
     if (!cc || !cc->GetGroup())
         return;
@@ -765,19 +755,9 @@ Position DungeonBehavior::GetOptimalPosition(Player* player, DungeonRole role, c
     }
 
     return optimalPos;
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return;
-}
 }
 
 void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return nullptr;
-}
 {
     if (!player || dangerousAreas.empty())
         return;
@@ -914,16 +894,6 @@ void DungeonBehavior::PullTrashGroup(Group* group, const std::vector<Unit*>& tra
 }
 
 void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs)
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return;
-}
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group || trashMobs.empty())
         return;
@@ -1072,17 +1042,7 @@ void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, cons
                 continue;
 
             if ((player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                return nullptr;
-            }
                  player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimaryTalentTree() == 0)
-                 if (!player)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-                     return nullptr;
-                 }
             {
                 if (!currentTank)
                     currentTank = player;
@@ -1107,19 +1067,9 @@ void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, cons
         // DPS should switch to adds
         CoordinateGroupDamage(group, GetEncounterData(encounterId));
     }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 }
 
 void DungeonBehavior::AdaptToEncounterPhase(Group* group, uint32 encounterId, uint32 phase)
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return;
-}
 {
     if (!group)
         return;
@@ -1136,11 +1086,6 @@ if (!group)
 }
 
 void DungeonBehavior::HandleEnrageTimer(Group* group, const DungeonEncounter& encounter)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return;
-}
 {
     if (!group || !encounter.hasEnrageTimer)
         return;
@@ -1207,11 +1152,6 @@ void DungeonBehavior::HandleTankSwap(Group* group, Player* currentTank, Player* 
 }
 
 void DungeonBehavior::ManageThreatMeters(Group* group)
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return nullptr;
-}
 {
     if (!group)
         return;
@@ -1252,11 +1192,6 @@ if (!group)
 }
 
 void DungeonBehavior::HandleThreatEmergency(Group* group, Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     if (!group || !player)
         return;

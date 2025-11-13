@@ -56,11 +56,6 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
     float healthPercent = unit->GetMaxHealth() > 0 ? (static_cast<float>(packet.Health) / unit->GetMaxHealth() * 100.0f) : 0.0f;
         if (!unit)
         {
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method GetMaxHealth");
             return;
         }

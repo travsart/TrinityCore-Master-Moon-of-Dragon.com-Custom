@@ -39,11 +39,6 @@ KitingManager::KitingManager(Player* bot)
       _kitingAggressiveness(DEFAULT_AGGRESSIVENESS), _predictiveKiting(true), _emergencyKiting(false),
       _availableKitingSpace(50.0f), _lastObstacleUpdate(0), _kitingStartTime(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "KitingManager: Bot player is null!");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot.kiting", "KitingManager initialized for bot {}", _bot->GetName());
 }
@@ -398,11 +393,6 @@ KitingPattern KitingManager::GenerateKitingPattern(KitingType type, const Kiting
             break;
     }
     return pattern;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPositionX");
-    return;
-}
 }
 
 bool KitingManager::ShouldMaintainDistance(Unit* target)
@@ -439,11 +429,6 @@ bool KitingManager::IsAtOptimalKitingDistance(Unit* target)
         return false;
 
     float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return 0;
-}
     float optimal = GetOptimalKitingDistance(target);
 
     return distance >= optimal * 0.9f && distance <= optimal * 1.1f;
@@ -537,11 +522,6 @@ KitingResult KitingManager::ExecuteStutterStep(const KitingContext& context)
 }
 
 KitingResult KitingManager::ExecuteHitAndRun(const KitingContext& context)
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method IsAlive");
-    return nullptr;
-}
 {
     KitingResult result;
     result.usedType = KitingType::HIT_AND_RUN;
@@ -632,11 +612,6 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         {
             threat.velocity.m_positionX = enemy->GetSpeedXY() * std::cos(enemy->GetOrientation());
             threat.velocity.m_positionY = enemy->GetSpeedXY() * std::sin(enemy->GetOrientation());
-            if (!enemy)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetOrientation");
-                return;
-            }
             threat.relativeSpeed = CalculateRelativeSpeed(enemy);
         }
 
@@ -681,11 +656,6 @@ Position KitingManager::CalculateKitingPosition(Unit* target, KitingType type)
         case KitingType::CIRCULAR_KITING:
             {
                 float angle = std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-    return nullptr;
-}
                                        botPos.GetPositionX() - targetPos.GetPositionX());
                 return GetCircularKitingPosition(target, angle + M_PI/6);
             }

@@ -122,11 +122,6 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
     };
 
     profile.applyFunction = [this](Player* bot, uint32 flags) {
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetName());
         ActivateStrategy(flags);
     };

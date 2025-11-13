@@ -414,11 +414,6 @@ void PlayerbotConfig::InitializeLogging()
 {
     // Check if ModuleLogManager singleton is available
     auto* mgr = sModuleLogManager;
-    if (!mgr)
-    {
-        TC_LOG_ERROR("server.loading", "PlayerbotConfig: ModuleLogManager singleton is NULL");
-        return;
-    }
 
     // Register Playerbot module with the new ModuleLogManager
     if (!mgr->RegisterModule("playerbot", 4, "Playerbot.log"))

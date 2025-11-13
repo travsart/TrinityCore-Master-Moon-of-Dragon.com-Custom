@@ -347,11 +347,6 @@ namespace Playerbot
 
         TC_LOG_TRACE("playerbot.scanner",
             "Bot {} found {} valid hostile candidate GUIDs after snapshot filtering",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot->GetName(), hostileGuids.size());
         return hostileGuids;
     }
@@ -379,11 +374,6 @@ namespace Playerbot
         // Don't attack creatures already in combat with someone else (unless we're in a group)
         // This prevents bots from "stealing" kills
         if (creature.isInCombat && creature.victim != m_bot->GetGUID() &&
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-            return nullptr;
-        }
             !m_bot->GetGroup())
             return false;
 
@@ -404,11 +394,6 @@ namespace Playerbot
     // This is the original validation method - still used for non-snapshot code paths
     // ===========================================================================
     bool TargetScanner::IsValidTarget(Unit* target) const
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-            return nullptr;
-        }
             return false;
 
         float maxRange = GetMaxEngageRange();
@@ -443,11 +428,6 @@ namespace Playerbot
 
     uint8 TargetScanner::GetTargetPriority(Unit* target) const
     {
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return nullptr;
-        }
     {
         if (!target || !target->IsAlive())
             return false;
@@ -510,11 +490,6 @@ namespace Playerbot
             return false;
 
         // Be more cautious at low health
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetLevel");
-            return nullptr;
-        }
         if (healthPct < 50.0f && target->GetLevel() > m_bot->GetLevel())
             return false;
 
@@ -613,11 +588,6 @@ namespace Playerbot
 
         // Check creature rank
         if (target->GetTypeId() == TYPEID_UNIT)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetTypeId");
-            return nullptr;
-        }
         {
             Creature* creature = target->ToCreature();
             // Elite mobs
@@ -664,11 +634,6 @@ namespace Playerbot
             threat *= 1.5f;
         // Increase threat if target is attacking us
         if (target->GetVictim() == m_bot)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetVictim");
-            return nullptr;
-        }
             threat *= 3.0f;
 
         // Increase threat if attacking group member

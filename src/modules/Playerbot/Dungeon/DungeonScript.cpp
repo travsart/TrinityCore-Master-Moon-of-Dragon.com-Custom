@@ -34,15 +34,6 @@ DungeonScript::DungeonScript(char const* name, uint32 mapId)
 // ============================================================================
 
 void DungeonScript::OnDungeonEnter(::Player* player, ::InstanceScript* instance)
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
 {
     // Default: No action
     TC_LOG_DEBUG("playerbot", "DungeonScript: Player {} entered dungeon '{}'",
@@ -57,11 +48,6 @@ void DungeonScript::OnDungeonExit(::Player* player)
 }
 
 void DungeonScript::OnUpdate(::Player* player, uint32 diff)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     // Default: No action
 }
@@ -247,11 +233,6 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
 }
 
 ::Creature* DungeonScript::FindCreatureNearby(::Player* player, uint32 entry, float range) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return;
-}
 {
     if (!player)
         return nullptr;

@@ -43,11 +43,6 @@ void PlayerbotModuleAdapter::OnModuleStartup()
     TC_LOG_ERROR("server.loading", "=== PlayerbotModuleAdapter::OnModuleStartup() CALLED ===");
 
     // Check if playerbot is enabled
-    if (!sPlayerbotConfig)
-    {
-        TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: sPlayerbotConfig is null during startup");
-        return;
-    }
 
     bool enabled = sPlayerbotConfig->GetBool("Playerbot.Enable", false);
     if (!enabled)

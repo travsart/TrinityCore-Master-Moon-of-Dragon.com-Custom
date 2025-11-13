@@ -46,11 +46,6 @@ void BotAI::InitializeHybridAI()
 
 void BotAI::UpdateHybridAI(uint32 diff)
 {
-    if (!_hybridAI)
-    {
-        TC_LOG_ERROR("playerbot.ai", "UpdateHybridAI called but HybridAI not initialized");
-        return;
-    }
 
     // Update Hybrid AI (Utility AI decision + Behavior Tree execution)
     bool success = _hybridAI->Update(diff);

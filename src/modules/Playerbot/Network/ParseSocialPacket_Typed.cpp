@@ -45,11 +45,6 @@ void ParseTypedChat(WorldSession* session, WorldPackets::Chat::Chat const& packe
     SocialEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received CHAT (typed): from={}, type={}, msg={}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
         bot->GetName(), packet.SenderName, packet.SlashCmd, packet.ChatText.substr(0, 50));
 }
 

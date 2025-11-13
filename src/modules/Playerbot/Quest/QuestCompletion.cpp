@@ -67,11 +67,6 @@ bool QuestCompletion::StartQuestCompletion(uint32 questId, Player* bot)
         return false;
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
-    if (!quest)
-    {
-        TC_LOG_ERROR("playerbot", "QuestCompletion::StartQuestCompletion - Quest %u not found", questId);
-        return false;
-    }
 
     // Check if bot has the quest
     if (bot->GetQuestStatus(questId) == QUEST_STATUS_NONE)
@@ -936,15 +931,6 @@ void QuestCompletion::NavigateToObjective(Player* bot, const QuestObjectiveData&
 
     // Get optimal position for objective
     Position targetPos = GetOptimalObjectivePosition(bot, objective);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-
-    return;
-
-}
     // Use movement utility to navigate
     BotMovementUtil::MoveToPosition(bot, targetPos);
 

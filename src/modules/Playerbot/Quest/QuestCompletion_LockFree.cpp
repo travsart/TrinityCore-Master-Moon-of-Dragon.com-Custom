@@ -100,15 +100,6 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
             BotAction action;
             action.type = BotActionType::KILL_QUEST_TARGET;
             action.botGuid = bot->GetGUID();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
             action.targetGuid = targetGuid;
             action.questId = objective.questId;
             action.priority = 8;  // Quest combat is important
@@ -253,11 +244,6 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
             NavigateToObjective_LockFree(bot, objective);
         }
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
 }
 
 /**
@@ -315,15 +301,6 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
             BotAction action;
             action.type = BotActionType::INTERACT_QUEST_OBJECT;
             action.botGuid = bot->GetGUID();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
             action.targetGuid = objectGuid;
             action.questId = objective.questId;
             action.priority = 6;

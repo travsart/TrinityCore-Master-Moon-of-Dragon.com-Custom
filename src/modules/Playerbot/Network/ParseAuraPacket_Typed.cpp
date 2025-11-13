@@ -38,11 +38,6 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received AURA_UPDATE (typed): {} auras",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName(), packet.Auras.size());
 }
 
@@ -70,11 +65,6 @@ void ParseTypedSetFlatSpellModifier(WorldSession* session, WorldPackets::Spells:
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SET_FLAT_SPELL_MODIFIER (typed)",
         bot->GetName());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 void ParseTypedSetPctSpellModifier(WorldSession* session, WorldPackets::Spells::SetSpellModifier const& packet)

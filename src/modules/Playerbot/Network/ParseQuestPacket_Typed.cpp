@@ -75,11 +75,6 @@ void ParseTypedQuestGiverQuestListMessage(WorldSession* session, WorldPackets::Q
 }
 
 void ParseTypedQuestGiverQuestDetails(WorldSession* session, WorldPackets::Quest::QuestGiverQuestDetails const& packet)
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-    return;
-}
 {
     if (!session)
         return;
@@ -102,15 +97,6 @@ if (!session)
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_DETAILS (typed): quest={}",
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
         bot->GetName(), packet.QuestID);
 }
 
@@ -163,11 +149,6 @@ void ParseTypedQuestGiverOfferRewardMessage(WorldSession* session, WorldPackets:
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_OFFER_REWARD (typed): quest={}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
         bot->GetName(), packet.QuestData.QuestID);
 }
 
@@ -195,11 +176,6 @@ void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Ques
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_COMPLETE (typed): quest={}",
 if (!bot)
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-    return nullptr;
-}
 {
     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
     return;
@@ -230,11 +206,6 @@ void ParseTypedQuestGiverQuestFailed(WorldSession* session, WorldPackets::Quest:
     QuestEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_FAILED (typed): quest={}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
         bot->GetName(), packet.QuestID);
 }
 
@@ -244,15 +215,6 @@ void ParseTypedQuestUpdateAddCreditSimple(WorldSession* session, WorldPackets::Q
         return;
 
     Player* bot = session->GetPlayer();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return;
-
-}
     if (!bot)
         return;
 

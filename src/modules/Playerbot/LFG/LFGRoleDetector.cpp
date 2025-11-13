@@ -72,11 +72,6 @@ uint8 LFGRoleDetector::DetectBotRole(Player* bot)
 }
 
 bool LFGRoleDetector::CanPerformRole(Player* player, uint8 role)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return;
-}
 {
     if (!player)
         return false;
@@ -102,15 +97,6 @@ uint8 LFGRoleDetector::GetBestRoleForPlayer(Player* player)
 
     // Try spec-based detection first
     uint8 specRole = DetectRoleFromSpec(player);
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-
-    return;
-
-}
     if (specRole == lfg::PLAYER_ROLE_TANK || specRole == lfg::PLAYER_ROLE_HEALER)
         return specRole; // Tank and healer specs are definitive
 
@@ -165,11 +151,6 @@ uint8 LFGRoleDetector::GetRoleFromSpecialization(Player* player, uint32 specId)
 }
 
 uint8 LFGRoleDetector::DetectRoleFromSpec(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return nullptr;
-}
 {
     if (!player)
         return lfg::PLAYER_ROLE_NONE;

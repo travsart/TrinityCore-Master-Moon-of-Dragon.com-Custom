@@ -85,11 +85,6 @@ bool LootStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-    return;
-}
     // NOT active during combat
     if (bot->IsInCombat())
         return false;
@@ -133,15 +128,6 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         return;
 
     Player* bot = ai->GetBot();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
     // Don't loot during combat
     if (bot->IsInCombat())
         return;
@@ -246,15 +232,6 @@ std::vector<ObjectGuid> LootStrategy::FindLootableObjects(BotAI* ai, float maxDi
 
     Player* bot = ai->GetBot();
     Map* map = bot->GetMap();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-
-    return;
-
-}
     if (!map)
         return lootableObjects;
 
@@ -297,15 +274,6 @@ bool LootStrategy::LootCorpse(BotAI* ai, ObjectGuid corpseGuid)
 
     Player* bot = ai->GetBot();
     Map* map = bot->GetMap();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
     if (!map)
         return false;
 
@@ -375,15 +343,6 @@ if (!bot)
 
     // PHASE 5D: Thread-safe spatial grid validation
     auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(bot, corpseGuid);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
     Creature* creature = nullptr;
 
     if (snapshot)

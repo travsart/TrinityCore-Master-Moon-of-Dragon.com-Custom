@@ -375,11 +375,6 @@ std::unordered_set<uint32> const& BotPacketRelay::GetRelayOpcodes()
 }
 
 // ============================================================================
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 // GROUP MEMBER ENUMERATION
 // ============================================================================
 
@@ -445,11 +440,6 @@ std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
 }
 
 bool BotPacketRelay::IsBot(Player const* player)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return nullptr;
-}
 {
     if (!player)
         return false;
@@ -463,11 +453,6 @@ if (!bot)
     // This is safe because BotSession inherits from WorldSession
     BotSession const* botSession = dynamic_cast<BotSession const*>(session);
     return (botSession != nullptr);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 Group* BotPacketRelay::GetBotGroup(Player* bot)

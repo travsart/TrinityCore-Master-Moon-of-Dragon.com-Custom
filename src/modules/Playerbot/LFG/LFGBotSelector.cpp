@@ -62,16 +62,6 @@ std::vector<Player*> LFGBotSelector::FindDPS(uint8 minLevel, uint8 maxLevel, uin
 }
 
 bool LFGBotSelector::IsBotAvailable(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     if (!bot)
         return false;
@@ -93,11 +83,6 @@ if (!bot)
     // Must not be in LFG already
     if (IsInLFG(bot))
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is already in LFG", bot->GetName());
         return false;
     }
@@ -105,11 +90,6 @@ if (!bot)
     // Must not have deserter debuff
     if (HasDeserterDebuff(bot))
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} has deserter debuff", bot->GetName());
         return false;
     }
@@ -121,11 +101,6 @@ if (!bot)
     }
 
     // Must not be dead
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
-        return nullptr;
-    }
     if (!bot->IsAlive())
     {
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is dead", bot->GetName());
@@ -133,11 +108,6 @@ if (!bot)
     }
 
     // Must not be in combat
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-        return nullptr;
-    }
     if (bot->IsInCombat())
     {
         TC_LOG_DEBUG("module.playerbot.lfg", "LFGBotSelector::IsBotAvailable - Bot {} is in combat", bot->GetName());
@@ -155,11 +125,6 @@ if (!bot)
 }
 
 uint32 LFGBotSelector::CalculateBotPriority(Player* bot, uint8 desiredRole, uint8 desiredLevel)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     if (!bot)
         return 0;

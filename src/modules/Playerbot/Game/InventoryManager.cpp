@@ -51,11 +51,6 @@ InventoryManager::InventoryManager(Player* bot)
     , _itemScoreCache(256)
     , _itemUsableCache(256)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("module.playerbot", "InventoryManager: Attempted to create manager with null bot");
-        return;
-    }
 
     // Load configuration
     PlayerbotConfig* config = PlayerbotConfig::instance();
@@ -1296,11 +1291,6 @@ void InventoryManager::UpdateEquipmentCache()
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetItemByPos");
-            return;
-        }
         if (item)
             _equippedItems[slot] = item;
     }

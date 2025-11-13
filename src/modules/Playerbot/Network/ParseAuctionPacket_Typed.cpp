@@ -39,11 +39,6 @@ void ParseTypedAuctionCommandResult(WorldSession* session, WorldPackets::Auction
     AuctionEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received AUCTION_COMMAND_RESULT (typed): auction={}, cmd={}, error={}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
         bot->GetName(), packet.AuctionID, packet.Command, packet.ErrorCode);
 }
 
@@ -96,11 +91,6 @@ void ParseTypedAuctionListItemsResult(WorldSession* session, WorldPackets::Aucti
  * @brief SMSG_AUCTION_WON_NOTIFICATION - Bot won an auction
  */
 void ParseTypedAuctionWonNotification(WorldSession* session, WorldPackets::AuctionHouse::AuctionWonNotification const& packet)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     if (!session)
         return;

@@ -65,15 +65,6 @@ void ParseTypedSpellGo(WorldSession* session, WorldPackets::Spells::SpellGo cons
         return;
 
     Player* bot = session->GetPlayer();
-if (!session)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-
-    return;
-
-}
     if (!bot)
         return;
 
@@ -122,11 +113,6 @@ void ParseTypedSpellFailure(WorldSession* session, WorldPackets::Spells::SpellFa
     CombatEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_FAILURE (typed): caster={}, spell={}, reason={}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
         bot->GetName(), packet.CasterUnit.ToString(), packet.SpellID, static_cast<uint32>(packet.Reason));
 }
 

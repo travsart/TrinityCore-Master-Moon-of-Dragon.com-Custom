@@ -428,11 +428,6 @@ float CombatBehaviorIntegration::GetOptimalRange(Unit* target)
     {
         ObjectGuid targetGuid = _bot->GetTarget();
         target = ObjectAccessor::GetUnit(*_bot, targetGuid);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-    return;
-}
     }
 
     return _movementIntegration->GetOptimalRange(target);
@@ -565,11 +560,6 @@ void CombatBehaviorIntegration::ClearPendingActions()
 {
     std::lock_guard<std::mutex> lock(_actionQueueMutex);
         _actionQueue.clear();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 void CombatBehaviorIntegration::RecordActionResult(const RecommendedAction& action, bool success)

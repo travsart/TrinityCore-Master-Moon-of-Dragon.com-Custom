@@ -375,15 +375,6 @@ void BotInitStateMachine::OnUpdate(uint32 diff)
 bool BotInitStateMachine::HandleLoadingCharacter()
 {
     Player* bot = GetBot();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
     if (!bot)
     {
         TC_LOG_ERROR("module.playerbot.statemachine",
@@ -406,11 +397,6 @@ if (!bot)
     m_characterDataLoaded = true;
     TC_LOG_DEBUG("module.playerbot.statemachine",
         "Character data loaded for bot {}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName());
     return true; // Ready to proceed to IN_WORLD
 }

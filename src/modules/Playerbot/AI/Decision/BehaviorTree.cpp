@@ -33,17 +33,6 @@ void BehaviorTree::SetRoot(std::shared_ptr<BehaviorNode> root)
 
 NodeStatus BehaviorTree::Tick(Player* bot, Unit* target)
 {
-    if (!_root)
-    {
-        TC_LOG_ERROR("playerbot", "BehaviorTree::Tick: {} has no root node", _name);
-        return NodeStatus::FAILURE;
-    }
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot", "BehaviorTree::Tick: {} received null bot", _name);
-        return NodeStatus::FAILURE;
-    }
 
     if (_debugLogging)
     {

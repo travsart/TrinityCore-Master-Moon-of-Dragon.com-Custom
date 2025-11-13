@@ -623,11 +623,6 @@ void DynamicQuestSystem::OptimizeQuestOrder(Player* bot)
 }
 
 void DynamicQuestSystem::TrackQuestChains(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetZoneId");
-    return;
-}
 {
     if (!bot)
         return;

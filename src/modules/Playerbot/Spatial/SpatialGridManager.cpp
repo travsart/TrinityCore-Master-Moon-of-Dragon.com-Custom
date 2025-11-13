@@ -11,11 +11,6 @@ namespace Playerbot
 
 void SpatialGridManager::CreateGrid(Map* map)
 {
-    if (!map)
-    {
-        TC_LOG_ERROR("playerbot.spatial", "Attempted to create spatial grid with null map pointer");
-        return;
-    }
 
     std::unique_lock<std::shared_mutex> lock(_mutex);  // Exclusive write lock
 

@@ -694,21 +694,6 @@ std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid g
 }
 
 void PlayerPatternRecognition::RecordPlayerBehavior(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     if (!player || !_initialized)
         return;
@@ -725,16 +710,6 @@ if (!player)
     if (profile)
     {
         BehaviorSample sample = CreateBehaviorSample(player);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetVictim");
-    return nullptr;
-}
         profile->AddSample(sample);
         _metrics.samplesProcessed++;
     }
@@ -811,11 +786,6 @@ void PlayerPatternRecognition::ApplyPlayerStyle(Player* bot, ObjectGuid template
 
     // Apply archetype behavior
     ApplyArchetypeStyle(bot, templateProfile->GetArchetype());
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 }
 
 void PlayerPatternRecognition::ApplyArchetypeStyle(Player* bot, PlayerArchetype archetype)

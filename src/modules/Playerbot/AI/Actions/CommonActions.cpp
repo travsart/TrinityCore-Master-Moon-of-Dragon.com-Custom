@@ -67,21 +67,11 @@ FollowAction::FollowAction() : MovementAction("follow")
 }
 
 bool FollowAction::IsPossible(BotAI* ai) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-    return;
-}
 {
     if (!MovementAction::IsPossible(ai))
         return false;
 
     Player* bot = ai->GetBot();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
     return bot && !bot->IsInCombat();
 }
 
@@ -124,11 +114,6 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
     return ActionResult::SUCCESS;
 }
 ::Unit* FollowAction::GetFollowTarget(BotAI* ai) const
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method IsInWorld");
-    return;
-}
 {
     if (!ai)
         return nullptr;
@@ -138,11 +123,6 @@ if (!leader)
         return nullptr;
 
     Group* group = bot->GetGroup();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
     if (!group)
         return nullptr;
 
@@ -311,11 +291,6 @@ ActionResult HealAction::Execute(BotAI* ai, ActionContext const& context)
 }
 
 ::Unit* HealAction::GetHealTarget(BotAI* ai) const
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method IsInWorld");
-    return nullptr;
-}
 {
     if (!ai)
         return nullptr;

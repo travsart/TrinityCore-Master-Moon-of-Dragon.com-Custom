@@ -123,16 +123,6 @@ void BotWorldSessionMgr::Shutdown()
             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
             return nullptr;
         }
-        if (!session)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-            if (!session)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-                return nullptr;
-            }
-            return nullptr;
-        }
         if (session && session->GetPlayer())
         {
             // MEMORY SAFETY: Protect against use-after-free when accessing Player name
@@ -593,15 +583,6 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
         // OPTION 5: Capture weak_ptr for session lifetime detection
         std::weak_ptr<BotSession> weakSession = botSession;
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInWorld");
-
-    return;
-
-}
 
         // Define the update logic (will be used in both parallel and sequential paths)
         auto updateLogic = [guid, weakSession, diff, currentTime, enterpriseMode, tickCounter, this]()
@@ -648,15 +629,6 @@ if (!bot)
                     if (enterpriseMode && session->IsLoginComplete())
                     {
                         Player* bot = session->GetPlayer();
-if (!session)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method LogoutPlayer");
-
-    return nullptr;
-
-}
                         if (!bot || !bot->IsInWorld())
                         {
                             TC_LOG_WARN("module.playerbot.session", "?? Bot disconnected: {}", guid.ToString());
@@ -860,11 +832,6 @@ void BotWorldSessionMgr::TriggerCharacterLoginForAllSessions()
     // The native login approach doesn't need this trigger mechanism
     // But we can use it to spawn new bots if needed
     TC_LOG_INFO("module.playerbot.session", "?? Using native login - no manual triggering needed");
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return;
-}
 }
 
 bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
@@ -908,11 +875,6 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     TC_LOG_DEBUG("module.playerbot.session", "?? Character cache synchronized for {}", playerGuid.ToString());
     return true;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return;
-}
 }
 
 // ============================================================================

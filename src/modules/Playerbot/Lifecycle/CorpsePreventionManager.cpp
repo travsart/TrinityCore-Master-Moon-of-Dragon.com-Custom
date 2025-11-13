@@ -31,16 +31,6 @@ CorpsePreventionManager::~CorpsePreventionManager()
 }
 
 void CorpsePreventionManager::OnBotBeforeDeath(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-    return nullptr;
-}
 {
     if (!bot || !s_enabled)
         return;
@@ -65,11 +55,6 @@ if (!bot)
 }
 
 void CorpsePreventionManager::OnBotAfterDeath(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     if (!bot || !s_enabled)
         return;

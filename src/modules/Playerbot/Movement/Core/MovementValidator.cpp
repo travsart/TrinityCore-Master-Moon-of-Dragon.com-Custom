@@ -52,15 +52,6 @@ namespace Playerbot
         _totalValidations.fetch_add(1);
 
         Map* map = bot->GetMap();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
         // Check if destination is in void
         if (IsVoidPosition(map, destination))
         {

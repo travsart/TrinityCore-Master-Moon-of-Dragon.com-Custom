@@ -45,12 +45,6 @@ ManagerRegistry::~ManagerRegistry()
 
 bool ManagerRegistry::RegisterManager(std::unique_ptr<IManagerBase> manager)
 {
-    if (!manager)
-    {
-        TC_LOG_ERROR("module.playerbot.managers",
-            "Attempted to register null manager");
-        return false;
-    }
 
     std::string managerId = manager->GetManagerId();
 

@@ -48,11 +48,6 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_MESSAGE (typed): npc={}, menu={}, options={}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
         bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, options.size());
 }
 
@@ -78,11 +73,6 @@ void ParseTypedGossipComplete(WorldSession* session, WorldPackets::NPC::GossipCo
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_COMPLETE (typed)",
         bot->GetName());
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 }
 
 /**
@@ -113,11 +103,6 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received VENDOR_INVENTORY (typed): vendor={}, items={}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
         bot->GetName(), packet.Vendor.ToString(), items.size());
 }
 
@@ -149,16 +134,6 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received TRAINER_LIST (typed): trainer={}, spells={}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName(), packet.TrainerGUID.ToString(), spells.size());
 }
 

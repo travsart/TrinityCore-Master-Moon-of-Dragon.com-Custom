@@ -316,11 +316,6 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 
 // =====================================================================
 // DECISION MAKING AND PLANNING
-if (!caster)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method IsAlive");
-    return;
-}
 // =====================================================================
 
 std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Player* bot)

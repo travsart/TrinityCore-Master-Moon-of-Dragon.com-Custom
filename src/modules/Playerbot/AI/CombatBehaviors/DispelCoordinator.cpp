@@ -122,11 +122,6 @@ DispelCoordinator::DispelCoordinator(BotAI* ai)
     , m_bot(ai ? ai->GetBot() : nullptr)
     , m_group(nullptr)
 {
-    if (!m_bot)
-    {
-        TC_LOG_ERROR("playerbot", "DispelCoordinator: Created with null bot!");
-        return;
-    }
 
     m_group = m_bot->GetGroup();
 
@@ -425,11 +420,6 @@ void DispelCoordinator::UpdateDispelAssignments()
 // ============================================================================
 
 float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
-    return nullptr;
-}
 {
     if (!target)
         return static_cast<float>(basePriority);
@@ -1022,11 +1012,6 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
     {
         if (!snapshot)
             continue;
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method ToPlayer");
-    return 0;
-}
 
         ::Unit* enemy = ObjectAccessor::GetUnit(*m_bot, snapshot->guid);
         if (!enemy || enemy->isDead())
@@ -1050,16 +1035,6 @@ if (!unit)
 
             // Skip if not worth purging
             if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
-if (!enemy)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: enemy in method GetGUID");
-    return nullptr;
-if (!center)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: center in method GetDistance");
-    return nullptr;
-}
-}
                 continue;
 
             PurgeTarget target;

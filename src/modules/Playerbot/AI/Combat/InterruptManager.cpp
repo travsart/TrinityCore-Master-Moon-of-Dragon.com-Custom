@@ -41,11 +41,6 @@ InterruptManager::InterruptManager(Player* bot)
       _timingAccuracyTarget(TIMING_ACCURACY_TARGET), _lastScan(0), _lastInterruptAttempt(0),
       _lastCoordinationUpdate(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "InterruptManager: Bot player is null!");
-        return;
-    }
 
     InitializeInterruptCapabilities();
     TC_LOG_DEBUG("playerbot.interrupt", "InterruptManager initialized for bot {} with {} capabilities",
@@ -698,11 +693,6 @@ void InterruptManager::ScanNearbyUnitsForCasts()
 }
 
 bool InterruptManager::IsValidInterruptTarget(Unit* unit)
-if (!unit)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: unit in method IsAlive");
-    return;
-}
 {
     if (!unit || !unit->IsAlive())
         return false;
@@ -721,11 +711,6 @@ if (!unit)
     return true;
 }
 bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetPosition");
-    return;
-}
 {
     if (!target || !_bot->HasSpell(spellId))
         return false;

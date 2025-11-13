@@ -208,11 +208,6 @@ GearSet BotGearFactory::BuildGearSet(uint8 cls, uint32 specId, uint32 level, Tea
 
 bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
 {
-    if (!player)
-    {
-        TC_LOG_ERROR("playerbot.gear", "BotGearFactory: Null player pointer");
-        return false;
-    }
 
     TC_LOG_DEBUG("playerbot.gear", "BotGearFactory: Applying gear set to player {} (class {} level {})",
                  player->GetName(), player->GetClass(), player->GetLevel());

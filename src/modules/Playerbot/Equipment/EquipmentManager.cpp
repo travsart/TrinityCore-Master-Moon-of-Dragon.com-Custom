@@ -937,11 +937,6 @@ float EquipmentManager::CalculateItemTemplateScore(::Player* player, ItemTemplat
 // ============================================================================
 
 std::vector<ObjectGuid> EquipmentManager::IdentifyJunkItems(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
 {
     std::vector<ObjectGuid> junkItems;
 
@@ -1440,15 +1435,6 @@ EquipmentManager::EquipmentMetrics const& EquipmentManager::GetPlayerMetrics(uin
 
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
         return it->second;
 
     // Create default metrics (use operator[] which default-constructs)
@@ -1465,11 +1451,6 @@ EquipmentManager::EquipmentMetrics const& EquipmentManager::GetGlobalMetrics()
 // ============================================================================
 
 bool EquipmentManager::IsOutdatedGear(::Player* player, ::Item* item)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-    return nullptr;
-}
 {
     if (!player || !item)
         return false;
@@ -1481,11 +1462,6 @@ if (!player)
 }
 
 bool EquipmentManager::HasWrongPrimaryStats(::Player* player, ::Item* item)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-    return;
-}
 {
     if (!player || !item)
         return false;

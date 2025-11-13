@@ -521,11 +521,6 @@ std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetPlayerProfile(ObjectG
 }
 
 void AdaptiveDifficulty::AssessPlayerSkill(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     if (!player || !_initialized)
         return;
@@ -614,11 +609,6 @@ void AdaptiveDifficulty::SetBotDifficulty(BotAI* bot, float difficulty)
 }
 
 float AdaptiveDifficulty::GetBotDifficulty(BotAI* bot) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     if (!bot)
         return DEFAULT_DIFFICULTY;

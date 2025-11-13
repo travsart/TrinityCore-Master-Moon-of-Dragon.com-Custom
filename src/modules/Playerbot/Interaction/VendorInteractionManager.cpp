@@ -402,11 +402,6 @@ bool VendorInteractionManager::CanAfford(uint64 goldCost, uint32 extendedCostId)
         return false;
 
     // Check gold cost
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMoney");
-        return nullptr;
-    }
     if (m_bot->GetMoney() < goldCost)
         return false;
 
@@ -637,11 +632,6 @@ bool VendorInteractionManager::NeedsAmmunition() const
 
     // Only hunters use ammunition
     return m_bot->GetClass() == CLASS_HUNTER;
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetClass");
-        return;
-    }
 }
 
 uint32 VendorInteractionManager::GetAppropriateAmmunition() const

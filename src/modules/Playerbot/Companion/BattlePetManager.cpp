@@ -275,11 +275,6 @@ bool BattlePetManager::ReleasePet(::Player* player, uint32 speciesId)
 }
 
 uint32 BattlePetManager::GetPetCount(::Player* player) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     if (!player)
         return 0;
@@ -287,15 +282,6 @@ if (!player)
     // No lock needed - battle pet data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return;
-
-}
     if (!_playerPets.count(playerGuid))
         return 0;
 
@@ -397,11 +383,6 @@ uint32 BattlePetManager::SelectBestAbility(::Player* player) const
 }
 
 bool BattlePetManager::SwitchActivePet(::Player* player, uint32 petIndex)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return nullptr;
-}
 {
     if (!player)
         return false;
@@ -576,11 +557,6 @@ bool BattlePetManager::LevelUpPet(::Player* player, uint32 speciesId)
         speciesId, petInfo.level, petInfo.maxHealth, petInfo.power, petInfo.speed);
 
     return true;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 }
 
 // ============================================================================

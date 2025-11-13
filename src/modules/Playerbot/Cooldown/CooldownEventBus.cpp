@@ -153,11 +153,6 @@ bool CooldownEventBus::PublishEvent(CooldownEvent const& event)
 
 bool CooldownEventBus::Subscribe(BotAI* subscriber, std::vector<CooldownEventType> const& types)
 {
-    if (!subscriber)
-    {
-        TC_LOG_ERROR("module.playerbot.cooldown", "CooldownEventBus: Null subscriber attempted to subscribe");
-        return false;
-    }
 
     std::lock_guard lock(_subscriberMutex);
 
@@ -190,11 +185,6 @@ bool CooldownEventBus::Subscribe(BotAI* subscriber, std::vector<CooldownEventTyp
 
 bool CooldownEventBus::SubscribeAll(BotAI* subscriber)
 {
-    if (!subscriber)
-    {
-        TC_LOG_ERROR("module.playerbot.cooldown", "CooldownEventBus: Null subscriber attempted to subscribe to all");
-        return false;
-    }
 
     std::lock_guard lock(_subscriberMutex);
 

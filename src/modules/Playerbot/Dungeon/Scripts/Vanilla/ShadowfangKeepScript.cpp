@@ -299,11 +299,6 @@ public:
 
                 // Prioritize adds that are attacking healers
                 Group* group = player->GetGroup();
-                if (!player)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-                    return;
-                }
                 if (group)
                 {
                     for (::Creature* add : adds)

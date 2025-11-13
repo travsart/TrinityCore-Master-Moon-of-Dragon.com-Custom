@@ -31,11 +31,6 @@ namespace Playerbot
 {
 
 DoubleBufferedSpatialGrid::DoubleBufferedSpatialGrid(Map* map)
-if (!map)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: map in method GetMapName");
-    return nullptr;
-}
     : _map(map)
     , _startTime(std::chrono::steady_clock::now())
 {
@@ -140,12 +135,6 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
     auto& writeBuffer = GetWriteBuffer();
     writeBuffer.Clear();
 
-    if (!_map)
-    {
-        TC_LOG_ERROR("playerbot.spatial", "Map pointer is null in PopulateBufferFromMap!");
-        return;
-    }
-
     // CRITICAL: Thread-safe entity iteration using TrinityCore's MapRefManager
     // This iterates all creatures on the map using the map's internal storage
     // which is safe for concurrent reads (we're not modifying, just reading positions)
@@ -172,15 +161,6 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
     for (auto const& pair : creatures)
     {
         Creature* creature = pair.second;
-if (!creature)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-
-    return;
-
-}
         if (!creature || !creature->IsInWorld())
             continue;
 
@@ -193,11 +173,6 @@ if (!creature)
         // ===== IDENTITY (CRITICAL) =====
         snapshot.guid = creature->GetGUID();
         snapshot.entry = creature->GetEntry();
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetHomePosition");
-            return;
-        }
         snapshot.spawnId = creature->GetSpawnId();
         // ===== POSITION & MOVEMENT (CRITICAL) =====
         snapshot.position = creature->GetPosition();
@@ -249,21 +224,6 @@ if (!creature)
 
         // ===== CREATURE-SPECIFIC (HIGH/CRITICAL) =====
         CreatureTemplate const* creatureTemplate = creature->GetCreatureTemplate();
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method CanFly");
-            return;
-        }
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method CanSwim");
-            return nullptr;
-        }
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetCreatureTemplate");
-            return;
-        }
         if (creatureTemplate)
         {
             snapshot.classification = static_cast<uint8>(creatureTemplate->Classification);
@@ -280,33 +240,13 @@ if (!creature)
         snapshot.corpseDelay = creature->GetCorpseDelay();
         snapshot.respawnTime = creature->GetRespawnTime();
         snapshot.respawnDelay = creature->GetRespawnDelay();
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetRespawnDelay");
-            return;
-        }
         snapshot.sparringHealthPct = 0.0f;  // Not exposed via API
         // ===== STATIC FLAGS (MEDIUM) =====
         if (creatureTemplate)
-        if (!player)
         {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-            return nullptr;
-        }
-        {
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-                return nullptr;
-            }
             snapshot.isUnkillable = (creatureTemplate->flags_extra & 0x00000008) != 0;
             snapshot.isSessile = (creatureTemplate->flags_extra & 0x00000100) != 0;
             snapshot.canMelee = !creature->IsNonMeleeSpellCast(false);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-                return;
-            }
             snapshot.canGiveExperience = !(creatureTemplate->flags_extra & 0x00000040);
             snapshot.isIgnoringFeignDeath = (creatureTemplate->flags_extra & 0x00010000) != 0;
             snapshot.isIgnoringSanctuary = (creatureTemplate->flags_extra & 0x00000200) != 0;
@@ -318,42 +258,12 @@ if (!creature)
         snapshot.isMounted = creature->IsMounted();
         snapshot.canFly = creature->CanFly();
         snapshot.canSwim = creature->CanSwim();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-            return;
-        }
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method CanSwim");
-            return;
-        }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-            return;
-        }
         snapshot.isAquatic = creature->IsPet() ? false : creature->CanSwim();  // Simplified
-        if (!creature)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method CanSwim");
-            return;
-        }
         snapshot.isFloating = creature->IsGravityDisabled();
         // ===== QUEST & LOOT (HIGH) =====
         snapshot.isDead = creature->isDead();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return;
-        }
         snapshot.isTappedByOther = creature->IsTapListNotClearedOnEvade() && !creature->hasLootRecipient();
         // Check if creature is skinnable by verifying it has a skin loot ID
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
-            return;
-        }
         CreatureDifficulty const* difficulty = creature->GetCreatureDifficulty();
         snapshot.isSkinnable = difficulty && difficulty->SkinLootID > 0;
         snapshot.hasBeenLooted = creature->IsFullyLooted();
@@ -382,15 +292,6 @@ if (!creature)
     for (auto const& ref : players)
     {
         Player* player = ref.GetSource();
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetItemByPos");
-
-    return;
-
-}
         if (!player || !player->IsInWorld())
             continue;
 
@@ -403,11 +304,6 @@ if (!player)
         // ===== IDENTITY (CRITICAL) =====
         snapshot.guid = player->GetGUID();
         snapshot.accountId = player->GetSession()->GetAccountId();
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetMoney");
-                return;
-            }
         // Copy name to fixed-size array (POD compliance)
         std::string playerName = player->GetName();
         size_t copyLen = std::min(playerName.length(), snapshot.name.size() - 1);
@@ -426,26 +322,11 @@ if (!player)
 
         // ===== COMBAT & HEALTH (CRITICAL) =====
         snapshot.health = player->GetHealth();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetHealth");
-            return nullptr;
-        }
         snapshot.maxHealth = player->GetMaxHealth();
         snapshot.powerType = static_cast<uint8>(player->GetPowerType());
         snapshot.power = player->GetPower(player->GetPowerType());
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPower");
-            return;
-        }
         snapshot.maxPower = player->GetMaxPower(player->GetPowerType());
         snapshot.isInCombat = player->IsInCombat();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-            return;
-        }
         if (Unit* victim = player->GetVictim())
             snapshot.victim = victim->GetGUID();
         snapshot.unitState = 0;  // Unit state tracking removed - use HasUnitState() checks instead
@@ -454,18 +335,8 @@ if (!player)
 
         // ===== CHARACTER STATS (CRITICAL/HIGH) =====
         snapshot.level = player->GetLevel();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetLevel");
-            return nullptr;
-        }
         snapshot.experience = player->GetXP();
         snapshot.race = player->GetRace();
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetRace");
-            return;
-        }
         snapshot.classId = player->GetClass();
         snapshot.gender = player->GetGender();
         snapshot.faction = player->GetFaction();

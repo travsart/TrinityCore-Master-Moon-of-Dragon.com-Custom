@@ -1565,14 +1565,6 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         stmt->SetData(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
-        if (!accountCheck)
-        {
-            TC_LOG_ERROR("module.playerbot.spawner",
-                "❌ VALIDATION FAILED: Account {} does not exist in database! Cannot create character.",
-                accountId);
-            return ObjectGuid::Empty;
-        }
-
         // Check current character count for this account (enforce 10 character limit) (prepared statement)
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
         charStmt->SetData(0, accountId);
