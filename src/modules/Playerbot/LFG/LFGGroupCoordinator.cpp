@@ -165,11 +165,6 @@ bool LFGGroupCoordinator::OnGroupReady(ObjectGuid groupGuid)
 // ============================================================================
 
 bool LFGGroupCoordinator::TeleportPlayerToDungeon(Player* player, uint32 dungeonId)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     if (!_enabled || !player)
         return false;
@@ -255,11 +250,6 @@ bool LFGGroupCoordinator::TeleportGroupToDungeon(Group* group, uint32 dungeonId)
         successCount, totalMembers, dungeonId);
 
     return successCount == totalMembers;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
 }
 
 bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dungeonId) const
@@ -269,11 +259,6 @@ bool LFGGroupCoordinator::CanTeleportToDungeon(Player const* player, uint32 dung
 
     // Get dungeon data
     lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-    if (!dungeonData)
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Dungeon data not found for dungeon {}", dungeonId);
-        return false;
-    }
 
     // Check level requirements
     if (player->GetLevel() < dungeonData->minlevel)
@@ -320,11 +305,6 @@ bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, fl
 {
     // Get LFG dungeon data
     lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-    if (!dungeonData)
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Dungeon data not found for dungeon {}", dungeonId);
-        return false;
-    }
 
     // Get map ID from dungeon data
     mapId = dungeonData->map;
@@ -387,21 +367,6 @@ uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) con
     std::lock_guard lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
     if (itr != _pendingTeleports.end())
         return itr->second.dungeonId;
 
@@ -447,11 +412,6 @@ bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, f
 {
     // Check if map exists
     MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
-    if (!mapEntry)
-    {
-        TC_LOG_ERROR("lfg.playerbot", "Map {} not found in MapStore", mapId);
-        return false;
-    }
 
     // Check if coordinates are valid (not 0,0,0)
     if (x == 0.0f && y == 0.0f && z == 0.0f)
@@ -473,11 +433,6 @@ bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, f
 }
 
 void LFGGroupCoordinator::NotifyTeleportStart(Player* player, std::string const& dungeonName)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return nullptr;
-}
 {
     if (!player)
         return;
@@ -490,15 +445,6 @@ if (!player)
 }
 
 void LFGGroupCoordinator::HandleTeleportFailure(Player* player, std::string const& reason)
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return;

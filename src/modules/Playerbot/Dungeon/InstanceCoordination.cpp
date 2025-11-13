@@ -472,11 +472,6 @@ void InstanceCoordination::CoordinateResourceUsage(Group* group)
 }
 
 void InstanceCoordination::ManageGroupMana(Group* group)
-if (!group)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-    return;
-}
 {
     if (!group)
         return;
@@ -484,14 +479,6 @@ if (!group)
     uint32 groupId = group->GetGUID().GetCounter();
 
     auto resourceItr = _resourceCoordination.find(groupId);
-
-if (!group)
-
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-
-    return;
-}
     if (resourceItr == _resourceCoordination.end())
         return;
 
@@ -510,15 +497,6 @@ if (!group)
         if (player->GetMaxPower(POWER_MANA) > 0)
         {
             float manaPercent = player->GetMaxPower(POWER_MANA) > 0 ?
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
                 static_cast<float>(player->GetPower(POWER_MANA)) / player->GetMaxPower(POWER_MANA) : 1.0f;
 
             resources.memberMana[player->GetGUID().GetCounter()] = manaPercent;
@@ -1758,17 +1736,7 @@ bool InstanceCoordination::ShouldTakeRestBreak(Group* group)
     return resources.groupReadiness < 60;
 }
 // ============================================================================
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
-    return;
-}
 // Helper Functions - Loot Coordination
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionZ");
-    return;
-}
 // ============================================================================
 
 void InstanceCoordination::AnalyzeLootValue(Group* group, uint32 itemId)
@@ -1876,15 +1844,6 @@ Position InstanceCoordination::CalculateGroupCenterPoint(Group* group)
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
-
-    return;
-
-}
         if (!player || !player->IsInWorld())
             continue;
 

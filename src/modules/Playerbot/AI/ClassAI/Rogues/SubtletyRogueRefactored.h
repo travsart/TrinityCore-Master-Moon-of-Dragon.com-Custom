@@ -505,11 +505,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "🗡️ SUBTLETY ROGUE: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         // ========================================================================
         // ActionPriorityQueue: Register Subtlety Rogue spells with priorities

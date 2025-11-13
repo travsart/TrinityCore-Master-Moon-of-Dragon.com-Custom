@@ -46,11 +46,6 @@ bool RaidDirective::IsActive() const
 RaidOrchestrator::RaidOrchestrator(Group* raid)
     : _raid(raid)
 {
-    if (!_raid)
-    {
-        TC_LOG_ERROR("playerbot.coordination", "RaidOrchestrator created with null raid");
-        return;
-    }
 
     // Create group coordinators for each raid group
     // Raids have subgroups (0-7), each with up to 5 players

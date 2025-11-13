@@ -406,11 +406,6 @@ NpcLocationResult BotNpcLocationService::FindNearestCreatureSpawn(Player* bot, u
 }
 
 NpcLocationResult BotNpcLocationService::FindNearestGameObjectSpawn(Player* bot, uint32 objectEntry, float maxRange)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMapId");
-    return;
-}
 {
     if (!bot || !_initialized)
         return NpcLocationResult();

@@ -98,11 +98,6 @@ void BotThreatManager::UpdateThreat(uint32 diff)
     TrackPerformance(duration, "UpdateThreat");
 
     _metrics.threatCalculations++;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 void BotThreatManager::ResetThreat()
@@ -333,11 +328,6 @@ std::vector<ThreatTarget> BotThreatManager::GetSortedThreatTargets()
 {
     ThreatAnalysis analysis = AnalyzeThreatSituation();
     return analysis.sortedTargets;
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
 }
 
 ThreatTarget* BotThreatManager::GetPrimaryThreatTarget()
@@ -479,11 +469,6 @@ bool BotThreatManager::HasThreat(Unit* target) const
 }
 
 float BotThreatManager::GetThreat(Unit* target) const
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method IsAlive");
-    return;
-}
 {
     if (!target)
         return 0.0f;
@@ -526,11 +511,6 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
         return &it->second;
 
     return nullptr;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
@@ -551,11 +531,6 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 
         // Get actual Unit* for return vector (needed by callers)
         Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-    return;
-}
         if (target && target->IsAlive())
             targets.push_back(target);
     }
@@ -655,16 +630,6 @@ void BotThreatManager::OnSpellInterrupt(Unit* target)
         it->second.spellsInterrupted++;
         it->second.abilitiesUsed++;
     }
-if (!victim)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
-    return;
-}
-}
-if (!victim)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: victim in method GetClass");
-    return;
 }
 void BotThreatManager::OnTauntUsed(Unit* target)
 {
@@ -822,11 +787,6 @@ void BotThreatManager::UpdateThreatHistory(Unit* target, float threat)
 
     ObjectGuid targetGuid = target->GetGUID();
     auto& history = _threatHistory[targetGuid];
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetCreatureType");
-    return;
-}
 
     history.push_back(threat);
     if (history.size() > THREAT_HISTORY_SIZE)

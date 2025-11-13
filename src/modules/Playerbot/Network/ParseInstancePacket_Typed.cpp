@@ -37,11 +37,6 @@ void ParseTypedInstanceReset(WorldSession* session, WorldPackets::Instance::Inst
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received INSTANCE_RESET (typed): map={}",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
         bot->GetName(), packet.MapID);
 }
 
@@ -90,15 +85,6 @@ void ParseTypedInstanceEncounterEngageUnit(WorldSession* session, WorldPackets::
     InstanceEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received INSTANCE_ENCOUNTER_ENGAGE_UNIT (typed): unit={}, priority={}",
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return nullptr;
-
-}
         bot->GetName(), packet.Unit.ToString(), packet.TargetFramePriority);
 }
 

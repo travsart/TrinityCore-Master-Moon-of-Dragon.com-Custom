@@ -34,18 +34,8 @@ QuestValidation* QuestValidation::instance()
 
 bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot", "QuestValidation::ValidateQuestAcceptance - Null bot pointer");
-        return false;
-    }
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
-    if (!quest)
-    {
-        TC_LOG_ERROR("module.playerbot", "QuestValidation::ValidateQuestAcceptance - Quest {} not found", questId);
-        return false;
-    }
 
     // Check cached validation first
     if (_enableCaching)

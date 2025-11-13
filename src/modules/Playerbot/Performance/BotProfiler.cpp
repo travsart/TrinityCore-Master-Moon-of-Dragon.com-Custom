@@ -619,12 +619,6 @@ bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& fil
         }
     }
 
-    if (!session)
-    {
-        TC_LOG_ERROR("playerbot", "BotProfiler: Session {} not found for export", sessionId);
-        return false;
-    }
-
     try
     {
         std::ofstream file(filename);

@@ -404,11 +404,6 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             {
                 TC_LOG_DEBUG("playerbot.movement.arbiter",
                     "MovementArbiter: Executing CHASE movement (target: {}) for bot {} - Priority: {} ({})",
-                    if (!target)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                        return;
-                    }
                     target->GetName(),
                     _bot->GetName(),
                     MovementPriorityMapper::GetPriorityName(request.GetPriority()),
@@ -499,11 +494,6 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
             TC_LOG_ERROR("playerbot.movement.arbiter",
                 "MovementArbiter: Unknown movement type {} for bot {}",
                 static_cast<int>(request.GetType()),
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 _bot->GetName());
             break;
     }
@@ -545,11 +535,6 @@ void MovementArbiter::UpdateDeduplicationCache(uint32 currentTime)
         else
             ++it;
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 // ============================================================================
@@ -586,11 +571,6 @@ void MovementArbiter::StopMovement()
     {
         TC_LOG_DEBUG("playerbot.movement.arbiter",
             "MovementArbiter: Stopped all movement for bot {}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             _bot->GetName());
     }
 }

@@ -689,11 +689,6 @@ bool ClassAI::CanRequestBotSpellCast(uint32 spellId) const
 bool ClassAI::CanExecutePendingSpell() const
 {
     // DIAGNOSTIC: Log every check to trace execution flow
-    if (!_pendingSpellCastRequest)
-    {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO PENDING REQUEST");
-        return false;
-    }
 
     TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} has pending spell {} queued",
                 GetBot() ? GetBot()->GetName() : "NULL", _pendingSpellCastRequest->spellId);
@@ -725,12 +720,6 @@ bool ClassAI::CanExecutePendingSpell() const
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_pendingSpellCastRequest->spellId,
                                                           GetBot()->GetMap()->GetDifficultyID());
-    if (!spellInfo)
-    {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: INVALID SPELL INFO for spell {}",
-                    _pendingSpellCastRequest->spellId);
-        return false;
-    }
 
     TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Spell info valid, checking GCD");
 

@@ -216,15 +216,6 @@ bool GroupFormation::IsInFormation(uint32 memberGuid, float tolerance) const
             if (Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(member.memberGuid)))
             {
                 float distance = member.assignedPosition.GetExactDist(player->GetPosition());
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-
-    return 0;
-
-}
                 return distance <= tolerance;
             }
         }

@@ -30,11 +30,6 @@ PathfindingManager::PathfindingManager(Player* bot)
       _pathfindingTimeout(DEFAULT_TIMEOUT), _cacheDuration(DEFAULT_CACHE_DURATION),
       _enableCaching(true), _enableDangerAvoidance(true), _lastDangerUpdate(0), _lastCacheCleanup(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "PathfindingManager: Bot player is null!");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot.pathfinding", "PathfindingManager initialized for bot {}", _bot->GetName());
 }
@@ -124,11 +119,6 @@ PathResult PathfindingManager::FindPath(const PathRequest& request)
         {
             _metrics.failedPaths++;
             TC_LOG_DEBUG("playerbot.pathfinding", "Path finding failed for bot {}: {}",
-                       if (!bot)
-                       {
-                           TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                           return;
-                       }
                        _bot->GetName(), result.failureReason);
         }
 

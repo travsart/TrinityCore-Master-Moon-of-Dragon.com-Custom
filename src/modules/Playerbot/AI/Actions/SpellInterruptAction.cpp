@@ -497,11 +497,6 @@ bool SpellInterruptAction::IsInInterruptRange(BotAI* ai, ::Unit* target, float r
 
     float rangeCheckSq = (requiredRange + RANGE_TOLERANCE) * (requiredRange + RANGE_TOLERANCE);
     return bot->GetExactDistSq(target) <= rangeCheckSq;
-if (!channeledSpell)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: channeledSpell in method GetSpellInfo");
-    return;
-}
 }
 
 bool SpellInterruptAction::IsValidInterruptTarget(::Unit* target) const
@@ -532,11 +527,6 @@ bool SpellInterruptAction::IsTargetCastingInterruptible(::Unit* target) const
     if (Spell* currentSpell = target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         const SpellInfo* spellInfo = currentSpell->GetSpellInfo();
-        if (!currentSpell)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: currentSpell in method GetSpellInfo");
-            return nullptr;
-        }
         if (spellInfo)
         {
             // Check if spell can be interrupted

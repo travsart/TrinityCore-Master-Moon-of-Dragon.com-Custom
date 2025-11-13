@@ -389,11 +389,6 @@ MountInfo const* MountManager::GetDragonridingMount(::Player* player) const
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto playerMountsItr = _playerMounts.find(playerGuid);
     if (playerMountsItr == _playerMounts.end())
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-    return;
-}
         return nullptr;
 
     for (uint32 spellId : playerMountsItr->second)
@@ -440,21 +435,6 @@ bool MountManager::IsPlayerUnderwater(::Player* player) const
 }
 
 bool MountManager::CanUseDragonriding(::Player* player) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method LearnSpell");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
 {
     if (!player)
         return false;
@@ -537,20 +517,6 @@ bool MountManager::LearnMount(::Player* player, uint32 spellId)
 }
 
 uint32 MountManager::GetMountCount(::Player* player) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-    return;
-}
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return nullptr;
-
-}
 {
     if (!player)
         return 0;
@@ -781,16 +747,6 @@ MountManager::MountMetrics const& MountManager::GetPlayerMetrics(uint32 playerGu
 
     auto metricsItr = _playerMetrics.find(playerGuid);
     if (metricsItr != _playerMetrics.end())
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method CastSpell");
-    return nullptr;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method HasSpell");
-    return;
-}
         return metricsItr->second;
 
     static MountMetrics emptyMetrics;
@@ -890,11 +846,6 @@ void MountManager::InitializePandariaMounts()
 }
 
 void MountManager::InitializeDraenorMounts()
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetZoneId");
-    return;
-}
 {
     // Warlords of Draenor mounts
     // Stub implementation
@@ -928,11 +879,6 @@ void MountManager::InitializeWarWithinMounts()
 {
     // The War Within mounts (WoW 11.2)
     // Stub implementation
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInCombat");
-    return;
-}
 }
 
 // ============================================================================
@@ -948,11 +894,6 @@ bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
         return false;
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
-    if (!spellInfo)
-    {
-        TC_LOG_ERROR("module.playerbot", "MountManager::CastMountSpell - Invalid spell ID {}", spellId);
-        return false;
-    }
 
     // Cast mount spell
     player->CastSpell(player, spellId, false);

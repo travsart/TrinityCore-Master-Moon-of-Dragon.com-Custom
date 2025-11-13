@@ -45,12 +45,6 @@ void ProfessionAuctionBridge::Initialize()
     // Get reference to existing AuctionHouse singleton
     _auctionHouse = AuctionHouse::instance();
 
-    if (!_auctionHouse)
-    {
-        TC_LOG_ERROR("playerbots", "ProfessionAuctionBridge: Failed to get AuctionHouse instance");
-        return;
-    }
-
     LoadDefaultStockpileConfigs();
 
     TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Initialized (bridge to existing AuctionHouse)");

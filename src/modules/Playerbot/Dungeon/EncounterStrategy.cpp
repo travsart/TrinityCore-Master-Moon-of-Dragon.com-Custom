@@ -59,11 +59,6 @@ EncounterStrategy::EncounterStrategy()
 
 void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterId)
 {
-    if (!group)
-    {
-        TC_LOG_ERROR("module.playerbot", "EncounterStrategy::ExecuteEncounterStrategy - Invalid group");
-        return;
-    }
 
     std::lock_guard lock(_strategyMutex);
 
@@ -85,11 +80,6 @@ void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterI
     AdaptStrategyToGroupComposition(group, encounterId);
 
     // Execute role-specific strategies for each group member
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
@@ -184,11 +174,6 @@ void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId
 }
 
 void EncounterStrategy::AdaptStrategyToGroupComposition(Group* group, uint32 encounterId)
-    if (!group)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-        return nullptr;
-    }
 {
     if (!group)
         return;
@@ -556,11 +541,6 @@ void EncounterStrategy::HandleMovementMechanic(Group* group, uint32 encounterId,
 }
 
 Position EncounterStrategy::CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     DungeonEncounter encounter = DungeonBehavior::instance()->GetEncounterData(encounterId);
     Position optimalPos = encounter.encounterLocation;
@@ -838,11 +818,6 @@ EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 
 EncounterStrategy::StrategyMetrics EncounterStrategy::GetGlobalStrategyMetrics()
 {
     return _globalMetrics;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-    return;
-}
 }
 
 // ============================================================================
@@ -850,11 +825,6 @@ if (!player)
 // ============================================================================
 
 void EncounterStrategy::InitializeStrategyDatabase()
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGroup");
-    return nullptr;
-}
 {
     TC_LOG_INFO("server.loading", "Initializing encounter strategy database...");
 
@@ -1180,15 +1150,6 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
         case CLASS_PRIEST:
         case CLASS_SHAMAN:
             return player->GetPrimaryTalentTree() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-
-    return nullptr;
-
-}
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1475,16 +1436,6 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
         case DungeonRole::HEALER:
             // Healer: 15-20 yards away (safe distance)
             angle = player->GetAngle(boss);
-            if (!player)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionX");
-                return;
-            }
-        if (!player)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPositionY");
-            return;
-        }
             distance = 18.0f;
             targetPos = boss->GetPosition();
             targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});

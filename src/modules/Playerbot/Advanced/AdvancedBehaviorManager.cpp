@@ -203,21 +203,6 @@ bool AdvancedBehaviorManager::LeaveDungeon()
 
     // Leave dungeon via teleport to homebind
     WorldLocation homebind = m_bot->m_homebind;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method TeleportTo");
-    return nullptr;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
-    return;
-}
     m_bot->TeleportTo(homebind.GetMapId(), homebind.GetPositionX(), homebind.GetPositionY(),
                       homebind.GetPositionZ(), m_bot->GetOrientation());
 
@@ -397,11 +382,6 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
 void AdvancedBehaviorManager::DispelBossDebuff(uint32 spellId)
 {
     if (!m_bot)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method CastSpell");
-            return;
-        }
         return;
 
     // Dispel mechanics handled by class AI
@@ -467,11 +447,6 @@ void AdvancedBehaviorManager::HandleTrashPull()
     for (auto const& snapshot : creatureSnapshots)
     {
         if (!snapshot.IsAlive())
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-                return nullptr;
-            }
             continue;
 
         // Get Creature* for complex checks
@@ -601,15 +576,6 @@ void AdvancedBehaviorManager::ExecuteBattlegroundStrategy()
         return;
 
     Battleground* bg = m_bot->GetBattleground();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-
-    return;
-
-}
     if (!bg)
         return;
 
@@ -678,11 +644,6 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
 
     std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return nullptr;
-    }
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 20.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -773,11 +734,6 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
     if (botAI && botAI->GetMovementArbiter())
     {
         bool accepted = botAI->RequestFollowMovement(
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
             PlayerBotMovementPriority::PVP_TACTICAL,
             carrier->GetGUID(),
             3.0f,
@@ -852,11 +808,6 @@ void AdvancedBehaviorManager::ReturnFlag()
 }
 
 void AdvancedBehaviorManager::CaptureObjective(GameObject* objective)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-    return;
-}
 {
     if (!m_bot || !objective)
         return;
@@ -1143,11 +1094,6 @@ void AdvancedBehaviorManager::ExploreZone(uint32 zoneId)
 }
 
 void AdvancedBehaviorManager::DiscoverFlightPaths()
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 {
     if (!m_bot)
         return;
@@ -1176,11 +1122,6 @@ if (!bot)
     {
         // Get Creature* for NPC flag checks
         Creature* creature = ObjectAccessor::GetCreature(*m_bot, snapshot.guid);
-if (!creature)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: creature in method GetEntry");
-    return nullptr;
-}
         if (!creature)
             continue;
 
@@ -1222,15 +1163,6 @@ void AdvancedBehaviorManager::TrackRareSpawn(Creature* rare)
     spawn.lastSeenTime = time(nullptr);
     spawn.isElite = rare->IsElite();
     spawn.level = rare->GetLevel();
-if (!rare)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method GetName");
-
-    return;
-
-}
 
     m_trackedRares[rare->GetEntry()] = spawn;
 }
@@ -1247,21 +1179,11 @@ std::vector<AdvancedBehaviorManager::RareSpawn> AdvancedBehaviorManager::GetTrac
 }
 
 bool AdvancedBehaviorManager::ShouldEngageRare(Creature* rare) const
-if (!rare)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: rare in method IsElite");
-    return;
-}
 {
     if (!m_bot || !rare)
         return false;
     // Check if bot is strong enough
     if (rare->GetLevel() > m_bot->GetLevel() + 3)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-            return nullptr;
-        }
         return false;
     // Check if bot has group support for elite rares
     if (rare->IsElite() && !m_bot->GetGroup())
@@ -1354,11 +1276,6 @@ void AdvancedBehaviorManager::AnalyzeDungeonComposition()
         return;
 
     Group* group = m_bot->GetGroup();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
     if (!group)
         return;
 
@@ -1451,11 +1368,6 @@ void AdvancedBehaviorManager::AdvanceBossPhase()
 }
 
 void AdvancedBehaviorManager::UpdatePvPBehavior(uint32 diff)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
 {
     if (!IsInBattleground())
         return;
@@ -1472,11 +1384,6 @@ void AdvancedBehaviorManager::LoadBattlegroundStrategies()
     strategy.objectives = {"Capture enemy flag", "Defend friendly flag", "Eliminate enemy flag carriers"};
 
     m_bgStrategies[strategy.type] = strategy;
-}
-if (!go)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: go in method GetEntry");
-    return;
 }
 AdvancedBehaviorManager::BattlegroundStrategy* AdvancedBehaviorManager::GetBattlegroundStrategy(BattlegroundType type)
 {

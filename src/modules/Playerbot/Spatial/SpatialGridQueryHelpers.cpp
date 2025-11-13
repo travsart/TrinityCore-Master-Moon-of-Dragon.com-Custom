@@ -35,11 +35,6 @@ SpatialGridQueryHelpers::FindCreatureByGuid(Player* bot, ObjectGuid guid, float 
 
     // Query nearby creatures from spatial grid (lock-free)
     auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(bot->GetPosition(), searchRadius);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
     // Find snapshot matching GUID
     for (auto const& snapshot : creatureSnapshots)
     {
@@ -145,11 +140,6 @@ SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
 
         // Check distance
         float distance = bot->GetDistance(snapshot.position);
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
         if (distance > range)
             continue;
 

@@ -188,11 +188,6 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
     }
 
     return 0.0f;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 void LeaderFollowBehavior::OnActivate(BotAI* ai)
@@ -208,22 +203,8 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
 
     Player* bot = ai->GetBot();
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: bot={} ===", bot->GetName());
-if (!member)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-
-    return;
-
-}
 
     Group* group = bot->GetGroup();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return;
-    }
     if (!group)
     {
         TC_LOG_ERROR("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Bot {} has NO GROUP ===", bot->GetName());
@@ -472,11 +453,6 @@ bool LeaderFollowBehavior::SetFollowTarget(Player* leader)
     _followTarget.lastKnownPosition = leader->GetPosition();
     _followTarget.currentDistance = 0.0f;
     _followTarget.isMoving = leader->isMoving();
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
-        return nullptr;
-    }
     _followTarget.inLineOfSight = true;
     _followTarget.lastSeen = GameTime::GetGameTimeMS();
 
@@ -558,25 +534,10 @@ Position LeaderFollowBehavior::CalculateFormationPosition(Player* leader, uint32
     Position pos;
     pos.m_positionX = leader->GetPositionX() + cos(memberAngle) * distance;
     pos.m_positionY = leader->GetPositionY() + sin(memberAngle) * distance;
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
-        return nullptr;
-    }
     pos.m_positionZ = leader->GetPositionZ();
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionZ");
-        return;
-    }
     pos.SetOrientation(leader->GetOrientation());
     // Adjust Z coordinate for terrain
     if (Map* map = leader->GetMap())
-    if (!leader)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetMap");
-        return nullptr;
-    }
     {
         float groundZ = map->GetHeight(leader->GetPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
         if (groundZ > INVALID_HEIGHT)
@@ -643,11 +604,6 @@ bool LeaderFollowBehavior::TeleportToLeader(Player* bot, Player* leader)
 }
 
 FormationRole LeaderFollowBehavior::DetermineFormationRole(Player* bot)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     if (!bot)
         return FormationRole::SUPPORT;
@@ -1017,11 +973,6 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
     }
 
     return false;
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetMap");
-    return;
-}
 }
 
 void LeaderFollowBehavior::OptimizePath(std::vector<Position>& path)
@@ -1086,19 +1037,9 @@ void LeaderFollowBehavior::HandleLostLeader(BotAI* ai)
             TeleportToLeader(bot, _followTarget.player);
         }
     }
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
-    return;
-}
 }
 
 Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* leader, ::Unit* target)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     if (!bot || !leader || !target)
         return Position();
@@ -1128,11 +1069,6 @@ if (!bot)
             // Stay at range from target, near leader
             {
                 float angle = std::atan2(leader->GetPositionY() - target->GetPositionY(),
-                if (!leader)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetPositionY");
-                    return;
-                }
                                         leader->GetPositionX() - target->GetPositionX());
                 float distance = _formationRole == FormationRole::HEALER ? 25.0f : 20.0f;
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * distance;
@@ -1322,22 +1258,7 @@ float LeaderFollowBehavior::NormalizeAngle(float angle)
     return angle;
 }
 bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destination)
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
-        return;
-    }
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot", "❌ StartMovement: NULL bot pointer");
-        return false;
-    }
 
     if (!bot->IsAlive())
     {

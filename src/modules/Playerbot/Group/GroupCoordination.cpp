@@ -191,11 +191,6 @@ Position GroupCoordination::GetFormationPosition(uint32 memberGuid) const
 }
 
 bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-    return nullptr;
-}
 {
     Position assignedPos = GetFormationPosition(memberGuid);
 

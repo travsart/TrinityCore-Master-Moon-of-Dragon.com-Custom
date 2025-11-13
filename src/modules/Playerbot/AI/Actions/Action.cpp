@@ -69,15 +69,6 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
         return false;
 
     Player* bot = ai->GetBot();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPower");
-
-    return nullptr;
-
-}
     if (!bot)
         return false;
 

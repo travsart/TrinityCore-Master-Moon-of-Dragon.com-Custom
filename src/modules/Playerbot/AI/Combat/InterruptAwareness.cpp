@@ -105,11 +105,6 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
 }
 
 void InterruptAwareness::SetObserver(Player* observer)
-if (!observer)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: observer in method GetName");
-    return nullptr;
-}
 {
     std::lock_guard lock(_observerMutex);
     _observer = observer;
@@ -464,15 +459,6 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
         for (const auto& cast : result.newCasts)
         {
             if (cast.casterGuid == unitGuid)
-if (!caster)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: caster in method GetPositionX");
-
-    return;
-
-}
             {
                 UpdateSpellPatterns(cast);
             }

@@ -510,15 +510,6 @@ bool BotWorldPositioner::TeleportToZone(Player* bot, ZonePlacement const* placem
 
     // Teleport using TrinityCore API
     bool success = bot->TeleportTo(placement->mapId, placement->x, placement->y, placement->z, placement->orientation);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
     if (success)
     {
         LogPlacement(bot, placement);

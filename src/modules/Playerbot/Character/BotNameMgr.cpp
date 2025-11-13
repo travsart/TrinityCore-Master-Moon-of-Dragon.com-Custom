@@ -271,13 +271,6 @@ void BotNameMgr::LoadNamesFromDatabase()
 {
     QueryResult result = sPlayerbotDatabase->Query(
         "SELECT name_id, name, gender FROM playerbots_names");
-
-    if (!result)
-    {
-        TC_LOG_ERROR("module.playerbot.names",
-            "No names found in playerbots_names table!");
-        return;
-    }
     
     uint32 count = 0;
     do

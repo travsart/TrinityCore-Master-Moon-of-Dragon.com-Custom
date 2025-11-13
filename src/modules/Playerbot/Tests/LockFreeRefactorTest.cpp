@@ -131,11 +131,6 @@ private:
 
         // Create test bot
         Player* bot = CreateTestBot("QuestBot1");
-        if (!bot)
-        {
-            TC_LOG_ERROR("test.lockfree", "Failed to create test bot");
-            return;
-        }
 
         // Add test quest with kill objective
         uint32 questId = 12345;  // Test quest ID

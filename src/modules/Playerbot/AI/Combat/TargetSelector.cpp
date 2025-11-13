@@ -34,11 +34,6 @@ TargetSelector::TargetSelector(Player* bot, BotThreatManager* threatManager)
       _maxTargetsToEvaluate(DEFAULT_MAX_TARGETS), _selectionCacheDuration(CACHE_DURATION_MS),
       _defaultMaxRange(DEFAULT_MAX_RANGE), _cacheTimestamp(0), _cacheDirty(true)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "TargetSelector: Bot player is null!");
-        return;
-    }
 
     if (!_threatManager)
     {
@@ -128,11 +123,6 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
     {
         result.success = false;
         result.failureReason = std::string("Exception during target selection: ") + e.what();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         TC_LOG_ERROR("playerbot.target", "Exception in SelectBestTarget for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -671,11 +661,6 @@ bool TargetSelector::IsHealer(Unit* target) const
         return false;
 
     if (Player* player = target->ToPlayer())
-    if (!target)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToPlayer");
-        return nullptr;
-    }
     {
         ChrSpecialization spec = player->GetPrimarySpecialization();
         switch (spec)

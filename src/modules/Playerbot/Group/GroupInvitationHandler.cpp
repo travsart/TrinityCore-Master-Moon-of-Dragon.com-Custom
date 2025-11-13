@@ -39,11 +39,6 @@ GroupInvitationHandler::GroupInvitationHandler(Player* bot)
     , _updateTimer(0)
     , _cleanupTimer(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Attempted to create handler with null bot");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Initialized for bot {} ({})",
         _bot->GetName(), _bot->GetGUID().ToString());
@@ -156,15 +151,6 @@ bool GroupInvitationHandler::ShouldAcceptInvitation(ObjectGuid inviterGuid) cons
         return false;
     // Get inviter
     Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
-
-if (!inviter)
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
-
-    return nullptr;
-
-}
     if (!inviter)
         return false;
 
@@ -180,11 +166,6 @@ if (!inviter)
     }
 
     // Check if bot has pending group invite
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroupInvite");
-        return nullptr;
-    }
     if (_bot->GetGroupInvite())
     {
         // If it's from the same inviter, accept it
@@ -207,11 +188,6 @@ if (!inviter)
 }
 
 bool GroupInvitationHandler::IsValidInviter(Player* inviter) const
-            if (!inviter)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetName");
-                return nullptr;
-            }
 {
     if (!inviter)
         return false;
@@ -340,11 +316,6 @@ bool GroupInvitationHandler::HasPendingInvitation() const
 }
 
 ObjectGuid GroupInvitationHandler::GetPendingInviter() const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 {
     std::lock_guard lock(_invitationMutex);
 
@@ -354,30 +325,15 @@ if (!bot)
         return _pendingInvitations.front().inviterGuid;
 
     return ObjectGuid::Empty;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-    return;
-}
 }
 
 void GroupInvitationHandler::ClearPendingInvitations()
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     std::lock_guard lock(_invitationMutex);
     while (!_pendingInvitations.empty())
         _pendingInvitations.pop();
     _currentInviter = ObjectGuid::Empty;
     _recentInviters.clear();
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetName");
-    return;
-}
 }
 
 void GroupInvitationHandler::SetResponseDelay(uint32 delayMs)
@@ -388,11 +344,6 @@ void GroupInvitationHandler::SetResponseDelay(uint32 delayMs)
 }
 WorldSession* GroupInvitationHandler::GetSession() const
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-        return;
-    }
     return _bot ? _bot->GetSession() : nullptr;
 }
 
@@ -400,24 +351,6 @@ bool GroupInvitationHandler::SendAcceptPacket()
 {
     // EXECUTION MARKER: Verify this method is being called
     TC_LOG_INFO("playerbot.debug", "=== EXECUTION MARKER: SendAcceptPacket() called for bot {} ===", _bot ? _bot->GetName() : "NULL");
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
     WorldSession* session = GetSession();
     if (!session)
     {
@@ -462,12 +395,6 @@ if (!bot)
     // Create PartyInviteResponse and let it read from our properly formatted packet
     WorldPackets::Party::PartyInviteResponse response(std::move(packet));
     response.Read(); // This will properly parse our packet data
-
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     TC_LOG_INFO("playerbot", "GroupInvitationHandler: About to call HandlePartyInviteResponseOpcode for bot {}", _bot->GetName());
     // Send the packet through the session handler
     TC_LOG_INFO("playerbot", "GroupInvitationHandler: Before HandlePartyInviteResponseOpcode - Bot group: {}, Bot invite: {}",
@@ -477,19 +404,9 @@ if (!bot)
     session->HandlePartyInviteResponseOpcode(response);
     TC_LOG_INFO("playerbot", "GroupInvitationHandler: After HandlePartyInviteResponseOpcode - Bot group: {}, Bot invite: {}",
         _bot->GetGroup() ? _bot->GetGroup()->GetGUID().ToString() : "None",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroupInvite");
-            return;
-        }
         _bot->GetGroupInvite() ? _bot->GetGroupInvite()->GetGUID().ToString() : "None");
 
     // Check results immediately after the call
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-        return nullptr;
-    }
     if (_bot->GetGroup())
     {
         // EXECUTION MARKER: Verify this success path is being reached
@@ -530,11 +447,6 @@ if (!bot)
         }
 
         auto* botAI = botSession->GetAI();
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         if (!botAI)
         {
             TC_LOG_ERROR("module.playerbot.group", "Bot {} BotSession has no AI!", _bot->GetName());
@@ -573,11 +485,6 @@ if (!bot)
 }
 
 void GroupInvitationHandler::SendDeclinePacket(std::string const& reason)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     WorldSession* session = GetSession();
     if (!session)
@@ -609,11 +516,6 @@ if (!bot)
         _bot->GetName(), reason);
 }
 bool GroupInvitationHandler::ValidateNoInvitationLoop(ObjectGuid inviterGuid) const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     // Check if we recently accepted an invitation from this inviter
     if (_recentInviters.find(inviterGuid) != _recentInviters.end())
@@ -629,19 +531,9 @@ if (!bot)
 
     // Check if inviter is a bot that we invited (would create a loop)
     Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
-    if (!inviter)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetGroup");
-        return;
-    }
     if (inviter && inviter->GetGroup())
     {
         // If we're the leader of a group and the inviter is in our group, this would be a loop
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-            return nullptr;
-        }
         if (_bot->GetGroup() && _bot->GetGroup()->IsLeader(_bot->GetGUID()))
         {
             if (inviter->GetGroup() == _bot->GetGroup())
@@ -665,11 +557,6 @@ bool GroupInvitationHandler::IsInviterInRange(Player* inviter) const
 
     // Check distance
     float distance = _bot->GetDistance(inviter);
-if (!inviter)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: inviter in method GetName");
-    return;
-}
     if (distance > _maxAcceptRange)
     {
         TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Inviter {} is too far ({}y > {}y)",
@@ -898,15 +785,6 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
         TC_LOG_INFO("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} has BotSession, getting AI", _bot->GetName());
 
         auto* botAI = botSession->GetAI();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
         if (!botAI)
         {
             TC_LOG_ERROR("module.playerbot.group", "FOLLOW FIX DEBUG PATH2: Bot {} BotSession has no AI!", _bot->GetName());

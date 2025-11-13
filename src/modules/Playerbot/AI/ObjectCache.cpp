@@ -26,11 +26,6 @@ void ObjectCache::SetTarget(::Unit* target)
     _cachedTarget = target;
     _targetGuid = target ? target->GetGUID() : ObjectGuid::Empty;
     _stats.totalRefreshes++;
-if (!leader)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: leader in method GetGUID");
-    return nullptr;
-}
 }
 
 void ObjectCache::SetGroupLeader(Player* leader)

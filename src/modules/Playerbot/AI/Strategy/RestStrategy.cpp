@@ -70,11 +70,6 @@ bool RestStrategy::IsActive(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-    return;
-}
     // NOT active during combat (can't eat/drink in combat)
     if (bot->IsInCombat())
         return false;
@@ -142,11 +137,6 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (_isEating && healthPct >= _restCompleteHealth)
     {
         TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} finished eating ({:.1f}% health)",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      bot->GetName(), healthPct);
         _isEating = false;
     }
@@ -179,11 +169,6 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     _restStartTime = currentTime;
 
                 TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} started eating ({:.1f}% health)",
-                             if (!bot)
-                             {
-                                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                                 return;
-                             }
                              bot->GetName(), healthPct);
             }
             else

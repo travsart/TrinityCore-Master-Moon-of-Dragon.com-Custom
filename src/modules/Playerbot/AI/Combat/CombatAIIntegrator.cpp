@@ -258,14 +258,6 @@ void CombatAIIntegrator::OnCombatEnd()
 }
 
 void CombatAIIntegrator::OnTargetChanged(Unit* newTarget)
-if (!newTarget)
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: newTarget in method GetName");
-
-    return nullptr;
-
-}
 {
     std::lock_guard lock(_mutex);
 

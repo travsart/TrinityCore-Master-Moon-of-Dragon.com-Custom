@@ -909,16 +909,6 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 try {
                     // Test minimal access first - GetGUID is usually safe
                     ObjectGuid playerGuid = player->GetGUID();
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-                        return;
-                    }
-                    if (!player)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                        return;
-                    }
                     if (playerGuid.IsEmpty()) {
                         TC_LOG_ERROR("module.playerbot.session", "Player has invalid GUID for account {}", accountId);
                         playerIsValid = false;
@@ -935,11 +925,6 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 if (playerIsValid) {
                     try {
                         playerIsInWorld = player->IsInWorld();
-                        if (!player)
-                        {
-                            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-                            return nullptr;
-                        }
                     }
                     catch (...) {
                         TC_LOG_ERROR("module.playerbot.session", "Access violation in Player::IsInWorld() for account {}", accountId);
@@ -1137,11 +1122,6 @@ void BotSession::ProcessBotPackets()
     // if (!outgoingBatch.empty()) {
     //     TC_LOG_DEBUG("module.playerbot.session", "Processed {} outgoing packets for account {}", outgoingBatch.size(), GetAccountId());
     // }
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return;
-}
 }
 
 // ============================================================================
@@ -1430,15 +1410,6 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         uint32 instanceId = pCurrChar->GetInstanceId();
 
         TC_LOG_DEBUG("module.playerbot.session", "Bot {} attempting to join MapId={} InstanceId={}",
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
             pCurrChar->GetName(), mapId, instanceId);
 
         // CreateMap will find existing map or create it if it doesn't exist yet
@@ -1488,15 +1459,6 @@ if (!player)
         // Enables object visibility (fixes CanNeverSee() check)
         // Updates player visibility
         _packetSimulator->SimulateMoveInitActiveMoverComplete();
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return;
-
-}
 
         // PHASE 1 REFACTORING: Enable periodic time synchronization
         // Maintains clock delta calculations over time

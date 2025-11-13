@@ -35,22 +35,12 @@ FormationManager::FormationManager(Player* bot)
       _adaptiveFormations(true), _emergencyScatter(false), _lastUpdate(0),
       _lastIntegrityCheck(0), _lastReformation(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "FormationManager: Bot player is null!");
-        return;
-    }
 
     InitializeFormationConfigs();
     TC_LOG_DEBUG("playerbot.formation", "FormationManager initialized for bot {}", _bot->GetName());
 }
 
 bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation)
-            if (!group)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetLeaderGUID");
-                return;
-            }
 {
     // No lock needed - _members is per-bot instance data
     try
@@ -77,15 +67,6 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
         _leader = groupLeader;
         _isLeader = (_leader == _bot);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetOrientation");
-
-    return;
-
-}
         for (Player* member : groupMembers)
         {
             if (!member || !member->IsInWorld())
@@ -111,15 +92,6 @@ if (!bot)
         {
             _formationCenter = _bot->GetPosition();
             _formationOrientation = _bot->GetOrientation();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
         }
         else
         {
@@ -664,11 +636,6 @@ void FormationManager::AssignFormationPositions()
 }
 
 void FormationManager::UpdateMemberPositions()
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method IsInWorld");
-    return nullptr;
-}
 {
     uint32 currentTime = GameTime::GetGameTimeMS();
 

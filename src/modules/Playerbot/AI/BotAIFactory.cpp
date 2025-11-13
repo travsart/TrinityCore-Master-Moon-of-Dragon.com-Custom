@@ -32,11 +32,6 @@ BotAIFactory* BotAIFactory::instance()
 
 std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreateAI called with null player");
-        return nullptr;
-    }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Creating specialized AI for player {} (class: {})",
                  bot->GetName(), bot->GetClass());
@@ -57,11 +52,6 @@ std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
 
 std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreateClassAI called with null player");
-        return nullptr;
-    }
 
     try
     {
@@ -167,11 +157,6 @@ std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, u
 
 std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, std::string const& type)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreateSpecializedAI called with null player");
-        return nullptr;
-    }
 
     // Implement specialized AI types as needed
     return CreateClassAI(bot, bot->GetClass());
@@ -179,11 +164,6 @@ std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, std::strin
 
 std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreatePvPAI called with null player");
-        return nullptr;
-    }
 
     // For now, use class-specific AI with PvP strategies
     return CreateClassAI(bot, bot->GetClass());
@@ -191,11 +171,6 @@ std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
 
 std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreatePvEAI called with null player");
-        return nullptr;
-    }
 
     // For now, use class-specific AI with PvE strategies
     return CreateClassAI(bot, bot->GetClass());
@@ -203,11 +178,6 @@ std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
 
 std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::CreateRaidAI called with null player");
-        return nullptr;
-    }
 
     // For now, use class-specific AI with raid strategies
     return CreateClassAI(bot, bot->GetClass());

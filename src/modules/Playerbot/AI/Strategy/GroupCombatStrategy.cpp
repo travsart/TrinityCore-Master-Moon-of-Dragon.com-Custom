@@ -89,11 +89,6 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     if (shouldLog)
     {
         TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - groupInCombat={}",
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return;
-                    }
                     bot->GetName(), groupInCombat);
     }
 
@@ -129,11 +124,6 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
             // bot->Attack() makes the target hostile but needs to process
             if (!bot->GetVictim() || bot->GetVictim() != target)
-                if (!target)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method ToCreature");
-                    return nullptr;
-                }
             {
                 // CRITICAL FIX: DO NOT call SetAIState() here!
                 // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
@@ -234,11 +224,6 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
             {
                 Player* member = ObjectAccessor::FindPlayer(slot.guid);
                 if (!member || member == bot || !member->IsInCombat())
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-                        return nullptr;
-                    }
                     continue;
                 Unit* target = member->GetSelectedUnit();
                 if (target && target->IsAlive())

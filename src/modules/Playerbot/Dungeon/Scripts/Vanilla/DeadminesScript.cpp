@@ -94,15 +94,6 @@ public:
      * OVERRIDE REASON: Want to log entry and set up state
      */
     void OnDungeonEnter(::Player* player, ::InstanceScript* instance) override
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-
-    return nullptr;
-
-}
     {
         // Call base class first (good practice)
         DungeonScript::OnDungeonEnter(player, instance);

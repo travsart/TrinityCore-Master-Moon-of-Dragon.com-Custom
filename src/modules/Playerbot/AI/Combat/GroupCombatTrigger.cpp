@@ -37,15 +37,6 @@ bool GroupCombatTrigger::Check(BotAI* ai) const
         return false;
 
     Player* bot = ai->GetBot();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-
-    return;
-
-}
     // Debug logging
     static uint32 lastLog = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -201,11 +192,6 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     return inCombat;
 }
 bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
-                 if (!bot)
-                 {
-                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsInCombat");
-                     return nullptr;
-                 }
 {
     if (!bot || !group || bot->IsInCombat())
         return false;
@@ -297,11 +283,6 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     }
 
     return nullptr;
-if (!member)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: member in method GetGUID");
-    return;
-}
 }
 
 Unit* GroupCombatTrigger::GetLeaderTarget(Group* group) const

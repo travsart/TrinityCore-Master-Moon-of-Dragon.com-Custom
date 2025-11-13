@@ -55,12 +55,6 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 {
     TC_LOG_INFO("server.loading", "PlayerbotDatabaseManager::Query called with SQL: {}", sql);
 
-    if (!_connection)
-    {
-        TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: No connection available for query");
-        return nullptr;
-    }
-
     if (!_connection->IsConnected())
     {
         TC_LOG_ERROR("server.loading", "PlayerbotDatabaseManager: Connection is not active");
@@ -84,11 +78,6 @@ QueryResult PlayerbotDatabaseManager::Query(std::string const& sql)
 
 bool PlayerbotDatabaseManager::Execute(std::string const& sql)
 {
-    if (!_connection)
-    {
-        TC_LOG_ERROR("module.playerbot.database", "PlayerbotDatabaseManager: No connection available for execute");
-        return false;
-    }
 
     return _connection->Execute(sql);
 }

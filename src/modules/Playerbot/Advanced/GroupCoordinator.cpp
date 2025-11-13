@@ -141,12 +141,6 @@ namespace Playerbot
         m_currentGroup = group;
         m_currentState = GroupState::ACTIVE;
         RecordGroupJoin();
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s joined group", m_bot->GetName().c_str());
         return true;
     }
@@ -201,11 +195,6 @@ namespace Playerbot
             m_currentGroup = group;
             m_currentState = GroupState::FORMING;
             TC_LOG_DEBUG("bot.playerbot", "Bot %s created group and invited %s",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return nullptr;
-                }
                 m_bot->GetName().c_str(), player->GetName().c_str());
             return true;
         }
@@ -355,11 +344,6 @@ namespace Playerbot
 
         // Coordinate raid member positions based on roles
         // This integrates with PositionManager
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return 0;
-        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s coordinating raid positions", m_bot->GetName().c_str());
     }
 
@@ -581,11 +565,6 @@ namespace Playerbot
         if (!m_readyCheckActive)
             return false;
         if (ready)
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-                return nullptr;
-            }
             m_readyMembers.insert(m_bot->GetGUID());
         TC_LOG_DEBUG("bot.playerbot", "Bot %s responded to ready check: %s",
             m_bot->GetName().c_str(), ready ? "ready" : "not ready");
@@ -621,11 +600,6 @@ namespace Playerbot
         m_queueInfo.queueTime = GameTime::GetGameTimeMS();
         m_queueInfo.isQueued = true;
         TC_LOG_DEBUG("bot.playerbot", "Bot %s queued for dungeon %u",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             m_bot->GetName().c_str(), dungeonId);
 
         return true;
@@ -666,20 +640,10 @@ namespace Playerbot
             return;
 
         m_groupTarget = target->GetGUID();
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s assigned target", m_bot->GetName().c_str());
     }
 
     void GroupCoordinator::FocusTarget(Unit* target)
-        if (!target)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetGUID");
-            return;
-        }
     {
         if (!target || !m_bot)
             return;
@@ -721,12 +685,6 @@ namespace Playerbot
     {
         if (!m_bot || m_bot->IsAlive())
             return;
-
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("bot.playerbot", "Bot %s requesting resurrection", m_bot->GetName().c_str());
     }
 

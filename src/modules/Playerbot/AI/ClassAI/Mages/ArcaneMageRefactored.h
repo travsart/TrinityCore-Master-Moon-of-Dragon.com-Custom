@@ -472,11 +472,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "🔮 ARCANE MAGE: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         auto* queue = ai->GetActionPriorityQueue();
         if (queue)

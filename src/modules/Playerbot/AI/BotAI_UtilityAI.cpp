@@ -109,11 +109,6 @@ void BotAI::InitializeUtilityAI()
 
 void BotAI::UpdateUtilityDecision(uint32 diff)
 {
-    if (!_utilityAI)
-    {
-        TC_LOG_ERROR("playerbot.utility", "UpdateUtilityDecision called but UtilityAI not initialized");
-        return;
-    }
 
     // Throttle updates to every 500ms
     _lastUtilityUpdate += diff;

@@ -31,11 +31,6 @@ LineOfSightManager::LineOfSightManager(Player* bot)
       _angleTolerance(M_PI/3), _enableCaching(true), _profilingEnabled(false),
       _lastObstructionUpdate(0)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "LineOfSightManager: Bot player is null!");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot.los", "LineOfSightManager initialized for bot {}", _bot->GetName());
 }
@@ -506,11 +501,6 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
     {
         result.blockedByObject = true;
         result.failureReason = "Blocked by object";
-    if (!obj)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: obj in method GetGoType");
-        return nullptr;
-    }
         return result;
     }
     if ((context.validationFlags & LoSValidation::UNITS) && !context.ignoreUnits && CheckUnitBlocking(from, to, context.target))
@@ -550,11 +540,6 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
 bool LineOfSightManager::CheckTerrainBlocking(const Position& from, const Position& to)
 {
     Map* map = _bot->GetMap();
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetPosition");
-    return;
-}
     if (!map)
         return true;
 
@@ -565,11 +550,6 @@ if (!bot)
 bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Position& to)
 {
     Map* map = _bot->GetMap();
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetMap");
-        return;
-    }
     if (!map)
         return false;
     return !map->IsInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,

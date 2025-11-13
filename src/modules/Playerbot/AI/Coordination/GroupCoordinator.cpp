@@ -48,11 +48,6 @@ bool TacticalAssignment::IsValid() const
 GroupCoordinator::GroupCoordinator(Group* group)
     : _group(group)
 {
-    if (!_group)
-    {
-        TC_LOG_ERROR("playerbot.coordination", "GroupCoordinator created with null group");
-        return;
-    }
 
     TC_LOG_DEBUG("playerbot.coordination", "GroupCoordinator created for group {}", _group->GetGUID().ToString());
 

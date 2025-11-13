@@ -378,12 +378,6 @@ namespace Playerbot
         WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_QUEST_GIVER_SPAWNS);
         PreparedQueryResult result = WorldDatabase.Query(stmt);
 
-        if (!result)
-        {
-            TC_LOG_ERROR("playerbot", "QuestHubDatabase: Failed to load quest givers from database");
-            return 0;
-        }
-
         uint32 count = 0;
         std::unordered_map<uint32, uint32> zoneDistribution;
         std::unordered_map<uint32, uint32> mapDistribution;

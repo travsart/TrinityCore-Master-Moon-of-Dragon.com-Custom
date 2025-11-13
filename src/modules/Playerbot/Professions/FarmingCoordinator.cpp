@@ -113,11 +113,6 @@ void FarmingCoordinator::SetCoordinatorProfile(uint32 playerGuid, FarmingCoordin
 {
     std::lock_guard lock(_mutex);
     _profiles[playerGuid] = profile;
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 }
 
 FarmingCoordinatorProfile FarmingCoordinator::GetCoordinatorProfile(uint32 playerGuid) const
@@ -198,11 +193,6 @@ std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Play
 }
 
 uint32 FarmingCoordinator::CalculateFarmingDuration(::Player* player, ProfessionType profession) const
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     if (!player)
         return 0;
@@ -212,11 +202,6 @@ if (!player)
         return 0;
 
     FarmingCoordinatorProfile const& profile = GetCoordinatorProfile(player->GetGUID().GetCounter());
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetPosition");
-    return;
-}
     // Estimate: ~10 skill points per 5 minutes of farming
     uint32 estimatedDuration = (skillGap / 10) * 300000; // 5 minutes in ms
 
@@ -287,11 +272,6 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
 }
 
 void FarmingCoordinator::StopFarmingSession(::Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     if (!player)
         return;
@@ -549,16 +529,6 @@ void FarmingCoordinator::ResetStatistics(uint32 playerGuid)
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
-    return nullptr;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method TeleportTo");
-    return;
-}
         it->second.Reset();
 }
 

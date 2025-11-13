@@ -37,20 +37,10 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
     }
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_COOLDOWN (typed): {} cooldowns",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName(), packet.SpellCooldowns.size());
 }
 
 void ParseTypedCooldownEvent(WorldSession* session, WorldPackets::Spells::CooldownEvent const& packet)
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
 {
     if (!session)
         return;
@@ -81,15 +71,6 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
         return;
 
     Player* bot = session->GetPlayer();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-
-    return;
-
-}
     if (!bot)
         return;
 

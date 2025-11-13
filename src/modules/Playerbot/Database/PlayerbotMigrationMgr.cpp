@@ -320,12 +320,6 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
 {
     TC_LOG_DEBUG("module.playerbot.migration", "ApplyMigration called for version: {}", version);
 
-    if (!_initialized)
-    {
-        TC_LOG_ERROR("module.playerbot.migration", "Migration manager not initialized");
-        return false;
-    }
-
     if (IsMigrationApplied(version))
     {
         MIGRATION_LOG_WARN(version, "Migration already applied");

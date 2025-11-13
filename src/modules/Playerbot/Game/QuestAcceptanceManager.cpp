@@ -32,16 +32,6 @@ QuestAcceptanceManager::QuestAcceptanceManager(Player* bot)
 // ========================================================================
 
 void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
-if (!questGiver)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method IsQuestGiver");
-    return;
-}
-    if (!questGiver)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: questGiver in method GetEntry");
-        return nullptr;
-    }
 {
     if (!_bot || !questGiver)
         return;
@@ -77,11 +67,6 @@ if (!questGiver)
     if (eligibleQuests.empty())
     {
         TC_LOG_DEBUG("module.playerbot.quest", "Bot {} found no eligible quests from {}",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             _bot->GetName(), questGiver->GetName());
         return;
     }
@@ -189,11 +174,6 @@ bool QuestAcceptanceManager::IsQuestEligible(Quest const* quest) const
     if (IsGroupQuest(quest) && !_bot->GetGroup())
     {
         TC_LOG_TRACE("module.playerbot.quest", "Quest {} '{}' rejected - group quest for solo bot {}",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      quest->GetQuestId(), quest->GetLogTitle(), _bot->GetName());
         return false;
     }

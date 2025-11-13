@@ -192,11 +192,6 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
     {
         TC_LOG_DEBUG("playerbot.gathering",
             "Bot %s lacks skill for node (has %u, needs %u)",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             bot->GetName().c_str(), currentSkill, node.skillRequired);
         return false;
     }

@@ -61,15 +61,6 @@ void ParseTypedLootReleaseResponse(WorldSession* session, WorldPackets::Loot::Lo
     event.type = LootEventType::LOOT_WINDOW_CLOSED;
     event.priority = LootEventPriority::MEDIUM;
     event.looterGuid = bot->GetGUID();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
     event.itemGuid = packet.LootObj;
     event.itemEntry = 0;
     event.itemCount = 0;
@@ -84,11 +75,6 @@ if (!bot)
 }
 
 void ParseTypedLootRemoved(WorldSession* session, WorldPackets::Loot::LootRemoved const& packet)
-if (!session)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-    return;
-}
 {
     if (!session)
         return;
@@ -111,15 +97,6 @@ if (!session)
     LootEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_REMOVED (typed): slot={}",
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return;
-
-}
         bot->GetName(), packet.LootListID);
 }
 
@@ -172,11 +149,6 @@ void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLoo
     LootEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received START_LOOT_ROLL (typed): item={} x{}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
         bot->GetName(), packet.Item.Loot.ItemID, packet.Item.Quantity);
 }
 

@@ -25,17 +25,6 @@ namespace Playerbot
 LazyManagerFactory::LazyManagerFactory(Player* bot, BotAI* ai)
     : _bot(bot), _ai(ai)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("module.playerbot.lazy", "LazyManagerFactory created with null bot pointer");
-        return;
-    }
-
-    if (!_ai)
-    {
-        TC_LOG_ERROR("module.playerbot.lazy", "LazyManagerFactory created with null AI pointer");
-        return;
-    }
 
     TC_LOG_DEBUG("module.playerbot.lazy", "LazyManagerFactory initialized for bot {} - Managers will be created on-demand",
                  _bot->GetName());
@@ -51,11 +40,6 @@ LazyManagerFactory::~LazyManagerFactory()
 
 // ============================================================================
 // LAZY MANAGER GETTERS - Double-checked locking pattern
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 // ============================================================================
 
 QuestManager* LazyManagerFactory::GetQuestManager()
@@ -65,23 +49,8 @@ QuestManager* LazyManagerFactory::GetQuestManager()
         _questManagerInit,
         [this]() -> std::unique_ptr<QuestManager> {
             auto start = std::chrono::steady_clock::now();
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating QuestManager for bot {}", _bot->GetName());
             auto manager = std::make_unique<QuestManager>(_bot, _ai);
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
             // Initialize manager (calls OnInitialize())
             if (!manager->Initialize())
             {
@@ -107,12 +76,6 @@ TradeManager* LazyManagerFactory::GetTradeManager()
         _tradeManagerInit,
         [this]() -> std::unique_ptr<TradeManager> {
             auto start = std::chrono::steady_clock::now();
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating TradeManager for bot {}", _bot->GetName());
             auto manager = std::make_unique<TradeManager>(_bot, _ai);
             if (!manager->Initialize())
@@ -133,23 +96,12 @@ TradeManager* LazyManagerFactory::GetTradeManager()
 }
 
 GatheringManager* LazyManagerFactory::GetGatheringManager()
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     return GetOrCreate<GatheringManager>(
         _gatheringManager,
         _gatheringManagerInit,
         [this]() -> std::unique_ptr<GatheringManager> {
             auto start = std::chrono::steady_clock::now();
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating GatheringManager for bot {}", _bot->GetName());
             auto manager = std::make_unique<GatheringManager>(_bot, _ai);
             if (!manager->Initialize())
@@ -201,12 +153,6 @@ GroupCoordinator* LazyManagerFactory::GetGroupCoordinator()
         _groupCoordinatorInit,
         [this]() -> std::unique_ptr<GroupCoordinator> {
             auto start = std::chrono::steady_clock::now();
-
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating GroupCoordinator for bot {}", _bot->GetName());
             auto manager = std::make_unique<GroupCoordinator>(_bot, _ai);
             // Initialize() returns void, just call it
@@ -291,11 +237,6 @@ T* LazyManagerFactory::GetOrCreate(
         catch (std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.lazy", "Exception creating manager for bot {}: {}",
-                         if (!bot)
-                         {
-                             TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                             return;
-                         }
                          _bot ? _bot->GetName() : "Unknown", e.what());
             return nullptr;
         }
@@ -344,11 +285,6 @@ bool LazyManagerFactory::IsInitialized<GroupCoordinator>() const
 
 template<>
 bool LazyManagerFactory::IsInitialized<DeathRecoveryManager>() const
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 {
     return _deathRecoveryManagerInit.load(std::memory_order_acquire);
 }

@@ -148,11 +148,6 @@ namespace Playerbot
                 }
 
                 TC_LOG_INFO("module.playerbot", "AuctionManager: Bot {} was OUTBID on auction {} (Item: {}, Previous bid: {}, Buyout: {})",
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return;
-                    }
                     bot->GetName(), auctionData.auctionId, auctionData.itemEntry,
                     auctionData.bidPrice, auctionData.buyoutPrice);
 

@@ -619,11 +619,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "🎯 MARKSMANSHIP HUNTER: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         // ========================================================================
         // ActionPriorityQueue: Register Marksmanship Hunter spells with priorities

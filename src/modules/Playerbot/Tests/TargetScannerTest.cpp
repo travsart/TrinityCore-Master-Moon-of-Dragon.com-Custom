@@ -31,11 +31,6 @@ namespace Playerbot
         public:
             static void RunAllTests(Player* testBot)
             {
-                if (!testBot)
-                {
-                    TC_LOG_ERROR("playerbot.test", "TargetScannerTest: No test bot provided");
-                    return;
-                }
 
                 TC_LOG_INFO("playerbot.test", "=== Starting TargetScanner Tests ===");
 

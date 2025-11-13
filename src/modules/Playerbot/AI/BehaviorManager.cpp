@@ -53,11 +53,6 @@ namespace Playerbot
         m_lastUpdate = GameTime::GetGameTimeMS();
 
         TC_LOG_DEBUG("module.playerbot", "[{}] Created for bot {} with {}ms update interval",
-                     if (!bot)
-                     {
-                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                         return;
-                     }
                      m_managerName, m_bot->GetName(), m_updateInterval);
     }
 
@@ -219,11 +214,6 @@ namespace Playerbot
             else if (m_consecutiveSlowUpdates >= 5)
             {
                 TC_LOG_WARN("module.playerbot", "[{}] {} consecutive slow updates for bot {} (latest: {}ms)",
-                           if (!bot)
-                           {
-                               TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                               return;
-                           }
                            m_managerName, m_consecutiveSlowUpdates, m_bot->GetName(), updateDuration);
             }
 
@@ -293,11 +283,6 @@ namespace Playerbot
         }
 
         // Check bot pointer validity
-        if (!m_bot)
-        {
-            TC_LOG_ERROR("module.playerbot", "❌ [{}] ValidatePointers FAILED: Bot pointer is null", m_managerName);
-            return false;
-        }
 
         // Check if bot is in world
         if (!m_bot->IsInWorld())

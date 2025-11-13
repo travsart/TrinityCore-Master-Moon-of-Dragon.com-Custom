@@ -77,11 +77,6 @@ void DungeonScriptMgr::LoadScripts()
 
 void DungeonScriptMgr::RegisterScript(DungeonScript* script)
 {
-    if (!script)
-    {
-        TC_LOG_ERROR("playerbot", "DungeonScriptMgr: Attempted to register null script");
-        return;
-    }
 
     std::lock_guard lock(_mutex);
 
@@ -110,12 +105,6 @@ void DungeonScriptMgr::RegisterScript(DungeonScript* script)
 
 void DungeonScriptMgr::RegisterBossScript(uint32 bossEntry, DungeonScript* script)
 {
-    if (!script)
-    {
-        TC_LOG_ERROR("playerbot", "DungeonScriptMgr: Attempted to register null script for boss {}",
-            bossEntry);
-        return;
-    }
 
     std::lock_guard lock(_mutex);
 

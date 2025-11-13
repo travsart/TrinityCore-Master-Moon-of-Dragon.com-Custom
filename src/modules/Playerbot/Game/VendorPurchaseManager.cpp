@@ -283,11 +283,6 @@ namespace Playerbot
         // Delegate to EquipmentManager for gear evaluation
         // This ensures consistent gear scoring across all bot systems
         EquipmentManager* equipMgr = EquipmentManager::instance();
-        if (!equipMgr)
-        {
-            TC_LOG_ERROR("playerbot.vendor", "VendorPurchaseManager: EquipmentManager instance not available");
-            return false;
-        }
 
         // Get equipment slot for this item
         uint8 equipSlot = equipMgr->GetItemEquipmentSlot(itemTemplate);

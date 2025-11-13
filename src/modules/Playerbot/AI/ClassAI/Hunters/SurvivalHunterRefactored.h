@@ -775,11 +775,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "🗡️ SURVIVAL HUNTER: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         // ========================================================================
         // ActionPriorityQueue: Register Survival Hunter spells with priorities

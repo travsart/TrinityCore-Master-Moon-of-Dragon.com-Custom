@@ -196,12 +196,6 @@ bool HybridAIController::Update(uint32 diff)
         // Get tree for new behavior
         std::shared_ptr<BTNode> newTree = GetTreeForBehavior(selectedBehaviorName);
 
-        if (!newTree)
-        {
-            TC_LOG_ERROR("playerbot.ai", "No tree found for behavior: {}", selectedBehaviorName);
-            return false;
-        }
-
         // Switch to new behavior tree
         SwitchBehaviorTree(selectedBehaviorName, newTree);
         _behaviorChangedThisFrame = true;

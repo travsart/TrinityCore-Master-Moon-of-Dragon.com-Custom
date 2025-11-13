@@ -153,11 +153,6 @@ DeathRecoveryManager::~DeathRecoveryManager()
 }
 
 // ========================================================================
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 // LIFECYCLE EVENTS
 // ========================================================================
 void DeathRecoveryManager::OnDeath()
@@ -233,11 +228,6 @@ void DeathRecoveryManager::OnResurrection()
 }
 
 void DeathRecoveryManager::Reset()
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return nullptr;
-}
 {
     // No lock needed - death recovery state is per-bot instance data
 
@@ -368,22 +358,12 @@ void DeathRecoveryManager::HandleJustDied(uint32 diff)
     // Check if bot already released (manually or by another system)
     if (IsGhost())
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.death", "👻 Bot {} already a ghost, proceeding to decision phase", m_bot->GetName());
         TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Already ghost");
         return;
     }
 
     // Release spirit
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return nullptr;
-    }
     TC_LOG_ERROR("playerbot.death", "🚀 Bot {} auto-release timer expired, releasing spirit...", m_bot->GetName());
     TransitionToState(DeathRecoveryState::RELEASING_SPIRIT, "Auto-release timer expired");
 }
@@ -448,11 +428,6 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
 
             // Directly call the handler (as if packet was received from client)
             // This triggers UpdatePosition() safely through normal TrinityCore packet flow
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetSession");
-                return nullptr;
-            }
             m_bot->GetSession()->HandleMoveTeleportAck(ackPacket);
 
             TC_LOG_ERROR("playerbot.death", "✅ Bot {} HandleMoveTeleportAck() called successfully (deferred)",
@@ -476,11 +451,6 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
 
     // Transition to next state
     TransitionToState(DeathRecoveryState::GHOST_DECIDING, "Teleport ack completed, proceeding to decision");
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 void DeathRecoveryManager::HandleGhostDeciding(uint32 diff)
@@ -497,11 +467,6 @@ void DeathRecoveryManager::HandleGhostDeciding(uint32 diff)
     DecideResurrectionMethod();
     if (m_method == ResurrectionMethod::CORPSE_RUN)
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_ERROR("playerbot.death", "🏃 Bot {} chose CORPSE RUN (distance: {:.1f}y)", m_bot->GetName(), GetCorpseDistance());
         TransitionToState(DeathRecoveryState::RUNNING_TO_CORPSE, "Chose corpse run");
     }
@@ -533,11 +498,6 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
             return;
         }
         TC_LOG_INFO("playerbot.death", "📏 Bot {} distance to corpse: {:.1f} yards (resurrection range: {})",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot->GetName(), m_corpseDistance, CORPSE_RESURRECTION_RANGE);
     }
 
@@ -545,11 +505,6 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
     if (IsInCorpseRange())
     {
         TC_LOG_INFO("playerbot.death", "✅ Bot {} reached corpse! Distance: {:.1f} yards",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot->GetName(), m_corpseDistance);
         TransitionToState(DeathRecoveryState::AT_CORPSE, "Reached corpse");
         return;
@@ -639,11 +594,6 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
     if (!m_bot->HasPlayerFlag(PLAYER_FLAGS_GHOST))
     {
         TC_LOG_WARN("playerbot.death", "⚠️  Bot {} does not have PLAYER_FLAGS_GHOST, cannot resurrect yet",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot->GetName());
 
         // Timeout after 30 seconds
@@ -748,11 +698,6 @@ void DeathRecoveryManager::HandleFindingSpiritHealer(uint32 diff)
             if (++m_retryCount >= 3)
             {
                 TC_LOG_WARN("playerbot.death", "Bot {} cannot find spirit healer, switching to corpse run",
-                    if (!bot)
-                    {
-                        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                        return;
-                    }
                     m_bot->GetName());
                 m_method = ResurrectionMethod::CORPSE_RUN;
                 TransitionToState(DeathRecoveryState::RUNNING_TO_CORPSE, "Fallback to corpse run");
@@ -870,11 +815,6 @@ void DeathRecoveryManager::HandleResurrectionFailed(uint32 diff)
         else
         {
             TC_LOG_WARN("playerbot.death", "Bot {} retrying resurrection (attempt {}/{})",
-                if (!bot)
-                {
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                    return;
-                }
                 m_bot->GetName(), m_retryCount, MAX_RETRY_ATTEMPTS);
 
             // Reset to decision phase
@@ -893,11 +833,6 @@ void DeathRecoveryManager::DecideResurrectionMethod()
     {
         m_method = ResurrectionMethod::CORPSE_RUN;
         TC_LOG_DEBUG("playerbot.death", "Bot {} chose corpse run (distance: {:.1f}y)",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return nullptr;
-            }
             m_bot->GetName(), GetCorpseDistance());
     }
     else if (ShouldUseSpiritHealer())
@@ -955,11 +890,6 @@ bool DeathRecoveryManager::CheckSpecialResurrectionCases()
     {
         // Battlegrounds typically auto-resurrect
         TC_LOG_DEBUG("playerbot.death", "Bot {} in battleground, using default BG resurrection",
-            if (!bot)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-                return;
-            }
             m_bot->GetName());
         m_method = ResurrectionMethod::AUTO_RESURRECT;
         TransitionToState(DeathRecoveryState::RESURRECTING, "Battleground auto-resurrection");
@@ -975,11 +905,6 @@ bool DeathRecoveryManager::CheckSpecialResurrectionCases()
     }
 
     return false;
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-    return;
-}
 }
 
 // ========================================================================
@@ -1056,11 +981,6 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
 
     TC_LOG_WARN("playerbot.death",
         "Bot {} queued CMSG_REPOP_REQUEST packet for main thread execution (Ghost spell crash fix)",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         m_bot->GetName());
 
     // BOT AUTO-RESURRECTION DETECTION: Check if BotResurrectionScript auto-resurrected during BuildPlayerRepop()
@@ -1068,21 +988,11 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
     // We can't check IsAlive() immediately - the packet hasn't been processed yet
     // Instead, we defer this check to next Update() cycle (see GHOST_DECIDING state handling)
     // Old synchronous check removed:
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method IsAlive");
-        return nullptr;
-    }
     // if (m_bot->IsAlive())
     // {
     //     TC_LOG_INFO("playerbot.death",
     //         "✅ Bot {} was auto-resurrected during BuildPlayerRepop() by BotResurrectionScript! "
     //         "Health={}/{}, Mana={}/{}, Position=({:.2f}, {:.2f}, {:.2f})",
-    if (!bot)
-    {
-        TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-        return;
-    }
     //         m_bot->GetName(),
     //         m_bot->GetHealth(), m_bot->GetMaxHealth(),
     //         m_bot->GetPower(POWER_MANA), m_bot->GetMaxPower(POWER_MANA),
@@ -1108,11 +1018,6 @@ bool DeathRecoveryManager::ExecuteReleaseSpirit()
 
     TC_LOG_WARN("playerbot.death",
         "✅ Bot {} queued spirit release - waiting for main thread execution (async packet-based approach)",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         m_bot->GetName());
 
     return true;
@@ -1251,12 +1156,6 @@ bool DeathRecoveryManager::InteractWithCorpse()
         ~ResurrectionGuard() { flag.store(false, std::memory_order_release); }
     } guard{_resurrectionInProgress};
 
-    if (!m_bot)
-    {
-        TC_LOG_ERROR("playerbot.death", "Bot is nullptr!");
-        return false;
-    }
-
     // Match TrinityCore's HandleReclaimCorpse validation checks
     if (m_bot->IsAlive())
     {
@@ -1266,11 +1165,6 @@ bool DeathRecoveryManager::InteractWithCorpse()
 
     if (m_bot->InArena())
     {
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return nullptr;
-        }
         TC_LOG_DEBUG("playerbot.death", "Bot {} in arena, cannot resurrect at corpse", m_bot->GetName());
         return false;
     }
@@ -1301,15 +1195,6 @@ bool DeathRecoveryManager::InteractWithCorpse()
     else
     {
         TC_LOG_INFO("playerbot.death", "✅ Bot {} corpse reclaim delay check PASSED (ghostTime={}, delay={}, current={})",
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-
-    return nullptr;
-
-}
             m_bot->GetName(), ghostTime, reclaimDelay, currentTime);
     }
 
@@ -1400,15 +1285,6 @@ bool DeathRecoveryManager::NavigateToSpiritHealer()
 
         // Use Movement Arbiter for priority-based arbitration
         bool accepted = botAI->RequestPointMovement(
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetLevel");
-
-    return;
-
-}
             PlayerBotMovementPriority::DEATH_RECOVERY,  // Priority 255 - HIGHEST
             spiritHealerPos,
             "Moving to spirit healer - death recovery",
@@ -1797,11 +1673,6 @@ void DeathRecoveryManager::LogStatistics() const
 
 bool DeathRecoveryManager::ValidateBotState() const
 {
-    if (!m_bot)
-    {
-        TC_LOG_ERROR("playerbot.death", "DeathRecoveryManager: Bot is nullptr");
-        return false;
-    }
     if (!m_bot->IsInWorld())
     {
         TC_LOG_ERROR("playerbot.death", "Bot {} is not in world", m_bot->GetName());

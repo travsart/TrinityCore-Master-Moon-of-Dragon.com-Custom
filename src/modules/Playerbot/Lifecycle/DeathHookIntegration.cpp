@@ -20,11 +20,6 @@ namespace Playerbot
 bool DeathHookIntegration::s_enabled = true;
 
 void DeathHookIntegration::OnPlayerPreDeath(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     if (!player || !player->GetSession()->IsBot())
         return;
@@ -51,16 +46,6 @@ if (!player)
 }
 
 void DeathHookIntegration::OnPlayerCorpseCreated(Player* player, Corpse* corpse)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetSession");
-    return nullptr;
-}
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return nullptr;
-}
 {
     if (!player || !corpse || !player->GetSession()->IsBot())
         return;
@@ -98,11 +83,6 @@ bool DeathHookIntegration::OnCorpsePreRemove(Corpse* corpse)
     TC_LOG_TRACE("playerbot.death.hook", "OnCorpsePreRemove: Corpse {} safe to remove",
         corpseGuid.ToString());
     return true; // Allow removal
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-    return;
-}
 }
 
 void DeathHookIntegration::OnPlayerPreResurrection(Player* player)

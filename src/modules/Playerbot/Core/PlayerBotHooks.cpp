@@ -442,15 +442,6 @@ void PlayerBotHooks::RegisterHooks()
 
     // PLAYER LIFECYCLE HOOKS
     OnPlayerDeath = [](Player* player)
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return nullptr;
-
-}
     {
         if (!player)
             return;

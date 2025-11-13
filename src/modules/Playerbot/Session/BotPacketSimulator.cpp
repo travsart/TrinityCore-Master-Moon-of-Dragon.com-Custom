@@ -34,18 +34,8 @@ BotPacketSimulator::BotPacketSimulator(BotSession* session)
 
 void BotPacketSimulator::SimulateQueuedMessagesEnd()
 {
-    if (!_session)
-    {
-        TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null session in SimulateQueuedMessagesEnd");
-        return;
-    }
 
     Player* bot = _session->GetPlayer();
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null player in SimulateQueuedMessagesEnd");
-        return;
-    }
 
     // CRITICAL: This packet is sent by real clients after receiving SMSG_RESUME_COMMS
     // It triggers time synchronization via HandleTimeSync with SPECIAL_RESUME_COMMS_TIME_SYNC_COUNTER
@@ -70,18 +60,8 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
 
 void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
 {
-    if (!_session)
-    {
-        TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null session in SimulateMoveInitActiveMoverComplete");
-        return;
-    }
 
     Player* bot = _session->GetPlayer();
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.packet", "BotPacketSimulator: null player in SimulateMoveInitActiveMoverComplete");
-        return;
-    }
 
     // CRITICAL: This packet is sent by real clients after receiving SMSG_MOVE_INIT_ACTIVE_MOVER
     // It triggers:
@@ -107,22 +87,12 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
 
     TC_LOG_INFO("module.playerbot.packet",
         "✅ Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         bot->GetName());
 }
 
 void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
 {
     if (!_session)
-        if (!bot)
-        {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetName");
-            return;
-        }
         return;
 
     Player* bot = _session->GetPlayer();

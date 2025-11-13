@@ -70,11 +70,6 @@ namespace Playerbot
 
 std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 {
-    if (!bot)
-    {
-        TC_LOG_ERROR("module.playerbot.ai.factory", "CreateSpecializedAI called with null bot");
-        return nullptr;
-    }
 
     uint8 classId = bot->GetClass();
     uint8 specId = static_cast<uint8>(bot->GetPrimaryTalentTree(bot->GetActiveSpec()));

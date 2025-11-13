@@ -83,11 +83,6 @@ bool TriggerResultComparator::operator()(TriggerResult const& a, TriggerResult c
 
 BotAI::BotAI(Player* bot) : _bot(bot)
 {
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbots.ai", "BotAI created with null bot pointer");
-        return;
-    }
 
     // Initialize performance tracking
     _performanceMetrics.lastUpdate = std::chrono::steady_clock::now();
@@ -759,11 +754,6 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
 // ============================================================================
 
 void BotAI::UpdateStrategies(uint32 diff)
-if (!target)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-    return;
-}
 {
     // CRITICAL: This must run EVERY frame for following to work properly
     // No throttling allowed here!
@@ -950,11 +940,6 @@ void BotAI::UpdateCombatState(uint32 diff){
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
                 return;
-            }
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return nullptr;
             }TC_LOG_ERROR("module.playerbot", "🎯 Target from GetVictim(): {}", target ? target->GetName() : "null");
         }
 
@@ -1645,11 +1630,6 @@ bool BotAI::ExecuteAction(std::string const& name, ActionContext const& context)
 
     // Create action instance from factory
     std::shared_ptr<Action> action = sActionFactory->CreateAction(name);
-    if (!action)
-    {
-        TC_LOG_ERROR("bot.ai.action", "Failed to create action: {}", name);
-        return false;
-    }
 
     // Check if action is possible before executing
     if (!CanExecuteAction(action.get()))

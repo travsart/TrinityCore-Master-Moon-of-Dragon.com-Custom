@@ -446,15 +446,6 @@ public:
             {
                 // Sarevess applies slow debuffs - dispel curse/magic
                 Group* group = player->GetGroup();
-if (!group)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: group in method GetMemberSlots");
-
-    return;
-
-}
                 if (!group)
                     break;
 

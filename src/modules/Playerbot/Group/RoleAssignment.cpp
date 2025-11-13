@@ -164,11 +164,6 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
 }
 
 PlayerRoleProfile RoleAssignment::AnalyzePlayerCapabilities(Player* player)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetClass");
-    return nullptr;
-}
 {
     if (!player)
         return PlayerRoleProfile(0, 0, 0, 0);
@@ -184,11 +179,6 @@ if (!player)
 }
 
 std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group* group)
-if (!player)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-    return;
-}
 {
     std::vector<RoleScore> scores;
 

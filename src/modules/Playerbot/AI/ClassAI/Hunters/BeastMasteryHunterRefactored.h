@@ -590,11 +590,6 @@ private:
         using namespace bot::ai::BehaviorTreeBuilder;
 
         BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai)
-        {
-            TC_LOG_ERROR("playerbot", "🏹 BEAST MASTERY HUNTER: BotAI is null, skipping Phase 5 initialization");
-            return;
-        }
 
         // ========================================================================
         // ActionPriorityQueue: Register Beast Mastery Hunter spells with priorities

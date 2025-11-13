@@ -435,15 +435,6 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
 
     // Position features
     Position pos = bot->GetPosition();
-if (!bot)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGroup");
-
-    return;
-
-}
     features.push_back(pos.GetPositionX() / 10000.0f);  // Normalized
     features.push_back(pos.GetPositionY() / 10000.0f);
     features.push_back(pos.GetPositionZ() / 1000.0f);

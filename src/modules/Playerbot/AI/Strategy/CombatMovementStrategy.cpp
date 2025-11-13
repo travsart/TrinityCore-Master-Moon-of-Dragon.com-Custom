@@ -373,15 +373,6 @@ namespace Playerbot
     }
 
     Position CombatMovementStrategy::CalculateHealerPosition(Player* player, Unit* target) const
-if (!player)
-
-{
-
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetName");
-
-    return nullptr;
-
-}
     {
         if (!player || !target)
             return player ? player->GetPosition() : Position();
