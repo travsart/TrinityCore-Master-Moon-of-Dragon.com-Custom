@@ -206,7 +206,7 @@ public:
     void UpdateMarketData() override;
 
     // Advanced auction features
-    void SetAuctionProfile(uint32 playerGuid, const AuctionProfile& profile) override;
+    void SetAuctionProfile(uint32 playerGuid, const AuctionProfile& profile);
     AuctionProfile GetAuctionProfile(uint32 playerGuid) override;
 
     // Auction monitoring and automation

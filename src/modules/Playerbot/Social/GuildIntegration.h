@@ -188,13 +188,13 @@ public:
 
     // Core guild functionality using TrinityCore's Guild system
     void ProcessGuildInteraction(Player* player) override;
-    void HandleGuildChat(Player* player, const GuildChatMessage& message) override;
+    void HandleGuildChat(Player* player, const GuildChatMessage& message);
     void ParticipateInGuildActivities(Player* player) override;
     void ManageGuildResponsibilities(Player* player) override;
 
     // Guild chat automation
     void AutomateGuildChatParticipation(Player* player) override;
-    void RespondToGuildChat(Player* player, const GuildChatMessage& message) override;
+    void RespondToGuildChat(Player* player, const GuildChatMessage& message);
     void InitiateGuildConversation(Player* player) override;
     void ShareGuildInformation(Player* player, const std::string& topic) override;
 
@@ -212,7 +212,7 @@ public:
     void OrganizeGuildRuns(Player* player) override;
 
     // Advanced guild features
-    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile) override;
+    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile);
     GuildProfile GetGuildProfile(uint32 playerGuid) override;
 
     // Guild participation tracking
@@ -245,9 +245,9 @@ public:
         ChatIntelligence() : lastResponseTime(0), responseFrequency(0.3f) {}
     };
 
-    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) override;
+    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
     std::string GenerateConversationStarter(Player* player) override;
-    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message) override;
+    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message);
     void LearnFromGuildConversations(Player* player) override;
 
     // Guild achievement coordination

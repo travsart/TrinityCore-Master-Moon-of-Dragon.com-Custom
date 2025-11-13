@@ -137,7 +137,7 @@ public:
 
     // Event subscription system
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;
-    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler) override;
+    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler);
     void UnregisterEventHandler(uint32 handlerId) override;
 
 private:
