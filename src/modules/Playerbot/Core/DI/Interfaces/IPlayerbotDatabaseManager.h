@@ -10,11 +10,9 @@
 #pragma once
 
 #include "Define.h"
+#include "DatabaseEnvFwd.h"
 #include <string>
 #include <memory>
-
-// Forward declaration
-class QueryResult;
 
 /**
  * @brief Interface for playerbot database operations

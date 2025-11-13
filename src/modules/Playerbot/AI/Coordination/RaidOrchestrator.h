@@ -55,7 +55,8 @@ enum class EncounterPhase : uint8
     BURN,           // Burn/execute phase
     ADD_PHASE,      // Add management phase
     TRANSITION,     // Phase transition
-    INTERMISSION    // Boss intermission
+    INTERMISSION,   // Boss intermission
+    DEFENSIVE       // Defensive phase (survival focus)
 };
 
 /**
