@@ -268,7 +268,7 @@ protected:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (DPS + Holy Power Focus)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 

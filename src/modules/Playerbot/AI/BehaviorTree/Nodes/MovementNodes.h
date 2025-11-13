@@ -266,16 +266,13 @@ public:
             return _status;
         }
 
-        // Get leader (master or group leader)
-        Player* leader = ai->GetMaster();
-        if (!leader)
+        // Get leader (group leader)
+        Player* leader = nullptr;
+        Group* group = bot->GetGroup();
+        if (group)
         {
-            Group* group = bot->GetGroup();
-            if (group)
-            {
-                ObjectGuid leaderGuid = group->GetLeaderGUID();
-                leader = ObjectAccessor::FindPlayer(leaderGuid);
-            }
+            ObjectGuid leaderGuid = group->GetLeaderGUID();
+            leader = ObjectAccessor::FindPlayer(leaderGuid);
         }
 
         if (!leader)
