@@ -347,8 +347,8 @@ GroupRole GroupCoordinator::DetectRole(Player* player) const
     if (!player)
         return GroupRole::UNKNOWN;
 
-    uint8 classId = player->getClass();
-    uint8 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+    uint8 classId = player->GetClass();
+    uint8 spec = player->GetPrimarySpecialization());
 
     // Tank specs
     if ((classId == CLASS_WARRIOR && spec == 2) ||     // Protection Warrior

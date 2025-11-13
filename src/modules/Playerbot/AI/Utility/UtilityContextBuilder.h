@@ -154,8 +154,8 @@ private:
         if (!bot)
             return UtilityContext::Role::DPS;
 
-        uint8 classId = bot->getClass();
-        uint8 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+        uint8 classId = bot->GetClass();
+        uint8 spec = bot->GetPrimarySpecialization());
 
         // Tank specs
         if (classId == CLASS_WARRIOR && spec == 2) // Protection

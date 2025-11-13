@@ -93,12 +93,12 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
     {
         // Map TrinityCore Powers enum to Playerbot Powers enum
         // TrinityCore::Powers is int8, packet has uint8
-        ::Powers tcPowerType = static_cast<::Powers>(powerInfo.PowerType);
+        ::Powers tcPowerType = static_cast<::Powers>(powerInfo.Power);
         int32 maxPower = unit->GetMaxPower(tcPowerType);
 
         // Map to Playerbot::Powers enum (WoW 11.2: limited subset)
         Powers botPowerType = Powers::POWER_MANA;  // Default
-        switch (powerInfo.PowerType)
+        switch (powerInfo.Power)
         {
             case 0: botPowerType = Powers::POWER_MANA; break;
             case 1: botPowerType = Powers::POWER_RAGE; break;
@@ -128,7 +128,7 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         TC_LOG_TRACE("playerbot.packets", "Bot {} received POWER_UPDATE (typed): Unit {} powerType={} power={}/{} ({:.1f}%)",
             bot->GetName(),
             packet.Guid.ToString(),
-            uint32(powerInfo.PowerType),
+            uint32(powerInfo.Power),
             powerInfo.Power,
             maxPower,
             powerPercent);

@@ -648,7 +648,7 @@ void FormationManager::UpdateMemberPositions()
         member.distanceFromAssigned = member.currentPosition.GetExactDist(&member.assignedPosition);
         member.distanceFromLeader = _leader ? member.currentPosition.GetExactDist(_leader) : 0.0f;
         member.isInPosition = member.distanceFromAssigned <= _formationSpacing * 0.8f;
-        member.isMoving = member.player->IsMoving();
+        member.isMoving = member.player->isMoving();
         member.lastPositionUpdate = currentTime;
     }
 }
@@ -727,7 +727,7 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
     if (!player)
         return FormationRole::SUPPORT;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     uint32 spec = player->GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID);
 
     switch (playerClass)
@@ -860,7 +860,7 @@ FormationRole FormationUtils::DetermineOptimalRole(Player* player)
     if (!player)
         return FormationRole::SUPPORT;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (playerClass)
     {
         case CLASS_WARRIOR:

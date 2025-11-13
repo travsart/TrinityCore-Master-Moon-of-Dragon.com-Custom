@@ -368,7 +368,7 @@ std::vector<ObstacleInfo> ObstacleAvoidanceManager::DetectUnitObstacles(const De
             obstacle.type = ObstacleType::UNIT_OBSTACLE;
             obstacle.radius = CalculateObstacleRadius(unit, ObstacleType::UNIT_OBSTACLE);
             obstacle.height = unit->GetCollisionHeight();
-            obstacle.isMoving = unit->IsMoving();
+            obstacle.isMoving = unit->isMoving();
             obstacle.priority = AssessObstaclePriority(obstacle, context);
             obstacle.name = unit->GetName();
             obstacle.firstDetected = GameTime::GetGameTimeMS();

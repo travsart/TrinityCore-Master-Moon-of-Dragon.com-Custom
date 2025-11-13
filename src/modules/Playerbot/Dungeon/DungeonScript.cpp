@@ -146,8 +146,8 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
         return DungeonRole::MELEE_DPS;
 
     // Determine role based on spec/class
-    uint8 playerClass = player->getClass();
-    uint32 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+    uint8 playerClass = player->GetClass();
+    uint32 spec = player->GetPrimarySpecialization());
 
     // Tank specs
     if ((playerClass == CLASS_WARRIOR && spec == TALENT_TREE_WARRIOR_PROTECTION) ||
@@ -247,7 +247,7 @@ bool DungeonScript::HasInterruptAvailable(::Player* player) const
 
     // Get class-specific interrupt spell
     uint32 interruptSpell = 0;
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: interruptSpell = 6552; break;  // Pummel
         case CLASS_PALADIN: interruptSpell = 96231; break; // Rebuke
@@ -278,7 +278,7 @@ bool DungeonScript::UseInterruptSpell(::Player* player, ::Creature* target) cons
 
     // Get class-specific interrupt spell
     uint32 interruptSpell = 0;
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: interruptSpell = 6552; break;
         case CLASS_PALADIN: interruptSpell = 96231; break;

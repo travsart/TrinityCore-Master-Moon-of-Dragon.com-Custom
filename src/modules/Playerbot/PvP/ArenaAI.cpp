@@ -346,7 +346,7 @@ void ArenaAI::AdaptStrategy(::Player* player)
                 {
                     ::Player* enemyPlayer = enemy->ToPlayer();
                     // Check if healer (simplified)
-                    uint8 enemyClass = enemyPlayer->getClass();
+                    uint8 enemyClass = enemyPlayer->GetClass();
                     if (enemyClass == CLASS_PRIEST || enemyClass == CLASS_PALADIN ||
                         enemyClass == CLASS_SHAMAN || enemyClass == CLASS_DRUID ||
                         enemyClass == CLASS_MONK || enemyClass == CLASS_EVOKER)
@@ -416,7 +416,7 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
         if (newTarget->IsPlayer())
         {
             ::Player* newPlayer = newTarget->ToPlayer();
-            uint8 newClass = newPlayer->getClass();
+            uint8 newClass = newPlayer->GetClass();
                  newClass == CLASS_MONK || newClass == CLASS_EVOKER) &&
                 IsInLineOfSight(player, newTarget))
             {
@@ -442,7 +442,7 @@ std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
             bool aIsHealer = false, bIsHealer = false;
             if (a->IsPlayer())
             {
-                uint8 aClass = a->ToPlayer()->getClass();
+                uint8 aClass = a->ToPlayer()->GetClass();
                 aIsHealer = (aClass == CLASS_PRIEST || aClass == CLASS_PALADIN ||
                             aClass == CLASS_SHAMAN || aClass == CLASS_DRUID ||
                             aClass == CLASS_MONK || aClass == CLASS_EVOKER);
@@ -450,7 +450,7 @@ std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
 
             if (b->IsPlayer())
             {
-                uint8 bClass = b->ToPlayer()->getClass();
+                uint8 bClass = b->ToPlayer()->GetClass();
                 bIsHealer = (bClass == CLASS_PRIEST || bClass == CLASS_PALADIN ||
                             bClass == CLASS_SHAMAN || bClass == CLASS_DRUID ||
                             bClass == CLASS_MONK || bClass == CLASS_EVOKER);
@@ -1204,7 +1204,7 @@ float ArenaAI::GetOptimalRangeForClass(::Player* player) const
     if (!player)
         return 10.0f;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     switch (playerClass)
     {

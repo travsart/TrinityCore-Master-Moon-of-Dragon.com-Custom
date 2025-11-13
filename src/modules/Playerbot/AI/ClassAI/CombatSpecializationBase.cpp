@@ -1068,7 +1068,7 @@ bool CombatSpecializationBase::IsBehindTarget(::Unit* target) const
 
 bool CombatSpecializationBase::IsMoving() const
 {
-    return _bot && _bot->IsMoving();
+    return _bot && _bot->isMoving();
 }
 
 void CombatSpecializationBase::UpdatePositioning(::Unit* target)

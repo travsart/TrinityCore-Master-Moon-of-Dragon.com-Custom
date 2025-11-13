@@ -957,7 +957,7 @@ namespace Playerbot
                 }
 
                 // Still moving
-                if (bot->IsMoving())
+                if (bot->isMoving())
                     return InteractionResult::Pending;
 
                 // Not moving and not in range = problem

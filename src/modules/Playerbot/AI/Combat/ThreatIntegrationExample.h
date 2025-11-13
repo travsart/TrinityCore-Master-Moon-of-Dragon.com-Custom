@@ -176,7 +176,7 @@ public:
                     if (threatPercent < 110.0f) // Lost aggro
                     {
                         // Use taunt ability
-                        uint32 tauntSpell = GetTauntSpell(bot->getClass());
+                        uint32 tauntSpell = GetTauntSpell(bot->GetClass());
                         if (tauntSpell && bot->IsSpellReady(tauntSpell))
                         {
                             bot->CastSpell(target, tauntSpell, false);
@@ -194,12 +194,12 @@ public:
                 if (primaryTarget && primaryTarget->info.threatPercent > 85.0f)
                 {
                     // Use threat reduction
-                    if (bot->getClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
+                    if (bot->GetClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
                     {
                         bot->CastSpell(bot, ThreatSpells::FEINT, false);
                         threatMgr->ModifyThreat(primaryTarget->target, 0.5f);
                     }
-                    else if (bot->getClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
+                    else if (bot->GetClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
                     {
                         bot->CastSpell(bot, ThreatSpells::FEIGN_DEATH, false);
                         threatMgr->ClearAllThreat();
@@ -217,7 +217,7 @@ public:
                     if (threat->GetVictim() == bot)
                     {
                         // Emergency threat drop
-                        if (bot->getClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
+                        if (bot->GetClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
                         {
                             bot->CastSpell(bot, ThreatSpells::FADE, false);
                             threatMgr->ModifyThreat(threat, 0.1f);
@@ -296,7 +296,7 @@ private:
             return false;
 
         // Simplified check - in production, check actual spec
-        uint8 classId = player->getClass();
+        uint8 classId = player->GetClass();
         return classId == CLASS_PRIEST || classId == CLASS_SHAMAN ||
                classId == CLASS_DRUID || classId == CLASS_MONK ||
                classId == CLASS_PALADIN || classId == CLASS_EVOKER;

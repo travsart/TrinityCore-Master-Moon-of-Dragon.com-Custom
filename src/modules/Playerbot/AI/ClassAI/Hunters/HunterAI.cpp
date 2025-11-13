@@ -838,7 +838,7 @@ void HunterAI::OnCombatEnd(){
     // Check focus cost
     for (SpellPowerEntry const* power : spellInfo->PowerCosts)
     {
-        if (power && power->PowerType == POWER_FOCUS)
+        if (power && power->Power == POWER_FOCUS)
         {
             uint32 focusCost = power->ManaCost;
             return HasFocus(focusCost);
@@ -861,7 +861,7 @@ void HunterAI::ConsumeResource(uint32 spellId)
     // Track focus consumption
     for (SpellPowerEntry const* power : spellInfo->PowerCosts)
     {
-        if (power && power->PowerType == POWER_FOCUS)
+        if (power && power->Power == POWER_FOCUS)
         {
             _combatMetrics.focusSpent += power->ManaCost;
             break;

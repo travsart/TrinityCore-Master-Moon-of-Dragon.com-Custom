@@ -656,7 +656,7 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
             case CLASS_DEATH_KNIGHT:
             case CLASS_DRUID:
             case CLASS_MONK:
-                role = player->GetPrimaryTalentTree() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
+                role = player->GetPrimarySpecialization() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
                 break;
             case CLASS_PRIEST:
             case CLASS_SHAMAN:
@@ -909,7 +909,7 @@ void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>&
         if (player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
             player->GetClass() == CLASS_DEATH_KNIGHT)
         {
-            if (player->GetPrimaryTalentTree() == 0) // Protection/Blood/Prot
+            if (player->GetPrimarySpecialization() == 0) // Protection/Blood/Prot
             {
                 AssignTankTargets(player, trashMobs);
                 continue;
@@ -989,7 +989,7 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
             case CLASS_WARRIOR:
             case CLASS_PALADIN:
             case CLASS_DEATH_KNIGHT:
-                if (player->GetPrimaryTalentTree() == 0)
+                if (player->GetPrimarySpecialization() == 0)
                     CoordinateTankBehavior(player, encounter);
                 else
                     CoordinateDpsBehavior(player, encounter);
@@ -998,7 +998,7 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
             case CLASS_PRIEST:
             case CLASS_SHAMAN:
             case CLASS_DRUID:
-                if (player->GetPrimaryTalentTree() == 2)
+                if (player->GetPrimarySpecialization() == 2)
                     CoordinateHealerBehavior(player, encounter);
                 else
                     CoordinateDpsBehavior(player, encounter);
@@ -1042,7 +1042,7 @@ void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, cons
                 continue;
 
             if ((player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
-                 player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimaryTalentTree() == 0)
+                 player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimarySpecialization() == 0)
             {
                 if (!currentTank)
                     currentTank = player;
@@ -1176,7 +1176,7 @@ void DungeonBehavior::ManageThreatMeters(Group* group)
                     continue;
 
                 if ((tank->GetClass() == CLASS_WARRIOR || tank->GetClass() == CLASS_PALADIN ||
-                     tank->GetClass() == CLASS_DEATH_KNIGHT) && tank->GetPrimaryTalentTree() == 0)
+                     tank->GetClass() == CLASS_DEATH_KNIGHT) && tank->GetPrimarySpecialization() == 0)
                 {
                     tankThreat = victim->GetThreatManager().GetThreat(tank);
                     break;
@@ -1229,7 +1229,7 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
         if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
             player->GetClass() == CLASS_PALADIN || player->GetClass() == CLASS_DRUID)
         {
-            if (player->GetPrimaryTalentTree() == 2) // Holy/Resto/Holy
+            if (player->GetPrimarySpecialization() == 2) // Holy/Resto/Holy
             {
                 healers.push_back(player);
             }
@@ -1280,12 +1280,12 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
         // Exclude tanks and healers
         bool isTankOrHealer = false;
         if ((player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
-             player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimaryTalentTree() == 0)
+             player->GetClass() == CLASS_DEATH_KNIGHT) && player->GetPrimarySpecialization() == 0)
         {
             isTankOrHealer = true;
         }
         else if ((player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
-                  player->GetClass() == CLASS_DRUID) && player->GetPrimaryTalentTree() == 2)
+                  player->GetClass() == CLASS_DRUID) && player->GetPrimarySpecialization() == 2)
         {
             isTankOrHealer = true;
         }

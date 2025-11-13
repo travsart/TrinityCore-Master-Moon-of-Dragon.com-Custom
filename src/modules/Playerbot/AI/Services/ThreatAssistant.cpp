@@ -332,7 +332,7 @@ float ThreatAssistant::CalculateDangerRating(Unit* target)
     if (target->IsElite())
         danger += 2.0f;
 
-    if (target->IsWorldBoss())
+    if (target->isWorldBoss())
         danger = 10.0f;
 
     // Caster bonus (ranged attacks, spells)
@@ -370,7 +370,7 @@ ThreatAssistant::PlayerRole ThreatAssistant::GetPlayerRole(Player* player)
 
     // Simple heuristic based on class
     // TODO: Integrate with proper role detection system
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

@@ -63,7 +63,7 @@ void KitingManager::UpdateKiting(uint32 diff)
             context.currentHealth = _bot->GetHealthPct();
             context.currentMana = _bot->GetPowerPct(POWER_MANA);
             context.inCombat = _bot->IsInCombat();
-            context.isMoving = _bot->IsMoving();
+            context.isMoving = _bot->isMoving();
             context.isCasting = _bot->HasUnitState(UNIT_STATE_CASTING);
 
             // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -307,7 +307,7 @@ KitingType KitingManager::SelectOptimalKitingType(const KitingContext& context)
         return KitingType::FIGURE_EIGHT;
     }
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     switch (botClass)
     {
         case CLASS_HUNTER:
@@ -408,7 +408,7 @@ float KitingManager::GetOptimalKitingDistance(Unit* target)
     if (!target)
         return _optimalKitingDistance;
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     float baseDistance = KitingUtils::GetClassKitingRange(botClass);
 
     if (target->GetTypeId() == TYPEID_UNIT)
@@ -603,7 +603,7 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         threat.unit = enemy;
         threat.position = enemy->GetPosition();
         threat.distance = botPos.GetExactDist(&threat.position);
-        threat.isMoving = enemy->IsMoving();
+        threat.isMoving = enemy->isMoving();
         threat.isCasting = enemy->HasUnitState(UNIT_STATE_CASTING);
         threat.name = enemy->GetName();
         threat.lastUpdate = GameTime::GetGameTimeMS();
@@ -780,7 +780,7 @@ KitingTrigger KitingManager::EvaluateKitingTriggers(const KitingContext& context
     if (context.isCasting)
         triggers |= KitingTrigger::CASTING_INTERRUPT;
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     if (botClass == CLASS_HUNTER || botClass == CLASS_MAGE || botClass == CLASS_WARLOCK)
         triggers |= KitingTrigger::FORMATION_ROLE;
 
@@ -1040,7 +1040,7 @@ float KitingUtils::CalculateOptimalKitingDistance(Player* bot, Unit* target)
     if (!bot || !target)
         return 20.0f;
 
-    uint8 botClass = bot->getClass();
+    uint8 botClass = bot->GetClass();
     return GetClassKitingRange(botClass);
 }
 

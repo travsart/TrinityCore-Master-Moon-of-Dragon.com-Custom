@@ -771,7 +771,7 @@ private:
     void InitializeHavocMechanics()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         BotAI* ai = this;
         if (!ai) return;

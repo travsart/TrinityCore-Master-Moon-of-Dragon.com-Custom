@@ -969,7 +969,7 @@ void GroupCoordination::HandleDPSTargeting()
             for (Player* dps : dpsPlayers)
             {
                 // Check if DPS can interrupt (class-based)
-                uint8 classId = dps->getClass();
+                uint8 classId = dps->GetClass();
                 bool canInterrupt = false;
 
                 switch (classId)
@@ -1095,7 +1095,7 @@ void GroupCoordination::HandleSupportActions()
     {
         BuffProvider provider;
         provider.player = member;
-        provider.classId = member->getClass();
+        provider.classId = member->GetClass();
 
         // Identify what buffs this player can provide
         switch (provider.classId)
@@ -1177,7 +1177,7 @@ void GroupCoordination::HandleSupportActions()
         std::vector<Player*> ccCapablePlayers;
         for (Player* member : groupMembers)
         {
-            uint8 classId = member->getClass();
+            uint8 classId = member->GetClass();
             bool canCC = (classId == CLASS_MAGE || classId == CLASS_HUNTER || classId == CLASS_ROGUE ||
                           classId == CLASS_WARLOCK || classId == CLASS_DRUID || classId == CLASS_SHAMAN ||
                           classId == CLASS_PRIEST || classId == CLASS_MONK);
@@ -1220,7 +1220,7 @@ void GroupCoordination::HandleSupportActions()
     {
         for (Player* member : groupMembers)
         {
-            uint8 classId = member->getClass();
+            uint8 classId = member->GetClass();
 
             // Each class has raid-wide defensive cooldowns
             bool hasRaidCooldown = (classId == CLASS_PRIEST ||      // Divine Hymn, Power Word: Barrier

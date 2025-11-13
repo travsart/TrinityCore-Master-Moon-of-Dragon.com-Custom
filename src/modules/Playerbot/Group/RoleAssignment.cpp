@@ -168,7 +168,7 @@ PlayerRoleProfile RoleAssignment::AnalyzePlayerCapabilities(Player* player)
     if (!player)
         return PlayerRoleProfile(0, 0, 0, 0);
 
-    PlayerRoleProfile profile(player->GetGUID().GetCounter(), player->getClass(), 0, player->GetLevel());
+    PlayerRoleProfile profile(player->GetGUID().GetCounter(), player->GetClass(), 0, player->GetLevel());
 
     BuildPlayerProfile(profile, player);
     CalculateRoleCapabilities(profile, player);
@@ -191,7 +191,7 @@ std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group
         GroupRole role = static_cast<GroupRole>(roleInt);
         RoleScore score(role);
 
-        score.effectiveness = CalculateClassRoleEffectiveness(player->getClass(), 0, role);
+        score.effectiveness = CalculateClassRoleEffectiveness(player->GetClass(), 0, role);
         score.gearScore = CalculateGearScore(player, role);
         score.experienceScore = CalculateExperienceScore(player->GetGUID().GetCounter(), role);
         score.synergy = CalculateSynergyScore(player, role, group);
@@ -525,7 +525,7 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
     if (!player)
         return;
 
-    profile.playerClass = player->getClass();
+    profile.playerClass = player->GetClass();
     profile.playerLevel = player->GetLevel();
     profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
@@ -548,7 +548,7 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile, Playe
     if (!player)
         return;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     // Get player's active specialization
     uint8 playerSpec = 0;
     if (ChrSpecialization primarySpec = player->GetPrimarySpecialization())
@@ -748,7 +748,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
         return 0.5f;
 
     float synergyScore = 0.5f; // Base score
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     // Get group composition
     std::unordered_map<uint8, uint32> classCounts; // class -> count
@@ -761,7 +761,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             if (member->GetGUID() == player->GetGUID())
                 continue; // Skip the player we're evaluating
 
-            uint8 memberClass = member->getClass();
+            uint8 memberClass = member->GetClass();
             classCounts[memberClass]++;
 
             // Determine member's role (simplified)

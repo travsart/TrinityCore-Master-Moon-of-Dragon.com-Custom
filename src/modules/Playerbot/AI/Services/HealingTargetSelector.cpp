@@ -301,7 +301,7 @@ float HealingTargetSelector::CalculateRolePriority(Player* target)
     // TODO: Integrate with bot role detection system if available
 
     // Simple heuristic for now
-    switch (target->getClass())
+    switch (target->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

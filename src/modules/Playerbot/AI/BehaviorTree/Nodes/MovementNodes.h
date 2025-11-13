@@ -79,7 +79,7 @@ public:
         }
 
         // Check if movement is complete
-        if (!bot->IsMoving())
+        if (!bot->isMoving())
         {
             // Reached destination or movement failed
             _status = (distance <= _acceptableDistance * 2.0f) ? BTStatus::SUCCESS : BTStatus::FAILURE;
@@ -367,7 +367,7 @@ public:
                 if (!bot)
                     return false;
 
-                return bot->IsMoving();
+                return bot->isMoving();
             })
     {}
 };
@@ -492,8 +492,8 @@ public:
                 continue;
 
             // Check if member is healer
-            uint8 classId = member->getClass();
-            uint8 spec = member->GetPrimaryTalentTree(member->GetActiveSpec());
+            uint8 classId = member->GetClass();
+            uint8 spec = member->GetPrimarySpecialization());
 
             bool isHealer = false;
             if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) isHealer = true;

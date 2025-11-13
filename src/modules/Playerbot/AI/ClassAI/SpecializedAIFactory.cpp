@@ -72,7 +72,7 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 {
 
     uint8 classId = bot->GetClass();
-    uint8 specId = static_cast<uint8>(bot->GetPrimaryTalentTree(bot->GetActiveSpec()));
+    uint8 specId = static_cast<uint8>(bot->GetPrimarySpecialization()));
 
     TC_LOG_DEBUG("module.playerbot.ai.factory",
                  "Creating specialized AI for bot {} (class: {}, spec: {})",

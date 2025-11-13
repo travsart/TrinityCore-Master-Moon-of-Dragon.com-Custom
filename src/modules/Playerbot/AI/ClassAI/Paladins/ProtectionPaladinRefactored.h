@@ -495,7 +495,7 @@ private:
     void InitializeProtectionPaladinMechanics()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Tank + Holy Power Focus)

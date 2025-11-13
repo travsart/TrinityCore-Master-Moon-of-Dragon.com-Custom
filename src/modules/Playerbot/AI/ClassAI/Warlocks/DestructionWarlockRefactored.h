@@ -647,7 +647,7 @@ private:
                 Creature* creature = enemy->ToCreature();
                 if (creature)
                 {
-                    if (creature->IsWorldBoss() || creature->IsDungeonBoss())
+                    if (creature->isWorldBoss() || creature->IsDungeonBoss())
                         score += 100.0f; // Highest priority for bosses
                     else if (creature->GetCreatureTemplate()->rank >= CREATURE_ELITE_ELITE)
                         score += 50.0f; // High priority for elites
@@ -678,7 +678,7 @@ private:
     void InitializeDestructionMechanics()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         BotAI* ai = this;
         if (!ai) return;

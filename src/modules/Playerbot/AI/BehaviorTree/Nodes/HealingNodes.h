@@ -688,8 +688,8 @@ public:
                 if (!bot)
                     return false;
 
-                uint8 classId = bot->getClass();
-                uint8 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+                uint8 classId = bot->GetClass();
+                uint8 spec = bot->GetPrimarySpecialization());
 
                 // Healer specs
                 if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) // Discipline or Holy

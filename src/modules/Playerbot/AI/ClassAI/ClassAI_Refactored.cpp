@@ -465,7 +465,7 @@ uint32 ClassAI::GetAuraRemainingTime(uint32 spellId, ::Unit* target)
 
 bool ClassAI::IsMoving() const
 {
-    return GetBot() && GetBot()->IsMoving();
+    return GetBot() && GetBot()->isMoving();
 }
 
 bool ClassAI::IsInMeleeRange(::Unit* target) const

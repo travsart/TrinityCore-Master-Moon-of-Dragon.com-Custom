@@ -395,7 +395,7 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
             // BONUS: Elite/Boss mobs have more dangerous spells
             if (Creature const* creature = target->ToCreature())
             {
-                if (creature->IsWorldBoss() || creature->IsDungeonBoss())
+                if (creature->isWorldBoss() || creature->IsDungeonBoss())
                     score += 30.0f; // Boss spells are high priority
                 else if (creature->IsElite())
                     score += 15.0f; // Elite spells are medium-high priority
@@ -438,7 +438,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
         bool isHealer = false;
 
         // Determine role from specialization
-        switch (player->getClass())
+        switch (player->GetClass())
         {
             case CLASS_WARRIOR:
                 isTank = (spec == ChrSpecialization::WarriorProtection);

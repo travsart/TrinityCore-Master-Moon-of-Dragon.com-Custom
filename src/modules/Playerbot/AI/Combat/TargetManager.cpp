@@ -307,7 +307,7 @@ bool TargetManager::IsHealer(Unit* target) const
     if (target->IsPlayer())
     {
         Player* player = target->ToPlayer();
-        switch (player->getClass())
+        switch (player->GetClass())
         {
             case CLASS_PRIEST:
             case CLASS_PALADIN:

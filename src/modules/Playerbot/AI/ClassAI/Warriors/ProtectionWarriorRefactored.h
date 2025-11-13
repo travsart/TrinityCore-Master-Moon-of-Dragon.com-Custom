@@ -481,7 +481,7 @@ private:
     void InitializeProtectionMechanics()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         // Initialize Protection-specific systems
         CheckShieldStatus();
