@@ -80,9 +80,9 @@ void GroupCoordinator::Update(uint32 diff)
     bool wasInCombat = _tacticalState.inCombat;
     _tacticalState.inCombat = false;
 
-    for (GroupReference* ref = _group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (member && member->IsInCombat())
         {
             _tacticalState.inCombat = true;
@@ -258,9 +258,9 @@ void GroupCoordinator::UpdateRoleAssignments()
 {
     _roleAssignments.clear();
 
-    for (GroupReference* ref = _group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member)
             continue;
 
@@ -390,9 +390,9 @@ ObjectGuid GroupCoordinator::FindBestFocusTarget() const
     ObjectGuid bestTarget;
     float highestPriority = 0.0f;
 
-    for (GroupReference* ref = _group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || !member->IsInCombat())
             continue;
 

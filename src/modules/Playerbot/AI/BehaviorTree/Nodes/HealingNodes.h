@@ -70,9 +70,9 @@ public:
         // Check group members
         if (group)
         {
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference& ref : group->GetMembers())
             {
-                Player* member = ref->GetSource();
+                Player* member = ref.GetSource();
                 if (!member || !member->IsInWorld() || member->isDead())
                     continue;
 
@@ -153,9 +153,9 @@ public:
         // Check group members
         if (!dispelTarget && group)
         {
-            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+            for (GroupReference& ref : group->GetMembers())
             {
-                Player* member = ref->GetSource();
+                Player* member = ref.GetSource();
                 if (!member || !member->IsInWorld() || member->isDead())
                     continue;
 
@@ -318,7 +318,7 @@ public:
             }
 
             // Check if spell is ready
-            if (!bot->HasSpell(_spellId) || bot->HasSpellCooldown(_spellId))
+            if (!bot->HasSpell(_spellId) || bot->GetSpellHistory()->HasCooldown(_spellId))
             {
                 _status = BTStatus::FAILURE;
                 Reset();
@@ -425,7 +425,7 @@ public:
             if (targetHealthPct < spellOption.healthThreshold)
             {
                 // Check if spell is ready
-                if (bot->HasSpell(spellOption.spellId) && !bot->HasSpellCooldown(spellOption.spellId))
+                if (bot->HasSpell(spellOption.spellId) && !bot->GetSpellHistory()->HasCooldown(spellOption.spellId))
                 {
                     blackboard.Set<uint32>("SelectedHealSpell", spellOption.spellId);
                     _status = BTStatus::SUCCESS;
@@ -464,7 +464,7 @@ public:
                     return BTStatus::FAILURE;
 
                 // Check if spell is ready
-                if (!bot->HasSpell(spellId) || bot->HasSpellCooldown(spellId))
+                if (!bot->HasSpell(spellId) || bot->GetSpellHistory()->HasCooldown(spellId))
                     return BTStatus::FAILURE;
 
                 SpellCastResult result = ai->CastSpell(spellId, dispelTarget);
@@ -507,9 +507,9 @@ public:
 
         uint32 woundedCount = 0;
 
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference& ref : group->GetMembers())
         {
-            Player* member = ref->GetSource();
+            Player* member = ref.GetSource();
             if (!member || !member->IsInWorld() || member->isDead())
                 continue;
 
@@ -574,7 +574,7 @@ public:
             }
 
             // Check if spell is ready
-            if (!bot->HasSpell(_spellId) || bot->HasSpellCooldown(_spellId))
+            if (!bot->HasSpell(_spellId) || bot->GetSpellHistory()->HasCooldown(_spellId))
             {
                 _status = BTStatus::FAILURE;
                 Reset();

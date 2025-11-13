@@ -488,9 +488,9 @@ public:
         Player* nearestHealer = nullptr;
         float nearestDistance = 999.0f;
 
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference& ref : group->GetMembers())
         {
-            Player* member = ref->GetSource();
+            Player* member = ref.GetSource();
             if (!member || !member->IsInWorld() || member == bot)
                 continue;
 
@@ -723,9 +723,9 @@ public:
         float totalDistance = 0.0f;
         uint32 memberCount = 0;
 
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference& ref : group->GetMembers())
         {
-            Player* member = ref->GetSource();
+            Player* member = ref.GetSource();
             if (!member || !member->IsInWorld() || member == bot)
                 continue;
 

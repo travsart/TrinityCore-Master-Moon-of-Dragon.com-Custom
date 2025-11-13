@@ -532,7 +532,7 @@ struct GroupScenario
     EXPECT_GE(player->GetPower(POWER_MANA), spellCost)
 
 #define EXPECT_COOLDOWN_READY(player, spellId) \
-    EXPECT_FALSE(player->HasSpellCooldown(spellId))
+    EXPECT_FALSE(player->GetSpellHistory()->HasCooldown(spellId))
 
 // Combat state assertions
 #define EXPECT_IN_COMBAT(unit) \

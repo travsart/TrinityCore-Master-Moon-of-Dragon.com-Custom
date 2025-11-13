@@ -268,7 +268,7 @@ bool DungeonScript::HasInterruptAvailable(::Player* player) const
     if (interruptSpell == 0)
         return false;
 
-    return !player->HasSpellCooldown(interruptSpell);
+    return !player->GetSpellHistory()->HasCooldown(interruptSpell);
 }
 
 bool DungeonScript::UseInterruptSpell(::Player* player, ::Creature* target) const
@@ -296,7 +296,7 @@ bool DungeonScript::UseInterruptSpell(::Player* player, ::Creature* target) cons
         default: return false;
     }
 
-    if (interruptSpell == 0 || player->HasSpellCooldown(interruptSpell))
+    if (interruptSpell == 0 || player->GetSpellHistory()->HasCooldown(interruptSpell))
         return false;
 
     // Full implementation: Cast interrupt spell

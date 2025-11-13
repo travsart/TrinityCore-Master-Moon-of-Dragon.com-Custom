@@ -569,9 +569,9 @@ float DecisionFusionSystem::EvaluateScoringCategory(
                 uint32 membersNeedingHelp = 0;
                 uint32 totalMembers = 0;
 
-                for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+                for (GroupReference& ref : group->GetMembers())
                 {
-                    if (Player* member = ref->GetSource())
+                    if (Player* member = ref.GetSource())
                     {
                         if (member->IsAlive())
                         {
