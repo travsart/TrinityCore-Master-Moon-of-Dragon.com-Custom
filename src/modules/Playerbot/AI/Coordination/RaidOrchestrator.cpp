@@ -470,7 +470,7 @@ void RaidOrchestrator::DetectBossEncounter()
             continue;
 
         Creature* creature = target->ToCreature();
-        if (creature->IsDungeonBoss() || creature->IsWorldBoss())
+        if (creature->IsDungeonBoss() || creature->isWorldBoss())
         {
             bossGuid = creature->GetGUID();
             bossEntry = creature->GetEntry();
@@ -564,7 +564,7 @@ void RaidOrchestrator::UpdateAddPriorities()
             continue;
 
         Creature* creature = target->ToCreature();
-        if (!creature->IsDungeonBoss() && !creature->IsWorldBoss())
+        if (!creature->IsDungeonBoss() && !creature->isWorldBoss())
         {
             // This is an add
             if (std::find(adds.begin(), adds.end(), creature->GetGUID()) == adds.end())

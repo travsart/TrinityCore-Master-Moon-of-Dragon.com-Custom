@@ -427,7 +427,7 @@ void ZoneOrchestrator::DetectWorldBoss()
         if (target && target->IsCreature())
         {
             Creature* creature = target->ToCreature();
-            if (creature && creature->IsWorldBoss())
+            if (creature && creature->isWorldBoss())
             {
                 SetActivity(ZoneActivity::WORLD_BOSS);
 

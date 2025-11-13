@@ -211,7 +211,7 @@ public:
             return _status;
         }
 
-        if (bot->GetPower(Powers(spellInfo->PowerType)) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+        if (bot->GetPower(Powers(spellInfo->Power)) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
         {
             _status = BTStatus::FAILURE;
             return _status;

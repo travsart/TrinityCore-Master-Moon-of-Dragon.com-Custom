@@ -742,7 +742,7 @@ uint32 ResourceManager::CalculateSpellResourceCost(uint32 spellId, ResourceType 
         if (!powerEntry)
             continue;
 
-        if (powerEntry->PowerType == requiredPower)
+        if (powerEntry->Power == requiredPower)
         {
             uint32 baseCost = powerEntry->ManaCost;
             uint32 percentCost = 0;
@@ -771,7 +771,7 @@ bool ResourceManager::IsResourceTypeUsedBySpell(uint32 spellId, ResourceType typ
     // Check if any of the spell's power costs match the required type
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (powerEntry && powerEntry->PowerType == requiredPower)
+        if (powerEntry && powerEntry->Power == requiredPower)
             return true;
     }
 
@@ -823,7 +823,7 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
     uint32 cost = 0;
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (!powerEntry || powerEntry->PowerType != POWER_MANA)
+        if (!powerEntry || powerEntry->Power != POWER_MANA)
             continue;
 
         cost = powerEntry->ManaCost;
@@ -852,7 +852,7 @@ uint32 ResourceCalculator::CalculateRageCost(uint32 spellId, Player* caster)
     // Find rage cost in power costs array
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (powerEntry && powerEntry->PowerType == POWER_RAGE)
+        if (powerEntry && powerEntry->Power == POWER_RAGE)
         {
             return powerEntry->ManaCost;
         }
@@ -873,7 +873,7 @@ uint32 ResourceCalculator::CalculateEnergyCost(uint32 spellId, Player* caster)
     // Find energy cost in power costs array
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (powerEntry && powerEntry->PowerType == POWER_ENERGY)
+        if (powerEntry && powerEntry->Power == POWER_ENERGY)
         {
             return powerEntry->ManaCost;
         }
@@ -894,7 +894,7 @@ uint32 ResourceCalculator::CalculateFocusCost(uint32 spellId, Player* caster)
     // Find focus cost in power costs array
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (powerEntry && powerEntry->PowerType == POWER_FOCUS)
+        if (powerEntry && powerEntry->Power == POWER_FOCUS)
         {
             return powerEntry->ManaCost;
         }
@@ -988,7 +988,7 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
         if (!powerEntry)
             continue;
 
-        switch (powerEntry->PowerType)
+        switch (powerEntry->Power)
         {
             case POWER_MANA:
                 GetManaCostCache()[spellId] = powerEntry->ManaCost;

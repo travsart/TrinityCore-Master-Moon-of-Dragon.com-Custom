@@ -332,7 +332,7 @@ float ThreatAssistant::CalculateDangerRating(Unit* target)
     if (target->IsElite())
         danger += 2.0f;
 
-    if (target->IsWorldBoss())
+    if (target->isWorldBoss())
         danger = 10.0f;
 
     // Caster bonus (ranged attacks, spells)

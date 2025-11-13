@@ -63,7 +63,7 @@ void KitingManager::UpdateKiting(uint32 diff)
             context.currentHealth = _bot->GetHealthPct();
             context.currentMana = _bot->GetPowerPct(POWER_MANA);
             context.inCombat = _bot->IsInCombat();
-            context.isMoving = _bot->IsMoving();
+            context.isMoving = _bot->isMoving();
             context.isCasting = _bot->HasUnitState(UNIT_STATE_CASTING);
 
             // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -603,7 +603,7 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         threat.unit = enemy;
         threat.position = enemy->GetPosition();
         threat.distance = botPos.GetExactDist(&threat.position);
-        threat.isMoving = enemy->IsMoving();
+        threat.isMoving = enemy->isMoving();
         threat.isCasting = enemy->HasUnitState(UNIT_STATE_CASTING);
         threat.name = enemy->GetName();
         threat.lastUpdate = GameTime::GetGameTimeMS();

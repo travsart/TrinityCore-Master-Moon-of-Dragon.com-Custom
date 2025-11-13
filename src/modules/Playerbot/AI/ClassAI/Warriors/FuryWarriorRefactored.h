@@ -394,7 +394,7 @@ private:
     void InitializeFuryMechanics()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         // Setup Fury-specific mechanics
         CheckDualWieldStatus();

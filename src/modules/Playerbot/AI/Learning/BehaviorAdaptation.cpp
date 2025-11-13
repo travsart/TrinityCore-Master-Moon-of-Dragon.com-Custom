@@ -655,7 +655,7 @@ std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) c
     features.push_back(nearbyPlayers.size() / 20.0f);
     features.push_back(nearbyCreatures.size() / 30.0f);
     // Movement state
-    features.push_back(bot->IsMoving() ? 1.0f : 0.0f);
+    features.push_back(bot->isMoving() ? 1.0f : 0.0f);
     features.push_back(bot->IsFalling() ? 1.0f : 0.0f);
     features.push_back(bot->IsFlying() ? 1.0f : 0.0f);
     // Pad to fixed size

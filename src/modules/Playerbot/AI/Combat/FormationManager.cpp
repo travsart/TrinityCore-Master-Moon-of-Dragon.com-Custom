@@ -648,7 +648,7 @@ void FormationManager::UpdateMemberPositions()
         member.distanceFromAssigned = member.currentPosition.GetExactDist(&member.assignedPosition);
         member.distanceFromLeader = _leader ? member.currentPosition.GetExactDist(_leader) : 0.0f;
         member.isInPosition = member.distanceFromAssigned <= _formationSpacing * 0.8f;
-        member.isMoving = member.player->IsMoving();
+        member.isMoving = member.player->isMoving();
         member.lastPositionUpdate = currentTime;
     }
 }

@@ -729,7 +729,7 @@ BehaviorSample PlayerPatternRecognition::CreateBehaviorSample(Player* player) co
 
     sample.healthPct = player->GetHealthPct();
     sample.resourcePct = player->GetPowerPct(player->GetPowerType());
-    sample.isMoving = player->IsMoving();
+    sample.isMoving = player->isMoving();
     sample.isInCombat = player->IsInCombat();
     if (player->GetVictim())
         sample.targetGuid = player->GetVictim()->GetGUID();

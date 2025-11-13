@@ -460,7 +460,7 @@ private:
     void InitializeArmsRotation()
     {
         using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        using namespace BehaviorTreeBuilder;
 
         // Setup any Arms-specific initialization
         _tacticalMasteryRage = 0;

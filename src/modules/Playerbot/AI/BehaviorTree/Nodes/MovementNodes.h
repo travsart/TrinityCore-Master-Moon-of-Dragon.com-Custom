@@ -79,7 +79,7 @@ public:
         }
 
         // Check if movement is complete
-        if (!bot->IsMoving())
+        if (!bot->isMoving())
         {
             // Reached destination or movement failed
             _status = (distance <= _acceptableDistance * 2.0f) ? BTStatus::SUCCESS : BTStatus::FAILURE;
@@ -370,7 +370,7 @@ public:
                 if (!bot)
                     return false;
 
-                return bot->IsMoving();
+                return bot->isMoving();
             })
     {}
 };
