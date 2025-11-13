@@ -35,6 +35,8 @@
 #include <cmath>
 
 #include "BotSpawner.h"
+#include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
 #include "BotSessionMgr.h"
 #include "BotWorldSessionMgr.h"
 #include "BotResourcePool.h"
@@ -51,8 +53,6 @@
 #include "Player.h"
 #include "Random.h"
 #include "CharacterPackets.h"
-#include "DatabaseEnv.h"
-#include "CharacterDatabase.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "ObjectGuid.h"
 #include "MotionMaster.h"

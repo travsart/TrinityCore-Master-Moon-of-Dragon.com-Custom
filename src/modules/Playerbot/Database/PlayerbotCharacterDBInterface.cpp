@@ -9,6 +9,7 @@
 
 #include "PlayerbotCharacterDBInterface.h"
 #include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
 #include "QueryHolder.h"
 #include "Log.h"
 #include "World.h"
