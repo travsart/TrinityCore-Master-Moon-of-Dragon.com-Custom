@@ -3,6 +3,8 @@
  */
 
 #include "BotSession.h"
+#include "DatabaseEnv.h"
+#include "CharacterDatabase.h"
 #include "BotPacketRelay.h"
 #include "BotPacketSimulator.h"  // PHASE 1: Packet forging infrastructure
 #include "PacketDeferralClassifier.h"  // Selective main thread deferral
@@ -10,11 +12,9 @@
 #include "Log.h"
 #include "WorldPacket.h"
 #include "Player.h"
-#include "DatabaseEnv.h"
 #include "QueryHolder.h"
 #include "QueryCallback.h"
 #include "CharacterPackets.h"
-#include "CharacterDatabase.h"
 #include "Database/PlayerbotCharacterDBInterface.h"
 #include "World.h"
 #include "Map.h"
