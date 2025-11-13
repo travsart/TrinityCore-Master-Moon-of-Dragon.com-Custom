@@ -23,6 +23,7 @@
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
+#include "GridNotifiers.h"
 
 namespace Playerbot
 {
