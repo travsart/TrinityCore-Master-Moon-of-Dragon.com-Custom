@@ -391,7 +391,8 @@ protected:
             return;
 
         // Deep Wounds is applied by critical strikes
-        _deepWoundsTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000; // 21 second duration    }
+        _deepWoundsTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000; // 21 second duration
+    }
 
     void CleanupExpiredDeepWounds()
     {
