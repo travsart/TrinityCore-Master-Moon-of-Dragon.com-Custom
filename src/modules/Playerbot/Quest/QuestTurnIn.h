@@ -107,6 +107,73 @@ struct TurnInBatch
         , batchPriority(100), scheduledTime(0), isOptimized(false) {}
 };
 
+// Turn-in performance monitoring
+struct TurnInMetrics
+{
+    std::atomic<uint32> questsTurnedIn{0};
+    std::atomic<uint32> turnInAttempts{0};
+    std::atomic<uint32> successfulTurnIns{0};
+    std::atomic<uint32> failedTurnIns{0};
+    std::atomic<float> averageTurnInTime{15000.0f}; // 15 seconds
+    std::atomic<float> turnInSuccessRate{0.95f};
+    std::atomic<uint32> totalTravelDistance{0};
+    std::atomic<uint32> rewardsSelected{0};
+    std::atomic<float> rewardSelectionAccuracy{0.85f};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    // Delete copy operations (atomics are not copyable)
+    TurnInMetrics() = default;
+    TurnInMetrics(TurnInMetrics const&) = delete;
+    TurnInMetrics& operator=(TurnInMetrics const&) = delete;
+
+    void Reset() {
+        questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;
+        failedTurnIns = 0; averageTurnInTime = 15000.0f; turnInSuccessRate = 0.95f;
+        totalTravelDistance = 0; rewardsSelected = 0; rewardSelectionAccuracy = 0.85f;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetSuccessRate() const {
+        uint32 attempts = turnInAttempts.load();
+        uint32 successful = successfulTurnIns.load();
+        return attempts > 0 ? (float)successful / attempts : 0.0f;
+    }
+
+    // Snapshot structure for returning metrics
+    struct Snapshot {
+        uint32 questsTurnedIn;
+        uint32 turnInAttempts;
+        uint32 successfulTurnIns;
+        uint32 failedTurnIns;
+        float averageTurnInTime;
+        float turnInSuccessRate;
+        uint32 totalTravelDistance;
+        uint32 rewardsSelected;
+        float rewardSelectionAccuracy;
+        std::chrono::steady_clock::time_point lastUpdate;
+
+        float GetSuccessRate() const {
+            return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
+        }
+    };
+
+    // Create a snapshot of current metrics
+    Snapshot CreateSnapshot() const {
+        Snapshot snapshot;
+        snapshot.questsTurnedIn = questsTurnedIn.load();
+        snapshot.turnInAttempts = turnInAttempts.load();
+        snapshot.successfulTurnIns = successfulTurnIns.load();
+        snapshot.failedTurnIns = failedTurnIns.load();
+        snapshot.averageTurnInTime = averageTurnInTime.load();
+        snapshot.turnInSuccessRate = turnInSuccessRate.load();
+        snapshot.totalTravelDistance = totalTravelDistance.load();
+        snapshot.rewardsSelected = rewardsSelected.load();
+        snapshot.rewardSelectionAccuracy = rewardSelectionAccuracy.load();
+        snapshot.lastUpdate = lastUpdate;
+        return snapshot;
+    }
+};
+
 class TC_GAME_API QuestTurnIn final : public IQuestTurnIn
 {
 public:
@@ -163,74 +230,8 @@ public:
     void ExecuteChainContinuationStrategy(Player* bot) override;
 
     // Turn-in performance monitoring
-    struct TurnInMetrics
-    {
-        std::atomic<uint32> questsTurnedIn{0};
-        std::atomic<uint32> turnInAttempts{0};
-        std::atomic<uint32> successfulTurnIns{0};
-        std::atomic<uint32> failedTurnIns{0};
-        std::atomic<float> averageTurnInTime{15000.0f}; // 15 seconds
-        std::atomic<float> turnInSuccessRate{0.95f};
-        std::atomic<uint32> totalTravelDistance{0};
-        std::atomic<uint32> rewardsSelected{0};
-        std::atomic<float> rewardSelectionAccuracy{0.85f};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        // Delete copy operations (atomics are not copyable)
-        TurnInMetrics() = default;
-        TurnInMetrics(TurnInMetrics const&) = delete;
-        TurnInMetrics& operator=(TurnInMetrics const&) = delete;
-
-        void Reset() {
-            questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;
-            failedTurnIns = 0; averageTurnInTime = 15000.0f; turnInSuccessRate = 0.95f;
-            totalTravelDistance = 0; rewardsSelected = 0; rewardSelectionAccuracy = 0.85f;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetSuccessRate() const {
-            uint32 attempts = turnInAttempts.load();
-            uint32 successful = successfulTurnIns.load();
-            return attempts > 0 ? (float)successful / attempts : 0.0f;
-        }
-
-        // Snapshot structure for returning metrics
-        struct Snapshot {
-            uint32 questsTurnedIn;
-            uint32 turnInAttempts;
-            uint32 successfulTurnIns;
-            uint32 failedTurnIns;
-            float averageTurnInTime;
-            float turnInSuccessRate;
-            uint32 totalTravelDistance;
-            uint32 rewardsSelected;
-            float rewardSelectionAccuracy;
-            std::chrono::steady_clock::time_point lastUpdate;
-
-            float GetSuccessRate() const {
-                return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
-            }
-        };
-
-        // Create a snapshot of current metrics
-        Snapshot CreateSnapshot() const {
-            Snapshot snapshot;
-            snapshot.questsTurnedIn = questsTurnedIn.load();
-            snapshot.turnInAttempts = turnInAttempts.load();
-            snapshot.successfulTurnIns = successfulTurnIns.load();
-            snapshot.failedTurnIns = failedTurnIns.load();
-            snapshot.averageTurnInTime = averageTurnInTime.load();
-            snapshot.turnInSuccessRate = turnInSuccessRate.load();
-            snapshot.totalTravelDistance = totalTravelDistance.load();
-            snapshot.rewardsSelected = rewardsSelected.load();
-            snapshot.rewardSelectionAccuracy = rewardSelectionAccuracy.load();
-            snapshot.lastUpdate = lastUpdate;
-            return snapshot;
-        }
-    };
-
-    TurnInMetrics::Snapshot GetBotTurnInMetrics(uint32 botGuid) override;
-    TurnInMetrics::Snapshot GetGlobalTurnInMetrics() override;
+    TurnInMetricsSnapshot GetBotTurnInMetrics(uint32 botGuid) override;
+    TurnInMetricsSnapshot GetGlobalTurnInMetrics() override;
 
     // Quest chain management
     void HandleQuestChainProgression(Player* bot, uint32 completedQuestId) override;

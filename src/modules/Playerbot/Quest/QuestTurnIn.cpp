@@ -1059,24 +1059,45 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
     std::lock_guard lock(_turnInMutex);
 
+    TurnInMetricsSnapshot snapshot{};
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
-        return it->second.CreateSnapshot();
-
-    return TurnInMetrics().CreateSnapshot();
+    {
+        const auto& metrics = it->second;
+        snapshot.questsTurnedIn = metrics.questsTurnedIn.load();
+        snapshot.turnInAttempts = metrics.turnInAttempts.load();
+        snapshot.successfulTurnIns = metrics.successfulTurnIns.load();
+        snapshot.failedTurnIns = metrics.failedTurnIns.load();
+        snapshot.averageTurnInTime = metrics.averageTurnInTime.load();
+        snapshot.turnInSuccessRate = metrics.turnInSuccessRate.load();
+        snapshot.totalTravelDistance = metrics.totalTravelDistance.load();
+        snapshot.rewardsSelected = metrics.rewardsSelected.load();
+        snapshot.rewardSelectionAccuracy = metrics.rewardSelectionAccuracy.load();
+    }
+    return snapshot;
 }
 
 /**
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetGlobalTurnInMetrics()
+TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
-    return _globalMetrics.CreateSnapshot();
+    TurnInMetricsSnapshot snapshot{};
+    snapshot.questsTurnedIn = _globalMetrics.questsTurnedIn.load();
+    snapshot.turnInAttempts = _globalMetrics.turnInAttempts.load();
+    snapshot.successfulTurnIns = _globalMetrics.successfulTurnIns.load();
+    snapshot.failedTurnIns = _globalMetrics.failedTurnIns.load();
+    snapshot.averageTurnInTime = _globalMetrics.averageTurnInTime.load();
+    snapshot.turnInSuccessRate = _globalMetrics.turnInSuccessRate.load();
+    snapshot.totalTravelDistance = _globalMetrics.totalTravelDistance.load();
+    snapshot.rewardsSelected = _globalMetrics.rewardsSelected.load();
+    snapshot.rewardSelectionAccuracy = _globalMetrics.rewardSelectionAccuracy.load();
+    return snapshot;
 }
 
 /**
