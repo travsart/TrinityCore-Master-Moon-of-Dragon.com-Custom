@@ -22,6 +22,7 @@
 #include "AI/BotAI.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Creature.h"
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
