@@ -1006,11 +1006,6 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     return true;
 }void DeathKnightAI::ConsumeResource(uint32 spellId)
 {    if (!GetBot())
-        if (!creature)
-        {
-
-            return;
-        }
         return;
 
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
@@ -1340,11 +1335,6 @@ bool DeathKnightAI::HandleDefensives()
                          GetBot()->GetName());
 
             actionTaken = true;
-        if (!priorityTarget)
-        {
-
-            return nullptr;
-        }
         }
     }
 
