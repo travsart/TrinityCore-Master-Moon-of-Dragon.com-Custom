@@ -63,6 +63,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!vendorItem)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Item %u not found in vendor %u inventory",
+
             m_bot->GetName().c_str(), itemId, vendor->GetEntry());
         m_stats.purchaseFailures++;
         return false;
@@ -83,10 +84,15 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     {
         for (size_t i = 0; i < vendorItems->m_items.size(); ++i)
         {
+
             if (vendorItems->m_items[i].item == itemId)
+
             {
+
                 vendorSlot = static_cast<uint32>(i);
+
                 break;
+
             }
         }
     }
@@ -97,6 +103,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!CanAfford(goldCost, vendorItem->ExtendedCost))
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Cannot afford item %u (cost: %llu, available: %llu)",
+
             m_bot->GetName().c_str(), itemId, goldCost, m_bot->GetMoney());
         m_stats.insufficientGold++;
         RecordPurchase(itemId, goldCost, false);
@@ -107,6 +114,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!HasBagSpace(itemId, quantity))
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: No bag space for item %u",
+
             m_bot->GetName().c_str(), itemId);
         m_stats.noBagSpace++;
         RecordPurchase(itemId, goldCost, false);
@@ -119,6 +127,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (success)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully purchased %u x %u for %llu copper",
+
             m_bot->GetName().c_str(), quantity, itemId, goldCost);
     }
 
@@ -150,10 +159,12 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
     {
         VendorItem const* vendorItem = FindVendorItem(vendor, itemId);
         if (!vendorItem)
+
             continue;
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (!itemTemplate)
+
             continue;
 
         // Calculate vendor slot index (slot is the index in the vendor's item list)
@@ -161,18 +172,27 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
         VendorItemData const* vendorItems = vendor->GetVendorItems();
         if (vendorItems)
         {
+
             for (size_t i = 0; i < vendorItems->m_items.size(); ++i)
+
             {
+
                 if (vendorItems->m_items[i].item == itemId)
+
                 {
+
                     vendorSlot = static_cast<uint32>(i);
+
                     break;
+
                 }
+
             }
         }
 
         VendorItemEvaluation eval = EvaluateVendorItem(vendor, itemTemplate, vendorSlot);
         if (eval.shouldPurchase)
+
             evaluations.push_back(eval);
     }
 
@@ -180,6 +200,7 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
     std::sort(evaluations.begin(), evaluations.end(),
         [](VendorItemEvaluation const& a, VendorItemEvaluation const& b)
         {
+
             return static_cast<uint8>(a.priority) < static_cast<uint8>(b.priority);
         });
 
@@ -190,30 +211,49 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
     {
         if (!FitsWithinBudget(eval.goldCost, eval.priority, budget))
         {
+
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Item %u doesn't fit budget (priority: %u, cost: %llu)",
+
                 m_bot->GetName().c_str(), eval.itemId, static_cast<uint8>(eval.priority), eval.goldCost);
+
             continue;
         }
 
         if (PurchaseItem(vendor, eval.itemId, eval.recommendedQuantity))
         {
+
             purchasedCount++;
 
             // Deduct from appropriate budget category
+
             switch (eval.priority)
+
             {
+
                 case PurchasePriority::CRITICAL:
+
                     budget.criticalBudget -= eval.goldCost;
+
                     break;
+
                 case PurchasePriority::HIGH:
+
                     budget.highBudget -= eval.goldCost;
+
                     break;
+
                 case PurchasePriority::MEDIUM:
+
                     budget.mediumBudget -= eval.goldCost;
+
                     break;
+
                 case PurchasePriority::LOW:
+
                     budget.lowBudget -= eval.goldCost;
+
                     break;
+
             }
         }
     }
@@ -241,6 +281,7 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
     {
         uint32 ammo = GetAppropriateAmmunition();
         if (ammo != 0)
+
             itemsToPurchase.push_back(ammo);
     }
 
@@ -249,18 +290,22 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
     for (VendorItem const* vendorItem : vendorItems)
     {
         if (!vendorItem)
+
             continue;
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(vendorItem->item);
         if (!itemTemplate)
+
             continue;
 
         // Skip items already in our purchase list
         if (std::find(itemsToPurchase.begin(), itemsToPurchase.end(), vendorItem->item) != itemsToPurchase.end())
+
             continue;
 
         // Check if it's a useful equipment upgrade
         if (IsEquipmentUpgrade(itemTemplate))
+
             itemsToPurchase.push_back(vendorItem->item);
     }
 
@@ -312,13 +357,21 @@ VendorInteractionManager::VendorItemEvaluation VendorInteractionManager::Evaluat
     {
         if (IsClassReagent(item))
         {
+
             uint32 currentCount = m_bot->GetItemCount(item->GetId());
+
             if (currentCount < REAGENT_STACK_SIZE)
+
             {
+
                 eval.shouldPurchase = true;
+
                 eval.reason = "Critical class reagent";
+
                 eval.recommendedQuantity = REAGENT_STACK_SIZE - currentCount;
+
                 eval.goldCost = GetVendorPrice(vendor, item->GetId(), vendorSlot, eval.recommendedQuantity);
+
             }
         }
     }
@@ -327,15 +380,24 @@ VendorInteractionManager::VendorItemEvaluation VendorInteractionManager::Evaluat
     {
         if (IsConsumable(item))
         {
+
             uint32 currentCount = m_bot->GetItemCount(item->GetId());
+
             uint32 targetCount = (item->GetClass() == ITEM_CLASS_CONSUMABLE) ? FOOD_STACK_SIZE : WATER_STACK_SIZE;
 
+
             if (currentCount < targetCount / 2) // Restock when below 50%
+
             {
+
                 eval.shouldPurchase = true;
+
                 eval.reason = "Consumable restock needed";
+
                 eval.recommendedQuantity = targetCount - currentCount;
+
                 eval.goldCost = GetVendorPrice(vendor, item->GetId(), vendorSlot, eval.recommendedQuantity);
+
             }
         }
     }
@@ -344,8 +406,11 @@ VendorInteractionManager::VendorItemEvaluation VendorInteractionManager::Evaluat
     {
         if (IsEquipmentUpgrade(item))
         {
+
             eval.shouldPurchase = true;
+
             eval.reason = "Equipment upgrade available";
+
             eval.recommendedQuantity = 1;
         }
     }
@@ -410,6 +475,7 @@ bool VendorInteractionManager::CanAfford(uint64 goldCost, uint32 extendedCostId)
     if (extendedCostId != 0)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Extended cost %u not yet supported",
+
             m_bot->GetName().c_str(), extendedCostId);
         return false;
     }
@@ -475,6 +541,7 @@ uint64 VendorInteractionManager::CalculateRepairCostEstimate() const
     {
         Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!item)
+
             continue;
 
         uint32 maxDurability = *item->m_itemData->MaxDurability;
@@ -483,8 +550,11 @@ uint64 VendorInteractionManager::CalculateRepairCostEstimate() const
         if (maxDurability > 0 && durability < maxDurability)
         {
             // Simplified repair cost calculation
+
             uint32 itemLevel = item->GetTemplate()->GetBaseItemLevel();
+
             uint32 damagePercent = ((maxDurability - durability) * 100) / maxDurability;
+
             totalCost += (itemLevel * damagePercent) / 10;
         }
     }
@@ -498,14 +568,19 @@ bool VendorInteractionManager::FitsWithinBudget(uint64 goldCost, PurchasePriorit
     switch (priority)
     {
         case PurchasePriority::CRITICAL:
+
             return goldCost <= budget.criticalBudget;
         case PurchasePriority::HIGH:
+
             return goldCost <= budget.highBudget;
         case PurchasePriority::MEDIUM:
+
             return goldCost <= budget.mediumBudget;
         case PurchasePriority::LOW:
+
             return goldCost <= budget.lowBudget;
         default:
+
             return false;
     }
 }
@@ -528,53 +603,74 @@ std::vector<uint32> VendorInteractionManager::GetRequiredReagents() const
     {
         case CLASS_ROGUE:
             // Poisons, blinding powder
+
             reagents.push_back(5140);  // Flash Powder
+
             reagents.push_back(5530);  // Blinding Powder
+
             break;
 
         case CLASS_WARLOCK:
             // Soul shards handled differently (quest items)
+
             break;
 
         case CLASS_MAGE:
+
             reagents.push_back(17031); // Rune of Teleportation
+
             reagents.push_back(17032); // Rune of Portals
+
             break;
 
         case CLASS_PRIEST:
+
             reagents.push_back(17029); // Sacred Candle
+
             break;
 
         case CLASS_SHAMAN:
+
             reagents.push_back(17030); // Ankh
+
             break;
 
         case CLASS_DRUID:
+
             reagents.push_back(17034); // Maple Seed
+
             reagents.push_back(17035); // Stranglethorn Seed
+
             break;
 
         case CLASS_PALADIN:
+
             reagents.push_back(21177); // Symbol of Kings
+
             break;
 
         case CLASS_MONK:
             // No reagents typically
+
             break;
 
         case CLASS_DEATH_KNIGHT:
             // No consumable reagents
+
             break;
 
         case CLASS_DEMON_HUNTER:
             // No consumable reagents
+
             break;
 
         case CLASS_EVOKER:
             // No consumable reagents
+
             break;
 
         default:
+
             break;
     }
 
@@ -684,6 +780,7 @@ uint32 VendorInteractionManager::GetFreeBagSlots() const
     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
         if (!m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
+
             freeSlots++;
     }
 
@@ -692,6 +789,7 @@ uint32 VendorInteractionManager::GetFreeBagSlots() const
     {
         Bag* pBag = m_bot->GetBagByPos(bag);
         if (pBag)
+
             freeSlots += pBag->GetFreeSlots();
     }
 
@@ -714,12 +812,14 @@ VendorItem const* VendorInteractionManager::FindVendorItem(Creature* vendor, uin
     for (VendorItem const& vendorItem : vendorItems->m_items)
     {
         if (vendorItem.item == itemId)
+
             return &vendorItem;
     }
     return nullptr;
 }
 
 bool VendorInteractionManager::ExecutePurchase(Creature* vendor, uint32 vendorSlot, uint32 itemId,
+
                                                 uint32 quantity, uint8 bag, uint8 slot)
 {
     if (!m_bot || !vendor)
@@ -732,6 +832,7 @@ bool VendorInteractionManager::ExecutePurchase(Creature* vendor, uint32 vendorSl
     if (!success)
     {
         TC_LOG_DEBUG("bot.playerbot", "Bot %s: Purchase failed",
+
             m_bot->GetName().c_str());
         return false;
     }
@@ -783,43 +884,95 @@ bool VendorInteractionManager::IsEquipmentUpgrade(ItemTemplate const* item) cons
 
         switch (invType)
         {
-            case INVTYPE_HEAD:        eslot = EQUIPMENT_SLOT_HEAD; break;
-            case INVTYPE_NECK:        eslot = EQUIPMENT_SLOT_NECK; break;
+
+            case INVTYPE_HEAD:
+            eslot = EQUIPMENT_SLOT_HEAD; break;
+
+            case INVTYPE_NECK:
+            eslot = EQUIPMENT_SLOT_NECK; break;
+
             case INVTYPE_SHOULDERS:   eslot = EQUIPMENT_SLOT_SHOULDERS; break;
-            case INVTYPE_BODY:        eslot = EQUIPMENT_SLOT_BODY; break;
-            case INVTYPE_CHEST:       eslot = EQUIPMENT_SLOT_CHEST; break;
-            case INVTYPE_WAIST:       eslot = EQUIPMENT_SLOT_WAIST; break;
-            case INVTYPE_LEGS:        eslot = EQUIPMENT_SLOT_LEGS; break;
-            case INVTYPE_FEET:        eslot = EQUIPMENT_SLOT_FEET; break;
-            case INVTYPE_WRISTS:      eslot = EQUIPMENT_SLOT_WRISTS; break;
-            case INVTYPE_HANDS:       eslot = EQUIPMENT_SLOT_HANDS; break;
-            case INVTYPE_FINGER:      eslot = EQUIPMENT_SLOT_FINGER1; break; // Check both rings later
-            case INVTYPE_TRINKET:     eslot = EQUIPMENT_SLOT_TRINKET1; break; // Check both trinkets later
-            case INVTYPE_CLOAK:       eslot = EQUIPMENT_SLOT_BACK; break;
-            case INVTYPE_WEAPON:      eslot = EQUIPMENT_SLOT_MAINHAND; break;
-            case INVTYPE_SHIELD:      eslot = EQUIPMENT_SLOT_OFFHAND; break;
-            case INVTYPE_RANGED:      eslot = EQUIPMENT_SLOT_RANGED; break;
-            case INVTYPE_TABARD:      eslot = EQUIPMENT_SLOT_TABARD; break;
+
+            case INVTYPE_BODY:
+            eslot = EQUIPMENT_SLOT_BODY; break;
+
+            case INVTYPE_CHEST:
+            eslot = EQUIPMENT_SLOT_CHEST; break;
+
+            case INVTYPE_WAIST:
+            eslot = EQUIPMENT_SLOT_WAIST; break;
+
+            case INVTYPE_LEGS:
+            eslot = EQUIPMENT_SLOT_LEGS; break;
+
+            case INVTYPE_FEET:
+            eslot = EQUIPMENT_SLOT_FEET; break;
+
+            case INVTYPE_WRISTS:
+            eslot = EQUIPMENT_SLOT_WRISTS; break;
+
+            case INVTYPE_HANDS:
+            eslot = EQUIPMENT_SLOT_HANDS; break;
+
+            case INVTYPE_FINGER:
+            eslot = EQUIPMENT_SLOT_FINGER1; break; // Check both rings later
+
+            case INVTYPE_TRINKET:
+            eslot = EQUIPMENT_SLOT_TRINKET1; break; // Check both trinkets later
+
+            case INVTYPE_CLOAK:
+            eslot = EQUIPMENT_SLOT_BACK; break;
+
+            case INVTYPE_WEAPON:
+            eslot = EQUIPMENT_SLOT_MAINHAND; break;
+
+            case INVTYPE_SHIELD:
+            eslot = EQUIPMENT_SLOT_OFFHAND; break;
+
+            case INVTYPE_RANGED:
+            eslot = EQUIPMENT_SLOT_RANGED; break;
+
+            case INVTYPE_TABARD:
+            eslot = EQUIPMENT_SLOT_TABARD; break;
+
             case INVTYPE_WEAPONOFFHAND: eslot = EQUIPMENT_SLOT_OFFHAND; break;
-            case INVTYPE_HOLDABLE:    eslot = EQUIPMENT_SLOT_OFFHAND; break;
-            case INVTYPE_2HWEAPON:    eslot = EQUIPMENT_SLOT_MAINHAND; break;
+
+            case INVTYPE_HOLDABLE:
+            eslot = EQUIPMENT_SLOT_OFFHAND; break;
+
+            case INVTYPE_2HWEAPON:
+            eslot = EQUIPMENT_SLOT_MAINHAND; break;
+
             case INVTYPE_WEAPONMAINHAND: eslot = EQUIPMENT_SLOT_MAINHAND; break;
-            default:                  eslot = NULL_SLOT; break;
+
+            default:
+            eslot = NULL_SLOT; break;
         }
 
         if (eslot != NULL_SLOT)
         {
+
             Item* currentItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, eslot);
+
             if (currentItem)
+
             {
+
                 ItemTemplate const* currentTemplate = currentItem->GetTemplate();
+
                 if (currentTemplate && item->GetBaseItemLevel() > currentTemplate->GetBaseItemLevel())
+
                     return true;
+
             }
+
             else
+
             {
                 // No item equipped in that slot - this is an upgrade
+
                 return true;
+
             }
         }
     }
@@ -836,12 +989,15 @@ uint32 VendorInteractionManager::GetRecommendedQuantity(ItemTemplate const* item
     if (item->GetMaxStackSize() > 1)
     {
         if (IsConsumable(item))
+
             return std::min(FOOD_STACK_SIZE, item->GetMaxStackSize());
 
         if (item->GetClass() == ITEM_CLASS_PROJECTILE)
+
             return std::min(AMMO_STACK_SIZE, item->GetMaxStackSize());
 
         if (IsClassReagent(item))
+
             return std::min(REAGENT_STACK_SIZE, item->GetMaxStackSize());
     }
 

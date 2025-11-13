@@ -229,7 +229,9 @@ ShamanAI::ShamanAI(Player* bot) : ClassAI(bot),
     _healingStreamTotemTime(0),
     _chainHealBounceCount(3)
 {
-    TC_LOG_DEBUG("module.playerbot.ai", "ShamanAI created for player {}",                 bot ? bot->GetName() : "null");
+
+    TC_LOG_DEBUG("module.playerbot.ai", "ShamanAI created for player {}",
+    bot ? bot->GetName() : "null");
 }
 
 ShamanAI::~ShamanAI() = default;
@@ -243,6 +245,7 @@ void ShamanAI::UpdateRotation(::Unit* target)
     if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
     {
         TC_LOG_DEBUG("module.playerbot.shaman", "Shaman {} using BASELINE rotation (level {})",
+
                      bot->GetName(), bot->GetLevel());
 
         static BaselineRotationManager baselineManager;
@@ -321,49 +324,79 @@ bool ShamanAI::HandleInterrupts(::Unit* target)
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
         if (!interruptTarget)
+
             interruptTarget = target;
 
         // Wind Shear is our primary interrupt
         if (CanUseAbility(SPELL_WIND_SHEAR))
         {
+
             uint32 currentTime = GameTime::GetGameTimeMS();
+
             if (currentTime - _lastWindShear > 12000) // 12 sec cooldown
+
             {
+
                 if (interruptTarget->IsNonMeleeSpellCast(false))
+
                 {
+
                     if (CastSpell(interruptTarget, SPELL_WIND_SHEAR))
+
                     {
+
                         _lastWindShear = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} interrupted {} with Wind Shear",
+
                                      GetBot()->GetName(), interruptTarget->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
         }
 
         // Grounding Totem as backup interrupt mechanism
         if (CanUseAbility(SPELL_GROUNDING_TOTEM) && !_activeTotems[static_cast<size_t>(TotemType::AIR)].IsActive())
         {
+
             if (DeployTotem(SPELL_GROUNDING_TOTEM, TotemType::AIR))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deployed Grounding Totem for spell protection",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
 
         // Capacitor Totem for AoE stun interrupt
         if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 262 && CanUseAbility(SPELL_CAPACITOR_TOTEM)) // 262 = Elemental
         {
+
             if (GetBot()->GetDistance(target) <= 8.0f)
+
             {
+
                 if (CastSpell(SPELL_CAPACITOR_TOTEM))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Capacitor Totem for stun",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -388,27 +421,44 @@ bool ShamanAI::HandleDefensives()
         // Astral Shift - 40% damage reduction
         if (CanUseAbility(SPELL_ASTRAL_SHIFT))
         {
+
             if (CastSpell(SPELL_ASTRAL_SHIFT))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Astral Shift at {}% health",
+
                              GetBot()->GetName(), healthPct);
+
                 return true;
+
             }
         }
 
         // Earth Elemental Totem for tanking
         if (CanUseAbility(SPELL_EARTH_ELEMENTAL_TOTEM))
         {
+
             uint32 currentTime = GameTime::GetGameTimeMS();
+
             if (currentTime - _lastEarthElemental > 300000) // 5 min cooldown
+
             {
+
                 if (DeployTotem(SPELL_EARTH_ELEMENTAL_TOTEM, TotemType::EARTH))
+
                 {
+
                     _lastEarthElemental = currentTime;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} summoning Earth Elemental for protection",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -419,40 +469,65 @@ bool ShamanAI::HandleDefensives()
         // Shamanistic Rage for Enhancement
         if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 263 && CanUseAbility(SPELL_SHAMANISTIC_RAGE)) // 263 = Enhancement
         {
+
             uint32 currentTime = GameTime::GetGameTimeMS();
+
             if (currentTime - _lastShamanisticRage > 60000) // 1 min cooldown
+
             {
+
                 if (CastSpell(SPELL_SHAMANISTIC_RAGE))
+
                 {
+
                     _lastShamanisticRage = currentTime;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Shamanistic Rage",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Healing Stream Totem for passive healing
         if (!_activeTotems[static_cast<size_t>(TotemType::WATER)].IsActive() ||
+
             _activeTotems[static_cast<size_t>(TotemType::WATER)].spellId != SPELL_HEALING_STREAM_TOTEM)
         {
+
             if (DeployTotem(SPELL_HEALING_STREAM_TOTEM, TotemType::WATER))
+
             {
+
                 _healingStreamTotemTime = GameTime::GetGameTimeMS();
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Healing Stream Totem",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
 
         // Stoneclaw Totem for damage absorption
         if (CanUseAbility(SPELL_STONECLAW_TOTEM))
         {
+
             if (CastSpell(SPELL_STONECLAW_TOTEM))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Stoneclaw Totem for shield",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -462,27 +537,44 @@ bool ShamanAI::HandleDefensives()
     {
         if (CanUseAbility(SPELL_SPIRIT_WALK))
         {
+
             uint32 currentTime = GameTime::GetGameTimeMS();
+
             if (currentTime - _lastSpiritWalk > 120000) // 2 min cooldown
+
             {
+
                 if (CastSpell(SPELL_SPIRIT_WALK))
+
                 {
+
                     _lastSpiritWalk = currentTime;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Spirit Walk to break roots",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Ghost Wolf as backup escape
         if (!GetBot()->HasAura(SPELL_GHOST_WOLF))
         {
+
             if (CastSpell(SPELL_GHOST_WOLF))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} shifting to Ghost Wolf form",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -508,25 +600,43 @@ bool ShamanAI::HandlePositioning(::Unit* target)
         if (currentDistance > OPTIMAL_MELEE_RANGE)
         {
             // Use Ghost Wolf for gap closing
+
             if (currentDistance > 15.0f && !GetBot()->HasAura(SPELL_GHOST_WOLF))
+
             {
+
                 if (CastSpell(SPELL_GHOST_WOLF))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Ghost Wolf to close gap",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Feral Spirit for additional damage while closing
+
             if (CanUseAbility(SPELL_FERAL_SPIRIT))
+
             {
+
                 if (CastSpell(SPELL_FERAL_SPIRIT))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} summoning Feral Spirits",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -536,37 +646,65 @@ bool ShamanAI::HandlePositioning(::Unit* target)
         if (currentDistance < 8.0f)
         {
             // Thunderstorm for knockback
+
             if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 262 && CanUseAbility(SPELL_THUNDERSTORM)) // 262 = Elemental
+
             {
+
                 if (CastSpell(SPELL_THUNDERSTORM))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Thunderstorm for knockback",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Earthbind Totem for slowing
+
             if (!_activeTotems[static_cast<size_t>(TotemType::EARTH)].IsActive() ||
+
                 _activeTotems[static_cast<size_t>(TotemType::EARTH)].spellId != SPELL_EARTHBIND_TOTEM)
+
             {
+
                 if (DeployTotem(SPELL_EARTHBIND_TOTEM, TotemType::EARTH))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} placing Earthbind Totem for kiting",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Frost Shock for slowing while kiting
+
             if (CanUseAbility(SPELL_FROST_SHOCK))
+
             {
+
                 if (CastSpell(target, SPELL_FROST_SHOCK))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Frost Shock to slow target",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -594,15 +732,25 @@ bool ShamanAI::HandleTotemManagement(::Unit* target)
 
         if (NeedsTotemRefresh(type))
         {
+
             uint32 totemSpell = GetOptimalTotem(type, target);
+
             if (totemSpell && CanUseAbility(totemSpell))
+
             {
+
                 if (DeployTotem(totemSpell, type))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying totem {} for slot {}",
+
                                  GetBot()->GetName(), totemSpell, i);
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -619,16 +767,27 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
         return false;
 
     Unit* priorityTarget = behaviors->GetPriorityTarget();
-    if (!priorityTarget || priorityTarget == target)            if (!priorityTarget)
+
+    if (!priorityTarget || priorityTarget == target)
+    if (!priorityTarget)
+
             {
+
                 return nullptr;
+
             }
         if (!priorityTarget)
         {
+
             return nullptr;
-        }                if (!priorityTarget)
+
+        }
+        if (!priorityTarget)
+
                 {
+
                     return nullptr;
+
                 }
         return false;
 
@@ -636,14 +795,21 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
     if (CanUseAbility(SPELL_HEX))
     {
         if (!target->HasAura(SPELL_HEX) && target->GetTypeId() == TYPEID_UNIT)        {
+
             if (CastSpell(target, SPELL_HEX))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} hexing {} to switch targets",
+
                              GetBot()->GetName(), target->GetName());
 
                 // Update target
+
                 SetTarget(priorityTarget->GetGUID());
+
                 return true;
+
             }
         }
     }
@@ -653,14 +819,23 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
     {
         if (!HasFlameShockOnTarget(priorityTarget))
         {
+
             if (HandleFlameShock(priorityTarget))
+
             {
+
                 if (!priorityTarget)
+
                 {
+
                     return nullptr;
+
                 }
+
                 SetTarget(priorityTarget->GetGUID());
+
                 return true;
+
             }
         }
     }    return false;
@@ -675,23 +850,42 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target){
     {
         if (CanUseAbility(SPELL_PURGE))        {
             // Check if target has purgeable buffs
+
             bool hasPurgeableBuff = false;
-            Unit::AuraApplicationMap const& auras = target->GetAppliedAuras();            for (auto const& [auraId, aurApp] : auras)
+
+            Unit::AuraApplicationMap const& auras = target->GetAppliedAuras();
+            for (auto const& [auraId, aurApp] : auras)
+
             {
+
                 if (aurApp->IsPositive() && aurApp->GetBase()->GetSpellInfo()->Dispel == DISPEL_MAGIC)
+
                 {
+
                     hasPurgeableBuff = true;
+
                     break;
+
                 }
+
             }
 
+
             if (hasPurgeableBuff)
+
             {
+
                 if (CastSpell(target, SPELL_PURGE))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} purging buffs from {}",
-                                 GetBot()->GetName(), target->GetName());                    return true;
+
+                                 GetBot()->GetName(), target->GetName());
+                                 return true;
+
                 }
+
             }
         }
     }
@@ -702,37 +896,68 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target){
         // Check group members for debuffs
         if (Group* group = GetBot()->GetGroup())
         {
+
             for (GroupReference const& itr : group->GetMembers())
+
             {
-                if (Player* member = itr.GetSource())                {
+
+                if (Player* member = itr.GetSource())
+                {
+
                     if (!member->IsAlive() || member->GetDistance(GetBot()) > 40.0f)
+
                         continue;
 
                     // Check for dispellable debuffs
+
                     bool hasDispellableDebuff = false;
-                    Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();                    for (auto const& [auraId, aurApp] : auras)
+
+                    Unit::AuraApplicationMap const& auras = member->GetAppliedAuras();
+                    for (auto const& [auraId, aurApp] : auras)
+
                     {
+
                         if (!aurApp->IsPositive())
+
                         {
+
                             uint32 dispelType = aurApp->GetBase()->GetSpellInfo()->Dispel;
+
                             if (dispelType == DISPEL_CURSE)
+
                             {
+
                                 hasDispellableDebuff = true;
+
                                 break;
+
                             }
+
                         }
+
                     }
 
+
                     if (hasDispellableDebuff && CanUseAbility(SPELL_CLEANSE_SPIRIT))
+
                     {
+
                         if (CastSpell(member, SPELL_CLEANSE_SPIRIT))
+
                         {
+
                             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} cleansing {} with Cleanse Spirit",
+
                                          GetBot()->GetName(), member->GetName());
+
                             return true;
+
                         }
+
                     }
+
                 }
+
             }
         }
     }
@@ -764,6 +989,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }
 
@@ -787,6 +1013,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -800,104 +1027,175 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
         case 262: // Elemental
         {
             // Earthquake for ground AoE
+
             if (CanUseAbility(SPELL_EARTHQUAKE))
+
             {
                 // Note: Ground-targeted abilities need special handling
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Earthquake for AoE",
+
                              GetBot()->GetName());
                 // Would need actual ground targeting implementation
+
                 return true;
+
             }
 
             // Chain Lightning for cleave
+
             if (HandleChainLightning(target))
+
                 return true;
 
             // Lava Beam during Ascendance
+
             if (GetBot()->HasAura(SPELL_ASCENDANCE) && CanUseAbility(SPELL_LAVA_BEAM))
+
             {
+
                 if (CastSpell(target, SPELL_LAVA_BEAM))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Lava Beam in Ascendance",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Liquid Magma Totem
+
             if (CanUseAbility(SPELL_LIQUID_MAGMA_TOTEM))
+
             {
+
                 if (DeployTotem(SPELL_LIQUID_MAGMA_TOTEM, TotemType::FIRE))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Liquid Magma Totem",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
+
             break;
         }
 
         case 263: // Enhancement
         {
             // Crash Lightning for melee AoE
+
             if (HandleCrashLightning())
+
                 return true;
 
             // Fire Nova with Flame Shock spread
+
             if (_hasFlameShockUp && CanUseAbility(SPELL_FIRE_NOVA_TOTEM))
+
             {
+
                 if (CastSpell(SPELL_FIRE_NOVA_TOTEM))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Fire Nova",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Chain Lightning with Maelstrom Weapon
+
             if (ShouldUseInstantLightningBolt() && CanUseAbility(SPELL_CHAIN_LIGHTNING))
+
             {
+
                 if (CastSpell(target, SPELL_CHAIN_LIGHTNING))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} instant Chain Lightning with Maelstrom",
+
                                  GetBot()->GetName());
+
                     _maelstromWeaponStacks = 0;
+
                     return true;
+
                 }
+
             }
 
             // Sundering for cone AoE
+
             if (CanUseAbility(SPELL_SUNDERING))
+
             {
+
                 if (CastSpell(SPELL_SUNDERING))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Sundering",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
+
             break;
         }
 
         case 264: // Restoration
         {
             // Chain Heal for group healing
+
             if (CountInjuredGroupMembers(80.0f) >= 3)
+
             {
+
                 if (HandleChainHeal())
+
                     return true;
+
             }
 
             // Healing Rain for area healing
+
             if (HandleHealingRain())
+
                 return true;
 
             // Spirit Link Totem for health redistribution
+
             if (CountInjuredGroupMembers(50.0f) >= 2)
+
             {
+
                 if (HandleSpiritLink())
+
                     return true;
+
             }
+
             break;
         }
     }
@@ -922,12 +1220,19 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
         uint32 spellId = GetBot()->GetTeamId() == TEAM_ALLIANCE ? SPELL_HEROISM : SPELL_BLOODLUST;
         if (CanUseAbility(spellId) && currentTime - _lastBloodlust > 600000) // 10 min debuff
         {
+
             if (CastSpell(spellId))
+
             {
+
                 _lastBloodlust = currentTime;
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Bloodlust/Heroism",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -937,153 +1242,275 @@ bool ShamanAI::HandleOffensiveCooldowns(::Unit* target)
         case 262: // Elemental
         {
             // Ascendance for Lava Beam
+
             if (ShouldUseAscendance() && CanUseAbility(SPELL_ASCENDANCE))
+
             {
+
                 if (currentTime - _lastAscendance > 180000) // 3 min cooldown
+
                 {
+
                     if (CastSpell(SPELL_ASCENDANCE))
+
                     {
+
                         _lastAscendance = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} activating Elemental Ascendance",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
 
             // Elemental Mastery for instant cast
+
             if (ShouldUseElementalMastery() && CanUseAbility(SPELL_ELEMENTAL_MASTERY))
+
             {
+
                 if (currentTime - _lastElementalMastery > 90000) // 1.5 min cooldown
+
                 {
+
                     if (CastSpell(SPELL_ELEMENTAL_MASTERY))
+
                     {
+
                         _lastElementalMastery = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Elemental Mastery",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
 
             // Fire Elemental Totem
+
             if (CanUseAbility(SPELL_FIRE_ELEMENTAL_TOTEM))
+
             {
+
                 if (currentTime - _lastFireElemental > 300000) // 5 min cooldown
+
                 {
+
                     if (DeployTotem(SPELL_FIRE_ELEMENTAL_TOTEM, TotemType::FIRE))
+
                     {
+
                         _lastFireElemental = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} summoning Fire Elemental",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
 
             // Stormkeeper for empowered Lightning Bolts
+
             if (CanUseAbility(SPELL_STORMKEEPER))
+
             {
+
                 if (CastSpell(SPELL_STORMKEEPER))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Stormkeeper",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
+
             break;
         }
 
         case 263: // Enhancement
         {
             // Ascendance for Windstrike
+
             if (ShouldUseAscendance() && CanUseAbility(SPELL_ASCENDANCE))
+
             {
+
                 if (currentTime - _lastAscendance > 180000)
+
                 {
+
                     if (CastSpell(SPELL_ASCENDANCE))
+
                     {
+
                         _lastAscendance = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} activating Enhancement Ascendance",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
 
             // Doom Winds for Windfury procs
+
             if (CanUseAbility(SPELL_DOOM_WINDS))
+
             {
+
                 if (CastSpell(SPELL_DOOM_WINDS))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} activating Doom Winds",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Feral Spirit wolves
+
             if (CanUseAbility(SPELL_FERAL_SPIRIT))
+
             {
+
                 if (CastSpell(SPELL_FERAL_SPIRIT))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} summoning Feral Spirits",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
+
             break;
         }
 
         case 264: // Restoration
         {
             // Ascendance for spreading heals
+
             if (CountInjuredGroupMembers(60.0f) >= 3 && CanUseAbility(SPELL_ASCENDANCE))
+
             {
+
                 if (currentTime - _lastAscendance > 180000)
+
                 {
+
                     if (CastSpell(SPELL_ASCENDANCE))
+
                     {
+
                         _lastAscendance = currentTime;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} activating Restoration Ascendance",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
 
             // Healing Tide Totem for major healing
+
             if (CountInjuredGroupMembers(50.0f) >= 3 && CanUseAbility(SPELL_HEALING_TIDE_TOTEM))
+
             {
+
                 if (DeployTotem(SPELL_HEALING_TIDE_TOTEM, TotemType::WATER))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Healing Tide Totem",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Ancestral Guidance for healing while dealing damage
+
             if (CanUseAbility(SPELL_ANCESTRAL_GUIDANCE))
+
             {
+
                 if (CastSpell(SPELL_ANCESTRAL_GUIDANCE))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} activating Ancestral Guidance",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Mana Tide Totem for mana restoration
+
             if (GetBot()->GetPowerPct(POWER_MANA) < 30.0f && CanUseAbility(SPELL_MANA_TIDE_TOTEM))
+
             {
+
                 if (DeployTotem(SPELL_MANA_TIDE_TOTEM, TotemType::WATER))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Mana Tide Totem",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
+
             break;
         }
     }
@@ -1100,90 +1527,148 @@ bool ShamanAI::HandleResourceManagement()
         case 262: // Elemental
         {
             // Manage Elemental Maelstrom resource
+
             uint32 maelstrom = GetElementalMaelstrom();
 
             // Spend maelstrom if capped
+
             if (maelstrom >= 90 && !_currentTarget.IsEmpty())
+
             {
                 // PHASE 5F: Thread-safe spatial grid validation
+
                 auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
+
                 Unit* target = nullptr;
+
                 if (snapshot_target)
+
                 {
+
 
                 }
         
                 // Earth Shock to dump maelstrom
+
                 if (target && CanUseAbility(SPELL_EARTH_SHOCK))
+
                 {
+
                     if (CastSpell(target, SPELL_EARTH_SHOCK))
+
                     {
+
                         _elementalMaelstrom -= 60;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} spending maelstrom with Earth Shock",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
+
             break;
         }
 
         case 263: // Enhancement
         {
             // Check Maelstrom Weapon stacks
+
             _maelstromWeaponStacks = GetMaelstromWeaponStacks();
 
             // Use instant cast at 5 stacks
+
             if (_maelstromWeaponStacks >= MAELSTROM_WEAPON_MAX && !_currentTarget.IsEmpty())
+
             {
                 // PHASE 5F: Thread-safe spatial grid validation
+
                 auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
+
                 Unit* target = nullptr;
+
                 if (snapshot_target)
+
                 {
+
 
                 }
         
                 // Instant Lightning Bolt for single target
+
                 if (target && CanUseAbility(SPELL_LIGHTNING_BOLT))
+
                 {
+
                     if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+
                     {
+
                         _maelstromWeaponStacks = 0;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} instant Lightning Bolt with Maelstrom",
+
                                      GetBot()->GetName());
+
                         return true;
+
                     }
+
                 }
+
             }
+
             break;
         }
 
         case 264: // Restoration
         {
             // Mana management for Restoration
+
             float manaPct = GetBot()->GetPowerPct(POWER_MANA);
 
+
             if (behaviors && behaviors->ShouldConserveMana())
+
             {
                 // Use more efficient heals when low on mana
+
                 if (manaPct < 30.0f)
+
                 {
                     // Mana Spring Totem for regeneration
+
                     if (!_activeTotems[static_cast<size_t>(TotemType::WATER)].IsActive() ||
+
                         _activeTotems[static_cast<size_t>(TotemType::WATER)].spellId != SPELL_MANA_SPRING_TOTEM)
+
                     {
+
                         if (DeployTotem(SPELL_MANA_SPRING_TOTEM, TotemType::WATER))
+
                         {
+
                             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Mana Spring Totem",
+
                                          GetBot()->GetName());
+
                             return true;
+
                         }
+
                     }
+
                 }
+
             }
+
             break;
         }
     }
@@ -1199,15 +1684,19 @@ bool ShamanAI::HandleNormalRotation(::Unit* target)
     switch (static_cast<uint32>(GetBot()->GetPrimarySpecialization()))
     {
         case 262: // Elemental
+
             return UpdateElementalRotation(target);
 
         case 263: // Enhancement
+
             return UpdateEnhancementRotation(target);
 
         case 264: // Restoration
+
             return UpdateRestorationRotation(target);
 
         default:
+
             return false;
     }
 }
@@ -1239,9 +1728,13 @@ bool ShamanAI::UpdateElementalRotation(::Unit* target)
     {
         if (CastSpell(target, SPELL_LIGHTNING_BOLT))
         {
+
             _elementalMaelstrom += 8;
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Lightning Bolt",
-                         GetBot()->GetName());            return true;
+
+                         GetBot()->GetName());
+                         return true;
         }
     }
 
@@ -1261,17 +1754,28 @@ bool ShamanAI::HandleLavaBurst(::Unit* target)
         // Guaranteed crit if Flame Shock is up
         if (HasFlameShockOnTarget(target))
         {
+
             if (CastSpell(target, SPELL_LAVA_BURST))
+
             {
+
                 if (_hasLavaSurgeProc)
+
                     _hasLavaSurgeProc = false;
+
                 else
+
                     _lavaBurstCharges--;
 
+
                 _elementalMaelstrom += 10;
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Lava Burst (charges: {})",
+
                              GetBot()->GetName(), _lavaBurstCharges);
+
                 return true;
+
             }
         }
     }
@@ -1290,11 +1794,18 @@ bool ShamanAI::HandleFlameShock(::Unit* target)
     {
         if (CastSpell(target, SPELL_FLAME_SHOCK))
         {
-            _flameshockTarget = target->GetGUID().GetCounter();            _flameshockExpiry = GameTime::GetGameTimeMS() + FLAME_SHOCK_DURATION;
+
+            _flameshockTarget = target->GetGUID().GetCounter();
+            _flameshockExpiry = GameTime::GetGameTimeMS() + FLAME_SHOCK_DURATION;
+
             _hasFlameShockUp = true;
+
             _elementalMaelstrom += 20;
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} applying Flame Shock to {}",
+
                          GetBot()->GetName(), target->GetName());
+
             return true;
         }
     }
@@ -1322,6 +1833,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }
 
@@ -1345,6 +1857,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -1354,9 +1867,13 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
     {
         if (CastSpell(target, SPELL_CHAIN_LIGHTNING))
         {
+
             _elementalMaelstrom += 4 * std::min(static_cast<size_t>(5), enemies.size());
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Chain Lightning",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -1372,6 +1889,7 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target){
     if (!HasFlameShockOnTarget(target))
     {
         if (HandleFlameShock(target))
+
             return true;
     }
 
@@ -1383,6 +1901,7 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target){
     if (GetBot()->HasAura(SPELL_ASCENDANCE))
     {
         if (HandleWindstrike(target))
+
             return true;
     }
 
@@ -1390,6 +1909,7 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target){
     if (_hasFlameShockUp)
     {
         if (HandleLavaLash(target))
+
             return true;
     }
 
@@ -1418,8 +1938,11 @@ bool ShamanAI::HandleStormstrike(::Unit* target){
     {
         if (CastSpell(target, SPELL_STORMSTRIKE))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Stormstrike on {}",
+
                          GetBot()->GetName(), target->GetName());
+
             return true;
         }
     }
@@ -1435,8 +1958,11 @@ bool ShamanAI::HandleLavaLash(::Unit* target){
     {
         if (CastSpell(target, SPELL_LAVA_LASH))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Lava Lash on {}",
+
                          GetBot()->GetName(), target->GetName());
+
             return true;
         }
     }
@@ -1465,9 +1991,13 @@ bool ShamanAI::HandleMaelstromWeapon()
     {
         if (CastSpell(target, SPELL_LIGHTNING_BOLT))
         {
+
             _maelstromWeaponStacks = 0;
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} instant Lightning Bolt with Maelstrom Weapon",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -1488,34 +2018,50 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target){
         if (healthPct < 30.0f)
         {
             // Healing Surge for fast healing
+
             if (CanUseAbility(SPELL_HEALING_SURGE))
+
             {
+
                 if (CastSpell(lowestHealth, SPELL_HEALING_SURGE))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} emergency Healing Surge on {}",
+
                                  GetBot()->GetName(), lowestHealth->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Riptide for instant heal + HoT
         if (healthPct < 80.0f && !lowestHealth->HasAura(SPELL_RIPTIDE))
-        {            if (HandleRiptide(lowestHealth))
+
+        {
+        if (HandleRiptide(lowestHealth))
+
                 return true;
         }
 
         // Chain Heal for group healing
         if (CountInjuredGroupMembers(70.0f) >= 2)
         {
+
             if (HandleChainHeal())
+
                 return true;
         }
 
         // Healing Wave for efficient healing
         if (healthPct < 70.0f)
         {
+
             if (HandleHealingWave(lowestHealth))
+
                 return true;
         }
     }
@@ -1529,11 +2075,17 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target){
         // Lightning Bolt for damage
         if (CanUseAbility(SPELL_LIGHTNING_BOLT))
         {
+
             if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} dealing damage with Lightning Bolt",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -1549,8 +2101,11 @@ bool ShamanAI::HandleRiptide(Player* target){
     {
         if (CastSpell(target, SPELL_RIPTIDE))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Riptide on {}",
+
                          GetBot()->GetName(), target->GetName());
+
             return true;
         }
     }
@@ -1566,8 +2121,11 @@ bool ShamanAI::HandleChainHeal()
     {
         if (CastSpell(target, SPELL_CHAIN_HEAL))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Chain Heal starting from {}",
+
                          GetBot()->GetName(), target->GetName());
+
             return true;
         }
     }
@@ -1602,6 +2160,7 @@ bool ShamanAI::NeedsTotemRefresh(TotemType type) const
         }
         
         if (target && !IsTotemInRange(type, target))
+
             return true;
     }
 
@@ -1617,73 +2176,112 @@ uint32 ShamanAI::GetOptimalTotem(TotemType type, ::Unit* target) const
     {
         case TotemType::FIRE:
         {
+
             switch (static_cast<uint32>(GetBot()->GetPrimarySpecialization()))
+
             {
+
                 case 262: // Elemental
                     // Searing Totem for single target damage
+
                     return SPELL_SEARING_TOTEM;
+
 
                 case 263: // Enhancement
                     // Magma Totem for AoE
-                    if (GetBot()->GetDistance(target) <= 8.0f)                        return SPELL_MAGMA_TOTEM;
+
+                    if (GetBot()->GetDistance(target) <= 8.0f)
+                    return SPELL_MAGMA_TOTEM;
+
                     return SPELL_SEARING_TOTEM;
+
 
                 case 264: // Restoration
                     // Flametongue Totem for spell power buff
+
                     return SPELL_FLAMETONGUE_TOTEM;
+
             }
+
             break;
         }
 
         case TotemType::EARTH:
         {
             // Stoneskin Totem for physical mitigation
-            if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->IsDungeonBoss())                return SPELL_STONESKIN_TOTEM;
+
+            if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->IsDungeonBoss())
+            return SPELL_STONESKIN_TOTEM;
 
             // Strength of Earth for melee
+
             if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 263) // 263 = Enhancement
+
                 return SPELL_STRENGTH_OF_EARTH_TOTEM;
 
             // Earthbind for kiting
+
             if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) != 263 && GetBot()->GetDistance(target) < 15.0f) // 263 = Enhancement
+
                 return SPELL_EARTHBIND_TOTEM;
+
 
             return SPELL_STONESKIN_TOTEM;
         }
 
         case TotemType::WATER:
         {
+
             switch (static_cast<uint32>(GetBot()->GetPrimarySpecialization()))
+
             {
+
                 case 264: // Restoration
                     // Healing Stream for constant healing
+
                     return SPELL_HEALING_STREAM_TOTEM;
+
 
                 default:
                     // Mana Spring for mana regen
+
                     if (GetBot()->GetPowerPct(POWER_MANA) < 70.0f)
+
                         return SPELL_MANA_SPRING_TOTEM;
+
                     return SPELL_HEALING_STREAM_TOTEM;
+
             }
+
             break;
         }
 
         case TotemType::AIR:
         {
+
             switch (static_cast<uint32>(GetBot()->GetPrimarySpecialization()))
+
             {
+
                 case 263: // Enhancement
                     // Windfury for attack speed
+
                     return SPELL_WINDFURY_TOTEM;
+
 
                 case 262: // Elemental
                     // Wrath of Air for spell haste
+
                     return SPELL_WRATH_OF_AIR_TOTEM;
+
 
                 case 264: // Restoration
                     // Grace of Air for agility
+
                     return SPELL_GRACE_OF_AIR_TOTEM;
+
             }
+
             break;
         }
     }
@@ -1706,6 +2304,7 @@ bool ShamanAI::DeployTotem(uint32 spellId, TotemType type)
         _totemsDeploy++;
 
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deployed totem {} in slot {}",
+
                      GetBot()->GetName(), spellId, static_cast<uint32>(type));
         return true;
     }
@@ -1786,6 +2385,7 @@ bool ShamanAI::ShouldUseAscendance() const
         }
         
         if (target && target->GetMaxHealth() > 1000000)
+
             return true;
     }    std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
@@ -1801,6 +2401,7 @@ bool ShamanAI::ShouldUseAscendance() const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }
 
@@ -1824,6 +2425,7 @@ bool ShamanAI::ShouldUseAscendance() const
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -1859,16 +2461,27 @@ Player* ShamanAI::GetLowestHealthGroupMember() const
     {
         for (GroupReference const& itr : group->GetMembers())
         {
-            if (Player* member = itr.GetSource())            {
+
+            if (Player* member = itr.GetSource())
+            {
+
                 if (!member->IsAlive() || member->GetDistance(GetBot()) > 40.0f)
+
                     continue;
 
+
                 float healthPct = member->GetHealthPct();
+
                 if (healthPct < lowestPct)
+
                 {
+
                     lowestPct = healthPct;
+
                     lowest = member;
+
                 }
+
             }
         }
     }
@@ -1888,12 +2501,20 @@ uint32 ShamanAI::CountInjuredGroupMembers(float healthThreshold) const
     {
         for (GroupReference const& itr : group->GetMembers())
         {
-            if (Player* member = itr.GetSource())            {
+
+            if (Player* member = itr.GetSource())
+            {
+
                 if (member->IsAlive() && member->GetHealthPct() < healthThreshold &&
+
                     member->GetDistance(GetBot()) <= 40.0f)
+
                 {
+
                     count++;
+
                 }
+
             }
         }
     }
@@ -1925,6 +2546,7 @@ bool ShamanAI::HandleCrashLightning()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }
 
@@ -1948,6 +2570,7 @@ bool ShamanAI::HandleCrashLightning()
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -1965,6 +2588,7 @@ bool ShamanAI::HandleCrashLightning()
         }
         
         if (target && IsInMeleeRange(target))
+
             shouldUse = true;
     }
 
@@ -1972,8 +2596,11 @@ bool ShamanAI::HandleCrashLightning()
     {
         if (CastSpell(SPELL_CRASH_LIGHTNING))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Crash Lightning",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -1990,8 +2617,11 @@ bool ShamanAI::HandleWindstrike(::Unit* target)
     {
         if (CastSpell(target, SPELL_WINDSTRIKE))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Windstrike during Ascendance",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -2021,6 +2651,7 @@ bool ShamanAI::HandleEarthquake()
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }
 
@@ -2044,6 +2675,7 @@ bool ShamanAI::HandleEarthquake()
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -2052,9 +2684,13 @@ bool ShamanAI::HandleEarthquake()
         if (enemies.size() >= 3)
         {
             // Note: Ground-targeted spell, needs special handling
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Earthquake",
+
                          GetBot()->GetName());
+
             _elementalMaelstrom -= 60;
+
             return true;
         }
     }
@@ -2071,6 +2707,7 @@ bool ShamanAI::HandleElementalBlast(::Unit* target)
     {
         _elementalMaelstrom += 25;
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Elemental Blast",
+
                      GetBot()->GetName());
         return true;
     }
@@ -2085,6 +2722,7 @@ bool ShamanAI::HandleHealingWave(Player* target){
     if (CastSpell(target, SPELL_HEALING_WAVE))
     {
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Healing Wave on {}",
+
                      GetBot()->GetName(), target->GetName());
         return true;
     }
@@ -2102,6 +2740,7 @@ bool ShamanAI::HandleHealingRain()
     {
         // Note: Ground-targeted spell
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Healing Rain",
+
                      GetBot()->GetName());
         return true;
     }
@@ -2121,9 +2760,13 @@ bool ShamanAI::HandleHealingStreamTotem()
     {
         if (DeployTotem(SPELL_HEALING_STREAM_TOTEM, TotemType::WATER))
         {
+
             _healingStreamTotemTime = GameTime::GetGameTimeMS();
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Healing Stream Totem",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -2140,11 +2783,17 @@ bool ShamanAI::HandleHealingStreamTotem()
         Player* tank = FindGroupTank(group);
         if (tank && tank->GetHealthPct() < 30.0f)
         {
+
             if (CastSpell(SPELL_SPIRIT_LINK_TOTEM))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} deploying Spirit Link Totem",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -2182,13 +2831,21 @@ void ShamanAI::UpdateCooldowns(uint32 diff)
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE))
         {
             // Update cooldown tracking
+
             if (lastUse > 0 && lastUse < diff)
+
             {
+
                 lastUse = 0;
+
             }
+
             else if (lastUse > 0)
+
             {
+
                 lastUse -= diff;
+
             }
         }
     }
@@ -2228,6 +2885,7 @@ void ShamanAI::OnCombatStart(::Unit* target){
         return;
 
     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} entering combat with {}",
+
                  GetBot()->GetName(), target->GetName());
 
     // Deploy initial totems
@@ -2256,6 +2914,7 @@ void ShamanAI::OnCombatEnd()
         return;
 
     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} leaving combat. Metrics - Damage: {}, Healing: {}, Mana Used: {}, Totems: {}, Shocks: {}",
+
                  GetBot()->GetName(), _damageDealt, _healingDone, _manaSpent, _totemsDeploy, _shocksUsed);
 
     // Recall unnecessary totems
@@ -2293,6 +2952,7 @@ bool ShamanAI::HasEnoughResource(uint32 spellId)
     for (auto const& cost : powerCosts)
     {
         if (cost.Power == POWER_MANA && GetBot()->GetPower(POWER_MANA) < int32(cost.Amount))
+
             return false;
     }
 
@@ -2300,8 +2960,10 @@ bool ShamanAI::HasEnoughResource(uint32 spellId)
     if (static_cast<uint32>(GetBot()->GetPrimarySpecialization()) == 262) // 262 = Elemental
     {
         if (spellId == SPELL_EARTH_SHOCK && _elementalMaelstrom < 60)
+
             return false;
         if (spellId == SPELL_EARTHQUAKE && _elementalMaelstrom < 60)
+
             return false;
     }
 
@@ -2322,6 +2984,7 @@ void ShamanAI::ConsumeResource(uint32 spellId)
     for (auto const& cost : powerCosts)
     {
         if (cost.Power == POWER_MANA)
+
             _manaSpent += cost.Amount;
     }
 
@@ -2381,9 +3044,13 @@ void ShamanAI::UpdateShamanBuffs()
     {
         if (!HasAura(SPELL_LIGHTNING_SHIELD, GetBot()))
         {
+
             if (CastSpell(SPELL_LIGHTNING_SHIELD))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Lightning Shield", GetBot()->GetName());
+
             }
         }
     }
@@ -2392,9 +3059,13 @@ void ShamanAI::UpdateShamanBuffs()
     {
         if (!HasAura(SPELL_WATER_SHIELD, GetBot()))
         {
+
             if (CastSpell(SPELL_WATER_SHIELD))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Water Shield", GetBot()->GetName());
+
             }
         }
     }
@@ -2404,18 +3075,31 @@ void ShamanAI::UpdateShamanBuffs()
     {
         if (Group* group = GetBot()->GetGroup())
         {
+
             Player* tank = FindGroupTank(group);
+
                                  if (!tank)
+
                                  {
+
                                      return;
+
                                  }
+
             if (tank && !HasAura(SPELL_EARTH_SHIELD, tank))
+
             {
+
                 if (CastSpell(tank, SPELL_EARTH_SHIELD))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Earth Shield on tank {}",
+
                                  GetBot()->GetName(), tank->GetName());
+
                 }
+
             }
         }
     }
@@ -2455,7 +3139,9 @@ void ShamanAI::UpdateWeaponImbues()
         uint32 imbueSpell = GetOptimalWeaponImbue(true);
         if (imbueSpell && CastSpell(imbueSpell))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} applying weapon imbue {} to main hand",
+
                          GetBot()->GetName(), imbueSpell);
         }
     }
@@ -2466,7 +3152,9 @@ void ShamanAI::UpdateWeaponImbues()
         uint32 imbueSpell = GetOptimalWeaponImbue(false);
         if (imbueSpell && CastSpell(imbueSpell))
         {
+
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} applying weapon imbue {} to off-hand",
+
                          GetBot()->GetName(), imbueSpell);
         }
     }
@@ -2508,6 +3196,7 @@ void ShamanAI::RecallCombatTotems()
     }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} combat ended, totems will expire naturally",
+
                  GetBot()->GetName());
 }
 
@@ -2519,8 +3208,11 @@ void ShamanAI::ApplyCombatBuffs()
 void ShamanAI::LogCombatMetrics()
 {
     TC_LOG_DEBUG("module.playerbot.ai",
+
                  "Shaman {} combat metrics - Duration: {}s, Damage: {}, Healing: {}, Mana: {}, Totems: {}, Shocks: {}",
+
                  GetBot()->GetName(), _combatTime / 1000, _damageDealt, _healingDone,
+
                  _manaSpent, _totemsDeploy, _shocksUsed);
 
     // Reset metrics for next combat
@@ -2551,6 +3243,7 @@ bool ShamanAI::IsTotemSpell(uint32 spellId) const
         if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_SUMMON)
         {
             // Additional check for totem-specific summons could be added here
+
             return true;
         }
     }
@@ -2573,12 +3266,16 @@ uint32 ShamanAI::GetOptimalWeaponImbue(bool mainHand) const
     switch (static_cast<uint32>(GetBot()->GetPrimarySpecialization()))
     {
         case 262: // Elemental
+
             return SPELL_FLAMETONGUE_WEAPON;
         case 263: // Enhancement
+
             return mainHand ? SPELL_WINDFURY_WEAPON : SPELL_FLAMETONGUE_WEAPON;
         case 264: // Restoration
+
             return SPELL_EARTHLIVING_WEAPON;
         default:
+
             return SPELL_ROCKBITER_WEAPON;
     }
 }
@@ -2627,6 +3324,7 @@ bool ShamanAI::ShouldUseBloodlust() const
         }
         
         if (target && target->GetHealthPct() < 30.0f && target->GetMaxHealth() > 100000)
+
             return true;
     }
 
@@ -2636,10 +3334,15 @@ bool ShamanAI::ShouldUseBloodlust() const
         uint32 lowHealthCount = 0;
         for (GroupReference const& itr : group->GetMembers())
         {
+
             if (Player* member = itr.GetSource())
+
             {
+
                 if (member->GetHealthPct() < 40.0f)
+
                     lowHealthCount++;
+
             }
         }
         return lowHealthCount >= 3;
@@ -2661,12 +3364,22 @@ Player* ShamanAI::FindGroupTank(Group* group) const
         if (Player* member = itr.GetSource())
         {
             // Simple tank detection - highest health or warrior/paladin/death knight
-            if (member->GetClass() == CLASS_WARRIOR ||                member->GetClass() == CLASS_PALADIN ||                member->GetClass() == CLASS_DEATH_KNIGHT)            {
+
+            if (member->GetClass() == CLASS_WARRIOR ||
+            member->GetClass() == CLASS_PALADIN ||
+            member->GetClass() == CLASS_DEATH_KNIGHT)
+            {
+
                 if (member->GetMaxHealth() > highestHealth)
+
                 {
+
                     highestHealth = member->GetMaxHealth();
+
                     tank = member;
+
                 }
+
             }
         }
     }

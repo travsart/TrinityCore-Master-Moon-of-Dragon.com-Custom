@@ -147,7 +147,9 @@ public:
         , _globalCooldownEnd(0)
         , _performanceMetrics{}
         , _movementIntegration(botPtr)      // Phase 5D: Movement AI
-        , _targetManager(botPtr)            // Phase 5D: Target selection
+
+        , _targetManager(botPtr)
+        // Phase 5D: Target selection
         , _crowdControlManager(botPtr)      // Phase 5D: CC coordination
     {
         InitializeResource();
@@ -175,36 +177,49 @@ protected:
 
         // Update global cooldown
         if (_globalCooldownEnd > diff)
+
             _globalCooldownEnd -= diff;
         else
+
             _globalCooldownEnd = 0;
 
         // Update ability cooldowns using ranges (C++20)
         for (auto& [spellId, cooldown] : _cooldowns)
         {
+
             if (cooldown > diff)
+
                 cooldown -= diff;
+
             else
+
                 cooldown = 0;
         }
 
         // Update buff timers
         std::erase_if(_activeBuffs, [diff](auto& pair) {
+
             pair.second = (pair.second > diff) ? pair.second - diff : 0;
+
             return pair.second == 0;
         });
 
         // Update DoT timers
         for (auto& [targetGuid, dots] : _activeDots)
         {
+
             std::erase_if(dots, [diff](auto& pair) {
+
                 pair.second = (pair.second > diff) ? pair.second - diff : 0;
+
                 return pair.second == 0;
+
             });
         }
 
         // Clean up empty DoT entries
         std::erase_if(_activeDots, [](const auto& pair) {
+
             return pair.second.empty();
         });
 
@@ -222,23 +237,28 @@ protected:
 
         // Check global cooldown
         if (_globalCooldownEnd > 0)
+
             return false;
 
         // Check specific cooldown
         if (auto it = _cooldowns.find(spellId); it != _cooldowns.end() && it->second > 0)
+
             return false;
 
         // Check resource requirement
         uint32 cost = GetSpellResourceCost(spellId);
         if (!HasEnoughResourceInternal(cost))
+
             return false;
 
         // Check if bot has the spell
         if (!GetBot()->HasSpell(spellId))
+
             return false;
 
         // Check if currently casting/channeling
         if (GetBot()->IsNonMeleeSpellCast(false, true))
+
             return false;
 
         _performanceMetrics.abilityChecks++;
@@ -276,7 +296,9 @@ protected:
         OnCombatStartSpecific(target);
 
         TC_LOG_DEBUG("module.playerbot", "Bot {} entered combat with {} (Resource: {}/{})",
+
             GetBot()->GetName(), target->GetName(),
+
             GetCurrentResourceInternal(), _maxResource);
     }
 
@@ -298,7 +320,9 @@ protected:
         OnCombatEndSpecific();
 
         TC_LOG_DEBUG("module.playerbot", "Bot {} left combat (Duration: {}ms, Casts: {}, Failed: {})",
+
             GetBot()->GetName(), combatDuration,
+
             _performanceMetrics.totalCasts.load(), _performanceMetrics.failedCasts.load());
     }
 
@@ -343,11 +367,17 @@ protected:
         if (auto spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE))
         {
             // Get mana cost from power cost data
+
             auto costs = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
+
             for (auto const& cost : costs)
+
             {
+
                 if (cost.Power == POWER_MANA)
+
                     return cost.Amount;
+
             }
         }
         return 0;
@@ -422,10 +452,12 @@ private:
     {
         if constexpr (SimpleResource<ResourceType>)
         {
+
             _resource = static_cast<ResourceType>(_maxResource);
         }
         else if constexpr (ComplexResource<ResourceType>)
         {
+
             _resource.Initialize(GetBot());
         }
     }
@@ -437,10 +469,12 @@ private:
     {
         if constexpr (SimpleResource<ResourceType>)
         {
+
             return _resource >= static_cast<ResourceType>(amount);
         }
         else if constexpr (ComplexResource<ResourceType>)
         {
+
             return _resource.GetAvailable() >= amount;
         }
     }
@@ -454,11 +488,14 @@ private:
 
         if constexpr (SimpleResource<ResourceType>)
         {
+
             if (_resource >= static_cast<ResourceType>(amount))
+
                 _resource -= static_cast<ResourceType>(amount);
         }
         else if constexpr (ComplexResource<ResourceType>)
         {
+
             _resource.Consume(amount);
         }
     }
@@ -470,10 +507,12 @@ private:
     {
         if constexpr (SimpleResource<ResourceType>)
         {
+
             return static_cast<uint32>(_resource);
         }
         else if constexpr (ComplexResource<ResourceType>)
         {
+
             return _resource.GetAvailable();
         }
     }
@@ -485,17 +524,27 @@ private:
     {
         if constexpr (ResourceTraits<ResourceType>::regenerates)
         {
+
             std::lock_guard lock(_resourceMutex);
 
+
             if constexpr (SimpleResource<ResourceType>)
+
             {
                 // Simple regeneration
+
                 uint32 regenAmount = diff * 5 / 1000; // 5 per second
+
                 _resource = std::min<ResourceType>(_resource + regenAmount, _maxResource);
+
             }
+
             else if constexpr (ComplexResource<ResourceType>)
+
             {
+
                 _resource.Regenerate(diff);
+
             }
         }
     }
@@ -508,7 +557,9 @@ private:
         std::lock_guard lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
         std::erase_if(_activeDots, [bot](const auto& pair) {
-            Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);            return !target || !target->IsAlive();
+
+            Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);
+            return !target || !target->IsAlive();
         });
     }
 
@@ -520,25 +571,36 @@ protected:
     bool CanCastSpell(uint32 spellId, ::Unit* target = nullptr)    {
         // Use CanUseAbility for basic checks
         if (!CanUseAbility(spellId))
+
             return false;
 
         // If target provided, check additional target-specific conditions
         if (target)
         {
             // Check if target is valid
+
             if (!target || !target->IsAlive() || target->IsFriendlyTo(GetBot()))
+
                 return false;
 
             // Check if in range (use spell info to get range)
+
             if (auto spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID()))
+
             {
+
                 float range = spellInfo->GetMaxRange(false, GetBot(), nullptr);
+
                 if (GetBot()->GetDistance(target) > range)
+
                     return false;
+
             }
 
             // Check if line of sight
+
             if (!GetBot()->IsWithinLOSInMap(target))
+
                 return false;
         }
 
@@ -551,6 +613,7 @@ protected:
     {
         Player* bot = GetBot();
         if (!bot)
+
             return 0;
 
         std::list<Unit*> targets;
@@ -559,18 +622,31 @@ protected:
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
         Map* map = bot->GetMap();        if (map)
         {
+
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+
             if (spatialGrid)
+
             {
+
                 auto guids = spatialGrid->QueryNearbyCreatureGuids(*bot, range);
+
                 for (ObjectGuid guid : guids)
+
                 {
+
                     if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+
                     {
+
                         if (u_check(creature))
+
                             targets.push_back(creature);
+
                     }
+
                 }
+
             }
         }
         return static_cast<uint32>(targets.size());
@@ -582,6 +658,7 @@ protected:
     bool IsBehindTarget(::Unit* target) const
     {
         if (!target)
+
             return false;
         return !target->HasInArc(static_cast<float>(M_PI), GetBot());
     }
@@ -625,7 +702,9 @@ protected:
 
     // Phase 5D: Combat managers (available to all combat specs)
     MovementIntegration _movementIntegration;       // Intelligent movement and positioning
-    TargetManager _targetManager;                   // Smart target selection and switching
+
+    TargetManager _targetManager;
+    // Smart target selection and switching
     CrowdControlManager _crowdControlManager;       // CC coordination and DR tracking
 
     // Constants
@@ -658,10 +737,22 @@ protected:
         // Prefer behind target for melee DPS
         if (target)
         {
-            float angle = target->GetOrientation() + M_PI; // Behind target            float distance = 3.0f; // Close but not too close
+
+            float angle = target->GetOrientation() + M_PI; // Behind target
+
+            float distance = 3.0f; // Close but not too close
+
 
             Position pos;
-            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;            pos.m_positionZ = target->GetPositionZ();            pos.SetOrientation(target->GetAbsoluteAngle(&pos));
+
+            pos.m_positionX = target->GetPositionX() + cos(angle) * distance;
+
+            pos.m_positionY = target->GetPositionY() + sin(angle) * distance;
+
+            pos.m_positionZ = target->GetPositionZ();
+
+            pos.SetOrientation(target->GetAbsoluteAngle(&pos));
+
 
             return pos;
         }
@@ -674,6 +765,7 @@ protected:
     bool CanAttackFromBehind(::Unit* target) const
     {
         if (!target)
+
             return false;
 
         float angle = target->GetRelativeAngle(this->GetBot());
@@ -688,6 +780,7 @@ protected:
         if (!CanAttackFromBehind(target))
         {
             // Request movement to behind target
+
             Position optimal = GetOptimalPosition(target);
             // Movement would be handled by BotAI, not here
         }
@@ -721,15 +814,24 @@ protected:
         if (target)
         {
             // Maintain optimal distance for ranged DPS
-            float currentDistance = this->GetBot()->GetDistance(target);            if (currentDistance < _minimumRange)
+
+            float currentDistance = this->GetBot()->GetDistance(target);
+            if (currentDistance < _minimumRange)
+
             {
                 // Too close, need to move back (kite)
+
                 return GetKitePosition(target);
+
             }
+
             else if (currentDistance > GetOptimalRange(target))
+
             {
                 // Too far, move closer
+
                 return GetApproachPosition(target);
+
             }
         }
         return this->GetBot()->GetPosition();
@@ -774,7 +876,9 @@ protected:
     bool ShouldKite(::Unit* target) const
     {
         return target &&
-               target->GetVictim() == this->GetBot() &&               target->GetDistance(this->GetBot()) < _minimumRange;
+
+               target->GetVictim() == this->GetBot() &&
+               target->GetDistance(this->GetBot()) < _minimumRange;
     }
 
 private:
@@ -809,13 +913,22 @@ protected:
         if (target)
         {
             // Position target facing away from group
+
             Position groupCenter = CalculateGroupCenter();
+
             float angleToGroup = target->GetAbsoluteAngle(&groupCenter);
+
             float optimalAngle = angleToGroup + M_PI; // Opposite of group
 
+
             Position pos;
-            pos.m_positionX = target->GetPositionX() + cos(optimalAngle) * 3.0f;            pos.m_positionY = target->GetPositionY() + sin(optimalAngle) * 3.0f;            pos.m_positionZ = target->GetPositionZ();            
+
+            pos.m_positionX = target->GetPositionX() + cos(optimalAngle) * 3.0f;
+            pos.m_positionY = target->GetPositionY() + sin(optimalAngle) * 3.0f;
+            pos.m_positionZ = target->GetPositionZ();
+
             pos.SetOrientation(target->GetAbsoluteAngle(&pos));
+
 
             return pos;
         }
@@ -828,16 +941,23 @@ protected:
     virtual void ManageThreat(::Unit* target)
     {
         if (!target)
+
             return;
 
         // Check if we have aggro
         if (target->GetVictim() != this->GetBot())        {
+
             uint32 currentTime = GameTime::GetGameTimeMS();
+
             if (currentTime - _lastTauntTime > 8000) // 8 second taunt cooldown
+
             {
                 // Use taunt ability (implementation depends on class)
+
                 TauntTarget(target);
+
                 _lastTauntTime = currentTime;
+
             }
         }
     }
@@ -851,11 +971,14 @@ protected:
 
         if (healthPct < 30.0f && !_defensiveCooldownActive)
         {
+
             UseDefensiveCooldown();
+
             _defensiveCooldownActive = true;
         }
         else if (healthPct > 60.0f)
         {
+
             _defensiveCooldownActive = false;
         }
     }
@@ -870,25 +993,42 @@ protected:
 
         if (Group* group = this->GetBot()->GetGroup())
         {
+
             for (GroupReference& itr : group->GetMembers())
+
             {
+
                 if (Player* member = itr.GetSource())
+
                 {
-                    if (member != this->GetBot() && member->IsAlive())                    {
-                        center.m_positionX += member->GetPositionX();                        center.m_positionY += member->GetPositionY();                        center.m_positionZ += member->GetPositionZ();                        count++;
+
+                    if (member != this->GetBot() && member->IsAlive())
+                    {
+
+                        center.m_positionX += member->GetPositionX();
+                        center.m_positionY += member->GetPositionY();
+                        center.m_positionZ += member->GetPositionZ();
+                        count++;
+
                     }
+
                 }
+
             }
         }
 
         if (count > 0)
         {
+
             center.m_positionX /= count;
+
             center.m_positionY /= count;
+
             center.m_positionZ /= count;
         }
         else
         {
+
             center = this->GetBot()->GetPosition();
         }
 
@@ -939,21 +1079,34 @@ protected:
 
         if (_defensiveManager.NeedsEmergencyDefensive())
         {
+
             uint32 emergencySpell = _defensiveManager.UseEmergencyDefensive();
+
             if (emergencySpell != 0)
+
             {
+
                 this->CastSpell(this->GetBot(), emergencySpell);
+
                 TC_LOG_DEBUG("playerbot", "Tank: Emergency defensive {} used", emergencySpell);
+
             }
         }
         else if (_defensiveManager.NeedsDefensive())
         {
+
             uint32 recommendedSpell = _defensiveManager.GetRecommendedDefensive();
+
             if (recommendedSpell != 0)
+
             {
+
                 this->CastSpell(this->GetBot(), recommendedSpell);
+
                 _defensiveManager.UseDefensiveCooldown(recommendedSpell);
+
                 TC_LOG_DEBUG("playerbot", "Tank: Defensive {} used", recommendedSpell);
+
             }
         }
     }
@@ -1008,12 +1161,22 @@ protected:
         Position allyCenter = CalculateAllyCenter();
         Position enemyCenter = CalculateEnemyCenter();
 
-        if (enemyCenter.IsPositionValid())        {
-            // Move away from enemies while staying near allies            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;            Position pos;
+        if (enemyCenter.IsPositionValid())
+        {
+            // Move away from enemies while staying near allies
+
+            float angleFromEnemies = allyCenter.GetRelativeAngle(&enemyCenter) + M_PI;
+
+            Position pos;
+
             pos.m_positionX = allyCenter.m_positionX + cos(angleFromEnemies) * 15.0f;
+
             pos.m_positionY = allyCenter.m_positionY + sin(angleFromEnemies) * 15.0f;
+
             pos.m_positionZ = allyCenter.m_positionZ;
+
             pos.SetOrientation(angleFromEnemies);
+
 
             return pos;
         }
@@ -1032,21 +1195,33 @@ protected:
         // Check self first
         if (this->GetBot()->GetHealthPct() < _emergencyHealThreshold * 100)
         {
+
             return this->GetBot();
         }
 
         // Check group members
         if (Group* group = this->GetBot()->GetGroup())
         {
+
             for (GroupReference& itr : group->GetMembers())
+
             {
-                if (Player* member = itr.GetSource())                {
+
+                if (Player* member = itr.GetSource())
+                {
+
                     if (member->IsAlive() && member->GetHealthPct() < lowestHealthPct)
+
                     {
+
                         lowestHealthPct = member->GetHealthPct();
+
                         lowestHealthTarget = member;
+
                     }
+
                 }
+
             }
         }
 
@@ -1063,15 +1238,26 @@ protected:
 
         if (Group* group = this->GetBot()->GetGroup())
         {
+
             for (GroupReference& itr : group->GetMembers())
+
             {
-                if (Player* member = itr.GetSource())                {
+
+                if (Player* member = itr.GetSource())
+                {
+
                     if (member->IsAlive() && member->GetHealthPct() < 80.0f)
+
                     {
+
                         injuredCount++;
+
                         totalHealthDeficit += (100.0f - member->GetHealthPct());
+
                     }
+
                 }
+
             }
         }
 
@@ -1089,25 +1275,42 @@ protected:
 
         if (Group* group = this->GetBot()->GetGroup())
         {
+
             for (GroupReference& itr : group->GetMembers())
+
             {
-                if (Player* member = itr.GetSource())                {
+
+                if (Player* member = itr.GetSource())
+                {
+
                     if (member->IsAlive())
+
                     {
-                        center.m_positionX += member->GetPositionX();                        center.m_positionY += member->GetPositionY();                        center.m_positionZ += member->GetPositionZ();                        count++;
+
+                        center.m_positionX += member->GetPositionX();
+                        center.m_positionY += member->GetPositionY();
+                        center.m_positionZ += member->GetPositionZ();
+                        count++;
+
                     }
+
                 }
+
             }
         }
 
         if (count > 0)
         {
+
             center.m_positionX /= count;
+
             center.m_positionY /= count;
+
             center.m_positionZ /= count;
         }
         else
         {
+
             center = this->GetBot()->GetPosition();
         }
 
@@ -1124,6 +1327,7 @@ protected:
 
         Player* bot = this->GetBot();
         if (!bot)
+
             return center;
 
         // Find all hostile units in range
@@ -1134,33 +1338,53 @@ protected:
         Map* map = bot->GetMap();
         if (map)
         {
+
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+
             if (spatialGrid)
+
             {
+
                 auto guids = spatialGrid->QueryNearbyCreatureGuids(*bot, 40.0f);
+
                 for (ObjectGuid guid : guids)
+
                 {
+
                     if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+
                     {
+
                         if (checker(creature))
+
                             hostileUnits.push_back(creature);
+
                     }
+
                 }
+
             }
         }
 
         for (Unit* hostile : hostileUnits)
         {
+
             center.m_positionX += hostile->GetPositionX();
+
             center.m_positionY += hostile->GetPositionY();
+
             center.m_positionZ += hostile->GetPositionZ();
+
             count++;
         }
 
         if (count > 0)
         {
+
             center.m_positionX /= count;
+
             center.m_positionY /= count;
+
             center.m_positionZ /= count;
         }
 

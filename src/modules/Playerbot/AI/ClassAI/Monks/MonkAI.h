@@ -11,6 +11,8 @@
 
 #include "../ClassAI.h"
 #include "Position.h"
+#include "Group.h"
+#include "Creature.h"
 #include "../Combat/FormationManager.h"
 #include "../Combat/InterruptManager.h"
 #include "../Combat/PositionManager.h"

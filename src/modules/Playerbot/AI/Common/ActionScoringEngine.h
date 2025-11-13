@@ -65,7 +65,9 @@ enum class ScoringCategory : uint8
     POSITIONING_MECHANICS = 4,///< Movement, mechanic avoidance, formation adherence
     STRATEGIC_VALUE = 5,    ///< Fight phase awareness, long-term decisions
 
-    MAX                     ///< Sentinel value for array sizes
+
+    MAX
+    ///< Sentinel value for array sizes
 };
 
 /**
@@ -83,7 +85,9 @@ enum class CombatContext : uint8
     PVP_ARENA,      ///< Arena battlegrounds
     PVP_BG,         ///< Standard battlegrounds
 
-    MAX             ///< Sentinel value for array sizes
+
+    MAX
+    ///< Sentinel value for array sizes
 };
 
 /**
@@ -97,7 +101,9 @@ enum class BotRole : uint8
     MELEE_DPS,      ///< Melee DPS specialization
     RANGED_DPS,     ///< Ranged DPS specialization
 
-    MAX             ///< Sentinel value for array sizes
+
+    MAX
+    ///< Sentinel value for array sizes
 };
 
 /**
@@ -122,13 +128,24 @@ struct ScoringWeights
     {
         switch (category)
         {
-            case ScoringCategory::SURVIVAL:              return survival;
-            case ScoringCategory::GROUP_PROTECTION:      return groupProtection;
+
+            case ScoringCategory::SURVIVAL:
+            return survival;
+
+            case ScoringCategory::GROUP_PROTECTION:
+            return groupProtection;
+
             case ScoringCategory::DAMAGE_OPTIMIZATION:   return damageOptimization;
+
             case ScoringCategory::RESOURCE_EFFICIENCY:   return resourceEfficiency;
+
             case ScoringCategory::POSITIONING_MECHANICS: return positioningMechanics;
-            case ScoringCategory::STRATEGIC_VALUE:       return strategicValue;
-            default:                                      return 0.0f;
+
+            case ScoringCategory::STRATEGIC_VALUE:
+            return strategicValue;
+
+            default:
+            return 0.0f;
         }
     }
 
@@ -141,12 +158,22 @@ struct ScoringWeights
     {
         switch (category)
         {
-            case ScoringCategory::SURVIVAL:              survival = weight; break;
-            case ScoringCategory::GROUP_PROTECTION:      groupProtection = weight; break;
+
+            case ScoringCategory::SURVIVAL:
+            survival = weight; break;
+
+            case ScoringCategory::GROUP_PROTECTION:
+            groupProtection = weight; break;
+
             case ScoringCategory::DAMAGE_OPTIMIZATION:   damageOptimization = weight; break;
+
             case ScoringCategory::RESOURCE_EFFICIENCY:   resourceEfficiency = weight; break;
+
             case ScoringCategory::POSITIONING_MECHANICS: positioningMechanics = weight; break;
-            case ScoringCategory::STRATEGIC_VALUE:       strategicValue = weight; break;
+
+            case ScoringCategory::STRATEGIC_VALUE:
+            strategicValue = weight; break;
+
             default: break;
         }
     }
@@ -158,10 +185,16 @@ struct ScoringWeights
  */
 struct ActionScore
 {
-    uint32 actionId = 0;                                    ///< Action/spell ID
-    float totalScore = 0.0f;                                ///< Final total score
+
+    uint32 actionId = 0;
+    ///< Action/spell ID
+
+    float totalScore = 0.0f;
+    ///< Final total score
     std::array<float, static_cast<size_t>(ScoringCategory::MAX)> categoryScores = {}; ///< Per-category scores
-    std::string debugInfo;                                  ///< Debug information
+
+    std::string debugInfo;
+    ///< Debug information
 
     /**
      * Get score for a specific category
@@ -227,11 +260,17 @@ public:
      * [this](ScoringCategory cat) -> float {
      *     switch (cat) {
      *         case ScoringCategory::SURVIVAL:
-     *             return (100.0f - GetHealthPct()) / 100.0f; // 0.0 at 100% HP, 1.0 at 0% HP
+
+     *
+     return (100.0f - GetHealthPct()) / 100.0f; // 0.0 at 100% HP, 1.0 at 0% HP
      *         case ScoringCategory::DAMAGE_OPTIMIZATION:
-     *             return IsCooldownReady(spell) ? 0.8f : 0.0f;
+
+     *
+     return IsCooldownReady(spell) ? 0.8f : 0.0f;
      *         default:
-     *             return 0.0f;
+
+     *
+     return 0.0f;
      *     }
      * }
      * @endcode
@@ -391,10 +430,18 @@ private:
     [[nodiscard]] float ApplyDiminishingReturns(float rawScore, ScoringCategory category) const;
 
     // Member variables
-    BotRole _role;                      ///< Current bot role
-    CombatContext _context;             ///< Current combat context
-    ScoringWeights _weights;            ///< Base category weights
-    bool _debugLogging;                 ///< Enable detailed logging
+
+    BotRole _role;
+    ///< Current bot role
+
+    CombatContext _context;
+    ///< Current combat context
+
+    ScoringWeights _weights;
+    ///< Base category weights
+
+    bool _debugLogging;
+    ///< Enable detailed logging
 
     /// Cache of effective weights (base × role × context)
     std::array<float, static_cast<size_t>(ScoringCategory::MAX)> _effectiveWeights;

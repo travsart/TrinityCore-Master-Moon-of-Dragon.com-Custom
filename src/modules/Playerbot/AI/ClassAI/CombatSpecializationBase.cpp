@@ -105,6 +105,7 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
     for (auto& [spellId, cooldownEnd] : _cooldowns)
     {
         if (cooldownEnd > currentTime)
+
             continue;
 
         // Mark as ready (0 means ready)
@@ -116,6 +117,7 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
     if (currentTime - lastCleanup > 5000)
     {
         std::erase_if(_cooldowns, [](const auto& pair) {
+
             return pair.second == 0;
         });
         lastCleanup = currentTime;
@@ -209,14 +211,26 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId){
     // Check primary resource based on type    switch (_primaryResource)
     {
         case ResourceType::MANA:
-            return _bot->GetPower(POWER_MANA) >= GetSpellManaCost(spellId);        case ResourceType::RAGE:
-            return _bot->GetPower(POWER_RAGE) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());        case ResourceType::ENERGY:
-            return _bot->GetPower(POWER_ENERGY) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());        case ResourceType::FOCUS:
-            return _bot->GetPower(POWER_FOCUS) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());        case ResourceType::RUNIC_POWER:
-            return _bot->GetPower(POWER_RUNIC_POWER) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());        case ResourceType::COMBO_POINTS:
-            return _bot->GetPower(POWER_COMBO_POINTS) >= 1; // Minimum 1 combo point        
+
+            return _bot->GetPower(POWER_MANA) >= GetSpellManaCost(spellId);
+            case ResourceType::RAGE:
+
+            return _bot->GetPower(POWER_RAGE) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            case ResourceType::ENERGY:
+
+            return _bot->GetPower(POWER_ENERGY) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            case ResourceType::FOCUS:
+
+            return _bot->GetPower(POWER_FOCUS) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            case ResourceType::RUNIC_POWER:
+
+            return _bot->GetPower(POWER_RUNIC_POWER) >= spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            case ResourceType::COMBO_POINTS:
+
+            return _bot->GetPower(POWER_COMBO_POINTS) >= 1; // Minimum 1 combo point
 
         default:
+
             return true; // No resource requirement or unknown type
     }
 }
@@ -276,13 +290,16 @@ float CombatSpecializationBase::GetOptimalRange(::Unit* target)
     {
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
+
             return MELEE_RANGE;
 
         case CombatRole::RANGED_DPS:
         case CombatRole::HEALER:
+
             return RANGED_OPTIMAL_DISTANCE;
 
         default:
+
             return RANGED_MIN_DISTANCE;
     }
 }
@@ -335,11 +352,13 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 
         // Prefer current target (target switching penalty)
         if (target == _currentTarget)
+
             score += 20.0f;
 
         // Health percentage factor
         float healthPct = target->GetHealthPct();
         if (healthPct < 20.0f)
+
             score += 30.0f; // Execute range priority
 
         // Distance factor (closer is better for melee, optimal range for ranged)
@@ -349,11 +368,15 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 
         // Threat factor (tanks want high threat targets)
         if (_role == CombatRole::TANK)        {
-            float threat = CalculateThreatLevel(target);            score += threat * 0.5f;
+
+            float threat = CalculateThreatLevel(target);
+            score += threat * 0.5f;
         }
 
         // Debuff factor (prefer targets with our DoTs)
-        if (_dotTracking.contains(target->GetGUID().GetRawValue()))            score += 10.0f;
+
+        if (_dotTracking.contains(target->GetGUID().GetRawValue()))
+        score += 10.0f;
 
         return score;
     };
@@ -362,16 +385,23 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
     if (enemies.size() > 10)
     {
         return *std::max_element(std::execution::par_unseq,
+
             enemies.begin(), enemies.end(),
+
             [&scoreTarget](::Unit* a, ::Unit* b) {
+
                 return scoreTarget(a) < scoreTarget(b);
+
             });
     }
     else
     {
         return *std::max_element(enemies.begin(), enemies.end(),
+
             [&scoreTarget](::Unit* a, ::Unit* b) {
+
                 return scoreTarget(a) < scoreTarget(b);
+
             });
     }
 }
@@ -385,6 +415,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
         for (auto const& snapshot : creatures) {
         if (snapshot.isAlive && snapshot.isHostile)
+
             guids.push_back(snapshot.guid);
     }
 
@@ -405,6 +436,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 
         }
         if (!entity)
+
             continue;
         // Original filtering logic goes here
     }
@@ -426,6 +458,7 @@ std::vector<ObjectGuid> GetNearbyAllies(float range) const{
     float range = range;
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);    for (auto const& snapshot : creatures) {
         if (snapshot.isAlive && snapshot.isHostile)
+
             guids.push_back(snapshot.guid);
     }
 
@@ -447,6 +480,7 @@ std::vector<ObjectGuid> GetNearbyAllies(float range) const{
 
         }
         if (!entity)
+
             continue;
         // Original filtering logic goes here
     }
@@ -468,12 +502,16 @@ void CombatSpecializationBase::UpdateDoTTracking(::Unit* target)
     for (auto const& [auraId, auraApp] : auras)
     {
         Aura* aura = auraApp->GetBase();
-        if (!aura || aura->GetCasterGUID() != _bot->GetGUID())            continue;
+
+        if (!aura || aura->GetCasterGUID() != _bot->GetGUID())
+        continue;
 
         // Track DoT expiration
         uint32 duration = aura->GetDuration();        if (duration > 0)
         {
-            _dotTracking[targetGuid][aura->GetId()] = currentTime + duration;        }
+
+            _dotTracking[targetGuid][aura->GetId()] = currentTime + duration;
+            }
     }
 
     // Clean up expired DoTs
@@ -481,10 +519,13 @@ void CombatSpecializationBase::UpdateDoTTracking(::Unit* target)
     {
         auto& dots = _dotTracking[targetGuid];
         std::erase_if(dots, [currentTime](const auto& pair) {
-            return pair.second < currentTime;        });
+
+            return pair.second < currentTime;
+            });
 
         // Remove target entry if no DoTs remain
         if (dots.empty())
+
             _dotTracking.erase(targetGuid);
     }
 }
@@ -531,16 +572,23 @@ void CombatSpecializationBase::HandleEmergencySituation()
 
         // Try to use potions
         if (ShouldUsePotions())
+
             UsePotions();
 
         // Notify healer if in group
         if (IsInGroup())
         {
+
             Player* healer = GetGroupHealer();
-            if (healer && healer != _bot)            {
+
+            if (healer && healer != _bot)
+            {
                 // Healer notification would go here
+
                 TC_LOG_DEBUG("playerbot", "{} requesting emergency healing at {}% health",
+
                     _bot->GetName(), healthPct);
+
             }
         }
     }
@@ -565,8 +613,10 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
     if (!actualTarget)
     {
         if (spellInfo->IsPositive())
+
             actualTarget = _bot;
         else
+
             actualTarget = _currentTarget;
     }
 
@@ -574,10 +624,12 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
     if (actualTarget && !spellInfo->IsPositive())
     {
         if (!_bot->IsValidAttackTarget(actualTarget))
+
             return false;
 
         // Range check
         if (!IsInCastRange(actualTarget, spellId))
+
             return false;
     }
 
@@ -597,10 +649,12 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
         // Set cooldown
         uint32 cooldown = spellInfo->RecoveryTime;
         if (cooldown > 0)
+
             SetSpellCooldown(spellId, cooldown);
 
         // Set global cooldown
         if (!spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
+
             _globalCooldownEnd = GameTime::GetGameTimeMS() + GLOBAL_COOLDOWN_MS;
 
         // Consume resource
@@ -614,9 +668,14 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
         _consecutiveFailedCasts++;
         _metrics.failedCasts++;
 
-        TC_LOG_DEBUG("playerbot", "{} failed to cast {} on {}: {}",            _bot->GetName(), spellInfo->SpellName[0],
+
+        TC_LOG_DEBUG("playerbot", "{} failed to cast {} on {}: {}",
+        _bot->GetName(), spellInfo->SpellName[0],
+
             actualTarget ? actualTarget->GetName() : "self",
-            magic_enum::enum_name(result));        return false;
+
+            magic_enum::enum_name(result));
+            return false;
     }
 }// Performance monitoring and metricsvoid CombatSpecializationBase::ResetMetrics()
 {
@@ -664,9 +723,12 @@ void CombatSpecializationBase::UpdateBuffTimers(uint32 diff)
     // Update buff expiration times    for (auto it = _buffExpirationTimes.begin(); it != _buffExpirationTimes.end();)
     {
         if (it->second <= currentTime)
+
             it = _buffExpirationTimes.erase(it);
         else
-            ++it;    }
+
+            ++it;
+            }
 }
 
 void CombatSpecializationBase::UpdateMetrics(uint32 diff)
@@ -789,12 +851,16 @@ Player* CombatSpecializationBase::GetGroupTank() const
     {
         Player* member = itr->GetSource();
         if (!member || member == _bot)
+
             continue;
 
         // Simple tank detection based on spec/stance
         // This would need proper implementation based on your spec system        if (member->GetClass() == CLASS_WARRIOR || member->GetClass() == CLASS_PALADIN)        {
+
             const_cast<CombatSpecializationBase*>(this)->_cachedTank = member;
+
             const_cast<CombatSpecializationBase*>(this)->_lastGroupUpdate = currentTime;
+
             return member;
         }
     }
@@ -821,6 +887,7 @@ std::vector<Player*> CombatSpecializationBase::GetGroupMembers() const{
     for (GroupReference* itr : *group)
     {
         Player* member = itr->GetSource();        if (member && member->IsAlive())
+
             members.push_back(member);
     }
 
@@ -882,21 +949,32 @@ void CombatSpecializationBase::ConsumeResource(uint32 spellId)
     switch (_primaryResource)
     {
         case ResourceType::MANA:
+
             _bot->ModifyPower(POWER_MANA, -int32(cost));
+
             break;
         case ResourceType::RAGE:
+
             _bot->ModifyPower(POWER_RAGE, -int32(cost));
+
             break;
         case ResourceType::ENERGY:
+
             _bot->ModifyPower(POWER_ENERGY, -int32(cost));
+
             break;
         case ResourceType::FOCUS:
+
             _bot->ModifyPower(POWER_FOCUS, -int32(cost));
+
             break;
         case ResourceType::RUNIC_POWER:
+
             _bot->ModifyPower(POWER_RUNIC_POWER, -int32(cost));
+
             break;
         default:
+
             break;
     }
 }
@@ -910,17 +988,27 @@ uint32 CombatSpecializationBase::GetCurrentResource() const
     {
         case ResourceType::MANA:
             
+
             return _bot->GetPower(POWER_MANA);
         case ResourceType::RAGE:
             
+
             return _bot->GetPower(POWER_RAGE);
         case ResourceType::ENERGY:
             
+
             return _bot->GetPower(POWER_ENERGY);
-        case ResourceType::FOCUS:            return _bot->GetPower(POWER_FOCUS);
-        case ResourceType::RUNIC_POWER:            return _bot->GetPower(POWER_RUNIC_POWER);
-        case ResourceType::COMBO_POINTS:            return _bot->GetPower(POWER_COMBO_POINTS);
+
+        case ResourceType::FOCUS:
+        return _bot->GetPower(POWER_FOCUS);
+
+        case ResourceType::RUNIC_POWER:
+        return _bot->GetPower(POWER_RUNIC_POWER);
+
+        case ResourceType::COMBO_POINTS:
+        return _bot->GetPower(POWER_COMBO_POINTS);
         default:
+
             return 0;
     }
 }
@@ -931,14 +1019,24 @@ uint32 CombatSpecializationBase::GetMaxResource() const
         return 0;    switch (_primaryResource)
     {
         case ResourceType::MANA:
+
             return _bot->GetMaxPower(POWER_MANA);
         case ResourceType::RAGE:
+
             return _bot->GetMaxPower(POWER_RAGE);
-        case ResourceType::ENERGY:            return _bot->GetMaxPower(POWER_ENERGY);        case ResourceType::FOCUS:            return _bot->GetMaxPower(POWER_FOCUS);        case ResourceType::RUNIC_POWER:
+
+        case ResourceType::ENERGY:
+        return _bot->GetMaxPower(POWER_ENERGY);
+        case ResourceType::FOCUS:
+        return _bot->GetMaxPower(POWER_FOCUS);
+        case ResourceType::RUNIC_POWER:
+
             return _bot->GetMaxPower(POWER_RUNIC_POWER);
         case ResourceType::COMBO_POINTS:
+
             return 5; // Max combo points
         default:
+
             return 100;
     }
 }
@@ -1006,6 +1104,7 @@ void CombatSpecializationBase::UpdateThreatTable()
     {
         threat *= 0.95f; // 5% decay per second
         if (threat < 1.0f)
+
             threat = 0.0f;
     }
 
@@ -1095,32 +1194,55 @@ void CombatSpecializationBase::UpdatePositioning(::Unit* target)
         BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
         if (botAI && botAI->GetMovementArbiter())
         {
-            bool accepted = botAI->RequestPointMovement(                priority,
+
+            bool accepted = botAI->RequestPointMovement(
+            priority,
+
                 optimalPos,
+
                 "Combat positioning - maintaining optimal range",
+
                 "CombatSpecializationBase");
 
+
             if (accepted)
+
             {
+
                 _metrics.positioningUpdates++;
+
                 TC_LOG_DEBUG("playerbot.movement.arbiter",
+
                     "CombatSpecializationBase: Bot {} positioning requested (Role: {}, Priority: 170)",
+
                     _bot->GetName(), static_cast<uint32>(_role));
+
             }
+
             else
+
             {
                 // Arbiter rejected - higher priority movement is active
+
                 TC_LOG_TRACE("playerbot.movement.arbiter",
+
                     "CombatSpecializationBase: Positioning rejected for bot {} - higher priority active",
+
                     _bot->GetName());
+
             }
         }
         else
         {
             // FALLBACK: Direct MotionMaster call if arbiter not available
+
             TC_LOG_TRACE("playerbot.movement.arbiter",
-                "CombatSpecializationBase: Movement Arbiter not available for bot {} - using direct MotionMaster",                _bot->GetName());
+
+                "CombatSpecializationBase: Movement Arbiter not available for bot {} - using direct MotionMaster",
+                _bot->GetName());
+
             _bot->GetMotionMaster()->MovePoint(0, optimalPos);
+
             _metrics.positioningUpdates++;
         }
     }
@@ -1157,11 +1279,19 @@ Player* CombatSpecializationBase::GetGroupHealer() const
     {
         Player* member = itr->GetSource();
         if (!member || member == _bot)
+
             continue;
 
         // Simple healer detection based on class
-        if (member->GetClass() == CLASS_PRIEST ||            member->GetClass() == CLASS_DRUID ||            member->GetClass() == CLASS_SHAMAN ||            member->GetClass() == CLASS_PALADIN)        {
+
+        if (member->GetClass() == CLASS_PRIEST ||
+        member->GetClass() == CLASS_DRUID ||
+        member->GetClass() == CLASS_SHAMAN ||
+        member->GetClass() == CLASS_PALADIN)
+        {
+
             const_cast<CombatSpecializationBase*>(this)->_cachedHealer = member;
+
             return member;
         }
     }

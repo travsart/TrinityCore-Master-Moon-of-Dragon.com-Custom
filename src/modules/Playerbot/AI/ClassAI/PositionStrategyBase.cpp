@@ -80,13 +80,24 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
         float range = preferredRange + (ring * 3.0f);
         for (int i = 0; i < 8; ++i)
         {
+
             float angle = i * angleStep;
-            float x = target->GetPositionX() + cos(angle) * range;            float y = target->GetPositionY() + sin(angle) * range;            float z = target->GetPositionZ();            // Validate height
+
+            float x = target->GetPositionX() + cos(angle) * range;
+            float y = target->GetPositionY() + sin(angle) * range;
+            float z = target->GetPositionZ();
+            // Validate height
+
             _map->GetHeight(bot->GetPhaseShift(), x, y, z);
 
+
             Position candidate(x, y, z, angle);
-            if (ValidatePosition(candidate, bot))            {
+
+            if (ValidatePosition(candidate, bot))
+            {
+
                 candidates.push_back(candidate);
+
             }
         }
     }
@@ -97,7 +108,9 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
         float score = EvaluatePositionScore(pos, bot, target);
         if (score > bestScore)
         {
+
             bestScore = score;
+
             optimalPos = pos;
         }
     }
@@ -140,6 +153,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
 
     std::sort(sortedRequests.begin(), sortedRequests.end(),
         [](const PositionRequest* a, const PositionRequest* b) {
+
             return static_cast<uint8_t>(a->priority) > static_cast<uint8_t>(b->priority);
         });
 
@@ -151,17 +165,25 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
     {
         std::recursive_mutex resultMutex;
         std::for_each(std::execution::par_unseq,
+
             sortedRequests.begin(), sortedRequests.end(),
+
             [this, &results, &resultMutex, &occupiedCells](PositionRequest* req) {
+
                 Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
 
                 // Thread-safe result insertion
+
                 std::lock_guard lock(resultMutex);
+
                 results.push_back(pos);
 
                 // Mark grid cell as occupied
+
                 auto gridCoords = WorldToGrid(pos);
+
                 occupiedCells.insert(gridCoords);
+
             });
     }
     else
@@ -169,18 +191,28 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
         // Sequential processing for smaller batches
         for (auto* req : sortedRequests)
         {
-            Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);            // Check for collision with already assigned positions
+
+            Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
+            // Check for collision with already assigned positions
+
             auto gridCoords = WorldToGrid(pos);
+
             if (occupiedCells.count(gridCoords) > 0)
+
             {
                 // Find alternative position
+
                 pos = FindAlternativePosition(pos, req->bot, occupiedCells);
+
             }
 
+
             results.push_back(pos);
+
             occupiedCells.insert(WorldToGrid(pos));
 
             // Register position for collision detection
+
             RegisterPosition(req->bot, pos);
         }
     }
@@ -316,17 +348,28 @@ void PositionStrategyBase::AddDangerZone(const Position& center, float radius, f
     {
         for (int32 dy = -gridRadius; dy <= gridRadius; ++dy)
         {
+
             int32 x = centerGrid.first + dx;
+
             int32 y = centerGrid.second + dy;
 
+
             if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE)
+
             {
+
                 float cellDistance = std::sqrt(dx * dx + dy * dy) * GRID_CELL_SIZE;
+
                 if (cellDistance <= radius)
+
                 {
+
                     float cellDanger = dangerLevel * (1.0f - cellDistance / radius);
+
                     UpdateGridDanger(x, y, cellDanger);
+
                 }
+
             }
         }
     }
@@ -352,7 +395,9 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
         float distance = pos.GetExactDist(&zone.center);
         if (distance <= zone.radius)
         {
+
             float zoneDanger = zone.dangerLevel * (1.0f - distance / zone.radius);
+
             maxDanger = std::max(maxDanger, zoneDanger);
         }
     }
@@ -369,8 +414,11 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
     // Remove expired danger zones
     _dangerZones.erase(
         std::remove_if(_dangerZones.begin(), _dangerZones.end(),
+
             [currentTime](const DangerZone& zone) {
+
                 return zone.expirationTime <= currentTime;
+
             }),
         _dangerZones.end());
 
@@ -379,12 +427,19 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
     {
         for (uint32 y = 0; y < GRID_SIZE; ++y)
         {
+
             auto& cell = (*_spatialGrid)[x][y];
+
             float currentDanger = cell.dangerLevel.load(std::memory_order_acquire);
+
             if (currentDanger > 0.0f)
+
             {
+
                 float newDanger = std::max(0.0f, currentDanger - DANGER_DECAY_RATE * diff / 1000.0f);
+
                 cell.dangerLevel.store(newDanger, std::memory_order_release);
+
             }
         }
     }
@@ -457,13 +512,21 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
         if (current->pos.GetExactDist(&end) < POSITION_TOLERANCE)
         {
             // Reconstruct path
+
             std::vector<Position> path;
+
             while (current != nullptr)
+
             {
+
                 path.push_back(current->pos);
+
                 current = current->parent;
+
             }
+
             std::reverse(path.begin(), path.end());
+
             return path;
         }
 
@@ -473,50 +536,83 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
         // Generate neighbors (8 directions)
         for (int dx = -1; dx <= 1; ++dx)
         {
+
             for (int dy = -1; dy <= 1; ++dy)
+
             {
+
                 if (dx == 0 && dy == 0)
+
                     continue;
+
 
                 int32 nx = currentGrid.first + dx;
+
                 int32 ny = currentGrid.second + dy;
 
+
                 if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE)
+
                     continue;
+
 
                 std::pair<uint32, uint32> neighborGrid = {static_cast<uint32>(nx), static_cast<uint32>(ny)};
 
+
                 if (closedSet.count(neighborGrid) > 0)
+
                     continue;
 
+
                 Position neighborPos = GridToWorld(nx, ny);
-                float z = neighborPos.GetPositionZ();                _map->GetHeight(nullptr, neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
+
+                float z = neighborPos.GetPositionZ();
+                _map->GetHeight(nullptr, neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
+
                 neighborPos.Relocate(neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
 
                 // Check if position is valid
+
                 if (!ValidatePosition(neighborPos, nullptr))
+
                     continue;
 
                 // Calculate costs                float moveCost = current->pos.GetExactDist(&neighborPos);                // Add danger cost if avoiding danger
+
                 if (avoidDanger)
+
                 {
+
                     float dangerLevel = GetDangerLevel(neighborPos);
+
                     moveCost += dangerLevel * 10.0f;  // Heavy penalty for dangerous areas
+
                 }
 
+
                 float g_cost = current->g_cost + moveCost;
+
                 float h_cost = neighborPos.GetExactDist(&end);
 
                 // Create new node
+
                 auto newNode = std::make_unique<PathNode>();
+
                 newNode->pos = neighborPos;
+
                 newNode->g_cost = g_cost;
+
                 newNode->h_cost = h_cost;
+
                 newNode->parent = current;
 
+
                 PathNode* newPtr = newNode.get();
+
                 nodePool.push_back(std::move(newNode));
+
                 openSet.push(newPtr);
+
             }
         }
     }
@@ -537,6 +633,7 @@ std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     {
         if (!excludeBot)
         {
+
             return nullptr;
         }
         return;
@@ -591,9 +688,11 @@ bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Play
     for (const auto& [guid, botPos] : _botPositions)
     {
         if (guid == excludeGuid)
+
             continue;
 
         if (pos.GetExactDist(&botPos) < GetMinimumSpacing())
+
             return true;
     }
 
@@ -639,12 +738,16 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 
     for (const auto& [guid, allyPos] : _botPositions)
     {
-        if (guid == bot->GetGUID().GetRawValue())            continue;
+
+        if (guid == bot->GetGUID().GetRawValue())
+        continue;
 
         float distance = pos.GetExactDist(&allyPos);
         if (distance < 40.0f)  // Consider allies within 40 yards
         {
+
             totalDistance += distance;
+
             allyCount++;
         }
     }
@@ -679,6 +782,7 @@ std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bo
         uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - it->second.calculatedTime < CACHE_DURATION_MS)
         {
+
             return it->second;
         }
     }
@@ -753,9 +857,13 @@ void PositionStrategyBase::ClearGrid()
     {
         for (uint32 y = 0; y < GRID_SIZE; ++y)
         {
+
             auto& cell = (*_spatialGrid)[x][y];
+
             cell.occupantCount.store(0, std::memory_order_release);
+
             cell.dangerLevel.store(0.0f, std::memory_order_release);
+
             cell.lastUpdate.store(0, std::memory_order_release);
         }
     }
@@ -845,19 +953,34 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
     {
         for (int dx = -radius; dx <= radius; ++dx)
         {
+
             for (int dy = -radius; dy <= radius; ++dy)
+
             {
+
                 if (std::abs(dx) != radius && std::abs(dy) != radius)
-                    continue;  // Only check perimeter                float x = original.GetPositionX() + dx * GRID_CELL_SIZE;                float y = original.GetPositionY() + dy * GRID_CELL_SIZE;                float z = original.GetPositionZ();
+
+                    continue;  // Only check perimeter
+                    float x = original.GetPositionX() + dx * GRID_CELL_SIZE;
+                    float y = original.GetPositionY() + dy * GRID_CELL_SIZE;
+                    float z = original.GetPositionZ();
+
 
                 _map->GetHeight(bot->GetPhaseShift(), x, y, z);
+
                 Position candidate(x, y, z, original.GetOrientation());
 
+
                 auto gridCoords = WorldToGrid(candidate);
+
                 if (occupiedCells.count(gridCoords) == 0 && ValidatePosition(candidate, bot))
+
                 {
+
                     return candidate;
+
                 }
+
             }
         }
     }
@@ -876,7 +999,11 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
 
     for (size_t i = 1; i < path.size() - 1; ++i)
     {
-        float x = path[i].GetPositionX() * (1.0f - _pathSmoothingFactor) +                  (path[i - 1].GetPositionX() + path[i + 1].GetPositionX()) * 0.5f * _pathSmoothingFactor;        float y = path[i].GetPositionY() * (1.0f - _pathSmoothingFactor) +                  (path[i - 1].GetPositionY() + path[i + 1].GetPositionY()) * 0.5f * _pathSmoothingFactor;
+
+        float x = path[i].GetPositionX() * (1.0f - _pathSmoothingFactor) +
+        (path[i - 1].GetPositionX() + path[i + 1].GetPositionX()) * 0.5f * _pathSmoothingFactor;
+        float y = path[i].GetPositionY() * (1.0f - _pathSmoothingFactor) +
+        (path[i - 1].GetPositionY() + path[i + 1].GetPositionY()) * 0.5f * _pathSmoothingFactor;
         float z = path[i].GetPositionZ();
 
         _map->GetHeight(nullptr, x, y, z);
@@ -903,18 +1030,27 @@ void PositionStrategyBase::UpdateFormationPositions(std::vector<Player*> bots, U
     switch (_formationType)
     {
         case FormationType::LINE:
+
             positions = CalculateLineFormation(bots, centerTarget);
+
             break;
         case FormationType::WEDGE:
+
             positions = CalculateWedgeFormation(bots, centerTarget);
+
             break;
         case FormationType::CIRCLE:
+
             positions = CalculateCircleFormation(bots, centerTarget);
+
             break;
         case FormationType::SPREAD:
+
             positions = CalculateSpreadFormation(bots, centerTarget);
+
             break;
         default:
+
             return;
     }
 
@@ -947,10 +1083,17 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
 
         for (uint32 col = 0; col < botsInRow && botIndex < bots.size(); ++col, ++botIndex)
         {
+
             float offset = (col - botsInRow / 2.0f) * angleRad / botsInRow;
+
             float finalAngle = baseAngle + offset;
 
-            float x = target->GetPositionX() + cos(finalAngle) * rowDistance;            float y = target->GetPositionY() + sin(finalAngle) * rowDistance;            float z = target->GetPositionZ();            _map->GetHeight(bots[botIndex]->GetPhaseShift(), x, y, z);
+
+            float x = target->GetPositionX() + cos(finalAngle) * rowDistance;
+            float y = target->GetPositionY() + sin(finalAngle) * rowDistance;
+            float z = target->GetPositionZ();
+            _map->GetHeight(bots[botIndex]->GetPhaseShift(), x, y, z);
+
             positions.emplace_back(x, y, z, finalAngle);
         }
     }
@@ -994,13 +1137,20 @@ bool PositionStrategyBase::IsPositionOccupied(const Position& pos, float radius)
     {
         for (int32 dy = -gridRadius; dy <= gridRadius; ++dy)
         {
+
             int32 x = grid.first + dx;
+
             int32 y = grid.second + dy;
 
+
             if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE)
+
             {
+
                 if ((*_spatialGrid)[x][y].IsOccupied())
+
                     return true;
+
             }
         }
     }
@@ -1025,6 +1175,7 @@ Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* targ
     if (bot->GetClass() == CLASS_ROGUE)    {
         Position backstab = GetBackstabPosition(target);
         if (ValidatePosition(backstab, bot) && CanReachPosition(bot, backstab, 2.0f))
+
             return backstab;
     }
 

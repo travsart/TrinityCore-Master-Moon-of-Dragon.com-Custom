@@ -12,6 +12,7 @@
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellAuraEffects.h"
 #include <vector>

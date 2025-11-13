@@ -64,10 +64,12 @@ protected:
 
         if (criticalHealing || injuredAllies >= 2)
         {
+
             _healingMode = true;
         }
         else if (injuredAllies == 0)
         {
+
             _healingMode = false;
         }
 
@@ -81,10 +83,12 @@ protected:
     {
         if (_healingMode)
         {
+
             return SelectHealingTarget();
         }
         else
         {
+
             return SelectDamageTarget();
         }
     }
@@ -109,14 +113,23 @@ protected:
 
         for (Unit* hostile : hostileUnits)
         {
+
             if (hostile->IsAlive() && this->GetBot()->CanSeeOrDetect(hostile))
+
             {
+
                 float healthPct = hostile->GetHealthPct();
+
                 if (healthPct < lowestHealth)
+
                 {
+
                     lowestHealth = healthPct;
+
                     bestTarget = hostile;
+
                 }
+
             }
         }
 
@@ -127,12 +140,20 @@ protected:
 
         if (Group* group = this->GetBot()->GetGroup())
         {
+
             for (GroupReference* ref : *group)
+
             {
+
                 if (Player* member = ref->GetSource())
+
                 {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        count++;
+
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
+                    count++;
+
                 }
+
             }
         }
 
@@ -143,9 +164,17 @@ protected:
     {
         if (Group* group = this->GetBot()->GetGroup())
         {
-            for (GroupReference* ref : *group)            {                if (Player* member = ref->GetSource())                {
-                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)                        return true;
+
+            for (GroupReference* ref : *group)
+            {
+            if (Player* member = ref->GetSource())
+            {
+
+                    if (member->IsAlive() && member->GetHealthPct() < threshold * 100.0f)
+                    return true;
+
                 }
+
             }
         }
 
@@ -155,7 +184,11 @@ protected:
     bool IsTank(Player* player) const
     {
         // Simple check - could be enhanced with role detection
-        return player->GetClass() == CLASS_WARRIOR ||               player->GetClass() == CLASS_PALADIN ||               player->GetClass() == CLASS_DEATH_KNIGHT;    }
+
+        return player->GetClass() == CLASS_WARRIOR ||
+        player->GetClass() == CLASS_PALADIN ||
+        player->GetClass() == CLASS_DEATH_KNIGHT;
+        }
 
 protected:
     bool _healingMode;
@@ -195,10 +228,15 @@ protected:
 
         if (staggerPct > 0.6f) // Heavy stagger
         {
+
             if (currentTime - _lastStaggerPurge > 3000) // 3 second cooldown
+
             {
+
                 PurgeStagger();
+
                 _lastStaggerPurge = currentTime;
+
             }
         }
     }
@@ -243,14 +281,18 @@ protected:
         // Regenerate shield block charges
         if (currentTime - _lastShieldBlock > 12000) // 12 second recharge
         {
+
             _shieldBlockCharges = std::min<uint32>(_shieldBlockCharges + 1, 2);
         }
 
         // Use shield block on high damage
         if (this->GetBot()->GetHealthPct() < 70.0f && _shieldBlockCharges > 0)
         {
+
             UseShieldBlock();
+
             _shieldBlockCharges--;
+
             _lastShieldBlock = currentTime;
         }
     }
@@ -291,18 +333,27 @@ protected:
 
         // Sort by missing DoTs
         targets.sort([this](Unit* a, Unit* b) {
+
             return GetMissingDotCount(a) > GetMissingDotCount(b);
         });
 
         // Apply DoTs to targets
         for (Unit* target : targets)        {
+
             if (GetMissingDotCount(target) > 0)
+
             {
+
                 ApplyMissingDoTs(target);
+
             }
+
             else
+
             {
+
                 RefreshExpiringDoTs(target);
+
             }
         }
     }
@@ -316,11 +367,17 @@ protected:
 
         for (Unit* hostile : hostileUnits)
         {
+
             if (hostile->IsAlive() &&
+
                 this->GetBot()->CanSeeOrDetect(hostile) &&
+
                 hostile->GetHealthPct() > 20.0f) // Don't DoT low health targets
+
             {
+
                 targets.push_back(hostile);
+
             }
         }
 
@@ -332,15 +389,20 @@ protected:
         uint32 missingCount = 0;
         auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
         {
+
             return _maxDotsPerTarget; // No DoTs applied
         }
 
         // Count missing DoTs based on specialization
         for (uint32 dotSpell : GetRequiredDotSpells())
         {
+
             if (it->second.find(dotSpell) == it->second.end())
+
             {
+
                 missingCount++;
+
             }
         }
 
@@ -350,13 +412,18 @@ protected:
     void RefreshExpiringDoTs(Unit* target)
     {
         auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
+
             return;
 
         for (auto& [spellId, duration] : it->second)
         {
+
             if (duration < 3000) // Refresh if less than 3 seconds
+
             {
+
                 RefreshDot(target, spellId);
+
             }
         }
     }
@@ -396,19 +463,28 @@ protected:
         // Check if burst is available
         if (!_burstWindowActive && currentTime - _lastBurstTime > _burstCooldown)
         {
+
             if (ShouldStartBurst())
+
             {
+
                 StartBurstWindow();
+
                 _burstWindowActive = true;
+
                 _lastBurstTime = currentTime;
+
                 _burstEndTime = currentTime + GetBurstDuration();
+
             }
         }
 
         // Check if burst should end
         if (_burstWindowActive && currentTime > _burstEndTime)
         {
+
             EndBurstWindow();
+
             _burstWindowActive = false;
         }
     }
@@ -418,7 +494,9 @@ protected:
         // Default logic - start burst on high health boss or multiple enemies
         if (this->_currentTarget)
         {
+
             return this->_currentTarget->GetHealthPct() > 80.0f ||
+
                    CountNearbyEnemies() >= 3;
         }
         return false;
@@ -429,6 +507,7 @@ protected:
         uint32 count = 0;
         Player* bot = this->GetBot();
         if (!bot)
+
             return 0;
 
         std::list<Unit*> hostileUnits;
@@ -438,24 +517,39 @@ protected:
         Map* map = bot->GetMap();
         if (map)
         {
+
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
+
             if (spatialGrid)
+
             {
+
                 auto guids = spatialGrid->QueryNearbyCreatureGuids(*bot, 10.0f);
+
                 for (ObjectGuid guid : guids)
+
                 {
+
                     if (Creature* creature = ObjectAccessor::GetCreature(*bot, guid))
+
                     {
+
                         if (u_check(creature))
+
                             hostileUnits.push_back(creature);
+
                     }
+
                 }
+
             }
         }
 
         for (Unit* hostile : hostileUnits)
         {
+
             if (hostile->IsAlive())
+
                 count++;
         }
 
@@ -502,20 +596,27 @@ public:
     {
         for (const auto& ability : _abilities)
         {
+
             if (!ability.condition || ability.condition())
+
             {
+
                 return ability.spellId;
+
             }
         }
         return 0;
     }    void UpdatePriority(uint32 spellId, float newPriority)
     {
         auto it = std::find_if(_abilities.begin(), _abilities.end(),
+
             [spellId](const AbilityPriority& a) { return a.spellId == spellId; });
 
         if (it != _abilities.end())
         {
+
             it->priority = newPriority;
+
             SortAbilities();
         }
     }
@@ -524,8 +625,11 @@ private:
     void SortAbilities()
     {
         std::sort(_abilities.begin(), _abilities.end(),
+
             [](const AbilityPriority& a, const AbilityPriority& b) {
+
                 return a.priority > b.priority;
+
             });
     }
 
