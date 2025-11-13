@@ -13,8 +13,8 @@
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot

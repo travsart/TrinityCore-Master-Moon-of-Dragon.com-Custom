@@ -40,6 +40,46 @@ namespace Playerbot
  */
 class ArmsWarriorRefactored : public MeleeDpsSpecialization<RageResource>
 {
+private:
+    // ========================================================================
+    // SPELL IDS
+    // ========================================================================
+
+    enum ArmsSpells
+    {
+        // Stances
+        SPELL_BATTLE_STANCE         = 2457,
+        SPELL_DEFENSIVE_STANCE      = 71,
+        SPELL_BERSERKER_STANCE      = 2458,
+
+        // Shouts
+        SPELL_BATTLE_SHOUT          = 6673,
+        SPELL_COMMANDING_SHOUT      = 469,
+
+        // Core Abilities
+        SPELL_MORTAL_STRIKE         = 12294,
+        SPELL_COLOSSUS_SMASH        = 86346,
+        SPELL_OVERPOWER             = 7384,
+        SPELL_EXECUTE               = 5308,
+        SPELL_WHIRLWIND             = 1680,
+        SPELL_REND                  = 772,
+        SPELL_HEROIC_STRIKE         = 78,
+        SPELL_CLEAVE                = 845,
+        SPELL_CHARGE                = 100,
+
+        // Arms Specific
+        SPELL_WAR_BREAKER           = 262161,
+        SPELL_SWEEPING_STRIKES      = 260708,
+        SPELL_BLADESTORM            = 227847,
+        SPELL_AVATAR                = 107574,
+        SPELL_DEEP_WOUNDS           = 115767,
+        SPELL_TACTICAL_MASTERY      = 12295,
+
+        // Procs
+        SPELL_OVERPOWER_PROC        = 60503,
+        SPELL_SUDDEN_DEATH_PROC     = 52437,
+    };
+
 public:
     // Use base class members with type alias for cleaner syntax
     using Base = MeleeDpsSpecialization<RageResource>;
@@ -656,45 +696,6 @@ private:
             TC_LOG_INFO("module.playerbot", "🌲 ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
-
-    // ========================================================================
-    // SPELL IDS
-    // ========================================================================
-
-    enum ArmsSpells
-    {
-        // Stances
-        SPELL_BATTLE_STANCE         = 2457,
-        SPELL_DEFENSIVE_STANCE      = 71,
-        SPELL_BERSERKER_STANCE      = 2458,
-
-        // Shouts
-        SPELL_BATTLE_SHOUT          = 6673,
-        SPELL_COMMANDING_SHOUT      = 469,
-
-        // Core Abilities
-        SPELL_MORTAL_STRIKE         = 12294,
-        SPELL_COLOSSUS_SMASH        = 86346,
-        SPELL_OVERPOWER             = 7384,
-        SPELL_EXECUTE               = 5308,
-        SPELL_WHIRLWIND             = 1680,
-        SPELL_REND                  = 772,
-        SPELL_HEROIC_STRIKE         = 78,
-        SPELL_CLEAVE                = 845,
-        SPELL_CHARGE                = 100,
-
-        // Arms Specific
-        SPELL_WAR_BREAKER           = 262161,
-        SPELL_SWEEPING_STRIKES      = 260708,
-        SPELL_BLADESTORM            = 227847,
-        SPELL_AVATAR                = 107574,
-        SPELL_DEEP_WOUNDS           = 115767,
-        SPELL_TACTICAL_MASTERY      = 12295,
-
-        // Procs
-        SPELL_OVERPOWER_PROC        = 60503,
-        SPELL_SUDDEN_DEATH_PROC     = 52437,
-    };
 
     // Note: WarriorStance enum is inherited from WarriorSpecialization parent class
 

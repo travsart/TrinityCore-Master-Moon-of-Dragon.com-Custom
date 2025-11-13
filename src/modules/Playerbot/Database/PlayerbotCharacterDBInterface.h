@@ -339,7 +339,7 @@ namespace Playerbot
         ~SafeExecutionEngine();
 
         void Initialize();
-        void Shutdown() override;
+        void Shutdown();
 
         /**
          * Execute statement with comprehensive error handling

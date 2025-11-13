@@ -5,15 +5,11 @@
 #pragma once
 
 #include "Define.h"
+#include "DatabaseEnvFwd.h"
+#include "CharacterDatabase.h"
 #include <string>
 #include <functional>
 #include <thread>
-
-// Forward declarations
-class CharacterDatabasePreparedStatement;
-class PreparedQueryResult;
-class CharacterDatabaseTransaction;
-enum CharacterDatabaseStatements : uint32;
 
 namespace Playerbot
 {

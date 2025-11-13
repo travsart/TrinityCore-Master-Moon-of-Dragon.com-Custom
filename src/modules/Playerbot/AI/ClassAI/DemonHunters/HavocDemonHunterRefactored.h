@@ -29,8 +29,8 @@
 #include <unordered_map>
 #include <deque>
 #include <chrono>
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot

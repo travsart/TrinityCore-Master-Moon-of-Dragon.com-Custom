@@ -21,6 +21,7 @@
 #include "RaidOrchestrator.h"
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Position.h"
 #include <vector>
 #include <unordered_map>
 #include <memory>

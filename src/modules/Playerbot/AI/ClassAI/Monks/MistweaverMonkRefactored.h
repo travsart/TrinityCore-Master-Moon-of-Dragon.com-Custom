@@ -21,8 +21,8 @@
 #include "Group.h"
 #include "Log.h"
 #include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot

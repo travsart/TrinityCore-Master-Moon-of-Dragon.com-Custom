@@ -20,8 +20,8 @@
 #include "SpellAuraEffects.h"
 #include "Log.h"
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 #include "GameTime.h"
 
