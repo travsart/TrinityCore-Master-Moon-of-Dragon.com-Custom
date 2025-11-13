@@ -64,7 +64,11 @@ enum DemonHunterSpells
     // Talent abilities
     MOMENTUM_TALENT = 206476,
     DEMONIC_TALENT = 213410,
-    BLIND_FURY_TALENT = 203550
+    BLIND_FURY_TALENT = 203550,
+
+    // Buffs
+    BUFF_MOMENTUM = 206476,  // Momentum buff (same as talent)
+    BUFF_PREPARED = 203650    // Prepared buff from Vengeful Retreat
 };
 
 class TC_GAME_API DemonHunterAI : public ClassAI
