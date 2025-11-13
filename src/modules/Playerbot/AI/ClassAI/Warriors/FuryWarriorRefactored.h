@@ -419,18 +419,18 @@ private:
 
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                [](Player* bot, Unit* target) {
+                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && target->GetHealthPct() < 20.0f;
-                },
+                }},
                 "Target HP < 20% (Execute range)");
 
             // Critical cooldowns
             queue->RegisterSpell(SPELL_RECKLESSNESS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(SPELL_RECKLESSNESS,
-                [](Player* bot, Unit* target) {
+                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     // Use on bosses or high HP targets
                     return target && (target->GetMaxHealth() > 500000 || target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
-                },
+                }},
                 "Boss fight or high HP target");
 
             queue->RegisterSpell(SPELL_RAMPAGE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
