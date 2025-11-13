@@ -12,8 +12,11 @@
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellAuraEffects.h"
+#include "GridNotifiers.h"
+#include "CellImpl.h"
 #include <vector>
 #include <algorithm>
 
@@ -164,7 +167,9 @@ public:
 
         // Check if another target has more nearby enemies
         std::list<Unit*> enemies;
-        bot->GetAttackableUnitListInRange(enemies, 40.0f);
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
+        Cell::VisitAllObjects(bot, searcher, 40.0f);
 
         for (Unit* enemy : enemies)
         {
@@ -192,7 +197,9 @@ public:
 
         uint32 count = 0;
         std::list<Unit*> enemies;
-        center->GetAttackableUnitListInRange(enemies, range);
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(center, center, range);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(center, enemies, u_check);
+        Cell::VisitAllObjects(center, searcher, range);
 
         for (Unit* enemy : enemies)
         {
@@ -212,7 +219,9 @@ public:
             return nullptr;
 
         std::list<Unit*> enemies;
-        bot->GetAttackableUnitListInRange(enemies, maxRange);
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, maxRange);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
+        Cell::VisitAllObjects(bot, searcher, maxRange);
 
         for (Unit* enemy : enemies)
         {

@@ -370,7 +370,7 @@ ThreatAssistant::PlayerRole ThreatAssistant::GetPlayerRole(Player* player)
 
     // Simple heuristic based on class
     // TODO: Integrate with proper role detection system
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

@@ -635,7 +635,7 @@ RotationTemplate const* GetOptimalTemplate(std::vector<Player*> const& group)
         if (!member)
             continue;
 
-        switch (member->getClass())
+        switch (member->GetClass())
         {
             case CLASS_WARRIOR:
             case CLASS_PALADIN:

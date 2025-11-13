@@ -495,8 +495,8 @@ public:
                 continue;
 
             // Check if member is healer
-            uint8 classId = member->getClass();
-            uint8 spec = member->GetPrimaryTalentTree(member->GetActiveSpec());
+            uint8 classId = member->GetClass();
+            uint8 spec = member->GetPrimarySpecialization());
 
             bool isHealer = false;
             if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) isHealer = true;

@@ -90,8 +90,8 @@ void HybridAIController::Initialize()
     if (_bot && _bot->GetBot())
     {
         Player* player = _bot->GetBot();
-        uint8 classId = player->getClass();
-        uint8 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+        uint8 classId = player->GetClass();
+        uint8 spec = player->GetPrimarySpecialization());
 
         // Get class-specific tree from registry
         std::shared_ptr<BTNode> classTree = ClassBehaviorTreeRegistry::GetTree(

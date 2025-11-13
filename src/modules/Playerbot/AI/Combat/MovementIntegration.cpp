@@ -460,7 +460,7 @@ MovementIntegration::CombatRole MovementIntegration::GetCombatRole() const
 
     // Simple heuristic based on class
     // TODO: Proper role detection from spec/talents
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

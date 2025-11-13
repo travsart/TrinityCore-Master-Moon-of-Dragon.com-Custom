@@ -1145,11 +1145,11 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
         case CLASS_DEATH_KNIGHT:
         case CLASS_DRUID:
         case CLASS_MONK:
-            return player->GetPrimaryTalentTree() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
+            return player->GetPrimarySpecialization() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
 
         case CLASS_PRIEST:
         case CLASS_SHAMAN:
-            return player->GetPrimaryTalentTree() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
+            return player->GetPrimarySpecialization() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1215,7 +1215,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
 
     // Check if player has interrupt available
     uint32 interruptSpell = 0;
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: interruptSpell = 6552; break;  // Pummel
         case CLASS_PALADIN: interruptSpell = 96231; break; // Rebuke
@@ -1486,7 +1486,7 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
     bool canDispelDisease = false;
     bool canDispelPoison = false;
 
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_PRIEST:
         case CLASS_PALADIN:

@@ -457,7 +457,7 @@ uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
     if (healthPct < 20 && ShouldUseImmunity(player))
     {
         // Class-specific immunity spells
-        switch (player->getClass())
+        switch (player->GetClass())
         {
             case CLASS_PALADIN: return 642;  // Divine Shield
             case CLASS_MAGE: return 45438;   // Ice Block
@@ -468,7 +468,7 @@ uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
 
     // Get class-specific defensive cooldowns
     std::vector<uint32> defensives;
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: defensives = GetWarriorDefensiveCooldowns(player); break;
         case CLASS_PALADIN: defensives = GetPaladinDefensiveCooldowns(player); break;
@@ -580,7 +580,7 @@ std::vector<uint32> PvPCombatAI::GetOffensiveCooldowns(::Player* player) const
     if (!player)
         return {};
 
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: return GetWarriorOffensiveCooldowns(player);
         case CLASS_PALADIN: return GetPaladinOffensiveCooldowns(player);
@@ -667,7 +667,7 @@ uint32 PvPCombatAI::GetInterruptSpell(::Player* player) const
     if (!player)
         return 0;
 
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: return GetWarriorInterruptSpell(player);
         case CLASS_PALADIN: return 96231;  // Rebuke
@@ -748,7 +748,7 @@ uint32 PvPCombatAI::GetPeelAbility(::Player* player) const
         return 0;
 
     // Return class-specific peel abilities (CC, knockback, etc.)
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: return 5246;   // Intimidating Shout
         case CLASS_PALADIN: return 853;    // Hammer of Justice
@@ -845,9 +845,9 @@ bool PvPCombatAI::IsHealer(::Unit* unit) const
         return false;
 
     ::Player* player = unit->ToPlayer();
-    uint32 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+    uint32 spec = player->GetPrimarySpecialization());
     // Check if player is in healing spec
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_PRIEST:
             return spec == TALENT_TREE_PRIEST_DISCIPLINE || spec == TALENT_TREE_PRIEST_HOLY;
@@ -872,7 +872,7 @@ bool PvPCombatAI::IsCaster(::Unit* unit) const
         return false;
 
     ::Player* player = unit->ToPlayer();
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_MAGE:
         case CLASS_WARLOCK:
@@ -969,7 +969,7 @@ uint32 PvPCombatAI::GetCCSpellId(::Player* player, CCType ccType) const
     // Return class-specific CC spell IDs
     // Simplified - full implementation has complete spell mapping
 
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR:
             if (ccType == CCType::STUN) return 46968; // Shockwave
@@ -1012,7 +1012,7 @@ std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const
         return ccTypes;
 
     // Return available CC types based on class
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR:
             ccTypes.push_back(CCType::STUN);

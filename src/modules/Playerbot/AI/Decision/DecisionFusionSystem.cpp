@@ -487,8 +487,8 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         return BotRole::RANGED_DPS; // Default
 
     // Get player's class and spec
-    Classes playerClass = static_cast<Classes>(bot->getClass());
-    uint32 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+    Classes playerClass = static_cast<Classes>(bot->GetClass());
+    uint32 spec = bot->GetPrimarySpecialization());
 
     // Determine role based on class and spec
     switch (playerClass)

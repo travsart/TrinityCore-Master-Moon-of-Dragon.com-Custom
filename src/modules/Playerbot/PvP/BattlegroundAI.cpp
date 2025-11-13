@@ -267,7 +267,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
     BGRole role = BGRole::ATTACKER; // Default
 
     // Assign role based on class and BG type
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (bgType)
     {
         case BGType::WARSONG_GULCH:
@@ -353,7 +353,7 @@ bool BattlegroundAI::IsRoleAppropriate(::Player* player, BGRole role) const
     if (!player)
         return false;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (role)
     {
         case BGRole::FLAG_CARRIER:

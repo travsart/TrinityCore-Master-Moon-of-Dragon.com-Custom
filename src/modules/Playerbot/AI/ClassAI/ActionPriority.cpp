@@ -438,7 +438,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
         bool isHealer = false;
 
         // Determine role from specialization
-        switch (player->getClass())
+        switch (player->GetClass())
         {
             case CLASS_WARRIOR:
                 isTank = (spec == ChrSpecialization::WarriorProtection);
