@@ -287,10 +287,6 @@ void ClassAI::OnCombatEnd()
     _combatTime = 0;
     _currentCombatTarget = nullptr;
 
-    if (!newTarget)
-    {
-        return nullptr;
-    }
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
     // Notify combat behavior system
