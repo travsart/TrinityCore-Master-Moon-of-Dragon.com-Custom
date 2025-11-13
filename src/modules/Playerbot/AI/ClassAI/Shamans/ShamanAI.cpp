@@ -2772,7 +2772,9 @@ bool ShamanAI::HandleHealingStreamTotem()
     }
 
     return false;
-}bool ShamanAI::HandleSpiritLink()
+}
+
+bool ShamanAI::HandleSpiritLink()
 {
     if (!CanUseAbility(SPELL_SPIRIT_LINK_TOTEM))
         return false;
