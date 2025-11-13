@@ -248,10 +248,6 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // Check cooldown
     auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];    auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > GameTime::GetGameTimeMS())        return false; // On cooldown
-if (!castTarget)
-{
-    return nullptr;
-}
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
