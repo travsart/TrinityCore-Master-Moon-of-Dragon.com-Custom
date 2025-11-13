@@ -17,6 +17,7 @@
 class BotAI;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 enum class CombatContext : uint8;
@@ -311,5 +312,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif
