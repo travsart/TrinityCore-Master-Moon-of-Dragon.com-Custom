@@ -16,6 +16,7 @@
 #include <queue>
 #include <vector>
 #include <array>
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -22,6 +22,7 @@
 #include <numeric>
 #include <cmath>
 #include <random>
+#include "GameTime.h"
 
 namespace Playerbot
 {

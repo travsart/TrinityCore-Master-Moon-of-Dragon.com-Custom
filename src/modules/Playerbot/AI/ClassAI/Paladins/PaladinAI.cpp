@@ -21,6 +21,7 @@
 #include "Group.h"
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
+#include "GameTime.h"
 
 namespace Playerbot
 {

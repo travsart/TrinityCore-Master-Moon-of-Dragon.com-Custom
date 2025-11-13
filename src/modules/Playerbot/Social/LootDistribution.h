@@ -23,6 +23,7 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
+#include "GameTime.h"
 
 class Player;
 class Group;

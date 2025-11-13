@@ -17,6 +17,7 @@
 #include <sstream>
 #include <chrono>
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot
 {

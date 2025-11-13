@@ -10,6 +10,7 @@
 #include "Define.h"
 #include <vector>
 #include <unordered_map>
+#include "GameTime.h"
 
 class Player;
 

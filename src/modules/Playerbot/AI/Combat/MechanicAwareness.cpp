@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <execution>
 #include <cmath>
+#include "GameTime.h"
 
 namespace Playerbot
 {

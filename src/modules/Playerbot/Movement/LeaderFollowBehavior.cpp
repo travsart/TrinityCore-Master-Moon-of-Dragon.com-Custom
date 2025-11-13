@@ -36,6 +36,7 @@
 #include <cmath>
 #include <set>
 #include <unordered_map>
+#include "GameTime.h"
 
 namespace Playerbot
 {

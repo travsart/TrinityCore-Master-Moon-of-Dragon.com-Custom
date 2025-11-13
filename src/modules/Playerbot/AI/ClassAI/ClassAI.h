@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include "GameTime.h"
 
 namespace Playerbot
 {
