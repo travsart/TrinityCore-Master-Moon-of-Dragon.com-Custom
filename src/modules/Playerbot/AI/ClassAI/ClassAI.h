@@ -276,7 +276,7 @@ public:
     uint32 GetSpellCooldown(uint32 spellId);
 
     // Spell casting (overrides BotAI virtual method)
-    SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
+    ::SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
 
     // Target selection helpers
     ::Unit* GetBestAttackTarget();

@@ -395,7 +395,7 @@ uint32 ClassAI::GetSpellCooldown(uint32 spellId)
 // SPELL CASTING
 // ============================================================================
 
-SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
+::SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
     // If no target specified, self-cast
     if (!target)

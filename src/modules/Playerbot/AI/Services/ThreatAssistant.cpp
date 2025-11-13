@@ -103,7 +103,7 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
         return false;
 
     // Cast taunt spell
-    SpellCastResult result = tank->CastSpell(tauntSpellId, false, target);
+    ::SpellCastResult result = tank->CastSpell(tauntSpellId, false, target);
 
     if (result == SPELL_CAST_OK)
     {

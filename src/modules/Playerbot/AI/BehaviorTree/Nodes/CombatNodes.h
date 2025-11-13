@@ -269,7 +269,7 @@ public:
             }
 
             // Attempt to cast
-            SpellCastResult result = ai->CastSpell(_spellId, target);
+            ::SpellCastResult result = ai->CastSpell(_spellId, target);
 
             if (result != SPELL_CAST_OK)
             {
@@ -598,7 +598,7 @@ public:
         }
 
         // Cast on self
-        SpellCastResult result = ai->CastSpell(_spellId, bot);
+        ::SpellCastResult result = ai->CastSpell(_spellId, bot);
 
         _status = (result == SPELL_CAST_OK) ? BTStatus::SUCCESS : BTStatus::FAILURE;
         return _status;

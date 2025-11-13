@@ -805,7 +805,7 @@ void ClassAI::ExecutePendingSpell()
     // - Range/LOS checks
     // - Cast time processing
     // - Combat state management
-    SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = GameTime::GetGameTimeMS() - _pendingSpellCastRequest->queuedAtTime;
+    ::SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = GameTime::GetGameTimeMS() - _pendingSpellCastRequest->queuedAtTime;
 
     if (result == SPELL_CAST_OK)
     {
@@ -838,7 +838,7 @@ void ClassAI::CancelPendingSpell()
 // SPELL CASTING
 // ============================================================================
 
-SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
+::SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
     // If no target specified, self-cast
     if (!target)

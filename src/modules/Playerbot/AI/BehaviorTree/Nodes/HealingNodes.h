@@ -335,7 +335,7 @@ public:
             }
 
             // Attempt to cast
-            SpellCastResult result = ai->CastSpell(_spellId, healTarget);
+            ::SpellCastResult result = ai->CastSpell(_spellId, healTarget);
 
             if (result != SPELL_CAST_OK)
             {
@@ -467,7 +467,7 @@ public:
                 if (!bot->HasSpell(spellId) || bot->GetSpellHistory()->HasCooldown(spellId))
                     return BTStatus::FAILURE;
 
-                SpellCastResult result = ai->CastSpell(spellId, dispelTarget);
+                ::SpellCastResult result = ai->CastSpell(spellId, dispelTarget);
                 return (result == SPELL_CAST_OK) ? BTStatus::SUCCESS : BTStatus::FAILURE;
             })
     {}
@@ -591,7 +591,7 @@ public:
             }
 
             // Cast on self (AoE heal will affect nearby allies)
-            SpellCastResult result = ai->CastSpell(_spellId, bot);
+            ::SpellCastResult result = ai->CastSpell(_spellId, bot);
 
             if (result != SPELL_CAST_OK)
             {
