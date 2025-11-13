@@ -1086,7 +1086,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), emergencySpell);
+                this->CastSpell(emergencySpell, this->GetBot());
 
                 TC_LOG_DEBUG("playerbot", "Tank: Emergency defensive {} used", emergencySpell);
 
@@ -1101,7 +1101,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), recommendedSpell);
+                this->CastSpell(recommendedSpell, this->GetBot());
 
                 _defensiveManager.UseDefensiveCooldown(recommendedSpell);
 

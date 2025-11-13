@@ -489,7 +489,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
         // Use Cleave if multiple enemies
         if (GetNearbyEnemyCount(8.0f) > 1 && CanUseAbility(CLEAVE))
         {
-            if (CastSpell(CLEAVE))
+            if (CastSpell(uint32 spellId, bool success, CLEAVE))
             {
                 RecordAbilityUsage(CLEAVE);
                 return;
@@ -508,7 +508,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     }
 }
 
-void WarriorAI::RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success)
+void WarriorAI::RecordInterruptAttempt(::Unit* target)
 {
     if (success)
     {
@@ -565,11 +565,11 @@ void WarriorAI::UseDefensiveCooldowns()
     Unit* target = GetBot()->GetSelectedUnit();
     if (target && target->HasUnitState(UNIT_STATE_CASTING) && CanUseAbility(SPELL_REFLECTION))
     {
-        if (CastSpell(SPELL_REFLECTION))
+        if (CastSpell("Warrior {} activated Spell Reflection",
+                         GetBot(, SPELL_REFLECTION))
         {
             RecordAbilityUsage(SPELL_REFLECTION);
-            TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} activated Spell Reflection",
-                         GetBot()->GetName());
+            TC_LOG_DEBUG("module.playerbot.ai")->GetName());
             return;
         }
     }

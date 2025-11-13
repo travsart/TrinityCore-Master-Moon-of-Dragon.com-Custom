@@ -109,7 +109,7 @@ public:
         if (!bot->HasAura(SPELL_COMMANDING_SHOUT) && !bot->HasAura(SPELL_BATTLE_SHOUT))
         {
 
-            this->CastSpell(bot, SPELL_COMMANDING_SHOUT);
+            this->CastSpell(SPELL_COMMANDING_SHOUT, bot);
         }
 
         // Protection warriors must be in Defensive Stance
@@ -120,7 +120,7 @@ public:
 
             {
 
-                this->CastSpell(bot, SPELL_DEFENSIVE_STANCE);
+                this->CastSpell(SPELL_DEFENSIVE_STANCE, bot);
 
             }
         }
@@ -148,7 +148,7 @@ public:
         if (healthPct < 20.0f && !_lastStandActive && this->CanUseAbility(SPELL_LAST_STAND))
         {
 
-            this->CastSpell(bot, SPELL_LAST_STAND);
+            this->CastSpell(SPELL_LAST_STAND, bot);
 
             _lastStandActive = true;
 
@@ -158,7 +158,7 @@ public:
         if (healthPct < 30.0f && !_shieldWallActive && this->CanUseAbility(SPELL_SHIELD_WALL))
         {
 
-            this->CastSpell(bot, SPELL_SHIELD_WALL);
+            this->CastSpell(SPELL_SHIELD_WALL, bot);
 
             _shieldWallActive = true;
 
@@ -169,7 +169,7 @@ public:
         if (this->_resource >= 40 && this->CanUseAbility(SPELL_IGNORE_PAIN))
         {
 
-            this->CastSpell(bot, SPELL_IGNORE_PAIN);
+            this->CastSpell(SPELL_IGNORE_PAIN, bot);
 
             _ignoreAbsorb = bot->GetMaxHealth() * 0.3f; // Approximate absorb
 
@@ -180,7 +180,7 @@ public:
         if (ShouldUseSpellReflection() && this->CanUseAbility(SPELL_SPELL_REFLECTION))
         {
 
-            this->CastSpell(bot, SPELL_SPELL_REFLECTION);
+            this->CastSpell(SPELL_SPELL_REFLECTION, bot);
 
             return;
         }
@@ -265,7 +265,7 @@ protected:
         if (_hasShieldEquipped && this->CanUseAbility(SPELL_SHIELD_SLAM))
         {
 
-            this->CastSpell(target, SPELL_SHIELD_SLAM);
+            this->CastSpell(SPELL_SHIELD_SLAM, target);
 
             _lastShieldSlam = GameTime::GetGameTimeMS();
 
@@ -276,7 +276,7 @@ protected:
         if (HasRevengeProc() && this->CanUseAbility(SPELL_REVENGE))
         {
 
-            this->CastSpell(target, SPELL_REVENGE);
+            this->CastSpell(SPELL_REVENGE, target);
 
             return;
         }
@@ -285,7 +285,7 @@ protected:
         if (this->GetEnemiesInRange(8.0f) >= 2 && this->CanUseAbility(SPELL_THUNDER_CLAP))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_THUNDER_CLAP); // Self-cast AoE
+            this->CastSpell(SPELL_THUNDER_CLAP, this->GetBot()); // Self-cast AoE
 
             return;
         }
@@ -294,7 +294,7 @@ protected:
         if (this->CanUseAbility(SPELL_DEVASTATE))
         {
 
-            this->CastSpell(target, SPELL_DEVASTATE);
+            this->CastSpell(SPELL_DEVASTATE, target);
 
             ApplySunderArmor(target);
 
@@ -305,7 +305,7 @@ protected:
         if (!HasMaxSunder(target) && this->CanUseAbility(SPELL_SUNDER_ARMOR))
         {
 
-            this->CastSpell(target, SPELL_SUNDER_ARMOR);
+            this->CastSpell(SPELL_SUNDER_ARMOR, target);
 
             ApplySunderArmor(target);
 
@@ -316,7 +316,7 @@ protected:
         if (ShouldUseAvatar() && this->CanUseAbility(SPELL_AVATAR))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_AVATAR);
+            this->CastSpell(SPELL_AVATAR, this->GetBot());
 
             return;
         }
@@ -325,7 +325,7 @@ protected:
         if (this->GetEnemiesInRange(10.0f) >= 1 && this->CanUseAbility(SPELL_DEMORALIZING_SHOUT))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_DEMORALIZING_SHOUT); // Self-cast AoE debuff
+            this->CastSpell(SPELL_DEMORALIZING_SHOUT, this->GetBot()); // Self-cast AoE debuff
 
             return;
         }
@@ -334,7 +334,7 @@ protected:
         if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
         {
 
-            this->CastSpell(target, SPELL_HEROIC_STRIKE);
+            this->CastSpell(SPELL_HEROIC_STRIKE, target);
 
             return;
         }
@@ -351,14 +351,14 @@ protected:
         if (this->CanUseAbility(SPELL_CHALLENGING_SHOUT))
         {
 
-            this->CastSpell(bot, SPELL_CHALLENGING_SHOUT);
+            this->CastSpell(SPELL_CHALLENGING_SHOUT, bot);
         }
 
         // Rally Cry for group healing
         if (this->CanUseAbility(SPELL_RALLYING_CRY))
         {
 
-            this->CastSpell(bot, SPELL_RALLYING_CRY);
+            this->CastSpell(SPELL_RALLYING_CRY, bot);
         }
 
         _emergencyMode = bot->GetHealthPct() < 40.0f;
@@ -399,7 +399,7 @@ protected:
 
             return;
 
-        this->CastSpell(this->GetBot(), SPELL_SHIELD_BLOCK);
+        this->CastSpell(SPELL_SHIELD_BLOCK, this->GetBot());
         _shieldBlockCharges = std::min(_shieldBlockCharges + 1, 2u);
         _lastShieldBlock = GameTime::GetGameTimeMS();
     }
@@ -522,7 +522,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), SPELL_DEFENSIVE_STANCE);
+                this->CastSpell(SPELL_DEFENSIVE_STANCE, this->GetBot());
 
             }
         }
@@ -538,7 +538,7 @@ protected:
         if (!this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CHARGE))
         {
 
-            this->CastSpell(target, SPELL_CHARGE);
+            this->CastSpell(SPELL_CHARGE, target);
         }
     }
 
@@ -875,11 +875,11 @@ private:
 
                         Action("Cast Shield Wall", [this](Player* bot, Unit* target) {
 
-                            if (this->CanCastSpell(bot, SPELL_SHIELD_WALL))
+                            if (this->CanCastSpell(SPELL_SHIELD_WALL, bot))
 
                             {
 
-                                this->CastSpell(bot, SPELL_SHIELD_WALL);
+                                this->CastSpell(SPELL_SHIELD_WALL, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -891,11 +891,11 @@ private:
 
                         Action("Cast Last Stand", [this](Player* bot, Unit* target) {
 
-                            if (this->CanCastSpell(bot, SPELL_LAST_STAND))
+                            if (this->CanCastSpell(SPELL_LAST_STAND, bot))
 
                             {
 
-                                this->CastSpell(bot, SPELL_LAST_STAND);
+                                this->CastSpell(SPELL_LAST_STAND, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -907,11 +907,11 @@ private:
 
                         Action("Cast Rallying Cry", [this](Player* bot, Unit* target) {
 
-                            if (this->CanCastSpell(bot, SPELL_RALLYING_CRY))
+                            if (this->CanCastSpell(SPELL_RALLYING_CRY, bot))
 
                             {
 
-                                this->CastSpell(bot, SPELL_RALLYING_CRY);
+                                this->CastSpell(SPELL_RALLYING_CRY, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -923,11 +923,11 @@ private:
 
                         Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
 
-                            if (this->CanCastSpell(bot, SPELL_IGNORE_PAIN))
+                            if (this->CanCastSpell(SPELL_IGNORE_PAIN, bot))
 
                             {
 
-                                this->CastSpell(bot, SPELL_IGNORE_PAIN);
+                                this->CastSpell(SPELL_IGNORE_PAIN, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -955,7 +955,7 @@ private:
 
                     Action("Cast Taunt", [this](Player* bot, Unit* target) {
 
-                        if (this->CanCastSpell(target, SPELL_TAUNT))
+                        if (this->CanCastSpell(SPELL_TAUNT, target))
 
                         {
 
@@ -996,11 +996,11 @@ private:
 
                             Action("Cast Shield Block", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(bot, SPELL_SHIELD_BLOCK))
+                                if (this->CanCastSpell(SPELL_SHIELD_BLOCK, bot))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_SHIELD_BLOCK);
+                                    this->CastSpell(SPELL_SHIELD_BLOCK, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1023,11 +1023,11 @@ private:
 
                             Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(bot, SPELL_IGNORE_PAIN))
+                                if (this->CanCastSpell(SPELL_IGNORE_PAIN, bot))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_IGNORE_PAIN);
+                                    this->CastSpell(SPELL_IGNORE_PAIN, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1044,11 +1044,11 @@ private:
 
                             if (this->ShouldUseSpellReflection() &&
 
-                                this->CanCastSpell(bot, SPELL_SPELL_REFLECTION))
+                                this->CanCastSpell(SPELL_SPELL_REFLECTION, bot))
 
                             {
 
-                                this->CastSpell(bot, SPELL_SPELL_REFLECTION);
+                                this->CastSpell(SPELL_SPELL_REFLECTION, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1081,11 +1081,11 @@ private:
 
                             Action("Cast Avatar", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(bot, SPELL_AVATAR))
+                                if (this->CanCastSpell(SPELL_AVATAR, bot))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_AVATAR);
+                                    this->CastSpell(SPELL_AVATAR, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1108,11 +1108,11 @@ private:
 
                             if (this->_hasShieldEquipped &&
 
-                                this->CanCastSpell(target, SPELL_SHIELD_SLAM))
+                                this->CanCastSpell(SPELL_SHIELD_SLAM, target))
 
                             {
 
-                                this->CastSpell(target, SPELL_SHIELD_SLAM);
+                                this->CastSpell(SPELL_SHIELD_SLAM, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1134,11 +1134,11 @@ private:
 
                             Action("Cast Revenge", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(target, SPELL_REVENGE))
+                                if (this->CanCastSpell(SPELL_REVENGE, target))
 
                                 {
 
-                                    this->CastSpell(target, SPELL_REVENGE);
+                                    this->CastSpell(SPELL_REVENGE, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1162,11 +1162,11 @@ private:
 
                             Action("Cast Thunder Clap", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(bot, SPELL_THUNDER_CLAP))
+                                if (this->CanCastSpell(SPELL_THUNDER_CLAP, bot))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_THUNDER_CLAP);
+                                    this->CastSpell(SPELL_THUNDER_CLAP, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1182,11 +1182,11 @@ private:
 
                         Action("Cast Devastate", [this](Player* bot, Unit* target) {
 
-                            if (this->CanCastSpell(target, SPELL_DEVASTATE))
+                            if (this->CanCastSpell(SPELL_DEVASTATE, target))
 
                             {
 
-                                this->CastSpell(target, SPELL_DEVASTATE);
+                                this->CastSpell(SPELL_DEVASTATE, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1208,11 +1208,11 @@ private:
 
                             Action("Cast Demoralizing Shout", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(bot, SPELL_DEMORALIZING_SHOUT))
+                                if (this->CanCastSpell(SPELL_DEMORALIZING_SHOUT, bot))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_DEMORALIZING_SHOUT);
+                                    this->CastSpell(SPELL_DEMORALIZING_SHOUT, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1236,11 +1236,11 @@ private:
 
                             Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
 
-                                if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                                if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
 
                                 {
 
-                                    this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                    this->CastSpell(SPELL_HEROIC_STRIKE, target);
 
                                     return NodeStatus::SUCCESS;
 

@@ -130,7 +130,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         ::Unit* interruptTarget = behaviors->GetInterruptTarget();
         if (interruptTarget && CanUseAbility(SPELL_QUELL))
         {
-            if (CastSpell(interruptTarget, SPELL_QUELL))
+            if (CastSpell(SPELL_QUELL, interruptTarget))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} interrupted {} with Quell",                             _bot->GetName(), interruptTarget->GetName());
                 return;
@@ -281,7 +281,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             // Dragonrage - major DPS cooldown
             if (CanUseAbility(SPELL_DRAGONRAGE))
             {
-                if (CastSpell(_bot, SPELL_DRAGONRAGE))
+                if (CastSpell(SPELL_DRAGONRAGE, _bot))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Dragonrage",                                 _bot->GetName());
                     _dragonrageStacks = 40; // Starts at 40 stacks
@@ -729,7 +729,7 @@ void EvokerAI::ReleaseEmpoweredSpell()
     ::Unit* target = _currentEmpoweredSpell.target;
 
     if (target && CanUseAbility(spellId))
-    {        _bot->CastSpell(target, spellId, false);
+    {        _bot->CastSpell(spellId, false, target);
         ConsumeResource(spellId);
         _empoweredSpellsCast++;
     }
@@ -821,7 +821,7 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
     }
 
     if (CanUseAbility(aspectSpellId))
-    {        _bot->CastSpell(_bot, aspectSpellId, false);
+    {        _bot->CastSpell(aspectSpellId, false, _bot);
         _currentAspect = aspect;
         _lastAspectShift = _aspectCooldown;
         _canShiftAspect = false;

@@ -641,7 +641,7 @@ ActionResult SpellInterruptAction::ExecuteWarriorInterrupt(BotAI* ai, ::Unit* ta
     // Set target and cast interrupt
     bot->SetTarget(target->GetGUID());
 
-    if (bot->CastSpell(target, spellId, false))
+    if (bot->CastSpell(spellId, false, target))
         return ActionResult::SUCCESS;
 
     return ActionResult::FAILED;
@@ -661,7 +661,7 @@ ActionResult SpellInterruptAction::ExecuteMageInterrupt(BotAI* ai, ::Unit* targe
     // Mage counterspell is ranged
     bot->SetTarget(target->GetGUID());
 
-    if (bot->CastSpell(target, spellId, false))
+    if (bot->CastSpell(spellId, false, target))
         return ActionResult::SUCCESS;
 
     return ActionResult::FAILED;

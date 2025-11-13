@@ -896,7 +896,7 @@ bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
 
     // Cast mount spell
-    player->CastSpell(player, spellId, false);
+    player->CastSpell(spellId, false, player);
 
     HandleMountCastResult(player, spellId, true);
 

@@ -335,7 +335,7 @@ public:
         // Maintain Immolation Aura for passive threat/damage
         if (!_immolationAuraActive && this->CanCastSpell(DemonHunterSpells::IMMOLATION_AURA, bot))
         {
-            this->CastSpell(bot, DemonHunterSpells::IMMOLATION_AURA);
+            this->CastSpell(DemonHunterSpells::IMMOLATION_AURA, bot);
             _immolationAuraActive = true;
         }        // Emergency defensive cooldowns
         HandleEmergencyDefensives();
@@ -383,7 +383,7 @@ protected:
         // Priority 1: Sigil of Flame for threat and damage
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
         {
-            this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
+            this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
             _lastSigilOfFlameTime = now;
             
 
@@ -409,7 +409,7 @@ protected:
         // Priority 2: Fiery Brand on target (major defensive)
         if (ShouldUseFieryBrand() && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target))
         {
-            this->CastSpell(target, DemonHunterSpells::FIERY_BRAND);
+            this->CastSpell(DemonHunterSpells::FIERY_BRAND, target);
             _fieryBrandActive = true;
             _fieryBrandEndTime = now + 8000;
             TC_LOG_DEBUG("playerbot", "Vengeance: Fiery Brand cast");
@@ -431,7 +431,7 @@ protected:
         // Priority 4: Soul Cleave for healing (high priority if low health or high Pain)
         if (ShouldUseSoulCleave(currentPain) && currentPain >= 30)
         {
-            this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
+            this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
             _lastSoulCleaveTime = now;
             this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
             _soulFragments.ConsumeFragments(2); // Consumes up to 2 fragments for healing
@@ -444,7 +444,7 @@ protected:
         {
             if (_soulFragments.HasMinFragments(4))
             {
-                this->CastSpell(this->GetBot(), DemonHunterSpells::SPIRIT_BOMB);
+                this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, this->GetBot());
                 this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
                 _soulFragments.ConsumeAllFragments();
                 TC_LOG_DEBUG("playerbot", "Vengeance: Spirit Bomb cast");
@@ -470,7 +470,7 @@ protected:
         {
             if (this->CanCastSpell(DemonHunterSpells::SHEAR, target))
             {
-                this->CastSpell(target, DemonHunterSpells::SHEAR);
+                this->CastSpell(DemonHunterSpells::SHEAR, target);
                 _lastShearTime = now;
                 GeneratePain(10);
                 TC_LOG_DEBUG("playerbot", "Vengeance: Shear cast");
@@ -497,7 +497,7 @@ protected:
         // Priority 1: Sigil of Flame for AoE threat
         if (this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target))
         {
-            this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
+            this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
             _lastSigilOfFlameTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame AoE");
             return;
@@ -508,7 +508,7 @@ protected:
         {
             if (_soulFragments.HasMinFragments(3))
             {
-                this->CastSpell(this->GetBot(), DemonHunterSpells::SPIRIT_BOMB);
+                this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, this->GetBot());
                 this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
                 _soulFragments.ConsumeAllFragments();
                 TC_LOG_DEBUG("playerbot", "Vengeance: Spirit Bomb AoE");
@@ -519,7 +519,7 @@ protected:
         // Priority 3: Soul Cleave for AoE healing/damage
         if (currentPain >= 30)
         {
-            this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
+            this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
             _lastSoulCleaveTime = GameTime::GetGameTimeMS();
             this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
             _soulFragments.ConsumeFragments(2);
@@ -544,7 +544,7 @@ protected:
         {
             if (this->CanCastSpell(DemonHunterSpells::SHEAR, target))
             {
-                this->CastSpell(target, DemonHunterSpells::SHEAR);
+                this->CastSpell(DemonHunterSpells::SHEAR, target);
                 GeneratePain(10);
                 return;
             }
@@ -600,7 +600,7 @@ private:
         {
             if (this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, bot))
             {
-                this->CastSpell(bot, DemonHunterSpells::DEMON_SPIKES);
+                this->CastSpell(DemonHunterSpells::DEMON_SPIKES, bot);
                 _demonSpikes.Use();
                 TC_LOG_DEBUG("playerbot", "Vengeance: Demon Spikes activated");
             }
@@ -620,7 +620,7 @@ private:
         // Use Metamorphosis for major defensive cooldown
         if (healthPct < 35.0f && this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot))
         {
-            this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
+            this->CastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot);
             _metamorphosisActive = true;
             _metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
             TC_LOG_DEBUG("playerbot", "Vengeance: Metamorphosis emergency defensive");
@@ -637,7 +637,7 @@ private:
         {
             if (this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot))
             {
-                this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
+                this->CastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot);
                 _metamorphosisActive = true;
                 _metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
                 TC_LOG_DEBUG("playerbot", "Vengeance: Emergency Metamorphosis");
@@ -649,7 +649,7 @@ private:
         {
             if (::Unit* target = this->GetBot()->GetVictim())
             {
-                this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
+                this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
                 this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
                 _soulFragments.ConsumeFragments(2);
             }
@@ -872,7 +872,7 @@ private:
                             }),
                             Action("Cast Meta", [this](Player* bot) {
                                 if (this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot)) {
-                                    this->CastSpell(bot, DemonHunterSpells::METAMORPHOSIS_VENGEANCE);
+                                    this->CastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot);
                                     this->_metamorphosisActive = true;
                                     this->_metamorphosisEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
@@ -914,7 +914,7 @@ private:
                             }),
                             Action("Cast Demon Spikes", [this](Player* bot) {
                                 if (this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, bot)) {
-                                    this->CastSpell(bot, DemonHunterSpells::DEMON_SPIKES);
+                                    this->CastSpell(DemonHunterSpells::DEMON_SPIKES, bot);
                                     this->_demonSpikes.Use();
                                     return NodeStatus::SUCCESS;
                                 }
@@ -928,7 +928,7 @@ private:
                             Action("Cast Fiery Brand", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target)) {
-                                    this->CastSpell(target, DemonHunterSpells::FIERY_BRAND);
+                                    this->CastSpell(DemonHunterSpells::FIERY_BRAND, target);
                                     this->_fieryBrandActive = true;
                                     this->_fieryBrandEndTime = GameTime::GetGameTimeMS() + 8000;
                                     return NodeStatus::SUCCESS;
@@ -949,7 +949,7 @@ private:
                             Action("Cast Sigil", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target)) {
-                                    this->CastSpell(target, DemonHunterSpells::SIGIL_OF_FLAME);
+                                    this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -991,7 +991,7 @@ private:
                             Action("Cast Soul Cleave", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target)) {
-                                    this->CastSpell(target, DemonHunterSpells::SOUL_CLEAVE);
+                                    this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
                                     this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
                                     this->_soulFragments.ConsumeFragments(2);
                                     return NodeStatus::SUCCESS;
@@ -1011,7 +1011,7 @@ private:
                             }),
                             Action("Cast Spirit Bomb", [this](Player* bot) {
                                 if (this->CanCastSpell(DemonHunterSpells::SPIRIT_BOMB, bot)) {
-                                    this->CastSpell(bot, DemonHunterSpells::SPIRIT_BOMB);
+                                    this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, bot);
                                     this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
                                     this->_soulFragments.ConsumeAllFragments();
                                     return NodeStatus::SUCCESS;
@@ -1053,7 +1053,7 @@ private:
                             Action("Cast Shear", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SHEAR, target)) {
-                                    this->CastSpell(target, DemonHunterSpells::SHEAR);
+                                    this->CastSpell(DemonHunterSpells::SHEAR, target);
                                     this->GeneratePain(10);
                                     return NodeStatus::SUCCESS;
                                 }

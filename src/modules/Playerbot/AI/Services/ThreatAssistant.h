@@ -83,7 +83,7 @@ struct ThreatTarget
  *     if (/* complex threat calculation logic */)
  *     {
  *         if (this->CanCastSpell(SPELL_TAUNT, target))
- *             this->CastSpell(target, SPELL_TAUNT);
+ *             this->CastSpell(SPELL_TAUNT, target);
  *     }
  * }
  *

@@ -341,7 +341,7 @@ bool ShamanAI::HandleInterrupts(::Unit* target)
 
                 {
 
-                    if (CastSpell(interruptTarget, SPELL_WIND_SHEAR))
+                    if (CastSpell(SPELL_WIND_SHEAR, interruptTarget))
 
                     {
 
@@ -693,7 +693,7 @@ bool ShamanAI::HandlePositioning(::Unit* target)
 
             {
 
-                if (CastSpell(target, SPELL_FROST_SHOCK))
+                if (CastSpell(SPELL_FROST_SHOCK, target))
 
                 {
 
@@ -796,7 +796,7 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
     {
         if (!target->HasAura(SPELL_HEX) && target->GetTypeId() == TYPEID_UNIT)        {
 
-            if (CastSpell(target, SPELL_HEX))
+            if (CastSpell(SPELL_HEX, target))
 
             {
 
@@ -875,7 +875,7 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target){
 
             {
 
-                if (CastSpell(target, SPELL_PURGE))
+                if (CastSpell(SPELL_PURGE, target))
 
                 {
 
@@ -942,7 +942,7 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target){
 
                     {
 
-                        if (CastSpell(member, SPELL_CLEANSE_SPIRIT))
+                        if (CastSpell(SPELL_CLEANSE_SPIRIT, member))
 
                         {
 
@@ -1054,7 +1054,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
 
             {
 
-                if (CastSpell(target, SPELL_LAVA_BEAM))
+                if (CastSpell(SPELL_LAVA_BEAM, target))
 
                 {
 
@@ -1125,7 +1125,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
 
             {
 
-                if (CastSpell(target, SPELL_CHAIN_LIGHTNING))
+                if (CastSpell(SPELL_CHAIN_LIGHTNING, target))
 
                 {
 
@@ -1555,7 +1555,7 @@ bool ShamanAI::HandleResourceManagement()
 
                 {
 
-                    if (CastSpell(target, SPELL_EARTH_SHOCK))
+                    if (CastSpell(SPELL_EARTH_SHOCK, target))
 
                     {
 
@@ -1607,7 +1607,7 @@ bool ShamanAI::HandleResourceManagement()
 
                 {
 
-                    if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+                    if (CastSpell(SPELL_LIGHTNING_BOLT, target))
 
                     {
 
@@ -1726,7 +1726,7 @@ bool ShamanAI::UpdateElementalRotation(::Unit* target)
     // Lightning Bolt as filler
     if (CanUseAbility(SPELL_LIGHTNING_BOLT))
     {
-        if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+        if (CastSpell(SPELL_LIGHTNING_BOLT, target))
         {
 
             _elementalMaelstrom += 8;
@@ -1755,7 +1755,7 @@ bool ShamanAI::HandleLavaBurst(::Unit* target)
         if (HasFlameShockOnTarget(target))
         {
 
-            if (CastSpell(target, SPELL_LAVA_BURST))
+            if (CastSpell(SPELL_LAVA_BURST, target))
 
             {
 
@@ -1792,7 +1792,7 @@ bool ShamanAI::HandleFlameShock(::Unit* target)
     if (!HasFlameShockOnTarget(target) ||
         (GameTime::GetGameTimeMS() - _flameshockExpiry < 9000)) // Refresh at <9 seconds
     {
-        if (CastSpell(target, SPELL_FLAME_SHOCK))
+        if (CastSpell(SPELL_FLAME_SHOCK, target))
         {
 
             _flameshockTarget = target->GetGUID().GetCounter();
@@ -1865,7 +1865,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
 
     if (enemies.size() >= 2)
     {
-        if (CastSpell(target, SPELL_CHAIN_LIGHTNING))
+        if (CastSpell(SPELL_CHAIN_LIGHTNING, target))
         {
 
             _elementalMaelstrom += 4 * std::min(static_cast<size_t>(5), enemies.size());
@@ -1936,7 +1936,7 @@ bool ShamanAI::HandleStormstrike(::Unit* target){
 
     if (IsInMeleeRange(target))
     {
-        if (CastSpell(target, SPELL_STORMSTRIKE))
+        if (CastSpell(SPELL_STORMSTRIKE, target))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Stormstrike on {}",
@@ -1956,7 +1956,7 @@ bool ShamanAI::HandleLavaLash(::Unit* target){
 
     if (IsInMeleeRange(target))
     {
-        if (CastSpell(target, SPELL_LAVA_LASH))
+        if (CastSpell(SPELL_LAVA_LASH, target))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Lava Lash on {}",
@@ -1989,7 +1989,7 @@ bool ShamanAI::HandleMaelstromWeapon()
     // Use instant Lightning Bolt at 5 stacks
     if (CanUseAbility(SPELL_LIGHTNING_BOLT))
     {
-        if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+        if (CastSpell(SPELL_LIGHTNING_BOLT, target))
         {
 
             _maelstromWeaponStacks = 0;
@@ -2023,7 +2023,7 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target){
 
             {
 
-                if (CastSpell(lowestHealth, SPELL_HEALING_SURGE))
+                if (CastSpell(SPELL_HEALING_SURGE, lowestHealth))
 
                 {
 
@@ -2076,7 +2076,7 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target){
         if (CanUseAbility(SPELL_LIGHTNING_BOLT))
         {
 
-            if (CastSpell(target, SPELL_LIGHTNING_BOLT))
+            if (CastSpell(SPELL_LIGHTNING_BOLT, target))
 
             {
 
@@ -2099,7 +2099,7 @@ bool ShamanAI::HandleRiptide(Player* target){
 
     if (!target->HasAura(SPELL_RIPTIDE))
     {
-        if (CastSpell(target, SPELL_RIPTIDE))
+        if (CastSpell(SPELL_RIPTIDE, target))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Riptide on {}",
@@ -2119,7 +2119,7 @@ bool ShamanAI::HandleChainHeal()
 
     Player* target = GetLowestHealthGroupMember();    if (target)
     {
-        if (CastSpell(target, SPELL_CHAIN_HEAL))
+        if (CastSpell(SPELL_CHAIN_HEAL, target))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Chain Heal starting from {}",
@@ -2615,7 +2615,7 @@ bool ShamanAI::HandleWindstrike(::Unit* target)
 
     if (IsInMeleeRange(target))
     {
-        if (CastSpell(target, SPELL_WINDSTRIKE))
+        if (CastSpell(SPELL_WINDSTRIKE, target))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} using Windstrike during Ascendance",
@@ -2703,7 +2703,7 @@ bool ShamanAI::HandleElementalBlast(::Unit* target)
     if (!target || !CanUseAbility(SPELL_ELEMENTAL_BLAST))
         return false;
 
-    if (CastSpell(target, SPELL_ELEMENTAL_BLAST))
+    if (CastSpell(SPELL_ELEMENTAL_BLAST, target))
     {
         _elementalMaelstrom += 25;
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Elemental Blast",
@@ -2719,7 +2719,7 @@ bool ShamanAI::HandleHealingWave(Player* target){
     if (!target || !CanUseAbility(SPELL_HEALING_WAVE))
         return false;
 
-    if (CastSpell(target, SPELL_HEALING_WAVE))
+    if (CastSpell(SPELL_HEALING_WAVE, target))
     {
         TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Healing Wave on {}",
 
@@ -3090,7 +3090,7 @@ void ShamanAI::UpdateShamanBuffs()
 
             {
 
-                if (CastSpell(tank, SPELL_EARTH_SHIELD))
+                if (CastSpell(SPELL_EARTH_SHIELD, tank))
 
                 {
 

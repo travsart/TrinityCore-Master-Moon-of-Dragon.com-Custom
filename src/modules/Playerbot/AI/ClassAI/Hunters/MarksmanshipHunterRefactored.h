@@ -319,19 +319,19 @@ public:
         if (_loneWolfActive && !bot->GetPetGUID().IsEmpty())
         {
 
-            bot->CastSpell(bot, SPELL_DISMISS_PET, false);
+            bot->CastSpell(SPELL_DISMISS_PET, false, bot);
         }
 
         // Use Aspect of the Turtle for survival
         if (bot->GetHealthPct() < 30.0f && this->CanUseAbility(SPELL_ASPECT_TURTLE))
         {
 
-            this->CastSpell(bot, SPELL_ASPECT_TURTLE);
+            this->CastSpell(SPELL_ASPECT_TURTLE, bot);
         }        // Use Exhilaration for healing
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_EXHILARATION_MM))
         {
 
-            this->CastSpell(bot, SPELL_EXHILARATION_MM);
+            this->CastSpell(SPELL_EXHILARATION_MM, bot);
         }
 
         // Apply Hunter's Mark to current target
@@ -341,7 +341,7 @@ public:
 
             {
 
-                this->CastSpell(target, SPELL_HUNTERS_MARK_MM);
+                this->CastSpell(SPELL_HUNTERS_MARK_MM, target);
 
             }
         }
@@ -357,7 +357,7 @@ public:
         if (this->CanUseAbility(SPELL_COUNTER_SHOT_MM))
         {
 
-            this->CastSpell(target, SPELL_COUNTER_SHOT_MM);
+            this->CastSpell(SPELL_COUNTER_SHOT_MM, target);
         }
     }
 
@@ -425,7 +425,7 @@ protected:
         if (ShouldUseTrueshot(target) && this->CanUseAbility(SPELL_TRUESHOT))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_TRUESHOT);
+            this->CastSpell(SPELL_TRUESHOT, this->GetBot());
 
             _trueshotActive = true;
 
@@ -438,7 +438,7 @@ protected:
         if (_trueshotActive && this->CanUseAbility(SPELL_DOUBLE_TAP))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_DOUBLE_TAP);
+            this->CastSpell(SPELL_DOUBLE_TAP, this->GetBot());
 
             _doubleTapActive = true;
 
@@ -453,7 +453,7 @@ protected:
 
             _castManager.StartRapidFire();
 
-            this->CastSpell(target, SPELL_RAPID_FIRE);
+            this->CastSpell(SPELL_RAPID_FIRE, target);
 
             _lastRapidFire = GameTime::GetGameTimeMS();
 
@@ -472,7 +472,7 @@ protected:
 
                 _castManager.StartAimedShot(target);
 
-                this->CastSpell(target, SPELL_AIMED_SHOT);
+                this->CastSpell(SPELL_AIMED_SHOT, target);
 
                 _lastAimedShot = GameTime::GetGameTimeMS();
 
@@ -489,7 +489,7 @@ protected:
         if (_preciseShotsTracker.HasCharges() && currentFocus >= 20)
         {
 
-            this->CastSpell(target, SPELL_ARCANE_SHOT);
+            this->CastSpell(SPELL_ARCANE_SHOT, target);
 
             _preciseShotsTracker.ConsumeCharge();
 
@@ -502,7 +502,7 @@ protected:
         if (currentFocus >= 20 && this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
         {
 
-            this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+            this->CastSpell(SPELL_EXPLOSIVE_SHOT, target);
 
             this->ConsumeResource(20);
 
@@ -513,7 +513,7 @@ protected:
         if (currentFocus < 70)
         {
 
-            this->CastSpell(target, SPELL_STEADY_SHOT);
+            this->CastSpell(SPELL_STEADY_SHOT, target);
 
             _lastSteadyShot = GameTime::GetGameTimeMS();
 
@@ -526,7 +526,7 @@ protected:
         if (currentFocus >= 80)
         {
 
-            this->CastSpell(target, SPELL_ARCANE_SHOT);
+            this->CastSpell(SPELL_ARCANE_SHOT, target);
 
             this->ConsumeResource(20);
 
@@ -549,7 +549,7 @@ protected:
         if (currentFocus >= 45 && this->CanUseAbility(SPELL_VOLLEY))
         {
 
-            this->CastSpell(target, SPELL_VOLLEY);
+            this->CastSpell(SPELL_VOLLEY, target);
 
             this->ConsumeResource(45);
 
@@ -560,7 +560,7 @@ protected:
         if (currentFocus >= 20 && this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
         {
 
-            this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+            this->CastSpell(SPELL_EXPLOSIVE_SHOT, target);
 
             this->ConsumeResource(20);
 
@@ -571,7 +571,7 @@ protected:
         if (currentFocus >= 20)
         {
 
-            this->CastSpell(target, SPELL_MULTISHOT_MM);
+            this->CastSpell(SPELL_MULTISHOT_MM, target);
 
             this->ConsumeResource(20);
 
@@ -584,7 +584,7 @@ protected:
 
             _castManager.StartRapidFire();
 
-            this->CastSpell(target, SPELL_RAPID_FIRE);
+            this->CastSpell(SPELL_RAPID_FIRE, target);
 
             this->ConsumeResource(30);
 
@@ -595,7 +595,7 @@ protected:
         if (currentFocus < 40)
         {
 
-            this->CastSpell(target, SPELL_STEADY_SHOT);
+            this->CastSpell(SPELL_STEADY_SHOT, target);
 
             this->_resource = std::min<uint32>(this->_resource + 10, 100);
 
@@ -674,7 +674,7 @@ private:
         if (!this->GetBot()->GetPetGUID().IsEmpty())
         {
 
-            this->GetBot()->CastSpell(this->GetBot(), SPELL_DISMISS_PET, false);
+            this->GetBot()->CastSpell(SPELL_DISMISS_PET, false, this->GetBot());
         }
     }
 
@@ -911,7 +911,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_TRUESHOT);
+                                    this->CastSpell(SPELL_TRUESHOT, bot);
 
                                     this->_trueshotActive = true;
 
@@ -944,7 +944,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_DOUBLE_TAP);
+                                    this->CastSpell(SPELL_DOUBLE_TAP, bot);
 
                                     this->_doubleTapActive = true;
 
@@ -979,7 +979,7 @@ private:
 
                                     this->_castManager.StartRapidFire();
 
-                                    this->CastSpell(target, SPELL_RAPID_FIRE);
+                                    this->CastSpell(SPELL_RAPID_FIRE, target);
 
                                     this->_lastRapidFire = GameTime::GetGameTimeMS();
 
@@ -1029,7 +1029,7 @@ private:
 
                                     this->_castManager.StartAimedShot(target);
 
-                                    this->CastSpell(target, SPELL_AIMED_SHOT);
+                                    this->CastSpell(SPELL_AIMED_SHOT, target);
 
                                     this->_lastAimedShot = GameTime::GetGameTimeMS();
 
@@ -1078,7 +1078,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_ARCANE_SHOT);
+                                    this->CastSpell(SPELL_ARCANE_SHOT, target);
 
                                     this->_preciseShotsTracker.ConsumeCharge();
 
@@ -1111,7 +1111,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+                                    this->CastSpell(SPELL_EXPLOSIVE_SHOT, target);
 
                                     this->ConsumeResource(20);
 
@@ -1152,7 +1152,7 @@ private:
 
                             Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
-                                this->CastSpell(target, SPELL_STEADY_SHOT);
+                                this->CastSpell(SPELL_STEADY_SHOT, target);
 
                                 this->_lastSteadyShot = GameTime::GetGameTimeMS();
 
@@ -1179,7 +1179,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_ARCANE_SHOT);
+                                    this->CastSpell(SPELL_ARCANE_SHOT, target);
 
                                     this->ConsumeResource(20);
 

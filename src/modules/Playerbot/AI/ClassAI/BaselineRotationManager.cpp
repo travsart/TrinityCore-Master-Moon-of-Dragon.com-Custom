@@ -254,8 +254,8 @@ if (!castTarget)
 }
 
     // MIGRATION COMPLETE (2025-10-30):
-    // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
-    // BEFORE: bot->CastSpell(castTarget, spellId, false); // UNSAFE - worker thread
+    // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
+    // BEFORE: bot->CastSpell(castTarget); // UNSAFE - worker thread
     // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
 
     // Get spell info for validation

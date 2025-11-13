@@ -108,7 +108,7 @@ struct BotAction
         return action;
     }
 
-    static BotAction CastSpell(ObjectGuid bot, uint32 spell, ObjectGuid target, uint32 timestamp)
+    static BotAction CastSpell(uint32 spell, ObjectGuid target, uint32 timestamp, ObjectGuid bot)
     {
         BotAction action;
         action.type = BotActionType::CAST_SPELL;

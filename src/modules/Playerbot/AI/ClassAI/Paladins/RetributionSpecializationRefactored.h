@@ -93,13 +93,13 @@ public:
         // Maintain Retribution Aura
         if (!bot->HasAura(SPELL_RETRIBUTION_AURA))
         {
-            this->CastSpell(bot, SPELL_RETRIBUTION_AURA);
+            this->CastSpell(SPELL_RETRIBUTION_AURA, bot);
         }
 
         // Maintain Seal of Truth for single target
         if (!bot->HasAura(SPELL_SEAL_OF_TRUTH))
         {
-            this->CastSpell(bot, SPELL_SEAL_OF_TRUTH);
+            this->CastSpell(SPELL_SEAL_OF_TRUTH, bot);
         }
 
         // Blessings handled by group coordination
@@ -118,14 +118,14 @@ protected:
         // Hammer of Wrath (Execute phase)
         if (target->GetHealthPct() < 20.0f && this->CanUseAbility(SPELL_HAMMER_OF_WRATH))
         {
-            this->CastSpell(target, SPELL_HAMMER_OF_WRATH);
+            this->CastSpell(SPELL_HAMMER_OF_WRATH, target);
             return;
         }
 
         // Templar's Verdict at 3+ Holy Power
         if (_holyPower.GetAvailable() >= 3 && this->CanUseAbility(SPELL_TEMPLARS_VERDICT))
         {
-            this->CastSpell(target, SPELL_TEMPLARS_VERDICT);
+            this->CastSpell(SPELL_TEMPLARS_VERDICT, target);
             _holyPower.Consume(3);
             return;
         }
@@ -135,7 +135,7 @@ protected:
         {
             if (this->CanUseAbility(SPELL_DIVINE_STORM))
             {
-                this->CastSpell(this->GetBot(), SPELL_DIVINE_STORM);
+                this->CastSpell(SPELL_DIVINE_STORM, this->GetBot());
                 _holyPower.Consume(3);
                 return;
             }
@@ -144,7 +144,7 @@ protected:
         // Crusader Strike - Primary Holy Power generator
         if (this->CanUseAbility(SPELL_CRUSADER_STRIKE))
         {
-            this->CastSpell(target, SPELL_CRUSADER_STRIKE);
+            this->CastSpell(SPELL_CRUSADER_STRIKE, target);
             _holyPower.Generate(1);
             return;
         }
@@ -152,7 +152,7 @@ protected:
         // Exorcism with Art of War proc
         if (_hasArtOfWar && this->CanUseAbility(SPELL_EXORCISM))
         {
-            this->CastSpell(target, SPELL_EXORCISM);
+            this->CastSpell(SPELL_EXORCISM, target);
             _hasArtOfWar = false;
             return;
         }
@@ -160,21 +160,21 @@ protected:
         // Judgment
         if (this->CanUseAbility(SPELL_JUDGMENT))
         {
-            this->CastSpell(target, SPELL_JUDGMENT);
+            this->CastSpell(SPELL_JUDGMENT, target);
             return;
         }
 
         // Consecration if in melee range
         if (this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CONSECRATION))
         {
-            this->CastSpell(this->GetBot(), SPELL_CONSECRATION);
+            this->CastSpell(SPELL_CONSECRATION, this->GetBot());
             return;
         }
 
         // Holy Wrath for burst
         if (ShouldUseCooldowns(target) && this->CanUseAbility(SPELL_HOLY_WRATH))
         {
-            this->CastSpell(target, SPELL_HOLY_WRATH);
+            this->CastSpell(SPELL_HOLY_WRATH, target);
             return;
         }
     }
@@ -208,13 +208,13 @@ protected:
             if (bot->HasAura(SPELL_SEAL_OF_TRUTH))
             {
                 // Quick swap to Righteousness for instant damage
-                this->CastSpell(bot, SPELL_SEAL_OF_RIGHTEOUSNESS);
+                this->CastSpell(SPELL_SEAL_OF_RIGHTEOUSNESS, bot);
                 _sealTwistWindow = currentTime + 100; // Very brief window
             }
             else
             {
                 // Back to Truth for DoT
-                this->CastSpell(bot, SPELL_SEAL_OF_TRUTH);
+                this->CastSpell(SPELL_SEAL_OF_TRUTH, bot);
                 _sealTwistWindow = currentTime + 10000; // 10 seconds
             }
         }
@@ -240,12 +240,12 @@ protected:
             Player* bot = this->GetBot();
             if (this->CanUseAbility(SPELL_AVENGING_WRATH))
             {
-                this->CastSpell(bot, SPELL_AVENGING_WRATH);
+                this->CastSpell(SPELL_AVENGING_WRATH, bot);
             }
 
             if (this->CanUseAbility(SPELL_GUARDIAN_OF_ANCIENT_KINGS))
             {
-                this->CastSpell(bot, SPELL_GUARDIAN_OF_ANCIENT_KINGS);
+                this->CastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot);
             }
         }
 
@@ -399,9 +399,9 @@ protected:
                     Selector("Execute Priority", {
                         // Hammer of Wrath (execute ability)
                         Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_HAMMER_OF_WRATH))
+                            if (this->CanCastSpell(SPELL_HAMMER_OF_WRATH, target))
                             {
-                                this->CastSpell(target, SPELL_HAMMER_OF_WRATH);
+                                this->CastSpell(SPELL_HAMMER_OF_WRATH, target);
                                 this->_holyPower.Generate(1);
                                 return NodeStatus::SUCCESS;
                             }
@@ -410,9 +410,9 @@ protected:
                         // Templar's Verdict if we have HP
                         Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
                             if (this->_holyPower.GetAvailable() >= 3 &&
-                                this->CanCastSpell(target, SPELL_TEMPLARS_VERDICT))
+                                this->CanCastSpell(SPELL_TEMPLARS_VERDICT, target))
                             {
-                                this->CastSpell(target, SPELL_TEMPLARS_VERDICT);
+                                this->CastSpell(SPELL_TEMPLARS_VERDICT, target);
                                 this->_holyPower.Consume(3);
                                 return NodeStatus::SUCCESS;
                             }
@@ -438,9 +438,9 @@ protected:
                                         return bot->GetAttackersCount() >= 3;
                                     }),
                                     Action("Cast Divine Storm", [this](Player* bot, Unit* target) {
-                                        if (this->CanCastSpell(bot, SPELL_DIVINE_STORM))
+                                        if (this->CanCastSpell(SPELL_DIVINE_STORM, bot))
                                         {
-                                            this->CastSpell(bot, SPELL_DIVINE_STORM);
+                                            this->CastSpell(SPELL_DIVINE_STORM, bot);
                                             this->_holyPower.Consume(3);
                                             return NodeStatus::SUCCESS;
                                         }
@@ -449,9 +449,9 @@ protected:
                                 }),
                                 // Templar's Verdict single target
                                 Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
-                                    if (this->CanCastSpell(target, SPELL_TEMPLARS_VERDICT))
+                                    if (this->CanCastSpell(SPELL_TEMPLARS_VERDICT, target))
                                     {
-                                        this->CastSpell(target, SPELL_TEMPLARS_VERDICT);
+                                        this->CastSpell(SPELL_TEMPLARS_VERDICT, target);
                                         this->_holyPower.Consume(3);
                                         return NodeStatus::SUCCESS;
                                     }
@@ -467,9 +467,9 @@ protected:
                             Selector("HP Generator Priority", {
                                 // Crusader Strike
                                 Action("Cast Crusader Strike", [this](Player* bot, Unit* target) {
-                                    if (this->CanCastSpell(target, SPELL_CRUSADER_STRIKE))
+                                    if (this->CanCastSpell(SPELL_CRUSADER_STRIKE, target))
                                     {
-                                        this->CastSpell(target, SPELL_CRUSADER_STRIKE);
+                                        this->CastSpell(SPELL_CRUSADER_STRIKE, target);
                                         this->_holyPower.Generate(1);
                                         return NodeStatus::SUCCESS;
                                     }
@@ -481,9 +481,9 @@ protected:
                                         return this->_hasArtOfWar;
                                     }),
                                     Action("Cast Exorcism", [this](Player* bot, Unit* target) {
-                                        if (this->CanCastSpell(target, SPELL_EXORCISM))
+                                        if (this->CanCastSpell(SPELL_EXORCISM, target))
                                         {
-                                            this->CastSpell(target, SPELL_EXORCISM);
+                                            this->CastSpell(SPELL_EXORCISM, target);
                                             this->_hasArtOfWar = false;
                                             return NodeStatus::SUCCESS;
                                         }
@@ -505,18 +505,18 @@ protected:
                     Selector("Cooldown Priority", {
                         // Avenging Wrath
                         Action("Cast Avenging Wrath", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(bot, SPELL_AVENGING_WRATH))
+                            if (this->CanCastSpell(SPELL_AVENGING_WRATH, bot))
                             {
-                                this->CastSpell(bot, SPELL_AVENGING_WRATH);
+                                this->CastSpell(SPELL_AVENGING_WRATH, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
                         // Guardian of Ancient Kings
                         Action("Cast Guardian", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(bot, SPELL_GUARDIAN_OF_ANCIENT_KINGS))
+                            if (this->CanCastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot))
                             {
-                                this->CastSpell(bot, SPELL_GUARDIAN_OF_ANCIENT_KINGS);
+                                this->CastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -531,9 +531,9 @@ protected:
                     Selector("Rotation Priority", {
                         // Judgment
                         Action("Cast Judgment", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_JUDGMENT))
+                            if (this->CanCastSpell(SPELL_JUDGMENT, target))
                             {
-                                this->CastSpell(target, SPELL_JUDGMENT);
+                                this->CastSpell(SPELL_JUDGMENT, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -545,9 +545,9 @@ protected:
                                 return target && bot->IsWithinMeleeRange(target);
                             }),
                             Action("Cast Consecration", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(bot, SPELL_CONSECRATION))
+                                if (this->CanCastSpell(SPELL_CONSECRATION, bot))
                                 {
-                                    this->CastSpell(bot, SPELL_CONSECRATION);
+                                    this->CastSpell(SPELL_CONSECRATION, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -556,9 +556,9 @@ protected:
 
                         // Holy Wrath filler
                         Action("Cast Holy Wrath", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_HOLY_WRATH))
+                            if (this->CanCastSpell(SPELL_HOLY_WRATH, target))
                             {
-                                this->CastSpell(target, SPELL_HOLY_WRATH);
+                                this->CastSpell(SPELL_HOLY_WRATH, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;

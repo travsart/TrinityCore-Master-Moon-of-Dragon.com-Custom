@@ -1243,7 +1243,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
             player->GetGUID().GetCounter(), spellId, interruptPriority);
 
         // Would cast interrupt spell here
-        // player->CastSpell(boss, interruptSpell, false);
+        // player->CastSpell(interruptSpell, false, boss);
     }
 }
 
@@ -1540,7 +1540,7 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
                     player->GetGUID().GetCounter(), groupMember->GetGUID().GetCounter());
 
                 // Would cast dispel spell here
-                // player->CastSpell(groupMember, dispelSpellId, false);
+                // player->CastSpell(dispelSpellId, false, groupMember);
                 return;
             }
         }

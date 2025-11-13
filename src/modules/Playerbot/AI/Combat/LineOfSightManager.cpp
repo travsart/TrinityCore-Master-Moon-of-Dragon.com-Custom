@@ -179,7 +179,7 @@ bool LineOfSightManager::CanSeeTarget(Unit* target)
     return result.hasLineOfSight;
 }
 
-bool LineOfSightManager::CanCastSpell(Unit* target, uint32 spellId)
+bool LineOfSightManager::CanCastSpell(uint32 spellId, Unit* target)
 {
     if (!target || !spellId)
         return false;

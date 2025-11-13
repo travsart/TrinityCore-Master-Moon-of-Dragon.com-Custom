@@ -127,7 +127,7 @@ public:
      * if (losCache->HasLOS(bot->GetPosition(), targetPos, bot->GetPhaseShift()))
      * {
      *     // Target is visible, can cast spell
-     *     bot->CastSpell(target, spellId, false);
+     *     bot->CastSpell(spellId, false, target);
      * }
      * @endcode
      */

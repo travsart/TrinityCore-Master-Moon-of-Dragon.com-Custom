@@ -233,8 +233,8 @@ private:
 class TC_GAME_API BTCastSpell : public BTLeaf
 {
 public:
-    BTCastSpell(uint32 spellId)
-        : BTLeaf("CastSpell"), _spellId(spellId), _castStartTime(0)
+    BTCastSpell(_spellId(spellId, uint32 spellId)
+        : BTLeaf("CastSpell")), _castStartTime(0)
     {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override

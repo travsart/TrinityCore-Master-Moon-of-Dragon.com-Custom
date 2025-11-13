@@ -152,7 +152,7 @@ BotActionResult BotActionProcessor::ExecuteCastSpell(Player* bot, BotAction cons
     }
 
     // Cast spell
-    bot->CastSpell(target ? target : bot, action.spellId, false);
+    bot->CastSpell(action.spellId, false, target ? target : bot);
 
     TC_LOG_TRACE("playerbot.action",
         "Bot {} cast spell {} on {}",

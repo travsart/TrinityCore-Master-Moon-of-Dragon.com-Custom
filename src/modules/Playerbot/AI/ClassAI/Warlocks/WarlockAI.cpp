@@ -348,7 +348,7 @@ bool WarlockAI::HandleInterrupt(Unit* target)
 
             {
 
-                pet->CastSpell(target, SPELL_LOCK, false);
+                pet->CastSpell(SPELL_LOCK, false, target);
 
                 _petAbilityCooldowns[SPELL_LOCK] = GameTime::GetGameTimeMS();
 
@@ -567,7 +567,7 @@ bool WarlockAI::SummonPet()
         uint32 soulShards = bot->GetItemCount(6265);        if (soulShards > 0)
         {
 
-            bot->CastSpell(bot, summonSpell, false);
+            bot->CastSpell(summonSpell, false, bot);
 
             _lastPetSummon = GameTime::GetGameTimeMS();
 
@@ -964,7 +964,7 @@ bool WarlockAI::ApplyCurse(Unit* target){
     // Apply curse if available
     if (curseSpell && bot->HasSpell(curseSpell))
     {
-        bot->CastSpell(target, curseSpell, false);
+        bot->CastSpell(curseSpell, false, target);
         return true;
     }
 

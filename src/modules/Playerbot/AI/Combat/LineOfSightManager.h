@@ -230,7 +230,7 @@ public:
 
     // Specific LoS check types
     bool CanSeeTarget(Unit* target);
-    bool CanCastSpell(Unit* target, uint32 spellId);
+    bool CanCastSpell(uint32 spellId, Unit* target);
     bool CanAttackTarget(Unit* target);
     bool CanHealTarget(Unit* target);
     bool CanInterruptTarget(Unit* target);

@@ -139,7 +139,7 @@ public:
         // Maintain Battle Shout
         if (!bot->HasAura(SPELL_BATTLE_SHOUT) && !bot->HasAura(SPELL_COMMANDING_SHOUT))
         {
-            this->CastSpell(bot, SPELL_BATTLE_SHOUT);
+            this->CastSpell(SPELL_BATTLE_SHOUT, bot);
         }
 
         // Sweeping Strikes for multiple enemies
@@ -147,7 +147,7 @@ public:
         {
             if (this->CanUseAbility(SPELL_SWEEPING_STRIKES))
             {
-                this->CastSpell(bot, SPELL_SWEEPING_STRIKES);
+                this->CastSpell(SPELL_SWEEPING_STRIKES, bot);
             }
         }
 
@@ -185,7 +185,7 @@ protected:
         // Priority 1: Colossus Smash for vulnerability window
         if (ShouldUseColossusSmash(target) && this->CanUseAbility(SPELL_COLOSSUS_SMASH))
         {
-            this->CastSpell(target, SPELL_COLOSSUS_SMASH);
+            this->CastSpell(SPELL_COLOSSUS_SMASH, target);
             _colossusSmashActive = true;
             _lastColossusSmash = GameTime::GetGameTimeMS();
             return;
@@ -194,21 +194,21 @@ protected:
         // Priority 2: Bladestorm for burst AoE
         if (ShouldUseBladestorm() && this->CanUseAbility(SPELL_BLADESTORM))
         {
-            this->CastSpell(this->GetBot(), SPELL_BLADESTORM);
+            this->CastSpell(SPELL_BLADESTORM, this->GetBot());
             return;
         }
 
         // Priority 3: Avatar for damage increase
         if (ShouldUseAvatar(target) && this->CanUseAbility(SPELL_AVATAR))
         {
-            this->CastSpell(this->GetBot(), SPELL_AVATAR);
+            this->CastSpell(SPELL_AVATAR, this->GetBot());
             return;
         }
 
         // Priority 4: Mortal Strike - Primary damage and healing reduction
         if (this->CanUseAbility(SPELL_MORTAL_STRIKE))
         {
-            this->CastSpell(target, SPELL_MORTAL_STRIKE);
+            this->CastSpell(SPELL_MORTAL_STRIKE, target);
             _lastMortalStrike = GameTime::GetGameTimeMS();
             ApplyDeepWounds(target);
             return;
@@ -217,7 +217,7 @@ protected:
         // Priority 5: Overpower when proc is available
         if (_overpowerReady && this->CanUseAbility(SPELL_OVERPOWER))
         {
-            this->CastSpell(target, SPELL_OVERPOWER);
+            this->CastSpell(SPELL_OVERPOWER, target);
             _overpowerReady = false;
             ApplyDeepWounds(target);
             return;
@@ -226,26 +226,26 @@ protected:
         // Priority 6: War Breaker for AoE debuff
         if (this->GetEnemiesInRange(8.0f) >= 2 && this->CanUseAbility(SPELL_WAR_BREAKER))
         {
-            this->CastSpell(target, SPELL_WAR_BREAKER);
+            this->CastSpell(SPELL_WAR_BREAKER, target);
             return;
         }
 
         // Priority 7: Whirlwind for AoE
         if (this->GetEnemiesInRange(8.0f) >= 2 && this->CanUseAbility(SPELL_WHIRLWIND))
         {
-            this->CastSpell(this->GetBot(), SPELL_WHIRLWIND);
+            this->CastSpell(SPELL_WHIRLWIND, this->GetBot());
             return;
         }        // Priority 8: Rend for DoT (if not already applied)
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
         {
-            this->CastSpell(target, SPELL_REND);
+            this->CastSpell(SPELL_REND, target);
             _rendTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000;            return;
         }
 
         // Priority 9: Heroic Strike as rage dump
         if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
         {
-            this->CastSpell(target, SPELL_HEROIC_STRIKE);
+            this->CastSpell(SPELL_HEROIC_STRIKE, target);
             return;
         }
     }
@@ -261,7 +261,7 @@ protected:
         // Priority 1: Execute with Sudden Death proc
         if (_suddenDeathProc && this->CanUseAbility(SPELL_EXECUTE))
         {
-            this->CastSpell(target, SPELL_EXECUTE);
+            this->CastSpell(SPELL_EXECUTE, target);
             _suddenDeathProc = false;
             return;
         }
@@ -269,7 +269,7 @@ protected:
         // Priority 2: Colossus Smash for execute damage
         if (!_colossusSmashActive && this->CanUseAbility(SPELL_COLOSSUS_SMASH))
         {
-            this->CastSpell(target, SPELL_COLOSSUS_SMASH);
+            this->CastSpell(SPELL_COLOSSUS_SMASH, target);
             _colossusSmashActive = true;
             _lastColossusSmash = GameTime::GetGameTimeMS();
             return;
@@ -281,7 +281,7 @@ protected:
             // Execute consumes up to 40 additional rage for bonus damage
             if (this->_resource >= 15) // Base cost
             {
-                this->CastSpell(target, SPELL_EXECUTE);
+                this->CastSpell(SPELL_EXECUTE, target);
                 return;
             }
         }
@@ -289,7 +289,7 @@ protected:
         // Priority 4: Mortal Strike to maintain pressure
         if (this->CanUseAbility(SPELL_MORTAL_STRIKE))
         {
-            this->CastSpell(target, SPELL_MORTAL_STRIKE);
+            this->CastSpell(SPELL_MORTAL_STRIKE, target);
             _lastMortalStrike = GameTime::GetGameTimeMS();
             return;
         }
@@ -297,7 +297,7 @@ protected:
         // Priority 5: Overpower if available
         if (_overpowerReady && this->CanUseAbility(SPELL_OVERPOWER))
         {
-            this->CastSpell(target, SPELL_OVERPOWER);
+            this->CastSpell(SPELL_OVERPOWER, target);
             _overpowerReady = false;
             return;
         }
@@ -379,7 +379,7 @@ protected:
 
         if (stanceSpell && this->CanUseAbility(stanceSpell))
         {
-            this->CastSpell(this->GetBot(), stanceSpell);
+            this->CastSpell(stanceSpell, this->GetBot());
             _currentStance = stance;
         }
     }    // ========================================================================
@@ -470,7 +470,7 @@ protected:
         // Use charge if not in range
         if (!this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CHARGE))
         {
-            this->CastSpell(target, SPELL_CHARGE);
+            this->CastSpell(SPELL_CHARGE, target);
         }
     }
 
@@ -577,17 +577,17 @@ private:
                     }),
                     Selector("Execute Priority", {
                         Action("Cast Execute", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_EXECUTE))
+                            if (this->CanCastSpell(SPELL_EXECUTE, target))
                             {
-                                this->CastSpell(target, SPELL_EXECUTE);
+                                this->CastSpell(SPELL_EXECUTE, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
                         Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_MORTAL_STRIKE))
+                            if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
-                                this->CastSpell(target, SPELL_MORTAL_STRIKE);
+                                this->CastSpell(SPELL_MORTAL_STRIKE, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -606,17 +606,17 @@ private:
                     }),
                     Selector("Cooldown Priority", {
                         Action("Cast Avatar", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(bot, SPELL_AVATAR))
+                            if (this->CanCastSpell(SPELL_AVATAR, bot))
                             {
-                                this->CastSpell(bot, SPELL_AVATAR);
+                                this->CastSpell(SPELL_AVATAR, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
                         Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(bot, SPELL_BLADESTORM))
+                            if (this->CanCastSpell(SPELL_BLADESTORM, bot))
                             {
-                                this->CastSpell(bot, SPELL_BLADESTORM);
+                                this->CastSpell(SPELL_BLADESTORM, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -634,9 +634,9 @@ private:
                             return target && target->HasAura(SPELL_COLOSSUS_SMASH);
                         }),
                         Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_COLOSSUS_SMASH))
+                            if (this->CanCastSpell(SPELL_COLOSSUS_SMASH, target))
                             {
-                                this->CastSpell(target, SPELL_COLOSSUS_SMASH);
+                                this->CastSpell(SPELL_COLOSSUS_SMASH, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -646,9 +646,9 @@ private:
                     // Cast Mortal Strike on cooldown
                     Selector("Mortal Strike", {
                         Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_MORTAL_STRIKE))
+                            if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
-                                this->CastSpell(target, SPELL_MORTAL_STRIKE);
+                                this->CastSpell(SPELL_MORTAL_STRIKE, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -661,9 +661,9 @@ private:
                             return bot->HasAura(SPELL_OVERPOWER_PROC);
                         }),
                         Action("Cast Overpower", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_OVERPOWER))
+                            if (this->CanCastSpell(SPELL_OVERPOWER, target))
                             {
-                                this->CastSpell(target, SPELL_OVERPOWER);
+                                this->CastSpell(SPELL_OVERPOWER, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -673,17 +673,17 @@ private:
                     // Filler spells
                     Selector("Filler", {
                         Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
-                            if (bot->GetAttackersCount() >= 3 && this->CanCastSpell(target, SPELL_WHIRLWIND))
+                            if (bot->GetAttackersCount() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
                             {
-                                this->CastSpell(target, SPELL_WHIRLWIND);
+                                this->CastSpell(SPELL_WHIRLWIND, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
                         Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                            if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
                             {
-                                this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                this->CastSpell(SPELL_HEROIC_STRIKE, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;

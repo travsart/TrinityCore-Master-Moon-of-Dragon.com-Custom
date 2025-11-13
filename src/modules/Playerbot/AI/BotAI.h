@@ -464,7 +464,7 @@ public:
      *
      *     uint32 bestSpell = queue->GetHighestPrioritySpell(GetBot(), target, context);
      *     if (bestSpell)
-     *         CastSpell(target, bestSpell);
+     *         CastSpell(bestSpell, target);
      * }
      * @endcode
      */

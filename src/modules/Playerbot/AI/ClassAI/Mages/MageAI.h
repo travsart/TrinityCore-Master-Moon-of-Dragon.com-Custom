@@ -186,71 +186,7 @@ private:
     // Helper methods
     bool IsChanneling();
     bool IsCasting();
-    bool CanCastSpell();
-    MageSchool GetSpellSchool(uint32 spellId);
-    uint32 GetSpellCastTime(uint32 spellId);
-    bool IsSpellInstant(uint32 spellId);
-
-    // Optimization helpers
-    void OptimizeForSpecialization();
-    bool HasTalent(uint32 talentId);
-
-    // Threat and aggro management
-    void ManageThreat();
-    bool HasTooMuchThreat();
-    void ReduceThreat();
-
-    // Advanced emergency responses
-    void HandleEmergencySituation();
-    bool IsInCriticalDanger();
-    void UseEmergencyEscape();
-    void HandleMultipleEnemies(const std::vector<::Unit*>& enemies);
-    void HandleLowManaEmergency();
-    void HandleHighThreatSituation();
-    void ExecuteEmergencyTeleport();
-
-    // Advanced combat AI
-    void UpdateAdvancedCombatLogic(::Unit* target);
-    void OptimizeCastingSequence(::Unit* target);
-    void ManageResourceEfficiency();
-    void HandleCombatPhaseTransitions();
-    ::Unit* SelectOptimalTarget(const std::vector<::Unit*>& enemies);
-    void ExecuteAdvancedRotation(::Unit* target);
-
-    // Spell school mastery
-    void UpdateSchoolMastery();
-    float GetSchoolMasteryBonus(MageSchool school);
-    void AdaptToTargetResistances(::Unit* target);
-    MageSchool GetMostEffectiveSchool(::Unit* target);
-
-    // Predictive casting
-    void PredictEnemyMovement(::Unit* target);
-    void PrecastSpells(::Unit* target);
-    void HandleMovingTargets(::Unit* target);
-    void OptimizeInstantCasts();
-
-    // Performance optimization
-    void UpdatePerformanceMetrics(uint32 diff);
-    void OptimizeCastingSequence();
-
-    // Constants
-    static constexpr float OPTIMAL_CASTING_RANGE = 30.0f;
-    static constexpr float MINIMUM_SAFE_RANGE = 15.0f;
-    static constexpr float KITING_RANGE = 20.0f;
-    static constexpr uint32 MAX_ARCANE_CHARGES = 4;
-    static constexpr uint32 POLYMORPH_COOLDOWN = 30000; // 30 seconds
-    static constexpr uint32 COUNTERSPELL_COOLDOWN = 24000; // 24 seconds
-    static constexpr uint32 BLINK_COOLDOWN = 15000; // 15 seconds
-    static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f; // 30%
-    static constexpr float MANA_EMERGENCY_THRESHOLD = 0.15f; // 15%
-
-public:
-    // Spell IDs (version-specific - these need to be accurate for target WoW version)
-    enum MageSpells
-    {
-        // Arcane spells
-        ARCANE_MISSILES = 5143,
-        ARCANE_BLAST = 30451,
+    bool CanCastSpell(ARCANE_BLAST = 30451,
         ARCANE_BARRAGE = 44425,
         ARCANE_ORB = 153626,
         ARCANE_POWER = 12042,
@@ -358,7 +294,70 @@ class TC_GAME_API MageSpellCalculator
 {
 public:
     // Damage calculations
-    static uint32 CalculateFireballDamage(Player* caster, ::Unit* target);
+    static uint32 CalculateFireballDamage(Player* caster, ::Unit* target, );
+    MageSchool GetSpellSchool(uint32 spellId);
+    uint32 GetSpellCastTime(uint32 spellId);
+    bool IsSpellInstant(uint32 spellId);
+
+    // Optimization helpers
+    void OptimizeForSpecialization();
+    bool HasTalent(uint32 talentId);
+
+    // Threat and aggro management
+    void ManageThreat();
+    bool HasTooMuchThreat();
+    void ReduceThreat();
+
+    // Advanced emergency responses
+    void HandleEmergencySituation();
+    bool IsInCriticalDanger();
+    void UseEmergencyEscape();
+    void HandleMultipleEnemies(const std::vector<::Unit*>& enemies);
+    void HandleLowManaEmergency();
+    void HandleHighThreatSituation();
+    void ExecuteEmergencyTeleport();
+
+    // Advanced combat AI
+    void UpdateAdvancedCombatLogic(::Unit* target);
+    void OptimizeCastingSequence(::Unit* target);
+    void ManageResourceEfficiency();
+    void HandleCombatPhaseTransitions();
+    ::Unit* SelectOptimalTarget(const std::vector<::Unit*>& enemies);
+    void ExecuteAdvancedRotation(::Unit* target);
+
+    // Spell school mastery
+    void UpdateSchoolMastery();
+    float GetSchoolMasteryBonus(MageSchool school);
+    void AdaptToTargetResistances(::Unit* target);
+    MageSchool GetMostEffectiveSchool(::Unit* target);
+
+    // Predictive casting
+    void PredictEnemyMovement(::Unit* target);
+    void PrecastSpells(::Unit* target);
+    void HandleMovingTargets(::Unit* target);
+    void OptimizeInstantCasts();
+
+    // Performance optimization
+    void UpdatePerformanceMetrics(uint32 diff);
+    void OptimizeCastingSequence();
+
+    // Constants
+    static constexpr float OPTIMAL_CASTING_RANGE = 30.0f;
+    static constexpr float MINIMUM_SAFE_RANGE = 15.0f;
+    static constexpr float KITING_RANGE = 20.0f;
+    static constexpr uint32 MAX_ARCANE_CHARGES = 4;
+    static constexpr uint32 POLYMORPH_COOLDOWN = 30000; // 30 seconds
+    static constexpr uint32 COUNTERSPELL_COOLDOWN = 24000; // 24 seconds
+    static constexpr uint32 BLINK_COOLDOWN = 15000; // 15 seconds
+    static constexpr float MANA_CONSERVATION_THRESHOLD = 0.3f; // 30%
+    static constexpr float MANA_EMERGENCY_THRESHOLD = 0.15f; // 15%
+
+public:
+    // Spell IDs (version-specific - these need to be accurate for target WoW version)
+    enum MageSpells
+    {
+        // Arcane spells
+        ARCANE_MISSILES = 5143);
     static uint32 CalculateFrostboltDamage(Player* caster, ::Unit* target);
     static uint32 CalculateArcaneMissilesDamage(Player* caster, ::Unit* target);
 

@@ -153,9 +153,9 @@ if (!interruptTarget)
             // Check Chi requirement
             if (HasEnoughChi(2))
             {
-                if (CastSpell(SPINNING_CRANE_KICK))
+                if (CastSpell(2, SPINNING_CRANE_KICK))
                 {
-                    ConsumeChiForAbility(SPINNING_CRANE_KICK, 2);
+                    ConsumeChiForAbility(SPINNING_CRANE_KICK);
                     RecordAbilityUsage(SPINNING_CRANE_KICK);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} using Spinning Crane Kick for AoE",
                                  GetBot()->GetName());
@@ -169,9 +169,9 @@ if (!interruptTarget)
         {
             if (HasEnoughChi(1))
             {
-                if (CastSpell(RUSHING_JADE_WIND))
+                if (CastSpell(1, RUSHING_JADE_WIND))
                 {
-                    ConsumeChiForAbility(RUSHING_JADE_WIND, 1);
+                    ConsumeChiForAbility(RUSHING_JADE_WIND);
                     RecordAbilityUsage(RUSHING_JADE_WIND);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} activated Rushing Jade Wind",
                                  GetBot()->GetName());
@@ -960,9 +960,9 @@ void MonkAI::ManageResourceGeneration(::Unit* target)
     {
         if (GetBot()->GetHealthPct() < 80.0f)
         {
-            if (CastSpell(EXPEL_HARM))
+            if (CastSpell(15, EXPEL_HARM))
             {
-                ConsumeEnergyForAbility(EXPEL_HARM, 15);
+                ConsumeEnergyForAbility(EXPEL_HARM);
                 GenerateChi(1);
                 RecordAbilityUsage(EXPEL_HARM);
                 return;
@@ -1297,9 +1297,9 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     // Breath of Fire for DoT
     if (CanUseAbility(BREATH_OF_FIRE) && HasEnoughChi(1))
     {
-        if (CastSpell(BREATH_OF_FIRE))
+        if (CastSpell(1, BREATH_OF_FIRE))
         {
-            ConsumeChiForAbility(BREATH_OF_FIRE, 1);
+            ConsumeChiForAbility(BREATH_OF_FIRE);
             RecordAbilityUsage(BREATH_OF_FIRE);
             return;
         }
@@ -1333,9 +1333,9 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     {
         if (HasEnoughChi(1))
         {
-            if (CastSpell(RUSHING_JADE_WIND))
+            if (CastSpell(1, RUSHING_JADE_WIND))
             {
-                ConsumeChiForAbility(RUSHING_JADE_WIND, 1);
+                ConsumeChiForAbility(RUSHING_JADE_WIND);
                 RecordAbilityUsage(RUSHING_JADE_WIND);
                 return;
             }
@@ -1420,9 +1420,9 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
     {
         if (HasEnoughChi(2))
         {
-            if (CastSpell(ESSENCE_FONT))
+            if (CastSpell(2, ESSENCE_FONT))
             {
-                ConsumeChiForAbility(ESSENCE_FONT, 2);
+                ConsumeChiForAbility(ESSENCE_FONT);
                 RecordAbilityUsage(ESSENCE_FONT);
                 return;
             }
