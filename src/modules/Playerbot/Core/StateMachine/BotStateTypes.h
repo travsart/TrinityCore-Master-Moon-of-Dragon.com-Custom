@@ -38,13 +38,21 @@ namespace StateMachine
      */
     enum class BotInitState : uint8_t
     {
-        CREATED              = 0,  ///< Bot object instantiated but not initialized
+
+        CREATED
+        = 0,  ///< Bot object instantiated but not initialized
         LOADING_CHARACTER    = 1,  ///< Loading character data from database
-        IN_WORLD            = 2,  ///< AddedToWorld() completed, IsInWorld() returns true
+
+        IN_WORLD
+        = 2,  ///< AddedToWorld() completed, IsInWorld() returns true
         CHECKING_GROUP      = 3,  ///< Verifying group membership state
         ACTIVATING_STRATEGIES = 4,  ///< OnGroupJoined() called, strategies being enabled
-        READY               = 5,  ///< Fully initialized and operational
-        FAILED              = 6   ///< Initialization failed, requires manual intervention
+
+        READY
+        = 5,  ///< Fully initialized and operational
+
+        FAILED
+        = 6   ///< Initialization failed, requires manual intervention
     };
 
     /**
@@ -58,12 +66,18 @@ namespace StateMachine
     {
         // Bot lifecycle events (0-31)
         BOT_CREATED           = 0,   ///< Bot instance created
-        BOT_LOGIN             = 1,   ///< Bot login initiated
-        BOT_LOGOUT            = 2,   ///< Bot logout initiated
+
+        BOT_LOGIN
+        = 1,   ///< Bot login initiated
+
+        BOT_LOGOUT
+        = 2,   ///< Bot logout initiated
         BOT_ADDED_TO_WORLD    = 3,   ///< Bot added to world (IsInWorld() true)
         BOT_REMOVED_FROM_WORLD = 4,  ///< Bot removed from world
         BOT_DESTROYED         = 5,   ///< Bot instance being destroyed
-        BOT_RESET             = 6,   ///< Bot state reset requested
+
+        BOT_RESET
+        = 6,   ///< Bot state reset requested
         BOT_TELEPORTED        = 7,   ///< Bot teleported to new location
         FIRST_LOGIN           = 8,   ///< Bot's first login (new character)
         PLAYER_LOGIN          = 9,   ///< Player login event
@@ -74,18 +88,24 @@ namespace StateMachine
         PLAYER_LEVEL_UP       = 14,  ///< Player gained a level
         TALENT_POINTS_CHANGED = 15,  ///< Talent points gained/spent
         TALENTS_RESET         = 16,  ///< Talents were reset
-        XP_GAINED             = 17,  ///< Experience points gained
+
+        XP_GAINED
+        = 17,  ///< Experience points gained
         REPUTATION_CHANGED    = 18,  ///< Reputation with faction changed
 
         // Group events (32-63) - Addresses Issues #1 and #4
         GROUP_JOINED          = 32,  ///< Bot joined a group
-        GROUP_LEFT            = 33,  ///< Bot left the group
+
+        GROUP_LEFT
+        = 33,  ///< Bot left the group
         GROUP_DISBANDED       = 34,  ///< Group was disbanded
         LEADER_LOGGED_OUT     = 35,  ///< Group leader disconnected (Issue #4)
         LEADER_CHANGED        = 36,  ///< Group leader changed
         GROUP_LEADER_CHANGED  = 36,  ///< Alias for LEADER_CHANGED (script compatibility)
         GROUP_INVITE_RECEIVED = 37,  ///< Bot received group invitation
-        GROUP_CHAT            = 38,  ///< Group chat message received
+
+        GROUP_CHAT
+        = 38,  ///< Group chat message received
         MEMBER_JOINED         = 39,  ///< New member joined group
         MEMBER_LEFT           = 40,  ///< Member left group
         GROUP_INVITE_DECLINED = 41,  ///< Bot declined group invitation
@@ -105,10 +125,16 @@ namespace StateMachine
         SPELL_CAST_SUCCESS    = 74,  ///< Spell successfully cast
         SPELL_CAST_FAILED     = 75,  ///< Spell cast failed
         SPELL_INTERRUPTED     = 76,  ///< Spell casting interrupted
-        HEAL_CAST             = 77,  ///< Healing spell cast
+
+        HEAL_CAST
+        = 77,  ///< Healing spell cast
         DUEL_STARTED          = 78,  ///< Duel began
-        DUEL_WON              = 79,  ///< Duel victory
-        DUEL_LOST             = 80,  ///< Duel defeat
+
+        DUEL_WON
+        = 79,  ///< Duel victory
+
+        DUEL_LOST
+        = 80,  ///< Duel defeat
 
         // Movement events (96-127)
         MOVEMENT_STARTED      = 96,  ///< Movement initiated
@@ -120,21 +146,33 @@ namespace StateMachine
         PATH_RECALCULATED     = 102, ///< Path recalculated
         POSITION_REACHED      = 103, ///< Destination reached
         POSITION_CHANGED      = 104, ///< Position changed
-        TELEPORTED            = 105, ///< Bot teleported
+
+        TELEPORTED
+        = 105, ///< Bot teleported
         MOUNT_CHANGED         = 106, ///< Mount status changed
         STUCK_DETECTED        = 107, ///< Bot detected as stuck
         STUCK_RESOLVED        = 108, ///< Bot recovered from stuck state
-        FALLING               = 109, ///< Bot is falling
-        SWIMMING              = 110, ///< Bot is swimming
-        FLYING                = 111, ///< Bot is flying
+
+        FALLING
+        = 109, ///< Bot is falling
+
+        SWIMMING
+        = 110, ///< Bot is swimming
+
+        FLYING
+        = 111, ///< Bot is flying
         FOLLOW_STARTED        = 112, ///< Started following target
         FOLLOW_STOPPED        = 113, ///< Stopped following target
         FOLLOW_TARGET_SET     = 114, ///< Follow target established
         FOLLOW_TARGET_LOST    = 115, ///< Follow target no longer valid
         FOLLOW_DISTANCE_CHANGED = 116, ///< Follow distance changed
         TACTICAL_POSITIONING  = 117, ///< Tactical positioning for combat
-        KITING                = 118, ///< Kiting enemy (ranged combat)
-        RETREATING            = 119, ///< Tactical retreat from combat
+
+        KITING
+        = 118, ///< Kiting enemy (ranged combat)
+
+        RETREATING
+        = 119, ///< Tactical retreat from combat
 
         // Quest events (128-159)
         QUEST_ACCEPTED        = 128, ///< Quest accepted
@@ -168,7 +206,9 @@ namespace StateMachine
         GOLD_CHANGED          = 165, ///< Gold amount changed
         GOLD_CAP_REACHED      = 166, ///< Maximum gold limit reached
         GOLD_RECEIVED         = 167, ///< Gold received from trade/mail/quest
-        GOLD_SPENT            = 168, ///< Gold spent on purchases/repairs
+
+        GOLD_SPENT
+        = 168, ///< Gold spent on purchases/repairs
         LOW_GOLD_WARNING      = 169, ///< Gold below threshold
         AUCTION_BID_PLACED    = 170, ///< Bid placed on auction item
         AUCTION_WON           = 171, ///< Won auction item
@@ -176,7 +216,9 @@ namespace StateMachine
         AUCTION_EXPIRED       = 173, ///< Auction listing expired
         AUCTION_SOLD          = 174, ///< Auction item sold
         MAIL_RECEIVED         = 175, ///< Mail received in mailbox
-        MAIL_SENT             = 176, ///< Mail sent to player
+
+        MAIL_SENT
+        = 176, ///< Mail sent to player
         COD_PAYMENT           = 177, ///< COD payment made
         VENDOR_PURCHASE       = 178, ///< Item purchased from vendor
         VENDOR_SALE           = 179, ///< Item sold to vendor
@@ -200,8 +242,12 @@ namespace StateMachine
         AURA_REMOVED          = 232, ///< Buff/debuff removed
         AURA_REFRESHED        = 233, ///< Duration reset
         AURA_STACKS_CHANGED   = 234, ///< Stack count modified
-        CC_APPLIED            = 235, ///< Stun/Fear/Polymorph etc
-        CC_BROKEN             = 236, ///< CC effect broken
+
+        CC_APPLIED
+        = 235, ///< Stun/Fear/Polymorph etc
+
+        CC_BROKEN
+        = 236, ///< CC effect broken
         DISPELLABLE_DETECTED  = 237, ///< Dispellable debuff on bot
         INTERRUPT_NEEDED      = 238, ///< Enemy casting interruptible spell
         DEFENSIVE_NEEDED      = 239, ///< Low health, need defensive CD
@@ -230,7 +276,9 @@ namespace StateMachine
         BOSS_ENGAGED          = 280, ///< Boss combat started
         BOSS_PHASE_TRANSITION = 281, ///< Boss entered new phase
         BOSS_DEFEATED         = 282, ///< Boss killed
-        BOSS_WIPE             = 283, ///< Group wipe on boss
+
+        BOSS_WIPE
+        = 283, ///< Group wipe on boss
         BOSS_ABILITY_CAST     = 284, ///< Boss cast important ability
         WIPE_DETECTED         = 285, ///< Group wipe occurred
         MYTHIC_PLUS_STARTED   = 286, ///< Keystone activated
@@ -262,13 +310,17 @@ namespace StateMachine
         ARENA_MATCH_ENDED     = 310, ///< Arena match ended
         ARENA_ENDED           = 311, ///< Arena match completed (alias)
         ARENA_RATING_CHANGED  = 312, ///< Arena rating changed
-        BG_ENTERED            = 313, ///< Battleground joined
+
+        BG_ENTERED
+        = 313, ///< Battleground joined
         BATTLEGROUND_STARTED  = 314, ///< Battleground started (alias)
         BATTLEGROUND_OBJECTIVE_CAPTURED = 315, ///< BG objective captured
         BATTLEGROUND_FLAG_PICKED_UP = 316, ///< BG flag picked up
         BATTLEGROUND_FLAG_CAPTURED = 317, ///< BG flag captured
         BATTLEGROUND_ENDED    = 318, ///< Battleground ended
-        BG_ENDED              = 319, ///< Battleground completed (alias)
+
+        BG_ENDED
+        = 319, ///< Battleground completed (alias)
         BLITZ_BATTLEGROUND_STARTED = 320, ///< Blitz BG started (8v8)
         HONORABLE_KILL        = 321, ///< Honorable kill earned
         HONOR_GAINED          = 322, ///< Honor points earned
@@ -279,15 +331,21 @@ namespace StateMachine
 
         // Resource Management events (330-350) - HIGH priority
         HEALTH_CRITICAL       = 330, ///< Health below 30%
-        HEALTH_LOW            = 331, ///< Health below 50%
-        MANA_LOW              = 332, ///< Mana below 30%
+
+        HEALTH_LOW
+        = 331, ///< Health below 50%
+
+        MANA_LOW
+        = 332, ///< Mana below 30%
         RESOURCE_CAPPED       = 333, ///< Energy/Rage/etc at max
         RESOURCE_DEPLETED     = 334, ///< Out of primary resource
         COMBO_POINTS_MAX      = 335, ///< At max combo points
         HOLY_POWER_MAX        = 336, ///< Paladin at max HP
         SOUL_SHARDS_MAX       = 337, ///< Warlock at max shards
         RUNES_AVAILABLE       = 338, ///< DK runes ready
-        CHI_MAX               = 339, ///< Monk at max chi
+
+        CHI_MAX
+        = 339, ///< Monk at max chi
 
         // War Within specific events (341-370) - HIGH priority
         DELVE_ENTERED         = 341, ///< Entered delve instance
@@ -325,7 +383,9 @@ namespace StateMachine
         FRIEND_REMOVED        = 386, ///< Friend removed from list
         GUILD_INVITE_RECEIVED = 387, ///< Guild invitation
         GUILD_JOINED          = 388, ///< Joined guild
-        GUILD_LEFT            = 389, ///< Left guild
+
+        GUILD_LEFT
+        = 389, ///< Left guild
         GUILD_RANK_CHANGED    = 390, ///< Guild rank changed
         COMMAND_RECEIVED      = 391, ///< Bot command from master
         CONVERTED_TO_RAID     = 392, ///< Group converted to raid
@@ -335,12 +395,16 @@ namespace StateMachine
         ITEM_UNEQUIPPED       = 411, ///< Item removed
         ITEM_BROKEN           = 412, ///< Durability at 0
         ITEM_REPAIRED         = 413, ///< Items repaired
-        BAG_FULL              = 414, ///< No inventory space
+
+        BAG_FULL
+        = 414, ///< No inventory space
         ITEM_UPGRADED         = 415, ///< Item ilvl increased
         GEM_SOCKETED          = 416, ///< Gem inserted
         ENCHANT_APPLIED       = 417, ///< Enchantment added
         ITEM_COMPARISON       = 418, ///< Better item available
-        ITEM_USED             = 419, ///< Item activated/used
+
+        ITEM_USED
+        = 419, ///< Item activated/used
         ITEM_EXPIRED          = 420, ///< Temporary item expired
         ITEM_REMOVED          = 421, ///< Item removed from inventory
         VEHICLE_ENTERED       = 422, ///< Mounted vehicle/creature
@@ -366,7 +430,9 @@ namespace StateMachine
      */
     enum class StateTransitionResult : uint8_t
     {
-        SUCCESS               = 0, ///< Transition completed successfully
+
+        SUCCESS
+        = 0, ///< Transition completed successfully
         INVALID_FROM_STATE    = 1, ///< Current state doesn't allow this transition
         INVALID_TO_STATE      = 2, ///< Target state is not valid
         PRECONDITION_FAILED   = 3, ///< Required conditions not met (e.g., not IsInWorld())
@@ -383,7 +449,9 @@ namespace StateMachine
     {
         StateTransitionResult result;     ///< The validation result
         std::string_view reason;          ///< Human-readable explanation
-        uint32 errorCode = 0;             ///< Optional error code for debugging
+
+        uint32 errorCode = 0;
+        ///< Optional error code for debugging
 
         /// Check if transition is allowed
         constexpr bool IsValid() const noexcept { return result == StateTransitionResult::SUCCESS; }
@@ -429,14 +497,21 @@ namespace StateMachine
      */
     enum class StateFlags : uint32_t
     {
-        NONE                = 0,         ///< No flags set
+
+        NONE
+        = 0,
+        ///< No flags set
         INITIALIZING        = (1 << 0),  ///< Currently in initialization sequence
-        READY              = (1 << 1),  ///< Passed all initialization checks
+
+        READY
+        = (1 << 1),  ///< Passed all initialization checks
         IN_TRANSITION      = (1 << 2),  ///< Currently transitioning between states
         ERROR_STATE        = (1 << 3),  ///< Error has occurred
         REQUIRES_VALIDATION = (1 << 4),  ///< State needs revalidation
         SAFE_TO_UPDATE     = (1 << 5),  ///< Bot is safe for AI updates
-        LOCKED             = (1 << 6),  ///< State is locked (no transitions allowed)
+
+        LOCKED
+        = (1 << 6),  ///< State is locked (no transitions allowed)
         DEFERRED_TRANSITION = (1 << 7),  ///< Transition deferred until conditions met
         CLEANUP_REQUIRED   = (1 << 8),  ///< Cleanup needed before next transition
         DEBUG_MODE         = (1 << 9)   ///< Enhanced debugging enabled
@@ -474,36 +549,52 @@ namespace StateMachine
         std::atomic<BotInitState> currentState{BotInitState::CREATED};     ///< Current initialization state
         std::atomic<BotInitState> previousState{BotInitState::CREATED};    ///< Previous state (for rollback)
         std::atomic<StateFlags> flags{StateFlags::INITIALIZING};           ///< Current state flags
-        std::atomic<uint64_t> transitionCount{0};                         ///< Total transitions performed
-        std::atomic<uint64_t> lastTransitionTime{0};                      ///< Time of last transition (getMSTime)
-        std::atomic<uint32_t> errorCount{0};                              ///< Number of errors encountered
-        std::atomic<uint32_t> retryCount{0};                              ///< Number of retry attempts
+
+        std::atomic<uint64_t> transitionCount{0};
+        ///< Total transitions performed
+
+        std::atomic<uint64_t> lastTransitionTime{0};
+        ///< Time of last transition (getMSTime)
+
+        std::atomic<uint32_t> errorCount{0};
+        ///< Number of errors encountered
+
+        std::atomic<uint32_t> retryCount{0};
+        ///< Number of retry attempts
         std::atomic<EventType> lastEvent{EventType::BOT_CREATED};         ///< Last event processed
-        std::atomic<uint32_t> stateStartTime{0};                          ///< When entered current state (getMSTime)
+
+        std::atomic<uint32_t> stateStartTime{0};
+        ///< When entered current state (getMSTime)
 
         /// Check if state is terminal (READY or FAILED)
         bool IsTerminal() const noexcept
         {
+
             BotInitState state = currentState.load(std::memory_order_acquire);
+
             return state == BotInitState::READY || state == BotInitState::FAILED;
         }
 
         /// Check if initialization succeeded
         bool IsReady() const noexcept
         {
+
             return currentState.load(std::memory_order_acquire) == BotInitState::READY;
         }
 
         /// Check if initialization failed
         bool IsFailed() const noexcept
         {
+
             return currentState.load(std::memory_order_acquire) == BotInitState::FAILED;
         }
 
         /// Get time spent in current state (milliseconds)
         uint32_t GetTimeInCurrentState(uint32_t currentTime) const noexcept
         {
+
             uint32_t startTime = stateStartTime.load(std::memory_order_acquire);
+
             return startTime > 0 ? (currentTime - startTime) : 0;
         }
     };
@@ -515,14 +606,29 @@ namespace StateMachine
     {
         switch (state)
         {
-            case BotInitState::CREATED:               return "CREATED";
-            case BotInitState::LOADING_CHARACTER:     return "LOADING_CHARACTER";
-            case BotInitState::IN_WORLD:              return "IN_WORLD";
-            case BotInitState::CHECKING_GROUP:        return "CHECKING_GROUP";
+
+            case BotInitState::CREATED:
+            return "CREATED";
+
+            case BotInitState::LOADING_CHARACTER:
+            return "LOADING_CHARACTER";
+
+            case BotInitState::IN_WORLD:
+            return "IN_WORLD";
+
+            case BotInitState::CHECKING_GROUP:
+            return "CHECKING_GROUP";
+
             case BotInitState::ACTIVATING_STRATEGIES: return "ACTIVATING_STRATEGIES";
-            case BotInitState::READY:                 return "READY";
-            case BotInitState::FAILED:                return "FAILED";
-            default:                                  return "UNKNOWN";
+
+            case BotInitState::READY:
+            return "READY";
+
+            case BotInitState::FAILED:
+            return "FAILED";
+
+            default:
+            return "UNKNOWN";
         }
     }
 
@@ -534,88 +640,219 @@ namespace StateMachine
         switch (event)
         {
             // Lifecycle events
-            case EventType::BOT_CREATED:           return "BOT_CREATED";
-            case EventType::BOT_LOGIN:             return "BOT_LOGIN";
-            case EventType::BOT_LOGOUT:            return "BOT_LOGOUT";
-            case EventType::BOT_ADDED_TO_WORLD:    return "BOT_ADDED_TO_WORLD";
+
+            case EventType::BOT_CREATED:
+            return "BOT_CREATED";
+
+            case EventType::BOT_LOGIN:
+            return "BOT_LOGIN";
+
+            case EventType::BOT_LOGOUT:
+            return "BOT_LOGOUT";
+
+            case EventType::BOT_ADDED_TO_WORLD:
+            return "BOT_ADDED_TO_WORLD";
+
             case EventType::BOT_REMOVED_FROM_WORLD: return "BOT_REMOVED_FROM_WORLD";
-            case EventType::BOT_DESTROYED:         return "BOT_DESTROYED";
-            case EventType::BOT_RESET:             return "BOT_RESET";
-            case EventType::BOT_TELEPORTED:        return "BOT_TELEPORTED";
-            case EventType::FIRST_LOGIN:           return "FIRST_LOGIN";
-            case EventType::PLAYER_LOGIN:          return "PLAYER_LOGIN";
-            case EventType::PLAYER_LOGOUT:         return "PLAYER_LOGOUT";
-            case EventType::PLAYER_REPOP:          return "PLAYER_REPOP";
-            case EventType::ZONE_CHANGED:          return "ZONE_CHANGED";
-            case EventType::MAP_CHANGED:           return "MAP_CHANGED";
-            case EventType::PLAYER_LEVEL_UP:       return "PLAYER_LEVEL_UP";
+
+            case EventType::BOT_DESTROYED:
+            return "BOT_DESTROYED";
+
+            case EventType::BOT_RESET:
+            return "BOT_RESET";
+
+            case EventType::BOT_TELEPORTED:
+            return "BOT_TELEPORTED";
+
+            case EventType::FIRST_LOGIN:
+            return "FIRST_LOGIN";
+
+            case EventType::PLAYER_LOGIN:
+            return "PLAYER_LOGIN";
+
+            case EventType::PLAYER_LOGOUT:
+            return "PLAYER_LOGOUT";
+
+            case EventType::PLAYER_REPOP:
+            return "PLAYER_REPOP";
+
+            case EventType::ZONE_CHANGED:
+            return "ZONE_CHANGED";
+
+            case EventType::MAP_CHANGED:
+            return "MAP_CHANGED";
+
+            case EventType::PLAYER_LEVEL_UP:
+            return "PLAYER_LEVEL_UP";
+
             case EventType::TALENT_POINTS_CHANGED: return "TALENT_POINTS_CHANGED";
-            case EventType::TALENTS_RESET:         return "TALENTS_RESET";
-            case EventType::XP_GAINED:             return "XP_GAINED";
-            case EventType::REPUTATION_CHANGED:    return "REPUTATION_CHANGED";
+
+            case EventType::TALENTS_RESET:
+            return "TALENTS_RESET";
+
+            case EventType::XP_GAINED:
+            return "XP_GAINED";
+
+            case EventType::REPUTATION_CHANGED:
+            return "REPUTATION_CHANGED";
 
             // Group events
-            case EventType::GROUP_JOINED:          return "GROUP_JOINED";
-            case EventType::GROUP_LEFT:            return "GROUP_LEFT";
-            case EventType::GROUP_DISBANDED:       return "GROUP_DISBANDED";
-            case EventType::LEADER_LOGGED_OUT:     return "LEADER_LOGGED_OUT";
-            case EventType::LEADER_CHANGED:        return "LEADER_CHANGED";
+
+            case EventType::GROUP_JOINED:
+            return "GROUP_JOINED";
+
+            case EventType::GROUP_LEFT:
+            return "GROUP_LEFT";
+
+            case EventType::GROUP_DISBANDED:
+            return "GROUP_DISBANDED";
+
+            case EventType::LEADER_LOGGED_OUT:
+            return "LEADER_LOGGED_OUT";
+
+            case EventType::LEADER_CHANGED:
+            return "LEADER_CHANGED";
+
             case EventType::GROUP_INVITE_RECEIVED: return "GROUP_INVITE_RECEIVED";
-            case EventType::GROUP_CHAT:            return "GROUP_CHAT";
-            case EventType::MEMBER_JOINED:         return "MEMBER_JOINED";
-            case EventType::MEMBER_LEFT:           return "MEMBER_LEFT";
+
+            case EventType::GROUP_CHAT:
+            return "GROUP_CHAT";
+
+            case EventType::MEMBER_JOINED:
+            return "MEMBER_JOINED";
+
+            case EventType::MEMBER_LEFT:
+            return "MEMBER_LEFT";
+
             case EventType::GROUP_INVITE_DECLINED: return "GROUP_INVITE_DECLINED";
-            case EventType::RAID_CONVERTED:        return "RAID_CONVERTED";
+
+            case EventType::RAID_CONVERTED:
+            return "RAID_CONVERTED";
 
             // Combat events
-            case EventType::COMBAT_STARTED:        return "COMBAT_STARTED";
-            case EventType::COMBAT_ENDED:          return "COMBAT_ENDED";
-            case EventType::TARGET_ACQUIRED:       return "TARGET_ACQUIRED";
-            case EventType::TARGET_LOST:           return "TARGET_LOST";
-            case EventType::THREAT_GAINED:         return "THREAT_GAINED";
-            case EventType::THREAT_LOST:           return "THREAT_LOST";
-            case EventType::DAMAGE_TAKEN:          return "DAMAGE_TAKEN";
-            case EventType::DAMAGE_DEALT:          return "DAMAGE_DEALT";
-            case EventType::SPELL_CAST_START:      return "SPELL_CAST_START";
-            case EventType::SPELL_CAST_SUCCESS:    return "SPELL_CAST_SUCCESS";
-            case EventType::SPELL_CAST_FAILED:     return "SPELL_CAST_FAILED";
-            case EventType::SPELL_INTERRUPTED:     return "SPELL_INTERRUPTED";
-            case EventType::HEAL_CAST:             return "HEAL_CAST";
-            case EventType::DUEL_STARTED:          return "DUEL_STARTED";
-            case EventType::DUEL_WON:              return "DUEL_WON";
-            case EventType::DUEL_LOST:             return "DUEL_LOST";
+
+            case EventType::COMBAT_STARTED:
+            return "COMBAT_STARTED";
+
+            case EventType::COMBAT_ENDED:
+            return "COMBAT_ENDED";
+
+            case EventType::TARGET_ACQUIRED:
+            return "TARGET_ACQUIRED";
+
+            case EventType::TARGET_LOST:
+            return "TARGET_LOST";
+
+            case EventType::THREAT_GAINED:
+            return "THREAT_GAINED";
+
+            case EventType::THREAT_LOST:
+            return "THREAT_LOST";
+
+            case EventType::DAMAGE_TAKEN:
+            return "DAMAGE_TAKEN";
+
+            case EventType::DAMAGE_DEALT:
+            return "DAMAGE_DEALT";
+
+            case EventType::SPELL_CAST_START:
+            return "SPELL_CAST_START";
+
+            case EventType::SPELL_CAST_SUCCESS:
+            return "SPELL_CAST_SUCCESS";
+
+            case EventType::SPELL_CAST_FAILED:
+            return "SPELL_CAST_FAILED";
+
+            case EventType::SPELL_INTERRUPTED:
+            return "SPELL_INTERRUPTED";
+
+            case EventType::HEAL_CAST:
+            return "HEAL_CAST";
+
+            case EventType::DUEL_STARTED:
+            return "DUEL_STARTED";
+
+            case EventType::DUEL_WON:
+            return "DUEL_WON";
+
+            case EventType::DUEL_LOST:
+            return "DUEL_LOST";
 
             // Movement events
-            case EventType::MOVEMENT_STARTED:      return "MOVEMENT_STARTED";
-            case EventType::MOVEMENT_STOPPED:      return "MOVEMENT_STOPPED";
-            case EventType::PATH_COMPLETE:         return "PATH_COMPLETE";
-            case EventType::PATH_FAILED:           return "PATH_FAILED";
-            case EventType::FOLLOW_TARGET_SET:     return "FOLLOW_TARGET_SET";
-            case EventType::FOLLOW_TARGET_LOST:    return "FOLLOW_TARGET_LOST";
-            case EventType::POSITION_REACHED:      return "POSITION_REACHED";
-            case EventType::STUCK_DETECTED:        return "STUCK_DETECTED";
+
+            case EventType::MOVEMENT_STARTED:
+            return "MOVEMENT_STARTED";
+
+            case EventType::MOVEMENT_STOPPED:
+            return "MOVEMENT_STOPPED";
+
+            case EventType::PATH_COMPLETE:
+            return "PATH_COMPLETE";
+
+            case EventType::PATH_FAILED:
+            return "PATH_FAILED";
+
+            case EventType::FOLLOW_TARGET_SET:
+            return "FOLLOW_TARGET_SET";
+
+            case EventType::FOLLOW_TARGET_LOST:
+            return "FOLLOW_TARGET_LOST";
+
+            case EventType::POSITION_REACHED:
+            return "POSITION_REACHED";
+
+            case EventType::STUCK_DETECTED:
+            return "STUCK_DETECTED";
 
             // Quest events
-            case EventType::QUEST_ACCEPTED:        return "QUEST_ACCEPTED";
-            case EventType::QUEST_COMPLETED:       return "QUEST_COMPLETED";
-            case EventType::QUEST_TURNED_IN:       return "QUEST_TURNED_IN";
-            case EventType::QUEST_ABANDONED:       return "QUEST_ABANDONED";
-            case EventType::QUEST_FAILED:          return "QUEST_FAILED";
+
+            case EventType::QUEST_ACCEPTED:
+            return "QUEST_ACCEPTED";
+
+            case EventType::QUEST_COMPLETED:
+            return "QUEST_COMPLETED";
+
+            case EventType::QUEST_TURNED_IN:
+            return "QUEST_TURNED_IN";
+
+            case EventType::QUEST_ABANDONED:
+            return "QUEST_ABANDONED";
+
+            case EventType::QUEST_FAILED:
+            return "QUEST_FAILED";
+
             case EventType::QUEST_STATUS_CHANGED:  return "QUEST_STATUS_CHANGED";
 
             // Trade events
-            case EventType::TRADE_INITIATED:       return "TRADE_INITIATED";
-            case EventType::TRADE_ACCEPTED:        return "TRADE_ACCEPTED";
-            case EventType::TRADE_CANCELLED:       return "TRADE_CANCELLED";
-            case EventType::GOLD_CHANGED:          return "GOLD_CHANGED";
-            case EventType::GOLD_CAP_REACHED:      return "GOLD_CAP_REACHED";
+
+            case EventType::TRADE_INITIATED:
+            return "TRADE_INITIATED";
+
+            case EventType::TRADE_ACCEPTED:
+            return "TRADE_ACCEPTED";
+
+            case EventType::TRADE_CANCELLED:
+            return "TRADE_CANCELLED";
+
+            case EventType::GOLD_CHANGED:
+            return "GOLD_CHANGED";
+
+            case EventType::GOLD_CAP_REACHED:
+            return "GOLD_CAP_REACHED";
 
             // Social events
-            case EventType::EMOTE_RECEIVED:        return "EMOTE_RECEIVED";
+
+            case EventType::EMOTE_RECEIVED:
+            return "EMOTE_RECEIVED";
+
 
             default:
+
                 if (static_cast<uint16_t>(event) >= static_cast<uint16_t>(EventType::CUSTOM_BASE))
+
                     return "CUSTOM_EVENT";
+
                 return "UNKNOWN_EVENT";
         }
     }
@@ -627,15 +864,31 @@ namespace StateMachine
     {
         switch (result)
         {
-            case StateTransitionResult::SUCCESS:               return "SUCCESS";
-            case StateTransitionResult::INVALID_FROM_STATE:    return "INVALID_FROM_STATE";
-            case StateTransitionResult::INVALID_TO_STATE:      return "INVALID_TO_STATE";
+
+            case StateTransitionResult::SUCCESS:
+            return "SUCCESS";
+
+            case StateTransitionResult::INVALID_FROM_STATE:
+            return "INVALID_FROM_STATE";
+
+            case StateTransitionResult::INVALID_TO_STATE:
+            return "INVALID_TO_STATE";
+
             case StateTransitionResult::PRECONDITION_FAILED:   return "PRECONDITION_FAILED";
-            case StateTransitionResult::ALREADY_IN_STATE:      return "ALREADY_IN_STATE";
+
+            case StateTransitionResult::ALREADY_IN_STATE:
+            return "ALREADY_IN_STATE";
+
             case StateTransitionResult::CONCURRENT_TRANSITION: return "CONCURRENT_TRANSITION";
-            case StateTransitionResult::NOT_INITIALIZED:       return "NOT_INITIALIZED";
-            case StateTransitionResult::SYSTEM_ERROR:          return "SYSTEM_ERROR";
-            default:                                           return "UNKNOWN_RESULT";
+
+            case StateTransitionResult::NOT_INITIALIZED:
+            return "NOT_INITIALIZED";
+
+            case StateTransitionResult::SYSTEM_ERROR:
+            return "SYSTEM_ERROR";
+
+            default:
+            return "UNKNOWN_RESULT";
         }
     }
 
@@ -645,7 +898,9 @@ namespace StateMachine
      */
     constexpr std::string_view ToString(StateFlags flags) noexcept
     {
-        if (flags == StateFlags::NONE)                return "NONE";
+
+        if (flags == StateFlags::NONE)
+        return "NONE";
         if ((flags & StateFlags::INITIALIZING) != StateFlags::NONE)  return "INITIALIZING";
         if ((flags & StateFlags::READY) != StateFlags::NONE)         return "READY";
         if ((flags & StateFlags::IN_TRANSITION) != StateFlags::NONE) return "IN_TRANSITION";
@@ -686,11 +941,19 @@ namespace StateMachine
      *     switch (event)
      *     {
      *         case EventType::BOT_ADDED_TO_WORLD:
-     *             // Transition to IN_WORLD state
-     *             break;
+
+     *
+     // Transition to IN_WORLD state
+
+     *
+     break;
      *         case EventType::GROUP_JOINED:
-     *             // Activate strategies
-     *             break;
+
+     *
+     // Activate strategies
+
+     *
+     break;
      *     }
      * }
      * @endcode

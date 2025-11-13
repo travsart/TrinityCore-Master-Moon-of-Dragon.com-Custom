@@ -94,10 +94,14 @@ void HunterAI::UpdateRotation(::Unit* target)
 
         // Try auto-specialization if level 10+
         baselineManager.HandleAutoSpecialization(_bot);        // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(_bot, target))            return;
+
+        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+        return;
 
         // Fallback to basic ranged attack        if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
-        {            _bot->CastSpell(target, ARCANE_SHOT, false);
+
+        {
+        _bot->CastSpell(target, ARCANE_SHOT, false);
         }
         return;
     }
@@ -159,32 +163,56 @@ bool HunterAI::HandleInterrupts(::Unit* target)
     {
         Unit* interruptTarget = _combatBehaviors->GetInterruptTarget();
         if (!interruptTarget)
+
             interruptTarget = target;
 
         // Counter Shot (primary interrupt)
         if (CanInterruptTarget(interruptTarget))
         {
-            uint32 now = GameTime::GetGameTimeMS();            // Try Counter Shot first            if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
+
+            uint32 now = GameTime::GetGameTimeMS();
+            // Try Counter Shot first
+            if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
+
                 now - _lastCounterShot > 24000) // 24 second cooldown
+
             {
+
                 if (CastSpell(interruptTarget, COUNTER_SHOT))
+
                 {
+
                     _lastCounterShot = now;
+
                     _combatMetrics.interrupts++;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} interrupted {} with Counter Shot",
+
                                  GetBot()->GetName(), interruptTarget->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Try Silencing Shot if available (MM spec)            if (_bot->HasSpell(SILENCING_SHOT) && CanUseAbility(SILENCING_SHOT))
+
             {
-                if (CastSpell(interruptTarget, SILENCING_SHOT))                {
+
+                if (CastSpell(interruptTarget, SILENCING_SHOT))
+                {
+
                     _combatMetrics.interrupts++;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} interrupted {} with Silencing Shot",
+
                                  GetBot()->GetName(), interruptTarget->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -201,65 +229,118 @@ bool HunterAI::HandleDefensives(::Unit* target)
 
         // Feign Death - emergency escape
         if (healthPct < FEIGN_DEATH_THRESHOLD && ShouldFeignDeath())
-        {            if (_bot->HasSpell(FEIGN_DEATH) && CanUseAbility(FEIGN_DEATH) &&
-                now - _lastFeignDeath > 30000) // 30 second cooldown            {
-                if (CastSpell(FEIGN_DEATH))
+
+        {
+        if (_bot->HasSpell(FEIGN_DEATH) && CanUseAbility(FEIGN_DEATH) &&
+
+                now - _lastFeignDeath > 30000) // 30 second cooldown
                 {
+
+                if (CastSpell(FEIGN_DEATH))
+
+                {
+
                     _lastFeignDeath = now;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Feign Death at {}% health",
+
                                  GetBot()->GetName(), static_cast<uint32>(healthPct));
+
                     return true;
+
                 }
+
             }
         }
 
         // Deterrence - damage reduction        if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
-        {            if (_bot->HasSpell(DETERRENCE) && CanUseAbility(DETERRENCE) &&
+
+        {
+        if (_bot->HasSpell(DETERRENCE) && CanUseAbility(DETERRENCE) &&
+
                 now - _lastDeterrence > 120000) // 2 minute cooldown
+
             {
+
                 if (CastSpell(DETERRENCE))
+
                 {
-                    _lastDeterrence = now;                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Deterrence",
+
+                    _lastDeterrence = now;
+                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Deterrence",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Aspect of the Turtle - modern defensive
         if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
-        {            if (_bot->HasSpell(ASPECT_OF_THE_TURTLE) && CanUseAbility(ASPECT_OF_THE_TURTLE))
+
+        {
+        if (_bot->HasSpell(ASPECT_OF_THE_TURTLE) && CanUseAbility(ASPECT_OF_THE_TURTLE))
+
             {
+
                 if (CastSpell(ASPECT_OF_THE_TURTLE))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Aspect of the Turtle",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Exhilaration - self heal        if (healthPct < 50.0f && _bot->HasSpell(EXHILARATION) && CanUseAbility(EXHILARATION))
-        {            if (CastSpell(EXHILARATION))
+
+        {
+        if (CastSpell(EXHILARATION))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Exhilaration for healing",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
 
         // Disengage for creating distance
         if (target && GetDistanceToTarget(target) < DEAD_ZONE_MAX)
-        {            if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE) &&
+
+        {
+        if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE) &&
+
                 now - _lastDisengage > 20000) // 20 second cooldown
+
             {
+
                 if (CastSpell(HUNTER_DISENGAGE))
+
                 {
+
                     _lastDisengage = now;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Disengage to escape dead zone",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
     }
@@ -276,38 +357,60 @@ bool HunterAI::HandlePositioning(::Unit* target)
         // Check if in dead zone
         if (IsInDeadZone(target))
         {
+
             _combatMetrics.timeInDeadZone += 0.1f;
 
             // Try to get out of dead zone            if (distance < DEAD_ZONE_MAX)
+
             {
                 // Too close - use disengage or move back                if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE))
+
                 {
+
                     uint32 now = GameTime::GetGameTimeMS();
+
                     if (now - _lastDisengage > 20000)
+
                     {
+
                         if (CastSpell(HUNTER_DISENGAGE))
+
                         {
+
                             _lastDisengage = now;
+
                             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} disengaged from dead zone",
+
                                          GetBot()->GetName());
+
                             return true;
+
                         }
+
                     }
+
                 }
 
                 // Use melee abilities while in dead zone                if (_bot->HasSpell(WING_CLIP) && CanUseAbility(WING_CLIP))
+
                 {
+
                     CastSpell(target, WING_CLIP);
+
                     return true;
+
                 }
 
                 // Movement will be handled by BotAI movement strategies
+
                 Position optimalPos = _combatBehaviors->GetOptimalPosition();
                 // Movement is handled externally
+
             }
         }
         else
         {
+
             _combatMetrics.timeAtRange += 0.1f;
         }
 
@@ -315,18 +418,29 @@ bool HunterAI::HandlePositioning(::Unit* target)
         if (NeedsToKite(target))
         {
             // Apply slowing effects            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
+
             {
+
                 if (CastSpell(target, CONCUSSIVE_SHOT))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} applied Concussive Shot for kiting",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Switch to Aspect of the Cheetah if needed            if (!_bot->IsInCombat() && distance > 40.0f)
+
             {
+
                 SwitchToMovementAspect();
+
             }
         }
     }
@@ -341,10 +455,15 @@ bool HunterAI::HandlePositioning(::Unit* target)
         uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastPetRevive > 10000) // Don't spam revive
         {
+
             RevivePet();
+
             _lastPetRevive = now;
+
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} reviving pet",
+
                          GetBot()->GetName());
+
             return true;
         }
     }
@@ -354,6 +473,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {
         CallPet();
         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} calling pet",
+
                      GetBot()->GetName());
         return true;    }
 
@@ -375,10 +495,15 @@ bool HunterAI::HandlePositioning(::Unit* target)
         uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastPetHeal > 3000) // Don't spam heal
         {
+
             HealPet();
+
             _lastPetHeal = now;
+
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} healing pet ({}% health)",
+
                          GetBot()->GetName(), static_cast<uint32>(GetPetHealthPercent()));
+
             return true;
         }
     }
@@ -392,6 +517,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {
         if (!priorityTarget)
         {
+
             return nullptr;
         }
         CommandPetAttack(target);
@@ -403,11 +529,17 @@ bool HunterAI::HandlePositioning(::Unit* target)
     if (target && GetCurrentSpecialization() == HunterSpec::BEAST_MASTERY)
     {        if (_bot->HasSpell(KILL_COMMAND) && CanUseAbility(KILL_COMMAND))
         {
+
             if (CastSpell(target, KILL_COMMAND))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Kill Command",
+
                              GetBot()->GetName());
+
                 return false; // Continue rotation
+
             }
         }
     }
@@ -425,21 +557,33 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {
         if (!bot)
         {
+
             if (!ccTarget)
+
             {
+
                 return nullptr;
+
             }
+
             return nullptr;
         }
         if (_bot->HasSpell(MASTER_S_CALL) && CanUseAbility(MASTER_S_CALL))
         {
-            if (CastSpell(MASTER_S_CALL))            {
+
+            if (CastSpell(MASTER_S_CALL))
+            {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Master's Call for freedom",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         if (!ccTarget)
         {
+
             return nullptr;
         }
         }
@@ -459,41 +603,74 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
+
                                      if (!priorityTarget)
-                                     {                                         TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method HasAura");
-                                         return nullptr;
-                                     }
-                                     if (!priorityTarget)
+
                                      {
+                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method HasAura");
+
+                                         return nullptr;
+
+                                     }
+
+                                     if (!priorityTarget)
+
+                                     {
+
                                          return;
+
                                      }
         {
             // Apply Hunter's Mark to new target            if (_bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
+
             {
+
                 if (!priorityTarget->HasAura(HUNTER_S_MARK))
+
                 {
+
                     if (CastSpell(priorityTarget, HUNTER_S_MARK))
+
                     {
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} marked priority target {}",
+
                                      GetBot()->GetName(), priorityTarget->GetName());
+
                     }
+
                 }
-            }            // Command pet to switch targets
+
+            }
+            // Command pet to switch targets
+
             if (HasActivePet())
+
             {
+
                 CommandPetAttack(priorityTarget);
+
                 _petTargetSwitch = GameTime::GetGameTimeMS();
+
             }
 
             // Update current target
+
             _currentTarget = priorityTarget->GetGUID();
+
                          if (!priorityTarget)
+
                          {
+
                              return;
+
                          }
 
+
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} switching to priority target {}",
+
                          GetBot()->GetName(), priorityTarget->GetName());
+
             return false; // Continue with new target
         }    }
     return false;
@@ -507,59 +684,110 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
     if (_combatBehaviors->ShouldUseCrowdControl())
     {
         ::Unit* ccTarget = GetBestCrowdControlTarget();
-        if (ccTarget && ccTarget != target)                                     if (!ccTarget)
+
+        if (ccTarget && ccTarget != target)
+        if (!ccTarget)
+
                                      {
+
                                          return nullptr;
+
                                      }
+
             if (!ccTarget)
+
             {
+
                 return nullptr;
+
             }
+
                                  if (!ccTarget)
+
                                  {
+
                                      return;
+
                                  }
         {
+
             uint32 now = GameTime::GetGameTimeMS();
 
             // Freezing Trap for long CC
+
             if (ShouldPlaceFreezingTrap(ccTarget))
+
             {
+
                 if (now - _lastTrapPlacement > 30000) // 30 second trap CD
+
                 {
+
                     PlaceTrap(FREEZING_TRAP, ccTarget->GetPosition());
+
                     _lastTrapPlacement = now;
+
                     _frozenTargets.insert(ccTarget->GetGUID());
+
                     _combatMetrics.trapsTriggered++;
-                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} placed Freezing Trap for {}",                                 GetBot()->GetName(), ccTarget->GetName());
+
+                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} placed Freezing Trap for {}",
+                    GetBot()->GetName(), ccTarget->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Scatter Shot for instant CC            if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
+
             {
-                if (CastSpell(ccTarget, SCATTER_SHOT))                {
+
+                if (CastSpell(ccTarget, SCATTER_SHOT))
+                {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Scatter Shot on {}",
+
                                  if (!ccTarget)
+
                                  {
+
                                      return;
+
                                  }
+
                                  GetBot()->GetName(), ccTarget->GetName());
+
                     return true;
+
                 }
+
             }
 
             // Concussive Shot for slowing            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
+
             {
+
                 if (CastSpell(ccTarget, CONCUSSIVE_SHOT))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} slowed {} with Concussive Shot",
-                                 if (!ccTarget)                                 {
+
+                                 if (!ccTarget)
+                                 {
+
                                      return;
+
                                  }
+
                                  GetBot()->GetName(), ccTarget->GetName());
+
                     return false; // Continue rotation
+
                 }
+
             }
         }
     }
@@ -576,57 +804,95 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
 
         // Multi-Shot for 3+ targets
         if (nearbyEnemies >= 3)
-        {            if (_bot->HasSpell(MULTI_SHOT) && CanUseAbility(MULTI_SHOT))
+
+        {
+        if (_bot->HasSpell(MULTI_SHOT) && CanUseAbility(MULTI_SHOT))
+
             {
+
                 if (CastSpell(target, MULTI_SHOT))
+
                 {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} using Multi-Shot on {} enemies",
+
                                  GetBot()->GetName(), nearbyEnemies);
+
                     return true;
+
                 }
+
             }
         }        // Volley for ground-targeted AoE
         if (nearbyEnemies >= 4 && _bot->HasSpell(VOLLEY) && CanUseAbility(VOLLEY))        {
             // Volley needs special handling for ground targeting
+
             Position aoeCenter = _combatBehaviors->GetOptimalPosition();
+
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} would cast Volley for {} enemies",
+
                          GetBot()->GetName(), nearbyEnemies);
             // Ground-targeted spell handling would go here
         }
 
         // Explosive Shot for Survival spec        if (GetCurrentSpecialization() == HunterSpec::SURVIVAL && nearbyEnemies >= 2)
         {
+
             if (_bot->HasSpell(EXPLOSIVE_SHOT) && CanUseAbility(EXPLOSIVE_SHOT))
+
             {
-                if (CastSpell(target, EXPLOSIVE_SHOT))                {
+
+                if (CastSpell(target, EXPLOSIVE_SHOT))
+                {
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} using Explosive Shot for AoE",
+
                                  GetBot()->GetName());
+
                     return true;
+
                 }
+
             }
         }
 
         // Barrage for modern AoE
         if (nearbyEnemies >= 3 && _bot->HasSpell(BARRAGE) && CanUseAbility(BARRAGE))        {
+
             if (CastSpell(target, BARRAGE))
+
             {
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} using Barrage for AoE",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
 
         // Place explosive trap for AoE damage
         if (ShouldPlaceExplosiveTrap())
         {
+
             uint32 now = GameTime::GetGameTimeMS();
+
             if (now - _lastTrapPlacement > 30000)
-            {                PlaceTrap(13813, target->GetPosition()); // Explosive Trap spell ID
+
+            {
+            PlaceTrap(13813, target->GetPosition()); // Explosive Trap spell ID
+
                 _lastTrapPlacement = now;
+
                 _combatMetrics.trapsTriggered++;
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} placed Explosive Trap for AoE",
+
                              GetBot()->GetName());
+
                 return true;
+
             }
         }
     }
@@ -643,61 +909,111 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
 
         switch (GetCurrentSpecialization())
         {
+
             case HunterSpec::BEAST_MASTERY:
                 // Bestial Wrath - pet damage boost                if (_bot->HasSpell(BESTIAL_WRATH) && CanUseAbility(BESTIAL_WRATH))
+
                 {
+
                     if (HasActivePet() && IsPetInCombat())
+
                     {
+
                         if (CastSpell(BESTIAL_WRATH))
-                        {                            TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Bestial Wrath",
+
+                        {
+                        TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Bestial Wrath",
+
                                          GetBot()->GetName());
+
                             usedCooldown = true;
+
                         }
+
                     }
+
                 }
 
                 // Aspect of the Wild - BM cooldown                if (_bot->HasSpell(ASPECT_OF_THE_WILD) && CanUseAbility(ASPECT_OF_THE_WILD))
+
                 {
+
                     if (CastSpell(ASPECT_OF_THE_WILD))
+
                     {
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Aspect of the Wild",
+
                                      GetBot()->GetName());
+
                         usedCooldown = true;
+
                     }
+
                 }
+
                 break;
+
 
             case HunterSpec::MARKSMANSHIP:
                 // Trueshot - MM burst                if (_bot->HasSpell(TRUESHOT) && CanUseAbility(TRUESHOT))
+
                 {
+
                     if (CastSpell(TRUESHOT))
-                    {                        TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Trueshot",
+
+                    {
+                    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Trueshot",
+
                                      GetBot()->GetName());
+
                         usedCooldown = true;
+
                     }
+
                 }
 
                 // Rapid Fire for attack speed                if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
+
                 {
+
                     if (CastSpell(RAPID_FIRE))
+
                     {
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Rapid Fire",
+
                                      GetBot()->GetName());
+
                         usedCooldown = true;
+
                     }
+
                 }
+
                 break;
 
-            case HunterSpec::SURVIVAL:                // Coordinated Assault or similar survival cooldowns
+
+            case HunterSpec::SURVIVAL:
+            // Coordinated Assault or similar survival cooldowns
                 // Survival uses different cooldowns depending on version                if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
+
                 {
+
                     if (CastSpell(RAPID_FIRE))
+
                     {
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} activated Rapid Fire",
+
                                      GetBot()->GetName());
+
                         usedCooldown = true;
+
                     }
+
                 }
+
                 break;
         }
 
@@ -726,7 +1042,9 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
     {
         if (CastSpell(target, KILL_SHOT))
         {
+
             RecordShotResult(true, false);
+
             return;
         }
     }
@@ -805,6 +1123,7 @@ void HunterAI::OnCombatStart(::Unit* target)
     }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} entering combat with {}",
+
                  GetBot()->GetName(), target ? target->GetName() : "null");
 
     ClassAI::OnCombatStart(target);
@@ -840,7 +1159,9 @@ void HunterAI::OnCombatEnd(){
     {
         if (power && power->Power == POWER_FOCUS)
         {
+
             uint32 focusCost = power->ManaCost;
+
             return HasFocus(focusCost);
         }
     }
@@ -863,7 +1184,9 @@ void HunterAI::ConsumeResource(uint32 spellId)
     {
         if (power && power->Power == POWER_FOCUS)
         {
+
             _combatMetrics.focusSpent += power->ManaCost;
+
             break;
         }
     }
@@ -918,12 +1241,16 @@ HunterSpec HunterAI::GetCurrentSpecialization() const
     switch (spec)
     {
         case 253: // Beast Mastery
+
             return HunterSpec::BEAST_MASTERY;
         case 254: // Marksmanship
+
             return HunterSpec::MARKSMANSHIP;
         case 255: // Survival
+
             return HunterSpec::SURVIVAL;
         default:
+
             return HunterSpec::BEAST_MASTERY;
     }
 }
@@ -1112,6 +1439,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return false;
     }    // Query nearby GUIDs (lock-free!)
     std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
@@ -1128,6 +1456,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
 
         }
         if (!entity)
+
             continue;
         // Original filtering logic goes here
     }
@@ -1135,7 +1464,9 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
 
         if (target)
         {
-            minDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        }
+
+            minDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+            }
         return minDistance > DEAD_ZONE_MIN && minDistance <= DEAD_ZONE_MAX;
     }
 
@@ -1167,15 +1498,21 @@ void HunterAI::MaintainRange(::Unit* target){
         // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());        if (botAI && botAI->GetMovementArbiter())
         {
+
             botAI->RequestPointMovement(
+
                 PlayerBotMovementPriority::ROLE_POSITIONING,
+
                 pos,
+
                 "Hunter optimal range positioning (too close)",
+
                 "HunterAI");
         }
         else
         {
             // FALLBACK: Direct MotionMaster if arbiter not available
+
             _bot->GetMotionMaster()->MovePoint(0, pos);
         }
     }
@@ -1187,6 +1524,7 @@ void HunterAI::MaintainRange(::Unit* target){
         MotionMaster* mm = _bot->GetMotionMaster();
         if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) != CHASE_MOTION_TYPE)
         {
+
             mm->MoveChase(target, OPTIMAL_RANGE_PREFERRED);
         }
     }
@@ -1212,10 +1550,16 @@ void HunterAI::ManageAspects()
     {
         uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastAspectSwitch > 1000) // 1 second GCD
-        {            if (_bot->HasSpell(optimalAspect) && CanUseAbility(optimalAspect))
+
+        {
+        if (_bot->HasSpell(optimalAspect) && CanUseAbility(optimalAspect))
+
             {
+
                 CastSpell(optimalAspect);
+
                 _lastAspectSwitch = now;
+
             }
         }
     }
@@ -1245,53 +1589,95 @@ void HunterAI::UpdateTracking()
     {
         if (target->GetTypeId() == TYPEID_UNIT)
         {
+
             Creature* creature = target->ToCreature();
+
             if (creature)
+
             {
+
                 CreatureType creatureType = creature->GetCreatureTemplate()->type;
 
+
                 switch (creatureType)
+
                 {
+
                     case CREATURE_TYPE_BEAST:
+
                         if (_bot->HasSpell(TRACK_BEASTS))
+
                             optimalTracking = TRACK_BEASTS;
+
                         break;
+
                     case CREATURE_TYPE_DEMON:
+
                         if (_bot->HasSpell(TRACK_DEMONS))
+
                             optimalTracking = TRACK_DEMONS;
+
                         break;
+
                     case CREATURE_TYPE_DRAGONKIN:
+
                         if (_bot->HasSpell(TRACK_DRAGONKIN))
+
                             optimalTracking = TRACK_DRAGONKIN;
+
                         break;
+
                     case CREATURE_TYPE_ELEMENTAL:
+
                         if (_bot->HasSpell(TRACK_ELEMENTALS))
+
                             optimalTracking = TRACK_ELEMENTALS;
+
                         break;
+
                     case CREATURE_TYPE_GIANT:
+
                         if (_bot->HasSpell(TRACK_GIANTS))
+
                             optimalTracking = TRACK_GIANTS;
+
                         break;
+
                     case CREATURE_TYPE_HUMANOID:
+
                         if (_bot->HasSpell(TRACK_HUMANOIDS))
+
                             optimalTracking = TRACK_HUMANOIDS;
+
                         break;
+
                     case CREATURE_TYPE_UNDEAD:
+
                         if (_bot->HasSpell(TRACK_UNDEAD))
+
                             optimalTracking = TRACK_UNDEAD;
+
                         break;
+
                     default:
                         // For other types, default to humanoid tracking if in PvP zone
+
                         if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
+
                             optimalTracking = TRACK_HUMANOIDS;
+
                         break;
+
                 }
+
             }
         }
         else if (target->GetTypeId() == TYPEID_PLAYER)
         {
             // Tracking players with Track Humanoids
+
             if (_bot->HasSpell(TRACK_HUMANOIDS))
+
                 optimalTracking = TRACK_HUMANOIDS;
         }
     }
@@ -1309,10 +1695,14 @@ void HunterAI::UpdateTracking()
 
         for (Creature* creature : nearbyCreatures)
         {
+
             if (!creature || creature->IsFriendlyTo(_bot))
+
                 continue;
 
+
             CreatureType type = creature->GetCreatureTemplate()->type;
+
             creatureTypeCounts[type]++;
         }
 
@@ -1322,48 +1712,86 @@ void HunterAI::UpdateTracking()
 
         for (const auto& [type, count] : creatureTypeCounts)
         {
+
             if (count > maxCount)
+
             {
+
                 maxCount = count;
+
                 mostCommonType = type;
+
             }
         }
 
         // Apply tracking for most common type
         if (maxCount > 0)
         {
+
             switch (mostCommonType)
+
             {
+
                 case CREATURE_TYPE_BEAST:
+
                     if (_bot->HasSpell(TRACK_BEASTS))
+
                         optimalTracking = TRACK_BEASTS;
+
                     break;
+
                 case CREATURE_TYPE_DEMON:
+
                     if (_bot->HasSpell(TRACK_DEMONS))
+
                         optimalTracking = TRACK_DEMONS;
+
                     break;
+
                 case CREATURE_TYPE_DRAGONKIN:
+
                     if (_bot->HasSpell(TRACK_DRAGONKIN))
+
                         optimalTracking = TRACK_DRAGONKIN;
+
                     break;
+
                 case CREATURE_TYPE_ELEMENTAL:
+
                     if (_bot->HasSpell(TRACK_ELEMENTALS))
+
                         optimalTracking = TRACK_ELEMENTALS;
+
                     break;
+
                 case CREATURE_TYPE_GIANT:
+
                     if (_bot->HasSpell(TRACK_GIANTS))
+
                         optimalTracking = TRACK_GIANTS;
+
                     break;
+
                 case CREATURE_TYPE_HUMANOID:
+
                     if (_bot->HasSpell(TRACK_HUMANOIDS))
+
                         optimalTracking = TRACK_HUMANOIDS;
+
                     break;
+
                 case CREATURE_TYPE_UNDEAD:
+
                     if (_bot->HasSpell(TRACK_UNDEAD))
+
                         optimalTracking = TRACK_UNDEAD;
+
                     break;
+
                 default:
+
                     break;
+
             }
         }
     }
@@ -1374,16 +1802,19 @@ void HunterAI::UpdateTracking()
         // In dungeons/raids, prioritize Track Hidden for stealth detection
         if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
         {
+
             optimalTracking = TRACK_HIDDEN;
         }
         // In PvP zones, track humanoids
         else if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
         {
+
             optimalTracking = TRACK_HUMANOIDS;
         }
         // Default to beast tracking in open world
         else if (_bot->HasSpell(TRACK_BEASTS))
         {
+
             optimalTracking = TRACK_BEASTS;
         }
     }
@@ -1393,7 +1824,9 @@ void HunterAI::UpdateTracking()
     {
         if (CastSpell(_bot, optimalTracking))
         {
+
             TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched tracking to spell {}",
+
                          _bot->GetName(), optimalTracking);
         }
     }
@@ -1449,6 +1882,7 @@ uint32 HunterAI::GetOptimalAspect() const
     if (_bot->IsInCombat())
     {
         // Low on focus? Use Viper        if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
+
             return ASPECT_OF_THE_VIPER;
 
         // Normal combat aspect        return _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
@@ -1494,6 +1928,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return nullptr;
     }
 
@@ -1512,6 +1947,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
 
         }
         if (!entity)
+
             continue;
         // Original filtering logic goes here
     }
@@ -1523,11 +1959,17 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     {
         if (unit && unit != currentTarget && unit->IsAlive())
         {
+
             float healthPct = unit->GetHealthPct();
+
             if (healthPct < lowestHealth)
+
             {
+
                 lowestHealth = healthPct;
+
                 bestTarget = unit;
+
             }
         }
     }
@@ -1550,6 +1992,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return 0;
     }
 
@@ -1568,6 +2011,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
 
         }
         if (!entity)
+
             continue;
         // Original filtering logic goes here
     }
@@ -1601,21 +2045,37 @@ void HunterAI::LogCombatMetrics()
         return;
 
     TC_LOG_DEBUG("module.playerbot.ai",
+
                  "Hunter {} combat ended - Shots: {}/{}, Crits: {}, Interrupts: {}, Traps: {}, Pet Commands: {}, "
+
                  "Focus Spent: {}, Damage: {}, Time at Range: {:.1f}s, Time in Dead Zone: {:.1f}s, "
+
                  "Avg Update: {} us, Peak: {} us",
+
                  GetBot()->GetName(),
+
                  uint32(_combatMetrics.shotsLanded.load()),
+
                  uint32(_combatMetrics.shotsMissed.load()),
+
                  uint32(_combatMetrics.criticalStrikes.load()),
+
                  uint32(_combatMetrics.interrupts.load()),
+
                  uint32(_combatMetrics.trapsTriggered.load()),
+
                  uint32(_combatMetrics.petCommands.load()),
+
                  uint32(_combatMetrics.focusSpent.load()),
+
                  uint32(_combatMetrics.damageDealt.load()),
+
                  _combatMetrics.timeAtRange.load(),
+
                  _combatMetrics.timeInDeadZone.load(),
+
                  _totalUpdateTime / _updateCounter,
+
                  _peakUpdateTime);
 }
 
@@ -1632,13 +2092,20 @@ Player* HunterAI::GetMainTank()
         Player* member = itr.GetSource();
         if (member)
         {
+
             uint8 playerClass = member->GetClass();
             // Typical tank classes: Warrior, Paladin, Death Knight, Druid (in bear form)
+
             if (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
+
                 playerClass == CLASS_DEATH_KNIGHT || playerClass == CLASS_DRUID)
+
             {
+
                 tank = member;
+
                 break; // Use first potential tank found
+
             }
         }
     }
@@ -1672,6 +2139,7 @@ void HunterAI::RecordShotResult(bool hit, bool crit)
     {
         _combatMetrics.shotsLanded++;
         if (crit)
+
             _combatMetrics.criticalStrikes++;
     }
     else
@@ -1684,6 +2152,7 @@ void HunterAI::RecordTrapPlacement(uint32 trapSpell)
 {
     _combatMetrics.trapsTriggered++;
     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} placed trap type {}",
+
                  GetBot()->GetName(), trapSpell);
 }
 

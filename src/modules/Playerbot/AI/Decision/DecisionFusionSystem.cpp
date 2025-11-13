@@ -74,6 +74,7 @@ void DecisionFusionSystem::NormalizeWeights()
     if (sum > 0.0f)
     {
         for (float& weight : _systemWeights)
+
             weight /= sum;
     }
 }
@@ -93,6 +94,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     if (_debugLogging)
     {
         TC_LOG_DEBUG("playerbot", "DecisionFusionSystem: Collecting votes for bot {}, context {}",
+
             bot->GetName(), static_cast<uint32>(context));
     }
 
@@ -111,31 +113,57 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
 
         switch (activePriority)
         {
-            case BehaviorPriority::COMBAT:    urgency = 1.0f; break;
+
+            case BehaviorPriority::COMBAT:
+            urgency = 1.0f; break;
+
             case BehaviorPriority::FLEEING:   urgency = 0.95f; break;
+
             case BehaviorPriority::CASTING:   urgency = 0.7f; break;
-            case BehaviorPriority::FOLLOW:    urgency = 0.5f; break;
+
+            case BehaviorPriority::FOLLOW:
+            urgency = 0.5f; break;
+
             case BehaviorPriority::MOVEMENT:  urgency = 0.4f; break;
+
             case BehaviorPriority::GATHERING: urgency = 0.3f; break;
+
             case BehaviorPriority::TRADING:   urgency = 0.2f; break;
-            case BehaviorPriority::SOCIAL:    urgency = 0.1f; break;
-            case BehaviorPriority::SOLO:      urgency = 0.1f; break;
-            default:                          urgency = 0.0f; break;
+
+            case BehaviorPriority::SOCIAL:
+            urgency = 0.1f; break;
+
+            case BehaviorPriority::SOLO:
+            urgency = 0.1f; break;
+
+            default:
+            urgency = 0.0f; break;
         }
 
         if (urgency > 0.0f)
         {
+
             DecisionVote vote(
+
                 DecisionSource::BEHAVIOR_PRIORITY,
+
                 static_cast<uint32>(activePriority),
+
                 nullptr, // BehaviorPriority doesn't specify targets
+
                 confidence,
+
                 urgency,
+
                 "BehaviorPriority: Active priority"
+
             );
+
             votes.push_back(vote);
 
+
             if (_debugLogging)
+
                 LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_PRIORITY)]));
         }
     }
@@ -148,9 +176,12 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
         DecisionVote vote = priorityQueue->GetVote(bot, ai->GetCurrentTarget(), context);
         if (vote.actionId != 0)
         {
+
             votes.push_back(vote);
 
+
             if (_debugLogging)
+
                 LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::ACTION_PRIORITY)]));
         }
     }
@@ -167,9 +198,12 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
         DecisionVote vote = behaviorTree->GetVote(bot, ai->GetCurrentTarget(), context);
         if (vote.actionId != 0)
         {
+
             votes.push_back(vote);
 
+
             if (_debugLogging)
+
                 LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::BEHAVIOR_TREE)]));
         }
     }
@@ -205,57 +239,92 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
         if (!candidateSpells.empty() && candidateSpells.size() <= 50) // Limit to top 50 for performance
         {
             // Determine bot role for scoring
+
             BotRole role = DetermineBotRole(bot);
 
             // Create scoring engine for current context and role
+
             ActionScoringEngine scorer(role, context);
 
             // Score all candidate spells using utility-based evaluation
+
             auto scores = scorer.ScoreActions(candidateSpells,
+
                 [&](ScoringCategory category, uint32 spellId) -> float
+
                 {
                     // Category evaluator: returns 0.0-1.0 value for each category
+
                     return EvaluateScoringCategory(category, bot, ai->GetCurrentTarget(), spellId, context);
+
                 });
 
             // Get best action from scored list
+
             uint32 bestAction = scorer.GetBestAction(scores);
 
+
             if (bestAction != 0)
+
             {
                 // Find the score details for the best action
+
                 auto it = std::find_if(scores.begin(), scores.end(),
+
                     [bestAction](const ActionScore& s) { return s.actionId == bestAction; });
 
+
                 if (it != scores.end())
+
                 {
                     // Create vote with utility-based confidence
                     // Normalize total score to 0-1 confidence (typical scores: 0-500)
+
                     float confidence = std::min(it->totalScore / 500.0f, 1.0f);
 
                     // Urgency based on survival and group protection scores
+
                     float survivalScore = it->GetCategoryScore(ScoringCategory::SURVIVAL);
+
                     float protectionScore = it->GetCategoryScore(ScoringCategory::GROUP_PROTECTION);
+
                     float urgency = std::min((survivalScore + protectionScore) / 2.0f, 1.0f);
 
+
                     DecisionVote vote(
+
                         DecisionSource::WEIGHTING_SYSTEM,
+
                         bestAction,
+
                         ai->GetCurrentTarget(),
+
                         confidence,
+
                         urgency,
+
                         "ActionScoring: Utility-based selection (score: " + std::to_string(static_cast<int>(it->totalScore)) + ")"
+
                     );
+
 
                     votes.push_back(vote);
 
+
                     if (_debugLogging)
+
                     {
+
                         TC_LOG_DEBUG("playerbot", "ActionScoring: Selected spell {} with score {:.1f}",
+
                             bestAction, it->totalScore);
+
                         LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::WEIGHTING_SYSTEM)]));
+
                     }
+
                 }
+
             }
         }
     }
@@ -299,6 +368,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
         ++_stats.systemWins[static_cast<size_t>(urgentVote->source)];
 
         if (_debugLogging)
+
             LogDecision(result, votes);
 
         return result;
@@ -309,6 +379,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
     for (const auto& vote : votes)
     {
         if (vote.actionId != 0)
+
             votesByAction[vote.actionId].push_back(&vote);
     }
 
@@ -336,19 +407,30 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
 
         for (const DecisionVote* vote : actionVotes)
         {
+
             float weightedScore = vote->CalculateWeightedScore(_systemWeights[static_cast<size_t>(vote->source)]);
+
             consensus.consensusScore += weightedScore;
+
             consensus.contributingVotes.push_back(*vote);
 
             // Track highest scoring vote for target selection
+
             if (weightedScore > highestVoteScore)
+
             {
+
                 highestVoteScore = weightedScore;
+
                 consensus.target = vote->target;
+
                 consensus.primarySource = vote->source;
+
             }
 
+
             if (_debugLogging)
+
                 LogVote(*vote, weightedScore);
         }
 
@@ -361,6 +443,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
 
     auto bestConsensus = std::max_element(consensuses.begin(), consensuses.end(),
         [](const ActionConsensus& a, const ActionConsensus& b) {
+
             return a.consensusScore < b.consensusScore;
         });
 
@@ -376,6 +459,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
     for (size_t i = 0; i < result.contributingVotes.size(); ++i)
     {
         if (i > 0)
+
             reasoning << ", ";
         reasoning << GetSourceName(result.contributingVotes[i].source);
     }
@@ -420,8 +504,10 @@ void DecisionFusionSystem::LogDecision(const DecisionResult& result, const std::
     for (size_t i = 0; i < result.contributingVotes.size(); ++i)
     {
         if (i > 0)
+
             systems << ", ";
         systems << GetSourceName(result.contributingVotes[i].source)
+
                 << " (" << result.contributingVotes[i].confidence << ")";
     }
 
@@ -437,11 +523,14 @@ bool DecisionFusionSystem::AreVotesUnanimous(const std::vector<DecisionVote>& vo
     for (const auto& vote : votes)
     {
         if (vote.actionId == 0)
+
             continue;
 
         if (firstAction == 0)
+
             firstAction = vote.actionId;
         else if (firstAction != vote.actionId)
+
             return false;
     }
 
@@ -457,7 +546,9 @@ const DecisionVote* DecisionFusionSystem::FindHighestUrgencyVote(const std::vect
     {
         if (vote.urgency > maxUrgency)
         {
+
             maxUrgency = vote.urgency;
+
             highestUrgency = &vote;
         }
     }
@@ -474,7 +565,9 @@ const char* DecisionFusionSystem::GetSourceName(DecisionSource source)
         case DecisionSource::BEHAVIOR_TREE:      return "BehaviorTree";
         case DecisionSource::ADAPTIVE_BEHAVIOR:  return "AdaptiveBehavior";
         case DecisionSource::WEIGHTING_SYSTEM:   return "WeightingSystem";
-        default:                                  return "Unknown";
+
+        default:
+        return "Unknown";
     }
 }
 
@@ -495,41 +588,64 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
     switch (playerClass)
     {
         case CLASS_WARRIOR:
+
             return (spec == 2) ? BotRole::TANK : BotRole::MELEE_DPS; // Prot = Tank
 
         case CLASS_PALADIN:
+
             if (spec == 1) return BotRole::HEALER;  // Holy
-            if (spec == 2) return BotRole::TANK;    // Prot
-            return BotRole::MELEE_DPS;              // Ret
+
+            if (spec == 2) return BotRole::TANK;
+            // Prot
+
+            return BotRole::MELEE_DPS;
+            // Ret
 
         case CLASS_HUNTER:
+
             return BotRole::RANGED_DPS;
 
         case CLASS_ROGUE:
+
             return BotRole::MELEE_DPS;
 
         case CLASS_PRIEST:
+
             return (spec == 3) ? BotRole::RANGED_DPS : BotRole::HEALER; // Shadow = DPS
 
         case CLASS_DEATH_KNIGHT:
+
             return (spec == 1) ? BotRole::TANK : BotRole::MELEE_DPS; // Blood = Tank
 
         case CLASS_SHAMAN:
-            if (spec == 3) return BotRole::HEALER;      // Resto
+
+            if (spec == 3) return BotRole::HEALER;
+            // Resto
+
             if (spec == 1) return BotRole::RANGED_DPS;  // Ele
-            return BotRole::MELEE_DPS;                  // Enh
+
+            return BotRole::MELEE_DPS;
+            // Enh
 
         case CLASS_MAGE:
         case CLASS_WARLOCK:
+
             return BotRole::RANGED_DPS;
 
         case CLASS_DRUID:
+
             if (spec == 0) return BotRole::RANGED_DPS;  // Balance
+
             if (spec == 1) return BotRole::MELEE_DPS;   // Feral (DPS)
-            if (spec == 2) return BotRole::TANK;        // Feral (Tank) / Guardian
-            return BotRole::HEALER;                      // Resto
+
+            if (spec == 2) return BotRole::TANK;
+            // Feral (Tank) / Guardian
+
+            return BotRole::HEALER;
+            // Resto
 
         default:
+
             return BotRole::RANGED_DPS;
     }
 }
@@ -550,87 +666,146 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::SURVIVAL:
         {
             // Higher score when bot's health is lower
+
             float healthPct = bot->GetHealthPct();
+
             if (healthPct < 20.0f)
+
                 return 1.0f;  // Critical
+
             if (healthPct < 40.0f)
+
                 return 0.8f;  // Urgent
+
             if (healthPct < 60.0f)
+
                 return 0.5f;  // Moderate
+
             if (healthPct < 80.0f)
+
                 return 0.2f;  // Low
-            return 0.0f;       // No survival concern
+
+            return 0.0f;
+            // No survival concern
         }
 
         case ScoringCategory::GROUP_PROTECTION:
         {
             // Score based on group members' health and threat
+
             if (Group* group = bot->GetGroup())
+
             {
+
                 uint32 membersNeedingHelp = 0;
+
                 uint32 totalMembers = 0;
 
+
                 for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+
                 {
+
                     if (Player* member = ref->GetSource())
+
                     {
+
                         if (member->IsAlive())
+
                         {
+
                             totalMembers++;
+
                             if (member->GetHealthPct() < 60.0f)
+
                                 membersNeedingHelp++;
+
                         }
+
                     }
+
                 }
 
+
                 if (totalMembers > 0)
+
                 {
+
                     float helpRatio = static_cast<float>(membersNeedingHelp) / static_cast<float>(totalMembers);
+
                     return std::min(helpRatio, 1.0f);
+
                 }
+
             }
+
             return 0.0f;
         }
 
         case ScoringCategory::DAMAGE_OPTIMIZATION:
         {
             // Score based on target health and DPS opportunity
+
             if (!target || !target->IsAlive())
+
                 return 0.0f;
+
 
             float targetHealthPct = target->GetHealthPct();
 
             // Execute range (< 20% HP) = high priority
+
             if (targetHealthPct < 20.0f)
+
                 return 0.9f;
 
             // Normal DPS window
+
             if (targetHealthPct > 80.0f)
+
                 return 0.7f; // Fresh target, good DPS opportunity
 
             // Mid-fight
+
             return 0.5f;
         }
 
         case ScoringCategory::RESOURCE_EFFICIENCY:
         {
             // Score based on mana/resource levels
+
             Powers powerType = bot->GetPowerType();
+
             if (powerType == POWER_MANA)
+
             {
+
                 float manaPct = bot->GetPowerPct(POWER_MANA);
+
                 if (manaPct < 20.0f)
+
                     return 1.0f; // Very high priority to conserve
+
                 if (manaPct < 40.0f)
+
                     return 0.7f; // High priority
+
                 if (manaPct < 60.0f)
+
                     return 0.4f; // Moderate
-                return 0.1f;     // Plenty of mana
+
+                return 0.1f;
+                // Plenty of mana
+
             }
+
             else
+
             {
                 // For non-mana users (warriors, rogues, etc.), always low priority
+
                 return 0.1f;
+
             }
         }
 
@@ -638,45 +813,67 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         {
             // Score based on positioning needs
             // For now, basic implementation based on range
+
             if (!target)
+
                 return 0.0f;
+
 
             float distance = bot->GetDistance(target);
 
             // Melee range
+
             if (distance < 5.0f)
+
                 return 0.2f; // Good positioning for melee
 
             // Mid range
+
             if (distance < 30.0f)
+
                 return 0.5f; // Good positioning for ranged
 
             // Too far
+
             return 0.8f; // Need to reposition
         }
 
         case ScoringCategory::STRATEGIC_VALUE:
         {
             // Score based on context and fight phase
+
             switch (context)
+
             {
+
                 case CombatContext::RAID_MYTHIC:
+
                 case CombatContext::RAID_HEROIC:
+
                     return 0.8f; // High strategic importance in raids
 
+
                 case CombatContext::DUNGEON_BOSS:
+
                     return 0.6f; // Moderate strategic importance
 
+
                 case CombatContext::PVP_ARENA:
+
                 case CombatContext::PVP_BG:
+
                     return 0.7f; // High strategic importance in PvP
 
+
                 default:
+
                     return 0.3f; // Lower strategic importance in solo/trash
+
             }
         }
 
         default:
+
             return 0.0f;
     }
 }

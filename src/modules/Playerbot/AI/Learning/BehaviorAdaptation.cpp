@@ -515,7 +515,7 @@ std::vector<float> BehaviorAdaptation::ExtractCombatFeatures(Player* bot, Unit* 
     features.push_back(bot->GetFloatValue(PLAYER_FIELD_PARRY_PERCENTAGE) / 100.0f);
 
     // Cooldown availability (simplified)
-    features.push_back(bot->HasSpellCooldown(61304) ? 0.0f : 1.0f);  // Global cooldown check
+    features.push_back(bot->GetSpellHistory()->HasCooldown(61304) ? 0.0f : 1.0f);  // Global cooldown check
 
     // Buff/debuff counts
     uint32_t buffCount = 0, debuffCount = 0;

@@ -926,6 +926,10 @@ SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
                      result.failureReason);
         return SPELL_FAILED_ERROR;
     }
+	bool ClassAI::CastSpell(uint32 spellId)
+{
+    // Self-cast version
+    return CastSpell(GetBot(), spellId);
 }
 
 // ============================================================================

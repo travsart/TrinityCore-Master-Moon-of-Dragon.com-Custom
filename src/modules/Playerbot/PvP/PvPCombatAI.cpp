@@ -320,7 +320,7 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
         return false;
 
     // Cast CC
-    if (player->HasSpellCooldown(ccSpellId))
+    if (player->GetSpellHistory()->HasCooldown(ccSpellId))
         return false;
 
     // Full implementation: Cast spell using TrinityCore spell system
@@ -431,7 +431,7 @@ bool PvPCombatAI::UseDefensiveCooldown(::Player* player)
     if (cdSpellId == 0)
         return false;
 
-    if (player->HasSpellCooldown(cdSpellId))
+    if (player->GetSpellHistory()->HasCooldown(cdSpellId))
         return false;
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Player {} using defensive cooldown {}",
@@ -489,7 +489,7 @@ uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
     // Find first available defensive
     for (uint32 spellId : defensives)
     {
-        if (!player->HasSpellCooldown(spellId))
+        if (!player->GetSpellHistory()->HasCooldown(spellId))
             return spellId;
     }
 
@@ -608,7 +608,7 @@ bool PvPCombatAI::StackOffensiveCooldowns(::Player* player)
 
     for (uint32 spellId : cooldowns)
     {
-        if (!player->HasSpellCooldown(spellId))
+        if (!player->GetSpellHistory()->HasCooldown(spellId))
         {
             // Full implementation: Cast spell
             TC_LOG_DEBUG("playerbot", "PvPCombatAI: Using offensive CD {}", spellId);
@@ -632,7 +632,7 @@ bool PvPCombatAI::InterruptCast(::Player* player, ::Unit* target)
     if (interruptSpell == 0)
         return false;
 
-    if (player->HasSpellCooldown(interruptSpell))
+    if (player->GetSpellHistory()->HasCooldown(interruptSpell))
         return false;
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Player {} interrupting target {} cast",
@@ -958,7 +958,7 @@ bool PvPCombatAI::HasCCAvailable(::Player* player, CCType ccType) const
         return false;
 
     uint32 spellId = GetCCSpellId(player, ccType);
-    return spellId != 0 && !player->HasSpellCooldown(spellId);
+    return spellId != 0 && !player->GetSpellHistory()->HasCooldown(spellId);
 }
 
 uint32 PvPCombatAI::GetCCSpellId(::Player* player, CCType ccType) const
@@ -1001,7 +1001,7 @@ bool PvPCombatAI::IsCCOnCooldown(::Player* player, CCType ccType) const
         return true;
 
     uint32 spellId = GetCCSpellId(player, ccType);
-    return spellId == 0 || player->HasSpellCooldown(spellId);
+    return spellId == 0 || player->GetSpellHistory()->HasCooldown(spellId);
 }
 
 std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const

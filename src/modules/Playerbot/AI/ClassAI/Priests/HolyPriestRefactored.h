@@ -78,6 +78,7 @@ public:
     {
         auto it = _renewTargets.find(guid);
         if (it == _renewTargets.end())
+
             return false;
         return GameTime::GetGameTimeMS() < it->second;
     }
@@ -86,10 +87,12 @@ public:
     {
         auto it = _renewTargets.find(guid);
         if (it == _renewTargets.end())
+
             return 0;
 
         uint32 now = GameTime::GetGameTimeMS();
         if (now >= it->second)
+
             return 0;
 
         return it->second - now;
@@ -107,7 +110,9 @@ public:
         uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _renewTargets)
         {
+
             if (now < pair.second)
+
                 ++count;
         }
         return count;
@@ -116,15 +121,20 @@ public:
     void Update(Player* bot)
     {
         if (!bot)
+
             return;
 
         // Clean up expired Renews
         uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _renewTargets.begin(); it != _renewTargets.end();)
         {
+
             if (now >= it->second)
+
                 it = _renewTargets.erase(it);
+
             else
+
                 ++it;
         }
     }
@@ -154,6 +164,7 @@ public:
     {
         auto it = _pomTargets.find(guid);
         if (it == _pomTargets.end())
+
             return false;
         return GameTime::GetGameTimeMS() < it->second;
     }
@@ -163,7 +174,9 @@ public:
         uint32 now = GameTime::GetGameTimeMS();
         for (const auto& pair : _pomTargets)
         {
+
             if (now < pair.second)
+
                 return true;
         }
         return false;
@@ -172,15 +185,20 @@ public:
     void Update(Player* bot)
     {
         if (!bot)
+
             return;
 
         // Clean up expired PoMs
         uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _pomTargets.begin(); it != _pomTargets.end();)
         {
+
             if (now >= it->second)
+
                 it = _pomTargets.erase(it);
+
             else
+
                 ++it;
         }
     }
@@ -212,10 +230,15 @@ public:
     {
         // Register cooldowns for major abilities
         _cooldowns.RegisterBatch({
+
             {HOLY_DIVINE_HYMN, 180000, 1},
+
             {HOLY_HOLY_WORD_SALVATION, 720000, 1},
+
             {HOLY_APOTHEOSIS, 120000, 1},
+
             {HOLY_GUARDIAN_SPIRIT, 180000, 1},
+
             {HOLY_SYMBOL_OF_HOPE, 300000, 1}
         });
 
@@ -228,6 +251,7 @@ public:
     void UpdateRotation(::Unit* target) override
     {
         Player* bot = this->GetBot();        if (!target || !bot)
+
             return;
 
         UpdateHolyState();
@@ -236,26 +260,42 @@ public:
         if (Group* group = bot->GetGroup())
         
         {
+
             std::vector<Unit*> groupMembers;
+
             for (GroupReference const& ref : group->GetMembers())
+
             {
-                if (Player* member = ref.GetSource())                {
+
+                if (Player* member = ref.GetSource())
+                {
+
                     if (member->IsAlive() && bot->IsInMap(member))
+
                         groupMembers.push_back(member);
+
                 }
+
             }
 
+
             if (!groupMembers.empty())
+
             {
+
                 if (HandleGroupHealing(groupMembers))
+
                     return;
+
             }
         }
 
         // Solo healing (self)
         if (bot->GetHealthPct() < 80.0f)
         {
+
             if (HandleSelfHealing())
+
                 return;
         }
 
@@ -267,14 +307,19 @@ public:
     {
         Player* bot = this->GetBot();
         if (!bot)
+
             return;
 
         // Power Word: Fortitude (group buff)
         if (!bot->HasAura(HOLY_POWER_WORD_FORTITUDE))
         {
+
             if (this->CanCastSpell(HOLY_POWER_WORD_FORTITUDE, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_POWER_WORD_FORTITUDE);
+
             }
         }
     }
@@ -283,6 +328,7 @@ public:
     {
         Player* bot = this->GetBot();
         if (!bot)
+
             return;
 
         float healthPct = bot->GetHealthPct();
@@ -290,28 +336,41 @@ public:
         // Desperate Prayer (self-heal + damage reduction)
         if (healthPct < 30.0f && this->CanCastSpell(HOLY_DESPERATE_PRAYER, bot))
         {
+
             this->CastSpell(bot, HOLY_DESPERATE_PRAYER);
+
             return;
         }
 
         // Guardian Spirit (self - cheat death)
         if (healthPct < 20.0f && (GameTime::GetGameTimeMS() - _lastGuardianSpiritTime) >= 120000)
         {
+
             if (this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_GUARDIAN_SPIRIT);
+
                 _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
+
                 return;
+
             }
         }
 
         // Fade (threat reduction)
         if (healthPct < 50.0f && bot->GetThreatManager().GetThreatListSize() > 0)
         {
+
             if (this->CanCastSpell(HOLY_FADE, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_FADE);
+
                 return;
+
             }
         }
     }
@@ -323,6 +382,7 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
+
             return;
 
         _renewTracker.Update(bot);
@@ -332,37 +392,49 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
+
             return;
 
         // Apotheosis state (massive healing cooldown)
         if (_apotheosisActive && GameTime::GetGameTimeMS() >= _apotheosisEndTime)
+
             _apotheosisActive = false;
 
         if (bot->HasAura(HOLY_APOTHEOSIS))
         {
+
             _apotheosisActive = true;
+
             if (Aura* aura = bot->GetAura(HOLY_APOTHEOSIS))
-                _apotheosisEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+
+                _apotheosisEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
+                }
     }
 
     bool HandleGroupHealing(const std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
+
             return true;
 
         // Maintain HoTs
         if (HandleHoTs(group))
+
             return true;
 
         // Holy Words (core spells)
         if (HandleHolyWords(group))
+
             return true;
 
         // AoE healing
         if (HandleAoEHealing(group))
-            return true;        // Direct healing
+
+            return true;
+            // Direct healing
         if (HandleDirectHealing(group))
+
             return true;
 
         return false;
@@ -374,18 +446,30 @@ private:
         uint32 criticalHealthCount = 0;
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 40.0f)
+
                 ++criticalHealthCount;
         }
 
         if (criticalHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastSalvationTime) >= 720000) // 12 min CD
-        {            if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
+
+        {
+        if (bot->HasSpell(HOLY_HOLY_WORD_SALVATION))
+
             {
+
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SALVATION, bot))
+
                 {
+
                     this->CastSpell(bot, HOLY_HOLY_WORD_SALVATION);
+
                     _lastSalvationTime = GameTime::GetGameTimeMS();
-                    return true;                }
+
+                    return true;
+                    }
+
             }
         }
 
@@ -393,63 +477,105 @@ private:
         uint32 lowHealthCount = 0;
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 60.0f)
+
                 ++lowHealthCount;
         }
 
         if (lowHealthCount >= 4 && (GameTime::GetGameTimeMS() - _lastDivineHymnTime) >= 180000) // 3 min CD
         {
+
             if (this->CanCastSpell(HOLY_DIVINE_HYMN, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_DIVINE_HYMN);
+
                 _lastDivineHymnTime = GameTime::GetGameTimeMS();
+
                 return true;
+
             }
         }
 
         // Apotheosis (healing burst mode)
         if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastApotheosisTime) >= 120000) // 2 min CD
-        {            if (bot->HasSpell(HOLY_APOTHEOSIS))
+
+        {
+        if (bot->HasSpell(HOLY_APOTHEOSIS))
+
             {
+
                 if (this->CanCastSpell(HOLY_APOTHEOSIS, bot))
+
                 {
-                    this->CastSpell(bot, HOLY_APOTHEOSIS);                    _apotheosisActive = true;
+
+                    this->CastSpell(bot, HOLY_APOTHEOSIS);
+                    _apotheosisActive = true;
+
                     _apotheosisEndTime = GameTime::GetGameTimeMS() + 20000; // 20 sec
-                    _lastApotheosisTime = GameTime::GetGameTimeMS();                    return true;
+
+                    _lastApotheosisTime = GameTime::GetGameTimeMS();
+                    return true;
+
                 }
+
             }
         }
 
         // Guardian Spirit (tank save)
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 25.0f && IsTankRole(member))
+
             {
+
                 if ((GameTime::GetGameTimeMS() - _lastGuardianSpiritTime) >= 120000) // 2 min CD
+
                 {
+
                     if (this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, member))
+
                     {
+
                         this->CastSpell(member, HOLY_GUARDIAN_SPIRIT);
+
                         _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
+
                         return true;
+
                     }
+
                 }
+
             }
         }
 
         // Symbol of Hope (mana emergency for group)
         Player* bot = this->GetBot();
         if (!bot)
+
             return false;
 
         uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);        if (manaPercent < 20 && (GameTime::GetGameTimeMS() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
         {
+
             if (bot->HasSpell(HOLY_SYMBOL_OF_HOPE))
-            {                if (this->CanCastSpell(HOLY_SYMBOL_OF_HOPE, bot))
+
+            {
+            if (this->CanCastSpell(HOLY_SYMBOL_OF_HOPE, bot))
+
                 {
+
                     this->CastSpell(bot, HOLY_SYMBOL_OF_HOPE);
+
                     _lastSymbolOfHopeTime = GameTime::GetGameTimeMS();
-                    return true;                }
+
+                    return true;
+                    }
+
             }
         }
 
@@ -463,35 +589,62 @@ private:
         // Prayer of Mending (bouncing heal)
         if (!_pomTracker.HasActivePomOnAnyTarget())
         {
-            for (Unit* member : group)            {
+
+            for (Unit* member : group)
+            {
+
                 if (member && member->GetHealthPct() < 95.0f)
+
                 {
+
                     if (this->CanCastSpell(HOLY_PRAYER_OF_MENDING, member))
+
                     {
+
                         this->CastSpell(member, HOLY_PRAYER_OF_MENDING);
+
                         _pomTracker.ApplyPoM(member->GetGUID(), 30000);
+
                         return true;
+
                     }
+
                 }
+
             }
         }
 
         // Renew on injured allies
         if (activeRenews < group.size())
         {
-            for (Unit* member : group)            {
+
+            for (Unit* member : group)
+            {
+
                 if (member && member->GetHealthPct() < 90.0f)
+
                 {
+
                     if (_renewTracker.NeedsRenewRefresh(member->GetGUID()))
+
                     {
+
                         if (this->CanCastSpell(HOLY_RENEW, member))
+
                         {
+
                             this->CastSpell(member, HOLY_RENEW);
+
                             _renewTracker.ApplyRenew(member->GetGUID(), 15000);
+
                             return true;
+
                         }
+
                     }
+
                 }
+
             }
         }
 
@@ -503,12 +656,20 @@ private:
         // Holy Word: Serenity (big single-target heal)
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 50.0f)
+
             {
-                if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))                {
+
+                if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))
+                {
+
                     this->CastSpell(member, HOLY_HOLY_WORD_SERENITY);
+
                     return true;
+
                 }
+
             }
         }
 
@@ -518,29 +679,48 @@ private:
 
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 80.0f)
+
             {
                 // Count nearby allies to this member
+
                 uint32 nearbyCount = 0;
+
                 for (Unit* other : group)
+
                 {
+
                     if (other && member->GetDistance(other) <= 10.0f && other->GetHealthPct() < 80.0f)
+
                         ++nearbyCount;
+
                 }
 
+
                 if (nearbyCount > stackedAlliesCount)
+
                 {
+
                     stackedAlliesCount = nearbyCount;
+
                     stackedTarget = member;
+
                 }
+
             }
         }
 
         if (stackedAlliesCount >= 3 && stackedTarget)
         {
+
             if (this->CanCastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget))
-            {                this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
+
+            {
+            this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
+
                 return true;
+
             }
         }
 
@@ -552,64 +732,110 @@ private:
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
         for (Unit* member : group)        {
+
             if (member && member->GetHealthPct() < 85.0f)
+
                 ++injuredCount;
         }
 
         if (injuredCount >= 3)
-        {            if (bot->HasSpell(HOLY_CIRCLE_OF_HEALING))
+
+        {
+        if (bot->HasSpell(HOLY_CIRCLE_OF_HEALING))
+
             {
+
                 for (Unit* member : group)
+
                 {
+
                     if (member && member->GetHealthPct() < 85.0f)
+
                     {
+
                         if (this->CanCastSpell(HOLY_CIRCLE_OF_HEALING, member))
+
                         {
+
                             this->CastSpell(member, HOLY_CIRCLE_OF_HEALING);
+
                             return true;
+
                         }
+
                     }
+
                 }
+
             }
         }
 
         // Prayer of Healing (group heal)
         if (injuredCount >= 3)
         {
+
             for (Unit* member : group)
+
             {
+
                 if (member && member->GetHealthPct() < 80.0f)
+
                 {
+
                     if (this->CanCastSpell(HOLY_PRAYER_OF_HEALING, member))
+
                     {
+
                         this->CastSpell(member, HOLY_PRAYER_OF_HEALING);
+
                         return true;
+
                     }
+
                 }
+
             }
         }
 
         // Divine Star (damage + healing)
         if (injuredCount >= 2)
-        {            if (bot->HasSpell(HOLY_DIVINE_STAR))
+
+        {
+        if (bot->HasSpell(HOLY_DIVINE_STAR))
+
             {
+
                 if (this->CanCastSpell(HOLY_DIVINE_STAR, bot))
+
                 {
+
                     this->CastSpell(bot, HOLY_DIVINE_STAR);
+
                     return true;
+
                 }
+
             }
         }
 
         // Halo (large AoE damage + healing)
         if (injuredCount >= 4)
-        {            if (bot->HasSpell(HOLY_HALO))
+
+        {
+        if (bot->HasSpell(HOLY_HALO))
+
             {
+
                 if (this->CanCastSpell(HOLY_HALO, bot))
+
                 {
+
                     this->CastSpell(bot, HOLY_HALO);
+
                     return true;
+
                 }
+
             }
         }
 
@@ -621,26 +847,42 @@ private:
         // Flash Heal for emergency
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 60.0f)
+
             {
+
                 if (this->CanCastSpell(HOLY_FLASH_HEAL, member))
+
                 {
+
                     this->CastSpell(member, HOLY_FLASH_HEAL);
+
                     return true;
+
                 }
+
             }
         }
 
         // Heal (efficient single-target)
         for (Unit* member : group)
         {
+
             if (member && member->GetHealthPct() < 80.0f)
+
             {
+
                 if (this->CanCastSpell(HOLY_HEAL, member))
+
                 {
+
                     this->CastSpell(member, HOLY_HEAL);
+
                     return true;
+
                 }
+
             }
         }        return false;
     }
@@ -649,36 +891,53 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
+
             return false;
 
         // Renew
         if (_renewTracker.NeedsRenewRefresh(bot->GetGUID()))
         {
+
             if (this->CanCastSpell(HOLY_RENEW, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_RENEW);
+
                 _renewTracker.ApplyRenew(bot->GetGUID(), 15000);
+
                 return true;
+
             }
         }
 
         // Flash Heal
         if (bot->GetHealthPct() < 60.0f)
         {
+
             if (this->CanCastSpell(HOLY_FLASH_HEAL, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_FLASH_HEAL);
+
                 return true;
+
             }
         }
 
         // Heal
         if (bot->GetHealthPct() < 80.0f)
         {
+
             if (this->CanCastSpell(HOLY_HEAL, bot))
+
             {
+
                 this->CastSpell(bot, HOLY_HEAL);
+
                 return true;
+
             }
         }
 
@@ -690,14 +949,18 @@ private:
         // Holy Fire (DoT + damage)
         if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
         {
+
             this->CastSpell(target, HOLY_HOLY_FIRE);
+
             return;
         }
 
         // Smite (filler)
         if (this->CanCastSpell(HOLY_SMITE, target))
         {
+
             this->CastSpell(target, HOLY_SMITE);
+
             return;
         }
     }
@@ -705,14 +968,18 @@ private:
     [[nodiscard]] bool IsTankRole(Unit* unit) const
     {
         if (!unit)
+
             return false;
 
         if (Player* player = unit->ToPlayer())
         {
             // Simplified tank detection - check if player is currently tanking
             // A more robust implementation would check spec, but talent API is deprecated
+
             if (Unit* victim = player->GetVictim())
-                return victim->GetVictim() == player;            return false;
+
+                return victim->GetVictim() == player;
+                return false;
         }
 
         return false;
@@ -725,54 +992,86 @@ private:
 
         BotAI* ai = this;
         if (!ai)
+
             return;
 
         auto* queue = ai->GetActionPriorityQueue();
         if (queue)
         {
             // EMERGENCY
+
             queue->RegisterSpell(HOLY_GUARDIAN_SPIRIT, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+
             queue->AddCondition(HOLY_GUARDIAN_SPIRIT, [this](Player* bot, Unit* target) {
+
                 return target && target->GetHealthPct() < 25.0f && this->IsTankRole(target);
+
             }, "Tank < 25%");
 
+
             queue->RegisterSpell(HOLY_DESPERATE_PRAYER, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+
             queue->AddCondition(HOLY_DESPERATE_PRAYER, [](Player* bot, Unit*) {
+
                 return bot->GetHealthPct() < 30.0f;
+
             }, "Self < 30%");
+
 
             queue->RegisterSpell(HOLY_HOLY_WORD_SALVATION, SpellPriority::EMERGENCY, SpellCategory::HEALING);
 
             // CRITICAL
+
             queue->RegisterSpell(HOLY_HOLY_WORD_SERENITY, SpellPriority::CRITICAL, SpellCategory::HEALING);
+
             queue->AddCondition(HOLY_HOLY_WORD_SERENITY, [](Player* bot, Unit* target) {
+
                 return target && target->GetHealthPct() < 50.0f;
+
             }, "Target < 50%");
 
+
             queue->RegisterSpell(HOLY_FLASH_HEAL, SpellPriority::CRITICAL, SpellCategory::HEALING);
+
             queue->AddCondition(HOLY_FLASH_HEAL, [](Player* bot, Unit* target) {
+
                 return target && target->GetHealthPct() < 60.0f;
+
             }, "Target < 60%");
+
 
             queue->RegisterSpell(HOLY_DIVINE_HYMN, SpellPriority::CRITICAL, SpellCategory::HEALING);
 
             // HIGH
+
             queue->RegisterSpell(HOLY_HOLY_WORD_SANCTIFY, SpellPriority::HIGH, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_PRAYER_OF_MENDING, SpellPriority::HIGH, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_RENEW, SpellPriority::HIGH, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_APOTHEOSIS, SpellPriority::HIGH, SpellCategory::OFFENSIVE);
 
             // MEDIUM
+
             queue->RegisterSpell(HOLY_CIRCLE_OF_HEALING, SpellPriority::MEDIUM, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_PRAYER_OF_HEALING, SpellPriority::MEDIUM, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_HEAL, SpellPriority::MEDIUM, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_DIVINE_STAR, SpellPriority::MEDIUM, SpellCategory::HEALING);
+
             queue->RegisterSpell(HOLY_HALO, SpellPriority::MEDIUM, SpellCategory::HEALING);
 
             // LOW
+
             queue->RegisterSpell(HOLY_HOLY_FIRE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+
             queue->RegisterSpell(HOLY_SMITE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+
             queue->RegisterSpell(HOLY_PURIFY, SpellPriority::LOW, SpellCategory::UTILITY);
+
 
             TC_LOG_INFO("module.playerbot", "✨ HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
         }
@@ -780,97 +1079,186 @@ private:
         auto* behaviorTree = ai->GetBehaviorTree();
         if (behaviorTree)
         {
+
             auto root = Selector("Holy Priest Healer", {
+
                 Sequence("Emergency", {
+
                     Condition("Critical", [](Player* bot, Unit*) {
+
                         if (bot->GetHealthPct() < 30.0f) return true;
+
                         Group* g = bot->GetGroup();
+
                         if (!g) return false;
+
                         for (GroupReference const& r : g->GetMembers())
+
                             if (Player* m = r.GetSource())
+
                                 if (m->IsAlive() && m->GetHealthPct() < 30.0f) return true;
+
                         return false;
+
                     }),
+
                     Selector("Response", {
+
                         Action("Guardian Spirit", [this](Player* bot, Unit*) {
+
                             Group* g = bot->GetGroup();
+
                             if (!g) return NodeStatus::FAILURE;
+
                             for (GroupReference const& r : g->GetMembers())
+
                                 if (Player* m = r.GetSource())
+
                                     if (m->IsAlive() && m->GetHealthPct() < 25.0f && this->IsTankRole(m) &&
+
                                         this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m)) {
+
                                         this->CastSpell(m, HOLY_GUARDIAN_SPIRIT);
+
                                         return NodeStatus::SUCCESS;
+
                                     }
+
                             return NodeStatus::FAILURE;
+
                         }),
+
                         Action("Flash Heal", [this](Player* bot, Unit*) {
+
                             Group* g = bot->GetGroup();
+
                             if (!g) return NodeStatus::FAILURE;
+
                             for (GroupReference const& r : g->GetMembers())
+
                                 if (Player* m = r.GetSource())
+
                                     if (m->IsAlive() && m->GetHealthPct() < 50.0f &&
+
                                         this->CanCastSpell(HOLY_FLASH_HEAL, m)) {
+
                                         this->CastSpell(m, HOLY_FLASH_HEAL);
+
                                         return NodeStatus::SUCCESS;
+
                                     }
+
                             return NodeStatus::FAILURE;
+
                         })
+
                     })
+
                 }),
+
 
                 Sequence("HoT Maintenance", {
+
                     Condition("Has group", [](Player* bot, Unit*) { return bot->GetGroup() != nullptr; }),
+
                     Selector("HoT Priority", {
+
                         Action("Prayer of Mending", [this](Player* bot, Unit*) {
+
                             if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
+
                                 Group* g = bot->GetGroup();
+
                                 if (!g) return NodeStatus::FAILURE;
+
                                 for (GroupReference const& r : g->GetMembers())
+
                                     if (Player* m = r.GetSource())
+
                                         if (m->IsAlive() && m->GetHealthPct() < 95.0f &&
+
                                             this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m)) {
+
                                             this->CastSpell(m, HOLY_PRAYER_OF_MENDING);
+
                                             this->_pomTracker.ApplyPoM(m->GetGUID(), 30000);
+
                                             return NodeStatus::SUCCESS;
+
                                         }
+
                             }
+
                             return NodeStatus::FAILURE;
+
                         }),
+
                         Action("Renew", [this](Player* bot, Unit*) {
+
                             Group* g = bot->GetGroup();
+
                             if (!g) return NodeStatus::FAILURE;
+
                             for (GroupReference const& r : g->GetMembers())
+
                                 if (Player* m = r.GetSource())
+
                                     if (m->IsAlive() && m->GetHealthPct() < 90.0f &&
+
                                         this->_renewTracker.NeedsRenewRefresh(m->GetGUID()) &&
+
                                         this->CanCastSpell(HOLY_RENEW, m)) {
+
                                         this->CastSpell(m, HOLY_RENEW);
+
                                         this->_renewTracker.ApplyRenew(m->GetGUID(), 15000);
+
                                         return NodeStatus::SUCCESS;
+
                                     }
+
                             return NodeStatus::FAILURE;
+
                         })
+
                     })
+
                 }),
 
+
                 Sequence("Direct Healing", {
+
                     Action("Heal", [this](Player* bot, Unit*) {
+
                         Group* g = bot->GetGroup();
+
                         if (!g) return NodeStatus::FAILURE;
+
                         for (GroupReference const& r : g->GetMembers())
+
                             if (Player* m = r.GetSource())
+
                                 if (m->IsAlive() && m->GetHealthPct() < 80.0f &&
+
                                     this->CanCastSpell(HOLY_HEAL, m)) {
+
                                     this->CastSpell(m, HOLY_HEAL);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                         return NodeStatus::FAILURE;
+
                     })
+
                 })
+
             });
 
+
             behaviorTree->SetRoot(root);
+
             TC_LOG_INFO("module.playerbot", "🌲 HOLY PRIEST: BehaviorTree initialized");
         }
     }

@@ -114,9 +114,9 @@ private:
 
         float lowest = 1.0f;
 
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference& ref : group->GetMembers())
         {
-            Player* member = ref->GetSource();
+            Player* member = ref.GetSource();
             if (!member || !member->IsInWorld() || member->isDead())
                 continue;
 

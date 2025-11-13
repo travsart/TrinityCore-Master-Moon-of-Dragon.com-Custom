@@ -1233,7 +1233,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
         default: return;
     }
 
-    if (interruptSpell == 0 || player->HasSpellCooldown(interruptSpell))
+    if (interruptSpell == 0 || player->GetSpellHistory()->HasCooldown(interruptSpell))
         return;
 
     // Interrupt if priority is high enough (50+)

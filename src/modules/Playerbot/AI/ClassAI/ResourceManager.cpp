@@ -66,7 +66,9 @@ void ResourceManager::Initialize()
     LoadSpellResourceCosts();
     SyncWithPlayer();
 
-    TC_LOG_DEBUG("playerbot.resource", "ResourceManager initialized for class {}",                 static_cast<uint32>(_bot->GetClass()));
+
+    TC_LOG_DEBUG("playerbot.resource", "ResourceManager initialized for class {}",
+    static_cast<uint32>(_bot->GetClass()));
 }
 
 bool ResourceManager::HasEnoughResource(uint32 spellId)
@@ -165,10 +167,13 @@ void ResourceManager::ConsumeResource(uint32 spellId)
     {
         if (powerCost.Amount > 0)
         {
+
             ResourceType resourceType = GetResourceTypeForPower(powerCost.Power);
+
             ConsumeResource(resourceType, powerCost.Amount);
 
             // Record usage for tracking
+
             RecordResourceUsage(resourceType, powerCost.Amount, spellId);
         }
     }
@@ -183,6 +188,7 @@ void ResourceManager::ConsumeResource(ResourceType type, uint32 amount)
         _totalConsumed[type] += consumed;
 
         TC_LOG_DEBUG("playerbot.resource", "Consumed {} {} ({}%)",
+
                      consumed, static_cast<uint32>(type), it->second.GetPercent() * 100.0f);
     }
 }
@@ -196,6 +202,7 @@ void ResourceManager::AddResource(ResourceType type, uint32 amount)
         _totalGenerated[type] += added;
 
         TC_LOG_DEBUG("playerbot.resource", "Added {} {} ({}%)",
+
                      added, static_cast<uint32>(type), it->second.GetPercent() * 100.0f);
     }
 }
@@ -243,6 +250,7 @@ uint32 ResourceManager::GetTimeToResource(ResourceType type, uint32 amount)
     if (it != _resources.end() && it->second.isRegenerated && it->second.regenRate > 0.0f)
     {
         if (it->second.current >= amount)
+
             return 0;
 
         uint32 needed = amount - it->second.current;
@@ -314,6 +322,7 @@ uint32 ResourceManager::GetAvailableRunes(uint8 runeType)
     {
         if (_runes[i].available && (runeType == 255 || _runes[i].type == runeType))
         {
+
             count++;
         }
     }
@@ -332,11 +341,17 @@ void ResourceManager::ConsumeRunes(uint32 bloodRunes, uint32 frostRunes, uint32 
         uint32 consumed = 0;
         for (uint32 i = 0; i < MAX_RUNES && consumed < count; ++i)
         {
+
             if (_runes[i].available && _runes[i].type == runeType)
+
             {
+
                 _runes[i].available = false;
+
                 _runes[i].cooldownRemaining = RUNE_COOLDOWN_MS;
+
                 consumed++;
+
             }
         }
     };
@@ -346,6 +361,7 @@ void ResourceManager::ConsumeRunes(uint32 bloodRunes, uint32 frostRunes, uint32 
     consumeRuneType(2, unholyRunes);
 
     TC_LOG_DEBUG("playerbot.resource", "Consumed runes: {} blood, {} frost, {} unholy",
+
                  bloodRunes, frostRunes, unholyRunes);
 }
 
@@ -372,6 +388,7 @@ float ResourceManager::GetResourceEfficiency(ResourceType type)
 
         if (generated > 0)
         {
+
             return static_cast<float>(consumed) / generated;
         }
     }
@@ -403,12 +420,19 @@ bool ResourceManager::CanAffordSpellSequence(const std::vector<uint32>& spellIds
         if (spellInfo)
         {
             // Get power costs for this spell
+
             std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+
             for (const SpellPowerCost& powerCost : costs)
+
             {
+
                 ResourceType type = GetResourceTypeForPower(powerCost.Power);
+
                 uint32 cost = powerCost.Amount;
+
                 totalCosts[type] += cost;
+
             }
         }
     }
@@ -416,6 +440,7 @@ bool ResourceManager::CanAffordSpellSequence(const std::vector<uint32>& spellIds
     for (const auto& pair : totalCosts)
     {
         if (!HasEnoughResource(pair.first, pair.second))
+
             return false;
     }
 
@@ -430,11 +455,16 @@ uint32 ResourceManager::GetOptimalResourceThreshold(ResourceType type)
     switch (type)
     {
         case ResourceType::MANA:
-            return maxResource * 30 / 100; // 30% for mana        case ResourceType::ENERGY:
+
+            return maxResource * 30 / 100; // 30% for mana
+            case ResourceType::ENERGY:
+
             return maxResource * 40 / 100; // 40% for energy
         case ResourceType::RAGE:
+
             return maxResource * 20 / 100; // 20% for rage
         default:
+
             return maxResource * 25 / 100; // 25% default
     }
 }
@@ -467,12 +497,15 @@ std::vector<uint32> ResourceManager::GetResourceEmergencySpells()
     // Class-specific emergency resource spells    switch (_bot->GetClass())
     {        case CLASS_WARRIOR:
             // Berserker Rage, etc.
+
             break;
         case CLASS_ROGUE:
             // Adrenaline Rush, etc.
+
             break;
         case CLASS_MAGE:
             // Evocation, Mana Gem, etc.
+
             break;
         // Add other classes as needed    }
 
@@ -508,7 +541,9 @@ void ResourceManager::DumpResourceState()
     {
         const ResourceInfo& info = pair.second;
         TC_LOG_DEBUG("playerbot.resource", "{}: {}/{} ({}%) - Regen: {}/sec",
+
                      static_cast<uint32>(pair.first), info.current, info.maximum,
+
                      static_cast<uint32>(info.GetPercent() * 100), info.regenRate);
     }
 
@@ -516,7 +551,9 @@ void ResourceManager::DumpResourceState()
         TC_LOG_DEBUG("playerbot.resource", "Runic Power: {}", _runicPower);
         for (uint32 i = 0; i < MAX_RUNES; ++i)
         {
+
             TC_LOG_DEBUG("playerbot.resource", "Rune {}: {} (cooldown: {}ms)",
+
                          i, _runes[i].available ? "Available" : "On cooldown", _runes[i].cooldownRemaining);
         }
     }
@@ -547,13 +584,23 @@ ResourceInfo ResourceManager::GetResourceInfo(ResourceType type)
     for (uint32 i = 0; i < MAX_RUNES; ++i)
     {
         if (!_runes[i].available && _runes[i].cooldownRemaining > 0)
-        {            if (_runes[i].cooldownRemaining > diff)
-            {                _runes[i].cooldownRemaining -= diff;
-            }
-            else
+
+        {
+        if (_runes[i].cooldownRemaining > diff)
+
             {
+            _runes[i].cooldownRemaining -= diff;
+
+            }
+
+            else
+
+            {
+
                 _runes[i].cooldownRemaining = 0;
-                _runes[i].available = true;            }
+
+                _runes[i].available = true;
+                }
         }    }
 }
 
@@ -573,7 +620,9 @@ void ResourceManager::SyncWithPlayer()
     {
         // Create resource info if it doesn't exist
         _resources[primaryType] = ResourceInfo(primaryType,
+
                                                _bot->GetPower(primaryPower),
+
                                                _bot->GetMaxPower(primaryPower));
     }
 
@@ -583,28 +632,45 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_ROGUE:
         case CLASS_DRUID: // In cat form
             // Combo points
-            if (_bot->GetPower(POWER_COMBO_POINTS) != GetComboPoints())            {
+
+            if (_bot->GetPower(POWER_COMBO_POINTS) != GetComboPoints())
+            {
+
                 SetResource(ResourceType::COMBO_POINTS, _bot->GetPower(POWER_COMBO_POINTS));
+
             }
+
             break;
 
         case CLASS_PALADIN:
             // Holy Power
-            if (_bot->GetPower(POWER_HOLY_POWER) != GetHolyPower())            {
+
+            if (_bot->GetPower(POWER_HOLY_POWER) != GetHolyPower())
+            {
+
                 SetResource(ResourceType::HOLY_POWER, _bot->GetPower(POWER_HOLY_POWER));
+
             }
+
             break;
 
         case CLASS_MONK:
             // Chi
-            if (_bot->GetPower(POWER_CHI) != GetChi())            {
+
+            if (_bot->GetPower(POWER_CHI) != GetChi())
+            {
+
                 SetResource(ResourceType::CHI, _bot->GetPower(POWER_CHI));
+
             }
+
             break;
 
         case CLASS_DEATH_KNIGHT:
             // Runic Power
-            _runicPower = _bot->GetPower(POWER_RUNIC_POWER);            break;
+
+            _runicPower = _bot->GetPower(POWER_RUNIC_POWER);
+            break;
     }
 }
 
@@ -621,18 +687,27 @@ void ResourceManager::InitializeClassResources()
     switch (primaryType)
     {
         case ResourceType::MANA:
+
             regenRate = ResourceCalculator::CalculateManaRegen(_bot);
+
             break;
         case ResourceType::ENERGY:
+
             regenRate = ResourceCalculator::CalculateEnergyRegen(_bot);
+
             break;
         case ResourceType::RAGE:
-            regenRate = -ResourceCalculator::CalculateRageDecay(_bot); // Decay is negative regen            break;
+
+            regenRate = -ResourceCalculator::CalculateRageDecay(_bot); // Decay is negative regen
+            break;
     }
 
     _resources[primaryType] = ResourceInfo(primaryType,
+
                                            _bot->GetPower(primaryPower),
+
                                            _bot->GetMaxPower(primaryPower),
+
                                            regenRate);
 
     // Initialize class-specific secondary resources
@@ -640,19 +715,27 @@ void ResourceManager::InitializeClassResources()
     {
         case CLASS_ROGUE:
         case CLASS_DRUID:
+
             _resources[ResourceType::COMBO_POINTS] = ResourceInfo(ResourceType::COMBO_POINTS, 0, 5);
+
             break;
 
         case CLASS_PALADIN:
+
             _resources[ResourceType::HOLY_POWER] = ResourceInfo(ResourceType::HOLY_POWER, 0, 3);
+
             break;
 
         case CLASS_MONK:
+
             _resources[ResourceType::CHI] = ResourceInfo(ResourceType::CHI, 0, 4);
+
             break;
 
         case CLASS_WARLOCK:
+
             _resources[ResourceType::SOUL_SHARDS] = ResourceInfo(ResourceType::SOUL_SHARDS, 0, 3);
+
             break;
     }
 }
@@ -669,27 +752,36 @@ ResourceType ResourceManager::GetPrimaryResourceType()
         return ResourceType::MANA;    switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
+
             return ResourceType::RAGE;
         case CLASS_PALADIN:
         case CLASS_PRIEST:
         case CLASS_MAGE:
         case CLASS_WARLOCK:
+
             return ResourceType::MANA;
         case CLASS_HUNTER:
+
             return ResourceType::FOCUS;
         case CLASS_ROGUE:
         case CLASS_MONK:
+
             return ResourceType::ENERGY;
         case CLASS_DEATH_KNIGHT:
+
             return ResourceType::RUNIC_POWER;
         case CLASS_SHAMAN:
         case CLASS_DRUID:
+
             return ResourceType::MANA;
         case CLASS_DEMON_HUNTER:
+
             return ResourceType::FURY;
         case CLASS_EVOKER:
+
             return ResourceType::ESSENCE;
         default:
+
             return ResourceType::MANA;
     }
 }
@@ -740,18 +832,26 @@ uint32 ResourceManager::CalculateSpellResourceCost(uint32 spellId, ResourceType 
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
         if (!powerEntry)
+
             continue;
 
         if (powerEntry->Power == requiredPower)
         {
+
             uint32 baseCost = powerEntry->ManaCost;
+
             uint32 percentCost = 0;
 
             // Calculate percentage-based cost
+
             if (powerEntry->PowerCostPct > 0.0f)
+
             {
+
                 percentCost = uint32(powerEntry->PowerCostPct * _bot->GetMaxPower(requiredPower) / 100.0f);
+
             }
+
 
             return baseCost + percentCost;
         }
@@ -771,7 +871,8 @@ bool ResourceManager::IsResourceTypeUsedBySpell(uint32 spellId, ResourceType typ
     // Check if any of the spell's power costs match the required type
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (powerEntry && powerEntry->Power == requiredPower)
+        if (powerEntry && powerEntry->PowerType == requiredPower)
+
             return true;
     }
 
@@ -823,7 +924,7 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
     uint32 cost = 0;
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
-        if (!powerEntry || powerEntry->Power != POWER_MANA)
+        if (!powerEntry || powerEntry->PowerType != POWER_MANA)
             continue;
 
         cost = powerEntry->ManaCost;
@@ -854,6 +955,7 @@ uint32 ResourceCalculator::CalculateRageCost(uint32 spellId, Player* caster)
     {
         if (powerEntry && powerEntry->Power == POWER_RAGE)
         {
+
             return powerEntry->ManaCost;
         }
     }
@@ -875,6 +977,7 @@ uint32 ResourceCalculator::CalculateEnergyCost(uint32 spellId, Player* caster)
     {
         if (powerEntry && powerEntry->Power == POWER_ENERGY)
         {
+
             return powerEntry->ManaCost;
         }
     }
@@ -896,6 +999,7 @@ uint32 ResourceCalculator::CalculateFocusCost(uint32 spellId, Player* caster)
     {
         if (powerEntry && powerEntry->Power == POWER_FOCUS)
         {
+
             return powerEntry->ManaCost;
         }
     }
@@ -986,20 +1090,32 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
     {
         if (!powerEntry)
+
             continue;
 
         switch (powerEntry->Power)
         {
+
             case POWER_MANA:
+
                 GetManaCostCache()[spellId] = powerEntry->ManaCost;
+
                 break;
+
             case POWER_RAGE:
+
                 GetRageCostCache()[spellId] = powerEntry->ManaCost;
+
                 break;
+
             case POWER_ENERGY:
+
                 GetEnergyCostCache()[spellId] = powerEntry->ManaCost;
+
                 break;
+
             default:
+
                 break;
         }
     }
@@ -1044,7 +1160,9 @@ float ResourceMonitor::GetAverageResourceUsage(ResourceType type)
         auto typeIt = botPair.second.find(type);
         if (typeIt != botPair.second.end())
         {
+
             totalUsed += typeIt->second.totalUsed;
+
             totalSamples += typeIt->second.sampleCount;
         }
     }
@@ -1064,7 +1182,9 @@ float ResourceMonitor::GetResourceWasteRate(ResourceType type)
         auto typeIt = botPair.second.find(type);
         if (typeIt != botPair.second.end())
         {
+
             totalUsed += typeIt->second.totalUsed;
+
             totalWasted += typeIt->second.totalWasted;
         }
     }
@@ -1083,6 +1203,7 @@ uint32 ResourceMonitor::GetResourceStarvationTime(ResourceType type)
         auto typeIt = botPair.second.find(type);
         if (typeIt != botPair.second.end())
         {
+
             totalStarvation += typeIt->second.starvationTime;
         }
     }
@@ -1105,11 +1226,13 @@ std::vector<std::string> ResourceMonitor::GetResourceOptimizationSuggestions(uin
 
         if (data.totalWasted > data.totalUsed * 0.2f) // 20% waste threshold
         {
+
             suggestions.push_back("Reduce resource waste for " + std::to_string(static_cast<uint32>(resourcePair.first)));
         }
 
         if (data.starvationTime > 10000) // 10 seconds of starvation
         {
+
             suggestions.push_back("Improve resource management for " + std::to_string(static_cast<uint32>(resourcePair.first)));
         }
     }

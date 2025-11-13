@@ -461,9 +461,9 @@ std::vector<Player*> HealingTargetSelector::GetGroupMembersInRange(Player* heale
     }
 
     // Group: iterate members
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || member->isDead())
             continue;
 

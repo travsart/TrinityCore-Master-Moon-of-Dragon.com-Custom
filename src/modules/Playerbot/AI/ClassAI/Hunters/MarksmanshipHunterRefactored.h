@@ -42,13 +42,17 @@ enum MarksmanshipSpells
     SPELL_RAPID_FIRE           = 257044,  // Channel burst
     SPELL_STEADY_SHOT          = 56641,   // Focus generator
     SPELL_ARCANE_SHOT          = 185358,  // Instant damage
-    SPELL_TRUESHOT             = 288613,  // Major DPS cooldown
+
+    SPELL_TRUESHOT
+    = 288613,  // Major DPS cooldown
     SPELL_DOUBLE_TAP           = 260402,  // Burst window enhancement
 
     // AoE Abilities
     SPELL_MULTISHOT_MM         = 257620,  // AoE ability
     SPELL_EXPLOSIVE_SHOT       = 212431,  // AoE burst
-    SPELL_VOLLEY               = 260243,  // Sustained AoE
+
+    SPELL_VOLLEY
+    = 260243,  // Sustained AoE
 
     // Procs and Buffs
     SPELL_PRECISE_SHOTS        = 260242,  // Proc from Aimed Shot
@@ -71,7 +75,9 @@ enum MarksmanshipSpells
     // Pet (minimal for MM)
     SPELL_CALL_PET_MM          = 883,     // Summon pet
     SPELL_DISMISS_PET          = 2641,    // Dismiss pet for Lone Wolf
-    SPELL_LONE_WOLF            = 155228,  // Bonus damage without pet
+
+    SPELL_LONE_WOLF
+    = 155228,  // Bonus damage without pet
 };
 
 /**
@@ -99,6 +105,7 @@ public:
     bool HasCharges() const
     {
         if (GameTime::GetGameTimeMS() > _expireTime)
+
             return false;
         return _charges > 0;
     }
@@ -106,6 +113,7 @@ public:
     void ConsumeCharge()
     {
         if (_charges > 0)
+
             _charges--;
     }
 
@@ -151,6 +159,7 @@ public:
     void StartAimedShot(Unit* target)
     {
         if (!CanStartCast())
+
             return;
 
         _isCasting = true;
@@ -160,6 +169,7 @@ public:
         // Apply Careful Aim bonus if target is above 70% or below 20%
         if (target->GetHealthPct() > 70.0f || target->GetHealthPct() < 20.0f)
         {
+
             _castEndTime -= 500; // Faster cast with Careful Aim
         }
     }
@@ -167,6 +177,7 @@ public:
     void StartRapidFire()
     {
         if (!CanStartCast())
+
             return;
 
         _isChanneling = true;
@@ -180,15 +191,21 @@ public:
 
         if (_isCasting && currentTime >= _castEndTime)
         {
+
             _isCasting = false;
+
             _castEndTime = 0;
+
             _currentCastSpell = 0;
         }
 
         if (_isChanneling && currentTime >= _channelEndTime)
         {
+
             _isChanneling = false;
+
             _channelEndTime = 0;
+
             _currentCastSpell = 0;
         }
     }
@@ -268,6 +285,7 @@ public:
 
     void UpdateRotation(::Unit* target) override    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
+
             return;
 
         // Update cast manager
@@ -275,6 +293,7 @@ public:
 
         // Don't start new casts while busy
         if (_castManager.IsBusy())
+
             return;
 
         // Update MM-specific mechanics
@@ -284,7 +303,9 @@ public:
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
         if (enemyCount >= 3)
         {
+
             ExecuteAoERotation(target);
+
             return;
         }
 
@@ -297,24 +318,31 @@ public:
         Player* bot = this->GetBot();        // Maintain Lone Wolf (dismiss pet if we have one)
         if (_loneWolfActive && !bot->GetPetGUID().IsEmpty())
         {
+
             bot->CastSpell(bot, SPELL_DISMISS_PET, false);
         }
 
         // Use Aspect of the Turtle for survival
         if (bot->GetHealthPct() < 30.0f && this->CanUseAbility(SPELL_ASPECT_TURTLE))
         {
+
             this->CastSpell(bot, SPELL_ASPECT_TURTLE);
         }        // Use Exhilaration for healing
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_EXHILARATION_MM))
         {
+
             this->CastSpell(bot, SPELL_EXHILARATION_MM);
         }
 
         // Apply Hunter's Mark to current target
         if (Unit* target = bot->GetVictim())        {
+
             if (!target->HasAura(SPELL_HUNTERS_MARK_MM) && this->CanUseAbility(SPELL_HUNTERS_MARK_MM))
+
             {
+
                 this->CastSpell(target, SPELL_HUNTERS_MARK_MM);
+
             }
         }
     }
@@ -323,10 +351,12 @@ public:
     {
         // Interrupt current cast if needed
         if (_castManager.IsBusy())
+
             _castManager.InterruptCast();
 
         if (this->CanUseAbility(SPELL_COUNTER_SHOT_MM))
         {
+
             this->CastSpell(target, SPELL_COUNTER_SHOT_MM);
         }
     }
@@ -335,6 +365,7 @@ public:
     {
         // Interrupt any casts when we need to move
         if (_castManager.IsBusy())
+
             _castManager.InterruptCast();
     }
 
@@ -347,17 +378,38 @@ protected:
     {
         switch (spellId)
         {
-            case SPELL_AIMED_SHOT:       return 35;
-            case SPELL_RAPID_FIRE:       return 30;
-            case SPELL_STEADY_SHOT:      return 0;   // Generates 10 focus
-            case SPELL_ARCANE_SHOT:      return 20;
-            case SPELL_MULTISHOT_MM:     return 20;
+
+            case SPELL_AIMED_SHOT:
+            return 35;
+
+            case SPELL_RAPID_FIRE:
+            return 30;
+
+            case SPELL_STEADY_SHOT:
+            return 0;   // Generates 10 focus
+
+            case SPELL_ARCANE_SHOT:
+            return 20;
+
+            case SPELL_MULTISHOT_MM:
+            return 20;
+
             case SPELL_EXPLOSIVE_SHOT:   return 20;
-            case SPELL_VOLLEY:           return 45;
-            case SPELL_BINDING_SHOT:     return 0;
-            case SPELL_BURSTING_SHOT:    return 10;
-            case SPELL_SCATTER_SHOT:     return 0;
-            default:                     return 15;
+
+            case SPELL_VOLLEY:
+            return 45;
+
+            case SPELL_BINDING_SHOT:
+            return 0;
+
+            case SPELL_BURSTING_SHOT:
+            return 10;
+
+            case SPELL_SCATTER_SHOT:
+            return 0;
+
+            default:
+            return 15;
         }
     }
 
@@ -372,76 +424,112 @@ protected:
         // Priority 1: Trueshot for major burst
         if (ShouldUseTrueshot(target) && this->CanUseAbility(SPELL_TRUESHOT))
         {
+
             this->CastSpell(this->GetBot(), SPELL_TRUESHOT);
+
             _trueshotActive = true;
+
             _trueshotEndTime = GameTime::GetGameTimeMS() + 15000;
+
             return;
         }
 
         // Priority 2: Double Tap during Trueshot
         if (_trueshotActive && this->CanUseAbility(SPELL_DOUBLE_TAP))
         {
+
             this->CastSpell(this->GetBot(), SPELL_DOUBLE_TAP);
+
             _doubleTapActive = true;
+
             _doubleTapEndTime = GameTime::GetGameTimeMS() + 3000;
+
             return;
         }
 
         // Priority 3: Rapid Fire during burst windows
         if (ShouldUseRapidFire() && currentFocus >= 30 && this->CanUseAbility(SPELL_RAPID_FIRE))
         {
+
             _castManager.StartRapidFire();
+
             this->CastSpell(target, SPELL_RAPID_FIRE);
+
             _lastRapidFire = GameTime::GetGameTimeMS();
+
             this->ConsumeResource(30);
+
             return;
         }
 
         // Priority 4: Aimed Shot (primary nuke)
         if (currentFocus >= 35 && this->CanUseAbility(SPELL_AIMED_SHOT))
         {
+
             if (_castManager.CanStartCast())
+
             {
+
                 _castManager.StartAimedShot(target);
+
                 this->CastSpell(target, SPELL_AIMED_SHOT);
+
                 _lastAimedShot = GameTime::GetGameTimeMS();
+
                 _preciseShotsTracker.OnAimedShotCast();
+
                 this->ConsumeResource(35);
+
                 return;
+
             }
         }
 
         // Priority 5: Arcane Shot with Precise Shots
         if (_preciseShotsTracker.HasCharges() && currentFocus >= 20)
         {
+
             this->CastSpell(target, SPELL_ARCANE_SHOT);
+
             _preciseShotsTracker.ConsumeCharge();
+
             this->ConsumeResource(20);
+
             return;
         }
 
         // Priority 6: Explosive Shot if available
         if (currentFocus >= 20 && this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
         {
+
             this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+
             this->ConsumeResource(20);
+
             return;
         }
 
         // Priority 7: Steady Shot to generate focus
         if (currentFocus < 70)
         {
+
             this->CastSpell(target, SPELL_STEADY_SHOT);
+
             _lastSteadyShot = GameTime::GetGameTimeMS();
+
             this->_resource = std::min<uint32>(this->_resource + 10, 100);
+
             return;
         }
 
         // Priority 8: Arcane Shot as filler at high focus
         if (currentFocus >= 80)
         {
+
             this->CastSpell(target, SPELL_ARCANE_SHOT);
+
             this->ConsumeResource(20);
+
             return;
         }
     }
@@ -453,47 +541,64 @@ protected:
         // Enable Trick Shots for AoE
         if (!_trickShotsActive)
         {
+
             _trickShotsActive = true;
         }
 
         // Priority 1: Volley for sustained AoE
         if (currentFocus >= 45 && this->CanUseAbility(SPELL_VOLLEY))
         {
+
             this->CastSpell(target, SPELL_VOLLEY);
+
             this->ConsumeResource(45);
+
             return;
         }
 
         // Priority 2: Explosive Shot for burst AoE
         if (currentFocus >= 20 && this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
         {
+
             this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+
             this->ConsumeResource(20);
+
             return;
         }
 
         // Priority 3: Multi-Shot to spread damage
         if (currentFocus >= 20)
         {
+
             this->CastSpell(target, SPELL_MULTISHOT_MM);
+
             this->ConsumeResource(20);
+
             return;
         }
 
         // Priority 4: Rapid Fire for cleave
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_RAPID_FIRE))
         {
+
             _castManager.StartRapidFire();
+
             this->CastSpell(target, SPELL_RAPID_FIRE);
+
             this->ConsumeResource(30);
+
             return;
         }
 
         // Priority 5: Steady Shot for focus
         if (currentFocus < 40)
         {
+
             this->CastSpell(target, SPELL_STEADY_SHOT);
+
             this->_resource = std::min<uint32>(this->_resource + 10, 100);
+
             return;
         }
     }
@@ -510,26 +615,32 @@ private:
         // Check Trueshot expiry
         if (_trueshotActive && currentTime > _trueshotEndTime)
         {
+
             _trueshotActive = false;
+
             _trueshotEndTime = 0;
         }
 
         // Check Double Tap expiry
         if (_doubleTapActive && currentTime > _doubleTapEndTime)
         {
+
             _doubleTapActive = false;
+
             _doubleTapEndTime = 0;
         }
 
         // Disable Trick Shots if not in AoE
         if (_trickShotsActive && this->GetEnemiesInRange(40.0f) < 3)
         {
+
             _trickShotsActive = false;
         }
 
         // Update Precise Shots if expired
         if (!_preciseShotsTracker.HasCharges())
         {
+
             _preciseShotsTracker.Reset();
         }
     }
@@ -537,11 +648,14 @@ private:
     bool ShouldUseTrueshot(Unit* target) const
     {
         if (!target)
+
             return false;
 
         // Use on high priority targets or during burn phases
         return (target->GetHealthPct() > 50.0f && this->_resource > 60) ||
+
                target->GetLevel() > this->GetBot()->GetLevel() + 2 ||
+
                (target->GetMaxHealth() > this->GetBot()->GetMaxHealth() * 5);
     }
 
@@ -559,6 +673,7 @@ private:
         // Dismiss pet if we have one
         if (!this->GetBot()->GetPetGUID().IsEmpty())
         {
+
             this->GetBot()->CastSpell(this->GetBot(), SPELL_DISMISS_PET, false);
         }
     }
@@ -627,77 +742,134 @@ private:
         if (queue)
         {
             // EMERGENCY: Survival cooldowns
+
             queue->RegisterSpell(SPELL_ASPECT_TURTLE, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+
             queue->AddCondition(SPELL_ASPECT_TURTLE, [this](Player* bot, Unit* target) {
+
                 return bot && bot->GetHealthPct() < 30.0f;
+
             }, "Bot HP < 30% (damage reduction + immune)");
 
+
             queue->RegisterSpell(SPELL_EXHILARATION_MM, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+
             queue->AddCondition(SPELL_EXHILARATION_MM, [this](Player* bot, Unit* target) {
+
                 return bot && bot->GetHealthPct() < 50.0f;
+
             }, "Bot HP < 50% (self heal)");
 
             // CRITICAL: Major burst cooldowns
+
             queue->RegisterSpell(SPELL_TRUESHOT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+
             queue->AddCondition(SPELL_TRUESHOT, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource > 60 && !this->_trueshotActive &&
+
                        this->ShouldUseTrueshot(target);
+
             }, "60+ Focus, not active (major 15s burst)");
 
+
             queue->RegisterSpell(SPELL_DOUBLE_TAP, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
+
             queue->AddCondition(SPELL_DOUBLE_TAP, [this](Player* bot, Unit* target) {
+
                 return bot && bot->HasSpell(SPELL_DOUBLE_TAP) &&
+
                        target && this->_trueshotActive && !this->_doubleTapActive;
+
             }, "During Trueshot (3s burst enhancement)");
 
+
             queue->RegisterSpell(SPELL_RAPID_FIRE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_SINGLE);
+
             queue->AddCondition(SPELL_RAPID_FIRE, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource >= 30 &&
+
                        this->ShouldUseRapidFire() && !this->_castManager.IsBusy();
+
             }, "30+ Focus during burst or 80+ Focus (3s channel)");
 
             // HIGH: Primary nuke and procs
+
             queue->RegisterSpell(SPELL_AIMED_SHOT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+
             queue->AddCondition(SPELL_AIMED_SHOT, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource >= 35 &&
+
                        this->_castManager.CanStartCast() && this->GetEnemiesInRange(40.0f) < 3;
+
             }, "35+ Focus, can cast (primary nuke, 2.5s cast)");
 
+
             queue->RegisterSpell(SPELL_ARCANE_SHOT, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+
             queue->AddCondition(SPELL_ARCANE_SHOT, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource >= 20 &&
+
                        this->_preciseShotsTracker.HasCharges();
+
             }, "20+ Focus, has Precise Shots charges (instant damage)");
 
             // MEDIUM: Utility and talents
+
             queue->RegisterSpell(SPELL_EXPLOSIVE_SHOT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
+
             queue->AddCondition(SPELL_EXPLOSIVE_SHOT, [this](Player* bot, Unit* target) {
+
                 return bot && bot->HasSpell(SPELL_EXPLOSIVE_SHOT) &&
+
                        target && this->_resource >= 20;
+
             }, "Has talent, 20+ Focus (AoE burst)");
 
+
             queue->RegisterSpell(SPELL_COUNTER_SHOT_MM, SpellPriority::MEDIUM, SpellCategory::UTILITY);
+
             queue->AddCondition(SPELL_COUNTER_SHOT_MM, [this](Player* bot, Unit* target) {
+
                 return target && target->IsNonMeleeSpellCast(false);
+
             }, "Target casting (interrupt)");
 
             // LOW: Focus generation and fillers
+
             queue->RegisterSpell(SPELL_STEADY_SHOT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+
             queue->AddCondition(SPELL_STEADY_SHOT, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource < 70;
+
             }, "< 70 Focus (focus generator, +10 Focus)");
 
+
             queue->RegisterSpell(SPELL_ARCANE_SHOT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
+
             queue->AddCondition(SPELL_ARCANE_SHOT, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource >= 80 &&
+
                        !this->_preciseShotsTracker.HasCharges();
+
             }, "80+ Focus, no Precise Shots (filler dump)");
 
+
             queue->RegisterSpell(SPELL_MULTISHOT_MM, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+
             queue->AddCondition(SPELL_MULTISHOT_MM, [this](Player* bot, Unit* target) {
+
                 return target && this->_resource >= 20 &&
+
                        this->GetEnemiesInRange(40.0f) >= 3;
+
             }, "20+ Focus, 3+ enemies (AoE)");
+
 
             TC_LOG_INFO("module.playerbot", "🎯 MARKSMANSHIP HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
@@ -708,174 +880,328 @@ private:
         auto* behaviorTree = ai->GetBehaviorTree();
         if (behaviorTree)
         {
+
             auto root = Selector("Marksmanship Hunter DPS", {
                 // Tier 1: Burst Window (Trueshot → Double Tap → Rapid Fire)
+
                 Sequence("Burst Cooldowns", {
+
                     Condition("Target exists", [this](Player* bot, Unit* target) {
+
                         return target != nullptr;
+
                     }),
+
                     Selector("Use Burst Cooldowns", {
                         // Trueshot (major cooldown)
+
                         Sequence("Cast Trueshot", {
+
                             Condition("Should use Trueshot", [this](Player* bot, Unit* target) {
+
                                 return this->_resource > 60 && !this->_trueshotActive &&
+
                                        this->ShouldUseTrueshot(target);
+
                             }),
+
                             Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->CanUseAbility(SPELL_TRUESHOT))
+
                                 {
+
                                     this->CastSpell(bot, SPELL_TRUESHOT);
+
                                     this->_trueshotActive = true;
+
                                     this->_trueshotEndTime = GameTime::GetGameTimeMS() + 15000;
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         }),
                         // Double Tap (during Trueshot)
+
                         Sequence("Cast Double Tap", {
+
                             Condition("During Trueshot", [this](Player* bot, Unit* target) {
+
                                 return bot && bot->HasSpell(SPELL_DOUBLE_TAP) &&
+
                                        this->_trueshotActive && !this->_doubleTapActive;
+
                             }),
+
                             Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->CanUseAbility(SPELL_DOUBLE_TAP))
+
                                 {
+
                                     this->CastSpell(bot, SPELL_DOUBLE_TAP);
+
                                     this->_doubleTapActive = true;
+
                                     this->_doubleTapEndTime = GameTime::GetGameTimeMS() + 3000;
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         }),
                         // Rapid Fire (during burst windows or high focus)
+
                         Sequence("Cast Rapid Fire", {
+
                             Condition("Should use Rapid Fire", [this](Player* bot, Unit* target) {
+
                                 return this->_resource >= 30 && this->ShouldUseRapidFire() &&
+
                                        !this->_castManager.IsBusy();
+
                             }),
+
                             Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->CanUseAbility(SPELL_RAPID_FIRE))
+
                                 {
+
                                     this->_castManager.StartRapidFire();
+
                                     this->CastSpell(target, SPELL_RAPID_FIRE);
+
                                     this->_lastRapidFire = GameTime::GetGameTimeMS();
+
                                     this->ConsumeResource(30);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         })
+
                     })
+
                 }),
 
                 // Tier 2: Primary Damage (Aimed Shot with Careful Aim)
+
                 Sequence("Primary Nuke", {
+
                     Condition("Target exists and can cast", [this](Player* bot, Unit* target) {
+
                         return target != nullptr && this->_castManager.CanStartCast() &&
+
                                this->GetEnemiesInRange(40.0f) < 3;
+
                     }),
+
                     Selector("Cast Aimed Shot", {
+
                         Sequence("Cast Aimed Shot", {
+
                             Condition("35+ Focus", [this](Player* bot, Unit* target) {
+
                                 return this->_resource >= 35;
+
                             }),
+
                             Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->CanUseAbility(SPELL_AIMED_SHOT))
+
                                 {
+
                                     this->_castManager.StartAimedShot(target);
+
                                     this->CastSpell(target, SPELL_AIMED_SHOT);
+
                                     this->_lastAimedShot = GameTime::GetGameTimeMS();
+
                                     this->_preciseShotsTracker.OnAimedShotCast();
+
                                     this->ConsumeResource(35);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         })
+
                     })
+
                 }),
 
                 // Tier 3: Proc Management (Precise Shots → Arcane Shot)
+
                 Sequence("Proc Management", {
+
                     Condition("Target exists", [this](Player* bot, Unit* target) {
+
                         return target != nullptr;
+
                     }),
+
                     Selector("Use Procs", {
                         // Precise Shots: Arcane Shot charges
+
                         Sequence("Cast Arcane Shot with Precise Shots", {
+
                             Condition("Has Precise Shots", [this](Player* bot, Unit* target) {
+
                                 return this->_preciseShotsTracker.HasCharges() && this->_resource >= 20;
+
                             }),
+
                             Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->_resource >= 20)
+
                                 {
+
                                     this->CastSpell(target, SPELL_ARCANE_SHOT);
+
                                     this->_preciseShotsTracker.ConsumeCharge();
+
                                     this->ConsumeResource(20);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         }),
                         // Explosive Shot (talent)
+
                         Sequence("Cast Explosive Shot", {
+
                             Condition("Has talent and 20+ Focus", [this](Player* bot, Unit* target) {
+
                                 return bot && bot->HasSpell(SPELL_EXPLOSIVE_SHOT) &&
+
                                        this->_resource >= 20;
+
                             }),
+
                             Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
+
                                 {
+
                                     this->CastSpell(target, SPELL_EXPLOSIVE_SHOT);
+
                                     this->ConsumeResource(20);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         })
+
                     })
+
                 }),
 
                 // Tier 4: Focus Generation (Steady Shot < 70 Focus, Arcane Shot 80+ Focus)
+
                 Sequence("Focus Management", {
+
                     Condition("Target exists", [this](Player* bot, Unit* target) {
+
                         return target != nullptr;
+
                     }),
+
                     Selector("Generate or Dump Focus", {
                         // Generate focus when low
+
                         Sequence("Generate Focus", {
+
                             Condition("< 70 Focus", [this](Player* bot, Unit* target) {
+
                                 return this->_resource < 70;
+
                             }),
+
                             Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 this->CastSpell(target, SPELL_STEADY_SHOT);
+
                                 this->_lastSteadyShot = GameTime::GetGameTimeMS();
+
                                 this->_resource = std::min<uint32>(this->_resource + 10, 100);
+
                                 return NodeStatus::SUCCESS;
+
                             })
+
                         }),
                         // Dump focus when high
+
                         Sequence("Dump Focus", {
+
                             Condition("80+ Focus", [this](Player* bot, Unit* target) {
+
                                 return this->_resource >= 80;
+
                             }),
+
                             Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+
                                 if (this->_resource >= 20)
+
                                 {
+
                                     this->CastSpell(target, SPELL_ARCANE_SHOT);
+
                                     this->ConsumeResource(20);
+
                                     return NodeStatus::SUCCESS;
+
                                 }
+
                                 return NodeStatus::FAILURE;
+
                             })
+
                         })
+
                     })
+
                 })
+
             });
 
+
             behaviorTree->SetRoot(root);
+
             TC_LOG_INFO("module.playerbot", "🌲 MARKSMANSHIP HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
