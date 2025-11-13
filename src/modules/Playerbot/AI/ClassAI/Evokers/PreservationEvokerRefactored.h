@@ -548,7 +548,7 @@ protected:
     void StartEmpoweredSpell(uint32 spellId, EmpowerLevelPres targetLevel, Unit* target)
     {
         _empowermentTracker.StartEmpower(spellId, targetLevel);
-        this->CastSpell(target, spellId);
+        this->CastSpell(spellId, target);
     }
 
     void ReleaseEmpoweredSpell()

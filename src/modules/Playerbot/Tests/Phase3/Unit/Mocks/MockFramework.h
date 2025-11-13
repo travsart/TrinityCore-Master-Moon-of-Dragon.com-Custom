@@ -516,15 +516,15 @@ struct GroupScenario
 
 // Spell cast assertions
 #define EXPECT_SPELL_CAST(player, spellId) \
-    EXPECT_CALL(*player, CastSpell(::testing::_, spellId, ::testing::_)) \
+    EXPECT_CALL(*player, CastSpell(spellId, ::testing::_, ::testing::_)) \
         .Times(::testing::AtLeast(1))
 
 #define EXPECT_SPELL_NOT_CAST(player, spellId) \
-    EXPECT_CALL(*player, CastSpell(::testing::_, spellId, ::testing::_)) \
+    EXPECT_CALL(*player, CastSpell(spellId, ::testing::_, ::testing::_)) \
         .Times(0)
 
 #define EXPECT_SPELL_CAST_ON_TARGET(player, spellId, target) \
-    EXPECT_CALL(*player, CastSpell(target.get(), spellId, ::testing::_)) \
+    EXPECT_CALL(*player, CastSpell(spellId, ::testing::_, target.get())) \
         .Times(::testing::AtLeast(1))
 
 // Resource assertions

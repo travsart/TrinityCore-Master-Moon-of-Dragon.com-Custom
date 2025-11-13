@@ -234,7 +234,7 @@ public:
 
     // Debugging
     void PrintDistributionReport() const override;
-    std::string GetDistributionSummary() const override;
+    std::string GetDistributionSummary() const;
 
 private:
     BotLevelDistribution() = default;

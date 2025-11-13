@@ -99,12 +99,12 @@ namespace Playerbot
      * if (defMgr.NeedsEmergencyDefensive())
      * {
      *     uint32 spell = defMgr.UseEmergencyDefensive();
-     *     bot->CastSpell(bot, spell);
+     *     bot->CastSpell(spell, bot);
      * }
      * else if (defMgr.NeedsDefensive())
      * {
      *     uint32 spell = defMgr.GetRecommendedDefensive();
-     *     bot->CastSpell(bot, spell);
+     *     bot->CastSpell(spell, bot);
      * }
      * @endcode
      *

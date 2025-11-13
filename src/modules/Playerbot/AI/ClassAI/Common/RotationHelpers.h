@@ -241,8 +241,11 @@ public:
             return false;
 
         // Boss or elite
-        if (target->isWorldBoss() || target->GetCreatureType() == CREATURE_TYPE_HUMANOID)
-            return true;
+        if (Creature* creature = target->ToCreature())
+        {
+            if (creature->isWorldBoss() || creature->GetCreatureType() == CREATURE_TYPE_HUMANOID)
+                return true;
+        }
 
         // High health target
         if (target->GetMaxHealth() > 1000000)

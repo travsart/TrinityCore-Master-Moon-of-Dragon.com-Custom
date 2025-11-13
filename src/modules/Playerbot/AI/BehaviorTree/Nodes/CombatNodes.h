@@ -212,10 +212,15 @@ public:
             return _status;
         }
 
-        if (bot->GetPower(Powers(spellInfo->Power)) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+        // TrinityCore 11.2: CalcPowerCost returns vector of all power costs
+        auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        for (auto const& cost : powerCosts)
         {
-            _status = BTStatus::FAILURE;
-            return _status;
+            if (bot->GetPower(cost.Power) < cost.Amount)
+            {
+                _status = BTStatus::FAILURE;
+                return _status;
+            }
         }
 
         blackboard.Set<uint32>("ReadySpell", _spellId);
@@ -233,8 +238,8 @@ private:
 class TC_GAME_API BTCastSpell : public BTLeaf
 {
 public:
-    BTCastSpell(uint32 spellId)
-        : BTLeaf("CastSpell"), _spellId(spellId), _castStartTime(0)
+    BTCastSpell(_spellId(spellId, uint32 spellId)
+        : BTLeaf("CastSpell")), _castStartTime(0)
     {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
@@ -269,7 +274,7 @@ public:
             }
 
             // Attempt to cast
-            SpellCastResult result = ai->CastSpell(_spellId, target);
+            ::SpellCastResult result = ai->CastSpell(_spellId, target);
 
             if (result != SPELL_CAST_OK)
             {
@@ -598,7 +603,7 @@ public:
         }
 
         // Cast on self
-        SpellCastResult result = ai->CastSpell(_spellId, bot);
+        ::SpellCastResult result = ai->CastSpell(_spellId, bot);
 
         _status = (result == SPELL_CAST_OK) ? BTStatus::SUCCESS : BTStatus::FAILURE;
         return _status;

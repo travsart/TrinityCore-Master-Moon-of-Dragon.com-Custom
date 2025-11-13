@@ -374,14 +374,14 @@ public:
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_BLUR))
         {
 
-            this->CastSpell(bot, SPELL_BLUR);
+            this->CastSpell(SPELL_BLUR, bot);
         }
 
         // Maintain Immolation Aura
         if (!_immolationAuraActive && this->CanUseAbility(SPELL_IMMOLATION_AURA))
         {
 
-            this->CastSpell(bot, SPELL_IMMOLATION_AURA);
+            this->CastSpell(SPELL_IMMOLATION_AURA, bot);
 
             _immolationAuraActive = true;
 
@@ -392,7 +392,7 @@ public:
         if (IsGroupTakingHeavyDamage() && this->CanUseAbility(SPELL_DARKNESS))
         {
 
-            this->CastSpell(bot, SPELL_DARKNESS);
+            this->CastSpell(SPELL_DARKNESS, bot);
         }
     }
 
@@ -401,7 +401,7 @@ public:
         if (this->CanUseAbility(SPELL_DISRUPT))
         {
 
-            this->CastSpell(target, SPELL_DISRUPT);
+            this->CastSpell(SPELL_DISRUPT, target);
         }
     }
 
@@ -410,7 +410,7 @@ public:
         if (this->CanUseAbility(SPELL_CONSUME_MAGIC))
         {
 
-            this->CastSpell(target, SPELL_CONSUME_MAGIC);
+            this->CastSpell(SPELL_CONSUME_MAGIC, target);
         }
     }
 
@@ -499,7 +499,7 @@ protected:
         if (ShouldUseMetamorphosis() && this->CanUseAbility(SPELL_METAMORPHOSIS))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_METAMORPHOSIS);
+            this->CastSpell(SPELL_METAMORPHOSIS, this->GetBot());
 
             _metamorphosisActive = true;
 
@@ -516,7 +516,7 @@ protected:
 
             {
 
-                this->CastSpell(target, SPELL_EYE_BEAM);
+                this->CastSpell(SPELL_EYE_BEAM, target);
 
                 _eyeBeamChanneling = true;
 
@@ -551,7 +551,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_DEATH_SWEEP : SPELL_BLADE_DANCE;
 
-            this->CastSpell(this->GetBot(), spellId);
+            this->CastSpell(spellId, this->GetBot());
 
             _lastBladeDance = currentTime;
 
@@ -575,7 +575,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_ANNIHILATION : SPELL_CHAOS_STRIKE;
 
-            this->CastSpell(target, spellId);
+            this->CastSpell(spellId, target);
 
             _lastChaosStrike = currentTime;
 
@@ -601,7 +601,7 @@ protected:
         if (currentFury < 80)
         {
 
-            this->CastSpell(target, SPELL_DEMONS_BITE);
+            this->CastSpell(SPELL_DEMONS_BITE, target);
 
             _lastDemonsBite = currentTime;
 
@@ -619,7 +619,7 @@ protected:
         if (currentFury >= 30 && this->CanUseAbility(SPELL_EYE_BEAM))
         {
 
-            this->CastSpell(target, SPELL_EYE_BEAM);
+            this->CastSpell(SPELL_EYE_BEAM, target);
 
             _eyeBeamChanneling = true;
 
@@ -636,7 +636,7 @@ protected:
         if (currentFury >= 60 && enemyCount >= 5 && this->CanUseAbility(SPELL_FEL_BARRAGE))
         {
 
-            this->CastSpell(target, SPELL_FEL_BARRAGE);
+            this->CastSpell(SPELL_FEL_BARRAGE, target);
 
             this->ConsumeResource(SPELL_FEL_BARRAGE);
 
@@ -649,7 +649,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_DEATH_SWEEP : SPELL_BLADE_DANCE;
 
-            this->CastSpell(this->GetBot(), spellId);
+            this->CastSpell(spellId, this->GetBot());
 
             this->ConsumeResource(SPELL_BLADE_DANCE);
 
@@ -660,7 +660,7 @@ protected:
         if (currentFury >= 30 && enemyCount >= 4 && this->CanUseAbility(SPELL_CHAOS_NOVA))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_CHAOS_NOVA);
+            this->CastSpell(SPELL_CHAOS_NOVA, this->GetBot());
 
             this->ConsumeResource(SPELL_CHAOS_NOVA);
 
@@ -673,7 +673,7 @@ protected:
         if (currentFury < 60)
         {
 
-            this->CastSpell(target, SPELL_DEMONS_BITE);
+            this->CastSpell(SPELL_DEMONS_BITE, target);
 
             GenerateFury(rand() % 11 + 20);
 
@@ -820,7 +820,7 @@ private:
             this->GetBot()->GetDistance(target) < 20.0f)
         {
 
-            this->CastSpell(target, SPELL_FEL_RUSH);
+            this->CastSpell(SPELL_FEL_RUSH, target);
 
             _momentumTracker.UseFelRush();
 
@@ -835,7 +835,7 @@ private:
             this->GetBot()->GetDistance(target) < 5.0f)
         {
 
-            this->CastSpell(this->GetBot(), SPELL_VENGEFUL_RETREAT);
+            this->CastSpell(SPELL_VENGEFUL_RETREAT, this->GetBot());
 
             _momentumTracker.UseVengefulRetreat();
 
@@ -1204,7 +1204,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_BLUR, bot)) {
 
-                                    this->CastSpell(bot, SPELL_BLUR);
+                                    this->CastSpell(SPELL_BLUR, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1228,7 +1228,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
 
-                                    this->CastSpell(bot, SPELL_DARKNESS);
+                                    this->CastSpell(SPELL_DARKNESS, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1274,7 +1274,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
 
-                                    this->CastSpell(bot, SPELL_METAMORPHOSIS);
+                                    this->CastSpell(SPELL_METAMORPHOSIS, bot);
 
                                     this->_metamorphosisActive = true;
 
@@ -1310,7 +1310,7 @@ private:
 
                                 if (target && this->CanCastSpell(SPELL_FEL_BARRAGE, target)) {
 
-                                    this->CastSpell(target, SPELL_FEL_BARRAGE);
+                                    this->CastSpell(SPELL_FEL_BARRAGE, target);
 
                                     this->ConsumeResource(SPELL_FEL_BARRAGE);
 
@@ -1368,7 +1368,7 @@ private:
 
                                 if (target && this->CanCastSpell(SPELL_EYE_BEAM, target)) {
 
-                                    this->CastSpell(target, SPELL_EYE_BEAM);
+                                    this->CastSpell(SPELL_EYE_BEAM, target);
 
                                     this->_eyeBeamChanneling = true;
 
@@ -1412,7 +1412,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
 
-                                    this->CastSpell(bot, SPELL_DEATH_SWEEP);
+                                    this->CastSpell(SPELL_DEATH_SWEEP, bot);
 
                                     this->ConsumeResource(SPELL_BLADE_DANCE);
 
@@ -1452,7 +1452,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
 
-                                    this->CastSpell(bot, SPELL_BLADE_DANCE);
+                                    this->CastSpell(SPELL_BLADE_DANCE, bot);
 
                                     this->_lastBladeDance = GameTime::GetGameTimeMS();
 
@@ -1480,7 +1480,7 @@ private:
 
                                 if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
 
-                                    this->CastSpell(bot, SPELL_IMMOLATION_AURA);
+                                    this->CastSpell(SPELL_IMMOLATION_AURA, bot);
 
                                     this->_immolationAuraActive = true;
 
@@ -1534,7 +1534,7 @@ private:
 
                                         if (target && this->CanCastSpell(SPELL_FEL_RUSH, target)) {
 
-                                            this->CastSpell(target, SPELL_FEL_RUSH);
+                                            this->CastSpell(SPELL_FEL_RUSH, target);
 
                                             this->_momentumTracker.UseFelRush();
 
@@ -1570,7 +1570,7 @@ private:
 
                                         if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
 
-                                            this->CastSpell(bot, SPELL_VENGEFUL_RETREAT);
+                                            this->CastSpell(SPELL_VENGEFUL_RETREAT, bot);
 
                                             this->_momentumTracker.UseVengefulRetreat();
 
@@ -1624,7 +1624,7 @@ private:
 
                                 if (target && this->CanCastSpell(SPELL_ANNIHILATION, target)) {
 
-                                    this->CastSpell(target, SPELL_ANNIHILATION);
+                                    this->CastSpell(SPELL_ANNIHILATION, target);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1666,7 +1666,7 @@ private:
 
                                 if (target && this->CanCastSpell(SPELL_CHAOS_STRIKE, target)) {
 
-                                    this->CastSpell(target, SPELL_CHAOS_STRIKE);
+                                    this->CastSpell(SPELL_CHAOS_STRIKE, target);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1712,7 +1712,7 @@ private:
 
                         if (target && this->CanCastSpell(SPELL_DEMONS_BITE, target)) {
 
-                            this->CastSpell(target, SPELL_DEMONS_BITE);
+                            this->CastSpell(SPELL_DEMONS_BITE, target);
 
                             this->_lastDemonsBite = GameTime::GetGameTimeMS();
 

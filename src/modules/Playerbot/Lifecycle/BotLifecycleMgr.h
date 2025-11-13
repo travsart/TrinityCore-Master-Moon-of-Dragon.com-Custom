@@ -53,6 +53,38 @@ struct LifecycleEventInfo
     std::string correlationId;
 };
 
+// Performance monitoring metrics
+struct PerformanceMetrics
+{
+    std::atomic<uint32> totalBotsManaged{0};
+    std::atomic<uint32> activeBots{0};
+    std::atomic<uint32> scheduledBots{0};
+    std::atomic<uint32> eventsProcessedPerSecond{0};
+    std::atomic<uint32> averageEventProcessingTimeMs{0};
+    std::atomic<uint32> failedSpawnsLastHour{0};
+    std::atomic<float> systemCpuUsage{0.0f};
+    std::atomic<uint64> memoryUsageMB{0};
+
+    std::chrono::system_clock::time_point lastUpdate;
+    uint32 eventCountThisSecond = 0;
+    uint32 totalProcessingTimeThisSecond = 0;
+};
+
+// Lifecycle statistics
+struct LifecycleStatistics
+{
+    uint32 totalLifecycleEvents = 0;
+    uint32 successfulSpawns = 0;
+    uint32 failedSpawns = 0;
+    uint32 scheduledLogins = 0;
+    uint32 scheduledLogouts = 0;
+    uint32 populationUpdates = 0;
+    uint32 maintenanceRuns = 0;
+    float averageResponseTimeMs = 0.0f;
+    std::chrono::system_clock::time_point startTime;
+    std::chrono::system_clock::time_point lastUpdate;
+};
+
 class TC_GAME_API BotLifecycleMgr final : public IBotLifecycleMgr
 {
 public:
@@ -81,22 +113,6 @@ public:
     void HandlePopulationPressure() override;
 
     // Performance monitoring
-    struct PerformanceMetrics
-    {
-        std::atomic<uint32> totalBotsManaged{0};
-        std::atomic<uint32> activeBots{0};
-        std::atomic<uint32> scheduledBots{0};
-        std::atomic<uint32> eventsProcessedPerSecond{0};
-        std::atomic<uint32> averageEventProcessingTimeMs{0};
-        std::atomic<uint32> failedSpawnsLastHour{0};
-        std::atomic<float> systemCpuUsage{0.0f};
-        std::atomic<uint64> memoryUsageMB{0};
-
-        std::chrono::system_clock::time_point lastUpdate;
-        uint32 eventCountThisSecond = 0;
-        uint32 totalProcessingTimeThisSecond = 0;
-    };
-
     PerformanceMetrics const& GetPerformanceMetrics() const override { return _metrics; }
     void LogPerformanceReport() override;
 
@@ -116,26 +132,12 @@ public:
     void EmergencyShutdown() override;
 
     // Statistics and reporting
-    struct LifecycleStatistics
-    {
-        uint32 totalLifecycleEvents = 0;
-        uint32 successfulSpawns = 0;
-        uint32 failedSpawns = 0;
-        uint32 scheduledLogins = 0;
-        uint32 scheduledLogouts = 0;
-        uint32 populationUpdates = 0;
-        uint32 maintenanceRuns = 0;
-        float averageResponseTimeMs = 0.0f;
-        std::chrono::system_clock::time_point startTime;
-        std::chrono::system_clock::time_point lastUpdate;
-    };
-
     LifecycleStatistics GetStatistics() const override { return _statistics; }
     void ResetStatistics() override;
 
     // Event subscription system
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;
-    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler) override;
+    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler);
     void UnregisterEventHandler(uint32 handlerId) override;
 
 private:

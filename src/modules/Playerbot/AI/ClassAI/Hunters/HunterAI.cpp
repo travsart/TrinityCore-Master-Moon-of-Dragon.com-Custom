@@ -1397,7 +1397,7 @@ void HunterAI::PlaceTrap(uint32 trapSpell, const Position& pos)
 {    if (!_bot->HasSpell(trapSpell) || !CanUseAbility(trapSpell))
         return;
 
-    // Note: Ground-targeted spells need special handling    _bot->CastSpell(_bot, trapSpell, false);
+    // Note: Ground-targeted spells need special handling    _bot->CastSpell(trapSpell, false, _bot);
     _lastTrapPosition = pos;
     _activeTrapType = trapSpell;
     RecordTrapPlacement(trapSpell);

@@ -46,6 +46,7 @@ constexpr uint32 FERAL_MOONFIRE_CAT = 155625; // Lunar Inspiration talent
 constexpr uint32 FERAL_TIGERS_FURY = 5217;
 constexpr uint32 FERAL_BERSERK = 106951;
 constexpr uint32 FERAL_INCARNATION_KING = 102543; // Incarnation: Avatar of Ashamane
+constexpr uint32 FERAL_CONVOKE = 391528; // Convoke the Spirits (shared with Balance)
 constexpr uint32 FERAL_BLOODTALONS = 155672; // Healing touch buff
 constexpr uint32 FERAL_CAT_FORM = 768;
 constexpr uint32 FERAL_DASH = 1850;
@@ -176,19 +177,9 @@ public:
     {
         auto it = _ripTargets.find(guid);
         if (it != _ripTargets.end())
-    if (!rip)
-    {
-        return false;    }
         {
-
             uint32 now = GameTime::GetGameTimeMS();
-
             return now < it->second ? (it->second - now) : 0;
-        if (!rake)
-        {
-
-            return nullptr;
-        }
         }
         return 0;
     }
@@ -220,63 +211,23 @@ if (!thrash)
 
         ObjectGuid guid = target->GetGUID();        // Sync with actual auras
         if (Aura* rake = target->GetAura(FERAL_RAKE))
-
             _rakeTargets[guid] = GameTime::GetGameTimeMS() + rake->GetDuration();
-
-            if (!rake)
-
-            {
-
-                return nullptr;
-
-            }
         else
-
             _rakeTargets.erase(guid);
 
         if (Aura* rip = target->GetAura(FERAL_RIP))
-
             _ripTargets[guid] = GameTime::GetGameTimeMS() + rip->GetDuration();
-
-            if (!rip)
-
-            {
-
-                return nullptr;
-
-            }
         else
-
             _ripTargets.erase(guid);
 
         if (Aura* thrash = target->GetAura(FERAL_THRASH_CAT))
-
             _thrashTargets[guid] = GameTime::GetGameTimeMS() + thrash->GetDuration();
-
-            if (!thrash)
-
-            {
-
-                return nullptr;
-
-            }
         else
-
             _thrashTargets.erase(guid);
 
         if (Aura* moonfire = target->GetAura(FERAL_MOONFIRE_CAT))
-
             _moonfireTargets[guid] = GameTime::GetGameTimeMS() + moonfire->GetDuration();
-
-            if (!moonfire)
-
-            {
-
-                return nullptr;
-
-            }
         else
-
             _moonfireTargets.erase(guid);
     }
 
@@ -421,7 +372,7 @@ public:
 
             {FERAL_BERSERK, 180000, 1},
 
-            {FERAL_INCARNATION, 180000, 1},
+            {FERAL_INCARNATION_KING, 180000, 1},
 
             {FERAL_CONVOKE, 120000, 1},
 

@@ -639,7 +639,7 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
         targets.SetUnitTarget(actualTarget);
 
     Spell* spell = new Spell(_bot, spellInfo, TRIGGERED_NONE);
-    SpellCastResult result = spell->prepare(targets);
+    ::SpellCastResult result = spell->prepare(targets);
 
     if (result == SPELL_CAST_OK)
     {

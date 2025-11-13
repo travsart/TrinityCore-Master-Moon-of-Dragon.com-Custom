@@ -332,7 +332,7 @@ private:
         if (!_bot || HasActivePet())
 
             return;
-            _bot->CastSpell(_bot, SPELL_CALL_PET_SURV, false);
+            _bot->CastSpell(SPELL_CALL_PET_SURV, false, _bot);
     }
 
     bool IsPetHealthLow() const
@@ -354,7 +354,7 @@ private:
         Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
 
-            _bot->CastSpell(pet, SPELL_MEND_PET_SURV, false);
+            _bot->CastSpell(SPELL_MEND_PET_SURV, false, pet);
 
             _lastMendPet = currentTime;
         }
@@ -466,7 +466,7 @@ public:
         if (!_petManager.HasActivePet())
         {
 
-            bot->CastSpell(bot, SPELL_CALL_PET_SURV, false);
+            bot->CastSpell(SPELL_CALL_PET_SURV, false, bot);
 
             return;
         }
@@ -479,7 +479,7 @@ public:
 
             {
 
-                this->CastSpell(bot, SPELL_ASPECT_OF_EAGLE);
+                this->CastSpell(SPELL_ASPECT_OF_EAGLE, bot);
 
                 _aspectOfEagleActive = true;
 
@@ -490,14 +490,14 @@ public:
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_SURVIVAL_OF_FITTEST))
         {
 
-            this->CastSpell(bot, SPELL_SURVIVAL_OF_FITTEST);
+            this->CastSpell(SPELL_SURVIVAL_OF_FITTEST, bot);
         }
 
         // Use Exhilaration for healing
         if (bot->GetHealthPct() < 40.0f && this->CanUseAbility(SPELL_EXHILARATION_SURV))
         {
 
-            this->CastSpell(bot, SPELL_EXHILARATION_SURV);
+            this->CastSpell(SPELL_EXHILARATION_SURV, bot);
         }
     }
 
@@ -506,7 +506,7 @@ public:
         if (this->CanUseAbility(SPELL_MUZZLE))
         {
 
-            this->CastSpell(target, SPELL_MUZZLE);
+            this->CastSpell(SPELL_MUZZLE, target);
         }
     }
 
@@ -564,7 +564,7 @@ protected:
         if (ShouldUseCoordinatedAssault(target) && this->CanUseAbility(SPELL_COORDINATED_ASSAULT))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_COORDINATED_ASSAULT);
+            this->CastSpell(SPELL_COORDINATED_ASSAULT, this->GetBot());
 
             _coordinatedAssaultActive = true;
 
@@ -576,7 +576,7 @@ protected:
         // Priority 2: Maintain Serpent Sting
         if (!target->HasAura(SPELL_SERPENT_STING) && currentFocus >= 20)        {
 
-            this->CastSpell(target, SPELL_SERPENT_STING);
+            this->CastSpell(SPELL_SERPENT_STING, target);
 
             _lastSerpentSting = GameTime::GetGameTimeMS();
 
@@ -591,7 +591,7 @@ protected:
 
             uint32 bombSpell = _bombManager.GetBombSpell();
 
-            this->CastSpell(target, bombSpell);
+            this->CastSpell(bombSpell, target);
 
             _bombManager.UseCharge();
 
@@ -612,7 +612,7 @@ protected:
         if (currentFocus < 50 && this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
+            this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
             _lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -629,7 +629,7 @@ protected:
 
             {
 
-                this->CastSpell(target, SPELL_MONGOOSE_BITE);
+                this->CastSpell(SPELL_MONGOOSE_BITE, target);
 
                 _mongooseTracker.OnMongooseBiteCast();
 
@@ -644,7 +644,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_FLANKING_STRIKE))
         {
 
-            this->CastSpell(target, SPELL_FLANKING_STRIKE);
+            this->CastSpell(SPELL_FLANKING_STRIKE, target);
 
             this->ConsumeResource(30);
 
@@ -657,7 +657,7 @@ protected:
         if (currentFocus >= 30)
         {
 
-            this->CastSpell(target, SPELL_RAPTOR_STRIKE);
+            this->CastSpell(SPELL_RAPTOR_STRIKE, target);
 
             _lastRaptorStrike = GameTime::GetGameTimeMS();
 
@@ -670,7 +670,7 @@ protected:
         if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
+            this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
             this->_resource = std::min<uint32>(this->_resource + 15, 100);
 
@@ -688,7 +688,7 @@ protected:
 
             uint32 bombSpell = _bombManager.GetBombSpell();
 
-            this->CastSpell(target, bombSpell);
+            this->CastSpell(bombSpell, target);
 
             _bombManager.UseCharge();
 
@@ -699,7 +699,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_BUTCHERY))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_BUTCHERY);
+            this->CastSpell(SPELL_BUTCHERY, this->GetBot());
 
             this->ConsumeResource(30);
 
@@ -710,7 +710,7 @@ protected:
         if (currentFocus >= 35)
         {
 
-            this->CastSpell(this->GetBot(), SPELL_CARVE);
+            this->CastSpell(SPELL_CARVE, this->GetBot());
 
             this->ConsumeResource(35);
 
@@ -721,7 +721,7 @@ protected:
         if (currentFocus < 50 && this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
+            this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
             this->_resource = std::min<uint32>(this->_resource + 15, 100);
 
@@ -788,7 +788,7 @@ private:
         if (this->CanUseAbility(SPELL_HARPOON))
         {
 
-            this->CastSpell(target, SPELL_HARPOON);
+            this->CastSpell(SPELL_HARPOON, target);
 
             // Terms of Engagement generates focus
 
@@ -871,7 +871,7 @@ private:
 
             {
 
-                this->CastSpell(enemy, SPELL_SERPENT_STING);
+                this->CastSpell(SPELL_SERPENT_STING, enemy);
 
                 this->ConsumeResource(20);
 
@@ -889,7 +889,7 @@ private:
 
     // Pet management - implemented by SurvivalPetManager
     void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void SummonPet() { GetBot()->CastSpell(GetBot(), SPELL_CALL_PET_SURV, false); }
+    void SummonPet() { GetBot()->CastSpell(SPELL_CALL_PET_SURV, false, GetBot()); }
     void MendPetIfNeeded() { if (_petManager.HasActivePet()) _petManager.EnsurePetActive(GetBot()->GetVictim()); }
     void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
@@ -1135,7 +1135,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_COORDINATED_ASSAULT);
+                                    this->CastSpell(SPELL_COORDINATED_ASSAULT, bot);
 
                                     this->_coordinatedAssaultActive = true;
 
@@ -1180,7 +1180,7 @@ private:
 
                                 uint32 bombSpell = this->_bombManager.GetBombSpell();
 
-                                this->CastSpell(target, bombSpell);
+                                this->CastSpell(bombSpell, target);
 
                                 this->_bombManager.UseCharge();
 
@@ -1209,7 +1209,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_KILL_COMMAND_SURV);
+                                    this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
                                     this->_lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -1240,7 +1240,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_SERPENT_STING);
+                                    this->CastSpell(SPELL_SERPENT_STING, target);
 
                                     this->_lastSerpentSting = GameTime::GetGameTimeMS();
 
@@ -1289,7 +1289,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_MONGOOSE_BITE);
+                                    this->CastSpell(SPELL_MONGOOSE_BITE, target);
 
                                     this->_mongooseTracker.OnMongooseBiteCast();
 
@@ -1322,7 +1322,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_FLANKING_STRIKE);
+                                    this->CastSpell(SPELL_FLANKING_STRIKE, target);
 
                                     this->ConsumeResource(30);
 
@@ -1380,7 +1380,7 @@ private:
 
                                         {
 
-                                            this->CastSpell(bot, SPELL_BUTCHERY);
+                                            this->CastSpell(SPELL_BUTCHERY, bot);
 
                                             this->ConsumeResource(30);
 
@@ -1409,7 +1409,7 @@ private:
 
                                         {
 
-                                            this->CastSpell(bot, SPELL_CARVE);
+                                            this->CastSpell(SPELL_CARVE, bot);
 
                                             this->ConsumeResource(35);
 
@@ -1436,7 +1436,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_RAPTOR_STRIKE);
+                                    this->CastSpell(SPELL_RAPTOR_STRIKE, target);
 
                                     this->_lastRaptorStrike = GameTime::GetGameTimeMS();
 

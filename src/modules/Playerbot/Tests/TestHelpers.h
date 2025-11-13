@@ -478,10 +478,8 @@ inline void CompleteQuest(std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
 /**
  * @brief Verify spell can be cast on target
  */
-inline bool CanCastSpell(
-    std::shared_ptr<Test::MockPlayer> bot,
-    uint32 spellId,
-    std::shared_ptr<Test::MockUnit> target)
+inline bool CanCastSpell(uint32 spellId,
+    std::shared_ptr<Test::MockUnit> target, std::shared_ptr<Test::MockPlayer> bot)
 {
     if (!bot || !target)
         return false;
@@ -501,12 +499,10 @@ inline bool CanCastSpell(
 /**
  * @brief Simulate spell cast
  */
-inline void CastSpell(
-    std::shared_ptr<Test::MockPlayer> bot,
-    uint32 spellId,
-    std::shared_ptr<Test::MockUnit> target)
+inline void CastSpell(uint32 spellId,
+    std::shared_ptr<Test::MockUnit> target, std::shared_ptr<Test::MockPlayer> bot)
 {
-    ASSERT_TRUE(CanCastSpell(bot, spellId, target))
+    ASSERT_TRUE(CanCastSpell(spellId, target, bot))
         << "Cannot cast spell " << spellId;
 
     // Spell casting simulation

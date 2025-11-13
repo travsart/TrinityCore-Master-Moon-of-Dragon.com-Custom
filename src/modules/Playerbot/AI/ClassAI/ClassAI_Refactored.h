@@ -159,7 +159,7 @@ protected:
     uint32 GetSpellCooldown(uint32 spellId);
 
     // Spell casting
-    bool CastSpell(::Unit* target, uint32 spellId);
+    bool CastSpell(uint32 spellId, ::Unit* target);
     bool CastSpell(uint32 spellId); // Self-cast
 
     // Target selection helpers

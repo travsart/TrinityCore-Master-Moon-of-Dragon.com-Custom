@@ -1106,7 +1106,6 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
     }
 
     {
-        std::lock_guard lock(_botMutex);
         _activeBots[characterGuid] = zoneId;
         _botsByZone[zoneId].push_back(characterGuid);
 
@@ -1172,7 +1171,6 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
 
     // Get bot info and remove from tracking in a single critical section
     {
-        std::lock_guard lock(_botMutex);
         auto it = _activeBots.find(guid);
         if (it == _activeBots.end())
         {
@@ -1224,7 +1222,6 @@ void BotSpawner::DespawnAllBots()
 {
     std::vector<ObjectGuid> botsToRemove;
     {
-        std::lock_guard lock(_botMutex);
         for (auto const& [guid, zoneId] : _activeBots)
         {
             botsToRemove.push_back(guid);
@@ -1264,14 +1261,12 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
 
     // Phase 1: Quick data collection with separate locks (no nesting)
     {
-        std::lock_guard botLock(_botMutex);
         auto it = _botsByZone.find(zoneId);
         botCount = it != _botsByZone.end() ? it->second.size() : 0;
     }
 
     // Phase 2: Update zone data with separate lock
     {
-        std::lock_guard zoneLock(_zoneMutex);
         auto it = _zonePopulations.find(zoneId);
         if (it != _zonePopulations.end())
         {
@@ -1304,7 +1299,6 @@ void BotSpawner::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
 
 ZonePopulation BotSpawner::GetZonePopulation(uint32 zoneId) const
 {
-    std::lock_guard lock(_zoneMutex);
     auto it = _zonePopulations.find(zoneId);
     if (it != _zonePopulations.end())
     {
@@ -1322,7 +1316,6 @@ uint32 BotSpawner::GetActiveBotCount() const
 
 uint32 BotSpawner::GetActiveBotCount(uint32 zoneId) const
 {
-    std::lock_guard lock(_botMutex);
     auto it = _botsByZone.find(zoneId);
     return it != _botsByZone.end() ? it->second.size() : 0;
 }
@@ -1340,7 +1333,6 @@ bool BotSpawner::CanSpawnInZone(uint32 zoneId) const
 bool BotSpawner::CanSpawnOnMap(uint32 mapId) const
 {
     uint32 mapBotCount = 0;
-    std::lock_guard lock(_zoneMutex);
     for (auto const& [zoneId, population] : _zonePopulations)
     {
         if (population.mapId == mapId)
@@ -1360,7 +1352,6 @@ void BotSpawner::CalculateZoneTargets()
 
     // Phase 1: Copy zone data with minimal lock scope
     {
-        std::lock_guard lock(_zoneMutex);
         zonesCopy.reserve(_zonePopulations.size());
         for (auto const& [zoneId, population] : _zonePopulations)
         {
@@ -1378,7 +1369,6 @@ void BotSpawner::CalculateZoneTargets()
 
     // Phase 3: Update targets with minimal lock scope
     {
-        std::lock_guard lock(_zoneMutex);
         for (auto const& [zoneId, newTarget] : targetUpdates)
         {
             auto it = _zonePopulations.find(zoneId);
@@ -1429,7 +1419,6 @@ void BotSpawner::SpawnToPopulationTarget()
 
     // Phase 1: Copy zone data with minimal lock scope
     {
-        std::lock_guard lock(_zoneMutex);
 
         // CRITICAL FIX: If no zones are populated, add test zones
         if (_zonePopulations.empty())
@@ -1496,7 +1485,6 @@ void BotSpawner::UpdatePopulationTargets()
 {
     // Initialize zone populations for all known zones
     // This is a simplified version - in reality we'd query the database for all zones
-    std::lock_guard lock(_zoneMutex);
 
     // Add some default zones if empty
     if (_zonePopulations.empty())
@@ -1526,7 +1514,6 @@ bool BotSpawner::DespawnBot(ObjectGuid guid, std::string const& reason)
 
     // Check if bot exists before attempting despawn
     {
-        std::lock_guard lock(_botMutex);
         auto it = _activeBots.find(guid);
         if (it == _activeBots.end())
         {

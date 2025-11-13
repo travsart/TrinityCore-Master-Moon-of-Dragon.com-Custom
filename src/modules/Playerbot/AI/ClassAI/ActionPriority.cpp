@@ -376,7 +376,7 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
                 score += 15.0f; // Total: 95
 
             // MEDIUM PRIORITY: AoE damage spells
-            if (spellInfo->HasAttribute(SPELL_ATTR1_IS_AOE_SPELL))
+            if (spellInfo->IsTargetingArea())
                 score += 20.0f; // Total: 100+
 
             // MEDIUM PRIORITY: DoT spells (less urgent than direct damage)

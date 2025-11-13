@@ -75,6 +75,106 @@ struct GuildChatMessage
         , requiresResponse(false), relevanceScore(0.0f) {}
 };
 
+// Guild profile configuration
+struct GuildProfile
+{
+    GuildChatStyle chatStyle;
+    GuildRole preferredRole;
+    std::vector<GuildActivityType> activeActivities;
+    float participationLevel; // 0.0 = minimal, 1.0 = maximum
+    float helpfulnessLevel;
+    float leadershipAmbition;
+    std::vector<std::string> expertise; // Areas of knowledge
+    std::vector<std::string> interests; // Topics of interest
+    std::unordered_set<uint32> friendlyMembers;
+    std::unordered_set<std::string> chatTriggers;
+    uint32 dailyActivityQuota;
+    bool autoAcceptGuildInvites;
+
+    GuildProfile() : chatStyle(GuildChatStyle::MODERATE), preferredRole(GuildRole::MEMBER)
+        , participationLevel(0.7f), helpfulnessLevel(0.8f), leadershipAmbition(0.3f)
+        , dailyActivityQuota(10), autoAcceptGuildInvites(true) {}
+};
+
+// Guild participation tracking
+struct GuildParticipation
+{
+    uint32 playerGuid;
+    uint32 guildId;
+    std::vector<GuildChatMessage> recentMessages;
+    std::unordered_map<GuildActivityType, uint32> activityCounts;
+    uint32 totalChatMessages;
+    uint32 helpfulResponses;
+    uint32 eventsAttended;
+    float socialScore;
+    float contributionScore;
+    uint32 lastActivity;
+    uint32 joinDate;
+
+    // Default constructor for std::unordered_map compatibility
+    GuildParticipation() : playerGuid(0), guildId(0)
+        , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
+        , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
+        , joinDate(GameTime::GetGameTimeMS()) {}
+
+    GuildParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
+        , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
+        , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
+        , joinDate(GameTime::GetGameTimeMS()) {}
+};
+
+// Guild performance metrics
+struct GuildMetrics
+{
+    std::atomic<uint32> guildInteractions{0};
+    std::atomic<uint32> chatMessages{0};
+    std::atomic<uint32> bankTransactions{0};
+    std::atomic<uint32> eventsParticipated{0};
+    std::atomic<uint32> helpfulActions{0};
+    std::atomic<float> averageParticipationScore{0.7f};
+    std::atomic<float> socialIntegrationScore{0.8f};
+    std::atomic<float> contributionRating{0.75f};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    // Default constructor
+    GuildMetrics() = default;
+
+    // Copy constructor for atomic members
+    GuildMetrics(const GuildMetrics& other) :
+        guildInteractions(other.guildInteractions.load()),
+        chatMessages(other.chatMessages.load()),
+        bankTransactions(other.bankTransactions.load()),
+        eventsParticipated(other.eventsParticipated.load()),
+        helpfulActions(other.helpfulActions.load()),
+        averageParticipationScore(other.averageParticipationScore.load()),
+        socialIntegrationScore(other.socialIntegrationScore.load()),
+        contributionRating(other.contributionRating.load()),
+        lastUpdate(other.lastUpdate) {}
+
+    // Assignment operator for atomic members
+    GuildMetrics& operator=(const GuildMetrics& other) {
+        if (this != &other) {
+            guildInteractions.store(other.guildInteractions.load());
+            chatMessages.store(other.chatMessages.load());
+            bankTransactions.store(other.bankTransactions.load());
+            eventsParticipated.store(other.eventsParticipated.load());
+            helpfulActions.store(other.helpfulActions.load());
+            averageParticipationScore.store(other.averageParticipationScore.load());
+            socialIntegrationScore.store(other.socialIntegrationScore.load());
+            contributionRating.store(other.contributionRating.load());
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
+
+    void Reset() {
+        guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
+        eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
+        socialIntegrationScore = 0.8f; contributionRating = 0.75f;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+};
+
 /**
  * @brief Comprehensive guild integration system for automated guild participation
  *
@@ -88,13 +188,13 @@ public:
 
     // Core guild functionality using TrinityCore's Guild system
     void ProcessGuildInteraction(Player* player) override;
-    void HandleGuildChat(Player* player, const GuildChatMessage& message) override;
+    void HandleGuildChat(Player* player, const GuildChatMessage& message);
     void ParticipateInGuildActivities(Player* player) override;
     void ManageGuildResponsibilities(Player* player) override;
 
     // Guild chat automation
     void AutomateGuildChatParticipation(Player* player) override;
-    void RespondToGuildChat(Player* player, const GuildChatMessage& message) override;
+    void RespondToGuildChat(Player* player, const GuildChatMessage& message);
     void InitiateGuildConversation(Player* player) override;
     void ShareGuildInformation(Player* player, const std::string& topic) override;
 
@@ -112,56 +212,10 @@ public:
     void OrganizeGuildRuns(Player* player) override;
 
     // Advanced guild features
-    struct GuildProfile
-    {
-        GuildChatStyle chatStyle;
-        GuildRole preferredRole;
-        std::vector<GuildActivityType> activeActivities;
-        float participationLevel; // 0.0 = minimal, 1.0 = maximum
-        float helpfulnessLevel;
-        float leadershipAmbition;
-        std::vector<std::string> expertise; // Areas of knowledge
-        std::vector<std::string> interests; // Topics of interest
-        std::unordered_set<uint32> friendlyMembers;
-        std::unordered_set<std::string> chatTriggers;
-        uint32 dailyActivityQuota;
-        bool autoAcceptGuildInvites;
-
-        GuildProfile() : chatStyle(GuildChatStyle::MODERATE), preferredRole(GuildRole::MEMBER)
-            , participationLevel(0.7f), helpfulnessLevel(0.8f), leadershipAmbition(0.3f)
-            , dailyActivityQuota(10), autoAcceptGuildInvites(true) {}
-    };
-
-    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile) override;
+    void SetGuildProfile(uint32 playerGuid, const GuildProfile& profile);
     GuildProfile GetGuildProfile(uint32 playerGuid) override;
 
     // Guild participation tracking
-    struct GuildParticipation
-    {
-        uint32 playerGuid;
-        uint32 guildId;
-        std::vector<GuildChatMessage> recentMessages;
-        std::unordered_map<GuildActivityType, uint32> activityCounts;
-        uint32 totalChatMessages;
-        uint32 helpfulResponses;
-        uint32 eventsAttended;
-        float socialScore;
-        float contributionScore;
-        uint32 lastActivity;
-        uint32 joinDate;
-
-        // Default constructor for std::unordered_map compatibility
-        GuildParticipation() : playerGuid(0), guildId(0)
-            , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
-            , joinDate(GameTime::GetGameTimeMS()) {}
-
-        GuildParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
-            , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
-            , joinDate(GameTime::GetGameTimeMS()) {}
-    };
-
     GuildParticipation GetGuildParticipation(uint32 playerGuid) override;
     void UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType) override;
 
@@ -191,9 +245,9 @@ public:
         ChatIntelligence() : lastResponseTime(0), responseFrequency(0.3f) {}
     };
 
-    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) override;
+    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
     std::string GenerateConversationStarter(Player* player) override;
-    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message) override;
+    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message);
     void LearnFromGuildConversations(Player* player) override;
 
     // Guild achievement coordination
@@ -209,57 +263,6 @@ public:
     void HandleGuildConflicts(Player* player) override;
 
     // Performance monitoring
-    struct GuildMetrics
-    {
-        std::atomic<uint32> guildInteractions{0};
-        std::atomic<uint32> chatMessages{0};
-        std::atomic<uint32> bankTransactions{0};
-        std::atomic<uint32> eventsParticipated{0};
-        std::atomic<uint32> helpfulActions{0};
-        std::atomic<float> averageParticipationScore{0.7f};
-        std::atomic<float> socialIntegrationScore{0.8f};
-        std::atomic<float> contributionRating{0.75f};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        // Default constructor
-        GuildMetrics() = default;
-
-        // Copy constructor for atomic members
-        GuildMetrics(const GuildMetrics& other) :
-            guildInteractions(other.guildInteractions.load()),
-            chatMessages(other.chatMessages.load()),
-            bankTransactions(other.bankTransactions.load()),
-            eventsParticipated(other.eventsParticipated.load()),
-            helpfulActions(other.helpfulActions.load()),
-            averageParticipationScore(other.averageParticipationScore.load()),
-            socialIntegrationScore(other.socialIntegrationScore.load()),
-            contributionRating(other.contributionRating.load()),
-            lastUpdate(other.lastUpdate) {}
-
-        // Assignment operator for atomic members
-        GuildMetrics& operator=(const GuildMetrics& other) {
-            if (this != &other) {
-                guildInteractions.store(other.guildInteractions.load());
-                chatMessages.store(other.chatMessages.load());
-                bankTransactions.store(other.bankTransactions.load());
-                eventsParticipated.store(other.eventsParticipated.load());
-                helpfulActions.store(other.helpfulActions.load());
-                averageParticipationScore.store(other.averageParticipationScore.load());
-                socialIntegrationScore.store(other.socialIntegrationScore.load());
-                contributionRating.store(other.contributionRating.load());
-                lastUpdate = other.lastUpdate;
-            }
-            return *this;
-        }
-
-        void Reset() {
-            guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
-            eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
-            socialIntegrationScore = 0.8f; contributionRating = 0.75f;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-    };
-
     GuildMetrics GetPlayerGuildMetrics(uint32 playerGuid) override;
     GuildMetrics GetGuildBotMetrics(uint32 guildId) override;
 

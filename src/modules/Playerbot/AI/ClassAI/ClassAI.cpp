@@ -287,10 +287,6 @@ void ClassAI::OnCombatEnd()
     _combatTime = 0;
     _currentCombatTarget = nullptr;
 
-    if (!newTarget)
-    {
-        return nullptr;
-    }
     TC_LOG_DEBUG("playerbot.classai", "Bot {} leaving combat", GetBot()->GetName());
 
     // Notify combat behavior system
@@ -809,7 +805,7 @@ void ClassAI::ExecutePendingSpell()
     // - Range/LOS checks
     // - Cast time processing
     // - Combat state management
-    SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = GameTime::GetGameTimeMS() - _pendingSpellCastRequest->queuedAtTime;
+    ::SpellCastResult result = spell->prepare(targets);    uint32 queuedDuration = GameTime::GetGameTimeMS() - _pendingSpellCastRequest->queuedAtTime;
 
     if (result == SPELL_CAST_OK)
     {
@@ -842,7 +838,7 @@ void ClassAI::CancelPendingSpell()
 // SPELL CASTING
 // ============================================================================
 
-SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
+::SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
     // If no target specified, self-cast
     if (!target)
@@ -852,8 +848,8 @@ SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
         return SPELL_FAILED_ERROR;
 
     // MIGRATION COMPLETE (2025-10-30):
-    // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
-    // BEFORE: GetBot()->CastSpell(target, spellId, false); // UNSAFE - worker thread
+    // Replaced direct CastSpell(spellId, false, ) API call with packet-based SpellPacketBuilder.
+    // BEFORE: GetBot()->CastSpell(target); // UNSAFE - worker thread
     // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
     // IMPACT: All 39 class specializations now use thread-safe spell casting
 
@@ -926,10 +922,10 @@ SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
                      result.failureReason);
         return SPELL_FAILED_ERROR;
     }
-	bool ClassAI::CastSpell(uint32 spellId)
+	bool ClassAI::CastSpell(spellId, uint32 spellId)
 {
     // Self-cast version
-    return CastSpell(GetBot(), spellId);
+    return CastSpell(GetBot());
 }
 
 // ============================================================================
@@ -1095,7 +1091,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         {
             // Interrupt requires special handling - face target quickly
             GetBot()->SetFacingToObject(action.target);
-            success = CastSpell(action.target, action.spellId);            if (success)
+            success = CastSpell(action.spellId, action.target);            if (success)
             {
                 TC_LOG_INFO("playerbot.classai", "Bot {} successfully interrupted {} with spell {}",
                             GetBot()->GetName(), action.target->GetName(), action.spellId);
@@ -1108,7 +1104,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
             // Defensive actions often target self or allies
             Unit* defTarget = action.target == GetBot() ? nullptr : action.target;
             if (defTarget)
-                success = CastSpell(defTarget, action.spellId);
+                success = CastSpell(action.spellId, defTarget);
             else
                 success = CastSpell(action.spellId);  // Self-cast
 
@@ -1126,7 +1122,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
             // CC requires careful targeting
             if (action.target != _currentCombatTarget)  // Don't CC our main target
             {
-                success = CastSpell(action.target, action.spellId);                if (success)
+                success = CastSpell(action.spellId, action.target);                if (success)
                 {
                     TC_LOG_INFO("playerbot.classai", "Bot {} applied crowd control {} to {}",
                                 GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1138,7 +1134,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::EMERGENCY:
         {
             // Emergency actions are highest priority - try to force cast
-            success = CastSpell(action.target, action.spellId);            if (success)
+            success = CastSpell(action.spellId, action.target);            if (success)
             {
                 TC_LOG_WARN("playerbot.classai", "Bot {} executed EMERGENCY action: {} on {}",
                             GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1149,7 +1145,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::COOLDOWN:
         {
             // Major cooldowns
-            success = CastSpell(action.target, action.spellId);            if (success)
+            success = CastSpell(action.spellId, action.target);            if (success)
             {
                 TC_LOG_INFO("playerbot.classai", "Bot {} activated cooldown {} on {}",
                             GetBot()->GetName(), action.spellId, action.target->GetName());
@@ -1197,7 +1193,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         default:
         {
             // Normal rotation ability
-            success = CastSpell(action.target, action.spellId);            if (success)
+            success = CastSpell(action.spellId, action.target);            if (success)
             {
                 TC_LOG_TRACE("playerbot.classai", "Bot {} cast rotation spell {} on {}",
                              GetBot()->GetName(), action.spellId, action.target->GetName());

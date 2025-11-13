@@ -147,7 +147,7 @@ struct PrioritizedSpell
  * // Get highest priority spell
  * uint32 bestSpell = queue.GetHighestPrioritySpell(bot, target, context);
  * if (bestSpell != 0)
- *     CastSpell(target, bestSpell);
+ *     CastSpell(bestSpell, target);
  * @endcode
  *
  * **Performance**:

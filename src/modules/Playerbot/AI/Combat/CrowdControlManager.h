@@ -92,7 +92,7 @@ namespace Playerbot
      * {
      *     Unit* target = ccMgr.GetPriorityTarget();
      *     uint32 spell = ccMgr.GetRecommendedSpell(target);
-     *     bot->CastSpell(target, spell);
+     *     bot->CastSpell(spell, target);
      * }
      * @endcode
      *

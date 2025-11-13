@@ -473,7 +473,7 @@ protected:
     void StartEmpoweredSpell(uint32 spellId, EmpowerLevel targetLevel, ::Unit* target)
     {
         _empowermentTracker.StartEmpower(spellId, targetLevel);
-        this->CastSpell(target, spellId); // Start the channel
+        this->CastSpell(spellId, target); // Start the channel
     }
 
     void ReleaseEmpoweredSpell()

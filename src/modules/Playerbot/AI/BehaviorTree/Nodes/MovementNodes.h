@@ -24,6 +24,8 @@
 #include "Unit.h"
 #include "MotionMaster.h"
 #include "PathGenerator.h"
+#include "Duration.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -418,7 +420,7 @@ public:
         // Start fleeing if not already
         if (!_movementStarted)
         {
-            bot->GetMotionMaster()->MoveFleeing(target, 5000); // Flee for 5 seconds
+            bot->GetMotionMaster()->MoveFleeing(target, Milliseconds(5000)); // Flee for 5 seconds
             _movementStarted = true;
         }
 

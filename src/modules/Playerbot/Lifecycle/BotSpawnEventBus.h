@@ -106,6 +106,26 @@ struct PopulationChangedEvent : public BotSpawnEvent
         : BotSpawnEvent(BotSpawnEventType::POPULATION_CHANGED), zoneId(zone), oldBotCount(oldCount), newBotCount(newCount) {}
 };
 
+// Event statistics for performance monitoring
+struct EventStats
+{
+    std::atomic<uint64> eventsPublished{0};
+    std::atomic<uint64> eventsProcessed{0};
+    std::atomic<uint64> eventsDropped{0};
+    std::atomic<uint64> totalProcessingTimeUs{0};
+    std::atomic<uint32> queuedEvents{0};
+
+    // Delete copy constructor and assignment operator for atomic members
+    EventStats() = default;
+    EventStats(EventStats const&) = delete;
+    EventStats& operator=(EventStats const&) = delete;
+
+    float GetAverageProcessingTimeUs() const {
+        uint64 processed = eventsProcessed.load();
+        return processed > 0 ? static_cast<float>(totalProcessingTimeUs.load()) / processed : 0.0f;
+    }
+};
+
 /**
  * @class BotSpawnEventBus
  * @brief Event-driven architecture for bot spawning workflow
@@ -165,25 +185,6 @@ public:
     void ProcessEventsOfType(BotSpawnEventType eventType) override;
 
     // === PERFORMANCE AND MONITORING ===
-    struct EventStats
-    {
-        std::atomic<uint64> eventsPublished{0};
-        std::atomic<uint64> eventsProcessed{0};
-        std::atomic<uint64> eventsDropped{0};
-        std::atomic<uint64> totalProcessingTimeUs{0};
-        std::atomic<uint32> queuedEvents{0};
-
-        // Delete copy constructor and assignment operator for atomic members
-        EventStats() = default;
-        EventStats(EventStats const&) = delete;
-        EventStats& operator=(EventStats const&) = delete;
-
-        float GetAverageProcessingTimeUs() const {
-            uint64 processed = eventsProcessed.load();
-            return processed > 0 ? static_cast<float>(totalProcessingTimeUs.load()) / processed : 0.0f;
-        }
-    };
-
     EventStats const& GetStats() const override { return _stats; }
     void ResetStats() override;
 

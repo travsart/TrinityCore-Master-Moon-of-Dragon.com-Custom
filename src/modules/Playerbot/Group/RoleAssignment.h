@@ -125,6 +125,58 @@ struct GroupComposition
     }
 };
 
+// Role performance tracking
+struct RolePerformance
+{
+    std::atomic<uint32> assignmentsAccepted{0};
+    std::atomic<uint32> assignmentsDeclined{0};
+    std::atomic<float> performanceRating{5.0f};
+    std::atomic<uint32> successfulEncounters{0};
+    std::atomic<uint32> failedEncounters{0};
+    std::atomic<float> averageEffectiveness{0.5f};
+    std::chrono::steady_clock::time_point lastPerformanceUpdate;
+
+    void Reset() {
+        assignmentsAccepted = 0; assignmentsDeclined = 0; performanceRating = 5.0f;
+        successfulEncounters = 0; failedEncounters = 0; averageEffectiveness = 0.5f;
+        lastPerformanceUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetAcceptanceRate() const {
+        uint32 total = assignmentsAccepted.load() + assignmentsDeclined.load();
+        return total > 0 ? (float)assignmentsAccepted.load() / total : 1.0f;
+    }
+
+    float GetSuccessRate() const {
+        uint32 total = successfulEncounters.load() + failedEncounters.load();
+        return total > 0 ? (float)successfulEncounters.load() / total : 0.5f;
+    }
+};
+
+// Role statistics and monitoring
+struct RoleStatistics
+{
+    std::atomic<uint32> totalAssignments{0};
+    std::atomic<uint32> successfulAssignments{0};
+    std::atomic<uint32> roleConflicts{0};
+    std::atomic<uint32> emergencyFills{0};
+    std::atomic<float> averageCompositionScore{5.0f};
+    std::atomic<float> roleDistributionEfficiency{0.8f};
+    std::chrono::steady_clock::time_point lastStatsUpdate;
+
+    void Reset() {
+        totalAssignments = 0; successfulAssignments = 0; roleConflicts = 0;
+        emergencyFills = 0; averageCompositionScore = 5.0f; roleDistributionEfficiency = 0.8f;
+        lastStatsUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetSuccessRate() const {
+        uint32 total = totalAssignments.load();
+        uint32 successful = successfulAssignments.load();
+        return total > 0 ? (float)successful / total : 0.0f;
+    }
+};
+
 class TC_GAME_API RoleAssignment final : public IRoleAssignment
 {
 public:
@@ -167,33 +219,6 @@ public:
     void AddRoleConstraint(uint32 playerGuid, GroupRole role, RoleCapability capability) override;
 
     // Role performance tracking
-    struct RolePerformance
-    {
-        std::atomic<uint32> assignmentsAccepted{0};
-        std::atomic<uint32> assignmentsDeclined{0};
-        std::atomic<float> performanceRating{5.0f};
-        std::atomic<uint32> successfulEncounters{0};
-        std::atomic<uint32> failedEncounters{0};
-        std::atomic<float> averageEffectiveness{0.5f};
-        std::chrono::steady_clock::time_point lastPerformanceUpdate;
-
-        void Reset() {
-            assignmentsAccepted = 0; assignmentsDeclined = 0; performanceRating = 5.0f;
-            successfulEncounters = 0; failedEncounters = 0; averageEffectiveness = 0.5f;
-            lastPerformanceUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetAcceptanceRate() const {
-            uint32 total = assignmentsAccepted.load() + assignmentsDeclined.load();
-            return total > 0 ? (float)assignmentsAccepted.load() / total : 1.0f;
-        }
-
-        float GetSuccessRate() const {
-            uint32 total = successfulEncounters.load() + failedEncounters.load();
-            return total > 0 ? (float)successfulEncounters.load() / total : 0.5f;
-        }
-    };
-
     RolePerformance GetPlayerRolePerformance(uint32 playerGuid, GroupRole role) override;
     void UpdateRolePerformance(uint32 playerGuid, GroupRole role, bool wasSuccessful, float effectiveness) override;
 
@@ -208,29 +233,6 @@ public:
     void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid) override;
 
     // Role statistics and monitoring
-    struct RoleStatistics
-    {
-        std::atomic<uint32> totalAssignments{0};
-        std::atomic<uint32> successfulAssignments{0};
-        std::atomic<uint32> roleConflicts{0};
-        std::atomic<uint32> emergencyFills{0};
-        std::atomic<float> averageCompositionScore{5.0f};
-        std::atomic<float> roleDistributionEfficiency{0.8f};
-        std::chrono::steady_clock::time_point lastStatsUpdate;
-
-        void Reset() {
-            totalAssignments = 0; successfulAssignments = 0; roleConflicts = 0;
-            emergencyFills = 0; averageCompositionScore = 5.0f; roleDistributionEfficiency = 0.8f;
-            lastStatsUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetSuccessRate() const {
-            uint32 total = totalAssignments.load();
-            uint32 successful = successfulAssignments.load();
-            return total > 0 ? (float)successful / total : 0.0f;
-        }
-    };
-
     RoleStatistics GetGlobalRoleStatistics() override;
     void UpdateRoleStatistics() override;
 

@@ -179,7 +179,7 @@ public:
                         uint32 tauntSpell = GetTauntSpell(bot->GetClass());
                         if (tauntSpell && bot->IsSpellReady(tauntSpell))
                         {
-                            bot->CastSpell(target, tauntSpell, false);
+                            bot->CastSpell(tauntSpell, false, target);
                             threatMgr->OnTauntUsed(target);
                         }
                     }
@@ -196,12 +196,12 @@ public:
                     // Use threat reduction
                     if (bot->GetClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
                     {
-                        bot->CastSpell(bot, ThreatSpells::FEINT, false);
+                        bot->CastSpell(ThreatSpells::FEINT, false, bot);
                         threatMgr->ModifyThreat(primaryTarget->target, 0.5f);
                     }
                     else if (bot->GetClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
                     {
-                        bot->CastSpell(bot, ThreatSpells::FEIGN_DEATH, false);
+                        bot->CastSpell(ThreatSpells::FEIGN_DEATH, false, bot);
                         threatMgr->ClearAllThreat();
                     }
                 }
@@ -219,7 +219,7 @@ public:
                         // Emergency threat drop
                         if (bot->GetClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
                         {
-                            bot->CastSpell(bot, ThreatSpells::FADE, false);
+                            bot->CastSpell(ThreatSpells::FADE, false, bot);
                             threatMgr->ModifyThreat(threat, 0.1f);
                         }
                     }

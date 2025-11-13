@@ -376,7 +376,7 @@ void AdvancedBehaviorManager::InterruptBossCast(Creature* boss, uint32 spellId)
             return; // No interrupt available
     }
     if (m_bot->HasSpell(interruptSpell))
-        m_bot->CastSpell(boss, interruptSpell, false);
+        m_bot->CastSpell(interruptSpell, false, boss);
 }
 
 void AdvancedBehaviorManager::DispelBossDebuff(uint32 spellId)

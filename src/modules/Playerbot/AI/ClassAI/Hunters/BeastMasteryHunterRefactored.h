@@ -114,7 +114,7 @@ public:
         if (_bot->GetPetGUID().IsEmpty())
         {
 
-            _bot->CastSpell(_bot, SPELL_CALL_PET_1, false);
+            _bot->CastSpell(SPELL_CALL_PET_1, false, _bot);
         }
     }
 
@@ -212,7 +212,7 @@ public:
         Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
 
-            _bot->CastSpell(pet, SPELL_MEND_PET, false);
+            _bot->CastSpell(SPELL_MEND_PET, false, pet);
 
             _lastMendPet = currentTime;
         }
@@ -357,14 +357,14 @@ public:
         if (!bot->IsInCombat() && !bot->HasAura(SPELL_ASPECT_OF_CHEETAH))
         {
 
-            this->CastSpell(bot, SPELL_ASPECT_OF_CHEETAH);
+            this->CastSpell(SPELL_ASPECT_OF_CHEETAH, bot);
         }
 
         // Use Exhilaration for emergency healing
         if (bot->GetHealthPct() < 40.0f && this->CanUseAbility(SPELL_EXHILARATION))
         {
 
-            this->CastSpell(bot, SPELL_EXHILARATION);
+            this->CastSpell(SPELL_EXHILARATION, bot);
         }
 
         // Apply Hunter's Mark to current target
@@ -374,7 +374,7 @@ public:
 
             {
 
-                this->CastSpell(target, SPELL_HUNTERS_MARK);
+                this->CastSpell(SPELL_HUNTERS_MARK, target);
 
             }
         }
@@ -385,7 +385,7 @@ public:
         if (this->CanUseAbility(SPELL_COUNTER_SHOT))
         {
 
-            this->CastSpell(target, SPELL_COUNTER_SHOT);
+            this->CastSpell(SPELL_COUNTER_SHOT, target);
         }
     }
 
@@ -394,7 +394,7 @@ public:
         if (this->CanUseAbility(SPELL_TRANQUILIZING_SHOT))
         {
 
-            this->CastSpell(target, SPELL_TRANQUILIZING_SHOT);
+            this->CastSpell(SPELL_TRANQUILIZING_SHOT, target);
         }
     }
 
@@ -450,7 +450,7 @@ protected:
         if (ShouldUseBestialWrath(target) && this->CanUseAbility(SPELL_BESTIAL_WRATH))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_BESTIAL_WRATH);
+            this->CastSpell(SPELL_BESTIAL_WRATH, this->GetBot());
 
             _bestialWrathActive = true;
 
@@ -463,7 +463,7 @@ protected:
         if (_bestialWrathActive && this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_ASPECT_OF_THE_WILD);
+            this->CastSpell(SPELL_ASPECT_OF_THE_WILD, this->GetBot());
 
             _aspectOfTheWildActive = true;
 
@@ -476,7 +476,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_KILL_COMMAND))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND);
+            this->CastSpell(SPELL_KILL_COMMAND, target);
 
             _lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -489,7 +489,7 @@ protected:
         if (ShouldUseBarbedShot() && HasBarbedShotCharge())
         {
 
-            this->CastSpell(target, SPELL_BARBED_SHOT);
+            this->CastSpell(SPELL_BARBED_SHOT, target);
 
             _petManager.ApplyBarbedShot();
 
@@ -504,7 +504,7 @@ protected:
         if (currentFocus >= 25 && this->CanUseAbility(SPELL_DIRE_BEAST))
         {
 
-            this->CastSpell(target, SPELL_DIRE_BEAST);
+            this->CastSpell(SPELL_DIRE_BEAST, target);
 
             this->ConsumeResource(25);
 
@@ -515,7 +515,7 @@ protected:
         if (currentFocus >= 35)
         {
 
-            this->CastSpell(target, SPELL_COBRA_SHOT);
+            this->CastSpell(SPELL_COBRA_SHOT, target);
 
             _lastCobraShot = GameTime::GetGameTimeMS();
 
@@ -537,7 +537,7 @@ protected:
         if (currentFocus >= 40)
         {
 
-            this->CastSpell(target, SPELL_MULTISHOT);
+            this->CastSpell(SPELL_MULTISHOT, target);
 
             this->ConsumeResource(40);
 
@@ -548,7 +548,7 @@ protected:
         if (HasBarbedShotCharge())
         {
 
-            this->CastSpell(target, SPELL_BARBED_SHOT);
+            this->CastSpell(SPELL_BARBED_SHOT, target);
 
             _barbedShotCharges--;
 
@@ -561,7 +561,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_KILL_COMMAND))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND);
+            this->CastSpell(SPELL_KILL_COMMAND, target);
 
             this->ConsumeResource(30);
 
@@ -869,7 +869,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_BESTIAL_WRATH);
+                                    this->CastSpell(SPELL_BESTIAL_WRATH, bot);
 
                                     this->_bestialWrathActive = true;
 
@@ -900,7 +900,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_ASPECT_OF_THE_WILD);
+                                    this->CastSpell(SPELL_ASPECT_OF_THE_WILD, bot);
 
                                     this->_aspectOfTheWildActive = true;
 
@@ -947,7 +947,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_KILL_COMMAND);
+                                    this->CastSpell(SPELL_KILL_COMMAND, target);
 
                                     this->_lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -980,7 +980,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_DIRE_BEAST);
+                                    this->CastSpell(SPELL_DIRE_BEAST, target);
 
                                     this->ConsumeResource(25);
 
@@ -1031,7 +1031,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_BARBED_SHOT);
+                                    this->CastSpell(SPELL_BARBED_SHOT, target);
 
                                     this->_petManager.ApplyBarbedShot();
 
@@ -1080,7 +1080,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_MULTISHOT);
+                                    this->CastSpell(SPELL_MULTISHOT, target);
 
                                     this->ConsumeResource(40);
 
@@ -1109,7 +1109,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, SPELL_COBRA_SHOT);
+                                    this->CastSpell(SPELL_COBRA_SHOT, target);
 
                                     this->_lastCobraShot = GameTime::GetGameTimeMS();
 
