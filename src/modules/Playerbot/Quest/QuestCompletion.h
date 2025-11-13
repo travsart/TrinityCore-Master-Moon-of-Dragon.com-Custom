@@ -253,8 +253,8 @@ public:
         }
     };
 
-    QuestCompletionMetrics::Snapshot GetBotCompletionMetrics(uint32 botGuid) override;
-    QuestCompletionMetrics::Snapshot GetGlobalCompletionMetrics() override;
+    QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
+    QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
 
     // Quest data analysis
     std::vector<uint32> GetActiveQuests(Player* bot) override;
