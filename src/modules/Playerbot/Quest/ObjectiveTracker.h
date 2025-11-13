@@ -109,7 +109,7 @@ public:
     void StopTrackingObjective(Player* bot, uint32 questId, uint32 objectiveIndex) override;
     void UpdateObjectiveTracking(Player* bot, uint32 diff) override;
     void RefreshObjectiveStates(Player* bot) override;
-    void RefreshObjectiveState(Player* bot, ObjectiveState& state) override;
+    void RefreshObjectiveState(Player* bot, ObjectiveState& state);
 
     // Progress monitoring
     void MonitorObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex) override;
@@ -125,13 +125,13 @@ public:
 
     // Objective state management
     ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex) override;
-    void UpdateObjectiveState(Player* bot, const ObjectiveState& state) override;
+    void UpdateObjectiveState(Player* bot, const ObjectiveState& state);
     std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
 
     // Intelligent objective prioritization
     std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
     ObjectivePriority GetHighestPriorityObjective(Player* bot) override;
-    void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities) override;
+    void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities);
 
     // Target availability and spawn tracking
     void TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId) override;
@@ -158,18 +158,18 @@ public:
     // Advanced tracking features
     void EnablePredictiveTracking(Player* bot, bool enable) override;
     void PredictObjectiveCompletion(Player* bot, uint32 questId, uint32 objectiveIndex) override;
-    void AdaptTrackingStrategy(Player* bot, const ObjectiveState& state) override;
+    void AdaptTrackingStrategy(Player* bot, const ObjectiveState& state);
     void OptimizeTrackingPerformance(Player* bot) override;
 
     // Error detection and recovery
     void DetectTrackingErrors(Player* bot) override;
     void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error) override;
-    void HandleStuckObjective(Player* bot, ObjectiveState& state) override;
+    void HandleStuckObjective(Player* bot, ObjectiveState& state);
     void RecoverTrackingState(Player* bot, uint32 questId) override;
     void ValidateObjectiveConsistency(Player* bot) override;
 
     // Data conversion utilities
-    QuestObjectiveData ConvertToQuestObjectiveData(const ObjectiveState& state) override;
+    QuestObjectiveData ConvertToQuestObjectiveData(const ObjectiveState& state);
 
     // Configuration and settings
     void SetTrackingPrecision(uint32 botGuid, float precision) override; // 0.0 = low, 1.0 = high
