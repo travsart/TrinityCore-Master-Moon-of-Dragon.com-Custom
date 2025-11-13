@@ -25,6 +25,7 @@
 #include "MotionMaster.h"
 #include "PathGenerator.h"
 #include "Duration.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {

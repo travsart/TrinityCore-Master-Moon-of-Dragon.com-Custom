@@ -89,6 +89,19 @@ public:
     using Base::_resource;
     using Base::IsInMeleeRange;
     using Base::CanUseAbility;
+
+private:
+    // Forward declarations for methods called in constructor
+    void InitializeDebuffTracking();
+    void InitializeArmsRotation();
+    bool IsExecutePhase(::Unit* target) const;
+    bool ShouldUseColossusSmash(::Unit* target) const;
+    bool ShouldUseBladestorm() const;
+    bool ShouldUseAvatar(::Unit* target) const;
+    bool HasRendDebuff(::Unit* target) const;
+    void CleanupExpiredDeepWounds();
+
+public:
     explicit ArmsWarriorRefactored(Player* bot)
         : MeleeDpsSpecialization<RageResource>(bot)
         , _deepWoundsTracking()

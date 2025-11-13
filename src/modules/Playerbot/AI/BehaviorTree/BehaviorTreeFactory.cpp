@@ -17,6 +17,7 @@
 
 #include "BehaviorTreeFactory.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
