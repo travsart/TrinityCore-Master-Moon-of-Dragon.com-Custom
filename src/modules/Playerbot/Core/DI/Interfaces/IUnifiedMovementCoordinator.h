@@ -89,7 +89,7 @@ public:
      */
     virtual MovementArbiterStatistics const& GetArbiterStatistics() const = 0;
     virtual void ResetArbiterStatistics() = 0;
-    virtual std::string GetArbiterDiagnosticString() const = 0;
+    virtual ::std::string GetArbiterDiagnosticString() const = 0;
     virtual void LogArbiterStatistics() const = 0;
 
     /**
@@ -159,7 +159,7 @@ public:
     /**
      * @brief Formation management
      */
-    virtual bool JoinFormation(std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) = 0;
+    virtual bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) = 0;
     virtual bool LeaveFormation() = 0;
     virtual bool ChangeFormation(FormationType newFormation) = 0;
     virtual bool SetFormationLeader(Player* leader) = 0;
@@ -171,7 +171,7 @@ public:
     virtual void UpdateFormation(uint32 diff) = 0;
     virtual bool ExecuteFormationCommand(FormationCommand const& command) = 0;
     virtual bool MoveFormationToPosition(Position const& targetPos, float orientation = 0.0f) = 0;
-    virtual bool AdjustFormationForCombat(std::vector<Unit*> const& threats) = 0;
+    virtual bool AdjustFormationForCombat(::std::vector<Unit*> const& threats) = 0;
 
     /**
      * @brief Member management
@@ -180,13 +180,13 @@ public:
     virtual bool RemoveFormationMember(Player* player) = 0;
     virtual bool ChangeFormationMemberRole(Player* player, FormationRole newRole) = 0;
     virtual FormationMember* GetFormationMember(Player* player) = 0;
-    virtual std::vector<FormationMember> GetAllFormationMembers() const = 0;
+    virtual ::std::vector<FormationMember> GetAllFormationMembers() const = 0;
 
     /**
      * @brief Position calculation
      */
     virtual Position CalculateFormationPosition(FormationRole role, uint32 memberIndex) = 0;
-    virtual std::vector<Position> CalculateAllFormationPositions() = 0;
+    virtual ::std::vector<Position> CalculateAllFormationPositions() = 0;
     virtual Position GetAssignedFormationPosition() const = 0;
     virtual bool IsInFormationPosition(float tolerance = 2.0f) const = 0;
 
@@ -195,7 +195,7 @@ public:
      */
     virtual FormationIntegrity AssessFormationIntegrity() = 0;
     virtual float CalculateCohesionLevel() = 0;
-    virtual std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) = 0;
+    virtual ::std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) = 0;
     virtual bool RequiresReformation() = 0;
 
     /**
@@ -209,15 +209,15 @@ public:
     /**
      * @brief Combat formations
      */
-    virtual void TransitionToCombatFormation(std::vector<Unit*> const& enemies) = 0;
+    virtual void TransitionToCombatFormation(::std::vector<Unit*> const& enemies) = 0;
     virtual void TransitionToTravelFormation() = 0;
-    virtual void AdjustForThreatSpread(std::vector<Unit*> const& threats) = 0;
+    virtual void AdjustForThreatSpread(::std::vector<Unit*> const& threats) = 0;
     virtual void HandleFormationBreakage() = 0;
 
     /**
      * @brief Role-specific formations
      */
-    virtual FormationType DetermineOptimalFormation(std::vector<Player*> const& members) = 0;
+    virtual FormationType DetermineOptimalFormation(::std::vector<Player*> const& members) = 0;
     virtual FormationConfig GetFormationConfig(FormationType formation) = 0;
     virtual void SetFormationConfig(FormationType formation, FormationConfig const& config) = 0;
 
@@ -225,7 +225,7 @@ public:
      * @brief Dynamic adjustments
      */
     virtual void AdjustFormationForTerrain() = 0;
-    virtual void AdjustFormationForObstacles(std::vector<Position> const& obstacles) = 0;
+    virtual void AdjustFormationForObstacles(::std::vector<Position> const& obstacles) = 0;
     virtual void AdjustFormationForGroupSize() = 0;
     virtual void HandleMemberDisconnection(Player* disconnectedMember) = 0;
 
@@ -285,8 +285,8 @@ public:
      * @brief Position evaluation
      */
     virtual PositionInfo EvaluatePosition(Position const& pos, MovementContext const& context) = 0;
-    virtual std::vector<PositionInfo> EvaluatePositions(std::vector<Position> const& positions, MovementContext const& context) = 0;
-    virtual std::vector<Position> GenerateCandidatePositions(MovementContext const& context) = 0;
+    virtual ::std::vector<PositionInfo> EvaluatePositions(::std::vector<Position> const& positions, MovementContext const& context) = 0;
+    virtual ::std::vector<Position> GenerateCandidatePositions(MovementContext const& context) = 0;
 
     /**
      * @brief Range and angle management
@@ -294,7 +294,7 @@ public:
     virtual Position FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle = 0.0f) = 0;
     virtual Position FindMeleePosition(Unit* target, bool preferBehind = true) = 0;
     virtual Position FindRangedPosition(Unit* target, float preferredRange = 25.0f) = 0;
-    virtual Position FindHealingPosition(std::vector<Player*> const& allies) = 0;
+    virtual Position FindHealingPosition(::std::vector<Player*> const& allies) = 0;
     virtual Position FindKitingPosition(Unit* threat, float minDistance = 15.0f) = 0;
 
     /**
@@ -302,8 +302,8 @@ public:
      */
     virtual Position FindTankPosition(Unit* target) = 0;
     virtual Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_COMBAT) = 0;
-    virtual Position FindHealerPosition(std::vector<Player*> const& groupMembers) = 0;
-    virtual Position FindSupportPosition(std::vector<Player*> const& groupMembers) = 0;
+    virtual Position FindHealerPosition(::std::vector<Player*> const& groupMembers) = 0;
+    virtual Position FindSupportPosition(::std::vector<Player*> const& groupMembers) = 0;
 
     /**
      * @brief Safety and avoidance
@@ -311,7 +311,7 @@ public:
     virtual bool IsPositionSafe(Position const& pos, MovementContext const& context) = 0;
     virtual bool IsInDangerZone(Position const& pos) = 0;
     virtual Position FindSafePosition(Position const& fromPos, float minDistance = 10.0f) = 0;
-    virtual Position FindEscapePosition(std::vector<Unit*> const& threats) = 0;
+    virtual Position FindEscapePosition(::std::vector<Unit*> const& threats) = 0;
 
     /**
      * @brief AoE and hazard management
@@ -319,7 +319,7 @@ public:
     virtual void RegisterAoEZone(AoEZone const& zone) = 0;
     virtual void UpdateAoEZones(uint32 currentTime) = 0;
     virtual void ClearExpiredZones(uint32 currentTime) = 0;
-    virtual std::vector<AoEZone> GetActiveZones() const = 0;
+    virtual ::std::vector<AoEZone> GetActiveZones() const = 0;
 
     /**
      * @brief Validation and pathfinding
@@ -332,7 +332,7 @@ public:
     /**
      * @brief Group coordination
      */
-    virtual Position FindFormationPositionForRole(std::vector<Player*> const& groupMembers, PositionType formationType) = 0;
+    virtual Position FindFormationPositionForRole(::std::vector<Player*> const& groupMembers, PositionType formationType) = 0;
     virtual bool ShouldMaintainGroupProximity() = 0;
     virtual float GetOptimalGroupDistance(uint8 role) = 0;
 
@@ -369,7 +369,7 @@ public:
      * @brief Position history and learning
      */
     virtual void RecordPositionSuccess(Position const& pos, PositionType type) = 0;
-    virtual void RecordPositionFailure(Position const& pos, std::string const& reason) = 0;
+    virtual void RecordPositionFailure(Position const& pos, ::std::string const& reason) = 0;
     virtual float GetPositionSuccessRate(Position const& pos, float radius = 5.0f) = 0;
 
     // ========================================================================
@@ -404,7 +404,7 @@ public:
      * @param context Movement context
      * @return Detailed recommendation string
      */
-    virtual std::string GetMovementRecommendation(Player* bot, MovementContext const& context) = 0;
+    virtual ::std::string GetMovementRecommendation(Player* bot, MovementContext const& context) = 0;
 
     /**
      * @brief Optimize movement for a bot
@@ -423,7 +423,7 @@ public:
      * @brief Get statistics for movement operations
      * @return Statistics string (for debugging/monitoring)
      */
-    virtual std::string GetMovementStatistics() const = 0;
+    virtual ::std::string GetMovementStatistics() const = 0;
 };
 
 } // namespace Playerbot

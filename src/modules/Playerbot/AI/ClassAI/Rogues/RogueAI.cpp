@@ -43,17 +43,17 @@ namespace Playerbot
 // Performance metrics structure
 struct RogueMetrics
 {
-    std::atomic<uint32> totalEnergySpent{0};
-    std::atomic<uint32> totalComboPointsGenerated{0};
-    std::atomic<uint32> totalFinishersExecuted{0};
-    std::atomic<uint32> stealthOpeners{0};
-    std::atomic<uint32> poisonApplications{0};
-    std::atomic<uint32> interruptsExecuted{0};
-    std::atomic<uint32> backstabsLanded{0};
-    std::atomic<uint32> cooldownsUsed{0};
-    std::atomic<float> averageReactionTime{0};
-    std::atomic<float> energyEfficiency{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> totalEnergySpent{0};
+    ::std::atomic<uint32> totalComboPointsGenerated{0};
+    ::std::atomic<uint32> totalFinishersExecuted{0};
+    ::std::atomic<uint32> stealthOpeners{0};
+    ::std::atomic<uint32> poisonApplications{0};
+    ::std::atomic<uint32> interruptsExecuted{0};
+    ::std::atomic<uint32> backstabsLanded{0};
+    ::std::atomic<uint32> cooldownsUsed{0};
+    ::std::atomic<float> averageReactionTime{0};
+    ::std::atomic<float> energyEfficiency{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -67,7 +67,7 @@ struct RogueMetrics
         cooldownsUsed = 0;
         averageReactionTime = 0;
         energyEfficiency = 0;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     void UpdateReactionTime(float deltaMs)
@@ -96,7 +96,7 @@ class RogueCombatMetrics
 public:
     void RecordAbilityUsage(uint32 spellId, bool success, uint32 energyCost = 0)
     {
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         _abilityTimings[spellId] = now;
 
         if (success)
@@ -122,7 +122,7 @@ public:
     void RecordComboPointGeneration(uint32 points)
     {
         _totalComboPoints += points;
-        _comboPointHistory.push_back({std::chrono::steady_clock::now(), points});
+        _comboPointHistory.push_back({::std::chrono::steady_clock::now(), points});
     }
 
     float GetAbilitySuccessRate(uint32 spellId) const
@@ -150,8 +150,8 @@ public:
 
     bool IsOnGlobalCooldown() const
     {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastGCD);
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastGCD);
         return elapsed.count() < 1000; // 1 second GCD for rogues
     }
 
@@ -165,20 +165,20 @@ private:
                spellId == RogueAI::EXPOSE_ARMOR || spellId == RogueAI::ENVENOM;
     }
 
-    std::unordered_map<uint32, std::chrono::steady_clock::time_point> _abilityTimings;
-    std::unordered_map<uint32, uint32> _successfulCasts;
-    std::unordered_map<uint32, uint32> _failedCasts;
-    std::chrono::steady_clock::time_point _lastGCD;
+    ::std::unordered_map<uint32, ::std::chrono::steady_clock::time_point> _abilityTimings;
+    ::std::unordered_map<uint32, uint32> _successfulCasts;
+    ::std::unordered_map<uint32, uint32> _failedCasts;
+    ::std::chrono::steady_clock::time_point _lastGCD;
     uint32 _totalEnergyUsed = 0;
     uint32 _totalComboPoints = 0;
     uint32 _finisherCount = 0;
 
     struct ComboPointEvent
     {
-        std::chrono::steady_clock::time_point time;
+        ::std::chrono::steady_clock::time_point time;
         uint32 points;
     };
-    std::vector<ComboPointEvent> _comboPointHistory;
+    ::std::vector<ComboPointEvent> _comboPointHistory;
 };
 
 // ============================================================================
@@ -201,8 +201,8 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
                 float angle = target->GetOrientation() + M_PI; // 180 degrees behind
                 float distance = 3.0f; // Close melee range
 
-                float x = target->GetPositionX() + distance * std::cos(angle);
-                float y = target->GetPositionY() + distance * std::sin(angle);
+                float x = target->GetPositionX() + distance * ::std::cos(angle);
+                float y = target->GetPositionY() + distance * ::std::sin(angle);
                 
 
                 float z = target->GetPositionZ();
@@ -218,8 +218,8 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
                 float angle = target->GetOrientation(); // Face to face
                 float distance = 4.0f; // Slightly further for Blade Flurry AoE
 
-                float x = target->GetPositionX() + distance * std::cos(angle);
-                float y = target->GetPositionY() + distance * std::sin(angle);
+                float x = target->GetPositionX() + distance * ::std::cos(angle);
+                float y = target->GetPositionY() + distance * ::std::sin(angle);
                 float z = target->GetPositionZ();
 
                 return Position(x, y, z, target->GetOrientation());
@@ -282,11 +282,11 @@ void RogueAI::InitializeCombatSystems()
     {
         return;
     }
-    _threatManager = std::make_unique<BotThreatManager>(GetBot());
-    _targetSelector = std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
-    _positionManager = std::make_unique<PositionManager>(GetBot(), _threatManager.get());
-    _interruptManager = std::make_unique<InterruptManager>(GetBot());
-    _cooldownManager = std::make_unique<CooldownManager>();
+    _threatManager = ::std::make_unique<BotThreatManager>(GetBot());
+    _targetSelector = ::std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
+    _positionManager = ::std::make_unique<PositionManager>(GetBot(), _threatManager.get());
+    _interruptManager = ::std::make_unique<InterruptManager>(GetBot());
+    _cooldownManager = ::std::make_unique<CooldownManager>();
 
     TC_LOG_DEBUG("playerbot", "RogueAI combat systems initialized for {}", GetBot()->GetName());
 }
@@ -320,7 +320,7 @@ void RogueAI::UpdateRotation(Unit* target)
         return;
     }
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Check if we're on global cooldown
     if (_combatMetrics->IsOnGlobalCooldown())
@@ -641,8 +641,8 @@ void RogueAI::UpdateRotation(Unit* target)
     ExecuteRogueBasicRotation(target);
 
     // Update performance metrics
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     _metrics->UpdateReactionTime(duration.count() / 1000.0f);
 }
 
@@ -920,7 +920,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -939,7 +939,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

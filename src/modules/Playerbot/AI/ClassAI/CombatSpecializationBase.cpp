@@ -37,7 +37,7 @@ namespace Playerbot
 
 // Thread-local optimization for frequently accessed data
 thread_local uint32 g_currentUpdateTime = 0;
-thread_local std::array<float, 16> g_distanceCache;
+thread_local ::std::array<float, 16> g_distanceCache;
 thread_local uint32 g_distanceCacheTime = 0;
 
 // Object pool for performance metrics (avoid allocations during combat)
@@ -88,7 +88,7 @@ void CombatSpecializationBase::UpdateBuffs()
     RefreshExpiringBuffs();
 
     // Clean up expired buff tracking data
-    std::erase_if(_buffExpirationTimes, [currentTime](const auto& pair) {
+    ::std::erase_if(_buffExpirationTimes, [currentTime](const auto& pair) {
         return pair.second < currentTime;
     });
 }
@@ -116,7 +116,7 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
     static uint32 lastCleanup = 0;
     if (currentTime - lastCleanup > 5000)
     {
-        std::erase_if(_cooldowns, [](const auto& pair) {
+        ::std::erase_if(_cooldowns, [](const auto& pair) {
 
             return pair.second == 0;
         });
@@ -168,7 +168,7 @@ void CombatSpecializationBase::OnCombatStart(::Unit* target)
     _consecutiveFailedCasts = 0;
 
     // Start performance tracking
-    _metrics.combatStartTime = std::chrono::steady_clock::now();
+    _metrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     // Pre-calculate frequently used values
     if (target)
@@ -191,8 +191,8 @@ void CombatSpecializationBase::OnCombatEnd()
     _currentTarget = nullptr;
 
     // Update combat metrics
-    auto combatDuration = std::chrono::steady_clock::now() - _metrics.combatStartTime;
-    _metrics.totalCombatTime += std::chrono::duration_cast<std::chrono::milliseconds>(combatDuration);
+    auto combatDuration = ::std::chrono::steady_clock::now() - _metrics.combatStartTime;
+    _metrics.totalCombatTime += ::std::chrono::duration_cast<::std::chrono::milliseconds>(combatDuration);
 
     // Clear combat-specific data
     _dotTracking.clear();
@@ -200,7 +200,7 @@ void CombatSpecializationBase::OnCombatEnd()
     _procExpirationTimes.clear();
 
     // Log performance if significant combat
-    if (combatDuration > std::chrono::seconds(10))
+    if (combatDuration > ::std::chrono::seconds(10))
     {        LogPerformance();
     }
 }// Optimized resource management
@@ -252,7 +252,7 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
     // Calculate based on role
     float optimalDistance = GetOptimalRange(target);
     float currentDistance = GetDistance(target);    // If already in optimal range, maintain position
-    if (std::abs(currentDistance - optimalDistance) < 2.0f)
+    if (::std::abs(currentDistance - optimalDistance) < 2.0f)
     {
         _lastOptimalPosition = _bot->GetPosition();        return _lastOptimalPosition;
     }
@@ -342,7 +342,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 // Optimized target selection with threat consideration
 ::Unit* CombatSpecializationBase::SelectBestTarget()
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies();
+    ::std::vector<::Unit*> enemies = GetNearbyEnemies();
     if (enemies.empty())
         return nullptr;
 
@@ -364,7 +364,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
         // Distance factor (closer is better for melee, optimal range for ranged)
         float distance = GetDistance(target);
         float optimalRange = GetOptimalRange(target);
-        float distancePenalty = std::abs(distance - optimalRange);        score -= distancePenalty;
+        float distancePenalty = ::std::abs(distance - optimalRange);        score -= distancePenalty;
 
         // Threat factor (tanks want high threat targets)
         if (_role == CombatRole::TANK)        {
@@ -384,7 +384,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
     // Find best target using parallel execution for large enemy counts
     if (enemies.size() > 10)
     {
-        return *std::max_element(std::execution::par_unseq,
+        return *::std::max_element(::std::execution::par_unseq,
 
             enemies.begin(), enemies.end(),
 
@@ -396,7 +396,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
     }
     else
     {
-        return *std::max_element(enemies.begin(), enemies.end(),
+        return *::std::max_element(enemies.begin(), enemies.end(),
 
             [&scoreTarget](::Unit* a, ::Unit* b) {
 
@@ -407,9 +407,9 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 }
 
 // Efficient nearby unit detection with spatial indexing
-std::vector<ObjectGuid> GetNearbyEnemies(float range) const
+::std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 {
-    std::vector<ObjectGuid> guids;    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());    if (!grid) return guids;
+    ::std::vector<ObjectGuid> guids;    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());    if (!grid) return guids;
 
     float range = range;
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
@@ -423,7 +423,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -443,7 +443,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
     // End of spatial grid fix
 
     // Filter out invalid targets
-    std::erase_if(enemies, [this](::Unit* unit) {
+    ::std::erase_if(enemies, [this](::Unit* unit) {
         return !IsValidTarget(unit);
     });
 

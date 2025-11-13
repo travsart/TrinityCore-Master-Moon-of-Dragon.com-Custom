@@ -132,8 +132,8 @@ namespace Playerbot
          * @param maxSmoothPoints Maximum smooth points
          * @return Number of smooth points
          */
-        uint32 FindSmoothPath(Map* map, std::vector<Position> const& path,
-                            std::vector<Position>& smoothPath,
+        uint32 FindSmoothPath(Map* map, ::std::vector<Position> const& path,
+                            ::std::vector<Position>& smoothPath,
                             uint32 maxSmoothPoints = 20) const;
 
         /**
@@ -240,9 +240,9 @@ namespace Playerbot
                            float* nearestPt) const;
 
         // Statistics
-        mutable std::atomic<uint32> _totalQueries;
-        mutable std::atomic<uint32> _successfulQueries;
-        mutable std::atomic<uint64> _totalQueryTime;
+        mutable ::std::atomic<uint32> _totalQueries;
+        mutable ::std::atomic<uint32> _successfulQueries;
+        mutable ::std::atomic<uint64> _totalQueryTime;
 
         // Configuration
         float _defaultSearchExtent[3];

@@ -22,10 +22,10 @@ namespace Playerbot
 {
 
 // Trigger implementation
-Trigger::Trigger(std::string const& name, TriggerType type)
+Trigger::Trigger(::std::string const& name, TriggerType type)
     : _name(name), _type(type)
 {
-    _firstTrigger = std::chrono::steady_clock::now();
+    _firstTrigger = ::std::chrono::steady_clock::now();
     _lastTrigger = _firstTrigger;
 }
 
@@ -43,7 +43,7 @@ TriggerResult Trigger::Evaluate(BotAI* ai) const
     {
         // Update statistics
         _triggerCount++;
-        _lastTrigger = std::chrono::steady_clock::now();
+        _lastTrigger = ::std::chrono::steady_clock::now();
 
         // Calculate urgency
         result.urgency = CalculateUrgency(ai);
@@ -62,14 +62,14 @@ TriggerResult Trigger::Evaluate(BotAI* ai) const
     return result;
 }
 
-std::string Trigger::GetActionName() const
+::std::string Trigger::GetActionName() const
 {
     if (_action)
         return _action->GetName();
     return _actionName;
 }
 
-void Trigger::AddCondition(std::function<bool(BotAI*)> condition)
+void Trigger::AddCondition(::std::function<bool(BotAI*)> condition)
 {
     if (condition)
         _conditions.push_back(condition);
@@ -91,8 +91,8 @@ float Trigger::GetAverageTriggerRate() const
     if (triggerCount == 0)
         return 0.0f;
 
-    auto now = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - _firstTrigger);
+    auto now = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(now - _firstTrigger);
 
     if (duration.count() == 0)
         return 0.0f;
@@ -127,7 +127,7 @@ float HealthTrigger::CalculateUrgency(BotAI* ai) const
     float urgency = 1.0f - (healthPct / _threshold);
 
     // Clamp urgency to 0-1 range
-    return std::max(0.0f, std::min(1.0f, urgency));
+    return ::std::max(0.0f, ::std::min(1.0f, urgency));
 }
 
 // CombatTrigger implementation
@@ -167,13 +167,13 @@ float CombatTrigger::CalculateUrgency(BotAI* ai) const
     if (healthPct < 0.5f)
         urgency += (0.5f - healthPct);
 
-    return std::min(1.0f, urgency);
+    return ::std::min(1.0f, urgency);
 }
 
 // TimerTrigger implementation
 bool TimerTrigger::Check(BotAI* ai) const
 {
-    auto now = std::chrono::steady_clock::now();
+    auto now = ::std::chrono::steady_clock::now();
 
     if (_lastCheck.time_since_epoch().count() == 0)
     {
@@ -181,7 +181,7 @@ bool TimerTrigger::Check(BotAI* ai) const
         return false;
     }
 
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastCheck);
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastCheck);
     if (elapsed.count() >= _interval)
     {
         _lastCheck = now;
@@ -283,13 +283,13 @@ TriggerFactory* TriggerFactory::instance()
     return &instance;
 }
 
-void TriggerFactory::RegisterTrigger(std::string const& name,
-                                   std::function<std::shared_ptr<Trigger>()> creator)
+void TriggerFactory::RegisterTrigger(::std::string const& name,
+                                   ::std::function<::std::shared_ptr<Trigger>()> creator)
 {
     _creators[name] = creator;
 }
 
-std::shared_ptr<Trigger> TriggerFactory::CreateTrigger(std::string const& name)
+::std::shared_ptr<Trigger> TriggerFactory::CreateTrigger(::std::string const& name)
 {
     auto it = _creators.find(name);
     if (it != _creators.end())
@@ -298,53 +298,53 @@ std::shared_ptr<Trigger> TriggerFactory::CreateTrigger(std::string const& name)
     return nullptr;
 }
 
-std::vector<std::shared_ptr<Trigger>> TriggerFactory::CreateDefaultTriggers()
+::std::vector<::std::shared_ptr<Trigger>> TriggerFactory::CreateDefaultTriggers()
 {
-    std::vector<std::shared_ptr<Trigger>> triggers;
+    ::std::vector<::std::shared_ptr<Trigger>> triggers;
 
     // Create basic health trigger
-    auto healthTrigger = std::make_shared<HealthTrigger>("low_health", 0.3f);
+    auto healthTrigger = ::std::make_shared<HealthTrigger>("low_health", 0.3f);
     triggers.push_back(healthTrigger);
 
     // Create combat trigger
-    auto combatTrigger = std::make_shared<CombatTrigger>("enter_combat");
+    auto combatTrigger = ::std::make_shared<CombatTrigger>("enter_combat");
     triggers.push_back(combatTrigger);
 
     // Create quest completion trigger
-    auto questTrigger = std::make_shared<QuestTrigger>("quest_complete");
+    auto questTrigger = ::std::make_shared<QuestTrigger>("quest_complete");
     triggers.push_back(questTrigger);
 
     return triggers;
 }
 
-std::vector<std::shared_ptr<Trigger>> TriggerFactory::CreateCombatTriggers()
+::std::vector<::std::shared_ptr<Trigger>> TriggerFactory::CreateCombatTriggers()
 {
-    std::vector<std::shared_ptr<Trigger>> triggers;
+    ::std::vector<::std::shared_ptr<Trigger>> triggers;
 
     // Combat-specific triggers
-    auto combatTrigger = std::make_shared<CombatTrigger>("enter_combat");
+    auto combatTrigger = ::std::make_shared<CombatTrigger>("enter_combat");
     triggers.push_back(combatTrigger);
 
-    auto lowHealthTrigger = std::make_shared<HealthTrigger>("combat_low_health", 0.2f);
+    auto lowHealthTrigger = ::std::make_shared<HealthTrigger>("combat_low_health", 0.2f);
     triggers.push_back(lowHealthTrigger);
 
     return triggers;
 }
 
-std::vector<std::shared_ptr<Trigger>> TriggerFactory::CreateQuestTriggers()
+::std::vector<::std::shared_ptr<Trigger>> TriggerFactory::CreateQuestTriggers()
 {
-    std::vector<std::shared_ptr<Trigger>> triggers;
+    ::std::vector<::std::shared_ptr<Trigger>> triggers;
 
     // Quest-specific triggers
-    auto questCompleteTrigger = std::make_shared<QuestTrigger>("quest_complete");
+    auto questCompleteTrigger = ::std::make_shared<QuestTrigger>("quest_complete");
     triggers.push_back(questCompleteTrigger);
 
     return triggers;
 }
 
-std::vector<std::string> TriggerFactory::GetAvailableTriggers() const
+::std::vector<::std::string> TriggerFactory::GetAvailableTriggers() const
 {
-    std::vector<std::string> triggers;
+    ::std::vector<::std::string> triggers;
     triggers.reserve(_creators.size());
 
     for (auto const& pair : _creators)
@@ -353,7 +353,7 @@ std::vector<std::string> TriggerFactory::GetAvailableTriggers() const
     return triggers;
 }
 
-bool TriggerFactory::HasTrigger(std::string const& name) const
+bool TriggerFactory::HasTrigger(::std::string const& name) const
 {
     return _creators.find(name) != _creators.end();
 }

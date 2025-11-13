@@ -44,23 +44,23 @@ class WorkerThreadEnhanced : public WorkerThread
 {
 private:
     // Epoch-based wake tracking to prevent lost wake signals
-    alignas(64) std::atomic<uint64_t> _wakeEpoch{0};
-    alignas(64) std::atomic<uint64_t> _lastProcessedEpoch{0};
+    alignas(64) ::std::atomic<uint64_t> _wakeEpoch{0};
+    alignas(64) ::std::atomic<uint64_t> _lastProcessedEpoch{0};
 
     // Additional safety mechanisms
-    alignas(64) std::atomic<std::chrono::steady_clock::time_point> _lastWakeTime;
-    alignas(64) std::atomic<uint32_t> _consecutiveSleepTimeouts{0};
+    alignas(64) ::std::atomic<::std::chrono::steady_clock::time_point> _lastWakeTime;
+    alignas(64) ::std::atomic<uint32_t> _consecutiveSleepTimeouts{0};
 
     // Enhanced diagnostics for deadlock detection
-    alignas(64) std::atomic<uint32_t> _spuriousWakeups{0};
-    alignas(64) std::atomic<uint32_t> _epochMismatches{0};
-    alignas(64) std::atomic<uint32_t> _forcedWakes{0};
+    alignas(64) ::std::atomic<uint32_t> _spuriousWakeups{0};
+    alignas(64) ::std::atomic<uint32_t> _epochMismatches{0};
+    alignas(64) ::std::atomic<uint32_t> _forcedWakes{0};
 
 public:
     WorkerThreadEnhanced(ThreadPool* pool, uint32 workerId, uint32 cpuCore)
         : WorkerThread(pool, workerId, cpuCore)
     {
-        _lastWakeTime.store(std::chrono::steady_clock::now());
+        _lastWakeTime.store(::std::chrono::steady_clock::now());
     }
 
     /**
@@ -73,62 +73,62 @@ public:
     void SleepEnhanced()
     {
         // Safety check - don't sleep during shutdown
-        if (!_running.load(std::memory_order_relaxed) || _pool->IsShuttingDown())
+        if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
             return;
 
         // Stagger sleep entry by worker ID to prevent thundering herd
         // Workers with lower IDs sleep slightly earlier, reducing contention
-        std::this_thread::sleep_for(std::chrono::microseconds(_workerId * 10));
+        ::std::this_thread::sleep_for(::std::chrono::microseconds(_workerId * 10));
 
-        std::unique_lock<std::mutex> lock(_wakeMutex);
+        ::std::unique_lock<::std::mutex> lock(_wakeMutex);
 
         // CRITICAL: Capture epoch BEFORE setting sleeping flag
         // This ensures we can detect any wake that happens after this point
-        uint64_t sleepEpoch = _wakeEpoch.load(std::memory_order_acquire);
+        uint64_t sleepEpoch = _wakeEpoch.load(::std::memory_order_acquire);
 
         // Set sleeping flag under lock
-        _sleeping.store(true, std::memory_order_release);
+        _sleeping.store(true, ::std::memory_order_release);
 
         // Memory fence to ensure sleeping flag is visible before checking work
-        std::atomic_thread_fence(std::memory_order_seq_cst);
+        ::std::atomic_thread_fence(::std::memory_order_seq_cst);
 
         // Check for available work (local + stealable)
         bool hasWork = HasWorkAvailableEnhanced();
 
         // Check if epoch changed during our work check
         // If it did, we were woken and must not sleep
-        uint64_t currentEpoch = _wakeEpoch.load(std::memory_order_acquire);
+        uint64_t currentEpoch = _wakeEpoch.load(::std::memory_order_acquire);
 
         if (hasWork || currentEpoch != sleepEpoch)
         {
             // Either work available or we were woken - don't sleep
-            _sleeping.store(false, std::memory_order_release);
+            _sleeping.store(false, ::std::memory_order_release);
 
             if (currentEpoch != sleepEpoch)
             {
-                _epochMismatches.fetch_add(1, std::memory_order_relaxed);
+                _epochMismatches.fetch_add(1, ::std::memory_order_relaxed);
             }
 
             return;
         }
 
         // Record sleep entry time for deadlock detection
-        auto sleepStartTime = std::chrono::steady_clock::now();
+        auto sleepStartTime = ::std::chrono::steady_clock::now();
 
         // Wait with comprehensive wake conditions
         auto result = _wakeCv.wait_for(lock, _pool->GetConfiguration().workerSleepTime,
             [this, sleepEpoch]() {
                 // Wake conditions (in priority order):
                 // 1. Epoch changed (guaranteed wake signal)
-                if (_wakeEpoch.load(std::memory_order_acquire) != sleepEpoch)
+                if (_wakeEpoch.load(::std::memory_order_acquire) != sleepEpoch)
                     return true;
 
                 // 2. Explicitly woken (sleeping flag cleared)
-                if (!_sleeping.load(std::memory_order_relaxed))
+                if (!_sleeping.load(::std::memory_order_relaxed))
                     return true;
 
                 // 3. Shutdown requested
-                if (!_running.load(std::memory_order_relaxed) || _pool->IsShuttingDown())
+                if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
                     return true;
 
                 // 4. Work became available (double-check)
@@ -139,18 +139,18 @@ public:
             });
 
         // Track wake reason for diagnostics
-        auto wakeTime = std::chrono::steady_clock::now();
-        auto sleepDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto wakeTime = ::std::chrono::steady_clock::now();
+        auto sleepDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             wakeTime - sleepStartTime);
 
         if (!result)
         {
             // Timeout occurred - potential spurious wakeup or genuine timeout
-            _spuriousWakeups.fetch_add(1, std::memory_order_relaxed);
-            _consecutiveSleepTimeouts.fetch_add(1, std::memory_order_relaxed);
+            _spuriousWakeups.fetch_add(1, ::std::memory_order_relaxed);
+            _consecutiveSleepTimeouts.fetch_add(1, ::std::memory_order_relaxed);
 
             // Safety: If we've timed out too many times, force a work check
-            if (_consecutiveSleepTimeouts.load(std::memory_order_relaxed) > 5)
+            if (_consecutiveSleepTimeouts.load(::std::memory_order_relaxed) > 5)
             {
                 ForceWorkCheck();
             }
@@ -158,18 +158,18 @@ public:
         else
         {
             // Successful wake - reset timeout counter
-            _consecutiveSleepTimeouts.store(0, std::memory_order_relaxed);
+            _consecutiveSleepTimeouts.store(0, ::std::memory_order_relaxed);
         }
 
         // Update last processed epoch
-        _lastProcessedEpoch.store(_wakeEpoch.load(std::memory_order_acquire),
-                                 std::memory_order_release);
+        _lastProcessedEpoch.store(_wakeEpoch.load(::std::memory_order_acquire),
+                                 ::std::memory_order_release);
 
         // Clear sleeping flag
-        _sleeping.store(false, std::memory_order_release);
+        _sleeping.store(false, ::std::memory_order_release);
 
         // Record wake time for monitoring
-        _lastWakeTime.store(wakeTime, std::memory_order_release);
+        _lastWakeTime.store(wakeTime, ::std::memory_order_release);
     }
 
     /**
@@ -180,14 +180,14 @@ public:
      */
     void WakeEnhanced()
     {
-        std::lock_guard<std::mutex> lock(_wakeMutex);
+        ::std::lock_guard<::std::mutex> lock(_wakeMutex);
 
         // CRITICAL: Increment epoch FIRST
         // This guarantees the sleeping thread will see the change
-        uint64_t newEpoch = _wakeEpoch.fetch_add(1, std::memory_order_release) + 1;
+        uint64_t newEpoch = _wakeEpoch.fetch_add(1, ::std::memory_order_release) + 1;
 
         // Clear sleeping flag
-        _sleeping.store(false, std::memory_order_release);
+        _sleeping.store(false, ::std::memory_order_release);
 
         // Always notify - belt and suspenders approach
         _wakeCv.notify_one();
@@ -212,7 +212,7 @@ public:
         }
 
         // Memory fence to ensure we see latest updates from other threads
-        std::atomic_thread_fence(std::memory_order_acquire);
+        ::std::atomic_thread_fence(::std::memory_order_acquire);
 
         // Enhanced stealing check with work visibility
         if (_pool->GetConfiguration().enableWorkStealing)
@@ -232,7 +232,7 @@ public:
                     continue;
 
                 // Don't check sleeping workers (they likely have no work)
-                if (other->_sleeping.load(std::memory_order_acquire))
+                if (other->_sleeping.load(::std::memory_order_acquire))
                     continue;
 
                 // Check their queues
@@ -252,7 +252,7 @@ public:
      */
     void ForceWorkCheck()
     {
-        _forcedWakes.fetch_add(1, std::memory_order_relaxed);
+        _forcedWakes.fetch_add(1, ::std::memory_order_relaxed);
 
         // Wake a random other worker to redistribute work
         uint32 victimId = GetRandomWorkerIndex();
@@ -266,7 +266,7 @@ public:
         }
 
         // Reset consecutive timeout counter
-        _consecutiveSleepTimeouts.store(0, std::memory_order_relaxed);
+        _consecutiveSleepTimeouts.store(0, ::std::memory_order_relaxed);
     }
 
     /**
@@ -280,22 +280,22 @@ public:
         uint32_t epochMismatches;
         uint32_t forcedWakes;
         uint32_t consecutiveTimeouts;
-        std::chrono::milliseconds timeSinceLastWake;
+        ::std::chrono::milliseconds timeSinceLastWake;
     };
 
     EnhancedMetrics GetEnhancedMetrics() const
     {
         EnhancedMetrics metrics;
-        metrics.wakeEpoch = _wakeEpoch.load(std::memory_order_relaxed);
-        metrics.lastProcessedEpoch = _lastProcessedEpoch.load(std::memory_order_relaxed);
-        metrics.spuriousWakeups = _spuriousWakeups.load(std::memory_order_relaxed);
-        metrics.epochMismatches = _epochMismatches.load(std::memory_order_relaxed);
-        metrics.forcedWakes = _forcedWakes.load(std::memory_order_relaxed);
-        metrics.consecutiveTimeouts = _consecutiveSleepTimeouts.load(std::memory_order_relaxed);
+        metrics.wakeEpoch = _wakeEpoch.load(::std::memory_order_relaxed);
+        metrics.lastProcessedEpoch = _lastProcessedEpoch.load(::std::memory_order_relaxed);
+        metrics.spuriousWakeups = _spuriousWakeups.load(::std::memory_order_relaxed);
+        metrics.epochMismatches = _epochMismatches.load(::std::memory_order_relaxed);
+        metrics.forcedWakes = _forcedWakes.load(::std::memory_order_relaxed);
+        metrics.consecutiveTimeouts = _consecutiveSleepTimeouts.load(::std::memory_order_relaxed);
 
-        auto now = std::chrono::steady_clock::now();
-        auto lastWake = _lastWakeTime.load(std::memory_order_relaxed);
-        metrics.timeSinceLastWake = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto now = ::std::chrono::steady_clock::now();
+        auto lastWake = _lastWakeTime.load(::std::memory_order_relaxed);
+        metrics.timeSinceLastWake = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - lastWake);
 
         return metrics;
@@ -310,16 +310,16 @@ class ThreadPoolEnhanced : public ThreadPool
 {
 private:
     // Periodic safety broadcast to prevent stable deadlock
-    std::unique_ptr<std::thread> _safetyThread;
-    std::atomic<bool> _safetyThreadRunning{false};
+    ::std::unique_ptr<::std::thread> _safetyThread;
+    ::std::atomic<bool> _safetyThreadRunning{false};
 
     // Global work submission tracking
-    alignas(64) std::atomic<uint64_t> _globalSubmissionEpoch{0};
-    alignas(64) std::atomic<uint64_t> _lastBroadcastEpoch{0};
+    alignas(64) ::std::atomic<uint64_t> _globalSubmissionEpoch{0};
+    alignas(64) ::std::atomic<uint64_t> _lastBroadcastEpoch{0};
 
     // Deadlock detection state
-    alignas(64) std::atomic<uint32_t> _allSleepingDetections{0};
-    alignas(64) std::atomic<std::chrono::steady_clock::time_point> _lastAllSleepingTime;
+    alignas(64) ::std::atomic<uint32_t> _allSleepingDetections{0};
+    alignas(64) ::std::atomic<::std::chrono::steady_clock::time_point> _lastAllSleepingTime;
 
 public:
     explicit ThreadPoolEnhanced(Configuration config = {})
@@ -339,7 +339,7 @@ public:
     void StartSafetyThread()
     {
         _safetyThreadRunning.store(true);
-        _safetyThread = std::make_unique<std::thread>([this]() {
+        _safetyThread = ::std::make_unique<::std::thread>([this]() {
             SafetyThreadLoop();
         });
 
@@ -367,12 +367,12 @@ public:
      */
     void SafetyThreadLoop()
     {
-        while (_safetyThreadRunning.load(std::memory_order_relaxed))
+        while (_safetyThreadRunning.load(::std::memory_order_relaxed))
         {
             // Check every 50ms for deadlock conditions
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
 
-            if (_shutdown.load(std::memory_order_relaxed))
+            if (_shutdown.load(::std::memory_order_relaxed))
                 break;
 
             // Check if all workers are sleeping
@@ -399,7 +399,7 @@ public:
 
         for (const auto& worker : _workers)
         {
-            if (worker && worker->_sleeping.load(std::memory_order_acquire))
+            if (worker && worker->_sleeping.load(::std::memory_order_acquire))
             {
                 sleepingCount++;
             }
@@ -408,8 +408,8 @@ public:
         // If ALL workers are sleeping with queued tasks, we have a problem
         if (sleepingCount == totalWorkers && GetQueuedTasks() > 0)
         {
-            _allSleepingDetections.fetch_add(1, std::memory_order_relaxed);
-            _lastAllSleepingTime.store(std::chrono::steady_clock::now());
+            _allSleepingDetections.fetch_add(1, ::std::memory_order_relaxed);
+            _lastAllSleepingTime.store(::std::chrono::steady_clock::now());
 
             // EMERGENCY: Wake all workers immediately
             EmergencyWakeAll("All workers sleeping with pending tasks!");
@@ -422,21 +422,21 @@ public:
     void CheckForSafetyBroadcast()
     {
         // Periodic safety broadcast every 100ms
-        static std::chrono::steady_clock::time_point lastBroadcast;
-        auto now = std::chrono::steady_clock::now();
+        static ::std::chrono::steady_clock::time_point lastBroadcast;
+        auto now = ::std::chrono::steady_clock::now();
 
-        if (now - lastBroadcast > std::chrono::milliseconds(100))
+        if (now - lastBroadcast > ::std::chrono::milliseconds(100))
         {
             lastBroadcast = now;
 
             // Check submission epoch vs broadcast epoch
-            uint64_t currentSubmissions = _globalSubmissionEpoch.load(std::memory_order_acquire);
-            uint64_t lastBroadcast = _lastBroadcastEpoch.load(std::memory_order_acquire);
+            uint64_t currentSubmissions = _globalSubmissionEpoch.load(::std::memory_order_acquire);
+            uint64_t lastBroadcast = _lastBroadcastEpoch.load(::std::memory_order_acquire);
 
             // If new submissions since last broadcast, wake workers
             if (currentSubmissions != lastBroadcast)
             {
-                _lastBroadcastEpoch.store(currentSubmissions, std::memory_order_release);
+                _lastBroadcastEpoch.store(currentSubmissions, ::std::memory_order_release);
 
                 // Wake 25% of sleeping workers
                 WakeSleepingWorkers(0.25f);
@@ -450,14 +450,14 @@ public:
     void MonitorSubmissionHealth()
     {
         static uint64_t lastCompleted = 0;
-        static std::chrono::steady_clock::time_point lastCheck;
+        static ::std::chrono::steady_clock::time_point lastCheck;
 
-        auto now = std::chrono::steady_clock::now();
-        if (now - lastCheck < std::chrono::seconds(1))
+        auto now = ::std::chrono::steady_clock::now();
+        if (now - lastCheck < ::std::chrono::seconds(1))
             return;
 
         lastCheck = now;
-        uint64_t currentCompleted = _metrics.totalCompleted.load(std::memory_order_relaxed);
+        uint64_t currentCompleted = _metrics.totalCompleted.load(::std::memory_order_relaxed);
 
         // If no progress in 1 second with queued tasks, force wake
         if (currentCompleted == lastCompleted && GetQueuedTasks() > 0)
@@ -495,11 +495,11 @@ public:
      */
     void WakeSleepingWorkers(float percentage)
     {
-        std::vector<WorkerThreadEnhanced*> sleepingWorkers;
+        ::std::vector<WorkerThreadEnhanced*> sleepingWorkers;
 
         for (auto& worker : _workers)
         {
-            if (worker && worker->_sleeping.load(std::memory_order_acquire))
+            if (worker && worker->_sleeping.load(::std::memory_order_acquire))
             {
                 sleepingWorkers.push_back(static_cast<WorkerThreadEnhanced*>(worker.get()));
             }
@@ -508,13 +508,13 @@ public:
         if (sleepingWorkers.empty())
             return;
 
-        size_t toWake = std::max(1ULL,
+        size_t toWake = ::std::max(1ULL,
             static_cast<size_t>(sleepingWorkers.size() * percentage));
 
         // Randomly select workers to wake for better distribution
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::shuffle(sleepingWorkers.begin(), sleepingWorkers.end(), gen);
+        ::std::random_device rd;
+        ::std::mt19937 gen(rd());
+        ::std::shuffle(sleepingWorkers.begin(), sleepingWorkers.end(), gen);
 
         for (size_t i = 0; i < toWake && i < sleepingWorkers.size(); ++i)
         {
@@ -527,13 +527,13 @@ public:
      */
     template<typename Func, typename... Args>
     auto SubmitEnhanced(TaskPriority priority, Func&& func, Args&&... args)
-        -> std::future<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>>
+        -> ::std::future<::std::invoke_result_t<::std::decay_t<Func>, ::std::decay_t<Args>...>>
     {
         // Track global submission
-        _globalSubmissionEpoch.fetch_add(1, std::memory_order_release);
+        _globalSubmissionEpoch.fetch_add(1, ::std::memory_order_release);
 
         // Use base Submit but with enhanced wake strategy
-        auto future = Submit(priority, std::forward<Func>(func), std::forward<Args>(args)...);
+        auto future = Submit(priority, ::std::forward<Func>(func), ::std::forward<Args>(args)...);
 
         // Enhanced wake strategy for new submissions
         EnhancedWakeStrategy(priority);
@@ -570,11 +570,11 @@ public:
     /**
      * @brief Get enhanced diagnostic report
      */
-    std::string GetEnhancedDiagnosticReport() const
+    ::std::string GetEnhancedDiagnosticReport() const
     {
-        std::stringstream report;
+        ::std::stringstream report;
         report << "=== ThreadPool Enhanced Diagnostic Report ===\n";
-        report << "Timestamp: " << std::chrono::system_clock::now() << "\n\n";
+        report << "Timestamp: " << ::std::chrono::system_clock::now() << "\n\n";
 
         report << "Safety Metrics:\n";
         report << "  All-Sleeping Detections: " << _allSleepingDetections.load() << "\n";
@@ -608,12 +608,12 @@ public:
 // Factory function to create enhanced thread pool
 // ============================================================================
 
-std::unique_ptr<ThreadPool> CreateEnhancedThreadPool(ThreadPool::Configuration config)
+::std::unique_ptr<ThreadPool> CreateEnhancedThreadPool(ThreadPool::Configuration config)
 {
     TC_LOG_INFO("playerbot.performance",
         "Creating enhanced ThreadPool with epoch-based wake guarantee system");
 
-    return std::make_unique<ThreadPoolEnhanced>(config);
+    return ::std::make_unique<ThreadPoolEnhanced>(config);
 }
 
 } // namespace Performance

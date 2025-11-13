@@ -85,12 +85,12 @@ struct PerformanceSample
 // Optimization strategy
 struct OptimizationStrategy
 {
-    std::string name;
+    ::std::string name;
     OptimizationGoal goal;
-    std::vector<float> parameters;     // Strategy-specific parameters
+    ::std::vector<float> parameters;     // Strategy-specific parameters
     float fitness;                      // How well this strategy performs
     uint32_t iterations;                // How many times tested
-    std::chrono::steady_clock::time_point lastUpdated;
+    ::std::chrono::steady_clock::time_point lastUpdated;
 
     OptimizationStrategy() : goal(OptimizationGoal::BALANCE_ALL),
         fitness(0.0f), iterations(0) {}
@@ -102,7 +102,7 @@ struct OptimizationStrategy
 // Genetic algorithm chromosome for strategy evolution
 struct StrategyChromosome
 {
-    std::vector<float> genes;  // Strategy parameters encoded as genes
+    ::std::vector<float> genes;  // Strategy parameters encoded as genes
     float fitness;
     uint32_t generation;
 
@@ -125,7 +125,7 @@ public:
 
     // Metrics calculation
     float GetMetric(PerformanceMetric metric) const;
-    std::vector<float> GetAllMetrics() const;
+    ::std::vector<float> GetAllMetrics() const;
     float GetOverallScore() const;
 
     // Trend analysis
@@ -143,18 +143,18 @@ public:
 
 private:
     ObjectGuid _guid;
-    std::deque<PerformanceSample> _samples;
+    ::std::deque<PerformanceSample> _samples;
     static constexpr size_t MAX_SAMPLES = 500;
 
     // Cached metrics
-    mutable std::unordered_map<PerformanceMetric, float> _cachedMetrics;
+    mutable ::std::unordered_map<PerformanceMetric, float> _cachedMetrics;
     mutable bool _metricsValid;
 
     // Current optimization strategy
     OptimizationStrategy _currentStrategy;
 
     // Performance history
-    std::vector<float> _scoreHistory;
+    ::std::vector<float> _scoreHistory;
     float _baselineScore;
 
     // Helper methods
@@ -172,14 +172,14 @@ public:
 
     // Evolution cycle
     void InitializePopulation(size_t chromosomeSize);
-    void EvaluateFitness(std::function<float(const StrategyChromosome&)> fitnessFunc);
+    void EvaluateFitness(::std::function<float(const StrategyChromosome&)> fitnessFunc);
     void Evolve();
     StrategyChromosome GetBestChromosome() const;
 
     // Configuration
-    void SetMutationRate(float rate) { _mutationRate = std::clamp(rate, 0.0f, 1.0f); }
-    void SetCrossoverRate(float rate) { _crossoverRate = std::clamp(rate, 0.0f, 1.0f); }
-    void SetElitismCount(size_t count) { _elitismCount = std::min(count, _populationSize / 2); }
+    void SetMutationRate(float rate) { _mutationRate = ::std::clamp(rate, 0.0f, 1.0f); }
+    void SetCrossoverRate(float rate) { _crossoverRate = ::std::clamp(rate, 0.0f, 1.0f); }
+    void SetElitismCount(size_t count) { _elitismCount = ::std::min(count, _populationSize / 2); }
 
     // Statistics
     float GetAverageFitness() const;
@@ -187,7 +187,7 @@ public:
     uint32_t GetGeneration() const { return _generation; }
 
 private:
-    std::vector<StrategyChromosome> _population;
+    ::std::vector<StrategyChromosome> _population;
     size_t _populationSize;
     uint32_t _generation;
 
@@ -222,12 +222,12 @@ public:
     // Profile management
     void CreateProfile(uint32_t botGuid);
     void DeleteProfile(uint32_t botGuid);
-    std::shared_ptr<PerformanceProfile> GetProfile(uint32_t botGuid) const;
+    ::std::shared_ptr<PerformanceProfile> GetProfile(uint32_t botGuid) const;
 
     // Performance tracking
     void RecordPerformance(uint32_t botGuid, const PerformanceSample& sample);
     void RecordCombatPerformance(uint32_t botGuid, float damage, float healing, float damageTaken);
-    void RecordActionResult(uint32_t botGuid, const std::string& action, bool success);
+    void RecordActionResult(uint32_t botGuid, const ::std::string& action, bool success);
 
     // Optimization
     void OptimizeBotPerformance(uint32_t botGuid);
@@ -235,23 +235,23 @@ public:
     void ApplyOptimization(BotAI* ai, const OptimizationStrategy& strategy);
 
     // Real-time adjustments
-    void AdjustStrategyParameters(uint32_t botGuid, const std::vector<float>& feedback);
-    void AdaptToSituation(uint32_t botGuid, const std::string& situation);
+    void AdjustStrategyParameters(uint32_t botGuid, const ::std::vector<float>& feedback);
+    void AdaptToSituation(uint32_t botGuid, const ::std::string& situation);
 
     // Performance analysis
     float GetBotEffectiveness(uint32_t botGuid) const;
-    std::vector<std::pair<PerformanceMetric, float>> GetBotMetrics(uint32_t botGuid) const;
-    std::string GeneratePerformanceReport(uint32_t botGuid) const;
+    ::std::vector<::std::pair<PerformanceMetric, float>> GetBotMetrics(uint32_t botGuid) const;
+    ::std::string GeneratePerformanceReport(uint32_t botGuid) const;
 
     // Collective optimization
-    void OptimizeGroupPerformance(const std::vector<uint32_t>& botGuids);
+    void OptimizeGroupPerformance(const ::std::vector<uint32_t>& botGuids);
     void ShareOptimizations(uint32_t sourceBotGuid, uint32_t targetBotGuid);
     void PropagateSuccessfulStrategies();
 
     // Self-tuning parameters
     struct TuningParameter
     {
-        std::string name;
+        ::std::string name;
         float value;
         float minValue;
         float maxValue;
@@ -262,29 +262,29 @@ public:
         float Normalize() const;
     };
 
-    void RegisterTuningParameter(const std::string& name, float initial,
+    void RegisterTuningParameter(const ::std::string& name, float initial,
                                  float min, float max, float learningRate = 0.01f);
-    float GetTuningParameter(const std::string& name) const;
-    void UpdateTuningParameters(const std::unordered_map<std::string, float>& gradients);
+    float GetTuningParameter(const ::std::string& name) const;
+    void UpdateTuningParameters(const ::std::unordered_map<::std::string, float>& gradients);
 
     // Performance benchmarking
-    void StartBenchmark(uint32_t botGuid, const std::string& benchmarkName);
-    void EndBenchmark(uint32_t botGuid, const std::string& benchmarkName);
-    float GetBenchmarkScore(uint32_t botGuid, const std::string& benchmarkName) const;
+    void StartBenchmark(uint32_t botGuid, const ::std::string& benchmarkName);
+    void EndBenchmark(uint32_t botGuid, const ::std::string& benchmarkName);
+    float GetBenchmarkScore(uint32_t botGuid, const ::std::string& benchmarkName) const;
 
     // Configuration
     void SetOptimizationInterval(uint32_t ms) { _optimizationIntervalMs = ms; }
-    void SetLearningRate(float rate) { _learningRate = std::clamp(rate, 0.0001f, 0.1f); }
+    void SetLearningRate(float rate) { _learningRate = ::std::clamp(rate, 0.0001f, 0.1f); }
     void EnableAutoOptimization(bool enable) { _autoOptimize = enable; }
 
     // Metrics
     struct OptimizationMetrics
     {
-        std::atomic<uint32_t> profilesOptimized{0};
-        std::atomic<uint32_t> strategiesEvaluated{0};
-        std::atomic<float> averageImprovement{0.0f};
-        std::atomic<float> bestImprovement{0.0f};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint32_t> profilesOptimized{0};
+        ::std::atomic<uint32_t> strategiesEvaluated{0};
+        ::std::atomic<float> averageImprovement{0.0f};
+        ::std::atomic<float> bestImprovement{0.0f};
+        ::std::chrono::steady_clock::time_point startTime;
     };
 
     OptimizationMetrics GetMetrics() const { return _metrics; }
@@ -300,28 +300,28 @@ private:
 
     // Profiles
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _profilesMutex;
-    std::unordered_map<uint32_t, std::shared_ptr<PerformanceProfile>> _profiles;
+    ::std::unordered_map<uint32_t, ::std::shared_ptr<PerformanceProfile>> _profiles;
 
     // Evolutionary optimizers per bot
-    std::unordered_map<uint32_t, std::unique_ptr<EvolutionaryOptimizer>> _optimizers;
+    ::std::unordered_map<uint32_t, ::std::unique_ptr<EvolutionaryOptimizer>> _optimizers;
 
     // Strategy database
-    std::vector<OptimizationStrategy> _strategyDatabase;
-    std::unordered_map<OptimizationGoal, std::vector<OptimizationStrategy>> _goalStrategies;
+    ::std::vector<OptimizationStrategy> _strategyDatabase;
+    ::std::unordered_map<OptimizationGoal, ::std::vector<OptimizationStrategy>> _goalStrategies;
 
     // Tuning parameters
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _parametersMutex;
-    std::unordered_map<std::string, TuningParameter> _tuningParameters;
+    ::std::unordered_map<::std::string, TuningParameter> _tuningParameters;
 
     // Benchmarks
     struct BenchmarkData
     {
-        std::chrono::steady_clock::time_point startTime;
-        std::chrono::steady_clock::time_point endTime;
+        ::std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point endTime;
         float score;
         uint32_t iterations;
     };
-    std::unordered_map<uint32_t, std::unordered_map<std::string, BenchmarkData>> _benchmarks;
+    ::std::unordered_map<uint32_t, ::std::unordered_map<::std::string, BenchmarkData>> _benchmarks;
 
     // Configuration
     uint32_t _optimizationIntervalMs;
@@ -331,7 +331,7 @@ private:
     mutable OptimizationMetrics _metrics;
 
     // Helper methods
-    std::shared_ptr<PerformanceProfile> GetOrCreateProfile(uint32_t botGuid);
+    ::std::shared_ptr<PerformanceProfile> GetOrCreateProfile(uint32_t botGuid);
     void InitializeStrategies();
     void UpdateStrategyFitness(OptimizationStrategy& strategy, float performance);
     OptimizationStrategy CreateRandomStrategy(OptimizationGoal goal) const;
@@ -353,16 +353,16 @@ private:
 class TC_GAME_API ScopedPerformanceMeasurement
 {
 public:
-    ScopedPerformanceMeasurement(uint32_t botGuid, const std::string& operation);
+    ScopedPerformanceMeasurement(uint32_t botGuid, const ::std::string& operation);
     ~ScopedPerformanceMeasurement();
 
-    void RecordMetric(const std::string& name, float value);
+    void RecordMetric(const ::std::string& name, float value);
     void MarkSuccess();
 
 private:
     uint32_t _botGuid;
-    std::string _operation;
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::string _operation;
+    ::std::chrono::steady_clock::time_point _startTime;
     PerformanceSample _sample;
     bool _success;
 };

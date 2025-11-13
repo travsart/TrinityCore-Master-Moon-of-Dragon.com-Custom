@@ -231,7 +231,7 @@ namespace Playerbot
          *
          * @return Vector of all active CC targets
          */
-        std::vector<Unit*> GetCCdTargets() const;
+        ::std::vector<Unit*> GetCCdTargets() const;
 
         /**
          * @brief Check if should break CC
@@ -245,7 +245,7 @@ namespace Playerbot
 
     private:
         Player* _bot;
-        std::unordered_map<ObjectGuid, CCTarget> _activeCCs;
+        ::std::unordered_map<ObjectGuid, CCTarget> _activeCCs;
         uint32 _lastUpdate;
 
         static constexpr uint32 UPDATE_INTERVAL = 500;  // 500ms
@@ -254,7 +254,7 @@ namespace Playerbot
         /**
          * @brief Get all enemies in combat
          */
-        std::vector<Unit*> GetCombatEnemies() const;
+        ::std::vector<Unit*> GetCombatEnemies() const;
 
         /**
          * @brief Check if target is immune to CC type
@@ -271,7 +271,7 @@ namespace Playerbot
         /**
          * @brief Get bot's available CC spells
          */
-        std::vector<uint32> GetAvailableCCSpells() const;
+        ::std::vector<uint32> GetAvailableCCSpells() const;
 
         /**
          * @brief Check if spell is suitable for target

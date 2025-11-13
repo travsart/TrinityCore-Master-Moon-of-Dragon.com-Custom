@@ -107,8 +107,8 @@ void ParseTypedSpellFailure(WorldSession* session, WorldPackets::Spells::SpellFa
     event.amount = static_cast<int32>(packet.Reason);
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
     CombatEventBus::instance()->PublishEvent(event);
 
@@ -138,8 +138,8 @@ void ParseTypedSpellFailedOther(WorldSession* session, WorldPackets::Spells::Spe
     event.amount = static_cast<int32>(packet.Reason);
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     CombatEventBus::instance()->PublishEvent(event);
 
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received SPELL_FAILED_OTHER (typed): caster={}, spell={}",
@@ -168,8 +168,8 @@ void ParseTypedSpellEnergize(WorldSession* session, WorldPackets::CombatLog::Spe
     event.amount = packet.Amount;
     event.schoolMask = static_cast<uint32>(packet.Type);
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
     CombatEventBus::instance()->PublishEvent(event);
 
@@ -230,8 +230,8 @@ void ParseTypedSpellDispel(WorldSession* session, WorldPackets::CombatLog::Spell
         event.amount = static_cast<int32>(dispellData.SpellID);
         event.schoolMask = 0;
         event.flags = 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
         CombatEventBus::instance()->PublishEvent(event);
     }
@@ -313,8 +313,8 @@ void ParseTypedAIReaction(WorldSession* session, WorldPackets::Combat::AIReactio
     event.amount = static_cast<int32>(packet.Reaction);
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
     CombatEventBus::instance()->PublishEvent(event);
 

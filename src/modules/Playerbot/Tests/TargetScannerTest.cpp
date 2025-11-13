@@ -131,7 +131,7 @@ namespace Playerbot
                 TC_LOG_INFO("playerbot.test", "Test 3: Target Priority System");
 
                 TargetScanner scanner(bot);
-                std::vector<Unit*> allHostiles = scanner.FindAllHostiles();
+                ::std::vector<Unit*> allHostiles = scanner.FindAllHostiles();
 
                 TC_LOG_INFO("playerbot.test", "Found {} hostile targets", allHostiles.size());
 

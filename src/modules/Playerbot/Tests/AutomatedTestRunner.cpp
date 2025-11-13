@@ -27,10 +27,10 @@ namespace Test
 // TestResult Implementation
 // ========================
 
-std::string TestResult::GetFormattedResult() const
+::std::string TestResult::GetFormattedResult() const
 {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2);
+    ::std::stringstream ss;
+    ss << ::std::fixed << ::std::setprecision(2);
 
     ss << "[" << (passed ? "PASS" : "FAIL") << "] " << testName;
     ss << " (" << executionTime.count() << "ms)";
@@ -54,11 +54,11 @@ bool TestResult::IsWithinPerformanceThresholds(const PerformanceThresholds& thre
 // TestSuiteResult Implementation
 // ========================
 
-std::string TestSuiteResult::GenerateSummary() const
+::std::string TestSuiteResult::GenerateSummary() const
 {
-    std::stringstream ss;
+    ::std::stringstream ss;
     ss << suiteName << ": " << passedTests << "/" << totalTests << " passed";
-    ss << " (" << std::fixed << std::setprecision(1) << (GetSuccessRate() * 100.0f) << "%)";
+    ss << " (" << ::std::fixed << ::std::setprecision(1) << (GetSuccessRate() * 100.0f) << "%)";
     ss << " in " << totalExecutionTime.count() << "ms";
 
     if (failedTests > 0)
@@ -73,15 +73,15 @@ std::string TestSuiteResult::GenerateSummary() const
 // TestRunResult Implementation
 // ========================
 
-std::chrono::milliseconds TestRunResult::GetTotalExecutionTime() const
+::std::chrono::milliseconds TestRunResult::GetTotalExecutionTime() const
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    return ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 }
 
-std::string TestRunResult::GenerateFullReport() const
+::std::string TestRunResult::GenerateFullReport() const
 {
-    std::stringstream report;
-    report << std::fixed << std::setprecision(2);
+    ::std::stringstream report;
+    report << ::std::fixed << ::std::setprecision(2);
 
     // Header
     report << "====================================\n";
@@ -90,8 +90,8 @@ std::string TestRunResult::GenerateFullReport() const
 
     // Summary
     report << "Run ID: " << runId << "\n";
-    report << "Start Time: " << std::put_time(std::localtime(&std::chrono::system_clock::to_time_t(startTime)), "%Y-%m-%d %H:%M:%S") << "\n";
-    report << "End Time: " << std::put_time(std::localtime(&std::chrono::system_clock::to_time_t(endTime)), "%Y-%m-%d %H:%M:%S") << "\n";
+    report << "Start Time: " << ::std::put_time(::std::localtime(&::std::chrono::system_clock::to_time_t(startTime)), "%Y-%m-%d %H:%M:%S") << "\n";
+    report << "End Time: " << ::std::put_time(::std::localtime(&::std::chrono::system_clock::to_time_t(endTime)), "%Y-%m-%d %H:%M:%S") << "\n";
     report << "Total Duration: " << GetTotalExecutionTime().count() << "ms\n\n";
 
     // Overall results
@@ -153,12 +153,12 @@ std::string TestRunResult::GenerateFullReport() const
 // TestRegistry Implementation
 // ========================
 
-std::unique_ptr<TestRegistry> TestRegistry::s_instance = nullptr;
+::std::unique_ptr<TestRegistry> TestRegistry::s_instance = nullptr;
 
 TestRegistry* TestRegistry::Instance()
 {
     if (!s_instance)
-        s_instance = std::unique_ptr<TestRegistry>(new TestRegistry());
+        s_instance = ::std::unique_ptr<TestRegistry>(new TestRegistry());
     return s_instance.get();
 }
 
@@ -169,7 +169,7 @@ void TestRegistry::RegisterTest(const TestInfo& testInfo)
                 testInfo.name, static_cast<int>(testInfo.category), static_cast<int>(testInfo.severity));
 }
 
-void TestRegistry::RegisterTestSuite(const std::string& suiteName, TestCategory category, const std::vector<TestInfo>& tests)
+void TestRegistry::RegisterTestSuite(const ::std::string& suiteName, TestCategory category, const ::std::vector<TestInfo>& tests)
 {
     m_testSuites[suiteName] = tests;
 
@@ -182,36 +182,36 @@ void TestRegistry::RegisterTestSuite(const std::string& suiteName, TestCategory 
     TC_LOG_INFO("playerbot.test", "Registered test suite: {} with {} tests", suiteName, tests.size());
 }
 
-std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsByCategory(TestCategory category) const
+::std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsByCategory(TestCategory category) const
 {
-    std::vector<TestInfo> result;
-    std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
-                 std::back_inserter(result),
+    ::std::vector<TestInfo> result;
+    ::std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
+                 ::std::back_inserter(result),
                  [category](const TestInfo& test) { return test.category == category; });
     return result;
 }
 
-std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsBySeverity(TestSeverity severity) const
+::std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsBySeverity(TestSeverity severity) const
 {
-    std::vector<TestInfo> result;
-    std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
-                 std::back_inserter(result),
+    ::std::vector<TestInfo> result;
+    ::std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
+                 ::std::back_inserter(result),
                  [severity](const TestInfo& test) { return test.severity == severity; });
     return result;
 }
 
-std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsByPattern(const std::string& pattern) const
+::std::vector<TestRegistry::TestInfo> TestRegistry::GetTestsByPattern(const ::std::string& pattern) const
 {
-    std::vector<TestInfo> result;
-    std::regex regex(pattern, std::regex_constants::icase);
+    ::std::vector<TestInfo> result;
+    ::std::regex regex(pattern, ::std::regex_constants::icase);
 
-    std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
-                 std::back_inserter(result),
-                 [&regex](const TestInfo& test) { return std::regex_search(test.name, regex); });
+    ::std::copy_if(m_registeredTests.begin(), m_registeredTests.end(),
+                 ::std::back_inserter(result),
+                 [&regex](const TestInfo& test) { return ::std::regex_search(test.name, regex); });
     return result;
 }
 
-std::vector<TestRegistry::TestInfo> TestRegistry::GetAllTests() const
+::std::vector<TestRegistry::TestInfo> TestRegistry::GetAllTests() const
 {
     return m_registeredTests;
 }
@@ -222,7 +222,7 @@ std::vector<TestRegistry::TestInfo> TestRegistry::GetAllTests() const
 
 AutomatedTestRunner::AutomatedTestRunner(const TestConfiguration& config)
     : m_config(config)
-    , m_performanceValidator(std::make_unique<PerformanceValidator>(config.performanceThresholds))
+    , m_performanceValidator(::std::make_unique<PerformanceValidator>(config.performanceThresholds))
     , m_testEnvironment(TestEnvironment::Instance())
 {
 }
@@ -244,14 +244,14 @@ TestRunResult AutomatedTestRunner::RunAllTests()
 
     TestRunResult result;
     result.runId = GenerateRunId();
-    result.startTime = std::chrono::system_clock::now();
+    result.startTime = ::std::chrono::system_clock::now();
     result.configuration = m_config;
 
     SetupTestEnvironment();
 
     // Get all tests to run
     auto allTests = TestRegistry::Instance()->GetAllTests();
-    std::vector<TestRegistry::TestInfo> testsToRun;
+    ::std::vector<TestRegistry::TestInfo> testsToRun;
 
     // Filter tests based on configuration
     for (const auto& test : allTests)
@@ -264,14 +264,14 @@ TestRunResult AutomatedTestRunner::RunAllTests()
                 testsToRun.size(), m_config.categoriesToRun.size());
 
     // Group tests by suite and execute
-    std::unordered_map<std::string, std::vector<TestRegistry::TestInfo>> suiteTests;
+    ::std::unordered_map<::std::string, ::std::vector<TestRegistry::TestInfo>> suiteTests;
 
     for (const auto& test : testsToRun)
     {
-        std::string suiteName = "Default";
+        ::std::string suiteName = "Default";
         // Extract suite name from test name (e.g., "GroupFunctionalityTests::TestName" -> "GroupFunctionalityTests")
         size_t pos = test.name.find("::");
-        if (pos != std::string::npos)
+        if (pos != ::std::string::npos)
             suiteName = test.name.substr(0, pos);
 
         suiteTests[suiteName].push_back(test);
@@ -306,7 +306,7 @@ TestRunResult AutomatedTestRunner::RunAllTests()
         result.skippedTests += suite.skippedTests;
     }
 
-    result.endTime = std::chrono::system_clock::now();
+    result.endTime = ::std::chrono::system_clock::now();
 
     CleanupTestEnvironment();
 
@@ -323,7 +323,7 @@ TestRunResult AutomatedTestRunner::RunTestsByCategory(TestCategory category)
 {
     auto tests = TestRegistry::Instance()->GetTestsByCategory(category);
     return RunSpecificTests([&tests]() {
-        std::vector<std::string> testNames;
+        ::std::vector<::std::string> testNames;
         for (const auto& test : tests)
             testNames.push_back(test.name);
         return testNames;
@@ -342,7 +342,7 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
     if (m_testStartCallback)
         m_testStartCallback(testInfo.name);
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     try
     {
@@ -356,17 +356,17 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
         }
 
         // Execute the test with timeout
-        std::atomic<bool> testCompleted{false};
-        std::atomic<bool> testResult{false};
-        std::string errorMessage;
+        ::std::atomic<bool> testCompleted{false};
+        ::std::atomic<bool> testResult{false};
+        ::std::string errorMessage;
 
-        std::thread testThread([&]() {
+        ::std::thread testThread([&]() {
             try
             {
                 testResult = testInfo.testFunction();
                 testCompleted = true;
             }
-            catch (const std::exception& e)
+            catch (const ::std::exception& e)
             {
                 errorMessage = e.what();
                 testCompleted = true;
@@ -375,19 +375,19 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
         });
 
         // Wait for completion with timeout
-        auto timeout = std::chrono::seconds(m_config.testTimeoutSeconds);
+        auto timeout = ::std::chrono::seconds(m_config.testTimeoutSeconds);
         auto timeoutEnd = startTime + timeout;
 
-        while (!testCompleted && std::chrono::high_resolution_clock::now() < timeoutEnd)
+        while (!testCompleted && ::std::chrono::high_resolution_clock::now() < timeoutEnd)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
 
         if (!testCompleted)
         {
             // Test timed out
             result.passed = false;
-            result.failureReason = "Test timed out after " + std::to_string(m_config.testTimeoutSeconds) + " seconds";
+            result.failureReason = "Test timed out after " + ::std::to_string(m_config.testTimeoutSeconds) + " seconds";
             TC_LOG_ERROR("playerbot.test", "Test {} timed out", testInfo.name);
 
             // Force terminate the test thread (not recommended but necessary)
@@ -401,15 +401,15 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
                 result.failureReason = errorMessage;
         }
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.passed = false;
-        result.failureReason = std::string("Exception: ") + e.what();
+        result.failureReason = ::std::string("Exception: ") + e.what();
         TC_LOG_ERROR("playerbot.test", "Test {} threw exception: {}", testInfo.name, e.what());
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    result.executionTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    result.executionTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
     ProcessTestResult(result);
 
@@ -422,7 +422,7 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
     return result;
 }
 
-TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const std::string& suiteName, const std::vector<TestRegistry::TestInfo>& tests)
+TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const ::std::string& suiteName, const ::std::vector<TestRegistry::TestInfo>& tests)
 {
     TestSuiteResult suiteResult;
     suiteResult.suiteName = suiteName;
@@ -430,7 +430,7 @@ TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const std::string& suiteNa
 
     TC_LOG_INFO("playerbot.test", "Executing test suite: {} ({} tests)", suiteName, tests.size());
 
-    auto suiteStartTime = std::chrono::high_resolution_clock::now();
+    auto suiteStartTime = ::std::chrono::high_resolution_clock::now();
 
     for (const auto& testInfo : tests)
     {
@@ -450,8 +450,8 @@ TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const std::string& suiteNa
             break;
     }
 
-    auto suiteEndTime = std::chrono::high_resolution_clock::now();
-    suiteResult.totalExecutionTime = std::chrono::duration_cast<std::chrono::milliseconds>(suiteEndTime - suiteStartTime);
+    auto suiteEndTime = ::std::chrono::high_resolution_clock::now();
+    suiteResult.totalExecutionTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(suiteEndTime - suiteStartTime);
 
     AggregateMetrics(suiteResult);
 
@@ -467,13 +467,13 @@ TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const std::string& suiteNa
 bool AutomatedTestRunner::ShouldRunTest(const TestRegistry::TestInfo& testInfo) const
 {
     // Check category filter
-    bool categoryMatch = std::find(m_config.categoriesToRun.begin(), m_config.categoriesToRun.end(),
+    bool categoryMatch = ::std::find(m_config.categoriesToRun.begin(), m_config.categoriesToRun.end(),
                                    testInfo.category) != m_config.categoriesToRun.end();
     if (!categoryMatch)
         return false;
 
     // Check severity filter
-    bool severityMatch = std::find(m_config.severityLevels.begin(), m_config.severityLevels.end(),
+    bool severityMatch = ::std::find(m_config.severityLevels.begin(), m_config.severityLevels.end(),
                                    testInfo.severity) != m_config.severityLevels.end();
     if (!severityMatch)
         return false;
@@ -495,7 +495,7 @@ void AutomatedTestRunner::ProcessTestResult(TestResult& result)
     }
 
     // Add additional metadata
-    result.additionalData["execution_timestamp"] = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+    result.additionalData["execution_timestamp"] = ::std::to_string(::std::chrono::system_clock::now().time_since_epoch().count());
     result.additionalData["test_environment"] = "automated";
 }
 
@@ -511,30 +511,30 @@ void AutomatedTestRunner::AggregateMetrics(TestSuiteResult& suiteResult)
         suiteResult.aggregatedMetrics.failedOperations += metrics.failedOperations;
 
         // Take maximum values for timing metrics
-        suiteResult.aggregatedMetrics.invitationAcceptanceTime = std::max(
+        suiteResult.aggregatedMetrics.invitationAcceptanceTime = ::std::max(
             suiteResult.aggregatedMetrics.invitationAcceptanceTime, metrics.invitationAcceptanceTime);
-        suiteResult.aggregatedMetrics.combatEngagementTime = std::max(
+        suiteResult.aggregatedMetrics.combatEngagementTime = ::std::max(
             suiteResult.aggregatedMetrics.combatEngagementTime, metrics.combatEngagementTime);
-        suiteResult.aggregatedMetrics.targetSwitchTime = std::max(
+        suiteResult.aggregatedMetrics.targetSwitchTime = ::std::max(
             suiteResult.aggregatedMetrics.targetSwitchTime, metrics.targetSwitchTime);
 
         // Take maximum values for resource metrics
-        suiteResult.aggregatedMetrics.memoryUsagePeak = std::max(
+        suiteResult.aggregatedMetrics.memoryUsagePeak = ::std::max(
             suiteResult.aggregatedMetrics.memoryUsagePeak, metrics.memoryUsagePeak);
-        suiteResult.aggregatedMetrics.cpuUsagePeak = std::max(
+        suiteResult.aggregatedMetrics.cpuUsagePeak = ::std::max(
             suiteResult.aggregatedMetrics.cpuUsagePeak, metrics.cpuUsagePeak);
     }
 }
 
-std::string AutomatedTestRunner::GenerateRunId() const
+::std::string AutomatedTestRunner::GenerateRunId() const
 {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    auto now = ::std::chrono::system_clock::now();
+    auto time_t = ::std::chrono::system_clock::to_time_t(now);
+    auto ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-    std::stringstream ss;
-    ss << "TestRun_" << std::put_time(std::gmtime(&time_t), "%Y%m%d_%H%M%S");
-    ss << "_" << std::setfill('0') << std::setw(3) << ms.count();
+    ::std::stringstream ss;
+    ss << "TestRun_" << ::std::put_time(::std::gmtime(&time_t), "%Y%m%d_%H%M%S");
+    ss << "_" << ::std::setfill('0') << ::std::setw(3) << ms.count();
 
     return ss.str();
 }
@@ -547,8 +547,8 @@ void AutomatedTestRunner::SetupTestEnvironment()
     }
 
     // Create output directories
-    std::filesystem::create_directories(m_config.reportOutputPath);
-    std::filesystem::create_directories(m_config.testDataPath);
+    ::std::filesystem::create_directories(m_config.reportOutputPath);
+    ::std::filesystem::create_directories(m_config.testDataPath);
 }
 
 void AutomatedTestRunner::CleanupTestEnvironment()
@@ -587,7 +587,7 @@ void AutomatedTestRunner::GenerateReports(const TestRunResult& results)
     }
 
     // Always generate a text summary
-    std::ofstream summaryFile(m_config.reportOutputPath + "/" + results.runId + "_summary.txt");
+    ::std::ofstream summaryFile(m_config.reportOutputPath + "/" + results.runId + "_summary.txt");
     if (summaryFile.is_open())
     {
         summaryFile << results.GenerateFullReport();
@@ -597,14 +597,14 @@ void AutomatedTestRunner::GenerateReports(const TestRunResult& results)
 
 void AutomatedTestRunner::GenerateJsonReport(const TestRunResult& results)
 {
-    std::ofstream jsonFile(m_config.reportOutputPath + "/" + results.runId + "_report.json");
+    ::std::ofstream jsonFile(m_config.reportOutputPath + "/" + results.runId + "_report.json");
     if (!jsonFile.is_open())
         return;
 
     jsonFile << "{\n";
     jsonFile << "  \"runId\": \"" << results.runId << "\",\n";
-    jsonFile << "  \"startTime\": \"" << std::chrono::system_clock::to_time_t(results.startTime) << "\",\n";
-    jsonFile << "  \"endTime\": \"" << std::chrono::system_clock::to_time_t(results.endTime) << "\",\n";
+    jsonFile << "  \"startTime\": \"" << ::std::chrono::system_clock::to_time_t(results.startTime) << "\",\n";
+    jsonFile << "  \"endTime\": \"" << ::std::chrono::system_clock::to_time_t(results.endTime) << "\",\n";
     jsonFile << "  \"totalTests\": " << results.totalTests << ",\n";
     jsonFile << "  \"passedTests\": " << results.passedTests << ",\n";
     jsonFile << "  \"failedTests\": " << results.failedTests << ",\n";
@@ -657,7 +657,7 @@ ContinuousIntegrationRunner::ContinuousIntegrationRunner(const CIConfiguration& 
     : m_ciConfig(config)
 {
     TestConfiguration testConfig = CreateCITestConfiguration();
-    m_testRunner = std::make_unique<AutomatedTestRunner>(testConfig);
+    m_testRunner = ::std::make_unique<AutomatedTestRunner>(testConfig);
 }
 
 int ContinuousIntegrationRunner::RunCIPipeline()
@@ -734,12 +734,12 @@ TestConfiguration ContinuousIntegrationRunner::CreateCITestConfiguration()
 
 void ContinuousIntegrationRunner::GenerateArtifacts(const TestRunResult& results)
 {
-    std::filesystem::create_directories(m_ciConfig.artifactPath);
+    ::std::filesystem::create_directories(m_ciConfig.artifactPath);
 
     // Copy test reports to artifact directory
-    std::filesystem::copy(results.configuration.reportOutputPath,
+    ::std::filesystem::copy(results.configuration.reportOutputPath,
                          m_ciConfig.artifactPath + "/test_reports",
-                         std::filesystem::copy_options::recursive);
+                         ::std::filesystem::copy_options::recursive);
 
     TC_LOG_INFO("playerbot.test", "Generated CI artifacts in: {}", m_ciConfig.artifactPath);
 }

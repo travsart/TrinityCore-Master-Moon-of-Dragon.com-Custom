@@ -397,7 +397,7 @@ public:
                 // Loksey has bloodhound adds
                 // Kill adds before focusing boss
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {

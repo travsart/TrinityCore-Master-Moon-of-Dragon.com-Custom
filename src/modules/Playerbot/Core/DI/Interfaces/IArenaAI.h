@@ -76,7 +76,7 @@ public:
     // Target selection
     virtual ::Unit* SelectFocusTarget(::Player* player) const = 0;
     virtual bool ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const = 0;
-    virtual std::vector<::Unit*> GetKillTargetPriority(::Player* player) const = 0;
+    virtual ::std::vector<::Unit*> GetKillTargetPriority(::Player* player) const = 0;
 
     // Positioning
     virtual void ExecutePositioning(::Player* player) = 0;

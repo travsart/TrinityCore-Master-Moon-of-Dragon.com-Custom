@@ -120,7 +120,7 @@ public:
      * Called on main thread when bot initialization complete.
      * Callback is responsible for taking ownership of BotAI pointer.
      */
-    using InitCallback = std::function<void(BotAI* ai)>;
+    using InitCallback = ::std::function<void(BotAI* ai)>;
 
     /**
      * @brief Initialize a bot asynchronously in background thread
@@ -177,31 +177,31 @@ public:
      * @brief Check if initializer is running
      * @return true if worker threads are active
      */
-    bool IsRunning() const { return _running.load(std::memory_order_acquire); }
+    bool IsRunning() const { return _running.load(::std::memory_order_acquire); }
 
     /**
      * @brief Get number of pending initializations
      * @return Count of bots queued for initialization
      */
-    size_t GetPendingCount() const { return _pendingCount.load(std::memory_order_acquire); }
+    size_t GetPendingCount() const { return _pendingCount.load(::std::memory_order_acquire); }
 
     /**
      * @brief Get number of in-progress initializations
      * @return Count of bots currently initializing in worker threads
      */
-    size_t GetInProgressCount() const { return _inProgressCount.load(std::memory_order_acquire); }
+    size_t GetInProgressCount() const { return _inProgressCount.load(::std::memory_order_acquire); }
 
     /**
      * @brief Get number of completed initializations waiting for callback
      * @return Count of bots ready for ProcessCompletedInits()
      */
-    size_t GetCompletedCount() const { return _completedCount.load(std::memory_order_acquire); }
+    size_t GetCompletedCount() const { return _completedCount.load(::std::memory_order_acquire); }
 
     /**
      * @brief Get total initializations processed since startup
      * @return Total count
      */
-    size_t GetTotalProcessed() const { return _totalProcessed.load(std::memory_order_acquire); }
+    size_t GetTotalProcessed() const { return _totalProcessed.load(::std::memory_order_acquire); }
 
     // ========================================================================
     // PERFORMANCE METRICS
@@ -212,10 +212,10 @@ public:
         size_t totalInits{0};              ///< Total initializations processed
         size_t successfulInits{0};         ///< Successful initializations
         size_t failedInits{0};             ///< Failed initializations
-        std::chrono::milliseconds avgInitTime{0};     ///< Average init time
-        std::chrono::milliseconds maxInitTime{0};     ///< Slowest init
-        std::chrono::milliseconds minInitTime{0};     ///< Fastest init
-        std::chrono::milliseconds totalTime{0};       ///< Cumulative time
+        ::std::chrono::milliseconds avgInitTime{0};     ///< Average init time
+        ::std::chrono::milliseconds maxInitTime{0};     ///< Slowest init
+        ::std::chrono::milliseconds minInitTime{0};     ///< Fastest init
+        ::std::chrono::milliseconds totalTime{0};       ///< Cumulative time
         size_t queueDepthMax{0};           ///< Maximum queue depth reached
         size_t callbacksProcessed{0};      ///< Total callbacks invoked
     };
@@ -249,10 +249,10 @@ private:
     {
         Player* bot;                       ///< Bot to initialize
         InitCallback callback;             ///< Completion callback
-        std::chrono::steady_clock::time_point queueTime;  ///< When queued
+        ::std::chrono::steady_clock::time_point queueTime;  ///< When queued
 
         InitTask(Player* b, InitCallback cb)
-            : bot(b), callback(std::move(cb)), queueTime(std::chrono::steady_clock::now())
+            : bot(b), callback(::std::move(cb)), queueTime(::std::chrono::steady_clock::now())
         {}
     };
 
@@ -264,11 +264,11 @@ private:
         Player* bot;                       ///< Bot that was initialized
         BotAI* ai;                         ///< Initialized AI (null if failed)
         InitCallback callback;             ///< Callback to invoke
-        std::chrono::milliseconds initTime;  ///< Time taken
+        ::std::chrono::milliseconds initTime;  ///< Time taken
         bool success;                      ///< Success flag
 
-        InitResult(Player* b, BotAI* a, InitCallback cb, std::chrono::milliseconds time, bool s)
-            : bot(b), ai(a), callback(std::move(cb)), initTime(time), success(s)
+        InitResult(Player* b, BotAI* a, InitCallback cb, ::std::chrono::milliseconds time, bool s)
+            : bot(b), ai(a), callback(::std::move(cb)), initTime(time), success(s)
         {}
     };
 
@@ -300,27 +300,27 @@ private:
     // THREAD MANAGEMENT
     // ========================================================================
 
-    std::vector<std::thread> _workerThreads;           ///< Worker thread pool
-    std::atomic<bool> _running{false};                 ///< Running state
-    std::atomic<bool> _shutdown{false};                ///< Shutdown requested
+    ::std::vector<::std::thread> _workerThreads;           ///< Worker thread pool
+    ::std::atomic<bool> _running{false};                 ///< Running state
+    ::std::atomic<bool> _shutdown{false};                ///< Shutdown requested
 
     // Task queue (pending initializations)
-    std::queue<InitTask> _pendingTasks;
-    mutable std::mutex _pendingMutex;
-    std::condition_variable _pendingCV;
+    ::std::queue<InitTask> _pendingTasks;
+    mutable ::std::mutex _pendingMutex;
+    ::std::condition_variable _pendingCV;
 
     // Result queue (completed initializations)
-    std::queue<InitResult> _completedResults;
-    mutable std::mutex _completedMutex;
+    ::std::queue<InitResult> _completedResults;
+    mutable ::std::mutex _completedMutex;
 
     // Performance counters
-    std::atomic<size_t> _pendingCount{0};
-    std::atomic<size_t> _inProgressCount{0};
-    std::atomic<size_t> _completedCount{0};
-    std::atomic<size_t> _totalProcessed{0};
+    ::std::atomic<size_t> _pendingCount{0};
+    ::std::atomic<size_t> _inProgressCount{0};
+    ::std::atomic<size_t> _completedCount{0};
+    ::std::atomic<size_t> _totalProcessed{0};
 
     // Performance metrics
-    mutable std::mutex _metricsMutex;
+    mutable ::std::mutex _metricsMutex;
     PerformanceMetrics _metrics;
 
     // Configuration

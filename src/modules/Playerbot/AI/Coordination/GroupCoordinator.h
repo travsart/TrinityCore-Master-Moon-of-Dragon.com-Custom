@@ -56,7 +56,7 @@ struct TacticalAssignment
 {
     ObjectGuid targetGuid;          // Focus target
     uint32 priority;                // Assignment priority (0-100)
-    std::string taskType;           // "interrupt", "dispel", "focus", "cc", etc.
+    ::std::string taskType;           // "interrupt", "dispel", "focus", "cc", etc.
     uint32 timestamp;               // When assigned
     uint32 expirationTime;          // When assignment expires
 
@@ -70,18 +70,18 @@ struct TacticalAssignment
 struct GroupTacticalState
 {
     ObjectGuid focusTarget;                 // Current focus target
-    std::vector<ObjectGuid> ccTargets;      // Crowd control targets
-    std::vector<ObjectGuid> priorityTargets; // Priority kill targets
+    ::std::vector<ObjectGuid> ccTargets;      // Crowd control targets
+    ::std::vector<ObjectGuid> priorityTargets; // Priority kill targets
 
     // Interrupt rotation
-    std::unordered_map<ObjectGuid, uint32> interruptQueue; // Bot GUID → next interrupt time
+    ::std::unordered_map<ObjectGuid, uint32> interruptQueue; // Bot GUID → next interrupt time
     uint32 lastInterruptTime = 0;
 
     // Dispel assignments
-    std::unordered_map<ObjectGuid, ObjectGuid> dispelAssignments; // Bot GUID → Target GUID
+    ::std::unordered_map<ObjectGuid, ObjectGuid> dispelAssignments; // Bot GUID → Target GUID
 
     // Cooldown coordination
-    std::unordered_map<std::string, uint32> groupCooldowns; // Cooldown name → expire time
+    ::std::unordered_map<::std::string, uint32> groupCooldowns; // Cooldown name → expire time
 
     bool inCombat = false;
     uint32 combatStartTime = 0;
@@ -158,14 +158,14 @@ public:
      * @param cooldownName Cooldown identifier (e.g., "Bloodlust")
      * @return True if available
      */
-    bool IsGroupCooldownAvailable(std::string const& cooldownName) const;
+    bool IsGroupCooldownAvailable(::std::string const& cooldownName) const;
 
     /**
      * @brief Use group cooldown
      * @param cooldownName Cooldown identifier
      * @param durationMs Cooldown duration in milliseconds
      */
-    void UseGroupCooldown(std::string const& cooldownName, uint32 durationMs);
+    void UseGroupCooldown(::std::string const& cooldownName, uint32 durationMs);
 
     /**
      * @brief Get group tactical state (read-only)
@@ -184,7 +184,7 @@ public:
      * @param role Role to filter
      * @return Vector of bot GUIDs
      */
-    std::vector<ObjectGuid> GetBotsByRole(GroupRole role) const;
+    ::std::vector<ObjectGuid> GetBotsByRole(GroupRole role) const;
 
     /**
      * @brief Check if group is in combat
@@ -246,10 +246,10 @@ private:
     GroupTacticalState _tacticalState;
 
     // Role assignments
-    std::unordered_map<ObjectGuid, GroupRole> _roleAssignments;
+    ::std::unordered_map<ObjectGuid, GroupRole> _roleAssignments;
 
     // Tactical assignments per bot
-    std::unordered_map<ObjectGuid, TacticalAssignment> _assignments;
+    ::std::unordered_map<ObjectGuid, TacticalAssignment> _assignments;
 
     // Update timing
     uint32 _lastUpdateTime = 0;

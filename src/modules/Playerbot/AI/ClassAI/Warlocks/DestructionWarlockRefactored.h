@@ -111,7 +111,7 @@ struct ManaSoulShardResourceDestro
     void Regenerate(uint32 diff) {
         if (mana < maxMana) {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
-            mana = std::min(mana + regenAmount, maxMana);
+            mana = ::std::min(mana + regenAmount, maxMana);
         }
         available = mana > 0;
     }
@@ -188,7 +188,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -347,7 +347,7 @@ public:
         {
             this->CastSpell(target, CONFLAGRATE);
             GenerateSoulShard(1);
-            _backdraftStacks = std::min(_backdraftStacks + 2, 4u); // Grants 2 stacks
+            _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u); // Grants 2 stacks
             return;
         }
 
@@ -425,7 +425,7 @@ public:
         {
             this->CastSpell(target, CONFLAGRATE);
             GenerateSoulShard(1);
-            _backdraftStacks = std::min(_backdraftStacks + 2, 4u);
+            _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u);
             return;
         }
 
@@ -582,7 +582,7 @@ private:
 
     void GenerateSoulShard(uint32 amount)
     {
-        this->_resource.soulShards = std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
+        this->_resource.soulShards = ::std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
     }
 
     void ConsumeSoulShard(uint32 amount)
@@ -599,7 +599,7 @@ private:
         ObjectGuid primaryGuid = primaryTarget->GetGUID();
 
         // Get all nearby enemies within 40 yards
-        std::list<::Unit*> nearbyEnemies;
+        ::std::list<::Unit*> nearbyEnemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, nearbyEnemies, u_check);
         Cell::VisitAllObjects(bot, searcher, 40.0f);
@@ -832,7 +832,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 this->CastSpell(target, CONFLAGRATE);
                                 this->GenerateSoulShard(1);
-                                this->_backdraftStacks = std::min(this->_backdraftStacks + 2, 4u);
+                                this->_backdraftStacks = ::std::min(this->_backdraftStacks + 2, 4u);
                                 return NodeStatus::SUCCESS;
                             })
                         })

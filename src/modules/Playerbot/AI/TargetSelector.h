@@ -24,7 +24,7 @@ public:
     ~TargetSelector() = default;
 
     // Target selection
-    ::Unit* SelectBestTarget(const std::vector<::Unit*>& candidates);
+    ::Unit* SelectBestTarget(const ::std::vector<::Unit*>& candidates);
     ::Unit* GetCurrentTarget() const;
     void SetTarget(::Unit* target);
 

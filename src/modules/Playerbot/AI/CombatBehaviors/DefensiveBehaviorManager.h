@@ -264,7 +264,7 @@ public:
      * @param classId Class to get defensives for
      * @return Vector of defensive cooldowns
      */
-    static std::vector<DefensiveCooldown> GetClassDefensives(uint8 classId);
+    static ::std::vector<DefensiveCooldown> GetClassDefensives(uint8 classId);
 
     /**
      * Initialize default defensive cooldowns based on bot's class
@@ -284,8 +284,8 @@ public:
         uint32 updatesPerformed = 0;
         uint32 defensivesUsed = 0;
         uint32 externalDefensivesProvided = 0;
-        std::chrono::microseconds averageUpdateTime{0};
-        std::chrono::microseconds maxUpdateTime{0};
+        ::std::chrono::microseconds averageUpdateTime{0};
+        ::std::chrono::microseconds maxUpdateTime{0};
     };
 
     const PerformanceMetrics& GetMetrics() const { return _metrics; }
@@ -351,7 +351,7 @@ private:
      * Track performance metrics
      * @param startTime When update started
      */
-    void UpdateMetrics(std::chrono::steady_clock::time_point startTime);
+    void UpdateMetrics(::std::chrono::steady_clock::time_point startTime);
 
 private:
     // Core components
@@ -370,18 +370,18 @@ private:
         uint32 timestamp;
         bool isMagical;
     };
-    std::vector<DamageEntry> _damageHistory;
+    ::std::vector<DamageEntry> _damageHistory;
     size_t _damageHistoryIndex;
     static constexpr size_t DAMAGE_HISTORY_SIZE = 30; // 3 seconds at 100ms updates
 
     // Defensive cooldowns
-    std::unordered_map<uint32, DefensiveCooldown> _defensiveCooldowns;
-    mutable std::vector<uint32> _sortedDefensives; // Cache for performance
+    ::std::unordered_map<uint32, DefensiveCooldown> _defensiveCooldowns;
+    mutable ::std::vector<uint32> _sortedDefensives; // Cache for performance
     mutable uint32 _sortedDefensivesTime;
 
     // External defensive coordination
-    std::vector<ExternalDefensiveRequest> _externalRequests;
-    std::unordered_map<ObjectGuid, uint32> _providedDefensives; // Target -> last time
+    ::std::vector<ExternalDefensiveRequest> _externalRequests;
+    ::std::unordered_map<ObjectGuid, uint32> _providedDefensives; // Target -> last time
 
     // Role-specific thresholds
     RoleThresholds _thresholds;

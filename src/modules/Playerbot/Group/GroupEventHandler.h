@@ -71,13 +71,13 @@ public:
      * Get handler name for debugging and logging
      * @return Human-readable handler name
      */
-    virtual std::string GetHandlerName() const = 0;
+    virtual ::std::string GetHandlerName() const = 0;
 
     /**
      * Get event types this handler subscribes to
      * @return Vector of event types
      */
-    virtual std::vector<GroupEventType> GetSubscribedEvents() const = 0;
+    virtual ::std::vector<GroupEventType> GetSubscribedEvents() const = 0;
 
     /**
      * Check if this handler can process a specific event type
@@ -87,7 +87,7 @@ public:
     virtual bool CanHandle(GroupEventType type) const
     {
         auto subscribedEvents = GetSubscribedEvents();
-        return std::find(subscribedEvents.begin(), subscribedEvents.end(), type) != subscribedEvents.end();
+        return ::std::find(subscribedEvents.begin(), subscribedEvents.end(), type) != subscribedEvents.end();
     }
 
     /**
@@ -133,7 +133,7 @@ protected:
      * @param event Event being handled
      * @param action Action taken
      */
-    void LogEventHandling(GroupEvent const& event, std::string const& action) const;
+    void LogEventHandling(GroupEvent const& event, ::std::string const& action) const;
 
 private:
     BotAI* _botAI; ///< The BotAI this handler belongs to
@@ -159,8 +159,8 @@ public:
     explicit MemberJoinedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "MemberJoinedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "MemberJoinedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::MEMBER_JOINED };
     }
@@ -182,8 +182,8 @@ public:
     explicit MemberLeftHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "MemberLeftHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "MemberLeftHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::MEMBER_LEFT };
     }
@@ -205,8 +205,8 @@ public:
     explicit LeaderChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "LeaderChangedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "LeaderChangedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::LEADER_CHANGED };
     }
@@ -228,8 +228,8 @@ public:
     explicit GroupDisbandedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "GroupDisbandedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "GroupDisbandedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::GROUP_DISBANDED };
     }
@@ -251,8 +251,8 @@ public:
     explicit LootMethodChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "LootMethodChangedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "LootMethodChangedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return {
             GroupEventType::LOOT_METHOD_CHANGED,
@@ -278,8 +278,8 @@ public:
     explicit TargetIconChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "TargetIconChangedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "TargetIconChangedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::TARGET_ICON_CHANGED };
     }
@@ -301,8 +301,8 @@ public:
     explicit ReadyCheckHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "ReadyCheckHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "ReadyCheckHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return {
             GroupEventType::READY_CHECK_STARTED,
@@ -328,8 +328,8 @@ public:
     explicit RaidConvertedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "RaidConvertedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "RaidConvertedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::RAID_CONVERTED };
     }
@@ -351,8 +351,8 @@ public:
     explicit SubgroupChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "SubgroupChangedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "SubgroupChangedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::SUBGROUP_CHANGED };
     }
@@ -374,8 +374,8 @@ public:
     explicit RoleAssignmentHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "RoleAssignmentHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "RoleAssignmentHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return {
             GroupEventType::ASSISTANT_CHANGED,
@@ -401,8 +401,8 @@ public:
     explicit DifficultyChangedHandler(BotAI* botAI) : GroupEventHandler(botAI) { }
 
     bool HandleEvent(GroupEvent const& event) override;
-    std::string GetHandlerName() const override { return "DifficultyChangedHandler"; }
-    std::vector<GroupEventType> GetSubscribedEvents() const override
+    ::std::string GetHandlerName() const override { return "DifficultyChangedHandler"; }
+    ::std::vector<GroupEventType> GetSubscribedEvents() const override
     {
         return { GroupEventType::DIFFICULTY_CHANGED };
     }
@@ -427,14 +427,14 @@ public:
      * @param botAI The BotAI to create handlers for
      * @return Vector of created handlers (owned by caller)
      */
-    static std::vector<std::unique_ptr<GroupEventHandler>> CreateAllHandlers(BotAI* botAI);
+    static ::std::vector<::std::unique_ptr<GroupEventHandler>> CreateAllHandlers(BotAI* botAI);
 
     /**
      * Register all handlers with GroupEventBus
      * @param handlers Vector of handlers to register
      * @param botAI The BotAI to register for
      */
-    static void RegisterHandlers(std::vector<std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI);
+    static void RegisterHandlers(::std::vector<::std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI);
 
     /**
      * Unregister all handlers from GroupEventBus

@@ -122,7 +122,7 @@ private:
     // Quest area wandering (for respawn waiting)
     uint32 _lastWanderTime;
     uint32 _currentWanderPointIndex;
-    std::vector<Position> _questAreaWanderPoints;
+    ::std::vector<Position> _questAreaWanderPoints;
 
     // Performance tracking
     uint32 _objectivesCompleted;
@@ -130,7 +130,7 @@ private:
     uint32 _averageObjectiveTime;
 
     // Quest acceptance manager (enterprise-grade auto-acceptance)
-    std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
+    ::std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
 
     // Helper methods for area wandering
     bool ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;

@@ -141,7 +141,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
 };
 
 // Prayer of Mending tracker (bouncing heal)
@@ -204,7 +204,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
 };
 
 class HolyPriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
@@ -261,7 +261,7 @@ public:
         
         {
 
-            std::vector<Unit*> groupMembers;
+            ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -411,7 +411,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -440,7 +440,7 @@ private:
         return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Salvation (massive AoE heal)
         uint32 criticalHealthCount = 0;
@@ -582,7 +582,7 @@ private:
         return false;
     }
 
-    bool HandleHoTs(const std::vector<Unit*>& group)
+    bool HandleHoTs(const ::std::vector<Unit*>& group)
     {
         uint32 activeRenews = _renewTracker.GetActiveRenewCount();
 
@@ -651,7 +651,7 @@ private:
         return false;
     }
 
-    bool HandleHolyWords(const std::vector<Unit*>& group)
+    bool HandleHolyWords(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Serenity (big single-target heal)
         for (Unit* member : group)
@@ -727,7 +727,7 @@ private:
         return false;
     }
 
-    bool HandleAoEHealing(const std::vector<Unit*>& group)
+    bool HandleAoEHealing(const ::std::vector<Unit*>& group)
     {
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
@@ -842,7 +842,7 @@ private:
         return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {
         // Flash Heal for emergency
         for (Unit* member : group)

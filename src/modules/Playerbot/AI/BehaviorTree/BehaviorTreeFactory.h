@@ -67,7 +67,7 @@ public:
      * @param type Tree type to create
      * @return Shared pointer to root node
      */
-    static std::shared_ptr<BTNode> CreateTree(TreeType type);
+    static ::std::shared_ptr<BTNode> CreateTree(TreeType type);
 
     /**
      * @brief Build melee DPS combat tree
@@ -80,7 +80,7 @@ public:
      *   - Face target
      *   - Execute melee attack
      */
-    static std::shared_ptr<BTNode> BuildMeleeCombatTree();
+    static ::std::shared_ptr<BTNode> BuildMeleeCombatTree();
 
     /**
      * @brief Build ranged DPS combat tree
@@ -94,7 +94,7 @@ public:
      *   - Face target
      *   - Cast ranged spells
      */
-    static std::shared_ptr<BTNode> BuildRangedCombatTree();
+    static ::std::shared_ptr<BTNode> BuildRangedCombatTree();
 
     /**
      * @brief Build tank combat tree
@@ -107,7 +107,7 @@ public:
      *   - Use threat generation abilities
      *   - Maintain defensive stance
      */
-    static std::shared_ptr<BTNode> BuildTankCombatTree();
+    static ::std::shared_ptr<BTNode> BuildTankCombatTree();
 
     /**
      * @brief Build single-target healing tree
@@ -120,7 +120,7 @@ public:
      *   - Select appropriate heal spell
      *   - Cast heal
      */
-    static std::shared_ptr<BTNode> BuildSingleTargetHealingTree();
+    static ::std::shared_ptr<BTNode> BuildSingleTargetHealingTree();
 
     /**
      * @brief Build group healing tree (AoE heals)
@@ -132,7 +132,7 @@ public:
      *   - Cast AoE heal
      * - Fallback: Single target heal
      */
-    static std::shared_ptr<BTNode> BuildGroupHealingTree();
+    static ::std::shared_ptr<BTNode> BuildGroupHealingTree();
 
     /**
      * @brief Build dispel priority tree
@@ -142,7 +142,7 @@ public:
      * - Dispel disease debuffs
      * - Dispel poison debuffs
      */
-    static std::shared_ptr<BTNode> BuildDispelPriorityTree();
+    static ::std::shared_ptr<BTNode> BuildDispelPriorityTree();
 
     /**
      * @brief Build follow leader movement tree
@@ -151,7 +151,7 @@ public:
      * - Check too far from leader (>10 yards)
      * - Move to leader
      */
-    static std::shared_ptr<BTNode> BuildFollowLeaderTree();
+    static ::std::shared_ptr<BTNode> BuildFollowLeaderTree();
 
     /**
      * @brief Build combat positioning tree
@@ -165,7 +165,7 @@ public:
      *   - Check not in optimal range (20-35 yards)
      *   - Move to optimal range
      */
-    static std::shared_ptr<BTNode> BuildCombatPositioningTree();
+    static ::std::shared_ptr<BTNode> BuildCombatPositioningTree();
 
     /**
      * @brief Build flee to safety tree
@@ -176,7 +176,7 @@ public:
      * - Move to safe position
      * - Stop movement when safe
      */
-    static std::shared_ptr<BTNode> BuildFleeToSafetyTree();
+    static ::std::shared_ptr<BTNode> BuildFleeToSafetyTree();
 
     /**
      * @brief Build buff maintenance tree
@@ -185,7 +185,7 @@ public:
      * - Check missing self buff
      * - Cast self buff
      */
-    static std::shared_ptr<BTNode> BuildBuffMaintenanceTree();
+    static ::std::shared_ptr<BTNode> BuildBuffMaintenanceTree();
 
     /**
      * @brief Build resource management tree (mana/rage/energy)
@@ -198,7 +198,7 @@ public:
      *   - Check mana < 50%
      *   - Avoid expensive spells
      */
-    static std::shared_ptr<BTNode> BuildResourceManagementTree();
+    static ::std::shared_ptr<BTNode> BuildResourceManagementTree();
 
     /**
      * @brief Register custom tree builder
@@ -206,19 +206,19 @@ public:
      * @param name Unique tree name
      * @param builder Lambda that builds the tree
      */
-    static void RegisterCustomTree(std::string const& name,
-        std::function<std::shared_ptr<BTNode>()> builder);
+    static void RegisterCustomTree(::std::string const& name,
+        ::std::function<::std::shared_ptr<BTNode>()> builder);
 
     /**
      * @brief Create custom tree by name
      * @param name Registered tree name
      * @return Shared pointer to root node or nullptr if not found
      */
-    static std::shared_ptr<BTNode> CreateCustomTree(std::string const& name);
+    static ::std::shared_ptr<BTNode> CreateCustomTree(::std::string const& name);
 
 private:
     // Registry of custom tree builders
-    static std::unordered_map<std::string, std::function<std::shared_ptr<BTNode>()>> _customTreeBuilders;
+    static ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<BTNode>()>> _customTreeBuilders;
 };
 
 } // namespace Playerbot

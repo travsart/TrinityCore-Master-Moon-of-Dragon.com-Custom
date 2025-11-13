@@ -45,12 +45,12 @@ public:
 
     // === SPAWNING INTERFACE ===
     virtual bool SpawnBot(SpawnRequest const& request) = 0;
-    virtual uint32 SpawnBots(std::vector<SpawnRequest> const& requests) = 0;
+    virtual uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) = 0;
 
     // === POPULATION MANAGEMENT ===
     virtual void SpawnToPopulationTarget() = 0;
     virtual void UpdatePopulationTargets() = 0;
-    virtual bool DespawnBot(ObjectGuid guid, std::string const& reason) = 0;
+    virtual bool DespawnBot(ObjectGuid guid, ::std::string const& reason) = 0;
     virtual void DespawnBot(ObjectGuid guid, bool forced = false) = 0;
 
     // === QUERIES ===
@@ -75,8 +75,8 @@ class IBotSpawnerCallback
 public:
     virtual ~IBotSpawnerCallback() = default;
 
-    virtual void OnSpawnCompleted(ObjectGuid botGuid, bool success, std::string const& details = "") = 0;
-    virtual void OnSpawnFailed(SpawnRequest const& request, std::string const& reason) = 0;
+    virtual void OnSpawnCompleted(ObjectGuid botGuid, bool success, ::std::string const& details = "") = 0;
+    virtual void OnSpawnFailed(SpawnRequest const& request, ::std::string const& reason) = 0;
     virtual void OnPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount) = 0;
 };
 
@@ -89,8 +89,8 @@ class IBotSpawnerEvents
 public:
     virtual ~IBotSpawnerEvents() = default;
 
-    using SpawnCallback = std::function<void(bool success, ObjectGuid botGuid)>;
-    using PopulationCallback = std::function<void(uint32 zoneId, uint32 botCount)>;
+    using SpawnCallback = ::std::function<void(bool success, ObjectGuid botGuid)>;
+    using PopulationCallback = ::std::function<void(uint32 zoneId, uint32 botCount)>;
 
     virtual void RegisterSpawnCallback(SpawnCallback callback) = 0;
     virtual void RegisterPopulationCallback(PopulationCallback callback) = 0;

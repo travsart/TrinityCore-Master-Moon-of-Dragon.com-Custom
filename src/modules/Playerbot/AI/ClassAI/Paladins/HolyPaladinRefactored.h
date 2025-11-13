@@ -559,7 +559,7 @@ private:
 
     void GenerateHolyPower(uint32 amount)
     {
-        this->_resource.holyPower = std::min(this->_resource.holyPower + amount, this->_resource.maxHolyPower);
+        this->_resource.holyPower = ::std::min(this->_resource.holyPower + amount, this->_resource.maxHolyPower);
     }
 
     void ConsumeHolyPower(uint32 amount)

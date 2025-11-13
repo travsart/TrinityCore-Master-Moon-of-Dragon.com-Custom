@@ -41,14 +41,14 @@ AsyncBotInitializer::~AsyncBotInitializer()
 
 void AsyncBotInitializer::Initialize(size_t numWorkerThreads)
 {
-    if (_running.load(std::memory_order_acquire))
+    if (_running.load(::std::memory_order_acquire))
     {
         TC_LOG_WARN("module.playerbot.async", "AsyncBotInitializer already running");
         return;
     }
 
-    _running.store(true, std::memory_order_release);
-    _shutdown.store(false, std::memory_order_release);
+    _running.store(true, ::std::memory_order_release);
+    _shutdown.store(false, ::std::memory_order_release);
 
     // Start worker threads
     for (size_t i = 0; i < numWorkerThreads; ++i)
@@ -62,13 +62,13 @@ void AsyncBotInitializer::Initialize(size_t numWorkerThreads)
 
 void AsyncBotInitializer::Shutdown()
 {
-    if (!_running.load(std::memory_order_acquire))
+    if (!_running.load(::std::memory_order_acquire))
         return;
 
     TC_LOG_INFO("module.playerbot.async", "Shutting down AsyncBotInitializer...");
 
     // Signal shutdown
-    _shutdown.store(true, std::memory_order_release);
+    _shutdown.store(true, ::std::memory_order_release);
     _pendingCV.notify_all();
 
     // Wait for all workers to finish
@@ -79,7 +79,7 @@ void AsyncBotInitializer::Shutdown()
     }
 
     _workerThreads.clear();
-    _running.store(false, std::memory_order_release);
+    _running.store(false, ::std::memory_order_release);
 
     TC_LOG_INFO("module.playerbot.async", "AsyncBotInitializer shut down successfully");
 }
@@ -96,14 +96,14 @@ bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
         return false;
     }
 
-    if (_shutdown.load(std::memory_order_acquire))
+    if (_shutdown.load(::std::memory_order_acquire))
     {
         TC_LOG_ERROR("module.playerbot.async", "Cannot initialize bot - shutting down");
         return false;
     }
 
     // Check queue size limit
-    if (_pendingCount.load(std::memory_order_acquire) >= MAX_QUEUE_SIZE)
+    if (_pendingCount.load(::std::memory_order_acquire) >= MAX_QUEUE_SIZE)
     {
         TC_LOG_ERROR("module.playerbot.async",
                      "Bot initialization queue full ({} pending) - cannot queue {}",
@@ -113,9 +113,9 @@ bool AsyncBotInitializer::InitializeAsync(Player* bot, InitCallback callback)
 
     // Queue the task
     {
-        std::lock_guard lock(_pendingMutex);
-        _pendingTasks.emplace(bot, std::move(callback));
-        _pendingCount.fetch_add(1, std::memory_order_relaxed);
+        ::std::lock_guard lock(_pendingMutex);
+        _pendingTasks.emplace(bot, ::std::move(callback));
+        _pendingCount.fetch_add(1, ::std::memory_order_relaxed);
     }
     // Wake up a worker thread
     _pendingCV.notify_one();
@@ -135,13 +135,13 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
 {
     size_t processed = 0;
 
-    std::lock_guard lock(_completedMutex);
+    ::std::lock_guard lock(_completedMutex);
 
     while (!_completedResults.empty() && processed < maxToProcess)
     {
-        InitResult result = std::move(_completedResults.front());
+        InitResult result = ::std::move(_completedResults.front());
         _completedResults.pop();
-        _completedCount.fetch_sub(1, std::memory_order_relaxed);
+        _completedCount.fetch_sub(1, ::std::memory_order_relaxed);
 
         // Invoke callback (on main thread)
         try
@@ -151,11 +151,11 @@ size_t AsyncBotInitializer::ProcessCompletedInits(size_t maxToProcess)
                 result.callback(result.ai);  // Transfer ownership
                 ++processed;
 
-                std::lock_guard metricsLock(_metricsMutex);
+                ::std::lock_guard metricsLock(_metricsMutex);
                 ++_metrics.callbacksProcessed;
             }
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.async",
                          "Exception in initialization callback for {}: {}",
@@ -178,38 +178,38 @@ void AsyncBotInitializer::WorkerThreadMain(size_t workerId)
 {
     TC_LOG_INFO("module.playerbot.async", "Worker thread {} started", workerId);
 
-    while (!_shutdown.load(std::memory_order_acquire))
+    while (!_shutdown.load(::std::memory_order_acquire))
     {
-        std::unique_lock lock(_pendingMutex);
+        ::std::unique_lock lock(_pendingMutex);
 
         // Wait for task or shutdown
         _pendingCV.wait(lock, [this] {
-            return !_pendingTasks.empty() || _shutdown.load(std::memory_order_acquire);
+            return !_pendingTasks.empty() || _shutdown.load(::std::memory_order_acquire);
         });
 
-        if (_shutdown.load(std::memory_order_acquire) && _pendingTasks.empty())
+        if (_shutdown.load(::std::memory_order_acquire) && _pendingTasks.empty())
             break;
 
         if (_pendingTasks.empty())
             continue;
         // Get task
-        InitTask task = std::move(_pendingTasks.front());
+        InitTask task = ::std::move(_pendingTasks.front());
         _pendingTasks.pop();
-        _pendingCount.fetch_sub(1, std::memory_order_relaxed);
-        _inProgressCount.fetch_add(1, std::memory_order_relaxed);
+        _pendingCount.fetch_sub(1, ::std::memory_order_relaxed);
+        _inProgressCount.fetch_add(1, ::std::memory_order_relaxed);
 
         lock.unlock();
 
         // Process task (heavy work happens here - off main thread!)
-        InitResult result = ProcessInitTask(std::move(task));
+        InitResult result = ProcessInitTask(::std::move(task));
 
-        _inProgressCount.fetch_sub(1, std::memory_order_relaxed);
+        _inProgressCount.fetch_sub(1, ::std::memory_order_relaxed);
 
         // Queue result for main thread callback
         {
-            std::lock_guard completedLock(_completedMutex);
-            _completedResults.push(std::move(result));
-            _completedCount.fetch_add(1, std::memory_order_relaxed);
+            ::std::lock_guard completedLock(_completedMutex);
+            _completedResults.push(::std::move(result));
+            _completedCount.fetch_add(1, ::std::memory_order_relaxed);
         }
     }
 
@@ -218,12 +218,12 @@ void AsyncBotInitializer::WorkerThreadMain(size_t workerId)
 
 AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask task)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.async",
                  "Worker processing initialization for {} (queued for {}ms)",
                  task.bot->GetName(),
-                 std::chrono::duration_cast<std::chrono::milliseconds>(
+                 ::std::chrono::duration_cast<::std::chrono::milliseconds>(
                      startTime - task.queueTime).count());
 
     BotAI* ai = nullptr;
@@ -234,7 +234,7 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
         ai = CreateBotAI(task.bot);
         success = (ai != nullptr);
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.async",
                      "Exception creating BotAI for {}: {}",
@@ -242,14 +242,14 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
         success = false;
     }
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
     // Update metrics
     {
-        std::lock_guard lock(_metricsMutex);
+        ::std::lock_guard lock(_metricsMutex);
         ++_metrics.totalInits;
-        _totalProcessed.fetch_add(1, std::memory_order_relaxed);
+        _totalProcessed.fetch_add(1, ::std::memory_order_relaxed);
 
         if (success)
             ++_metrics.successfulInits;
@@ -267,12 +267,12 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
                 _metrics.maxInitTime = duration;
         }
 
-        _metrics.avgInitTime = std::chrono::milliseconds{
+        _metrics.avgInitTime = ::std::chrono::milliseconds{
             _metrics.totalTime.count() / _metrics.totalInits
         };
 
         // Track max queue depth
-        size_t currentPending = _pendingCount.load(std::memory_order_relaxed);
+        size_t currentPending = _pendingCount.load(::std::memory_order_relaxed);
         if (currentPending > _metrics.queueDepthMax)
             _metrics.queueDepthMax = currentPending;
     }
@@ -283,7 +283,7 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
                 task.bot->GetName(),
                 duration.count());
 
-    return InitResult(task.bot, ai, std::move(task.callback), duration, success);
+    return InitResult(task.bot, ai, ::std::move(task.callback), duration, success);
 }
 
 BotAI* AsyncBotInitializer::CreateBotAI(Player* bot)
@@ -305,13 +305,13 @@ BotAI* AsyncBotInitializer::CreateBotAI(Player* bot)
 
 AsyncBotInitializer::PerformanceMetrics AsyncBotInitializer::GetMetrics() const
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     return _metrics;
 }
 
 void AsyncBotInitializer::ResetMetrics()
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     _metrics = PerformanceMetrics{};
     TC_LOG_INFO("module.playerbot.async", "Performance metrics reset");
 }

@@ -64,11 +64,11 @@ struct FarmingZoneInfo
 {
     uint32 zoneId;
     uint32 areaId;
-    std::string zoneName;
+    ::std::string zoneName;
     uint16 minSkillLevel;           // Minimum profession skill
     uint16 maxSkillLevel;           // Maximum useful skill level
     ProfessionType profession;
-    std::vector<uint32> nodeEntries; // GameObject entries for nodes in zone
+    ::std::vector<uint32> nodeEntries; // GameObject entries for nodes in zone
     Position centerPosition;
     float zoneRadius;
     uint8 recommendedCharLevel;      // Character level for this zone
@@ -133,12 +133,12 @@ struct FarmingCoordinatorProfile
  */
 struct FarmingStatistics
 {
-    std::atomic<uint32> sessionsCompleted{0};
-    std::atomic<uint32> totalTimeSpent{0};          // Milliseconds
-    std::atomic<uint32> totalNodesGathered{0};
-    std::atomic<uint32> totalSkillPointsGained{0};
-    std::atomic<uint32> totalMaterialsCollected{0};
-    std::atomic<uint32> zonesVisited{0};
+    ::std::atomic<uint32> sessionsCompleted{0};
+    ::std::atomic<uint32> totalTimeSpent{0};          // Milliseconds
+    ::std::atomic<uint32> totalNodesGathered{0};
+    ::std::atomic<uint32> totalSkillPointsGained{0};
+    ::std::atomic<uint32> totalMaterialsCollected{0};
+    ::std::atomic<uint32> zonesVisited{0};
 
     void Reset()
     {
@@ -211,7 +211,7 @@ public:
     /**
      * Get professions that need farming (sorted by priority)
      */
-    std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const override;
+    ::std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const override;
 
     /**
      * Calculate recommended farming duration based on skill gap
@@ -264,7 +264,7 @@ public:
     /**
      * Get all suitable zones for skill level
      */
-    std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const override;
+    ::std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const override;
 
     /**
      * Calculate zone score based on:
@@ -292,7 +292,7 @@ public:
     /**
      * Get materials needed for auction house target
      */
-    std::vector<std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const override;
+    ::std::vector<::std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const override;
 
     // ============================================================================
     // STATISTICS
@@ -354,25 +354,25 @@ private:
     // ============================================================================
 
     // Active farming sessions (playerGuid -> session)
-    std::unordered_map<uint32, FarmingSession> _activeSessions;
+    ::std::unordered_map<uint32, FarmingSession> _activeSessions;
 
     // Farming zone database (profession -> zones sorted by skill level)
-    std::unordered_map<ProfessionType, std::vector<FarmingZoneInfo>> _farmingZones;
+    ::std::unordered_map<ProfessionType, ::std::vector<FarmingZoneInfo>> _farmingZones;
 
     // Coordination profiles (playerGuid -> profile)
-    std::unordered_map<uint32, FarmingCoordinatorProfile> _profiles;
+    ::std::unordered_map<uint32, FarmingCoordinatorProfile> _profiles;
 
     // Last farming time (playerGuid -> timestamp) for cooldown tracking
-    std::unordered_map<uint32, uint32> _lastFarmingTimes;
+    ::std::unordered_map<uint32, uint32> _lastFarmingTimes;
 
     // Statistics
-    std::unordered_map<uint32, FarmingStatistics> _playerStatistics;
+    ::std::unordered_map<uint32, FarmingStatistics> _playerStatistics;
     FarmingStatistics _globalStatistics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
 
     // Session ID generator
-    std::atomic<uint32> _nextSessionId{1};
+    ::std::atomic<uint32> _nextSessionId{1};
 
     // Update intervals
     static constexpr uint32 FARMING_CHECK_INTERVAL = 10000;     // 10 seconds

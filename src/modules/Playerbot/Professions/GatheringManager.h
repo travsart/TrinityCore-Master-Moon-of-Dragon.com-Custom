@@ -79,9 +79,9 @@ namespace Playerbot
         uint32 failedAttempts = 0;
         uint32 timeSpentGathering = 0;  // Milliseconds
         uint32 distanceTraveled = 0;    // Yards
-        std::chrono::steady_clock::time_point lastReset;
+        ::std::chrono::steady_clock::time_point lastReset;
 
-        GatheringStatistics() : lastReset(std::chrono::steady_clock::now()) {}
+        GatheringStatistics() : lastReset(::std::chrono::steady_clock::now()) {}
 
         void Reset()
         {
@@ -91,7 +91,7 @@ namespace Playerbot
             failedAttempts = 0;
             timeSpentGathering = 0;
             distanceTraveled = 0;
-            lastReset = std::chrono::steady_clock::now();
+            lastReset = ::std::chrono::steady_clock::now();
         }
     };
 
@@ -123,25 +123,25 @@ namespace Playerbot
          * @brief Check if bot is currently gathering
          * @return true if actively gathering, false otherwise
          */
-        bool IsGathering() const { return _isGathering.load(std::memory_order_acquire); }
+        bool IsGathering() const { return _isGathering.load(::std::memory_order_acquire); }
 
         /**
          * @brief Check if gathering nodes are nearby
          * @return true if nodes detected, false otherwise
          */
-        bool HasNearbyResources() const { return _hasNearbyResources.load(std::memory_order_acquire); }
+        bool HasNearbyResources() const { return _hasNearbyResources.load(::std::memory_order_acquire); }
 
         /**
          * @brief Get number of detected nodes
          * @return Count of detected gathering nodes
          */
-        uint32 GetDetectedNodeCount() const { return _detectedNodeCount.load(std::memory_order_acquire); }
+        uint32 GetDetectedNodeCount() const { return _detectedNodeCount.load(::std::memory_order_acquire); }
 
         /**
          * @brief Check if bot is moving to a node
          * @return true if pathing to node, false otherwise
          */
-        bool IsMovingToNode() const { return _isMovingToNode.load(std::memory_order_acquire); }
+        bool IsMovingToNode() const { return _isMovingToNode.load(::std::memory_order_acquire); }
 
         // ========================================================================
         // NODE DETECTION
@@ -152,7 +152,7 @@ namespace Playerbot
          * @param range Detection range in yards
          * @return Vector of detected nodes sorted by distance
          */
-        std::vector<GatheringNode> ScanForNodes(float range = 40.0f);
+        ::std::vector<GatheringNode> ScanForNodes(float range = 40.0f);
 
         /**
          * @brief Find nearest gathering node
@@ -265,7 +265,7 @@ namespace Playerbot
          * @brief Set detection range for nodes
          * @param range Range in yards
          */
-        void SetDetectionRange(float range) { _detectionRange = std::min(range, 100.0f); }
+        void SetDetectionRange(float range) { _detectionRange = ::std::min(range, 100.0f); }
 
         /**
          * @brief Get current detection range
@@ -346,28 +346,28 @@ namespace Playerbot
          * @param range Detection range
          * @return Vector of detected mining nodes
          */
-        std::vector<GatheringNode> DetectMiningNodes(float range);
+        ::std::vector<GatheringNode> DetectMiningNodes(float range);
 
         /**
          * @brief Detect herb nodes in range
          * @param range Detection range
          * @return Vector of detected herb nodes
          */
-        std::vector<GatheringNode> DetectHerbNodes(float range);
+        ::std::vector<GatheringNode> DetectHerbNodes(float range);
 
         /**
          * @brief Detect fishing pools in range
          * @param range Detection range
          * @return Vector of detected fishing nodes
          */
-        std::vector<GatheringNode> DetectFishingPools(float range);
+        ::std::vector<GatheringNode> DetectFishingPools(float range);
 
         /**
          * @brief Detect skinnable creatures in range
          * @param range Detection range
          * @return Vector of detected skinnable creatures
          */
-        std::vector<GatheringNode> DetectSkinnableCreatures(float range);
+        ::std::vector<GatheringNode> DetectSkinnableCreatures(float range);
 
         /**
          * @brief Convert GameObject to GatheringNode
@@ -457,10 +457,10 @@ namespace Playerbot
         // STATE FLAGS (Atomic for fast queries)
         // ========================================================================
 
-        std::atomic<bool> _isGathering{false};
-        std::atomic<bool> _hasNearbyResources{false};
-        std::atomic<bool> _isMovingToNode{false};
-        std::atomic<uint32> _detectedNodeCount{0};
+        ::std::atomic<bool> _isGathering{false};
+        ::std::atomic<bool> _hasNearbyResources{false};
+        ::std::atomic<bool> _isMovingToNode{false};
+        ::std::atomic<uint32> _detectedNodeCount{0};
 
         // ========================================================================
         // CONFIGURATION
@@ -482,10 +482,10 @@ namespace Playerbot
         // NODE TRACKING
         // ========================================================================
 
-        std::vector<GatheringNode> _detectedNodes;
+        ::std::vector<GatheringNode> _detectedNodes;
         GatheringNode const* _currentTarget = nullptr;
-        std::chrono::steady_clock::time_point _lastScanTime;
-        std::chrono::steady_clock::time_point _gatheringStartTime;
+        ::std::chrono::steady_clock::time_point _lastScanTime;
+        ::std::chrono::steady_clock::time_point _gatheringStartTime;
 
         // ========================================================================
         // GATHERING STATE

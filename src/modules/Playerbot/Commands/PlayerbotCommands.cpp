@@ -146,7 +146,7 @@ namespace Playerbot
     // BOT SPAWNING COMMANDS
     // =====================================================================
 
-    bool PlayerbotCommandScript::HandleBotSpawnCommand(ChatHandler* handler, std::string name,
+    bool PlayerbotCommandScript::HandleBotSpawnCommand(ChatHandler* handler, ::std::string name,
 
                                                        Optional<uint8> race, Optional<uint8> classId)
     {
@@ -187,7 +187,7 @@ namespace Playerbot
         return true;
     }
 
-    bool PlayerbotCommandScript::HandleBotDeleteCommand(ChatHandler* handler, std::string name)
+    bool PlayerbotCommandScript::HandleBotDeleteCommand(ChatHandler* handler, ::std::string name)
     {
         Player* bot = FindBotByName(name);
         if (!bot)
@@ -223,7 +223,7 @@ namespace Playerbot
 
     bool PlayerbotCommandScript::HandleBotListCommand(ChatHandler* handler)
     {
-        std::vector<Player*> bots;
+        ::std::vector<Player*> bots;
 
         // Collect all active bots
         SessionMap const& sessions = sWorld->GetAllSessions();
@@ -252,7 +252,7 @@ namespace Playerbot
         handler->PSendSysMessage("Active Bots (%u):", static_cast<uint32>(bots.size()));
         handler->SendSysMessage("================================================================================");
 
-        std::string botList = FormatBotList(bots);
+        ::std::string botList = FormatBotList(bots);
         handler->SendSysMessage(botList.c_str());
 
         return true;
@@ -261,7 +261,7 @@ namespace Playerbot
     // =====================================================================
     // BOT TELEPORTATION COMMANDS
     // =====================================================================
-    bool PlayerbotCommandScript::HandleBotTeleportCommand(ChatHandler* handler, std::string name)
+    bool PlayerbotCommandScript::HandleBotTeleportCommand(ChatHandler* handler, ::std::string name)
     {
         Player* player = handler->GetSession()->GetPlayer();
         if (!player)
@@ -286,7 +286,7 @@ namespace Playerbot
         return true;
     }
 
-    bool PlayerbotCommandScript::HandleBotSummonCommand(ChatHandler* handler, std::string name)
+    bool PlayerbotCommandScript::HandleBotSummonCommand(ChatHandler* handler, ::std::string name)
     {
         Player* player = handler->GetSession()->GetPlayer();
         if (!player)
@@ -356,7 +356,7 @@ namespace Playerbot
     // FORMATION COMMANDS
     // =====================================================================
 
-    bool PlayerbotCommandScript::HandleBotFormationCommand(ChatHandler* handler, std::string formationType)
+    bool PlayerbotCommandScript::HandleBotFormationCommand(ChatHandler* handler, ::std::string formationType)
     {
         Player* player = handler->GetSession()->GetPlayer();
         if (!player)
@@ -409,7 +409,7 @@ namespace Playerbot
         }
 
         // Collect group members
-        std::vector<Player*> groupMembers;
+        ::std::vector<Player*> groupMembers;
         for (GroupReference const& itr : group->GetMembers())
         {
 
@@ -424,7 +424,7 @@ namespace Playerbot
                                                                            static_cast<uint32>(groupMembers.size()));
 
         // Assign bots to formation
-        std::vector<Player*> bots;
+        ::std::vector<Player*> bots;
         for (Player* member : groupMembers)
         {
 
@@ -433,7 +433,7 @@ namespace Playerbot
                 bots.push_back(member);
         }
 
-        std::vector<BotFormationAssignment> assignments =
+        ::std::vector<BotFormationAssignment> assignments =
 
             GroupFormationManager::AssignBotsToFormation(player, bots, formation);
 
@@ -455,7 +455,7 @@ namespace Playerbot
         handler->SendSysMessage("Available Bot Formations:");
         handler->SendSysMessage("================================================================================");
 
-        std::string formationList = FormatFormationList();
+        ::std::string formationList = FormatFormationList();
         handler->SendSysMessage(formationList.c_str());
 
         return true;
@@ -470,13 +470,13 @@ namespace Playerbot
         handler->SendSysMessage("Playerbot Performance Statistics:");
         handler->SendSysMessage("================================================================================");
 
-        std::string stats = FormatBotStats();
+        ::std::string stats = FormatBotStats();
         handler->SendSysMessage(stats.c_str());
 
         return true;
     }
 
-    bool PlayerbotCommandScript::HandleBotInfoCommand(ChatHandler* handler, std::string name)
+    bool PlayerbotCommandScript::HandleBotInfoCommand(ChatHandler* handler, ::std::string name)
     {
         Player* bot = FindBotByName(name);
         if (!bot)
@@ -522,7 +522,7 @@ namespace Playerbot
     // CONFIGURATION COMMANDS
     // =====================================================================
 
-    bool PlayerbotCommandScript::HandleBotConfigCommand(ChatHandler* handler, std::string key, std::string value)
+    bool PlayerbotCommandScript::HandleBotConfigCommand(ChatHandler* handler, ::std::string key, ::std::string value)
     {
         ConfigManager* config = ConfigManager::instance();
 
@@ -549,11 +549,11 @@ namespace Playerbot
 
         // Convert value to appropriate type and set
         bool success = false;
-        std::string errorMsg;
+        ::std::string errorMsg;
 
-        std::visit([&](auto&& defaultValue) {
+        ::std::visit([&](auto&& defaultValue) {
 
-            using T = std::decay_t<decltype(defaultValue)>;
+            using T = ::std::decay_t<decltype(defaultValue)>;
 
             try
 
@@ -562,7 +562,7 @@ namespace Playerbot
                 ConfigManager::ConfigValue newValue;
 
 
-                if constexpr (std::is_same_v<T, bool>)
+                if constexpr (::std::is_same_v<T, bool>)
 
                 {
 
@@ -570,31 +570,31 @@ namespace Playerbot
 
                 }
 
-                else if constexpr (std::is_same_v<T, int32>)
+                else if constexpr (::std::is_same_v<T, int32>)
 
                 {
 
-                    newValue = static_cast<int32>(std::stoi(value));
+                    newValue = static_cast<int32>(::std::stoi(value));
 
                 }
 
-                else if constexpr (std::is_same_v<T, uint32>)
+                else if constexpr (::std::is_same_v<T, uint32>)
 
                 {
 
-                    newValue = static_cast<uint32>(std::stoul(value));
+                    newValue = static_cast<uint32>(::std::stoul(value));
 
                 }
 
-                else if constexpr (std::is_same_v<T, float>)
+                else if constexpr (::std::is_same_v<T, float>)
 
                 {
 
-                    newValue = std::stof(value);
+                    newValue = ::std::stof(value);
 
                 }
 
-                else if constexpr (std::is_same_v<T, std::string>)
+                else if constexpr (::std::is_same_v<T, ::std::string>)
 
                 {
 
@@ -615,7 +615,7 @@ namespace Playerbot
 
             }
 
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
 
             {
 
@@ -652,19 +652,19 @@ namespace Playerbot
         auto entries = config->GetAllEntries();
 
         // Group entries by category
-        std::map<std::string, std::vector<std::pair<std::string, ConfigManager::ConfigEntry>>> categorized;
+        ::std::map<::std::string, ::std::vector<::std::pair<::std::string, ConfigManager::ConfigEntry>>> categorized;
 
         for (auto const& [key, entry] : entries)
         {
 
-            std::string category;
+            ::std::string category;
 
 
             if (key.find("Max") == 0 || key.find("Global") == 0)
 
                 category = "Bot Limits";
 
-            else if (key.find("AI") != std::string::npos || key.find("Enable") == 0)
+            else if (key.find("AI") != ::std::string::npos || key.find("Enable") == 0)
 
                 category = "AI Behavior";
 
@@ -672,15 +672,15 @@ namespace Playerbot
 
                 category = "Logging";
 
-            else if (key.find("Formation") != std::string::npos)
+            else if (key.find("Formation") != ::std::string::npos)
 
                 category = "Formations";
 
-            else if (key.find("Database") != std::string::npos || key.find("Connection") == 0)
+            else if (key.find("Database") != ::std::string::npos || key.find("Connection") == 0)
 
                 category = "Database";
 
-            else if (key.find("Bot") == 0 || key.find("Decision") != std::string::npos)
+            else if (key.find("Bot") == 0 || key.find("Decision") != ::std::string::npos)
 
                 category = "Performance";
 
@@ -705,20 +705,20 @@ namespace Playerbot
 
             {
 
-                std::ostringstream oss;
+                ::std::ostringstream oss;
 
-                oss << "  " << std::left << std::setw(25) << key << " = ";
+                oss << "  " << ::std::left << ::std::setw(25) << key << " = ";
 
 
-                std::visit([&oss](auto&& value) {
+                ::std::visit([&oss](auto&& value) {
 
-                    using T = std::decay_t<decltype(value)>;
+                    using T = ::std::decay_t<decltype(value)>;
 
-                    if constexpr (std::is_same_v<T, bool>)
+                    if constexpr (::std::is_same_v<T, bool>)
 
                         oss << (value ? "true" : "false");
 
-                    else if constexpr (std::is_same_v<T, std::string>)
+                    else if constexpr (::std::is_same_v<T, ::std::string>)
 
                         oss << "\"" << value << "\"";
 
@@ -755,7 +755,7 @@ namespace Playerbot
     // HELPER METHODS
     // =====================================================================
 
-    Player* PlayerbotCommandScript::FindBotByName(std::string const& name)
+    Player* PlayerbotCommandScript::FindBotByName(::std::string const& name)
     {
         return ObjectAccessor::FindPlayerByName(name);
     }
@@ -805,19 +805,19 @@ namespace Playerbot
         return true;
     }
 
-    std::string PlayerbotCommandScript::FormatBotList(std::vector<Player*> const& bots)
+    ::std::string PlayerbotCommandScript::FormatBotList(::std::vector<Player*> const& bots)
     {
-        std::ostringstream oss;
+        ::std::ostringstream oss;
 
-        oss << std::left << std::setw(20) << "Name"
+        oss << ::std::left << ::std::setw(20) << "Name"
 
-            << std::setw(8) << "Level"
+            << ::std::setw(8) << "Level"
 
-            << std::setw(12) << "Class"
+            << ::std::setw(12) << "Class"
 
-            << std::setw(12) << "Zone"
+            << ::std::setw(12) << "Zone"
 
-            << std::setw(10) << "Health"
+            << ::std::setw(10) << "Health"
 
             << "\n";
 
@@ -826,15 +826,15 @@ namespace Playerbot
         for (Player* bot : bots)
         {
 
-            oss << std::left << std::setw(20) << bot->GetName()
+            oss << ::std::left << ::std::setw(20) << bot->GetName()
 
-                << std::setw(8) << static_cast<uint32>(bot->GetLevel())
+                << ::std::setw(8) << static_cast<uint32>(bot->GetLevel())
 
-                << std::setw(12) << static_cast<uint32>(bot->GetClass())
+                << ::std::setw(12) << static_cast<uint32>(bot->GetClass())
 
-                << std::setw(12) << bot->GetZoneId()
+                << ::std::setw(12) << bot->GetZoneId()
 
-                << std::setw(10) << bot->GetHealth()
+                << ::std::setw(10) << bot->GetHealth()
 
                 << "\n";
         }
@@ -842,9 +842,9 @@ namespace Playerbot
         return oss.str();
     }
 
-    std::string PlayerbotCommandScript::FormatBotStats()
+    ::std::string PlayerbotCommandScript::FormatBotStats()
     {
-        std::ostringstream oss;
+        ::std::ostringstream oss;
 
         // TODO: Integrate with actual performance metrics
         // For now, provide placeholder statistics
@@ -867,9 +867,9 @@ namespace Playerbot
         return oss.str();
     }
 
-    std::string PlayerbotCommandScript::FormatFormationList()
+    ::std::string PlayerbotCommandScript::FormatFormationList()
     {
-        std::ostringstream oss;
+        ::std::ostringstream oss;
 
         oss << "1. wedge     - V-shaped penetration formation (30 angle)\n";
         oss << "2. diamond   - Balanced 4-point diamond with interior fill\n";
@@ -902,7 +902,7 @@ namespace Playerbot
             return false;
         }
 
-        std::string summary = monitor->GetStatisticsSummary();
+        ::std::string summary = monitor->GetStatisticsSummary();
         handler->SendSysMessage(summary.c_str());
 
         return true;
@@ -925,8 +925,8 @@ namespace Playerbot
         TrendData botCountTrend = monitor->GetBotCountTrend();
         TrendData queryTimeTrend = monitor->GetQueryTimeTrend();
 
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2);
+        ::std::ostringstream oss;
+        oss << ::std::fixed << ::std::setprecision(2);
 
         oss << "Performance Trends (Last 60 Samples)\n";
         oss << "================================================================================\n\n";
@@ -1034,7 +1034,7 @@ namespace Playerbot
             return false;
         }
 
-        std::vector<PerformanceAlert> alerts = monitor->GetActiveAlerts(AlertLevel::WARNING);
+        ::std::vector<PerformanceAlert> alerts = monitor->GetActiveAlerts(AlertLevel::WARNING);
 
         if (alerts.empty())
         {
@@ -1044,7 +1044,7 @@ namespace Playerbot
             return true;
         }
 
-        std::ostringstream oss;
+        ::std::ostringstream oss;
         oss << "Active Alerts (Last 5 Minutes)\n";
         oss << "================================================================================\n\n";
 
@@ -1072,7 +1072,7 @@ namespace Playerbot
 
             oss << "[" << levelStr << "] " << alert.category << ": " << alert.message << "\n";
 
-            oss << "  Current: " << std::fixed << std::setprecision(2) << alert.currentValue;
+            oss << "  Current: " << ::std::fixed << ::std::setprecision(2) << alert.currentValue;
 
             oss << " | Threshold: " << alert.thresholdValue << "\n\n";
         }
@@ -1097,7 +1097,7 @@ namespace Playerbot
             return false;
         }
 
-        std::vector<PerformanceAlert> history = monitor->GetAlertHistory(20);  // Last 20 alerts
+        ::std::vector<PerformanceAlert> history = monitor->GetAlertHistory(20);  // Last 20 alerts
 
         if (history.empty())
         {
@@ -1107,7 +1107,7 @@ namespace Playerbot
             return true;
         }
 
-        std::ostringstream oss;
+        ::std::ostringstream oss;
         oss << "Alert History (Last 20 Alerts)\n";
         oss << "================================================================================\n\n";
 
@@ -1134,9 +1134,9 @@ namespace Playerbot
 
             // Format timestamp
 
-            auto timeT = std::chrono::system_clock::to_time_t(alert.timestamp);
+            auto timeT = ::std::chrono::system_clock::to_time_t(alert.timestamp);
 
-            std::tm tm;
+            ::std::tm tm;
 #ifdef _WIN32
 
             localtime_s(&tm, &timeT);
@@ -1146,7 +1146,7 @@ namespace Playerbot
 #endif
 
 
-            oss << "[" << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "] ";
+            oss << "[" << ::std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "] ";
 
             oss << "[" << levelStr << "] " << alert.category << ": " << alert.message << "\n";
         }

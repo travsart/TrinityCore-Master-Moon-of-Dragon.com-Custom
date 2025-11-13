@@ -51,7 +51,7 @@ public:
      * Constructor
      * @param name Action name for identification
      */
-    explicit TargetAssistAction(std::string const& name = "target_assist");
+    explicit TargetAssistAction(::std::string const& name = "target_assist");
 
     /**
      * Destructor
@@ -223,8 +223,8 @@ public:
         uint32 leaderAssists = 0;
         uint32 targetSwitches = 0;
         uint32 failedAssists = 0;
-        std::chrono::milliseconds averageSwitchTime{0};
-        std::chrono::steady_clock::time_point lastAssist;
+        ::std::chrono::milliseconds averageSwitchTime{0};
+        ::std::chrono::steady_clock::time_point lastAssist;
     };
 
     /**
@@ -263,7 +263,7 @@ private:
         float distance = 0.0f;
         float healthPct = 100.0f;
         bool isLeaderTarget = false;
-        std::chrono::steady_clock::time_point firstSeen;
+        ::std::chrono::steady_clock::time_point firstSeen;
     };
 
     // Internal methods
@@ -273,7 +273,7 @@ private:
      * @param group The bot's group
      * @return Map of target GUIDs to their info
      */
-    std::unordered_map<ObjectGuid, TargetInfo> EvaluateTargets(Player* bot, Group* group) const;
+    ::std::unordered_map<ObjectGuid, TargetInfo> EvaluateTargets(Player* bot, Group* group) const;
 
     /**
      * Select best target from evaluated list
@@ -281,7 +281,7 @@ private:
      * @param bot The bot player
      * @return GUID of best target
      */
-    ObjectGuid SelectBestTarget(std::unordered_map<ObjectGuid, TargetInfo> const& targets, Player* bot) const;
+    ObjectGuid SelectBestTarget(::std::unordered_map<ObjectGuid, TargetInfo> const& targets, Player* bot) const;
 
     /**
      * Calculate threat adjustment for target
@@ -305,14 +305,14 @@ private:
      * @param bot The bot involved
      * @param target The target involved
      */
-    void LogAssistAction(std::string const& action, Player* bot, Unit* target) const;
+    void LogAssistAction(::std::string const& action, Player* bot, Unit* target) const;
 
     /**
      * Update statistics after assist
      * @param assistedLeader Whether assisting leader
      * @param switchTime Time taken to switch
      */
-    void UpdateStatistics(bool assistedLeader, std::chrono::milliseconds switchTime);
+    void UpdateStatistics(bool assistedLeader, ::std::chrono::milliseconds switchTime);
 
     /**
      * Check line of sight to target
@@ -330,7 +330,7 @@ private:
     bool RequiresFacingForClass(Player* bot) const;
 
     // Member variables
-    std::unordered_map<ObjectGuid, std::chrono::steady_clock::time_point> _lastTargetSwitch; // Track switch times
+    ::std::unordered_map<ObjectGuid, ::std::chrono::steady_clock::time_point> _lastTargetSwitch; // Track switch times
 
     // Configuration
     float _maxAssistRange = 40.0f;                     // Maximum range to assist

@@ -179,7 +179,7 @@ public:
      *
      * Performance metric for optimization analysis
      */
-    std::chrono::milliseconds GetTotalInitTime() const;
+    ::std::chrono::milliseconds GetTotalInitTime() const;
 
     // ========================================================================
     // LIFECYCLE MANAGEMENT
@@ -230,16 +230,16 @@ private:
      */
     template<typename T>
     T* GetOrCreate(
-        std::unique_ptr<T>& manager,
-        std::atomic<bool>& flag,
-        std::function<std::unique_ptr<T>()> factory);
+        ::std::unique_ptr<T>& manager,
+        ::std::atomic<bool>& flag,
+        ::std::function<::std::unique_ptr<T>()> factory);
 
     /**
      * @brief Record manager initialization timing
      * @param managerName Name for logging
      * @param duration Time taken to create manager
      */
-    void RecordInitTime(std::string const& managerName, std::chrono::milliseconds duration);
+    void RecordInitTime(::std::string const& managerName, ::std::chrono::milliseconds duration);
 
 private:
     // Core references (non-owning pointers)
@@ -247,27 +247,27 @@ private:
     BotAI* _ai;                             ///< Bot AI controller
 
     // Manager instances (created on-demand)
-    std::unique_ptr<QuestManager> _questManager;
-    std::unique_ptr<TradeManager> _tradeManager;
-    std::unique_ptr<GatheringManager> _gatheringManager;
-    std::unique_ptr<AuctionManager> _auctionManager;
-    std::unique_ptr<GroupCoordinator> _groupCoordinator;
-    std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
+    ::std::unique_ptr<QuestManager> _questManager;
+    ::std::unique_ptr<TradeManager> _tradeManager;
+    ::std::unique_ptr<GatheringManager> _gatheringManager;
+    ::std::unique_ptr<AuctionManager> _auctionManager;
+    ::std::unique_ptr<GroupCoordinator> _groupCoordinator;
+    ::std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
     // Initialization flags (lock-free fast path)
-    std::atomic<bool> _questManagerInit{false};
-    std::atomic<bool> _tradeManagerInit{false};
-    std::atomic<bool> _gatheringManagerInit{false};
-    std::atomic<bool> _auctionManagerInit{false};
-    std::atomic<bool> _groupCoordinatorInit{false};
-    std::atomic<bool> _deathRecoveryManagerInit{false};
+    ::std::atomic<bool> _questManagerInit{false};
+    ::std::atomic<bool> _tradeManagerInit{false};
+    ::std::atomic<bool> _gatheringManagerInit{false};
+    ::std::atomic<bool> _auctionManagerInit{false};
+    ::std::atomic<bool> _groupCoordinatorInit{false};
+    ::std::atomic<bool> _deathRecoveryManagerInit{false};
 
     // Thread safety for manager creation
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;       ///< Shared mutex for read-optimized access
 
     // Performance tracking
-    std::atomic<size_t> _initCount{0};      ///< Number of initialized managers
-    std::chrono::milliseconds _totalInitTime{0};  ///< Total init time
+    ::std::atomic<size_t> _initCount{0};      ///< Number of initialized managers
+    ::std::chrono::milliseconds _totalInitTime{0};  ///< Total init time
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _metricsMutex;       ///< Protects metrics updates
 
     // Deleted copy/move operations

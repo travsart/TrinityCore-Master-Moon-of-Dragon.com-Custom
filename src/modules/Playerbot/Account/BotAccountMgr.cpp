@@ -97,15 +97,15 @@ void BotAccountMgr::ProcessPendingCallbacks()
 
     while (processed < MAX_CALLBACKS_PER_UPDATE)
     {
-        std::function<void()> callback;
+        ::std::function<void()> callback;
 
         // Extract callback from queue
         {
-            std::lock_guard lock(_callbackMutex);
+            ::std::lock_guard lock(_callbackMutex);
             if (_pendingCallbacks.empty())
                 break;
 
-            callback = std::move(_pendingCallbacks.front().callback);
+            callback = ::std::move(_pendingCallbacks.front().callback);
             _pendingCallbacks.pop();
         }
 
@@ -115,7 +115,7 @@ void BotAccountMgr::ProcessPendingCallbacks()
             callback();
             ++processed;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.account",
                 "Callback execution failed: {}", e.what());
@@ -123,15 +123,15 @@ void BotAccountMgr::ProcessPendingCallbacks()
     }
 }
 
-void BotAccountMgr::QueueCallback(std::function<void()> callback)
+void BotAccountMgr::QueueCallback(::std::function<void()> callback)
 {
-    std::lock_guard lock(_callbackMutex);
+    ::std::lock_guard lock(_callbackMutex);
 
     PendingCallback pending;
-    pending.callback = std::move(callback);
-    pending.submitTime = std::chrono::steady_clock::now();
+    pending.callback = ::std::move(callback);
+    pending.submitTime = ::std::chrono::steady_clock::now();
 
-    _pendingCallbacks.push(std::move(pending));
+    _pendingCallbacks.push(::std::move(pending));
 }
 
 void BotAccountMgr::Update(uint32 /*diff*/)
@@ -151,16 +151,16 @@ void BotAccountMgr::LoadConfigurationValues()
 
     // AUTO-ADJUSTMENT: If MaxBots > 10 * AccountsToCreate, adjust accounts to the right number
     // Formula: accounts = ceil(MaxBots / 10.0) to support 10 characters per account
-    uint32 calculatedAccounts = static_cast<uint32>(std::ceil(_maxBotsTotal.load() / 10.0));
+    uint32 calculatedAccounts = static_cast<uint32>(::std::ceil(_maxBotsTotal.load() / 10.0));
 
     // Use the maximum of configured and calculated to ensure we have enough accounts
-    uint32 requiredAccounts = std::max(configuredAccounts, calculatedAccounts);
+    uint32 requiredAccounts = ::std::max(configuredAccounts, calculatedAccounts);
 
     _accountsToCreate.store(requiredAccounts);  // Store adjusted value
     _requiredAccounts.store(requiredAccounts);
 
     // Set target pool size (keep 25% in pool for instant availability)
-    _targetPoolSize.store(std::max(10U, requiredAccounts / 4));
+    _targetPoolSize.store(::std::max(10U, requiredAccounts / 4));
 
     TC_LOG_ERROR("module.playerbot",
         " BotAccountMgr Config: MaxBotsTotal={}, AutoCreate={}, ConfiguredAccounts={}, CalculatedAccounts={}, RequiredAccounts={}, PoolTarget={}",
@@ -192,7 +192,7 @@ uint32 BotAccountMgr::GetRequiredAccountCount() const
     return _requiredAccounts.load();
 }
 
-uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
+uint32 BotAccountMgr::CreateBotAccount(::std::string const& requestedEmail)
 {
     // Check if auto-creation is disabled
     if (!_autoCreateAccounts.load())
@@ -211,12 +211,12 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
         return 0;
     }
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Generate email and password with retry logic for duplicates
-    std::string email;
-    std::string password = GenerateSecurePassword();
-    std::string gameAccountName;
+    ::std::string email;
+    ::std::string password = GenerateSecurePassword();
+    ::std::string gameAccountName;
     AccountOpResult result;
 
     // Try up to 100 different email addresses to find a unique one
@@ -227,8 +227,8 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
         if (requestedEmail.empty())
         {
             // Generate email with base counter + attempt number
-            std::ostringstream emailStream;
-            emailStream << "bot" << std::setfill('0') << std::setw(6) << (baseCounter + attempt + 1)
+            ::std::ostringstream emailStream;
+            emailStream << "bot" << ::std::setfill('0') << ::std::setw(6) << (baseCounter + attempt + 1)
                        << "@" << _emailDomain;
             email = emailStream.str();
         }
@@ -300,14 +300,14 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
     info.legacyAccountId = legacyAccountId;
     info.email = email;
     info.passwordHash = password; // Store hash in production
-    info.createdAt = std::chrono::system_clock::now();
+    info.createdAt = ::std::chrono::system_clock::now();
     info.characterCount = 0;
     info.isActive = false;
     info.isInPool = false;
 
     // Store in memory
     {
-        std::unique_lock lock(_accountsMutex);
+        ::std::unique_lock lock(_accountsMutex);
         _accounts[bnetAccountId] = info;
     }
 
@@ -317,8 +317,8 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
     // Update statistics
     _totalAccounts.fetch_add(1);
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    uint32 creationTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    uint32 creationTimeUs = ::std::chrono::duration_cast<::std::chrono::microseconds>(
         endTime - startTime).count();
 
     TC_LOG_DEBUG("module.playerbot.account",
@@ -329,14 +329,14 @@ uint32 BotAccountMgr::CreateBotAccount(std::string const& requestedEmail)
 }
 
 void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
-    std::function<void(std::vector<uint32>)> callback)
+    ::std::function<void(::std::vector<uint32>)> callback)
 {
     TC_LOG_INFO("module.playerbot.account", "Creating batch of {} bot accounts with throttling (50/sec)...", count);
 
     // Execute in a separate thread to avoid blocking
-    std::thread([this, count, callback]()
+    ::std::thread([this, count, callback]()
     {
-        std::vector<uint32> createdAccounts;
+        ::std::vector<uint32> createdAccounts;
         createdAccounts.reserve(count);
 
         for (uint32 i = 0; i < count; ++i)
@@ -370,7 +370,7 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
             }
 
             // THROTTLING: 50 accounts per second = 20ms delay between accounts
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(20));
         }
 
         TC_LOG_INFO("module.playerbot.account",
@@ -413,16 +413,16 @@ void BotAccountMgr::RefillAccountPool()
     // Additional accounts needed for pool
     uint32 poolToCreate = (currentSize < targetPoolSize) ? (targetPoolSize - currentSize) : 0;
 
-    uint32 toCreate = std::max(totalToCreate, poolToCreate);
+    uint32 toCreate = ::std::max(totalToCreate, poolToCreate);
 
     if (toCreate > 0 && _autoCreateAccounts.load())
     {
         CreateBotAccountsBatch(toCreate,
-            [this, targetPoolSize](std::vector<uint32> const& accounts)
+            [this, targetPoolSize](::std::vector<uint32> const& accounts)
             {
                 // Add to pool
                 {
-                    std::lock_guard lock(_poolMutex);
+                    ::std::lock_guard lock(_poolMutex);
                     for (uint32 accountId : accounts)
                     {
                         _accountPool.push(accountId);
@@ -458,7 +458,7 @@ uint32 BotAccountMgr::AcquireAccount()
 {
     // Try to get from pool first
     {
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
         if (!_accountPool.empty())
         {
             uint32 accountId = _accountPool.front();
@@ -518,7 +518,7 @@ uint32 BotAccountMgr::AcquireAccount()
 
 void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     // Check if account exists
     auto it = _accounts.find(bnetAccountId);
@@ -556,13 +556,13 @@ void BotAccountMgr::ReleaseAccount(uint32 bnetAccountId)
 
 uint32 BotAccountMgr::GetPoolSize() const
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
     return _accountPool.size();
 }
 
 bool BotAccountMgr::CanCreateCharacter(uint32 bnetAccountId) const
 {
-    std::lock_guard lock(_accountsMutex);
+    ::std::lock_guard lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     if (it == _accounts.end())
@@ -575,13 +575,13 @@ bool BotAccountMgr::CanCreateCharacter(uint32 bnetAccountId) const
 
 void BotAccountMgr::UpdateCharacterCount(uint32 bnetAccountId, int8 delta)
 {
-    std::unique_lock lock(_accountsMutex);
+    ::std::unique_lock lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     if (it != _accounts.end())
     {
         int16 newCount = it->second.characterCount + delta;
-        it->second.characterCount = std::max(0, std::min(static_cast<int>(
+        it->second.characterCount = ::std::max(0, ::std::min(static_cast<int>(
             _maxCharactersPerAccount.load()), static_cast<int>(newCount)));
 
         TC_LOG_DEBUG("module.playerbot.account",
@@ -595,14 +595,14 @@ void BotAccountMgr::UpdateCharacterCount(uint32 bnetAccountId, int8 delta)
 
 BotAccountMgr::BotAccountInfo const* BotAccountMgr::GetAccountInfo(uint32 bnetAccountId) const
 {
-    std::lock_guard lock(_accountsMutex);
+    ::std::lock_guard lock(_accountsMutex);
 
     auto it = _accounts.find(bnetAccountId);
     return (it != _accounts.end()) ? &it->second : nullptr;
 }
 
 void BotAccountMgr::DeleteBotAccount(uint32 bnetAccountId,
-    std::function<void(bool success)> callback)
+    ::std::function<void(bool success)> callback)
 {
     TC_LOG_INFO("module.playerbot.account",
         "Deleting bot account {}...", bnetAccountId);
@@ -617,7 +617,7 @@ void BotAccountMgr::DeleteBotAccount(uint32 bnetAccountId,
     {
         // Remove from memory
         {
-            std::unique_lock lock(_accountsMutex);
+            ::std::unique_lock lock(_accountsMutex);
             _accounts.erase(bnetAccountId);
         }
 
@@ -636,13 +636,13 @@ void BotAccountMgr::DeleteBotAccount(uint32 bnetAccountId,
     }
 }
 
-void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> callback)
+void BotAccountMgr::DeleteAllBotAccounts(::std::function<void(uint32 deleted)> callback)
 {
     TC_LOG_WARN("module.playerbot.account", "Deleting ALL bot accounts...");
 
-    std::vector<uint32> accountIds;
+    ::std::vector<uint32> accountIds;
     {
-        std::lock_guard lock(_accountsMutex);
+        ::std::lock_guard lock(_accountsMutex);
         accountIds.reserve(_accounts.size());
         for (auto const& [id, info] : _accounts)
         {
@@ -658,7 +658,7 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
     }
 
     // Delete accounts in a separate thread
-    std::thread([this, accountIds = std::move(accountIds), callback]()
+    ::std::thread([this, accountIds = ::std::move(accountIds), callback]()
     {
         uint32 deleted = 0;
         for (uint32 accountId : accountIds)
@@ -672,7 +672,7 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
             }
 
             // Small delay between deletions
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
         }
 
         TC_LOG_WARN("module.playerbot.account",
@@ -682,18 +682,18 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
     }).detach();
 }
 
-std::string BotAccountMgr::GenerateUniqueEmail()
+::std::string BotAccountMgr::GenerateUniqueEmail()
 {
     uint32 counter = _emailCounter.fetch_add(1);
 
-    std::ostringstream email;
-    email << "bot" << std::setfill('0') << std::setw(6) << counter
+    ::std::ostringstream email;
+    email << "bot" << ::std::setfill('0') << ::std::setw(6) << counter
           << "@" << _emailDomain;
 
     return email.str();
 }
 
-std::string BotAccountMgr::GenerateSecurePassword()
+::std::string BotAccountMgr::GenerateSecurePassword()
 {
     // Generate random secure password
     static const char charset[] =
@@ -702,7 +702,7 @@ std::string BotAccountMgr::GenerateSecurePassword()
         "0123456789"
         "!@#$%^&*";
 
-    std::string password;
+    ::std::string password;
     password.reserve(16);
 
     // Use TrinityCore's thread-safe random number generator
@@ -723,7 +723,7 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
 
     try
     {
-        std::ostringstream ss;
+        ::std::ostringstream ss;
         ss << "INSERT INTO bot_account_metadata "
            << "(account_id, bnet_account_id, email, character_count, expansion, locale, last_ip, join_date, total_time_played, notes) "
            << "VALUES ("
@@ -756,7 +756,7 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
                 info.bnetAccountId);
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.account",
             "Exception while storing account metadata for account {}: {}",
@@ -788,7 +788,7 @@ void BotAccountMgr::LoadAccountMetadata()
             {
                 Field* fields = result->Fetch();
                 uint32 bnetAccountId = fields[0].GetUInt32();
-                std::string email = fields[1].GetString();
+                ::std::string email = fields[1].GetString();
                 uint32 legacyAccountId = fields[2].GetUInt32();
 
                 // Try to extract bot number from different email patterns
@@ -796,40 +796,40 @@ void BotAccountMgr::LoadAccountMetadata()
                 bool isValidBotAccount = false;
 
                 // Convert email to lowercase for case-insensitive matching
-                std::string emailLower = email;
-                std::transform(emailLower.begin(), emailLower.end(), emailLower.begin(), ::tolower);
+                ::std::string emailLower = email;
+                ::std::transform(emailLower.begin(), emailLower.end(), emailLower.begin(), ::tolower);
 
                 // Pattern 1: "bot######@playerbot.local"
-                if (emailLower.find("bot") == 0 && emailLower.find("@playerbot.local") != std::string::npos)
+                if (emailLower.find("bot") == 0 && emailLower.find("@playerbot.local") != ::std::string::npos)
                 {
                     size_t atPos = emailLower.find("@");
-                    std::string numberStr = emailLower.substr(3, atPos - 3);
+                    ::std::string numberStr = emailLower.substr(3, atPos - 3);
                     try
                     {
-                        botNumber = std::stoul(numberStr);
+                        botNumber = ::std::stoul(numberStr);
                         isValidBotAccount = true;
                     }
                     catch (...) { /* ignore */ }
                 }
                 // Pattern 2: "X#1@playerbot.local" or similar patterns
-                else if (emailLower.find("#") != std::string::npos && emailLower.find("@") != std::string::npos)
+                else if (emailLower.find("#") != ::std::string::npos && emailLower.find("@") != ::std::string::npos)
                 {
                     size_t hashPos = emailLower.find("#");
                     size_t atPos = emailLower.find("@");
 
                     if (hashPos < atPos)
                     {
-                        std::string beforeHash = emailLower.substr(0, hashPos);
+                        ::std::string beforeHash = emailLower.substr(0, hashPos);
                         try
                         {
-                            botNumber = std::stoul(beforeHash);
+                            botNumber = ::std::stoul(beforeHash);
                             isValidBotAccount = true;
                         }
                         catch (...) { /* ignore */ }
                     }
                 }
                 // Pattern 3: Any email containing "playerbot" domain
-                else if (emailLower.find("@playerbot.local") != std::string::npos)
+                else if (emailLower.find("@playerbot.local") != ::std::string::npos)
                 {
                     // For accounts with playerbot domain but unknown pattern,
                     // assign sequential numbers starting from current counter
@@ -839,7 +839,7 @@ void BotAccountMgr::LoadAccountMetadata()
 
                 if (isValidBotAccount)
                 {
-                    highestBotNumber = std::max(highestBotNumber, botNumber);
+                    highestBotNumber = ::std::max(highestBotNumber, botNumber);
 
                     // Create basic account info
                     BotAccountInfo info;
@@ -849,14 +849,14 @@ void BotAccountMgr::LoadAccountMetadata()
                     info.characterCount = 0; // Could query this later
                     info.isActive = false;
                     info.isInPool = false;
-                    info.createdAt = std::chrono::system_clock::now(); // Placeholder
+                    info.createdAt = ::std::chrono::system_clock::now(); // Placeholder
 
                     _accounts[bnetAccountId] = info;
                     loadedAccounts++;
 
                     // CRITICAL FIX: Add loaded accounts to the account pool so they can be acquired
                     {
-                        std::lock_guard lock(_poolMutex);
+                        ::std::lock_guard lock(_poolMutex);
                         _accountPool.push(legacyAccountId);  // Use legacy account ID for the pool
                         _accounts[bnetAccountId].isInPool = true;  // Mark as in pool
                     }
@@ -876,7 +876,7 @@ void BotAccountMgr::LoadAccountMetadata()
             "Loaded {} bot account metadata entries, highest bot number: {}, next counter: {}",
             loadedAccounts, highestBotNumber, _emailCounter.load());
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("module.playerbot.account",
             "Failed to load bot account metadata: {}", e.what());

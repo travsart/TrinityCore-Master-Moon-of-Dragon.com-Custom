@@ -180,15 +180,15 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
     return DungeonRole::MELEE_DPS;
 }
 
-std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Creature* boss) const
+::std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Creature* boss) const
 {
-    std::vector<::Creature*> adds;
+    ::std::vector<::Creature*> adds;
 
     if (!player || !boss)
         return adds;
 
     // Find all creatures in combat within 50 yards
-    std::list<::Creature*> creatures;
+    ::std::list<::Creature*> creatures;
     Trinity::AllWorldObjectsInRange check(player, 50.0f);
     Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -206,7 +206,7 @@ std::vector<::Creature*> DungeonScript::GetAddsInCombat(::Player* player, ::Crea
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         player->GetPosition(), 50.0f);
     // Process results (replace old loop)
     for (ObjectGuid guid : nearbyGuids)

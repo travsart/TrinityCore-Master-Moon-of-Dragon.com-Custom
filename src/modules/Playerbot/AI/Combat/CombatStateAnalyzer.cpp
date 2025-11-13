@@ -184,7 +184,7 @@ void CombatStateAnalyzer::UpdateGroupMetrics()
 
         float healthPct = member->GetHealthPct();
         totalHealth += healthPct;
-        lowestHealth = std::min(lowestHealth, healthPct);
+        lowestHealth = ::std::min(lowestHealth, healthPct);
         memberCount++;
 
         // Simple role detection based on class
@@ -251,7 +251,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
             if (spatialGrid)
             {
                 // Query nearby creature GUIDs (lock-free!)
-                std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+                ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                     _bot->GetPosition(), 50.0f);
 
                 // Resolve GUIDs to Unit pointers and apply filtering logic
@@ -267,9 +267,9 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                     _enemyCache.push_back(enemy);
                     _currentMetrics.enemyCount++;
 
-                    float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
-                    _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
-                    _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
+                    float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+                    _currentMetrics.nearestEnemyDistance = ::std::min(_currentMetrics.nearestEnemyDistance, distance);
+                    _currentMetrics.furthestEnemyDistance = ::std::max(_currentMetrics.furthestEnemyDistance, distance);
 
                     if (enemy->GetTypeId() == TYPEID_UNIT)
                                         {
@@ -296,9 +296,9 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
             if (!enemy || !enemy->IsAlive())
                 continue;
 
-            float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
-            _currentMetrics.nearestEnemyDistance = std::min(_currentMetrics.nearestEnemyDistance, distance);
-            _currentMetrics.furthestEnemyDistance = std::max(_currentMetrics.furthestEnemyDistance, distance);
+            float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+            _currentMetrics.nearestEnemyDistance = ::std::min(_currentMetrics.nearestEnemyDistance, distance);
+            _currentMetrics.furthestEnemyDistance = ::std::max(_currentMetrics.furthestEnemyDistance, distance);
         }
     }
 
@@ -312,12 +312,12 @@ void CombatStateAnalyzer::UpdatePositioningMetrics()
     Player* healer = GetMainHealer();
 
     if (tank && tank != _bot)
-        _currentMetrics.distanceToTank = std::sqrt(_bot->GetExactDistSq(tank)); // Calculate once from squared distance
+        _currentMetrics.distanceToTank = ::std::sqrt(_bot->GetExactDistSq(tank)); // Calculate once from squared distance
     else
         _currentMetrics.distanceToTank = 0.0f;
 
     if (healer && healer != _bot)
-        _currentMetrics.distanceToHealer = std::sqrt(_bot->GetExactDistSq(healer)); // Calculate once from squared distance
+        _currentMetrics.distanceToHealer = ::std::sqrt(_bot->GetExactDistSq(healer)); // Calculate once from squared distance
     else
         _currentMetrics.distanceToHealer = 0.0f;
 
@@ -688,7 +688,7 @@ Position CombatStateAnalyzer::GetSafePosition() const
     return pos;
 }
 
-float CombatStateAnalyzer::GetMetricTrend(std::function<float(const CombatMetrics&)> selector) const
+float CombatStateAnalyzer::GetMetricTrend(::std::function<float(const CombatMetrics&)> selector) const
 {
     if (_historyIndex < 2)
         return 0.0f;
@@ -699,13 +699,13 @@ float CombatStateAnalyzer::GetMetricTrend(std::function<float(const CombatMetric
     return recent - previous;
 }
 
-bool CombatStateAnalyzer::IsMetricDeclining(std::function<float(const CombatMetrics&)> selector, float threshold) const
+bool CombatStateAnalyzer::IsMetricDeclining(::std::function<float(const CombatMetrics&)> selector, float threshold) const
 {
     float trend = GetMetricTrend(selector);
     return trend < -threshold;
 }
 
-bool CombatStateAnalyzer::IsMetricImproving(std::function<float(const CombatMetrics&)> selector, float threshold) const
+bool CombatStateAnalyzer::IsMetricImproving(::std::function<float(const CombatMetrics&)> selector, float threshold) const
 {
     float trend = GetMetricTrend(selector);
     return trend > threshold;
@@ -730,9 +730,9 @@ uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
     return count;
 }
 
-std::vector<Unit*> CombatStateAnalyzer::GetNearbyEnemies(float range) const
+::std::vector<Unit*> CombatStateAnalyzer::GetNearbyEnemies(float range) const
 {
-    std::vector<Unit*> result;
+    ::std::vector<Unit*> result;
     float rangeSq = range * range;
     for (Unit* enemy : _enemyCache)
     {
@@ -769,7 +769,7 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
                             danger *= 3.0f;
 
         // Close enemies are dangerous
-        float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+        float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
 
         if (distance < 5.0f)
             danger *= 2.0f;
@@ -948,12 +948,12 @@ float CombatStateAnalyzer::GetGroupSurvivabilityScore() const
         if (!_currentMetrics.isPositioningSafe)
         score *= 0.9f;
 
-        return std::max(0.0f, score);
+        return ::std::max(0.0f, score);
 }
 
-std::vector<ThreatData> CombatStateAnalyzer::GetThreatList() const
+::std::vector<ThreatData> CombatStateAnalyzer::GetThreatList() const
 {
-    std::vector<ThreatData> threatList;
+    ::std::vector<ThreatData> threatList;
 
     // Would need actual threat API access here
     // This is a simplified version
@@ -1135,7 +1135,7 @@ bool CombatStateAnalyzer::IsBeingKited() const
 
         if (enemy->GetTarget() == _bot->GetGUID())
                 {
-            float distance = std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+            float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
             if (distance > 15.0f && distance < 40.0f)
                 return true;
         }
@@ -1199,9 +1199,9 @@ bool CombatStateAnalyzer::IsPhaseTransition() const
         {
             // Common phase transition health percentages
             float health = creature->GetHealthPct();
-            if (std::abs(health - 75.0f) < 2.0f ||
-                std::abs(health - 50.0f) < 2.0f ||
-                std::abs(health - 25.0f) < 2.0f)
+            if (::std::abs(health - 75.0f) < 2.0f ||
+                ::std::abs(health - 50.0f) < 2.0f ||
+                ::std::abs(health - 25.0f) < 2.0f)
             {
                 return true;
             }
@@ -1215,7 +1215,7 @@ float CombatStateAnalyzer::CalculateGroupSpread() const
 {
     if (Group* group = _bot->GetGroup())
         {
-        std::vector<Position> positions;
+        ::std::vector<Position> positions;
         for (GroupReference const& groupRef : group->GetMembers())
         {
             if (Player* member = groupRef.GetSource())
@@ -1312,7 +1312,7 @@ void CombatStateAnalyzer::PruneOldData()
     // Clean up old mechanic casts
     uint32 now = GameTime::GetGameTimeMS();
     _recentMechanicCasts.erase(
-        std::remove_if(_recentMechanicCasts.begin(), _recentMechanicCasts.end(),
+        ::std::remove_if(_recentMechanicCasts.begin(), _recentMechanicCasts.end(),
             [now](uint32 castTime) { return now - castTime > 30000; }),
         _recentMechanicCasts.end()
     );

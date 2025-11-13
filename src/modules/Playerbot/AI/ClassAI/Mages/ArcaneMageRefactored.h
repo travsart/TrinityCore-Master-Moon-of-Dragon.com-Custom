@@ -60,7 +60,7 @@ public:
 
     void AddCharge(uint32 amount = 1)
     {
-        _charges = std::min(_charges + amount, _maxCharges);
+        _charges = ::std::min(_charges + amount, _maxCharges);
     }
 
     void ClearCharges()
@@ -96,7 +96,7 @@ public:
     void ActivateProc(uint32 stacks = 1)
     {
         _clearcastingActive = true;
-        _clearcastingStacks = std::min(_clearcastingStacks + stacks, 3u); // Max 3 stacks
+        _clearcastingStacks = ::std::min(_clearcastingStacks + stacks, 3u); // Max 3 stacks
         _clearcastingEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 

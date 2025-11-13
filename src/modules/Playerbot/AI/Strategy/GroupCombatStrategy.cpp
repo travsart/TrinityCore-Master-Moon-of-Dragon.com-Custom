@@ -120,7 +120,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // CRITICAL FIX: Delegate movement to ClassAI for proper positioning
             // ClassAI knows the bot's optimal range (melee vs ranged)
 
-            float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+            float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
             // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
             // bot->Attack() makes the target hostile but needs to process
             if (!bot->GetVictim() || bot->GetVictim() != target)
@@ -235,7 +235,7 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
                     // Just set target here and return high relevance
                     if (!bot->IsInCombat() && !bot->GetVictim())
                     {
-                        float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+                        float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
                         TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
                                     bot->GetName(), target->GetName(), distance, member->GetName());
                     }

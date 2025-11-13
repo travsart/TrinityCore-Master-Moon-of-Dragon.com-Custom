@@ -43,15 +43,15 @@ public:
 
     // Role analysis and scoring
     virtual PlayerRoleProfile AnalyzePlayerCapabilities(Player* player) = 0;
-    virtual std::vector<RoleScore> CalculateRoleScores(Player* player, Group* group) = 0;
+    virtual ::std::vector<RoleScore> CalculateRoleScores(Player* player, Group* group) = 0;
     virtual GroupRole RecommendRole(Player* player, Group* group) = 0;
     virtual float CalculateRoleSynergy(Player* player, GroupRole role, Group* group) = 0;
 
     // Group composition analysis
     virtual GroupComposition AnalyzeGroupComposition(Group* group) = 0;
     virtual bool IsCompositionViable(const GroupComposition& composition) = 0;
-    virtual std::vector<GroupRole> GetMissingRoles(Group* group) = 0;
-    virtual std::vector<uint32> FindPlayersForRole(GroupRole role, const std::vector<Player*>& candidates) = 0;
+    virtual ::std::vector<GroupRole> GetMissingRoles(Group* group) = 0;
+    virtual ::std::vector<uint32> FindPlayersForRole(GroupRole role, const ::std::vector<Player*>& candidates) = 0;
 
     // Dynamic role adjustment
     virtual void HandleRoleConflict(Group* group, GroupRole conflictedRole) = 0;
@@ -77,12 +77,12 @@ public:
 
     // Role assignment validation
     virtual bool ValidateRoleAssignment(Group* group) = 0;
-    virtual std::vector<std::string> GetRoleAssignmentIssues(Group* group) = 0;
+    virtual ::std::vector<::std::string> GetRoleAssignmentIssues(Group* group) = 0;
     virtual bool CanGroupFunction(Group* group) = 0;
 
     // Emergency role filling
     virtual bool FillEmergencyRole(Group* group, GroupRole urgentRole) = 0;
-    virtual std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel) = 0;
+    virtual ::std::vector<uint32> FindEmergencyReplacements(GroupRole role, uint32 minLevel, uint32 maxLevel) = 0;
     virtual void HandleRoleEmergency(Group* group, uint32 disconnectedPlayerGuid) = 0;
 
     // Role statistics and monitoring
@@ -91,7 +91,7 @@ public:
 
     // Configuration and settings
     virtual void SetRoleAssignmentStrategy(Group* group, RoleAssignmentStrategy strategy) = 0;
-    virtual void SetContentTypeRequirements(uint32 contentId, const std::unordered_map<GroupRole, uint32>& requirements) = 0;
+    virtual void SetContentTypeRequirements(uint32 contentId, const ::std::unordered_map<GroupRole, uint32>& requirements) = 0;
 
     // Update and maintenance
     virtual void Update(uint32 diff) = 0;

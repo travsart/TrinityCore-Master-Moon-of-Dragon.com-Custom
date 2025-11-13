@@ -113,7 +113,7 @@ struct ManaSoulShardResourceDemo
         // Mana regenerates naturally
         if (mana < maxMana) {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
-            mana = std::min(mana + regenAmount, maxMana);
+            mana = ::std::min(mana + regenAmount, maxMana);
         }
         available = mana > 0;
     }
@@ -221,7 +221,7 @@ public:
         // Wild Imps naturally despawn after 20 sec, but we track via spells
         // Decay imps over time
         if (_wildImpCount > 0 && rand() % 100 < 5) // 5% chance per update
-            _wildImpCount = std::max(0u, _wildImpCount - 1);
+            _wildImpCount = ::std::max(0u, _wildImpCount - 1);
     }
 
 private:
@@ -550,7 +550,7 @@ private:
 
     void GenerateSoulShard(uint32 amount)
     {
-        this->_resource.soulShards = std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
+        this->_resource.soulShards = ::std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
     }
 
     void ConsumeSoulShard(uint32 amount)

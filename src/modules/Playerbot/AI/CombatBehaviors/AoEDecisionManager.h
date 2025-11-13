@@ -99,7 +99,7 @@ public:
         float avgHealthPercent;    // Average health percentage
         bool hasElite;            // Contains elite/boss units
         float radius;             // Cluster radius
-        std::vector<ObjectGuid> targets;  // Target GUIDs in cluster
+        ::std::vector<ObjectGuid> targets;  // Target GUIDs in cluster
 
         TargetCluster() : targetCount(0), avgHealthPercent(100.0f),
                          hasElite(false), radius(0.0f) {}
@@ -110,7 +110,7 @@ public:
      * @param maxRange Maximum range to search
      * @return Vector of detected target clusters
      */
-    std::vector<TargetCluster> FindTargetClusters(float maxRange = 30.0f) const;
+    ::std::vector<TargetCluster> FindTargetClusters(float maxRange = 30.0f) const;
 
     /**
      * Get best position for AoE spell placement
@@ -172,7 +172,7 @@ public:
      * @param maxTargets Maximum number of targets to return
      * @return Sorted list of targets for DoT application
      */
-    std::vector<Unit*> GetDoTSpreadTargets(uint32 maxTargets = 5) const;
+    ::std::vector<Unit*> GetDoTSpreadTargets(uint32 maxTargets = 5) const;
 
     /**
      * Check if target needs DoT refresh
@@ -253,8 +253,8 @@ private:
         uint32 lastUpdateTime;
     };
 
-    std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
-    std::vector<TargetCluster> _clusters;
+    ::std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
+    ::std::vector<TargetCluster> _clusters;
 
     // Update timers
     uint32 _lastCacheUpdate;
@@ -276,9 +276,9 @@ private:
     static constexpr float GRID_SIZE = 5.0f;  // 5 yard grid cells
     struct GridCell
     {
-        std::vector<ObjectGuid> targets;
+        ::std::vector<ObjectGuid> targets;
     };
-    mutable std::unordered_map<uint32, GridCell> _spatialGrid;
+    mutable ::std::unordered_map<uint32, GridCell> _spatialGrid;
 
     /**
      * Get grid key for position
@@ -288,7 +288,7 @@ private:
     /**
      * Find neighbors in grid
      */
-    std::vector<ObjectGuid> GetGridNeighbors(Position const& pos, float radius) const;
+    ::std::vector<ObjectGuid> GetGridNeighbors(Position const& pos, float radius) const;
 };
 
 } // namespace Playerbot

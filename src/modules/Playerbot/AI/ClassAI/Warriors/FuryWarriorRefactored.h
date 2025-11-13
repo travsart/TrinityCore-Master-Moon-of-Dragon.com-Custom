@@ -178,7 +178,7 @@ protected:
         if (this->CanUseAbility(SPELL_FURIOUS_SLASH))
         {
             this->CastSpell(SPELL_FURIOUS_SLASH, target);
-            _furiousSlashStacks = std::min(_furiousSlashStacks + 1, 4u);
+            _furiousSlashStacks = ::std::min(_furiousSlashStacks + 1, 4u);
             return;
         }
 
@@ -419,7 +419,7 @@ private:
 
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && target->GetHealthPct() < 20.0f;
                 }},
                 "Target HP < 20% (Execute range)");
@@ -427,7 +427,7 @@ private:
             // Critical cooldowns
             queue->RegisterSpell(SPELL_RECKLESSNESS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(SPELL_RECKLESSNESS,
-                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     // Use on bosses or high HP targets
                     return target && (target->GetMaxHealth() > 500000 || target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
                 }},

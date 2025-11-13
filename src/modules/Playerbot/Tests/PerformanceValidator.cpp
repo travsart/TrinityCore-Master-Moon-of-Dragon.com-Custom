@@ -68,10 +68,10 @@ bool SystemHealthMetrics::IsHealthy(const PerformanceThresholds& thresholds) con
     return true;
 }
 
-std::string SystemHealthMetrics::GetHealthSummary() const
+::std::string SystemHealthMetrics::GetHealthSummary() const
 {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2);
+    ::std::stringstream ss;
+    ss << ::std::fixed << ::std::setprecision(2);
 
     ss << "System Health Summary:\n";
     ss << "  CPU Usage: " << processCpuUsage << "%\n";
@@ -216,30 +216,30 @@ bool PerformanceValidator::ValidateAllMetrics(const PerformanceMetrics& metrics,
            ValidateSuccessRates(metrics);
 }
 
-std::vector<std::string> PerformanceValidator::GetValidationFailures(const PerformanceMetrics& metrics, uint32 botCount) const
+::std::vector<::std::string> PerformanceValidator::GetValidationFailures(const PerformanceMetrics& metrics, uint32 botCount) const
 {
-    std::vector<std::string> failures;
+    ::std::vector<::std::string> failures;
 
     // Check timing metrics
     if (metrics.invitationAcceptanceTime > m_thresholds.maxInvitationAcceptanceTime)
     {
         failures.push_back("Invitation acceptance time exceeds threshold: " +
-                          std::to_string(metrics.invitationAcceptanceTime / 1000.0f) + "ms > " +
-                          std::to_string(m_thresholds.maxInvitationAcceptanceTime / 1000.0f) + "ms");
+                          ::std::to_string(metrics.invitationAcceptanceTime / 1000.0f) + "ms > " +
+                          ::std::to_string(m_thresholds.maxInvitationAcceptanceTime / 1000.0f) + "ms");
     }
 
     if (metrics.combatEngagementTime > m_thresholds.maxCombatEngagementTime)
     {
         failures.push_back("Combat engagement time exceeds threshold: " +
-                          std::to_string(metrics.combatEngagementTime / 1000.0f) + "ms > " +
-                          std::to_string(m_thresholds.maxCombatEngagementTime / 1000.0f) + "ms");
+                          ::std::to_string(metrics.combatEngagementTime / 1000.0f) + "ms > " +
+                          ::std::to_string(m_thresholds.maxCombatEngagementTime / 1000.0f) + "ms");
     }
 
     if (metrics.targetSwitchTime > m_thresholds.maxTargetSwitchTime)
     {
         failures.push_back("Target switch time exceeds threshold: " +
-                          std::to_string(metrics.targetSwitchTime / 1000.0f) + "ms > " +
-                          std::to_string(m_thresholds.maxTargetSwitchTime / 1000.0f) + "ms");
+                          ::std::to_string(metrics.targetSwitchTime / 1000.0f) + "ms > " +
+                          ::std::to_string(m_thresholds.maxTargetSwitchTime / 1000.0f) + "ms");
     }
 
     // Check memory metrics
@@ -247,8 +247,8 @@ std::vector<std::string> PerformanceValidator::GetValidationFailures(const Perfo
     if (memoryGrowth > m_thresholds.maxTotalMemoryGrowth)
     {
         failures.push_back("Total memory growth exceeds threshold: " +
-                          std::to_string(memoryGrowth / (1024 * 1024)) + "MB > " +
-                          std::to_string(m_thresholds.maxTotalMemoryGrowth / (1024 * 1024)) + "MB");
+                          ::std::to_string(memoryGrowth / (1024 * 1024)) + "MB > " +
+                          ::std::to_string(m_thresholds.maxTotalMemoryGrowth / (1024 * 1024)) + "MB");
     }
 
     if (botCount > 0)
@@ -257,8 +257,8 @@ std::vector<std::string> PerformanceValidator::GetValidationFailures(const Perfo
         if (memoryPerBot > m_thresholds.maxMemoryPerBot)
         {
             failures.push_back("Memory per bot exceeds threshold: " +
-                              std::to_string(memoryPerBot / (1024 * 1024)) + "MB > " +
-                              std::to_string(m_thresholds.maxMemoryPerBot / (1024 * 1024)) + "MB");
+                              ::std::to_string(memoryPerBot / (1024 * 1024)) + "MB > " +
+                              ::std::to_string(m_thresholds.maxMemoryPerBot / (1024 * 1024)) + "MB");
         }
     }
 
@@ -266,8 +266,8 @@ std::vector<std::string> PerformanceValidator::GetValidationFailures(const Perfo
     if (metrics.cpuUsagePeak > m_thresholds.maxCpuUsage)
     {
         failures.push_back("Peak CPU usage exceeds threshold: " +
-                          std::to_string(metrics.cpuUsagePeak) + "% > " +
-                          std::to_string(m_thresholds.maxCpuUsage) + "%");
+                          ::std::to_string(metrics.cpuUsagePeak) + "% > " +
+                          ::std::to_string(m_thresholds.maxCpuUsage) + "%");
     }
 
     // Check success rate
@@ -275,8 +275,8 @@ std::vector<std::string> PerformanceValidator::GetValidationFailures(const Perfo
     if (successRate < m_thresholds.minSuccessRate)
     {
         failures.push_back("Success rate below threshold: " +
-                          std::to_string(successRate * 100.0f) + "% < " +
-                          std::to_string(m_thresholds.minSuccessRate * 100.0f) + "%");
+                          ::std::to_string(successRate * 100.0f) + "% < " +
+                          ::std::to_string(m_thresholds.minSuccessRate * 100.0f) + "%");
     }
 
     return failures;
@@ -330,10 +330,10 @@ bool PerformanceValidator::ValidateSystemHealth() const
     return health.IsHealthy(m_thresholds);
 }
 
-std::string PerformanceValidator::GenerateHealthReport() const
+::std::string PerformanceValidator::GenerateHealthReport() const
 {
     SystemHealthMetrics health = GetCurrentSystemHealth();
-    std::stringstream report;
+    ::std::stringstream report;
 
     report << "=== SYSTEM HEALTH REPORT ===\n";
     report << health.GetHealthSummary();
@@ -353,10 +353,10 @@ std::string PerformanceValidator::GenerateHealthReport() const
     return report.str();
 }
 
-std::string PerformanceValidator::GeneratePerformanceReport() const
+::std::string PerformanceValidator::GeneratePerformanceReport() const
 {
-    std::stringstream report;
-    report << std::fixed << std::setprecision(2);
+    ::std::stringstream report;
+    report << ::std::fixed << ::std::setprecision(2);
 
     report << "=== PERFORMANCE VALIDATION REPORT ===\n\n";
 
@@ -428,7 +428,7 @@ std::string PerformanceValidator::GeneratePerformanceReport() const
     return report.str();
 }
 
-bool PerformanceValidator::ValidateTimingThreshold(uint64 actualTime, uint64 threshold, const std::string& metric) const
+bool PerformanceValidator::ValidateTimingThreshold(uint64 actualTime, uint64 threshold, const ::std::string& metric) const
 {
     if (actualTime > threshold)
     {
@@ -439,7 +439,7 @@ bool PerformanceValidator::ValidateTimingThreshold(uint64 actualTime, uint64 thr
     return true;
 }
 
-bool PerformanceValidator::ValidateMemoryThreshold(uint64 actualMemory, uint64 threshold, const std::string& metric) const
+bool PerformanceValidator::ValidateMemoryThreshold(uint64 actualMemory, uint64 threshold, const ::std::string& metric) const
 {
     if (actualMemory > threshold)
     {
@@ -450,7 +450,7 @@ bool PerformanceValidator::ValidateMemoryThreshold(uint64 actualMemory, uint64 t
     return true;
 }
 
-bool PerformanceValidator::ValidateCpuThreshold(float actualCpu, float threshold, const std::string& metric) const
+bool PerformanceValidator::ValidateCpuThreshold(float actualCpu, float threshold, const ::std::string& metric) const
 {
     if (actualCpu > threshold)
     {
@@ -468,16 +468,16 @@ uint64 PerformanceValidator::GetCurrentMemoryUsage() const
     if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
         return pmc.WorkingSetSize;
 #elif defined(__linux__)
-    std::ifstream statusFile("/proc/self/status");
-    std::string line;
-    while (std::getline(statusFile, line))
+    ::std::ifstream statusFile("/proc/self/status");
+    ::std::string line;
+    while (::std::getline(statusFile, line))
     {
         if (line.find("VmRSS:") == 0)
         {
-            std::istringstream iss(line);
-            std::string label;
+            ::std::istringstream iss(line);
+            ::std::string label;
             uint64 size;
-            std::string unit;
+            ::std::string unit;
             if (iss >> label >> size >> unit)
             {
                 return size * 1024; // Convert from kB to bytes
@@ -528,14 +528,14 @@ PerformanceProfiler::~PerformanceProfiler()
         StopProfiling();
 }
 
-void PerformanceProfiler::StartProfiling(const std::string& sessionName)
+void PerformanceProfiler::StartProfiling(const ::std::string& sessionName)
 {
     if (m_profilingActive)
         StopProfiling();
 
-    m_currentSession = std::make_unique<ProfilingSession>();
+    m_currentSession = ::std::make_unique<ProfilingSession>();
     m_currentSession->name = sessionName;
-    m_currentSession->startTime = std::chrono::high_resolution_clock::now();
+    m_currentSession->startTime = ::std::chrono::high_resolution_clock::now();
     m_profilingActive = true;
 
     TC_LOG_INFO("playerbot.test", "Started performance profiling session: {}", sessionName);
@@ -546,7 +546,7 @@ void PerformanceProfiler::StopProfiling()
     if (!m_profilingActive || !m_currentSession)
         return;
 
-    m_currentSession->endTime = std::chrono::high_resolution_clock::now();
+    m_currentSession->endTime = ::std::chrono::high_resolution_clock::now();
     m_profilingActive = false;
 
     TC_LOG_INFO("playerbot.test", "Stopped performance profiling session: {}", m_currentSession->name);
@@ -557,7 +557,7 @@ bool PerformanceProfiler::IsProfilingActive() const
     return m_profilingActive;
 }
 
-void PerformanceProfiler::RecordOperation(const std::string& operationType, uint64 duration)
+void PerformanceProfiler::RecordOperation(const ::std::string& operationType, uint64 duration)
 {
     if (!m_profilingActive || !m_currentSession)
         return;
@@ -592,7 +592,7 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
     benchmark.category = "ProfiledTest";
 
     // Calculate timing metrics from all operations
-    std::vector<uint64> allTimes;
+    ::std::vector<uint64> allTimes;
     for (const auto& [operationType, times] : m_currentSession->operationTimes)
     {
         allTimes.insert(allTimes.end(), times.begin(), times.end());
@@ -600,24 +600,24 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
 
     if (!allTimes.empty())
     {
-        std::sort(allTimes.begin(), allTimes.end());
+        ::std::sort(allTimes.begin(), allTimes.end());
 
         benchmark.totalOperations = allTimes.size();
         benchmark.successfulOperations = allTimes.size(); // Assume all recorded operations were successful
         benchmark.minResponseTime = allTimes.front();
         benchmark.maxResponseTime = allTimes.back();
-        benchmark.averageResponseTime = std::accumulate(allTimes.begin(), allTimes.end(), 0ULL) / allTimes.size();
+        benchmark.averageResponseTime = ::std::accumulate(allTimes.begin(), allTimes.end(), 0ULL) / allTimes.size();
 
         // Calculate percentiles
         size_t p95Index = static_cast<size_t>(allTimes.size() * 0.95);
         size_t p99Index = static_cast<size_t>(allTimes.size() * 0.99);
-        benchmark.p95ResponseTime = allTimes[std::min(p95Index, allTimes.size() - 1)];
-        benchmark.p99ResponseTime = allTimes[std::min(p99Index, allTimes.size() - 1)];
+        benchmark.p95ResponseTime = allTimes[::std::min(p95Index, allTimes.size() - 1)];
+        benchmark.p99ResponseTime = allTimes[::std::min(p99Index, allTimes.size() - 1)];
 
         // Calculate throughput
         if (m_currentSession->endTime > m_currentSession->startTime)
         {
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(
                 m_currentSession->endTime - m_currentSession->startTime);
             if (duration.count() > 0)
                 benchmark.operationsPerSecond = allTimes.size() / duration.count();
@@ -627,7 +627,7 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
     // Memory metrics
     if (!m_currentSession->memorySnapshots.empty())
     {
-        benchmark.peakMemoryUsage = *std::max_element(
+        benchmark.peakMemoryUsage = *::std::max_element(
             m_currentSession->memorySnapshots.begin(),
             m_currentSession->memorySnapshots.end());
     }
@@ -635,11 +635,11 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
     // CPU metrics
     if (!m_currentSession->cpuSnapshots.empty())
     {
-        benchmark.peakCpuUsage = *std::max_element(
+        benchmark.peakCpuUsage = *::std::max_element(
             m_currentSession->cpuSnapshots.begin(),
             m_currentSession->cpuSnapshots.end());
 
-        benchmark.averageCpuUsage = std::accumulate(
+        benchmark.averageCpuUsage = ::std::accumulate(
             m_currentSession->cpuSnapshots.begin(),
             m_currentSession->cpuSnapshots.end(), 0.0f) / m_currentSession->cpuSnapshots.size();
     }
@@ -653,7 +653,7 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
 
 LoadTestRunner::LoadTestRunner(const LoadTestConfig& config)
     : m_config(config)
-    , m_profiler(std::make_unique<PerformanceProfiler>())
+    , m_profiler(::std::make_unique<PerformanceProfiler>())
 {
 }
 
@@ -695,14 +695,14 @@ bool LoadTestRunner::ExecuteRampUp(uint32 targetBots, uint32 rampTimeSeconds)
 {
     TC_LOG_INFO("playerbot.test", "Executing ramp-up to {} bots over {} seconds", targetBots, rampTimeSeconds);
 
-    uint32 botIncrement = std::max(1U, targetBots / (rampTimeSeconds / 10)); // Add bots every 10 seconds
+    uint32 botIncrement = ::std::max(1U, targetBots / (rampTimeSeconds / 10)); // Add bots every 10 seconds
     uint32 currentBots = 0;
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     while (currentBots < targetBots)
     {
-        uint32 nextBotCount = std::min(currentBots + botIncrement, targetBots);
+        uint32 nextBotCount = ::std::min(currentBots + botIncrement, targetBots);
 
         // Simulate spawning additional bots
         for (uint32 i = currentBots; i < nextBotCount; ++i)
@@ -723,11 +723,11 @@ bool LoadTestRunner::ExecuteRampUp(uint32 targetBots, uint32 rampTimeSeconds)
         }
 
         // Wait before next increment
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(10));
 
         // Check if we've exceeded our ramp time
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - startTime);
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::seconds>(
+            ::std::chrono::steady_clock::now() - startTime);
         if (elapsed.count() > rampTimeSeconds)
             break;
     }
@@ -741,10 +741,10 @@ bool LoadTestRunner::ExecuteSustainedLoad(uint32 botCount, uint32 durationSecond
     TC_LOG_INFO("playerbot.test", "Executing sustained load test with {} bots for {} seconds",
                 botCount, durationSeconds);
 
-    auto startTime = std::chrono::steady_clock::now();
-    auto endTime = startTime + std::chrono::seconds(durationSeconds);
+    auto startTime = ::std::chrono::steady_clock::now();
+    auto endTime = startTime + ::std::chrono::seconds(durationSeconds);
 
-    while (std::chrono::steady_clock::now() < endTime)
+    while (::std::chrono::steady_clock::now() < endTime)
     {
         // Record ongoing operations
         m_profiler->RecordOperation("BotUpdate", 1000); // 1ms per bot update
@@ -760,7 +760,7 @@ bool LoadTestRunner::ExecuteSustainedLoad(uint32 botCount, uint32 durationSecond
         }
 
         // Sleep to simulate update intervals
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
     }
 
     TC_LOG_INFO("playerbot.test", "Sustained load test completed successfully");
@@ -774,7 +774,7 @@ void LoadTestRunner::RecordLoadMetrics(uint32 currentBots)
     m_profiler->RecordMemorySnapshot(memoryUsage);
 
     // Record CPU usage (simulated)
-    float cpuUsage = std::min(90.0f, currentBots * 0.01f); // 0.01% CPU per bot
+    float cpuUsage = ::std::min(90.0f, currentBots * 0.01f); // 0.01% CPU per bot
     m_profiler->RecordCpuSnapshot(cpuUsage);
 }
 

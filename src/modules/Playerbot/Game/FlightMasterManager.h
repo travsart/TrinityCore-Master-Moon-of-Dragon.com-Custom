@@ -69,7 +69,7 @@ namespace Playerbot
         uint32 pathId;                  ///< Taxi path ID
         uint32 sourceNode;              ///< Source taxi node ID
         uint32 destinationNode;         ///< Destination taxi node ID
-        std::vector<uint32> nodes;      ///< All nodes in path
+        ::std::vector<uint32> nodes;      ///< All nodes in path
         float totalDistance;            ///< Total flight distance (yards)
         uint32 flightTime;              ///< Estimated flight time (seconds)
         uint32 goldCost;                ///< Flight cost in copper
@@ -91,7 +91,7 @@ namespace Playerbot
         Position position;              ///< Location coordinates
         uint32 taxiNode;                ///< Associated taxi node ID
         float distanceFromPlayer;       ///< Distance from player (yards)
-        std::string name;               ///< Flight master name
+        ::std::string name;               ///< Flight master name
 
         FlightMasterLocation()
             : entry(0), taxiNode(0), distanceFromPlayer(0.0f) {}
@@ -202,7 +202,7 @@ namespace Playerbot
          * Performance: O(n) where n = creatures on map, ~1ms typical
          * Thread-safety: Thread-safe (read-only map access)
          */
-        [[nodiscard]] static std::optional<FlightMasterLocation> FindNearestFlightMaster(
+        [[nodiscard]] static ::std::optional<FlightMasterLocation> FindNearestFlightMaster(
             Player const* player,
             float maxDistance = 0.0f);
 
@@ -235,7 +235,7 @@ namespace Playerbot
          * Performance: O(V + E) graph traversal, ~2ms typical
          * Thread-safety: Thread-safe (read-only graph access)
          */
-        [[nodiscard]] static std::optional<FlightPathInfo> CalculateFlightPath(
+        [[nodiscard]] static ::std::optional<FlightPathInfo> CalculateFlightPath(
             Player const* player,
             uint32 sourceNode,
             uint32 destinationNode,
@@ -294,7 +294,7 @@ namespace Playerbot
          */
         [[nodiscard]] static uint32 CalculateFlightCost(
             Player const* player,
-            std::vector<uint32> const& nodes);
+            ::std::vector<uint32> const& nodes);
 
         /**
          * @brief Estimates flight time for path
@@ -305,7 +305,7 @@ namespace Playerbot
          * Performance: < 0.1ms
          */
         [[nodiscard]] static uint32 EstimateFlightTime(
-            std::vector<uint32> const& nodes);
+            ::std::vector<uint32> const& nodes);
 
         /**
          * @brief Calculates total flight distance
@@ -316,7 +316,7 @@ namespace Playerbot
          * Performance: < 0.1ms
          */
         [[nodiscard]] static float CalculateFlightDistance(
-            std::vector<uint32> const& nodes);
+            ::std::vector<uint32> const& nodes);
     };
 
 } // namespace Playerbot

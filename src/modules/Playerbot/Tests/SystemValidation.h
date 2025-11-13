@@ -52,9 +52,9 @@ struct ValidationResult
     SystemComponent component;
     bool isValid;
     float healthScore; // 0.0 = critical, 1.0 = perfect
-    std::vector<std::string> issues;
-    std::vector<std::string> warnings;
-    std::vector<std::string> recommendations;
+    ::std::vector<::std::string> issues;
+    ::std::vector<::std::string> warnings;
+    ::std::vector<::std::string> recommendations;
     uint32 validationTime;
     uint32 totalChecks;
     uint32 passedChecks;
@@ -76,7 +76,7 @@ public:
 
     // Core validation framework
     ValidationResult ValidateSystem(SystemComponent component, ValidationLevel level = ValidationLevel::STANDARD) override;
-    std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD) override;
+    ::std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD) override;
     bool RunSystemHealthCheck() override;
     void PerformSystemDiagnostics() override;
 
@@ -106,14 +106,14 @@ public:
         uint32 responseTime;
         uint32 throughput;
         bool meetsPerformanceTargets;
-        std::vector<std::string> bottlenecks;
+        ::std::vector<::std::string> bottlenecks;
 
         PerformanceValidation(SystemComponent comp) : component(comp), cpuUsage(0.0f)
             , memoryUsage(0), responseTime(0), throughput(0), meetsPerformanceTargets(true) {}
     };
 
     PerformanceValidation ValidateSystemPerformance(SystemComponent component) override;
-    std::vector<PerformanceValidation> ValidateAllPerformance() override;
+    ::std::vector<PerformanceValidation> ValidateAllPerformance() override;
     bool ValidateMemoryUsage() override;
     bool ValidateResponseTimes() override;
 
@@ -133,29 +133,29 @@ public:
     // Runtime validation
     void EnableContinuousValidation(bool enable) override;
     void SetValidationInterval(uint32 intervalMs) override;
-    void RegisterValidationTrigger(const std::string& triggerName, std::function<bool()> validator) override;
-    void ValidateOnEvent(const std::string& eventName) override;
+    void RegisterValidationTrigger(const ::std::string& triggerName, ::std::function<bool()> validator) override;
+    void ValidateOnEvent(const ::std::string& eventName) override;
 
     // Validation reporting
     struct SystemHealthReport
     {
-        std::vector<ValidationResult> componentResults;
-        std::vector<PerformanceValidation> performanceResults;
+        ::std::vector<ValidationResult> componentResults;
+        ::std::vector<PerformanceValidation> performanceResults;
         float overallHealthScore;
         uint32 criticalIssues;
         uint32 warnings;
         uint32 totalChecks;
-        std::chrono::steady_clock::time_point reportTime;
+        ::std::chrono::steady_clock::time_point reportTime;
         bool systemHealthy;
 
         SystemHealthReport() : overallHealthScore(1.0f), criticalIssues(0), warnings(0)
-            , totalChecks(0), reportTime(std::chrono::steady_clock::now()), systemHealthy(true) {}
+            , totalChecks(0), reportTime(::std::chrono::steady_clock::now()), systemHealthy(true) {}
     };
 
     SystemHealthReport GenerateHealthReport() override;
-    void ExportValidationReport(const std::string& filename) override;
+    void ExportValidationReport(const ::std::string& filename) override;
     void LogValidationResults(const ValidationResult& result) override;
-    std::vector<std::string> GetCriticalIssues() override;
+    ::std::vector<::std::string> GetCriticalIssues() override;
 
     // Automated fixing and recovery
     bool AttemptAutomaticFix(const ValidationResult& result) override;
@@ -166,13 +166,13 @@ public:
     // Validation metrics and analytics
     struct ValidationMetrics
     {
-        std::atomic<uint32> totalValidations{0};
-        std::atomic<uint32> successfulValidations{0};
-        std::atomic<uint32> failedValidations{0};
-        std::atomic<uint32> issuesDetected{0};
-        std::atomic<uint32> issuesResolved{0};
-        std::atomic<float> averageHealthScore{1.0f};
-        std::atomic<uint32> averageValidationTime{0};
+        ::std::atomic<uint32> totalValidations{0};
+        ::std::atomic<uint32> successfulValidations{0};
+        ::std::atomic<uint32> failedValidations{0};
+        ::std::atomic<uint32> issuesDetected{0};
+        ::std::atomic<uint32> issuesResolved{0};
+        ::std::atomic<float> averageHealthScore{1.0f};
+        ::std::atomic<uint32> averageValidationTime{0};
 
         void Reset() {
             totalValidations = 0; successfulValidations = 0; failedValidations = 0;
@@ -184,15 +184,15 @@ public:
     ValidationMetrics GetValidationMetrics() override { return _metrics; }
 
     // Advanced validation features
-    void SetupValidationSchedule(const std::string& schedule) override;
+    void SetupValidationSchedule(const ::std::string& schedule) override;
     void ValidateAfterSystemChanges() override;
     void ValidateBeforeCriticalOperations() override;
     void MonitorSystemDegradation() override;
 
     // Custom validation rules
-    void AddCustomValidationRule(const std::string& ruleName, std::function<bool(SystemComponent)> rule) override;
-    void RemoveCustomValidationRule(const std::string& ruleName) override;
-    std::vector<std::string> GetActiveValidationRules() override;
+    void AddCustomValidationRule(const ::std::string& ruleName, ::std::function<bool(SystemComponent)> rule) override;
+    void RemoveCustomValidationRule(const ::std::string& ruleName) override;
+    ::std::vector<::std::string> GetActiveValidationRules() override;
 
     // Update and maintenance
     void Update(uint32 diff) override;
@@ -204,14 +204,14 @@ private:
     ~SystemValidation() = default;
 
     // Core validation data
-    std::unordered_map<SystemComponent, ValidationResult> _lastResults;
-    std::unordered_map<std::string, std::function<bool()>> _validationTriggers;
-    std::unordered_map<std::string, std::function<bool(SystemComponent)>> _customRules;
+    ::std::unordered_map<SystemComponent, ValidationResult> _lastResults;
+    ::std::unordered_map<::std::string, ::std::function<bool()>> _validationTriggers;
+    ::std::unordered_map<::std::string, ::std::function<bool(SystemComponent)>> _customRules;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _validationMutex;
 
     // Continuous validation
-    std::atomic<bool> _continuousValidationEnabled{false};
-    std::atomic<uint32> _validationInterval{300000}; // 5 minutes
+    ::std::atomic<bool> _continuousValidationEnabled{false};
+    ::std::atomic<uint32> _validationInterval{300000}; // 5 minutes
     uint32 _lastValidationTime{0};
 
     // Performance tracking
@@ -240,9 +240,9 @@ private:
     void IdentifyPerformanceBottlenecks(PerformanceValidation& validation);
 
     // Issue detection and classification
-    void ClassifyIssue(ValidationResult& result, const std::string& issue);
-    bool IsCriticalIssue(const std::string& issue);
-    bool IsPerformanceIssue(const std::string& issue);
+    void ClassifyIssue(ValidationResult& result, const ::std::string& issue);
+    bool IsCriticalIssue(const ::std::string& issue);
+    bool IsPerformanceIssue(const ::std::string& issue);
     void PrioritizeIssues(ValidationResult& result);
 
     // Automatic fixing implementations
@@ -256,7 +256,7 @@ private:
     // Validation algorithms
     float CalculateHealthScore(const ValidationResult& result);
     bool RunValidationChecks(SystemComponent component, ValidationLevel level, ValidationResult& result);
-    void AddValidationCheck(ValidationResult& result, const std::string& checkName, bool passed);
+    void AddValidationCheck(ValidationResult& result, const ::std::string& checkName, bool passed);
     void GenerateRecommendations(ValidationResult& result);
 
     // System state analysis

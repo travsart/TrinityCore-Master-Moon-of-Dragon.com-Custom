@@ -139,7 +139,7 @@ private:
         uint32 count = 0;
 
         // Use Trinity's SearcherInRange to find nearby hostile units
-        std::list<Unit*> targets;
+        ::std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         Cell::VisitAllObjects(bot, searcher, range);

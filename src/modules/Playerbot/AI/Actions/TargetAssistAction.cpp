@@ -18,7 +18,7 @@
 namespace Playerbot
 {
 
-TargetAssistAction::TargetAssistAction(std::string const& name)
+TargetAssistAction::TargetAssistAction(::std::string const& name)
     : CombatAction(name)
 {
     // SIMPLIFIED IMPLEMENTATION - TECHNICAL DEBT DOCUMENTED
@@ -264,8 +264,8 @@ float TargetAssistAction::CalculateAssistPriority(Player* bot, Unit* target, Gro
     priority += attackers * 5.0f;
 
     // Distance factor (closer = higher priority)
-    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-    priority += std::max(0.0f, 30.0f - distance);
+    float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    priority += ::std::max(0.0f, 30.0f - distance);
 
     // Health factor (lower health = higher priority)
     float healthPct = target->GetHealthPct();

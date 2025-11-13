@@ -51,7 +51,7 @@ private:
     SpatialGridManager() = default;
     ~SpatialGridManager() { DestroyAllGrids(); }
 
-    std::unordered_map<uint32, std::unique_ptr<DoubleBufferedSpatialGrid>> _grids;
+    ::std::unordered_map<uint32, ::std::unique_ptr<DoubleBufferedSpatialGrid>> _grids;
     mutable OrderedSharedMutex<LockOrder::SPATIAL_GRID> _mutex;  // Allow concurrent reads with deadlock prevention
 
     // Non-copyable

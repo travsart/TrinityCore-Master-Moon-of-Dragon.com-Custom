@@ -56,7 +56,7 @@ namespace Playerbot
          * @param type The target service type
          * @return Vector of menu option indices to select in order
          */
-        std::vector<uint32> GetGossipPath(Creature* creature, InteractionType type) const;
+        ::std::vector<uint32> GetGossipPath(Creature* creature, InteractionType type) const;
 
         /**
          * @brief Process gossip menu received from server
@@ -82,7 +82,7 @@ namespace Playerbot
          * @param menuId The menu ID
          * @return Vector of parsed gossip options
          */
-        std::vector<GossipMenuOption> ParseGossipMenu(::Player* bot, uint32 menuId) const;
+        ::std::vector<GossipMenuOption> ParseGossipMenu(::Player* bot, uint32 menuId) const;
 
         /**
          * @brief Select best gossip option for desired service
@@ -90,7 +90,7 @@ namespace Playerbot
          * @param desiredType The service type wanted
          * @return Index of best option, or -1 if none suitable
          */
-        int32 SelectBestOption(const std::vector<GossipMenuOption>& options, InteractionType desiredType) const;
+        int32 SelectBestOption(const ::std::vector<GossipMenuOption>& options, InteractionType desiredType) const;
 
         /**
          * @brief Check if gossip option leads to desired service
@@ -105,7 +105,7 @@ namespace Playerbot
          * @param text The gossip option text
          * @return Detected service type, or None if uncertain
          */
-        InteractionType AnalyzeGossipText(const std::string& text) const;
+        InteractionType AnalyzeGossipText(const ::std::string& text) const;
 
         /**
          * @brief Handle special gossip cases (code input, etc)
@@ -121,7 +121,7 @@ namespace Playerbot
          * @param type The service type reached
          * @param path The successful path taken
          */
-        void CacheGossipPath(uint32 creatureEntry, InteractionType type, const std::vector<uint32>& path);
+        void CacheGossipPath(uint32 creatureEntry, InteractionType type, const ::std::vector<uint32>& path);
 
         /**
          * @brief Get cached gossip path if exists
@@ -129,7 +129,7 @@ namespace Playerbot
          * @param type The desired service type
          * @return Cached path, or empty vector if not cached
          */
-        std::vector<uint32> GetCachedPath(uint32 creatureEntry, InteractionType type) const;
+        ::std::vector<uint32> GetCachedPath(uint32 creatureEntry, InteractionType type) const;
 
         /**
          * @brief Clear gossip path cache
@@ -157,7 +157,7 @@ namespace Playerbot
          * @param boxText The text prompt from NPC
          * @return Generated response string
          */
-        std::string GenerateResponse(::Player* bot, const std::string& boxText) const;
+        ::std::string GenerateResponse(::Player* bot, const ::std::string& boxText) const;
 
     private:
         /**
@@ -176,14 +176,14 @@ namespace Playerbot
          * @param keywords The keywords to search for
          * @return True if any keyword found
          */
-        bool ContainsKeywords(const std::string& text, const std::vector<std::string>& keywords) const;
+        bool ContainsKeywords(const ::std::string& text, const ::std::vector<::std::string>& keywords) const;
 
         /**
          * @brief Convert text to lowercase for comparison
          * @param text The text to convert
          * @return Lowercase version of text
          */
-        std::string ToLowerCase(const std::string& text) const;
+        ::std::string ToLowerCase(const ::std::string& text) const;
 
         /**
          * @brief Score a gossip option for relevance to desired service
@@ -198,22 +198,22 @@ namespace Playerbot
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
 
         // Gossip path cache: [creatureEntry][interactionType] = path
-        std::unordered_map<uint32, std::unordered_map<InteractionType, std::vector<uint32>>> m_gossipPathCache;
+        ::std::unordered_map<uint32, ::std::unordered_map<InteractionType, ::std::vector<uint32>>> m_gossipPathCache;
 
         // Keyword mappings for text analysis
-        std::unordered_map<InteractionType, std::vector<std::string>> m_serviceKeywords;
+        ::std::unordered_map<InteractionType, ::std::vector<::std::string>> m_serviceKeywords;
 
         // Icon to service type mappings
-        std::unordered_map<uint8, GossipSelectType> m_iconMappings;
+        ::std::unordered_map<uint8, GossipSelectType> m_iconMappings;
 
         // Known NPC gossip patterns (hardcoded for specific NPCs)
         struct KnownGossipPath
         {
             uint32 creatureEntry;
             InteractionType serviceType;
-            std::vector<uint32> optionSequence;
+            ::std::vector<uint32> optionSequence;
         };
-        std::vector<KnownGossipPath> m_knownPaths;
+        ::std::vector<KnownGossipPath> m_knownPaths;
 
         // Current gossip session tracking
         struct GossipSession
@@ -221,12 +221,12 @@ namespace Playerbot
             ObjectGuid botGuid;
             ObjectGuid npcGuid;
             uint32 menuId = 0;
-            std::vector<GossipMenuOption> options;
+            ::std::vector<GossipMenuOption> options;
             InteractionType targetService = InteractionType::None;
             uint32 currentDepth = 0;
             const uint32 MAX_DEPTH = 5;
         };
-        std::unordered_map<ObjectGuid, GossipSession> m_activeSessions;
+        ::std::unordered_map<ObjectGuid, GossipSession> m_activeSessions;
 
         // Statistics for learning
         struct GossipStatistics
@@ -234,16 +234,16 @@ namespace Playerbot
             uint32 successCount = 0;
             uint32 failureCount = 0;
             float successRate = 0.0f;
-            std::chrono::steady_clock::time_point lastUsed;
+            ::std::chrono::steady_clock::time_point lastUsed;
         };
-        std::unordered_map<uint32, GossipStatistics> m_pathStatistics;
+        ::std::unordered_map<uint32, GossipStatistics> m_pathStatistics;
 
         // Common gossip codes/passwords
-        std::unordered_map<std::string, std::string> m_gossipCodes;
+        ::std::unordered_map<::std::string, ::std::string> m_gossipCodes;
 
         // Performance optimization
         const uint32 CACHE_CLEANUP_INTERVAL = 300000; // 5 minutes
-        std::chrono::steady_clock::time_point m_lastCacheCleanup;
+        ::std::chrono::steady_clock::time_point m_lastCacheCleanup;
 
         bool m_initialized = false;
     };

@@ -497,7 +497,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
         {
             QuestObjective const& questObjective = quest->Objectives[objective.objectiveIndex];
             // Scan for friendly NPCs with this entry in range (300 yards to match hostile creature scan)
-            std::list<Creature*> nearbyCreatures;
+            ::std::list<Creature*> nearbyCreatures;
             bot->GetCreatureListWithEntryInGrid(nearbyCreatures, questObjective.ObjectID, 300.0f);
             for (Creature* creature : nearbyCreatures)
             {
@@ -516,7 +516,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                         continue;  // Skip this creature - it should be attacked via FindQuestTarget(), not interacted with
                     }
 
-                    float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
+                    float distance = ::std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
                     TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Bot {} found FRIENDLY quest NPC {} (Entry: {}) with spell click at distance {:.1f}",
                                  bot->GetName(), creature->GetName(), questObjective.ObjectID, distance);
 
@@ -597,7 +597,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
     }
 
     TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Bot {} found target {} (Entry: {}) at distance {:.1f}",
-                 bot->GetName(), target->GetName(), target->GetEntry(), std::sqrt(bot->GetExactDistSq(target)));
+                 bot->GetName(), target->GetName(), target->GetEntry(), ::std::sqrt(bot->GetExactDistSq(target)));
 
     // Check if we should engage this target
     if (!ShouldEngageTarget(ai, target, objective))
@@ -648,7 +648,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
         {
             // Move to optimal range instead of melee
             float optimalRange = 25.0f; // Standard ranged distance
-            float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+            float currentDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
 
             TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Bot {} is RANGED class ({}), currentDistance={:.1f}yd, optimalRange={:.1f}yd",
                          bot->GetName(), bot->GetClass(), currentDistance, optimalRange);
@@ -766,7 +766,7 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
         return;
     }
 
-    float distance = std::sqrt(bot->GetExactDistSq(questObject)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(questObject)); // Calculate once from squared distance
     TC_LOG_ERROR("module.playerbot.quest", " CollectQuestItems: Bot {} found quest object {} at distance {:.1f}",
                  bot->GetName(), questObject->GetEntry(), distance);
 
@@ -863,7 +863,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     uint32 targetObjectId = questObjective.ObjectID;
 
     // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
-    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, targetObjectId, 200.0f);
+    ::std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, targetObjectId, 200.0f);
 
     TC_LOG_ERROR("module.playerbot.quest", " UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
                  targetObjectId, objects.size());
@@ -887,12 +887,12 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
         return;
 
     // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
         spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 200.0f);
 
     // Find the nearest valid GameObject matching target entry
     ObjectGuid targetGuid;
-    float nearestDistance = std::numeric_limits<float>::max();
+    float nearestDistance = ::std::numeric_limits<float>::max();
     uint32 validObjectsFound = 0;
 
     for (auto const& snapshot : nearbyObjects)
@@ -1033,7 +1033,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
                  gameObjectScale, damageRadius, safeDistance);
 
     // Calculate bot's current distance to target
-    float currentDistance = std::sqrt(bot->GetExactDistSq(targetObject)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(targetObject)); // Calculate once from squared distance
 
     TC_LOG_ERROR("module.playerbot.quest", " UseQuestItemOnTarget: Bot distance to target={:.1f}yd (safe range: {:.1f}-{:.1f}yd)",
                  currentDistance, minSafeDistance, maxUseDistance);
@@ -1356,7 +1356,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
         return nullptr;
 
     // Query nearby creatures (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
         spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 300.0f);
 
     // Find first matching creature by entry
@@ -1459,7 +1459,7 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
         return nullptr;
 
     // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
         spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 200.0f);
 
     TC_LOG_ERROR("module.playerbot.quest", " FindQuestObject: Bot {} scanning for GameObject entry {} within 200 yards - found {} nearby objects",
@@ -1496,7 +1496,7 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     TC_LOG_ERROR("module.playerbot.quest", " FindQuestObject: Bot {} found GameObject {} (Entry: {}) at ({:.1f}, {:.1f}, {:.1f}), distance={:.1f}",
                  bot->GetName(), gameObject->GetName(), questObjective.ObjectID,
                  gameObject->GetPositionX(), gameObject->GetPositionY(), gameObject->GetPositionZ(),
-                 std::sqrt(bot->GetExactDistSq(gameObject)));
+                 ::std::sqrt(bot->GetExactDistSq(gameObject)));
 
     return gameObject;
 }
@@ -1535,7 +1535,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     // Initialize QuestAcceptanceManager if not already done
     if (!_acceptanceManager)
     {
-        _acceptanceManager = std::make_unique<QuestAcceptanceManager>(bot);
+        _acceptanceManager = ::std::make_unique<QuestAcceptanceManager>(bot);
         TC_LOG_ERROR("module.playerbot.quest",
             " SearchForQuestGivers: Initialized QuestAcceptanceManager for bot {}",
             bot->GetName());
@@ -1553,7 +1553,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
     uint32 backoffDelay = 0;
     if (_questGiverSearchFailures > 0)
     {
-        backoffDelay = std::min(30000u, 5000u * (1u << (_questGiverSearchFailures - 1)));
+        backoffDelay = ::std::min(30000u, 5000u * (1u << (_questGiverSearchFailures - 1)));
     }
 
     TC_LOG_ERROR("module.playerbot.quest", "⏰ SearchForQuestGivers: Bot {} - failures={}, backoffDelay={}ms, timeSinceLastSearch={}ms",
@@ -1579,7 +1579,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         bot->GetName(), bot->GetLevel());
 
     // Search for nearby creatures that might offer quests
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 50.0f); // 50 yard radius
 
     TC_LOG_ERROR("module.playerbot.quest", " SearchForQuestGivers: Bot {} found {} nearby creatures",
@@ -1646,7 +1646,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         questGiversWithEligibleQuests++;
 
         // Find the closest quest giver WITH ELIGIBLE QUESTS
-        float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
+        float distance = ::std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
         TC_LOG_ERROR("module.playerbot.quest", " Found quest giver WITH ELIGIBLE QUESTS: {} (Entry: {}) at distance {:.1f}",
                      creature->GetName(), creature->GetEntry(), distance);
 
@@ -1670,7 +1670,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         TC_LOG_ERROR("module.playerbot.quest",
             " SearchForQuestGivers: Bot {} found no quest givers within 50 yards (failures: {}, next search in {}s)",
             bot->GetName(), _questGiverSearchFailures,
-            std::min(30u, 5u * (1u << (_questGiverSearchFailures - 1))));
+            ::std::min(30u, 5u * (1u << (_questGiverSearchFailures - 1))));
 
         // PATHFINDING TO QUEST HUBS: Navigate to appropriate quest hub for bot's level
         TC_LOG_ERROR("module.playerbot.quest",
@@ -1981,7 +1981,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
                  bot->GetName(), npcEntry);
 
     // Scan for quest ender NPC in 50-yard radius
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, npcEntry, 50.0f);
 
     TC_LOG_ERROR("module.playerbot.quest", " CheckForQuestEnderInRange: Bot {} found {} creatures with entry {} in 50-yard radius",
@@ -2019,7 +2019,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
             continue;
         }
 
-        float distance = std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
+        float distance = ::std::sqrt(bot->GetExactDistSq(creature)); // Calculate once from squared distance
         TC_LOG_ERROR("module.playerbot.quest", " CheckForQuestEnderInRange: Found valid quest ender {} (Entry: {}) at distance {:.1f}",
                      creature->GetName(), creature->GetEntry(), distance);
 
@@ -2403,13 +2403,13 @@ bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
 
     // PERFORMANCE: Use static cache to avoid repeated database queries
     // Key: itemId, Value: isCreatureLoot
-    static std::unordered_map<uint32, bool> itemLootCache;
+    static ::std::unordered_map<uint32, bool> itemLootCache;
     // DEADLOCK FIX: Changed to recursive_mutex
-    static std::recursive_mutex cacheMutex;
+    static ::std::recursive_mutex cacheMutex;
 
     // Check cache first for performance
     {
-        std::lock_guard lock(cacheMutex);
+        ::std::lock_guard lock(cacheMutex);
         auto cacheIt = itemLootCache.find(itemId);
         if (cacheIt != itemLootCache.end())
         {
@@ -2430,7 +2430,7 @@ bool QuestStrategy::IsItemFromCreatureLoot(uint32 itemId) const
 
     // Cache the result for future queries (thread-safe)
     {
-        std::lock_guard lock(cacheMutex);
+        ::std::lock_guard lock(cacheMutex);
         itemLootCache[itemId] = isCreatureLoot;
     }
 
@@ -2449,13 +2449,13 @@ bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
     TC_LOG_DEBUG("module.playerbot.quest", " RequiresSpellClickInteraction: Checking creature entry {}", creatureEntry);
 
     // PERFORMANCE: Use static cache to avoid repeated database queries
-    static std::unordered_map<uint32, bool> spellClickCache;
+    static ::std::unordered_map<uint32, bool> spellClickCache;
     // DEADLOCK FIX: Changed to recursive_mutex
-    static std::recursive_mutex cacheMutex;
+    static ::std::recursive_mutex cacheMutex;
 
     // Check cache first
     {
-        std::lock_guard lock(cacheMutex);
+        ::std::lock_guard lock(cacheMutex);
         auto cacheIt = spellClickCache.find(creatureEntry);
         if (cacheIt != spellClickCache.end())
         {
@@ -2475,7 +2475,7 @@ bool QuestStrategy::RequiresSpellClickInteraction(uint32 creatureEntry) const
 
     // Cache the result
     {
-        std::lock_guard lock(cacheMutex);
+        ::std::lock_guard lock(cacheMutex);
         spellClickCache[creatureEntry] = hasSpellClick;
     }
 

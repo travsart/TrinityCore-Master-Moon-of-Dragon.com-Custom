@@ -48,14 +48,14 @@ struct TriggerResult
 {
     bool triggered = false;
     float urgency = 0.0f;  // 0-1, higher = more urgent
-    std::shared_ptr<Action> suggestedAction;
+    ::std::shared_ptr<Action> suggestedAction;
     ActionContext context;
 };
 
 class TC_GAME_API Trigger
 {
 public:
-    Trigger(std::string const& name, TriggerType type);
+    Trigger(::std::string const& name, TriggerType type);
     virtual ~Trigger() = default;
 
     // Core trigger interface
@@ -66,24 +66,24 @@ public:
     virtual bool IsActive(BotAI* ai) const { return Check(ai); }
 
     // Trigger properties
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
     TriggerType GetType() const { return _type; }
     bool IsActive() const { return _active; }
     void SetActive(bool active) { _active = active; }
 
     // Associated action
-    void SetAction(std::shared_ptr<Action> action) { _action = action; }
-    std::shared_ptr<Action> GetAction() const { return _action; }
+    void SetAction(::std::shared_ptr<Action> action) { _action = action; }
+    ::std::shared_ptr<Action> GetAction() const { return _action; }
 
     // Legacy action access
-    std::string GetActionName() const;
-    void SetAction(std::string const& actionName) { _actionName = actionName; }
+    ::std::string GetActionName() const;
+    void SetAction(::std::string const& actionName) { _actionName = actionName; }
 
     // Urgency calculation
     virtual float CalculateUrgency(BotAI* ai) const { return 0.5f; }
 
     // Trigger conditions
-    void AddCondition(std::function<bool(BotAI*)> condition);
+    void AddCondition(::std::function<bool(BotAI*)> condition);
     bool CheckConditions(BotAI* ai) const;
 
     // Performance tracking
@@ -95,25 +95,25 @@ public:
     void SetPriority(uint32 priority) { _priority = priority; }
 
 protected:
-    std::string _name;
+    ::std::string _name;
     TriggerType _type;
     bool _active = true;
-    std::shared_ptr<Action> _action;
-    std::string _actionName; // Legacy support
-    std::vector<std::function<bool(BotAI*)>> _conditions;
+    ::std::shared_ptr<Action> _action;
+    ::std::string _actionName; // Legacy support
+    ::std::vector<::std::function<bool(BotAI*)>> _conditions;
     uint32 _priority = 100;
 
     // Statistics
-    mutable std::atomic<uint32> _triggerCount{0};
-    mutable std::chrono::steady_clock::time_point _firstTrigger;
-    mutable std::chrono::steady_clock::time_point _lastTrigger;
+    mutable ::std::atomic<uint32> _triggerCount{0};
+    mutable ::std::chrono::steady_clock::time_point _firstTrigger;
+    mutable ::std::chrono::steady_clock::time_point _lastTrigger;
 };
 
 // Health trigger
 class TC_GAME_API HealthTrigger : public Trigger
 {
 public:
-    HealthTrigger(std::string const& name, float threshold)
+    HealthTrigger(::std::string const& name, float threshold)
         : Trigger(name, TriggerType::HEALTH), _threshold(threshold) {}
 
     virtual bool Check(BotAI* ai) const override;
@@ -130,7 +130,7 @@ protected:
 class TC_GAME_API CombatTrigger : public Trigger
 {
 public:
-    CombatTrigger(std::string const& name)
+    CombatTrigger(::std::string const& name)
         : Trigger(name, TriggerType::COMBAT) {}
 
     virtual bool Check(BotAI* ai) const override;
@@ -141,7 +141,7 @@ public:
 class TC_GAME_API TimerTrigger : public Trigger
 {
 public:
-    TimerTrigger(std::string const& name, uint32 intervalMs)
+    TimerTrigger(::std::string const& name, uint32 intervalMs)
         : Trigger(name, TriggerType::TIMER), _interval(intervalMs) {}
 
     virtual bool Check(BotAI* ai) const override;
@@ -151,14 +151,14 @@ public:
 
 protected:
     uint32 _interval;
-    mutable std::chrono::steady_clock::time_point _lastCheck;
+    mutable ::std::chrono::steady_clock::time_point _lastCheck;
 };
 
 // Distance trigger
 class TC_GAME_API DistanceTrigger : public Trigger
 {
 public:
-    DistanceTrigger(std::string const& name, float distance)
+    DistanceTrigger(::std::string const& name, float distance)
         : Trigger(name, TriggerType::DISTANCE), _distance(distance) {}
 
     virtual bool Check(BotAI* ai) const override;
@@ -175,7 +175,7 @@ protected:
 class TC_GAME_API QuestTrigger : public Trigger
 {
 public:
-    QuestTrigger(std::string const& name)
+    QuestTrigger(::std::string const& name)
         : Trigger(name, TriggerType::QUEST) {}
 
     virtual bool Check(BotAI* ai) const override;
@@ -198,21 +198,21 @@ public:
     static TriggerFactory* instance();
 
     // Trigger registration
-    void RegisterTrigger(std::string const& name,
-                        std::function<std::shared_ptr<Trigger>()> creator) override;
+    void RegisterTrigger(::std::string const& name,
+                        ::std::function<::std::shared_ptr<Trigger>()> creator) override;
 
     // Trigger creation
-    std::shared_ptr<Trigger> CreateTrigger(std::string const& name) override;
-    std::vector<std::shared_ptr<Trigger>> CreateDefaultTriggers() override;
-    std::vector<std::shared_ptr<Trigger>> CreateCombatTriggers() override;
-    std::vector<std::shared_ptr<Trigger>> CreateQuestTriggers() override;
+    ::std::shared_ptr<Trigger> CreateTrigger(::std::string const& name) override;
+    ::std::vector<::std::shared_ptr<Trigger>> CreateDefaultTriggers() override;
+    ::std::vector<::std::shared_ptr<Trigger>> CreateCombatTriggers() override;
+    ::std::vector<::std::shared_ptr<Trigger>> CreateQuestTriggers() override;
 
     // Available triggers
-    std::vector<std::string> GetAvailableTriggers() const override;
-    bool HasTrigger(std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableTriggers() const override;
+    bool HasTrigger(::std::string const& name) const override;
 
 private:
-    std::unordered_map<std::string, std::function<std::shared_ptr<Trigger>()>> _creators;
+    ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<Trigger>()>> _creators;
 };
 
 #define sTriggerFactory TriggerFactory::instance()

@@ -72,7 +72,7 @@ public:
     // === IBotDatabasePool interface implementation ===
 
     // Initialize with connection parameters and thread counts
-    bool Initialize(std::string const& connectionString,
+    bool Initialize(::std::string const& connectionString,
                    uint8 asyncThreads = 4,
                    uint8 syncThreads = 2) override;
     void Shutdown() override;
@@ -81,7 +81,7 @@ public:
 
     // Async query execution with callback
     void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
-                     std::function<void(PreparedQueryResult)> callback,
+                     ::std::function<void(PreparedQueryResult)> callback,
                      uint32 timeoutMs = 30000) override;
 
     // Fire-and-forget async execution (no result needed)
@@ -89,8 +89,8 @@ public:
                              uint32 timeoutMs = 30000) override;
 
     // Async batch operations
-    void ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
-                          std::function<void(std::vector<PreparedQueryResult>)> callback,
+    void ExecuteBatchAsync(::std::vector<CharacterDatabasePreparedStatement*> const& statements,
+                          ::std::function<void(::std::vector<PreparedQueryResult>)> callback,
                           uint32 timeoutMs = 30000) override;
 
     // === SYNCHRONOUS QUERY OPERATIONS ===
@@ -105,16 +105,16 @@ public:
     CharacterDatabasePreparedStatement* GetPreparedStatement(uint32 stmtId) override;
 
     // Cache prepared statement for reuse
-    void CachePreparedStatement(uint32 stmtId, std::string const& sql) override;
+    void CachePreparedStatement(uint32 stmtId, ::std::string const& sql) override;
 
     // === CACHING SYSTEM ===
 
     // Cache query result with TTL
-    void CacheResult(std::string const& key, PreparedQueryResult const& result,
-                    std::chrono::seconds ttl = std::chrono::seconds(60)) override;
+    void CacheResult(::std::string const& key, PreparedQueryResult const& result,
+                    ::std::chrono::seconds ttl = ::std::chrono::seconds(60)) override;
 
     // Get cached result
-    PreparedQueryResult GetCachedResult(std::string const& key) override;
+    PreparedQueryResult GetCachedResult(::std::string const& key) override;
 
     // === PERFORMANCE MONITORING ===
 
@@ -130,7 +130,7 @@ public:
     // Configuration
     void SetQueryTimeout(uint32 timeoutMs) override { _defaultTimeoutMs = timeoutMs; }
     void SetCacheSize(size_t maxSize) override { _maxCacheSize = maxSize; }
-    void SetConnectionRecycleInterval(std::chrono::seconds interval) override { _recycleInterval = interval; }
+    void SetConnectionRecycleInterval(::std::chrono::seconds interval) override { _recycleInterval = interval; }
 
 private:
     BotDatabasePool() = default;
@@ -141,49 +141,49 @@ private:
     // === INTERNAL STRUCTURES ===
 
     struct ConnectionInfo {
-        std::unique_ptr<MySQLConnection> connection;
-        std::chrono::steady_clock::time_point lastUsed;
-        std::atomic<bool> inUse{false};
+        ::std::unique_ptr<MySQLConnection> connection;
+        ::std::chrono::steady_clock::time_point lastUsed;
+        ::std::atomic<bool> inUse{false};
         uint32 queryCount{0};
     };
 
     struct QueryRequest {
         CharacterDatabasePreparedStatement* statement;
-        std::function<void(PreparedQueryResult)> callback;
-        std::chrono::steady_clock::time_point submitTime;
+        ::std::function<void(PreparedQueryResult)> callback;
+        ::std::chrono::steady_clock::time_point submitTime;
         uint32 timeoutMs;
         uint32 requestId;
     };
 
     struct CacheEntry {
         PreparedQueryResult result;
-        std::chrono::steady_clock::time_point expiry;
-        std::chrono::steady_clock::time_point lastAccess;
+        ::std::chrono::steady_clock::time_point expiry;
+        ::std::chrono::steady_clock::time_point lastAccess;
         uint32 accessCount{0};
     };
 
     // === CONNECTION MANAGEMENT ===
 
     // Connection pool
-    std::vector<std::unique_ptr<ConnectionInfo>> _connections;
+    ::std::vector<::std::unique_ptr<ConnectionInfo>> _connections;
     boost::lockfree::queue<size_t> _availableConnections{16};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::DATABASE_POOL> _connectionMutex;
 
     // Connection configuration
-    std::string _connectionString;
+    ::std::string _connectionString;
     uint8 _asyncThreads;
     uint8 _syncThreads;
 
     // === ASYNC OPERATION SYSTEM ===
 
     // Boost.Asio for async operations
-    std::unique_ptr<boost::asio::io_context> _ioContext;
-    std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> _workGuard;
-    std::vector<std::thread> _workers;
+    ::std::unique_ptr<boost::asio::io_context> _ioContext;
+    ::std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> _workGuard;
+    ::std::vector<::std::thread> _workers;
 
     // Query queue
     boost::lockfree::queue<QueryRequest*> _queryQueue{1024};
-    std::atomic<uint32> _nextRequestId{1};
+    ::std::atomic<uint32> _nextRequestId{1};
 
     // === CACHING SYSTEM ===
 
@@ -193,29 +193,29 @@ private:
     // When bots query database during update, the hashmap's internal std::shared_mutex
     // throws "resource deadlock would occur" on recursive lock attempts
     using CacheMap = phmap::parallel_flat_hash_map<
-        std::string,
+        ::std::string,
         CacheEntry,
-        std::hash<std::string>,
-        std::equal_to<>,
-        std::allocator<std::pair<std::string, CacheEntry>>,
+        ::std::hash<::std::string>,
+        ::std::equal_to<>,
+        ::std::allocator<::std::pair<::std::string, CacheEntry>>,
         4, // 4 submaps for good concurrency
-        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
+        ::std::recursive_mutex        // CHANGED: ::std::shared_mutex -> ::std::recursive_mutex
     >;
 
     CacheMap _resultCache;
-    std::atomic<size_t> _maxCacheSize{10000};
+    ::std::atomic<size_t> _maxCacheSize{10000};
 
     // === PREPARED STATEMENT CACHE ===
 
     // DEADLOCK FIX #18: Changed mutex type for prepared statements cache
     using PreparedStatementMap = phmap::parallel_flat_hash_map<
         uint32,
-        std::string,
-        std::hash<uint32>,
-        std::equal_to<>,
-        std::allocator<std::pair<uint32, std::string>>,
+        ::std::string,
+        ::std::hash<uint32>,
+        ::std::equal_to<>,
+        ::std::allocator<::std::pair<uint32, ::std::string>>,
         4,
-        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
+        ::std::recursive_mutex        // CHANGED: ::std::shared_mutex -> ::std::recursive_mutex
     >;
 
     PreparedStatementMap _preparedStatements;
@@ -223,16 +223,16 @@ private:
     // === METRICS AND MONITORING ===
 
     mutable DatabaseMetrics _metrics;
-    std::chrono::steady_clock::time_point _startTime;
-    std::chrono::steady_clock::time_point _lastMetricsUpdate;
+    ::std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _lastMetricsUpdate;
 
     // === CONFIGURATION ===
 
-    std::atomic<bool> _initialized{false};
-    std::atomic<bool> _shutdown{false};
-    std::atomic<uint32> _defaultTimeoutMs{30000};
-    std::chrono::seconds _recycleInterval{60};
-    std::chrono::steady_clock::time_point _lastConnectionRecycle;
+    ::std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _shutdown{false};
+    ::std::atomic<uint32> _defaultTimeoutMs{30000};
+    ::std::chrono::seconds _recycleInterval{60};
+    ::std::chrono::steady_clock::time_point _lastConnectionRecycle;
 
     // === PRIVATE IMPLEMENTATION ===
 
@@ -251,11 +251,11 @@ private:
     // Caching implementation
     void CleanupExpiredCache();
     void EvictLeastRecentlyUsed();
-    std::string GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const;
+    ::std::string GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const;
 
     // Metrics and monitoring
     void UpdateMetrics();
-    void RecordQueryExecution(std::chrono::steady_clock::time_point startTime);
+    void RecordQueryExecution(::std::chrono::steady_clock::time_point startTime);
 
     // Worker thread management
     void StartWorkerThreads();

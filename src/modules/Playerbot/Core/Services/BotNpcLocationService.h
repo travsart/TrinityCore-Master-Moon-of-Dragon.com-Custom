@@ -82,7 +82,7 @@ namespace Playerbot
         bool isValid = false;       // Whether location was found
         bool isLiveEntity = false;  // If found in spatial grid (spawned)
         uint8 qualityScore = 0;     // 0-100, higher = better (live > spawn > POI)
-        std::string sourceName;     // Debug: where location came from
+        ::std::string sourceName;     // Debug: where location came from
 
         NpcLocationResult() = default;
 
@@ -263,20 +263,20 @@ namespace Playerbot
         };
 
         // Map-indexed spawn caches (mapId → entry → vector<positions>)
-        std::unordered_map<uint32, std::unordered_map<uint32, std::vector<SpawnLocationData>>> _creatureSpawnCache;
-        std::unordered_map<uint32, std::unordered_map<uint32, std::vector<SpawnLocationData>>> _gameObjectSpawnCache;
+        ::std::unordered_map<uint32, ::std::unordered_map<uint32, ::std::vector<SpawnLocationData>>> _creatureSpawnCache;
+        ::std::unordered_map<uint32, ::std::unordered_map<uint32, ::std::vector<SpawnLocationData>>> _gameObjectSpawnCache;
 
         // Profession trainer cache (skillId → vector<locations>)
-        std::unordered_map<uint32, std::vector<SpawnLocationData>> _professionTrainerCache;
+        ::std::unordered_map<uint32, ::std::vector<SpawnLocationData>> _professionTrainerCache;
 
         // Class trainer cache (classId → vector<locations>)
-        std::unordered_map<uint8, std::vector<SpawnLocationData>> _classTrainerCache;
+        ::std::unordered_map<uint8, ::std::vector<SpawnLocationData>> _classTrainerCache;
 
         // Service NPC cache (serviceType → vector<locations>)
-        std::unordered_map<NpcServiceType, std::vector<SpawnLocationData>> _serviceNpcCache;
+        ::std::unordered_map<NpcServiceType, ::std::vector<SpawnLocationData>> _serviceNpcCache;
 
         // Quest POI cache (questId → objectiveIndex → position)
-        std::unordered_map<uint32, std::unordered_map<uint32, Position>> _questPOICache;
+        ::std::unordered_map<uint32, ::std::unordered_map<uint32, Position>> _questPOICache;
 
         bool _initialized = false;
 
@@ -296,9 +296,9 @@ namespace Playerbot
          */
         NpcLocationResult FindNearestFromCache(
             Player* bot,
-            std::vector<SpawnLocationData> const& locations,
+            ::std::vector<SpawnLocationData> const& locations,
             float maxRange,
-            std::string const& sourceName);
+            ::std::string const& sourceName);
 
         /**
          * @brief Check if creature is a trainer for given skill

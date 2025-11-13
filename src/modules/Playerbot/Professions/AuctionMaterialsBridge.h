@@ -111,7 +111,7 @@ struct MaterialSourcingDecision
 
     // Confidence
     float decisionConfidence;       // 0.0-1.0 confidence in recommendation
-    std::string rationale;          // Human-readable explanation
+    ::std::string rationale;          // Human-readable explanation
 
     MaterialSourcingDecision()
         : itemId(0), quantityNeeded(0)
@@ -132,7 +132,7 @@ struct MaterialAcquisitionPlan
     ProfessionType profession;
     uint32 totalCost;                   // Total gold cost (copper)
     uint32 totalTime;                   // Total time required (seconds)
-    std::vector<MaterialSourcingDecision> materialDecisions;
+    ::std::vector<MaterialSourcingDecision> materialDecisions;
 
     // Plan optimization
     float efficiencyScore;              // Overall efficiency (0.0-1.0)
@@ -196,19 +196,19 @@ struct BotEconomicProfile
  */
 struct MaterialSourcingStatistics
 {
-    std::atomic<uint32> decisionsGather{0};
-    std::atomic<uint32> decisionsBuy{0};
-    std::atomic<uint32> decisionsCraft{0};
-    std::atomic<uint32> decisionsVendor{0};
-    std::atomic<uint32> decisionsHybrid{0};
+    ::std::atomic<uint32> decisionsGather{0};
+    ::std::atomic<uint32> decisionsBuy{0};
+    ::std::atomic<uint32> decisionsCraft{0};
+    ::std::atomic<uint32> decisionsVendor{0};
+    ::std::atomic<uint32> decisionsHybrid{0};
 
-    std::atomic<uint32> goldSavedByGathering{0};
-    std::atomic<uint32> timeSavedByBuying{0};
-    std::atomic<uint32> plansGenerated{0};
-    std::atomic<uint32> plansExecuted{0};
+    ::std::atomic<uint32> goldSavedByGathering{0};
+    ::std::atomic<uint32> timeSavedByBuying{0};
+    ::std::atomic<uint32> plansGenerated{0};
+    ::std::atomic<uint32> plansExecuted{0};
 
-    std::atomic<float> averageDecisionConfidence{0.0f};
-    std::atomic<float> averageEfficiencyScore{0.0f};
+    ::std::atomic<float> averageDecisionConfidence{0.0f};
+    ::std::atomic<float> averageEfficiencyScore{0.0f};
 
     void Reset()
     {
@@ -490,7 +490,7 @@ private:
     /**
      * Generate decision rationale for logging/debugging
      */
-    std::string GenerateDecisionRationale(
+    ::std::string GenerateDecisionRationale(
         MaterialSourcingDecision const& decision);
 
     /**
@@ -512,20 +512,20 @@ private:
     // ========================================================================
 
     // Economic profiles (playerGuid -> profile)
-    std::unordered_map<uint32, BotEconomicProfile> _economicProfiles;
+    ::std::unordered_map<uint32, BotEconomicProfile> _economicProfiles;
 
     // Vendor materials (itemId -> vendor price)
-    std::unordered_map<uint32, uint32> _vendorMaterials;
+    ::std::unordered_map<uint32, uint32> _vendorMaterials;
 
     // Active acquisition plans (playerGuid -> plan)
-    std::unordered_map<uint32, MaterialAcquisitionPlan> _activePlans;
+    ::std::unordered_map<uint32, MaterialAcquisitionPlan> _activePlans;
 
     // Statistics
-    std::unordered_map<uint32, MaterialSourcingStatistics> _playerStatistics;
+    ::std::unordered_map<uint32, MaterialSourcingStatistics> _playerStatistics;
     MaterialSourcingStatistics _globalStatistics;
 
     // Last update times (playerGuid -> timestamp)
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _mutex;
 

@@ -245,12 +245,12 @@ OrchestratorMetrics StartupSpawnOrchestrator::GetMetrics() const
 
     if (_startupBegun)
     {
-        metrics.totalElapsedTime = std::chrono::duration_cast<Milliseconds>(
+        metrics.totalElapsedTime = ::std::chrono::duration_cast<Milliseconds>(
             GameTime::Now() - _startupBeginTime);
 
         if (_currentPhase != StartupPhase::IDLE && _currentPhase != StartupPhase::COMPLETED)
         {
-            metrics.timeInCurrentPhase = std::chrono::duration_cast<Milliseconds>(
+            metrics.timeInCurrentPhase = ::std::chrono::duration_cast<Milliseconds>(
                 GameTime::Now() - _phaseStartTime);
         }
     }
@@ -259,7 +259,7 @@ OrchestratorMetrics StartupSpawnOrchestrator::GetMetrics() const
     const PhaseConfig* phaseConfig = GetCurrentPhaseConfig();
     if (phaseConfig && phaseConfig->targetBotsToSpawn > 0)
     {
-        metrics.currentPhaseProgress = std::min(1.0f,
+        metrics.currentPhaseProgress = ::std::min(1.0f,
             static_cast<float>(_botsSpawnedThisPhase) / phaseConfig->targetBotsToSpawn);
     }
 
@@ -347,7 +347,7 @@ bool StartupSpawnOrchestrator::ShouldTransitionPhase() const
     if (!phaseConfig)
         return true;  // Invalid config, transition anyway
 
-    Milliseconds timeInPhase = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeInPhase = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _phaseStartTime);
 
     // Must meet minimum duration
@@ -400,7 +400,7 @@ float StartupSpawnOrchestrator::CalculateOverallProgress() const
         return 0.0f;
 
     // Calculate progress as: botsSpawned / totalTarget
-    return std::min(1.0f, static_cast<float>(_botsSpawnedTotal) / totalTargetBots);
+    return ::std::min(1.0f, static_cast<float>(_botsSpawnedTotal) / totalTargetBots);
 }
 
 // ============================================================================

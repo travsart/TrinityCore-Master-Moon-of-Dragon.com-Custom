@@ -580,7 +580,7 @@ private:
 
     void GenerateChi(uint32 amount)
     {
-        this->_resource.chi = std::min(this->_resource.chi + amount, this->_resource.maxChi);
+        this->_resource.chi = ::std::min(this->_resource.chi + amount, this->_resource.maxChi);
     }
 
     void ConsumeChi(uint32 amount)

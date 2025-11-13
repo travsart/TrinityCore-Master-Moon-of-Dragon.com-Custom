@@ -25,9 +25,9 @@ struct EnhancedAIStats
     uint32 combatUpdates = 0;
     uint32 soloUpdates = 0;
 
-    std::chrono::microseconds totalUpdateTime{0};
-    std::chrono::microseconds avgUpdateTime{0};
-    std::chrono::microseconds maxUpdateTime{0};
+    ::std::chrono::microseconds totalUpdateTime{0};
+    ::std::chrono::microseconds avgUpdateTime{0};
+    ::std::chrono::microseconds maxUpdateTime{0};
 
     float cpuUsagePercent = 0.0f;
     size_t memoryUsageBytes = 0;
@@ -41,9 +41,9 @@ struct EnhancedAIStats
         totalUpdates = 0;
         combatUpdates = 0;
         soloUpdates = 0;
-        totalUpdateTime = std::chrono::microseconds{0};
-        avgUpdateTime = std::chrono::microseconds{0};
-        maxUpdateTime = std::chrono::microseconds{0};
+        totalUpdateTime = ::std::chrono::microseconds{0};
+        avgUpdateTime = ::std::chrono::microseconds{0};
+        maxUpdateTime = ::std::chrono::microseconds{0};
         cpuUsagePercent = 0.0f;
         memoryUsageBytes = 0;
         actionsExecuted = 0;
@@ -128,7 +128,7 @@ protected:
 
     // Performance monitoring
     void StartPerformanceCapture();
-    void EndPerformanceCapture(std::chrono::microseconds elapsed);
+    void EndPerformanceCapture(::std::chrono::microseconds elapsed);
     bool IsWithinPerformanceBudget() const;
     void ThrottleIfNeeded();
 
@@ -153,10 +153,10 @@ private:
 
 private:
     // Phase 2 Combat System Integration
-    std::unique_ptr<CombatAIIntegrator> _combatIntegrator;
+    ::std::unique_ptr<CombatAIIntegrator> _combatIntegrator;
 
     // Class-specific AI
-    std::unique_ptr<ClassAI> _classAI;
+    ::std::unique_ptr<ClassAI> _classAI;
 
     // Current state
     BotAIState _currentState;
@@ -165,7 +165,7 @@ private:
 
     // Performance tracking
     EnhancedAIStats _stats;
-    std::chrono::high_resolution_clock::time_point _lastUpdateTime;
+    ::std::chrono::high_resolution_clock::time_point _lastUpdateTime;
     uint32 _updateThrottleMs;
 
     // Configuration
@@ -181,7 +181,7 @@ private:
     // Combat tracking
     bool _inCombat;
     Unit* _primaryTarget;
-    std::vector<Unit*> _threatList;
+    ::std::vector<Unit*> _threatList;
     uint32 _combatStartTime;
 
     // Resource management
@@ -210,27 +210,27 @@ private:
 class TC_GAME_API EnhancedBotAIFactory
 {
 public:
-    static std::unique_ptr<EnhancedBotAI> CreateEnhancedAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateEnhancedAI(Player* bot);
 
     // Role-specific creation
-    static std::unique_ptr<EnhancedBotAI> CreateTankAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateHealerAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateDPSAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateTankAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateHealerAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateDPSAI(Player* bot);
 
     // Class-specific creation
-    static std::unique_ptr<EnhancedBotAI> CreateWarriorAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreatePaladinAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateHunterAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateRogueAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreatePriestAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateDeathKnightAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateShamanAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateMageAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateWarlockAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateMonkAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateDruidAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateDemonHunterAI(Player* bot);
-    static std::unique_ptr<EnhancedBotAI> CreateEvokerAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateWarriorAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreatePaladinAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateHunterAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateRogueAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreatePriestAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateDeathKnightAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateShamanAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateMageAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateWarlockAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateMonkAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateDruidAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateDemonHunterAI(Player* bot);
+    static ::std::unique_ptr<EnhancedBotAI> CreateEvokerAI(Player* bot);
 };
 
 } // namespace Playerbot

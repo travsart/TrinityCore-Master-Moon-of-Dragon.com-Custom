@@ -59,9 +59,9 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
-                    auctionData = std::any_cast<AuctionEventData>(event.eventData);
+                    auctionData = ::std::any_cast<AuctionEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_BID_PLACED data: {}", e.what());
                     ForceUpdate();
@@ -103,9 +103,9 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
-                    auctionData = std::any_cast<AuctionEventData>(event.eventData);
+                    auctionData = ::std::any_cast<AuctionEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_WON data: {}", e.what());
                     ForceUpdate();
@@ -138,9 +138,9 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
-                    auctionData = std::any_cast<AuctionEventData>(event.eventData);
+                    auctionData = ::std::any_cast<AuctionEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_OUTBID data: {}", e.what());
                     ForceUpdate();
@@ -200,9 +200,9 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
-                    auctionData = std::any_cast<AuctionEventData>(event.eventData);
+                    auctionData = ::std::any_cast<AuctionEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_EXPIRED data: {}", e.what());
                     ForceUpdate();
@@ -235,9 +235,9 @@ namespace Playerbot
                 AuctionEventData auctionData;
                 try
                 {
-                    auctionData = std::any_cast<AuctionEventData>(event.eventData);
+                    auctionData = ::std::any_cast<AuctionEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "AuctionManager::OnEventInternal: Failed to cast AUCTION_SOLD data: {}", e.what());
                     ForceUpdate();

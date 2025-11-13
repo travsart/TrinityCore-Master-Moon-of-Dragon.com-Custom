@@ -186,7 +186,7 @@ public:
                 // Grubbis spawns radiation clouds on ground
                 // Must move out of radiation zones
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 15.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -252,7 +252,7 @@ public:
             case 7079: // Viscous Fallout
             {
                 // Fallout leaves slowing ooze on ground
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 12.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -329,7 +329,7 @@ public:
                 // These walking bombs MUST be killed immediately or they explode
                 // CRITICAL: Top priority over boss
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 for (::Creature* add : adds)
                 {
@@ -354,7 +354,7 @@ public:
                 // Crowd Pummeler can summon alarm bots
                 // Kill quickly to prevent reinforcements
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {
@@ -570,7 +570,7 @@ public:
             case 7800: // Mekgineer Thermaplugg
             {
                 // Walking bombs - must kite away from them while killing
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 for (::Creature* add : adds)
                 {

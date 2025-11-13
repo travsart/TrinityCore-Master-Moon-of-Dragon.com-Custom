@@ -62,7 +62,7 @@ public:
 
     void ApplyIronfur(uint32 duration = 7000)
     {
-        _ironfurStacks = std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
+        _ironfurStacks = ::std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
         _ironfurEndTime = GameTime::GetGameTimeMS() + duration;
     }
 
@@ -120,7 +120,7 @@ public:
     {
         auto& thrash = _thrashTargets[guid];
         thrash.endTime = GameTime::GetGameTimeMS() + duration;
-        thrash.stacks = std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
+        thrash.stacks = ::std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
     }
 
     void RemoveThrash(ObjectGuid guid)
@@ -168,7 +168,7 @@ private:
         uint32 endTime = 0;
     };
 
-    std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
+    ::std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
 };
 
 class GuardianDruidRefactored : public TankSpecialization<RageResource>

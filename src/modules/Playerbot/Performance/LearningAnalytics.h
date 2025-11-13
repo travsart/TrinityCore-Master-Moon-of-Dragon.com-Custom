@@ -67,12 +67,12 @@ struct LearningTrend
 // Model comparison metrics
 struct ModelComparison
 {
-    std::string modelA;
-    std::string modelB;
+    ::std::string modelA;
+    ::std::string modelB;
     float performanceDelta;      // A - B performance
     float efficiencyDelta;       // A - B efficiency
     float stabilityDelta;        // A - B stability
-    std::string betterModel;
+    ::std::string betterModel;
     float confidence;
 
     ModelComparison() : performanceDelta(0), efficiencyDelta(0),
@@ -82,15 +82,15 @@ struct ModelComparison
 // Learning experiment results
 struct ExperimentResult
 {
-    std::string name;
-    std::string configuration;
+    ::std::string name;
+    ::std::string configuration;
     uint32_t iterations;
     float finalPerformance;
     float peakPerformance;
     float convergenceTime;       // Time to converge in seconds
     float efficiency;            // Performance per computation
     bool successful;
-    std::string notes;
+    ::std::string notes;
 
     ExperimentResult() : iterations(0), finalPerformance(0), peakPerformance(0),
         convergenceTime(0), efficiency(0), successful(false) {}
@@ -125,7 +125,7 @@ public:
     float GetAveragePerformance(uint32_t botGuid, uint32_t lastEpisodes = 100) const;
     float GetPerformanceVariance(uint32_t botGuid) const;
     float GetPeakPerformance(uint32_t botGuid) const;
-    std::pair<uint32_t, float> GetBestEpisode(uint32_t botGuid) const;
+    ::std::pair<uint32_t, float> GetBestEpisode(uint32_t botGuid) const;
 
     // Learning efficiency metrics
     float GetSampleEfficiency(uint32_t botGuid) const;  // Performance per experience
@@ -142,32 +142,32 @@ public:
     bool IsInPlateau(uint32_t botGuid) const;
     bool IsRegressing(uint32_t botGuid) const;
     uint32_t GetPlateauDuration(uint32_t botGuid) const;
-    std::vector<std::string> GetPlateauBreakingSuggestions(uint32_t botGuid) const;
+    ::std::vector<::std::string> GetPlateauBreakingSuggestions(uint32_t botGuid) const;
 
     // Model comparison
     ModelComparison CompareModels(uint32_t botGuidA, uint32_t botGuidB) const;
-    std::vector<uint32_t> RankBotsByPerformance() const;
+    ::std::vector<uint32_t> RankBotsByPerformance() const;
     uint32_t GetBestPerformingBot() const;
 
     // Experiment management
-    void StartExperiment(const std::string& name, const std::string& configuration);
-    void EndExperiment(const std::string& name, bool successful);
-    ExperimentResult GetExperimentResult(const std::string& name) const;
-    std::vector<ExperimentResult> GetAllExperiments() const;
+    void StartExperiment(const ::std::string& name, const ::std::string& configuration);
+    void EndExperiment(const ::std::string& name, bool successful);
+    ExperimentResult GetExperimentResult(const ::std::string& name) const;
+    ::std::vector<ExperimentResult> GetAllExperiments() const;
 
     // Visualization data export
-    void ExportLearningCurve(uint32_t botGuid, const std::string& filename) const;
-    void ExportComparisonChart(const std::vector<uint32_t>& botGuids, const std::string& filename) const;
-    std::string GenerateLearningReport(uint32_t botGuid) const;
+    void ExportLearningCurve(uint32_t botGuid, const ::std::string& filename) const;
+    void ExportComparisonChart(const ::std::vector<uint32_t>& botGuids, const ::std::string& filename) const;
+    ::std::string GenerateLearningReport(uint32_t botGuid) const;
 
     // Hyperparameter impact analysis
-    void RecordHyperparameters(uint32_t botGuid, const std::unordered_map<std::string, float>& params);
-    std::unordered_map<std::string, float> AnalyzeHyperparameterImpact() const;
-    std::unordered_map<std::string, float> GetOptimalHyperparameters() const;
+    void RecordHyperparameters(uint32_t botGuid, const ::std::unordered_map<::std::string, float>& params);
+    ::std::unordered_map<::std::string, float> AnalyzeHyperparameterImpact() const;
+    ::std::unordered_map<::std::string, float> GetOptimalHyperparameters() const;
 
     // Anomaly detection
     bool DetectAnomalousLearning(uint32_t botGuid) const;
-    std::vector<std::string> GetLearningAnomalies(uint32_t botGuid) const;
+    ::std::vector<::std::string> GetLearningAnomalies(uint32_t botGuid) const;
 
     // Predictive analytics
     float PredictFuturePerformance(uint32_t botGuid, uint32_t futureEpisodes) const;
@@ -176,14 +176,14 @@ public:
     // Global learning metrics
     struct GlobalMetrics
     {
-        std::atomic<uint32_t> totalBots{0};
-        std::atomic<uint32_t> convergedBots{0};
-        std::atomic<uint32_t> improvingBots{0};
-        std::atomic<uint32_t> regressingBots{0};
-        std::atomic<float> averagePerformance{0};
-        std::atomic<float> averageLearningRate{0};
-        std::atomic<uint64_t> totalLearningSteps{0};
-        std::atomic<uint64_t> totalExperiences{0};
+        ::std::atomic<uint32_t> totalBots{0};
+        ::std::atomic<uint32_t> convergedBots{0};
+        ::std::atomic<uint32_t> improvingBots{0};
+        ::std::atomic<uint32_t> regressingBots{0};
+        ::std::atomic<float> averagePerformance{0};
+        ::std::atomic<float> averageLearningRate{0};
+        ::std::atomic<uint64_t> totalLearningSteps{0};
+        ::std::atomic<uint64_t> totalExperiences{0};
     };
 
     GlobalMetrics GetGlobalMetrics() const;
@@ -203,26 +203,26 @@ private:
     // Learning data storage
     struct BotLearningData
     {
-        std::deque<LearningDataPoint> dataPoints;
-        std::unordered_map<uint32_t, float> episodeRewards;
-        std::unordered_map<uint32_t, float> modelVersions;
-        std::unordered_map<std::string, float> hyperparameters;
+        ::std::deque<LearningDataPoint> dataPoints;
+        ::std::unordered_map<uint32_t, float> episodeRewards;
+        ::std::unordered_map<uint32_t, float> modelVersions;
+        ::std::unordered_map<::std::string, float> hyperparameters;
         LearningPhase currentPhase;
         uint32_t plateauStartEpisode;
         uint32_t convergenceEpisode;
         float peakPerformance;
-        std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point startTime;
 
         static constexpr size_t MAX_DATA_POINTS = 10000;
     };
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _dataMutex;
-    std::unordered_map<uint32_t, std::unique_ptr<BotLearningData>> _botData;
+    ::std::unordered_map<uint32_t, ::std::unique_ptr<BotLearningData>> _botData;
 
     // Experiments
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _experimentsMutex;
-    std::unordered_map<std::string, ExperimentResult> _experiments;
-    std::unordered_map<std::string, std::chrono::steady_clock::time_point> _activeExperiments;
+    ::std::unordered_map<::std::string, ExperimentResult> _experiments;
+    ::std::unordered_map<::std::string, ::std::chrono::steady_clock::time_point> _activeExperiments;
 
     // Configuration
     float _convergenceThreshold = 0.01f;     // Performance variance for convergence
@@ -234,16 +234,16 @@ private:
 
     // Helper methods
     BotLearningData* GetOrCreateBotData(uint32_t botGuid);
-    float CalculateSlope(const std::vector<float>& values) const;
-    float CalculateVariance(const std::vector<float>& values) const;
-    float CalculateMovingAverage(const std::deque<LearningDataPoint>& points,
+    float CalculateSlope(const ::std::vector<float>& values) const;
+    float CalculateVariance(const ::std::vector<float>& values) const;
+    float CalculateMovingAverage(const ::std::deque<LearningDataPoint>& points,
                                  size_t window, auto getValue) const;
-    bool DetectConvergence(const std::deque<LearningDataPoint>& points) const;
-    bool DetectPlateau(const std::deque<LearningDataPoint>& points) const;
+    bool DetectConvergence(const ::std::deque<LearningDataPoint>& points) const;
+    bool DetectPlateau(const ::std::deque<LearningDataPoint>& points) const;
     void UpdateGlobalMetrics();
-    std::vector<float> ExtractMetricSeries(const std::deque<LearningDataPoint>& points,
+    ::std::vector<float> ExtractMetricSeries(const ::std::deque<LearningDataPoint>& points,
                                           auto getValue) const;
-    float PredictWithLinearRegression(const std::vector<float>& values, uint32_t steps) const;
+    float PredictWithLinearRegression(const ::std::vector<float>& values, uint32_t steps) const;
     float CalculateEfficiency(const BotLearningData* data) const;
 };
 
@@ -251,20 +251,20 @@ private:
 class TC_GAME_API ScopedLearningExperiment
 {
 public:
-    ScopedLearningExperiment(const std::string& name, const std::string& configuration);
+    ScopedLearningExperiment(const ::std::string& name, const ::std::string& configuration);
     ~ScopedLearningExperiment();
 
     void MarkSuccessful() { _successful = true; }
-    void SetNote(const std::string& note) { _note = note; }
-    void RecordMetric(const std::string& name, float value);
+    void SetNote(const ::std::string& note) { _note = note; }
+    void RecordMetric(const ::std::string& name, float value);
 
 private:
-    std::string _name;
-    std::string _configuration;
+    ::std::string _name;
+    ::std::string _configuration;
     bool _successful;
-    std::string _note;
-    std::chrono::steady_clock::time_point _startTime;
-    std::unordered_map<std::string, float> _metrics;
+    ::std::string _note;
+    ::std::chrono::steady_clock::time_point _startTime;
+    ::std::unordered_map<::std::string, float> _metrics;
 };
 
 #define sLearningAnalytics LearningAnalytics::Instance()

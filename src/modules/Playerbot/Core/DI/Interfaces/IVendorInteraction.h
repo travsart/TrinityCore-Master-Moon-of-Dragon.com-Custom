@@ -34,19 +34,19 @@ public:
 
     // Core vendor discovery
     virtual void LoadVendorDataFromDatabase() = 0;
-    virtual std::vector<VendorInfo> QueryVendorsByZone(uint32 zoneId) = 0;
-    virtual std::vector<VendorInfo> QueryVendorsByType(VendorType type) = 0;
+    virtual ::std::vector<VendorInfo> QueryVendorsByZone(uint32 zoneId) = 0;
+    virtual ::std::vector<VendorInfo> QueryVendorsByType(VendorType type) = 0;
     virtual VendorInfo GetVendorFromCreature(const Creature* creature) = 0;
 
     // Intelligent vendor selection
     virtual uint32 FindOptimalVendor(Player* player, VendorType preferredType, float maxDistance) = 0;
-    virtual std::vector<uint32> FindVendorsWithItem(uint32 itemId, uint32 playerZone) = 0;
-    virtual uint32 FindCheapestVendor(uint32 itemId, const std::vector<uint32>& vendorGuids) = 0;
+    virtual ::std::vector<uint32> FindVendorsWithItem(uint32 itemId, uint32 playerZone) = 0;
+    virtual uint32 FindCheapestVendor(uint32 itemId, const ::std::vector<uint32>& vendorGuids) = 0;
     virtual uint32 FindNearestRepairVendor(Player* player) = 0;
 
     // Vendor interaction optimization
-    virtual void OptimizeVendorRoute(Player* player, const std::vector<std::pair<VendorType, uint32>>& needs) = 0;
-    virtual void PlanVendorTrip(Player* player, const std::vector<uint32>& itemsToBuy, const std::vector<uint32>& itemsToSell) = 0;
+    virtual void OptimizeVendorRoute(Player* player, const ::std::vector<::std::pair<VendorType, uint32>>& needs) = 0;
+    virtual void PlanVendorTrip(Player* player, const ::std::vector<uint32>& itemsToBuy, const ::std::vector<uint32>& itemsToSell) = 0;
     virtual bool ShouldTravelToVendor(Player* player, uint32 vendorGuid, float expectedValue) = 0;
 
     // Advanced vendor analysis
@@ -70,11 +70,11 @@ public:
     virtual void ExecuteSellingStrategy(Player* player, uint32 vendorGuid, const SellingStrategy& strategy) = 0;
     virtual void AutoSellJunkItems(Player* player, uint32 vendorGuid) = 0;
     virtual void SellOutdatedEquipment(Player* player, uint32 vendorGuid) = 0;
-    virtual uint32 CalculateSellingValue(Player* player, const std::vector<uint32>& itemGuids) = 0;
+    virtual uint32 CalculateSellingValue(Player* player, const ::std::vector<uint32>& itemGuids) = 0;
 
     // Reputation and faction vendor handling
     virtual void HandleFactionVendors(Player* player) = 0;
-    virtual std::vector<uint32> GetAccessibleFactionVendors(Player* player) = 0;
+    virtual ::std::vector<uint32> GetAccessibleFactionVendors(Player* player) = 0;
     virtual bool MeetsReputationRequirement(Player* player, uint32 vendorGuid) = 0;
     virtual void OptimizeReputationGains(Player* player) = 0;
 

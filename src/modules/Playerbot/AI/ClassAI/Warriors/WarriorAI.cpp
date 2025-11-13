@@ -243,7 +243,7 @@ bool WarriorAI::CanUseAbility(uint32 spellId)
 
 void WarriorAI::OnCombatStart(::Unit* target)
 {
-    _warriorMetrics.combatStartTime = std::chrono::steady_clock::now();
+    _warriorMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     // Combat start logic is handled by specialization templates
     // No polymorphic delegation needed
@@ -365,7 +365,7 @@ bool WarriorAI::CanCharge(::Unit* target) const
     if (!target || !GetBot())
         return false;
 
-    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     return distance >= CHARGE_MIN_RANGE && distance <= CHARGE_MAX_RANGE;
 }
 
@@ -399,7 +399,7 @@ void WarriorAI::AnalyzeCombatEffectiveness()
 
 void WarriorAI::UpdateMetrics(uint32 diff)
 {
-    _warriorMetrics.lastMetricsUpdate = std::chrono::steady_clock::now();
+    _warriorMetrics.lastMetricsUpdate = ::std::chrono::steady_clock::now();
 }
 
 float WarriorAI::CalculateRageEfficiency()
@@ -581,7 +581,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -599,7 +599,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

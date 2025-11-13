@@ -99,8 +99,8 @@ public:
     // Batch operations
     void ResetAllCooldowns();
     void ReduceAllCooldowns(uint32 reductionMs);
-    std::vector<uint32> GetSpellsOnCooldown() const;
-    std::vector<uint32> GetReadySpells(const std::vector<uint32>& spellIds) const;
+    ::std::vector<uint32> GetSpellsOnCooldown() const;
+    ::std::vector<uint32> GetReadySpells(const ::std::vector<uint32>& spellIds) const;
 
     // Cooldown categories (for talents/effects that affect multiple spells)
     void SetCooldownCategory(uint32 spellId, uint32 categoryId);
@@ -129,24 +129,24 @@ private:
     // DEADLOCK FIX: Changed to recursive_mutex to prevent "resource deadlock would occur"
     // Allows same thread to lock multiple times during nested cooldown checks
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cooldownMutex;
-    std::unordered_map<uint32, CooldownInfo> _cooldowns;
+    ::std::unordered_map<uint32, CooldownInfo> _cooldowns;
 
     // Category cooldowns (spell schools, etc.)
     // DEADLOCK FIX: Changed to recursive_mutex
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _categoryMutex;
-    std::unordered_map<uint32, uint32> _spellCategories;     // spellId -> categoryId
-    std::unordered_map<uint32, uint32> _categoryCooldowns;   // categoryId -> remainingMs
+    ::std::unordered_map<uint32, uint32> _spellCategories;     // spellId -> categoryId
+    ::std::unordered_map<uint32, uint32> _categoryCooldowns;   // categoryId -> remainingMs
 
     // Global cooldown state
-    std::atomic<uint32> _globalCooldown{0};
+    ::std::atomic<uint32> _globalCooldown{0};
     uint32 _gcdDuration{1500}; // Default 1.5 seconds
 
     // Cooldown modifiers
-    std::atomic<float> _cooldownMultiplier{1.0f};
+    ::std::atomic<float> _cooldownMultiplier{1.0f};
 
     // Performance tracking
-    mutable std::atomic<uint32> _totalUpdates{0};
-    mutable std::atomic<uint32> _activeCooldowns{0};
+    mutable ::std::atomic<uint32> _totalUpdates{0};
+    mutable ::std::atomic<uint32> _activeCooldowns{0};
 
     // Internal helpers
     void UpdateCooldown(CooldownInfo& cooldown, uint32 diff);
@@ -191,9 +191,9 @@ public:
 
 private:
     // Meyer's singleton accessors for DLL-safe static data
-    static std::unordered_map<uint32, uint32>& GetCooldownCache();
-    static std::unordered_map<uint32, bool>& GetGcdCache();
-    static std::recursive_mutex& GetCacheMutex();
+    static ::std::unordered_map<uint32, uint32>& GetCooldownCache();
+    static ::std::unordered_map<uint32, bool>& GetGcdCache();
+    static ::std::recursive_mutex& GetCacheMutex();
 
     static void CacheSpellData(uint32 spellId);
 };

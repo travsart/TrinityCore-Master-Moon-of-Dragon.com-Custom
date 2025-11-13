@@ -101,7 +101,7 @@ public:
         uint32 extendedCostId;
         uint32 recommendedQuantity;
         bool shouldPurchase;
-        std::string reason;  // Human-readable reason for decision
+        ::std::string reason;  // Human-readable reason for decision
 
         VendorItemEvaluation()
             : itemId(0), vendorSlot(0), priority(PurchasePriority::LOW)
@@ -160,7 +160,7 @@ public:
      * Evaluates all requested items, prioritizes based on bot needs,
      * respects budget constraints, and purchases in priority order.
      */
-    uint32 PurchaseItems(Creature* vendor, std::vector<uint32> const& itemIds);
+    uint32 PurchaseItems(Creature* vendor, ::std::vector<uint32> const& itemIds);
 
     /**
      * @brief Smart purchase - automatically determines what to buy
@@ -179,7 +179,7 @@ public:
      * @param vendor Vendor creature
      * @return Vector of vendor items (uses Creature::GetVendorItems())
      */
-    std::vector<VendorItem const*> GetVendorItems(Creature* vendor) const;
+    ::std::vector<VendorItem const*> GetVendorItems(Creature* vendor) const;
 
     /**
      * @brief Evaluate whether an item should be purchased
@@ -259,7 +259,7 @@ public:
      * - Shaman: Ankhs
      * - Druid: Wild Thornroot
      */
-    std::vector<uint32> GetRequiredReagents() const;
+    ::std::vector<uint32> GetRequiredReagents() const;
 
     /**
      * @brief Get required food/water for bot level
@@ -270,7 +270,7 @@ public:
      * - Level 5-15: Still Water, Haunch of Meat
      * - etc. (scaled by level)
      */
-    std::vector<uint32> GetRequiredConsumables() const;
+    ::std::vector<uint32> GetRequiredConsumables() const;
 
     /**
      * @brief Check if bot needs ammunition (hunters only)
@@ -383,8 +383,8 @@ private:
     uint32 m_purchaseCount;
 
     // Cache for frequently accessed data
-    std::unordered_map<uint32, PurchasePriority> m_priorityCache;
-    std::unordered_map<uint32, uint64> m_priceCache;
+    ::std::unordered_map<uint32, PurchasePriority> m_priorityCache;
+    ::std::unordered_map<uint32, uint64> m_priceCache;
 };
 
 } // namespace Playerbot

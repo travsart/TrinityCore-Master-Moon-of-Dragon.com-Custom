@@ -61,7 +61,7 @@ private:
      * @param maxDistance Maximum search distance (default: 30 yards)
      * @return List of lootable creature GUIDs
      */
-    std::vector<ObjectGuid> FindLootableCorpses(BotAI* ai, float maxDistance = 30.0f) const;
+    ::std::vector<ObjectGuid> FindLootableCorpses(BotAI* ai, float maxDistance = 30.0f) const;
 
     /**
      * @brief Find nearby lootable game objects (chests, herb nodes, etc.)
@@ -69,7 +69,7 @@ private:
      * @param maxDistance Maximum search distance (default: 20 yards)
      * @return List of lootable GameObject GUIDs
      */
-    std::vector<ObjectGuid> FindLootableObjects(BotAI* ai, float maxDistance = 20.0f) const;
+    ::std::vector<ObjectGuid> FindLootableObjects(BotAI* ai, float maxDistance = 20.0f) const;
 
     /**
      * @brief Move to and loot a corpse
@@ -100,7 +100,7 @@ private:
      * @param targets List of loot target GUIDs
      * @return Sorted list (highest priority first)
      */
-    std::vector<ObjectGuid> PrioritizeLootTargets(BotAI* ai, std::vector<ObjectGuid> const& targets) const;
+    ::std::vector<ObjectGuid> PrioritizeLootTargets(BotAI* ai, ::std::vector<ObjectGuid> const& targets) const;
 
 private:
     // Loot scan throttling

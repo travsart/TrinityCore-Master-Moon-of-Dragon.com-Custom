@@ -143,7 +143,7 @@ public:
     {
         uint32 startTime;          // Window start time
         uint32 duration;           // Window duration
-        std::vector<uint32> cooldowns;  // Cooldowns to use
+        ::std::vector<uint32> cooldowns;  // Cooldowns to use
         float totalMultiplier;     // Combined damage multiplier
         float score;               // Window score for optimization
 
@@ -162,7 +162,7 @@ public:
      * @param cooldowns List of cooldown spell IDs
      * @return Combined multiplier with DR applied
      */
-    float CalculateStackedMultiplier(std::vector<uint32> const& cooldowns) const;
+    float CalculateStackedMultiplier(::std::vector<uint32> const& cooldowns) const;
 
     // ========================================================================
     // COOLDOWN DECISIONS
@@ -326,8 +326,8 @@ private:
     Player* _bot;
 
     // Cooldown tracking
-    std::unordered_map<uint32, CooldownData> _cooldowns;
-    std::set<uint32> _reservedCooldowns;
+    ::std::unordered_map<uint32, CooldownData> _cooldowns;
+    ::std::set<uint32> _reservedCooldowns;
 
     // Phase tracking
     BossPhase _currentPhase;
@@ -339,9 +339,9 @@ private:
     {
         BossPhase phase;
         uint32 timeUntil;
-        std::vector<uint32> cooldowns;
+        ::std::vector<uint32> cooldowns;
     };
-    std::vector<PhaseReservation> _phaseReservations;
+    ::std::vector<PhaseReservation> _phaseReservations;
 
     // Bloodlust tracking
     uint32 _lastBloodlustTime;
@@ -364,11 +364,11 @@ private:
         float damageDealt;
         float damageTaken;
     };
-    std::queue<DamageSnapshot> _damageHistory;
+    ::std::queue<DamageSnapshot> _damageHistory;
     static constexpr size_t MAX_DAMAGE_HISTORY = 20;
 
     // Static cooldown database
-    static inline std::unordered_map<uint32, CooldownData> s_defaultCooldowns;
+    static inline ::std::unordered_map<uint32, CooldownData> s_defaultCooldowns;
     static inline bool s_defaultsInitialized = false;
 
     /**

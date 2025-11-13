@@ -159,7 +159,7 @@ public:
     float GetDamageMultiplier() const
     {
         // Hit Combo: 1% damage per stack (max 10%)
-        return 1.0f + (std::min(_comboCount, 10u) * 0.01f);
+        return 1.0f + (::std::min(_comboCount, 10u) * 0.01f);
     }
 
 private:
@@ -526,7 +526,7 @@ private:
 
     void GenerateChi(uint32 amount)
     {
-        this->_resource.chi = std::min(this->_resource.chi + amount, this->_resource.maxChi);
+        this->_resource.chi = ::std::min(this->_resource.chi + amount, this->_resource.maxChi);
     }
 
     void ConsumeChi(uint32 amount)

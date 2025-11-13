@@ -100,17 +100,17 @@ struct UnholyRuneRunicPowerResource
         if (totalRunes >= runesCost) {
             uint32 remaining = runesCost;
             if (bloodRunes > 0) {
-                uint32 toConsume = std::min(bloodRunes, remaining);
+                uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && frostRunes > 0) {
-                uint32 toConsume = std::min(frostRunes, remaining);
+                uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && unholyRunes > 0) {
-                uint32 toConsume = std::min(unholyRunes, remaining);
+                uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
             }
@@ -154,7 +154,7 @@ public:
 
     void ApplyWounds(ObjectGuid guid, uint32 count)
     {
-        _trackedTargets[guid] = std::min(_trackedTargets[guid] + count, 6u); // Max 6 stacks
+        _trackedTargets[guid] = ::std::min(_trackedTargets[guid] + count, 6u); // Max 6 stacks
     }
 
     void BurstWounds(ObjectGuid guid, uint32 count)
@@ -186,7 +186,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -585,7 +585,7 @@ private:
 
     void GenerateRunicPower(uint32 amount)
     {
-        this->_resource.runicPower = std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
+        this->_resource.runicPower = ::std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
     }
 
     void ConsumeRunicPower(uint32 amount)

@@ -61,7 +61,7 @@ namespace Playerbot
         uint32 maxConcurrentDbLoads = 10;     ///< Max concurrent character loads from DB
         uint32 initialDelaySeconds = 5;       ///< Delay before starting Phase 1
 
-        std::vector<PhaseConfig> phases;      ///< Phase configurations
+        ::std::vector<PhaseConfig> phases;      ///< Phase configurations
 
         /**
          * @brief Load configuration from playerbots.conf

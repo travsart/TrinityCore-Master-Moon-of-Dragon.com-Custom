@@ -81,7 +81,7 @@ public:
      *
      * @return Manager name string
      */
-    virtual std::string GetManagerName() const = 0;
+    virtual ::std::string GetManagerName() const = 0;
 
     /**
      * @brief Check if manager has been initialized

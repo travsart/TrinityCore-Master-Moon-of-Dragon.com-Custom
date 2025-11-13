@@ -85,32 +85,32 @@ BotAI::BotAI(Player* bot) : _bot(bot)
 {
 
     // Initialize performance tracking
-    _performanceMetrics.lastUpdate = std::chrono::steady_clock::now();
+    _performanceMetrics.lastUpdate = ::std::chrono::steady_clock::now();
 
     // Initialize priority-based behavior manager
-    _priorityManager = std::make_unique<BehaviorPriorityManager>(this);
+    _priorityManager = ::std::make_unique<BehaviorPriorityManager>(this);
 
     // Initialize group management
-    _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
+    _groupInvitationHandler = ::std::make_unique<GroupInvitationHandler>(_bot);
 
     // Initialize target scanner for autonomous enemy detection
-    _targetScanner = std::make_unique<TargetScanner>(_bot);
+    _targetScanner = ::std::make_unique<TargetScanner>(_bot);
 
     // Initialize all game system managers
-    _questManager = std::make_unique<QuestManager>(_bot, this);
-    _tradeManager = std::make_unique<TradeManager>(_bot, this);
-    _gatheringManager = std::make_unique<GatheringManager>(_bot, this);
-    _auctionManager = std::make_unique<AuctionManager>(_bot, this);
-    _groupCoordinator = std::make_unique<GroupCoordinator>(_bot, this);
+    _questManager = ::std::make_unique<QuestManager>(_bot, this);
+    _tradeManager = ::std::make_unique<TradeManager>(_bot, this);
+    _gatheringManager = ::std::make_unique<GatheringManager>(_bot, this);
+    _auctionManager = ::std::make_unique<AuctionManager>(_bot, this);
+    _groupCoordinator = ::std::make_unique<GroupCoordinator>(_bot, this);
 
     // Initialize death recovery system
-    _deathRecoveryManager = std::make_unique<DeathRecoveryManager>(_bot, this);
+    _deathRecoveryManager = ::std::make_unique<DeathRecoveryManager>(_bot, this);
 
     // Initialize movement arbiter for priority-based movement request arbitration
-    _movementArbiter = std::make_unique<MovementArbiter>(_bot);
+    _movementArbiter = ::std::make_unique<MovementArbiter>(_bot);
 
     // Initialize combat state manager for automatic combat state synchronization
-    _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
+    _combatStateManager = ::std::make_unique<CombatStateManager>(_bot, this);
 
     // Phase 4: Initialize Shared Blackboard (thread-safe shared state system)
     _sharedBlackboard = BlackboardManager::GetBotBlackboard(_bot->GetGUID());
@@ -122,26 +122,26 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
-    _eventDispatcher = std::make_unique<Events::EventDispatcher>(512);  // Initial queue size: 512 events
-    _managerRegistry = std::make_unique<ManagerRegistry>();
+    _eventDispatcher = ::std::make_unique<Events::EventDispatcher>(512);  // Initial queue size: 512 events
+    _managerRegistry = ::std::make_unique<ManagerRegistry>();
 
     TC_LOG_INFO("module.playerbot", " EVENT DISPATCHER & MANAGER REGISTRY: {} - Phase 7.1 integration ready",
                 _bot->GetName());
 
     // Phase 5E: Initialize decision fusion system for unified action arbitration
-    _decisionFusion = std::make_unique<bot::ai::DecisionFusionSystem>();
+    _decisionFusion = ::std::make_unique<bot::ai::DecisionFusionSystem>();
 
     TC_LOG_INFO("module.playerbot", " DECISION FUSION SYSTEM: {} - Phase 5E unified arbitration ready",
                 _bot->GetName());
 
     // Phase 5 Enhancement: Initialize action priority queue for spell priority management
-    _actionPriorityQueue = std::make_unique<bot::ai::ActionPriorityQueue>();
+    _actionPriorityQueue = ::std::make_unique<bot::ai::ActionPriorityQueue>();
 
     TC_LOG_INFO("module.playerbot", " ACTION PRIORITY QUEUE: {} - Phase 5 spell priority system ready",
                 _bot->GetName());
 
     // Phase 5 Enhancement: Initialize behavior tree for hierarchical combat decisions
-    _behaviorTree = std::make_unique<bot::ai::BehaviorTree>("DefaultTree");
+    _behaviorTree = ::std::make_unique<bot::ai::BehaviorTree>("DefaultTree");
 
     TC_LOG_INFO("module.playerbot", " BEHAVIOR TREE: {} - Phase 5 hierarchical decision system ready",
                 _bot->GetName());

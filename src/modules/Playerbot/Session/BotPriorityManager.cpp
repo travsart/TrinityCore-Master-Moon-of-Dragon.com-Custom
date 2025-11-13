@@ -409,7 +409,7 @@ uint32 BotPriorityManager::GetEstimatedBotsThisTick(uint32 currentTick) const
         {
             uint32 botsAtPriority = GetBotCountByPriority(priority);
             uint32 maxBots = _priorityConfigs[i].maxBotsPerTick;
-            total += std::min(botsAtPriority, maxBots);
+            total += ::std::min(botsAtPriority, maxBots);
         }
     }
 
@@ -496,11 +496,11 @@ void BotPriorityManager::DetectStalledBots(uint32 currentTime, uint32 stallThres
     }
 }
 
-std::vector<ObjectGuid> BotPriorityManager::GetStalledBots() const
+::std::vector<ObjectGuid> BotPriorityManager::GetStalledBots() const
 {
     // No lock needed - priority metrics are per-bot instance data
 
-    std::vector<ObjectGuid> stalled;
+    ::std::vector<ObjectGuid> stalled;
     for (auto const& [guid, metrics] : _botMetrics)
     {
         if (metrics.isStalled)
@@ -573,7 +573,7 @@ void BotPriorityManager::LogPerformanceStatistics() const
     for (auto const& [guid, metrics] : _botMetrics)
     {
         totalAvgUpdateTime += metrics.averageUpdateDuration;
-        totalMaxUpdateTime = std::max(totalMaxUpdateTime, metrics.maxUpdateDuration);
+        totalMaxUpdateTime = ::std::max(totalMaxUpdateTime, metrics.maxUpdateDuration);
         totalUpdateCount += metrics.updateCount;
         totalErrorCount += metrics.errorCount;
     }

@@ -245,7 +245,7 @@ public:
     /**
      * Get all adds in combat with boss
      */
-    std::vector<::Creature*> GetAddsInCombat(::Player* player, ::Creature* boss) const;
+    ::std::vector<::Creature*> GetAddsInCombat(::Player* player, ::Creature* boss) const;
 
     /**
      * Find creature by entry near player

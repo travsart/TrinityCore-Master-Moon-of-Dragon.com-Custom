@@ -57,7 +57,7 @@ public:
     // Core pet management
     virtual void Initialize() = 0;
     virtual void Update(::Player* player, uint32 diff) = 0;
-    virtual std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const = 0;
+    virtual ::std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const = 0;
     virtual bool OwnsPet(::Player* player, uint32 speciesId) const = 0;
     virtual bool CapturePet(::Player* player, uint32 speciesId, PetQuality quality) = 0;
     virtual bool ReleasePet(::Player* player, uint32 speciesId) = 0;
@@ -74,17 +74,17 @@ public:
 
     // Pet leveling
     virtual void AutoLevelPets(::Player* player) = 0;
-    virtual std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const = 0;
+    virtual ::std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const = 0;
     virtual uint32 GetXPRequiredForLevel(uint32 currentLevel) const = 0;
     virtual void AwardPetXP(::Player* player, uint32 speciesId, uint32 xp) = 0;
     virtual bool LevelUpPet(::Player* player, uint32 speciesId) = 0;
 
     // Team composition
-    virtual bool CreatePetTeam(::Player* player, std::string const& teamName, std::vector<uint32> const& petSpeciesIds) = 0;
-    virtual std::vector<PetTeam> GetPlayerTeams(::Player* player) const = 0;
-    virtual bool SetActiveTeam(::Player* player, std::string const& teamName) = 0;
+    virtual bool CreatePetTeam(::Player* player, ::std::string const& teamName, ::std::vector<uint32> const& petSpeciesIds) = 0;
+    virtual ::std::vector<PetTeam> GetPlayerTeams(::Player* player) const = 0;
+    virtual bool SetActiveTeam(::Player* player, ::std::string const& teamName) = 0;
     virtual PetTeam GetActiveTeam(::Player* player) const = 0;
-    virtual std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const = 0;
+    virtual ::std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const = 0;
 
     // Pet healing
     virtual bool HealAllPets(::Player* player) = 0;
@@ -95,7 +95,7 @@ public:
     // Rare pet tracking
     virtual void TrackRarePetSpawns(::Player* player) = 0;
     virtual bool IsRarePet(uint32 speciesId) const = 0;
-    virtual std::vector<uint32> GetRarePetsInZone(::Player* player) const = 0;
+    virtual ::std::vector<uint32> GetRarePetsInZone(::Player* player) const = 0;
     virtual bool NavigateToRarePet(::Player* player, uint32 speciesId) = 0;
 
     // Automation profiles

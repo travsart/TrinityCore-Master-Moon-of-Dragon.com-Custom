@@ -241,7 +241,7 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
     return true;}
 
 void PaladinAI::OnCombatStart(::Unit* target){
-    _paladinMetrics.combatStartTime = std::chrono::steady_clock::now();
+    _paladinMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
@@ -910,7 +910,7 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -928,7 +928,7 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -967,7 +967,7 @@ uint32 PaladinAI::GetNearbyAllyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> allies;
+    ::std::list<Unit*> allies;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(GetBot(), allies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -985,7 +985,7 @@ uint32 PaladinAI::GetNearbyAllyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1098,7 +1098,7 @@ void PaladinAI::AnalyzeCombatEffectiveness()
 
 void PaladinAI::UpdateMetrics(uint32 diff)
 {
-    _paladinMetrics.lastMetricsUpdate = std::chrono::steady_clock::now();
+    _paladinMetrics.lastMetricsUpdate = ::std::chrono::steady_clock::now();
 }
 
 float PaladinAI::CalculateHolyPowerEfficiency()

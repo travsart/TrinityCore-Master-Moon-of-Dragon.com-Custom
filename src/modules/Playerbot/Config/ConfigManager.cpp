@@ -30,7 +30,7 @@ namespace Playerbot
 
     bool ConfigManager::Initialize()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (_initialized)
             return true;
@@ -141,18 +141,18 @@ namespace Playerbot
         };
 
         _entries["LogFile"] = ConfigEntry{
-            std::string("Playerbot.log"),
+            ::std::string("Playerbot.log"),
             "Log file name",
-            std::string("Playerbot.log"),
+            ::std::string("Playerbot.log"),
             true,
             false
         };
 
         // Formation Settings
         _entries["DefaultFormation"] = ConfigEntry{
-            std::string("wedge"),
+            ::std::string("wedge"),
             "Default tactical formation",
-            std::string("wedge"),
+            ::std::string("wedge"),
             true,
             false
         };
@@ -186,7 +186,7 @@ namespace Playerbot
         _validationRules["MaxActiveBots"] = ValidationRule{
             "MaxActiveBots",
             [](ConfigValue const& value) {
-                uint32 val = std::get<uint32>(value);
+                uint32 val = ::std::get<uint32>(value);
                 return val > 0 && val <= 5000;
             },
             "MaxActiveBots must be between 1 and 5000"
@@ -195,7 +195,7 @@ namespace Playerbot
         _validationRules["BotUpdateInterval"] = ValidationRule{
             "BotUpdateInterval",
             [](ConfigValue const& value) {
-                uint32 val = std::get<uint32>(value);
+                uint32 val = ::std::get<uint32>(value);
                 return val >= 10 && val <= 10000;
             },
             "BotUpdateInterval must be between 10 and 10000 milliseconds"
@@ -204,7 +204,7 @@ namespace Playerbot
         _validationRules["LogLevel"] = ValidationRule{
             "LogLevel",
             [](ConfigValue const& value) {
-                uint32 val = std::get<uint32>(value);
+                uint32 val = ::std::get<uint32>(value);
                 return val <= 5;
             },
             "LogLevel must be between 0 and 5"
@@ -213,16 +213,16 @@ namespace Playerbot
         _validationRules["FormationSpacing"] = ValidationRule{
             "FormationSpacing",
             [](ConfigValue const& value) {
-                float val = std::get<float>(value);
+                float val = ::std::get<float>(value);
                 return val >= 1.0f && val <= 10.0f;
             },
             "FormationSpacing must be between 1.0 and 10.0 meters"
         };
     }
 
-    bool ConfigManager::SetValue(std::string const& key, ConfigValue const& value)
+    bool ConfigManager::SetValue(::std::string const& key, ConfigValue const& value)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (!_initialized)
         {
@@ -264,9 +264,9 @@ namespace Playerbot
         return true;
     }
 
-    bool ConfigManager::GetBool(std::string const& key, bool defaultValue) const
+    bool ConfigManager::GetBool(::std::string const& key, bool defaultValue) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -274,18 +274,18 @@ namespace Playerbot
 
         try
         {
-            return std::get<bool>(it->second.value);
+            return ::std::get<bool>(it->second.value);
         }
-        catch (std::bad_variant_access const&)
+        catch (::std::bad_variant_access const&)
         {
             TC_LOG_WARN("playerbot.config", "Type mismatch for key '%s', expected bool", key.c_str());
             return defaultValue;
         }
     }
 
-    int32 ConfigManager::GetInt(std::string const& key, int32 defaultValue) const
+    int32 ConfigManager::GetInt(::std::string const& key, int32 defaultValue) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -293,18 +293,18 @@ namespace Playerbot
 
         try
         {
-            return std::get<int32>(it->second.value);
+            return ::std::get<int32>(it->second.value);
         }
-        catch (std::bad_variant_access const&)
+        catch (::std::bad_variant_access const&)
         {
             TC_LOG_WARN("playerbot.config", "Type mismatch for key '%s', expected int32", key.c_str());
             return defaultValue;
         }
     }
 
-    uint32 ConfigManager::GetUInt(std::string const& key, uint32 defaultValue) const
+    uint32 ConfigManager::GetUInt(::std::string const& key, uint32 defaultValue) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -312,18 +312,18 @@ namespace Playerbot
 
         try
         {
-            return std::get<uint32>(it->second.value);
+            return ::std::get<uint32>(it->second.value);
         }
-        catch (std::bad_variant_access const&)
+        catch (::std::bad_variant_access const&)
         {
             TC_LOG_WARN("playerbot.config", "Type mismatch for key '%s', expected uint32", key.c_str());
             return defaultValue;
         }
     }
 
-    float ConfigManager::GetFloat(std::string const& key, float defaultValue) const
+    float ConfigManager::GetFloat(::std::string const& key, float defaultValue) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -331,18 +331,18 @@ namespace Playerbot
 
         try
         {
-            return std::get<float>(it->second.value);
+            return ::std::get<float>(it->second.value);
         }
-        catch (std::bad_variant_access const&)
+        catch (::std::bad_variant_access const&)
         {
             TC_LOG_WARN("playerbot.config", "Type mismatch for key '%s', expected float", key.c_str());
             return defaultValue;
         }
     }
 
-    std::string ConfigManager::GetString(std::string const& key, std::string const& defaultValue) const
+    ::std::string ConfigManager::GetString(::std::string const& key, ::std::string const& defaultValue) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
@@ -350,30 +350,30 @@ namespace Playerbot
 
         try
         {
-            return std::get<std::string>(it->second.value);
+            return ::std::get<::std::string>(it->second.value);
         }
-        catch (std::bad_variant_access const&)
+        catch (::std::bad_variant_access const&)
         {
             TC_LOG_WARN("playerbot.config", "Type mismatch for key '%s', expected string", key.c_str());
             return defaultValue;
         }
     }
 
-    void ConfigManager::RegisterCallback(std::string const& key, ChangeCallback callback)
+    void ConfigManager::RegisterCallback(::std::string const& key, ChangeCallback callback)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _callbacks[key].push_back(callback);
     }
 
-    std::map<std::string, ConfigManager::ConfigEntry> ConfigManager::GetAllEntries() const
+    ::std::map<::std::string, ConfigManager::ConfigEntry> ConfigManager::GetAllEntries() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _entries;
     }
 
     void ConfigManager::ResetToDefaults()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         TC_LOG_INFO("playerbot.config", "Resetting all configuration to defaults");
 
@@ -383,13 +383,13 @@ namespace Playerbot
         }
     }
 
-    bool ConfigManager::SaveToFile(std::string const& filePath) const
+    bool ConfigManager::SaveToFile(::std::string const& filePath) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
-        std::string path = filePath.empty() ? "playerbots_runtime.conf" : filePath;
+        ::std::string path = filePath.empty() ? "playerbots_runtime.conf" : filePath;
 
-        std::ofstream file(path);
+        ::std::ofstream file(path);
         if (!file.is_open())
         {
             const_cast<ConfigManager*>(this)->_lastError = "Failed to open file for writing: " + path;
@@ -408,11 +408,11 @@ namespace Playerbot
 
             file << "# " << entry.description << "\n";
 
-            std::visit([&file, &key](auto&& value) {
-                using T = std::decay_t<decltype(value)>;
-                if constexpr (std::is_same_v<T, bool>)
+            ::std::visit([&file, &key](auto&& value) {
+                using T = ::std::decay_t<decltype(value)>;
+                if constexpr (::std::is_same_v<T, bool>)
                     file << key << " = " << (value ? "1" : "0") << "\n";
-                else if constexpr (std::is_same_v<T, std::string>)
+                else if constexpr (::std::is_same_v<T, ::std::string>)
                     file << key << " = \"" << value << "\"\n";
                 else
                     file << key << " = " << value << "\n";
@@ -427,21 +427,21 @@ namespace Playerbot
         return true;
     }
 
-    bool ConfigManager::LoadFromFile(std::string const& filePath)
+    bool ConfigManager::LoadFromFile(::std::string const& filePath)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
-        std::ifstream file(filePath);
+        ::std::ifstream file(filePath);
         if (!file.is_open())
         {
             _lastError = "Failed to open configuration file: " + filePath;
             return false;
         }
 
-        std::string line;
+        ::std::string line;
         uint32 lineNumber = 0;
 
-        while (std::getline(file, line))
+        while (::std::getline(file, line))
         {
             lineNumber++;
 
@@ -451,11 +451,11 @@ namespace Playerbot
 
             // Parse key = value
             size_t equalPos = line.find('=');
-            if (equalPos == std::string::npos)
+            if (equalPos == ::std::string::npos)
                 continue;
 
-            std::string key = line.substr(0, equalPos);
-            std::string value = line.substr(equalPos + 1);
+            ::std::string key = line.substr(0, equalPos);
+            ::std::string value = line.substr(equalPos + 1);
 
             // Trim whitespace
             key.erase(0, key.find_first_not_of(" \t"));
@@ -479,24 +479,24 @@ namespace Playerbot
             ConfigValue configValue;
             try
             {
-                std::visit([&value, &configValue](auto&& defaultVal) {
-                    using T = std::decay_t<decltype(defaultVal)>;
-                    if constexpr (std::is_same_v<T, bool>)
+                ::std::visit([&value, &configValue](auto&& defaultVal) {
+                    using T = ::std::decay_t<decltype(defaultVal)>;
+                    if constexpr (::std::is_same_v<T, bool>)
                         configValue = (value == "1" || value == "true");
-                    else if constexpr (std::is_same_v<T, int32>)
-                        configValue = static_cast<int32>(std::stoi(value));
-                    else if constexpr (std::is_same_v<T, uint32>)
-                        configValue = static_cast<uint32>(std::stoul(value));
-                    else if constexpr (std::is_same_v<T, float>)
-                        configValue = std::stof(value);
-                    else if constexpr (std::is_same_v<T, std::string>)
+                    else if constexpr (::std::is_same_v<T, int32>)
+                        configValue = static_cast<int32>(::std::stoi(value));
+                    else if constexpr (::std::is_same_v<T, uint32>)
+                        configValue = static_cast<uint32>(::std::stoul(value));
+                    else if constexpr (::std::is_same_v<T, float>)
+                        configValue = ::std::stof(value);
+                    else if constexpr (::std::is_same_v<T, ::std::string>)
                         configValue = value;
                 }, it->second.defaultValue);
 
                 // Set value (with validation)
                 SetValue(key, configValue);
             }
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
             {
                 TC_LOG_ERROR("playerbot.config", "Failed to parse value for key '%s' on line %u: %s",
                             key.c_str(), lineNumber, ex.what());
@@ -509,24 +509,24 @@ namespace Playerbot
         return true;
     }
 
-    bool ConfigManager::HasKey(std::string const& key) const
+    bool ConfigManager::HasKey(::std::string const& key) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _entries.find(key) != _entries.end();
     }
 
-    std::optional<ConfigManager::ConfigEntry> ConfigManager::GetEntry(std::string const& key) const
+    ::std::optional<ConfigManager::ConfigEntry> ConfigManager::GetEntry(::std::string const& key) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto it = _entries.find(key);
         if (it == _entries.end())
-            return std::nullopt;
+            return ::std::nullopt;
 
         return it->second;
     }
 
-    bool ConfigManager::ValidateValue(std::string const& key, ConfigValue const& value)
+    bool ConfigManager::ValidateValue(::std::string const& key, ConfigValue const& value)
     {
         // Check if validation rule exists
         auto it = _validationRules.find(key);
@@ -543,7 +543,7 @@ namespace Playerbot
         return true;
     }
 
-    void ConfigManager::TriggerCallbacks(std::string const& key, ConfigValue const& newValue)
+    void ConfigManager::TriggerCallbacks(::std::string const& key, ConfigValue const& newValue)
     {
         auto it = _callbacks.find(key);
         if (it == _callbacks.end())
@@ -555,7 +555,7 @@ namespace Playerbot
             {
                 callback(newValue);
             }
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
             {
                 TC_LOG_ERROR("playerbot.config", "Exception in config callback for key '%s': %s",
                             key.c_str(), ex.what());

@@ -32,7 +32,7 @@ PlayerbotGroupScript::PlayerbotGroupScript() : GroupScript("PlayerbotGroupScript
 
 PlayerbotGroupScript::~PlayerbotGroupScript()
 {
-    std::lock_guard lock(_groupStatesMutex);
+    ::std::lock_guard lock(_groupStatesMutex);
     _groupStates.clear();
 }
 
@@ -50,7 +50,7 @@ void PlayerbotGroupScript::OnAddMember(Group* group, ObjectGuid guid)
     PublishEvent(event);
 
     // Initialize or update group state for polling
-    std::lock_guard lock(_groupStatesMutex);
+    ::std::lock_guard lock(_groupStatesMutex);
     GroupState& state = GetOrCreateGroupState(group->GetGUID());
 
     // Update member subgroup tracking
@@ -84,7 +84,7 @@ void PlayerbotGroupScript::OnRemoveMember(Group* group, ObjectGuid guid, RemoveM
     PublishEvent(event);
 
     // Update group state
-    std::lock_guard lock(_groupStatesMutex);
+    ::std::lock_guard lock(_groupStatesMutex);
     auto stateItr = _groupStates.find(group->GetGUID());
     if (stateItr != _groupStates.end())
     {
@@ -135,9 +135,9 @@ void PlayerbotGroupScript::PollGroupStateChanges(Group* group, uint32 diff)
     if (!group)
         return;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
-    std::lock_guard lock(_groupStatesMutex);
+    ::std::lock_guard lock(_groupStatesMutex);
     GroupState& state = GetOrCreateGroupState(group->GetGUID());
 
     // Check all polled state changes
@@ -151,10 +151,10 @@ void PlayerbotGroupScript::PollGroupStateChanges(Group* group, uint32 diff)
     CheckSubgroupChanges(group, state);
 
     // Update statistics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
-    std::lock_guard statsLock(_pollStatsMutex);
+    ::std::lock_guard statsLock(_pollStatsMutex);
     _pollStats.totalPolls++;
 
     // Running average of poll time
@@ -174,7 +174,7 @@ void PlayerbotGroupScript::CheckLootMethodChange(Group* group, GroupState& state
 
         state.lootMethod = currentMethod;
 
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckLootMethodChange: Group {} loot method changed to {}",
@@ -193,13 +193,13 @@ void PlayerbotGroupScript::CheckLootThresholdChange(Group* group, GroupState& st
         event.priority = EventPriority::MEDIUM;
         event.groupGuid = group->GetGUID();
         event.data1 = currentThreshold;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::seconds(30);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
         PublishEvent(event);
 
         state.lootThreshold = currentThreshold;
 
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckLootThresholdChange: Group {} loot threshold changed to {}",
@@ -218,13 +218,13 @@ void PlayerbotGroupScript::CheckMasterLooterChange(Group* group, GroupState& sta
         event.priority = EventPriority::MEDIUM;
         event.groupGuid = group->GetGUID();
         event.targetGuid = currentMasterLooter;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::seconds(30);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
         PublishEvent(event);
 
         state.masterLooterGuid = currentMasterLooter;
 
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckMasterLooterChange: Group {} master looter changed to {}",
@@ -273,7 +273,7 @@ void PlayerbotGroupScript::CheckDifficultyChanges(Group* group, GroupState& stat
 
     if (changed)
     {
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_DEBUG("playerbot.group", "PlayerbotGroupScript::CheckDifficultyChanges: Group {} difficulty changed",
@@ -292,13 +292,13 @@ void PlayerbotGroupScript::CheckRaidConversion(Group* group, GroupState& state)
         event.priority = EventPriority::HIGH;
         event.groupGuid = group->GetGUID();
         event.data1 = currentIsRaid ? 1 : 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::seconds(30);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
         PublishEvent(event);
 
         state.isRaid = currentIsRaid;
 
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
 
         TC_LOG_INFO("playerbot.group", "PlayerbotGroupScript::CheckRaidConversion: Group {} converted to {}",
@@ -340,8 +340,8 @@ void PlayerbotGroupScript::CheckSubgroupChanges(Group* group, GroupState& state)
             event.groupGuid = group->GetGUID();
             event.targetGuid = memberGuid;
             event.data1 = currentSubgroup;
-            event.timestamp = std::chrono::steady_clock::now();
-            event.expiryTime = event.timestamp + std::chrono::seconds(30);
+            event.timestamp = ::std::chrono::steady_clock::now();
+            event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
             PublishEvent(event);
 
             itr->second = currentSubgroup;
@@ -354,7 +354,7 @@ void PlayerbotGroupScript::CheckSubgroupChanges(Group* group, GroupState& state)
 
     if (anyChanged)
     {
-        std::lock_guard lock(_pollStatsMutex);
+        ::std::lock_guard lock(_pollStatsMutex);
         _pollStats.eventsDetected++;
     }
 }
@@ -372,15 +372,15 @@ PlayerbotGroupScript::GroupState& PlayerbotGroupScript::GetOrCreateGroupState(Ob
 
     // Create new state
     GroupState newState;
-    newState.lastUpdate = std::chrono::steady_clock::now();
+    newState.lastUpdate = ::std::chrono::steady_clock::now();
 
-    auto [insertItr, inserted] = _groupStates.emplace(groupGuid, std::move(newState));
+    auto [insertItr, inserted] = _groupStates.emplace(groupGuid, ::std::move(newState));
     return insertItr->second;
 }
 
 void PlayerbotGroupScript::RemoveGroupState(ObjectGuid groupGuid)
 {
-    std::lock_guard lock(_groupStatesMutex);
+    ::std::lock_guard lock(_groupStatesMutex);
     _groupStates.erase(groupGuid);
 }
 
@@ -408,7 +408,7 @@ void PlayerbotGroupScript::InitializeGroupState(Group* group, GroupState& state)
     for (auto const& memberSlot : group->GetMemberSlots())
         state.memberSubgroups[memberSlot.guid] = memberSlot.group;
 
-    state.lastUpdate = std::chrono::steady_clock::now();
+    state.lastUpdate = ::std::chrono::steady_clock::now();
 }
 
 // ========================================================================
@@ -429,13 +429,13 @@ void PlayerbotGroupScript::PollStatistics::Reset()
     totalPolls = 0;
     eventsDetected = 0;
     averagePollTimeUs = 0;
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string PlayerbotGroupScript::PollStatistics::ToString() const
+::std::string PlayerbotGroupScript::PollStatistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime).count();
 
     return fmt::format(
         "PlayerbotGroupScript Poll Statistics:\n"

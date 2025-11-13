@@ -63,15 +63,15 @@ T* MemoryPool<T>::Allocate(Args&&... args)
 
     if (!block)
     {
-        throw std::bad_alloc();
+        throw ::std::bad_alloc();
     }
 
     // Construct object
-    new (&block->object) T(std::forward<Args>(args)...);
+    new (&block->object) T(::std::forward<Args>(args)...);
 
     // Update metrics
-    size_t used = _usedBlocks.fetch_add(1, std::memory_order_relaxed) + 1;
-    size_t peak = _peakUsage.load(std::memory_order_relaxed);
+    size_t used = _usedBlocks.fetch_add(1, ::std::memory_order_relaxed) + 1;
+    size_t peak = _peakUsage.load(::std::memory_order_relaxed);
     while (used > peak && !_peakUsage.compare_exchange_weak(peak, used)) {}
 
     return &block->object;
@@ -92,27 +92,27 @@ void MemoryPool<T>::Deallocate(T* ptr)
     // Try thread-local cache first
     if (_config.enableThreadCache && _threadCache.TryPush(block))
     {
-        _usedBlocks.fetch_sub(1, std::memory_order_relaxed);
+        _usedBlocks.fetch_sub(1, ::std::memory_order_relaxed);
         return;
     }
 
     // Return to shared free list
     ReturnToFreeList(block);
-    _usedBlocks.fetch_sub(1, std::memory_order_relaxed);
+    _usedBlocks.fetch_sub(1, ::std::memory_order_relaxed);
 }
 
 template<typename T>
 void MemoryPool<T>::AllocateChunk()
 {
-    std::lock_guard lock(_chunkMutex);
+    ::std::lock_guard lock(_chunkMutex);
 
-    size_t currentCapacity = _totalCapacity.load(std::memory_order_relaxed);
+    size_t currentCapacity = _totalCapacity.load(::std::memory_order_relaxed);
     if (currentCapacity >= _config.maxCapacity)
     {
         return; // At capacity limit
     }
 
-    size_t chunkSize = std::min(_config.chunkSize, _config.maxCapacity - currentCapacity);
+    size_t chunkSize = ::std::min(_config.chunkSize, _config.maxCapacity - currentCapacity);
 
     // Create new chunk
     Chunk* newChunk = new Chunk(chunkSize);
@@ -124,24 +124,24 @@ void MemoryPool<T>::AllocateChunk()
     }
 
     // Add chunk to list
-    Chunk* oldHead = _chunks.load(std::memory_order_relaxed);
+    Chunk* oldHead = _chunks.load(::std::memory_order_relaxed);
     newChunk->next = oldHead;
-    _chunks.store(newChunk, std::memory_order_release);
+    _chunks.store(newChunk, ::std::memory_order_release);
 
-    _totalCapacity.fetch_add(chunkSize, std::memory_order_relaxed);
+    _totalCapacity.fetch_add(chunkSize, ::std::memory_order_relaxed);
 }
 
 template<typename T>
 typename MemoryPool<T>::Block* MemoryPool<T>::AllocateFromFreeList()
 {
-    Block* head = _freeList.load(std::memory_order_acquire);
+    Block* head = _freeList.load(::std::memory_order_acquire);
 
     while (head)
     {
         Block* next = head->next;
         if (_freeList.compare_exchange_weak(head, next,
-            std::memory_order_release,
-            std::memory_order_acquire))
+            ::std::memory_order_release,
+            ::std::memory_order_acquire))
         {
             return head;
         }
@@ -153,13 +153,13 @@ typename MemoryPool<T>::Block* MemoryPool<T>::AllocateFromFreeList()
 template<typename T>
 void MemoryPool<T>::ReturnToFreeList(Block* block)
 {
-    Block* head = _freeList.load(std::memory_order_relaxed);
+    Block* head = _freeList.load(::std::memory_order_relaxed);
     do
     {
         block->next = head;
     } while (!_freeList.compare_exchange_weak(head, block,
-        std::memory_order_release,
-        std::memory_order_relaxed));
+        ::std::memory_order_release,
+        ::std::memory_order_relaxed));
 }
 
 // ============================================================================
@@ -174,24 +174,24 @@ BotMemoryManager& BotMemoryManager::Instance()
 
 void BotMemoryManager::TrackAllocation(ObjectGuid guid, size_t size)
 {
-    _totalAllocated.fetch_add(size, std::memory_order_relaxed);
+    _totalAllocated.fetch_add(size, ::std::memory_order_relaxed);
 
-    std::lock_guard lock(_usageMutex);
+    ::std::lock_guard lock(_usageMutex);
     auto& usage = _botMemoryUsage[guid];
-    usage.totalMemory.fetch_add(size, std::memory_order_relaxed);
-    usage.lastUpdate = std::chrono::steady_clock::now();
+    usage.totalMemory.fetch_add(size, ::std::memory_order_relaxed);
+    usage.lastUpdate = ::std::chrono::steady_clock::now();
 }
 
 void BotMemoryManager::TrackDeallocation(ObjectGuid guid, size_t size)
 {
-    _totalAllocated.fetch_sub(size, std::memory_order_relaxed);
+    _totalAllocated.fetch_sub(size, ::std::memory_order_relaxed);
 
-    std::lock_guard lock(_usageMutex);
+    ::std::lock_guard lock(_usageMutex);
     auto it = _botMemoryUsage.find(guid);
     if (it != _botMemoryUsage.end())
     {
-        it->second.totalMemory.fetch_sub(size, std::memory_order_relaxed);
-        it->second.lastUpdate = std::chrono::steady_clock::now();
+        it->second.totalMemory.fetch_sub(size, ::std::memory_order_relaxed);
+        it->second.lastUpdate = ::std::chrono::steady_clock::now();
     }
 }
 

@@ -42,7 +42,7 @@ void ParseTypedReadyCheckStarted(WorldSession* session, WorldPackets::Party::Rea
     event.sourceGuid = packet.InitiatorGUID;
     event.data1 = static_cast<uint32>(Milliseconds(packet.Duration).count());  // Duration in milliseconds (WoW 11.2 API)
     event.data2 = static_cast<uint32>(packet.PartyIndex);
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
@@ -68,7 +68,7 @@ void ParseTypedReadyCheckResponse(WorldSession* session, WorldPackets::Party::Re
     event.groupGuid = packet.PartyGUID;
     event.targetGuid = packet.Player;
     event.data1 = packet.IsReady ? 1 : 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
@@ -94,7 +94,7 @@ void ParseTypedReadyCheckCompleted(WorldSession* session, WorldPackets::Party::R
     event.groupGuid = packet.PartyGUID;
     event.data1 = 0;  // WoW 11.2: ReadyCount no longer in packet
     event.data2 = 0;  // WoW 11.2: NotReadyCount no longer in packet
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
@@ -121,7 +121,7 @@ void ParseTypedRaidTargetUpdateSingle(WorldSession* session, WorldPackets::Party
     event.sourceGuid = packet.ChangedBy;
     event.data1 = static_cast<uint32>(packet.Symbol);
     event.data2 = static_cast<uint32>(packet.PartyIndex);
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 
@@ -152,7 +152,7 @@ void ParseTypedRaidTargetUpdateAll(WorldSession* session, WorldPackets::Party::S
             event.targetGuid = targetGuid;
             event.data1 = static_cast<uint32>(symbolIndex);  // Explicit symbol index from pair
             event.data2 = static_cast<uint32>(packet.PartyIndex);
-            event.timestamp = std::chrono::steady_clock::now();
+            event.timestamp = ::std::chrono::steady_clock::now();
 
             GroupEventBus::instance()->PublishEvent(event);
         }
@@ -179,7 +179,7 @@ void ParseTypedGroupNewLeader(WorldSession* session, WorldPackets::Party::GroupN
     event.priority = EventPriority::HIGH;
     event.targetGuid = ObjectGuid::Empty;  // New leader GUID might be in packet data
     event.data1 = static_cast<uint32>(packet.PartyIndex);
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     GroupEventBus::instance()->PublishEvent(event);
 

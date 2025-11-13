@@ -48,15 +48,15 @@ struct ActionContext
     float x = 0, y = 0, z = 0;  // Position data
     uint32 spellId = 0;
     uint32 itemId = 0;
-    std::string text;
-    std::unordered_map<std::string, float> values;
+    ::std::string text;
+    ::std::unordered_map<::std::string, float> values;
 };
 
 // Base action class
 class TC_GAME_API Action
 {
 public:
-    Action(std::string const& name);
+    Action(::std::string const& name);
     virtual ~Action() = default;
 
     // Core action interface
@@ -73,7 +73,7 @@ public:
     virtual float GetRelevance(BotAI* ai) const { return IsUseful(ai) ? 1.0f : 0.0f; }
 
     // Action properties
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
     float GetRelevanceScore() const { return _relevance; }
     void SetRelevance(float relevance) { _relevance = relevance; }
 
@@ -83,18 +83,18 @@ public:
     bool IsOnCooldown() const;
 
     // Action chaining
-    void SetNextAction(std::shared_ptr<Action> action) { _nextAction = action; }
-    std::shared_ptr<Action> GetNextAction() const { return _nextAction; }
+    void SetNextAction(::std::shared_ptr<Action> action) { _nextAction = action; }
+    ::std::shared_ptr<Action> GetNextAction() const { return _nextAction; }
 
     // Prerequisites
-    void AddPrerequisite(std::shared_ptr<Action> action);
-    std::vector<std::shared_ptr<Action>> const& GetPrerequisites() const { return _prerequisites; }
+    void AddPrerequisite(::std::shared_ptr<Action> action);
+    ::std::vector<::std::shared_ptr<Action>> const& GetPrerequisites() const { return _prerequisites; }
 
     // Performance tracking
     uint32 GetExecutionCount() const { return _executionCount; }
     uint32 GetSuccessCount() const { return _successCount; }
     float GetSuccessRate() const;
-    std::chrono::milliseconds GetAverageExecutionTime() const { return _avgExecutionTime; }
+    ::std::chrono::milliseconds GetAverageExecutionTime() const { return _avgExecutionTime; }
 
     // Legacy compatibility
     uint32 GetPriority() const { return static_cast<uint32>(_relevance * 100); }
@@ -107,7 +107,7 @@ protected:
     bool CanCast(BotAI* ai, uint32 spellId, ::Unit* target = nullptr) const;
     bool DoCast(BotAI* ai, uint32 spellId, ::Unit* target = nullptr);
     bool DoMove(BotAI* ai, float x, float y, float z);
-    bool DoSay(BotAI* ai, std::string const& text);
+    bool DoSay(BotAI* ai, ::std::string const& text);
     bool DoEmote(BotAI* ai, uint32 emoteId);
     bool UseItem(BotAI* ai, uint32 itemId, ::Unit* target = nullptr);
 
@@ -117,18 +117,18 @@ protected:
     Player* GetNearestPlayer(BotAI* ai, float range = 100.0f) const;
 
 protected:
-    std::string _name;
+    ::std::string _name;
     float _relevance = 1.0f;
-    std::shared_ptr<Action> _nextAction;
-    std::vector<std::shared_ptr<Action>> _prerequisites;
+    ::std::shared_ptr<Action> _nextAction;
+    ::std::vector<::std::shared_ptr<Action>> _prerequisites;
 
     // Cooldown tracking
-    mutable std::chrono::steady_clock::time_point _lastExecution;
+    mutable ::std::chrono::steady_clock::time_point _lastExecution;
 
     // Performance metrics
-    std::atomic<uint32> _executionCount{0};
-    std::atomic<uint32> _successCount{0};
-    std::chrono::milliseconds _avgExecutionTime{0};
+    ::std::atomic<uint32> _executionCount{0};
+    ::std::atomic<uint32> _successCount{0};
+    ::std::chrono::milliseconds _avgExecutionTime{0};
     bool _executing = false;
 };
 
@@ -136,7 +136,7 @@ protected:
 class TC_GAME_API MovementAction : public Action
 {
 public:
-    MovementAction(std::string const& name) : Action(name) {}
+    MovementAction(::std::string const& name) : Action(name) {}
 
     virtual bool IsPossible(BotAI* ai) const override;
     virtual ActionResult Execute(BotAI* ai, ActionContext const& context) override;
@@ -149,14 +149,14 @@ public:
 protected:
     float _speed = 1.0f;
     uint32 _formation = 0;
-    std::vector<G3D::Vector3> _path;
+    ::std::vector<G3D::Vector3> _path;
 };
 
 // Combat action
 class TC_GAME_API CombatAction : public Action
 {
 public:
-    CombatAction(std::string const& name) : Action(name) {}
+    CombatAction(::std::string const& name) : Action(name) {}
 
     virtual bool IsUseful(BotAI* ai) const override;
 
@@ -171,7 +171,7 @@ public:
 class TC_GAME_API SpellAction : public CombatAction
 {
 public:
-    SpellAction(std::string const& name, uint32 spellId)
+    SpellAction(::std::string const& name, uint32 spellId)
         : CombatAction(name), _spellId(spellId) {}
 
     virtual bool IsPossible(BotAI* ai) const override;
@@ -196,21 +196,21 @@ public:
     static ActionFactory* instance();
 
     // Action registration
-    void RegisterAction(std::string const& name,
-                       std::function<std::shared_ptr<Action>()> creator) override;
+    void RegisterAction(::std::string const& name,
+                       ::std::function<::std::shared_ptr<Action>()> creator) override;
 
     // Action creation
-    std::shared_ptr<Action> CreateAction(std::string const& name) override;
-    std::vector<std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) override;
-    std::vector<std::shared_ptr<Action>> CreateCombatActions(uint8 classId) override;
-    std::vector<std::shared_ptr<Action>> CreateMovementActions() override;
+    ::std::shared_ptr<Action> CreateAction(::std::string const& name) override;
+    ::std::vector<::std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) override;
+    ::std::vector<::std::shared_ptr<Action>> CreateCombatActions(uint8 classId) override;
+    ::std::vector<::std::shared_ptr<Action>> CreateMovementActions() override;
 
     // Available actions
-    std::vector<std::string> GetAvailableActions() const override;
-    bool HasAction(std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableActions() const override;
+    bool HasAction(::std::string const& name) const override;
 
 private:
-    std::unordered_map<std::string, std::function<std::shared_ptr<Action>()>> _creators;
+    ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<Action>()>> _creators;
 };
 
 #define sActionFactory ActionFactory::instance()

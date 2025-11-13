@@ -66,7 +66,7 @@ public:
 
     void AddStack(uint32 amount = 1)
     {
-        _maelstromStacks = std::min(_maelstromStacks + amount, 5u); // Max 5 stacks
+        _maelstromStacks = ::std::min(_maelstromStacks + amount, 5u); // Max 5 stacks
         _maelstromEndTime = GameTime::GetGameTimeMS() + 30000; // 30 sec duration
     }
 
@@ -721,7 +721,7 @@ private:
 
         uint32 count = 0;
         // Simplified enemy counting
-        return std::min(count, 10u);
+        return ::std::min(count, 10u);
     }
 
     void InitializeEnhancementMechanics()

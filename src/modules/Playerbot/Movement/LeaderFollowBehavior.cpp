@@ -135,23 +135,23 @@ LeaderFollowBehavior::LeaderFollowBehavior()
 
 void LeaderFollowBehavior::InitializeActions()
 {
-    AddAction("follow", std::make_shared<FollowAction>());
+    AddAction("follow", ::std::make_shared<FollowAction>());
 
     // DEADLOCK FIX: Pass 'this' pointer to StopFollowAction so it doesn't need to call GetStrategy()
-    AddAction("stop follow", std::make_shared<StopFollowAction>(this));
+    AddAction("stop follow", ::std::make_shared<StopFollowAction>(this));
 
     // CRITICAL FIX: Add combat assistance action
-    AddAction("assist_group", std::make_shared<TargetAssistAction>("assist_group"));
+    AddAction("assist_group", ::std::make_shared<TargetAssistAction>("assist_group"));
 }
 
 void LeaderFollowBehavior::InitializeTriggers()
 {
     // DEADLOCK FIX: Pass 'this' pointer to triggers so they don't need to call GetStrategy()
-    AddTrigger(std::make_shared<LeaderFarTrigger>(this));
-    AddTrigger(std::make_shared<LeaderLostTrigger>(this));
+    AddTrigger(::std::make_shared<LeaderFarTrigger>(this));
+    AddTrigger(::std::make_shared<LeaderLostTrigger>(this));
 
     // CRITICAL FIX: Add group combat trigger for combat assistance
-    AddTrigger(std::make_shared<GroupCombatTrigger>("group_combat"));
+    AddTrigger(::std::make_shared<GroupCombatTrigger>("group_combat"));
 }
 
 void LeaderFollowBehavior::InitializeValues()
@@ -329,14 +329,14 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     Player* bot = ai->GetBot();
 
     // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> followLogAccumulators;
+    static const ::std::set<::std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+    static ::std::unordered_map<::std::string, uint32> followLogAccumulators;
     bool isTestBot = testBots.find(bot->GetName()) != testBots.end();
     bool shouldLog = false;
 
     if (isTestBot)
     {
-        std::string const& botName = bot->GetName();
+        ::std::string const& botName = bot->GetName();
         // Throttle by call count (every 1000 calls ~= 50s)
         followLogAccumulators[botName]++;
         if (followLogAccumulators[botName] >= 1000)
@@ -378,7 +378,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     // Update cached pointer if it changed
     _followTarget.player = leader;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // CRITICAL DEBUG: Log state at entry (already throttled above via shouldLog)
     if (shouldLog)
@@ -438,8 +438,8 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
             break;
     }
     // Track performance
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "UpdateFollowBehavior");
 }
 
@@ -553,7 +553,7 @@ bool LeaderFollowBehavior::ShouldTeleportToLeader(Player* bot, Player* leader)
         return false;
 
     // Check distance
-    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     if (distance > _config.teleportDistance)
         return true;
 
@@ -665,7 +665,7 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
     }
 
     // Check if we're already close enough
-    float distance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
     if (distance <= POSITION_TOLERANCE)
     {
         TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
@@ -703,7 +703,7 @@ void LeaderFollowBehavior::UpdateFollowTarget(Player* bot, Player* leader)
         return;
 
     _followTarget.lastKnownPosition = leader->GetPosition();
-    _followTarget.currentDistance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    _followTarget.currentDistance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     _followTarget.isMoving = leader->isMoving();
     _followTarget.currentSpeed = leader->GetSpeed(MOVE_RUN);
 
@@ -750,7 +750,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     Position targetPos = CalculateFollowPosition(leader, _formationRole);
 
     // Check current distance
-    float currentDistance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
 
     TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
                  bot->GetName(), currentDistance, _config.minDistance, _config.maxDistance);
@@ -811,7 +811,7 @@ void LeaderFollowBehavior::UpdateFormation(BotAI* ai)
     Position formationPos = CalculateFollowPosition(leader, _formationRole);
 
     // Move to formation position
-    float distance = std::sqrt(bot->GetExactDistSq(formationPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(formationPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 1.5f)
     {
         MoveToFollowPosition(ai, formationPos);
@@ -844,7 +844,7 @@ void LeaderFollowBehavior::UpdateCombatFollowing(BotAI* ai)
     Position combatPos = CalculateCombatPosition(bot, leader, target);
 
     // Move to combat position if needed
-    float distance = std::sqrt(bot->GetExactDistSq(combatPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(combatPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 2)
     {
         MoveToFollowPosition(ai, combatPos);
@@ -891,8 +891,8 @@ void LeaderFollowBehavior::SetFollowMode(FollowMode mode)
 
 void LeaderFollowBehavior::SetFollowDistance(float min, float max)
 {
-    _config.minDistance = std::max(MIN_FOLLOW_DISTANCE, min);
-    _config.maxDistance = std::min(MAX_FOLLOW_DISTANCE, max);
+    _config.minDistance = ::std::max(MIN_FOLLOW_DISTANCE, min);
+    _config.maxDistance = ::std::min(MAX_FOLLOW_DISTANCE, max);
     _config.mode = FollowMode::CUSTOM;
 }
 
@@ -975,24 +975,24 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
     return false;
 }
 
-void LeaderFollowBehavior::OptimizePath(std::vector<Position>& path)
+void LeaderFollowBehavior::OptimizePath(::std::vector<Position>& path)
 {
     if (path.size() < 3)
         return;
 
     // Simple path smoothing - remove unnecessary waypoints
-    std::vector<Position> optimized;
+    ::std::vector<Position> optimized;
     optimized.push_back(path[0]);
 
     for (size_t i = 1; i < path.size() - 1; ++i)
     {
         // Check if this waypoint is necessary
-        float angle1 = std::atan2(path[i].GetPositionY() - path[i-1].GetPositionY(),
+        float angle1 = ::std::atan2(path[i].GetPositionY() - path[i-1].GetPositionY(),
                                  path[i].GetPositionX() - path[i-1].GetPositionX());
-        float angle2 = std::atan2(path[i+1].GetPositionY() - path[i].GetPositionY(),
+        float angle2 = ::std::atan2(path[i+1].GetPositionY() - path[i].GetPositionY(),
                                  path[i+1].GetPositionX() - path[i].GetPositionX());
 
-        float angleDiff = std::abs(angle1 - angle2);
+        float angleDiff = ::std::abs(angle1 - angle2);
         if (angleDiff > M_PI / 6) // 30 degree threshold
         {
             optimized.push_back(path[i]);
@@ -1068,7 +1068,7 @@ Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* lead
         case FormationRole::HEALER:
             // Stay at range from target, near leader
             {
-                float angle = std::atan2(leader->GetPositionY() - target->GetPositionY(),
+                float angle = ::std::atan2(leader->GetPositionY() - target->GetPositionY(),
                                         leader->GetPositionX() - target->GetPositionX());
                 float distance = _formationRole == FormationRole::HEALER ? 25.0f : 20.0f;
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * distance;
@@ -1127,7 +1127,7 @@ void LeaderFollowBehavior::AdjustMovementSpeed(Player* bot, float distanceToTarg
     }
 
     // Apply speed modifier if changed
-    if (std::abs(_currentSpeedModifier - speedMod) > 0.01f)
+    if (::std::abs(_currentSpeedModifier - speedMod) > 0.01f)
     {
         _currentSpeedModifier = speedMod;
         bot->SetSpeed(MOVE_RUN, bot->GetSpeed(MOVE_RUN) * speedMod);
@@ -1387,7 +1387,7 @@ float LeaderFollowBehavior::CalculateDistance2D(const Position& pos1, const Posi
 {
     float dx = pos1.GetPositionX() - pos2.GetPositionX();
     float dy = pos1.GetPositionY() - pos2.GetPositionY();
-    return std::sqrt(dx * dx + dy * dy);
+    return ::std::sqrt(dx * dx + dy * dy);
 }
 
 float LeaderFollowBehavior::CalculateDistance3D(const Position& pos1, const Position& pos2)
@@ -1395,7 +1395,7 @@ float LeaderFollowBehavior::CalculateDistance3D(const Position& pos1, const Posi
     float dx = pos1.GetPositionX() - pos2.GetPositionX();
     float dy = pos1.GetPositionY() - pos2.GetPositionY();
     float dz = pos1.GetPositionZ() - pos2.GetPositionZ();
-    return std::sqrt(dx * dx + dy * dy + dz * dz);
+    return ::std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 bool LeaderFollowBehavior::IsWithinRange(float distance, float min, float max)
@@ -1409,35 +1409,35 @@ uint32 LeaderFollowBehavior::GetTimeSince(uint32 timestamp)
     return (now >= timestamp) ? (now - timestamp) : 0;
 }
 
-void LeaderFollowBehavior::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void LeaderFollowBehavior::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
 {
     if (duration > _metrics.maxUpdateTime)
         _metrics.maxUpdateTime = duration;
 
     // Update rolling average
-    _metrics.averageUpdateTime = std::chrono::microseconds(
+    _metrics.averageUpdateTime = ::std::chrono::microseconds(
         (_metrics.averageUpdateTime.count() * 9 + duration.count()) / 10);
 }
 
 // Factory implementations
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateFollowBehavior(FollowMode mode)
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateFollowBehavior(FollowMode mode)
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->SetFollowMode(mode);
     return behavior;
 }
 
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateRoleBasedFollowBehavior(FormationRole role)
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateRoleBasedFollowBehavior(FormationRole role)
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->SetFollowMode(FollowMode::FORMATION);
     // Role will be used in position calculations
     return behavior;
 }
 
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateCombatFollowBehavior()
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateCombatFollowBehavior()
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->GetConfig().followInCombat = true;
     behavior->GetConfig().minDistance = 10.0f;
     behavior->GetConfig().maxDistance = 20.0f;
@@ -1499,7 +1499,7 @@ bool FollowBehaviorUtils::IsInFollowRange(Player* bot, Player* leader, float min
     if (!bot || !leader)
         return false;
 
-    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     return distance >= minDist && distance <= maxDist;
 }
 

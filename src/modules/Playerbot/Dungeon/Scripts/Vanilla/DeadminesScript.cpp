@@ -354,7 +354,7 @@ public:
             case 646: // Mr. Smite
             {
                 // Mr. Smite spawns adds - kill adds first if low health
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
                 for (::Creature* add : adds)
                 {
                     if (add->GetHealthPct() < 30)
@@ -372,7 +372,7 @@ public:
             {
                 // VanCleef summons two Defias adds at low health
                 // Kill adds first if they exist
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
                 if (!adds.empty())
                 {
                     player->SetSelection(adds[0]->GetGUID());

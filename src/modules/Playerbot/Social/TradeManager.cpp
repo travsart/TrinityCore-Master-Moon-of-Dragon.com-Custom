@@ -78,9 +78,9 @@ namespace Playerbot
 
             return false;
 
-        float ratio = static_cast<float>(std::min(offeredValue, receivedValue)) /
+        float ratio = static_cast<float>(::std::min(offeredValue, receivedValue)) /
 
-                     static_cast<float>(std::max(offeredValue, receivedValue));
+                     static_cast<float>(::std::max(offeredValue, receivedValue));
 
         return ratio >= (1.0f - tolerance);
     }
@@ -94,11 +94,11 @@ namespace Playerbot
         return static_cast<float>(successfulTrades) / static_cast<float>(totalTrades);
     }
 
-    std::chrono::milliseconds TradeStatistics::GetAverageTradeTime() const
+    ::std::chrono::milliseconds TradeStatistics::GetAverageTradeTime() const
     {
         if (successfulTrades == 0)
 
-            return std::chrono::milliseconds(0);
+            return ::std::chrono::milliseconds(0);
         return totalTradeTime / successfulTrades;
     }
 
@@ -113,7 +113,7 @@ namespace Playerbot
         m_maxTradeDistance(MAX_TRADE_DISTANCE_YARDS),
         m_updateTimer(0)
     {
-        m_lastUpdateTime = std::chrono::steady_clock::now();
+        m_lastUpdateTime = ::std::chrono::steady_clock::now();
     }
 
     TradeManager::~TradeManager()
@@ -128,7 +128,7 @@ namespace Playerbot
         // Initialize trade state
         ResetTradeSession();
         m_updateTimer = 0;
-        m_lastUpdateTime = std::chrono::steady_clock::now();
+        m_lastUpdateTime = ::std::chrono::steady_clock::now();
 
         // Clear any pending transfers
         while (!m_pendingTransfers.empty())
@@ -142,9 +142,9 @@ namespace Playerbot
         m_statistics = TradeStatistics();
 
         // Set initial atomic states
-        _isTradingActive.store(false, std::memory_order_release);
-        _needsRepair.store(false, std::memory_order_release);
-        _needsSupplies.store(false, std::memory_order_release);
+        _isTradingActive.store(false, ::std::memory_order_release);
+        _needsRepair.store(false, ::std::memory_order_release);
+        _needsSupplies.store(false, ::std::memory_order_release);
 
         TC_LOG_DEBUG("bot.trade", "TradeManager initialized for bot {}",
 
@@ -179,7 +179,7 @@ namespace Playerbot
             GetBot() ? GetBot()->GetName() : "unknown");
     }
 
-    bool TradeManager::InitiateTrade(Player* target, std::string const& reason)
+    bool TradeManager::InitiateTrade(Player* target, ::std::string const& reason)
     {
         if (!target)
 
@@ -188,7 +188,7 @@ namespace Playerbot
         return InitiateTrade(target->GetGUID(), reason);
     }
 
-    bool TradeManager::InitiateTrade(ObjectGuid targetGuid, std::string const& reason)
+    bool TradeManager::InitiateTrade(ObjectGuid targetGuid, ::std::string const& reason)
     {
         if (!GetBot() || !targetGuid)
 
@@ -242,7 +242,7 @@ namespace Playerbot
         // Initialize trade session
         ResetTradeSession();
         m_currentSession.traderGuid = targetGuid;
-        m_currentSession.startTime = std::chrono::steady_clock::now();
+        m_currentSession.startTime = ::std::chrono::steady_clock::now();
         SetTradeState(TradeState::INITIATING);
 
         // Initiate trade (this will create the trade data internally and send packets)
@@ -288,8 +288,8 @@ namespace Playerbot
         }
 
         // Check request timeout
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
 
             now - it->second.requestTime).count();
 
@@ -323,7 +323,7 @@ namespace Playerbot
         return false;
     }
 
-    void TradeManager::CancelTrade(std::string const& reason)
+    void TradeManager::CancelTrade(::std::string const& reason)
     {
         if (!IsTrading())
 
@@ -456,7 +456,7 @@ namespace Playerbot
         if (!CanTradeItem(item))
         {
 
-            LogTradeAction("ADD_ITEM_FAILED", "Item cannot be traded: " + std::to_string(item->GetEntry()));
+            LogTradeAction("ADD_ITEM_FAILED", "Item cannot be traded: " + ::std::to_string(item->GetEntry()));
 
             return false;
         }
@@ -499,7 +499,7 @@ namespace Playerbot
         return true;
     }
 
-    bool TradeManager::AddItemsToTrade(std::vector<Item*> const& items)
+    bool TradeManager::AddItemsToTrade(::std::vector<Item*> const& items)
     {
         if (!GetBot() || items.empty() || !IsTrading())
 
@@ -538,7 +538,7 @@ namespace Playerbot
         myTrade->SetItem(TradeSlots(slot), nullptr, false);
 
         // Remove from session
-        auto it = std::remove_if(m_currentSession.offeredItems.begin(),
+        auto it = ::std::remove_if(m_currentSession.offeredItems.begin(),
 
                                  m_currentSession.offeredItems.end(),
 
@@ -549,7 +549,7 @@ namespace Playerbot
 
             m_currentSession.offeredItems.erase(it, m_currentSession.offeredItems.end());
 
-            LogTradeAction("REMOVE_ITEM", "Removed item from slot " + std::to_string(slot));
+            LogTradeAction("REMOVE_ITEM", "Removed item from slot " + ::std::to_string(slot));
 
             return true;
         }
@@ -572,7 +572,7 @@ namespace Playerbot
         if (!ValidateTradeGold(gold))
         {
 
-            LogTradeAction("SET_GOLD_FAILED", "Invalid gold amount: " + std::to_string(gold));
+            LogTradeAction("SET_GOLD_FAILED", "Invalid gold amount: " + ::std::to_string(gold));
 
             return false;
         }
@@ -590,7 +590,7 @@ namespace Playerbot
         m_currentSession.offeredGold = gold;
         SetTradeState(TradeState::ADDING_ITEMS);
 
-        LogTradeAction("SET_GOLD", "Set gold to " + std::to_string(gold));
+        LogTradeAction("SET_GOLD", "Set gold to " + ::std::to_string(gold));
         return true;
     }
 
@@ -602,7 +602,7 @@ namespace Playerbot
 
         m_currentSession.traderGuid = trader->GetGUID();
         SetTradeState(TradeState::ADDING_ITEMS);
-        m_currentSession.startTime = std::chrono::steady_clock::now();
+        m_currentSession.startTime = ::std::chrono::steady_clock::now();
 
         LogTradeAction("TRADE_STARTED", "Trade window opened with " + trader->GetName());
     }
@@ -659,7 +659,7 @@ namespace Playerbot
             SetTradeState(TradeState::REVIEWING);
 
         m_currentSession.updateCount++;
-        m_currentSession.lastUpdate = std::chrono::steady_clock::now();
+        m_currentSession.lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     void TradeManager::OnTradeAccepted()
@@ -683,11 +683,11 @@ namespace Playerbot
         m_updateTimer += elapsed;
 
         // Process pending trade requests
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         for (auto it = m_pendingRequests.begin(); it != m_pendingRequests.end();)
         {
 
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
 
                 now - it->second.requestTime).count();
 
@@ -739,7 +739,7 @@ namespace Playerbot
 
             // Check for timeout
 
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
 
                 now - m_currentSession.startTime).count();
 
@@ -748,7 +748,7 @@ namespace Playerbot
 
             {
 
-                LogTradeAction("TRADE_TIMEOUT", "Trade timed out after " + std::to_string(elapsed) + "ms");
+                LogTradeAction("TRADE_TIMEOUT", "Trade timed out after " + ::std::to_string(elapsed) + "ms");
 
                 CancelTrade("Trade timeout");
 
@@ -773,7 +773,7 @@ namespace Playerbot
 
                     LogTradeAction("ITEM_TRANSFER", "Sent item " +
 
-                        std::to_string(transfer.first->GetEntry()) + " to " + recipient->GetName());
+                        ::std::to_string(transfer.first->GetEntry()) + " to " + recipient->GetName());
 
                 }
 
@@ -783,7 +783,7 @@ namespace Playerbot
             m_pendingTransfers.pop();
         }
     }
-    bool TradeManager::DistributeLoot(std::vector<Item*> const& items, bool useNeedGreed)
+    bool TradeManager::DistributeLoot(::std::vector<Item*> const& items, bool useNeedGreed)
     {
         if (!GetBot() || items.empty())
 
@@ -799,7 +799,7 @@ namespace Playerbot
         }
 
         // Create distribution plan
-        m_currentDistribution = std::make_unique<LootDistribution>();
+        m_currentDistribution = ::std::make_unique<LootDistribution>();
         m_currentDistribution->items = items;
         m_currentDistribution->useRoundRobin = !useNeedGreed;
         m_currentDistribution->considerSpec = useNeedGreed;
@@ -818,7 +818,7 @@ namespace Playerbot
 
             // Find best recipient
 
-            std::vector<Player*> candidates;
+            ::std::vector<Player*> candidates;
 
             for (Group::MemberSlot const& member : group->GetMemberSlots())
 
@@ -855,7 +855,7 @@ namespace Playerbot
             }
         }
 
-        LogTradeAction("DISTRIBUTE_LOOT", "Distributed " + std::to_string(distributedCount) +
+        LogTradeAction("DISTRIBUTE_LOOT", "Distributed " + ::std::to_string(distributedCount) +
 
             " items to group");
         return distributedCount > 0;
@@ -920,13 +920,13 @@ namespace Playerbot
         if (!hasItem)
         {
 
-            LogTradeAction("REQUEST_ITEM_FAILED", "Owner doesn't have item " + std::to_string(itemEntry));
+            LogTradeAction("REQUEST_ITEM_FAILED", "Owner doesn't have item " + ::std::to_string(itemEntry));
 
             return false;
         }
 
         // Initiate trade
-        return InitiateTrade(owner, "Requesting item " + std::to_string(itemEntry));
+        return InitiateTrade(owner, "Requesting item " + ::std::to_string(itemEntry));
     }
 
     bool TradeManager::ValidateTradeTarget(Player* target) const
@@ -1022,7 +1022,7 @@ namespace Playerbot
 
                 LogTradeAction("VALIDATE_ITEMS_FAILED", "Invalid ownership for item " +
 
-                    std::to_string(item->GetEntry()));
+                    ::std::to_string(item->GetEntry()));
 
                 return false;
 
@@ -1036,7 +1036,7 @@ namespace Playerbot
 
                 LogTradeAction("VALIDATE_ITEMS_FAILED", "Protected item " +
 
-                    std::to_string(item->GetEntry()));
+                    ::std::to_string(item->GetEntry()));
 
                 return false;
 
@@ -1052,7 +1052,7 @@ namespace Playerbot
 
                 LogTradeAction("VALIDATE_ITEMS_FAILED", "Item value exceeds maximum: " +
 
-                    std::to_string(value));
+                    ::std::to_string(value));
 
                 return false;
 
@@ -1225,9 +1225,9 @@ namespace Playerbot
         return MAX_TRADE_ITEMS;
     }
 
-    std::vector<Item*> TradeManager::GetTradableItems() const
+    ::std::vector<Item*> TradeManager::GetTradableItems() const
     {
-        std::vector<Item*> tradableItems;
+        ::std::vector<Item*> tradableItems;
         if (!GetBot())
 
             return tradableItems;
@@ -1281,9 +1281,9 @@ namespace Playerbot
         TradeState oldState = m_currentSession.state;
         m_currentSession.state = newState;
 
-        LogTradeAction("STATE_CHANGE", "State changed from " + std::to_string(uint8(oldState)) +
+        LogTradeAction("STATE_CHANGE", "State changed from " + ::std::to_string(uint8(oldState)) +
 
-            " to " + std::to_string(uint8(newState)));
+            " to " + ::std::to_string(uint8(newState)));
     }
 
     void TradeManager::ResetTradeSession()
@@ -1403,9 +1403,9 @@ namespace Playerbot
             {
                 // Small delay before auto-accepting
 
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
 
-                    std::chrono::steady_clock::now() - m_currentSession.lastUpdate).count();
+                    ::std::chrono::steady_clock::now() - m_currentSession.lastUpdate).count();
 
 
                 if (elapsed > 2000) // 2 second delay
@@ -1545,7 +1545,7 @@ namespace Playerbot
         return GetBot()->CanUseItem(item) == EQUIP_ERR_OK;
     }
 
-    Player* TradeManager::SelectBestRecipient(Item* item, std::vector<Player*> const& candidates) const
+    Player* TradeManager::SelectBestRecipient(Item* item, ::std::vector<Player*> const& candidates) const
     {
         if (candidates.empty() || !item)
 
@@ -1774,8 +1774,8 @@ namespace Playerbot
 
     void TradeManager::ProcessTradeCompletion()
     {
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
 
             endTime - m_currentSession.startTime);
 
@@ -1796,7 +1796,7 @@ namespace Playerbot
         ResetTradeSession();
     }
 
-    void TradeManager::ProcessTradeCancellation(std::string const& reason)
+    void TradeManager::ProcessTradeCancellation(::std::string const& reason)
     {
         // Update statistics
         m_statistics.totalTrades++;
@@ -1816,7 +1816,7 @@ namespace Playerbot
         ResetTradeSession();
     }
 
-    void TradeManager::HandleTradeError(std::string const& error)
+    void TradeManager::HandleTradeError(::std::string const& error)
     {
         m_statistics.totalTrades++;
         m_statistics.failedTrades++;
@@ -1827,7 +1827,7 @@ namespace Playerbot
         CancelTrade(error);
     }
 
-    void TradeManager::LogTradeAction(std::string const& action, std::string const& details) const
+    void TradeManager::LogTradeAction(::std::string const& action, ::std::string const& details) const
     {
         if (!GetBot())
 

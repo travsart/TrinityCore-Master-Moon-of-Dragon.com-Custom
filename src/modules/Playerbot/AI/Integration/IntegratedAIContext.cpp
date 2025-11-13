@@ -88,7 +88,7 @@ Coordination::ZoneOrchestrator* IntegratedAIContext::GetZoneOrchestrator() const
     return _cachedZoneOrchestrator;
 }
 
-void IntegratedAIContext::PropagateToGroup(std::string const& key)
+void IntegratedAIContext::PropagateToGroup(::std::string const& key)
 {
     if (!IsInGroup())
         return;
@@ -112,7 +112,7 @@ void IntegratedAIContext::PropagateToGroup(std::string const& key)
     }
 }
 
-void IntegratedAIContext::PullFromGroup(std::string const& key)
+void IntegratedAIContext::PullFromGroup(::std::string const& key)
 {
     if (!IsInGroup())
         return;

@@ -66,7 +66,7 @@ public:
 
     void Generate(uint32 amount)
     {
-        _maelstrom = std::min(_maelstrom + amount, _maxMaelstrom);
+        _maelstrom = ::std::min(_maelstrom + amount, _maxMaelstrom);
     }
 
     void Spend(uint32 amount)
@@ -164,7 +164,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
 };
 
 // Lava Surge proc tracker (instant Lava Burst)
@@ -632,7 +632,7 @@ private:
             {
                 this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
                 _stormkeeperTracker.ConsumeStack();
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u)); // 4 per target hit
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u)); // 4 per target hit
                 return;
             }
         }
@@ -643,7 +643,7 @@ private:
             if (this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
             {
                 this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u));
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -665,7 +665,7 @@ private:
 
         uint32 count = 0;
         // Simplified enemy counting
-        return std::min(count, 10u);
+        return ::std::min(count, 10u);
     }
 
     void InitializeElementalMechanics()
@@ -924,7 +924,7 @@ private:
                                 if (target && this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
                                 {
                                     this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                                    uint32 enemies = std::min(this->GetEnemiesInRange(40.0f), 5u);
+                                    uint32 enemies = ::std::min(this->GetEnemiesInRange(40.0f), 5u);
                                     this->_maelstromTracker.Generate(4 * enemies);
                                     return NodeStatus::SUCCESS;
                                 }

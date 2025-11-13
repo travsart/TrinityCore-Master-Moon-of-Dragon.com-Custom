@@ -70,7 +70,7 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
         return false;
 
     // Check if already within desired distance
-    float currentDistance = std::sqrt(bot->GetExactDistSq(unit)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(unit)); // Calculate once from squared distance
     if (currentDistance <= distance)
     {
         TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} already within {:.1f}yd of {} (current: {:.1f}yd)",
@@ -80,15 +80,15 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
 
     // Calculate position at desired distance from unit
     // Use unit's position and calculate approach vector
-    float targetDistance = std::max(distance - 1.0f, 0.5f); // Stop 1 yard before desired distance
+    float targetDistance = ::std::max(distance - 1.0f, 0.5f); // Stop 1 yard before desired distance
     float angle = unit->GetOrientation(); // Use unit's facing direction
 
     Position destination;
     destination.Relocate(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ());
 
     // Move backwards from unit position along its facing direction
-    destination.m_positionX -= targetDistance * std::cos(angle);
-    destination.m_positionY -= targetDistance * std::sin(angle);
+    destination.m_positionX -= targetDistance * ::std::cos(angle);
+    destination.m_positionY -= targetDistance * ::std::sin(angle);
     TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} moving to within {:.1f}yd of {} at ({:.2f},{:.2f},{:.2f})",
                  bot->GetName(), distance, unit->GetName(),
                  destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
@@ -108,10 +108,10 @@ bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
     // Check if already chasing this target at this distance
     if (mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE) == CHASE_MOTION_TYPE)
     {
-        float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+        float currentDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
         float tolerance = 2.0f;
 
-        if (std::abs(currentDistance - distance) <= tolerance)
+        if (::std::abs(currentDistance - distance) <= tolerance)
         {
             TC_LOG_DEBUG("module.playerbot", "⏭ BotMovement: Bot {} already chasing at optimal distance", bot->GetName());
             return true;

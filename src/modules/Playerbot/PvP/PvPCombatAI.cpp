@@ -46,7 +46,7 @@ PvPCombatAI::PvPCombatAI()
 
 void PvPCombatAI::Initialize()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Initializing PvP combat systems...");
 
@@ -73,7 +73,7 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
     }
 
     _lastUpdateTimes[playerGuid] = currentTime;
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Get combat profile
     PvPCombatProfile profile = GetCombatProfile(playerGuid);
@@ -160,14 +160,14 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
     if (!player)
         return nullptr;
 
-    std::vector<::Unit*> enemies = GetEnemyPlayers(player, 40.0f);
+    ::std::vector<::Unit*> enemies = GetEnemyPlayers(player, 40.0f);
     if (enemies.empty())
         return nullptr;
 
     PvPCombatProfile profile = GetCombatProfile(player->GetGUID().GetCounter());
 
     // Assess threat for all enemies
-    std::vector<std::pair<::Unit*, float>> threatScores;
+    ::std::vector<::std::pair<::Unit*, float>> threatScores;
     for (::Unit* enemy : enemies)
     {
         ThreatAssessment assessment = AssessThreat(player, enemy);
@@ -175,7 +175,7 @@ void PvPCombatAI::Update(::Player* player, uint32 diff)
     }
 
     // Sort by threat score descending
-    std::sort(threatScores.begin(), threatScores.end(),
+    ::std::sort(threatScores.begin(), threatScores.end(),
         [](auto const& a, auto const& b) { return a.second > b.second; });
 
     return threatScores.empty() ? nullptr : threatScores[0].first;
@@ -186,7 +186,7 @@ ThreatAssessment PvPCombatAI::AssessThreat(::Player* player, ::Unit* target) con
     ThreatAssessment assessment;
     assessment.targetGuid = target->GetGUID();
     assessment.healthPercent = target->GetHealthPct();
-    assessment.distanceToPlayer = static_cast<uint32>(std::sqrt(player->GetExactDistSq(target))); // Calculate once from squared distance
+    assessment.distanceToPlayer = static_cast<uint32>(::std::sqrt(player->GetExactDistSq(target))); // Calculate once from squared distance
     // Check if healer
     assessment.isHealer = IsHealer(target);
 
@@ -205,9 +205,9 @@ ThreatAssessment PvPCombatAI::AssessThreat(::Player* player, ::Unit* target) con
     return assessment;
 }
 
-std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range) const
+::std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range) const
 {
-    std::vector<::Unit*> enemies;
+    ::std::vector<::Unit*> enemies;
 
     if (!player || !player->GetMap())
         return enemies;
@@ -219,7 +219,7 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
     {
         Map* cellVisitMap = player->GetMap();
         if (!cellVisitMap)
-            return std::vector<ObjectGuid>();
+            return ::std::vector<ObjectGuid>();
 
         DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(cellVisitMap);
         if (!spatialGrid)
@@ -230,7 +230,7 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                 player->GetPosition(), range);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -245,7 +245,7 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
     }
 
     // Filter to only hostile players
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+    enemies.erase(::std::remove_if(enemies.begin(), enemies.end(),
         [player](::Unit* unit) {
             return !unit->IsPlayer() ||
                    !player->IsHostileTo(unit) ||
@@ -255,10 +255,10 @@ std::vector<::Unit*> PvPCombatAI::GetEnemyPlayers(::Player* player, float range)
     return enemies;
 }
 
-std::vector<::Unit*> PvPCombatAI::GetEnemyHealers(::Player* player) const
+::std::vector<::Unit*> PvPCombatAI::GetEnemyHealers(::Player* player) const
 {
-    std::vector<::Unit*> enemies = GetEnemyPlayers(player, 40.0f);
-    std::vector<::Unit*> healers;
+    ::std::vector<::Unit*> enemies = GetEnemyPlayers(player, 40.0f);
+    ::std::vector<::Unit*> healers;
 
     for (::Unit* enemy : enemies)
     {
@@ -303,7 +303,7 @@ bool PvPCombatAI::ExecuteCCChain(::Player* player, ::Unit* target)
     if (!player || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     PvPCombatProfile profile = GetCombatProfile(player->GetGUID().GetCounter());
     if (!profile.autoCCChain)
@@ -349,7 +349,7 @@ uint32 PvPCombatAI::GetNextCCAbility(::Player* player, ::Unit* target) const
         return 0;
 
     // Get available CC types for player's class
-    std::vector<CCType> availableCC = GetAvailableCCTypes(player);
+    ::std::vector<CCType> availableCC = GetAvailableCCTypes(player);
 
     // Filter by diminishing returns
     for (CCType ccType : availableCC)
@@ -382,7 +382,7 @@ void PvPCombatAI::TrackCCUsed(::Unit* target, CCType ccType)
     if (!target)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid targetGuid = target->GetGUID();
     if (!_ccChains.count(targetGuid))
@@ -467,7 +467,7 @@ uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
     }
 
     // Get class-specific defensive cooldowns
-    std::vector<uint32> defensives;
+    ::std::vector<uint32> defensives;
     switch (player->GetClass())
     {
         case CLASS_WARRIOR: defensives = GetWarriorDefensiveCooldowns(player); break;
@@ -510,7 +510,7 @@ bool PvPCombatAI::ShouldUseImmunity(::Player* player) const
     if (healthPct < 20)
         return true;
 
-    std::vector<::Unit*> attackers = GetEnemyPlayers(player, 10.0f);
+    ::std::vector<::Unit*> attackers = GetEnemyPlayers(player, 10.0f);
     if (attackers.size() >= 2)
         return true;
 
@@ -540,7 +540,7 @@ bool PvPCombatAI::ExecuteOffensiveBurst(::Player* player, ::Unit* target)
     if (!player || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     TC_LOG_INFO("playerbot", "PvPCombatAI: Player {} executing offensive burst on target {}",
         player->GetGUID().GetCounter(), target->GetGUID().GetCounter());
@@ -575,7 +575,7 @@ bool PvPCombatAI::ShouldBurstTarget(::Player* player, ::Unit* target) const
     return false;
 }
 
-std::vector<uint32> PvPCombatAI::GetOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetOffensiveCooldowns(::Player* player) const
 {
     if (!player)
         return {};
@@ -603,7 +603,7 @@ bool PvPCombatAI::StackOffensiveCooldowns(::Player* player)
     if (!player)
         return false;
 
-    std::vector<uint32> cooldowns = GetOffensiveCooldowns(player);
+    ::std::vector<uint32> cooldowns = GetOffensiveCooldowns(player);
     bool usedAny = false;
 
     for (uint32 spellId : cooldowns)
@@ -776,7 +776,7 @@ void PvPCombatAI::SetCombatState(::Player* player, PvPCombatState state)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _combatStates[player->GetGUID().GetCounter()] = state;
 }
 
@@ -785,7 +785,7 @@ PvPCombatState PvPCombatAI::GetCombatState(::Player* player) const
     if (!player)
         return PvPCombatState::IDLE;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_combatStates.count(playerGuid))
@@ -800,13 +800,13 @@ PvPCombatState PvPCombatAI::GetCombatState(::Player* player) const
 
 void PvPCombatAI::SetCombatProfile(uint32 playerGuid, PvPCombatProfile const& profile)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 PvPCombatProfile PvPCombatAI::GetCombatProfile(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -820,7 +820,7 @@ PvPCombatProfile PvPCombatAI::GetCombatProfile(uint32 playerGuid) const
 
 PvPCombatAI::PvPMetrics const& PvPCombatAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {
@@ -917,7 +917,7 @@ float PvPCombatAI::CalculateThreatScore(::Player* player, ::Unit* target) const
         score *= ATTACKING_ALLY_MULTIPLIER;
 
     // Distance penalty
-    float distance = std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance > 30.0f)
         score *= 0.5f;
 
@@ -933,7 +933,7 @@ bool PvPCombatAI::IsInCCRange(::Player* player, ::Unit* target, CCType ccType) c
     if (!player || !target)
         return false;
 
-    float distance = std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(target)); // Calculate once from squared distance
 
     // Range check based on CC type
     switch (ccType)
@@ -1004,9 +1004,9 @@ bool PvPCombatAI::IsCCOnCooldown(::Player* player, CCType ccType) const
     return spellId == 0 || player->GetSpellHistory()->HasCooldown(spellId);
 }
 
-std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const
+::std::vector<CCType> PvPCombatAI::GetAvailableCCTypes(::Player* player) const
 {
-    std::vector<CCType> ccTypes;
+    ::std::vector<CCType> ccTypes;
 
     if (!player)
         return ccTypes;
@@ -1068,9 +1068,9 @@ bool PvPCombatAI::IsTargetAttackingAlly(::Unit* target, ::Player* player) const
 // CLASS-SPECIFIC HELPERS - WARRIOR
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetWarriorDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetWarriorDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(871);    // Shield Wall
     cooldowns.push_back(97462);  // Rallying Cry
     cooldowns.push_back(18499);  // Berserker Rage
@@ -1078,9 +1078,9 @@ std::vector<uint32> PvPCombatAI::GetWarriorDefensiveCooldowns(::Player* player) 
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetWarriorOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetWarriorOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(1719);   // Recklessness
     cooldowns.push_back(107574); // Avatar
     cooldowns.push_back(46924);  // Bladestorm
@@ -1096,9 +1096,9 @@ uint32 PvPCombatAI::GetWarriorInterruptSpell(::Player* player) const
 // CLASS-SPECIFIC HELPERS - PALADIN
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetPaladinDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetPaladinDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(642);    // Divine Shield
     cooldowns.push_back(498);    // Divine Protection
     cooldowns.push_back(1022);   // Blessing of Protection
@@ -1106,9 +1106,9 @@ std::vector<uint32> PvPCombatAI::GetPaladinDefensiveCooldowns(::Player* player) 
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetPaladinOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetPaladinOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(31884);  // Avenging Wrath
     cooldowns.push_back(231895); // Crusade
     return cooldowns;
@@ -1118,18 +1118,18 @@ std::vector<uint32> PvPCombatAI::GetPaladinOffensiveCooldowns(::Player* player) 
 // CLASS-SPECIFIC HELPERS - HUNTER
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetHunterDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetHunterDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(186265); // Aspect of the Turtle
     cooldowns.push_back(109304); // Exhilaration
     cooldowns.push_back(5384);   // Feign Death
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetHunterOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetHunterOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(19574);  // Bestial Wrath
     cooldowns.push_back(288613); // Trueshot
     cooldowns.push_back(266779); // Coordinated Assault
@@ -1140,18 +1140,18 @@ std::vector<uint32> PvPCombatAI::GetHunterOffensiveCooldowns(::Player* player) c
 // CLASS-SPECIFIC HELPERS - ROGUE
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetRogueDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetRogueDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(31224);  // Cloak of Shadows
     cooldowns.push_back(5277);   // Evasion
     cooldowns.push_back(1856);   // Vanish
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetRogueOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetRogueOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(13750);  // Adrenaline Rush
     cooldowns.push_back(121471); // Shadow Blades
     cooldowns.push_back(79140);  // Vendetta
@@ -1162,18 +1162,18 @@ std::vector<uint32> PvPCombatAI::GetRogueOffensiveCooldowns(::Player* player) co
 // CLASS-SPECIFIC HELPERS - PRIEST
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetPriestDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetPriestDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(47585);  // Dispersion
     cooldowns.push_back(33206);  // Pain Suppression
     cooldowns.push_back(19236);  // Desperate Prayer
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetPriestOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetPriestOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(10060);  // Power Infusion
     cooldowns.push_back(47540);  // Penance
     return cooldowns;
@@ -1183,18 +1183,18 @@ std::vector<uint32> PvPCombatAI::GetPriestOffensiveCooldowns(::Player* player) c
 // CLASS-SPECIFIC HELPERS - DEATH KNIGHT
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetDeathKnightDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDeathKnightDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(48792);  // Icebound Fortitude
     cooldowns.push_back(48707);  // Anti-Magic Shell
     cooldowns.push_back(55233);  // Vampiric Blood
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetDeathKnightOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDeathKnightOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(51271);  // Pillar of Frost
     cooldowns.push_back(207289); // Unholy Assault
     cooldowns.push_back(152279); // Breath of Sindragosa
@@ -1205,17 +1205,17 @@ std::vector<uint32> PvPCombatAI::GetDeathKnightOffensiveCooldowns(::Player* play
 // CLASS-SPECIFIC HELPERS - SHAMAN
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetShamanDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetShamanDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(108271); // Astral Shift
     cooldowns.push_back(108280); // Healing Tide Totem
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetShamanOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetShamanOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(51533);  // Feral Spirit
     cooldowns.push_back(191634); // Stormkeeper
     return cooldowns;
@@ -1225,18 +1225,18 @@ std::vector<uint32> PvPCombatAI::GetShamanOffensiveCooldowns(::Player* player) c
 // CLASS-SPECIFIC HELPERS - MAGE
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetMageDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetMageDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(45438);  // Ice Block
     cooldowns.push_back(55342);  // Mirror Image
     cooldowns.push_back(235219); // Cold Snap
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetMageOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetMageOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(12042);  // Arcane Power
     cooldowns.push_back(190319); // Combustion
     cooldowns.push_back(12472);  // Icy Veins
@@ -1247,17 +1247,17 @@ std::vector<uint32> PvPCombatAI::GetMageOffensiveCooldowns(::Player* player) con
 // CLASS-SPECIFIC HELPERS - WARLOCK
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetWarlockDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetWarlockDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(104773); // Unending Resolve
     cooldowns.push_back(108416); // Dark Pact
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetWarlockOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetWarlockOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(113860); // Dark Soul
     cooldowns.push_back(1122);   // Summon Infernal
     return cooldowns;
@@ -1267,18 +1267,18 @@ std::vector<uint32> PvPCombatAI::GetWarlockOffensiveCooldowns(::Player* player) 
 // CLASS-SPECIFIC HELPERS - MONK
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetMonkDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetMonkDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(122783); // Diffuse Magic
     cooldowns.push_back(122278); // Dampen Harm
     cooldowns.push_back(243435); // Fortifying Brew
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetMonkOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetMonkOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(137639); // Storm, Earth, and Fire
     cooldowns.push_back(152173); // Serenity
     return cooldowns;
@@ -1288,18 +1288,18 @@ std::vector<uint32> PvPCombatAI::GetMonkOffensiveCooldowns(::Player* player) con
 // CLASS-SPECIFIC HELPERS - DRUID
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetDruidDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDruidDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(22812);  // Barkskin
     cooldowns.push_back(61336);  // Survival Instincts
     cooldowns.push_back(108238); // Renewal
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetDruidOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDruidOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(106951); // Berserk
     cooldowns.push_back(194223); // Celestial Alignment
     return cooldowns;
@@ -1309,18 +1309,18 @@ std::vector<uint32> PvPCombatAI::GetDruidOffensiveCooldowns(::Player* player) co
 // CLASS-SPECIFIC HELPERS - DEMON HUNTER
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetDemonHunterDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDemonHunterDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(196555); // Netherwalk
     cooldowns.push_back(187827); // Metamorphosis
     cooldowns.push_back(198589); // Blur
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetDemonHunterOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetDemonHunterOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(191427); // Metamorphosis (DPS)
     cooldowns.push_back(258920); // Immolation Aura
     return cooldowns;
@@ -1330,17 +1330,17 @@ std::vector<uint32> PvPCombatAI::GetDemonHunterOffensiveCooldowns(::Player* play
 // CLASS-SPECIFIC HELPERS - EVOKER
 // ============================================================================
 
-std::vector<uint32> PvPCombatAI::GetEvokerDefensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetEvokerDefensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(363916); // Obsidian Scales
     cooldowns.push_back(374348); // Renewing Blaze
     return cooldowns;
 }
 
-std::vector<uint32> PvPCombatAI::GetEvokerOffensiveCooldowns(::Player* player) const
+::std::vector<uint32> PvPCombatAI::GetEvokerOffensiveCooldowns(::Player* player) const
 {
-    std::vector<uint32> cooldowns;
+    ::std::vector<uint32> cooldowns;
     cooldowns.push_back(375087); // Dragonrage
     return cooldowns;
 }

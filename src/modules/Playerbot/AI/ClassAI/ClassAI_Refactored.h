@@ -183,9 +183,9 @@ protected:
     // COMPONENT MANAGERS - Class-specific systems
     // ========================================================================
 
-    std::unique_ptr<ActionPriorityQueue> _actionQueue;
-    std::unique_ptr<CooldownManager> _cooldownManager;
-    std::unique_ptr<ResourceManager> _resourceManager;
+    ::std::unique_ptr<ActionPriorityQueue> _actionQueue;
+    ::std::unique_ptr<CooldownManager> _cooldownManager;
+    ::std::unique_ptr<ResourceManager> _resourceManager;
 
     // ========================================================================
     // COMBAT STATE - Current combat information
@@ -231,7 +231,7 @@ private:
      * @param metric Metric name
      * @param value Metric value
      */
-    void RecordPerformanceMetric(std::string const& metric, uint32 value);
+    void RecordPerformanceMetric(::std::string const& metric, uint32 value);
 };
 
 // ========================================================================
@@ -246,23 +246,23 @@ public:
      * @param bot Player bot
      * @return Unique pointer to created ClassAI
      */
-    static std::unique_ptr<ClassAI> CreateClassAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateClassAI(Player* bot);
 
 private:
     // Class-specific creation methods
-    static std::unique_ptr<ClassAI> CreateWarriorAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreatePaladinAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateHunterAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateRogueAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreatePriestAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDeathKnightAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateShamanAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateMageAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateWarlockAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateMonkAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDruidAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateDemonHunterAI(Player* bot);
-    static std::unique_ptr<ClassAI> CreateEvokerAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateWarriorAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreatePaladinAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateHunterAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateRogueAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreatePriestAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateDeathKnightAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateShamanAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateMageAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateWarlockAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateMonkAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateDruidAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateDemonHunterAI(Player* bot);
+    static ::std::unique_ptr<ClassAI> CreateEvokerAI(Player* bot);
 };
 
 } // namespace Playerbot

@@ -49,7 +49,7 @@ class TC_GAME_API INPCEventBus
 public:
     virtual ~INPCEventBus() = default;
 
-    using EventHandler = std::function<void(NPCEvent const&)>;
+    using EventHandler = ::std::function<void(NPCEvent const&)>;
 
     // ====================================================================
     // EVENT PUBLISHING
@@ -73,7 +73,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @note Subscriber must call Unsubscribe before destruction
      */
-    virtual void Subscribe(BotAI* subscriber, std::vector<NPCEventType> const& types) = 0;
+    virtual void Subscribe(BotAI* subscriber, ::std::vector<NPCEventType> const& types) = 0;
 
     /**
      * @brief Subscribe BotAI to all NPC event types
@@ -98,7 +98,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @return Subscription ID for later unsubscription
      */
-    virtual uint32 SubscribeCallback(EventHandler handler, std::vector<NPCEventType> const& types) = 0;
+    virtual uint32 SubscribeCallback(EventHandler handler, ::std::vector<NPCEventType> const& types) = 0;
 
     /**
      * @brief Unsubscribe callback handler

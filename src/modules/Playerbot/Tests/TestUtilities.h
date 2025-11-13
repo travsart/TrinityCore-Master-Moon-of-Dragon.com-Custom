@@ -40,7 +40,7 @@ struct BotTestData
 {
     uint32 characterId = 0;
     ObjectGuid guid;
-    std::string name;
+    ::std::string name;
     uint8 level = 80;
     uint8 race = 1;    // Human
     uint8 class_ = 1;  // Warrior
@@ -56,7 +56,7 @@ struct BotTestData
     bool isAssistingTarget = false;
     uint32 lastActionTime = 0;
 
-    BotTestData(const std::string& botName) : name(botName) {}
+    BotTestData(const ::std::string& botName) : name(botName) {}
 };
 
 /**
@@ -67,14 +67,14 @@ struct GroupTestData
 {
     ObjectGuid groupId;
     ObjectGuid leaderGuid;
-    std::string leaderName;
-    std::vector<BotTestData> members;
+    ::std::string leaderName;
+    ::std::vector<BotTestData> members;
     Position groupPosition;
     bool isInCombat = false;
     ObjectGuid currentTarget;
     uint32 creationTime = 0;
 
-    GroupTestData(const std::string& leader) : leaderName(leader) {}
+    GroupTestData(const ::std::string& leader) : leaderName(leader) {}
 };
 
 /**
@@ -119,7 +119,7 @@ class MockPlayer
 {
 public:
     MOCK_METHOD(ObjectGuid, GetGUID, (), (const));
-    MOCK_METHOD(std::string, GetName, (), (const));
+    MOCK_METHOD(::std::string, GetName, (), (const));
     MOCK_METHOD(uint8, GetLevel, (), (const));
     MOCK_METHOD(uint8, GetRace, (), (const));
     MOCK_METHOD(uint8, GetClass, (), (const));
@@ -183,8 +183,8 @@ public:
     void Cleanup();
 
     // Bot creation and management
-    std::unique_ptr<BotTestData> CreateTestBot(const std::string& name, uint8 class_ = 1, uint8 level = 80);
-    std::unique_ptr<GroupTestData> CreateTestGroup(const std::string& leaderName);
+    ::std::unique_ptr<BotTestData> CreateTestBot(const ::std::string& name, uint8 class_ = 1, uint8 level = 80);
+    ::std::unique_ptr<GroupTestData> CreateTestGroup(const ::std::string& leaderName);
     bool AddBotToGroup(GroupTestData& group, const BotTestData& bot);
     bool RemoveBotFromGroup(GroupTestData& group, const ObjectGuid& botGuid);
 
@@ -198,7 +198,7 @@ public:
     void AdvanceTime(uint32 milliseconds);
 
     // Performance monitoring
-    void StartPerformanceMonitoring(const std::string& testName);
+    void StartPerformanceMonitoring(const ::std::string& testName);
     void StopPerformanceMonitoring();
     PerformanceMetrics GetPerformanceMetrics() const;
     void ResetPerformanceMetrics();
@@ -215,19 +215,19 @@ public:
     void SimulateConcurrentGroups(uint32 groupCount, uint32 botsPerGroup);
 
     // Mock factory methods
-    std::shared_ptr<MockPlayer> CreateMockPlayer(const BotTestData& data);
-    std::shared_ptr<MockGroup> CreateMockGroup(const GroupTestData& data);
-    std::shared_ptr<MockWorldSession> CreateMockSession(bool isBot = true);
+    ::std::shared_ptr<MockPlayer> CreateMockPlayer(const BotTestData& data);
+    ::std::shared_ptr<MockGroup> CreateMockGroup(const GroupTestData& data);
+    ::std::shared_ptr<MockWorldSession> CreateMockSession(bool isBot = true);
 
 private:
     TestEnvironment() = default;
     ~TestEnvironment() = default;
 
-    static std::unique_ptr<TestEnvironment> s_instance;
+    static ::std::unique_ptr<TestEnvironment> s_instance;
 
     // Performance tracking
-    std::string m_currentTestName;
-    std::chrono::high_resolution_clock::time_point m_testStartTime;
+    ::std::string m_currentTestName;
+    ::std::chrono::high_resolution_clock::time_point m_testStartTime;
     PerformanceMetrics m_currentMetrics;
 
     // Test state
@@ -247,15 +247,15 @@ private:
 class PerformanceTimer
 {
 public:
-    explicit PerformanceTimer(std::function<void(uint64)> callback);
+    explicit PerformanceTimer(::std::function<void(uint64)> callback);
     ~PerformanceTimer();
 
     uint64 GetElapsedMicroseconds() const;
     void Cancel();
 
 private:
-    std::chrono::high_resolution_clock::time_point m_startTime;
-    std::function<void(uint64)> m_callback;
+    ::std::chrono::high_resolution_clock::time_point m_startTime;
+    ::std::function<void(uint64)> m_callback;
     bool m_cancelled = false;
 };
 
@@ -267,9 +267,9 @@ class GroupTestHelper
 {
 public:
     // Group creation scenarios
-    static bool TestGroupCreation(const std::string& leaderName, const std::vector<std::string>& memberNames);
-    static bool TestGroupInvitation(const std::string& leaderName, const std::string& memberName);
-    static bool TestGroupAcceptance(const std::string& memberName);
+    static bool TestGroupCreation(const ::std::string& leaderName, const ::std::vector<::std::string>& memberNames);
+    static bool TestGroupInvitation(const ::std::string& leaderName, const ::std::string& memberName);
+    static bool TestGroupAcceptance(const ::std::string& memberName);
 
     // Following behavior scenarios
     static bool TestLeaderFollowing(const GroupTestData& group, const Position& destination);
@@ -317,7 +317,7 @@ public:
     bool RunStabilityTest(uint32 groupCount, uint32 durationHours);
 
 private:
-    std::vector<std::unique_ptr<GroupTestData>> m_activeGroups;
+    ::std::vector<::std::unique_ptr<GroupTestData>> m_activeGroups;
     PerformanceMetrics m_aggregatedMetrics;
 
     void CleanupActiveGroups();
@@ -358,7 +358,7 @@ class MockUnit
 {
 public:
     MOCK_METHOD(ObjectGuid, GetGUID, (), (const));
-    MOCK_METHOD(std::string, GetName, (), (const));
+    MOCK_METHOD(::std::string, GetName, (), (const));
     MOCK_METHOD(Position, GetPosition, (), (const));
     MOCK_METHOD(bool, HasUnitState, (uint32), (const));
     MOCK_METHOD(bool, IsAlive, (), (const));
@@ -403,11 +403,11 @@ struct CastAttempt
     ObjectGuid casterGuid;
     ObjectGuid targetGuid;
     uint32 spellId;
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point timestamp;
 
     CastAttempt(ObjectGuid caster, ObjectGuid target, uint32 spell)
         : casterGuid(caster), targetGuid(target), spellId(spell),
-          timestamp(std::chrono::steady_clock::now())
+          timestamp(::std::chrono::steady_clock::now())
     {}
 };
 
@@ -421,7 +421,7 @@ public:
     MOCK_METHOD(bool, CastSpell, (Player*, Unit*, uint32));
     MOCK_METHOD(bool, CastSpellOnTarget, (Player*, ObjectGuid, uint32));
     MOCK_METHOD(void, RecordCastAttempt, (ObjectGuid, ObjectGuid, uint32));
-    MOCK_METHOD(std::vector<CastAttempt>, GetCastHistory, ());
+    MOCK_METHOD(::std::vector<CastAttempt>, GetCastHistory, ());
     MOCK_METHOD(void, ClearHistory, ());
     MOCK_METHOD(uint32, GetCastCount, ());
     MOCK_METHOD(bool, WasSpellCast, (uint32));
@@ -436,11 +436,11 @@ struct MovementRequest
     ObjectGuid botGuid;
     Position destination;
     uint32 priority; // PlayerBotMovementPriority enum value
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point timestamp;
 
     MovementRequest(ObjectGuid bot, Position const& dest, uint32 prio)
         : botGuid(bot), destination(dest), priority(prio),
-          timestamp(std::chrono::steady_clock::now())
+          timestamp(::std::chrono::steady_clock::now())
     {}
 };
 
@@ -453,7 +453,7 @@ class MovementArbiterMock
 public:
     MOCK_METHOD(bool, RequestMovement, (Player*, Position const&, uint32));
     MOCK_METHOD(void, RecordMovementRequest, (ObjectGuid, Position const&, uint32));
-    MOCK_METHOD(std::vector<MovementRequest>, GetMovementHistory, ());
+    MOCK_METHOD(::std::vector<MovementRequest>, GetMovementHistory, ());
     MOCK_METHOD(void, ClearHistory, ());
     MOCK_METHOD(uint32, GetMovementCount, ());
     MOCK_METHOD(bool, HasMovementRequest, (ObjectGuid));

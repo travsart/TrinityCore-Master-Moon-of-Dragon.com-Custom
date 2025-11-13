@@ -33,8 +33,8 @@ namespace Diagnostics {
  */
 struct CallStackFrame
 {
-    std::string functionName;
-    std::string fileName;
+    ::std::string functionName;
+    ::std::string fileName;
     uint32 lineNumber{0};
     uintptr_t address{0};
 };
@@ -44,12 +44,12 @@ struct CallStackFrame
  */
 struct ThreadState
 {
-    std::thread::id threadId;
-    std::string threadName;
-    std::chrono::steady_clock::time_point captureTime;
-    std::vector<CallStackFrame> callStack;
+    ::std::thread::id threadId;
+    ::std::string threadName;
+    ::std::chrono::steady_clock::time_point captureTime;
+    ::std::vector<CallStackFrame> callStack;
     bool isWaiting{false};
-    std::string waitingOn; // Mutex/future/condition variable identifier
+    ::std::string waitingOn; // Mutex/future/condition variable identifier
 };
 
 /**
@@ -57,10 +57,10 @@ struct ThreadState
  */
 struct DeadlockReport
 {
-    std::chrono::steady_clock::time_point detectionTime;
-    std::vector<ThreadState> involvedThreads;
-    std::string description;
-    std::string suggestedFix;
+    ::std::chrono::steady_clock::time_point detectionTime;
+    ::std::vector<ThreadState> involvedThreads;
+    ::std::string description;
+    ::std::string suggestedFix;
 
     // Specific to bot updates
     ObjectGuid botGuid;
@@ -93,8 +93,8 @@ public:
     void Shutdown() override;
 
     // Thread registration (for named threads)
-    void RegisterThread(std::thread::id threadId, std::string const& name) override;
-    void UnregisterThread(std::thread::id threadId) override;
+    void RegisterThread(::std::thread::id threadId, ::std::string const& name) override;
+    void UnregisterThread(::std::thread::id threadId) override;
 
     // Deadlock detection
     DeadlockReport DetectFutureDeadlock(
@@ -102,14 +102,14 @@ public:
         uint32 futureIndex,
         uint32 totalFutures,
         uint32 waitTimeMs,
-        std::thread::id waitingThreadId) override;
+        ::std::thread::id waitingThreadId) override;
 
     // Call stack capture
-    std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64) override;
-    ThreadState CaptureThreadState(std::thread::id threadId) override;
+    ::std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64) override;
+    ThreadState CaptureThreadState(::std::thread::id threadId) override;
 
     // Diagnostic output
-    void DumpDeadlockReport(DeadlockReport const& report, std::string const& outputFile) override;
+    void DumpDeadlockReport(DeadlockReport const& report, ::std::string const& outputFile) override;
     void LogDeadlockReport(DeadlockReport const& report) override;
 
     // Visual Studio integration
@@ -119,11 +119,11 @@ public:
     // Configuration
     void SetCallStackCaptureEnabled(bool enabled) override { _captureCallStacks = enabled; }
     void SetAutoLaunchDebugger(bool enabled) override { _autoLaunchDebugger = enabled; }
-    void SetDumpDirectory(std::string const& dir) override { _dumpDirectory = dir; }
+    void SetDumpDirectory(::std::string const& dir) override { _dumpDirectory = dir; }
 
     // Statistics
     uint32 GetTotalDeadlocksDetected() const override { return _totalDeadlocks; }
-    std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const override;
+    ::std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const override;
 
 private:
     DeadlockDetector() = default;
@@ -132,27 +132,27 @@ private:
     DeadlockDetector& operator=(const DeadlockDetector&) = delete;
 
     // Platform-specific call stack capture
-    std::vector<CallStackFrame> CaptureCallStackWindows(uint32 skipFrames, uint32 maxFrames);
-    std::vector<CallStackFrame> CaptureCallStackLinux(uint32 skipFrames, uint32 maxFrames);
+    ::std::vector<CallStackFrame> CaptureCallStackWindows(uint32 skipFrames, uint32 maxFrames);
+    ::std::vector<CallStackFrame> CaptureCallStackLinux(uint32 skipFrames, uint32 maxFrames);
 
     // Analysis helpers
-    std::string AnalyzeFutureTimeout(ObjectGuid botGuid, uint32 waitTimeMs);
-    std::string GenerateSuggestedFix(DeadlockReport const& report);
+    ::std::string AnalyzeFutureTimeout(ObjectGuid botGuid, uint32 waitTimeMs);
+    ::std::string GenerateSuggestedFix(DeadlockReport const& report);
 
     // Configuration
     bool _initialized{false};
     bool _captureCallStacks{true};
     bool _autoLaunchDebugger{false};
-    std::string _dumpDirectory{"./deadlock_dumps"};
+    ::std::string _dumpDirectory{"./deadlock_dumps"};
 
     // Thread tracking
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _threadsMutex;
-    std::unordered_map<std::thread::id, std::string> _threadNames;
+    ::std::unordered_map<::std::thread::id, ::std::string> _threadNames;
 
     // Statistics
-    std::atomic<uint32> _totalDeadlocks{0};
+    ::std::atomic<uint32> _totalDeadlocks{0};
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _reportsMutex;
-    std::vector<DeadlockReport> _recentReports;
+    ::std::vector<DeadlockReport> _recentReports;
     constexpr static size_t MAX_RECENT_REPORTS = 50;
 };
 

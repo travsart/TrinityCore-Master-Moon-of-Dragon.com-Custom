@@ -25,7 +25,7 @@ LOSCache::LOSCache(Map* map)
         map->GetId(), map->GetMapName(), MAX_CACHED_PAIRS, CACHE_TTL_SECONDS);
 }
 
-std::pair<uint32, uint32> LOSCache::GetCellCoords(Position const& pos) const
+::std::pair<uint32, uint32> LOSCache::GetCellCoords(Position const& pos) const
 {
     // Convert world coordinates to grid cell indices
     // Same algorithm as TerrainCache for consistency
@@ -37,8 +37,8 @@ std::pair<uint32, uint32> LOSCache::GetCellCoords(Position const& pos) const
     uint32 cellY = static_cast<uint32>(offsetY / SAME_CELL_THRESHOLD);
 
     // Clamp to valid range
-    cellX = std::min(cellX, 511u);
-    cellY = std::min(cellY, 511u);
+    cellX = ::std::min(cellX, 511u);
+    cellY = ::std::min(cellY, 511u);
 
     return {cellX, cellY};
 }
@@ -66,8 +66,8 @@ uint64_t LOSCache::GetPairHash(Position const& pos1, Position const& pos2) const
     // This makes HasLOS(A, B) == HasLOS(B, A) use same cache entry
     if (x1 > x2 || (x1 == x2 && y1 > y2))
     {
-        std::swap(x1, x2);
-        std::swap(y1, y2);
+        ::std::swap(x1, x2);
+        ::std::swap(y1, y2);
     }
 
     // Pack into 64-bit hash
@@ -85,7 +85,7 @@ bool LOSCache::HasLOS(Position const& pos1, Position const& pos2, PhaseShift con
     // This handles 95% of queries with <1 microsecond latency
     if (IsSameCell(pos1, pos2))
     {
-        std::unique_lock<std::shared_mutex> lock(_mutex);
+        ::std::unique_lock<::std::shared_mutex> lock(_mutex);
         ++_stats.sameCellHits;
         return true;
     }
@@ -95,7 +95,7 @@ bool LOSCache::HasLOS(Position const& pos1, Position const& pos2, PhaseShift con
 
     // Try shared lock first (concurrent reads)
     {
-        std::shared_lock<std::shared_mutex> lock(_mutex);
+        ::std::shared_lock<::std::shared_mutex> lock(_mutex);
         auto it = _cache.find(pairHash);
 
         if (it != _cache.end() && !it->second.IsExpired())
@@ -109,7 +109,7 @@ bool LOSCache::HasLOS(Position const& pos1, Position const& pos2, PhaseShift con
     // ===== SLOW PATH: Cache miss - query TrinityCore VMAP =====
     // This is expensive (~500-2000 microseconds) - VMAP raycasting
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
     ++_stats.misses;
 
     // Double-check cache after acquiring unique lock (another thread may have populated it)
@@ -140,7 +140,7 @@ bool LOSCache::HasLOS(Position const& pos1, Position const& pos2, PhaseShift con
     // Store in cache
     LOSResult result;
     result.hasLOS = hasLOS;
-    result.timestamp = std::chrono::steady_clock::now();
+    result.timestamp = ::std::chrono::steady_clock::now();
 
     // LRU eviction if cache is full
     if (_cache.size() >= MAX_CACHED_PAIRS)
@@ -186,7 +186,7 @@ void LOSCache::InvalidateRegion(Position const& center, float radius)
     // Invalidate all cached pairs where either position is within radius of center
     // This is expensive (O(n) scan) but rare (only on environment changes like door opening)
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
 
     uint32 invalidated = 0;
 
@@ -205,7 +205,7 @@ void LOSCache::InvalidateRegion(Position const& center, float radius)
 
 void LOSCache::Clear()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
     uint32 clearedCount = _cache.size();
     _cache.clear();
 

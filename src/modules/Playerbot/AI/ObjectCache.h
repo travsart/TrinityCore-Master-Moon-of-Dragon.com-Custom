@@ -84,7 +84,7 @@ public:
      * Set cached group members (call when group composition changes)
      * @param members Vector of all group members
      */
-    void SetGroupMembers(std::vector<Player*> const& members);
+    void SetGroupMembers(::std::vector<Player*> const& members);
 
     /**
      * Set cached follow target (call when follow target changes)
@@ -125,7 +125,7 @@ public:
      * Get all cached group members
      * Returns empty vector if not in group
      */
-    std::vector<Player*> const& GetGroupMembers() const;
+    ::std::vector<Player*> const& GetGroupMembers() const;
 
     /**
      * Get specific group member by GUID
@@ -241,8 +241,8 @@ private:
     Player* _cachedGroupLeader = nullptr;
     ObjectGuid _groupLeaderGuid;
 
-    std::vector<Player*> _cachedGroupMembers;
-    std::vector<ObjectGuid> _groupMemberGuids;
+    ::std::vector<Player*> _cachedGroupMembers;
+    ::std::vector<ObjectGuid> _groupMemberGuids;
 
     // Movement-related objects
     ::Unit* _cachedFollowTarget = nullptr;

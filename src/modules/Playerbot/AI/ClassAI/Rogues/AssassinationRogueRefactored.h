@@ -274,7 +274,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), FAN_OF_KNIVES);
                 ConsumeEnergy(35);
-                GenerateComboPoints(std::min(enemyCount, 5u)); // 1 CP per target hit
+                GenerateComboPoints(::std::min(enemyCount, 5u)); // 1 CP per target hit
                 return;
             }
         }
@@ -334,7 +334,7 @@ private:
         if (timeDiff >= 100) // Every 100ms
         {
             uint32 energyRegen = (timeDiff / 100);
-            this->_resource.energy = std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
+            this->_resource.energy = ::std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
             lastRegenTime = now;
         }
     }
@@ -346,7 +346,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     // Phase 5 Integration: Decision Systems Initialization
@@ -366,7 +366,7 @@ private:
             // EMERGENCY: Defensive cooldowns
             queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
             queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->GetHealthPct() < 30.0f;
             }},
                 "Bot HP < 30% (spell immunity)");
@@ -374,21 +374,21 @@ private:
             // CRITICAL: Burst cooldowns and stealth openers
             queue->RegisterSpell(VENDETTA, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(VENDETTA,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && !this->_vendettaActive;
             }},
                 "Not active (20s burst window, 30% damage increase)");
 
             queue->RegisterSpell(RogueAI::DEATHMARK, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(RogueAI::DEATHMARK,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(RogueAI::DEATHMARK) && target;
             }},
                 "Has talent (burst cooldown)");
 
             queue->RegisterSpell(RogueAI::GARROTE, SpellPriority::CRITICAL, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(RogueAI::GARROTE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_inStealth;
             }},
                 "In stealth (opener with silence)");
@@ -396,7 +396,7 @@ private:
             // HIGH: DoT maintenance and finishers
             queue->RegisterSpell(RogueAI::GARROTE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(RogueAI::GARROTE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && !this->_inStealth &&
                        this->_resource.energy >= 45 &&
                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE);
@@ -405,7 +405,7 @@ private:
 
             queue->RegisterSpell(RogueAI::RUPTURE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(RogueAI::RUPTURE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 25 &&
                        this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE);
@@ -414,7 +414,7 @@ private:
 
             queue->RegisterSpell(ENVENOM, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(ENVENOM,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 35 &&
                        this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
             }},
@@ -423,7 +423,7 @@ private:
             // MEDIUM: Combo builders and talents
             queue->RegisterSpell(KINGSBANE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(KINGSBANE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(KINGSBANE) &&
                        target && this->_resource.energy >= 35;
             }},
@@ -431,7 +431,7 @@ private:
 
             queue->RegisterSpell(MUTILATE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(MUTILATE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 50 &&
                        this->_resource.comboPoints < this->_resource.maxComboPoints;
             }},
@@ -439,7 +439,7 @@ private:
 
             queue->RegisterSpell(RogueAI::KICK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
             queue->AddCondition(RogueAI::KICK,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && target->IsNonMeleeSpellCast(false);
             }},
                 "Target casting (interrupt)");
@@ -447,7 +447,7 @@ private:
             // LOW: AoE and ranged filler
             queue->RegisterSpell(FAN_OF_KNIVES, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(FAN_OF_KNIVES,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 35 &&
                        this->GetEnemiesInRange(10.0f) >= 3 &&
                        this->_resource.comboPoints < this->_resource.maxComboPoints;
@@ -456,7 +456,7 @@ private:
 
             queue->RegisterSpell(RogueAI::POISONED_KNIFE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(RogueAI::POISONED_KNIFE,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(RogueAI::POISONED_KNIFE) &&
                        target && this->_resource.energy >= 40 &&
                        PositionUtils::GetDistance(bot, target) > 10.0f;

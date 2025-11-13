@@ -72,21 +72,21 @@ namespace Playerbot
         /**
          * @brief Configuration value type (supports multiple types)
          */
-        using ConfigValue = std::variant<bool, int32, uint32, float, std::string>;
+        using ConfigValue = ::std::variant<bool, int32, uint32, float, ::std::string>;
 
         /**
          * @brief Configuration change callback type
          */
-        using ChangeCallback = std::function<void(ConfigValue const&)>;
+        using ChangeCallback = ::std::function<void(ConfigValue const&)>;
 
         /**
          * @brief Configuration validation rule
          */
         struct ValidationRule
         {
-            std::string key;
-            std::function<bool(ConfigValue const&)> validator;
-            std::string errorMessage;
+            ::std::string key;
+            ::std::function<bool(ConfigValue const&)> validator;
+            ::std::string errorMessage;
         };
 
         /**
@@ -107,7 +107,7 @@ namespace Playerbot
          * @param value New value
          * @return true if successful, false if validation failed
          */
-        bool SetValue(std::string const& key, ConfigValue const& value) override;
+        bool SetValue(::std::string const& key, ConfigValue const& value) override;
 
         /**
          * @brief Get boolean configuration value
@@ -115,7 +115,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        bool GetBool(std::string const& key, bool defaultValue) const override;
+        bool GetBool(::std::string const& key, bool defaultValue) const override;
 
         /**
          * @brief Get signed integer configuration value
@@ -123,7 +123,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        int32 GetInt(std::string const& key, int32 defaultValue) const override;
+        int32 GetInt(::std::string const& key, int32 defaultValue) const override;
 
         /**
          * @brief Get unsigned integer configuration value
@@ -131,7 +131,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        uint32 GetUInt(std::string const& key, uint32 defaultValue) const override;
+        uint32 GetUInt(::std::string const& key, uint32 defaultValue) const override;
 
         /**
          * @brief Get float configuration value
@@ -139,7 +139,7 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        float GetFloat(std::string const& key, float defaultValue) const override;
+        float GetFloat(::std::string const& key, float defaultValue) const override;
 
         /**
          * @brief Get string configuration value
@@ -147,20 +147,20 @@ namespace Playerbot
          * @param defaultValue Default value if not found
          * @return Configuration value or default
          */
-        std::string GetString(std::string const& key, std::string const& defaultValue) const override;
+        ::std::string GetString(::std::string const& key, ::std::string const& defaultValue) const override;
 
         /**
          * @brief Register configuration change callback
          * @param key Configuration key to monitor
          * @param callback Function to call when value changes
          */
-        void RegisterCallback(std::string const& key, ChangeCallback callback) override;
+        void RegisterCallback(::std::string const& key, ChangeCallback callback) override;
 
         /**
          * @brief Get all configuration entries
          * @return Map of all configuration entries
          */
-        std::map<std::string, ConfigEntry> GetAllEntries() const override;
+        ::std::map<::std::string, ConfigEntry> GetAllEntries() const override;
 
         /**
          * @brief Reset configuration to defaults
@@ -172,34 +172,34 @@ namespace Playerbot
          * @param filePath Path to configuration file (optional, uses default if empty)
          * @return true if successful, false otherwise
          */
-        bool SaveToFile(std::string const& filePath = "") const override;
+        bool SaveToFile(::std::string const& filePath = "") const override;
 
         /**
          * @brief Load configuration from file
          * @param filePath Path to configuration file
          * @return true if successful, false otherwise
          */
-        bool LoadFromFile(std::string const& filePath) override;
+        bool LoadFromFile(::std::string const& filePath) override;
 
         /**
          * @brief Get last error message
          * @return Error description
          */
-        std::string GetLastError() const override { return _lastError; }
+        ::std::string GetLastError() const override { return _lastError; }
 
         /**
          * @brief Check if configuration key exists
          * @param key Configuration key
          * @return true if exists, false otherwise
          */
-        bool HasKey(std::string const& key) const override;
+        bool HasKey(::std::string const& key) const override;
 
         /**
          * @brief Get configuration entry (with metadata)
          * @param key Configuration key
          * @return Configuration entry or nullopt if not found
          */
-        std::optional<ConfigEntry> GetEntry(std::string const& key) const override;
+        ::std::optional<ConfigEntry> GetEntry(::std::string const& key) const override;
 
     private:
         ConfigManager() = default;
@@ -220,25 +220,25 @@ namespace Playerbot
          * @param value Value to validate
          * @return true if valid, false otherwise
          */
-        bool ValidateValue(std::string const& key, ConfigValue const& value);
+        bool ValidateValue(::std::string const& key, ConfigValue const& value);
 
         /**
          * @brief Trigger change callbacks for key
          * @param key Configuration key
          * @param newValue New value
          */
-        void TriggerCallbacks(std::string const& key, ConfigValue const& newValue);
+        void TriggerCallbacks(::std::string const& key, ConfigValue const& newValue);
 
         // Configuration storage
-        std::map<std::string, ConfigEntry> _entries;
-        std::map<std::string, std::vector<ChangeCallback>> _callbacks;
-        std::map<std::string, ValidationRule> _validationRules;
+        ::std::map<::std::string, ConfigEntry> _entries;
+        ::std::map<::std::string, ::std::vector<ChangeCallback>> _callbacks;
+        ::std::map<::std::string, ValidationRule> _validationRules;
 
         // Thread safety
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::CONFIG_MANAGER> _mutex;
 
         // State
-        std::string _lastError;
+        ::std::string _lastError;
         bool _initialized = false;
     };
 

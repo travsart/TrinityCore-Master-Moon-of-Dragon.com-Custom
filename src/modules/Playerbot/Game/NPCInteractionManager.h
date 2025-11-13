@@ -62,7 +62,7 @@ namespace Playerbot
 
         // Vendor interactions
         bool InteractWithVendor(Creature* vendor);
-        bool BuyFromVendor(Creature* vendor, std::vector<uint32> const& itemsToBuy);
+        bool BuyFromVendor(Creature* vendor, ::std::vector<uint32> const& itemsToBuy);
         bool SellToVendor(Creature* vendor);
         bool RepairAtVendor(Creature* vendor);
         bool RestockReagents(Creature* vendor);
@@ -71,7 +71,7 @@ namespace Playerbot
         bool InteractWithTrainer(Creature* trainer);
         bool LearnAvailableSpells(Creature* trainer);
         bool CanAffordTraining() const;
-        std::vector<uint32> GetAffordableSpells(Creature* trainer) const;
+        ::std::vector<uint32> GetAffordableSpells(Creature* trainer) const;
 
         // Service NPC interactions
         bool InteractWithInnkeeper(Creature* innkeeper);
@@ -211,21 +211,21 @@ namespace Playerbot
         bool IsAuctioneer(Creature* npc) const;
 
         // Vendor logic
-        std::vector<VendorItemInfo> EvaluateVendorItems(Creature* vendor) const;
-        std::vector<Item*> GetJunkItems() const;
-        std::vector<uint32> GetRequiredReagents() const;
+        ::std::vector<VendorItemInfo> EvaluateVendorItems(Creature* vendor) const;
+        ::std::vector<Item*> GetJunkItems() const;
+        ::std::vector<uint32> GetRequiredReagents() const;
         float CalculateItemPriority(ItemTemplate const* itemTemplate) const;
         bool ShouldBuyItem(ItemTemplate const* itemTemplate) const;
         bool IsJunkItem(Item* item) const;
 
         // Trainer logic
-        std::vector<TrainerSpellInfo> EvaluateTrainerSpells(Creature* trainer) const;
+        ::std::vector<TrainerSpellInfo> EvaluateTrainerSpells(Creature* trainer) const;
         float CalculateSpellPriority(TrainerSpell const* trainerSpell) const;
         bool ShouldLearnSpell(uint32 spellId) const;
         bool MeetsSpellRequirements(TrainerSpell const* trainerSpell) const;
 
         // Flight master logic
-        std::vector<uint32> GetKnownFlightPaths() const;
+        ::std::vector<uint32> GetKnownFlightPaths() const;
         uint32 FindBestFlightDestination(Creature* flightMaster) const;
         bool HasFlightPath(uint32 nodeId) const;
         float CalculateFlightPriority(uint32 nodeId) const;
@@ -263,10 +263,10 @@ namespace Playerbot
         bool m_enabled;
 
         // Vendor interaction subsystem
-        std::unique_ptr<VendorInteractionManager> m_vendorManager;
+        ::std::unique_ptr<VendorInteractionManager> m_vendorManager;
 
         // Flight master interaction subsystem
-        std::unique_ptr<FlightMasterManager> m_flightMasterManager;
+        ::std::unique_ptr<FlightMasterManager> m_flightMasterManager;
 
         // Interaction state
         InteractionPhase m_currentPhase;
@@ -282,12 +282,12 @@ namespace Playerbot
         CurrentInteraction m_currentInteraction;
 
         // NPC cache
-        std::vector<NPCInfo> m_nearbyNPCs;
+        ::std::vector<NPCInfo> m_nearbyNPCs;
         uint32 m_lastNPCScan;
         uint32 m_npcScanInterval;
 
         // Interaction history (prevent spam)
-        std::unordered_map<ObjectGuid, uint32> m_lastInteractionTime;
+        ::std::unordered_map<ObjectGuid, uint32> m_lastInteractionTime;
         uint32 m_interactionCooldown;
 
         // Configuration
@@ -304,9 +304,9 @@ namespace Playerbot
         Statistics m_stats;
 
         // Performance metrics
-        std::chrono::high_resolution_clock::time_point m_performanceStart;
-        std::chrono::microseconds m_lastUpdateDuration;
-        std::chrono::microseconds m_totalUpdateTime;
+        ::std::chrono::high_resolution_clock::time_point m_performanceStart;
+        ::std::chrono::microseconds m_lastUpdateDuration;
+        ::std::chrono::microseconds m_totalUpdateTime;
         uint32 m_updateCount;
         float m_cpuUsage;
     };

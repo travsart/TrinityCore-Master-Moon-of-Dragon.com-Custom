@@ -20,20 +20,20 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
 
     ObjectGuid corpseGuid = corpse->GetGUID();
     ObjectGuid ownerGuid = bot->GetGUID();
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
 
     // Create tracker
-    auto tracker = std::make_unique<CorpseTracker>();
+    auto tracker = ::std::make_unique<CorpseTracker>();
     tracker->corpseGuid = corpseGuid;
     tracker->ownerGuid = ownerGuid;
     tracker->mapId = corpse->GetMapId();
     tracker->x = corpse->GetPositionX();
     tracker->y = corpse->GetPositionY();
     tracker->z = corpse->GetPositionZ();
-    tracker->creationTime = std::chrono::steady_clock::now();
+    tracker->creationTime = ::std::chrono::steady_clock::now();
     tracker->safeToDelete = false; // NOT safe until Map update completes
     tracker->referenceCount = 1;
-    _trackedCorpses[corpseGuid] = std::move(tracker);
+    _trackedCorpses[corpseGuid] = ::std::move(tracker);
     _ownerToCorpse[ownerGuid] = corpseGuid;
 
     TC_LOG_DEBUG("playerbot.corpse", "Registered corpse {} for bot {} at ({:.2f}, {:.2f}, {:.2f})",
@@ -42,7 +42,7 @@ void SafeCorpseManager::RegisterCorpse(Player* bot, Corpse* corpse)
 
 void SafeCorpseManager::MarkCorpseSafeForDeletion(ObjectGuid corpseGuid)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -54,7 +54,7 @@ void SafeCorpseManager::MarkCorpseSafeForDeletion(ObjectGuid corpseGuid)
 
 bool SafeCorpseManager::IsCorpseSafeToDelete(ObjectGuid corpseGuid) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -83,7 +83,7 @@ bool SafeCorpseManager::IsCorpseSafeToDelete(ObjectGuid corpseGuid) const
 
 void SafeCorpseManager::AddCorpseReference(ObjectGuid corpseGuid)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -96,7 +96,7 @@ void SafeCorpseManager::AddCorpseReference(ObjectGuid corpseGuid)
 
 void SafeCorpseManager::RemoveCorpseReference(ObjectGuid corpseGuid)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
 
     auto it = _trackedCorpses.find(corpseGuid);
     if (it != _trackedCorpses.end())
@@ -116,7 +116,7 @@ void SafeCorpseManager::RemoveCorpseReference(ObjectGuid corpseGuid)
 
 bool SafeCorpseManager::GetCorpseLocation(ObjectGuid ownerGuid, float& x, float& y, float& z, uint32& mapId) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    ::std::shared_lock<::std::shared_mutex> lock(_mutex);
 
     auto ownerIt = _ownerToCorpse.find(ownerGuid);
     if (ownerIt == _ownerToCorpse.end())
@@ -139,13 +139,13 @@ bool SafeCorpseManager::GetCorpseLocation(ObjectGuid ownerGuid, float& x, float&
 
 void SafeCorpseManager::CleanupExpiredCorpses()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
+    ::std::unique_lock<::std::shared_mutex> lock(_mutex);
 
-    auto now = std::chrono::steady_clock::now();
+    auto now = ::std::chrono::steady_clock::now();
 
     for (auto it = _trackedCorpses.begin(); it != _trackedCorpses.end();)
     {
-        auto elapsed = std::chrono::duration_cast<std::chrono::minutes>(now - it->second->creationTime);
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::minutes>(now - it->second->creationTime);
 
         // Remove if expired and no references
         if (elapsed > CORPSE_EXPIRY_TIME && it->second->referenceCount.load() == 0)

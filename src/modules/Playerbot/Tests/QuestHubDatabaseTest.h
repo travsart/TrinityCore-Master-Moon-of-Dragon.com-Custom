@@ -102,7 +102,7 @@ public:
      * @brief Generate test report with performance metrics
      * @return Test report as string
      */
-    static std::string GenerateTestReport();
+    static ::std::string GenerateTestReport();
 
     /**
      * @brief Validate Quest Hub Database meets Phase 1.1 requirements

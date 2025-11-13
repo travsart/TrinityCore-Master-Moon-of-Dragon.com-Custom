@@ -92,8 +92,8 @@ struct QuestObjectiveData
     uint32 retryCount;
     bool isOptional;
     bool requiresGroup;
-    std::string description;
-    std::vector<uint32> alternativeTargets;
+    ::std::string description;
+    ::std::vector<uint32> alternativeTargets;
 
     QuestObjectiveData(uint32 qId, uint32 index, QuestObjectiveType t, uint32 tId, uint32 required)
         : questId(qId), objectiveIndex(index), type(t), targetId(tId), requiredCount(required)
@@ -106,7 +106,7 @@ struct QuestProgressData
 {
     uint32 questId;
     uint32 botGuid;
-    std::vector<QuestObjectiveData> objectives;
+    ::std::vector<QuestObjectiveData> objectives;
     QuestCompletionStrategy strategy;
     uint32 startTime;
     uint32 lastUpdateTime;
@@ -116,7 +116,7 @@ struct QuestProgressData
     uint32 stuckTime;
     uint32 consecutiveFailures;
     Position lastKnownLocation;
-    std::vector<std::string> completionLog;
+    ::std::vector<::std::string> completionLog;
     bool requiresTurnIn;
     uint32 questGiverGuid;
     Position questGiverLocation;
@@ -158,7 +158,7 @@ public:
     // Navigation and pathfinding
     void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) override;
     bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) override;
-    std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
+    ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
     Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) override;
 
     // Group coordination for quest completion
@@ -170,8 +170,8 @@ public:
     // Quest completion optimization
     void OptimizeQuestCompletionOrder(Player* bot) override;
     void OptimizeObjectiveSequence(Player* bot, uint32 questId) override;
-    void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds) override;
-    void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives) override;
+    void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds) override;
+    void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives) override;
 
     // Stuck detection and recovery
     void DetectStuckState(Player* bot, uint32 questId) override;
@@ -188,23 +188,23 @@ public:
     // Performance monitoring
     struct QuestCompletionMetrics
     {
-        std::atomic<uint32> questsStarted{0};
-        std::atomic<uint32> questsCompleted{0};
-        std::atomic<uint32> questsFailed{0};
-        std::atomic<uint32> objectivesCompleted{0};
-        std::atomic<uint32> stuckInstances{0};
-        std::atomic<float> averageCompletionTime{1200000.0f}; // 20 minutes
-        std::atomic<float> completionSuccessRate{0.85f};
-        std::atomic<float> objectiveEfficiency{0.9f};
-        std::atomic<uint32> totalDistanceTraveled{0};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> questsStarted{0};
+        ::std::atomic<uint32> questsCompleted{0};
+        ::std::atomic<uint32> questsFailed{0};
+        ::std::atomic<uint32> objectivesCompleted{0};
+        ::std::atomic<uint32> stuckInstances{0};
+        ::std::atomic<float> averageCompletionTime{1200000.0f}; // 20 minutes
+        ::std::atomic<float> completionSuccessRate{0.85f};
+        ::std::atomic<float> objectiveEfficiency{0.9f};
+        ::std::atomic<uint32> totalDistanceTraveled{0};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Reset() {
             questsStarted = 0; questsCompleted = 0; questsFailed = 0;
             objectivesCompleted = 0; stuckInstances = 0; averageCompletionTime = 1200000.0f;
             completionSuccessRate = 0.85f; objectiveEfficiency = 0.9f;
             totalDistanceTraveled = 0;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
 
         float GetCompletionRate() const {
@@ -229,7 +229,7 @@ public:
             float completionSuccessRate;
             float objectiveEfficiency;
             uint32 totalDistanceTraveled;
-            std::chrono::steady_clock::time_point lastUpdate;
+            ::std::chrono::steady_clock::time_point lastUpdate;
 
             float GetCompletionRate() const {
                 return questsStarted > 0 ? (float)questsCompleted / questsStarted : 0.0f;
@@ -257,8 +257,8 @@ public:
     QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
 
     // Quest data analysis
-    std::vector<uint32> GetActiveQuests(Player* bot) override;
-    std::vector<uint32> GetCompletableQuests(Player* bot) override;
+    ::std::vector<uint32> GetActiveQuests(Player* bot) override;
+    ::std::vector<uint32> GetCompletableQuests(Player* bot) override;
     uint32 GetHighestPriorityQuest(Player* bot) override;
     float CalculateQuestProgress(uint32 questId, Player* bot) override;
 
@@ -275,7 +275,7 @@ public:
     void HandleDailyQuests(Player* bot) override;
 
     // Error handling and recovery
-    void HandleQuestCompletionError(Player* bot, uint32 questId, const std::string& error) override;
+    void HandleQuestCompletionError(Player* bot, uint32 questId, const ::std::string& error) override;
     void RecoverFromCompletionFailure(Player* bot, uint32 questId) override;
     void AbandonUncompletableQuest(Player* bot, uint32 questId) override;
     void DiagnoseCompletionIssues(Player* bot, uint32 questId) override;
@@ -291,19 +291,19 @@ private:
     ~QuestCompletion() = default;
 
     // Core data structures
-    std::unordered_map<uint32, std::vector<QuestProgressData>> _botQuestProgress; // botGuid -> quests
-    std::unordered_map<uint32, QuestCompletionStrategy> _botStrategies;
-    std::unordered_map<uint32, QuestCompletionMetrics> _botMetrics;
+    ::std::unordered_map<uint32, ::std::vector<QuestProgressData>> _botQuestProgress; // botGuid -> quests
+    ::std::unordered_map<uint32, QuestCompletionStrategy> _botStrategies;
+    ::std::unordered_map<uint32, QuestCompletionMetrics> _botMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _completionMutex;
 
     // Objective execution state
-    std::unordered_map<uint32, uint32> _botCurrentObjective; // botGuid -> objectiveIndex
-    std::unordered_map<uint32, uint32> _botLastObjectiveUpdate; // botGuid -> timestamp
-    std::unordered_set<uint32> _botsInQuestMode; // bots actively completing quests
+    ::std::unordered_map<uint32, uint32> _botCurrentObjective; // botGuid -> objectiveIndex
+    ::std::unordered_map<uint32, uint32> _botLastObjectiveUpdate; // botGuid -> timestamp
+    ::std::unordered_set<uint32> _botsInQuestMode; // bots actively completing quests
 
     // Group coordination data
-    std::unordered_map<uint32, std::vector<uint32>> _groupQuestSharing; // groupId -> questIds
-    std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _groupObjectiveSync; // groupId -> questId -> syncTime
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _groupQuestSharing; // groupId -> questIds
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, uint32>> _groupObjectiveSync; // groupId -> questId -> syncTime
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _groupMutex;
 
     // Performance tracking
@@ -326,11 +326,11 @@ private:
 
     // Combat integration
     void HandleQuestCombat(Player* bot, const QuestObjectiveData& objective, Unit* target);
-    void PrioritizeQuestTargets(Player* bot, const std::vector<Unit*>& enemies);
+    void PrioritizeQuestTargets(Player* bot, const ::std::vector<Unit*>& enemies);
     bool ShouldEngageQuestTarget(Player* bot, Unit* target, const QuestObjectiveData& objective);
 
     // Pathfinding and navigation
-    std::vector<Position> GenerateObjectivePath(Player* bot, const QuestObjectiveData& objective);
+    ::std::vector<Position> GenerateObjectivePath(Player* bot, const QuestObjectiveData& objective);
     Position FindNearestObjectiveLocation(Player* bot, const QuestObjectiveData& objective);
     bool ValidateObjectivePosition(const Position& position, const QuestObjectiveData& objective);
 
@@ -355,7 +355,7 @@ private:
     void BatchObjectiveUpdates();
 
     // Error handling
-    void LogCompletionError(Player* bot, uint32 questId, const std::string& error);
+    void LogCompletionError(Player* bot, uint32 questId, const ::std::string& error);
     void HandleObjectiveTimeout(Player* bot, QuestObjectiveData& objective);
     void RecoverFromObjectiveFailure(Player* bot, QuestObjectiveData& objective);
 

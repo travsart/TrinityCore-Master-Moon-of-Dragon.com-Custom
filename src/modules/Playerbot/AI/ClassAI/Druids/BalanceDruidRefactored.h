@@ -265,7 +265,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint32>> _trackedDoTs;
+    ::std::unordered_map<ObjectGuid, ::std::unordered_map<uint32, uint32>> _trackedDoTs;
 };
 
 // ============================================================================
@@ -598,7 +598,7 @@ private:
 
     void GenerateAstralPower(uint32 amount)
     {
-        this->_resource.astralPower = std::min(this->_resource.astralPower + amount, this->_resource.maxAstralPower);
+        this->_resource.astralPower = ::std::min(this->_resource.astralPower + amount, this->_resource.maxAstralPower);
     }
 
     void ConsumeAstralPower(uint32 amount)

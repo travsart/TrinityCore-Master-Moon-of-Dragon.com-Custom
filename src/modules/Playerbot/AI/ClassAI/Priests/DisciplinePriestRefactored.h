@@ -139,7 +139,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _atonementTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _atonementTargets; // GUID -> expiration time
 };
 
 // Power Word: Shield tracker
@@ -189,7 +189,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _shieldTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _shieldTargets; // GUID -> expiration time
 };
 
 class DisciplinePriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
@@ -246,7 +246,7 @@ public:
 
         if (Group* group = bot->GetGroup())
         {
-        std::vector<Unit*> groupMembers;
+        ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -393,7 +393,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -418,7 +418,7 @@ private:
         return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -500,7 +500,7 @@ private:
         return false;
     }
 
-    bool HandleAtonementMaintenance(const std::vector<Unit*>& group)
+    bool HandleAtonementMaintenance(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();        if (!bot)
 
@@ -609,7 +609,7 @@ private:
         }        return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {        Player* bot = this->GetBot();        if (!bot)
 
             return false;
@@ -683,7 +683,7 @@ private:
         return false;
     }
 
-    bool HandleShielding(const std::vector<Unit*>& group)    {
+    bool HandleShielding(const ::std::vector<Unit*>& group)    {
         // During Rapture, spam shields on everyone
         if (_raptureActive)
         {

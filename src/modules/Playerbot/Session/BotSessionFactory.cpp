@@ -51,13 +51,13 @@ void BotSessionFactory::Shutdown()
 
     // Clear templates
     {
-        std::lock_guard lock(_templateMutex);
+        ::std::lock_guard lock(_templateMutex);
         _sessionTemplates.clear();
     }
 
     // Clear cache
     {
-        std::lock_guard lock(_cacheMutex);
+        ::std::lock_guard lock(_cacheMutex);
         _configCache.classConfigurations.clear();
         _configCache.zoneConfigurations.clear();
         _configCache.isValid = false;
@@ -66,9 +66,9 @@ void BotSessionFactory::Shutdown()
 
 // === SESSION CREATION ===
 
-std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(ObjectGuid characterGuid, SpawnRequest const& request)
+::std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(ObjectGuid characterGuid, SpawnRequest const& request)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     // Get account ID from character
     uint32 accountId = 0;
@@ -84,9 +84,9 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(ObjectGuid chara
     return CreateBotSession(accountId, characterGuid);
 }
 
-std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
+::std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     try
     {
@@ -113,8 +113,8 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(uint32 accountId
         }
 
         // Record successful creation
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
         RecordCreation(duration.count(), true);
 
         TC_LOG_DEBUG("module.playerbot.session.factory",
@@ -123,21 +123,21 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateBotSession(uint32 accountId
 
         return session;
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         HandleCreationError(ex.what(), characterGuid);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
         RecordCreation(duration.count(), false);
         return nullptr;
     }
 }
 
-std::vector<std::shared_ptr<BotSession>> BotSessionFactory::CreateBotSessions(
-    std::vector<ObjectGuid> const& characterGuids,
+::std::vector<::std::shared_ptr<BotSession>> BotSessionFactory::CreateBotSessions(
+    ::std::vector<ObjectGuid> const& characterGuids,
     SpawnRequest const& baseRequest)
 {
-    std::vector<std::shared_ptr<BotSession>> sessions;
+    ::std::vector<::std::shared_ptr<BotSession>> sessions;
     sessions.reserve(characterGuids.size());
 
     for (ObjectGuid const& characterGuid : characterGuids)
@@ -157,7 +157,7 @@ std::vector<std::shared_ptr<BotSession>> BotSessionFactory::CreateBotSessions(
 
 // === SESSION CONFIGURATION ===
 
-bool BotSessionFactory::ConfigureSession(std::shared_ptr<BotSession> session, SpawnRequest const& request)
+bool BotSessionFactory::ConfigureSession(::std::shared_ptr<BotSession> session, SpawnRequest const& request)
 {
     if (!session)
         return false;
@@ -177,7 +177,7 @@ bool BotSessionFactory::ConfigureSession(std::shared_ptr<BotSession> session, Sp
 
         return true;
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.session.factory",
             "Failed to configure session: {}", ex.what());
@@ -185,7 +185,7 @@ bool BotSessionFactory::ConfigureSession(std::shared_ptr<BotSession> session, Sp
     }
 }
 
-bool BotSessionFactory::ValidateSession(std::shared_ptr<BotSession> session) const
+bool BotSessionFactory::ValidateSession(::std::shared_ptr<BotSession> session) const
 {
     return session &&
            session->GetAccountId() != 0 &&
@@ -194,9 +194,9 @@ bool BotSessionFactory::ValidateSession(std::shared_ptr<BotSession> session) con
 
 // === SESSION TEMPLATES ===
 
-void BotSessionFactory::RegisterSessionTemplate(std::string const& templateName, SpawnRequest const& templateRequest)
+void BotSessionFactory::RegisterSessionTemplate(::std::string const& templateName, SpawnRequest const& templateRequest)
 {
-    std::lock_guard lock(_templateMutex);
+    ::std::lock_guard lock(_templateMutex);
 
     if (_sessionTemplates.size() >= MAX_TEMPLATES)
     {
@@ -214,7 +214,7 @@ void BotSessionFactory::RegisterSessionTemplate(std::string const& templateName,
         "Registered session template '{}'", templateName);
 }
 
-std::shared_ptr<BotSession> BotSessionFactory::CreateFromTemplate(std::string const& templateName, ObjectGuid characterGuid)
+::std::shared_ptr<BotSession> BotSessionFactory::CreateFromTemplate(::std::string const& templateName, ObjectGuid characterGuid)
 {
     SessionTemplate const* sessionTemplate = GetTemplate(templateName);
     if (!sessionTemplate)
@@ -237,7 +237,7 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateFromTemplate(std::string co
 
 // === PRIVATE IMPLEMENTATION ===
 
-std::shared_ptr<BotSession> BotSessionFactory::CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid)
+::std::shared_ptr<BotSession> BotSessionFactory::CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid)
 {
     // Create the BotSession instance using factory method
     auto session = BotSession::Create(accountId);
@@ -252,7 +252,7 @@ std::shared_ptr<BotSession> BotSessionFactory::CreateSessionInternal(uint32 acco
     return session;
 }
 
-bool BotSessionFactory::InitializeSessionComponents(std::shared_ptr<BotSession> session, SpawnRequest const& request)
+bool BotSessionFactory::InitializeSessionComponents(::std::shared_ptr<BotSession> session, SpawnRequest const& request)
 {
     // Initialize session components based on spawn request
     // This would include:
@@ -264,7 +264,7 @@ bool BotSessionFactory::InitializeSessionComponents(std::shared_ptr<BotSession> 
     return session != nullptr;
 }
 
-void BotSessionFactory::ApplyBaseConfiguration(std::shared_ptr<BotSession> session, SpawnRequest const& request)
+void BotSessionFactory::ApplyBaseConfiguration(::std::shared_ptr<BotSession> session, SpawnRequest const& request)
 {
     // Apply base configuration from spawn request
     // This would set:
@@ -273,10 +273,10 @@ void BotSessionFactory::ApplyBaseConfiguration(std::shared_ptr<BotSession> sessi
     // - Social interaction settings
 }
 
-void BotSessionFactory::ApplyClassSpecificConfiguration(std::shared_ptr<BotSession> session, uint8 playerClass)
+void BotSessionFactory::ApplyClassSpecificConfiguration(::std::shared_ptr<BotSession> session, uint8 playerClass)
 {
     // Apply class-specific AI and behavior configuration
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto it = _configCache.classConfigurations.find(playerClass);
     if (it != _configCache.classConfigurations.end())
@@ -287,16 +287,16 @@ void BotSessionFactory::ApplyClassSpecificConfiguration(std::shared_ptr<BotSessi
     }
 }
 
-void BotSessionFactory::ApplyLevelConfiguration(std::shared_ptr<BotSession> session, uint8 level)
+void BotSessionFactory::ApplyLevelConfiguration(::std::shared_ptr<BotSession> session, uint8 level)
 {
     // Apply level-appropriate behavior and difficulty settings
     // Adjust AI aggressiveness, spell usage, etc.
 }
 
-void BotSessionFactory::ApplyZoneConfiguration(std::shared_ptr<BotSession> session, uint32 zoneId)
+void BotSessionFactory::ApplyZoneConfiguration(::std::shared_ptr<BotSession> session, uint32 zoneId)
 {
     // Apply zone-specific behavior settings
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto it = _configCache.zoneConfigurations.find(zoneId);
     if (it != _configCache.zoneConfigurations.end())
@@ -311,7 +311,7 @@ void BotSessionFactory::ApplyZoneConfiguration(std::shared_ptr<BotSession> sessi
 
 bool BotSessionFactory::ValidateAccountAccess(uint32 accountId) const
 {
-    std::string accountName;
+    ::std::string accountName;
     if (!AccountMgr::GetName(accountId, accountName))
         return false;
 
@@ -323,7 +323,7 @@ bool BotSessionFactory::ValidateCharacterData(ObjectGuid characterGuid) const
     return sCharacterCache->GetCharacterCacheByGuid(characterGuid) != nullptr;
 }
 
-bool BotSessionFactory::ValidateSessionConfiguration(std::shared_ptr<BotSession> session) const
+bool BotSessionFactory::ValidateSessionConfiguration(::std::shared_ptr<BotSession> session) const
 {
     // Validate that the session is properly configured
     return session->GetAccountId() != 0;
@@ -333,7 +333,7 @@ bool BotSessionFactory::ValidateSessionConfiguration(std::shared_ptr<BotSession>
 
 void BotSessionFactory::LoadDefaultTemplates()
 {
-    std::lock_guard lock(_templateMutex);
+    ::std::lock_guard lock(_templateMutex);
 
     // Create default templates for common bot types
     SpawnRequest defaultRequest;
@@ -351,9 +351,9 @@ void BotSessionFactory::LoadDefaultTemplates()
     TC_LOG_DEBUG("module.playerbot.session.factory", "Loaded {} default templates", 1);
 }
 
-BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(std::string const& templateName) const
+BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(::std::string const& templateName) const
 {
-    std::lock_guard lock(_templateMutex);
+    ::std::lock_guard lock(_templateMutex);
 
     auto it = _sessionTemplates.find(templateName);
     return it != _sessionTemplates.end() ? &it->second : nullptr;
@@ -363,7 +363,7 @@ BotSessionFactory::SessionTemplate const* BotSessionFactory::GetTemplate(std::st
 
 void BotSessionFactory::UpdateConfigurationCache()
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     // Update class configurations
     _configCache.classConfigurations.clear();
@@ -376,7 +376,7 @@ void BotSessionFactory::UpdateConfigurationCache()
     _configCache.zoneConfigurations.clear();
     // Would populate with actual zone configurations
 
-    _configCache.lastUpdate = std::chrono::steady_clock::now();
+    _configCache.lastUpdate = ::std::chrono::steady_clock::now();
     _configCache.isValid = true;
 
     TC_LOG_DEBUG("module.playerbot.session.factory", "Updated configuration cache");
@@ -384,13 +384,13 @@ void BotSessionFactory::UpdateConfigurationCache()
 
 bool BotSessionFactory::IsCacheValid() const
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     if (!_configCache.isValid)
         return false;
 
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _configCache.lastUpdate);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _configCache.lastUpdate);
 
     return elapsed.count() < CACHE_VALIDITY_MS;
 }
@@ -415,11 +415,11 @@ void BotSessionFactory::RecordCreation(uint64 durationMicroseconds, bool success
     }
 }
 
-void BotSessionFactory::RecordTemplateUsage(std::string const& templateName)
+void BotSessionFactory::RecordTemplateUsage(::std::string const& templateName)
 {
     _stats.templatesUsed.fetch_add(1);
 
-    std::lock_guard lock(_templateMutex);
+    ::std::lock_guard lock(_templateMutex);
     auto it = _sessionTemplates.find(templateName);
     if (it != _sessionTemplates.end())
     {
@@ -438,7 +438,7 @@ void BotSessionFactory::ResetStats()
 
 // === ERROR HANDLING ===
 
-void BotSessionFactory::HandleCreationError(std::string const& error, ObjectGuid characterGuid)
+void BotSessionFactory::HandleCreationError(::std::string const& error, ObjectGuid characterGuid)
 {
     TC_LOG_ERROR("module.playerbot.session.factory",
         "Session creation error for character {}: {}", characterGuid.ToString(), error);
@@ -446,7 +446,7 @@ void BotSessionFactory::HandleCreationError(std::string const& error, ObjectGuid
     _stats.creationFailures.fetch_add(1);
 }
 
-std::shared_ptr<BotSession> BotSessionFactory::CreateFallbackSession(ObjectGuid characterGuid)
+::std::shared_ptr<BotSession> BotSessionFactory::CreateFallbackSession(ObjectGuid characterGuid)
 {
     // Create a minimal session for error recovery
     // This would be a simplified session with minimal functionality

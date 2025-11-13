@@ -117,7 +117,7 @@ struct ObstacleInfo
     uint32 firstDetected;
     uint32 lastSeen;
     uint32 expirationTime;
-    std::string name;
+    ::std::string name;
 
     // Collision prediction
     float timeToCollision;
@@ -126,7 +126,7 @@ struct ObstacleInfo
 
     // Avoidance data
     AvoidanceBehavior recommendedBehavior;
-    std::vector<Position> avoidanceWaypoints;
+    ::std::vector<Position> avoidanceWaypoints;
     float avoidanceRadius;
 
     ObstacleInfo() : object(nullptr), type(ObstacleType::STATIC_TERRAIN),
@@ -147,7 +147,7 @@ struct CollisionPrediction
     CollisionType collisionType;
     ObstacleInfo* obstacle;
     float collisionSeverity;        // 0.0 = minor, 1.0 = severe
-    std::vector<Position> avoidancePath;
+    ::std::vector<Position> avoidancePath;
     AvoidanceBehavior recommendedAction;
 
     CollisionPrediction() : willCollide(false), timeToCollision(0.0f),
@@ -159,7 +159,7 @@ struct CollisionPrediction
 struct AvoidanceManeuver
 {
     AvoidanceBehavior behavior;
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     float executionTime;
     float successProbability;
     float energyCost;
@@ -167,7 +167,7 @@ struct AvoidanceManeuver
     bool requiresJump;
     bool requiresSprint;
     bool maintainsFormation;
-    std::string description;
+    ::std::string description;
 
     AvoidanceManeuver() : behavior(AvoidanceBehavior::DIRECT_AVOIDANCE),
                          executionTime(0.0f), successProbability(0.0f),
@@ -192,7 +192,7 @@ struct DetectionContext
     float scanRadius;
     float lookaheadTime;
     DetectionFlags flags;
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> groupMembers;
     bool inCombat;
     bool emergencyMode;
 
@@ -203,14 +203,14 @@ struct DetectionContext
 // Performance metrics for obstacle avoidance
 struct AvoidanceMetrics
 {
-    std::atomic<uint32> obstaclesDetected{0};
-    std::atomic<uint32> collisionsPrevented{0};
-    std::atomic<uint32> avoidanceManeuvers{0};
-    std::atomic<uint32> emergencyStops{0};
-    std::atomic<uint32> falsePositives{0};
-    std::chrono::microseconds averageDetectionTime{0};
-    std::chrono::microseconds maxDetectionTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> obstaclesDetected{0};
+    ::std::atomic<uint32> collisionsPrevented{0};
+    ::std::atomic<uint32> avoidanceManeuvers{0};
+    ::std::atomic<uint32> emergencyStops{0};
+    ::std::atomic<uint32> falsePositives{0};
+    ::std::chrono::microseconds averageDetectionTime{0};
+    ::std::chrono::microseconds maxDetectionTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -219,9 +219,9 @@ struct AvoidanceMetrics
         avoidanceManeuvers = 0;
         emergencyStops = 0;
         falsePositives = 0;
-        averageDetectionTime = std::chrono::microseconds{0};
-        maxDetectionTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageDetectionTime = ::std::chrono::microseconds{0};
+        maxDetectionTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetSuccessRate() const
@@ -239,20 +239,20 @@ public:
 
     // Primary obstacle detection and avoidance interface
     void UpdateObstacleDetection(const DetectionContext& context);
-    std::vector<CollisionPrediction> PredictCollisions(const DetectionContext& context);
-    std::vector<AvoidanceManeuver> GenerateAvoidanceManeuvers(const CollisionPrediction& collision);
+    ::std::vector<CollisionPrediction> PredictCollisions(const DetectionContext& context);
+    ::std::vector<AvoidanceManeuver> GenerateAvoidanceManeuvers(const CollisionPrediction& collision);
     bool ExecuteAvoidanceManeuver(const AvoidanceManeuver& maneuver);
 
     // Obstacle detection methods
-    std::vector<ObstacleInfo> ScanForObstacles(const DetectionContext& context);
-    std::vector<ObstacleInfo> DetectStaticObstacles(const DetectionContext& context);
-    std::vector<ObstacleInfo> DetectDynamicObstacles(const DetectionContext& context);
-    std::vector<ObstacleInfo> DetectUnitObstacles(const DetectionContext& context);
-    std::vector<ObstacleInfo> DetectEnvironmentalHazards(const DetectionContext& context);
+    ::std::vector<ObstacleInfo> ScanForObstacles(const DetectionContext& context);
+    ::std::vector<ObstacleInfo> DetectStaticObstacles(const DetectionContext& context);
+    ::std::vector<ObstacleInfo> DetectDynamicObstacles(const DetectionContext& context);
+    ::std::vector<ObstacleInfo> DetectUnitObstacles(const DetectionContext& context);
+    ::std::vector<ObstacleInfo> DetectEnvironmentalHazards(const DetectionContext& context);
 
     // Collision prediction and analysis
     CollisionPrediction PredictCollisionWithObstacle(const ObstacleInfo& obstacle, const DetectionContext& context);
-    bool WillCollideWithPath(const std::vector<Position>& path, const ObstacleInfo& obstacle);
+    bool WillCollideWithPath(const ::std::vector<Position>& path, const ObstacleInfo& obstacle);
     float CalculateTimeToCollision(const ObstacleInfo& obstacle, const DetectionContext& context);
     Position PredictObstaclePosition(const ObstacleInfo& obstacle, float timeAhead);
 
@@ -270,9 +270,9 @@ public:
     bool CanSafelyProceed(const Position& nextPosition);
 
     // Formation-aware avoidance
-    std::vector<AvoidanceManeuver> GenerateFormationAwareAvoidance(const CollisionPrediction& collision);
-    bool WillManeuverBreakFormation(const AvoidanceManeuver& maneuver, const std::vector<Player*>& group);
-    Position AdjustAvoidanceForFormation(const Position& avoidancePos, const std::vector<Player*>& group);
+    ::std::vector<AvoidanceManeuver> GenerateFormationAwareAvoidance(const CollisionPrediction& collision);
+    bool WillManeuverBreakFormation(const AvoidanceManeuver& maneuver, const ::std::vector<Player*>& group);
+    Position AdjustAvoidanceForFormation(const Position& avoidancePos, const ::std::vector<Player*>& group);
 
     // Obstacle classification and analysis
     ObstacleType ClassifyObstacle(WorldObject* object);
@@ -283,7 +283,7 @@ public:
     // Predictive systems
     void UpdateObstaclePredictions();
     Position PredictUnitMovement(Unit* unit, float timeAhead);
-    std::vector<Position> PredictProjectilePath(WorldObject* projectile);
+    ::std::vector<Position> PredictProjectilePath(WorldObject* projectile);
     bool WillObstacleBlock(const ObstacleInfo& obstacle, const Position& from, const Position& to, float timeOffset = 0.0f);
 
     // Obstacle management
@@ -294,10 +294,10 @@ public:
     ObstacleInfo* GetObstacle(ObjectGuid guid);
 
     // Query methods
-    bool IsPathBlocked(const std::vector<Position>& path);
+    bool IsPathBlocked(const ::std::vector<Position>& path);
     bool IsPositionBlocked(const Position& pos, float radius = 1.0f);
-    std::vector<ObstacleInfo> GetObstaclesInRadius(const Position& center, float radius);
-    std::vector<ObstacleInfo> GetObstaclesOnPath(const Position& start, const Position& end);
+    ::std::vector<ObstacleInfo> GetObstaclesInRadius(const Position& center, float radius);
+    ::std::vector<ObstacleInfo> GetObstaclesOnPath(const Position& start, const Position& end);
 
     // Configuration
     void SetScanRadius(float radius) { _scanRadius = radius; }
@@ -321,14 +321,14 @@ public:
     void ActivateEmergencyMode() { _emergencyMode = true; }
     void DeactivateEmergencyMode() { _emergencyMode = false; }
     bool IsEmergencyMode() const { return _emergencyMode; }
-    std::vector<Position> GetEmergencyEscapeRoutes();
+    ::std::vector<Position> GetEmergencyEscapeRoutes();
 
 private:
     // Core detection algorithms
-    void ScanTerrain(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles);
-    void ScanUnits(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles);
-    void ScanGameObjects(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles);
-    void ScanEnvironmentalHazards(const DetectionContext& context, std::vector<ObstacleInfo>& obstacles);
+    void ScanTerrain(const DetectionContext& context, ::std::vector<ObstacleInfo>& obstacles);
+    void ScanUnits(const DetectionContext& context, ::std::vector<ObstacleInfo>& obstacles);
+    void ScanGameObjects(const DetectionContext& context, ::std::vector<ObstacleInfo>& obstacles);
+    void ScanEnvironmentalHazards(const DetectionContext& context, ::std::vector<ObstacleInfo>& obstacles);
 
     // Collision calculation helpers
     bool CheckSphereCollision(const Position& center1, float radius1, const Position& center2, float radius2);
@@ -337,30 +337,30 @@ private:
     Position CalculateInterceptionPoint(const Position& target, const Position& targetVel, const Position& interceptor, float interceptorSpeed);
 
     // Avoidance calculation helpers
-    std::vector<Position> CalculateAvoidancePath(const Position& start, const Position& goal, const ObstacleInfo& obstacle);
+    ::std::vector<Position> CalculateAvoidancePath(const Position& start, const Position& goal, const ObstacleInfo& obstacle);
     Position FindNearestClearPosition(const Position& blocked, float searchRadius);
-    bool IsPositionClear(const Position& pos, float radius, const std::vector<ObstacleInfo>& obstacles);
+    bool IsPositionClear(const Position& pos, float radius, const ::std::vector<ObstacleInfo>& obstacles);
     float CalculateAvoidanceAngle(const Position& bot, const Position& obstacle, const Position& goal);
 
     // Predictive analysis
     void UpdateMovementPredictions();
-    bool WillPathIntersectObstacle(const std::vector<Position>& path, const ObstacleInfo& obstacle, float timeOffset);
+    bool WillPathIntersectObstacle(const ::std::vector<Position>& path, const ObstacleInfo& obstacle, float timeOffset);
     float EstimateObstacleClearanceTime(const ObstacleInfo& obstacle);
 
     // Optimization and caching
     void OptimizeObstacleList();
     bool ShouldIgnoreObstacle(const ObstacleInfo& obstacle, const DetectionContext& context);
-    void CacheAvoidanceCalculation(const std::string& key, const AvoidanceManeuver& maneuver);
-    AvoidanceManeuver* GetCachedAvoidance(const std::string& key);
+    void CacheAvoidanceCalculation(const ::std::string& key, const AvoidanceManeuver& maneuver);
+    AvoidanceManeuver* GetCachedAvoidance(const ::std::string& key);
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, const std::string& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
 
     // Utility methods
     float GetBotRadius() const;
     float GetBotSpeed() const;
     bool IsInScanRange(const Position& pos, const DetectionContext& context);
-    std::string GenerateObstacleKey(const ObstacleInfo& obstacle);
+    ::std::string GenerateObstacleKey(const ObstacleInfo& obstacle);
 
 private:
     Player* _bot;
@@ -375,13 +375,13 @@ private:
     bool _emergencyMode;
 
     // Obstacle tracking
-    std::unordered_map<ObjectGuid, ObstacleInfo> _obstacles;
-    std::vector<ObstacleInfo> _staticObstacles;
-    std::vector<ObstacleInfo> _dynamicObstacles;
+    ::std::unordered_map<ObjectGuid, ObstacleInfo> _obstacles;
+    ::std::vector<ObstacleInfo> _staticObstacles;
+    ::std::vector<ObstacleInfo> _dynamicObstacles;
     uint32 _lastCleanup;
 
     // Avoidance cache
-    std::unordered_map<std::string, AvoidanceManeuver> _avoidanceCache;
+    ::std::unordered_map<::std::string, AvoidanceManeuver> _avoidanceCache;
     uint32 _lastCacheCleanup;
 
     // Performance metrics
@@ -414,11 +414,11 @@ public:
     // Collision detection utilities
     static bool DoCirclesIntersect(const Position& center1, float radius1, const Position& center2, float radius2);
     static bool DoesLineIntersectCircle(const Position& lineStart, const Position& lineEnd, const Position& center, float radius);
-    static std::vector<Position> FindLineCircleIntersections(const Position& lineStart, const Position& lineEnd, const Position& center, float radius);
+    static ::std::vector<Position> FindLineCircleIntersections(const Position& lineStart, const Position& lineEnd, const Position& center, float radius);
 
     // Avoidance calculation utilities
     static float CalculateAvoidanceRadius(float obstacleRadius, float botRadius, float safetyMargin = 1.0f);
-    static std::vector<Position> GenerateAvoidanceWaypoints(const Position& start, const Position& goal, const Position& obstacle, float avoidanceRadius);
+    static ::std::vector<Position> GenerateAvoidanceWaypoints(const Position& start, const Position& goal, const Position& obstacle, float avoidanceRadius);
     static Position CalculateTangentPoint(const Position& center, const Position& obstacle, float radius, bool leftTangent = true);
 
     // Prediction utilities
@@ -427,14 +427,14 @@ public:
     static bool WillPathsIntersect(const Position& start1, const Position& end1, const Position& start2, const Position& end2, float& intersectionTime);
 
     // Formation utilities
-    static bool WillAvoidanceBreakFormation(const Position& avoidancePos, const std::vector<Player*>& group, float maxDistance = 15.0f);
-    static Position AdjustForFormationConstraints(const Position& intended, const std::vector<Player*>& group, float minDistance = 3.0f);
-    static float CalculateFormationStrain(const Position& newPos, const std::vector<Player*>& group);
+    static bool WillAvoidanceBreakFormation(const Position& avoidancePos, const ::std::vector<Player*>& group, float maxDistance = 15.0f);
+    static Position AdjustForFormationConstraints(const Position& intended, const ::std::vector<Player*>& group, float minDistance = 3.0f);
+    static float CalculateFormationStrain(const Position& newPos, const ::std::vector<Player*>& group);
 
     // Safety assessment utilities
-    static float CalculatePathSafety(const std::vector<Position>& path, const std::vector<ObstacleInfo>& obstacles);
-    static bool IsPositionSafe(const Position& pos, const std::vector<ObstacleInfo>& obstacles, float safetyRadius = 2.0f);
-    static Position FindSafestNearbyPosition(const Position& target, const std::vector<ObstacleInfo>& obstacles, float searchRadius = 10.0f);
+    static float CalculatePathSafety(const ::std::vector<Position>& path, const ::std::vector<ObstacleInfo>& obstacles);
+    static bool IsPositionSafe(const Position& pos, const ::std::vector<ObstacleInfo>& obstacles, float safetyRadius = 2.0f);
+    static Position FindSafestNearbyPosition(const Position& target, const ::std::vector<ObstacleInfo>& obstacles, float searchRadius = 10.0f);
 };
 
 } // namespace Playerbot

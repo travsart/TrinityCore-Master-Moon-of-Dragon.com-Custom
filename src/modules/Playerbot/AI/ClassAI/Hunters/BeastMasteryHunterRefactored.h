@@ -235,7 +235,7 @@ public:
     void ApplyBarbedShot()
     {
         // Barbed Shot applies/refreshes Pet Frenzy
-        _petFrenzyStacks = std::min<uint32>(_petFrenzyStacks + 1, 3);
+        _petFrenzyStacks = ::std::min<uint32>(_petFrenzyStacks + 1, 3);
         _petFrenzyExpireTime = GameTime::GetGameTimeMS() + 8000; // 8 second duration
     }
 
@@ -495,7 +495,7 @@ protected:
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
+            _resource = ::std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
 
             return;
         }
@@ -521,7 +521,7 @@ protected:
 
             this->ConsumeResource(35);
 
-            _resource = std::min<uint32>(_resource + 5, 100); // Small focus return
+            _resource = ::std::min<uint32>(_resource + 5, 100); // Small focus return
 
             return;
         }
@@ -552,7 +552,7 @@ protected:
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100);
+            _resource = ::std::min<uint32>(_resource + 20, 100);
 
             return;
         }
@@ -686,7 +686,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -1037,7 +1037,7 @@ private:
 
                                     this->_barbedShotCharges--;
 
-                                    this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 20, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1115,7 +1115,7 @@ private:
 
                                     this->ConsumeResource(35);
 
-                                    this->_resource = std::min<uint32>(this->_resource + 5, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 5, 100);
 
                                     return NodeStatus::SUCCESS;
 

@@ -381,12 +381,12 @@ BotSession::BotSession(uint32 bnetAccountId)
 }
 
 // Factory method that creates BotSession with better socket handling
-std::shared_ptr<BotSession> BotSession::Create(uint32 bnetAccountId)
+::std::shared_ptr<BotSession> BotSession::Create(uint32 bnetAccountId)
 {
     TC_LOG_INFO("module.playerbot.session", " BotSession::Create() factory method called for account {}", bnetAccountId);
 
     // Create BotSession using regular constructor
-    auto session = std::make_shared<BotSession>(bnetAccountId);
+    auto session = ::std::make_shared<BotSession>(bnetAccountId);
 
     // TODO: In future, we could create a BotSocket here and use it to initialize the session
     // For now, we rely on method overrides to handle the null socket case
@@ -418,12 +418,12 @@ BotSession::~BotSession()
 
     // DEADLOCK PREVENTION: Wait for any ongoing packet processing to complete
     // Use a reasonable timeout to prevent hanging during shutdown
-    auto waitStart = std::chrono::steady_clock::now();
-    constexpr auto MAX_WAIT_TIME = std::chrono::milliseconds(500);
+    auto waitStart = ::std::chrono::steady_clock::now();
+    constexpr auto MAX_WAIT_TIME = ::std::chrono::milliseconds(500);
 
     while (_packetProcessing.load() &&
-           (std::chrono::steady_clock::now() - waitStart) < MAX_WAIT_TIME) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+           (::std::chrono::steady_clock::now() - waitStart) < MAX_WAIT_TIME) {
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(1));
     }
 
     if (_packetProcessing.load()) {
@@ -463,10 +463,10 @@ BotSession::~BotSession()
 
     // DEADLOCK-FREE PACKET CLEANUP: Use very short timeout to prevent hanging
     try {
-        std::unique_lock<std::recursive_timed_mutex> lock(_packetMutex, std::defer_lock);
-        if (lock.try_lock_for(std::chrono::milliseconds(10))) { // Reduced timeout
+        ::std::unique_lock<::std::recursive_timed_mutex> lock(_packetMutex, ::std::defer_lock);
+        if (lock.try_lock_for(::std::chrono::milliseconds(10))) { // Reduced timeout
             // Clear packets quickly
-            std::queue<std::unique_ptr<WorldPacket>> empty1, empty2;
+            ::std::queue<::std::unique_ptr<WorldPacket>> empty1, empty2;
             _incomingPackets.swap(empty1);
             _outgoingPackets.swap(empty2);
             // Queues will be destroyed when they go out of scope
@@ -524,11 +524,11 @@ void BotSession::SendPacket(WorldPacket const* packet, bool forced)
     BotPacketRelay::RelayToGroupMembers(this, packet);
 
     // Store packet in outgoing queue for debugging/logging
-    std::lock_guard<std::recursive_timed_mutex> lock(_packetMutex);
+    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
 
     // Create a copy of the packet
-    auto packetCopy = std::make_unique<WorldPacket>(*packet);
-    _outgoingPackets.push(std::move(packetCopy));
+    auto packetCopy = ::std::make_unique<WorldPacket>(*packet);
+    _outgoingPackets.push(::std::move(packetCopy));
 }
 
 void BotSession::QueuePacket(WorldPacket* packet)
@@ -536,11 +536,11 @@ void BotSession::QueuePacket(WorldPacket* packet)
     if (!packet) return;
 
     // Simple packet handling - just store in incoming queue
-    std::lock_guard<std::recursive_timed_mutex> lock(_packetMutex);
+    ::std::lock_guard<::std::recursive_timed_mutex> lock(_packetMutex);
 
     // Create a copy of the packet
-    auto packetCopy = std::make_unique<WorldPacket>(*packet);
-    _incomingPackets.push(std::move(packetCopy));
+    auto packetCopy = ::std::make_unique<WorldPacket>(*packet);
+    _incomingPackets.push(::std::move(packetCopy));
 }
 
 bool BotSession::Update(uint32 diff, PacketFilter& updater)
@@ -549,10 +549,10 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     // - Prevents Ghost aura race condition (concurrent ResurrectPlayer calls)
     // - Prevents shutdown deadlock (100ms timeout)
     // - Prevents strategy freezing (skips update instead of blocking)
-    std::unique_lock<std::timed_mutex> lock(_updateMutex, std::defer_lock);
+    ::std::unique_lock<::std::timed_mutex> lock(_updateMutex, ::std::defer_lock);
 
     // Try to acquire lock with 100ms timeout
-    if (!lock.try_lock_for(std::chrono::milliseconds(100))) {
+    if (!lock.try_lock_for(::std::chrono::milliseconds(100))) {
         // Failed to acquire lock within 100ms
 
         // Check if shutting down - bail immediately
@@ -678,7 +678,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     PacketDeferralClassifier::GetDeferralReason(opcode));
 
                 // Transfer ownership to deferred queue (processed by World::UpdateSessions)
-                QueueDeferredPacket(std::unique_ptr<WorldPacket>(packet));
+                QueueDeferredPacket(::std::unique_ptr<WorldPacket>(packet));
                 packet = nullptr; // Ownership transferred
                 processedPackets++;
                 continue; // Skip to next packet
@@ -843,7 +843,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 packet->hexlike();
                 // Continue processing other packets
             }
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
             {
                 TC_LOG_ERROR("playerbot.packets",
                     "Unexpected exception processing opcode {} for bot {}: {}",
@@ -940,18 +940,18 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 bool validSnapshot = playerIsValid;
                 bool inWorldSnapshot = playerIsInWorld;
                 BotAI* aiSnapshot = _ai;  // Snapshot pointer (raw pointer for now)
-                bool activeSnapshot = _active.load(std::memory_order_acquire);  // Acquire semantics
+                bool activeSnapshot = _active.load(::std::memory_order_acquire);  // Acquire semantics
 
                 // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-                static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-                static std::unordered_map<std::string, uint32> sessionLogAccumulators;
+                static const ::std::set<::std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+                static ::std::unordered_map<::std::string, uint32> sessionLogAccumulators;
                 Player* botPlayer = GetPlayer();
                 bool isTestBot = botPlayer && (testBots.find(botPlayer->GetName()) != testBots.end());
                 bool shouldLog = false;
 
                 if (isTestBot)
                 {
-                    std::string botName = botPlayer->GetName();
+                    ::std::string botName = botPlayer->GetName();
                     // Throttle by call count (every 1000 calls ~= 50s)
                     sessionLogAccumulators[botName]++;
                     if (sessionLogAccumulators[botName] >= 1000)
@@ -977,7 +977,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         // Call UpdateAI using snapshot pointer (guaranteed non-null and stable)
                         aiSnapshot->UpdateAI(diff);
                     }
-                    catch (std::exception const& e) {
+                    catch (::std::exception const& e) {
                         TC_LOG_ERROR("module.playerbot.session", "Exception in BotAI::Update for account {}: {}", accountId, e.what());
                         // Don't propagate AI exceptions to prevent session crashes
                     }
@@ -1024,7 +1024,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
         return true; // Bot sessions always return success
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception in BotSession::Update for account {}: {}", GetAccountId(), e.what());
         return false;
@@ -1050,8 +1050,8 @@ void BotSession::ProcessBotPackets()
     // Use atomic operations instead of mutex to prevent thread pool deadlocks
 
     // Batch process packets with atomic queue operations (lock-free)
-    std::vector<std::unique_ptr<WorldPacket>> incomingBatch;
-    std::vector<std::unique_ptr<WorldPacket>> outgoingBatch;
+    ::std::vector<::std::unique_ptr<WorldPacket>> incomingBatch;
+    ::std::vector<::std::unique_ptr<WorldPacket>> outgoingBatch;
     incomingBatch.reserve(BATCH_SIZE);
     outgoingBatch.reserve(BATCH_SIZE);
 
@@ -1066,8 +1066,8 @@ void BotSession::ProcessBotPackets()
 
     // Ensure processing flag is cleared on exit (RAII pattern)
     struct PacketProcessingGuard {
-        std::atomic<bool>& flag;
-        explicit PacketProcessingGuard(std::atomic<bool>& f) : flag(f) {}
+        ::std::atomic<bool>& flag;
+        explicit PacketProcessingGuard(::std::atomic<bool>& f) : flag(f) {}
         ~PacketProcessingGuard() { flag.store(false); }
     } guard(_packetProcessing);
 
@@ -1079,8 +1079,8 @@ void BotSession::ProcessBotPackets()
     // PHASE 1: Quick extraction with minimal lock time
     {
         // Use shorter timeout for better responsiveness under high load
-        std::unique_lock<std::recursive_timed_mutex> lock(_packetMutex, std::defer_lock);
-        if (!lock.try_lock_for(std::chrono::milliseconds(5))) // Reduced from 50ms to 5ms
+        ::std::unique_lock<::std::recursive_timed_mutex> lock(_packetMutex, ::std::defer_lock);
+        if (!lock.try_lock_for(::std::chrono::milliseconds(5))) // Reduced from 50ms to 5ms
         {
             TC_LOG_DEBUG("module.playerbot.session", "Failed to acquire packet mutex within 5ms for account {}, deferring", GetAccountId());
             return; // Defer processing to prevent thread pool starvation
@@ -1088,13 +1088,13 @@ void BotSession::ProcessBotPackets()
 
         // Extract incoming packets atomically
         for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
-            incomingBatch.emplace_back(std::move(_incomingPackets.front()));
+            incomingBatch.emplace_back(::std::move(_incomingPackets.front()));
             _incomingPackets.pop();
         }
 
         // Extract outgoing packets (for logging/debugging)
         for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
-            outgoingBatch.emplace_back(std::move(_outgoingPackets.front()));
+            outgoingBatch.emplace_back(::std::move(_outgoingPackets.front()));
             _outgoingPackets.pop();
         }
     } // Release lock immediately
@@ -1110,7 +1110,7 @@ void BotSession::ProcessBotPackets()
             // This is safe to call without locks
             WorldSession::QueuePacket(packet.get());
         }
-        catch (std::exception const& e) {
+        catch (::std::exception const& e) {
             TC_LOG_ERROR("module.playerbot.session", "Exception processing incoming packet for account {}: {}", GetAccountId(), e.what());
         }
         catch (...) {
@@ -1128,7 +1128,7 @@ void BotSession::ProcessBotPackets()
 // DEFERRED PACKET SYSTEM - Main Thread Processing for Race Condition Prevention
 // ============================================================================
 
-void BotSession::QueueDeferredPacket(std::unique_ptr<WorldPacket> packet)
+void BotSession::QueueDeferredPacket(::std::unique_ptr<WorldPacket> packet)
 {
     if (!packet)
         return;
@@ -1136,8 +1136,8 @@ void BotSession::QueueDeferredPacket(std::unique_ptr<WorldPacket> packet)
     // Log BEFORE moving (packet will be invalid after move)
     OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
 
-    std::lock_guard<std::mutex> lock(_deferredPacketMutex);
-    _deferredPackets.emplace(std::move(packet));
+    ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
+    _deferredPackets.emplace(::std::move(packet));
 
     TC_LOG_TRACE("playerbot.packets.deferred",
         "Bot {} queued packet opcode {} for main thread processing",
@@ -1154,15 +1154,15 @@ uint32 BotSession::ProcessDeferredPackets()
 
     while (processed < MAX_DEFERRED_PACKETS_PER_UPDATE)
     {
-        std::unique_ptr<WorldPacket> packet;
+        ::std::unique_ptr<WorldPacket> packet;
 
         // Quick lock to extract one packet
         {
-            std::lock_guard<std::mutex> lock(_deferredPacketMutex);
+            ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
             if (_deferredPackets.empty())
                 break;
 
-            packet = std::move(_deferredPackets.front());
+            packet = ::std::move(_deferredPackets.front());
             _deferredPackets.pop();
         }
 
@@ -1235,7 +1235,7 @@ uint32 BotSession::ProcessDeferredPackets()
 
             processed++;
         }
-        catch (std::exception const& ex)
+        catch (::std::exception const& ex)
         {
             TC_LOG_ERROR("playerbot.packets.deferred",
                 "Exception processing deferred packet for bot {}: {}",
@@ -1261,7 +1261,7 @@ uint32 BotSession::ProcessDeferredPackets()
 
 bool BotSession::HasDeferredPackets() const
 {
-    std::lock_guard<std::mutex> lock(_deferredPacketMutex);
+    ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
     return !_deferredPackets.empty();
 }
 
@@ -1301,7 +1301,7 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
         m_playerLoading = characterGuid;
 
         // Create LoginQueryHolder exactly like WorldSession does
-        std::shared_ptr<BotLoginQueryHolder> holder = std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
+        ::std::shared_ptr<BotLoginQueryHolder> holder = ::std::make_shared<BotLoginQueryHolder>(GetAccountId(), characterGuid);
         if (!holder->Initialize())
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to initialize BotLoginQueryHolder for character {}", characterGuid.ToString());
@@ -1323,7 +1323,7 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
         // Login state will be updated in HandleBotPlayerLogin callback
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session", "Exception in LoginCharacter: {}", e.what());
         m_playerLoading.Clear();
@@ -1447,7 +1447,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         // PHASE 1 REFACTORING: Create packet simulator for this bot session
         // This replaces manual workarounds with proper packet forging
-        _packetSimulator = std::make_unique<BotPacketSimulator>(this);
+        _packetSimulator = ::std::make_unique<BotPacketSimulator>(this);
 
         // PHASE 1 REFACTORING: Simulate CMSG_QUEUED_MESSAGES_END packet
         // Real clients send this after SMSG_RESUME_COMMS to resume communication
@@ -1467,13 +1467,13 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         // DIAGNOSTIC: Log phase information after SendInitialPacketsAfterAddToMap
         PhaseShift const& phaseShift = pCurrChar->GetPhaseShift();
-        std::string botPhases;
+        ::std::string botPhases;
         auto const& phases = phaseShift.GetPhases();
         botPhases.reserve(phases.size() * 8); // Pre-allocate approximate size
         for (auto const& phaseRef : phases)
         {
             if (!botPhases.empty()) botPhases += ",";
-            botPhases += std::to_string(phaseRef.Id);
+            botPhases += ::std::to_string(phaseRef.Id);
         }
         if (botPhases.empty()) botPhases = "NONE";
 
@@ -1561,7 +1561,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         TC_LOG_INFO("module.playerbot.session", " ASYNC bot login successful for character {}", characterGuid.ToString());
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session", "Exception in HandleBotPlayerLogin: {}", e.what());
         if (GetPlayer())
@@ -1638,8 +1638,8 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         uint32 realmNameNormalizedSize = packetCopy.ReadBits(8);
         packetCopy.FlushBits();
 
-        std::string realmNameActual = std::string(packetCopy.ReadString(realmNameActualSize));
-        std::string realmNameNormalized = std::string(packetCopy.ReadString(realmNameNormalizedSize));
+        ::std::string realmNameActual = ::std::string(packetCopy.ReadString(realmNameActualSize));
+        ::std::string realmNameNormalized = ::std::string(packetCopy.ReadString(realmNameNormalizedSize));
 
         ObjectGuid inviterGUID;
         ObjectGuid inviterBNetAccountId;
@@ -1656,10 +1656,10 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         packetCopy >> lfgCompletedMask;
 
         // Read the inviter name
-        std::string inviterName = std::string(packetCopy.ReadString(inviterNameSize));
+        ::std::string inviterName = ::std::string(packetCopy.ReadString(inviterNameSize));
 
         // Read LFG slots if present
-        std::vector<uint32> lfgSlots;
+        ::std::vector<uint32> lfgSlots;
         for (uint32 i = 0; i < lfgSlotCount; ++i)
         {
             uint32 lfgSlot;
@@ -1767,7 +1767,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                     if (_ai && _ai->GetEventDispatcher())
                     {
                         Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, bot->GetGUID(), inviterGroup->GetLeaderGUID());
-                        _ai->GetEventDispatcher()->Dispatch(std::move(evt));
+                        _ai->GetEventDispatcher()->Dispatch(::std::move(evt));
                         TC_LOG_INFO("module.playerbot.group", " GROUP_JOINED event dispatched for bot {}", bot->GetName());
                     }
 
@@ -1803,7 +1803,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                 bot->GetName(), inviterGroup->GetGUID().ToString());
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.group", "Exception handling party invitation for bot {}: {}",
             bot->GetName(), e.what());

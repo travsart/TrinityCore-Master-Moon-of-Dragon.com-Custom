@@ -102,10 +102,10 @@ private:
 
     // DoT management
     bool ApplyCurse(Unit* target);
-    std::map<ObjectGuid, std::map<uint32, uint32>> _dotTracker; // target -> spell -> timestamp
+    ::std::map<ObjectGuid, ::std::map<uint32, uint32>> _dotTracker; // target -> spell -> timestamp
 
     // Pet ability tracking
-    std::map<uint32, uint32> _petAbilityCooldowns; // ability -> last use time
+    ::std::map<uint32, uint32> _petAbilityCooldowns; // ability -> last use time
 
     // Combat metrics
     void UpdateCombatMetrics();
@@ -118,28 +118,28 @@ private:
     // ========================================================================
 
     struct WarlockMetrics {
-        std::atomic<uint32> manaSpent{0};
-        std::atomic<uint32> damageDealt{0};
-        std::atomic<uint32> dotDamage{0};
-        std::atomic<uint32> petDamage{0};
-        std::atomic<uint32> soulShardsUsed{0};
-        std::atomic<uint32> lifeTapsCast{0};
-        std::atomic<uint32> spellsCast{0};
-        std::atomic<float> manaEfficiency{0.0f};
-        std::atomic<float> petUptime{0.0f};
-        std::atomic<float> dotUptime{0.0f};
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> manaSpent{0};
+        ::std::atomic<uint32> damageDealt{0};
+        ::std::atomic<uint32> dotDamage{0};
+        ::std::atomic<uint32> petDamage{0};
+        ::std::atomic<uint32> soulShardsUsed{0};
+        ::std::atomic<uint32> lifeTapsCast{0};
+        ::std::atomic<uint32> spellsCast{0};
+        ::std::atomic<float> manaEfficiency{0.0f};
+        ::std::atomic<float> petUptime{0.0f};
+        ::std::atomic<float> dotUptime{0.0f};
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastUpdate;
         void Reset() {
             manaSpent = 0; damageDealt = 0; dotDamage = 0; petDamage = 0;
             soulShardsUsed = 0; lifeTapsCast = 0; spellsCast = 0;
             manaEfficiency = 0.0f; petUptime = 0.0f; dotUptime = 0.0f;
-            combatStartTime = std::chrono::steady_clock::now();
+            combatStartTime = ::std::chrono::steady_clock::now();
             lastUpdate = combatStartTime;
         }
     } _warlockMetrics;
 
-    std::unordered_map<uint32, std::atomic<uint32>> _abilityUsage;
+    ::std::unordered_map<uint32, ::std::atomic<uint32>> _abilityUsage;
 
     // ========================================================================
     // Warlock-Specific Utilities
@@ -163,28 +163,28 @@ private:
     // Combat System Integration
     // ========================================================================
 
-    std::unique_ptr<BotThreatManager> _threatManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PositionManager> _positionManager;
-    std::unique_ptr<InterruptManager> _interruptManager;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PositionManager> _positionManager;
+    ::std::unique_ptr<InterruptManager> _interruptManager;
 
     // ========================================================================
     // Resource Tracking
     // ========================================================================
 
     // Soul shard tracking
-    std::atomic<uint32> _currentSoulShards{0};
-    std::queue<uint32> _soulShardHistory;
+    ::std::atomic<uint32> _currentSoulShards{0};
+    ::std::queue<uint32> _soulShardHistory;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _soulShardMutex;
 
     // Pet management
-    std::atomic<bool> _petActive{false};
-    std::atomic<uint32> _petHealthPercent{0};
-    std::chrono::steady_clock::time_point _lastPetCheck;
+    ::std::atomic<bool> _petActive{false};
+    ::std::atomic<uint32> _petHealthPercent{0};
+    ::std::chrono::steady_clock::time_point _lastPetCheck;
 
     // Mana management
     float _optimalManaThreshold;
-    std::atomic<bool> _lowManaMode{false};
+    ::std::atomic<bool> _lowManaMode{false};
     uint32 _lastLifeTapTime;
 
     // ========================================================================

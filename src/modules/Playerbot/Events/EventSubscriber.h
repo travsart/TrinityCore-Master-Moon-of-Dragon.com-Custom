@@ -35,8 +35,8 @@ template<typename EventType>
 class EventSubscriberManager
 {
 public:
-    using EventHandler = std::function<void(EventType const&)>;
-    using EventPredicate = std::function<bool(EventType const&)>;
+    using EventHandler = ::std::function<void(EventType const&)>;
+    using EventPredicate = ::std::function<bool(EventType const&)>;
 
     /**
      * @brief Subscription handle for RAII-based cleanup
@@ -77,18 +77,18 @@ public:
      * @param predicate Optional filter (return true to receive event)
      * @return Subscription handle for automatic cleanup
      */
-    std::shared_ptr<SubscriptionHandle> Subscribe(EventHandler handler, EventPredicate predicate = nullptr)
+    ::std::shared_ptr<SubscriptionHandle> Subscribe(EventHandler handler, EventPredicate predicate = nullptr)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         Subscriber sub;
         sub.id = ++_nextSubscriptionId;
-        sub.handler = std::move(handler);
-        sub.predicate = std::move(predicate);
+        sub.handler = ::std::move(handler);
+        sub.predicate = ::std::move(predicate);
 
-        _subscribers.push_back(std::move(sub));
+        _subscribers.push_back(::std::move(sub));
 
-        return std::make_shared<SubscriptionHandle>(this, sub.id);
+        return ::std::make_shared<SubscriptionHandle>(this, sub.id);
     }
 
     /**
@@ -96,10 +96,10 @@ public:
      */
     void Unsubscribe(uint32 subscriptionId)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         _subscribers.erase(
-            std::remove_if(_subscribers.begin(), _subscribers.end(),
+            ::std::remove_if(_subscribers.begin(), _subscribers.end(),
                 [subscriptionId](Subscriber const& sub) { return sub.id == subscriptionId; }),
             _subscribers.end());
     }
@@ -111,7 +111,7 @@ public:
      */
     void PublishEvent(EventType const& event)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         for (auto const& subscriber : _subscribers)
         {
@@ -129,7 +129,7 @@ public:
      */
     size_t GetSubscriberCount() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _subscribers.size();
     }
 
@@ -138,7 +138,7 @@ public:
      */
     void ClearSubscribers()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _subscribers.clear();
     }
 
@@ -150,7 +150,7 @@ private:
         EventPredicate predicate;
     };
 
-    std::vector<Subscriber> _subscribers;
+    ::std::vector<Subscriber> _subscribers;
     uint32 _nextSubscriptionId = 0;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 };

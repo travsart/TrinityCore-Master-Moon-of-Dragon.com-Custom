@@ -141,12 +141,12 @@ public:
     struct Statistics
     {
         uint64_t totalPacketsProcessed;
-        std::array<uint64_t, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> packetsPerCategory;
+        ::std::array<uint64_t, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> packetsPerCategory;
         uint64_t avgProcessTimeUs;
         uint64_t peakProcessTimeUs;
-        std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point startTime;
 
-        std::string ToString() const;
+        ::std::string ToString() const;
         void Reset();
     };
 
@@ -180,22 +180,22 @@ private:
     static void ParseInstancePacket(WorldSession* session, WorldPacket const& packet);
 
     // Opcode → Category mapping
-    static inline std::unordered_map<OpcodeServer, PacketCategory> _packetCategoryMap;
+    static inline ::std::unordered_map<OpcodeServer, PacketCategory> _packetCategoryMap;
     static inline bool _initialized = false;
 
     // Performance tracking
-    static inline std::atomic<uint64_t> _totalPackets{0};
-    static inline std::array<std::atomic<uint64_t>, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> _categoryPackets{};
-    static inline std::atomic<uint64_t> _totalProcessTimeUs{0};
-    static inline std::atomic<uint64_t> _peakProcessTimeUs{0};
-    static inline std::chrono::steady_clock::time_point _startTime;
+    static inline ::std::atomic<uint64_t> _totalPackets{0};
+    static inline ::std::array<::std::atomic<uint64_t>, static_cast<uint8>(PacketCategory::MAX_CATEGORY)> _categoryPackets{};
+    static inline ::std::atomic<uint64_t> _totalProcessTimeUs{0};
+    static inline ::std::atomic<uint64_t> _peakProcessTimeUs{0};
+    static inline ::std::chrono::steady_clock::time_point _startTime;
 
     // Initialize opcode mapping
     static void InitializeOpcodeMapping();
 
     // Typed packet handlers (WoW 11.2)
-    using TypedPacketHandler = std::function<void(WorldSession*, void const*)>;
-    static inline std::unordered_map<std::type_index, TypedPacketHandler> _typedPacketHandlers;
+    using TypedPacketHandler = ::std::function<void(WorldSession*, void const*)>;
+    static inline ::std::unordered_map<::std::type_index, TypedPacketHandler> _typedPacketHandlers;
 
     template<typename PacketType>
     static void RegisterTypedHandler(void (*handler)(WorldSession*, PacketType const&));
@@ -222,7 +222,7 @@ void PlayerbotPacketSniffer::OnTypedPacket(WorldSession* session, PacketType con
         return;
 
     // Dispatch to registered typed handler
-    std::type_index typeIdx(typeid(PacketType));
+    ::std::type_index typeIdx(typeid(PacketType));
     auto it = _typedPacketHandlers.find(typeIdx);
     if (it != _typedPacketHandlers.end())
         it->second(session, &typedPacket);
@@ -231,7 +231,7 @@ void PlayerbotPacketSniffer::OnTypedPacket(WorldSession* session, PacketType con
 template<typename PacketType>
 void PlayerbotPacketSniffer::RegisterTypedHandler(void (*handler)(WorldSession*, PacketType const&))
 {
-    _typedPacketHandlers[std::type_index(typeid(PacketType))] =
+    _typedPacketHandlers[::std::type_index(typeid(PacketType))] =
         [handler](WorldSession* session, void const* packet) {
             handler(session, *static_cast<PacketType const*>(packet));
         };

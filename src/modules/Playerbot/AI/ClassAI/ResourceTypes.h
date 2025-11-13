@@ -41,8 +41,8 @@ public:
     struct Rune
     {
         RuneType type;
-        std::atomic<bool> available{true};
-        std::atomic<uint32> cooldownRemaining{0};
+        ::std::atomic<bool> available{true};
+        ::std::atomic<uint32> cooldownRemaining{0};
         uint32 lastUsedTime{0};
 
         bool IsReady() const { return available.load() && cooldownRemaining.load() == 0; }
@@ -116,7 +116,7 @@ public:
         }
 
         // Generate runic power when consuming runes
-        _runicPower = std::min<uint32>(_runicPower + consumed * 10, _maxRunicPower);
+        _runicPower = ::std::min<uint32>(_runicPower + consumed * 10, _maxRunicPower);
         return true;
     }
 
@@ -208,11 +208,11 @@ public:
 
         // Generate runic power
         uint32 totalConsumed = blood + frost + unholy;
-        _runicPower = std::min<uint32>(_runicPower + totalConsumed * 10, _maxRunicPower);
+        _runicPower = ::std::min<uint32>(_runicPower + totalConsumed * 10, _maxRunicPower);
     }
 
     uint32 GetRunicPower() const { return _runicPower; }
-    void SetRunicPower(uint32 power) { _runicPower = std::min(power, _maxRunicPower); }
+    void SetRunicPower(uint32 power) { _runicPower = ::std::min(power, _maxRunicPower); }
     void ConsumeRunicPower(uint32 amount) { _runicPower = (amount > _runicPower) ? 0 : _runicPower - amount; }
 
     void ResetAllRunes()
@@ -227,8 +227,8 @@ public:
 
 private:
     Player* _bot = nullptr;
-    std::array<Rune, 6> _runes;
-    std::atomic<uint32> _runicPower{0};
+    ::std::array<Rune, 6> _runes;
+    ::std::atomic<uint32> _runicPower{0};
     uint32 _maxRunicPower{100};
 
     static constexpr uint32 RUNE_COOLDOWN_MS = 10000; // 10 seconds
@@ -275,7 +275,7 @@ public:
 
     void AddComboPoints(uint32 points)
     {
-        _comboPoints = std::min<uint32>(_comboPoints + points, _maxComboPoints);
+        _comboPoints = ::std::min<uint32>(_comboPoints + points, _maxComboPoints);
     }
 
     void ConsumeAll()
@@ -288,7 +288,7 @@ public:
 
 private:
     Player* _bot = nullptr;
-    std::atomic<uint32> _comboPoints{0};
+    ::std::atomic<uint32> _comboPoints{0};
     uint32 _maxComboPoints{5};
     uint32 _lastConsumedPoints{0};
 };
@@ -332,12 +332,12 @@ public:
 
     void Generate(uint32 amount = 1)
     {
-        _holyPower = std::min<uint32>(_holyPower + amount, _maxHolyPower);
+        _holyPower = ::std::min<uint32>(_holyPower + amount, _maxHolyPower);
     }
 
 private:
     Player* _bot = nullptr;
-    std::atomic<uint32> _holyPower{0};
+    ::std::atomic<uint32> _holyPower{0};
     uint32 _maxHolyPower{3};
 };
 
@@ -378,12 +378,12 @@ public:
 
     void Generate(uint32 amount = 1)
     {
-        _chi = std::min<uint32>(_chi + amount, _maxChi);
+        _chi = ::std::min<uint32>(_chi + amount, _maxChi);
     }
 
 private:
     Player* _bot = nullptr;
-    std::atomic<uint32> _chi{0};
+    ::std::atomic<uint32> _chi{0};
     uint32 _maxChi{4};
 };
 
@@ -420,7 +420,7 @@ public:
         // Very slow regeneration out of combat        if (!_bot || !_bot->IsInCombat())
         {
             float regenRate = 0.1f; // 0.1 shards per second out of combat
-            _shards = std::min(_shards + (regenRate * diff / 1000.0f), _maxShards);
+            _shards = ::std::min(_shards + (regenRate * diff / 1000.0f), _maxShards);
         }
     }
 
@@ -429,14 +429,14 @@ public:
 
     void Generate(float amount = 1.0f)
     {
-        _shards = std::min(_shards + amount, _maxShards);
+        _shards = ::std::min(_shards + amount, _maxShards);
     }
 
     float GetExactShards() const { return _shards; }
 
 private:
     Player* _bot = nullptr;
-    std::atomic<float> _shards{3.0f};
+    ::std::atomic<float> _shards{3.0f};
     float _maxShards{5.0f};
 };
 
@@ -473,7 +473,7 @@ public:
     {
         // Essence regenerates at 0.2 per second (1 per 5 seconds)
         float regenRate = 0.2f;
-        _essence = std::min(_essence + static_cast<uint32>(regenRate * diff / 1000.0f), _maxEssence);
+        _essence = ::std::min(_essence + static_cast<uint32>(regenRate * diff / 1000.0f), _maxEssence);
         available = (_essence > 0);
     }
 
@@ -482,13 +482,13 @@ public:
 
     void Generate(uint32 amount = 1)
     {
-        _essence = std::min<uint32>(_essence + amount, _maxEssence);
+        _essence = ::std::min<uint32>(_essence + amount, _maxEssence);
         available = (_essence > 0);
     }
 
 private:
     Player* _bot = nullptr;
-    std::atomic<uint32> _essence{0};
+    ::std::atomic<uint32> _essence{0};
     uint32 _maxEssence{5};
 };
 

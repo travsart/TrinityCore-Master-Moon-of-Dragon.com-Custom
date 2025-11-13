@@ -44,7 +44,7 @@ BankingManager::BankingManager()
 
 void BankingManager::OnInitialize()
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "BankingManager::OnInitialize - Initializing personal banking system");
 
@@ -61,7 +61,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // Check if enabled
     auto profileItr = _bankingProfiles.find(playerGuid);
@@ -153,7 +153,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
 
 void BankingManager::OnShutdown()
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "BankingManager::OnShutdown - Shutting down personal banking system");
 
@@ -174,7 +174,7 @@ void BankingManager::SetEnabled(::Player* player, bool enabled)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     if (enabled)
     {
@@ -197,20 +197,20 @@ bool BankingManager::IsEnabled(::Player* player) const
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     return _bankingProfiles.find(playerGuid) != _bankingProfiles.end();
 }
 
 void BankingManager::SetBankingProfile(uint32 playerGuid, BotBankingProfile const& profile)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _bankingProfiles[playerGuid] = profile;
 }
 
 BotBankingProfile BankingManager::GetBankingProfile(uint32 playerGuid) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _bankingProfiles.find(playerGuid);
     if (itr != _bankingProfiles.end())
@@ -221,7 +221,7 @@ BotBankingProfile BankingManager::GetBankingProfile(uint32 playerGuid) const
 
 void BankingManager::AddBankingRule(uint32 playerGuid, BankingRule const& rule)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _bankingProfiles.find(playerGuid);
     if (profileItr != _bankingProfiles.end())
@@ -232,13 +232,13 @@ void BankingManager::AddBankingRule(uint32 playerGuid, BankingRule const& rule)
 
 void BankingManager::RemoveBankingRule(uint32 playerGuid, uint32 itemId)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _bankingProfiles.find(playerGuid);
     if (profileItr != _bankingProfiles.end())
     {
         auto& rules = profileItr->second.customRules;
-        rules.erase(std::remove_if(rules.begin(), rules.end(),
+        rules.erase(::std::remove_if(rules.begin(), rules.end(),
             [itemId](const BankingRule& rule) { return rule.itemId == itemId; }),
             rules.end());
     }
@@ -278,7 +278,7 @@ bool BankingManager::DepositGold(::Player* player, uint32 amount)
     RecordTransaction(playerGuid, transaction);
 
     // Update statistics
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _playerStatistics[playerGuid].totalDeposits++;
     _playerStatistics[playerGuid].goldDeposited += amount;
     _globalStatistics.totalDeposits++;
@@ -316,7 +316,7 @@ bool BankingManager::WithdrawGold(::Player* player, uint32 amount)
     RecordTransaction(playerGuid, transaction);
 
     // Update statistics
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _playerStatistics[playerGuid].totalWithdrawals++;
     _playerStatistics[playerGuid].goldWithdrawn += amount;
     _globalStatistics.totalWithdrawals++;
@@ -332,7 +332,7 @@ bool BankingManager::ShouldDepositGold(::Player* player)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _bankingProfiles.find(playerGuid);
     if (profileItr == _bankingProfiles.end())
@@ -349,7 +349,7 @@ bool BankingManager::ShouldWithdrawGold(::Player* player)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _bankingProfiles.find(playerGuid);
     if (profileItr == _bankingProfiles.end())
@@ -366,7 +366,7 @@ uint32 BankingManager::GetRecommendedGoldDeposit(::Player* player)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _bankingProfiles.find(playerGuid);
     if (profileItr == _bankingProfiles.end())
@@ -419,7 +419,7 @@ bool BankingManager::DepositItem(::Player* player, uint32 itemGuid, uint32 quant
     RecordTransaction(playerGuid, transaction);
 
     // Update statistics
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _playerStatistics[playerGuid].totalDeposits++;
     _playerStatistics[playerGuid].itemsDeposited += quantity;
     _globalStatistics.totalDeposits++;
@@ -451,7 +451,7 @@ bool BankingManager::WithdrawItem(::Player* player, uint32 itemId, uint32 quanti
     RecordTransaction(playerGuid, transaction);
 
     // Update statistics
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _playerStatistics[playerGuid].totalWithdrawals++;
     _playerStatistics[playerGuid].itemsWithdrawn += quantity;
     _globalStatistics.totalWithdrawals++;
@@ -467,7 +467,7 @@ bool BankingManager::ShouldDepositItem(::Player* player, uint32 itemId, uint32 c
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // Find banking rule
     BankingRule const* rule = FindBankingRule(playerGuid, itemId);
@@ -510,7 +510,7 @@ BankingPriority BankingManager::GetItemBankingPriority(::Player* player, uint32 
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     BankingRule const* rule = FindBankingRule(playerGuid, itemId);
     if (rule)
@@ -524,10 +524,10 @@ void BankingManager::DepositExcessItems(::Player* player)
     if (!player)
         return;
 
-    std::vector<DepositCandidate> candidates = GetDepositCandidates(player);
+    ::std::vector<DepositCandidate> candidates = GetDepositCandidates(player);
 
     // Sort by priority (highest first)
-    std::sort(candidates.begin(), candidates.end(),
+    ::std::sort(candidates.begin(), candidates.end(),
         [](const DepositCandidate& a, const DepositCandidate& b) {
             return a.priority > b.priority;
         });
@@ -547,7 +547,7 @@ void BankingManager::WithdrawMaterialsForCrafting(::Player* player)
     if (!player)
         return;
 
-    std::vector<WithdrawRequest> requests = GetWithdrawRequests(player);
+    ::std::vector<WithdrawRequest> requests = GetWithdrawRequests(player);
 
     for (const WithdrawRequest& request : requests)
     {
@@ -561,7 +561,7 @@ void BankingManager::WithdrawMaterialsForCrafting(::Player* player)
             continue;
 
         uint32 bankCount = GetItemCountInBank(player, request.itemId);
-        uint32 withdrawAmount = std::min(request.quantity, bankCount);
+        uint32 withdrawAmount = ::std::min(request.quantity, bankCount);
 
         if (withdrawAmount > 0)
             WithdrawItem(player, request.itemId, withdrawAmount);
@@ -672,23 +672,23 @@ bool BankingManager::TravelToNearestBanker(::Player* player)
 // TRANSACTION HISTORY
 // ========================================================================
 
-std::vector<BankingTransaction> BankingManager::GetRecentTransactions(uint32 playerGuid, uint32 count)
+::std::vector<BankingTransaction> BankingManager::GetRecentTransactions(uint32 playerGuid, uint32 count)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _transactionHistory.find(playerGuid);
     if (itr == _transactionHistory.end())
         return {};
 
-    const std::vector<BankingTransaction>& history = itr->second;
+    const ::std::vector<BankingTransaction>& history = itr->second;
 
     uint32 start = history.size() > count ? history.size() - count : 0;
-    return std::vector<BankingTransaction>(history.begin() + start, history.end());
+    return ::std::vector<BankingTransaction>(history.begin() + start, history.end());
 }
 
 void BankingManager::RecordTransaction(uint32 playerGuid, BankingTransaction const& transaction)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto& history = _transactionHistory[playerGuid];
     history.push_back(transaction);
@@ -706,7 +706,7 @@ void BankingManager::RecordTransaction(uint32 playerGuid, BankingTransaction con
 
 BankingStatistics const& BankingManager::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _playerStatistics.find(playerGuid);
     if (itr != _playerStatistics.end())
@@ -718,13 +718,13 @@ BankingStatistics const& BankingManager::GetPlayerStatistics(uint32 playerGuid) 
 
 BankingStatistics const& BankingManager::GetGlobalStatistics() const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     return _globalStatistics;
 }
 
 void BankingManager::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _playerStatistics.find(playerGuid);
     if (itr != _playerStatistics.end())
@@ -833,9 +833,9 @@ bool BankingManager::ItemMatchesRule(uint32 itemId, BankingRule const& rule)
     return false;
 }
 
-std::vector<BankingManager::DepositCandidate> BankingManager::GetDepositCandidates(::Player* player)
+::std::vector<BankingManager::DepositCandidate> BankingManager::GetDepositCandidates(::Player* player)
 {
-    std::vector<DepositCandidate> candidates;
+    ::std::vector<DepositCandidate> candidates;
 
     if (!player)
         return candidates;
@@ -865,9 +865,9 @@ std::vector<BankingManager::DepositCandidate> BankingManager::GetDepositCandidat
     return candidates;
 }
 
-std::vector<BankingManager::WithdrawRequest> BankingManager::GetWithdrawRequests(::Player* player)
+::std::vector<BankingManager::WithdrawRequest> BankingManager::GetWithdrawRequests(::Player* player)
 {
-    std::vector<WithdrawRequest> requests;
+    ::std::vector<WithdrawRequest> requests;
 
     if (!player)
         return requests;

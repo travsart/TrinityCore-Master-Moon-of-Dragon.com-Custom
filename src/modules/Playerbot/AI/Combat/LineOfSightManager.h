@@ -75,10 +75,10 @@ struct LoSResult
     float heightDifference;
     Position blockingPoint;
     ObjectGuid blockingObjectGuid;
-    std::string blockingObjectName;
+    ::std::string blockingObjectName;
     LoSCheckType checkType;
     uint32 checkTime;
-    std::string failureReason;
+    ::std::string failureReason;
 
     // Detailed obstruction information
     bool blockedByTerrain;
@@ -142,10 +142,10 @@ struct LoSCacheKey
 // Hash function for LoSCacheKey
 struct LoSCacheKeyHash
 {
-    std::size_t operator()(const LoSCacheKey& key) const noexcept
+    ::std::size_t operator()(const LoSCacheKey& key) const noexcept
     {
         // FNV-1a hash algorithm for combining three values
-        std::size_t hash = 14695981039346656037ULL;
+        ::std::size_t hash = 14695981039346656037ULL;
         hash ^= key.sourceGuid;
         hash *= 1099511628211ULL;
         hash ^= key.targetGuid;
@@ -182,14 +182,14 @@ struct LoSContext
 // Performance metrics for LoS system
 struct LoSMetrics
 {
-    std::atomic<uint32> totalChecks{0};
-    std::atomic<uint32> cacheHits{0};
-    std::atomic<uint32> cacheMisses{0};
-    std::atomic<uint32> successfulChecks{0};
-    std::atomic<uint32> failedChecks{0};
-    std::chrono::microseconds averageCheckTime{0};
-    std::chrono::microseconds maxCheckTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> totalChecks{0};
+    ::std::atomic<uint32> cacheHits{0};
+    ::std::atomic<uint32> cacheMisses{0};
+    ::std::atomic<uint32> successfulChecks{0};
+    ::std::atomic<uint32> failedChecks{0};
+    ::std::chrono::microseconds averageCheckTime{0};
+    ::std::chrono::microseconds maxCheckTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -198,9 +198,9 @@ struct LoSMetrics
         cacheMisses = 0;
         successfulChecks = 0;
         failedChecks = 0;
-        averageCheckTime = std::chrono::microseconds{0};
-        maxCheckTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageCheckTime = ::std::chrono::microseconds{0};
+        maxCheckTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetCacheHitRate() const
@@ -237,13 +237,13 @@ public:
     bool CanMoveToPosition(const Position& pos);
 
     // Advanced LoS analysis
-    std::vector<Position> FindLineOfSightPositions(Unit* target, float radius = 10.0f);
+    ::std::vector<Position> FindLineOfSightPositions(Unit* target, float radius = 10.0f);
     Position FindBestLineOfSightPosition(Unit* target, float preferredRange = 0.0f);
     bool HasLineOfSightFromPosition(const Position& fromPos, Unit* target);
     bool WillHaveLineOfSightAfterMovement(const Position& newPos, Unit* target);
 
     // Obstruction analysis
-    std::vector<ObjectGuid> GetBlockingObjects(Unit* target);
+    ::std::vector<ObjectGuid> GetBlockingObjects(Unit* target);
     Position GetClosestUnblockedPosition(Unit* target);
     bool IsObstructionTemporary(const LoSResult& result);
     float EstimateTimeUntilClearPath(Unit* target);
@@ -255,10 +255,10 @@ public:
     Position CalculateOptimalViewingPosition(Unit* target);
 
     // Multi-target LoS management
-    std::vector<Unit*> GetVisibleEnemies(float maxRange = 40.0f);
-    std::vector<Unit*> GetVisibleAllies(float maxRange = 40.0f);
-    Unit* GetBestVisibleTarget(const std::vector<Unit*>& candidates);
-    uint32 CountVisibleTargets(const std::vector<Unit*>& targets);
+    ::std::vector<Unit*> GetVisibleEnemies(float maxRange = 40.0f);
+    ::std::vector<Unit*> GetVisibleAllies(float maxRange = 40.0f);
+    Unit* GetBestVisibleTarget(const ::std::vector<Unit*>& candidates);
+    uint32 CountVisibleTargets(const ::std::vector<Unit*>& targets);
 
     // Height and elevation handling
     bool IsHeightDifferenceBlocking(Unit* target);
@@ -297,14 +297,14 @@ public:
 
     // Area of effect LoS
     bool CanCastAoEAtPosition(const Position& targetPos, uint32 spellId);
-    std::vector<Unit*> GetAoETargetsInLoS(const Position& centerPos, float radius);
-    bool IsAoEPositionOptimal(const Position& pos, const std::vector<Unit*>& targets);
+    ::std::vector<Unit*> GetAoETargetsInLoS(const Position& centerPos, float radius);
+    bool IsAoEPositionOptimal(const Position& pos, const ::std::vector<Unit*>& targets);
 
     // Movement and pathfinding integration
-    bool IsPathClear(const std::vector<Position>& waypoints);
-    Position GetFirstBlockedWaypoint(const std::vector<Position>& waypoints);
+    bool IsPathClear(const ::std::vector<Position>& waypoints);
+    Position GetFirstBlockedWaypoint(const ::std::vector<Position>& waypoints);
     bool CanSeeDestination(const Position& destination);
-    std::vector<Position> GetVisibilityWaypoints(const Position& destination);
+    ::std::vector<Position> GetVisibilityWaypoints(const Position& destination);
 
 private:
     // Core LoS calculation methods
@@ -333,7 +333,7 @@ private:
     bool IsUnderground(const Position& pos);
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, bool cacheHit, bool successful);
+    void TrackPerformance(::std::chrono::microseconds duration, bool cacheHit, bool successful);
     void UpdateMetrics();
 
     // Specialized LoS checks
@@ -346,7 +346,7 @@ private:
     Player* _bot;
 
     // Cache system (using struct key eliminates string allocations)
-    std::unordered_map<LoSCacheKey, LoSCacheEntry, LoSCacheKeyHash> _losCache;
+    ::std::unordered_map<LoSCacheKey, LoSCacheEntry, LoSCacheKeyHash> _losCache;
     uint32 _cacheDuration;
     uint32 _lastCacheCleanup;
 
@@ -358,7 +358,7 @@ private:
     bool _profilingEnabled;
 
     // Dynamic obstruction tracking
-    std::unordered_map<ObjectGuid, GameObject*> _dynamicObstructions;
+    ::std::unordered_map<ObjectGuid, GameObject*> _dynamicObstructions;
     uint32 _lastObstructionUpdate;
 
     // Performance metrics
@@ -384,7 +384,7 @@ public:
     static bool HasLoS(Player* source, Unit* target);
     static bool HasLoS(const Position& from, const Position& to, Map* map);
     static float GetLoSDistance(Player* source, Unit* target);
-    static bool IsLoSBlocked(Player* source, Unit* target, std::string& reason);
+    static bool IsLoSBlocked(Player* source, Unit* target, ::std::string& reason);
 
     // Geometric utilities
     static bool IsPointBehindPoint(const Position& observer, const Position& target, const Position& reference);
@@ -405,12 +405,12 @@ public:
 
     // Area validation utilities
     static bool IsAreaClear(const Position& center, float radius, Map* map);
-    static std::vector<Position> GetBlockedPositionsInArea(const Position& center, float radius, Map* map);
+    static ::std::vector<Position> GetBlockedPositionsInArea(const Position& center, float radius, Map* map);
     static Position GetClearedPositionNear(const Position& target, float searchRadius, Map* map);
 
     // Pathfinding integration utilities
     static bool IsDirectPathClear(const Position& from, const Position& to, Map* map);
-    static std::vector<Position> GetLoSBreakpoints(const Position& from, const Position& to, Map* map);
+    static ::std::vector<Position> GetLoSBreakpoints(const Position& from, const Position& to, Map* map);
     static Position GetLastVisiblePoint(const Position& from, const Position& to, Map* map);
 };
 

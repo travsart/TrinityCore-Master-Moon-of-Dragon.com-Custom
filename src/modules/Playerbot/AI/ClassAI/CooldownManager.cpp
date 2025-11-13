@@ -428,10 +428,10 @@ void CooldownManager::ReduceAllCooldowns(uint32 reductionMs)
     TC_LOG_DEBUG("playerbot.cooldown", "Reduced all cooldowns by {}ms", reductionMs);
 }
 
-std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
+::std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
 {
     // No lock needed - _cooldowns is per-bot instance data
-    std::vector<uint32> result;
+    ::std::vector<uint32> result;
     for (const auto& pair : _cooldowns)
     {
         if (pair.second.remainingMs > 0)
@@ -443,10 +443,10 @@ std::vector<uint32> CooldownManager::GetSpellsOnCooldown() const
     return result;
 }
 
-std::vector<uint32> CooldownManager::GetReadySpells(const std::vector<uint32>& spellIds) const
+::std::vector<uint32> CooldownManager::GetReadySpells(const ::std::vector<uint32>& spellIds) const
 {
     // No lock needed - _cooldowns is per-bot instance data
-    std::vector<uint32> result;
+    ::std::vector<uint32> result;
     for (uint32 spellId : spellIds)
     {
         auto it = _cooldowns.find(spellId);
@@ -502,7 +502,7 @@ uint32 CooldownManager::GetTimeUntilReady(uint32 spellId) const
     {
         uint32 cooldownTime = it->second.remainingMs;
         uint32 chargeTime = (it->second.charges == 0) ? it->second.nextChargeTime : 0;
-        return std::max(cooldownTime, chargeTime);
+        return ::std::max(cooldownTime, chargeTime);
     }
 
     return 0;
@@ -645,21 +645,21 @@ void CooldownManager::CleanupExpiredCooldowns()
 // CooldownCalculator implementation
 
 // Meyer's singleton accessors for DLL-safe static data
-std::unordered_map<uint32, uint32>& CooldownCalculator::GetCooldownCache()
+::std::unordered_map<uint32, uint32>& CooldownCalculator::GetCooldownCache()
 {
-    static std::unordered_map<uint32, uint32> cooldownCache;
+    static ::std::unordered_map<uint32, uint32> cooldownCache;
     return cooldownCache;
 }
 
-std::unordered_map<uint32, bool>& CooldownCalculator::GetGcdCache()
+::std::unordered_map<uint32, bool>& CooldownCalculator::GetGcdCache()
 {
-    static std::unordered_map<uint32, bool> gcdCache;
+    static ::std::unordered_map<uint32, bool> gcdCache;
     return gcdCache;
 }
 
-std::recursive_mutex& CooldownCalculator::GetCacheMutex()
+::std::recursive_mutex& CooldownCalculator::GetCacheMutex()
 {
-    static std::recursive_mutex cacheMutex;
+    static ::std::recursive_mutex cacheMutex;
     return cacheMutex;
 }
 
@@ -670,7 +670,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Check cache first
     {
-        std::lock_guard lock(GetCacheMutex());
+        ::std::lock_guard lock(GetCacheMutex());
         auto it = GetCooldownCache().find(spellId);
         if (it != GetCooldownCache().end())
             return it->second;
@@ -685,7 +685,7 @@ uint32 CooldownCalculator::CalculateSpellCooldown(uint32 spellId, Player* caster
 
     // Cache the result
     {
-        std::lock_guard lock(GetCacheMutex());
+        ::std::lock_guard lock(GetCacheMutex());
         GetCooldownCache()[spellId] = cooldown;
     }
 
@@ -750,7 +750,7 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
         if (player->GetClass() == CLASS_DEATH_KNIGHT || player->GetClass() == CLASS_SHAMAN)
             minGCD = 500; // These classes can reach 0.5s GCD
 
-        return std::max(minGCD, modifiedGCD);
+        return ::std::max(minGCD, modifiedGCD);
     }
 
     return baseGCD;
@@ -763,7 +763,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Check cache first
     {
-        std::lock_guard lock(GetCacheMutex());
+        ::std::lock_guard lock(GetCacheMutex());
         auto it = GetGcdCache().find(spellId);
         if (it != GetGcdCache().end())
             return it->second;
@@ -778,7 +778,7 @@ bool CooldownCalculator::TriggersGCD(uint32 spellId)
 
     // Cache the result
     {
-        std::lock_guard lock(GetCacheMutex());
+        ::std::lock_guard lock(GetCacheMutex());
         GetGcdCache()[spellId] = triggersGCD;
     }
 
@@ -895,7 +895,7 @@ uint32 CooldownCalculator::ApplyCooldownReduction(uint32 cooldownMs, Player* cas
     }
 
     // 5. Ensure cooldown doesn't go below 0
-    modifiedCooldown = std::max(0.0f, modifiedCooldown);
+    modifiedCooldown = ::std::max(0.0f, modifiedCooldown);
 
     return static_cast<uint32>(modifiedCooldown);
 }
@@ -906,7 +906,7 @@ void CooldownCalculator::CacheSpellData(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard lock(GetCacheMutex());
+    ::std::lock_guard lock(GetCacheMutex());
     GetCooldownCache()[spellId] = spellInfo->RecoveryTime;
     GetGcdCache()[spellId] = true; // Default assumption
 }

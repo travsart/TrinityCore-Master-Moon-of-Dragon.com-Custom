@@ -273,7 +273,7 @@ Position PriestAI::GetOptimalPosition(::Unit* target){
     // Position behind and to the side for safety
     angle += M_PI / 4; // 45 degrees offset
 
-    float x = target->GetPositionX() - optimalRange * std::cos(angle);    float y = target->GetPositionY() - optimalRange * std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
+    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float PriestAI::GetOptimalRange(::Unit* target)

@@ -95,8 +95,8 @@ struct InterruptTarget
     bool isChanneled;
     bool isInterruptible;
     bool requiresLoS;
-    std::string spellName;
-    std::string targetName;
+    ::std::string spellName;
+    ::std::string targetName;
 
     // WoW 11.2 specific fields
     bool isMythicPlus;
@@ -124,7 +124,7 @@ struct InterruptTarget
 struct InterruptCapability
 {
     uint32 spellId;
-    std::string spellName;
+    ::std::string spellName;
     InterruptMethod method;
     float range;
     float cooldown;
@@ -138,7 +138,7 @@ struct InterruptCapability
     uint32 lastUsed;
     uint32 cooldownExpires;
     InterruptPriority minPriority;
-    std::vector<InterruptType> effectiveAgainst;
+    ::std::vector<InterruptType> effectiveAgainst;
 
     // WoW 11.2 specific fields
     uint32 lockoutDuration;  // Duration of spell school lockout
@@ -174,7 +174,7 @@ struct InterruptPlan
     bool requiresMovement;
     Position executionPosition;
     uint32 priority;
-    std::string reasoning;
+    ::std::string reasoning;
 
     InterruptPlan() : target(nullptr), capability(nullptr), method(InterruptMethod::SPELL_INTERRUPT),
                      executionTime(0.0f), successProbability(0.0f), reactionTime(0.0f),
@@ -197,7 +197,7 @@ struct InterruptResult
     uint32 usedSpell;
     float timingAccuracy;
     uint32 executionTime;
-    std::string failureReason;
+    ::std::string failureReason;
     InterruptTarget originalTarget;
 
     InterruptResult() : success(false), attemptMade(false),
@@ -208,16 +208,16 @@ struct InterruptResult
 // Interrupt performance metrics
 struct InterruptMetrics
 {
-    std::atomic<uint32> interruptAttempts{0};
-    std::atomic<uint32> successfulInterrupts{0};
-    std::atomic<uint32> failedInterrupts{0};
-    std::atomic<uint32> missedOpportunities{0};
-    std::atomic<uint32> criticalInterrupts{0};
-    std::chrono::microseconds averageReactionTime{0};
-    std::chrono::microseconds minReactionTime{std::chrono::microseconds::max()};
-    std::chrono::microseconds maxReactionTime{0};
+    ::std::atomic<uint32> interruptAttempts{0};
+    ::std::atomic<uint32> successfulInterrupts{0};
+    ::std::atomic<uint32> failedInterrupts{0};
+    ::std::atomic<uint32> missedOpportunities{0};
+    ::std::atomic<uint32> criticalInterrupts{0};
+    ::std::chrono::microseconds averageReactionTime{0};
+    ::std::chrono::microseconds minReactionTime{::std::chrono::microseconds::max()};
+    ::std::chrono::microseconds maxReactionTime{0};
     float averageTimingAccuracy{0.0f};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -226,11 +226,11 @@ struct InterruptMetrics
         failedInterrupts = 0;
         missedOpportunities = 0;
         criticalInterrupts = 0;
-        averageReactionTime = std::chrono::microseconds{0};
-        minReactionTime = std::chrono::microseconds::max();
-        maxReactionTime = std::chrono::microseconds{0};
+        averageReactionTime = ::std::chrono::microseconds{0};
+        minReactionTime = ::std::chrono::microseconds::max();
+        maxReactionTime = ::std::chrono::microseconds{0};
         averageTimingAccuracy = 0.0f;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetSuccessRate() const
@@ -243,13 +243,13 @@ struct InterruptMetrics
 // Group interrupt coordination data
 struct GroupInterruptData
 {
-    std::unordered_map<ObjectGuid, InterruptAssignment> assignments;
-    std::unordered_map<ObjectGuid, std::vector<InterruptCapability>> memberCapabilities;
-    std::unordered_map<ObjectGuid, uint32> memberCooldowns;
-    std::unordered_map<uint32, ObjectGuid> spellAssignments;  // SpellId -> Assigned player
+    ::std::unordered_map<ObjectGuid, InterruptAssignment> assignments;
+    ::std::unordered_map<ObjectGuid, ::std::vector<InterruptCapability>> memberCapabilities;
+    ::std::unordered_map<ObjectGuid, uint32> memberCooldowns;
+    ::std::unordered_map<uint32, ObjectGuid> spellAssignments;  // SpellId -> Assigned player
     uint32 lastRotationUpdate;
     uint8 rotationIndex;
-    std::vector<ObjectGuid> rotationOrder;
+    ::std::vector<ObjectGuid> rotationOrder;
 
     GroupInterruptData() : lastRotationUpdate(0), rotationIndex(0) {}
 };
@@ -257,9 +257,9 @@ struct GroupInterruptData
 // Interrupt rotation strategy
 struct InterruptRotation
 {
-    std::vector<ObjectGuid> primaryInterrupters;
-    std::vector<ObjectGuid> backupInterrupters;
-    std::unordered_map<ObjectGuid, uint32> nextAvailable;  // When each member's interrupt is available
+    ::std::vector<ObjectGuid> primaryInterrupters;
+    ::std::vector<ObjectGuid> backupInterrupters;
+    ::std::unordered_map<ObjectGuid, uint32> nextAvailable;  // When each member's interrupt is available
     uint32 rotationCooldown;  // Time between rotation switches
     bool useStaggered;        // Use staggered interrupts for chain casting
 
@@ -275,7 +275,7 @@ public:
     // Primary interrupt interface
     void UpdateInterruptSystem(uint32 diff);
     void Update(uint32 diff) { UpdateInterruptSystem(diff); }  // Alias for compatibility
-    std::vector<InterruptTarget> ScanForInterruptTargets();
+    ::std::vector<InterruptTarget> ScanForInterruptTargets();
     InterruptResult AttemptInterrupt(const InterruptTarget& target);
     void ProcessInterruptOpportunities();
 
@@ -297,13 +297,13 @@ public:
     // Capability management
     void InitializeInterruptCapabilities();
     void UpdateInterruptCapabilities();
-    std::vector<InterruptCapability> GetAvailableInterrupts();
+    ::std::vector<InterruptCapability> GetAvailableInterrupts();
     InterruptCapability* GetBestInterruptForTarget(const InterruptTarget& target);
     bool CanInterrupt(uint32 spellId, InterruptMethod method = InterruptMethod::SPELL_INTERRUPT);
 
     // Interrupt planning and execution
     InterruptPlan CreateInterruptPlan(const InterruptTarget& target);
-    std::vector<InterruptPlan> GenerateInterruptPlans(const std::vector<InterruptTarget>& targets);
+    ::std::vector<InterruptPlan> GenerateInterruptPlans(const ::std::vector<InterruptTarget>& targets);
     bool ExecuteInterruptPlan(const InterruptPlan& plan);
     bool IsInterruptExecutable(const InterruptPlan& plan);
 
@@ -320,24 +320,24 @@ public:
     uint32 GetOptimalInterruptTiming(const InterruptTarget& target);
 
     // Group coordination for WoW 11.2
-    void CoordinateInterruptsWithGroup(const std::vector<Player*>& groupMembers);
+    void CoordinateInterruptsWithGroup(const ::std::vector<Player*>& groupMembers);
     bool ShouldLetOthersInterrupt(const InterruptTarget& target);
     void RegisterInterruptAttempt(const InterruptTarget& target);
-    void ShareInterruptInformation(const std::vector<Player*>& groupMembers);
+    void ShareInterruptInformation(const ::std::vector<Player*>& groupMembers);
 
     // Interrupt rotation management
-    void InitializeInterruptRotation(const std::vector<Player*>& groupMembers);
+    void InitializeInterruptRotation(const ::std::vector<Player*>& groupMembers);
     void UpdateInterruptRotation();
     InterruptAssignment GetMyAssignment(const InterruptTarget& target);
     ObjectGuid GetAssignedInterrupter(const InterruptTarget& target);
-    void AssignInterruptRoles(const std::vector<Player*>& groupMembers);
+    void AssignInterruptRoles(const ::std::vector<Player*>& groupMembers);
     void OptimizeRotationForEncounter(uint32 encounterId);
 
     // Cooldown tracking across group
-    void TrackGroupCooldowns(const std::vector<Player*>& groupMembers);
+    void TrackGroupCooldowns(const ::std::vector<Player*>& groupMembers);
     uint32 GetMemberInterruptCooldown(ObjectGuid memberGuid);
     bool IsMemberInterruptReady(ObjectGuid memberGuid);
-    std::vector<ObjectGuid> GetAvailableInterrupters();
+    ::std::vector<ObjectGuid> GetAvailableInterrupters();
 
     // Backup interrupt systems
     bool TriggerBackupInterrupt(const InterruptTarget& target);
@@ -419,7 +419,7 @@ private:
 
     // Performance tracking
     void TrackInterruptAttempt(const InterruptResult& result);
-    void UpdateReactionTimeMetrics(std::chrono::microseconds reactionTime);
+    void UpdateReactionTimeMetrics(::std::chrono::microseconds reactionTime);
     void UpdateTimingAccuracy(const InterruptResult& result);
 
     // Utility methods
@@ -433,15 +433,15 @@ private:
     // Current state
     bool _isInterrupting;
     InterruptTarget* _currentTarget;
-    std::vector<InterruptTarget> _trackedTargets;
-    std::vector<InterruptCapability> _interruptCapabilities;
+    ::std::vector<InterruptTarget> _trackedTargets;
+    ::std::vector<InterruptCapability> _interruptCapabilities;
 
     // WoW 11.2 specific tracking
-    std::unordered_map<uint32, uint32> _schoolLockouts;  // School mask -> expiry time
-    std::unordered_map<ObjectGuid, uint32> _targetImmunities;  // Target -> immunity expiry
+    ::std::unordered_map<uint32, uint32> _schoolLockouts;  // School mask -> expiry time
+    ::std::unordered_map<ObjectGuid, uint32> _targetImmunities;  // Target -> immunity expiry
     GroupInterruptData _groupData;
     InterruptRotation _currentRotation;
-    std::unordered_map<uint32, InterruptPriority> _spellPriorityOverrides;  // Custom priorities
+    ::std::unordered_map<uint32, InterruptPriority> _spellPriorityOverrides;  // Custom priorities
 
     // Configuration
     uint32 _reactionTime;
@@ -454,10 +454,10 @@ private:
     // Timing tracking
     uint32 _lastScan;
     uint32 _lastInterruptAttempt;
-    std::unordered_map<ObjectGuid, uint32> _targetFirstDetected;
+    ::std::unordered_map<ObjectGuid, uint32> _targetFirstDetected;
 
     // Group coordination
-    std::unordered_map<ObjectGuid, uint32> _groupInterruptClaims;
+    ::std::unordered_map<ObjectGuid, uint32> _groupInterruptClaims;
     uint32 _lastCoordinationUpdate;
 
     // Performance metrics
@@ -498,7 +498,7 @@ public:
     static float GetSpellDangerRating(uint32 spellId);
 
     // Class-specific interrupt utilities
-    static std::vector<uint32> GetClassInterruptSpells(uint8 playerClass);
+    static ::std::vector<uint32> GetClassInterruptSpells(uint8 playerClass);
     static uint32 GetBestInterruptSpell(uint8 playerClass, InterruptType type);
     static bool CanClassInterrupt(uint8 playerClass);
     static float GetClassInterruptRange(uint8 playerClass);
@@ -516,9 +516,9 @@ public:
     static bool IsSpellGameChanging(uint32 spellId);
 
     // Group coordination utilities
-    static bool ShouldPrioritizeInterrupt(Player* bot, const InterruptTarget& target, const std::vector<Player*>& group);
-    static Player* GetBestInterrupter(const InterruptTarget& target, const std::vector<Player*>& group);
-    static void DistributeInterruptTargets(const std::vector<InterruptTarget>& targets, const std::vector<Player*>& group);
+    static bool ShouldPrioritizeInterrupt(Player* bot, const InterruptTarget& target, const ::std::vector<Player*>& group);
+    static Player* GetBestInterrupter(const InterruptTarget& target, const ::std::vector<Player*>& group);
+    static void DistributeInterruptTargets(const ::std::vector<InterruptTarget>& targets, const ::std::vector<Player*>& group);
 
     // Database and configuration utilities
     static void LoadInterruptDatabase();
@@ -528,7 +528,7 @@ public:
 
     // Emergency interrupt utilities
     static bool RequiresEmergencyInterrupt(uint32 spellId, Unit* caster);
-    static std::vector<uint32> GetEmergencyInterruptSpells();
+    static ::std::vector<uint32> GetEmergencyInterruptSpells();
     static bool CanForceInterrupt(Player* bot, Unit* target);
 };
 

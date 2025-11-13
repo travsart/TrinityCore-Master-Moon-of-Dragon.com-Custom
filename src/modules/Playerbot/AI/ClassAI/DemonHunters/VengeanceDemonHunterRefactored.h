@@ -100,7 +100,7 @@ public:
 
     void GenerateFragments(uint32 count)
     {
-        _fragmentCount = std::min(_fragmentCount + count, _maxFragments);
+        _fragmentCount = ::std::min(_fragmentCount + count, _maxFragments);
         _lastFragmentTime = GameTime::GetGameTimeMS();
     }
 
@@ -714,7 +714,7 @@ private:
 
     void GeneratePain(uint32 amount)
     {
-        _resource = std::min<uint32>(_resource + amount, _maxResource);
+        _resource = ::std::min<uint32>(_resource + amount, _maxResource);
     }
 
     float GetDistanceToTarget(::Unit* target) const

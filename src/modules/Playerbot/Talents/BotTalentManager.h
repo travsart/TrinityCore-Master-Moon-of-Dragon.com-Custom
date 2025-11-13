@@ -43,9 +43,9 @@ struct TalentLoadout
     uint8 specId;
     uint32 minLevel;
     uint32 maxLevel;
-    std::vector<uint32> talentEntries;       // Talent spell IDs to learn
-    std::vector<uint32> heroTalentEntries;   // Hero talents (71+)
-    std::string description;
+    ::std::vector<uint32> talentEntries;       // Talent spell IDs to learn
+    ::std::vector<uint32> heroTalentEntries;   // Hero talents (71+)
+    ::std::string description;
 
     bool IsValidForLevel(uint32 level) const
     {
@@ -70,13 +70,13 @@ struct TalentLoadout
 struct SpecChoice
 {
     uint8 specId;
-    std::string specName;
+    ::std::string specName;
     GroupRole primaryRole;
     float confidence;  // 0.0-1.0, how confident the selection is
 
     SpecChoice() : specId(0), primaryRole(GroupRole::NONE), confidence(0.0f) {}
-    SpecChoice(uint8 spec, std::string name, GroupRole role, float conf)
-        : specId(spec), specName(std::move(name)), primaryRole(role), confidence(conf) {}
+    SpecChoice(uint8 spec, ::std::string name, GroupRole role, float conf)
+        : specId(spec), specName(::std::move(name)), primaryRole(role), confidence(conf) {}
 };
 
 /**
@@ -141,7 +141,7 @@ public:
      */
     bool IsReady() const override
     {
-        return _initialized.load(std::memory_order_acquire);
+        return _initialized.load(::std::memory_order_acquire);
     }
 
     // ====================================================================
@@ -180,7 +180,7 @@ public:
     /**
      * Get all available specs for a class
      */
-    std::vector<uint8> GetAvailableSpecs(uint8 cls) const override;
+    ::std::vector<uint8> GetAvailableSpecs(uint8 cls) const override;
 
     // ====================================================================
     // TALENT LOADOUT QUERIES (Thread-safe, lock-free cache access)
@@ -201,7 +201,7 @@ public:
      * Get all loadouts for a class/spec combination
      * Useful for debugging and validation
      */
-    std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const override;
+    ::std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const override;
 
     // ====================================================================
     // TALENT APPLICATION (MAIN THREAD ONLY - Player API)
@@ -329,7 +329,7 @@ public:
 
     TalentStats GetStats() const override { return _stats; }
     void PrintLoadoutReport() const override;
-    std::string GetLoadoutSummary() const override;
+    ::std::string GetLoadoutSummary() const override;
 
 private:
     BotTalentManager() = default;
@@ -349,7 +349,7 @@ private:
     // SPECIALIZATION SELECTION HELPERS
     // ====================================================================
 
-    uint8 SelectByDistribution(uint8 cls, std::vector<uint8> const& availableSpecs) const;
+    uint8 SelectByDistribution(uint8 cls, ::std::vector<uint8> const& availableSpecs) const;
     uint8 SelectComplementarySpec(uint8 cls, uint8 primarySpec) const;
     float GetSpecPopularity(uint8 cls, uint8 specId) const;
 
@@ -367,16 +367,16 @@ private:
 
     // Loadout cache: [cls][spec][level_bracket] -> TalentLoadout
     // Key encoding: ((cls << 16) | (spec << 8) | (level/10))
-    std::unordered_map<uint32, TalentLoadout> _loadoutCache;
+    ::std::unordered_map<uint32, TalentLoadout> _loadoutCache;
 
     // Quick lookup: class -> available specs
-    std::unordered_map<uint8, std::vector<uint8>> _classSpecs;
+    ::std::unordered_map<uint8, ::std::vector<uint8>> _classSpecs;
 
     // Statistics
     TalentStats _stats;
 
     // Initialization flag
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 
     // ====================================================================
     // HELPER FUNCTIONS

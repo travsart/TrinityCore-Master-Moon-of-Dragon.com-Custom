@@ -51,11 +51,11 @@ GroupInvitationHandler::~GroupInvitationHandler()
 
 bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite const& packet)
 {
-    std::lock_guard lock(_invitationMutex);
+    ::std::lock_guard lock(_invitationMutex);
 
     // Extract invitation details
     ObjectGuid inviterGuid = packet.InviterGUID;
-    std::string inviterName = packet.InviterName;
+    ::std::string inviterName = packet.InviterName;
     uint32 proposedRoles = packet.ProposedRoles;
 
     TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} received invitation from {} ({})",
@@ -63,7 +63,7 @@ bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite c
 
     // Update statistics
     _stats.totalInvitations++;
-    _stats.lastInvitation = std::chrono::steady_clock::now();
+    _stats.lastInvitation = ::std::chrono::steady_clock::now();
 
     // Validate inviter first
     Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
@@ -105,7 +105,7 @@ bool GroupInvitationHandler::HandleInvitation(WorldPackets::Party::PartyInvite c
     invitation.inviterGuid = inviterGuid;
     invitation.inviterName = inviterName;
     invitation.proposedRoles = proposedRoles;
-    invitation.timestamp = std::chrono::steady_clock::now();
+    invitation.timestamp = ::std::chrono::steady_clock::now();
     invitation.isProcessing = false;
 
     // Add to queue
@@ -285,7 +285,7 @@ bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
+    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -294,11 +294,11 @@ bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
     return AcceptInvitationInternal(inviterGuid);
 }
 
-void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::string const& reason)
+void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, ::std::string const& reason)
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
+    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -311,13 +311,13 @@ void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, std::stri
 
 bool GroupInvitationHandler::HasPendingInvitation() const
 {
-    std::lock_guard lock(_invitationMutex);
+    ::std::lock_guard lock(_invitationMutex);
     return !_pendingInvitations.empty() || !_currentInviter.IsEmpty();
 }
 
 ObjectGuid GroupInvitationHandler::GetPendingInviter() const
 {
-    std::lock_guard lock(_invitationMutex);
+    ::std::lock_guard lock(_invitationMutex);
 
     if (!_currentInviter.IsEmpty())
         return _currentInviter;
@@ -329,7 +329,7 @@ ObjectGuid GroupInvitationHandler::GetPendingInviter() const
 
 void GroupInvitationHandler::ClearPendingInvitations()
 {
-    std::lock_guard lock(_invitationMutex);
+    ::std::lock_guard lock(_invitationMutex);
     while (!_pendingInvitations.empty())
         _pendingInvitations.pop();
     _currentInviter = ObjectGuid::Empty;
@@ -338,7 +338,7 @@ void GroupInvitationHandler::ClearPendingInvitations()
 
 void GroupInvitationHandler::SetResponseDelay(uint32 delayMs)
 {
-    _responseDelayMs = std::min(std::max(delayMs, MIN_RESPONSE_DELAY), MAX_RESPONSE_DELAY);
+    _responseDelayMs = ::std::min(::std::max(delayMs, MIN_RESPONSE_DELAY), MAX_RESPONSE_DELAY);
     TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Response delay set to {}ms for bot {}",
         _responseDelayMs, _bot->GetName());
 }
@@ -393,7 +393,7 @@ bool GroupInvitationHandler::SendAcceptPacket()
     // No additional data needed since we didn't enable optional fields
 
     // Create PartyInviteResponse and let it read from our properly formatted packet
-    WorldPackets::Party::PartyInviteResponse response(std::move(packet));
+    WorldPackets::Party::PartyInviteResponse response(::std::move(packet));
     response.Read(); // This will properly parse our packet data
     TC_LOG_INFO("playerbot", "GroupInvitationHandler: About to call HandlePartyInviteResponseOpcode for bot {}", _bot->GetName());
     // Send the packet through the session handler
@@ -484,7 +484,7 @@ bool GroupInvitationHandler::SendAcceptPacket()
     return true;
 }
 
-void GroupInvitationHandler::SendDeclinePacket(std::string const& reason)
+void GroupInvitationHandler::SendDeclinePacket(::std::string const& reason)
 {
     WorldSession* session = GetSession();
     if (!session)
@@ -506,7 +506,7 @@ void GroupInvitationHandler::SendDeclinePacket(std::string const& reason)
     // No additional data needed since we didn't enable optional fields
 
     // Create PartyInviteResponse and let it read from our properly formatted packet
-    WorldPackets::Party::PartyInviteResponse response(std::move(packet));
+    WorldPackets::Party::PartyInviteResponse response(::std::move(packet));
     response.Read(); // This will properly parse our packet data
 
     // Send the packet through the session handler
@@ -521,8 +521,8 @@ bool GroupInvitationHandler::ValidateNoInvitationLoop(ObjectGuid inviterGuid) co
     if (_recentInviters.find(inviterGuid) != _recentInviters.end())
     {
         // Check if enough time has passed
-        auto timeSinceLastAccept = std::chrono::steady_clock::now() - _lastAcceptTime;
-        if (timeSinceLastAccept < std::chrono::milliseconds(RECENT_INVITER_MEMORY))
+        auto timeSinceLastAccept = ::std::chrono::steady_clock::now() - _lastAcceptTime;
+        if (timeSinceLastAccept < ::std::chrono::milliseconds(RECENT_INVITER_MEMORY))
         {
             TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Recent invitation from same inviter detected");
             return false;
@@ -567,10 +567,10 @@ bool GroupInvitationHandler::IsInviterInRange(Player* inviter) const
     return true;
 }
 
-void GroupInvitationHandler::LogInvitationEvent(std::string const& action, ObjectGuid inviterGuid, std::string const& reason) const
+void GroupInvitationHandler::LogInvitationEvent(::std::string const& action, ObjectGuid inviterGuid, ::std::string const& reason) const
 {
     Player* inviter = ObjectAccessor::FindPlayer(inviterGuid);
-    std::string inviterName = inviter ? inviter->GetName() : inviterGuid.ToString();
+    ::std::string inviterName = inviter ? inviter->GetName() : inviterGuid.ToString();
 
     if (reason.empty())
     {
@@ -584,13 +584,13 @@ void GroupInvitationHandler::LogInvitationEvent(std::string const& action, Objec
     }
 }
 
-void GroupInvitationHandler::UpdateStatistics(bool accepted, std::chrono::milliseconds responseTime)
+void GroupInvitationHandler::UpdateStatistics(bool accepted, ::std::chrono::milliseconds responseTime)
 {
     // Update average response time with moving average
     if (_stats.acceptedInvitations + _stats.declinedInvitations > 0)
     {
         uint32 totalResponses = _stats.acceptedInvitations + _stats.declinedInvitations;
-        _stats.averageResponseTime = std::chrono::milliseconds(
+        _stats.averageResponseTime = ::std::chrono::milliseconds(
             (_stats.averageResponseTime.count() * (totalResponses - 1) + responseTime.count()) / totalResponses
         );
     }
@@ -603,7 +603,7 @@ void GroupInvitationHandler::UpdateStatistics(bool accepted, std::chrono::millis
 bool GroupInvitationHandler::ProcessNextInvitation()
 {
     // CRITICAL: Use try_lock to avoid deadlock - if mutex is busy, skip this update and try next time
-    std::unique_lock<std::recursive_mutex> lock(_invitationMutex, std::try_to_lock);
+    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Mutex is busy, skip this update cycle
@@ -618,8 +618,8 @@ bool GroupInvitationHandler::ProcessNextInvitation()
             _currentInviter.ToString(), _bot->GetName());
 
         // Check if enough time has passed for response delay
-        auto now = std::chrono::steady_clock::now();
-        auto timeSinceInvite = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto now = ::std::chrono::steady_clock::now();
+        auto timeSinceInvite = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - _stats.lastInvitation);
 
         TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Time since invite: {}ms, Response delay: {}ms",
@@ -658,11 +658,11 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
     TC_LOG_INFO("playerbot", "GroupInvitationHandler: Processing queued invitation from {} for bot {} (age: {}ms)",
         invitation.inviterName, _bot->GetName(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - invitation.timestamp).count());
+        ::std::chrono::duration_cast<::std::chrono::milliseconds>(::std::chrono::steady_clock::now() - invitation.timestamp).count());
 
     // Check if invitation has expired
-    auto now = std::chrono::steady_clock::now();
-    auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto age = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - invitation.timestamp);
 
     if (age.count() > INVITATION_TIMEOUT)
@@ -686,16 +686,16 @@ bool GroupInvitationHandler::ProcessNextInvitation()
 
 void GroupInvitationHandler::CleanupExpiredInvitations()
 {
-    std::lock_guard lock(_invitationMutex);
+    ::std::lock_guard lock(_invitationMutex);
 
     // Clean up expired invitations from queue
-    std::queue<PendingInvitation> validInvitations;
-    auto now = std::chrono::steady_clock::now();
+    ::std::queue<PendingInvitation> validInvitations;
+    auto now = ::std::chrono::steady_clock::now();
 
     while (!_pendingInvitations.empty())
     {
         PendingInvitation& invitation = _pendingInvitations.front();
-        auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto age = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - invitation.timestamp);
 
         if (age.count() <= INVITATION_TIMEOUT)
@@ -715,7 +715,7 @@ void GroupInvitationHandler::CleanupExpiredInvitations()
     _pendingInvitations = validInvitations;
 
     // Clean up old inviters from recent list
-    auto cutoffTime = now - std::chrono::milliseconds(RECENT_INVITER_MEMORY);
+    auto cutoffTime = now - ::std::chrono::milliseconds(RECENT_INVITER_MEMORY);
     if (_lastAcceptTime < cutoffTime)
     {
         _recentInviters.clear();
@@ -734,7 +734,7 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
         _bot->GetName(), inviterGuid.ToString());
 
     // Record accept time
-    auto acceptTime = std::chrono::steady_clock::now();
+    auto acceptTime = ::std::chrono::steady_clock::now();
 
     // Send accept packet
     if (!SendAcceptPacket())
@@ -745,9 +745,9 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
 
     // Update statistics
     _stats.acceptedInvitations++;
-    if (_stats.lastInvitation != std::chrono::steady_clock::time_point{})
+    if (_stats.lastInvitation != ::std::chrono::steady_clock::time_point{})
     {
-        auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto responseTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             acceptTime - _stats.lastInvitation);
         UpdateStatistics(true, responseTime);
     }
@@ -811,7 +811,7 @@ bool GroupInvitationHandler::AcceptInvitationInternal(ObjectGuid inviterGuid)
     return true;
 }
 
-void GroupInvitationHandler::DeclineInvitationInternal(ObjectGuid inviterGuid, std::string const& reason)
+void GroupInvitationHandler::DeclineInvitationInternal(ObjectGuid inviterGuid, ::std::string const& reason)
 {
     // NOTE: This method assumes _invitationMutex is already locked by the caller
 

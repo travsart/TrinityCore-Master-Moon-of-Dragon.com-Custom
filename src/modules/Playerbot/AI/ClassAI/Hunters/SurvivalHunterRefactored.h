@@ -224,7 +224,7 @@ public:
         else
         {
 
-            _stacks = std::min<uint32>(_stacks + 1, _maxStacks);
+            _stacks = ::std::min<uint32>(_stacks + 1, _maxStacks);
 
             _windowEndTime = currentTime + 14000; // Refresh window
         }
@@ -616,7 +616,7 @@ protected:
 
             _lastKillCommand = GameTime::GetGameTimeMS();
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -648,7 +648,7 @@ protected:
 
             this->ConsumeResource(30);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100); // Returns some focus
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100); // Returns some focus
 
             return;
         }
@@ -672,7 +672,7 @@ protected:
 
             this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -723,7 +723,7 @@ protected:
 
             this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -796,7 +796,7 @@ private:
 
             {
 
-                this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                this->_resource = ::std::min<uint32>(this->_resource + 20, 100);
 
             }
         }
@@ -823,7 +823,7 @@ private:
             return;
 
         // Get enemies in range
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), 8.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -900,7 +900,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return SPELL_STEEL_TRAP; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -916,7 +916,7 @@ private:
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
-        float x = target->GetPositionX() + 15.0f * std::cos(angle);        float y = target->GetPositionY() + 15.0f * std::sin(angle);        return Position(x, y, target->GetPositionZ());
+        float x = target->GetPositionX() + 15.0f * ::std::cos(angle);        float y = target->GetPositionY() + 15.0f * ::std::sin(angle);        return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 
@@ -1213,7 +1213,7 @@ private:
 
                                     this->_lastKillCommand = GameTime::GetGameTimeMS();
 
-                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1326,7 +1326,7 @@ private:
 
                                     this->ConsumeResource(30);
 
-                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
                                     return NodeStatus::SUCCESS;
 

@@ -106,7 +106,7 @@ private:
         float weight;  // How much this point influences the curve
     };
 
-    std::vector<DataPoint> _dataPoints;
+    ::std::vector<DataPoint> _dataPoints;
     float _slope;
     float _intercept;
     bool _fitted;
@@ -148,20 +148,20 @@ public:
 private:
     ObjectGuid _playerGuid;
     SkillIndicators _currentSkill;
-    std::deque<SkillIndicators> _skillHistory;
-    std::deque<PerformanceWindow> _performanceHistory;
+    ::std::deque<SkillIndicators> _skillHistory;
+    ::std::deque<PerformanceWindow> _performanceHistory;
 
     // Metrics
-    std::atomic<float> _skillLevel;
-    std::atomic<float> _frustrationLevel;
-    std::atomic<float> _engagementLevel;
-    std::atomic<uint32_t> _totalEngagements;
-    std::atomic<uint32_t> _consecutiveWins;
-    std::atomic<uint32_t> _consecutiveLosses;
+    ::std::atomic<float> _skillLevel;
+    ::std::atomic<float> _frustrationLevel;
+    ::std::atomic<float> _engagementLevel;
+    ::std::atomic<uint32_t> _totalEngagements;
+    ::std::atomic<uint32_t> _consecutiveWins;
+    ::std::atomic<uint32_t> _consecutiveLosses;
 
     // Timing
-    std::chrono::steady_clock::time_point _lastUpdate;
-    std::chrono::steady_clock::time_point _profileCreated;
+    ::std::chrono::steady_clock::time_point _lastUpdate;
+    ::std::chrono::steady_clock::time_point _profileCreated;
 
     static constexpr size_t MAX_HISTORY_SIZE = 50;
     static constexpr uint32_t FRUSTRATION_THRESHOLD = 5;  // Consecutive losses
@@ -190,7 +190,7 @@ public:
     // Player profile management
     void CreatePlayerProfile(Player* player);
     void DeletePlayerProfile(ObjectGuid guid);
-    std::shared_ptr<PlayerSkillProfile> GetPlayerProfile(ObjectGuid guid) const;
+    ::std::shared_ptr<PlayerSkillProfile> GetPlayerProfile(ObjectGuid guid) const;
 
     // Skill assessment
     void AssessPlayerSkill(Player* player);
@@ -229,9 +229,9 @@ public:
     void AdjustDifficultyInCombat(BotAI* bot, Player* opponent);
 
     // Group difficulty balancing
-    void BalanceGroupDifficulty(const std::vector<Player*>& players,
-                                const std::vector<BotAI*>& bots);
-    float CalculateGroupSkillLevel(const std::vector<Player*>& players) const;
+    void BalanceGroupDifficulty(const ::std::vector<Player*>& players,
+                                const ::std::vector<BotAI*>& bots);
+    float CalculateGroupSkillLevel(const ::std::vector<Player*>& players) const;
 
     // Difficulty curves
     void TrainDifficultyCurve(ObjectGuid playerGuid, float skill, float optimalDifficulty);
@@ -243,18 +243,18 @@ public:
     void OptimizeForFlow(BotAI* bot, Player* player);
 
     // Configuration
-    void SetDifficultyMode(const std::string& mode);  // "adaptive", "fixed", "progressive"
-    void SetAdjustmentSpeed(float speed) { _adjustmentSpeed = std::clamp(speed, 0.01f, 1.0f); }
-    void SetTargetWinRate(float rate) { _targetWinRate = std::clamp(rate, 0.3f, 0.7f); }
+    void SetDifficultyMode(const ::std::string& mode);  // "adaptive", "fixed", "progressive"
+    void SetAdjustmentSpeed(float speed) { _adjustmentSpeed = ::std::clamp(speed, 0.01f, 1.0f); }
+    void SetTargetWinRate(float rate) { _targetWinRate = ::std::clamp(rate, 0.3f, 0.7f); }
 
     // Metrics
     struct DifficultyMetrics
     {
-        std::atomic<uint32_t> profilesTracked{0};
-        std::atomic<uint32_t> adjustmentsMade{0};
-        std::atomic<float> averagePlayerSatisfaction{0.0f};
-        std::atomic<float> averageSkillMatch{0.0f};
-        std::atomic<uint32_t> flowStatesAchieved{0};
+        ::std::atomic<uint32_t> profilesTracked{0};
+        ::std::atomic<uint32_t> adjustmentsMade{0};
+        ::std::atomic<float> averagePlayerSatisfaction{0.0f};
+        ::std::atomic<float> averageSkillMatch{0.0f};
+        ::std::atomic<uint32_t> flowStatesAchieved{0};
     };
 
     DifficultyMetrics GetMetrics() const { return _metrics; }
@@ -280,26 +280,26 @@ private:
     // System state
     bool _initialized;
     bool _enabled;
-    std::string _difficultyMode;
+    ::std::string _difficultyMode;
     float _adjustmentSpeed;
     float _targetWinRate;
 
     // Player profiles
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _profilesMutex;
-    std::unordered_map<ObjectGuid, std::shared_ptr<PlayerSkillProfile>> _playerProfiles;
+    ::std::unordered_map<ObjectGuid, ::std::shared_ptr<PlayerSkillProfile>> _playerProfiles;
 
     // Bot difficulty settings
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _botDifficultyMutex;
-    std::unordered_map<uint32_t, DifficultySettings> _botDifficulties;
+    ::std::unordered_map<uint32_t, DifficultySettings> _botDifficulties;
 
     // Difficulty curves
-    std::unordered_map<ObjectGuid, std::unique_ptr<DifficultyCurve>> _difficultyCurves;
+    ::std::unordered_map<ObjectGuid, ::std::unique_ptr<DifficultyCurve>> _difficultyCurves;
 
     // Metrics
     mutable DifficultyMetrics _metrics;
 
     // Helper methods
-    std::shared_ptr<PlayerSkillProfile> GetOrCreateProfile(ObjectGuid guid);
+    ::std::shared_ptr<PlayerSkillProfile> GetOrCreateProfile(ObjectGuid guid);
     void UpdateFlowState(Player* player);
     float CalculateDifficultyDelta(float currentWinRate, float targetWinRate) const;
     DifficultySettings InterpolateDifficulty(const DifficultySettings& easy,
@@ -335,7 +335,7 @@ private:
     BotAI* _bot;
     Player* _player;
     float _initialDifficulty;
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _startTime;
     uint32_t _playerSuccesses;
     uint32_t _botSuccesses;
     float _totalReactionTime;

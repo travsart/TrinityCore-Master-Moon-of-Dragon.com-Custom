@@ -100,7 +100,7 @@ public:
      * Register multiple cooldowns at once
      * Usage: mgr.RegisterBatch({{SPELL_1, 60000}, {SPELL_2, 120000, 2}});
      */
-    void RegisterBatch(std::initializer_list<std::tuple<uint32, uint32, uint32>> cooldowns)
+    void RegisterBatch(::std::initializer_list<::std::tuple<uint32, uint32, uint32>> cooldowns)
     {
         for (const auto& [spellId, duration, charges] : cooldowns)
         {
@@ -276,9 +276,9 @@ public:
     /**
      * Get all cooldowns currently on cooldown
      */
-    [[nodiscard]] std::vector<uint32> GetActiveCooldowns() const
+    [[nodiscard]] ::std::vector<uint32> GetActiveCooldowns() const
     {
-        std::vector<uint32> active;
+        ::std::vector<uint32> active;
         for (const auto& [spellId, cd] : _cooldowns)
         {
             if (cd.remaining > 0 || cd.chargesAvail < cd.chargesMax)
@@ -307,7 +307,7 @@ public:
     }
 
 private:
-    std::unordered_map<uint32, CooldownInfo> _cooldowns;
+    ::std::unordered_map<uint32, CooldownInfo> _cooldowns;
 };
 
 // ============================================================================

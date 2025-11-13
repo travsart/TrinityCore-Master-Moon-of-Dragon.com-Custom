@@ -47,10 +47,10 @@ QuestManager* LazyManagerFactory::GetQuestManager()
     return GetOrCreate<QuestManager>(
         _questManager,
         _questManagerInit,
-        [this]() -> std::unique_ptr<QuestManager> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<QuestManager> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating QuestManager for bot {}", _bot->GetName());
-            auto manager = std::make_unique<QuestManager>(_bot, _ai);
+            auto manager = ::std::make_unique<QuestManager>(_bot, _ai);
             // Initialize manager (calls OnInitialize())
             if (!manager->Initialize())
             {
@@ -58,8 +58,8 @@ QuestManager* LazyManagerFactory::GetQuestManager()
                 return nullptr;
             }
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
 
             RecordInitTime("QuestManager", duration);
             TC_LOG_INFO("module.playerbot.lazy", " QuestManager created for bot {} in {}ms", _bot->GetName(), duration.count());
@@ -74,18 +74,18 @@ TradeManager* LazyManagerFactory::GetTradeManager()
     return GetOrCreate<TradeManager>(
         _tradeManager,
         _tradeManagerInit,
-        [this]() -> std::unique_ptr<TradeManager> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<TradeManager> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating TradeManager for bot {}", _bot->GetName());
-            auto manager = std::make_unique<TradeManager>(_bot, _ai);
+            auto manager = ::std::make_unique<TradeManager>(_bot, _ai);
             if (!manager->Initialize())
             {
                 TC_LOG_ERROR("module.playerbot.lazy", "Failed to initialize TradeManager for bot {}", _bot->GetName());
                 return nullptr;
             }
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
 
             RecordInitTime("TradeManager", duration);
             TC_LOG_INFO("module.playerbot.lazy", " TradeManager created for bot {} in {}ms", _bot->GetName(), duration.count());
@@ -100,18 +100,18 @@ GatheringManager* LazyManagerFactory::GetGatheringManager()
     return GetOrCreate<GatheringManager>(
         _gatheringManager,
         _gatheringManagerInit,
-        [this]() -> std::unique_ptr<GatheringManager> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<GatheringManager> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating GatheringManager for bot {}", _bot->GetName());
-            auto manager = std::make_unique<GatheringManager>(_bot, _ai);
+            auto manager = ::std::make_unique<GatheringManager>(_bot, _ai);
             if (!manager->Initialize())
             {
                 TC_LOG_ERROR("module.playerbot.lazy", "Failed to initialize GatheringManager for bot {}", _bot->GetName());
                 return nullptr;
             }
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
             RecordInitTime("GatheringManager", duration);
             TC_LOG_INFO("module.playerbot.lazy", " GatheringManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
@@ -125,18 +125,18 @@ AuctionManager* LazyManagerFactory::GetAuctionManager()
     return GetOrCreate<AuctionManager>(
         _auctionManager,
         _auctionManagerInit,
-        [this]() -> std::unique_ptr<AuctionManager> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<AuctionManager> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating AuctionManager for bot {}", _bot->GetName());
-            auto manager = std::make_unique<AuctionManager>(_bot, _ai);
+            auto manager = ::std::make_unique<AuctionManager>(_bot, _ai);
             if (!manager->Initialize())
             {
                 TC_LOG_ERROR("module.playerbot.lazy", "Failed to initialize AuctionManager for bot {}", _bot->GetName());
                 return nullptr;
             }
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
 
             RecordInitTime("AuctionManager", duration);
             TC_LOG_INFO("module.playerbot.lazy", " AuctionManager created for bot {} in {}ms", _bot->GetName(), duration.count());
@@ -151,15 +151,15 @@ GroupCoordinator* LazyManagerFactory::GetGroupCoordinator()
     return GetOrCreate<GroupCoordinator>(
         _groupCoordinator,
         _groupCoordinatorInit,
-        [this]() -> std::unique_ptr<GroupCoordinator> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<GroupCoordinator> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating GroupCoordinator for bot {}", _bot->GetName());
-            auto manager = std::make_unique<GroupCoordinator>(_bot, _ai);
+            auto manager = ::std::make_unique<GroupCoordinator>(_bot, _ai);
             // Initialize() returns void, just call it
             manager->Initialize();
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
 
             RecordInitTime("GroupCoordinator", duration);
             TC_LOG_INFO("module.playerbot.lazy", " GroupCoordinator created for bot {} in {}ms", _bot->GetName(), duration.count());
@@ -174,14 +174,14 @@ DeathRecoveryManager* LazyManagerFactory::GetDeathRecoveryManager()
     return GetOrCreate<DeathRecoveryManager>(
         _deathRecoveryManager,
         _deathRecoveryManagerInit,
-        [this]() -> std::unique_ptr<DeathRecoveryManager> {
-            auto start = std::chrono::steady_clock::now();
+        [this]() -> ::std::unique_ptr<DeathRecoveryManager> {
+            auto start = ::std::chrono::steady_clock::now();
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating DeathRecoveryManager for bot {}", _bot->GetName());
-            auto manager = std::make_unique<DeathRecoveryManager>(_bot, _ai);
+            auto manager = ::std::make_unique<DeathRecoveryManager>(_bot, _ai);
             // DeathRecoveryManager doesn't have Initialize() method - ready after construction
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - start);
 
             RecordInitTime("DeathRecoveryManager", duration);
             TC_LOG_INFO("module.playerbot.lazy", " DeathRecoveryManager created for bot {} in {}ms", _bot->GetName(), duration.count());
@@ -197,22 +197,22 @@ DeathRecoveryManager* LazyManagerFactory::GetDeathRecoveryManager()
 
 template<typename T>
 T* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<T>& manager,
-    std::atomic<bool>& flag,
-    std::function<std::unique_ptr<T>()> factory)
+    ::std::unique_ptr<T>& manager,
+    ::std::atomic<bool>& flag,
+    ::std::function<::std::unique_ptr<T>()> factory)
 {
     // Fast path: Check if already initialized (lock-free)
-    if (flag.load(std::memory_order_acquire))
+    if (flag.load(::std::memory_order_acquire))
     {
         return manager.get();
     }
 
     // Slow path: Need to create manager
     {
-        std::unique_lock lock(_mutex);
+        ::std::unique_lock lock(_mutex);
 
         // Double-check after acquiring lock (another thread may have created it)
-        if (flag.load(std::memory_order_relaxed))
+        if (flag.load(::std::memory_order_relaxed))
         {
             return manager.get();
         }
@@ -229,12 +229,12 @@ T* LazyManagerFactory::GetOrCreate(
             }
 
             // Mark as initialized (memory_order_release ensures all writes are visible)
-            flag.store(true, std::memory_order_release);
-            _initCount.fetch_add(1, std::memory_order_relaxed);
+            flag.store(true, ::std::memory_order_release);
+            _initCount.fetch_add(1, ::std::memory_order_relaxed);
 
             return manager.get();
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.lazy", "Exception creating manager for bot {}: {}",
                          _bot ? _bot->GetName() : "Unknown", e.what());
@@ -256,47 +256,47 @@ T* LazyManagerFactory::GetOrCreate(
 template<>
 bool LazyManagerFactory::IsInitialized<QuestManager>() const
 {
-    return _questManagerInit.load(std::memory_order_acquire);
+    return _questManagerInit.load(::std::memory_order_acquire);
 }
 
 template<>
 bool LazyManagerFactory::IsInitialized<TradeManager>() const
 {
-    return _tradeManagerInit.load(std::memory_order_acquire);
+    return _tradeManagerInit.load(::std::memory_order_acquire);
 }
 
 template<>
 bool LazyManagerFactory::IsInitialized<GatheringManager>() const
 {
-    return _gatheringManagerInit.load(std::memory_order_acquire);
+    return _gatheringManagerInit.load(::std::memory_order_acquire);
 }
 
 template<>
 bool LazyManagerFactory::IsInitialized<AuctionManager>() const
 {
-    return _auctionManagerInit.load(std::memory_order_acquire);
+    return _auctionManagerInit.load(::std::memory_order_acquire);
 }
 
 template<>
 bool LazyManagerFactory::IsInitialized<GroupCoordinator>() const
 {
-    return _groupCoordinatorInit.load(std::memory_order_acquire);
+    return _groupCoordinatorInit.load(::std::memory_order_acquire);
 }
 
 template<>
 bool LazyManagerFactory::IsInitialized<DeathRecoveryManager>() const
 {
-    return _deathRecoveryManagerInit.load(std::memory_order_acquire);
+    return _deathRecoveryManagerInit.load(::std::memory_order_acquire);
 }
 
 size_t LazyManagerFactory::GetInitializedCount() const
 {
-    return _initCount.load(std::memory_order_relaxed);
+    return _initCount.load(::std::memory_order_relaxed);
 }
 
-std::chrono::milliseconds LazyManagerFactory::GetTotalInitTime() const
+::std::chrono::milliseconds LazyManagerFactory::GetTotalInitTime() const
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     return _totalInitTime;
 }
 // ============================================================================
@@ -306,7 +306,7 @@ std::chrono::milliseconds LazyManagerFactory::GetTotalInitTime() const
 void LazyManagerFactory::Update(uint32 diff)
 {
     // Only update managers that have been initialized (zero overhead for uninit)
-    std::shared_lock lock(_mutex);
+    ::std::shared_lock lock(_mutex);
 
     if (_questManager)
         _questManager->Update(diff);
@@ -329,7 +329,7 @@ void LazyManagerFactory::Update(uint32 diff)
 
 void LazyManagerFactory::ShutdownAll()
 {
-    std::unique_lock lock(_mutex);
+    ::std::unique_lock lock(_mutex);
 
     TC_LOG_DEBUG("module.playerbot.lazy", "Shutting down {} managers for bot {}",
                  _initCount.load(), _bot ? _bot->GetName() : "Unknown");
@@ -377,13 +377,13 @@ void LazyManagerFactory::ShutdownAll()
     }
 
     // Reset flags
-    _questManagerInit.store(false, std::memory_order_release);
-    _tradeManagerInit.store(false, std::memory_order_release);
-    _gatheringManagerInit.store(false, std::memory_order_release);
-    _auctionManagerInit.store(false, std::memory_order_release);
-    _groupCoordinatorInit.store(false, std::memory_order_release);
-    _deathRecoveryManagerInit.store(false, std::memory_order_release);
-    _initCount.store(0, std::memory_order_release);
+    _questManagerInit.store(false, ::std::memory_order_release);
+    _tradeManagerInit.store(false, ::std::memory_order_release);
+    _gatheringManagerInit.store(false, ::std::memory_order_release);
+    _auctionManagerInit.store(false, ::std::memory_order_release);
+    _groupCoordinatorInit.store(false, ::std::memory_order_release);
+    _deathRecoveryManagerInit.store(false, ::std::memory_order_release);
+    _initCount.store(0, ::std::memory_order_release);
 }
 
 void LazyManagerFactory::InitializeAll()
@@ -391,7 +391,7 @@ void LazyManagerFactory::InitializeAll()
     TC_LOG_WARN("module.playerbot.lazy", "Force-initializing ALL managers for bot {} - this defeats lazy initialization!",
                 _bot ? _bot->GetName() : "Unknown");
 
-    auto start = std::chrono::steady_clock::now();
+    auto start = ::std::chrono::steady_clock::now();
 
     GetQuestManager();
     GetTradeManager();
@@ -400,8 +400,8 @@ void LazyManagerFactory::InitializeAll()
     GetGroupCoordinator();
     GetDeathRecoveryManager();
 
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start);
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+        ::std::chrono::steady_clock::now() - start);
 
     TC_LOG_INFO("module.playerbot.lazy", "All managers initialized for bot {} in {}ms (lazy init would be instant)",
                 _bot ? _bot->GetName() : "Unknown", duration.count());
@@ -411,9 +411,9 @@ void LazyManagerFactory::InitializeAll()
 // INTERNAL IMPLEMENTATION
 // ============================================================================
 
-void LazyManagerFactory::RecordInitTime(std::string const& managerName, std::chrono::milliseconds duration)
+void LazyManagerFactory::RecordInitTime(::std::string const& managerName, ::std::chrono::milliseconds duration)
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     _totalInitTime += duration;
 
     TC_LOG_DEBUG("module.playerbot.lazy", "{} initialization time: {}ms (total: {}ms)",
@@ -422,33 +422,33 @@ void LazyManagerFactory::RecordInitTime(std::string const& managerName, std::chr
 
 // Explicit template instantiations for all manager types
 template QuestManager* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<QuestManager>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<QuestManager>()>);
+    ::std::unique_ptr<QuestManager>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<QuestManager>()>);
 
 template TradeManager* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<TradeManager>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<TradeManager>()>);
+    ::std::unique_ptr<TradeManager>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<TradeManager>()>);
 
 template GatheringManager* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<GatheringManager>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<GatheringManager>()>);
+    ::std::unique_ptr<GatheringManager>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<GatheringManager>()>);
 
 template AuctionManager* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<AuctionManager>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<AuctionManager>()>);
+    ::std::unique_ptr<AuctionManager>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<AuctionManager>()>);
 
 template GroupCoordinator* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<GroupCoordinator>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<GroupCoordinator>()>);
+    ::std::unique_ptr<GroupCoordinator>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<GroupCoordinator>()>);
 
 template DeathRecoveryManager* LazyManagerFactory::GetOrCreate(
-    std::unique_ptr<DeathRecoveryManager>&,
-    std::atomic<bool>&,
-    std::function<std::unique_ptr<DeathRecoveryManager>()>);
+    ::std::unique_ptr<DeathRecoveryManager>&,
+    ::std::atomic<bool>&,
+    ::std::function<::std::unique_ptr<DeathRecoveryManager>()>);
 
 } // namespace Playerbot

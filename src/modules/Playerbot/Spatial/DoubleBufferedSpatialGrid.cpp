@@ -32,7 +32,7 @@ namespace Playerbot
 
 DoubleBufferedSpatialGrid::DoubleBufferedSpatialGrid(Map* map)
     : _map(map)
-    , _startTime(std::chrono::steady_clock::now())
+    , _startTime(::std::chrono::steady_clock::now())
 {
     ASSERT(map, "DoubleBufferedSpatialGrid requires valid Map pointer");
 
@@ -76,8 +76,8 @@ void DoubleBufferedSpatialGrid::Stop()
 
 bool DoubleBufferedSpatialGrid::ShouldUpdate() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUpdate);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdate);
     return elapsed.count() >= UPDATE_INTERVAL_MS;
 }
 
@@ -88,7 +88,7 @@ void DoubleBufferedSpatialGrid::Update() const
     // Other threads will skip if update is already in progress
 
     // Try to acquire lock (non-blocking)
-    std::unique_lock<std::mutex> lock(_updateMutex, std::try_to_lock);
+    ::std::unique_lock<::std::mutex> lock(_updateMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Another thread is already updating, skip
@@ -99,7 +99,7 @@ void DoubleBufferedSpatialGrid::Update() const
     if (!ShouldUpdate())
         return;
 
-    auto cycleStart = std::chrono::steady_clock::now();
+    auto cycleStart = ::std::chrono::steady_clock::now();
 
     try
     {
@@ -110,17 +110,17 @@ void DoubleBufferedSpatialGrid::Update() const
         const_cast<DoubleBufferedSpatialGrid*>(this)->SwapBuffers();
 
         _lastUpdate = cycleStart;
-        _totalUpdates.fetch_add(1, std::memory_order_relaxed);
+        _totalUpdates.fetch_add(1, ::std::memory_order_relaxed);
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("playerbot.spatial",
             "Exception in spatial grid update for map {}: {}",
             _map->GetId(), ex.what());
     }
 
-    auto cycleEnd = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(cycleEnd - cycleStart);
+    auto cycleEnd = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(cycleEnd - cycleStart);
 
     if (elapsed.count() > 10)  // Warn if update takes >10ms
         TC_LOG_WARN("playerbot.spatial",
@@ -130,7 +130,7 @@ void DoubleBufferedSpatialGrid::Update() const
 
 void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     auto& writeBuffer = GetWriteBuffer();
     writeBuffer.Clear();
@@ -280,7 +280,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].creatures.push_back(std::move(snapshot));
+                writeBuffer.cells[x][y].creatures.push_back(::std::move(snapshot));
                 ++creatureCount;
             }
         }
@@ -305,9 +305,9 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.guid = player->GetGUID();
         snapshot.accountId = player->GetSession()->GetAccountId();
         // Copy name to fixed-size array (POD compliance)
-        std::string playerName = player->GetName();
-        size_t copyLen = std::min(playerName.length(), snapshot.name.size() - 1);
-        std::memcpy(snapshot.name.data(), playerName.c_str(), copyLen);
+        ::std::string playerName = player->GetName();
+        size_t copyLen = ::std::min(playerName.length(), snapshot.name.size() - 1);
+        ::std::memcpy(snapshot.name.data(), playerName.c_str(), copyLen);
         snapshot.name[copyLen] = '\0';
 
         // ===== POSITION & MOVEMENT (CRITICAL) =====
@@ -415,7 +415,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].players.push_back(std::move(snapshot));
+                writeBuffer.cells[x][y].players.push_back(::std::move(snapshot));
                 ++playerCount;
             }
         }
@@ -482,7 +482,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].gameObjects.push_back(std::move(snapshot));
+                writeBuffer.cells[x][y].gameObjects.push_back(::std::move(snapshot));
                 ++gameObjectCount;
             }
         }
@@ -534,7 +534,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].dynamicObjects.push_back(std::move(snapshot));
+                writeBuffer.cells[x][y].dynamicObjects.push_back(::std::move(snapshot));
                 ++dynamicObjectCount;
             }
         }
@@ -584,13 +584,13 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         // Visit the shape variant to extract proper data
         areaTrigger->m_areaTriggerData->ShapeData.Visit([&snapshot](auto const& shape)
         {
-            using ShapeType = std::decay_t<decltype(shape)>;
-            if constexpr (std::is_same_v<ShapeType, UF::AreaTriggerSphere>)
+            using ShapeType = ::std::decay_t<decltype(shape)>;
+            if constexpr (::std::is_same_v<ShapeType, UF::AreaTriggerSphere>)
             {
                 snapshot.shapeType = 0;  // Sphere
                 snapshot.sphereRadius = shape.Radius;
             }
-            else if constexpr (std::is_same_v<ShapeType, UF::AreaTriggerBox>)
+            else if constexpr (::std::is_same_v<ShapeType, UF::AreaTriggerBox>)
             {
                 snapshot.shapeType = 1;  // Box
                 // Extents is an UpdateField<TaggedPosition<Position::XYZ>> - access via .Pos member
@@ -616,7 +616,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
             {
-                writeBuffer.cells[x][y].areaTriggers.push_back(std::move(snapshot));
+                writeBuffer.cells[x][y].areaTriggers.push_back(::std::move(snapshot));
                 ++areaTriggerCount;
             }
         }
@@ -624,11 +624,11 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
 
     writeBuffer.populationCount = creatureCount + playerCount + gameObjectCount +
                                    dynamicObjectCount + areaTriggerCount;
-    writeBuffer.lastUpdate = std::chrono::steady_clock::now();
+    writeBuffer.lastUpdate = ::std::chrono::steady_clock::now();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    _lastUpdateDurationUs.store(static_cast<uint32>(duration.count()), std::memory_order_relaxed);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
+    _lastUpdateDurationUs.store(static_cast<uint32>(duration.count()), ::std::memory_order_relaxed);
 
     TC_LOG_TRACE("playerbot.spatial",
         "PopulateBufferFromMap: map {} - {} creatures, {} players, {} gameobjects, {} dynobjects, {} areatriggers in {}?s",
@@ -637,10 +637,10 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
 
 void DoubleBufferedSpatialGrid::SwapBuffers()
 {
-    uint32 oldIndex = _readBufferIndex.load(std::memory_order_relaxed);
-    _readBufferIndex.store(1 - oldIndex, std::memory_order_release);
+    uint32 oldIndex = _readBufferIndex.load(::std::memory_order_relaxed);
+    _readBufferIndex.store(1 - oldIndex, ::std::memory_order_release);
 
-    _totalSwaps.fetch_add(1, std::memory_order_relaxed);
+    _totalSwaps.fetch_add(1, ::std::memory_order_relaxed);
 
     TC_LOG_TRACE("playerbot.spatial",
         "SwapBuffers: map {} - Read buffer now {}, swap #{}",
@@ -654,12 +654,12 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
 // Worker threads can use this data directly without ANY Map/ObjectAccessor calls!
 // ===========================================================================
 
-std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> DoubleBufferedSpatialGrid::QueryNearbyCreatures(
+::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> DoubleBufferedSpatialGrid::QueryNearbyCreatures(
     Position const& pos, float radius) const
 {
-    _totalQueries.fetch_add(1, std::memory_order_relaxed);
+    _totalQueries.fetch_add(1, ::std::memory_order_relaxed);
 
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> results;
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> results;
     auto const& readBuffer = GetReadBuffer();
 
     // Get all cells within radius
@@ -693,12 +693,12 @@ std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> DoubleBufferedSpatialGr
     return results;
 }
 
-std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> DoubleBufferedSpatialGrid::QueryNearbyPlayers(
+::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> DoubleBufferedSpatialGrid::QueryNearbyPlayers(
     Position const& pos, float radius) const
 {
-    _totalQueries.fetch_add(1, std::memory_order_relaxed);
+    _totalQueries.fetch_add(1, ::std::memory_order_relaxed);
 
-    std::vector<PlayerSnapshot> results;
+    ::std::vector<PlayerSnapshot> results;
     auto const& readBuffer = GetReadBuffer();
     auto cells = GetCellsInRadius(pos, radius);
     float radiusSq = radius * radius;
@@ -728,12 +728,12 @@ std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> DoubleBufferedSpatialGrid
     return results;
 }
 
-std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> DoubleBufferedSpatialGrid::QueryNearbyGameObjects(
+::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> DoubleBufferedSpatialGrid::QueryNearbyGameObjects(
     Position const& pos, float radius) const
 {
-    _totalQueries.fetch_add(1, std::memory_order_relaxed);
+    _totalQueries.fetch_add(1, ::std::memory_order_relaxed);
 
-    std::vector<GameObjectSnapshot> results;
+    ::std::vector<GameObjectSnapshot> results;
     auto const& readBuffer = GetReadBuffer();
     auto cells = GetCellsInRadius(pos, radius);
     float radiusSq = radius * radius;
@@ -763,12 +763,12 @@ std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> DoubleBufferedSpatial
     return results;
 }
 
-std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> DoubleBufferedSpatialGrid::QueryNearbyAreaTriggers(
+::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> DoubleBufferedSpatialGrid::QueryNearbyAreaTriggers(
     Position const& pos, float radius) const
 {
-    _totalQueries.fetch_add(1, std::memory_order_relaxed);
+    _totalQueries.fetch_add(1, ::std::memory_order_relaxed);
 
-    std::vector<AreaTriggerSnapshot> results;
+    ::std::vector<AreaTriggerSnapshot> results;
     auto const& readBuffer = GetReadBuffer();
     auto cells = GetCellsInRadius(pos, radius);
     float radiusSq = radius * radius;
@@ -798,12 +798,12 @@ std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> DoubleBufferedSpatia
     return results;
 }
 
-std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> DoubleBufferedSpatialGrid::QueryNearbyDynamicObjects(
+::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> DoubleBufferedSpatialGrid::QueryNearbyDynamicObjects(
     Position const& pos, float radius) const
 {
-    _totalQueries.fetch_add(1, std::memory_order_relaxed);
+    _totalQueries.fetch_add(1, ::std::memory_order_relaxed);
 
-    std::vector<DynamicObjectSnapshot> results;
+    ::std::vector<DynamicObjectSnapshot> results;
     auto const& readBuffer = GetReadBuffer();
     auto cells = GetCellsInRadius(pos, radius);
     float radiusSq = radius * radius;
@@ -840,33 +840,33 @@ std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> DoubleBufferedSpat
 // existing code. NEW CODE SHOULD USE SNAPSHOT QUERIES ABOVE!
 // ===========================================================================
 
-std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyCreatureGuids(
+::std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyCreatureGuids(
     Position const& pos, float radius) const
 {
     auto snapshots = QueryNearbyCreatures(pos, radius);
-    std::vector<ObjectGuid> guids;
+    ::std::vector<ObjectGuid> guids;
     guids.reserve(snapshots.size());
     for (auto const& snapshot : snapshots)
         guids.push_back(snapshot.guid);
     return guids;
 }
 
-std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyPlayerGuids(
+::std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyPlayerGuids(
     Position const& pos, float radius) const
 {
     auto snapshots = QueryNearbyPlayers(pos, radius);
-    std::vector<ObjectGuid> guids;
+    ::std::vector<ObjectGuid> guids;
     guids.reserve(snapshots.size());
     for (auto const& snapshot : snapshots)
         guids.push_back(snapshot.guid);
     return guids;
 }
 
-std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyGameObjectGuids(
+::std::vector<ObjectGuid> DoubleBufferedSpatialGrid::QueryNearbyGameObjectGuids(
     Position const& pos, float radius) const
 {
     auto snapshots = QueryNearbyGameObjects(pos, radius);
-    std::vector<ObjectGuid> guids;
+    ::std::vector<ObjectGuid> guids;
     guids.reserve(snapshots.size());
     for (auto const& snapshot : snapshots)
         guids.push_back(snapshot.guid);
@@ -888,10 +888,10 @@ DoubleBufferedSpatialGrid::CellContents const& DoubleBufferedSpatialGrid::GetCel
 DoubleBufferedSpatialGrid::Statistics DoubleBufferedSpatialGrid::GetStatistics() const
 {
     Statistics stats;
-    stats.totalQueries = _totalQueries.load(std::memory_order_relaxed);
-    stats.totalUpdates = _totalUpdates.load(std::memory_order_relaxed);
-    stats.totalSwaps = _totalSwaps.load(std::memory_order_relaxed);
-    stats.lastUpdateDurationUs = _lastUpdateDurationUs.load(std::memory_order_relaxed);
+    stats.totalQueries = _totalQueries.load(::std::memory_order_relaxed);
+    stats.totalUpdates = _totalUpdates.load(::std::memory_order_relaxed);
+    stats.totalSwaps = _totalSwaps.load(::std::memory_order_relaxed);
+    stats.lastUpdateDurationUs = _lastUpdateDurationUs.load(::std::memory_order_relaxed);
     stats.currentPopulation = GetReadBuffer().populationCount;
     stats.startTime = _startTime;
 
@@ -903,7 +903,7 @@ uint32 DoubleBufferedSpatialGrid::GetPopulationCount() const
     return GetReadBuffer().populationCount;
 }
 
-std::pair<uint32, uint32> DoubleBufferedSpatialGrid::GetCellCoords(Position const& pos) const
+::std::pair<uint32, uint32> DoubleBufferedSpatialGrid::GetCellCoords(Position const& pos) const
 {
     // TrinityCore coordinate system:
     // Map center is at (0, 0)
@@ -916,24 +916,24 @@ std::pair<uint32, uint32> DoubleBufferedSpatialGrid::GetCellCoords(Position cons
     float y = (pos.GetPositionY() + MAP_HALF_SIZE) / CELL_SIZE;
 
     // Clamp to valid range
-    uint32 cellX = static_cast<uint32>(std::clamp(x, 0.0f, static_cast<float>(TOTAL_CELLS - 1)));
-    uint32 cellY = static_cast<uint32>(std::clamp(y, 0.0f, static_cast<float>(TOTAL_CELLS - 1)));
+    uint32 cellX = static_cast<uint32>(::std::clamp(x, 0.0f, static_cast<float>(TOTAL_CELLS - 1)));
+    uint32 cellY = static_cast<uint32>(::std::clamp(y, 0.0f, static_cast<float>(TOTAL_CELLS - 1)));
 
     return {cellX, cellY};
 }
 
-std::vector<std::pair<uint32, uint32>> DoubleBufferedSpatialGrid::GetCellsInRadius(
+::std::vector<::std::pair<uint32, uint32>> DoubleBufferedSpatialGrid::GetCellsInRadius(
     Position const& center, float radius) const
 {
-    std::vector<std::pair<uint32, uint32>> cells;
+    ::std::vector<::std::pair<uint32, uint32>> cells;
 
     auto [centerX, centerY] = GetCellCoords(center);
-    uint32 cellRadius = static_cast<uint32>(std::ceil(radius / CELL_SIZE)) + 1; // +1 for safety
+    uint32 cellRadius = static_cast<uint32>(::std::ceil(radius / CELL_SIZE)) + 1; // +1 for safety
 
     uint32 minX = (centerX > cellRadius) ? (centerX - cellRadius) : 0;
-    uint32 maxX = std::min(TOTAL_CELLS - 1, centerX + cellRadius);
+    uint32 maxX = ::std::min(TOTAL_CELLS - 1, centerX + cellRadius);
     uint32 minY = (centerY > cellRadius) ? (centerY - cellRadius) : 0;
-    uint32 maxY = std::min(TOTAL_CELLS - 1, centerY + cellRadius);
+    uint32 maxY = ::std::min(TOTAL_CELLS - 1, centerY + cellRadius);
 
     // Reserve space for efficiency
     cells.reserve((maxX - minX + 1) * (maxY - minY + 1));

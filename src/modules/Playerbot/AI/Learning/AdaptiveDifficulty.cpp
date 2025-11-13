@@ -56,7 +56,7 @@ float PerformanceWindow::GetBalance() const
 
     float winRate = GetWinRate();
     // Balance is highest at 50% win rate
-    return 1.0f - std::abs(winRate - 0.5f) * 2.0f;
+    return 1.0f - ::std::abs(winRate - 0.5f) * 2.0f;
 }
 
 // DifficultyCurve Implementation
@@ -70,8 +70,8 @@ DifficultyCurve::~DifficultyCurve() = default;
 void DifficultyCurve::AddDataPoint(float playerSkill, float optimalDifficulty)
 {
     DataPoint point;
-    point.skill = std::clamp(playerSkill, 0.0f, 1.0f);
-    point.difficulty = std::clamp(optimalDifficulty, 0.0f, 1.0f);
+    point.skill = ::std::clamp(playerSkill, 0.0f, 1.0f);
+    point.difficulty = ::std::clamp(optimalDifficulty, 0.0f, 1.0f);
     point.weight = 1.0f;
 
     _dataPoints.push_back(point);
@@ -91,12 +91,12 @@ void DifficultyCurve::AddDataPoint(float playerSkill, float optimalDifficulty)
 
 float DifficultyCurve::GetDifficulty(float playerSkill) const
 {
-    playerSkill = std::clamp(playerSkill, 0.0f, 1.0f);
+    playerSkill = ::std::clamp(playerSkill, 0.0f, 1.0f);
 
     if (!_fitted || _dataPoints.size() < MIN_POINTS_FOR_TRAINING)
     {
         // Default linear progression
-        return std::clamp(playerSkill, 0.1f, 0.9f);
+        return ::std::clamp(playerSkill, 0.1f, 0.9f);
     }
 
     return Interpolate(playerSkill);
@@ -130,7 +130,7 @@ void DifficultyCurve::FitCurve()
     float numerator = sumXY - sumX * sumY / sumW;
     float denominator = sumX2 - sumX * sumX / sumW;
 
-    if (std::abs(denominator) < 0.0001f)
+    if (::std::abs(denominator) < 0.0001f)
     {
         _slope = 0.0f;
         _intercept = meanY;
@@ -142,14 +142,14 @@ void DifficultyCurve::FitCurve()
     }
 
     // Constrain slope to reasonable values
-    _slope = std::clamp(_slope, 0.5f, 2.0f);
+    _slope = ::std::clamp(_slope, 0.5f, 2.0f);
     _fitted = true;
 }
 
 float DifficultyCurve::Interpolate(float skill) const
 {
     float difficulty = _slope * skill + _intercept;
-    return std::clamp(difficulty, 0.0f, 1.0f);
+    return ::std::clamp(difficulty, 0.0f, 1.0f);
 }
 
 void DifficultyCurve::Smooth(float smoothingFactor)
@@ -157,7 +157,7 @@ void DifficultyCurve::Smooth(float smoothingFactor)
     if (_dataPoints.size() < 2)
         return;
 
-    smoothingFactor = std::clamp(smoothingFactor, 0.0f, 1.0f);
+    smoothingFactor = ::std::clamp(smoothingFactor, 0.0f, 1.0f);
 
     // Apply exponential smoothing to data points
     for (size_t i = 1; i < _dataPoints.size(); ++i)
@@ -179,7 +179,7 @@ PlayerSkillProfile::PlayerSkillProfile(ObjectGuid playerGuid)
     , _consecutiveWins(0)
     , _consecutiveLosses(0)
 {
-    _lastUpdate = std::chrono::steady_clock::now();
+    _lastUpdate = ::std::chrono::steady_clock::now();
     _profileCreated = _lastUpdate;
 }
 
@@ -197,7 +197,7 @@ void PlayerSkillProfile::UpdateSkillIndicators(const SkillIndicators& indicators
     CalculateEngagement();
     CalculateFrustration();
 
-    _lastUpdate = std::chrono::steady_clock::now();
+    _lastUpdate = ::std::chrono::steady_clock::now();
 }
 
 float PlayerSkillProfile::GetSkillLevel() const
@@ -211,7 +211,7 @@ float PlayerSkillProfile::GetSkillTrend() const
         return 0.0f;
 
     // Calculate trend using recent skill levels
-    std::vector<float> recentSkills;
+    ::std::vector<float> recentSkills;
     for (const auto& indicators : _skillHistory)
         recentSkills.push_back(indicators.GetOverallSkill());
 
@@ -247,7 +247,7 @@ void PlayerSkillProfile::RecordEngagement(bool playerWon, float duration)
     }
 
     // Update performance window
-    auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+    auto now = ::std::chrono::steady_clock::now().time_since_epoch().count();
 
     if (_performanceHistory.empty() ||
         _performanceHistory.back().endTime + 300000000 < now)  // New window every 5 minutes
@@ -292,7 +292,7 @@ float PlayerSkillProfile::GetRecommendedDifficulty() const
     if (_consecutiveLosses > 3)
         recommendedDifficulty -= 0.05f * (_consecutiveLosses - 3);
 
-    return std::clamp(recommendedDifficulty, 0.1f, 0.9f);
+    return ::std::clamp(recommendedDifficulty, 0.1f, 0.9f);
 }
 
 void PlayerSkillProfile::CalculateFrustration()
@@ -302,7 +302,7 @@ void PlayerSkillProfile::CalculateFrustration()
     // Consecutive losses increase frustration
     if (_consecutiveLosses > 0)
     {
-        frustration += std::min(1.0f, _consecutiveLosses / static_cast<float>(FRUSTRATION_THRESHOLD));
+        frustration += ::std::min(1.0f, _consecutiveLosses / static_cast<float>(FRUSTRATION_THRESHOLD));
     }
 
     // Recent performance affects frustration
@@ -315,7 +315,7 @@ void PlayerSkillProfile::CalculateFrustration()
             frustration += (0.3f - winRate) * 2.0f;
     }
 
-    _frustrationLevel = std::clamp(frustration, 0.0f, 1.0f);
+    _frustrationLevel = ::std::clamp(frustration, 0.0f, 1.0f);
 }
 
 void PlayerSkillProfile::CalculateEngagement()
@@ -341,7 +341,7 @@ void PlayerSkillProfile::CalculateEngagement()
     if (trend > 0)
         engagement += trend * 10.0f;  // Scale trend to meaningful range
 
-    _engagementLevel = std::clamp(engagement, 0.0f, 1.0f);
+    _engagementLevel = ::std::clamp(engagement, 0.0f, 1.0f);
 }
 
 void PlayerSkillProfile::UpdateSkillLevel()
@@ -351,7 +351,7 @@ void PlayerSkillProfile::UpdateSkillLevel()
 
     // Average of recent skill indicators
     float totalSkill = 0.0f;
-    size_t count = std::min<size_t>(10, _skillHistory.size());
+    size_t count = ::std::min<size_t>(10, _skillHistory.size());
 
     for (size_t i = _skillHistory.size() - count; i < _skillHistory.size(); ++i)
     {
@@ -400,7 +400,7 @@ AdaptiveDifficulty::DifficultySettings::DifficultySettings()
 
 void AdaptiveDifficulty::DifficultySettings::ApplyDifficulty(float difficulty)
 {
-    difficulty = std::clamp(difficulty, 0.0f, 1.0f);
+    difficulty = ::std::clamp(difficulty, 0.0f, 1.0f);
 
     // Map difficulty to various parameters
     reactionTimeMultiplier = 2.0f - 1.5f * difficulty;  // 2.0 at diff 0, 0.5 at diff 1
@@ -417,7 +417,7 @@ void AdaptiveDifficulty::DifficultySettings::ApplyDifficulty(float difficulty)
 
 void AdaptiveDifficulty::DifficultySettings::ApplyAspect(DifficultyAspect aspect, float value)
 {
-    value = std::clamp(value, 0.0f, 1.0f);
+    value = ::std::clamp(value, 0.0f, 1.0f);
 
     switch (aspect)
     {
@@ -482,8 +482,8 @@ void AdaptiveDifficulty::Shutdown()
 
     TC_LOG_INFO("playerbot.difficulty", "Shutting down Adaptive Difficulty System");
 
-    std::lock_guard profileLock(_profilesMutex);
-    std::lock_guard difficultyLock(_botDifficultyMutex);
+    ::std::lock_guard profileLock(_profilesMutex);
+    ::std::lock_guard difficultyLock(_botDifficultyMutex);
 
     _playerProfiles.clear();
     _botDifficulties.clear();
@@ -498,20 +498,20 @@ void AdaptiveDifficulty::CreatePlayerProfile(Player* player)
         return;
 
     ObjectGuid guid = player->GetGUID();
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     if (_playerProfiles.find(guid) == _playerProfiles.end())
     {
-        auto profile = std::make_shared<PlayerSkillProfile>(guid);
+        auto profile = ::std::make_shared<PlayerSkillProfile>(guid);
         _playerProfiles[guid] = profile;
-        _difficultyCurves[guid] = std::make_unique<DifficultyCurve>(DEFAULT_DIFFICULTY);
+        _difficultyCurves[guid] = ::std::make_unique<DifficultyCurve>(DEFAULT_DIFFICULTY);
         _metrics.profilesTracked++;
     }
 }
 
-std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetPlayerProfile(ObjectGuid guid) const
+::std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetPlayerProfile(ObjectGuid guid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     auto it = _playerProfiles.find(guid);
     if (it != _playerProfiles.end())
@@ -597,9 +597,9 @@ void AdaptiveDifficulty::SetBotDifficulty(BotAI* bot, float difficulty)
     if (!bot)
         return;
 
-    difficulty = std::clamp(difficulty, MIN_DIFFICULTY, MAX_DIFFICULTY);
+    difficulty = ::std::clamp(difficulty, MIN_DIFFICULTY, MAX_DIFFICULTY);
 
-    std::lock_guard lock(_botDifficultyMutex);
+    ::std::lock_guard lock(_botDifficultyMutex);
 
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     DifficultySettings settings;
@@ -613,7 +613,7 @@ float AdaptiveDifficulty::GetBotDifficulty(BotAI* bot) const
     if (!bot)
         return DEFAULT_DIFFICULTY;
 
-    std::lock_guard lock(_botDifficultyMutex);
+    ::std::lock_guard lock(_botDifficultyMutex);
 
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     auto it = _botDifficulties.find(botId);
@@ -675,7 +675,7 @@ void AdaptiveDifficulty::OptimizeForFlow(BotAI* bot, Player* player)
         optimalDifficulty += 0.05f;
 
     // Ensure challenge is neither too easy nor too hard
-    optimalDifficulty = std::clamp(optimalDifficulty, playerSkill - 0.15f, playerSkill + 0.15f);
+    optimalDifficulty = ::std::clamp(optimalDifficulty, playerSkill - 0.15f, playerSkill + 0.15f);
     SetBotDifficulty(bot, optimalDifficulty);
 
     // Record flow state achievement
@@ -751,16 +751,16 @@ float AdaptiveDifficulty::GetOptimalDifficulty(ObjectGuid playerGuid, float curr
     return currentSkill;  // Default to matching skill level
 }
 
-std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetOrCreateProfile(ObjectGuid guid)
+::std::shared_ptr<PlayerSkillProfile> AdaptiveDifficulty::GetOrCreateProfile(ObjectGuid guid)
 {
     auto profile = GetPlayerProfile(guid);
     if (!profile)
     {
         // Create profile if it doesn't exist
-        std::lock_guard lock(_profilesMutex);
-        profile = std::make_shared<PlayerSkillProfile>(guid);
+        ::std::lock_guard lock(_profilesMutex);
+        profile = ::std::make_shared<PlayerSkillProfile>(guid);
         _playerProfiles[guid] = profile;
-        _difficultyCurves[guid] = std::make_unique<DifficultyCurve>(DEFAULT_DIFFICULTY);
+        _difficultyCurves[guid] = ::std::make_unique<DifficultyCurve>(DEFAULT_DIFFICULTY);
         _metrics.profilesTracked++;
     }
     return profile;
@@ -773,7 +773,7 @@ void AdaptiveDifficulty::ApplyPreset(BotAI* bot, DifficultyPreset preset)
 
     DifficultySettings settings = GetPresetSettings(preset);
 
-    std::lock_guard lock(_botDifficultyMutex);
+    ::std::lock_guard lock(_botDifficultyMutex);
     uint32_t botId = bot->GetBot()->GetGUID().GetCounter();
     _botDifficulties[botId] = settings;
 }
@@ -817,7 +817,7 @@ ScopedDifficultyAdjustment::ScopedDifficultyAdjustment(BotAI* bot, Player* playe
     , _totalReactionTime(0)
     , _reactionSamples(0)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
     _initialDifficulty = sAdaptiveDifficulty.GetBotDifficulty(bot);
 }
 
@@ -825,8 +825,8 @@ ScopedDifficultyAdjustment::~ScopedDifficultyAdjustment()
 {
     if (_bot && _player)
     {
-        auto endTime = std::chrono::steady_clock::now();
-        float duration = std::chrono::duration<float>(endTime - _startTime).count();
+        auto endTime = ::std::chrono::steady_clock::now();
+        float duration = ::std::chrono::duration<float>(endTime - _startTime).count();
 
         // Update player skill indicators
         SkillIndicators indicators = sAdaptiveDifficulty.CalculateSkillIndicators(_player);
@@ -861,8 +861,8 @@ void ScopedDifficultyAdjustment::MarkCombatEnd(bool playerWon)
 {
     if (_bot && _player)
     {
-        auto endTime = std::chrono::steady_clock::now();
-        float duration = std::chrono::duration<float>(endTime - _startTime).count();
+        auto endTime = ::std::chrono::steady_clock::now();
+        float duration = ::std::chrono::duration<float>(endTime - _startTime).count();
 
         sAdaptiveDifficulty.RecordCombatOutcome(_player, _bot, playerWon, duration);
     }

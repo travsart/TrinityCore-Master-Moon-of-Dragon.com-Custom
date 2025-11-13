@@ -48,23 +48,23 @@ public:
      * @param bot Player bot to create AI for
      * @return Unique pointer to specialized AI instance, nullptr on failure
      */
-    static std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot);
+    static ::std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot);
 
 private:
     // Class-specific factory methods
-    static std::unique_ptr<BotAI> CreateWarriorAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreatePaladinAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateHunterAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateRogueAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreatePriestAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateDeathKnightAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateShamanAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateMageAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateWarlockAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateMonkAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateDruidAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateDemonHunterAI(Player* bot, uint8 specId);
-    static std::unique_ptr<BotAI> CreateEvokerAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateWarriorAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreatePaladinAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateHunterAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateRogueAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreatePriestAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateDeathKnightAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateShamanAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateMageAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateWarlockAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateMonkAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateDruidAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateDemonHunterAI(Player* bot, uint8 specId);
+    static ::std::unique_ptr<BotAI> CreateEvokerAI(Player* bot, uint8 specId);
 };
 
 } // namespace Playerbot

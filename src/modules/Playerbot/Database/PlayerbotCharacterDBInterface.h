@@ -67,7 +67,7 @@ namespace Playerbot
          * @param timeoutMs Maximum execution time in milliseconds
          */
         void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
-                         std::function<void(PreparedQueryResult)> callback = nullptr,
+                         ::std::function<void(PreparedQueryResult)> callback = nullptr,
                          uint32 timeoutMs = 10000);
 
         /**
@@ -77,7 +77,7 @@ namespace Playerbot
          * @return Callback handle for async processing
          */
         template<typename T>
-        SQLQueryHolderCallback DelayQueryHolder(std::shared_ptr<T> holder);
+        SQLQueryHolderCallback DelayQueryHolder(::std::shared_ptr<T> holder);
 
         /**
          * Execute synchronous query with safety checks
@@ -104,7 +104,7 @@ namespace Playerbot
          * @param sql The SQL query to execute
          * @return True if successful
          */
-        bool ExecuteDirectSQL(std::string const& sql) override;
+        bool ExecuteDirectSQL(::std::string const& sql) override;
 
         // === Context Detection ===
 
@@ -125,20 +125,20 @@ namespace Playerbot
          * Get the main thread ID for context detection
          * @return Main thread ID
          */
-        std::thread::id GetMainThreadId() const override { return _mainThreadId; }
+        ::std::thread::id GetMainThreadId() const override { return _mainThreadId; }
 
         // === Performance Metrics ===
 
         struct Metrics
         {
-            std::atomic<uint64> totalQueries{0};
-            std::atomic<uint64> syncQueries{0};
-            std::atomic<uint64> asyncQueries{0};
-            std::atomic<uint64> routedQueries{0};
-            std::atomic<uint64> errors{0};
-            std::atomic<uint64> timeouts{0};
-            std::atomic<uint32> avgResponseTimeMs{0};
-            std::atomic<uint32> maxResponseTimeMs{0};
+            ::std::atomic<uint64> totalQueries{0};
+            ::std::atomic<uint64> syncQueries{0};
+            ::std::atomic<uint64> asyncQueries{0};
+            ::std::atomic<uint64> routedQueries{0};
+            ::std::atomic<uint64> errors{0};
+            ::std::atomic<uint64> timeouts{0};
+            ::std::atomic<uint32> avgResponseTimeMs{0};
+            ::std::atomic<uint32> maxResponseTimeMs{0};
 
             void Reset()
             {
@@ -192,7 +192,7 @@ namespace Playerbot
          * @return True if routed successfully
          */
         bool RouteQuery(CharacterDatabasePreparedStatement* stmt,
-                       std::function<void(PreparedQueryResult)> callback,
+                       ::std::function<void(PreparedQueryResult)> callback,
                        bool forceSync = false);
 
         /**
@@ -201,7 +201,7 @@ namespace Playerbot
          * @param callback Result callback
          */
         void ExecuteSyncFromAsync(CharacterDatabasePreparedStatement* stmt,
-                                 std::function<void(PreparedQueryResult)> callback);
+                                 ::std::function<void(PreparedQueryResult)> callback);
 
         /**
          * Process sync queue on main thread
@@ -229,10 +229,10 @@ namespace Playerbot
         struct SyncRequest
         {
             CharacterDatabasePreparedStatement* statement;
-            std::function<void(PreparedQueryResult)> callback;
-            std::chrono::steady_clock::time_point submitTime;
+            ::std::function<void(PreparedQueryResult)> callback;
+            ::std::chrono::steady_clock::time_point submitTime;
             uint32 timeoutMs;
-            std::condition_variable* completionSignal;
+            ::std::condition_variable* completionSignal;
             PreparedQueryResult* result;
             bool completed;
 
@@ -242,33 +242,33 @@ namespace Playerbot
 
         // === Member Variables ===
 
-        std::atomic<bool> _initialized{false};
-        std::atomic<bool> _shutdown{false};
+        ::std::atomic<bool> _initialized{false};
+        ::std::atomic<bool> _shutdown{false};
 
         // Statement classification
-        std::unique_ptr<StatementClassifier> _classifier;
-        std::unordered_set<uint32> _syncOnlyStatements;
-        std::unordered_map<uint32, std::string> _statementNames;
+        ::std::unique_ptr<StatementClassifier> _classifier;
+        ::std::unordered_set<uint32> _syncOnlyStatements;
+        ::std::unordered_map<uint32, ::std::string> _statementNames;
 
         // Sync queue for async-to-sync bridge
-        std::queue<std::shared_ptr<SyncRequest>> _syncQueue;
-        mutable std::recursive_mutex _syncQueueMutex;
-        std::condition_variable _syncQueueCV;
+        ::std::queue<::std::shared_ptr<SyncRequest>> _syncQueue;
+        mutable ::std::recursive_mutex _syncQueueMutex;
+        ::std::condition_variable _syncQueueCV;
 
         // Thread tracking
-        std::thread::id _mainThreadId;
-        std::unordered_set<std::thread::id> _asyncThreadIds;
-        mutable std::recursive_mutex _threadMutex;
+        ::std::thread::id _mainThreadId;
+        ::std::unordered_set<::std::thread::id> _asyncThreadIds;
+        mutable ::std::recursive_mutex _threadMutex;
 
         // Metrics
         mutable Metrics _metrics;
-        std::chrono::steady_clock::time_point _startTime;
+        ::std::chrono::steady_clock::time_point _startTime;
 
         // Configuration
         Config _config;
 
         // Safe execution engine
-        std::unique_ptr<SafeExecutionEngine> _executionEngine;
+        ::std::unique_ptr<SafeExecutionEngine> _executionEngine;
     };
 
     /**
@@ -290,14 +290,14 @@ namespace Playerbot
 
         void Initialize();
         StatementType ClassifyStatement(uint32 statementId) const;
-        std::string GetStatementName(uint32 statementId) const;
+        ::std::string GetStatementName(uint32 statementId) const;
 
     private:
         void LoadSyncOnlyStatements();
         void LoadAsyncSafeStatements();
 
-        std::unordered_map<uint32, StatementType> _statementTypes;
-        std::unordered_map<uint32, std::string> _statementNames;
+        ::std::unordered_map<uint32, StatementType> _statementTypes;
+        ::std::unordered_map<uint32, ::std::string> _statementNames;
     };
 
     /**
@@ -317,7 +317,7 @@ namespace Playerbot
         ExecutionContext();
 
         ContextType GetType() const { return _type; }
-        std::thread::id GetThreadId() const { return _threadId; }
+        ::std::thread::id GetThreadId() const { return _threadId; }
         bool IsAsync() const { return _type == ASYNC_WORKER || _type == BOT_THREAD; }
         bool IsMainThread() const { return _type == MAIN_THREAD; }
 
@@ -325,8 +325,8 @@ namespace Playerbot
 
     private:
         ContextType _type;
-        std::thread::id _threadId;
-        std::string _threadName;
+        ::std::thread::id _threadId;
+        ::std::string _threadName;
     };
 
     /**
@@ -350,7 +350,7 @@ namespace Playerbot
          */
         PreparedQueryResult ExecuteWithSafety(CharacterDatabasePreparedStatement* stmt,
                                              bool async,
-                                             std::function<void(PreparedQueryResult)> callback = nullptr);
+                                             ::std::function<void(PreparedQueryResult)> callback = nullptr);
 
         /**
          * Execute with retry logic for transient failures
@@ -360,12 +360,12 @@ namespace Playerbot
                                             uint32 retryDelayMs = 100);
 
     private:
-        bool HandleError(uint32 errorCode, std::string const& context);
+        bool HandleError(uint32 errorCode, ::std::string const& context);
         bool IsTransientError(uint32 errorCode) const;
         void LogExecution(CharacterDatabasePreparedStatement* stmt, bool success, uint32 durationMs);
 
-        std::atomic<bool> _initialized{false};
-        std::atomic<uint64> _executionCounter{0};
+        ::std::atomic<bool> _initialized{false};
+        ::std::atomic<uint64> _executionCounter{0};
     };
 
 } // namespace Playerbot

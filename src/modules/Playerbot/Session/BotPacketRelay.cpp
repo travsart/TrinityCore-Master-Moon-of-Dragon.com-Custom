@@ -125,7 +125,7 @@ void BotPacketRelay::Shutdown()
 
     // Clear opcode whitelist
     {
-        std::lock_guard lock(_opcodesMutex);
+        ::std::lock_guard lock(_opcodesMutex);
         _relayOpcodes.clear();
     }
 
@@ -153,13 +153,13 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
     if (!_initialized.load())
     {
         // Queue packet for delivery after initialization completes
-        std::lock_guard lock(_deferredMutex);
+        ::std::lock_guard lock(_deferredMutex);
 
         // Create a copy of the packet (WorldPacket must be copied, not moved)
-        auto packetCopy = std::make_unique<WorldPacket>(*packet);
+        auto packetCopy = ::std::make_unique<WorldPacket>(*packet);
 
         // Queue the deferred packet with timestamp
-        _deferredPackets.push({botSession, std::move(packetCopy), GameTime::GetGameTimeMS()});
+        _deferredPackets.push({botSession, ::std::move(packetCopy), GameTime::GetGameTimeMS()});
 
         TC_LOG_DEBUG("playerbot", "BotPacketRelay: Queued packet (opcode {}) from bot {} for delivery after initialization",
                      packet->GetOpcode(), botSession->GetPlayer() ? botSession->GetPlayer()->GetName() : "Unknown");
@@ -192,7 +192,7 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
     }
 
     // Get human players in group (O(n) where n = group size, max 40)
-    std::vector<Player*> humanPlayers = GetHumanGroupMembers(bot);
+    ::std::vector<Player*> humanPlayers = GetHumanGroupMembers(bot);
 
     // Early exit: No human players to relay to
     if (humanPlayers.empty())
@@ -300,7 +300,7 @@ void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const*
     }
 
     // Get all group members (including bots)
-    std::vector<Player*> allPlayers = GetAllGroupMembers(bot);
+    ::std::vector<Player*> allPlayers = GetAllGroupMembers(bot);
 
     // Filter based on ignoreBot flag
     size_t successCount = 0;
@@ -350,7 +350,7 @@ bool BotPacketRelay::ShouldRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 {
-    std::lock_guard lock(_opcodesMutex);
+    ::std::lock_guard lock(_opcodesMutex);
 
     auto result = _relayOpcodes.insert(opcode);
     if (result.second && _debugLogging.load())
@@ -361,7 +361,7 @@ void BotPacketRelay::AddRelayOpcode(uint32 opcode)
 
 void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
 {
-    std::lock_guard lock(_opcodesMutex);
+    ::std::lock_guard lock(_opcodesMutex);
 
     size_t removed = _relayOpcodes.erase(opcode);
     if (removed > 0 && _debugLogging.load())
@@ -370,7 +370,7 @@ void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
     }
 }
 
-std::unordered_set<uint32> const& BotPacketRelay::GetRelayOpcodes()
+::std::unordered_set<uint32> const& BotPacketRelay::GetRelayOpcodes()
 {
     return _relayOpcodes;
 }
@@ -379,9 +379,9 @@ std::unordered_set<uint32> const& BotPacketRelay::GetRelayOpcodes()
 // GROUP MEMBER ENUMERATION
 // ============================================================================
 
-std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
+::std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
 {
-    std::vector<Player*> humanPlayers;
+    ::std::vector<Player*> humanPlayers;
 
     if (!bot)
         return humanPlayers;
@@ -414,9 +414,9 @@ std::vector<Player*> BotPacketRelay::GetHumanGroupMembers(Player* bot)
     return humanPlayers;
 }
 
-std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
+::std::vector<Player*> BotPacketRelay::GetAllGroupMembers(Player* bot)
 {
-    std::vector<Player*> allPlayers;
+    ::std::vector<Player*> allPlayers;
 
     if (!bot)
         return allPlayers;
@@ -537,7 +537,7 @@ void BotPacketRelay::SetDebugLogging(bool enabled)
 // ============================================================================
 void BotPacketRelay::InitializeOpcodeWhitelist()
 {
-    std::lock_guard lock(_opcodesMutex);
+    ::std::lock_guard lock(_opcodesMutex);
     _relayOpcodes.clear();
 
     // ========================================================================
@@ -615,7 +615,7 @@ bool BotPacketRelay::SendPacketToPlayer(Player* player, WorldPacket const* packe
         player->SendDirectMessage(packet);
         return true;
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         _statistics.totalRelayErrors++;
         TC_LOG_ERROR("playerbot", "BotPacketRelay::SendPacketToPlayer() - Exception sending packet to player {}: {}",
@@ -726,7 +726,7 @@ char const* BotPacketRelay::GetPacketCategory(uint32 opcode)
 
 void BotPacketRelay::ProcessDeferredPackets()
 {
-    std::lock_guard lock(_deferredMutex);
+    ::std::lock_guard lock(_deferredMutex);
 
     if (_deferredPackets.empty())
     {
@@ -776,7 +776,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         }
 
         // Get human group members
-        std::vector<Player*> humanMembers = GetHumanGroupMembers(bot);
+        ::std::vector<Player*> humanMembers = GetHumanGroupMembers(bot);
         if (humanMembers.empty())
         {
             // Bot may have left group during initialization - not an error

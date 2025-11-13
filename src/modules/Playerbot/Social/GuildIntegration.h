@@ -63,12 +63,12 @@ enum class GuildRole : uint8
 struct GuildChatMessage
 {
     uint32 senderId;
-    std::string senderName;
-    std::string content;
+    ::std::string senderName;
+    ::std::string content;
     ChatMsg chatType;
     uint32 timestamp;
     bool requiresResponse;
-    std::vector<std::string> keywords;
+    ::std::vector<::std::string> keywords;
     float relevanceScore;
 
     GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
@@ -80,14 +80,14 @@ struct GuildProfile
 {
     GuildChatStyle chatStyle;
     GuildRole preferredRole;
-    std::vector<GuildActivityType> activeActivities;
+    ::std::vector<GuildActivityType> activeActivities;
     float participationLevel; // 0.0 = minimal, 1.0 = maximum
     float helpfulnessLevel;
     float leadershipAmbition;
-    std::vector<std::string> expertise; // Areas of knowledge
-    std::vector<std::string> interests; // Topics of interest
-    std::unordered_set<uint32> friendlyMembers;
-    std::unordered_set<std::string> chatTriggers;
+    ::std::vector<::std::string> expertise; // Areas of knowledge
+    ::std::vector<::std::string> interests; // Topics of interest
+    ::std::unordered_set<uint32> friendlyMembers;
+    ::std::unordered_set<::std::string> chatTriggers;
     uint32 dailyActivityQuota;
     bool autoAcceptGuildInvites;
 
@@ -101,8 +101,8 @@ struct GuildParticipation
 {
     uint32 playerGuid;
     uint32 guildId;
-    std::vector<GuildChatMessage> recentMessages;
-    std::unordered_map<GuildActivityType, uint32> activityCounts;
+    ::std::vector<GuildChatMessage> recentMessages;
+    ::std::unordered_map<GuildActivityType, uint32> activityCounts;
     uint32 totalChatMessages;
     uint32 helpfulResponses;
     uint32 eventsAttended;
@@ -126,15 +126,15 @@ struct GuildParticipation
 // Guild performance metrics
 struct GuildMetrics
 {
-    std::atomic<uint32> guildInteractions{0};
-    std::atomic<uint32> chatMessages{0};
-    std::atomic<uint32> bankTransactions{0};
-    std::atomic<uint32> eventsParticipated{0};
-    std::atomic<uint32> helpfulActions{0};
-    std::atomic<float> averageParticipationScore{0.7f};
-    std::atomic<float> socialIntegrationScore{0.8f};
-    std::atomic<float> contributionRating{0.75f};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> guildInteractions{0};
+    ::std::atomic<uint32> chatMessages{0};
+    ::std::atomic<uint32> bankTransactions{0};
+    ::std::atomic<uint32> eventsParticipated{0};
+    ::std::atomic<uint32> helpfulActions{0};
+    ::std::atomic<float> averageParticipationScore{0.7f};
+    ::std::atomic<float> socialIntegrationScore{0.8f};
+    ::std::atomic<float> contributionRating{0.75f};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     // Default constructor
     GuildMetrics() = default;
@@ -171,7 +171,7 @@ struct GuildMetrics
         guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
         eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
         socialIntegrationScore = 0.8f; contributionRating = 0.75f;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -196,7 +196,7 @@ public:
     void AutomateGuildChatParticipation(Player* player) override;
     void RespondToGuildChat(Player* player, const GuildChatMessage& message);
     void InitiateGuildConversation(Player* player) override;
-    void ShareGuildInformation(Player* player, const std::string& topic) override;
+    void ShareGuildInformation(Player* player, const ::std::string& topic) override;
 
     // Guild bank management
     void AutomateGuildBankInteractions(Player* player) override;
@@ -234,19 +234,19 @@ public:
     // Chat intelligence and response generation
     struct ChatIntelligence
     {
-        std::unordered_map<std::string, std::vector<std::string>> responseTemplates;
-        std::unordered_map<std::string, float> keywordWeights;
-        std::vector<std::string> conversationStarters;
-        std::vector<std::string> helpfulTips;
-        std::unordered_map<std::string, std::string> topicResponses;
+        ::std::unordered_map<::std::string, ::std::vector<::std::string>> responseTemplates;
+        ::std::unordered_map<::std::string, float> keywordWeights;
+        ::std::vector<::std::string> conversationStarters;
+        ::std::vector<::std::string> helpfulTips;
+        ::std::unordered_map<::std::string, ::std::string> topicResponses;
         uint32 lastResponseTime;
         float responseFrequency;
 
         ChatIntelligence() : lastResponseTime(0), responseFrequency(0.3f) {}
     };
 
-    std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
-    std::string GenerateConversationStarter(Player* player) override;
+    ::std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
+    ::std::string GenerateConversationStarter(Player* player) override;
     bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message);
     void LearnFromGuildConversations(Player* player) override;
 
@@ -274,7 +274,7 @@ public:
     void TrackGuildBankActivity(Player* player) override;
 
     // Guild event management
-    void CreateGuildEvent(Player* player, const std::string& eventType) override;
+    void CreateGuildEvent(Player* player, const ::std::string& eventType) override;
     void ManageGuildCalendarEvents(Player* player) override;
     void CoordinateRaidScheduling(Player* player) override;
     void OrganizePvPEvents(Player* player) override;
@@ -292,7 +292,7 @@ public:
     void ConfigureGuildBankAccess(uint32 playerGuid, bool autoDeposit, bool autoWithdraw) override;
 
     // Error handling and recovery
-    void HandleGuildInteractionError(uint32 playerGuid, const std::string& error) override;
+    void HandleGuildInteractionError(uint32 playerGuid, const ::std::string& error) override;
     void RecoverFromGuildFailure(uint32 playerGuid) override;
     void HandleGuildLeaving(Player* player) override;
     void HandleGuildInvitations(Player* player, uint32 guildId) override;
@@ -314,25 +314,25 @@ private:
         uint32 lastEventParticipation = 0;
     };
 
-    std::unordered_map<uint32, GuildProfile> _playerProfiles; // playerGuid -> profile
-    std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
-    std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
-    std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
+    ::std::unordered_map<uint32, GuildProfile> _playerProfiles; // playerGuid -> profile
+    ::std::unordered_map<uint32, GuildParticipation> _playerParticipation; // playerGuid -> participation
+    ::std::unordered_map<uint32, GuildMetrics> _playerMetrics; // playerGuid -> metrics
+    ::std::unordered_map<uint32, PlayerState> _playerStates; // playerGuid -> state
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _guildMutex;
 
     // Chat intelligence system
-    std::unordered_map<uint32, ChatIntelligence> _chatIntelligence; // playerGuid -> intelligence
-    std::unordered_map<std::string, std::vector<std::string>> _globalResponseTemplates;
-    std::vector<std::string> _conversationTopics;
+    ::std::unordered_map<uint32, ChatIntelligence> _chatIntelligence; // playerGuid -> intelligence
+    ::std::unordered_map<::std::string, ::std::vector<::std::string>> _globalResponseTemplates;
+    ::std::vector<::std::string> _conversationTopics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _chatMutex;
 
     // Guild activity tracking
     struct GuildActivityTracker
     {
         uint32 guildId;
-        std::unordered_map<uint32, uint32> memberActivity; // playerGuid -> activity count
-        std::vector<std::pair<std::string, uint32>> recentEvents; // event, timestamp
-        std::queue<GuildChatMessage> chatHistory;
+        ::std::unordered_map<uint32, uint32> memberActivity; // playerGuid -> activity count
+        ::std::vector<::std::pair<::std::string, uint32>> recentEvents; // event, timestamp
+        ::std::queue<GuildChatMessage> chatHistory;
         float overallMorale;
         float activityLevel;
         uint32 lastAnalysisTime;
@@ -345,7 +345,7 @@ private:
             , activityLevel(0.6f), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
-    std::unordered_map<uint32, GuildActivityTracker> _guildTracking; // guildId -> tracker
+    ::std::unordered_map<uint32, GuildActivityTracker> _guildTracking; // guildId -> tracker
 
     // Performance tracking
     GuildMetrics _globalMetrics;
@@ -357,12 +357,12 @@ private:
     void UpdateGuildSocialGraph(uint32 guildId);
 
     // Chat response generation
-    void OfferGuildAssistance(Player* player, const std::string& assistance);
-    void SendGuildChatMessage(Player* player, const std::string& message);
-    std::string SelectResponseTemplate(const std::string& category);
-    std::string PersonalizeResponse(Player* player, const std::string& responseTemplate);
+    void OfferGuildAssistance(Player* player, const ::std::string& assistance);
+    void SendGuildChatMessage(Player* player, const ::std::string& message);
+    ::std::string SelectResponseTemplate(const ::std::string& category);
+    ::std::string PersonalizeResponse(Player* player, const ::std::string& responseTemplate);
     float CalculateMessageRelevance(Player* player, const GuildChatMessage& message);
-    std::vector<std::string> ExtractKeywords(const std::string& message);
+    ::std::vector<::std::string> ExtractKeywords(const ::std::string& message);
 
     // Guild bank logic
     bool ShouldDepositItem(Player* player, uint32 itemId);
@@ -371,10 +371,10 @@ private:
     void OptimizeGuildBankLayout(Player* player);
 
     // Event coordination
-    void PlanGuildEvent(Player* player, const std::string& eventType, uint32 proposedTime);
-    void InviteMembersToEvent(Player* player, const std::string& eventId);
-    void ManageEventAttendance(Player* player, const std::string& eventId);
-    bool IsGoodTimeForEvent(uint32 proposedTime, const std::vector<uint32>& memberIds);
+    void PlanGuildEvent(Player* player, const ::std::string& eventType, uint32 proposedTime);
+    void InviteMembersToEvent(Player* player, const ::std::string& eventId);
+    void ManageEventAttendance(Player* player, const ::std::string& eventId);
+    bool IsGoodTimeForEvent(uint32 proposedTime, const ::std::vector<uint32>& memberIds);
 
     // Social dynamics analysis
     void AnalyzeGuildPersonalities(uint32 guildId);

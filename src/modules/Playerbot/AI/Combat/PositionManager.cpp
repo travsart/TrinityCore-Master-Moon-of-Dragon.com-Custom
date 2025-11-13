@@ -48,7 +48,7 @@ PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
 
 MovementResult PositionManager::UpdatePosition(const MovementContext& context)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     MovementResult result;
     // No lock needed - position data is per-bot instance data
 
@@ -105,15 +105,15 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
         result.targetPosition = currentPos;
         result.priority = MovementPriority::MAINTENANCE;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.success = false;
-        result.failureReason = "Exception during position update: " + std::string(e.what());
+        result.failureReason = "Exception during position update: " + ::std::string(e.what());
         TC_LOG_ERROR("playerbot.position", "Exception in UpdatePosition for bot {}: {}", _bot->GetName(), e.what());
     }
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "UpdatePosition");
 
     return result;
@@ -122,21 +122,21 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
 MovementResult PositionManager::FindOptimalPosition(const MovementContext& context)
 {
     MovementResult result;
-    std::vector<Position> candidates = GenerateCandidatePositions(context);
+    ::std::vector<Position> candidates = GenerateCandidatePositions(context);
     if (candidates.empty())
     {
         result.failureReason = "No candidate positions generated";
         return result;
     }
 
-    std::vector<PositionInfo> evaluatedPositions = EvaluatePositions(candidates, context);
+    ::std::vector<PositionInfo> evaluatedPositions = EvaluatePositions(candidates, context);
     if (evaluatedPositions.empty())
     {
         result.failureReason = "No valid positions after evaluation";
         return result;
     }
 
-    std::sort(evaluatedPositions.begin(), evaluatedPositions.end(), std::greater<PositionInfo>());
+    ::std::sort(evaluatedPositions.begin(), evaluatedPositions.end(), ::std::greater<PositionInfo>());
 
     PositionInfo bestPosition = evaluatedPositions[0];
     result.success = true;
@@ -174,7 +174,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         return result;
     }
 
-    std::vector<Position> waypoints = CalculateWaypoints(currentPos, targetPos);
+    ::std::vector<Position> waypoints = CalculateWaypoints(currentPos, targetPos);
     result.waypoints = waypoints;
     result.pathDistance = 0.0f;
 
@@ -190,7 +190,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         result.requiresSprint = true;
     }
 
-    float heightDiff = std::abs(targetPos.GetPositionZ() - currentPos.GetPositionZ());
+    float heightDiff = ::std::abs(targetPos.GetPositionZ() - currentPos.GetPositionZ());
     if (heightDiff > 3.0f)
     {
         result.requiresJump = true;
@@ -243,7 +243,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
 
 PositionInfo PositionManager::EvaluatePosition(const Position& pos, const MovementContext& context)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     PositionInfo info;
     info.position = pos;
     info.evaluationTime = GameTime::GetGameTimeMS();
@@ -264,7 +264,7 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     totalScore += CalculateGroupScore(pos, context) * context.weights.groupWeight;
     totalScore += CalculateEscapeScore(pos, context) * context.weights.escapeWeight;
 
-    info.score = std::max(0.0f, totalScore);
+    info.score = ::std::max(0.0f, totalScore);
     info.distanceToTarget = context.target ? pos.GetExactDist(context.target) : 0.0f;
     info.hasLineOfSight = context.target ? _bot->IsWithinLOSInMap(context.target) : true;
     info.isOptimalRange = (info.distanceToTarget >= context.preferredRange * 0.8f &&
@@ -286,17 +286,17 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
         info.score *= 0.1f;
     }
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "EvaluatePosition");
 
     _metrics.positionEvaluations++;
     return info;
 }
 
-std::vector<PositionInfo> PositionManager::EvaluatePositions(const std::vector<Position>& positions, const MovementContext& context)
+::std::vector<PositionInfo> PositionManager::EvaluatePositions(const ::std::vector<Position>& positions, const MovementContext& context)
 {
-    std::vector<PositionInfo> results;
+    ::std::vector<PositionInfo> results;
     results.reserve(positions.size());
 
     for (const Position& pos : positions)
@@ -311,9 +311,9 @@ std::vector<PositionInfo> PositionManager::EvaluatePositions(const std::vector<P
     return results;
 }
 
-std::vector<Position> PositionManager::GenerateCandidatePositions(const MovementContext& context)
+::std::vector<Position> PositionManager::GenerateCandidatePositions(const MovementContext& context)
 {
-    std::vector<Position> candidates;
+    ::std::vector<Position> candidates;
 
     if (!context.target)
     {
@@ -332,8 +332,8 @@ std::vector<Position> PositionManager::GenerateCandidatePositions(const Movement
 
         case PositionType::RANGED_DPS:
             {
-                std::vector<Position> innerRing = GenerateCircularPositions(targetPos, context.preferredRange * 0.8f, 12);
-                std::vector<Position> outerRing = GenerateCircularPositions(targetPos, context.preferredRange * 1.2f, 12);
+                ::std::vector<Position> innerRing = GenerateCircularPositions(targetPos, context.preferredRange * 0.8f, 12);
+                ::std::vector<Position> outerRing = GenerateCircularPositions(targetPos, context.preferredRange * 1.2f, 12);
                 candidates.insert(candidates.end(), innerRing.begin(), innerRing.end());
                 candidates.insert(candidates.end(), outerRing.begin(), outerRing.end());
             }
@@ -407,7 +407,7 @@ Position PositionManager::FindMeleePosition(Unit* target, bool preferBehind)
     }
     else
     {
-        std::vector<Position> candidates = GenerateCircularPositions(targetPos, 4.0f, 8);
+        ::std::vector<Position> candidates = GenerateCircularPositions(targetPos, 4.0f, 8);
 
         MovementContext context;
         context.bot = _bot;
@@ -435,7 +435,7 @@ Position PositionManager::FindRangedPosition(Unit* target, float preferredRange)
         return _bot->GetPosition();
 
     Position targetPos = target->GetPosition();
-    std::vector<Position> candidates = GenerateCircularPositions(targetPos, preferredRange, 16);
+    ::std::vector<Position> candidates = GenerateCircularPositions(targetPos, preferredRange, 16);
     MovementContext context;
     context.bot = _bot;
     context.target = target;
@@ -472,7 +472,7 @@ Position PositionManager::FindKitingPosition(Unit* threat, float minDistance)
 
     float escapeAngle = PositionUtils::CalculateAngleBetween(threatPos, currentPos);
 
-    std::vector<Position> escapePositions;
+    ::std::vector<Position> escapePositions;
     for (int i = -2; i <= 2; ++i)
     {
         float angle = PositionUtils::NormalizeAngle(escapeAngle + (i * M_PI/6));
@@ -536,7 +536,7 @@ bool PositionManager::IsInDangerZone(const Position& pos)
 
 Position PositionManager::FindSafePosition(const Position& fromPos, float minDistance)
 {
-    std::vector<Position> safePositions = GenerateCircularPositions(fromPos, minDistance, 16);
+    ::std::vector<Position> safePositions = GenerateCircularPositions(fromPos, minDistance, 16);
 
     for (const Position& pos : safePositions)
     {
@@ -545,7 +545,7 @@ Position PositionManager::FindSafePosition(const Position& fromPos, float minDis
             return pos;
         }
     }
-    std::vector<Position> farPositions = GenerateCircularPositions(fromPos, minDistance * 2.0f, 16);
+    ::std::vector<Position> farPositions = GenerateCircularPositions(fromPos, minDistance * 2.0f, 16);
     for (const Position& pos : farPositions)
     {
         if (!IsInDangerZone(pos) && ValidatePosition(pos, PositionValidation::BASIC))
@@ -578,7 +578,7 @@ void PositionManager::UpdateAoEZones(uint32 currentTime)
 void PositionManager::ClearExpiredZones(uint32 currentTime)
 {
     _activeZones.erase(
-        std::remove_if(_activeZones.begin(), _activeZones.end(),
+        ::std::remove_if(_activeZones.begin(), _activeZones.end(),
             [currentTime](const AoEZone& zone) {
                 return !zone.isActive || currentTime > zone.startTime + zone.duration;
             }),
@@ -623,7 +623,7 @@ bool PositionManager::IsWalkablePosition(const Position& pos)
 float PositionManager::CalculateMovementCost(const Position& from, const Position& to)
 {
     float distance = from.GetExactDist(&to);
-    float heightDiff = std::abs(to.GetPositionZ() - from.GetPositionZ());
+    float heightDiff = ::std::abs(to.GetPositionZ() - from.GetPositionZ());
 
     float cost = distance;
     if (heightDiff > 2.0f)
@@ -651,7 +651,7 @@ MovementResult PositionManager::HandleEmergencyMovement(const MovementContext& /
 Position PositionManager::FindEmergencyEscapePosition()
 {
     Position currentPos = _bot->GetPosition();
-    std::vector<Position> escapePositions = GenerateCircularPositions(currentPos, EMERGENCY_DISTANCE, 12);
+    ::std::vector<Position> escapePositions = GenerateCircularPositions(currentPos, EMERGENCY_DISTANCE, 12);
 
     for (const Position& pos : escapePositions)
     {
@@ -675,8 +675,8 @@ float PositionManager::CalculateDistanceScore(const Position& pos, const Movemen
     if (distance <= optimalDistance * 1.2f && distance >= optimalDistance * 0.8f)
         return 100.0f;
 
-    float deviation = std::abs(distance - optimalDistance) / optimalDistance;
-    return std::max(0.0f, 100.0f - (deviation * 100.0f));
+    float deviation = ::std::abs(distance - optimalDistance) / optimalDistance;
+    return ::std::max(0.0f, 100.0f - (deviation * 100.0f));
 }
 
 float PositionManager::CalculateSafetyScore(const Position& pos, const MovementContext& context)
@@ -698,7 +698,7 @@ float PositionManager::CalculateSafetyScore(const Position& pos, const MovementC
             score -= 15.0f;
     }
 
-    return std::max(0.0f, score);
+    return ::std::max(0.0f, score);
 }
 
 float PositionManager::CalculateLineOfSightScore(const Position& /* pos */, const MovementContext& context)
@@ -728,7 +728,7 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
         case PositionType::FLANKING:
             {
                 float behindAngle = PositionUtils::NormalizeAngle(targetAngle + M_PI);
-                float angleDiff = std::abs(PositionUtils::NormalizeAngle(positionAngle - behindAngle));
+                float angleDiff = ::std::abs(PositionUtils::NormalizeAngle(positionAngle - behindAngle));
                 if (angleDiff < M_PI/6)  // Within 30 degrees behind
                     score += 30.0f;
             }
@@ -737,7 +737,7 @@ float PositionManager::CalculateAngleScore(const Position& pos, const MovementCo
         case PositionType::TANKING:
             {
                 float frontAngle = targetAngle;
-                float angleDiff = std::abs(PositionUtils::NormalizeAngle(positionAngle - frontAngle));
+                float angleDiff = ::std::abs(PositionUtils::NormalizeAngle(positionAngle - frontAngle));
                 if (angleDiff < M_PI/6)  // Within 30 degrees in front
                     score += 30.0f;
             }
@@ -763,8 +763,8 @@ float PositionManager::CalculateGroupScore(const Position& pos, const MovementCo
     if (distanceToGroup <= optimalDistance * 1.2f && distanceToGroup >= optimalDistance * 0.8f)
         return 100.0f;
 
-    float deviation = std::abs(distanceToGroup - optimalDistance) / optimalDistance;
-    return std::max(0.0f, 100.0f - (deviation * 50.0f));
+    float deviation = ::std::abs(distanceToGroup - optimalDistance) / optimalDistance;
+    return ::std::max(0.0f, 100.0f - (deviation * 50.0f));
 }
 
 float PositionManager::GetOptimalGroupDistance(ThreatRole role)
@@ -784,9 +784,9 @@ float PositionManager::GetOptimalGroupDistance(ThreatRole role)
     }
 }
 
-std::vector<Position> PositionManager::GenerateCircularPositions(const Position& center, float radius, uint32 count)
+::std::vector<Position> PositionManager::GenerateCircularPositions(const Position& center, float radius, uint32 count)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(count);
 
     for (uint32 i = 0; i < count; ++i)
@@ -798,9 +798,9 @@ std::vector<Position> PositionManager::GenerateCircularPositions(const Position&
     return positions;
 }
 
-std::vector<Position> PositionManager::GenerateArcPositions(const Position& center, float radius, float startAngle, float endAngle, uint32 count)
+::std::vector<Position> PositionManager::GenerateArcPositions(const Position& center, float radius, float startAngle, float endAngle, uint32 count)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(count);
 
     float angleStep = (endAngle - startAngle) / (count - 1);
@@ -828,29 +828,29 @@ bool PositionManager::CanReachPosition(const Position& pos)
     return ValidatePosition(pos, PositionValidation::WALKABLE | PositionValidation::NO_OBSTACLES);
 }
 
-std::vector<Position> PositionManager::CalculateWaypoints(const Position& from, const Position& to)
+::std::vector<Position> PositionManager::CalculateWaypoints(const Position& from, const Position& to)
 {
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     waypoints.push_back(from);
     waypoints.push_back(to);
 
     return waypoints;
 }
 
-void PositionManager::TrackPerformance(std::chrono::microseconds duration, const std::string& /* operation */)
+void PositionManager::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& /* operation */)
 {
     if (duration > _metrics.maxEvaluationTime)
         _metrics.maxEvaluationTime = duration;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(currentTime - _metrics.lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - _metrics.lastUpdate);
 
     if (timeSinceLastUpdate.count() >= 1)
     {
         uint32 totalEvaluations = _metrics.positionEvaluations.load();
         if (totalEvaluations > 0)
         {
-            _metrics.averageEvaluationTime = std::chrono::microseconds(
+            _metrics.averageEvaluationTime = ::std::chrono::microseconds(
                 static_cast<uint64_t>(_metrics.averageEvaluationTime.count() * 0.9 + duration.count() * 0.1)
             );
         }
@@ -867,7 +867,7 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
 
     // Base score for distance from current position
     float currentDistance = _bot->GetPosition().GetExactDist(&pos);
-    score += std::min(currentDistance * 10.0f, 50.0f); // Max 50 points for distance
+    score += ::std::min(currentDistance * 10.0f, 50.0f); // Max 50 points for distance
 
     // Lock-free spatial grid query for nearby enemies
     Map* map = _bot->GetMap();
@@ -901,11 +901,11 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
                     continue;
 
                 float enemyDistance = pos.GetExactDist(snapshot->position);
-                minEnemyDistance = std::min(minEnemyDistance, enemyDistance);
+                minEnemyDistance = ::std::min(minEnemyDistance, enemyDistance);
 
                 // Higher score for positions farther from enemies
                 if (enemyDistance > 0.0f)
-                    score += std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
+                    score += ::std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
             }
 
             // Bonus for getting to safe range
@@ -938,15 +938,15 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
     if (!IsPositionSafe(pos, tempContext))
         score -= 20.0f;
 
-    return std::max(score, 0.0f);
+    return ::std::max(score, 0.0f);
 }
 
 // PositionUtils implementation
 Position PositionUtils::CalculatePositionAtAngle(const Position& center, float distance, float angle)
 {
     Position result;
-    result.m_positionX = center.GetPositionX() + distance * std::cos(angle);
-    result.m_positionY = center.GetPositionY() + distance * std::sin(angle);
+    result.m_positionX = center.GetPositionX() + distance * ::std::cos(angle);
+    result.m_positionY = center.GetPositionY() + distance * ::std::sin(angle);
     result.m_positionZ = center.GetPositionZ();
     result.SetOrientation(angle);
 
@@ -958,7 +958,7 @@ float PositionUtils::CalculateAngleBetween(const Position& from, const Position&
     float dx = to.GetPositionX() - from.GetPositionX();
     float dy = to.GetPositionY() - from.GetPositionY();
 
-    return std::atan2(dy, dx);
+    return ::std::atan2(dy, dx);
 }
 
 float PositionUtils::NormalizeAngle(float angle)
@@ -1001,7 +1001,7 @@ bool PositionUtils::IsInOptimalRange(Player* bot, Unit* target, PositionType typ
     }
 }
 
-Position PositionUtils::CalculateGroupCenter(const std::vector<Player*>& players)
+Position PositionUtils::CalculateGroupCenter(const ::std::vector<Player*>& players)
 {
     if (players.empty())
         return Position();
@@ -1032,7 +1032,7 @@ bool PositionUtils::IsPositionOnGround(const Position& pos, Map* map)
         return false;
 
     float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
-    return std::abs(pos.GetPositionZ() - groundZ) <= 2.0f;
+    return ::std::abs(pos.GetPositionZ() - groundZ) <= 2.0f;
 }
 
 Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
@@ -1059,8 +1059,8 @@ Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
 
     // Project position forward based on current facing direction
     Position predictedPos;
-    predictedPos.m_positionX = currentPos.GetPositionX() + distance * std::cos(orientation);
-    predictedPos.m_positionY = currentPos.GetPositionY() + distance * std::sin(orientation);
+    predictedPos.m_positionX = currentPos.GetPositionX() + distance * ::std::cos(orientation);
+    predictedPos.m_positionY = currentPos.GetPositionY() + distance * ::std::sin(orientation);
     predictedPos.m_positionZ = currentPos.GetPositionZ();
     predictedPos.SetOrientation(orientation);
 
@@ -1073,7 +1073,7 @@ Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
                                                  predictedPos.GetPositionZ());
 
         // If ground height is reasonable, use it
-        if (std::abs(groundZ - predictedPos.GetPositionZ()) <= 10.0f)
+        if (::std::abs(groundZ - predictedPos.GetPositionZ()) <= 10.0f)
             predictedPos.m_positionZ = groundZ;
     }
 

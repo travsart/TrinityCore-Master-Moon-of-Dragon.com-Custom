@@ -48,7 +48,7 @@ namespace Playerbot
         , _positionUpdateInterval(MIN_UPDATE_INTERVAL)
         , _movementTimer(0)
         , _isMoving(false)
-        , _lastDangerCheck(std::chrono::steady_clock::now())
+        , _lastDangerCheck(::std::chrono::steady_clock::now())
         , _lastDangerResult(false)
     {
         // Set priority after construction
@@ -142,7 +142,7 @@ namespace Playerbot
 
     void CombatMovementStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     {
-        auto startTime = std::chrono::steady_clock::now();
+        auto startTime = ::std::chrono::steady_clock::now();
 
         if (!ai)
             return;
@@ -232,8 +232,8 @@ namespace Playerbot
         }
 
         // Performance tracking
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
         if (duration > 500) // Log if update took more than 0.5ms
         {
             TC_LOG_DEBUG("module.playerbot", "CombatMovementStrategy::UpdateBehavior: Slow update %lld us for %s",
@@ -397,11 +397,11 @@ namespace Playerbot
             if (spatialGrid)
             {
                 // Query nearby players (lock-free!)
-                std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> nearbyPlayers =
+                ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot> nearbyPlayers =
                     spatialGrid->QueryNearbyPlayers(player->GetPosition(), 40.0f);
 
                 // Build list of ally GUIDs from snapshots
-                std::vector<ObjectGuid> allyGuids;
+                ::std::vector<ObjectGuid> allyGuids;
                 for (auto const& snapshot : nearbyPlayers)
                 {
                     // Only include friendly players (same faction or in group)
@@ -457,7 +457,7 @@ namespace Playerbot
 
         // Validate position is on valid terrain
         float groundZ = player->GetMap()->GetHeight(player->GetPhaseShift(), position.GetPositionX(), position.GetPositionY(), position.GetPositionZ());
-        if (std::abs(position.GetPositionZ() - groundZ) > 10.0f)
+        if (::std::abs(position.GetPositionZ() - groundZ) > 10.0f)
         {
             TC_LOG_DEBUG("module.playerbot", "CombatMovementStrategy::MoveToPosition: Invalid Z coordinate for %s",
                 player->GetName().c_str());
@@ -516,7 +516,7 @@ namespace Playerbot
         float distance = player->GetExactDist2d(&targetPosition);
 
         // Consider Z axis difference
-        float zDiff = std::abs(player->GetPositionZ() - targetPosition.GetPositionZ());
+        float zDiff = ::std::abs(player->GetPositionZ() - targetPosition.GetPositionZ());
         if (zDiff > 5.0f)
             return false;
 
@@ -544,8 +544,8 @@ namespace Playerbot
             return false;
 
         // Cache danger checks for performance
-        auto now = std::chrono::steady_clock::now();
-        auto timeSinceLastCheck = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastDangerCheck).count();
+        auto now = ::std::chrono::steady_clock::now();
+        auto timeSinceLastCheck = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastDangerCheck).count();
 
         if (timeSinceLastCheck < DANGER_CACHE_TIME)
             return _lastDangerResult;
@@ -563,7 +563,7 @@ namespace Playerbot
         Position playerPos = player->GetPosition();
 
         // Check for AreaTriggers (fire, poison pools, etc.)
-        std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> nearbyAreaTriggers =
+        ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> nearbyAreaTriggers =
             spatialGrid->QueryNearbyAreaTriggers(playerPos, 20.0f);
 
         for (auto const& trigger : nearbyAreaTriggers)
@@ -587,7 +587,7 @@ namespace Playerbot
         }
 
         // Check for DynamicObjects (AoE spell effects like Blizzard, Rain of Fire)
-        std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> nearbyDynamicObjects =
+        ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> nearbyDynamicObjects =
             spatialGrid->QueryNearbyDynamicObjects(playerPos, 20.0f);
         for (auto const& dynObj : nearbyDynamicObjects)
         {
@@ -657,7 +657,7 @@ namespace Playerbot
             return true; // If no spatial grid, assume safe
 
         // Check for AreaTriggers at position
-        std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> nearbyAreaTriggers =
+        ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot> nearbyAreaTriggers =
             spatialGrid->QueryNearbyAreaTriggers(position, 10.0f);
 
         for (auto const& trigger : nearbyAreaTriggers)
@@ -678,7 +678,7 @@ namespace Playerbot
         }
 
         // Check for DynamicObjects at position
-        std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> nearbyDynamicObjects =
+        ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot> nearbyDynamicObjects =
             spatialGrid->QueryNearbyDynamicObjects(position, 10.0f);
 
         for (auto const& dynObj : nearbyDynamicObjects)
@@ -775,7 +775,7 @@ namespace Playerbot
         return _lastPositionUpdate >= _positionUpdateInterval;
     }
 
-    void CombatMovementStrategy::LogPositionUpdate(Player* player, Position const& targetPos, std::string const& reason) const
+    void CombatMovementStrategy::LogPositionUpdate(Player* player, Position const& targetPos, ::std::string const& reason) const
     {
         if (!player)
             return;

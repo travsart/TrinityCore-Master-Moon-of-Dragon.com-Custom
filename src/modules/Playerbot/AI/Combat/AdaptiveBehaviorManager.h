@@ -86,10 +86,10 @@ namespace Playerbot
     // Behavior profile for specific situations
     struct BehaviorProfile
     {
-        std::string name;                                                      // Profile name for logging
+        ::std::string name;                                                      // Profile name for logging
         BehaviorPriority priority;                                             // Priority level
-        std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
-        std::function<void(Player*, uint32)> applyFunction;                   // Apply behavior changes
+        ::std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
+        ::std::function<void(Player*, uint32)> applyFunction;                   // Apply behavior changes
         uint32 strategyFlags;                                                  // Strategy flags to activate
         uint32 minDuration;                                                    // Minimum time to stay active (ms)
         uint32 maxDuration;                                                    // Maximum time to stay active (ms)
@@ -171,11 +171,11 @@ namespace Playerbot
 
         // Profile management
         void RegisterProfile(const BehaviorProfile& profile);
-        void ActivateProfile(const std::string& name);
-        void DeactivateProfile(const std::string& name);
-        bool IsProfileActive(const std::string& name) const;
+        void ActivateProfile(const ::std::string& name);
+        void DeactivateProfile(const ::std::string& name);
+        bool IsProfileActive(const ::std::string& name) const;
         const BehaviorProfile* GetActiveProfile() const;
-        std::vector<std::string> GetActiveProfileNames() const;
+        ::std::vector<::std::string> GetActiveProfileNames() const;
 
         // Role management
         BotRole GetPrimaryRole() const { return _roleAssignment.primaryRole; }
@@ -242,8 +242,8 @@ namespace Playerbot
         uint32 GetStrategySwitchCount() const { return _strategySwitchCount; }
 
         // Learning and adaptation
-        void RecordDecisionOutcome(const std::string& decision, bool success);
-        float GetDecisionSuccessRate(const std::string& decision) const;
+        void RecordDecisionOutcome(const ::std::string& decision, bool success);
+        float GetDecisionSuccessRate(const ::std::string& decision) const;
         void AdjustBehaviorWeights();
 
         // Reset and cleanup
@@ -296,7 +296,7 @@ namespace Playerbot
         GroupComposition _groupComposition;
 
         // Behavior profiles
-        std::vector<BehaviorProfile> _profiles;
+        ::std::vector<BehaviorProfile> _profiles;
         BehaviorProfile* _activeProfile;
         uint32 _lastProfileSwitch;
         uint32 _profileSwitchCount;
@@ -304,7 +304,7 @@ namespace Playerbot
         // Strategy tracking
         uint32 _lastStrategyUpdate;
         uint32 _strategySwitchCount;
-        std::map<uint32, uint32> _strategyActiveTimes;
+        ::std::map<uint32, uint32> _strategyActiveTimes;
 
         // Decision tracking for learning
         struct DecisionOutcome
@@ -313,7 +313,7 @@ namespace Playerbot
             uint32 failureCount;
             float successRate;
         };
-        std::map<std::string, DecisionOutcome> _decisionHistory;
+        ::std::map<::std::string, DecisionOutcome> _decisionHistory;
 
         // Performance tracking
         uint32 _updateTimer;

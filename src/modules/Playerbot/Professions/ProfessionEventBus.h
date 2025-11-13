@@ -88,15 +88,15 @@ struct ProfessionEvent
     uint32 skillBefore;
     uint32 skillAfter;
     uint32 goldAmount;              // For banking events
-    std::string reason;             // Human-readable event reason
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::string reason;             // Human-readable event reason
+    ::std::chrono::steady_clock::time_point timestamp;
 
     // Factory methods for each event type
     static ProfessionEvent RecipeLearned(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId);
     static ProfessionEvent SkillUp(ObjectGuid playerGuid, ProfessionType profession, uint32 skillBefore, uint32 skillAfter);
     static ProfessionEvent CraftingStarted(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, uint32 itemId);
     static ProfessionEvent CraftingCompleted(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, uint32 itemId, uint32 quantity);
-    static ProfessionEvent CraftingFailed(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, std::string const& reason);
+    static ProfessionEvent CraftingFailed(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, ::std::string const& reason);
     static ProfessionEvent MaterialsNeeded(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId);
     static ProfessionEvent MaterialGathered(ObjectGuid playerGuid, ProfessionType profession, uint32 itemId, uint32 quantity);
     static ProfessionEvent MaterialPurchased(ObjectGuid playerGuid, uint32 itemId, uint32 quantity, uint32 goldSpent);
@@ -106,7 +106,7 @@ struct ProfessionEvent
     static ProfessionEvent GoldWithdrawn(ObjectGuid playerGuid, uint32 goldAmount);
 
     bool IsValid() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 /**
@@ -131,7 +131,7 @@ public:
     /**
      * Event handler callback
      */
-    using EventHandler = std::function<void(ProfessionEvent const&)>;
+    using EventHandler = ::std::function<void(ProfessionEvent const&)>;
 
     // ========================================================================
     // BOTAI SUBSCRIPTION
@@ -140,7 +140,7 @@ public:
     /**
      * Subscribe BotAI to specific event types
      */
-    void Subscribe(BotAI* subscriber, std::vector<ProfessionEventType> const& types);
+    void Subscribe(BotAI* subscriber, ::std::vector<ProfessionEventType> const& types);
 
     /**
      * Subscribe BotAI to all event types
@@ -160,7 +160,7 @@ public:
      * Subscribe callback to specific event types
      * Returns subscription ID for later unsubscribe
      */
-    uint32 SubscribeCallback(EventHandler handler, std::vector<ProfessionEventType> const& types);
+    uint32 SubscribeCallback(EventHandler handler, ::std::vector<ProfessionEventType> const& types);
 
     /**
      * Unsubscribe callback by subscription ID
@@ -193,26 +193,26 @@ private:
     // ========================================================================
 
     // BotAI subscribers (type -> subscribers)
-    std::unordered_map<ProfessionEventType, std::vector<BotAI*>> _subscribers;
+    ::std::unordered_map<ProfessionEventType, ::std::vector<BotAI*>> _subscribers;
 
     // Global subscribers (all events)
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
 
     // Callback subscriptions
     struct CallbackSubscription
     {
         uint32 id;
         EventHandler handler;
-        std::vector<ProfessionEventType> types;
+        ::std::vector<ProfessionEventType> types;
     };
-    std::vector<CallbackSubscription> _callbackSubscriptions;
+    ::std::vector<CallbackSubscription> _callbackSubscriptions;
     uint32 _nextCallbackId = 1;
 
     // ========================================================================
     // STATISTICS
     // ========================================================================
 
-    std::unordered_map<ProfessionEventType, uint64> _eventCounts;
+    ::std::unordered_map<ProfessionEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
     // Thread safety

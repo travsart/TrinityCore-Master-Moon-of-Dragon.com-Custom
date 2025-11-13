@@ -63,11 +63,11 @@ struct BotPerformanceProfile
     uint64_t totalCombatTime;      // Microseconds
 
     // Behavior category scores (0.0 to 100.0)
-    std::array<double, 10> behaviorScores;
+    ::std::array<double, 10> behaviorScores;
 
     // Performance trends
-    std::array<double, 24> hourlyPerformance;  // Performance by hour of day
-    std::array<double, 7> dailyPerformance;    // Performance by day of week
+    ::std::array<double, 24> hourlyPerformance;  // Performance by hour of day
+    ::std::array<double, 7> dailyPerformance;    // Performance by day of week
 
     // Efficiency metrics
     double dpsEfficiency;           // Damage per second efficiency
@@ -103,14 +103,14 @@ struct BotPerformanceProfile
 struct SystemPerformanceAnalytics
 {
     // Bot distribution by performance
-    std::array<uint32_t, 5> performanceDistribution; // Count by PerformanceProfile
+    ::std::array<uint32_t, 5> performanceDistribution; // Count by PerformanceProfile
 
     // Class performance analysis
-    std::unordered_map<uint8_t, double> classPerformanceAverage;
-    std::unordered_map<uint8_t, uint32_t> classBotCount;
+    ::std::unordered_map<uint8_t, double> classPerformanceAverage;
+    ::std::unordered_map<uint8_t, uint32_t> classBotCount;
 
     // Specialization performance analysis
-    std::unordered_map<uint8_t, std::unordered_map<uint8_t, double>> specializationPerformance;
+    ::std::unordered_map<uint8_t, ::std::unordered_map<uint8_t, double>> specializationPerformance;
 
     // System load metrics
     double averageSystemLoad;
@@ -119,8 +119,8 @@ struct SystemPerformanceAnalytics
     uint64_t totalSystemUptime;
 
     // Performance trends
-    std::vector<double> performanceTrend;  // Last 100 measurements
-    std::vector<uint64_t> trendTimestamps;
+    ::std::vector<double> performanceTrend;  // Last 100 measurements
+    ::std::vector<uint64_t> trendTimestamps;
 
     // Resource usage analytics
     uint64_t totalMemoryUsage;
@@ -149,8 +149,8 @@ struct PerformanceComparison
     double currentScore;
     double previousScore;
     double improvementRate;
-    std::vector<std::pair<BotBehaviorCategory, double>> improvements;
-    std::vector<std::pair<BotBehaviorCategory, double>> regressions;
+    ::std::vector<::std::pair<BotBehaviorCategory, double>> improvements;
+    ::std::vector<::std::pair<BotBehaviorCategory, double>> regressions;
     uint64_t comparisonTimestamp;
 };
 
@@ -178,7 +178,7 @@ public:
     // Performance analysis
     void AnalyzeBotPerformance(uint32_t botGuid);
     void UpdateBehaviorScore(uint32_t botGuid, BotBehaviorCategory category, double score);
-    void RecordPerformanceEvent(uint32_t botGuid, const std::string& eventType, double value);
+    void RecordPerformanceEvent(uint32_t botGuid, const ::std::string& eventType, double value);
 
     // Performance calculation
     double CalculateOverallPerformance(uint32_t botGuid);
@@ -193,49 +193,49 @@ public:
 
     // Data retrieval
     BotPerformanceProfile GetBotProfile(uint32_t botGuid) const;
-    std::vector<BotPerformanceProfile> GetTopPerformers(uint32_t count = 10) const;
-    std::vector<BotPerformanceProfile> GetPoorPerformers(uint32_t count = 10) const;
-    std::vector<uint32_t> GetBotsInPerformanceRange(PerformanceProfile minProfile, PerformanceProfile maxProfile) const;
+    ::std::vector<BotPerformanceProfile> GetTopPerformers(uint32_t count = 10) const;
+    ::std::vector<BotPerformanceProfile> GetPoorPerformers(uint32_t count = 10) const;
+    ::std::vector<uint32_t> GetBotsInPerformanceRange(PerformanceProfile minProfile, PerformanceProfile maxProfile) const;
 
     // Comparative analysis
     PerformanceComparison CompareBotPerformance(uint32_t botGuid, uint64_t timeWindow = 3600000000); // 1 hour in microseconds
-    std::vector<PerformanceComparison> GetPerformanceImprovements(uint32_t count = 10) const;
-    std::vector<PerformanceComparison> GetPerformanceRegressions(uint32_t count = 10) const;
+    ::std::vector<PerformanceComparison> GetPerformanceImprovements(uint32_t count = 10) const;
+    ::std::vector<PerformanceComparison> GetPerformanceRegressions(uint32_t count = 10) const;
 
     // Performance optimization suggestions
-    std::vector<std::string> GetOptimizationSuggestions(uint32_t botGuid) const;
-    std::vector<std::string> GetSystemOptimizationSuggestions() const;
+    ::std::vector<::std::string> GetOptimizationSuggestions(uint32_t botGuid) const;
+    ::std::vector<::std::string> GetSystemOptimizationSuggestions() const;
 
     // Reporting
-    void GeneratePerformanceReport(std::string& report, uint32_t botGuid = 0) const;
-    void GenerateSystemReport(std::string& report) const;
-    void GenerateClassAnalysisReport(std::string& report, uint8_t classId) const;
+    void GeneratePerformanceReport(::std::string& report, uint32_t botGuid = 0) const;
+    void GenerateSystemReport(::std::string& report) const;
+    void GenerateClassAnalysisReport(::std::string& report, uint8_t classId) const;
 
     // Learning and adaptation
-    void RecordAdaptationEvent(uint32_t botGuid, const std::string& eventType);
+    void RecordAdaptationEvent(uint32_t botGuid, const ::std::string& eventType);
     void UpdateLearningMetrics(uint32_t botGuid, double learningRate);
     void AnalyzeLearningTrends();
 
     // Error tracking and analysis
-    void RecordError(uint32_t botGuid, const std::string& errorType, const std::string& context);
-    void RecordErrorRecovery(uint32_t botGuid, const std::string& errorType, uint64_t recoveryTime);
+    void RecordError(uint32_t botGuid, const ::std::string& errorType, const ::std::string& context);
+    void RecordErrorRecovery(uint32_t botGuid, const ::std::string& errorType, uint64_t recoveryTime);
     void AnalyzeErrorPatterns();
 
     // Configuration and tuning
     void SetAnalyticsEnabled(bool enabled) { _enabled.store(enabled); }
     void SetUpdateInterval(uint64_t intervalMicroseconds) { _updateInterval = intervalMicroseconds; }
-    void SetPerformanceWeights(const std::array<double, 10>& weights) { _behaviorWeights = weights; }
+    void SetPerformanceWeights(const ::std::array<double, 10>& weights) { _behaviorWeights = weights; }
 
     // Data management
     void FlushAnalytics();
     void ArchiveOldData(uint64_t olderThanMicroseconds);
-    void ExportAnalytics(const std::string& filename) const;
-    void ImportAnalytics(const std::string& filename);
+    void ExportAnalytics(const ::std::string& filename) const;
+    void ImportAnalytics(const ::std::string& filename);
 
     // Real-time monitoring
     void StartRealTimeMonitoring();
     void StopRealTimeMonitoring();
-    std::vector<std::pair<uint32_t, double>> GetRealTimePerformance() const;
+    ::std::vector<::std::pair<uint32_t, double>> GetRealTimePerformance() const;
 
 private:
     BotPerformanceAnalytics() = default;
@@ -249,9 +249,9 @@ private:
     void AnalyzeSpecializationUsage(uint32_t botGuid, BotPerformanceProfile& profile);
 
     // Score calculation helpers
-    double CalculateWeightedScore(const std::array<double, 10>& scores) const;
+    double CalculateWeightedScore(const ::std::array<double, 10>& scores) const;
     double NormalizeScore(double rawScore, double minValue, double maxValue) const;
-    double CalculateTrendScore(const std::vector<double>& values) const;
+    double CalculateTrendScore(const ::std::vector<double>& values) const;
 
     // Data persistence
     void SaveBotProfile(const BotPerformanceProfile& profile);
@@ -265,12 +265,12 @@ private:
     void CalculateSystemMetrics();
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _shutdownRequested{false};
     uint64_t _updateInterval{60000000}; // 60 seconds in microseconds
 
     // Performance weighting for different behavior categories
-    std::array<double, 10> _behaviorWeights{
+    ::std::array<double, 10> _behaviorWeights{
         0.20, // COMBAT_EFFICIENCY
         0.15, // RESOURCE_MANAGEMENT
         0.10, // MOVEMENT_OPTIMIZATION
@@ -284,25 +284,25 @@ private:
     };
 
     // Data storage
-    mutable std::recursive_mutex _profilesMutex;
-    std::unordered_map<uint32_t, BotPerformanceProfile> _botProfiles;
+    mutable ::std::recursive_mutex _profilesMutex;
+    ::std::unordered_map<uint32_t, BotPerformanceProfile> _botProfiles;
 
-    mutable std::recursive_mutex _systemAnalyticsMutex;
+    mutable ::std::recursive_mutex _systemAnalyticsMutex;
     SystemPerformanceAnalytics _systemAnalytics;
 
-    mutable std::recursive_mutex _comparisonMutex;
-    std::unordered_map<uint32_t, std::vector<PerformanceComparison>> _performanceHistory;
+    mutable ::std::recursive_mutex _comparisonMutex;
+    ::std::unordered_map<uint32_t, ::std::vector<PerformanceComparison>> _performanceHistory;
 
     // Background processing
-    std::thread _analyticsThread;
-    std::condition_variable _analyticsCondition;
-    std::recursive_mutex _analyticsUpdateMutex;
+    ::std::thread _analyticsThread;
+    ::std::condition_variable _analyticsCondition;
+    ::std::recursive_mutex _analyticsUpdateMutex;
 
     // Real-time monitoring
-    std::atomic<bool> _realTimeMonitoring{false};
-    std::thread _monitoringThread;
-    mutable std::recursive_mutex _realTimeDataMutex;
-    std::vector<std::pair<uint32_t, double>> _realTimePerformanceData;
+    ::std::atomic<bool> _realTimeMonitoring{false};
+    ::std::thread _monitoringThread;
+    mutable ::std::recursive_mutex _realTimeDataMutex;
+    ::std::vector<::std::pair<uint32_t, double>> _realTimePerformanceData;
 
     // Constants
     static constexpr uint64_t DEFAULT_UPDATE_INTERVAL_US = 60000000;  // 60 seconds

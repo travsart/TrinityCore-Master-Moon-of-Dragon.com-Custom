@@ -40,15 +40,15 @@ public:
     virtual void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs = 0) = 0;
 
     // Quest completion detection
-    virtual std::vector<uint32> GetCompletedQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetCompletedQuests(Player* bot) = 0;
     virtual bool IsQuestReadyForTurnIn(uint32 questId, Player* bot) = 0;
     virtual void MonitorQuestCompletion(Player* bot) = 0;
     virtual void HandleQuestCompletion(Player* bot, uint32 questId) = 0;
 
     // Turn-in planning and optimization
     virtual void PlanOptimalTurnInRoute(Player* bot) = 0;
-    virtual TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds) = 0;
-    virtual void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns) = 0;
+    virtual TurnInBatch CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds) = 0;
+    virtual void OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns) = 0;
     virtual void MinimizeTurnInTravel(Player* bot) = 0;
 
     // Quest giver location and navigation
@@ -59,8 +59,8 @@ public:
 
     // Reward selection and optimization
     virtual void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot) = 0;
-    virtual uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) = 0;
-    virtual void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot) = 0;
+    virtual uint32 SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) = 0;
+    virtual void EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot) = 0;
     virtual float CalculateItemValue(const QuestRewardItem& reward, Player* bot) = 0;
 
     // Group turn-in coordination
@@ -118,7 +118,7 @@ public:
     virtual void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold) = 0;
 
     // Error handling and recovery
-    virtual void HandleTurnInError(Player* bot, uint32 questId, const std::string& error) = 0;
+    virtual void HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error) = 0;
     virtual void RecoverFromTurnInFailure(Player* bot, uint32 questId) = 0;
     virtual void RetryFailedTurnIn(Player* bot, uint32 questId) = 0;
     virtual void ValidateTurnInState(Player* bot, uint32 questId) = 0;

@@ -29,9 +29,9 @@ UnifiedLootManager* UnifiedLootManager::instance()
 }
 
 UnifiedLootManager::UnifiedLootManager()
-    : _analysis(std::make_unique<AnalysisModule>())
-    , _coordination(std::make_unique<CoordinationModule>())
-    , _distribution(std::make_unique<DistributionModule>())
+    : _analysis(::std::make_unique<AnalysisModule>())
+    , _coordination(::std::make_unique<CoordinationModule>())
+    , _distribution(::std::make_unique<DistributionModule>())
 {
     TC_LOG_INFO("playerbot.loot", "UnifiedLootManager initialized");
 }
@@ -82,7 +82,7 @@ float UnifiedLootManager::AnalysisModule::CalculateItemScore(Player* player, Loo
     return LootAnalysis::instance()->CalculateItemScore(player, item);
 }
 
-std::vector<std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetStatPriorities(Player* player)
+::std::vector<::std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetStatPriorities(Player* player)
 {
     return LootAnalysis::instance()->GetStatPriorities(player);
 }
@@ -93,7 +93,7 @@ std::vector<std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetSta
 
 void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, Loot* loot)
 {
-    std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
+    ::std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
 
     // Delegate to existing LootCoordination
     LootCoordination::instance()->InitiateLootSession(group, loot);
@@ -112,7 +112,7 @@ void UnifiedLootManager::CoordinationModule::ProcessLootSession(Group* group, ui
 
 void UnifiedLootManager::CoordinationModule::CompleteLootSession(uint32 lootSessionId)
 {
-    std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
+    ::std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
 
     LootCoordination::instance()->CompleteLootSession(lootSessionId);
 
@@ -131,17 +131,17 @@ void UnifiedLootManager::CoordinationModule::HandleLootSessionTimeout(uint32 loo
     CompleteLootSession(lootSessionId); // Cleanup
 }
 
-void UnifiedLootManager::CoordinationModule::OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items)
+void UnifiedLootManager::CoordinationModule::OrchestrateLootDistribution(Group* group, ::std::vector<LootItem> const& items)
 {
     LootCoordination::instance()->OrchestrateLootDistribution(group, items);
 }
 
-void UnifiedLootManager::CoordinationModule::PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items)
+void UnifiedLootManager::CoordinationModule::PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items)
 {
     LootCoordination::instance()->PrioritizeLootDistribution(group, items);
 }
 
-void UnifiedLootManager::CoordinationModule::OptimizeLootSequence(Group* group, std::vector<LootItem>& items)
+void UnifiedLootManager::CoordinationModule::OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items)
 {
     LootCoordination::instance()->OptimizeLootSequence(group, items);
 }
@@ -188,7 +188,7 @@ void UnifiedLootManager::DistributionModule::DistributeLoot(Group* group, LootIt
 
 void UnifiedLootManager::DistributionModule::HandleLootRoll(Player* player, uint32 rollId, LootRollType rollType)
 {
-    std::lock_guard<decltype(_rollMutex)> lock(_rollMutex);
+    ::std::lock_guard<decltype(_rollMutex)> lock(_rollMutex);
 
     LootDistribution::instance()->HandleLootRoll(player, rollId, rollType);
     _rollsProcessed++;
@@ -279,7 +279,7 @@ float UnifiedLootManager::CalculateItemScore(Player* player, LootItem const& ite
     return _analysis->CalculateItemScore(player, item);
 }
 
-std::vector<std::pair<uint32, float>> UnifiedLootManager::GetStatPriorities(Player* player)
+::std::vector<::std::pair<uint32, float>> UnifiedLootManager::GetStatPriorities(Player* player)
 {
     return _analysis->GetStatPriorities(player);
 }
@@ -308,17 +308,17 @@ void UnifiedLootManager::HandleLootSessionTimeout(uint32 lootSessionId)
     _coordination->HandleLootSessionTimeout(lootSessionId);
 }
 
-void UnifiedLootManager::OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items)
+void UnifiedLootManager::OrchestrateLootDistribution(Group* group, ::std::vector<LootItem> const& items)
 {
     _coordination->OrchestrateLootDistribution(group, items);
 }
 
-void UnifiedLootManager::PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items)
+void UnifiedLootManager::PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items)
 {
     _coordination->PrioritizeLootDistribution(group, items);
 }
 
-void UnifiedLootManager::OptimizeLootSequence(Group* group, std::vector<LootItem>& items)
+void UnifiedLootManager::OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items)
 {
     _coordination->OptimizeLootSequence(group, items);
 }
@@ -424,7 +424,7 @@ void UnifiedLootManager::HandleLootNinja(Group* group, uint32 suspectedPlayer)
 
 void UnifiedLootManager::ProcessCompleteLootFlow(Group* group, Loot* loot)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto startTime = GameTime::GetGameTimeMS();
     _totalOperations++;
@@ -444,9 +444,9 @@ void UnifiedLootManager::ProcessCompleteLootFlow(Group* group, Loot* loot)
     TC_LOG_DEBUG("playerbot.loot", "Processed complete loot flow in {} ms", endTime - startTime);
 }
 
-std::string UnifiedLootManager::GetLootRecommendation(Player* player, LootItem const& item)
+::std::string UnifiedLootManager::GetLootRecommendation(Player* player, LootItem const& item)
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     // Analysis
     float itemValue = CalculateItemValue(player, item);
@@ -476,9 +476,9 @@ std::string UnifiedLootManager::GetLootRecommendation(Player* player, LootItem c
     return oss.str();
 }
 
-std::string UnifiedLootManager::GetLootStatistics() const
+::std::string UnifiedLootManager::GetLootStatistics() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     oss << "=== UnifiedLootManager Statistics ===\n";
     oss << "Total Operations: " << _totalOperations.load() << "\n";

@@ -160,7 +160,7 @@ void BehaviorPriorityManager::UnregisterStrategy(Strategy* strategy)
     // Remove from all priority buckets
     for (auto& [priority, strategies] : m_strategies)
     {
-        auto it = std::remove_if(strategies.begin(), strategies.end(),
+        auto it = ::std::remove_if(strategies.begin(), strategies.end(),
             [strategy](const BehaviorMetadata& meta) {
                 return meta.strategy == strategy;
             });
@@ -197,7 +197,7 @@ void BehaviorPriorityManager::AddExclusionRule(BehaviorPriority a, BehaviorPrior
 // ========================================================================
 
 Strategy* BehaviorPriorityManager::SelectActiveBehavior(
-    std::vector<Strategy*>& activeStrategies)
+    ::std::vector<Strategy*>& activeStrategies)
 {
     TC_LOG_ERROR("module.playerbot.priority", " SelectActiveBehavior ENTRY: {} active strategies",
                  activeStrategies.size());
@@ -210,7 +210,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
     }
 
     // Build list of active priorities and their strategies
-    std::vector<std::pair<BehaviorPriority, Strategy*>> prioritizedStrategies;
+    ::std::vector<::std::pair<BehaviorPriority, Strategy*>> prioritizedStrategies;
 
     for (Strategy* strategy : activeStrategies)
     {
@@ -249,7 +249,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
                  prioritizedStrategies.size());
 
     // Sort by priority (descending)
-    std::sort(prioritizedStrategies.begin(), prioritizedStrategies.end(),
+    ::std::sort(prioritizedStrategies.begin(), prioritizedStrategies.end(),
         [](const auto& a, const auto& b) {
             return a.first > b.first;
         });
@@ -260,7 +260,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
 
     // Track which priorities are actually viable (non-zero relevance)
     // This prevents strategies with 0.0f relevance from blocking lower-priority strategies
-    std::vector<BehaviorPriority> viablePriorities;
+    ::std::vector<BehaviorPriority> viablePriorities;
 
     for (const auto& [priority, strategy] : prioritizedStrategies)
     {
@@ -349,9 +349,9 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
     return nullptr;
 }
 
-std::vector<Strategy*> BehaviorPriorityManager::GetPrioritizedStrategies() const
+::std::vector<Strategy*> BehaviorPriorityManager::GetPrioritizedStrategies() const
 {
-    std::vector<Strategy*> result;
+    ::std::vector<Strategy*> result;
 
     // Iterate through priorities in descending order
     for (auto it = m_strategies.rbegin(); it != m_strategies.rend(); ++it)
@@ -530,7 +530,7 @@ bool BehaviorPriorityManager::IsPriorityActive(BehaviorPriority priority) const
 
 void BehaviorPriorityManager::DumpPriorityState() const
 {
-    std::stringstream ss;
+    ::std::stringstream ss;
     ss << "BehaviorPriorityManager State:\n";
     ss << "  Active Priority: " << ToString(m_activePriority) << " ("
        << static_cast<int>(m_activePriority) << ")\n";
@@ -581,7 +581,7 @@ void BehaviorPriorityManager::DumpPriorityState() const
     TC_LOG_INFO("module.playerbot.priority", "{}", ss.str());
 }
 
-std::set<BehaviorPriority> BehaviorPriorityManager::GetConflicts(BehaviorPriority priority) const
+::std::set<BehaviorPriority> BehaviorPriorityManager::GetConflicts(BehaviorPriority priority) const
 {
     auto it = m_exclusionRules.find(priority);
     if (it != m_exclusionRules.end())
@@ -595,7 +595,7 @@ std::set<BehaviorPriority> BehaviorPriorityManager::GetConflicts(BehaviorPriorit
 
 bool BehaviorPriorityManager::IsBlockedByExclusion(
     BehaviorPriority priority,
-    const std::vector<BehaviorPriority>& activePriorities) const
+    const ::std::vector<BehaviorPriority>& activePriorities) const
 {
     auto it = m_exclusionRules.find(priority);
     if (it == m_exclusionRules.end())
@@ -603,7 +603,7 @@ bool BehaviorPriorityManager::IsBlockedByExclusion(
         return false; // No exclusion rules for this priority
     }
 
-    const std::set<BehaviorPriority>& conflicts = it->second;
+    const ::std::set<BehaviorPriority>& conflicts = it->second;
 
     // Check if any active priority conflicts
     for (BehaviorPriority activePriority : activePriorities)
@@ -664,7 +664,7 @@ const BehaviorMetadata* BehaviorPriorityManager::FindMetadata(Strategy* strategy
 // HELPER FUNCTIONS
 // ========================================================================
 
-std::string_view ToString(BehaviorPriority priority)
+::std::string_view ToString(BehaviorPriority priority)
 {
     switch (priority)
     {

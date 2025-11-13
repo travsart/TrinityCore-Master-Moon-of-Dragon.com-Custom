@@ -127,8 +127,8 @@ struct GroupEvent
     uint32 data2;                   // Event-specific data 2
     uint64 data3;                   // Event-specific data 3 (64-bit for positions)
 
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     // Helper constructors for common event types
     static GroupEvent MemberJoined(ObjectGuid groupGuid, ObjectGuid memberGuid);
@@ -153,7 +153,7 @@ struct GroupEvent
     // Validation
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 /**
@@ -201,7 +201,7 @@ public:
      *
      * Note: Subscriber must call Unsubscribe before destruction
      */
-    bool Subscribe(BotAI* subscriber, std::vector<GroupEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<GroupEventType> const& types) override;
 
     /**
      * Subscribe to all event types
@@ -257,16 +257,16 @@ public:
     // Statistics and monitoring
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};      // Expired or invalid
-        std::atomic<uint64_t> totalDeliveries{0};         // Event→Subscriber deliveries
-        std::atomic<uint64_t> averageProcessingTimeUs{0}; // Microseconds
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};      // Expired or invalid
+        ::std::atomic<uint64_t> totalDeliveries{0};         // Event→Subscriber deliveries
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0}; // Microseconds
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -288,7 +288,7 @@ public:
      */
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<GroupEvent> GetQueueSnapshot() const override;
+    ::std::vector<GroupEvent> GetQueueSnapshot() const override;
 
 private:
     GroupEventBus();
@@ -323,30 +323,30 @@ private:
      * Update performance metrics
      * @param processingTime Time taken to process event
      */
-    void UpdateMetrics(std::chrono::microseconds processingTime);
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
 
     /**
      * Log event for debugging
      * @param event The event to log
      * @param action Action being performed (Published/Processed/Dropped)
      */
-    void LogEvent(GroupEvent const& event, std::string const& action) const;
+    void LogEvent(GroupEvent const& event, ::std::string const& action) const;
 
 private:
     // Event queue (priority queue for automatic priority sorting)
-    std::priority_queue<GroupEvent> _eventQueue;
+    ::std::priority_queue<GroupEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _queueMutex;
 
     // Subscriber management
     // Map: EventType → Vector of subscribers for that type
-    std::unordered_map<GroupEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers; // Subscribed to all events
+    ::std::unordered_map<GroupEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers; // Subscribed to all events
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _subscriberMutex;
 
     // Configuration
-    std::atomic<uint32_t> _maxQueueSize{10000};     // Maximum events in queue
-    std::atomic<uint32_t> _eventTTLMs{30000};       // Event time-to-live (30 seconds)
-    std::atomic<uint32_t> _batchSize{50};           // Events per batch
+    ::std::atomic<uint32_t> _maxQueueSize{10000};     // Maximum events in queue
+    ::std::atomic<uint32_t> _eventTTLMs{30000};       // Event time-to-live (30 seconds)
+    ::std::atomic<uint32_t> _batchSize{50};           // Events per batch
 
     // Statistics
     Statistics _stats;

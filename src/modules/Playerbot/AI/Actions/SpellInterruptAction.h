@@ -101,13 +101,13 @@ public:
     // === Integration Methods ===
 
     // Set the interrupt coordinator for result reporting
-    void SetInterruptCoordinator(std::shared_ptr<InterruptCoordinator> coordinator);
+    void SetInterruptCoordinator(::std::shared_ptr<InterruptCoordinator> coordinator);
 
     // Get pending interrupt assignments for this bot
-    std::vector<InterruptAssignment> GetPendingAssignments(BotAI* ai) const;
+    ::std::vector<InterruptAssignment> GetPendingAssignments(BotAI* ai) const;
 
     // Report interrupt execution result
-    void ReportInterruptResult(BotAI* ai, InterruptContext const& context, bool success, std::string const& reason = "");
+    void ReportInterruptResult(BotAI* ai, InterruptContext const& context, bool success, ::std::string const& reason = "");
 
 protected:
     // === Internal Implementation ===
@@ -145,7 +145,7 @@ protected:
     void WaitForOptimalTiming(InterruptContext const& context) const;
 
     // Error handling and recovery
-    void HandleInterruptFailure(BotAI* ai, InterruptContext const& context, std::string const& reason);
+    void HandleInterruptFailure(BotAI* ai, InterruptContext const& context, ::std::string const& reason);
     bool CanRetryInterrupt(InterruptContext const& context) const;
 
     // Performance optimization
@@ -154,10 +154,10 @@ protected:
 
 private:
     // Interrupt coordinator integration
-    std::weak_ptr<InterruptCoordinator> _coordinator;
+    ::std::weak_ptr<InterruptCoordinator> _coordinator;
 
     // Execution tracking
-    std::chrono::steady_clock::time_point _lastExecution;
+    ::std::chrono::steady_clock::time_point _lastExecution;
     uint32 _executionCount = 0;
 
     // Performance metrics
@@ -169,7 +169,7 @@ private:
         uint32 timingFailures = 0;
         uint32 cooldownFailures = 0;
         uint32 rangeFailures = 0;
-        std::chrono::microseconds averageExecutionTime{0};
+        ::std::chrono::microseconds averageExecutionTime{0};
 
         float GetSuccessRate() const
         {

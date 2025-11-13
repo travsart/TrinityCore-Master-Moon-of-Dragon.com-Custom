@@ -87,7 +87,7 @@ public:
 
 private:
     Player* _bot;
-    std::array<RuneInfo, 6> _runes;
+    ::std::array<RuneInfo, 6> _runes;
     uint32 _lastRegenUpdate;
     float _regenModifier;
 

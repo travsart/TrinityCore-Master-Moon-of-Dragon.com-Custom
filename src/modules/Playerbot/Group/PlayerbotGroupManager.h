@@ -89,7 +89,7 @@ struct GroupFormationData
     };
 
     Position leaderOffset;
-    std::unordered_map<GroupRole, Position> rolePositions;
+    ::std::unordered_map<GroupRole, Position> rolePositions;
     float maxFormationDistance;
     bool maintainFormation;
 
@@ -145,7 +145,7 @@ public:
 
     // Group finder and matching
     uint32 FindSuitableGroup(Player* player, GroupRole role) override;
-    std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel) override;
+    ::std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel) override;
     bool CanJoinGroup(Player* player, uint32 groupId, GroupRole role) override;
 
     // Group coordination
@@ -157,7 +157,7 @@ public:
     // Leadership and decision making
     void AssignGroupLeader(uint32 groupId, uint32 newLeaderGuid) override;
     void HandleLeaderDisconnect(uint32 groupId) override;
-    void MakeGroupDecision(uint32 groupId, std::string const& decision) override;
+    void MakeGroupDecision(uint32 groupId, ::std::string const& decision) override;
 
     // Combat coordination
     void OnCombatStart(uint32 groupId, Unit* target) override;
@@ -171,8 +171,8 @@ public:
     void FormationMove(uint32 groupId, Position const& destination) override;
 
     // Communication and chat
-    void BroadcastToGroup(uint32 groupId, std::string const& message, ChatMsg type = CHAT_MSG_PARTY) override;
-    void HandleGroupChat(uint32 groupId, Player* sender, std::string const& message) override;
+    void BroadcastToGroup(uint32 groupId, ::std::string const& message, ChatMsg type = CHAT_MSG_PARTY) override;
+    void HandleGroupChat(uint32 groupId, Player* sender, ::std::string const& message) override;
 
     // Statistics and monitoring
     using GroupStatistics = Playerbot::GroupStatistics;
@@ -206,9 +206,9 @@ private:
         Group* coreGroup;
         GroupFormationType formationType;
         GroupCoordinationMode coordinationMode;
-        std::vector<GroupMemberInfo> members;
+        ::std::vector<GroupMemberInfo> members;
         GroupFormationData formation;
-        std::queue<GroupObjective> objectives;
+        ::std::queue<GroupObjective> objectives;
         GroupObjective currentObjective;
         GroupStatistics statistics;
         uint32 creationTime;
@@ -226,9 +226,9 @@ private:
     };
 
     // Core data structures
-    std::unordered_map<uint32, std::unique_ptr<PlayerbotGroup>> _groups;
-    std::unordered_map<uint32, uint32> _playerToGroup; // player guid -> group id
-    std::atomic<uint32> _nextGroupId{1};
+    ::std::unordered_map<uint32, ::std::unique_ptr<PlayerbotGroup>> _groups;
+    ::std::unordered_map<uint32, uint32> _playerToGroup; // player guid -> group id
+    ::std::atomic<uint32> _nextGroupId{1};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupsMutex;
 
     // Group formation queue
@@ -246,18 +246,18 @@ private:
             , minLevel(minLvl), maxLevel(maxLvl), requestTime(GameTime::GetGameTimeMS()) {}
     };
 
-    std::queue<GroupFormationRequest> _formationQueue;
+    ::std::queue<GroupFormationRequest> _formationQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _queueMutex;
 
     // Configuration
-    std::atomic<bool> _autoGroupingEnabled{true};
-    std::unordered_map<uint32, uint32> _maxGroupsPerMap;
+    ::std::atomic<bool> _autoGroupingEnabled{true};
+    ::std::unordered_map<uint32, uint32> _maxGroupsPerMap;
 
     // Helper functions
     uint32 GenerateGroupId() { return _nextGroupId++; }
     GroupRole DetermineOptimalRole(Player* player);
     bool IsGroupBalanced(const PlayerbotGroup& group);
-    float CalculateGroupCompatibility(const std::vector<Player*>& players);
+    float CalculateGroupCompatibility(const ::std::vector<Player*>& players);
     void OptimizeGroupComposition(PlayerbotGroup& group);
     Position CalculateFormationPosition(const PlayerbotGroup& group, const GroupMemberInfo& member);
     void ExecuteGroupObjective(PlayerbotGroup& group);

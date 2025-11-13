@@ -118,7 +118,7 @@ struct DeathRecoveryStatistics
     void RecordDeath();
     void RecordResurrection(ResurrectionMethod method, uint64 recoveryTimeMs, bool hadSickness);
     void RecordFailure();
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 /**
@@ -455,14 +455,14 @@ private:
      * @brief Handle resurrection failure
      * @param reason Failure reason for logging
      */
-    void HandleResurrectionFailure(std::string const& reason);
+    void HandleResurrectionFailure(::std::string const& reason);
 
     /**
      * @brief Transition to new state with logging
      * @param newState New state to transition to
      * @param reason Reason for transition
      */
-    void TransitionToState(DeathRecoveryState newState, std::string const& reason);
+    void TransitionToState(DeathRecoveryState newState, ::std::string const& reason);
 
     // ========================================================================
     // HELPER METHODS
@@ -495,7 +495,7 @@ private:
      * @brief Log debug information
      * @param message Message to log
      */
-    void LogDebug(std::string const& message) const;
+    void LogDebug(::std::string const& message) const;
 
 private:
     // Core references
@@ -503,22 +503,22 @@ private:
     BotAI* m_ai;
 
     // State management
-    std::atomic<DeathRecoveryState> m_state;
+    ::std::atomic<DeathRecoveryState> m_state;
     ResurrectionMethod m_method;
-    std::chrono::steady_clock::time_point m_deathTime;
-    std::chrono::steady_clock::time_point m_lastStateTransition;
+    ::std::chrono::steady_clock::time_point m_deathTime;
+    ::std::chrono::steady_clock::time_point m_lastStateTransition;
 
     // Corpse tracking
     WorldLocation m_corpseLocation;
     mutable float m_corpseDistance;
-    mutable std::chrono::steady_clock::time_point m_lastCorpseDistanceCheck;
+    mutable ::std::chrono::steady_clock::time_point m_lastCorpseDistanceCheck;
 
     // Spirit healer tracking
     ObjectGuid m_spiritHealerGuid;
     WorldLocation m_spiritHealerLocation;
 
     // Navigation tracking
-    std::chrono::steady_clock::time_point m_lastNavigationUpdate;
+    ::std::chrono::steady_clock::time_point m_lastNavigationUpdate;
     bool m_navigationActive;
 
     // Timers
@@ -537,12 +537,12 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> m_mutex;
 
     // GHOST AURA FIX: Resurrection synchronization to prevent duplicate aura application
-    mutable std::timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts with timeout support
-    std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
-    std::atomic<uint64> _lastResurrectionAttemptMs{0}; ///< Last resurrection attempt timestamp (for debouncing)
+    mutable ::std::timed_mutex _resurrectionMutex;    ///< Prevents concurrent resurrection attempts with timeout support
+    ::std::atomic<bool> _resurrectionInProgress{false};         ///< Resurrection is currently executing
+    ::std::atomic<uint64> _lastResurrectionAttemptMs{0}; ///< Last resurrection attempt timestamp (for debouncing)
 
     // SPELL MOD CRASH FIX: Deferred teleport ack to prevent Spell.cpp:603 crash
-    std::chrono::steady_clock::time_point m_teleportAckTime;  ///< Time when teleport ack was deferred
+    ::std::chrono::steady_clock::time_point m_teleportAckTime;  ///< Time when teleport ack was deferred
     bool m_needsTeleportAck;                                  ///< True if teleport ack needs to be processed
 
     // Constants

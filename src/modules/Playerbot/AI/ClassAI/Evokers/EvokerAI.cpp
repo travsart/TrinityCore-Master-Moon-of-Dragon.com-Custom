@@ -178,7 +178,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
     // Priority 3: Positioning - Maintain mid-range (20-25 yards for empowered spells)
     if (behaviors && behaviors->NeedsRepositioning())
     {        Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Too close - use Hover to gain distance
+        float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Too close - use Hover to gain distance
         if (distance < 15.0f && CanUseAbility(HOVER))
         {
             if (CastSpell(_bot, HOVER))
@@ -528,7 +528,7 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
     if (!target)        return _bot->GetPosition();
 
     Position pos = _bot->GetPosition();
-    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float optimalRange = GetOptimalRange(target);
 
     if (distance > optimalRange || distance < optimalRange * 0.8f)
@@ -563,7 +563,7 @@ void EvokerAI::UpdateDevastationRotation(::Unit* target)
         }
 
         // Fire Breath for AoE situations
-        std::vector<::Unit*> enemies = GetEmpoweredSpellTargets(FIRE_BREATH);
+        ::std::vector<::Unit*> enemies = GetEmpoweredSpellTargets(FIRE_BREATH);
         if (enemies.size() >= 3 && CanUseAbility(FIRE_BREATH))
         {
             EmpowermentLevel level = CalculateOptimalEmpowermentLevel(FIRE_BREATH, target);
@@ -744,7 +744,7 @@ EmpowermentLevel EvokerAI::CalculateOptimalEmpowermentLevel(uint32 spellId, ::Un
         return EmpowermentLevel::RANK_1;
 
     // Calculate based on situation
-    std::vector<::Unit*> targets = GetEmpoweredSpellTargets(spellId);
+    ::std::vector<::Unit*> targets = GetEmpoweredSpellTargets(spellId);
 
     if (targets.size() >= 5)
         return EmpowermentLevel::RANK_4;
@@ -788,7 +788,7 @@ void EvokerAI::ProcessEchoHealing(){
 void EvokerAI::RemoveExpiredEchoes()
 {
     _activeEchoes.erase(
-        std::remove_if(_activeEchoes.begin(), _activeEchoes.end(),            [](const Echo& echo) { return echo.remainingHeals == 0 || !echo.target; }),
+        ::std::remove_if(_activeEchoes.begin(), _activeEchoes.end(),            [](const Echo& echo) { return echo.remainingHeals == 0 || !echo.target; }),
         _activeEchoes.end());
 }uint32 EvokerAI::GetActiveEchoCount()
 {
@@ -901,11 +901,11 @@ bool EvokerAI::CanShiftAspect()
     return nullptr;
 }
 
-std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
+::std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
 {
-    std::vector<::Unit*> targets;
+    ::std::vector<::Unit*> targets;
 
-    std::list<Unit*> nearbyEnemies;
+    ::std::list<Unit*> nearbyEnemies;
     Trinity::AnyUnitInObjectRangeCheck check(_bot, EMPOWERED_SPELL_RANGE);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -922,7 +922,7 @@ std::vector<::Unit*> EvokerAI::GetEmpoweredSpellTargets(uint32 spellId)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), EMPOWERED_SPELL_RANGE);
 
     // Process results (replace old loop)
@@ -1258,9 +1258,9 @@ bool EvokerCalculator::ShouldConserveEssence(Player* caster, uint32 currentEssen
     return currentEssence < 2; // Conserve when below 2 essence
 }
 
-uint32 EvokerCalculator::CalculateOptimalEchoTargets(Player* caster, const std::vector<::Unit*>& allies)
+uint32 EvokerCalculator::CalculateOptimalEchoTargets(Player* caster, const ::std::vector<::Unit*>& allies)
 {
-    return std::min(static_cast<uint32>(allies.size()), 8u);
+    return ::std::min(static_cast<uint32>(allies.size()), 8u);
 }
 
 bool EvokerCalculator::ShouldCreateEcho(Player* caster, ::Unit* target)
@@ -1278,7 +1278,7 @@ uint32 EvokerCalculator::CalculateBuffEfficiency(uint32 spellId, Player* caster,
     return 100; // Placeholder
 }
 
-::Unit* EvokerCalculator::GetOptimalAugmentationTarget(Player* caster, const std::vector<::Unit*>& allies)
+::Unit* EvokerCalculator::GetOptimalAugmentationTarget(Player* caster, const ::std::vector<::Unit*>& allies)
 {
     return allies.empty() ? nullptr : allies[0]; // Placeholder
 }
@@ -1480,7 +1480,7 @@ void EchoController::ProcessEchoHealing()
 void EchoController::RemoveExpiredEchoes()
 {
     _echoes.erase(
-        std::remove_if(_echoes.begin(), _echoes.end(),
+        ::std::remove_if(_echoes.begin(), _echoes.end(),
             [](const Echo& echo) { return echo.remainingHeals == 0; }),
         _echoes.end());
 }
@@ -1492,7 +1492,7 @@ uint32 EchoController::GetActiveEchoCount() const
 
 bool EchoController::HasEcho(::Unit* target) const
 {
-    return std::any_of(_echoes.begin(), _echoes.end(),
+    return ::std::any_of(_echoes.begin(), _echoes.end(),
         [target](const Echo& echo) { return echo.target == target; });
 }
 

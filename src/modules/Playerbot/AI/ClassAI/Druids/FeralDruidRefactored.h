@@ -284,10 +284,10 @@ if (!thrash)
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _rakeTargets;
-    std::unordered_map<ObjectGuid, uint32> _ripTargets;
-    std::unordered_map<ObjectGuid, uint32> _thrashTargets;
-    std::unordered_map<ObjectGuid, uint32> _moonfireTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _rakeTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _ripTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _thrashTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _moonfireTargets;
 };
 
 // Bloodtalons proc tracker
@@ -865,7 +865,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     void ConsumeComboPoints(uint32 amount)

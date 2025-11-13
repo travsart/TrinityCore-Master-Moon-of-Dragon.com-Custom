@@ -70,8 +70,8 @@ void GatheringManager::OnShutdown()
     // Clear detected nodes (no lock needed - per-bot instance data)
     _detectedNodes.clear();
 
-    _detectedNodeCount.store(0, std::memory_order_release);
-    _hasNearbyResources.store(false, std::memory_order_release);
+    _detectedNodeCount.store(0, ::std::memory_order_release);
+    _hasNearbyResources.store(false, ::std::memory_order_release);
 }
 
 void GatheringManager::OnUpdate(uint32 elapsed)
@@ -80,8 +80,8 @@ void GatheringManager::OnUpdate(uint32 elapsed)
         return;
 
     // Update node detection every few seconds
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastScanTime).count() >= NODE_SCAN_INTERVAL)
+    auto now = ::std::chrono::steady_clock::now();
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastScanTime).count() >= NODE_SCAN_INTERVAL)
     {
         UpdateDetectedNodes();
         _lastScanTime = now;
@@ -113,13 +113,13 @@ void GatheringManager::OnUpdate(uint32 elapsed)
     CleanupExpiredNodes();
 
     // Update state flags
-    _detectedNodeCount.store(static_cast<uint32>(_detectedNodes.size()), std::memory_order_release);
-    _hasNearbyResources.store(!_detectedNodes.empty(), std::memory_order_release);
+    _detectedNodeCount.store(static_cast<uint32>(_detectedNodes.size()), ::std::memory_order_release);
+    _hasNearbyResources.store(!_detectedNodes.empty(), ::std::memory_order_release);
 }
 
-std::vector<GatheringNode> GatheringManager::ScanForNodes(float range)
+::std::vector<GatheringNode> GatheringManager::ScanForNodes(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     if (!GetBot() || !GetBot()->IsInWorld())
         return nodes;
@@ -150,7 +150,7 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes(float range)
     }
 
     // Sort by distance
-    std::sort(nodes.begin(), nodes.end(),
+    ::std::sort(nodes.begin(), nodes.end(),
         [](GatheringNode const& a, GatheringNode const& b) { return a.distance < b.distance; });
 
     return nodes;
@@ -160,7 +160,7 @@ GatheringNode const* GatheringManager::FindNearestNode(GatheringNodeType nodeTyp
 {
     // No lock needed - _detectedNodes is per-bot instance data
     GatheringNode const* nearest = nullptr;
-    float minDistance = std::numeric_limits<float>::max();
+    float minDistance = ::std::numeric_limits<float>::max();
 
     for (auto const& node : _detectedNodes)
     {
@@ -205,10 +205,10 @@ bool GatheringManager::GatherFromNode(GatheringNode const& node)
         return false;
 
     // Set gathering state
-    _isGathering.store(true, std::memory_order_release);
+    _isGathering.store(true, ::std::memory_order_release);
     _currentNodeGuid = node.guid;
     _currentTarget = &node;
-    _gatheringStartTime = std::chrono::steady_clock::now();
+    _gatheringStartTime = ::std::chrono::steady_clock::now();
     _gatheringAttempts++;
 
     // Cast appropriate gathering spell
@@ -317,7 +317,7 @@ bool GatheringManager::PathToNode(GatheringNode const& node)
     // Move to the node
     GetAI()->MoveTo(node.position.GetPositionX(), node.position.GetPositionY(), node.position.GetPositionZ());
 
-    _isMovingToNode.store(true, std::memory_order_release);
+    _isMovingToNode.store(true, ::std::memory_order_release);
     _currentTarget = &node;
 
     TC_LOG_DEBUG("bot.playerbot", "GatheringManager: Moving to node at %.2f, %.2f, %.2f",
@@ -338,15 +338,15 @@ bool GatheringManager::IsInGatheringRange(GatheringNode const& node) const
 float GatheringManager::GetDistanceToNode(GatheringNode const& node) const
 {
     if (!GetBot())
-        return std::numeric_limits<float>::max();
+        return ::std::numeric_limits<float>::max();
 
     return GetBot()->GetDistance(node.position);
 }
 
 void GatheringManager::StopGathering()
 {
-    _isGathering.store(false, std::memory_order_release);
-    _isMovingToNode.store(false, std::memory_order_release);
+    _isGathering.store(false, ::std::memory_order_release);
+    _isMovingToNode.store(false, ::std::memory_order_release);
     _currentNodeGuid.Clear();
     _currentTarget = nullptr;
     _currentSpellId = 0;
@@ -402,9 +402,9 @@ bool GatheringManager::IsProfessionEnabled(GatheringNodeType nodeType) const
     }
 }
 
-std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
+::std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
@@ -424,7 +424,7 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     }
 
     // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
         spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
     // Filter for mining veins using snapshot data
@@ -447,9 +447,9 @@ std::vector<GatheringNode> GatheringManager::DetectMiningNodes(float range)
     return nodes;
 }
 
-std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
+::std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
@@ -469,7 +469,7 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     }
 
     // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
         spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
     // Filter for herb nodes using snapshot data
@@ -492,9 +492,9 @@ std::vector<GatheringNode> GatheringManager::DetectHerbNodes(float range)
     return nodes;
 }
 
-std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
+::std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
@@ -514,7 +514,7 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
     }
 
     // Query nearby GameObjects (lock-free!)
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
         spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), range);
 
     // Filter for fishing pools using snapshot data
@@ -537,9 +537,9 @@ std::vector<GatheringNode> GatheringManager::DetectFishingPools(float range)
     return nodes;
 }
 
-std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float range)
+::std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     if (!GetBot() || !GetBot()->GetMap())
         return nodes;
@@ -559,7 +559,7 @@ std::vector<GatheringNode> GatheringManager::DetectSkinnableCreatures(float rang
     }
 
     // DEADLOCK FIX: Use snapshot-based query (thread-safe, lock-free)
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
         spatialGrid->QueryNearbyCreatures(GetBot()->GetPosition(), range);
 
     for (auto const& snapshot : nearbyCreatures)
@@ -633,7 +633,7 @@ bool GatheringManager::ValidateNode(GatheringNode const& node)
     if (node.nodeType == GatheringNodeType::CREATURE_CORPSE)
     {
         // Query nearby creatures and find matching GUID
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
             spatialGrid->QueryNearbyCreatures(GetBot()->GetPosition(), 100.0f);
 
         for (auto const& snapshot : nearbyCreatures)
@@ -646,7 +646,7 @@ bool GatheringManager::ValidateNode(GatheringNode const& node)
     else
     {
         // Query nearby game objects and find matching GUID
-        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
+        ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
             spatialGrid->QueryNearbyGameObjects(GetBot()->GetPosition(), 100.0f);
 
         for (auto const& snapshot : nearbyObjects)
@@ -695,7 +695,7 @@ void GatheringManager::HandleGatheringResult(GatheringNode const& node, bool suc
     if (success)
     {
         // No lock needed - _detectedNodes is per-bot instance data
-        auto it = std::find_if(_detectedNodes.begin(), _detectedNodes.end(),
+        auto it = ::std::find_if(_detectedNodes.begin(), _detectedNodes.end(),
             [&node](GatheringNode const& n) { return n.guid == node.guid; });
 
         if (it != _detectedNodes.end())
@@ -715,7 +715,7 @@ void GatheringManager::UpdateDetectedNodes()
 
     // Scan for new nodes
     auto newNodes = ScanForNodes(_detectionRange);
-    _detectedNodes = std::move(newNodes);
+    _detectedNodes = ::std::move(newNodes);
 
     TC_LOG_DEBUG("bot.playerbot", "GatheringManager: Detected %zu gathering nodes", _detectedNodes.size());
 }
@@ -758,8 +758,8 @@ void GatheringManager::ProcessCurrentGathering()
     }
 
     // Check if gathering timed out
-    auto elapsed = std::chrono::steady_clock::now() - _gatheringStartTime;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > GATHERING_CAST_TIME * 3)
+    auto elapsed = ::std::chrono::steady_clock::now() - _gatheringStartTime;
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count() > GATHERING_CAST_TIME * 3)
     {
         TC_LOG_DEBUG("bot.playerbot", "GatheringManager: Gathering timed out");
         HandleGatheringResult(*_currentTarget, false);
@@ -796,7 +796,7 @@ void GatheringManager::CleanupExpiredNodes()
 
     // Remove nodes that are too old or no longer valid
     _detectedNodes.erase(
-        std::remove_if(_detectedNodes.begin(), _detectedNodes.end(),
+        ::std::remove_if(_detectedNodes.begin(), _detectedNodes.end(),
             [currentTime, this](GatheringNode const& node) {
                 return !node.isActive ||
                        (currentTime - node.detectionTime > NODE_CACHE_DURATION) ||
@@ -818,9 +818,9 @@ void GatheringManager::RecordStatistics(GatheringNode const& node, bool success)
         _statistics.failedAttempts++;
     }
 
-    auto elapsed = std::chrono::steady_clock::now() - _gatheringStartTime;
+    auto elapsed = ::std::chrono::steady_clock::now() - _gatheringStartTime;
     _statistics.timeSpentGathering += static_cast<uint32>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        ::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count());
 }
 
 bool GatheringManager::HasProfession(GatheringNodeType nodeType) const

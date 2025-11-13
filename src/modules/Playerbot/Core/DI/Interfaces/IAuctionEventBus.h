@@ -49,7 +49,7 @@ class TC_GAME_API IAuctionEventBus
 public:
     virtual ~IAuctionEventBus() = default;
 
-    using EventHandler = std::function<void(AuctionEvent const&)>;
+    using EventHandler = ::std::function<void(AuctionEvent const&)>;
 
     // ====================================================================
     // EVENT PUBLISHING
@@ -73,7 +73,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @note Subscriber must call Unsubscribe before destruction
      */
-    virtual void Subscribe(BotAI* subscriber, std::vector<AuctionEventType> const& types) = 0;
+    virtual void Subscribe(BotAI* subscriber, ::std::vector<AuctionEventType> const& types) = 0;
 
     /**
      * @brief Subscribe BotAI to all auction event types
@@ -98,7 +98,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @return Subscription ID for later unsubscription
      */
-    virtual uint32 SubscribeCallback(EventHandler handler, std::vector<AuctionEventType> const& types) = 0;
+    virtual uint32 SubscribeCallback(EventHandler handler, ::std::vector<AuctionEventType> const& types) = 0;
 
     /**
      * @brief Unsubscribe callback handler

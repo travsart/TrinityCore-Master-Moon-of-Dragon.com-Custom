@@ -53,7 +53,7 @@ struct BotCreationTask
     // Bot identity
     ObjectGuid botGuid;
     uint32 accountId;
-    std::string botName;
+    ::std::string botName;
 
     // Character data (prepared in worker thread)
     uint8 race;
@@ -71,22 +71,22 @@ struct BotCreationTask
     bool useDualSpec;
 
     // Gear data (prepared in worker thread)
-    std::unique_ptr<GearSet> gearSet;
+    ::std::unique_ptr<GearSet> gearSet;
 
     // Zone data (prepared in worker thread)
     ZonePlacement const* zonePlacement;
 
     // Task metadata
     uint64 taskId;
-    std::chrono::steady_clock::time_point createdAt;
-    std::chrono::steady_clock::time_point preparedAt;
+    ::std::chrono::steady_clock::time_point createdAt;
+    ::std::chrono::steady_clock::time_point preparedAt;
 
     BotCreationTask()
         : accountId(0), race(0), cls(0), gender(0), faction(TEAM_ALLIANCE)
         , targetLevel(0), levelBracket(nullptr), primarySpec(0), secondarySpec(0)
         , useDualSpec(false), zonePlacement(nullptr), taskId(0)
     {
-        createdAt = std::chrono::steady_clock::now();
+        createdAt = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -164,7 +164,7 @@ public:
      */
     bool IsReady() const override
     {
-        return _initialized.load(std::memory_order_acquire);
+        return _initialized.load(::std::memory_order_acquire);
     }
 
     // ====================================================================
@@ -193,7 +193,7 @@ public:
      * @param bots          Vector of bot player objects
      * @return              Number of tasks submitted
      */
-    uint32 CreateBotsAsync(std::vector<Player*> const& bots) override;
+    uint32 CreateBotsAsync(::std::vector<Player*> const& bots) override;
 
     /**
      * Process queued bot creation tasks (main thread only)
@@ -245,7 +245,7 @@ public:
 
     LevelManagerStats GetStats() const override { return _stats; }
     void PrintReport() const override;
-    std::string GetSummary() const override;
+    ::std::string GetSummary() const override;
 
     // ====================================================================
     // CONFIGURATION
@@ -257,12 +257,12 @@ public:
      */
     void SetMaxBotsPerUpdate(uint32 maxBots) override
     {
-        _maxBotsPerUpdate.store(maxBots, std::memory_order_release);
+        _maxBotsPerUpdate.store(maxBots, ::std::memory_order_release);
     }
 
     uint32 GetMaxBotsPerUpdate() const override
     {
-        return _maxBotsPerUpdate.load(std::memory_order_acquire);
+        return _maxBotsPerUpdate.load(::std::memory_order_acquire);
     }
 
     /**
@@ -270,7 +270,7 @@ public:
      */
     void SetVerboseLogging(bool enabled) override
     {
-        _verboseLogging.store(enabled, std::memory_order_release);
+        _verboseLogging.store(enabled, ::std::memory_order_release);
     }
 
 private:
@@ -287,7 +287,7 @@ private:
      * Prepare bot creation data (worker thread)
      * NO Player API calls allowed
      */
-    void PrepareBot_WorkerThread(std::shared_ptr<BotCreationTask> task);
+    void PrepareBot_WorkerThread(::std::shared_ptr<BotCreationTask> task);
 
     /**
      * Generate bot character data
@@ -351,12 +351,12 @@ private:
     /**
      * Queue task for main thread processing
      */
-    void QueueMainThreadTask(std::shared_ptr<BotCreationTask> task);
+    void QueueMainThreadTask(::std::shared_ptr<BotCreationTask> task);
 
     /**
      * Get next task from queue (main thread only)
      */
-    std::shared_ptr<BotCreationTask> DequeueTask();
+    ::std::shared_ptr<BotCreationTask> DequeueTask();
 
     // ====================================================================
     // SUBSYSTEM REFERENCES
@@ -371,7 +371,7 @@ private:
     // TASK QUEUE
     // ====================================================================
 
-    std::queue<std::shared_ptr<BotCreationTask>> _mainThreadQueue;
+    ::std::queue<::std::shared_ptr<BotCreationTask>> _mainThreadQueue;
     Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     // ====================================================================
@@ -379,15 +379,15 @@ private:
     // ====================================================================
 
     LevelManagerStats _stats;
-    std::atomic<uint64> _nextTaskId{1};
+    ::std::atomic<uint64> _nextTaskId{1};
 
     // ====================================================================
     // CONFIGURATION
     // ====================================================================
 
-    std::atomic<uint32> _maxBotsPerUpdate{10};
-    std::atomic<bool> _verboseLogging{false};
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<uint32> _maxBotsPerUpdate{10};
+    ::std::atomic<bool> _verboseLogging{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 } // namespace Playerbot

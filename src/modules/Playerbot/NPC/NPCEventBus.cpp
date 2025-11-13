@@ -17,7 +17,7 @@ namespace Playerbot
 {
 
 // Factory methods
-NPCEvent NPCEvent::GossipMenuReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 menuId, uint32 textId, std::vector<uint32> options)
+NPCEvent NPCEvent::GossipMenuReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 menuId, uint32 textId, ::std::vector<uint32> options)
 {
     NPCEvent event;
     event.type = NPCEventType::GOSSIP_MENU_RECEIVED;
@@ -25,12 +25,12 @@ NPCEvent NPCEvent::GossipMenuReceived(ObjectGuid playerGuid, ObjectGuid npcGuid,
     event.npcGuid = npcGuid;
     event.menuId = menuId;
     event.textId = textId;
-    event.gossipOptions = std::move(options);
+    event.gossipOptions = ::std::move(options);
     event.vendorEntry = 0;
     event.trainerEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -46,41 +46,41 @@ NPCEvent NPCEvent::GossipComplete(ObjectGuid playerGuid, ObjectGuid npcGuid)
     event.trainerEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
-NPCEvent NPCEvent::VendorListReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 vendorEntry, std::vector<uint32> items)
+NPCEvent NPCEvent::VendorListReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 vendorEntry, ::std::vector<uint32> items)
 {
     NPCEvent event;
     event.type = NPCEventType::VENDOR_LIST_RECEIVED;
     event.playerGuid = playerGuid;
     event.npcGuid = npcGuid;
     event.vendorEntry = vendorEntry;
-    event.availableItems = std::move(items);
+    event.availableItems = ::std::move(items);
     event.menuId = 0;
     event.textId = 0;
     event.trainerEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
-NPCEvent NPCEvent::TrainerListReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 trainerEntry, std::vector<uint32> spells)
+NPCEvent NPCEvent::TrainerListReceived(ObjectGuid playerGuid, ObjectGuid npcGuid, uint32 trainerEntry, ::std::vector<uint32> spells)
 {
     NPCEvent event;
     event.type = NPCEventType::TRAINER_LIST_RECEIVED;
     event.playerGuid = playerGuid;
     event.npcGuid = npcGuid;
     event.trainerEntry = trainerEntry;
-    event.availableItems = std::move(spells);  // Reuse availableItems for spells
+    event.availableItems = ::std::move(spells);  // Reuse availableItems for spells
     event.menuId = 0;
     event.textId = 0;
     event.vendorEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -95,7 +95,7 @@ NPCEvent NPCEvent::TrainerServiceResult(ObjectGuid playerGuid, uint32 trainerSer
     event.vendorEntry = 0;
     event.trainerEntry = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -111,7 +111,7 @@ NPCEvent NPCEvent::BankOpened(ObjectGuid playerGuid, ObjectGuid npcGuid)
     event.trainerEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -127,7 +127,7 @@ NPCEvent NPCEvent::SpiritHealerConfirm(ObjectGuid playerGuid, ObjectGuid npcGuid
     event.trainerEntry = 0;
     event.trainerService = 0;
     event.petitionEntry = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -143,7 +143,7 @@ NPCEvent NPCEvent::PetitionListReceived(ObjectGuid playerGuid, ObjectGuid npcGui
     event.vendorEntry = 0;
     event.trainerEntry = 0;
     event.trainerService = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -175,9 +175,9 @@ bool NPCEvent::IsValid() const
     }
 }
 
-std::string NPCEvent::ToString() const
+::std::string NPCEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "NPCEvent[";
 
     switch (type)
@@ -234,7 +234,7 @@ bool NPCEventBus::PublishEvent(NPCEvent const& event)
 
     // Update statistics
     {
-        std::lock_guard lock(_subscriberMutex);
+        ::std::lock_guard lock(_subscriberMutex);
         ++_eventCounts[event.type];
         ++_totalEventsPublished;
     }
@@ -246,17 +246,17 @@ bool NPCEventBus::PublishEvent(NPCEvent const& event)
     return true;
 }
 
-void NPCEventBus::Subscribe(BotAI* subscriber, std::vector<NPCEventType> const& types)
+void NPCEventBus::Subscribe(BotAI* subscriber, ::std::vector<NPCEventType> const& types)
 {
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto type : types)
     {
         auto& typeSubscribers = _subscribers[type];
-        if (std::find(typeSubscribers.begin(), typeSubscribers.end(), subscriber) == typeSubscribers.end())
+        if (::std::find(typeSubscribers.begin(), typeSubscribers.end(), subscriber) == typeSubscribers.end())
         {
             typeSubscribers.push_back(subscriber);
             TC_LOG_DEBUG("playerbot.events", "NPCEventBus: Subscriber {} registered for type {}",
@@ -270,9 +270,9 @@ void NPCEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
         _globalSubscribers.push_back(subscriber);
         TC_LOG_DEBUG("playerbot.events", "NPCEventBus: Subscriber {} registered for ALL events",
@@ -285,34 +285,34 @@ void NPCEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
     {
-        subscribers.erase(std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
+        subscribers.erase(::std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
     }
 
     // Remove from global subscriptions
-    _globalSubscribers.erase(std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+    _globalSubscribers.erase(::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end());
 
     TC_LOG_DEBUG("playerbot.events", "NPCEventBus: Subscriber {} unregistered", static_cast<void*>(subscriber));
 }
 
-uint32 NPCEventBus::SubscribeCallback(EventHandler handler, std::vector<NPCEventType> const& types)
+uint32 NPCEventBus::SubscribeCallback(EventHandler handler, ::std::vector<NPCEventType> const& types)
 {
     if (!handler)
         return 0;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     CallbackSubscription sub;
     sub.id = _nextCallbackId++;
-    sub.handler = std::move(handler);
+    sub.handler = ::std::move(handler);
     sub.types = types;
 
-    _callbackSubscriptions.push_back(std::move(sub));
+    _callbackSubscriptions.push_back(::std::move(sub));
 
     TC_LOG_DEBUG("playerbot.events", "NPCEventBus: Callback {} registered for {} types",
         sub.id, types.size());
@@ -322,10 +322,10 @@ uint32 NPCEventBus::SubscribeCallback(EventHandler handler, std::vector<NPCEvent
 
 void NPCEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
-        std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
+        ::std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
             [subscriptionId](CallbackSubscription const& sub) { return sub.id == subscriptionId; }),
         _callbackSubscriptions.end());
 
@@ -334,14 +334,14 @@ void NPCEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 NPCEventBus::GetEventCount(NPCEventType type) const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     auto it = _eventCounts.find(type);
     return it != _eventCounts.end() ? it->second : 0;
 }
 
 void NPCEventBus::DeliverEvent(NPCEvent const& event)
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);
@@ -364,7 +364,7 @@ void NPCEventBus::DeliverEvent(NPCEvent const& event)
     // Deliver to callback subscriptions
     for (auto const& sub : _callbackSubscriptions)
     {
-        if (sub.types.empty() || std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
+        if (sub.types.empty() || ::std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
         {
             sub.handler(event);
         }

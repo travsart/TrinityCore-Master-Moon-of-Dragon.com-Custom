@@ -432,7 +432,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), SHURIKEN_STORM);
                 ConsumeEnergy(35);
-                GenerateComboPoints(std::min(enemyCount, 5u));
+                GenerateComboPoints(::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -470,7 +470,7 @@ private:
         if (timeDiff >= 100) // Every 100ms
         {
             uint32 energyRegen = (timeDiff / 100);
-            this->_resource.energy = std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
+            this->_resource.energy = ::std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
             lastRegenTime = now;
         }
     }
@@ -481,7 +481,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     bool IsBehindTarget(::Unit* target) const

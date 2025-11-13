@@ -32,19 +32,19 @@ public:
     virtual ~IStrategyFactory() = default;
 
     // Strategy registration
-    virtual void RegisterStrategy(std::string const& name,
-                                 std::function<std::unique_ptr<Strategy>()> creator) = 0;
+    virtual void RegisterStrategy(::std::string const& name,
+                                 ::std::function<::std::unique_ptr<Strategy>()> creator) = 0;
 
     // Strategy creation
-    virtual std::unique_ptr<Strategy> CreateStrategy(std::string const& name) = 0;
-    virtual std::vector<std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec) = 0;
-    virtual std::vector<std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level) = 0;
-    virtual std::vector<std::unique_ptr<Strategy>> CreatePvPStrategies() = 0;
-    virtual std::vector<std::unique_ptr<Strategy>> CreatePvEStrategies() = 0;
+    virtual ::std::unique_ptr<Strategy> CreateStrategy(::std::string const& name) = 0;
+    virtual ::std::vector<::std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec) = 0;
+    virtual ::std::vector<::std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level) = 0;
+    virtual ::std::vector<::std::unique_ptr<Strategy>> CreatePvPStrategies() = 0;
+    virtual ::std::vector<::std::unique_ptr<Strategy>> CreatePvEStrategies() = 0;
 
     // Available strategies
-    virtual std::vector<std::string> GetAvailableStrategies() const = 0;
-    virtual bool HasStrategy(std::string const& name) const = 0;
+    virtual ::std::vector<::std::string> GetAvailableStrategies() const = 0;
+    virtual bool HasStrategy(::std::string const& name) const = 0;
 };
 
 } // namespace Playerbot

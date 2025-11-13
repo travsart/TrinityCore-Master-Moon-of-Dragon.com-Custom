@@ -40,14 +40,14 @@ namespace Playerbot
 
         // Check cache first
         auto cacheKey = bot->GetGUID();
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
 
         {
-            std::lock_guard lock(m_mutex);
+            ::std::lock_guard lock(m_mutex);
             auto lastCheck = m_lastValidation.find(cacheKey);
             if (lastCheck != m_lastValidation.end())
             {
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCheck->second);
+                auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - lastCheck->second);
                 if (elapsed.count() < CACHE_DURATION_MS)
                 {
                     auto cached = m_validationCache.find(cacheKey);
@@ -112,7 +112,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::lock_guard lock(m_mutex);
+            ::std::lock_guard lock(m_mutex);
             m_lastValidation[cacheKey] = now;
             m_validationCache[cacheKey] = result;
         }
@@ -302,7 +302,7 @@ namespace Playerbot
 
         // Check cache
         {
-            std::lock_guard lock(m_mutex);
+            ::std::lock_guard lock(m_mutex);
             auto it = m_usefulItemCache.find(itemId);
             if (it != m_usefulItemCache.end())
                 return it->second;
@@ -374,7 +374,7 @@ namespace Playerbot
 
         // Cache result
         {
-            std::lock_guard lock(m_mutex);
+            ::std::lock_guard lock(m_mutex);
             m_usefulItemCache[itemId] = isUseful;
         }
 
@@ -614,10 +614,10 @@ namespace Playerbot
         return requirements.CheckRequirements(bot);
     }
 
-    std::vector<std::string> InteractionValidator::GetMissingRequirements(::Player* bot, ::WorldObject* target,
+    ::std::vector<::std::string> InteractionValidator::GetMissingRequirements(::Player* bot, ::WorldObject* target,
                                                                           InteractionType type) const
     {
-        std::vector<std::string> missing;
+        ::std::vector<::std::string> missing;
 
         if (!bot || !target)
         {
@@ -716,13 +716,13 @@ namespace Playerbot
 
     InteractionValidator::ValidationMetrics InteractionValidator::GetMetrics() const
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
         return m_metrics;
     }
 
     void InteractionValidator::ResetMetrics()
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
         m_metrics = ValidationMetrics();
     }
 
@@ -755,7 +755,7 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         auto botIt = m_cooldowns.find(bot->GetGUID());
         if (botIt == m_cooldowns.end())
@@ -770,15 +770,15 @@ namespace Playerbot
         if (cooldownIt == m_cooldownDurations.end())
             return false;
 
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - typeIt->second);
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - typeIt->second);
 
         return elapsed.count() < static_cast<int64>(cooldownIt->second);
     }
 
     void InteractionValidator::RecordValidation(InteractionType type, bool passed) const
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         ++m_metrics.totalValidations;
         if (passed)
@@ -792,7 +792,7 @@ namespace Playerbot
         // Update cooldown if passed
         if (passed)
         {
-            auto now = std::chrono::steady_clock::now();
+            auto now = ::std::chrono::steady_clock::now();
             // Note: We need the bot GUID here, but it's not passed to this function
             // In a real implementation, this would be handled differently
         }

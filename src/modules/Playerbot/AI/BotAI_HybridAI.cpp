@@ -32,7 +32,7 @@ void BotAI::InitializeHybridAI()
         _bot->GetName());
 
     // Create Hybrid AI Controller with SharedBlackboard (Phase 4)
-    _hybridAI = std::make_unique<HybridAIController>(this, _sharedBlackboard);
+    _hybridAI = ::std::make_unique<HybridAIController>(this, _sharedBlackboard);
 
     // Initialize with default behaviors and mappings
     _hybridAI->Initialize();

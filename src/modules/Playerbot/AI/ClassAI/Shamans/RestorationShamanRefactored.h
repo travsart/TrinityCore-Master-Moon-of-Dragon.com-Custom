@@ -140,7 +140,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _riptideTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _riptideTargets; // GUID -> expiration time
 };
 
 // Earth Shield tracker
@@ -255,7 +255,7 @@ public:
         
         {
 
-            std::vector<Unit*> groupMembers;
+            ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -389,7 +389,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -413,7 +413,7 @@ private:
             return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();        if (!bot)
 
@@ -556,7 +556,7 @@ private:
         return false;
     }
 
-    bool HandleHoTs(const std::vector<Unit*>& group)
+    bool HandleHoTs(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -647,7 +647,7 @@ private:
         return false;
     }
 
-    bool HandleAoEHealing(const std::vector<Unit*>& group)
+    bool HandleAoEHealing(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -789,7 +789,7 @@ private:
         return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {
         // Healing Surge for emergency
         for (Unit* member : group)
@@ -1692,9 +1692,9 @@ private:
         }
     }
 
-    [[nodiscard]] std::vector<Unit*> GetGroupMembers() const
+    [[nodiscard]] ::std::vector<Unit*> GetGroupMembers() const
     {
-        std::vector<Unit*> members;
+        ::std::vector<Unit*> members;
         Player* bot = this->GetBot();
         if (!bot) return members;
 

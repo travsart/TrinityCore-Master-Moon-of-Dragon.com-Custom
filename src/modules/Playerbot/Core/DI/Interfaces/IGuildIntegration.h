@@ -47,7 +47,7 @@ public:
     virtual void AutomateGuildChatParticipation(Player* player) = 0;
     virtual void RespondToGuildChat(Player* player, const GuildChatMessage& message) = 0;
     virtual void InitiateGuildConversation(Player* player) = 0;
-    virtual void ShareGuildInformation(Player* player, const std::string& topic) = 0;
+    virtual void ShareGuildInformation(Player* player, const ::std::string& topic) = 0;
 
     // Guild bank management
     virtual void AutomateGuildBankInteractions(Player* player) = 0;
@@ -81,8 +81,8 @@ public:
     virtual void ProvideMemberFeedback(Player* player) = 0;
 
     // Chat intelligence and response generation
-    virtual std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) = 0;
-    virtual std::string GenerateConversationStarter(Player* player) = 0;
+    virtual ::std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) = 0;
+    virtual ::std::string GenerateConversationStarter(Player* player) = 0;
     virtual bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message) = 0;
     virtual void LearnFromGuildConversations(Player* player) = 0;
 
@@ -110,7 +110,7 @@ public:
     virtual void TrackGuildBankActivity(Player* player) = 0;
 
     // Guild event management
-    virtual void CreateGuildEvent(Player* player, const std::string& eventType) = 0;
+    virtual void CreateGuildEvent(Player* player, const ::std::string& eventType) = 0;
     virtual void ManageGuildCalendarEvents(Player* player) = 0;
     virtual void CoordinateRaidScheduling(Player* player) = 0;
     virtual void OrganizePvPEvents(Player* player) = 0;
@@ -128,7 +128,7 @@ public:
     virtual void ConfigureGuildBankAccess(uint32 playerGuid, bool autoDeposit, bool autoWithdraw) = 0;
 
     // Error handling and recovery
-    virtual void HandleGuildInteractionError(uint32 playerGuid, const std::string& error) = 0;
+    virtual void HandleGuildInteractionError(uint32 playerGuid, const ::std::string& error) = 0;
     virtual void RecoverFromGuildFailure(uint32 playerGuid) = 0;
     virtual void HandleGuildLeaving(Player* player) = 0;
     virtual void HandleGuildInvitations(Player* player, uint32 guildId) = 0;

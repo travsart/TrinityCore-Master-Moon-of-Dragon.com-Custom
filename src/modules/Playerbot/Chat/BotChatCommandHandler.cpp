@@ -90,17 +90,17 @@ void BotChatCommandHandler::Shutdown()
 
     // Clear all data structures
     {
-        std::lock_guard lock(_commandsMutex);
+        ::std::lock_guard lock(_commandsMutex);
         _commands.clear();
     }
 
     {
-        std::lock_guard lock(_cooldownsMutex);
+        ::std::lock_guard lock(_cooldownsMutex);
         _cooldowns.clear();
     }
 
     {
-        std::lock_guard lock(_llmMutex);
+        ::std::lock_guard lock(_llmMutex);
         _llmProvider.reset();
     }
 
@@ -169,32 +169,32 @@ CommandResult BotChatCommandHandler::ProcessChatMessage(CommandContext const& co
     return CommandResult::COMMAND_NOT_FOUND;
 }
 
-bool BotChatCommandHandler::ParseCommand(std::string const& message, CommandContext& context)
+bool BotChatCommandHandler::ParseCommand(::std::string const& message, CommandContext& context)
 {
     // Check if message starts with command prefix
     if (!IsCommand(message))
         return false;
 
     // Remove prefix
-    std::string commandStr = message.substr(_commandPrefix.length());
+    ::std::string commandStr = message.substr(_commandPrefix.length());
 
     // Trim leading whitespace
     size_t start = commandStr.find_first_not_of(" \t");
-    if (start == std::string::npos)
+    if (start == ::std::string::npos)
         return false;
 
     commandStr = commandStr.substr(start);
 
     // Split into command and arguments
-    std::istringstream iss(commandStr);
-    std::string token;
+    ::std::istringstream iss(commandStr);
+    ::std::string token;
 
     // First token is command name
     if (!(iss >> context.command))
         return false;
 
     // Convert command to lowercase
-    std::transform(context.command.begin(), context.command.end(),
+    ::std::transform(context.command.begin(), context.command.end(),
         context.command.begin(), ::tolower);
 
     // Remaining tokens are arguments
@@ -207,7 +207,7 @@ bool BotChatCommandHandler::ParseCommand(std::string const& message, CommandCont
     return true;
 }
 
-bool BotChatCommandHandler::IsCommand(std::string const& message)
+bool BotChatCommandHandler::IsCommand(::std::string const& message)
 {
     return message.find(_commandPrefix) == 0;
 }
@@ -268,7 +268,7 @@ CommandResult BotChatCommandHandler::ProcessDirectCommand(CommandContext const& 
         bool found = false;
         for (auto const& [name, cmd] : _commands)
         {
-            for (std::string const& alias : cmd.aliases)
+            for (::std::string const& alias : cmd.aliases)
             {
                 if (alias == parsedContext.command)
                 {
@@ -308,7 +308,7 @@ CommandResult BotChatCommandHandler::ProcessDirectCommand(CommandContext const& 
         _statistics.rateLimited++;
         CommandResponse response;
         response.SetText("Command on cooldown. Please wait " +
-            std::to_string(remainingCooldown / 1000) + " seconds.");
+            ::std::to_string(remainingCooldown / 1000) + " seconds.");
         SendResponse(context, response);
         return CommandResult::RATE_LIMITED;
     }
@@ -361,7 +361,7 @@ CommandResult BotChatCommandHandler::ExecuteCommand(CommandContext const& contex
 
         return result;
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Exception executing command '{}': {}",
             command.name, ex.what());
@@ -386,7 +386,7 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
         return CommandResult::LLM_UNAVAILABLE;
     }
 
-    std::lock_guard lock(_llmMutex);
+    ::std::lock_guard lock(_llmMutex);
 
     if (!_llmProvider->IsAvailable())
     {
@@ -397,7 +397,7 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
     try
     {
         CommandResponse response;
-        std::future<CommandResult> future = _llmProvider->ProcessNaturalLanguage(context, response);
+        ::std::future<CommandResult> future = _llmProvider->ProcessNaturalLanguage(context, response);
 
         // For now, wait synchronously
         // TODO: Implement proper async command queue in Phase 7
@@ -410,7 +410,7 @@ CommandResult BotChatCommandHandler::ProcessNaturalLanguageCommand(CommandContex
 
         return result;
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("playerbot.chat", "BotChatCommandHandler: Exception in NLP processing: {}",
             ex.what());
@@ -443,7 +443,7 @@ bool BotChatCommandHandler::RegisterCommand(ChatCommand const& command)
         return false;
     }
 
-    std::lock_guard lock(_commandsMutex);
+    ::std::lock_guard lock(_commandsMutex);
 
     if (_commands.find(command.name) != _commands.end())
     {
@@ -458,12 +458,12 @@ bool BotChatCommandHandler::RegisterCommand(ChatCommand const& command)
     return true;
 }
 
-bool BotChatCommandHandler::UnregisterCommand(std::string const& name)
+bool BotChatCommandHandler::UnregisterCommand(::std::string const& name)
 {
     if (!_initialized)
         return false;
 
-    std::lock_guard lock(_commandsMutex);
+    ::std::lock_guard lock(_commandsMutex);
 
     auto it = _commands.find(name);
     if (it == _commands.end())
@@ -476,9 +476,9 @@ bool BotChatCommandHandler::UnregisterCommand(std::string const& name)
     return true;
 }
 
-ChatCommand const* BotChatCommandHandler::GetCommand(std::string const& name)
+ChatCommand const* BotChatCommandHandler::GetCommand(::std::string const& name)
 {
-    std::lock_guard lock(_commandsMutex);
+    ::std::lock_guard lock(_commandsMutex);
 
     auto it = _commands.find(name);
     if (it != _commands.end())
@@ -487,11 +487,11 @@ ChatCommand const* BotChatCommandHandler::GetCommand(std::string const& name)
     return nullptr;
 }
 
-std::vector<ChatCommand> BotChatCommandHandler::GetAllCommands()
+::std::vector<ChatCommand> BotChatCommandHandler::GetAllCommands()
 {
-    std::lock_guard lock(_commandsMutex);
+    ::std::lock_guard lock(_commandsMutex);
 
-    std::vector<ChatCommand> commands;
+    ::std::vector<ChatCommand> commands;
     commands.reserve(_commands.size());
 
     for (auto const& [name, cmd] : _commands)
@@ -502,11 +502,11 @@ std::vector<ChatCommand> BotChatCommandHandler::GetAllCommands()
     return commands;
 }
 
-std::vector<ChatCommand> BotChatCommandHandler::GetAvailableCommands(CommandContext const& context)
+::std::vector<ChatCommand> BotChatCommandHandler::GetAvailableCommands(CommandContext const& context)
 {
-    std::vector<ChatCommand> available;
+    ::std::vector<ChatCommand> available;
 
-    std::lock_guard lock(_commandsMutex);
+    ::std::lock_guard lock(_commandsMutex);
 
     for (auto const& [name, cmd] : _commands)
     {
@@ -582,7 +582,7 @@ uint32 BotChatCommandHandler::GetRemainingCooldown(CommandContext const& context
     if (!context.sender)
         return 0;
 
-    std::lock_guard lock(_cooldownsMutex);
+    ::std::lock_guard lock(_cooldownsMutex);
 
     ObjectGuid playerGuid = context.sender->GetGUID();
     auto playerIt = _cooldowns.find(playerGuid);
@@ -610,7 +610,7 @@ void BotChatCommandHandler::SetCooldown(CommandContext const& context, ChatComma
     if (!context.sender)
         return;
 
-    std::lock_guard lock(_cooldownsMutex);
+    ::std::lock_guard lock(_cooldownsMutex);
 
     ObjectGuid playerGuid = context.sender->GetGUID();
 
@@ -623,7 +623,7 @@ void BotChatCommandHandler::SetCooldown(CommandContext const& context, ChatComma
 
 void BotChatCommandHandler::ClearCooldowns(ObjectGuid playerGuid)
 {
-    std::lock_guard lock(_cooldownsMutex);
+    ::std::lock_guard lock(_cooldownsMutex);
 
     auto it = _cooldowns.find(playerGuid);
     if (it != _cooldowns.end())
@@ -658,9 +658,9 @@ bool BotChatCommandHandler::ValidateArgumentCount(CommandContext const& context,
 // LLM Integration
 // ========================================
 
-void BotChatCommandHandler::RegisterLLMProvider(std::shared_ptr<LLMProvider> provider)
+void BotChatCommandHandler::RegisterLLMProvider(::std::shared_ptr<LLMProvider> provider)
 {
-    std::lock_guard lock(_llmMutex);
+    ::std::lock_guard lock(_llmMutex);
 
     if (_llmProvider)
     {
@@ -683,7 +683,7 @@ void BotChatCommandHandler::RegisterLLMProvider(std::shared_ptr<LLMProvider> pro
 
 void BotChatCommandHandler::UnregisterLLMProvider()
 {
-    std::lock_guard lock(_llmMutex);
+    ::std::lock_guard lock(_llmMutex);
 
     if (_llmProvider)
     {
@@ -697,13 +697,13 @@ void BotChatCommandHandler::UnregisterLLMProvider()
 
 bool BotChatCommandHandler::HasLLMProvider()
 {
-    std::lock_guard lock(_llmMutex);
+    ::std::lock_guard lock(_llmMutex);
     return _llmProvider != nullptr;
 }
 
-std::shared_ptr<LLMProvider> BotChatCommandHandler::GetLLMProvider()
+::std::shared_ptr<LLMProvider> BotChatCommandHandler::GetLLMProvider()
 {
-    std::lock_guard lock(_llmMutex);
+    ::std::lock_guard lock(_llmMutex);
     return _llmProvider;
 }
 
@@ -711,15 +711,15 @@ std::shared_ptr<LLMProvider> BotChatCommandHandler::GetLLMProvider()
 // Configuration
 // ========================================
 
-void BotChatCommandHandler::SetCommandPrefix(std::string prefix)
+void BotChatCommandHandler::SetCommandPrefix(::std::string prefix)
 {
-    _commandPrefix = std::move(prefix);
+    _commandPrefix = ::std::move(prefix);
 
     TC_LOG_INFO("playerbot.chat", "BotChatCommandHandler: Command prefix set to '{}'",
         _commandPrefix);
 }
 
-std::string BotChatCommandHandler::GetCommandPrefix()
+::std::string BotChatCommandHandler::GetCommandPrefix()
 {
     return _commandPrefix;
 }
@@ -782,9 +782,9 @@ void BotChatCommandHandler::ResetStatistics()
 
 static CommandResult HandleHelpCommand(CommandContext const& context, CommandResponse& response)
 {
-    std::vector<ChatCommand> availableCommands = BotChatCommandHandler::GetAvailableCommands(context);
+    ::std::vector<ChatCommand> availableCommands = BotChatCommandHandler::GetAvailableCommands(context);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Available commands:\n";
 
     for (ChatCommand const& cmd : availableCommands)
@@ -908,7 +908,7 @@ static CommandResult HandleAttackCommand(CommandContext const& context, CommandR
     float distance = context.bot->GetDistance(target);
     if (distance > 100.0f) // Max attack initiation range
     {
-        response.SetText("Target too far away (" + std::to_string(static_cast<int>(distance)) + " yards)");
+        response.SetText("Target too far away (" + ::std::to_string(static_cast<int>(distance)) + " yards)");
         return CommandResult::EXECUTION_FAILED;
     }
 
@@ -936,7 +936,7 @@ static CommandResult HandleStatsCommand(CommandContext const& context, CommandRe
 {
     auto const& stats = BotChatCommandHandler::GetStatistics();
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Bot Command Statistics:\n";
     oss << "Total Commands: " << stats.totalCommands << "\n";
     oss << "Successful: " << stats.successfulCommands << "\n";
@@ -1020,13 +1020,13 @@ void BotChatCommandHandler::RegisterDefaultCommands()
 // CommandResponse Implementation
 // ========================================
 
-CommandResponse& CommandResponse::SetText(std::string text)
+CommandResponse& CommandResponse::SetText(::std::string text)
 {
-    _text = std::move(text);
+    _text = ::std::move(text);
     return *this;
 }
 
-CommandResponse& CommandResponse::AppendLine(std::string line)
+CommandResponse& CommandResponse::AppendLine(::std::string line)
 {
     if (!_text.empty())
         _text += "\n";
@@ -1040,9 +1040,9 @@ CommandResponse& CommandResponse::SetColor(uint32 color)
     return *this;
 }
 
-CommandResponse& CommandResponse::SetLink(std::string link)
+CommandResponse& CommandResponse::SetLink(::std::string link)
 {
-    _link = std::move(link);
+    _link = ::std::move(link);
     return *this;
 }
 

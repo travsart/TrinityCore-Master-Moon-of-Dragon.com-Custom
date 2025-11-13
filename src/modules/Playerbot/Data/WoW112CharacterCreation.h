@@ -51,7 +51,7 @@ namespace CharacterCreation
 
     // Valid Race/Class combinations for WoW 11.2
     // Note: Almost all race/class restrictions have been lifted in recent expansions
-    inline const std::vector<RaceClassCombination> VALID_COMBINATIONS = {
+    inline const ::std::vector<RaceClassCombination> VALID_COMBINATIONS = {
         // ========== ALLIANCE RACES ==========
 
         // Human (Can be all classes except Evoker)
@@ -422,7 +422,7 @@ namespace CharacterCreation
         Position npePosition;  // New Player Experience position (if different)
     };
 
-    inline const std::unordered_map<Races, StartingZone> STARTING_ZONES = {
+    inline const ::std::unordered_map<Races, StartingZone> STARTING_ZONES = {
         // Alliance
         { RACE_HUMAN,               { 0, 12, { -8949.95f, -132.493f, 83.5312f, 0.0f }, { -8949.95f, -132.493f, 83.5312f, 0.0f } } },  // Elwynn Forest
         { RACE_DWARF,               { 0, 1, { -6240.32f, 331.033f, 382.758f, 0.0f }, { -6240.32f, 331.033f, 382.758f, 0.0f } } },     // Dun Morogh

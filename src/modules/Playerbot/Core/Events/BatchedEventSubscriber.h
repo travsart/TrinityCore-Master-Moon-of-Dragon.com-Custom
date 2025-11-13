@@ -89,7 +89,7 @@ public:
     static size_t SubscribeBatch(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::initializer_list<StateMachine::EventType> eventTypes);
+        ::std::initializer_list<StateMachine::EventType> eventTypes);
 
     /**
      * @brief Subscribe a manager to multiple event types (vector version)
@@ -103,7 +103,7 @@ public:
     static size_t SubscribeBatch(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::vector<StateMachine::EventType> const& eventTypes);
+        ::std::vector<StateMachine::EventType> const& eventTypes);
 
     /**
      * @brief Unsubscribe a manager from multiple event types in a single operation
@@ -117,7 +117,7 @@ public:
     static size_t UnsubscribeBatch(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::initializer_list<StateMachine::EventType> eventTypes);
+        ::std::initializer_list<StateMachine::EventType> eventTypes);
 
     /**
      * @brief Unsubscribe a manager from multiple event types (vector version)
@@ -129,7 +129,7 @@ public:
     static size_t UnsubscribeBatch(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::vector<StateMachine::EventType> const& eventTypes);
+        ::std::vector<StateMachine::EventType> const& eventTypes);
 
     /**
      * @brief Subscribe QuestManager to all quest-related events
@@ -204,10 +204,10 @@ public:
      *
      * Debugging utility to measure batched vs non-batched performance
      */
-    static std::chrono::microseconds MeasureSubscriptionTime(
+    static ::std::chrono::microseconds MeasureSubscriptionTime(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::initializer_list<StateMachine::EventType> eventTypes);
+        ::std::initializer_list<StateMachine::EventType> eventTypes);
 
     // ========================================================================
     // STATISTICS - Performance monitoring
@@ -218,10 +218,10 @@ public:
         size_t totalBatchCalls{0};        ///< Number of batch operations
         size_t totalSubscriptions{0};     ///< Total events subscribed
         size_t failedSubscriptions{0};    ///< Failed subscriptions
-        std::chrono::microseconds totalTime{0};  ///< Cumulative time
-        std::chrono::microseconds avgTime{0};    ///< Average per batch
-        std::chrono::microseconds maxTime{0};    ///< Slowest batch
-        std::chrono::microseconds minTime{std::chrono::microseconds::max()};  ///< Fastest batch
+        ::std::chrono::microseconds totalTime{0};  ///< Cumulative time
+        ::std::chrono::microseconds avgTime{0};    ///< Average per batch
+        ::std::chrono::microseconds maxTime{0};    ///< Slowest batch
+        ::std::chrono::microseconds minTime{::std::chrono::microseconds::max()};  ///< Fastest batch
     };
 
     /**
@@ -247,16 +247,16 @@ private:
     static size_t BatchOperation(
         EventDispatcher* dispatcher,
         IManagerBase* manager,
-        std::vector<StateMachine::EventType> const& eventTypes,
+        ::std::vector<StateMachine::EventType> const& eventTypes,
         bool subscribe);
 
     // Performance tracking (thread-safe via atomic operations)
-    static std::atomic<size_t> s_totalBatchCalls;
-    static std::atomic<size_t> s_totalSubscriptions;
-    static std::atomic<size_t> s_failedSubscriptions;
-    static std::atomic<uint64_t> s_totalTimeMicros;
-    static std::atomic<uint64_t> s_maxTimeMicros;
-    static std::atomic<uint64_t> s_minTimeMicros;
+    static ::std::atomic<size_t> s_totalBatchCalls;
+    static ::std::atomic<size_t> s_totalSubscriptions;
+    static ::std::atomic<size_t> s_failedSubscriptions;
+    static ::std::atomic<uint64_t> s_totalTimeMicros;
+    static ::std::atomic<uint64_t> s_maxTimeMicros;
+    static ::std::atomic<uint64_t> s_minTimeMicros;
 };
 
 } // namespace Events

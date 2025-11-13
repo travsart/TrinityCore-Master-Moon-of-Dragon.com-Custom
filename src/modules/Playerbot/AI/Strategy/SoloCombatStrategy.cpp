@@ -167,7 +167,7 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // Get optimal range for this bot's class/spec
     float optimalRange = GetOptimalCombatRange(ai, target);
-    float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     // Diagnostic logging (throttled)
     static uint32 updateCounter = 0;
     bool shouldLog = ((++updateCounter % 50) == 0);  // Every 50 calls (~2.5 seconds)

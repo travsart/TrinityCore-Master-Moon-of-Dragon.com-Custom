@@ -90,7 +90,7 @@ public:
         Movement::PointsArray points;
         PathType pathType{PATHFIND_NOPATH};
         float length{0.0f};
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
 
         /**
          * @brief Check if this cache entry has expired (older than TTL)
@@ -98,8 +98,8 @@ public:
          */
         bool IsExpired() const
         {
-            auto now = std::chrono::steady_clock::now();
-            auto age = std::chrono::duration_cast<std::chrono::seconds>(now - timestamp);
+            auto now = ::std::chrono::steady_clock::now();
+            auto age = ::std::chrono::duration_cast<::std::chrono::seconds>(now - timestamp);
             return age.count() > CACHE_TTL_SECONDS;
         }
 
@@ -201,7 +201,7 @@ public:
      */
     Statistics GetStatistics() const
     {
-        std::shared_lock<std::shared_mutex> lock(_mutex);
+        ::std::shared_lock<::std::shared_mutex> lock(_mutex);
         return _stats;
     }
 
@@ -266,8 +266,8 @@ private:
     PathResult CalculateNewPath(Position const& src, Position const& dest, WorldObject const* owner);
 
     Map* _map;  // Map pointer (not owned, must remain valid)
-    std::unordered_map<uint64_t, PathResult> _cache;  // Path cache (hash key → result)
-    std::deque<uint64_t> _lruQueue;  // LRU access order (front = oldest, back = newest)
+    ::std::unordered_map<uint64_t, PathResult> _cache;  // Path cache (hash key → result)
+    ::std::deque<uint64_t> _lruQueue;  // LRU access order (front = oldest, back = newest)
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::SPATIAL_GRID> _mutex;  // Allows concurrent reads, exclusive writes
     mutable Statistics _stats;  // Performance counters
 };

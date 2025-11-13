@@ -8,11 +8,11 @@ namespace Playerbot {
 
 struct DependencyInfo
 {
-    std::string name;
-    std::string version;
-    std::string status;
+    ::std::string name;
+    ::std::string version;
+    ::std::string status;
     bool required;
-    std::string errorMessage;
+    ::std::string errorMessage;
 };
 
 /**
@@ -40,7 +40,7 @@ public:
      * @brief Gets detailed status of all dependencies
      * @return Vector of dependency information with status details
      */
-    static std::vector<DependencyInfo> GetDependencyStatus();
+    static ::std::vector<DependencyInfo> GetDependencyStatus();
 
     /**
      * @brief Logs detailed dependency report to server log
@@ -61,10 +61,10 @@ private:
     static bool ValidateMySQL();
 
     // Version string getters
-    static std::string GetTBBVersion();
-    static std::string GetBoostVersion();
-    static std::string GetMySQLVersion();
-    static std::string GetPhmapVersion();
+    static ::std::string GetTBBVersion();
+    static ::std::string GetBoostVersion();
+    static ::std::string GetMySQLVersion();
+    static ::std::string GetPhmapVersion();
 
     // System requirement checks
     static bool CheckMemoryRequirements();

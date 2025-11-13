@@ -36,10 +36,10 @@ public:
     virtual void Update(uint32 diff) = 0;
 
     // Session management
-    virtual std::shared_ptr<BotSession> AcquireSession(uint32 accountId) = 0;
-    virtual void ReleaseSession(std::shared_ptr<BotSession> session) = 0;
+    virtual ::std::shared_ptr<BotSession> AcquireSession(uint32 accountId) = 0;
+    virtual void ReleaseSession(::std::shared_ptr<BotSession> session) = 0;
     virtual void ReturnSession(ObjectGuid botGuid) = 0;
-    virtual void AddSession(std::shared_ptr<BotSession> session) = 0;
+    virtual void AddSession(::std::shared_ptr<BotSession> session) = 0;
 
     // Statistics and monitoring
     virtual void ResetStats() = 0;

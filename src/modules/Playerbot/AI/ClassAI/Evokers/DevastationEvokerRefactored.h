@@ -498,7 +498,7 @@ protected:
 
     void GenerateEssence(uint32 amount)
     {
-        this->_resource.essence = std::min(this->_resource.essence + amount, this->_resource.maxEssence);
+        this->_resource.essence = ::std::min(this->_resource.essence + amount, this->_resource.maxEssence);
     }
 
     void ConsumeEssence(uint32 amount)

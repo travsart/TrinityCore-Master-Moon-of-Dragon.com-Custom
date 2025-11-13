@@ -128,7 +128,7 @@ DispelCoordinator::DispelCoordinator(BotAI* ai)
     // Initialize database if needed
     if (!s_databaseInitialized)
     {
-        std::lock_guard lock(s_databaseMutex);
+        ::std::lock_guard lock(s_databaseMutex);
         if (!s_databaseInitialized)
         {
             InitializeGlobalDatabase();
@@ -364,10 +364,10 @@ void DispelCoordinator::UpdateDispelAssignments()
         return;
 
     // Gather all debuffs on group members
-    std::vector<DebuffTarget> debuffs = GatherGroupDebuffs();
+    ::std::vector<DebuffTarget> debuffs = GatherGroupDebuffs();
 
     // Sort by adjusted priority (highest first)
-    std::sort(debuffs.begin(), debuffs.end(),
+    ::std::sort(debuffs.begin(), debuffs.end(),
         [](const DebuffTarget& a, const DebuffTarget& b)
         {
             return a.adjustedPriority > b.adjustedPriority;
@@ -472,7 +472,7 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
 
 ObjectGuid DispelCoordinator::FindBestDispeller(const DebuffTarget& target) const
 {
-    std::vector<std::pair<ObjectGuid, float>> candidates;
+    ::std::vector<::std::pair<ObjectGuid, float>> candidates;
 
     for (const auto& dispeller : m_dispellers)
     {
@@ -490,7 +490,7 @@ ObjectGuid DispelCoordinator::FindBestDispeller(const DebuffTarget& target) cons
         return ObjectGuid::Empty;
 
     // Sort by score (highest first)
-    std::sort(candidates.begin(), candidates.end(),
+    ::std::sort(candidates.begin(), candidates.end(),
         [](const auto& a, const auto& b)
         {
             return a.second > b.second;
@@ -593,9 +593,9 @@ void DispelCoordinator::UpdateDispellerCapabilities()
     }
 }
 
-std::vector<DispelType> DispelCoordinator::GetClassDispelTypes(Classes botClass) const
+::std::vector<DispelType> DispelCoordinator::GetClassDispelTypes(Classes botClass) const
 {
-    std::vector<DispelType> types;
+    ::std::vector<DispelType> types;
 
     switch (botClass)
     {
@@ -855,7 +855,7 @@ bool DispelCoordinator::ExecutePurge()
         return false;
 
     // Get purge targets
-    std::vector<PurgeTarget> targets = GatherPurgeTargets();
+    ::std::vector<PurgeTarget> targets = GatherPurgeTargets();
     if (targets.empty())
         return false;
 
@@ -925,9 +925,9 @@ bool DispelCoordinator::ExecutePurge()
 // Gathering Functions
 // ============================================================================
 
-std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuffs() const
+::std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuffs() const
 {
-    std::vector<DebuffTarget> debuffs;
+    ::std::vector<DebuffTarget> debuffs;
 
     if (!m_group)
         return debuffs;
@@ -972,7 +972,7 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
     }
 
     // Sort by adjusted priority
-    std::sort(debuffs.begin(), debuffs.end(),
+    ::std::sort(debuffs.begin(), debuffs.end(),
         [](const DebuffTarget& a, const DebuffTarget& b)
         {
             return a.adjustedPriority > b.adjustedPriority;
@@ -981,9 +981,9 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
     return debuffs;
 }
 
-std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
+::std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
 {
-    std::vector<PurgeTarget> targets;
+    ::std::vector<PurgeTarget> targets;
 
     if (!m_bot)
         return targets;
@@ -1044,14 +1044,14 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
             target.isEnrage = buffData->isEnrage;
             target.isImmunity = buffData->providesImmunity;
             target.threatLevel = m_bot->GetThreatManager().GetThreat(enemy);
-            target.distance = std::sqrt(m_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+            target.distance = ::std::sqrt(m_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
 
             targets.push_back(target);
         }
     }
 
     // Sort by priority, then by threat
-    std::sort(targets.begin(), targets.end(),
+    ::std::sort(targets.begin(), targets.end(),
         [](const PurgeTarget& a, const PurgeTarget& b)
         {
             if (a.priority != b.priority)
@@ -1223,7 +1223,7 @@ void DispelCoordinator::CleanupAssignments()
 
     // Remove expired or fulfilled assignments
     m_assignments.erase(
-        std::remove_if(m_assignments.begin(), m_assignments.end(),
+        ::std::remove_if(m_assignments.begin(), m_assignments.end(),
             [this, now](const DispelAssignment& assign)
             {
                 if (assign.fulfilled)
@@ -1287,7 +1287,7 @@ bool DispelCoordinator::ShouldPurge(Unit* enemy, uint32 auraId) const
 
 DispelCoordinator::PurgeTarget DispelCoordinator::GetPurgeTarget() const
 {
-    std::vector<PurgeTarget> targets = GatherPurgeTargets();
+    ::std::vector<PurgeTarget> targets = GatherPurgeTargets();
     if (!targets.empty())
         return targets[0];
 

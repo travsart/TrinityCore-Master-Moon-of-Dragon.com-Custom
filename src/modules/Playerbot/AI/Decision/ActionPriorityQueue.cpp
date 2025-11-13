@@ -66,7 +66,7 @@ float PrioritizedSpell::CalculateEffectivePriority(Player* bot, Unit* target, Co
         priority *= 1.3f; // Boost execute-range damage
 
     // Clamp to 0.0-1.0 range
-    return std::min(std::max(priority, 0.0f), 1.0f);
+    return ::std::min(::std::max(priority, 0.0f), 1.0f);
 }
 
 bool PrioritizedSpell::AreConditionsMet(Player* bot, Unit* target) const
@@ -105,7 +105,7 @@ void ActionPriorityQueue::RegisterSpell(uint32 spellId, SpellPriority priority, 
             spellId, static_cast<uint32>(priority));
 }
 
-void ActionPriorityQueue::AddCondition(uint32 spellId, std::function<bool(Player*, Unit*)> condition, const std::string& description)
+void ActionPriorityQueue::AddCondition(uint32 spellId, ::std::function<bool(Player*, Unit*)> condition, const ::std::string& description)
 {
     PrioritizedSpell* spell = FindSpell(spellId);
     if (!spell)
@@ -213,12 +213,12 @@ DecisionVote ActionPriorityQueue::GetVote(Player* bot, Unit* target, CombatConte
         vote.urgency = 0.3f;
 
     // Set reasoning
-    vote.reasoning = "ActionPriorityQueue: Spell " + std::to_string(bestSpell);
+    vote.reasoning = "ActionPriorityQueue: Spell " + ::std::to_string(bestSpell);
 
     return vote;
 }
 
-std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const
+::std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const
 {
     if (!bot)
         return {};
@@ -229,7 +229,7 @@ std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit*
         float priority;
     };
 
-    std::vector<SpellScore> scores;
+    ::std::vector<SpellScore> scores;
 
     for (const auto& spell : _spells)
     {
@@ -248,12 +248,12 @@ std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit*
     }
 
     // Sort by priority (highest first)
-    std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b) {
+    ::std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b) {
         return a.priority > b.priority;
     });
 
     // Extract spell IDs
-    std::vector<uint32> result;
+    ::std::vector<uint32> result;
     result.reserve(scores.size());
     for (const auto& score : scores)
         result.push_back(score.spellId);

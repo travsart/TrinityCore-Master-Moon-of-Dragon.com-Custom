@@ -100,13 +100,13 @@ public:
      * @brief Propagate local data to group
      * @param key Key to propagate (empty = all)
      */
-    void PropagateToGroup(std::string const& key = "");
+    void PropagateToGroup(::std::string const& key = "");
 
     /**
      * @brief Pull group data to local
      * @param key Key to pull (empty = all)
      */
-    void PullFromGroup(std::string const& key = "");
+    void PullFromGroup(::std::string const& key = "");
 
     /**
      * @brief Check if bot is in group
@@ -158,7 +158,7 @@ private:
 class TC_GAME_API CoordinationBTNode : public BTNode
 {
 public:
-    CoordinationBTNode(std::string const& name) : BTNode(name) {}
+    CoordinationBTNode(::std::string const& name) : BTNode(name) {}
 
     /**
      * @brief Tick with integrated context
@@ -208,7 +208,7 @@ public:
 class TC_GAME_API BTUseCoordinatedCooldown : public CoordinationBTNode
 {
 public:
-    BTUseCoordinatedCooldown(std::string const& cooldownType)
+    BTUseCoordinatedCooldown(::std::string const& cooldownType)
         : CoordinationBTNode("UseCoordinatedCooldown")
         , _cooldownType(cooldownType)
     {
@@ -217,7 +217,7 @@ public:
     BTStatus TickWithContext(IntegratedAIContext& context) override;
 
 private:
-    std::string _cooldownType;
+    ::std::string _cooldownType;
 };
 
 /**

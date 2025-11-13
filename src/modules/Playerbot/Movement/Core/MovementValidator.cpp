@@ -96,7 +96,7 @@ namespace Playerbot
             if (GetGroundHeight(map, destination.GetPositionX(),
                               destination.GetPositionY(), groundZ))
             {
-                float heightDiff = std::abs(destZ - groundZ);
+                float heightDiff = ::std::abs(destZ - groundZ);
                 if (heightDiff > 10.0f) // Destination is too far from ground
                 {
                     TC_LOG_DEBUG("playerbot.movement",
@@ -253,13 +253,13 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
 
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         // Check if enough time has passed since last check
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - data.lastCheck).count();
         if (elapsed < _stuckCheckInterval)
             return data.isStuck;
@@ -318,7 +318,7 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         if (!data.isStuck)
@@ -382,7 +382,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto it = _stuckData.find(bot->GetGUID());
         if (it != _stuckData.end())
         {
@@ -545,10 +545,10 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<float> angleDist(0.0f, 2 * M_PI);
-        std::uniform_real_distribution<float> distDist(5.0f, 15.0f);
+        ::std::random_device rd;
+        ::std::mt19937 gen(rd());
+        ::std::uniform_real_distribution<float> angleDist(0.0f, 2 * M_PI);
+        ::std::uniform_real_distribution<float> distDist(5.0f, 15.0f);
 
         // Try random positions around the bot
         for (int i = 0; i < 8; ++i)

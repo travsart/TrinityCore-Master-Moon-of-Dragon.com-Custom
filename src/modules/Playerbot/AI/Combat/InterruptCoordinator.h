@@ -60,7 +60,7 @@ struct InterruptAssignment
     // Get time until deadline (in milliseconds)
     uint32 GetTimeUntilDeadline() const
     {
-        uint32 currentTime = static_cast<uint32>(std::chrono::steady_clock::now().time_since_epoch().count() / 1000000);
+        uint32 currentTime = static_cast<uint32>(::std::chrono::steady_clock::now().time_since_epoch().count() / 1000000);
         if (currentTime >= executionDeadline)
             return 0;
         return executionDeadline - currentTime;
@@ -109,14 +109,14 @@ public:
     // Performance metrics (all atomic for lock-free access)
     struct InterruptMetrics
     {
-        std::atomic<uint32> spellsDetected{0};
-        std::atomic<uint32> interruptsAssigned{0};
-        std::atomic<uint32> interruptsExecuted{0};
-        std::atomic<uint32> interruptsSuccessful{0};
-        std::atomic<uint32> interruptsFailed{0};
-        std::atomic<uint32> assignmentTime{0};      // Total microseconds
-        std::atomic<uint32> rotationInterrupts{0};
-        std::atomic<uint32> priorityInterrupts{0};
+        ::std::atomic<uint32> spellsDetected{0};
+        ::std::atomic<uint32> interruptsAssigned{0};
+        ::std::atomic<uint32> interruptsExecuted{0};
+        ::std::atomic<uint32> interruptsSuccessful{0};
+        ::std::atomic<uint32> interruptsFailed{0};
+        ::std::atomic<uint32> assignmentTime{0};      // Total microseconds
+        ::std::atomic<uint32> rotationInterrupts{0};
+        ::std::atomic<uint32> priorityInterrupts{0};
 
         void Reset()
         {
@@ -151,11 +151,11 @@ public:
     bool ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId) const;
     uint32 GetNextInterruptTime(ObjectGuid botGuid) const;
     bool HasPendingInterrupt(ObjectGuid botGuid) const;
-    std::vector<InterruptAssignment> GetPendingAssignments() const;
+    ::std::vector<InterruptAssignment> GetPendingAssignments() const;
 
     // Interrupt execution reporting
     void OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, bool success);
-    void OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, std::string const& reason);
+    void OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, ::std::string const& reason);
 
     // Spell priority configuration
     void SetSpellPriority(uint32 spellId, InterruptPriority priority);
@@ -164,7 +164,7 @@ public:
     // Metrics and debugging
     InterruptMetrics GetMetrics() const;
     void ResetMetrics();
-    std::string GetStatusString() const;
+    ::std::string GetStatusString() const;
 
     // Configuration
     void SetMinInterruptDelay(uint32 delayMs) { _minInterruptDelay = delayMs; }
@@ -176,11 +176,11 @@ private:
     // Internal state structure for lock-free read access
     struct CoordinatorState
     {
-        std::unordered_map<ObjectGuid, BotInterruptInfo> botInfo;
-        std::unordered_map<ObjectGuid, BotAI*> botAI;
-        std::unordered_map<ObjectGuid, CastingSpellInfo> activeCasts;
-        std::vector<InterruptAssignment> pendingAssignments;
-        std::unordered_set<ObjectGuid> assignedBots;
+        ::std::unordered_map<ObjectGuid, BotInterruptInfo> botInfo;
+        ::std::unordered_map<ObjectGuid, BotAI*> botAI;
+        ::std::unordered_map<ObjectGuid, CastingSpellInfo> activeCasts;
+        ::std::vector<InterruptAssignment> pendingAssignments;
+        ::std::unordered_set<ObjectGuid> assignedBots;
     };
 
     // Assignment logic
@@ -190,14 +190,14 @@ private:
     uint32 CalculateInterruptTime(CastingSpellInfo const& castInfo) const;
 
     // Helper methods
-    std::vector<ObjectGuid> GetAvailableInterrupters(CastingSpellInfo const& castInfo) const;
+    ::std::vector<ObjectGuid> GetAvailableInterrupters(CastingSpellInfo const& castInfo) const;
     float GetBotDistanceToTarget(ObjectGuid botGuid, ObjectGuid targetGuid) const;
     bool IsBotInRange(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 range) const;
     void RotateInterrupters();
 
     // Thread-safe state management using single mutex
     Group* _group;
-    std::atomic<bool> _active{true};
+    ::std::atomic<bool> _active{true};
 
     // SINGLE MUTEX DESIGN - No deadlock possible
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _stateMutex;
@@ -208,18 +208,18 @@ private:
     using ConcurrentBotSet = tbb::concurrent_hash_map<ObjectGuid, bool>;
 
     // Spell priority cache (read-heavy, rarely written)
-    Threading::LockFreeState<std::unordered_map<uint32, InterruptPriority>> _spellPriorities;
+    Threading::LockFreeState<::std::unordered_map<uint32, InterruptPriority>> _spellPriorities;
 
     // Configuration (atomic for lock-free access)
-    std::atomic<uint32> _minInterruptDelay{100};
-    std::atomic<uint32> _maxAssignmentTime{50};
-    std::atomic<bool> _enableBackupAssignment{true};
-    std::atomic<bool> _useRotation{true};
+    ::std::atomic<uint32> _minInterruptDelay{100};
+    ::std::atomic<uint32> _maxAssignmentTime{50};
+    ::std::atomic<bool> _enableBackupAssignment{true};
+    ::std::atomic<bool> _useRotation{true};
 
     // Performance tracking (all atomic)
     mutable InterruptMetrics _metrics;
-    std::chrono::steady_clock::time_point _lastUpdate;
-    std::atomic<uint32> _updateCount{0};
+    ::std::chrono::steady_clock::time_point _lastUpdate;
+    ::std::atomic<uint32> _updateCount{0};
 
     // Optional components
     void* _positionManager{nullptr};
@@ -228,12 +228,12 @@ private:
     struct EncounterPattern
     {
         uint32 npcId;
-        std::vector<uint32> spellSequence;
-        std::vector<uint32> timings;
+        ::std::vector<uint32> spellSequence;
+        ::std::vector<uint32> timings;
     };
 
     // Pattern cache (rarely modified)
-    Threading::LockFreeState<std::unordered_map<uint32, EncounterPattern>> _encounterPatterns;
+    Threading::LockFreeState<::std::unordered_map<uint32, EncounterPattern>> _encounterPatterns;
 
     // Deleted operations
     InterruptCoordinatorFixed(InterruptCoordinatorFixed const&) = delete;

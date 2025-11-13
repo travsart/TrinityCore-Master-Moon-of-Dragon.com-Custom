@@ -43,7 +43,7 @@ public:
     virtual bool NeedsFarming(::Player* player, ProfessionType profession) const = 0;
     virtual int32 GetSkillGap(::Player* player, ProfessionType profession) const = 0;
     virtual uint16 GetTargetSkillLevel(::Player* player, ProfessionType profession) const = 0;
-    virtual std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const = 0;
+    virtual ::std::vector<ProfessionType> GetProfessionsNeedingFarm(::Player* player) const = 0;
     virtual uint32 CalculateFarmingDuration(::Player* player, ProfessionType profession) const = 0;
 
     // Farming session management
@@ -56,13 +56,13 @@ public:
 
     // Zone selection
     virtual FarmingZoneInfo const* GetOptimalFarmingZone(::Player* player, ProfessionType profession) const = 0;
-    virtual std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const = 0;
+    virtual ::std::vector<FarmingZoneInfo> GetSuitableZones(::Player* player, ProfessionType profession) const = 0;
     virtual float CalculateZoneScore(::Player* player, FarmingZoneInfo const& zone) const = 0;
 
     // Material management
     virtual bool HasReachedStockpileTarget(::Player* player, uint32 itemId) const = 0;
     virtual uint32 GetMaterialCount(::Player* player, uint32 itemId) const = 0;
-    virtual std::vector<std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const = 0;
+    virtual ::std::vector<::std::pair<uint32, uint32>> GetNeededMaterials(::Player* player, ProfessionType profession) const = 0;
 
     // Statistics
     virtual FarmingStatistics const& GetPlayerStatistics(uint32 playerGuid) const = 0;

@@ -70,13 +70,13 @@ struct VendorInfo
 {
     uint32 creatureId;
     uint32 creatureGuid;
-    std::string vendorName;
+    ::std::string vendorName;
     VendorType vendorType;
     Position location;
     uint32 zoneId;
     uint32 areaId;
-    std::vector<uint32> availableItems;
-    std::vector<uint32> buyableItems;
+    ::std::vector<uint32> availableItems;
+    ::std::vector<uint32> buyableItems;
     bool isRepairVendor;
     bool isInnkeeper;
     bool isFlightMaster;
@@ -84,7 +84,7 @@ struct VendorInfo
     float discountRate;
     uint32 lastInteractionTime;
 
-    VendorInfo(uint32 id, uint32 guid, const std::string& name, VendorType type)
+    VendorInfo(uint32 id, uint32 guid, const ::std::string& name, VendorType type)
         : creatureId(id), creatureGuid(guid), vendorName(name), vendorType(type)
         , zoneId(0), areaId(0), isRepairVendor(false), isInnkeeper(false)
         , isFlightMaster(false), factionId(0), discountRate(0.0f)
@@ -97,8 +97,8 @@ struct TradeSession
     uint32 initiatorGuid;
     uint32 targetGuid;
     TradeType tradeType;
-    std::vector<std::pair<uint32, uint32>> initiatorItems; // itemGuid, count
-    std::vector<std::pair<uint32, uint32>> targetItems;
+    ::std::vector<::std::pair<uint32, uint32>> initiatorItems; // itemGuid, count
+    ::std::vector<::std::pair<uint32, uint32>> targetItems;
     uint32 initiatorGold;
     uint32 targetGold;
     bool initiatorAccepted;
@@ -106,7 +106,7 @@ struct TradeSession
     uint32 sessionStartTime;
     uint32 sessionTimeout;
     bool isActive;
-    std::string tradeReason;
+    ::std::string tradeReason;
 
     TradeSession(uint32 id, uint32 init, uint32 target, TradeType type)
         : sessionId(id), initiatorGuid(init), targetGuid(target), tradeType(type)
@@ -123,9 +123,9 @@ struct TradeConfiguration
     bool acceptTradesFromFriends;
     uint32 maxTradeValue;
     uint32 minItemLevel;
-    std::unordered_set<uint32> acceptableItemTypes;
-    std::unordered_set<uint32> blacklistedItems;
-    std::unordered_set<uint32> trustedPlayers;
+    ::std::unordered_set<uint32> acceptableItemTypes;
+    ::std::unordered_set<uint32> blacklistedItems;
+    ::std::unordered_set<uint32> trustedPlayers;
     float acceptanceThreshold; // 0.0 = never accept, 1.0 = always accept
     bool requireItemAnalysis;
     bool enableTradeHistory;
@@ -156,7 +156,7 @@ public:
 
     // Vendor interactions using TrinityCore data
     void LoadVendorDatabase() override;
-    std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f) override;
+    ::std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f) override;
     VendorInfo GetVendorInfo(uint32 creatureGuid);
     bool InteractWithVendor(Player* player, uint32 vendorGuid) override;
 
@@ -168,14 +168,14 @@ public:
 
     // Equipment repair using TrinityCore repair vendors
     void AutoRepairEquipment(Player* player) override;
-    std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f) override;
+    ::std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f) override;
     uint32 CalculateRepairCost(Player* player);
     void ProcessEquipmentRepair(Player* player, uint32 vendorGuid) override;
 
     // Innkeeper services using TrinityCore innkeeper data
     void InteractWithInnkeeper(Player* player, uint32 innkeeperGuid) override;
     void SetHearthstone(Player* player, uint32 innkeeperGuid);
-    std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f) override;
+    ::std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f) override;
     bool CanUseInnkeeperServices(Player* player, uint32 innkeeperGuid);
 
     // Intelligent trade decision making
@@ -193,22 +193,22 @@ public:
     // Performance monitoring
     struct TradeMetrics
     {
-        std::atomic<uint32> tradesInitiated{0};
-        std::atomic<uint32> tradesCompleted{0};
-        std::atomic<uint32> tradesCancelled{0};
-        std::atomic<uint32> vendorTransactions{0};
-        std::atomic<uint32> repairTransactions{0};
-        std::atomic<float> averageTradeValue{1000.0f};
-        std::atomic<float> tradeSuccessRate{0.8f};
-        std::atomic<uint32> totalGoldTraded{0};
-        std::atomic<uint32> totalItemsTraded{0};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> tradesInitiated{0};
+        ::std::atomic<uint32> tradesCompleted{0};
+        ::std::atomic<uint32> tradesCancelled{0};
+        ::std::atomic<uint32> vendorTransactions{0};
+        ::std::atomic<uint32> repairTransactions{0};
+        ::std::atomic<float> averageTradeValue{1000.0f};
+        ::std::atomic<float> tradeSuccessRate{0.8f};
+        ::std::atomic<uint32> totalGoldTraded{0};
+        ::std::atomic<uint32> totalItemsTraded{0};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Reset() {
             tradesInitiated = 0; tradesCompleted = 0; tradesCancelled = 0;
             vendorTransactions = 0; repairTransactions = 0; averageTradeValue = 1000.0f;
             tradeSuccessRate = 0.8f; totalGoldTraded = 0; totalItemsTraded = 0;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
 
         float GetCompletionRate() const {
@@ -246,7 +246,7 @@ public:
     float GetPlayerTrustLevel(uint32 playerGuid, uint32 targetGuid);
 
     // Error handling and recovery
-    void HandleTradeError(uint32 sessionId, const std::string& error);
+    void HandleTradeError(uint32 sessionId, const ::std::string& error);
     void RecoverFromTradeFailure(uint32 sessionId);
     void HandleTradeTimeout(uint32 sessionId);
     void ValidateTradeStates();
@@ -262,32 +262,32 @@ private:
     ~TradeSystem() = default;
 
     // Core data structures
-    std::unordered_map<uint32, TradeSession> _activeTrades; // sessionId -> session
-    std::unordered_map<uint32, TradeConfiguration> _playerConfigs; // playerGuid -> config
-    std::unordered_map<uint32, TradeMetrics> _playerMetrics; // playerGuid -> metrics
-    std::atomic<uint32> _nextSessionId{1};
+    ::std::unordered_map<uint32, TradeSession> _activeTrades; // sessionId -> session
+    ::std::unordered_map<uint32, TradeConfiguration> _playerConfigs; // playerGuid -> config
+    ::std::unordered_map<uint32, TradeMetrics> _playerMetrics; // playerGuid -> metrics
+    ::std::atomic<uint32> _nextSessionId{1};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _tradeMutex;
 
     // Vendor database loaded from TrinityCore
-    std::unordered_map<uint32, VendorInfo> _vendorDatabase; // creatureGuid -> vendor info
-    std::unordered_map<uint32, std::vector<uint32>> _zoneVendors; // zoneId -> vendorGuids
-    std::unordered_map<VendorType, std::vector<uint32>> _vendorsByType; // type -> vendorGuids
+    ::std::unordered_map<uint32, VendorInfo> _vendorDatabase; // creatureGuid -> vendor info
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _zoneVendors; // zoneId -> vendorGuids
+    ::std::unordered_map<VendorType, ::std::vector<uint32>> _vendorsByType; // type -> vendorGuids
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _vendorMutex;
 
     // Trade history and learning
     struct PlayerTradeHistory
     {
-        std::vector<uint32> completedTrades;
-        std::unordered_map<uint32, uint32> tradePartnerCounts; // playerGuid -> trade count
-        std::unordered_map<uint32, float> partnerTrustLevels; // playerGuid -> trust level
-        std::vector<std::pair<uint32, bool>> recentTradeOutcomes; // sessionId, wasSuccessful
+        ::std::vector<uint32> completedTrades;
+        ::std::unordered_map<uint32, uint32> tradePartnerCounts; // playerGuid -> trade count
+        ::std::unordered_map<uint32, float> partnerTrustLevels; // playerGuid -> trust level
+        ::std::vector<::std::pair<uint32, bool>> recentTradeOutcomes; // sessionId, wasSuccessful
         uint32 totalTradeValue;
         uint32 lastTradeTime;
 
         PlayerTradeHistory() : totalTradeValue(0), lastTradeTime(0) {}
     };
 
-    std::unordered_map<uint32, PlayerTradeHistory> _playerTradeHistory; // playerGuid -> history
+    ::std::unordered_map<uint32, PlayerTradeHistory> _playerTradeHistory; // playerGuid -> history
 
     // Performance tracking
     TradeMetrics _globalMetrics;
@@ -303,7 +303,7 @@ private:
     void InitializeTradeSession(TradeSession& session);
     void ValidateTradeItems(TradeSession& session);
     void ExecuteTradeExchange(TradeSession& session);
-    void NotifyTradeParticipants(const TradeSession& session, const std::string& message);
+    void NotifyTradeParticipants(const TradeSession& session, const ::std::string& message);
 
     // Vendor interaction implementations
     bool NavigateToVendor(Player* player, uint32 vendorGuid);

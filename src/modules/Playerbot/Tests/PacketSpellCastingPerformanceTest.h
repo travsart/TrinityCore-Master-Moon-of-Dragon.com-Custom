@@ -41,11 +41,11 @@ namespace Test
 struct Week4TestMetrics
 {
     // Test identification
-    std::string testName;
-    std::string scenario;
+    ::std::string testName;
+    ::std::string scenario;
     uint32 botCount;
-    std::chrono::system_clock::time_point startTime;
-    std::chrono::system_clock::time_point endTime;
+    ::std::chrono::system_clock::time_point startTime;
+    ::std::chrono::system_clock::time_point endTime;
 
     // CPU metrics (%)
     float avgCpuUsage = 0.0f;
@@ -104,12 +104,12 @@ struct Week4TestMetrics
     // Calculated metrics
     uint64 GetDuration() const
     {
-        return std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
+        return ::std::chrono::duration_cast<::std::chrono::seconds>(endTime - startTime).count();
     }
 
     bool MeetsPerformanceTargets() const;
-    std::string GenerateReport() const;
-    void ExportToCSV(std::string const& filename) const;
+    ::std::string GenerateReport() const;
+    void ExportToCSV(::std::string const& filename) const;
 };
 
 /**
@@ -118,15 +118,15 @@ struct Week4TestMetrics
  */
 struct Week4TestScenario
 {
-    std::string name;
-    std::string description;
+    ::std::string name;
+    ::std::string description;
     uint32 botCount;
     uint32 durationMinutes;
 
     // Spawn configuration
     bool spawnGradually;              // Gradual spawn vs instant
     uint32 spawnIntervalSeconds;      // Time between spawns
-    std::vector<std::string> zones;   // Zones to spawn bots in
+    ::std::vector<::std::string> zones;   // Zones to spawn bots in
 
     // Activity configuration
     bool enableCombat;                // Engage in combat
@@ -201,13 +201,13 @@ public:
      * @brief Generate comprehensive test report from all scenarios
      * @param outputPath Path to save report
      */
-    void GenerateComprehensiveReport(std::string const& outputPath);
+    void GenerateComprehensiveReport(::std::string const& outputPath);
 
     /**
      * @brief Get predefined Week 4 scenarios from roadmap
      * @return Vector of 5 scenarios (100, 500, 1000, 5000 bots, 24-hour)
      */
-    static std::vector<Week4TestScenario> GetWeek4Scenarios();
+    static ::std::vector<Week4TestScenario> GetWeek4Scenarios();
 
 private:
     // Scenario execution
@@ -250,22 +250,22 @@ private:
     void UpdateBotStates();
 
     // Reporting
-    std::string FormatDuration(uint64 seconds) const;
-    std::string FormatBytes(uint64 bytes) const;
-    std::string FormatMicroseconds(uint64 microseconds) const;
+    ::std::string FormatDuration(uint64 seconds) const;
+    ::std::string FormatBytes(uint64 bytes) const;
+    ::std::string FormatMicroseconds(uint64 microseconds) const;
 
     // Data members
-    std::vector<Week4TestMetrics> _allResults;
+    ::std::vector<Week4TestMetrics> _allResults;
     Week4TestMetrics _currentMetrics;
-    std::chrono::system_clock::time_point _testStartTime;
-    std::chrono::system_clock::time_point _lastSampleTime;
+    ::std::chrono::system_clock::time_point _testStartTime;
+    ::std::chrono::system_clock::time_point _lastSampleTime;
 
     // Metric sample history (for percentile calculations)
-    std::vector<uint64> _spellCastLatencySamples;
-    std::vector<uint32> _queueDepthSamples;
-    std::vector<uint64> _mainThreadCycleSamples;
-    std::vector<float> _cpuUsageSamples;
-    std::vector<uint64> _memoryUsageSamples;
+    ::std::vector<uint64> _spellCastLatencySamples;
+    ::std::vector<uint32> _queueDepthSamples;
+    ::std::vector<uint64> _mainThreadCycleSamples;
+    ::std::vector<float> _cpuUsageSamples;
+    ::std::vector<uint64> _memoryUsageSamples;
 
     // Configuration
     bool _metricsCollectionActive;

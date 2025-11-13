@@ -400,7 +400,7 @@ protected:
             return;
 
         this->CastSpell(SPELL_SHIELD_BLOCK, this->GetBot());
-        _shieldBlockCharges = std::min(_shieldBlockCharges + 1, 2u);
+        _shieldBlockCharges = ::std::min(_shieldBlockCharges + 1, 2u);
         _lastShieldBlock = GameTime::GetGameTimeMS();
     }
 
@@ -449,7 +449,7 @@ protected:
             return;
 
         // Track sunder stacks (max 5)
-        _sunderStacks[target->GetGUID()] = std::min(_sunderStacks[target->GetGUID()] + 1, 5u);    }
+        _sunderStacks[target->GetGUID()] = ::std::min(_sunderStacks[target->GetGUID()] + 1, 5u);    }
 
     // ========================================================================
     // CONDITION CHECKS
@@ -1346,8 +1346,8 @@ private:
 
     // Threat management
     uint32 _lastTaunt;
-    std::priority_queue<ThreatTarget> _threatPriority;
-    std::unordered_map<ObjectGuid, uint32> _sunderStacks;
+    ::std::priority_queue<ThreatTarget> _threatPriority;
+    ::std::unordered_map<ObjectGuid, uint32> _sunderStacks;
 
     // Stance management
     WarriorAI::WarriorStance _currentStance;

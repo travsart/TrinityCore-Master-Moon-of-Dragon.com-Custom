@@ -57,12 +57,12 @@ struct CooldownEvent
     uint32 category;
     uint32 cooldownMs;
     int32 modRateMs;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 
     // Helper constructors
     static CooldownEvent SpellCooldownStart(ObjectGuid caster, uint32 spellId, uint32 cooldownMs);
@@ -85,7 +85,7 @@ public:
     bool PublishEvent(CooldownEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<CooldownEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<CooldownEventType> const& types) override;
     bool SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
@@ -101,21 +101,21 @@ public:
     // Diagnostics
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<CooldownEvent> GetQueueSnapshot() const override;
+    ::std::vector<CooldownEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};
-        std::atomic<uint64_t> totalDeliveries{0};
-        std::atomic<uint64_t> averageProcessingTimeUs{0};
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};
+        ::std::atomic<uint64_t> totalDeliveries{0};
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0};
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -128,16 +128,16 @@ private:
     bool DeliverEvent(BotAI* subscriber, CooldownEvent const& event);
     bool ValidateEvent(CooldownEvent const& event) const;
     uint32 CleanupExpiredEvents();
-    void UpdateMetrics(std::chrono::microseconds processingTime);
-    void LogEvent(CooldownEvent const& event, std::string const& action) const;
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
+    void LogEvent(CooldownEvent const& event, ::std::string const& action) const;
 
     // Event queue
-    std::priority_queue<CooldownEvent> _eventQueue;
+    ::std::priority_queue<CooldownEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     // Subscriber management
-    std::unordered_map<CooldownEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<CooldownEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriberMutex;
 
     // Configuration

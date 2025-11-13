@@ -36,7 +36,7 @@ public:
     {
         TC_LOG_INFO("test.playerbot", "=== Spatial Cache Scalability Benchmark ===");
 
-        std::vector<uint32> botCounts = {100, 500, 1000, 2000, 5000};
+        ::std::vector<uint32> botCounts = {100, 500, 1000, 2000, 5000};
 
         for (uint32 count : botCounts)
         {
@@ -56,11 +56,11 @@ public:
 
         struct TestPattern
         {
-            std::string name;
-            std::function<Position()> generatePosition;
+            ::std::string name;
+            ::std::function<Position()> generatePosition;
         };
 
-        std::vector<TestPattern> patterns = {
+        ::std::vector<TestPattern> patterns = {
             {"Clustered", []() { return GenerateClusteredPosition(); }},
             {"Scattered", []() { return GenerateScatteredPosition(); }},
             {"Hotspot", []() { return GenerateHotspotPosition(); }},
@@ -86,11 +86,11 @@ public:
         const uint32 QUERIES_PER_THREAD = 5000;
         const uint32 BOT_COUNT = 5000;
 
-        std::atomic<uint32> deadlockCount{0};
-        std::atomic<uint32> completedQueries{0};
-        std::vector<std::thread> threads;
+        ::std::atomic<uint32> deadlockCount{0};
+        ::std::atomic<uint32> completedQueries{0};
+        ::std::vector<::std::thread> threads;
 
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = ::std::chrono::high_resolution_clock::now();
 
         // Spawn worker threads
         for (uint32 i = 0; i < NUM_THREADS; ++i)
@@ -125,8 +125,8 @@ public:
             if (thread.joinable())
             {
                 // Use timed join to detect deadlocks
-                auto future = std::async(std::launch::async, [&thread]() { thread.join(); });
-                if (future.wait_for(std::chrono::seconds(30)) == std::future_status::timeout)
+                auto future = ::std::async(::std::launch::async, [&thread]() { thread.join(); });
+                if (future.wait_for(::std::chrono::seconds(30)) == ::std::future_status::timeout)
                 {
                     timedOut = true;
                     TC_LOG_ERROR("test.playerbot", "Thread deadlocked!");
@@ -134,8 +134,8 @@ public:
             }
         }
 
-        auto elapsed = std::chrono::high_resolution_clock::now() - start;
-        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+        auto elapsed = ::std::chrono::high_resolution_clock::now() - start;
+        auto elapsedMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count();
 
         TC_LOG_INFO("test.playerbot",
             "Stress Test Complete: {} queries in {}ms | Deadlocks: {} | Timed Out: {}",
@@ -157,7 +157,7 @@ public:
             uint64 perBotKB;
         };
 
-        std::vector<MemorySnapshot> snapshots;
+        ::std::vector<MemorySnapshot> snapshots;
 
         for (uint32 bots : {0, 100, 500, 1000, 2000, 5000})
         {
@@ -198,7 +198,7 @@ private:
         results.totalQueries = queryCount;
 
         // Simulate bot positions
-        std::vector<Position> botPositions;
+        ::std::vector<Position> botPositions;
         for (uint32 i = 0; i < botCount; ++i)
         {
             botPositions.push_back(GenerateRandomPosition());
@@ -220,17 +220,17 @@ private:
         {
             const auto& pos = botPositions[i % botCount];
 
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = ::std::chrono::high_resolution_clock::now();
 
             auto& cache = SpatialHostileCache::Instance();
             auto hostiles = cache.FindHostilesForBot(nullptr, 30.0f);
 
-            auto elapsed = std::chrono::high_resolution_clock::now() - start;
-            auto timeUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+            auto elapsed = ::std::chrono::high_resolution_clock::now() - start;
+            auto timeUs = ::std::chrono::duration_cast<::std::chrono::microseconds>(elapsed).count();
 
             totalTime += timeUs;
-            minTime = std::min(minTime, uint64(timeUs));
-            maxTime = std::max(maxTime, uint64(timeUs));
+            minTime = ::std::min(minTime, uint64(timeUs));
+            maxTime = ::std::max(maxTime, uint64(timeUs));
         }
 
         results.avgTimeUs = totalTime / queryCount;
@@ -249,7 +249,7 @@ private:
     }
 
     static BenchmarkResults RunPatternBenchmark(
-        std::function<Position()> generatePos,
+        ::std::function<Position()> generatePos,
         uint32 botCount,
         uint32 queryCount)
     {
@@ -259,8 +259,8 @@ private:
 
     static Position GenerateRandomPosition()
     {
-        static std::mt19937 gen(42);
-        static std::uniform_real_distribution<float> dist(-1000.0f, 1000.0f);
+        static ::std::mt19937 gen(42);
+        static ::std::uniform_real_distribution<float> dist(-1000.0f, 1000.0f);
 
         Position pos;
         pos.m_positionX = dist(gen);
@@ -272,9 +272,9 @@ private:
     static Position GenerateClusteredPosition()
     {
         // Generate positions in clusters
-        static std::mt19937 gen(42);
-        static std::uniform_real_distribution<float> clusterDist(0.0f, 100.0f);
-        static std::uniform_int_distribution<int> clusterSelect(0, 4);
+        static ::std::mt19937 gen(42);
+        static ::std::uniform_real_distribution<float> clusterDist(0.0f, 100.0f);
+        static ::std::uniform_int_distribution<int> clusterSelect(0, 4);
 
         float centers[5][2] = {
             {0, 0}, {500, 500}, {-500, 500}, {500, -500}, {-500, -500}
@@ -296,10 +296,10 @@ private:
     static Position GenerateHotspotPosition()
     {
         // 80% of queries in small area
-        static std::mt19937 gen(42);
-        static std::uniform_real_distribution<float> hotDist(-50.0f, 50.0f);
-        static std::uniform_real_distribution<float> coldDist(-1000.0f, 1000.0f);
-        static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
+        static ::std::mt19937 gen(42);
+        static ::std::uniform_real_distribution<float> hotDist(-50.0f, 50.0f);
+        static ::std::uniform_real_distribution<float> coldDist(-1000.0f, 1000.0f);
+        static ::std::uniform_real_distribution<float> chance(0.0f, 1.0f);
 
         Position pos;
         if (chance(gen) < 0.8f)

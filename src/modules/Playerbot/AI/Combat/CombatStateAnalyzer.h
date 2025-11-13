@@ -149,7 +149,7 @@ namespace Playerbot
     struct BossMechanic
     {
         uint32 spellId;
-        std::string name;
+        ::std::string name;
         uint32 castTime;
         uint32 cooldown;
         uint32 lastSeen;
@@ -191,13 +191,13 @@ namespace Playerbot
 
         // Metrics access
         const CombatMetrics& GetCurrentMetrics() const { return _currentMetrics; }
-        float GetMetricTrend(std::function<float(const CombatMetrics&)> selector) const;
-        bool IsMetricDeclining(std::function<float(const CombatMetrics&)> selector, float threshold = 0.1f) const;
-        bool IsMetricImproving(std::function<float(const CombatMetrics&)> selector, float threshold = 0.1f) const;
+        float GetMetricTrend(::std::function<float(const CombatMetrics&)> selector) const;
+        bool IsMetricDeclining(::std::function<float(const CombatMetrics&)> selector, float threshold = 0.1f) const;
+        bool IsMetricImproving(::std::function<float(const CombatMetrics&)> selector, float threshold = 0.1f) const;
 
         // Enemy analysis
         uint32 GetPriorityTargetCount() const;
-        std::vector<Unit*> GetNearbyEnemies(float range = 40.0f) const;
+        ::std::vector<Unit*> GetNearbyEnemies(float range = 40.0f) const;
         Unit* GetMostDangerousEnemy() const;
         bool HasCleaveTargets() const;
         bool ShouldFocusAdd() const;
@@ -211,7 +211,7 @@ namespace Playerbot
         float GetGroupSurvivabilityScore() const;
 
         // Threat management
-        std::vector<ThreatData> GetThreatList() const;
+        ::std::vector<ThreatData> GetThreatList() const;
         bool IsAboutToGetAggro() const;
         bool ShouldDropThreat() const;
         float GetThreatPercentage(Unit* target) const;
@@ -229,7 +229,7 @@ namespace Playerbot
         void EnableDetailedLogging(bool enable) { _detailedLogging = enable; }
 
         // Historical analysis
-        const std::array<MetricsSnapshot, 10>& GetHistory() const { return _history; }
+        const ::std::array<MetricsSnapshot, 10>& GetHistory() const { return _history; }
         CombatMetrics GetAverageMetrics(uint32 periodMs = 5000) const;
         float GetDPSTrend() const;
         float GetHealthTrend() const;
@@ -284,13 +284,13 @@ namespace Playerbot
         uint32 _timeSinceSituationChange;
 
         // Historical tracking
-        std::array<MetricsSnapshot, 10> _history;
+        ::std::array<MetricsSnapshot, 10> _history;
         uint32 _historyIndex;
         uint32 _lastSnapshotTime;
 
         // Boss mechanics tracking
-        std::vector<BossMechanic> _knownMechanics;
-        std::vector<uint32> _recentMechanicCasts;
+        ::std::vector<BossMechanic> _knownMechanics;
+        ::std::vector<uint32> _recentMechanicCasts;
 
         // Performance tracking
         uint32 _updateTimer;
@@ -300,7 +300,7 @@ namespace Playerbot
         bool _detailedLogging;
 
         // Caches (refreshed each update)
-        mutable std::vector<Unit*> _enemyCache;
+        mutable ::std::vector<Unit*> _enemyCache;
         mutable uint32 _enemyCacheTime;
         mutable Player* _mainTankCache;
         mutable Player* _mainHealerCache;

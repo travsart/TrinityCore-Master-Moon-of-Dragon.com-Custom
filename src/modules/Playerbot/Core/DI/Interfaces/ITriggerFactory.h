@@ -32,18 +32,18 @@ public:
     virtual ~ITriggerFactory() = default;
 
     // Trigger registration
-    virtual void RegisterTrigger(std::string const& name,
-                                std::function<std::shared_ptr<Trigger>()> creator) = 0;
+    virtual void RegisterTrigger(::std::string const& name,
+                                ::std::function<::std::shared_ptr<Trigger>()> creator) = 0;
 
     // Trigger creation
-    virtual std::shared_ptr<Trigger> CreateTrigger(std::string const& name) = 0;
-    virtual std::vector<std::shared_ptr<Trigger>> CreateDefaultTriggers() = 0;
-    virtual std::vector<std::shared_ptr<Trigger>> CreateCombatTriggers() = 0;
-    virtual std::vector<std::shared_ptr<Trigger>> CreateQuestTriggers() = 0;
+    virtual ::std::shared_ptr<Trigger> CreateTrigger(::std::string const& name) = 0;
+    virtual ::std::vector<::std::shared_ptr<Trigger>> CreateDefaultTriggers() = 0;
+    virtual ::std::vector<::std::shared_ptr<Trigger>> CreateCombatTriggers() = 0;
+    virtual ::std::vector<::std::shared_ptr<Trigger>> CreateQuestTriggers() = 0;
 
     // Available triggers
-    virtual std::vector<std::string> GetAvailableTriggers() const = 0;
-    virtual bool HasTrigger(std::string const& name) const = 0;
+    virtual ::std::vector<::std::string> GetAvailableTriggers() const = 0;
+    virtual bool HasTrigger(::std::string const& name) const = 0;
 };
 
 } // namespace Playerbot

@@ -78,7 +78,7 @@ namespace Playerbot
         uint32 itemId;                  ///< Item entry ID
         ObjectGuid itemGuid;            ///< Item instance GUID
         uint32 stackCount;              ///< Stack size
-        std::string enchantments;       ///< Enchantment data (serialized)
+        ::std::string enchantments;       ///< Enchantment data (serialized)
         uint32 durability;              ///< Item durability
 
         InventoryItemSnapshot()
@@ -95,8 +95,8 @@ namespace Playerbot
         uint8 slot;                     ///< Equipment slot (EQUIPMENT_SLOT_*)
         uint32 itemId;                  ///< Item entry ID
         ObjectGuid itemGuid;            ///< Item instance GUID
-        std::string enchantments;       ///< Enchantment data (serialized)
-        std::string gems;               ///< Gem data (serialized)
+        ::std::string enchantments;       ///< Enchantment data (serialized)
+        ::std::string gems;               ///< Gem data (serialized)
         uint32 durability;              ///< Item durability
 
         EquipmentItemSnapshot()
@@ -179,7 +179,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult SaveBotStateAsync(
             Player const* player,
-            std::function<void(PersistenceResult)> callback = nullptr);
+            ::std::function<void(PersistenceResult)> callback = nullptr);
 
         /**
          * @brief Loads bot state synchronously
@@ -209,7 +209,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult SaveInventoryAsync(
             Player const* player,
-            std::function<void(PersistenceResult)> callback = nullptr);
+            ::std::function<void(PersistenceResult)> callback = nullptr);
 
         /**
          * @brief Loads bot inventory synchronously
@@ -223,7 +223,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult LoadInventory(
             ObjectGuid botGuid,
-            std::vector<InventoryItemSnapshot>& items);
+            ::std::vector<InventoryItemSnapshot>& items);
 
         /**
          * @brief Saves bot equipment asynchronously
@@ -237,7 +237,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult SaveEquipmentAsync(
             Player const* player,
-            std::function<void(PersistenceResult)> callback = nullptr);
+            ::std::function<void(PersistenceResult)> callback = nullptr);
 
         /**
          * @brief Loads bot equipment synchronously
@@ -251,7 +251,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult LoadEquipment(
             ObjectGuid botGuid,
-            std::vector<EquipmentItemSnapshot>& equipment);
+            ::std::vector<EquipmentItemSnapshot>& equipment);
 
         /**
          * @brief Saves all bot data (state + inventory + equipment) in single transaction
@@ -265,7 +265,7 @@ namespace Playerbot
          */
         [[nodiscard]] PersistenceResult SaveCompleteSnapshot(
             Player const* player,
-            std::function<void(PersistenceResult)> callback = nullptr);
+            ::std::function<void(PersistenceResult)> callback = nullptr);
 
         /**
          * @brief Updates only bot position (fast frequent update)
@@ -335,7 +335,7 @@ namespace Playerbot
          */
         [[nodiscard]] static bool CaptureInventorySnapshot(
             Player const* player,
-            std::vector<InventoryItemSnapshot>& items);
+            ::std::vector<InventoryItemSnapshot>& items);
 
         /**
          * @brief Captures bot equipment snapshot
@@ -346,7 +346,7 @@ namespace Playerbot
          */
         [[nodiscard]] static bool CaptureEquipmentSnapshot(
             Player const* player,
-            std::vector<EquipmentItemSnapshot>& equipment);
+            ::std::vector<EquipmentItemSnapshot>& equipment);
 
         /**
          * @brief Serializes item enchantments to string
@@ -354,7 +354,7 @@ namespace Playerbot
          * @param item Item to serialize
          * @return Serialized enchantment data
          */
-        [[nodiscard]] static std::string SerializeEnchantments(Item const* item);
+        [[nodiscard]] static ::std::string SerializeEnchantments(Item const* item);
 
         /**
          * @brief Serializes item gems to string
@@ -362,7 +362,7 @@ namespace Playerbot
          * @param item Item to serialize
          * @return Serialized gem data
          */
-        [[nodiscard]] static std::string SerializeGems(Item const* item);
+        [[nodiscard]] static ::std::string SerializeGems(Item const* item);
     };
 
 } // namespace Playerbot

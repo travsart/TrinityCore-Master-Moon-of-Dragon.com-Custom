@@ -31,8 +31,8 @@ LootEvent LootEvent::ItemLooted(ObjectGuid looter, ObjectGuid item, uint32 entry
     event.itemEntry = entry;
     event.itemCount = count;
     event.lootType = type;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -46,8 +46,8 @@ LootEvent LootEvent::LootRollStarted(ObjectGuid item, uint32 entry)
     event.itemEntry = entry;
     event.itemCount = 1;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(60000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000);
     return event;
 }
 
@@ -61,8 +61,8 @@ LootEvent LootEvent::LootRollWon(ObjectGuid winner, ObjectGuid item, uint32 entr
     event.itemEntry = entry;
     event.itemCount = 1;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -79,12 +79,12 @@ bool LootEvent::IsValid() const
 
 bool LootEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string LootEvent::ToString() const
+::std::string LootEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[LootEvent] Type: " << static_cast<uint32>(type)
         << ", Looter: " << looterGuid.ToString()
         << ", Item: " << itemEntry
@@ -98,7 +98,7 @@ std::string LootEvent::ToString() const
 
 LootEventBus::LootEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.loot", "LootEventBus initialized");
 }
 
@@ -122,7 +122,7 @@ bool LootEventBus::PublishEvent(LootEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -144,17 +144,17 @@ bool LootEventBus::PublishEvent(LootEvent const& event)
     return true;
 }
 
-bool LootEventBus::Subscribe(BotAI* subscriber, std::vector<LootEventType> const& types)
+bool LootEventBus::Subscribe(BotAI* subscriber, ::std::vector<LootEventType> const& types)
 {
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (LootEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
             continue;
         if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
             return false;
@@ -169,9 +169,9 @@ bool LootEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
 
     _globalSubscribers.push_back(subscriber);
@@ -183,25 +183,25 @@ void LootEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 }
 
 uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _cleanupTimer += diff;
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -211,10 +211,10 @@ uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<LootEvent> eventsToProcess;
+    ::std::vector<LootEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -234,11 +234,11 @@ uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (LootEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -260,8 +260,8 @@ uint32 LootEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         _stats.totalEventsProcessed++;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -276,9 +276,9 @@ uint32 LootEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void LootEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<LootEvent> remainingEvents;
+    ::std::vector<LootEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -297,13 +297,13 @@ void LootEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 LootEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 LootEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -325,7 +325,7 @@ bool LootEventBus::DeliverEvent(BotAI* subscriber, LootEvent const& event)
         TC_LOG_TRACE("module.playerbot.loot", "LootEventBus: Delivered event to subscriber");
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.loot", "LootEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -339,10 +339,10 @@ bool LootEventBus::ValidateEvent(LootEvent const& event) const
 
 uint32 LootEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<LootEvent> validEvents;
+    ::std::vector<LootEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -361,7 +361,7 @@ uint32 LootEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void LootEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void LootEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -369,29 +369,29 @@ void LootEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void LootEventBus::LogEvent(LootEvent const& event, std::string const& action) const
+void LootEventBus::LogEvent(LootEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.loot", "LootEventBus: {} event - {}", action, event.ToString());
 }
 
 void LootEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.loot", "=== LootEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void LootEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.loot", "=== LootEventBus Queue: {} events ===", _eventQueue.size());
 }
 
-std::vector<LootEvent> LootEventBus::GetQueueSnapshot() const
+::std::vector<LootEvent> LootEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<LootEvent> snapshot;
-    std::priority_queue<LootEvent> tempQueue = _eventQueue;
+    ::std::vector<LootEvent> snapshot;
+    ::std::priority_queue<LootEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -410,15 +410,15 @@ void LootEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string LootEventBus::Statistics::ToString() const
+::std::string LootEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

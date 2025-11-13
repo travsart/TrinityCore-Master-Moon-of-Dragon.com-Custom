@@ -32,18 +32,18 @@ public:
     virtual ~IActionFactory() = default;
 
     // Action registration
-    virtual void RegisterAction(std::string const& name,
-                               std::function<std::shared_ptr<Action>()> creator) = 0;
+    virtual void RegisterAction(::std::string const& name,
+                               ::std::function<::std::shared_ptr<Action>()> creator) = 0;
 
     // Action creation
-    virtual std::shared_ptr<Action> CreateAction(std::string const& name) = 0;
-    virtual std::vector<std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) = 0;
-    virtual std::vector<std::shared_ptr<Action>> CreateCombatActions(uint8 classId) = 0;
-    virtual std::vector<std::shared_ptr<Action>> CreateMovementActions() = 0;
+    virtual ::std::shared_ptr<Action> CreateAction(::std::string const& name) = 0;
+    virtual ::std::vector<::std::shared_ptr<Action>> CreateClassActions(uint8 classId, uint8 spec) = 0;
+    virtual ::std::vector<::std::shared_ptr<Action>> CreateCombatActions(uint8 classId) = 0;
+    virtual ::std::vector<::std::shared_ptr<Action>> CreateMovementActions() = 0;
 
     // Available actions
-    virtual std::vector<std::string> GetAvailableActions() const = 0;
-    virtual bool HasAction(std::string const& name) const = 0;
+    virtual ::std::vector<::std::string> GetAvailableActions() const = 0;
+    virtual bool HasAction(::std::string const& name) const = 0;
 };
 
 } // namespace Playerbot

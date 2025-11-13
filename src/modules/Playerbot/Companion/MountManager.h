@@ -55,7 +55,7 @@ struct MountInfo
 {
     uint32 spellId;          // Spell ID to cast for mount
     uint32 displayId;        // Creature display ID
-    std::string name;
+    ::std::string name;
     MountType type;
     MountSpeed speed;
     uint32 requiredLevel;
@@ -65,7 +65,7 @@ struct MountInfo
     bool isDragonridingMount;
     bool isMultiPassenger;
     uint32 passengerCount;
-    std::vector<uint32> zoneRestrictions; // Zones where mount is restricted
+    ::std::vector<uint32> zoneRestrictions; // Zones where mount is restricted
 
     MountInfo() : spellId(0), displayId(0), type(MountType::GROUND),
         speed(MountSpeed::NORMAL), requiredLevel(20), requiredSkill(75),
@@ -87,7 +87,7 @@ struct MountAutomationProfile
     uint32 mountCastDelay = 1500;            // Delay before mounting (ms)
     bool useGroundMountIndoors = true;       // Use ground mount in no-fly zones
     bool sharePassengerMounts = false;       // Allow group members to ride as passengers
-    std::unordered_set<uint32> preferredMounts; // Preferred mount spell IDs
+    ::std::unordered_set<uint32> preferredMounts; // Preferred mount spell IDs
 
     MountAutomationProfile() = default;
 };
@@ -196,7 +196,7 @@ public:
     /**
      * Get all mounts player knows
      */
-    std::vector<MountInfo> GetPlayerMounts(::Player* player) const override;
+    ::std::vector<MountInfo> GetPlayerMounts(::Player* player) const override;
 
     /**
      * Check if player knows mount
@@ -279,12 +279,12 @@ public:
 
     struct MountMetrics
     {
-        std::atomic<uint32> mountsLearned{0};
-        std::atomic<uint32> timesMounted{0};
-        std::atomic<uint32> timesDismounted{0};
-        std::atomic<uint32> flyingMountUsage{0};
-        std::atomic<uint32> dragonridingUsage{0};
-        std::atomic<uint64> totalMountedTime{0};  // Milliseconds
+        ::std::atomic<uint32> mountsLearned{0};
+        ::std::atomic<uint32> timesMounted{0};
+        ::std::atomic<uint32> timesDismounted{0};
+        ::std::atomic<uint32> flyingMountUsage{0};
+        ::std::atomic<uint32> dragonridingUsage{0};
+        ::std::atomic<uint64> totalMountedTime{0};  // Milliseconds
 
         void Reset()
         {
@@ -352,29 +352,29 @@ private:
     // ============================================================================
 
     // Mount database (spellId -> MountInfo)
-    std::unordered_map<uint32, MountInfo> _mountDatabase;
+    ::std::unordered_map<uint32, MountInfo> _mountDatabase;
 
     // Player automation profiles
-    std::unordered_map<uint32, MountAutomationProfile> _playerProfiles;
+    ::std::unordered_map<uint32, MountAutomationProfile> _playerProfiles;
 
     // Player mount tracking (playerGuid -> known mount spell IDs)
-    std::unordered_map<uint32, std::unordered_set<uint32>> _playerMounts;
+    ::std::unordered_map<uint32, ::std::unordered_set<uint32>> _playerMounts;
 
     // Mount state tracking (playerGuid -> current mount spell ID)
-    std::unordered_map<uint32, uint32> _activeMounts;
+    ::std::unordered_map<uint32, uint32> _activeMounts;
 
     // Mount timestamps (playerGuid -> mount timestamp)
-    std::unordered_map<uint32, uint32> _mountTimestamps;
+    ::std::unordered_map<uint32, uint32> _mountTimestamps;
 
     // Metrics
-    std::unordered_map<uint32, MountMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, MountMetrics> _playerMetrics;
     MountMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 MOUNT_UPDATE_INTERVAL = 5000;  // 5 seconds
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 
     // Mount spell IDs (examples - full list loaded from DB/DBC)
     static constexpr uint32 SPELL_MOUNT_RIDING_APPRENTICE = 33388;

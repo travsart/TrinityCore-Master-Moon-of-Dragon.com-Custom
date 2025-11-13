@@ -102,7 +102,7 @@ void ActionPriorityQueue::Clear()
 
 void ActionPriorityQueue::CleanupOldActions(uint32 maxAgeMs)
 {
-    std::vector<PrioritizedAction> validActions;
+    ::std::vector<PrioritizedAction> validActions;
     PrioritizedAction action;
 
     // Extract all actions and filter valid ones
@@ -127,7 +127,7 @@ void ActionPriorityQueue::CleanupOldActions(uint32 maxAgeMs)
     TC_LOG_DEBUG("playerbot.actionqueue", "Cleaned up action queue: {} valid actions remaining", validActions.size());
 }
 
-void ActionPriorityQueue::AddActions(const std::vector<PrioritizedAction>& actions)
+void ActionPriorityQueue::AddActions(const ::std::vector<PrioritizedAction>& actions)
 {
     for (const auto& action : actions)
     {
@@ -141,10 +141,10 @@ void ActionPriorityQueue::AddActions(const std::vector<PrioritizedAction>& actio
     TC_LOG_DEBUG("playerbot.actionqueue", "Added {} actions to queue", actions.size());
 }
 
-std::vector<PrioritizedAction> ActionPriorityQueue::GetActionsByPriority(ActionPriority priority) const
+::std::vector<PrioritizedAction> ActionPriorityQueue::GetActionsByPriority(ActionPriority priority) const
 {
-    std::vector<PrioritizedAction> result;
-    std::vector<PrioritizedAction> allActions;
+    ::std::vector<PrioritizedAction> result;
+    ::std::vector<PrioritizedAction> allActions;
     PrioritizedAction action;
 
     // Extract all actions
@@ -173,7 +173,7 @@ std::vector<PrioritizedAction> ActionPriorityQueue::GetActionsByPriority(ActionP
 
 bool ActionPriorityQueue::ContainsSpell(uint32 spellId) const
 {
-    std::vector<PrioritizedAction> allActions;
+    ::std::vector<PrioritizedAction> allActions;
     PrioritizedAction action;
     bool found = false;
 
@@ -404,7 +404,7 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
     }
 
     // Ensure score stays in reasonable range
-    return std::max(0.0f, std::min(score, 200.0f));
+    return ::std::max(0.0f, ::std::min(score, 200.0f));
 }
 
 float ActionPriorityHelper::GetHealthPriorityMultiplier(float healthPct)
@@ -550,7 +550,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
     }
 
     // Clamp multiplier to reasonable range
-    return std::max(0.1f, std::min(multiplier, 5.0f));
+    return ::std::max(0.1f, ::std::min(multiplier, 5.0f));
 }
 
 float ActionPriorityHelper::GetDistancePriorityMultiplier(float distance)
@@ -573,39 +573,39 @@ ActionPool& ActionPool::Instance()
     return instance;
 }
 
-std::unique_ptr<PrioritizedAction> ActionPool::Acquire()
+::std::unique_ptr<PrioritizedAction> ActionPool::Acquire()
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     if (!_pool.empty())
     {
-        auto action = std::move(_pool.back());
+        auto action = ::std::move(_pool.back());
         _pool.pop_back();
         return action;
     }
 
-    return std::make_unique<PrioritizedAction>();
+    return ::std::make_unique<PrioritizedAction>();
 }
 
-void ActionPool::Release(std::unique_ptr<PrioritizedAction> action)
+void ActionPool::Release(::std::unique_ptr<PrioritizedAction> action)
 {
     if (!action)
         return;
 
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     if (_pool.size() < MAX_POOL_SIZE)
     {
         // Reset the action
         *action = PrioritizedAction();
-        _pool.push_back(std::move(action));
+        _pool.push_back(::std::move(action));
     }
     // If pool is full, just let the unique_ptr destroy the object
 }
 
 void ActionPool::Cleanup()
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     // Keep only half the pool size to free up memory
     if (_pool.size() > MAX_POOL_SIZE / 2)

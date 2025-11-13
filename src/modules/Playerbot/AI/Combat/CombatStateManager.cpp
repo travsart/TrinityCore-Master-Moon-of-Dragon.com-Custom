@@ -170,7 +170,7 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     if (event.type != EventType::DAMAGE_TAKEN)
         return;
 
-    m_statistics.totalDamageEvents.fetch_add(1, std::memory_order_relaxed);
+    m_statistics.totalDamageEvents.fetch_add(1, ::std::memory_order_relaxed);
 
     // Validate bot state
     Player* botPtr = GetBot();
@@ -190,10 +190,10 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     try
     {
         size_t colonPos = event.data.find(':');
-        if (colonPos != std::string::npos)
+        if (colonPos != ::std::string::npos)
         {
-            std::string damageStr = event.data.substr(0, colonPos);
-            damage = static_cast<uint32>(std::stoull(damageStr));
+            ::std::string damageStr = event.data.substr(0, colonPos);
+            damage = static_cast<uint32>(::std::stoull(damageStr));
         }
     }
     catch (...)
@@ -212,7 +212,7 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     Unit* attacker = ObjectAccessor::GetUnit(*botPtr, attackerGuid);
     if (!attacker)
     {
-        m_statistics.attackerNotFoundSkipped.fetch_add(1, std::memory_order_relaxed);
+        m_statistics.attackerNotFoundSkipped.fetch_add(1, ::std::memory_order_relaxed);
 
         if (m_config.verboseLogging)
         {
@@ -225,7 +225,7 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
 
     if (!attacker->IsAlive())
     {
-        m_statistics.attackerNotFoundSkipped.fetch_add(1, std::memory_order_relaxed);
+        m_statistics.attackerNotFoundSkipped.fetch_add(1, ::std::memory_order_relaxed);
 
         if (m_config.verboseLogging)
         {
@@ -239,7 +239,7 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     // EDGE CASE: Filter friendly fire (healing/buff damage)
     if (m_config.filterFriendlyFire && botPtr->IsFriendlyTo(attacker))
     {
-        m_statistics.friendlyFireFiltered.fetch_add(1, std::memory_order_relaxed);
+        m_statistics.friendlyFireFiltered.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_DEBUG("module.playerbot.combat",
             "CombatStateManager: Bot '{}' took damage from friendly unit '{}' ({} damage) - ignoring",
@@ -251,7 +251,7 @@ void CombatStateManager::OnEventInternal(Events::BotEvent const& event)
     EnterCombatWith(attacker);
 }
 
-std::string CombatStateManager::GetManagerId() const
+::std::string CombatStateManager::GetManagerId() const
 {
     return "CombatStateManager";
 }
@@ -261,19 +261,19 @@ std::string CombatStateManager::GetManagerId() const
 
 void CombatStateManager::Statistics::Reset()
 {
-    totalDamageEvents.store(0, std::memory_order_relaxed);
-    environmentalDamageFiltered.store(0, std::memory_order_relaxed);
-    selfDamageFiltered.store(0, std::memory_order_relaxed);
-    friendlyFireFiltered.store(0, std::memory_order_relaxed);
-    alreadyInCombatSkipped.store(0, std::memory_order_relaxed);
-    attackerNotFoundSkipped.store(0, std::memory_order_relaxed);
-    combatStateTriggered.store(0, std::memory_order_relaxed);
-    combatStateFailures.store(0, std::memory_order_relaxed);
+    totalDamageEvents.store(0, ::std::memory_order_relaxed);
+    environmentalDamageFiltered.store(0, ::std::memory_order_relaxed);
+    selfDamageFiltered.store(0, ::std::memory_order_relaxed);
+    friendlyFireFiltered.store(0, ::std::memory_order_relaxed);
+    alreadyInCombatSkipped.store(0, ::std::memory_order_relaxed);
+    attackerNotFoundSkipped.store(0, ::std::memory_order_relaxed);
+    combatStateTriggered.store(0, ::std::memory_order_relaxed);
+    combatStateFailures.store(0, ::std::memory_order_relaxed);
 }
 
-std::string CombatStateManager::Statistics::ToString() const
+::std::string CombatStateManager::Statistics::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "CombatStateManager Statistics:\n"
         << "  Total DAMAGE_TAKEN events:    " << totalDamageEvents.load() << "\n"
         << "  Combat state triggered:       " << combatStateTriggered.load() << "\n"
@@ -310,7 +310,7 @@ void CombatStateManager::DumpStatistics() const
     if (!botPtr)
         return;
 
-    std::string stats = m_statistics.ToString();
+    ::std::string stats = m_statistics.ToString();
 
     TC_LOG_INFO("module.playerbot.combat",
         "CombatStateManager: Statistics for bot '{}':\n{}",
@@ -351,8 +351,8 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
     {
         if (m_config.filterEnvironmental)
         {
-            const_cast<std::atomic<uint64_t>&>(m_statistics.environmentalDamageFiltered)
-                .fetch_add(1, std::memory_order_relaxed);
+            const_cast<::std::atomic<uint64_t>&>(m_statistics.environmentalDamageFiltered)
+                .fetch_add(1, ::std::memory_order_relaxed);
 
             if (m_config.verboseLogging)
             {
@@ -369,8 +369,8 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
     {
         if (m_config.filterEnvironmental)  // Use same config flag for self-damage
         {
-            const_cast<std::atomic<uint64_t>&>(m_statistics.selfDamageFiltered)
-                .fetch_add(1, std::memory_order_relaxed);
+            const_cast<::std::atomic<uint64_t>&>(m_statistics.selfDamageFiltered)
+                .fetch_add(1, ::std::memory_order_relaxed);
 
             if (m_config.verboseLogging)
             {
@@ -397,8 +397,8 @@ bool CombatStateManager::ShouldTriggerCombatState(ObjectGuid const& attackerGuid
     // Filter 4: Already in combat with this attacker
     if (botPtr->GetCombatManager().IsInCombatWith(attackerGuid))
     {
-        const_cast<std::atomic<uint64_t>&>(m_statistics.alreadyInCombatSkipped)
-            .fetch_add(1, std::memory_order_relaxed);
+        const_cast<::std::atomic<uint64_t>&>(m_statistics.alreadyInCombatSkipped)
+            .fetch_add(1, ::std::memory_order_relaxed);
 
         if (m_config.verboseLogging)
         {
@@ -458,7 +458,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
     // Verify combat state was successfully set
     if (botPtr->IsInCombat())
     {
-        m_statistics.combatStateTriggered.fetch_add(1, std::memory_order_relaxed);
+        m_statistics.combatStateTriggered.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_DEBUG("module.playerbot.combat",
             " CombatStateManager: Combat state ACTIVE for bot '{}' (attacker: '{}')",
@@ -466,7 +466,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
     }
     else
     {
-        m_statistics.combatStateFailures.fetch_add(1, std::memory_order_relaxed);
+        m_statistics.combatStateFailures.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_ERROR("module.playerbot.combat",
             " CombatStateManager: FAILURE - SetInCombatWith() called but IsInCombat() still FALSE for bot '{}'! "

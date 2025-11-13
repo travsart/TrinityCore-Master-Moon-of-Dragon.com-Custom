@@ -62,7 +62,7 @@ namespace Playerbot
         }
 
         // Query appropriate quest hubs for player
-        std::vector<QuestHub const*> hubs = hubDb.GetQuestHubsForPlayer(
+        ::std::vector<QuestHub const*> hubs = hubDb.GetQuestHubsForPlayer(
             player,
             options.maxQuestHubCandidates);
 
@@ -361,8 +361,8 @@ namespace Playerbot
             0,                          // Movement ID
             destination,                // Destination position
             true,                       // Generate path using navmesh
-            std::nullopt,              // No specific final orientation
-            std::nullopt               // Use default movement speed
+            ::std::nullopt,              // No specific final orientation
+            ::std::nullopt               // Use default movement speed
         );
 
         state.movementInitiated = true;
@@ -391,7 +391,7 @@ namespace Playerbot
         // Calculate 2D distance to destination
         float dx = player->GetPositionX() - state.destination.GetPositionX();
         float dy = player->GetPositionY() - state.destination.GetPositionY();
-        float distance = std::sqrt(dx * dx + dy * dy);
+        float distance = ::std::sqrt(dx * dx + dy * dy);
 
         return distance <= interactionRange;
     }
@@ -404,7 +404,7 @@ namespace Playerbot
             return nullptr;
 
         Creature* nearestQuestGiver = nullptr;
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
 
         // Iterate through all creature entries in the hub
         for (uint32 creatureEntry : hub->creatureIds)
@@ -485,7 +485,7 @@ namespace Playerbot
         Player const* player,
         Position const& destination,
         QuestPathfindingOptions const& options,
-        std::vector<Position>& path,
+        ::std::vector<Position>& path,
         float& pathLength)
     {
         path.clear();
@@ -593,7 +593,7 @@ namespace Playerbot
 
     QuestHub const* QuestPathfinder::SelectBestQuestHub(
         Player const* player,
-        std::vector<QuestHub const*> const& hubs,
+        ::std::vector<QuestHub const*> const& hubs,
         QuestPathfindingOptions::SelectionStrategy strategy)
     {
         if (hubs.empty())
@@ -605,7 +605,7 @@ namespace Playerbot
             {
                 // Select hub with minimum distance
                 QuestHub const* nearest = nullptr;
-                float minDistance = std::numeric_limits<float>::max();
+                float minDistance = ::std::numeric_limits<float>::max();
 
                 for (auto const* hub : hubs)
                 {

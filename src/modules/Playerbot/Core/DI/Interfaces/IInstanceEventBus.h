@@ -48,7 +48,7 @@ class TC_GAME_API IInstanceEventBus
 public:
     virtual ~IInstanceEventBus() = default;
 
-    using EventHandler = std::function<void(InstanceEvent const&)>;
+    using EventHandler = ::std::function<void(InstanceEvent const&)>;
 
     // ====================================================================
     // EVENT PUBLISHING
@@ -72,7 +72,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @note Subscriber must call Unsubscribe before destruction
      */
-    virtual void Subscribe(BotAI* subscriber, std::vector<InstanceEventType> const& types) = 0;
+    virtual void Subscribe(BotAI* subscriber, ::std::vector<InstanceEventType> const& types) = 0;
 
     /**
      * @brief Subscribe to all instance event types
@@ -93,7 +93,7 @@ public:
      * @param types Vector of event types to subscribe to
      * @return Subscription ID for later unsubscription
      */
-    virtual uint32 SubscribeCallback(EventHandler handler, std::vector<InstanceEventType> const& types) = 0;
+    virtual uint32 SubscribeCallback(EventHandler handler, ::std::vector<InstanceEventType> const& types) = 0;
 
     /**
      * @brief Unsubscribe a callback handler

@@ -59,7 +59,7 @@ public:
 
     void ActivateProc(uint32 stacks = 1)
     {
-        _fofStacks = std::min(_fofStacks + stacks, 2u); // Max 2 stacks
+        _fofStacks = ::std::min(_fofStacks + stacks, 2u); // Max 2 stacks
         _fofEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec duration
     }
 
@@ -145,7 +145,7 @@ public:
 
     void AddIcicle(uint32 amount = 1)
     {
-        _icicles = std::min(_icicles + amount, _maxIcicles);
+        _icicles = ::std::min(_icicles + amount, _maxIcicles);
     }
 
     void ConsumeIcicles()
@@ -497,7 +497,7 @@ private:
 
         uint32 count = 0;
         // Simplified enemy counting
-        return std::min(count, 10u);
+        return ::std::min(count, 10u);
     }
 
     void InitializeFrostMechanics()

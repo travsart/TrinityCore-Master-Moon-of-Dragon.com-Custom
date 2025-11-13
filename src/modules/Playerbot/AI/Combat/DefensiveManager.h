@@ -249,8 +249,8 @@ namespace Playerbot
 
     private:
         Player* _bot;
-        std::vector<DefensiveCooldown> _availableDefensives;
-        std::unordered_map<uint32, uint32> _cooldownTracker;  // spellId -> lastUsed
+        ::std::vector<DefensiveCooldown> _availableDefensives;
+        ::std::unordered_map<uint32, uint32> _cooldownTracker;  // spellId -> lastUsed
         float _recentDamage;
         uint32 _lastUpdate;
 
@@ -265,7 +265,7 @@ namespace Playerbot
         /**
          * @brief Get available defensives by priority
          */
-        std::vector<DefensiveCooldown*> GetAvailableDefensives(DefensivePriority minPriority);
+        ::std::vector<DefensiveCooldown*> GetAvailableDefensives(DefensivePriority minPriority);
 
         /**
          * @brief Check if any major defensive is active

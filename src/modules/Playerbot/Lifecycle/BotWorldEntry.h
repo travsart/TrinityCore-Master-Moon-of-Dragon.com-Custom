@@ -52,8 +52,8 @@ enum class BotWorldEntryState : uint8
  */
 struct BotWorldEntryMetrics
 {
-    std::chrono::steady_clock::time_point startTime;
-    std::chrono::steady_clock::time_point endTime;
+    ::std::chrono::steady_clock::time_point startTime;
+    ::std::chrono::steady_clock::time_point endTime;
 
     // Phase durations in microseconds
     uint32 databaseLoadTime = 0;
@@ -68,7 +68,7 @@ struct BotWorldEntryMetrics
     size_t memoryAfterEntry = 0;
 
     // Error tracking
-    std::string lastError;
+    ::std::string lastError;
     BotWorldEntryState failedState = BotWorldEntryState::NONE;
 };
 
@@ -81,9 +81,9 @@ struct BotWorldEntryMetrics
 class TC_GAME_API BotWorldEntry
 {
 public:
-    using EntryCallback = std::function<void(bool success, BotWorldEntryMetrics const& metrics)>;
+    using EntryCallback = ::std::function<void(bool success, BotWorldEntryMetrics const& metrics)>;
 
-    BotWorldEntry(std::shared_ptr<BotSession> session, ObjectGuid characterGuid);
+    BotWorldEntry(::std::shared_ptr<BotSession> session, ObjectGuid characterGuid);
     ~BotWorldEntry();
 
     // === Main Entry Process ===
@@ -125,8 +125,8 @@ public:
 
     // === Error Handling ===
 
-    std::string GetLastError() const { return _metrics.lastError; }
-    void SetError(std::string const& error);
+    ::std::string GetLastError() const { return _metrics.lastError; }
+    void SetError(::std::string const& error);
 
 private:
     // === State Transition Functions ===
@@ -191,7 +191,7 @@ private:
     /**
      * Handle world entry failure and cleanup
      */
-    void HandleWorldEntryFailure(std::string const& reason);
+    void HandleWorldEntryFailure(::std::string const& reason);
 
     /**
      * Clean up resources on failure or logout
@@ -207,13 +207,13 @@ private:
 
 private:
     // Core components
-    std::shared_ptr<BotSession> _session;
+    ::std::shared_ptr<BotSession> _session;
     ObjectGuid _characterGuid;
     Player* _player;
 
     // State management
-    std::atomic<BotWorldEntryState> _state;
-    std::atomic<bool> _processing;
+    ::std::atomic<BotWorldEntryState> _state;
+    ::std::atomic<bool> _processing;
 
     // Performance tracking
     BotWorldEntryMetrics _metrics;
@@ -227,8 +227,8 @@ private:
     static constexpr uint32 MAX_RETRY_COUNT = 3;
 
     // Timeout management
-    std::chrono::steady_clock::time_point _phaseStartTime;
-    static constexpr auto PHASE_TIMEOUT = std::chrono::seconds(10);
+    ::std::chrono::steady_clock::time_point _phaseStartTime;
+    static constexpr auto PHASE_TIMEOUT = ::std::chrono::seconds(10);
 
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _stateMutex;
@@ -249,7 +249,7 @@ public:
      * @param entry The bot world entry to queue
      * @return Position in queue (0 = immediate processing)
      */
-    uint32 QueueEntry(std::shared_ptr<BotWorldEntry> entry) override;
+    uint32 QueueEntry(::std::shared_ptr<BotWorldEntry> entry) override;
 
     /**
      * Process queued entries
@@ -281,14 +281,14 @@ private:
     ~BotWorldEntryQueue() = default;
 
     // Queue management
-    std::queue<std::shared_ptr<BotWorldEntry>> _pendingQueue;
-    std::vector<std::shared_ptr<BotWorldEntry>> _activeEntries;
+    ::std::queue<::std::shared_ptr<BotWorldEntry>> _pendingQueue;
+    ::std::vector<::std::shared_ptr<BotWorldEntry>> _activeEntries;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _queueMutex;
 
     // Statistics
-    std::atomic<uint32> _totalCompleted{0};
-    std::atomic<uint32> _totalFailed{0};
-    std::atomic<uint64> _totalEntryTime{0}; // in microseconds
+    ::std::atomic<uint32> _totalCompleted{0};
+    ::std::atomic<uint32> _totalFailed{0};
+    ::std::atomic<uint64> _totalEntryTime{0}; // in microseconds
 
     // Singleton
     BotWorldEntryQueue(BotWorldEntryQueue const&) = delete;

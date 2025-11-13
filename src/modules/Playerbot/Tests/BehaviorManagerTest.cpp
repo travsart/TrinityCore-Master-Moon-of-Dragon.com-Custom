@@ -73,11 +73,11 @@ public:
     bool IsInWorld() const { return m_inWorld; }
     void SetInWorld(bool inWorld) { m_inWorld = inWorld; }
     const char* GetName() const { return m_name.c_str(); }
-    void SetName(std::string name) { m_name = std::move(name); }
+    void SetName(::std::string name) { m_name = ::std::move(name); }
 
 private:
     bool m_inWorld;
-    std::string m_name;
+    ::std::string m_name;
 };
 
 /**
@@ -146,7 +146,7 @@ protected:
         // Simulate slow update if requested
         if (m_simulateSlowUpdate)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(m_slowUpdateDuration));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(m_slowUpdateDuration));
         }
 
         // Throw exception if requested (for error handling tests)
@@ -156,7 +156,7 @@ protected:
             {
                 m_shouldThrow = false; // Only throw once
             }
-            throw std::runtime_error("Test exception in OnUpdate");
+            throw ::std::runtime_error("Test exception in OnUpdate");
         }
     }
 
@@ -220,8 +220,8 @@ protected:
     void SetUp() override
     {
         // Create mock player and AI
-        mockPlayer = std::make_unique<MockPlayer>();
-        mockAI = std::make_unique<MockBotAI>();
+        mockPlayer = ::std::make_unique<MockPlayer>();
+        mockAI = ::std::make_unique<MockBotAI>();
 
         // Cast to Player* and BotAI* for BehaviorManager constructor
         // Note: In real implementation, these would be actual TrinityCore types
@@ -238,9 +238,9 @@ protected:
     }
 
     // Helper: Create a testable manager with default settings
-    std::unique_ptr<TestableManager> CreateManager(uint32 updateInterval = 1000)
+    ::std::unique_ptr<TestableManager> CreateManager(uint32 updateInterval = 1000)
     {
-        return std::make_unique<TestableManager>(player, ai, updateInterval);
+        return ::std::make_unique<TestableManager>(player, ai, updateInterval);
     }
 
     // Helper: Simulate time passage by calling Update() multiple times
@@ -258,17 +258,17 @@ protected:
     template<typename Func>
     uint64_t MeasureTimeMicroseconds(Func&& func)
     {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = ::std::chrono::high_resolution_clock::now();
         func();
-        auto end = std::chrono::high_resolution_clock::now();
-        return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = ::std::chrono::high_resolution_clock::now();
+        return ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     }
 
-    std::unique_ptr<MockPlayer> mockPlayer;
-    std::unique_ptr<MockBotAI> mockAI;
+    ::std::unique_ptr<MockPlayer> mockPlayer;
+    ::std::unique_ptr<MockBotAI> mockAI;
     Player* player;
     BotAI* ai;
-    std::unique_ptr<TestableManager> manager;
+    ::std::unique_ptr<TestableManager> manager;
 };
 
 // ============================================================================
@@ -294,7 +294,7 @@ TEST_F(BehaviorManagerTest, Constructor_ValidParameters_CreatesEnabledManager)
  */
 TEST_F(BehaviorManagerTest, Constructor_NullBotPointer_CreatesDisabledManager)
 {
-    auto mgr = std::make_unique<TestableManager>(nullptr, ai, 1000);
+    auto mgr = ::std::make_unique<TestableManager>(nullptr, ai, 1000);
 
     EXPECT_FALSE(mgr->IsEnabled());
     EXPECT_FALSE(mgr->IsInitialized());
@@ -305,7 +305,7 @@ TEST_F(BehaviorManagerTest, Constructor_NullBotPointer_CreatesDisabledManager)
  */
 TEST_F(BehaviorManagerTest, Constructor_NullAIPointer_CreatesDisabledManager)
 {
-    auto mgr = std::make_unique<TestableManager>(player, nullptr, 1000);
+    auto mgr = ::std::make_unique<TestableManager>(player, nullptr, 1000);
 
     EXPECT_FALSE(mgr->IsEnabled());
     EXPECT_FALSE(mgr->IsInitialized());
@@ -497,7 +497,7 @@ TEST_F(BehaviorManagerTest, Performance_ThrottledUpdate_UnderOneMicrosecond)
 TEST_F(BehaviorManagerTest, Performance_HundredManagers_AmortizedCostUnder200Microseconds)
 {
     // Create 100 managers with varying intervals
-    std::vector<std::unique_ptr<TestableManager>> managers;
+    ::std::vector<::std::unique_ptr<TestableManager>> managers;
     for (int i = 0; i < 100; ++i)
     {
         uint32 interval = 1000 + (i * 100); // Stagger intervals
@@ -602,14 +602,14 @@ TEST_F(BehaviorManagerTest, AtomicState_IsBusy_TrueDuringOnUpdate)
     manager->SetSimulateSlowUpdate(true, 50); // 50ms slow update
 
     // Start update in separate thread
-    std::atomic<bool> busyDuringUpdate{false};
-    std::thread updateThread([&]() {
+    ::std::atomic<bool> busyDuringUpdate{false};
+    ::std::thread updateThread([&]() {
         manager->Update(1000); // Force first update
         busyDuringUpdate = manager->IsBusy();
     });
 
     // Wait a bit to ensure OnUpdate is executing
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
 
     // Check if busy (might be, depending on timing)
     // The key is that it returns to false after
@@ -628,12 +628,12 @@ TEST_F(BehaviorManagerTest, AtomicState_IsBusy_PreventsReentrantUpdates)
     manager->SetSimulateSlowUpdate(true, 100);
 
     // Start first update
-    std::thread thread1([&]() {
+    ::std::thread thread1([&]() {
         manager->Update(1000);
     });
 
     // Attempt second update while first is running
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(20));
     uint32 countBefore = manager->GetOnUpdateCallCount();
     manager->Update(1000); // Should be blocked by IsBusy()
     uint32 countAfter = manager->GetOnUpdateCallCount();
@@ -675,7 +675,7 @@ TEST_F(BehaviorManagerTest, AtomicState_IsInitialized_TrueAfterInitialization)
  */
 TEST_F(BehaviorManagerTest, Initialization_OnInitialize_CalledOnceOnFirstUpdate)
 {
-    auto initMgr = std::make_unique<InitializationTestManager>(player, ai, true);
+    auto initMgr = ::std::make_unique<InitializationTestManager>(player, ai, true);
 
     // First update should trigger initialization
     initMgr->Update(1000);
@@ -693,7 +693,7 @@ TEST_F(BehaviorManagerTest, Initialization_OnInitialize_CalledOnceOnFirstUpdate)
  */
 TEST_F(BehaviorManagerTest, Initialization_FailedInit_RetriedOnNextUpdate)
 {
-    auto initMgr = std::make_unique<InitializationTestManager>(player, ai, false);
+    auto initMgr = ::std::make_unique<InitializationTestManager>(player, ai, false);
 
     // First attempt should fail
     initMgr->Update(100);
@@ -717,7 +717,7 @@ TEST_F(BehaviorManagerTest, Initialization_FailedInit_RetriedOnNextUpdate)
  */
 TEST_F(BehaviorManagerTest, Initialization_OnUpdate_NotCalledUntilInitialized)
 {
-    auto initMgr = std::make_unique<InitializationTestManager>(player, ai, false);
+    auto initMgr = ::std::make_unique<InitializationTestManager>(player, ai, false);
 
     // Multiple updates while initialization fails
     for (int i = 0; i < 5; ++i)
@@ -802,7 +802,7 @@ TEST_F(BehaviorManagerTest, ErrorHandling_BotLeavesWorld_DisablesManager)
 TEST_F(BehaviorManagerTest, ErrorHandling_NullBotPointer_ManagerDisabled)
 {
     // This is already tested in constructor, but verify runtime detection
-    auto mgr = std::make_unique<TestableManager>(nullptr, ai, 1000);
+    auto mgr = ::std::make_unique<TestableManager>(nullptr, ai, 1000);
 
     mgr->Update(1000);
 
@@ -843,7 +843,7 @@ TEST_F(BehaviorManagerTest, SlowUpdate_ConsecutiveSlowUpdates_AutoAdjustsInterva
     for (int i = 0; i < 12; ++i)
     {
         manager->Update(200); // Enough time to trigger each time
-        std::this_thread::sleep_for(std::chrono::milliseconds(70));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(70));
     }
 
     // Interval should have been auto-adjusted upward
@@ -922,7 +922,7 @@ TEST_F(BehaviorManagerTest, TimeTracking_GetTimeSinceLastUpdate_AccurateTime)
     manager->Update(1000);
 
     // Wait a bit
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
 
     // Time since last update should be approximately 100ms
     uint32 timeSince = manager->GetTimeSinceLastUpdate();

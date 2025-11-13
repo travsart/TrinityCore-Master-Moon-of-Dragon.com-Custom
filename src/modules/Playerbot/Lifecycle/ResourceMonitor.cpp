@@ -56,7 +56,7 @@ ResourcePressure ResourceMetrics::GetPressureLevel() const
         memPressure = ResourcePressure::ELEVATED;
 
     // Return the more severe pressure level
-    return std::max(cpuPressure, memPressure);
+    return ::std::max(cpuPressure, memPressure);
 }
 
 bool ResourceMetrics::IsSpawningSafe() const
@@ -254,7 +254,7 @@ float ResourceMonitor::CollectCpuUsage()
     _lastCpuTime = currentCpuTime;
     _lastSystemTime = currentSystemTime;
 
-    return std::min(cpuUsage, 100.0f);
+    return ::std::min(cpuUsage, 100.0f);
 
 #else
     // Linux implementation using /proc/stat
@@ -278,7 +278,7 @@ float ResourceMonitor::CollectCpuUsage()
     _lastCpuTime = currentCpuTime;
     _lastTimestamp = now;
 
-    return std::min(cpuUsage, 100.0f);
+    return ::std::min(cpuUsage, 100.0f);
 #endif
 }
 
@@ -301,11 +301,11 @@ float ResourceMonitor::CollectMemoryUsage()
 
     // Calculate percentage of total physical memory
     float memoryUsagePercent = (float)(pmc.WorkingSetSize * 100.0 / memInfo.ullTotalPhys);
-    return std::min(memoryUsagePercent, 100.0f);
+    return ::std::min(memoryUsagePercent, 100.0f);
 
 #else
     // Linux implementation using /proc/self/statm
-    std::ifstream statm("/proc/self/statm");
+    ::std::ifstream statm("/proc/self/statm");
     if (!statm)
         return 0.0f;
 
@@ -323,7 +323,7 @@ float ResourceMonitor::CollectMemoryUsage()
         return 0.0f;
 
     float memoryUsagePercent = (float)((vmRSS * pageSize) * 100.0 / memInfo.totalram);
-    return std::min(memoryUsagePercent, 100.0f);
+    return ::std::min(memoryUsagePercent, 100.0f);
 #endif
 }
 
@@ -374,7 +374,7 @@ void ResourceMonitor::UpdateMovingAverages()
     _currentMetrics.cpuUsage60sAvg = CalculateAverage(_cpuSamples60s);
 }
 
-float ResourceMonitor::CalculateAverage(const std::deque<float>& window) const
+float ResourceMonitor::CalculateAverage(const ::std::deque<float>& window) const
 {
     if (window.empty())
         return 0.0f;

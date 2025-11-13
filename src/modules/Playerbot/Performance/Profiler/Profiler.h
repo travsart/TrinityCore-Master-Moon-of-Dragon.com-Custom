@@ -44,12 +44,12 @@ public:
     class ScopedTimer
     {
     private:
-        std::string _section;
-        std::chrono::steady_clock::time_point _start;
+        ::std::string _section;
+        ::std::chrono::steady_clock::time_point _start;
         bool _enabled;
 
     public:
-        explicit ScopedTimer(const std::string& section);
+        explicit ScopedTimer(const ::std::string& section);
         ~ScopedTimer();
     };
 
@@ -68,25 +68,25 @@ public:
 
     struct SectionData
     {
-        std::atomic<uint64> totalTime{0};
-        std::atomic<uint64> callCount{0};
-        std::atomic<uint64> minTime{UINT64_MAX};
-        std::atomic<uint64> maxTime{0};
+        ::std::atomic<uint64> totalTime{0};
+        ::std::atomic<uint64> callCount{0};
+        ::std::atomic<uint64> minTime{UINT64_MAX};
+        ::std::atomic<uint64> maxTime{0};
 
         SectionDataSnapshot GetSnapshot() const
         {
             SectionDataSnapshot snapshot;
-            snapshot.totalTime = totalTime.load(std::memory_order_relaxed);
-            snapshot.callCount = callCount.load(std::memory_order_relaxed);
-            snapshot.minTime = minTime.load(std::memory_order_relaxed);
-            snapshot.maxTime = maxTime.load(std::memory_order_relaxed);
+            snapshot.totalTime = totalTime.load(::std::memory_order_relaxed);
+            snapshot.callCount = callCount.load(::std::memory_order_relaxed);
+            snapshot.minTime = minTime.load(::std::memory_order_relaxed);
+            snapshot.maxTime = maxTime.load(::std::memory_order_relaxed);
             return snapshot;
         }
     };
 
     struct ProfileResults
     {
-        std::unordered_map<std::string, SectionDataSnapshot> sections;
+        ::std::unordered_map<::std::string, SectionDataSnapshot> sections;
         size_t totalAllocations{0};
         size_t totalDeallocations{0};
         size_t currentMemoryUsage{0};
@@ -94,17 +94,17 @@ public:
     };
 
 private:
-    std::unordered_map<std::string, SectionData> _sections;
+    ::std::unordered_map<::std::string, SectionData> _sections;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
-    std::atomic<bool> _enabled{false};
-    std::atomic<uint32> _samplingRate{10};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<uint32> _samplingRate{10};
 
 public:
     /**
      * @brief Record section timing
      */
-    void RecordSection(const std::string& section, uint64 microseconds);
+    void RecordSection(const ::std::string& section, uint64 microseconds);
 
     /**
      * @brief Get profiling results
@@ -119,9 +119,9 @@ public:
     /**
      * @brief Enable/disable profiling
      */
-    void Enable() { _enabled.store(true, std::memory_order_relaxed); }
-    void Disable() { _enabled.store(false, std::memory_order_relaxed); }
-    bool IsEnabled() const { return _enabled.load(std::memory_order_relaxed); }
+    void Enable() { _enabled.store(true, ::std::memory_order_relaxed); }
+    void Disable() { _enabled.store(false, ::std::memory_order_relaxed); }
+    bool IsEnabled() const { return _enabled.load(::std::memory_order_relaxed); }
 
     /**
      * @brief Get singleton instance

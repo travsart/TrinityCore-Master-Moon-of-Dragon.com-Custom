@@ -265,19 +265,19 @@ namespace Playerbot
         {
             MovementPath path;
             Position destination;
-            std::chrono::steady_clock::time_point timestamp;
+            ::std::chrono::steady_clock::time_point timestamp;
             uint32 hitCount;
             bool isValid;
 
             CachedPath() : hitCount(0), isValid(false)
             {
-                timestamp = std::chrono::steady_clock::now();
+                timestamp = ::std::chrono::steady_clock::now();
             }
 
             bool IsExpired(uint32 duration) const
             {
-                auto now = std::chrono::steady_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                auto now = ::std::chrono::steady_clock::now();
+                auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
                     now - timestamp).count();
                 return elapsed > duration;
             }
@@ -285,8 +285,8 @@ namespace Playerbot
 
         // Cache management
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _cacheLock;
-        std::unordered_map<uint64, CachedPath> _pathCache;
-        std::queue<uint64> _cacheOrder; // LRU tracking
+        ::std::unordered_map<uint64, CachedPath> _pathCache;
+        ::std::queue<uint64> _cacheOrder; // LRU tracking
 
         // Configuration
         bool _enableCaching;
@@ -298,15 +298,15 @@ namespace Playerbot
         float _maxSearchDistance;
 
         // Statistics
-        mutable std::atomic<uint32> _cacheHits;
-        mutable std::atomic<uint32> _cacheMisses;
-        mutable std::atomic<uint32> _cacheEvictions;
-        std::atomic<uint32> _totalPathsGenerated;
-        std::atomic<uint64> _totalGenerationTime;
-        std::atomic<uint32> _maxGenerationTime;
+        mutable ::std::atomic<uint32> _cacheHits;
+        mutable ::std::atomic<uint32> _cacheMisses;
+        mutable ::std::atomic<uint32> _cacheEvictions;
+        ::std::atomic<uint32> _totalPathsGenerated;
+        ::std::atomic<uint64> _totalGenerationTime;
+        ::std::atomic<uint32> _maxGenerationTime;
 
         // Performance tracking
-        std::chrono::steady_clock::time_point _lastCacheClean;
+        ::std::chrono::steady_clock::time_point _lastCacheClean;
         uint32 _cacheCleanInterval;
 
         // Thread pool for async path calculation (future enhancement)

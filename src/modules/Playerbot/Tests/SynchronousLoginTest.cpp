@@ -152,7 +152,7 @@ private:
             TC_LOG_INFO("test.playerbot", "Database query execution test completed successfully");
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in database query test: {}", e.what());
             return false;
@@ -179,7 +179,7 @@ private:
             // Instead, we'll test the LoadCharacterDataSynchronously method which uses it
 
             // Create a test bot session
-            auto botSession = std::make_shared<BotSession>(testAccountId);
+            auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
             if (!botSession->IsActive())
             {
@@ -190,7 +190,7 @@ private:
             TC_LOG_INFO("test.playerbot", "SynchronousLoginQueryHolder test framework ready");
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in SynchronousLoginQueryHolder test: {}", e.what());
             return false;
@@ -226,7 +226,7 @@ private:
             TC_LOG_INFO("test.playerbot", "Using test character GUID {} from account {}", testCharacterGuid, testAccountId);
 
             // Create bot session
-            auto botSession = std::make_shared<BotSession>(testAccountId);
+            auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
             if (!botSession->IsActive())
             {
@@ -237,11 +237,11 @@ private:
             // Test the synchronous login
             ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(testCharacterGuid);
 
-            auto startTime = std::chrono::steady_clock::now();
+            auto startTime = ::std::chrono::steady_clock::now();
             bool loginResult = botSession->LoginCharacter(characterGuid);
-            auto endTime = std::chrono::steady_clock::now();
+            auto endTime = ::std::chrono::steady_clock::now();
 
-            auto loginDuration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+            auto loginDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
             if (loginResult)
             {
@@ -283,7 +283,7 @@ private:
 
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in complete bot login flow test: {}", e.what());
             return false;
@@ -303,7 +303,7 @@ private:
         try
         {
             uint32 testAccountId = 1;
-            auto botSession = std::make_shared<BotSession>(testAccountId);
+            auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
             // Test 1: Invalid character GUID
             ObjectGuid invalidGuid = ObjectGuid::Create<HighGuid::Player>(99999999);
@@ -346,7 +346,7 @@ private:
 
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in error handling test: {}", e.what());
             return false;
@@ -371,7 +371,7 @@ private:
             for (int i = 0; i < numSessions; ++i)
             {
                 uint32 testAccountId = 1;
-                auto botSession = std::make_shared<BotSession>(testAccountId);
+                auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
                 // Test session creation/destruction
                 if (!botSession->IsActive())
@@ -386,7 +386,7 @@ private:
             TC_LOG_INFO("test.playerbot", " Memory safety test completed - no crashes detected");
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in memory safety test: {}", e.what());
             return false;
@@ -421,24 +421,24 @@ private:
 
             // Performance test - measure multiple login attempts
             const int numTests = 3;
-            std::vector<std::chrono::milliseconds> timings;
+            ::std::vector<::std::chrono::milliseconds> timings;
 
             for (int i = 0; i < numTests; ++i)
             {
-                auto botSession = std::make_shared<BotSession>(testAccountId);
+                auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
-                auto startTime = std::chrono::steady_clock::now();
+                auto startTime = ::std::chrono::steady_clock::now();
                 bool loginResult = botSession->LoginCharacter(characterGuid);
-                auto endTime = std::chrono::steady_clock::now();
+                auto endTime = ::std::chrono::steady_clock::now();
 
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
                 timings.push_back(duration);
 
                 TC_LOG_INFO("test.playerbot", "Performance test iteration {}: {} ms", i + 1, duration.count());
             }
 
             // Calculate average
-            auto totalTime = std::accumulate(timings.begin(), timings.end(), std::chrono::milliseconds(0));
+            auto totalTime = ::std::accumulate(timings.begin(), timings.end(), ::std::chrono::milliseconds(0));
             auto avgTime = totalTime / numTests;
 
             TC_LOG_INFO("test.playerbot", " Average synchronous login time: {} ms", avgTime.count());
@@ -452,7 +452,7 @@ private:
 
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in performance test: {}", e.what());
             return false;
@@ -472,14 +472,14 @@ private:
         try
         {
             uint32 testAccountId = 1;
-            auto botSession = std::make_shared<BotSession>(testAccountId);
+            auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
             // Test concurrent access to the same session (should be safe)
-            std::atomic<bool> testPassed{true};
-            std::atomic<int> completedThreads{0};
+            ::std::atomic<bool> testPassed{true};
+            ::std::atomic<int> completedThreads{0};
 
             const int numThreads = 3;
-            std::vector<std::thread> threads;
+            ::std::vector<::std::thread> threads;
 
             for (int i = 0; i < numThreads; ++i)
             {
@@ -498,7 +498,7 @@ private:
                         }
 
                         // Sleep briefly to allow thread interleaving
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
 
                         completedThreads.fetch_add(1);
                     }
@@ -531,7 +531,7 @@ private:
             TC_LOG_INFO("test.playerbot", " Thread safety test passed - {} threads completed successfully", numThreads);
             return true;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("test.playerbot", "Exception in thread safety test: {}", e.what());
             return false;

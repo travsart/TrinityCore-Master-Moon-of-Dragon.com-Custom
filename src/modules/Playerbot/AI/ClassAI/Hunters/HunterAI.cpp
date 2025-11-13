@@ -57,7 +57,7 @@ HunterAI::HunterAI(Player* bot) :
     _peakUpdateTime(0)
 {
     // Initialize combat behavior integration
-    _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);    // Reset combat metrics
+    _combatBehaviors = ::std::make_unique<CombatBehaviorIntegration>(bot);    // Reset combat metrics
     _combatMetrics.Reset();
 
     TC_LOG_DEBUG("playerbot", "HunterAI initialized for {} with CombatBehaviorIntegration", bot->GetName());
@@ -78,7 +78,7 @@ void HunterAI::UpdateRotation(::Unit* target)
         return;
 
     // Performance tracking
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Update combat behavior integration
     if (_combatBehaviors)
@@ -147,8 +147,8 @@ void HunterAI::UpdateRotation(::Unit* target)
     ExecuteNormalRotation(target);
 
     // Update combat metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    uint32 updateTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    uint32 updateTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
     _totalUpdateTime += updateTime;
     _updateCounter++;
     if (updateTime > _peakUpdateTime)
@@ -1442,7 +1442,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
 
             return false;
     }    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), DEAD_ZONE_MAX);
 
     // Process results (replace old loop)
@@ -1465,7 +1465,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         if (target)
         {
 
-            minDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+            minDistance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
             }
         return minDistance > DEAD_ZONE_MIN && minDistance <= DEAD_ZONE_MAX;
     }
@@ -1534,7 +1534,7 @@ float HunterAI::GetDistanceToTarget(::Unit* target) const
 {
     if (!target || !_bot)
         return 0.0f;
-    return std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    return ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // Hunter-specific mechanics implementation
@@ -1685,10 +1685,10 @@ void HunterAI::UpdateTracking()
     // Priority 2: If no specific target, analyze nearby creatures
     if (optimalTracking == 0)
     {
-        std::unordered_map<CreatureType, uint32> creatureTypeCounts;
+        ::std::unordered_map<CreatureType, uint32> creatureTypeCounts;
 
         // Count nearby creature types within 40 yards
-        std::list<Creature*> nearbyCreatures;
+        ::std::list<Creature*> nearbyCreatures;
         Trinity::AllCreaturesInRange check(_bot, 40.0f);
         Trinity::CreatureListSearcher<Trinity::AllCreaturesInRange> searcher(_bot, nearbyCreatures, check);
         Cell::VisitGridObjects(_bot, searcher, 40.0f);
@@ -1915,7 +1915,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     float lowestHealth = 100.0f;
 
     // Find best CC target (lowest health add that's not the main target)
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, 30.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1933,7 +1933,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -1979,7 +1979,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
 
 uint32 HunterAI::GetNearbyEnemyCount(float range) const
 {
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1997,7 +1997,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)

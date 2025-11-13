@@ -56,7 +56,7 @@ public:
     // Navigation and pathfinding
     virtual void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) = 0;
     virtual bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) = 0;
-    virtual std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) = 0;
+    virtual ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) = 0;
     virtual Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) = 0;
 
     // Group coordination for quest completion
@@ -68,8 +68,8 @@ public:
     // Quest completion optimization
     virtual void OptimizeQuestCompletionOrder(Player* bot) = 0;
     virtual void OptimizeObjectiveSequence(Player* bot, uint32 questId) = 0;
-    virtual void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds) = 0;
-    virtual void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives) = 0;
+    virtual void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds) = 0;
+    virtual void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives) = 0;
 
     // Stuck detection and recovery
     virtual void DetectStuckState(Player* bot, uint32 questId) = 0;
@@ -105,8 +105,8 @@ public:
     virtual QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() = 0;
 
     // Quest data analysis
-    virtual std::vector<uint32> GetActiveQuests(Player* bot) = 0;
-    virtual std::vector<uint32> GetCompletableQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetActiveQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetCompletableQuests(Player* bot) = 0;
     virtual uint32 GetHighestPriorityQuest(Player* bot) = 0;
     virtual float CalculateQuestProgress(uint32 questId, Player* bot) = 0;
 
@@ -123,7 +123,7 @@ public:
     virtual void HandleDailyQuests(Player* bot) = 0;
 
     // Error handling and recovery
-    virtual void HandleQuestCompletionError(Player* bot, uint32 questId, const std::string& error) = 0;
+    virtual void HandleQuestCompletionError(Player* bot, uint32 questId, const ::std::string& error) = 0;
     virtual void RecoverFromCompletionFailure(Player* bot, uint32 questId) = 0;
     virtual void AbandonUncompletableQuest(Player* bot, uint32 questId) = 0;
     virtual void DiagnoseCompletionIssues(Player* bot, uint32 questId) = 0;

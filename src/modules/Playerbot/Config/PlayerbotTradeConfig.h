@@ -61,7 +61,7 @@ namespace Playerbot
         static uint32 GetItemBaseValue(uint32 itemClass);
 
         // Protected items (never trade these)
-        static std::vector<uint32> const& GetProtectedItems() { return m_protectedItems; }
+        static ::std::vector<uint32> const& GetProtectedItems() { return m_protectedItems; }
         static bool IsItemProtected(uint32 itemEntry);
         static void AddProtectedItem(uint32 itemEntry);
         static void RemoveProtectedItem(uint32 itemEntry);
@@ -102,7 +102,7 @@ namespace Playerbot
         static bool m_lootBySpecEnabled;
 
         // Protected items
-        static std::vector<uint32> m_protectedItems;
+        static ::std::vector<uint32> m_protectedItems;
 
         // Logging
         static bool m_tradeLoggingEnabled;
@@ -111,7 +111,7 @@ namespace Playerbot
     };
 
     // Configuration string for playerbots.conf
-    inline std::string GetTradeConfigString()
+    inline ::std::string GetTradeConfigString()
     {
         return R"(
 ###################################################################################################

@@ -204,9 +204,9 @@ void MovementIntegration::ClearDangerZones()
     _dangerZones.clear();
 }
 
-std::vector<DangerZone> MovementIntegration::GetDangerZones() const
+::std::vector<DangerZone> MovementIntegration::GetDangerZones() const
 {
-    std::vector<DangerZone> active;
+    ::std::vector<DangerZone> active;
 
     for (const auto& zone : _dangerZones)
     {
@@ -227,7 +227,7 @@ float MovementIntegration::GetDangerLevel(const Position& pos) const
             continue;
 
         if (zone.IsInDanger(pos))
-            maxDanger = std::max(maxDanger, zone.dangerLevel);
+            maxDanger = ::std::max(maxDanger, zone.dangerLevel);
     }
 
     return maxDanger;
@@ -244,8 +244,8 @@ Position MovementIntegration::FindNearestSafePosition(const Position& from, floa
         for (float angle : angles)
         {
             float radians = angle * M_PI / 180.0f;
-            float x = from.GetPositionX() + distance * std::cos(radians);
-            float y = from.GetPositionY() + distance * std::sin(radians);
+            float x = from.GetPositionX() + distance * ::std::cos(radians);
+            float y = from.GetPositionY() + distance * ::std::sin(radians);
 
             Position test(x, y, from.GetPositionZ());
 
@@ -288,8 +288,8 @@ Position MovementIntegration::GetKitingPosition(Unit* target)
     float angle = target->GetAngle(_bot);
     float distance = KITING_DISTANCE + 5.0f;  // Kite to safe distance
 
-    float x = target->GetPositionX() + distance * std::cos(angle);
-    float y = target->GetPositionY() + distance * std::sin(angle);
+    float x = target->GetPositionX() + distance * ::std::cos(angle);
+    float y = target->GetPositionY() + distance * ::std::sin(angle);
 
     return Position(x, y, _bot->GetPositionZ());
 }
@@ -299,7 +299,7 @@ Position MovementIntegration::GetKitingPosition(Unit* target)
 void MovementIntegration::UpdateDangerZones()
 {
     _dangerZones.erase(
-        std::remove_if(_dangerZones.begin(), _dangerZones.end(),
+        ::std::remove_if(_dangerZones.begin(), _dangerZones.end(),
             [](const DangerZone& zone) { return zone.IsExpired(); }),
         _dangerZones.end()
     );
@@ -350,8 +350,8 @@ MovementCommand MovementIntegration::CheckRange()
         float angle = _bot->GetAngle(target);
         float moveDistance = currentDistance - optimalRange;
 
-        float x = _bot->GetPositionX() + moveDistance * std::cos(angle);
-        float y = _bot->GetPositionY() + moveDistance * std::sin(angle);
+        float x = _bot->GetPositionX() + moveDistance * ::std::cos(angle);
+        float y = _bot->GetPositionY() + moveDistance * ::std::sin(angle);
 
         command.destination = Position(x, y, _bot->GetPositionZ());
         command.urgency = MovementUrgency::HIGH;
@@ -420,8 +420,8 @@ MovementCommand MovementIntegration::CheckLineOfSight()
         float angle = _bot->GetAngle(target);
         float distance = 10.0f;
 
-        float x = _bot->GetPositionX() + distance * std::cos(angle);
-        float y = _bot->GetPositionY() + distance * std::sin(angle);
+        float x = _bot->GetPositionX() + distance * ::std::cos(angle);
+        float y = _bot->GetPositionY() + distance * ::std::sin(angle);
 
         command.destination = Position(x, y, _bot->GetPositionZ());
         command.urgency = MovementUrgency::HIGH;
@@ -447,8 +447,8 @@ Position MovementIntegration::CalculateRolePosition()
 
     // Calculate position at optimal range
     float angle = target->GetAngle(_bot);
-    float x = target->GetPositionX() + optimalRange * std::cos(angle);
-    float y = target->GetPositionY() + optimalRange * std::sin(angle);
+    float x = target->GetPositionX() + optimalRange * ::std::cos(angle);
+    float y = target->GetPositionY() + optimalRange * ::std::sin(angle);
 
     return Position(x, y, _bot->GetPositionZ());
 }

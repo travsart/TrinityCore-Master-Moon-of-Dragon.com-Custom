@@ -72,18 +72,18 @@ void OptimizationStrategy::Update(float newFitness)
     float alpha = 0.1f;
     fitness = (iterations > 0) ? (fitness * (1.0f - alpha) + newFitness * alpha) : newFitness;
     iterations++;
-    lastUpdated = std::chrono::steady_clock::now();
+    lastUpdated = ::std::chrono::steady_clock::now();
 }
 
 float OptimizationStrategy::GetConfidence() const
 {
     // Confidence based on number of iterations and recency
-    float iterationConfidence = std::min(1.0f, iterations / 100.0f);
+    float iterationConfidence = ::std::min(1.0f, iterations / 100.0f);
 
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceUpdate = std::chrono::duration_cast<std::chrono::hours>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceUpdate = ::std::chrono::duration_cast<::std::chrono::hours>(
         now - lastUpdated).count();
-    float recencyFactor = std::exp(-timeSinceUpdate / 24.0f);  // Decay over 24 hours
+    float recencyFactor = ::std::exp(-timeSinceUpdate / 24.0f);  // Decay over 24 hours
 
     return iterationConfidence * recencyFactor;
 }
@@ -91,17 +91,17 @@ float OptimizationStrategy::GetConfidence() const
 // StrategyChromosome Implementation
 void StrategyChromosome::Mutate(float mutationRate)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> mutationDist(0.0f, 1.0f);
-    std::normal_distribution<float> valueDist(0.0f, 0.1f);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_real_distribution<float> mutationDist(0.0f, 1.0f);
+    ::std::normal_distribution<float> valueDist(0.0f, 0.1f);
 
     for (float& gene : genes)
     {
         if (mutationDist(gen) < mutationRate)
         {
             gene += valueDist(gen);
-            gene = std::clamp(gene, 0.0f, 1.0f);
+            gene = ::std::clamp(gene, 0.0f, 1.0f);
         }
     }
 }
@@ -109,22 +109,22 @@ void StrategyChromosome::Mutate(float mutationRate)
 StrategyChromosome StrategyChromosome::Crossover(const StrategyChromosome& other) const
 {
     StrategyChromosome offspring;
-    offspring.generation = std::max(generation, other.generation) + 1;
+    offspring.generation = ::std::max(generation, other.generation) + 1;
 
     if (genes.size() != other.genes.size())
         return offspring;
 
     offspring.genes.resize(genes.size());
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> crossoverPoint(1, genes.size() - 1);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_int_distribution<> crossoverPoint(1, genes.size() - 1);
 
     // Two-point crossover
     size_t point1 = crossoverPoint(gen);
     size_t point2 = crossoverPoint(gen);
     if (point1 > point2)
-        std::swap(point1, point2);
+        ::std::swap(point1, point2);
 
     for (size_t i = 0; i < genes.size(); ++i)
     {
@@ -161,7 +161,7 @@ void PerformanceProfile::AddSample(const PerformanceSample& sample)
     // Set baseline after initial samples
     if (_scoreHistory.size() == 10)
     {
-        _baselineScore = std::accumulate(_scoreHistory.begin(), _scoreHistory.end(), 0.0f) /
+        _baselineScore = ::std::accumulate(_scoreHistory.begin(), _scoreHistory.end(), 0.0f) /
                          _scoreHistory.size();
     }
 }
@@ -178,9 +178,9 @@ float PerformanceProfile::GetMetric(PerformanceMetric metric) const
     return 0.0f;
 }
 
-std::vector<float> PerformanceProfile::GetAllMetrics() const
+::std::vector<float> PerformanceProfile::GetAllMetrics() const
 {
-    std::vector<float> metrics;
+    ::std::vector<float> metrics;
 
     for (uint8_t i = 0; i <= static_cast<uint8_t>(PerformanceMetric::OVERALL_EFFECTIVENESS); ++i)
     {
@@ -345,8 +345,8 @@ float PerformanceProfile::GetMetricTrend(PerformanceMetric metric) const
         return 0.0f;
 
     // Calculate trend using linear regression on recent samples
-    std::vector<float> recentValues;
-    size_t sampleCount = std::min<size_t>(20, _samples.size());
+    ::std::vector<float> recentValues;
+    size_t sampleCount = ::std::min<size_t>(20, _samples.size());
 
     for (size_t i = _samples.size() - sampleCount; i < _samples.size(); ++i)
     {
@@ -381,7 +381,7 @@ float PerformanceProfile::GetImprovementRate() const
         return 0.0f;
 
     float recentAverage = 0.0f;
-    size_t recentCount = std::min<size_t>(10, _scoreHistory.size());
+    size_t recentCount = ::std::min<size_t>(10, _scoreHistory.size());
 
     for (size_t i = _scoreHistory.size() - recentCount; i < _scoreHistory.size(); ++i)
         recentAverage += _scoreHistory[i];
@@ -408,9 +408,9 @@ void EvolutionaryOptimizer::InitializePopulation(size_t chromosomeSize)
     _population.clear();
     _population.reserve(_populationSize);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     for (size_t i = 0; i < _populationSize; ++i)
     {
@@ -425,7 +425,7 @@ void EvolutionaryOptimizer::InitializePopulation(size_t chromosomeSize)
     }
 }
 
-void EvolutionaryOptimizer::EvaluateFitness(std::function<float(const StrategyChromosome&)> fitnessFunc)
+void EvolutionaryOptimizer::EvaluateFitness(::std::function<float(const StrategyChromosome&)> fitnessFunc)
 {
     for (auto& chromosome : _population)
     {
@@ -440,7 +440,7 @@ void EvolutionaryOptimizer::Evolve()
     if (_population.empty())
         return;
 
-    std::vector<StrategyChromosome> newPopulation;
+    ::std::vector<StrategyChromosome> newPopulation;
     newPopulation.reserve(_populationSize);
 
     // Elitism: keep best individuals
@@ -451,9 +451,9 @@ void EvolutionaryOptimizer::Evolve()
     }
 
     // Generate offspring
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     while (newPopulation.size() < _populationSize)
     {
@@ -478,7 +478,7 @@ void EvolutionaryOptimizer::Evolve()
         newPopulation.push_back(offspring);
     }
 
-    _population = std::move(newPopulation);
+    _population = ::std::move(newPopulation);
     _generation++;
 }
 
@@ -495,9 +495,9 @@ StrategyChromosome EvolutionaryOptimizer::TournamentSelection(size_t tournamentS
     if (_population.empty())
         return StrategyChromosome();
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(0, _population.size() - 1);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_int_distribution<> dist(0, _population.size() - 1);
 
     size_t bestIdx = dist(gen);
     float bestFitness = _population[bestIdx].fitness;
@@ -517,7 +517,7 @@ StrategyChromosome EvolutionaryOptimizer::TournamentSelection(size_t tournamentS
 
 void EvolutionaryOptimizer::SortPopulation()
 {
-    std::sort(_population.begin(), _population.end(),
+    ::std::sort(_population.begin(), _population.end(),
         [](const StrategyChromosome& a, const StrategyChromosome& b)
         {
             return a.fitness > b.fitness;
@@ -552,7 +552,7 @@ PerformanceOptimizer::PerformanceOptimizer()
     , _optimizationIntervalMs(DEFAULT_OPTIMIZATION_INTERVAL_MS)
     , _learningRate(DEFAULT_LEARNING_RATE)
 {
-    _metrics.startTime = std::chrono::steady_clock::now();
+    _metrics.startTime = ::std::chrono::steady_clock::now();
 }
 
 PerformanceOptimizer::~PerformanceOptimizer()
@@ -588,8 +588,8 @@ void PerformanceOptimizer::Shutdown()
 
     TC_LOG_INFO("playerbot.optimizer", "Shutting down Performance Optimizer");
 
-    std::lock_guard profileLock(_profilesMutex);
-    std::lock_guard paramLock(_parametersMutex);
+    ::std::lock_guard profileLock(_profilesMutex);
+    ::std::lock_guard paramLock(_parametersMutex);
 
     _profiles.clear();
     _optimizers.clear();
@@ -612,12 +612,12 @@ void PerformanceOptimizer::InitializeStrategies()
         {
             OptimizationStrategy strategy;
             strategy.goal = goal;
-            strategy.name = "Strategy_" + std::to_string(i) + "_" + std::to_string(j);
+            strategy.name = "Strategy_" + ::std::to_string(i) + "_" + ::std::to_string(j);
 
             // Initialize with random parameters
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+            ::std::random_device rd;
+            ::std::mt19937 gen(rd());
+            ::std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
             for (int k = 0; k < 10; ++k)
                 strategy.parameters.push_back(dist(gen));
@@ -633,22 +633,22 @@ void PerformanceOptimizer::InitializeStrategies()
 
 void PerformanceOptimizer::CreateProfile(uint32_t botGuid)
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     if (_profiles.find(botGuid) == _profiles.end())
     {
-        auto profile = std::make_shared<PerformanceProfile>(ObjectGuid(HighGuid::Player, botGuid));
+        auto profile = ::std::make_shared<PerformanceProfile>(ObjectGuid(HighGuid::Player, botGuid));
         _profiles[botGuid] = profile;
 
         // Create evolutionary optimizer for this bot
-        _optimizers[botGuid] = std::make_unique<EvolutionaryOptimizer>(EVOLUTION_POPULATION_SIZE);
+        _optimizers[botGuid] = ::std::make_unique<EvolutionaryOptimizer>(EVOLUTION_POPULATION_SIZE);
         _optimizers[botGuid]->InitializePopulation(10);  // 10 parameters
     }
 }
 
-std::shared_ptr<PerformanceProfile> PerformanceOptimizer::GetProfile(uint32_t botGuid) const
+::std::shared_ptr<PerformanceProfile> PerformanceOptimizer::GetProfile(uint32_t botGuid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     auto it = _profiles.find(botGuid);
     if (it != _profiles.end())
@@ -670,10 +670,10 @@ void PerformanceOptimizer::RecordPerformance(uint32_t botGuid, const Performance
         // Auto-optimize if enabled
         if (_autoOptimize)
         {
-            static std::unordered_map<uint32_t, std::chrono::steady_clock::time_point> lastOptimization;
-            auto now = std::chrono::steady_clock::now();
+            static ::std::unordered_map<uint32_t, ::std::chrono::steady_clock::time_point> lastOptimization;
+            auto now = ::std::chrono::steady_clock::now();
 
-            if (lastOptimization[botGuid] + std::chrono::milliseconds(_optimizationIntervalMs) < now)
+            if (lastOptimization[botGuid] + ::std::chrono::milliseconds(_optimizationIntervalMs) < now)
             {
                 OptimizeBotPerformance(botGuid);
                 lastOptimization[botGuid] = now;
@@ -761,7 +761,7 @@ float PerformanceOptimizer::EvaluateStrategyFitness(uint32_t botGuid, const Stra
     float diversity = 0.0f;
     for (size_t i = 0; i < chromosome.genes.size(); ++i)
     {
-        diversity += std::abs(chromosome.genes[i] - 0.5f);
+        diversity += ::std::abs(chromosome.genes[i] - 0.5f);
     }
     diversity /= chromosome.genes.size();
 
@@ -770,10 +770,10 @@ float PerformanceOptimizer::EvaluateStrategyFitness(uint32_t botGuid, const Stra
     return fitness;
 }
 
-void PerformanceOptimizer::RegisterTuningParameter(const std::string& name, float initial,
+void PerformanceOptimizer::RegisterTuningParameter(const ::std::string& name, float initial,
                                                    float min, float max, float learningRate)
 {
-    std::lock_guard lock(_parametersMutex);
+    ::std::lock_guard lock(_parametersMutex);
 
     TuningParameter param;
     param.name = name;
@@ -786,9 +786,9 @@ void PerformanceOptimizer::RegisterTuningParameter(const std::string& name, floa
     _tuningParameters[name] = param;
 }
 
-float PerformanceOptimizer::GetTuningParameter(const std::string& name) const
+float PerformanceOptimizer::GetTuningParameter(const ::std::string& name) const
 {
-    std::lock_guard lock(_parametersMutex);
+    ::std::lock_guard lock(_parametersMutex);
 
     auto it = _tuningParameters.find(name);
     if (it != _tuningParameters.end())
@@ -797,7 +797,7 @@ float PerformanceOptimizer::GetTuningParameter(const std::string& name) const
     return 0.0f;
 }
 
-std::shared_ptr<PerformanceProfile> PerformanceOptimizer::GetOrCreateProfile(uint32_t botGuid)
+::std::shared_ptr<PerformanceProfile> PerformanceOptimizer::GetOrCreateProfile(uint32_t botGuid)
 {
     auto profile = GetProfile(botGuid);
     if (!profile)
@@ -814,7 +814,7 @@ void PerformanceOptimizer::TuningParameter::Update(float gradient)
     // Gradient descent with momentum
     momentum = momentum * 0.9f + gradient * 0.1f;
     value -= learningRate * momentum;
-    value = std::clamp(value, minValue, maxValue);
+    value = ::std::clamp(value, minValue, maxValue);
 }
 
 float PerformanceOptimizer::TuningParameter::Normalize() const
@@ -825,19 +825,19 @@ float PerformanceOptimizer::TuningParameter::Normalize() const
 }
 
 // ScopedPerformanceMeasurement Implementation
-ScopedPerformanceMeasurement::ScopedPerformanceMeasurement(uint32_t botGuid, const std::string& operation)
+ScopedPerformanceMeasurement::ScopedPerformanceMeasurement(uint32_t botGuid, const ::std::string& operation)
     : _botGuid(botGuid)
     , _operation(operation)
     , _success(false)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
     _sample.timestamp = _startTime.time_since_epoch().count();
 }
 
 ScopedPerformanceMeasurement::~ScopedPerformanceMeasurement()
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - _startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - _startTime);
 
     if (_success)
         _sample.successfulActions++;

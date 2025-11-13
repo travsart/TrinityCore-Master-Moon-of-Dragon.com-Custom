@@ -66,12 +66,12 @@ namespace Playerbot
 
         // Quest discovery
         void ScanForQuests();
-        std::vector<uint32> GetAvailableQuests() const;
-        std::vector<uint32> GetActiveQuests() const;
-        std::vector<uint32> GetCompletableQuests() const;
+        ::std::vector<uint32> GetAvailableQuests() const;
+        ::std::vector<uint32> GetActiveQuests() const;
+        ::std::vector<uint32> GetCompletableQuests() const;
 
         // Quest selection and evaluation
-        uint32 SelectBestQuest(std::vector<uint32> const& availableQuests);
+        uint32 SelectBestQuest(::std::vector<uint32> const& availableQuests);
         float EvaluateQuest(Quest const* quest) const;
         uint32 SelectBestReward(Quest const* quest) const;
 
@@ -92,9 +92,9 @@ namespace Playerbot
         bool AcceptSharedQuest(uint32 questId);
 
         // Fast atomic state queries (<0.001ms)
-        bool IsQuestingActive() const { return _hasActiveQuests.load(std::memory_order_acquire); }
+        bool IsQuestingActive() const { return _hasActiveQuests.load(::std::memory_order_acquire); }
         bool HasActiveQuest(uint32 questId) const;
-        uint32 GetActiveQuestCount() const { return _activeQuestCount.load(std::memory_order_acquire); }
+        uint32 GetActiveQuestCount() const { return _activeQuestCount.load(::std::memory_order_acquire); }
 
         // Performance monitoring
         size_t GetMemoryUsage() const;
@@ -168,7 +168,7 @@ namespace Playerbot
             uint32 questId = 0;
             uint32 startTime = 0;
             uint32 lastUpdateTime = 0;
-            std::array<uint32, 32> objectiveProgress;  // Max objectives per quest (reasonable limit)
+            ::std::array<uint32, 32> objectiveProgress;  // Max objectives per quest (reasonable limit)
             float completionPercent = 0.0f;
             bool isComplete = false;
             uint32 attemptCount = 0;
@@ -237,30 +237,30 @@ namespace Playerbot
 
     private:
         // Atomic state flags for fast queries
-        std::atomic<bool> _hasActiveQuests{false};
-        std::atomic<uint32> _activeQuestCount{0};
+        ::std::atomic<bool> _hasActiveQuests{false};
+        ::std::atomic<uint32> _activeQuestCount{0};
 
         // State management
         QuestPhase m_currentPhase;
         uint32 m_phaseTimer;
 
         // Quest tracking
-        std::unordered_map<uint32, QuestProgress> m_questProgress;
-        std::unordered_set<uint32> m_ignoredQuests;
-        std::deque<uint32> m_recentlyCompleted;
+        ::std::unordered_map<uint32, QuestProgress> m_questProgress;
+        ::std::unordered_set<uint32> m_ignoredQuests;
+        ::std::deque<uint32> m_recentlyCompleted;
 
         // Quest giver cache
-        std::vector<QuestGiverInfo> m_questGivers;
+        ::std::vector<QuestGiverInfo> m_questGivers;
         uint32 m_lastQuestGiverScan;
         uint32 m_questGiverScanInterval;
 
         // Quest evaluation cache
-        std::unordered_map<uint32, QuestPriority> m_questPriorities;
+        ::std::unordered_map<uint32, QuestPriority> m_questPriorities;
         uint32 m_lastPriorityCalculation;
 
         // Available quests cache
-        std::vector<uint32> m_availableQuests;
-        std::vector<uint32> m_completableQuests;
+        ::std::vector<uint32> m_availableQuests;
+        ::std::vector<uint32> m_completableQuests;
         uint32 m_lastAvailableScan;
 
         // Configuration
@@ -279,10 +279,10 @@ namespace Playerbot
         Statistics m_stats;
 
         // Quest strategy handler
-        std::unique_ptr<QuestSelectionStrategy> m_strategy;
+        ::std::unique_ptr<QuestSelectionStrategy> m_strategy;
 
         // Quest cache for performance
-        std::unique_ptr<QuestCache> m_cache;
+        ::std::unique_ptr<QuestCache> m_cache;
     };
 
     /**
@@ -303,7 +303,7 @@ namespace Playerbot
         explicit QuestSelectionStrategy(Strategy strategy = Strategy::OPTIMAL);
 
         float EvaluateQuest(Quest const* quest, Player* bot) const;
-        std::vector<uint32> SelectQuestPath(std::vector<uint32> const& available, Player* bot) const;
+        ::std::vector<uint32> SelectQuestPath(::std::vector<uint32> const& available, Player* bot) const;
         Strategy GetStrategy() const { return m_strategy; }
         void SetStrategy(Strategy strategy) { m_strategy = strategy; }
 
@@ -326,8 +326,8 @@ namespace Playerbot
         bool GetQuestProgress(uint32 questId, float& progress) const;
         bool IsQuestCached(uint32 questId) const;
 
-        std::vector<uint32> const& GetActiveQuests() const { return m_activeQuests; }
-        std::vector<uint32> const& GetCompletableQuests() const { return m_completableQuests; }
+        ::std::vector<uint32> const& GetActiveQuests() const { return m_activeQuests; }
+        ::std::vector<uint32> const& GetCompletableQuests() const { return m_completableQuests; }
         uint32 GetLastUpdateTime() const { return m_lastUpdateTime; }
 
     private:
@@ -338,9 +338,9 @@ namespace Playerbot
             uint32 updateTime;
         };
 
-        std::unordered_map<uint32, CachedQuest> m_questCache;
-        std::vector<uint32> m_activeQuests;
-        std::vector<uint32> m_completableQuests;
+        ::std::unordered_map<uint32, CachedQuest> m_questCache;
+        ::std::vector<uint32> m_activeQuests;
+        ::std::vector<uint32> m_completableQuests;
         uint32 m_lastUpdateTime;
         bool m_isDirty;
     };

@@ -66,16 +66,16 @@ namespace Playerbot
         struct ChatMessage
         {
             ChatType type;
-            std::string content;
+            ::std::string content;
             ObjectGuid target;  // For whispers
             uint32 timestamp;
             uint32 channelId;   // For channel chat
         };
 
-        bool SendChatMessage(ChatType type, std::string const& message, ObjectGuid target = ObjectGuid::Empty);
-        bool RespondToChat(Player* sender, std::string const& message, ChatType type);
-        void ProcessIncomingChat(Player* sender, std::string const& message, ChatType type);
-        std::string GenerateChatResponse(std::string const& message, ChatType type);
+        bool SendChatMessage(ChatType type, ::std::string const& message, ObjectGuid target = ObjectGuid::Empty);
+        bool RespondToChat(Player* sender, ::std::string const& message, ChatType type);
+        void ProcessIncomingChat(Player* sender, ::std::string const& message, ChatType type);
+        ::std::string GenerateChatResponse(::std::string const& message, ChatType type);
 
         // Chat behavior
         void SetChatEnabled(bool enabled) { m_chatEnabled = enabled; }
@@ -117,7 +117,7 @@ namespace Playerbot
 
         bool PerformEmote(EmoteType emote);
         bool RespondWithEmote(Player* trigger, EmoteType triggerEmote);
-        EmoteType SelectContextualEmote(std::string const& context);
+        EmoteType SelectContextualEmote(::std::string const& context);
         void SetEmotesEnabled(bool enabled) { m_emotesEnabled = enabled; }
         bool AreEmotesEnabled() const { return m_emotesEnabled; }
 
@@ -125,28 +125,28 @@ namespace Playerbot
         struct FriendInfo
         {
             ObjectGuid guid;
-            std::string name;
+            ::std::string name;
             uint8 level;
             uint8 playerClass;
             uint32 zoneId;
             bool isOnline;
             uint32 lastSeenTime;
-            std::string note;
+            ::std::string note;
         };
 
-        bool AddFriend(ObjectGuid playerGuid, std::string const& note = "");
+        bool AddFriend(ObjectGuid playerGuid, ::std::string const& note = "");
         bool RemoveFriend(ObjectGuid playerGuid);
         bool IsFriend(ObjectGuid playerGuid) const;
-        std::vector<FriendInfo> GetFriends() const;
+        ::std::vector<FriendInfo> GetFriends() const;
         FriendInfo GetFriendInfo(ObjectGuid playerGuid) const;
-        void UpdateFriendNote(ObjectGuid playerGuid, std::string const& note);
+        void UpdateFriendNote(ObjectGuid playerGuid, ::std::string const& note);
         void SyncFriendList();
 
         // Ignore List
         bool IgnorePlayer(ObjectGuid playerGuid);
         bool UnignorePlayer(ObjectGuid playerGuid);
         bool IsIgnored(ObjectGuid playerGuid) const;
-        std::vector<ObjectGuid> GetIgnoreList() const;
+        ::std::vector<ObjectGuid> GetIgnoreList() const;
 
         // Guild System
         bool JoinGuild(Guild* guild);
@@ -156,9 +156,9 @@ namespace Playerbot
         Guild* GetGuild() const;
 
         // Guild chat participation
-        bool SendGuildChat(std::string const& message);
-        bool SendOfficerChat(std::string const& message);
-        bool RespondToGuildChat(Player* sender, std::string const& message);
+        bool SendGuildChat(::std::string const& message);
+        bool SendOfficerChat(::std::string const& message);
+        bool RespondToGuildChat(Player* sender, ::std::string const& message);
         void SetGuildChatEnabled(bool enabled) { m_guildChatEnabled = enabled; }
         bool IsGuildChatEnabled() const { return m_guildChatEnabled; }
 
@@ -182,21 +182,21 @@ namespace Playerbot
         void UpdateReputation(ObjectGuid playerGuid, int32 change, bool isPositive);
         int32 GetReputation(ObjectGuid playerGuid) const;
         bool HasPositiveReputation(ObjectGuid playerGuid) const;
-        std::vector<SocialReputation> GetTopFriendlyPlayers(uint32 count = 10) const;
+        ::std::vector<SocialReputation> GetTopFriendlyPlayers(uint32 count = 10) const;
 
         // Contextual Responses
         struct ResponseTemplate
         {
-            std::string trigger;        // Keyword/phrase that triggers response
-            std::vector<std::string> responses;  // Possible responses
+            ::std::string trigger;        // Keyword/phrase that triggers response
+            ::std::vector<::std::string> responses;  // Possible responses
             ChatType preferredType;     // Preferred chat type
             uint32 cooldown;            // Cooldown in ms
         };
 
         void LoadResponseTemplates();
         void AddResponseTemplate(ResponseTemplate const& response);
-        bool HasResponseTemplate(std::string const& trigger) const;
-        std::string GetRandomResponse(std::string const& trigger);
+        bool HasResponseTemplate(::std::string const& trigger) const;
+        ::std::string GetRandomResponse(::std::string const& trigger);
 
         // Greetings and Farewells
         void GreetPlayer(Player* player);
@@ -205,10 +205,10 @@ namespace Playerbot
         void HandlePlayerLogout(Player* player);
 
         // Channel Management
-        bool JoinChannel(std::string const& channelName, std::string const& password = "");
-        bool LeaveChannel(std::string const& channelName);
-        bool IsInChannel(std::string const& channelName) const;
-        std::vector<std::string> GetChannels() const;
+        bool JoinChannel(::std::string const& channelName, ::std::string const& password = "");
+        bool LeaveChannel(::std::string const& channelName);
+        bool IsInChannel(::std::string const& channelName) const;
+        ::std::vector<::std::string> GetChannels() const;
 
         // Configuration
         bool IsEnabled() const { return m_enabled; }
@@ -242,9 +242,9 @@ namespace Playerbot
     private:
         // Chat processing
         void ProcessChatQueue(uint32 diff);
-        bool ShouldRespondToChat(Player* sender, std::string const& message, ChatType type);
-        std::string SanitizeMessage(std::string const& message) const;
-        bool IsSpam(std::string const& message) const;
+        bool ShouldRespondToChat(Player* sender, ::std::string const& message, ChatType type);
+        ::std::string SanitizeMessage(::std::string const& message) const;
+        bool IsSpam(::std::string const& message) const;
 
         // Chat delay management
         uint32 m_nextChatTime;
@@ -260,8 +260,8 @@ namespace Playerbot
         EmoteType SelectRandomEmote() const;
 
         // Friend list cache
-        std::unordered_map<ObjectGuid, FriendInfo> m_friends;
-        std::unordered_set<ObjectGuid> m_ignoreList;
+        ::std::unordered_map<ObjectGuid, FriendInfo> m_friends;
+        ::std::unordered_set<ObjectGuid> m_ignoreList;
         void LoadFriendList();
         void SaveFriendList();
         void UpdateFriendStatus();
@@ -272,30 +272,30 @@ namespace Playerbot
         void UpdateGuildStatus();
 
         // Reputation tracking
-        std::unordered_map<ObjectGuid, SocialReputation> m_reputations;
+        ::std::unordered_map<ObjectGuid, SocialReputation> m_reputations;
         void LoadReputations();
         void SaveReputations();
         void DecayReputations(uint32 diff);
 
         // Response templates
-        std::vector<ResponseTemplate> m_responseTemplates;
-        std::unordered_map<std::string, uint32> m_responseCooldowns;
-        bool IsOnCooldown(std::string const& trigger) const;
+        ::std::vector<ResponseTemplate> m_responseTemplates;
+        ::std::unordered_map<::std::string, uint32> m_responseCooldowns;
+        bool IsOnCooldown(::std::string const& trigger) const;
         void UpdateCooldowns(uint32 diff);
 
         // Recent chat tracking (for spam prevention)
         struct RecentChat
         {
-            std::string message;
+            ::std::string message;
             uint32 timestamp;
             uint32 count;
         };
-        std::vector<RecentChat> m_recentChats;
-        void TrackChat(std::string const& message);
+        ::std::vector<RecentChat> m_recentChats;
+        void TrackChat(::std::string const& message);
         void CleanupOldChats(uint32 diff);
 
         // Channel membership
-        std::unordered_set<std::string> m_channels;
+        ::std::unordered_set<::std::string> m_channels;
 
         // Statistics tracking
         void RecordMessageSent(ChatType type);
@@ -338,9 +338,9 @@ namespace Playerbot
         Statistics m_stats;
 
         // Performance metrics
-        std::chrono::high_resolution_clock::time_point m_performanceStart;
-        std::chrono::microseconds m_lastUpdateDuration;
-        std::chrono::microseconds m_totalUpdateTime;
+        ::std::chrono::high_resolution_clock::time_point m_performanceStart;
+        ::std::chrono::microseconds m_lastUpdateDuration;
+        ::std::chrono::microseconds m_totalUpdateTime;
         uint32 m_updateCount;
         float m_cpuUsage;
     };

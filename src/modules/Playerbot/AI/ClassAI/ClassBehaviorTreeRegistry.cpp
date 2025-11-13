@@ -25,8 +25,8 @@ namespace Playerbot
 {
 
 // Static member initialization
-std::unordered_map<ClassSpec, ClassTreeBuilder, ClassSpecHash> ClassBehaviorTreeRegistry::_treeBuilders;
-std::unordered_map<ClassSpec, SpecRole, ClassSpecHash> ClassBehaviorTreeRegistry::_specRoles;
+::std::unordered_map<ClassSpec, ClassTreeBuilder, ClassSpecHash> ClassBehaviorTreeRegistry::_treeBuilders;
+::std::unordered_map<ClassSpec, SpecRole, ClassSpecHash> ClassBehaviorTreeRegistry::_specRoles;
 
 // ============================================================================
 // ClassBehaviorTreeRegistry
@@ -41,7 +41,7 @@ void ClassBehaviorTreeRegistry::RegisterTree(WowClass classId, uint8 specId, Cla
         static_cast<uint8>(classId), specId);
 }
 
-std::shared_ptr<BTNode> ClassBehaviorTreeRegistry::GetTree(WowClass classId, uint8 specId)
+::std::shared_ptr<BTNode> ClassBehaviorTreeRegistry::GetTree(WowClass classId, uint8 specId)
 {
     ClassSpec spec = {classId, specId};
     auto it = _treeBuilders.find(spec);
@@ -101,15 +101,15 @@ void ClassBehaviorTreeRegistry::Clear()
 void ClassBehaviorTreeRegistry::InitializeWarrior()
 {
     // Arms (Spec 0) - Melee DPS
-    RegisterTree(WowClass::WARRIOR, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarriorArmsRoot");
+    RegisterTree(WowClass::WARRIOR, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarriorArmsRoot");
 
         // Combat rotation
-        auto combatSeq = std::make_shared<BTSequence>("ArmsCombat");
-        combatSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        combatSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        combatSeq->AddChild(std::make_shared<BTWarriorExecute>()); // Execute at <20% health
-        combatSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto combatSeq = ::std::make_shared<BTSequence>("ArmsCombat");
+        combatSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        combatSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        combatSeq->AddChild(::std::make_shared<BTWarriorExecute>()); // Execute at <20% health
+        combatSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(combatSeq);
         return root;
@@ -117,14 +117,14 @@ void ClassBehaviorTreeRegistry::InitializeWarrior()
     _specRoles[{WowClass::WARRIOR, 0}] = SpecRole::MELEE_DPS;
 
     // Fury (Spec 1) - Melee DPS
-    RegisterTree(WowClass::WARRIOR, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarriorFuryRoot");
+    RegisterTree(WowClass::WARRIOR, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarriorFuryRoot");
 
-        auto combatSeq = std::make_shared<BTSequence>("FuryCombat");
-        combatSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        combatSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        combatSeq->AddChild(std::make_shared<BTWarriorRecklessness>()); // Burst CD
-        combatSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto combatSeq = ::std::make_shared<BTSequence>("FuryCombat");
+        combatSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        combatSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        combatSeq->AddChild(::std::make_shared<BTWarriorRecklessness>()); // Burst CD
+        combatSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(combatSeq);
         return root;
@@ -132,14 +132,14 @@ void ClassBehaviorTreeRegistry::InitializeWarrior()
     _specRoles[{WowClass::WARRIOR, 1}] = SpecRole::MELEE_DPS;
 
     // Protection (Spec 2) - Tank
-    RegisterTree(WowClass::WARRIOR, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarriorProtectionRoot");
+    RegisterTree(WowClass::WARRIOR, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarriorProtectionRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("ProtectionTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTWarriorShieldBlock>()); // Defensive
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("ProtectionTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTWarriorShieldBlock>()); // Defensive
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -154,12 +154,12 @@ void ClassBehaviorTreeRegistry::InitializeWarrior()
 void ClassBehaviorTreeRegistry::InitializePaladin()
 {
     // Holy (Spec 0) - Healer
-    RegisterTree(WowClass::PALADIN, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PaladinHolyRoot");
+    RegisterTree(WowClass::PALADIN, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PaladinHolyRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("HolyHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTCastHeal>()); // Flash of Light
+        auto healSeq = ::std::make_shared<BTSequence>("HolyHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>()); // Flash of Light
 
         root->AddChild(healSeq);
         return root;
@@ -167,13 +167,13 @@ void ClassBehaviorTreeRegistry::InitializePaladin()
     _specRoles[{WowClass::PALADIN, 0}] = SpecRole::HEALER;
 
     // Protection (Spec 1) - Tank
-    RegisterTree(WowClass::PALADIN, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PaladinProtectionRoot");
+    RegisterTree(WowClass::PALADIN, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PaladinProtectionRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("ProtectionTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("ProtectionTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -181,13 +181,13 @@ void ClassBehaviorTreeRegistry::InitializePaladin()
     _specRoles[{WowClass::PALADIN, 1}] = SpecRole::TANK;
 
     // Retribution (Spec 2) - Melee DPS
-    RegisterTree(WowClass::PALADIN, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PaladinRetributionRoot");
+    RegisterTree(WowClass::PALADIN, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PaladinRetributionRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("RetributionDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("RetributionDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -202,12 +202,12 @@ void ClassBehaviorTreeRegistry::InitializePaladin()
 void ClassBehaviorTreeRegistry::InitializeHunter()
 {
     // Beast Mastery (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::HUNTER, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("HunterBeastMasteryRoot");
+    RegisterTree(WowClass::HUNTER, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("HunterBeastMasteryRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("BeastMasteryDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f)); // Ranged range
+        auto dpsSeq = ::std::make_shared<BTSequence>("BeastMasteryDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f)); // Ranged range
 
         root->AddChild(dpsSeq);
         return root;
@@ -215,12 +215,12 @@ void ClassBehaviorTreeRegistry::InitializeHunter()
     _specRoles[{WowClass::HUNTER, 0}] = SpecRole::RANGED_DPS;
 
     // Marksmanship (Spec 1) - Ranged DPS
-    RegisterTree(WowClass::HUNTER, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("HunterMarksmanshipRoot");
+    RegisterTree(WowClass::HUNTER, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("HunterMarksmanshipRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("MarksmanshipDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("MarksmanshipDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -228,13 +228,13 @@ void ClassBehaviorTreeRegistry::InitializeHunter()
     _specRoles[{WowClass::HUNTER, 1}] = SpecRole::RANGED_DPS;
 
     // Survival (Spec 2) - Melee DPS
-    RegisterTree(WowClass::HUNTER, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("HunterSurvivalRoot");
+    RegisterTree(WowClass::HUNTER, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("HunterSurvivalRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("SurvivalDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("SurvivalDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -249,13 +249,13 @@ void ClassBehaviorTreeRegistry::InitializeHunter()
 void ClassBehaviorTreeRegistry::InitializeRogue()
 {
     // Assassination (Spec 0) - Melee DPS
-    RegisterTree(WowClass::ROGUE, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("RogueAssassinationRoot");
+    RegisterTree(WowClass::ROGUE, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("RogueAssassinationRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("AssassinationDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTPositionBehindTarget>()); // Backstab positioning
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("AssassinationDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTPositionBehindTarget>()); // Backstab positioning
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -263,13 +263,13 @@ void ClassBehaviorTreeRegistry::InitializeRogue()
     _specRoles[{WowClass::ROGUE, 0}] = SpecRole::MELEE_DPS;
 
     // Outlaw (Spec 1) - Melee DPS
-    RegisterTree(WowClass::ROGUE, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("RogueOutlawRoot");
+    RegisterTree(WowClass::ROGUE, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("RogueOutlawRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("OutlawDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("OutlawDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -277,13 +277,13 @@ void ClassBehaviorTreeRegistry::InitializeRogue()
     _specRoles[{WowClass::ROGUE, 1}] = SpecRole::MELEE_DPS;
 
     // Subtlety (Spec 2) - Melee DPS
-    RegisterTree(WowClass::ROGUE, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("RogueSubtletyRoot");
+    RegisterTree(WowClass::ROGUE, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("RogueSubtletyRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("SubtletyDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTPositionBehindTarget>());
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("SubtletyDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTPositionBehindTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -298,13 +298,13 @@ void ClassBehaviorTreeRegistry::InitializeRogue()
 void ClassBehaviorTreeRegistry::InitializePriest()
 {
     // Discipline (Spec 0) - Healer
-    RegisterTree(WowClass::PRIEST, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PriestDisciplineRoot");
+    RegisterTree(WowClass::PRIEST, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PriestDisciplineRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("DisciplineHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTPriestPowerWordShield>()); // Shield first
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        auto healSeq = ::std::make_shared<BTSequence>("DisciplineHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTPriestPowerWordShield>()); // Shield first
+        healSeq->AddChild(::std::make_shared<BTCastHeal>());
 
         root->AddChild(healSeq);
         return root;
@@ -312,13 +312,13 @@ void ClassBehaviorTreeRegistry::InitializePriest()
     _specRoles[{WowClass::PRIEST, 0}] = SpecRole::HEALER;
 
     // Holy (Spec 1) - Healer
-    RegisterTree(WowClass::PRIEST, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PriestHolyRoot");
+    RegisterTree(WowClass::PRIEST, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PriestHolyRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("HolyHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTPriestPrayerOfMending>()); // HoT
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        auto healSeq = ::std::make_shared<BTSequence>("HolyHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTPriestPrayerOfMending>()); // HoT
+        healSeq->AddChild(::std::make_shared<BTCastHeal>());
 
         root->AddChild(healSeq);
         return root;
@@ -326,13 +326,13 @@ void ClassBehaviorTreeRegistry::InitializePriest()
     _specRoles[{WowClass::PRIEST, 1}] = SpecRole::HEALER;
 
     // Shadow (Spec 2) - Ranged DPS
-    RegisterTree(WowClass::PRIEST, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("PriestShadowRoot");
+    RegisterTree(WowClass::PRIEST, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("PriestShadowRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("ShadowDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
-        dpsSeq->AddChild(std::make_shared<BTPriestShadowWordPain>()); // DoT
+        auto dpsSeq = ::std::make_shared<BTSequence>("ShadowDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        dpsSeq->AddChild(::std::make_shared<BTPriestShadowWordPain>()); // DoT
 
         root->AddChild(dpsSeq);
         return root;
@@ -347,13 +347,13 @@ void ClassBehaviorTreeRegistry::InitializePriest()
 void ClassBehaviorTreeRegistry::InitializeDeathKnight()
 {
     // Blood (Spec 0) - Tank
-    RegisterTree(WowClass::DEATH_KNIGHT, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DeathKnightBloodRoot");
+    RegisterTree(WowClass::DEATH_KNIGHT, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DeathKnightBloodRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("BloodTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("BloodTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -361,13 +361,13 @@ void ClassBehaviorTreeRegistry::InitializeDeathKnight()
     _specRoles[{WowClass::DEATH_KNIGHT, 0}] = SpecRole::TANK;
 
     // Frost (Spec 1) - Melee DPS
-    RegisterTree(WowClass::DEATH_KNIGHT, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DeathKnightFrostRoot");
+    RegisterTree(WowClass::DEATH_KNIGHT, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DeathKnightFrostRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("FrostDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("FrostDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -375,13 +375,13 @@ void ClassBehaviorTreeRegistry::InitializeDeathKnight()
     _specRoles[{WowClass::DEATH_KNIGHT, 1}] = SpecRole::MELEE_DPS;
 
     // Unholy (Spec 2) - Melee DPS
-    RegisterTree(WowClass::DEATH_KNIGHT, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DeathKnightUnholyRoot");
+    RegisterTree(WowClass::DEATH_KNIGHT, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DeathKnightUnholyRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("UnholyDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("UnholyDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -396,12 +396,12 @@ void ClassBehaviorTreeRegistry::InitializeDeathKnight()
 void ClassBehaviorTreeRegistry::InitializeShaman()
 {
     // Elemental (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::SHAMAN, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("ShamanElementalRoot");
+    RegisterTree(WowClass::SHAMAN, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("ShamanElementalRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("ElementalDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("ElementalDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -409,13 +409,13 @@ void ClassBehaviorTreeRegistry::InitializeShaman()
     _specRoles[{WowClass::SHAMAN, 0}] = SpecRole::RANGED_DPS;
 
     // Enhancement (Spec 1) - Melee DPS
-    RegisterTree(WowClass::SHAMAN, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("ShamanEnhancementRoot");
+    RegisterTree(WowClass::SHAMAN, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("ShamanEnhancementRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("EnhancementDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("EnhancementDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -423,12 +423,12 @@ void ClassBehaviorTreeRegistry::InitializeShaman()
     _specRoles[{WowClass::SHAMAN, 1}] = SpecRole::MELEE_DPS;
 
     // Restoration (Spec 2) - Healer
-    RegisterTree(WowClass::SHAMAN, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("ShamanRestorationRoot");
+    RegisterTree(WowClass::SHAMAN, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("ShamanRestorationRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("RestorationHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        auto healSeq = ::std::make_shared<BTSequence>("RestorationHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>());
 
         root->AddChild(healSeq);
         return root;
@@ -443,13 +443,13 @@ void ClassBehaviorTreeRegistry::InitializeShaman()
 void ClassBehaviorTreeRegistry::InitializeMage()
 {
     // Arcane (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::MAGE, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MageArcaneRoot");
+    RegisterTree(WowClass::MAGE, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MageArcaneRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("ArcaneDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
-        dpsSeq->AddChild(std::make_shared<BTMageArcaneBlast>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("ArcaneDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMageArcaneBlast>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -457,12 +457,12 @@ void ClassBehaviorTreeRegistry::InitializeMage()
     _specRoles[{WowClass::MAGE, 0}] = SpecRole::RANGED_DPS;
 
     // Fire (Spec 1) - Ranged DPS
-    RegisterTree(WowClass::MAGE, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MageFireRoot");
+    RegisterTree(WowClass::MAGE, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MageFireRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("FireDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("FireDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -470,12 +470,12 @@ void ClassBehaviorTreeRegistry::InitializeMage()
     _specRoles[{WowClass::MAGE, 1}] = SpecRole::RANGED_DPS;
 
     // Frost (Spec 2) - Ranged DPS
-    RegisterTree(WowClass::MAGE, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MageFrostRoot");
+    RegisterTree(WowClass::MAGE, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MageFrostRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("FrostDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("FrostDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -490,12 +490,12 @@ void ClassBehaviorTreeRegistry::InitializeMage()
 void ClassBehaviorTreeRegistry::InitializeWarlock()
 {
     // Affliction (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::WARLOCK, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarlockAfflictionRoot");
+    RegisterTree(WowClass::WARLOCK, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarlockAfflictionRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("AfflictionDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("AfflictionDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -503,12 +503,12 @@ void ClassBehaviorTreeRegistry::InitializeWarlock()
     _specRoles[{WowClass::WARLOCK, 0}] = SpecRole::RANGED_DPS;
 
     // Demonology (Spec 1) - Ranged DPS
-    RegisterTree(WowClass::WARLOCK, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarlockDemonologyRoot");
+    RegisterTree(WowClass::WARLOCK, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarlockDemonologyRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("DemonologyDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("DemonologyDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -516,12 +516,12 @@ void ClassBehaviorTreeRegistry::InitializeWarlock()
     _specRoles[{WowClass::WARLOCK, 1}] = SpecRole::RANGED_DPS;
 
     // Destruction (Spec 2) - Ranged DPS
-    RegisterTree(WowClass::WARLOCK, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("WarlockDestructionRoot");
+    RegisterTree(WowClass::WARLOCK, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("WarlockDestructionRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("DestructionDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("DestructionDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -536,13 +536,13 @@ void ClassBehaviorTreeRegistry::InitializeWarlock()
 void ClassBehaviorTreeRegistry::InitializeMonk()
 {
     // Brewmaster (Spec 0) - Tank
-    RegisterTree(WowClass::MONK, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MonkBrewmasterRoot");
+    RegisterTree(WowClass::MONK, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MonkBrewmasterRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("BrewmasterTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("BrewmasterTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -550,12 +550,12 @@ void ClassBehaviorTreeRegistry::InitializeMonk()
     _specRoles[{WowClass::MONK, 0}] = SpecRole::TANK;
 
     // Mistweaver (Spec 1) - Healer
-    RegisterTree(WowClass::MONK, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MonkMistweaverRoot");
+    RegisterTree(WowClass::MONK, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MonkMistweaverRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("MistweaverHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        auto healSeq = ::std::make_shared<BTSequence>("MistweaverHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>());
 
         root->AddChild(healSeq);
         return root;
@@ -563,13 +563,13 @@ void ClassBehaviorTreeRegistry::InitializeMonk()
     _specRoles[{WowClass::MONK, 1}] = SpecRole::HEALER;
 
     // Windwalker (Spec 2) - Melee DPS
-    RegisterTree(WowClass::MONK, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("MonkWindwalkerRoot");
+    RegisterTree(WowClass::MONK, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("MonkWindwalkerRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("WindwalkerDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("WindwalkerDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -584,12 +584,12 @@ void ClassBehaviorTreeRegistry::InitializeMonk()
 void ClassBehaviorTreeRegistry::InitializeDruid()
 {
     // Balance (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::DRUID, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DruidBalanceRoot");
+    RegisterTree(WowClass::DRUID, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DruidBalanceRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("BalanceDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+        auto dpsSeq = ::std::make_shared<BTSequence>("BalanceDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
         root->AddChild(dpsSeq);
         return root;
@@ -597,13 +597,13 @@ void ClassBehaviorTreeRegistry::InitializeDruid()
     _specRoles[{WowClass::DRUID, 0}] = SpecRole::RANGED_DPS;
 
     // Feral (Spec 1) - Melee DPS
-    RegisterTree(WowClass::DRUID, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DruidFeralRoot");
+    RegisterTree(WowClass::DRUID, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DruidFeralRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("FeralDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTPositionBehindTarget>());
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("FeralDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTPositionBehindTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -611,13 +611,13 @@ void ClassBehaviorTreeRegistry::InitializeDruid()
     _specRoles[{WowClass::DRUID, 1}] = SpecRole::MELEE_DPS;
 
     // Guardian (Spec 2) - Tank
-    RegisterTree(WowClass::DRUID, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DruidGuardianRoot");
+    RegisterTree(WowClass::DRUID, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DruidGuardianRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("GuardianTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("GuardianTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -635,13 +635,13 @@ void ClassBehaviorTreeRegistry::InitializeDruid()
 void ClassBehaviorTreeRegistry::InitializeDemonHunter()
 {
     // Havoc (Spec 0) - Melee DPS
-    RegisterTree(WowClass::DEMON_HUNTER, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DemonHunterHavocRoot");
+    RegisterTree(WowClass::DEMON_HUNTER, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DemonHunterHavocRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("HavocDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        dpsSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto dpsSeq = ::std::make_shared<BTSequence>("HavocDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        dpsSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(dpsSeq);
         return root;
@@ -649,13 +649,13 @@ void ClassBehaviorTreeRegistry::InitializeDemonHunter()
     _specRoles[{WowClass::DEMON_HUNTER, 0}] = SpecRole::MELEE_DPS;
 
     // Vengeance (Spec 1) - Tank
-    RegisterTree(WowClass::DEMON_HUNTER, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("DemonHunterVengeanceRoot");
+    RegisterTree(WowClass::DEMON_HUNTER, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("DemonHunterVengeanceRoot");
 
-        auto tankSeq = std::make_shared<BTSequence>("VengeanceTank");
-        tankSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        tankSeq->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
-        tankSeq->AddChild(std::make_shared<BTMeleeAttack>());
+        auto tankSeq = ::std::make_shared<BTSequence>("VengeanceTank");
+        tankSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        tankSeq->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+        tankSeq->AddChild(::std::make_shared<BTMeleeAttack>());
 
         root->AddChild(tankSeq);
         return root;
@@ -672,12 +672,12 @@ void ClassBehaviorTreeRegistry::InitializeDemonHunter()
 void ClassBehaviorTreeRegistry::InitializeEvoker()
 {
     // Devastation (Spec 0) - Ranged DPS
-    RegisterTree(WowClass::EVOKER, 0, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("EvokerDevastationRoot");
+    RegisterTree(WowClass::EVOKER, 0, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("EvokerDevastationRoot");
 
-        auto dpsSeq = std::make_shared<BTSequence>("DevastationDPS");
-        dpsSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        dpsSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 25.0f)); // Mid-range
+        auto dpsSeq = ::std::make_shared<BTSequence>("DevastationDPS");
+        dpsSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        dpsSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 25.0f)); // Mid-range
 
         root->AddChild(dpsSeq);
         return root;
@@ -685,12 +685,12 @@ void ClassBehaviorTreeRegistry::InitializeEvoker()
     _specRoles[{WowClass::EVOKER, 0}] = SpecRole::RANGED_DPS;
 
     // Preservation (Spec 1) - Healer
-    RegisterTree(WowClass::EVOKER, 1, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("EvokerPreservationRoot");
+    RegisterTree(WowClass::EVOKER, 1, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("EvokerPreservationRoot");
 
-        auto healSeq = std::make_shared<BTSequence>("PreservationHeal");
-        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        auto healSeq = ::std::make_shared<BTSequence>("PreservationHeal");
+        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>());
 
         root->AddChild(healSeq);
         return root;
@@ -698,12 +698,12 @@ void ClassBehaviorTreeRegistry::InitializeEvoker()
     _specRoles[{WowClass::EVOKER, 1}] = SpecRole::HEALER;
 
     // Augmentation (Spec 2) - Support DPS
-    RegisterTree(WowClass::EVOKER, 2, []() -> std::shared_ptr<BTNode> {
-        auto root = std::make_shared<BTSelector>("EvokerAugmentationRoot");
+    RegisterTree(WowClass::EVOKER, 2, []() -> ::std::shared_ptr<BTNode> {
+        auto root = ::std::make_shared<BTSelector>("EvokerAugmentationRoot");
 
-        auto supportSeq = std::make_shared<BTSequence>("AugmentationSupport");
-        supportSeq->AddChild(std::make_shared<BTCheckHasTarget>());
-        supportSeq->AddChild(std::make_shared<BTCheckInRange>(5.0f, 25.0f));
+        auto supportSeq = ::std::make_shared<BTSequence>("AugmentationSupport");
+        supportSeq->AddChild(::std::make_shared<BTCheckHasTarget>());
+        supportSeq->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 25.0f));
 
         root->AddChild(supportSeq);
         return root;

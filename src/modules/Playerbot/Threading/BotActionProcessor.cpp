@@ -244,7 +244,7 @@ BotActionResult BotActionProcessor::ExecuteInteractNPC(Player* bot, BotAction co
 
     // Interact with NPC (opens gossip menu)
     // Get the first gossip menu for this creature
-    std::vector<uint32> const& gossipMenuIds = npc->GetCreatureTemplate()->GossipMenuIds;
+    ::std::vector<uint32> const& gossipMenuIds = npc->GetCreatureTemplate()->GossipMenuIds;
     uint32 menuId = gossipMenuIds.empty() ? 0 : gossipMenuIds[0];
 
     // Prepare gossip menu with quest options enabled

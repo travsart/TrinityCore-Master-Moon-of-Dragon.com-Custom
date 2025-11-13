@@ -74,11 +74,11 @@ void BotSpawnerAdapter::Update(uint32 diff)
     if (!_enabled || !_orchestrator)
         return;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     _orchestrator->Update(diff);
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = ::std::chrono::high_resolution_clock::now();
 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 }
 
@@ -87,30 +87,30 @@ bool BotSpawnerAdapter::SpawnBot(SpawnRequest const& request)
     if (!_enabled || !_orchestrator)
         return false;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     ++_stats.callsToSpawnBot;
 
     bool result = _orchestrator->SpawnBot(request);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 
     return result;
 }
 
-uint32 BotSpawnerAdapter::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 BotSpawnerAdapter::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     if (!_enabled || !_orchestrator)
         return 0;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     ++_stats.callsToSpawnBots;
 
     uint32 result = _orchestrator->SpawnBots(requests);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 
     return result;
@@ -132,7 +132,7 @@ void BotSpawnerAdapter::UpdatePopulationTargets()
     _orchestrator->UpdatePopulationTargets();
 }
 
-bool BotSpawnerAdapter::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool BotSpawnerAdapter::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     if (!_enabled || !_orchestrator)
         return false;
@@ -223,10 +223,10 @@ bool BotSpawnerAdapter::InitializeOrchestrator()
 {
     try
     {
-        _orchestrator = std::make_unique<BotSpawnOrchestrator>();
+        _orchestrator = ::std::make_unique<BotSpawnOrchestrator>();
         return _orchestrator->Initialize();
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.adapter",
             "BotSpawnerAdapter: Exception during orchestrator initialization: {}", ex.what());
@@ -278,10 +278,10 @@ bool LegacyBotSpawnerAdapter::Initialize()
 
     try
     {
-        _legacySpawner = std::make_unique<BotSpawner>();
+        _legacySpawner = ::std::make_unique<BotSpawner>();
         return _legacySpawner->Initialize();
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.adapter",
             "LegacyBotSpawnerAdapter: Exception during initialization: {}", ex.what());
@@ -312,7 +312,7 @@ bool LegacyBotSpawnerAdapter::SpawnBot(SpawnRequest const& request)
     return _legacySpawner->SpawnBot(request);
 }
 
-uint32 LegacyBotSpawnerAdapter::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 LegacyBotSpawnerAdapter::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     if (!_legacySpawner)
         return 0;
@@ -332,7 +332,7 @@ void LegacyBotSpawnerAdapter::UpdatePopulationTargets()
         _legacySpawner->UpdatePopulationTargets();
 }
 
-bool LegacyBotSpawnerAdapter::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool LegacyBotSpawnerAdapter::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     if (!_legacySpawner)
         return false;
@@ -393,7 +393,7 @@ void LegacyBotSpawnerAdapter::SetEnabled(bool enabled)
 // BotSpawnerFactory Implementation
 // =====================================================
 
-std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
+::std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
 {
     if (type == SpawnerType::AUTO)
         type = DetectBestSpawnerType();
@@ -404,15 +404,15 @@ std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
     switch (type)
     {
         case SpawnerType::ORCHESTRATED:
-            return std::make_unique<BotSpawnerAdapter>();
+            return ::std::make_unique<BotSpawnerAdapter>();
 
         case SpawnerType::LEGACY:
-            return std::make_unique<LegacyBotSpawnerAdapter>();
+            return ::std::make_unique<LegacyBotSpawnerAdapter>();
 
         default:
             TC_LOG_ERROR("module.playerbot.factory",
                 "BotSpawnerFactory: Unknown spawner type, falling back to legacy");
-            return std::make_unique<LegacyBotSpawnerAdapter>();
+            return ::std::make_unique<LegacyBotSpawnerAdapter>();
     }
 }
 
@@ -431,7 +431,7 @@ BotSpawnerFactory::SpawnerType BotSpawnerFactory::DetectBestSpawnerType()
     return SpawnerType::LEGACY;
 }
 
-std::string BotSpawnerFactory::GetSpawnerTypeName(SpawnerType type)
+::std::string BotSpawnerFactory::GetSpawnerTypeName(SpawnerType type)
 {
     switch (type)
     {

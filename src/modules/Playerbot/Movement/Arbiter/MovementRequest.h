@@ -150,7 +150,7 @@ public:
      * Construct empty request
      * Must call Set*Movement() before use
      */
-    explicit MovementRequest(PlayerBotMovementPriority priority, std::string reason);
+    explicit MovementRequest(PlayerBotMovementPriority priority, ::std::string reason);
 
     /**
      * Construct point movement request
@@ -162,8 +162,8 @@ public:
         Optional<float> finalOrient = {},
         Optional<float> speed = {},
         Optional<float> closeEnoughDistance = {},
-        std::string reason = "",
-        std::string sourceSystem = "");
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
 
     /**
      * Construct chase movement request
@@ -173,8 +173,8 @@ public:
         ObjectGuid targetGuid,
         Optional<ChaseRange> range = {},
         Optional<ChaseAngle> angle = {},
-        std::string reason = "",
-        std::string sourceSystem = "");
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
 
     /**
      * Construct follow movement request
@@ -185,16 +185,16 @@ public:
         float distance,
         Optional<ChaseAngle> angle = {},
         Optional<Milliseconds> duration = {},
-        std::string reason = "",
-        std::string sourceSystem = "");
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
 
     /**
      * Construct idle movement request
      */
     static MovementRequest MakeIdleMovement(
         PlayerBotMovementPriority priority,
-        std::string reason = "",
-        std::string sourceSystem = "");
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
 
     /**
      * Construct jump movement request
@@ -205,8 +205,8 @@ public:
         float speedXY,
         float speedZ,
         uint32 eventId = 0,
-        std::string reason = "",
-        std::string sourceSystem = "");
+        ::std::string reason = "",
+        ::std::string sourceSystem = "");
 
     // ========================================================================
     // ACCESSORS
@@ -215,8 +215,8 @@ public:
     uint64 GetRequestId() const { return _requestId; }
     PlayerBotMovementPriority GetPriority() const { return _priority; }
     MovementRequestType GetType() const { return _type; }
-    std::string const& GetReason() const { return _reason; }
-    std::string const& GetSourceSystem() const { return _sourceSystem; }
+    ::std::string const& GetReason() const { return _reason; }
+    ::std::string const& GetSourceSystem() const { return _sourceSystem; }
     uint32 GetSourceThreadId() const { return _sourceThreadId; }
     uint32 GetTimestamp() const { return _timestamp; }
     uint32 GetExpectedDuration() const { return _expectedDuration; }
@@ -238,7 +238,7 @@ public:
     // SETTERS (Fluent Interface)
     // ========================================================================
 
-    MovementRequest& SetSourceSystem(std::string sourceSystem);
+    MovementRequest& SetSourceSystem(::std::string sourceSystem);
     MovementRequest& SetExpectedDuration(uint32 durationMs);
     MovementRequest& SetAllowInterrupt(bool allow);
 
@@ -285,7 +285,7 @@ public:
     /**
      * Get debug string representation
      */
-    std::string ToString() const;
+    ::std::string ToString() const;
 
     /**
      * Comparison operators for testing
@@ -302,10 +302,10 @@ private:
     uint64 _requestId;                          // Unique ID (generated)
     PlayerBotMovementPriority _priority;        // Request priority
     MovementRequestType _type;                  // Request type
-    std::string _reason;                        // Debug description
+    ::std::string _reason;                        // Debug description
 
     // Source tracking
-    std::string _sourceSystem;                  // System that made request
+    ::std::string _sourceSystem;                  // System that made request
     uint32 _sourceThreadId;                     // Thread ID (for thread safety checks)
 
     // Timing
@@ -314,8 +314,8 @@ private:
     bool _allowInterrupt;                       // Can be interrupted?
 
     // Type-specific parameters
-    using Params = std::variant<
-        std::monostate,                         // Uninitialized
+    using Params = ::std::variant<
+        ::std::monostate,                         // Uninitialized
         PointMovementParams,
         ChaseMovementParams,
         FollowMovementParams,

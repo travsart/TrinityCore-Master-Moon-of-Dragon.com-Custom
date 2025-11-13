@@ -111,7 +111,7 @@ public:
      * @param states Vector of states to check
      * @return true if current state is in the list
      */
-    [[nodiscard]] bool IsInAnyState(const std::vector<BotInitState>& states) const;
+    [[nodiscard]] bool IsInAnyState(const ::std::vector<BotInitState>& states) const;
 
     /**
      * @brief Check if state flags are set
@@ -153,7 +153,7 @@ public:
      */
     TransitionValidation TransitionTo(
         BotInitState newState,
-        std::string_view reason = "",
+        ::std::string_view reason = "",
         bool force = false
     );
 
@@ -167,7 +167,7 @@ public:
     TransitionValidation TransitionOnEvent(
         EventType event,
         BotInitState newState,
-        std::string_view reason = ""
+        ::std::string_view reason = ""
     );
 
     /**
@@ -178,7 +178,7 @@ public:
      */
     TransitionValidation ForceTransition(
         BotInitState newState,
-        std::string_view reason
+        ::std::string_view reason
     );
 
     /**
@@ -217,13 +217,13 @@ public:
      * @brief Get transition history (last 10 transitions)
      * @return Vector of transition events
      */
-    [[nodiscard]] std::vector<TransitionEvent> GetTransitionHistory() const;
+    [[nodiscard]] ::std::vector<TransitionEvent> GetTransitionHistory() const;
 
     /**
      * @brief Get the most recent transition
      * @return Optional transition event (nullopt if no transitions yet)
      */
-    [[nodiscard]] std::optional<TransitionEvent> GetLastTransition() const;
+    [[nodiscard]] ::std::optional<TransitionEvent> GetLastTransition() const;
 
     /**
      * @brief Get time spent in current state
@@ -329,8 +329,8 @@ protected:
      */
     TransitionValidation TransitionInternal(
         BotInitState newState,
-        std::string_view reason,
-        std::optional<EventType> event,
+        ::std::string_view reason,
+        ::std::optional<EventType> event,
         bool force
     );
 
@@ -361,22 +361,22 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> m_stateMutex;
 
     // Transition history (circular buffer, last 10 transitions)
-    std::array<TransitionEvent, 10> m_transitionHistory;
+    ::std::array<TransitionEvent, 10> m_transitionHistory;
     uint32 m_historyIndex{ 0 };
 
     // Retry tracking
-    std::atomic<uint32> m_retryCount{ 0 };
+    ::std::atomic<uint32> m_retryCount{ 0 };
 
     // Performance tracking
-    std::atomic<uint64> m_totalTransitions{ 0 };
-    std::atomic<uint64> m_totalTransitionTimeMicros{ 0 };
+    ::std::atomic<uint64> m_totalTransitions{ 0 };
+    ::std::atomic<uint64> m_totalTransitionTimeMicros{ 0 };
 
     // Configuration
-    std::atomic<bool> m_loggingEnabled{ true };
+    ::std::atomic<bool> m_loggingEnabled{ true };
 
     // Last update time
-    std::chrono::steady_clock::time_point m_lastStateChangeTime;
-    std::chrono::steady_clock::time_point m_lastUpdateTime;
+    ::std::chrono::steady_clock::time_point m_lastStateChangeTime;
+    ::std::chrono::steady_clock::time_point m_lastUpdateTime;
 };
 
 } // namespace Playerbot::StateMachine

@@ -22,11 +22,11 @@ namespace Playerbot
 // === PlayerbotCharacterDBInterface Implementation ===
 
 PlayerbotCharacterDBInterface::PlayerbotCharacterDBInterface()
-    : _classifier(std::make_unique<StatementClassifier>()),
-      _executionEngine(std::make_unique<SafeExecutionEngine>())
+    : _classifier(::std::make_unique<StatementClassifier>()),
+      _executionEngine(::std::make_unique<SafeExecutionEngine>())
 {
-    _startTime = std::chrono::steady_clock::now();
-    _mainThreadId = std::this_thread::get_id();
+    _startTime = ::std::chrono::steady_clock::now();
+    _mainThreadId = ::std::this_thread::get_id();
 }
 
 PlayerbotCharacterDBInterface::~PlayerbotCharacterDBInterface()
@@ -63,7 +63,7 @@ bool PlayerbotCharacterDBInterface::Initialize()
     _executionEngine->Initialize();
 
     // Store main thread ID
-    _mainThreadId = std::this_thread::get_id();
+    _mainThreadId = ::std::this_thread::get_id();
 
     _initialized.store(true);
 
@@ -150,7 +150,7 @@ CharacterDatabasePreparedStatement* PlayerbotCharacterDBInterface::GetPreparedSt
 }
 
 void PlayerbotCharacterDBInterface::ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
-                                                std::function<void(PreparedQueryResult)> callback,
+                                                ::std::function<void(PreparedQueryResult)> callback,
                                                 uint32 timeoutMs)
 {
     (void)timeoutMs; // Parameter reserved for future timeout implementation
@@ -197,13 +197,13 @@ void PlayerbotCharacterDBInterface::ExecuteAsync(CharacterDatabasePreparedStatem
     else
     {
         // Safe to execute asynchronously
-        auto startTime = std::chrono::steady_clock::now();
+        auto startTime = ::std::chrono::steady_clock::now();
 
         CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(
             [this, callback, startTime](PreparedQueryResult result)
             {
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::steady_clock::now() - startTime).count();
+                auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                    ::std::chrono::steady_clock::now() - startTime).count();
 
                 UpdateMetrics(static_cast<uint32>(duration), false, !result);
 
@@ -236,12 +236,12 @@ PreparedQueryResult PlayerbotCharacterDBInterface::ExecuteSync(CharacterDatabase
     _metrics.totalQueries.fetch_add(1);
     _metrics.syncQueries.fetch_add(1);
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - startTime).count();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+        ::std::chrono::steady_clock::now() - startTime).count();
 
     UpdateMetrics(static_cast<uint32>(duration), true, !result);
 
@@ -276,7 +276,7 @@ void PlayerbotCharacterDBInterface::CommitTransaction(CharacterDatabaseTransacti
     }
 }
 
-bool PlayerbotCharacterDBInterface::ExecuteDirectSQL(std::string const& sql)
+bool PlayerbotCharacterDBInterface::ExecuteDirectSQL(::std::string const& sql)
 {
     if (sql.empty())
     {
@@ -302,7 +302,7 @@ bool PlayerbotCharacterDBInterface::ExecuteDirectSQL(std::string const& sql)
 
 bool PlayerbotCharacterDBInterface::IsAsyncContext() const
 {
-    std::thread::id currentThread = std::this_thread::get_id();
+    ::std::thread::id currentThread = ::std::this_thread::get_id();
 
     // Check if we're in main thread (no lock needed - _mainThreadId is set once and never changes)
     if (currentThread == _mainThreadId)
@@ -321,7 +321,7 @@ bool PlayerbotCharacterDBInterface::IsSyncOnlyStatement(uint32 statementId) cons
 }
 
 bool PlayerbotCharacterDBInterface::RouteQuery(CharacterDatabasePreparedStatement* stmt,
-                                              std::function<void(PreparedQueryResult)> callback,
+                                              ::std::function<void(PreparedQueryResult)> callback,
                                               bool forceSync)
 {
     if (!stmt)
@@ -360,18 +360,18 @@ bool PlayerbotCharacterDBInterface::RouteQuery(CharacterDatabasePreparedStatemen
 }
 
 void PlayerbotCharacterDBInterface::ExecuteSyncFromAsync(CharacterDatabasePreparedStatement* stmt,
-                                                        std::function<void(PreparedQueryResult)> callback)
+                                                        ::std::function<void(PreparedQueryResult)> callback)
 {
     // Create sync request
-    auto request = std::make_shared<SyncRequest>();
+    auto request = ::std::make_shared<SyncRequest>();
     request->statement = stmt;
     request->callback = callback;
-    request->submitTime = std::chrono::steady_clock::now();
+    request->submitTime = ::std::chrono::steady_clock::now();
     request->timeoutMs = _config.defaultTimeoutMs;
 
     // Add to sync queue
     {
-        std::lock_guard lock(_syncQueueMutex);
+        ::std::lock_guard lock(_syncQueueMutex);
 
         if (_syncQueue.size() >= _config.syncQueueMaxSize)
         {
@@ -403,11 +403,11 @@ void PlayerbotCharacterDBInterface::ProcessSyncQueue()
 
     for (uint32 batch = 0; batch < MAX_BATCH_SIZE; ++batch)
     {
-        std::shared_ptr<SyncRequest> request = nullptr;
+        ::std::shared_ptr<SyncRequest> request = nullptr;
 
         // Extract one request at a time
         {
-            std::lock_guard lock(_syncQueueMutex);
+            ::std::lock_guard lock(_syncQueueMutex);
             if (_syncQueue.empty())
                 break;
 
@@ -435,7 +435,7 @@ void PlayerbotCharacterDBInterface::ProcessSyncQueue()
                 request->completionSignal->notify_one();
             }
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.database", "ProcessSyncQueue failed: {}", e.what());
 
@@ -632,14 +632,14 @@ StatementClassifier::StatementType StatementClassifier::ClassifyStatement(uint32
     return UNKNOWN;
 }
 
-std::string StatementClassifier::GetStatementName(uint32 statementId) const
+::std::string StatementClassifier::GetStatementName(uint32 statementId) const
 {
     auto it = _statementNames.find(statementId);
     if (it != _statementNames.end())
     {
         return it->second;
     }
-    return "UNKNOWN_STATEMENT_" + std::to_string(statementId);
+    return "UNKNOWN_STATEMENT_" + ::std::to_string(statementId);
 }
 
 void StatementClassifier::LoadSyncOnlyStatements()
@@ -676,14 +676,14 @@ void StatementClassifier::LoadAsyncSafeStatements()
 
 ExecutionContext::ExecutionContext()
     : _type(UNKNOWN_CONTEXT)
-    , _threadId(std::this_thread::get_id())
+    , _threadId(::std::this_thread::get_id())
 {
 }
 
 ExecutionContext ExecutionContext::Detect()
 {
     ExecutionContext context;
-    context._threadId = std::this_thread::get_id();
+    context._threadId = ::std::this_thread::get_id();
 
     // Try to determine context type
     // This is a simplified detection - real implementation would check thread pools
@@ -732,7 +732,7 @@ void SafeExecutionEngine::Shutdown()
 
 PreparedQueryResult SafeExecutionEngine::ExecuteWithSafety(CharacterDatabasePreparedStatement* stmt,
                                                           bool async,
-                                                          std::function<void(PreparedQueryResult)> callback)
+                                                          ::std::function<void(PreparedQueryResult)> callback)
 {
     if (!stmt)
     {
@@ -743,7 +743,7 @@ PreparedQueryResult SafeExecutionEngine::ExecuteWithSafety(CharacterDatabasePrep
 
     _executionCounter.fetch_add(1);
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     try
     {
@@ -752,8 +752,8 @@ PreparedQueryResult SafeExecutionEngine::ExecuteWithSafety(CharacterDatabasePrep
             CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(
                 [this, callback, startTime](PreparedQueryResult result)
                 {
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now() - startTime).count();
+                    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                        ::std::chrono::steady_clock::now() - startTime).count();
 
                     LogExecution(nullptr, result != nullptr, static_cast<uint32>(duration));
 
@@ -769,15 +769,15 @@ PreparedQueryResult SafeExecutionEngine::ExecuteWithSafety(CharacterDatabasePrep
         {
             PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - startTime).count();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - startTime).count();
 
             LogExecution(stmt, result != nullptr, static_cast<uint32>(duration));
 
             return result;
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.database",
             "Exception during statement execution: {}", e.what());
@@ -810,7 +810,7 @@ PreparedQueryResult SafeExecutionEngine::ExecuteWithRetry(CharacterDatabasePrepa
             TC_LOG_WARN("module.playerbot.database",
                 "Query failed, retrying ({}/{})", attempt + 1, maxRetries);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(retryDelayMs));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(retryDelayMs));
         }
     }
 
@@ -820,7 +820,7 @@ PreparedQueryResult SafeExecutionEngine::ExecuteWithRetry(CharacterDatabasePrepa
     return nullptr;
 }
 
-bool SafeExecutionEngine::HandleError(uint32 errorCode, std::string const& context)
+bool SafeExecutionEngine::HandleError(uint32 errorCode, ::std::string const& context)
 {
     TC_LOG_ERROR("module.playerbot.database",
         "Database error {} in context: {}", errorCode, context);
@@ -877,15 +877,15 @@ void PlayerbotCharacterDBInterface::Update(uint32 diff)
 }
 
 template<typename T>
-SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder(std::shared_ptr<T> holder)
+SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder(::std::shared_ptr<T> holder)
 {
     if (!_initialized.load())
     {
         TC_LOG_ERROR("module.playerbot.database",
             "PlayerbotCharacterDBInterface::DelayQueryHolder called before initialization");
         // Return empty callback that will never trigger
-        auto emptyFuture = std::async(std::launch::deferred, [](){});
-        return SQLQueryHolderCallback(nullptr, std::move(emptyFuture));
+        auto emptyFuture = ::std::async(::std::launch::deferred, [](){});
+        return SQLQueryHolderCallback(nullptr, ::std::move(emptyFuture));
     }
 
     // Route QueryHolder to the standard CharacterDatabase for async processing
@@ -901,6 +901,6 @@ SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder(std::shar
 }
 
 // Explicit template instantiation for BotLoginQueryHolder
-template SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder<CharacterDatabaseQueryHolder>(std::shared_ptr<CharacterDatabaseQueryHolder> holder);
+template SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder<CharacterDatabaseQueryHolder>(::std::shared_ptr<CharacterDatabaseQueryHolder> holder);
 
 } // namespace Playerbot

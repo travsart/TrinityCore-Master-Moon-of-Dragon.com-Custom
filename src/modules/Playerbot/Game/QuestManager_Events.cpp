@@ -58,9 +58,9 @@ namespace Playerbot
                 QuestEventData questData;
                 try
                 {
-                    questData = std::any_cast<QuestEventData>(event.eventData);
+                    questData = ::std::any_cast<QuestEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_ACCEPTED data for event {}: {}",
                         event.eventId, e.what());
@@ -88,9 +88,9 @@ namespace Playerbot
                 QuestEventData questData;
                 try
                 {
-                    questData = std::any_cast<QuestEventData>(event.eventData);
+                    questData = ::std::any_cast<QuestEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_COMPLETED data: {}", e.what());
                     return;
@@ -124,9 +124,9 @@ namespace Playerbot
                 QuestEventData questData;
                 try
                 {
-                    questData = std::any_cast<QuestEventData>(event.eventData);
+                    questData = ::std::any_cast<QuestEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const&)
+                catch (::std::bad_any_cast const&)
                 {
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_ABANDONED data");
                     ForceUpdate();
@@ -145,11 +145,11 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_WARN("module.playerbot", "QuestManager: Bot {} failed quest {}",
                             bot->GetName(), questData.questId);
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_WARN("module.playerbot", "QuestManager: Bot {} failed quest (no data)", bot->GetName());
                     }
@@ -172,9 +172,9 @@ namespace Playerbot
                 QuestEventData questData;
                 try
                 {
-                    questData = std::any_cast<QuestEventData>(event.eventData);
+                    questData = ::std::any_cast<QuestEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const&)
+                catch (::std::bad_any_cast const&)
                 {
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_OBJECTIVE_COMPLETE data");
                     ForceUpdate();
@@ -204,11 +204,11 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} quest {} status changed (complete: {})",
                             bot->GetName(), questData.questId, questData.isComplete);
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
                 UpdateQuestProgress();
                 ForceUpdate();
@@ -227,9 +227,9 @@ namespace Playerbot
                 QuestEventData questData;
                 try
                 {
-                    questData = std::any_cast<QuestEventData>(event.eventData);
+                    questData = ::std::any_cast<QuestEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const&)
+                catch (::std::bad_any_cast const&)
                 {
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: Failed to cast QUEST_SHARED data");
                     return;
@@ -273,7 +273,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "QuestManager: Bot {} turned in quest {} (Reward: item {}, XP: {}, Gold: {})",
                             bot->GetName(), questData.questId, questData.rewardItemId,
                             questData.experienceGained, questData.goldReward);
@@ -287,7 +287,7 @@ namespace Playerbot
                             ScanForQuests();
                         }
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} turned in quest (no details)", bot->GetName());
                     }
@@ -303,11 +303,11 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} chose reward item {} for quest {}",
                             bot->GetName(), questData.rewardItemId, questData.questId);
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
                 break;
             }
@@ -319,12 +319,12 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} collected quest item for quest {} ({}/{})",
                             bot->GetName(), questData.questId,
                             questData.objectiveCount, questData.objectiveRequired);
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
 
                 UpdateQuestProgress();
@@ -339,12 +339,12 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} kill credit for quest {} ({}/{})",
                             bot->GetName(), questData.questId,
                             questData.objectiveCount, questData.objectiveRequired);
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
 
                 UpdateQuestProgress();
@@ -359,11 +359,11 @@ namespace Playerbot
                 {
                     try
                     {
-                        QuestEventData questData = std::any_cast<QuestEventData>(event.eventData);
+                        QuestEventData questData = ::std::any_cast<QuestEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "QuestManager: Bot {} explored area for quest {}",
                             bot->GetName(), questData.questId);
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
 
                 UpdateQuestProgress();

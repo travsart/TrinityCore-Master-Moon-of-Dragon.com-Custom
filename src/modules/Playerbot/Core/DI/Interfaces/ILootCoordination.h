@@ -35,10 +35,10 @@ public:
     virtual void HandleLootSessionTimeout(uint32 lootSessionId) = 0;
 
     // Intelligent loot distribution orchestration
-    virtual void OrchestrateLootDistribution(Group* group, const std::vector<LootItem>& items) = 0;
-    virtual void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items) = 0;
-    virtual void OptimizeLootSequence(Group* group, std::vector<LootItem>& items) = 0;
-    virtual void HandleSimultaneousLooting(Group* group, const std::vector<LootItem>& items) = 0;
+    virtual void OrchestrateLootDistribution(Group* group, const ::std::vector<LootItem>& items) = 0;
+    virtual void PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items) = 0;
+    virtual void OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items) = 0;
+    virtual void HandleSimultaneousLooting(Group* group, const ::std::vector<LootItem>& items) = 0;
 
     // Group consensus and communication
     virtual void FacilitateGroupLootDiscussion(Group* group, const LootItem& item) = 0;
@@ -53,19 +53,19 @@ public:
     virtual void BalanceLootSpeedAndFairness(Group* group, uint32 sessionId) = 0;
 
     // Conflict resolution and mediation
-    virtual void MediateLootDispute(Group* group, const LootItem& item, const std::vector<uint32>& disputingPlayers) = 0;
-    virtual void HandleLootGrievances(Group* group, uint32 complainingPlayer, const std::string& grievance) = 0;
+    virtual void MediateLootDispute(Group* group, const LootItem& item, const ::std::vector<uint32>& disputingPlayers) = 0;
+    virtual void HandleLootGrievances(Group* group, uint32 complainingPlayer, const ::std::string& grievance) = 0;
     virtual void ResolveRollTies(Group* group, uint32 rollId) = 0;
     virtual void HandleLootNinja(Group* group, uint32 suspectedPlayer) = 0;
 
     // Configuration and customization
-    virtual void SetCoordinationStyle(uint32 groupId, const std::string& style) = 0;
-    virtual void SetConflictResolutionMethod(uint32 groupId, const std::string& method) = 0;
+    virtual void SetCoordinationStyle(uint32 groupId, const ::std::string& style) = 0;
+    virtual void SetConflictResolutionMethod(uint32 groupId, const ::std::string& method) = 0;
     virtual void EnableAdvancedCoordination(uint32 groupId, bool enable) = 0;
     virtual void SetLootCoordinationTimeout(uint32 groupId, uint32 timeoutMs) = 0;
 
     // Error handling and recovery
-    virtual void HandleCoordinationError(uint32 sessionId, const std::string& error) = 0;
+    virtual void HandleCoordinationError(uint32 sessionId, const ::std::string& error) = 0;
     virtual void RecoverFromCoordinationFailure(uint32 sessionId) = 0;
     virtual void HandleCorruptedLootState(uint32 sessionId) = 0;
     virtual void EmergencyLootDistribution(Group* group, const LootItem& item) = 0;

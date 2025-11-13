@@ -67,9 +67,9 @@ struct CachedItem
  */
 struct GearSet
 {
-    std::map<uint8, uint32> items;           // slot -> itemEntry
-    std::vector<uint32> bags;                // 4 bag slots
-    std::map<uint32, uint32> consumables;    // itemEntry -> quantity
+    ::std::map<uint8, uint32> items;           // slot -> itemEntry
+    ::std::vector<uint32> bags;                // 4 bag slots
+    ::std::map<uint32, uint32> consumables;    // itemEntry -> quantity
 
     float totalScore{0.0f};
     float averageIlvl{0.0f};
@@ -86,20 +86,20 @@ struct GearSet
  */
 struct GearFactoryStats
 {
-    std::atomic<uint64> setsGenerated{0};
-    std::atomic<uint64> itemsSelected{0};
-    std::atomic<uint64> itemsApplied{0};     // Items successfully equipped to players
-    std::atomic<uint64> cacheLookups{0};
-    std::atomic<uint64> qualityRolls{0};
-    std::atomic<uint32> cacheSize{0};
+    ::std::atomic<uint64> setsGenerated{0};
+    ::std::atomic<uint64> itemsSelected{0};
+    ::std::atomic<uint64> itemsApplied{0};     // Items successfully equipped to players
+    ::std::atomic<uint64> cacheLookups{0};
+    ::std::atomic<uint64> qualityRolls{0};
+    ::std::atomic<uint32> cacheSize{0};
 
     void Reset()
     {
-        setsGenerated.store(0, std::memory_order_relaxed);
-        itemsSelected.store(0, std::memory_order_relaxed);
-        itemsApplied.store(0, std::memory_order_relaxed);
-        cacheLookups.store(0, std::memory_order_relaxed);
-        qualityRolls.store(0, std::memory_order_relaxed);
+        setsGenerated.store(0, ::std::memory_order_relaxed);
+        itemsSelected.store(0, ::std::memory_order_relaxed);
+        itemsApplied.store(0, ::std::memory_order_relaxed);
+        cacheLookups.store(0, ::std::memory_order_relaxed);
+        qualityRolls.store(0, ::std::memory_order_relaxed);
     }
 };
 
@@ -169,12 +169,12 @@ public:
     /**
      * Get appropriate bag item entries for level range
      */
-    virtual std::vector<uint32> GetBagItemsForLevel(uint32 level) = 0;
+    virtual ::std::vector<uint32> GetBagItemsForLevel(uint32 level) = 0;
 
     /**
      * Get class-appropriate consumables
      */
-    virtual std::map<uint32, uint32> GetConsumablesForClass(uint8 cls, uint32 level) = 0;
+    virtual ::std::map<uint32, uint32> GetConsumablesForClass(uint8 cls, uint32 level) = 0;
 };
 
 } // namespace Playerbot

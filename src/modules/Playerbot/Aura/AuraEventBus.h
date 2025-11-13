@@ -58,12 +58,12 @@ struct AuraEvent
     uint32 duration;
     bool isBuff;
     bool isHarmful;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 
     // Helper constructors
     static AuraEvent AuraApplied(ObjectGuid target, ObjectGuid caster, uint32 spellId, uint8 stacks, bool harmful);
@@ -86,7 +86,7 @@ public:
     bool PublishEvent(AuraEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<AuraEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<AuraEventType> const& types) override;
     bool SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
@@ -102,21 +102,21 @@ public:
     // Diagnostics
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<AuraEvent> GetQueueSnapshot() const override;
+    ::std::vector<AuraEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};
-        std::atomic<uint64_t> totalDeliveries{0};
-        std::atomic<uint64_t> averageProcessingTimeUs{0};
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};
+        ::std::atomic<uint64_t> totalDeliveries{0};
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0};
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -129,16 +129,16 @@ private:
     bool DeliverEvent(BotAI* subscriber, AuraEvent const& event);
     bool ValidateEvent(AuraEvent const& event) const;
     uint32 CleanupExpiredEvents();
-    void UpdateMetrics(std::chrono::microseconds processingTime);
-    void LogEvent(AuraEvent const& event, std::string const& action) const;
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
+    void LogEvent(AuraEvent const& event, ::std::string const& action) const;
 
     // Event queue
-    std::priority_queue<AuraEvent> _eventQueue;
+    ::std::priority_queue<AuraEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     // Subscriber management
-    std::unordered_map<AuraEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<AuraEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriberMutex;
 
     // Configuration

@@ -241,7 +241,7 @@ public:
      * @brief Get manager identifier for logging
      * @return "CombatStateManager"
      */
-    std::string GetManagerId() const override;
+    ::std::string GetManagerId() const override;
 
     // ========================================================================
     // STATISTICS & MONITORING
@@ -252,14 +252,14 @@ public:
      */
     struct Statistics
     {
-        std::atomic<uint64_t> totalDamageEvents{0};           ///< Total DAMAGE_TAKEN events received
-        std::atomic<uint64_t> environmentalDamageFiltered{0}; ///< Environmental damage filtered
-        std::atomic<uint64_t> selfDamageFiltered{0};          ///< Self-damage filtered
-        std::atomic<uint64_t> friendlyFireFiltered{0};        ///< Friendly fire filtered
-        std::atomic<uint64_t> alreadyInCombatSkipped{0};      ///< Already in combat, skipped
-        std::atomic<uint64_t> attackerNotFoundSkipped{0};     ///< Attacker unit not found
-        std::atomic<uint64_t> combatStateTriggered{0};        ///< Combat state successfully triggered
-        std::atomic<uint64_t> combatStateFailures{0};         ///< SetInCombatWith called but IsInCombat still false
+        ::std::atomic<uint64_t> totalDamageEvents{0};           ///< Total DAMAGE_TAKEN events received
+        ::std::atomic<uint64_t> environmentalDamageFiltered{0}; ///< Environmental damage filtered
+        ::std::atomic<uint64_t> selfDamageFiltered{0};          ///< Self-damage filtered
+        ::std::atomic<uint64_t> friendlyFireFiltered{0};        ///< Friendly fire filtered
+        ::std::atomic<uint64_t> alreadyInCombatSkipped{0};      ///< Already in combat, skipped
+        ::std::atomic<uint64_t> attackerNotFoundSkipped{0};     ///< Attacker unit not found
+        ::std::atomic<uint64_t> combatStateTriggered{0};        ///< Combat state successfully triggered
+        ::std::atomic<uint64_t> combatStateFailures{0};         ///< SetInCombatWith called but IsInCombat still false
 
         // Default constructor
         Statistics() = default;
@@ -267,14 +267,14 @@ public:
         // Copy constructor - manually copy atomic values
         Statistics(Statistics const& other)
         {
-            totalDamageEvents.store(other.totalDamageEvents.load(), std::memory_order_relaxed);
-            environmentalDamageFiltered.store(other.environmentalDamageFiltered.load(), std::memory_order_relaxed);
-            selfDamageFiltered.store(other.selfDamageFiltered.load(), std::memory_order_relaxed);
-            friendlyFireFiltered.store(other.friendlyFireFiltered.load(), std::memory_order_relaxed);
-            alreadyInCombatSkipped.store(other.alreadyInCombatSkipped.load(), std::memory_order_relaxed);
-            attackerNotFoundSkipped.store(other.attackerNotFoundSkipped.load(), std::memory_order_relaxed);
-            combatStateTriggered.store(other.combatStateTriggered.load(), std::memory_order_relaxed);
-            combatStateFailures.store(other.combatStateFailures.load(), std::memory_order_relaxed);
+            totalDamageEvents.store(other.totalDamageEvents.load(), ::std::memory_order_relaxed);
+            environmentalDamageFiltered.store(other.environmentalDamageFiltered.load(), ::std::memory_order_relaxed);
+            selfDamageFiltered.store(other.selfDamageFiltered.load(), ::std::memory_order_relaxed);
+            friendlyFireFiltered.store(other.friendlyFireFiltered.load(), ::std::memory_order_relaxed);
+            alreadyInCombatSkipped.store(other.alreadyInCombatSkipped.load(), ::std::memory_order_relaxed);
+            attackerNotFoundSkipped.store(other.attackerNotFoundSkipped.load(), ::std::memory_order_relaxed);
+            combatStateTriggered.store(other.combatStateTriggered.load(), ::std::memory_order_relaxed);
+            combatStateFailures.store(other.combatStateFailures.load(), ::std::memory_order_relaxed);
         }
 
         // Copy assignment operator
@@ -282,14 +282,14 @@ public:
         {
             if (this != &other)
             {
-                totalDamageEvents.store(other.totalDamageEvents.load(), std::memory_order_relaxed);
-                environmentalDamageFiltered.store(other.environmentalDamageFiltered.load(), std::memory_order_relaxed);
-                selfDamageFiltered.store(other.selfDamageFiltered.load(), std::memory_order_relaxed);
-                friendlyFireFiltered.store(other.friendlyFireFiltered.load(), std::memory_order_relaxed);
-                alreadyInCombatSkipped.store(other.alreadyInCombatSkipped.load(), std::memory_order_relaxed);
-                attackerNotFoundSkipped.store(other.attackerNotFoundSkipped.load(), std::memory_order_relaxed);
-                combatStateTriggered.store(other.combatStateTriggered.load(), std::memory_order_relaxed);
-                combatStateFailures.store(other.combatStateFailures.load(), std::memory_order_relaxed);
+                totalDamageEvents.store(other.totalDamageEvents.load(), ::std::memory_order_relaxed);
+                environmentalDamageFiltered.store(other.environmentalDamageFiltered.load(), ::std::memory_order_relaxed);
+                selfDamageFiltered.store(other.selfDamageFiltered.load(), ::std::memory_order_relaxed);
+                friendlyFireFiltered.store(other.friendlyFireFiltered.load(), ::std::memory_order_relaxed);
+                alreadyInCombatSkipped.store(other.alreadyInCombatSkipped.load(), ::std::memory_order_relaxed);
+                attackerNotFoundSkipped.store(other.attackerNotFoundSkipped.load(), ::std::memory_order_relaxed);
+                combatStateTriggered.store(other.combatStateTriggered.load(), ::std::memory_order_relaxed);
+                combatStateFailures.store(other.combatStateFailures.load(), ::std::memory_order_relaxed);
             }
             return *this;
         }
@@ -303,7 +303,7 @@ public:
          * @brief Get formatted statistics string for logging
          * @return Multi-line string with all statistics
          */
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     /**

@@ -44,7 +44,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
 
     // Get all available quests from this NPC
     QuestRelationResult objectQR = sObjectMgr->GetCreatureQuestRelations(questGiver->GetEntry());
-    std::vector<std::pair<Quest const*, float>> eligibleQuests;
+    ::std::vector<::std::pair<Quest const*, float>> eligibleQuests;
 
     // Filter and score quests
     for (uint32 questId : objectQR)
@@ -72,7 +72,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
     }
 
     // Sort by priority (highest first)
-    std::sort(eligibleQuests.begin(), eligibleQuests.end(),
+    ::std::sort(eligibleQuests.begin(), eligibleQuests.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     TC_LOG_INFO("module.playerbot.quest", "Bot {} found {} eligible quests from {} (highest priority: {:.1f})",
@@ -415,7 +415,7 @@ float QuestAcceptanceManager::GetXPPriority(Quest const* quest) const
 
     // Higher XP = higher priority
     // Scale: 1000 XP = 10 priority points
-    return std::min(50.0f, xp / 100.0f);
+    return ::std::min(50.0f, xp / 100.0f);
 }
 
 float QuestAcceptanceManager::GetGoldPriority(Quest const* quest) const
@@ -428,7 +428,7 @@ float QuestAcceptanceManager::GetGoldPriority(Quest const* quest) const
         return 0.0f;
 
     // Scale: 1 gold = 1 priority point
-    return std::min(20.0f, gold / 10000.0f);
+    return ::std::min(20.0f, gold / 10000.0f);
 }
 
 float QuestAcceptanceManager::GetReputationPriority(Quest const* quest) const
@@ -446,7 +446,7 @@ float QuestAcceptanceManager::GetReputationPriority(Quest const* quest) const
         }
     }
 
-    return std::min(15.0f, repPriority);
+    return ::std::min(15.0f, repPriority);
 }
 
 float QuestAcceptanceManager::GetItemRewardPriority(Quest const* quest) const
@@ -484,7 +484,7 @@ float QuestAcceptanceManager::GetItemRewardPriority(Quest const* quest) const
         }
     }
 
-    return std::min(25.0f, itemPriority);
+    return ::std::min(25.0f, itemPriority);
 }
 
 float QuestAcceptanceManager::GetZonePriority(Quest const* quest) const

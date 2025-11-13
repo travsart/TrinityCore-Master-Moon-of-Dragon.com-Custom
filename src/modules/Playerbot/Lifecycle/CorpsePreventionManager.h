@@ -41,9 +41,9 @@ public:
     static bool IsEnabled() { return s_enabled; }
 
 private:
-    static std::atomic<bool> s_enabled;
-    static std::atomic<uint32> s_preventedCorpses;
-    static std::atomic<uint32> s_activePrevention;
+    static ::std::atomic<bool> s_enabled;
+    static ::std::atomic<uint32> s_preventedCorpses;
+    static ::std::atomic<uint32> s_activePrevention;
 };
 
 } // namespace Playerbot

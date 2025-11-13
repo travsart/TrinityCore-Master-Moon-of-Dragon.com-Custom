@@ -65,15 +65,15 @@ public:
     }
 
     void RecordCacheHit() {
-        m_totalCacheHits.fetch_add(1, std::memory_order_relaxed);
+        m_totalCacheHits.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     void RecordCacheMiss() {
-        m_totalCacheMisses.fetch_add(1, std::memory_order_relaxed);
+        m_totalCacheMisses.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     void RecordObjectDeleted(ObjectGuid guid) {
-        m_deletedObjects.fetch_add(1, std::memory_order_relaxed);
+        m_deletedObjects.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_TRACE("module.playerbot.reference",
             "SafeReferenceMetrics: Object {} deleted (total: {})",
@@ -81,8 +81,8 @@ public:
     }
 
     float GetGlobalCacheHitRate() const {
-        uint64 hits = m_totalCacheHits.load(std::memory_order_relaxed);
-        uint64 misses = m_totalCacheMisses.load(std::memory_order_relaxed);
+        uint64 hits = m_totalCacheHits.load(::std::memory_order_relaxed);
+        uint64 misses = m_totalCacheMisses.load(::std::memory_order_relaxed);
         uint64 total = hits + misses;
 
         if (total == 0) return 0.0f;
@@ -94,7 +94,7 @@ public:
     }
 
     uint64 GetDeletedObjectCount() const {
-        return m_deletedObjects.load(std::memory_order_relaxed);
+        return m_deletedObjects.load(::std::memory_order_relaxed);
     }
 
     void LogPerformanceReport() const {
@@ -121,9 +121,9 @@ public:
 private:
     SafeReferenceMetrics() = default;
 
-    std::atomic<uint64> m_totalCacheHits{0};
-    std::atomic<uint64> m_totalCacheMisses{0};
-    std::atomic<uint64> m_deletedObjects{0};
+    ::std::atomic<uint64> m_totalCacheHits{0};
+    ::std::atomic<uint64> m_totalCacheMisses{0};
+    ::std::atomic<uint64> m_deletedObjects{0};
 };
 
 // ========================================================================
@@ -140,7 +140,7 @@ class DanglingReferenceDetector {
 public:
     static void RegisterReference(ObjectGuid guid, void* reference) {
 #ifdef _DEBUG
-        std::lock_guard lock(s_mutex);
+        ::std::lock_guard lock(s_mutex);
         s_references[guid].insert(reference);
 
         TC_LOG_TRACE("module.playerbot.reference.debug",
@@ -151,7 +151,7 @@ public:
 
     static void UnregisterReference(ObjectGuid guid, void* reference) {
 #ifdef _DEBUG
-        std::lock_guard lock(s_mutex);
+        ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
         if (it != s_references.end()) {
             it->second.erase(reference);
@@ -168,7 +168,7 @@ public:
 
     static void CheckForDanglingReferences(ObjectGuid guid) {
 #ifdef _DEBUG
-        std::lock_guard lock(s_mutex);
+        ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
         if (it != s_references.end() && !it->second.empty()) {
             TC_LOG_ERROR("module.playerbot.reference",
@@ -184,7 +184,7 @@ public:
 
     static size_t GetReferenceCount(ObjectGuid guid) {
 #ifdef _DEBUG
-        std::lock_guard lock(s_mutex);
+        ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
         return it != s_references.end() ? it->second.size() : 0;
 #else
@@ -194,14 +194,14 @@ public:
 
 private:
 #ifdef _DEBUG
-    static std::recursive_mutex s_mutex;
-    static std::unordered_map<ObjectGuid, std::unordered_set<void*>> s_references;
+    static ::std::recursive_mutex s_mutex;
+    static ::std::unordered_map<ObjectGuid, ::std::unordered_set<void*>> s_references;
 #endif
 };
 
 #ifdef _DEBUG
-std::recursive_mutex DanglingReferenceDetector::s_mutex;
-std::unordered_map<ObjectGuid, std::unordered_set<void*>> DanglingReferenceDetector::s_references;
+::std::recursive_mutex DanglingReferenceDetector::s_mutex;
+::std::unordered_map<ObjectGuid, ::std::unordered_set<void*>> DanglingReferenceDetector::s_references;
 #endif
 
 // ========================================================================
@@ -260,7 +260,7 @@ private:
         SafePlayerReference ref1;
         ref1.SetGuid(ObjectGuid::Create<HighGuid::Player>(12345));
 
-        SafePlayerReference ref2(std::move(ref1));
+        SafePlayerReference ref2(::std::move(ref1));
         ASSERT(ref1.IsEmpty(), "Moved-from reference should be empty");
         ASSERT(!ref2.IsEmpty(), "Moved-to reference should have GUID");
         ASSERT(ref2.GetGuid().GetCounter() == 12345,

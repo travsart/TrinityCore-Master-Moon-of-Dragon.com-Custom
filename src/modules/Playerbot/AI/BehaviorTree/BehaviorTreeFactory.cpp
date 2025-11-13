@@ -23,9 +23,9 @@ namespace Playerbot
 {
 
 // Static member initialization
-std::unordered_map<std::string, std::function<std::shared_ptr<BTNode>()>> BehaviorTreeFactory::_customTreeBuilders;
+::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<BTNode>()>> BehaviorTreeFactory::_customTreeBuilders;
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::CreateTree(TreeType type)
+::std::shared_ptr<BTNode> BehaviorTreeFactory::CreateTree(TreeType type)
 {
     switch (type)
     {
@@ -57,13 +57,13 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::CreateTree(TreeType type)
     }
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildMeleeCombatTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildMeleeCombatTree()
 {
     // Root: Selector (try combat or flee)
-    auto root = std::make_shared<BTSelector>("MeleeCombatRoot");
+    auto root = ::std::make_shared<BTSelector>("MeleeCombatRoot");
 
     // Branch 1: Flee if critically wounded
-    auto fleeCondition = std::make_shared<BTCondition>("CriticalHealth",
+    auto fleeCondition = ::std::make_shared<BTCondition>("CriticalHealth",
         [](BotAI* ai, BTBlackboard& bb) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
@@ -74,17 +74,17 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildMeleeCombatTree()
     root->AddChild(fleeCondition);
 
     // Branch 2: Melee combat sequence
-    auto combatSequence = std::make_shared<BTSequence>("MeleeCombat");
+    auto combatSequence = ::std::make_shared<BTSequence>("MeleeCombat");
 
     // Check has target
-    combatSequence->AddChild(std::make_shared<BTCheckHasTarget>());
+    combatSequence->AddChild(::std::make_shared<BTCheckHasTarget>());
 
     // Check in melee range (0-5 yards)
-    combatSequence->AddChild(std::make_shared<BTCheckInRange>(0.0f, 5.0f));
+    combatSequence->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 5.0f));
 
     // Use defensive cooldowns if low health
-    auto defensiveSelector = std::make_shared<BTSelector>("DefensiveCooldowns");
-    defensiveSelector->AddChild(std::make_shared<BTCondition>("HighHealth",
+    auto defensiveSelector = ::std::make_shared<BTSelector>("DefensiveCooldowns");
+    defensiveSelector->AddChild(::std::make_shared<BTCondition>("HighHealth",
         [](BotAI* ai, BTBlackboard& bb) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
@@ -92,7 +92,7 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildMeleeCombatTree()
         }
     ));
     // If low health, try to use defensive CD (placeholder - class-specific)
-    defensiveSelector->AddChild(std::make_shared<BTAction>("UseDefensive",
+    defensiveSelector->AddChild(::std::make_shared<BTAction>("UseDefensive",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Class-specific defensive cooldowns
             return BTStatus::SUCCESS;
@@ -101,30 +101,30 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildMeleeCombatTree()
     combatSequence->AddChild(defensiveSelector);
 
     // Face target
-    combatSequence->AddChild(std::make_shared<BTFaceTarget>());
+    combatSequence->AddChild(::std::make_shared<BTFaceTarget>());
 
     // Execute melee attack
-    combatSequence->AddChild(std::make_shared<BTMeleeAttack>());
+    combatSequence->AddChild(::std::make_shared<BTMeleeAttack>());
 
     root->AddChild(combatSequence);
 
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildRangedCombatTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildRangedCombatTree()
 {
-    auto root = std::make_shared<BTSelector>("RangedCombatRoot");
+    auto root = ::std::make_shared<BTSelector>("RangedCombatRoot");
 
     // Flee if critically wounded
-    auto fleeSequence = std::make_shared<BTSequence>("FleeIfCritical");
-    fleeSequence->AddChild(std::make_shared<BTCondition>("CriticalHealth",
+    auto fleeSequence = ::std::make_shared<BTSequence>("FleeIfCritical");
+    fleeSequence->AddChild(::std::make_shared<BTCondition>("CriticalHealth",
         [](BotAI* ai, BTBlackboard& bb) {
             if (!ai) return false;
             Player* bot = ai->GetBot();
             return bot && bot->GetHealthPct() < 20.0f && bot->IsInCombat();
         }
     ));
-    fleeSequence->AddChild(std::make_shared<BTAction>("StartFleeing",
+    fleeSequence->AddChild(::std::make_shared<BTAction>("StartFleeing",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             bb.Set<bool>("ShouldFlee", true);
             return BTStatus::SUCCESS;
@@ -133,17 +133,17 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildRangedCombatTree()
     root->AddChild(fleeSequence);
 
     // Ranged combat sequence
-    auto combatSequence = std::make_shared<BTSequence>("RangedCombat");
+    auto combatSequence = ::std::make_shared<BTSequence>("RangedCombat");
 
-    combatSequence->AddChild(std::make_shared<BTCheckHasTarget>());
+    combatSequence->AddChild(::std::make_shared<BTCheckHasTarget>());
 
     // Check in ranged range (5-40 yards)
-    auto rangeCheck = std::make_shared<BTSelector>("RangeManagement");
-    rangeCheck->AddChild(std::make_shared<BTCheckInRange>(5.0f, 40.0f));
+    auto rangeCheck = ::std::make_shared<BTSelector>("RangeManagement");
+    rangeCheck->AddChild(::std::make_shared<BTCheckInRange>(5.0f, 40.0f));
 
     // If not in range, move to optimal range
-    auto moveSequence = std::make_shared<BTSequence>("MoveToRange");
-    moveSequence->AddChild(std::make_shared<BTCondition>("OutOfRange",
+    auto moveSequence = ::std::make_shared<BTSequence>("MoveToRange");
+    moveSequence->AddChild(::std::make_shared<BTCondition>("OutOfRange",
         [](BotAI* ai, BTBlackboard& bb) {
             Unit* target = nullptr;
             if (!bb.Get<Unit*>("CurrentTarget", target) || !target)
@@ -157,16 +157,16 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildRangedCombatTree()
             return distance < 5.0f || distance > 40.0f;
         }
     ));
-    moveSequence->AddChild(std::make_shared<BTMoveToTarget>(20.0f, 35.0f));
+    moveSequence->AddChild(::std::make_shared<BTMoveToTarget>(20.0f, 35.0f));
     rangeCheck->AddChild(moveSequence);
 
     combatSequence->AddChild(rangeCheck);
 
     // Face target
-    combatSequence->AddChild(std::make_shared<BTFaceTarget>());
+    combatSequence->AddChild(::std::make_shared<BTFaceTarget>());
 
     // Cast ranged abilities (placeholder - class-specific)
-    combatSequence->AddChild(std::make_shared<BTAction>("CastRangedSpell",
+    combatSequence->AddChild(::std::make_shared<BTAction>("CastRangedSpell",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Class-specific ranged spell rotation
             return BTStatus::SUCCESS;
@@ -178,15 +178,15 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildRangedCombatTree()
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildTankCombatTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildTankCombatTree()
 {
-    auto root = std::make_shared<BTSelector>("TankCombatRoot");
+    auto root = ::std::make_shared<BTSelector>("TankCombatRoot");
 
     // Use defensive CDs if critical
-    auto emergencyDefensive = std::make_shared<BTSequence>("EmergencyDefensive");
-    emergencyDefensive->AddChild(std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
-    emergencyDefensive->AddChild(std::make_shared<BTCheckInCombat>());
-    emergencyDefensive->AddChild(std::make_shared<BTAction>("UseEmergencyCD",
+    auto emergencyDefensive = ::std::make_shared<BTSequence>("EmergencyDefensive");
+    emergencyDefensive->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
+    emergencyDefensive->AddChild(::std::make_shared<BTCheckInCombat>());
+    emergencyDefensive->AddChild(::std::make_shared<BTAction>("UseEmergencyCD",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Class-specific emergency defensive
             return BTStatus::SUCCESS;
@@ -195,14 +195,14 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildTankCombatTree()
     root->AddChild(emergencyDefensive);
 
     // Tanking sequence
-    auto tankingSequence = std::make_shared<BTSequence>("Tanking");
+    auto tankingSequence = ::std::make_shared<BTSequence>("Tanking");
 
-    tankingSequence->AddChild(std::make_shared<BTCheckHasTarget>());
-    tankingSequence->AddChild(std::make_shared<BTCheckInRange>(0.0f, 10.0f));
-    tankingSequence->AddChild(std::make_shared<BTFaceTarget>());
+    tankingSequence->AddChild(::std::make_shared<BTCheckHasTarget>());
+    tankingSequence->AddChild(::std::make_shared<BTCheckInRange>(0.0f, 10.0f));
+    tankingSequence->AddChild(::std::make_shared<BTFaceTarget>());
 
     // Use threat generation
-    tankingSequence->AddChild(std::make_shared<BTAction>("GenerateThreat",
+    tankingSequence->AddChild(::std::make_shared<BTAction>("GenerateThreat",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Class-specific threat abilities
             return BTStatus::SUCCESS;
@@ -210,7 +210,7 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildTankCombatTree()
     ));
 
     // Maintain defensive stance/presence
-    tankingSequence->AddChild(std::make_shared<BTAction>("DefensiveStance",
+    tankingSequence->AddChild(::std::make_shared<BTAction>("DefensiveStance",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Check and apply defensive stance
             return BTStatus::SUCCESS;
@@ -222,14 +222,14 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildTankCombatTree()
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildSingleTargetHealingTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildSingleTargetHealingTree()
 {
-    auto root = std::make_shared<BTSelector>("SingleTargetHealingRoot");
+    auto root = ::std::make_shared<BTSelector>("SingleTargetHealingRoot");
 
     // Heal self if critical
-    auto selfHealSequence = std::make_shared<BTSequence>("SelfHeal");
-    selfHealSequence->AddChild(std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
-    selfHealSequence->AddChild(std::make_shared<BTAction>("HealSelf",
+    auto selfHealSequence = ::std::make_shared<BTSequence>("SelfHeal");
+    selfHealSequence->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
+    selfHealSequence->AddChild(::std::make_shared<BTAction>("HealSelf",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             if (!ai) return BTStatus::INVALID;
             Player* bot = ai->GetBot();
@@ -242,19 +242,19 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildSingleTargetHealingTree()
     root->AddChild(selfHealSequence);
 
     // Heal ally sequence
-    auto healAllySequence = std::make_shared<BTSequence>("HealAlly");
+    auto healAllySequence = ::std::make_shared<BTSequence>("HealAlly");
 
     // Find most wounded ally
-    healAllySequence->AddChild(std::make_shared<BTFindWoundedAlly>(0.80f));
+    healAllySequence->AddChild(::std::make_shared<BTFindWoundedAlly>(0.80f));
 
     // Check in range
-    healAllySequence->AddChild(std::make_shared<BTCheckHealTargetInRange>(40.0f));
+    healAllySequence->AddChild(::std::make_shared<BTCheckHealTargetInRange>(40.0f));
 
     // Check line of sight
-    healAllySequence->AddChild(std::make_shared<BTCheckHealTargetLoS>());
+    healAllySequence->AddChild(::std::make_shared<BTCheckHealTargetLoS>());
 
     // Select appropriate heal spell based on deficit
-    healAllySequence->AddChild(std::make_shared<BTAction>("SelectHealSpell",
+    healAllySequence->AddChild(::std::make_shared<BTAction>("SelectHealSpell",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             float targetHealthPct = bb.GetOr<float>("HealTargetHealthPct", 1.0f);
 
@@ -274,7 +274,7 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildSingleTargetHealingTree()
     ));
 
     // Cast heal (placeholder)
-    healAllySequence->AddChild(std::make_shared<BTAction>("CastHeal",
+    healAllySequence->AddChild(::std::make_shared<BTAction>("CastHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Actually cast the selected heal spell
             return BTStatus::SUCCESS;
@@ -286,14 +286,14 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildSingleTargetHealingTree()
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildGroupHealingTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildGroupHealingTree()
 {
-    auto root = std::make_shared<BTSelector>("GroupHealingRoot");
+    auto root = ::std::make_shared<BTSelector>("GroupHealingRoot");
 
     // Self heal if critical
-    auto selfHealSequence = std::make_shared<BTSequence>("SelfHeal");
-    selfHealSequence->AddChild(std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
-    selfHealSequence->AddChild(std::make_shared<BTAction>("HealSelf",
+    auto selfHealSequence = ::std::make_shared<BTSequence>("SelfHeal");
+    selfHealSequence->AddChild(::std::make_shared<BTCheckHealthPercent>(0.30f, BTCheckHealthPercent::Comparison::LESS_THAN));
+    selfHealSequence->AddChild(::std::make_shared<BTAction>("HealSelf",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Self-heal
             return BTStatus::SUCCESS;
@@ -302,17 +302,17 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildGroupHealingTree()
     root->AddChild(selfHealSequence);
 
     // AoE heal sequence
-    auto aoeHealSequence = std::make_shared<BTSequence>("AoEHeal");
+    auto aoeHealSequence = ::std::make_shared<BTSequence>("AoEHeal");
 
     // Check multiple wounded (3+ allies <80% health)
-    aoeHealSequence->AddChild(std::make_shared<BTCheckGroupNeedsAoEHeal>(0.80f, 3));
+    aoeHealSequence->AddChild(::std::make_shared<BTCheckGroupNeedsAoEHeal>(0.80f, 3));
 
     // Check mana sufficient
-    aoeHealSequence->AddChild(std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.30f,
+    aoeHealSequence->AddChild(::std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.30f,
         BTCheckResourcePercent::Comparison::GREATER_THAN));
 
     // Cast AoE heal (placeholder)
-    aoeHealSequence->AddChild(std::make_shared<BTAction>("CastAoEHeal",
+    aoeHealSequence->AddChild(::std::make_shared<BTAction>("CastAoEHeal",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Class-specific AoE heal (Chain Heal, Circle of Healing, etc.)
             return BTStatus::SUCCESS;
@@ -327,48 +327,48 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildGroupHealingTree()
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildDispelPriorityTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildDispelPriorityTree()
 {
-    auto root = std::make_shared<BTSelector>("DispelPriority");
+    auto root = ::std::make_shared<BTSelector>("DispelPriority");
 
     // Dispel magic (high priority)
-    auto dispelMagicSequence = std::make_shared<BTSequence>("DispelMagic");
-    dispelMagicSequence->AddChild(std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::MAGIC));
-    dispelMagicSequence->AddChild(std::make_shared<BTCastDispel>(0)); // Placeholder spell ID
+    auto dispelMagicSequence = ::std::make_shared<BTSequence>("DispelMagic");
+    dispelMagicSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::MAGIC));
+    dispelMagicSequence->AddChild(::std::make_shared<BTCastDispel>(0)); // Placeholder spell ID
     root->AddChild(dispelMagicSequence);
 
     // Dispel curse
-    auto dispelCurseSequence = std::make_shared<BTSequence>("DispelCurse");
-    dispelCurseSequence->AddChild(std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::CURSE));
-    dispelCurseSequence->AddChild(std::make_shared<BTCastDispel>(0));
+    auto dispelCurseSequence = ::std::make_shared<BTSequence>("DispelCurse");
+    dispelCurseSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::CURSE));
+    dispelCurseSequence->AddChild(::std::make_shared<BTCastDispel>(0));
     root->AddChild(dispelCurseSequence);
 
     // Dispel disease
-    auto dispelDiseaseSequence = std::make_shared<BTSequence>("DispelDisease");
-    dispelDiseaseSequence->AddChild(std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::DISEASE));
-    dispelDiseaseSequence->AddChild(std::make_shared<BTCastDispel>(0));
+    auto dispelDiseaseSequence = ::std::make_shared<BTSequence>("DispelDisease");
+    dispelDiseaseSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::DISEASE));
+    dispelDiseaseSequence->AddChild(::std::make_shared<BTCastDispel>(0));
     root->AddChild(dispelDiseaseSequence);
 
     // Dispel poison
-    auto dispelPoisonSequence = std::make_shared<BTSequence>("DispelPoison");
-    dispelPoisonSequence->AddChild(std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::POISON));
-    dispelPoisonSequence->AddChild(std::make_shared<BTCastDispel>(0));
+    auto dispelPoisonSequence = ::std::make_shared<BTSequence>("DispelPoison");
+    dispelPoisonSequence->AddChild(::std::make_shared<BTFindDispelTarget>(BTFindDispelTarget::DispelType::POISON));
+    dispelPoisonSequence->AddChild(::std::make_shared<BTCastDispel>(0));
     root->AddChild(dispelPoisonSequence);
 
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFollowLeaderTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFollowLeaderTree()
 {
-    auto root = std::make_shared<BTSequence>("FollowLeader");
+    auto root = ::std::make_shared<BTSequence>("FollowLeader");
 
     // Check not in combat
-    root->AddChild(std::make_shared<BTInverter>("NotInCombat",
-        std::make_shared<BTCheckInCombat>()
+    root->AddChild(::std::make_shared<BTInverter>("NotInCombat",
+        ::std::make_shared<BTCheckInCombat>()
     ));
 
     // Check too far from leader (>10 yards)
-    root->AddChild(std::make_shared<BTCondition>("TooFarFromLeader",
+    root->AddChild(::std::make_shared<BTCondition>("TooFarFromLeader",
         [](BotAI* ai, BTBlackboard& bb) {
             if (!ai) return false;
 
@@ -389,24 +389,24 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFollowLeaderTree()
     ));
 
     // Move to leader
-    root->AddChild(std::make_shared<BTFollowLeader>(5.0f));
+    root->AddChild(::std::make_shared<BTFollowLeader>(5.0f));
 
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildCombatPositioningTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildCombatPositioningTree()
 {
-    auto root = std::make_shared<BTSelector>("CombatPositioning");
+    auto root = ::std::make_shared<BTSelector>("CombatPositioning");
 
     // Melee positioning
-    auto meleeSequence = std::make_shared<BTSequence>("MeleePositioning");
-    meleeSequence->AddChild(std::make_shared<BTCondition>("IsMeleeClass",
+    auto meleeSequence = ::std::make_shared<BTSequence>("MeleePositioning");
+    meleeSequence->AddChild(::std::make_shared<BTCondition>("IsMeleeClass",
         [](BotAI* ai, BTBlackboard& bb) {
             // TODO: Check if bot is melee class
             return true; // Placeholder
         }
     ));
-    meleeSequence->AddChild(std::make_shared<BTCondition>("TooFarFromTarget",
+    meleeSequence->AddChild(::std::make_shared<BTCondition>("TooFarFromTarget",
         [](BotAI* ai, BTBlackboard& bb) {
             Unit* target = nullptr;
             if (!bb.Get<Unit*>("CurrentTarget", target) || !target)
@@ -419,18 +419,18 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildCombatPositioningTree()
             return bot->GetDistance(target) > 5.0f;
         }
     ));
-    meleeSequence->AddChild(std::make_shared<BTMoveToTarget>(0.0f, 5.0f));
+    meleeSequence->AddChild(::std::make_shared<BTMoveToTarget>(0.0f, 5.0f));
     root->AddChild(meleeSequence);
 
     // Ranged positioning
-    auto rangedSequence = std::make_shared<BTSequence>("RangedPositioning");
-    rangedSequence->AddChild(std::make_shared<BTCondition>("IsRangedClass",
+    auto rangedSequence = ::std::make_shared<BTSequence>("RangedPositioning");
+    rangedSequence->AddChild(::std::make_shared<BTCondition>("IsRangedClass",
         [](BotAI* ai, BTBlackboard& bb) {
             // TODO: Check if bot is ranged class
             return true; // Placeholder
         }
     ));
-    rangedSequence->AddChild(std::make_shared<BTCondition>("NotInOptimalRange",
+    rangedSequence->AddChild(::std::make_shared<BTCondition>("NotInOptimalRange",
         [](BotAI* ai, BTBlackboard& bb) {
             Unit* target = nullptr;
             if (!bb.Get<Unit*>("CurrentTarget", target) || !target)
@@ -444,44 +444,44 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildCombatPositioningTree()
             return distance < 20.0f || distance > 35.0f;
         }
     ));
-    rangedSequence->AddChild(std::make_shared<BTMoveToTarget>(20.0f, 35.0f));
+    rangedSequence->AddChild(::std::make_shared<BTMoveToTarget>(20.0f, 35.0f));
     root->AddChild(rangedSequence);
 
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFleeToSafetyTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFleeToSafetyTree()
 {
-    auto root = std::make_shared<BTSequence>("FleeToSafety");
+    auto root = ::std::make_shared<BTSequence>("FleeToSafety");
 
     // Check health below 20%
-    root->AddChild(std::make_shared<BTCheckHealthPercent>(0.20f, BTCheckHealthPercent::Comparison::LESS_THAN));
+    root->AddChild(::std::make_shared<BTCheckHealthPercent>(0.20f, BTCheckHealthPercent::Comparison::LESS_THAN));
 
     // Check in combat
-    root->AddChild(std::make_shared<BTCheckInCombat>());
+    root->AddChild(::std::make_shared<BTCheckInCombat>());
 
     // Find safe position
-    root->AddChild(std::make_shared<BTFindSafePosition>(20.0f));
+    root->AddChild(::std::make_shared<BTFindSafePosition>(20.0f));
 
     // Move to safe position
-    root->AddChild(std::make_shared<BTMoveToPosition>(2.0f));
+    root->AddChild(::std::make_shared<BTMoveToPosition>(2.0f));
 
     // Stop movement when safe
-    root->AddChild(std::make_shared<BTStopMovement>());
+    root->AddChild(::std::make_shared<BTStopMovement>());
 
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildBuffMaintenanceTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildBuffMaintenanceTree()
 {
-    auto root = std::make_shared<BTSequence>("BuffMaintenance");
+    auto root = ::std::make_shared<BTSequence>("BuffMaintenance");
 
     // Check not in combat OR combat duration < 5 seconds
-    root->AddChild(std::make_shared<BTSelector>("CanBuff",
-        std::make_shared<BTInverter>("NotInCombat",
-            std::make_shared<BTCheckInCombat>()
+    root->AddChild(::std::make_shared<BTSelector>("CanBuff",
+        ::std::make_shared<BTInverter>("NotInCombat",
+            ::std::make_shared<BTCheckInCombat>()
         ),
-        std::make_shared<BTCondition>("EarlyCombat",
+        ::std::make_shared<BTCondition>("EarlyCombat",
             [](BotAI* ai, BTBlackboard& bb) {
                 // TODO: Check combat duration
                 return false; // Placeholder
@@ -490,7 +490,7 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildBuffMaintenanceTree()
     ));
 
     // Check missing self buff
-    root->AddChild(std::make_shared<BTCondition>("MissingBuff",
+    root->AddChild(::std::make_shared<BTCondition>("MissingBuff",
         [](BotAI* ai, BTBlackboard& bb) {
             // TODO: Check for missing class buffs
             return false; // Placeholder
@@ -498,7 +498,7 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildBuffMaintenanceTree()
     ));
 
     // Cast self buff
-    root->AddChild(std::make_shared<BTAction>("CastBuff",
+    root->AddChild(::std::make_shared<BTAction>("CastBuff",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Cast appropriate buff
             return BTStatus::SUCCESS;
@@ -508,24 +508,24 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildBuffMaintenanceTree()
     return root;
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::BuildResourceManagementTree()
+::std::shared_ptr<BTNode> BehaviorTreeFactory::BuildResourceManagementTree()
 {
-    auto root = std::make_shared<BTSelector>("ResourceManagement");
+    auto root = ::std::make_shared<BTSelector>("ResourceManagement");
 
     // Drink/Eat sequence
-    auto consumableSequence = std::make_shared<BTSequence>("UseConsumable");
+    auto consumableSequence = ::std::make_shared<BTSequence>("UseConsumable");
 
     // Check not in combat
-    consumableSequence->AddChild(std::make_shared<BTInverter>("NotInCombat",
-        std::make_shared<BTCheckInCombat>()
+    consumableSequence->AddChild(::std::make_shared<BTInverter>("NotInCombat",
+        ::std::make_shared<BTCheckInCombat>()
     ));
 
     // Check mana < 30%
-    consumableSequence->AddChild(std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.30f,
+    consumableSequence->AddChild(::std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.30f,
         BTCheckResourcePercent::Comparison::LESS_THAN));
 
     // Use consumable
-    consumableSequence->AddChild(std::make_shared<BTAction>("UseConsumable",
+    consumableSequence->AddChild(::std::make_shared<BTAction>("UseConsumable",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             // TODO: Find and use mana consumable
             return BTStatus::SUCCESS;
@@ -535,14 +535,14 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildResourceManagementTree()
     root->AddChild(consumableSequence);
 
     // Conserve mana sequence
-    auto conserveSequence = std::make_shared<BTSequence>("ConserveMana");
+    auto conserveSequence = ::std::make_shared<BTSequence>("ConserveMana");
 
     // Check mana < 50%
-    conserveSequence->AddChild(std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.50f,
+    conserveSequence->AddChild(::std::make_shared<BTCheckResourcePercent>(POWER_MANA, 0.50f,
         BTCheckResourcePercent::Comparison::LESS_THAN));
 
     // Avoid expensive spells
-    conserveSequence->AddChild(std::make_shared<BTAction>("AvoidExpensiveSpells",
+    conserveSequence->AddChild(::std::make_shared<BTAction>("AvoidExpensiveSpells",
         [](BotAI* ai, BTBlackboard& bb) -> BTStatus {
             bb.Set<bool>("ConserveMana", true);
             return BTStatus::SUCCESS;
@@ -554,14 +554,14 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildResourceManagementTree()
     return root;
 }
 
-void BehaviorTreeFactory::RegisterCustomTree(std::string const& name,
-    std::function<std::shared_ptr<BTNode>()> builder)
+void BehaviorTreeFactory::RegisterCustomTree(::std::string const& name,
+    ::std::function<::std::shared_ptr<BTNode>()> builder)
 {
     _customTreeBuilders[name] = builder;
     TC_LOG_INFO("playerbot.bt", "Registered custom behavior tree: {}", name);
 }
 
-std::shared_ptr<BTNode> BehaviorTreeFactory::CreateCustomTree(std::string const& name)
+::std::shared_ptr<BTNode> BehaviorTreeFactory::CreateCustomTree(::std::string const& name)
 {
     auto it = _customTreeBuilders.find(name);
     if (it != _customTreeBuilders.end())

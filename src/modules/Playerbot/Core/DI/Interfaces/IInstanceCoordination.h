@@ -62,13 +62,13 @@ public:
     virtual void OptimizeGroupEfficiency(Group* group) = 0;
 
     // Communication and coordination
-    virtual void BroadcastInstanceInformation(Group* group, const std::string& message) = 0;
-    virtual void CoordinateGroupActions(Group* group, const std::string& action) = 0;
-    virtual void HandleGroupDecisionMaking(Group* group, const std::string& decision) = 0;
+    virtual void BroadcastInstanceInformation(Group* group, const ::std::string& message) = 0;
+    virtual void CoordinateGroupActions(Group* group, const ::std::string& action) = 0;
+    virtual void HandleGroupDecisionMaking(Group* group, const ::std::string& decision) = 0;
     virtual void SynchronizeGroupStates(Group* group) = 0;
 
     // Loot coordination and distribution
-    virtual void CoordinateLootDistribution(Group* group, const std::vector<uint32>& lootItems) = 0;
+    virtual void CoordinateLootDistribution(Group* group, const ::std::vector<uint32>& lootItems) = 0;
     virtual void HandleLootRolling(Group* group, uint32 itemId) = 0;
     virtual void ManageLootPriorities(Group* group) = 0;
     virtual void ResolveeLootConflicts(Group* group, uint32 itemId) = 0;
@@ -79,14 +79,14 @@ public:
     virtual void AnalyzeProgressEfficiency(Group* group) = 0;
 
     // Route planning and navigation
-    virtual void PlanInstanceRoute(Group* group, const std::vector<uint32>& objectiveIds) = 0;
+    virtual void PlanInstanceRoute(Group* group, const ::std::vector<uint32>& objectiveIds) = 0;
     virtual void UpdateNavigationRoute(Group* group, const Position& currentLocation) = 0;
-    virtual void HandleNavigationObstacles(Group* group, const std::vector<Position>& obstacles) = 0;
+    virtual void HandleNavigationObstacles(Group* group, const ::std::vector<Position>& obstacles) = 0;
     virtual Position GetNextWaypoint(Group* group) = 0;
 
     // Safety and emergency coordination
     virtual void MonitorGroupSafety(Group* group) = 0;
-    virtual void HandleEmergencySituations(Group* group, const std::string& emergency) = 0;
+    virtual void HandleEmergencySituations(Group* group, const ::std::string& emergency) = 0;
     virtual void CoordinateEmergencyEvacuation(Group* group) = 0;
     virtual void HandlePlayerIncapacitation(Group* group, Player* incapacitatedPlayer) = 0;
 
@@ -102,17 +102,17 @@ public:
 
     // Instance-specific coordination strategies
     virtual void ApplyInstanceSpecificStrategy(Group* group, uint32 instanceId) = 0;
-    virtual void HandleInstanceMechanics(Group* group, const std::string& mechanic) = 0;
+    virtual void HandleInstanceMechanics(Group* group, const ::std::string& mechanic) = 0;
     virtual void AdaptToInstanceDifficulty(Group* group, float difficultyRating) = 0;
 
     // Configuration and settings
     virtual void SetCoordinationPrecision(uint32 groupId, float precision) = 0;
-    virtual void SetFormationStyle(uint32 groupId, const std::string& formationStyle) = 0;
+    virtual void SetFormationStyle(uint32 groupId, const ::std::string& formationStyle) = 0;
     virtual void EnableAdvancedCoordination(uint32 groupId, bool enable) = 0;
     virtual void SetCommunicationLevel(uint32 groupId, uint32 level) = 0;
 
     // Error handling and recovery
-    virtual void HandleCoordinationError(Group* group, const std::string& error) = 0;
+    virtual void HandleCoordinationError(Group* group, const ::std::string& error) = 0;
     virtual void RecoverFromCoordinationFailure(Group* group) = 0;
     virtual void DiagnoseCoordinationIssues(Group* group) = 0;
     virtual void ResetCoordinationState(Group* group) = 0;

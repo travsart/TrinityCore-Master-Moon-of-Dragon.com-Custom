@@ -202,7 +202,7 @@ public:
         // ===== IDENTITY (CRITICAL) =====
         ObjectGuid guid;
         uint32 accountId{0};
-        std::array<char, 48> name{};  // Fixed-size character name (no std::string for POD)
+        ::std::array<char, 48> name{};  // Fixed-size character name (no ::std::string for POD)
 
         // ===== POSITION & MOVEMENT (CRITICAL) =====
         Position position;
@@ -442,11 +442,11 @@ public:
      */
     struct CellContents
     {
-        std::vector<CreatureSnapshot> creatures;
-        std::vector<PlayerSnapshot> players;
-        std::vector<GameObjectSnapshot> gameObjects;
-        std::vector<AreaTriggerSnapshot> areaTriggers;
-        std::vector<DynamicObjectSnapshot> dynamicObjects;
+        ::std::vector<CreatureSnapshot> creatures;
+        ::std::vector<PlayerSnapshot> players;
+        ::std::vector<GameObjectSnapshot> gameObjects;
+        ::std::vector<AreaTriggerSnapshot> areaTriggers;
+        ::std::vector<DynamicObjectSnapshot> dynamicObjects;
 
         void Clear()
         {
@@ -478,9 +478,9 @@ public:
      */
     struct GridBuffer
     {
-        std::array<std::array<CellContents, TOTAL_CELLS>, TOTAL_CELLS> cells;
+        ::std::array<::std::array<CellContents, TOTAL_CELLS>, TOTAL_CELLS> cells;
         uint32 populationCount{0};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Clear()
         {
@@ -501,7 +501,7 @@ public:
         uint64_t totalSwaps{0};
         uint32 lastUpdateDurationUs{0};
         uint32 currentPopulation{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point startTime;
     };
 
     // Constructor/Destructor
@@ -520,17 +520,17 @@ public:
     // Bot query interface (thread-safe, lock-free) - NOW RETURNS SNAPSHOTS!
     // BREAKING CHANGE: Methods now return data snapshots instead of GUIDs
     // This eliminates ALL ObjectAccessor/Map access from worker threads!
-    std::vector<CreatureSnapshot> QueryNearbyCreatures(Position const& pos, float radius) const;
-    std::vector<PlayerSnapshot> QueryNearbyPlayers(Position const& pos, float radius) const;
-    std::vector<GameObjectSnapshot> QueryNearbyGameObjects(Position const& pos, float radius) const;
-    std::vector<AreaTriggerSnapshot> QueryNearbyAreaTriggers(Position const& pos, float radius) const;
-    std::vector<DynamicObjectSnapshot> QueryNearbyDynamicObjects(Position const& pos, float radius) const;
+    ::std::vector<CreatureSnapshot> QueryNearbyCreatures(Position const& pos, float radius) const;
+    ::std::vector<PlayerSnapshot> QueryNearbyPlayers(Position const& pos, float radius) const;
+    ::std::vector<GameObjectSnapshot> QueryNearbyGameObjects(Position const& pos, float radius) const;
+    ::std::vector<AreaTriggerSnapshot> QueryNearbyAreaTriggers(Position const& pos, float radius) const;
+    ::std::vector<DynamicObjectSnapshot> QueryNearbyDynamicObjects(Position const& pos, float radius) const;
 
     // Legacy GUID-based queries (DEPRECATED - use snapshot queries instead!)
     // These are maintained temporarily for backward compatibility but will be removed
-    std::vector<ObjectGuid> QueryNearbyCreatureGuids(Position const& pos, float radius) const;
-    std::vector<ObjectGuid> QueryNearbyPlayerGuids(Position const& pos, float radius) const;
-    std::vector<ObjectGuid> QueryNearbyGameObjectGuids(Position const& pos, float radius) const;
+    ::std::vector<ObjectGuid> QueryNearbyCreatureGuids(Position const& pos, float radius) const;
+    ::std::vector<ObjectGuid> QueryNearbyPlayerGuids(Position const& pos, float radius) const;
+    ::std::vector<ObjectGuid> QueryNearbyGameObjectGuids(Position const& pos, float radius) const;
 
     // Cell-level query (for advanced usage)
     CellContents const& GetCell(uint32 x, uint32 y) const;
@@ -549,25 +549,25 @@ private:
     // Helper: Get write buffer (inactive)
     GridBuffer& GetWriteBuffer()
     {
-        return _buffers[1 - _readBufferIndex.load(std::memory_order_relaxed)];
+        return _buffers[1 - _readBufferIndex.load(::std::memory_order_relaxed)];
     }
 
     // Helper: Get read buffer (active)
     GridBuffer const& GetReadBuffer() const
     {
-        return _buffers[_readBufferIndex.load(std::memory_order_acquire)];
+        return _buffers[_readBufferIndex.load(::std::memory_order_acquire)];
     }
 
     // Coordinate conversion helpers
-    std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
-    std::vector<std::pair<uint32, uint32>> GetCellsInRadius(Position const& center, float radius) const;
+    ::std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
+    ::std::vector<::std::pair<uint32, uint32>> GetCellsInRadius(Position const& center, float radius) const;
 
     // Thread-safe Map entity access
-    std::vector<Creature*> GetCreaturesInArea(Position const& center, float radius);
-    std::vector<Player*> GetPlayersInArea(Position const& center, float radius);
-    std::vector<GameObject*> GetGameObjectsInArea(Position const& center, float radius);
-    std::vector<DynamicObject*> GetDynamicObjectsInArea(Position const& center, float radius);
-    std::vector<AreaTrigger*> GetAreaTriggersInArea(Position const& center, float radius);
+    ::std::vector<Creature*> GetCreaturesInArea(Position const& center, float radius);
+    ::std::vector<Player*> GetPlayersInArea(Position const& center, float radius);
+    ::std::vector<GameObject*> GetGameObjectsInArea(Position const& center, float radius);
+    ::std::vector<DynamicObject*> GetDynamicObjectsInArea(Position const& center, float radius);
+    ::std::vector<AreaTrigger*> GetAreaTriggersInArea(Position const& center, float radius);
 
     // Check if update is needed (rate-limited)
     bool ShouldUpdate() const;
@@ -575,18 +575,18 @@ private:
     // Data members
     Map* _map;
     mutable GridBuffer _buffers[2];  // Mutable to allow updates from const methods
-    mutable std::atomic<uint32> _readBufferIndex{0};
+    mutable ::std::atomic<uint32> _readBufferIndex{0};
 
-    mutable std::chrono::steady_clock::time_point _lastUpdate;
+    mutable ::std::chrono::steady_clock::time_point _lastUpdate;
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SPATIAL_GRID> _updateMutex;  // Protects Update() to ensure only one thread updates at a time
 
     // Statistics (atomic for thread-safe access)
-    mutable std::atomic<uint64_t> _totalQueries{0};
-    mutable std::atomic<uint64_t> _totalUpdates{0};
-    mutable std::atomic<uint64_t> _totalSwaps{0};
-    mutable std::atomic<uint32> _lastUpdateDurationUs{0};
+    mutable ::std::atomic<uint64_t> _totalQueries{0};
+    mutable ::std::atomic<uint64_t> _totalUpdates{0};
+    mutable ::std::atomic<uint64_t> _totalSwaps{0};
+    mutable ::std::atomic<uint32> _lastUpdateDurationUs{0};
 
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _startTime;
 
     // Non-copyable, non-movable
     DoubleBufferedSpatialGrid(DoubleBufferedSpatialGrid const&) = delete;

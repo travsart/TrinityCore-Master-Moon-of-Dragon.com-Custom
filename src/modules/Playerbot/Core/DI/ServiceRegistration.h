@@ -224,7 +224,7 @@ inline void RegisterPlayerbotServices()
 
         // Register SpatialGridManager
         container.RegisterInstance<ISpatialGridManager>(
-            std::shared_ptr<ISpatialGridManager>(
+            ::std::shared_ptr<ISpatialGridManager>(
                 &SpatialGridManager::Instance(),
                 [](ISpatialGridManager*) {} // No-op deleter (singleton)
             )
@@ -233,7 +233,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotSessionMgr
         container.RegisterInstance<IBotSessionMgr>(
-            std::shared_ptr<IBotSessionMgr>(
+            ::std::shared_ptr<IBotSessionMgr>(
                 BotSessionMgr::instance(),
                 [](IBotSessionMgr*) {} // No-op deleter (singleton)
             )
@@ -242,7 +242,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ConfigManager (Phase 2)
         container.RegisterInstance<IConfigManager>(
-            std::shared_ptr<IConfigManager>(
+            ::std::shared_ptr<IConfigManager>(
                 ConfigManager::instance(),
                 [](IConfigManager*) {} // No-op deleter (singleton)
             )
@@ -251,7 +251,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotLifecycleManager (Phase 2)
         container.RegisterInstance<IBotLifecycleManager>(
-            std::shared_ptr<IBotLifecycleManager>(
+            ::std::shared_ptr<IBotLifecycleManager>(
                 BotLifecycleManager::instance(),
                 [](IBotLifecycleManager*) {} // No-op deleter (singleton)
             )
@@ -260,7 +260,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotDatabasePool (Phase 2)
         container.RegisterInstance<IBotDatabasePool>(
-            std::shared_ptr<IBotDatabasePool>(
+            ::std::shared_ptr<IBotDatabasePool>(
                 BotDatabasePool::instance(),
                 [](IBotDatabasePool*) {} // No-op deleter (singleton)
             )
@@ -269,7 +269,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotNameMgr (Phase 3)
         container.RegisterInstance<IBotNameMgr>(
-            std::shared_ptr<IBotNameMgr>(
+            ::std::shared_ptr<IBotNameMgr>(
                 BotNameMgr::instance(),
                 [](IBotNameMgr*) {} // No-op deleter (singleton)
             )
@@ -278,7 +278,7 @@ inline void RegisterPlayerbotServices()
 
         // Register DungeonScriptMgr (Phase 3)
         container.RegisterInstance<IDungeonScriptMgr>(
-            std::shared_ptr<IDungeonScriptMgr>(
+            ::std::shared_ptr<IDungeonScriptMgr>(
                 Playerbot::DungeonScriptMgr::instance(),
                 [](IDungeonScriptMgr*) {} // No-op deleter (singleton)
             )
@@ -287,7 +287,7 @@ inline void RegisterPlayerbotServices()
 
         // Register EquipmentManager (Phase 4)
         container.RegisterInstance<IEquipmentManager>(
-            std::shared_ptr<IEquipmentManager>(
+            ::std::shared_ptr<IEquipmentManager>(
                 Playerbot::EquipmentManager::instance(),
                 [](IEquipmentManager*) {} // No-op deleter (singleton)
             )
@@ -296,7 +296,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotAccountMgr (Phase 4)
         container.RegisterInstance<IBotAccountMgr>(
-            std::shared_ptr<IBotAccountMgr>(
+            ::std::shared_ptr<IBotAccountMgr>(
                 Playerbot::BotAccountMgr::instance(),
                 [](IBotAccountMgr*) {} // No-op deleter (singleton)
             )
@@ -305,7 +305,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LFGBotManager (Phase 5)
         container.RegisterInstance<ILFGBotManager>(
-            std::shared_ptr<ILFGBotManager>(
+            ::std::shared_ptr<ILFGBotManager>(
                 LFGBotManager::instance(),
                 [](ILFGBotManager*) {} // No-op deleter (singleton)
             )
@@ -314,7 +314,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotGearFactory (Phase 5)
         container.RegisterInstance<IBotGearFactory>(
-            std::shared_ptr<IBotGearFactory>(
+            ::std::shared_ptr<IBotGearFactory>(
                 Playerbot::BotGearFactory::instance(),
                 [](IBotGearFactory*) {} // No-op deleter (singleton)
             )
@@ -323,7 +323,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotMonitor (Phase 6)
         container.RegisterInstance<IBotMonitor>(
-            std::shared_ptr<IBotMonitor>(
+            ::std::shared_ptr<IBotMonitor>(
                 Playerbot::BotMonitor::instance(),
                 [](IBotMonitor*) {} // No-op deleter (singleton)
             )
@@ -332,7 +332,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotLevelManager (Phase 6)
         container.RegisterInstance<IBotLevelManager>(
-            std::shared_ptr<IBotLevelManager>(
+            ::std::shared_ptr<IBotLevelManager>(
                 Playerbot::BotLevelManager::instance(),
                 [](IBotLevelManager*) {} // No-op deleter (singleton)
             )
@@ -341,7 +341,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PlayerbotGroupManager (Phase 7)
         container.RegisterInstance<IPlayerbotGroupManager>(
-            std::shared_ptr<IPlayerbotGroupManager>(
+            ::std::shared_ptr<IPlayerbotGroupManager>(
                 Playerbot::PlayerbotGroupManager::instance(),
                 [](IPlayerbotGroupManager*) {} // No-op deleter (singleton)
             )
@@ -350,7 +350,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotTalentManager (Phase 7)
         container.RegisterInstance<IBotTalentManager>(
-            std::shared_ptr<IBotTalentManager>(
+            ::std::shared_ptr<IBotTalentManager>(
                 Playerbot::BotTalentManager::instance(),
                 [](IBotTalentManager*) {} // No-op deleter (singleton)
             )
@@ -359,7 +359,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PlayerbotConfig (Phase 8)
         container.RegisterInstance<IPlayerbotConfig>(
-            std::shared_ptr<IPlayerbotConfig>(
+            ::std::shared_ptr<IPlayerbotConfig>(
                 PlayerbotConfig::instance(),
                 [](IPlayerbotConfig*) {} // No-op deleter (singleton)
             )
@@ -368,7 +368,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotSpawner (Phase 8)
         container.RegisterInstance<IBotSpawner>(
-            std::shared_ptr<IBotSpawner>(
+            ::std::shared_ptr<IBotSpawner>(
                 Playerbot::BotSpawner::instance(),
                 [](IBotSpawner*) {} // No-op deleter (singleton)
             )
@@ -377,7 +377,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotWorldPositioner (Phase 9)
         container.RegisterInstance<IBotWorldPositioner>(
-            std::shared_ptr<IBotWorldPositioner>(
+            ::std::shared_ptr<IBotWorldPositioner>(
                 Playerbot::BotWorldPositioner::instance(),
                 [](IBotWorldPositioner*) {} // No-op deleter (singleton)
             )
@@ -386,7 +386,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotHealthCheck (Phase 9)
         container.RegisterInstance<IBotHealthCheck>(
-            std::shared_ptr<IBotHealthCheck>(
+            ::std::shared_ptr<IBotHealthCheck>(
                 Playerbot::BotHealthCheck::instance(),
                 [](IBotHealthCheck*) {} // No-op deleter (singleton)
             )
@@ -395,7 +395,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotScheduler (Phase 10)
         container.RegisterInstance<IBotScheduler>(
-            std::shared_ptr<IBotScheduler>(
+            ::std::shared_ptr<IBotScheduler>(
                 Playerbot::BotScheduler::instance(),
                 [](IBotScheduler*) {} // No-op deleter (singleton)
             )
@@ -404,7 +404,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotCharacterDistribution (Phase 11)
         container.RegisterInstance<IBotCharacterDistribution>(
-            std::shared_ptr<IBotCharacterDistribution>(
+            ::std::shared_ptr<IBotCharacterDistribution>(
                 Playerbot::BotCharacterDistribution::instance(),
                 [](IBotCharacterDistribution*) {} // No-op deleter (singleton)
             )
@@ -413,7 +413,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotLevelDistribution (Phase 11)
         container.RegisterInstance<IBotLevelDistribution>(
-            std::shared_ptr<IBotLevelDistribution>(
+            ::std::shared_ptr<IBotLevelDistribution>(
                 Playerbot::BotLevelDistribution::instance(),
                 [](IBotLevelDistribution*) {} // No-op deleter (singleton)
             )
@@ -422,7 +422,7 @@ inline void RegisterPlayerbotServices()
 
         // Register GroupEventBus (Phase 12)
         container.RegisterInstance<IGroupEventBus>(
-            std::shared_ptr<IGroupEventBus>(
+            ::std::shared_ptr<IGroupEventBus>(
                 Playerbot::GroupEventBus::instance(),
                 [](IGroupEventBus*) {} // No-op deleter (singleton)
             )
@@ -431,7 +431,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LFGGroupCoordinator (Phase 12)
         container.RegisterInstance<ILFGGroupCoordinator>(
-            std::shared_ptr<ILFGGroupCoordinator>(
+            ::std::shared_ptr<ILFGGroupCoordinator>(
                 Playerbot::LFGGroupCoordinator::instance(),
                 [](ILFGGroupCoordinator*) {} // No-op deleter (singleton)
             )
@@ -440,7 +440,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LootEventBus (Phase 13)
         container.RegisterInstance<ILootEventBus>(
-            std::shared_ptr<ILootEventBus>(
+            ::std::shared_ptr<ILootEventBus>(
                 Playerbot::LootEventBus::instance(),
                 [](ILootEventBus*) {} // No-op deleter (singleton)
             )
@@ -449,7 +449,7 @@ inline void RegisterPlayerbotServices()
 
         // Register QuestEventBus (Phase 13)
         container.RegisterInstance<IQuestEventBus>(
-            std::shared_ptr<IQuestEventBus>(
+            ::std::shared_ptr<IQuestEventBus>(
                 Playerbot::QuestEventBus::instance(),
                 [](IQuestEventBus*) {} // No-op deleter (singleton)
             )
@@ -458,7 +458,7 @@ inline void RegisterPlayerbotServices()
 
         // Register AuctionEventBus (Phase 14)
         container.RegisterInstance<IAuctionEventBus>(
-            std::shared_ptr<IAuctionEventBus>(
+            ::std::shared_ptr<IAuctionEventBus>(
                 Playerbot::AuctionEventBus::instance(),
                 [](IAuctionEventBus*) {} // No-op deleter (singleton)
             )
@@ -467,7 +467,7 @@ inline void RegisterPlayerbotServices()
 
         // Register NPCEventBus (Phase 14)
         container.RegisterInstance<INPCEventBus>(
-            std::shared_ptr<INPCEventBus>(
+            ::std::shared_ptr<INPCEventBus>(
                 Playerbot::NPCEventBus::instance(),
                 [](INPCEventBus*) {} // No-op deleter (singleton)
             )
@@ -476,7 +476,7 @@ inline void RegisterPlayerbotServices()
 
         // Register CooldownEventBus (Phase 15)
         container.RegisterInstance<ICooldownEventBus>(
-            std::shared_ptr<ICooldownEventBus>(
+            ::std::shared_ptr<ICooldownEventBus>(
                 Playerbot::CooldownEventBus::instance(),
                 [](ICooldownEventBus*) {} // No-op deleter (singleton)
             )
@@ -485,7 +485,7 @@ inline void RegisterPlayerbotServices()
 
         // Register AuraEventBus (Phase 15)
         container.RegisterInstance<IAuraEventBus>(
-            std::shared_ptr<IAuraEventBus>(
+            ::std::shared_ptr<IAuraEventBus>(
                 Playerbot::AuraEventBus::instance(),
                 [](IAuraEventBus*) {} // No-op deleter (singleton)
             )
@@ -494,7 +494,7 @@ inline void RegisterPlayerbotServices()
 
         // Register InstanceEventBus (Phase 16)
         container.RegisterInstance<IInstanceEventBus>(
-            std::shared_ptr<IInstanceEventBus>(
+            ::std::shared_ptr<IInstanceEventBus>(
                 Playerbot::InstanceEventBus::instance(),
                 [](IInstanceEventBus*) {} // No-op deleter (singleton)
             )
@@ -503,7 +503,7 @@ inline void RegisterPlayerbotServices()
 
         // Register SocialEventBus (Phase 17)
         container.RegisterInstance<ISocialEventBus>(
-            std::shared_ptr<ISocialEventBus>(
+            ::std::shared_ptr<ISocialEventBus>(
                 Playerbot::SocialEventBus::instance(),
                 [](ISocialEventBus*) {} // No-op deleter (singleton)
             )
@@ -512,7 +512,7 @@ inline void RegisterPlayerbotServices()
 
         // Register CombatEventBus (Phase 18)
         container.RegisterInstance<ICombatEventBus>(
-            std::shared_ptr<ICombatEventBus>(
+            ::std::shared_ptr<ICombatEventBus>(
                 Playerbot::CombatEventBus::instance(),
                 [](ICombatEventBus*) {} // No-op deleter (singleton)
             )
@@ -521,7 +521,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ResourceEventBus (Phase 19)
         container.RegisterInstance<IResourceEventBus>(
-            std::shared_ptr<IResourceEventBus>(
+            ::std::shared_ptr<IResourceEventBus>(
                 Playerbot::ResourceEventBus::instance(),
                 [](IResourceEventBus*) {} // No-op deleter (singleton)
             )
@@ -530,7 +530,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LootAnalysis (Phase 20)
         container.RegisterInstance<ILootAnalysis>(
-            std::shared_ptr<ILootAnalysis>(
+            ::std::shared_ptr<ILootAnalysis>(
                 Playerbot::LootAnalysis::instance(),
                 [](ILootAnalysis*) {} // No-op deleter (singleton)
             )
@@ -539,7 +539,7 @@ inline void RegisterPlayerbotServices()
 
         // Register GuildBankManager (Phase 21)
         container.RegisterInstance<IGuildBankManager>(
-            std::shared_ptr<IGuildBankManager>(
+            ::std::shared_ptr<IGuildBankManager>(
                 Playerbot::GuildBankManager::instance(),
                 [](IGuildBankManager*) {} // No-op deleter (singleton)
             )
@@ -548,7 +548,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LootCoordination (Phase 22)
         container.RegisterInstance<ILootCoordination>(
-            std::shared_ptr<ILootCoordination>(
+            ::std::shared_ptr<ILootCoordination>(
                 Playerbot::LootCoordination::instance(),
                 [](ILootCoordination*) {} // No-op deleter (singleton)
             )
@@ -557,7 +557,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LootDistribution (Phase 23)
         container.RegisterInstance<ILootDistribution>(
-            std::shared_ptr<ILootDistribution>(
+            ::std::shared_ptr<ILootDistribution>(
                 Playerbot::LootDistribution::instance(),
                 [](ILootDistribution*) {} // No-op deleter (singleton)
             )
@@ -567,7 +567,7 @@ inline void RegisterPlayerbotServices()
         // Register UnifiedLootManager (Manager Consolidation)
         // Consolidates: LootAnalysis, LootCoordination, LootDistribution
         container.RegisterInstance<IUnifiedLootManager>(
-            std::shared_ptr<IUnifiedLootManager>(
+            ::std::shared_ptr<IUnifiedLootManager>(
                 Playerbot::UnifiedLootManager::instance(),
                 [](IUnifiedLootManager*) {} // No-op deleter (singleton)
             )
@@ -577,7 +577,7 @@ inline void RegisterPlayerbotServices()
         // Register UnifiedQuestManager (Manager Consolidation Phase 2)
         // Consolidates: QuestPickup, QuestCompletion, QuestValidation, QuestTurnIn, DynamicQuestSystem
         container.RegisterInstance<IUnifiedQuestManager>(
-            std::shared_ptr<IUnifiedQuestManager>(
+            ::std::shared_ptr<IUnifiedQuestManager>(
                 Playerbot::UnifiedQuestManager::instance(),
                 [](IUnifiedQuestManager*) {} // No-op deleter (singleton)
             )
@@ -586,7 +586,7 @@ inline void RegisterPlayerbotServices()
 
         // Register MarketAnalysis (Phase 24)
         container.RegisterInstance<IMarketAnalysis>(
-            std::shared_ptr<IMarketAnalysis>(
+            ::std::shared_ptr<IMarketAnalysis>(
                 Playerbot::MarketAnalysis::instance(),
                 [](IMarketAnalysis*) {} // No-op deleter (singleton)
             )
@@ -595,7 +595,7 @@ inline void RegisterPlayerbotServices()
 
         // Register TradeSystem (Phase 25)
         container.RegisterInstance<ITradeSystem>(
-            std::shared_ptr<ITradeSystem>(
+            ::std::shared_ptr<ITradeSystem>(
                 Playerbot::TradeSystem::instance(),
                 [](ITradeSystem*) {} // No-op deleter (singleton)
             )
@@ -604,7 +604,7 @@ inline void RegisterPlayerbotServices()
 
         // Register QuestPickup (Phase 26)
         container.RegisterInstance<IQuestPickup>(
-            std::shared_ptr<IQuestPickup>(
+            ::std::shared_ptr<IQuestPickup>(
                 Playerbot::QuestPickup::instance(),
                 [](IQuestPickup*) {} // No-op deleter (singleton)
             )
@@ -613,7 +613,7 @@ inline void RegisterPlayerbotServices()
 
         // Register GuildEventCoordinator (Phase 27)
         container.RegisterInstance<IGuildEventCoordinator>(
-            std::shared_ptr<IGuildEventCoordinator>(
+            ::std::shared_ptr<IGuildEventCoordinator>(
                 Playerbot::GuildEventCoordinator::instance(),
                 [](IGuildEventCoordinator*) {} // No-op deleter (singleton)
             )
@@ -622,7 +622,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ProfessionManager (Phase 28)
         container.RegisterInstance<IProfessionManager>(
-            std::shared_ptr<IProfessionManager>(
+            ::std::shared_ptr<IProfessionManager>(
                 Playerbot::ProfessionManager::instance(),
                 [](IProfessionManager*) {} // No-op deleter (singleton)
             )
@@ -631,7 +631,7 @@ inline void RegisterPlayerbotServices()
 
         // Register QuestCompletion (Phase 29)
         container.RegisterInstance<IQuestCompletion>(
-            std::shared_ptr<IQuestCompletion>(
+            ::std::shared_ptr<IQuestCompletion>(
                 Playerbot::QuestCompletion::instance(),
                 [](IQuestCompletion*) {} // No-op deleter (singleton)
             )
@@ -640,7 +640,7 @@ inline void RegisterPlayerbotServices()
 
         // Register QuestValidation (Phase 30)
         container.RegisterInstance<IQuestValidation>(
-            std::shared_ptr<IQuestValidation>(
+            ::std::shared_ptr<IQuestValidation>(
                 Playerbot::QuestValidation::instance(),
                 [](IQuestValidation*) {} // No-op deleter (singleton)
             )
@@ -649,7 +649,7 @@ inline void RegisterPlayerbotServices()
 
         // Register QuestTurnIn (Phase 31)
         container.RegisterInstance<IQuestTurnIn>(
-            std::shared_ptr<IQuestTurnIn>(
+            ::std::shared_ptr<IQuestTurnIn>(
                 Playerbot::QuestTurnIn::instance(),
                 [](IQuestTurnIn*) {} // No-op deleter (singleton)
             )
@@ -658,7 +658,7 @@ inline void RegisterPlayerbotServices()
 
         // Register RoleAssignment (Phase 32)
         container.RegisterInstance<IRoleAssignment>(
-            std::shared_ptr<IRoleAssignment>(
+            ::std::shared_ptr<IRoleAssignment>(
                 Playerbot::RoleAssignment::instance(),
                 [](IRoleAssignment*) {} // No-op deleter (singleton)
             )
@@ -667,7 +667,7 @@ inline void RegisterPlayerbotServices()
 
         // Register DynamicQuestSystem (Phase 33)
         container.RegisterInstance<IDynamicQuestSystem>(
-            std::shared_ptr<IDynamicQuestSystem>(
+            ::std::shared_ptr<IDynamicQuestSystem>(
                 Playerbot::DynamicQuestSystem::instance(),
                 [](IDynamicQuestSystem*) {} // No-op deleter (singleton)
             )
@@ -676,7 +676,7 @@ inline void RegisterPlayerbotServices()
 
         // Register FarmingCoordinator (Phase 34)
         container.RegisterInstance<IFarmingCoordinator>(
-            std::shared_ptr<IFarmingCoordinator>(
+            ::std::shared_ptr<IFarmingCoordinator>(
                 Playerbot::FarmingCoordinator::instance(),
                 [](IFarmingCoordinator*) {} // No-op deleter (singleton)
             )
@@ -685,7 +685,7 @@ inline void RegisterPlayerbotServices()
 
         // Register AuctionHouse (Phase 35)
         container.RegisterInstance<IAuctionHouse>(
-            std::shared_ptr<IAuctionHouse>(
+            ::std::shared_ptr<IAuctionHouse>(
                 Playerbot::AuctionHouse::instance(),
                 [](IAuctionHouse*) {} // No-op deleter (singleton)
             )
@@ -694,7 +694,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ProfessionAuctionBridge (Phase 36)
         container.RegisterInstance<IProfessionAuctionBridge>(
-            std::shared_ptr<IProfessionAuctionBridge>(
+            ::std::shared_ptr<IProfessionAuctionBridge>(
                 Playerbot::ProfessionAuctionBridge::instance(),
                 [](IProfessionAuctionBridge*) {} // No-op deleter (singleton)
             )
@@ -703,7 +703,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LFGRoleDetector (Phase 37)
         container.RegisterInstance<ILFGRoleDetector>(
-            std::shared_ptr<ILFGRoleDetector>(
+            ::std::shared_ptr<ILFGRoleDetector>(
                 LFGRoleDetector::instance(),
                 [](ILFGRoleDetector*) {} // No-op deleter (singleton)
             )
@@ -712,7 +712,7 @@ inline void RegisterPlayerbotServices()
 
         // Register VendorInteraction (Phase 38)
         container.RegisterInstance<IVendorInteraction>(
-            std::shared_ptr<IVendorInteraction>(
+            ::std::shared_ptr<IVendorInteraction>(
                 Playerbot::VendorInteraction::instance(),
                 [](IVendorInteraction*) {} // No-op deleter (singleton)
             )
@@ -721,7 +721,7 @@ inline void RegisterPlayerbotServices()
 
         // Register LFGBotSelector (Phase 39)
         container.RegisterInstance<ILFGBotSelector>(
-            std::shared_ptr<ILFGBotSelector>(
+            ::std::shared_ptr<ILFGBotSelector>(
                 LFGBotSelector::instance(),
                 [](ILFGBotSelector*) {} // No-op deleter (singleton)
             )
@@ -730,7 +730,7 @@ inline void RegisterPlayerbotServices()
 
         // Register GuildIntegration (Phase 40)
         container.RegisterInstance<IGuildIntegration>(
-            std::shared_ptr<IGuildIntegration>(
+            ::std::shared_ptr<IGuildIntegration>(
                 Playerbot::GuildIntegration::instance(),
                 [](IGuildIntegration*) {} // No-op deleter (singleton)
             )
@@ -739,7 +739,7 @@ inline void RegisterPlayerbotServices()
 
         // Register DungeonBehavior (Phase 41)
         container.RegisterInstance<IDungeonBehavior>(
-            std::shared_ptr<IDungeonBehavior>(
+            ::std::shared_ptr<IDungeonBehavior>(
                 Playerbot::DungeonBehavior::instance(),
                 [](IDungeonBehavior*) {} // No-op deleter (singleton)
             )
@@ -748,7 +748,7 @@ inline void RegisterPlayerbotServices()
 
         // Register InstanceCoordination (Phase 42)
         container.RegisterInstance<IInstanceCoordination>(
-            std::shared_ptr<IInstanceCoordination>(
+            ::std::shared_ptr<IInstanceCoordination>(
                 Playerbot::InstanceCoordination::instance(),
                 [](IInstanceCoordination*) {} // No-op deleter (singleton)
             )
@@ -757,7 +757,7 @@ inline void RegisterPlayerbotServices()
 
         // Register EncounterStrategy (Phase 43)
         container.RegisterInstance<IEncounterStrategy>(
-            std::shared_ptr<IEncounterStrategy>(
+            ::std::shared_ptr<IEncounterStrategy>(
                 Playerbot::EncounterStrategy::instance(),
                 [](IEncounterStrategy*) {} // No-op deleter (singleton)
             )
@@ -766,7 +766,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ObjectiveTracker (Phase 44)
         container.RegisterInstance<IObjectiveTracker>(
-            std::shared_ptr<IObjectiveTracker>(
+            ::std::shared_ptr<IObjectiveTracker>(
                 Playerbot::ObjectiveTracker::instance(),
                 [](IObjectiveTracker*) {} // No-op deleter (singleton)
             )
@@ -775,7 +775,7 @@ inline void RegisterPlayerbotServices()
 
         // Register UnifiedInterruptSystem (Phase 45)
         container.RegisterInstance<IUnifiedInterruptSystem>(
-            std::shared_ptr<IUnifiedInterruptSystem>(
+            ::std::shared_ptr<IUnifiedInterruptSystem>(
                 Playerbot::UnifiedInterruptSystem::instance(),
                 [](IUnifiedInterruptSystem*) {} // No-op deleter (singleton)
             )
@@ -784,7 +784,7 @@ inline void RegisterPlayerbotServices()
 
         // Register TriggerFactory (Phase 46)
         container.RegisterInstance<ITriggerFactory>(
-            std::shared_ptr<ITriggerFactory>(
+            ::std::shared_ptr<ITriggerFactory>(
                 Playerbot::TriggerFactory::instance(),
                 [](ITriggerFactory*) {} // No-op deleter (singleton)
             )
@@ -793,7 +793,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ActionFactory (Phase 47)
         container.RegisterInstance<IActionFactory>(
-            std::shared_ptr<IActionFactory>(
+            ::std::shared_ptr<IActionFactory>(
                 Playerbot::ActionFactory::instance(),
                 [](IActionFactory*) {} // No-op deleter (singleton)
             )
@@ -802,7 +802,7 @@ inline void RegisterPlayerbotServices()
 
         // Register StrategyFactory (Phase 48)
         container.RegisterInstance<IStrategyFactory>(
-            std::shared_ptr<IStrategyFactory>(
+            ::std::shared_ptr<IStrategyFactory>(
                 Playerbot::StrategyFactory::instance(),
                 [](IStrategyFactory*) {} // No-op deleter (singleton)
             )
@@ -811,7 +811,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotWorldSessionMgr (Phase 49)
         container.RegisterInstance<IBotWorldSessionMgr>(
-            std::shared_ptr<IBotWorldSessionMgr>(
+            ::std::shared_ptr<IBotWorldSessionMgr>(
                 Playerbot::BotWorldSessionMgr::instance(),
                 [](IBotWorldSessionMgr*) {} // No-op deleter (singleton)
             )
@@ -820,7 +820,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotPriorityManager (Phase 50)
         container.RegisterInstance<IBotPriorityManager>(
-            std::shared_ptr<IBotPriorityManager>(
+            ::std::shared_ptr<IBotPriorityManager>(
                 Playerbot::BotPriorityManager::instance(),
                 [](IBotPriorityManager*) {} // No-op deleter (singleton)
             )
@@ -829,7 +829,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotResourcePool (Phase 51)
         container.RegisterInstance<IBotResourcePool>(
-            std::shared_ptr<IBotResourcePool>(
+            ::std::shared_ptr<IBotResourcePool>(
                 Playerbot::BotResourcePool::instance(),
                 [](IBotResourcePool*) {} // No-op deleter (singleton)
             )
@@ -838,7 +838,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotPerformanceMonitor (Phase 52)
         container.RegisterInstance<IBotPerformanceMonitor>(
-            std::shared_ptr<IBotPerformanceMonitor>(
+            ::std::shared_ptr<IBotPerformanceMonitor>(
                 Playerbot::BotPerformanceMonitor::instance(),
                 [](IBotPerformanceMonitor*) {} // No-op deleter (singleton)
             )
@@ -847,7 +847,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PlayerbotDatabaseManager (Phase 53)
         container.RegisterInstance<IPlayerbotDatabaseManager>(
-            std::shared_ptr<IPlayerbotDatabaseManager>(
+            ::std::shared_ptr<IPlayerbotDatabaseManager>(
                 PlayerbotDatabaseManager::instance(),
                 [](IPlayerbotDatabaseManager*) {} // No-op deleter (singleton)
             )
@@ -856,7 +856,7 @@ inline void RegisterPlayerbotServices()
 
         // Register DeadlockDetector (Phase 54)
         container.RegisterInstance<Playerbot::Diagnostics::IDeadlockDetector>(
-            std::shared_ptr<Playerbot::Diagnostics::IDeadlockDetector>(
+            ::std::shared_ptr<Playerbot::Diagnostics::IDeadlockDetector>(
                 Playerbot::Diagnostics::DeadlockDetector::instance(),
                 [](Playerbot::Diagnostics::IDeadlockDetector*) {} // No-op deleter (singleton)
             )
@@ -865,7 +865,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PlayerbotMigrationMgr (Phase 55)
         container.RegisterInstance<IPlayerbotMigrationMgr>(
-            std::shared_ptr<IPlayerbotMigrationMgr>(
+            ::std::shared_ptr<IPlayerbotMigrationMgr>(
                 PlayerbotMigrationMgr::instance(),
                 [](IPlayerbotMigrationMgr*) {} // No-op deleter (singleton)
             )
@@ -874,7 +874,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotSpawnEventBus (Phase 56)
         container.RegisterInstance<Playerbot::IBotSpawnEventBus>(
-            std::shared_ptr<Playerbot::IBotSpawnEventBus>(
+            ::std::shared_ptr<Playerbot::IBotSpawnEventBus>(
                 Playerbot::BotSpawnEventBus::instance(),
                 [](Playerbot::IBotSpawnEventBus*) {} // No-op deleter (singleton)
             )
@@ -883,7 +883,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotNpcLocationService (Phase 57)
         container.RegisterInstance<Playerbot::IBotNpcLocationService>(
-            std::shared_ptr<Playerbot::IBotNpcLocationService>(
+            ::std::shared_ptr<Playerbot::IBotNpcLocationService>(
                 Playerbot::BotNpcLocationService::instance(),
                 [](Playerbot::IBotNpcLocationService*) {} // No-op deleter (singleton)
             )
@@ -892,7 +892,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotLifecycleMgr (Phase 58)
         container.RegisterInstance<IBotLifecycleMgr>(
-            std::shared_ptr<IBotLifecycleMgr>(
+            ::std::shared_ptr<IBotLifecycleMgr>(
                 BotLifecycleMgr::instance(),
                 [](IBotLifecycleMgr*) {} // No-op deleter (singleton)
             )
@@ -901,7 +901,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotWorldEntryQueue (Phase 59)
         container.RegisterInstance<Playerbot::IBotWorldEntryQueue>(
-            std::shared_ptr<Playerbot::IBotWorldEntryQueue>(
+            ::std::shared_ptr<Playerbot::IBotWorldEntryQueue>(
                 Playerbot::BotWorldEntryQueue::instance(),
                 [](Playerbot::IBotWorldEntryQueue*) {} // No-op deleter (singleton)
             )
@@ -910,7 +910,7 @@ inline void RegisterPlayerbotServices()
 
         // Register MountManager (Phase 60)
         container.RegisterInstance<Playerbot::IMountManager>(
-            std::shared_ptr<Playerbot::IMountManager>(
+            ::std::shared_ptr<Playerbot::IMountManager>(
                 Playerbot::MountManager::instance(),
                 [](Playerbot::IMountManager*) {} // No-op deleter (singleton)
             )
@@ -919,7 +919,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PlayerbotCharacterDBInterface (Phase 61)
         container.RegisterInstance<Playerbot::IPlayerbotCharacterDBInterface>(
-            std::shared_ptr<Playerbot::IPlayerbotCharacterDBInterface>(
+            ::std::shared_ptr<Playerbot::IPlayerbotCharacterDBInterface>(
                 Playerbot::PlayerbotCharacterDBInterface::instance(),
                 [](Playerbot::IPlayerbotCharacterDBInterface*) {} // No-op deleter (singleton)
             )
@@ -928,7 +928,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BattlePetManager (Phase 62)
         container.RegisterInstance<Playerbot::IBattlePetManager>(
-            std::shared_ptr<Playerbot::IBattlePetManager>(
+            ::std::shared_ptr<Playerbot::IBattlePetManager>(
                 Playerbot::BattlePetManager::instance(),
                 [](Playerbot::IBattlePetManager*) {} // No-op deleter (singleton)
             )
@@ -937,7 +937,7 @@ inline void RegisterPlayerbotServices()
 
         // Register ArenaAI (Phase 63)
         container.RegisterInstance<Playerbot::IArenaAI>(
-            std::shared_ptr<Playerbot::IArenaAI>(
+            ::std::shared_ptr<Playerbot::IArenaAI>(
                 Playerbot::ArenaAI::instance(),
                 [](Playerbot::IArenaAI*) {} // No-op deleter (singleton)
             )
@@ -946,7 +946,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PvPCombatAI (Phase 64)
         container.RegisterInstance<Playerbot::IPvPCombatAI>(
-            std::shared_ptr<Playerbot::IPvPCombatAI>(
+            ::std::shared_ptr<Playerbot::IPvPCombatAI>(
                 Playerbot::PvPCombatAI::instance(),
                 [](Playerbot::IPvPCombatAI*) {} // No-op deleter (singleton)
             )
@@ -955,7 +955,7 @@ inline void RegisterPlayerbotServices()
 
         // Register PerformanceBenchmark (Phase 65)
         container.RegisterInstance<Playerbot::IPerformanceBenchmark>(
-            std::shared_ptr<Playerbot::IPerformanceBenchmark>(
+            ::std::shared_ptr<Playerbot::IPerformanceBenchmark>(
                 Playerbot::PerformanceBenchmark::instance(),
                 [](Playerbot::IPerformanceBenchmark*) {} // No-op deleter (singleton)
             )
@@ -964,7 +964,7 @@ inline void RegisterPlayerbotServices()
 
         // Register SystemValidation (Phase 66)
         container.RegisterInstance<Playerbot::ISystemValidation>(
-            std::shared_ptr<Playerbot::ISystemValidation>(
+            ::std::shared_ptr<Playerbot::ISystemValidation>(
                 Playerbot::SystemValidation::instance(),
                 [](Playerbot::ISystemValidation*) {} // No-op deleter (singleton)
             )
@@ -973,7 +973,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BattlegroundAI (Phase 67)
         container.RegisterInstance<Playerbot::IBattlegroundAI>(
-            std::shared_ptr<Playerbot::IBattlegroundAI>(
+            ::std::shared_ptr<Playerbot::IBattlegroundAI>(
                 Playerbot::BattlegroundAI::instance(),
                 [](Playerbot::IBattlegroundAI*) {} // No-op deleter (singleton)
             )
@@ -982,7 +982,7 @@ inline void RegisterPlayerbotServices()
 
         // Register BotAIFactory (Phase 68)
         container.RegisterInstance<Playerbot::IBotAIFactory>(
-            std::shared_ptr<Playerbot::IBotAIFactory>(
+            ::std::shared_ptr<Playerbot::IBotAIFactory>(
                 Playerbot::BotAIFactory::instance(),
                 [](Playerbot::IBotAIFactory*) {} // No-op deleter (singleton)
             )
@@ -996,7 +996,7 @@ inline void RegisterPlayerbotServices()
         TC_LOG_INFO("playerbot.di", "Playerbot service registration complete. {} services registered.",
             container.GetServiceCount());
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_FATAL("playerbot.di", "Failed to register Playerbot services: {}", e.what());
     }

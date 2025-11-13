@@ -355,7 +355,7 @@ protected:
             // Tactical Mastery allows retaining rage when switching
             if (this->HasTacticalMastery())
             {
-                _tacticalMasteryRage = std::min(this->_resource, 25u);
+                _tacticalMasteryRage = ::std::min(this->_resource, 25u);
             }
 
             this->SwitchToStance(optimalStance);
@@ -531,7 +531,7 @@ private:
             // Emergency spells
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && target->GetHealthPct() < 20.0f;
                 }},
                 "Target HP < 20% (Execute range)");
@@ -553,7 +553,7 @@ private:
             // Medium priority
             queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(SPELL_WHIRLWIND,
-                std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                     // Capture 'this' for member access if needed
                     return bot->GetAttackersCount() >= 3;
                 }},
@@ -561,7 +561,7 @@ private:
 
             queue->RegisterSpell(SPELL_REND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_REND,
-                std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && !target->HasAura(SPELL_REND);
                 }},
                 "Rend not active on target");
@@ -717,8 +717,8 @@ private:
     // ========================================================================
 
     // Debuff tracking
-    std::unordered_map<ObjectGuid, uint32> _deepWoundsTracking;
-    std::unordered_map<ObjectGuid, uint32> _rendTracking;
+    ::std::unordered_map<ObjectGuid, uint32> _deepWoundsTracking;
+    ::std::unordered_map<ObjectGuid, uint32> _rendTracking;
 
     // State tracking
     bool _colossusSmashActive;

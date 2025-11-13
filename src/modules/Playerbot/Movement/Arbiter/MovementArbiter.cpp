@@ -28,55 +28,55 @@ namespace Playerbot
 
 void MovementArbiterStatistics::Reset()
 {
-    totalRequests.store(0, std::memory_order_relaxed);
-    executedRequests.store(0, std::memory_order_relaxed);
-    duplicateRequests.store(0, std::memory_order_relaxed);
-    lowPriorityFiltered.store(0, std::memory_order_relaxed);
-    interruptedRequests.store(0, std::memory_order_relaxed);
+    totalRequests.store(0, ::std::memory_order_relaxed);
+    executedRequests.store(0, ::std::memory_order_relaxed);
+    duplicateRequests.store(0, ::std::memory_order_relaxed);
+    lowPriorityFiltered.store(0, ::std::memory_order_relaxed);
+    interruptedRequests.store(0, ::std::memory_order_relaxed);
 
-    criticalRequests.store(0, std::memory_order_relaxed);
-    veryHighRequests.store(0, std::memory_order_relaxed);
-    highRequests.store(0, std::memory_order_relaxed);
-    mediumRequests.store(0, std::memory_order_relaxed);
-    lowRequests.store(0, std::memory_order_relaxed);
-    minimalRequests.store(0, std::memory_order_relaxed);
+    criticalRequests.store(0, ::std::memory_order_relaxed);
+    veryHighRequests.store(0, ::std::memory_order_relaxed);
+    highRequests.store(0, ::std::memory_order_relaxed);
+    mediumRequests.store(0, ::std::memory_order_relaxed);
+    lowRequests.store(0, ::std::memory_order_relaxed);
+    minimalRequests.store(0, ::std::memory_order_relaxed);
 
-    totalArbitrationTimeUs.store(0, std::memory_order_relaxed);
-    maxArbitrationTimeUs.store(0, std::memory_order_relaxed);
+    totalArbitrationTimeUs.store(0, ::std::memory_order_relaxed);
+    maxArbitrationTimeUs.store(0, ::std::memory_order_relaxed);
 
-    currentQueueSize.store(0, std::memory_order_relaxed);
-    maxQueueSize.store(0, std::memory_order_relaxed);
+    currentQueueSize.store(0, ::std::memory_order_relaxed);
+    maxQueueSize.store(0, ::std::memory_order_relaxed);
 }
 
-std::string MovementArbiterStatistics::ToString() const
+::std::string MovementArbiterStatistics::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
-    uint64 total = totalRequests.load(std::memory_order_relaxed);
-    uint64 executed = executedRequests.load(std::memory_order_relaxed);
-    uint64 duplicates = duplicateRequests.load(std::memory_order_relaxed);
-    uint64 filtered = lowPriorityFiltered.load(std::memory_order_relaxed);
+    uint64 total = totalRequests.load(::std::memory_order_relaxed);
+    uint64 executed = executedRequests.load(::std::memory_order_relaxed);
+    uint64 duplicates = duplicateRequests.load(::std::memory_order_relaxed);
+    uint64 filtered = lowPriorityFiltered.load(::std::memory_order_relaxed);
 
     oss << "MovementArbiterStatistics {\n";
     oss << "  Total Requests: " << total << "\n";
     oss << "  Executed: " << executed << " (" << (GetAcceptanceRate() * 100.0) << "%)\n";
     oss << "  Duplicates: " << duplicates << " (" << (GetDuplicateRate() * 100.0) << "%)\n";
     oss << "  Filtered: " << filtered << "\n";
-    oss << "  Interrupted: " << interruptedRequests.load(std::memory_order_relaxed) << "\n\n";
+    oss << "  Interrupted: " << interruptedRequests.load(::std::memory_order_relaxed) << "\n\n";
 
     oss << "  Priority Distribution:\n";
-    oss << "    CRITICAL: " << criticalRequests.load(std::memory_order_relaxed) << "\n";
-    oss << "    VERY_HIGH: " << veryHighRequests.load(std::memory_order_relaxed) << "\n";
-    oss << "    HIGH: " << highRequests.load(std::memory_order_relaxed) << "\n";
-    oss << "    MEDIUM: " << mediumRequests.load(std::memory_order_relaxed) << "\n";
-    oss << "    LOW: " << lowRequests.load(std::memory_order_relaxed) << "\n";
-    oss << "    MINIMAL: " << minimalRequests.load(std::memory_order_relaxed) << "\n\n";
+    oss << "    CRITICAL: " << criticalRequests.load(::std::memory_order_relaxed) << "\n";
+    oss << "    VERY_HIGH: " << veryHighRequests.load(::std::memory_order_relaxed) << "\n";
+    oss << "    HIGH: " << highRequests.load(::std::memory_order_relaxed) << "\n";
+    oss << "    MEDIUM: " << mediumRequests.load(::std::memory_order_relaxed) << "\n";
+    oss << "    LOW: " << lowRequests.load(::std::memory_order_relaxed) << "\n";
+    oss << "    MINIMAL: " << minimalRequests.load(::std::memory_order_relaxed) << "\n\n";
 
     oss << "  Performance:\n";
     oss << "    Avg Arbitration: " << GetAverageArbitrationTimeUs() << " us\n";
-    oss << "    Max Arbitration: " << maxArbitrationTimeUs.load(std::memory_order_relaxed) << " us\n";
-    oss << "    Current Queue: " << currentQueueSize.load(std::memory_order_relaxed) << "\n";
-    oss << "    Max Queue: " << maxQueueSize.load(std::memory_order_relaxed) << "\n";
+    oss << "    Max Arbitration: " << maxArbitrationTimeUs.load(::std::memory_order_relaxed) << " us\n";
+    oss << "    Current Queue: " << currentQueueSize.load(::std::memory_order_relaxed) << "\n";
+    oss << "    Max Queue: " << maxQueueSize.load(::std::memory_order_relaxed) << "\n";
 
     oss << "}";
     return oss.str();
@@ -91,7 +91,7 @@ MovementArbiter::MovementArbiter(Player* bot)
     , _lastUpdateTime(GameTime::GetGameTimeMS())
 {
     if (!_bot)
-        throw std::invalid_argument("MovementArbiter: bot cannot be null");
+        throw ::std::invalid_argument("MovementArbiter: bot cannot be null");
 
     TC_LOG_DEBUG("playerbot.movement.arbiter",
         "MovementArbiter: Created for bot {} (GUID: {})",
@@ -110,7 +110,7 @@ MovementArbiter::~MovementArbiter()
     }
 
     // Clear pending requests
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    ::std::lock_guard<::std::mutex> lock(_queueMutex);
     _pendingRequests.clear();
 }
 
@@ -120,10 +120,10 @@ MovementArbiter::~MovementArbiter()
 
 bool MovementArbiter::RequestMovement(MovementRequest const& request)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Increment total requests counter
-    _statistics.totalRequests.fetch_add(1, std::memory_order_relaxed);
+    _statistics.totalRequests.fetch_add(1, ::std::memory_order_relaxed);
 
     // Update priority distribution statistics
     UpdatePriorityStatistics(request.GetPriority());
@@ -131,7 +131,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     // Fast Path: Duplicate detection (lock-free)
     if (_config.enableDeduplication && IsDuplicate(request))
     {
-        _statistics.duplicateRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.duplicateRequests.fetch_add(1, ::std::memory_order_relaxed);
 
         if (_diagnosticLogging)
             LogRequest(request, "DUPLICATE");
@@ -143,14 +143,14 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     // If we have a current request and new request has lower priority, filter it
     if (_config.enablePriorityFiltering)
     {
-        std::lock_guard<std::mutex> currentLock(_currentRequestMutex);
+        ::std::lock_guard<::std::mutex> currentLock(_currentRequestMutex);
         if (_currentRequest.has_value())
         {
             // Only accept if new request has higher priority
             if (static_cast<uint8>(request.GetPriority()) <
                 static_cast<uint8>(_currentRequest->GetPriority()))
             {
-                _statistics.lowPriorityFiltered.fetch_add(1, std::memory_order_relaxed);
+                _statistics.lowPriorityFiltered.fetch_add(1, ::std::memory_order_relaxed);
 
                 if (_diagnosticLogging)
                     LogRequest(request, "FILTERED_LOW_PRIORITY");
@@ -162,17 +162,17 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
 
     // Slow Path: Queue insertion (mutex required)
     {
-        std::lock_guard<std::mutex> queueLock(_queueMutex);
+        ::std::lock_guard<::std::mutex> queueLock(_queueMutex);
 
         // Add to pending queue
         _pendingRequests.push_back(request);
 
         // Update queue size statistics
         uint32 queueSize = static_cast<uint32>(_pendingRequests.size());
-        _statistics.currentQueueSize.store(queueSize, std::memory_order_relaxed);
-        uint32 maxQueue = _statistics.maxQueueSize.load(std::memory_order_relaxed);
+        _statistics.currentQueueSize.store(queueSize, ::std::memory_order_relaxed);
+        uint32 maxQueue = _statistics.maxQueueSize.load(::std::memory_order_relaxed);
         if (queueSize > maxQueue)
-            _statistics.maxQueueSize.store(queueSize, std::memory_order_relaxed);
+            _statistics.maxQueueSize.store(queueSize, ::std::memory_order_relaxed);
 
         // Warning if queue is getting large
         if (queueSize > _config.maxQueueSize)
@@ -186,20 +186,20 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     // Update deduplication cache
     if (_config.enableDeduplication)
     {
-        std::lock_guard<std::mutex> dedupLock(_deduplicationMutex);
+        ::std::lock_guard<::std::mutex> dedupLock(_deduplicationMutex);
         uint64 hash = request.GetSpatialTemporalHash();
         _recentRequests[hash] = GameTime::GetGameTimeMS();
     }
 
     // Calculate arbitration time
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto durationUs = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
 
-    _statistics.totalArbitrationTimeUs.fetch_add(durationUs, std::memory_order_relaxed);
+    _statistics.totalArbitrationTimeUs.fetch_add(durationUs, ::std::memory_order_relaxed);
 
-    uint32 maxTime = _statistics.maxArbitrationTimeUs.load(std::memory_order_relaxed);
+    uint32 maxTime = _statistics.maxArbitrationTimeUs.load(::std::memory_order_relaxed);
     if (static_cast<uint32>(durationUs) > maxTime)
-        _statistics.maxArbitrationTimeUs.store(static_cast<uint32>(durationUs), std::memory_order_relaxed);
+        _statistics.maxArbitrationTimeUs.store(static_cast<uint32>(durationUs), ::std::memory_order_relaxed);
 
     if (_diagnosticLogging)
         LogRequest(request, "ACCEPTED");
@@ -221,13 +221,13 @@ void MovementArbiter::Update(uint32 diff)
     }
 
     // Check if we have pending requests
-    std::unique_lock<std::mutex> queueLock(_queueMutex);
+    ::std::unique_lock<::std::mutex> queueLock(_queueMutex);
     if (_pendingRequests.empty())
         return;
 
     // Find highest-priority request
     // Sort by priority (descending) - highest priority first
-    std::sort(_pendingRequests.begin(), _pendingRequests.end(),
+    ::std::sort(_pendingRequests.begin(), _pendingRequests.end(),
         [](MovementRequest const& a, MovementRequest const& b)
         {
             return static_cast<uint8>(a.GetPriority()) > static_cast<uint8>(b.GetPriority());
@@ -238,12 +238,12 @@ void MovementArbiter::Update(uint32 diff)
     _pendingRequests.pop_front();
 
     // Update current queue size
-    _statistics.currentQueueSize.store(static_cast<uint32>(_pendingRequests.size()), std::memory_order_relaxed);
+    _statistics.currentQueueSize.store(static_cast<uint32>(_pendingRequests.size()), ::std::memory_order_relaxed);
 
     // Check if we should interrupt current movement
     bool shouldInterrupt = false;
     {
-        std::lock_guard<std::mutex> currentLock(_currentRequestMutex);
+        ::std::lock_guard<::std::mutex> currentLock(_currentRequestMutex);
 
         if (_currentRequest.has_value())
         {
@@ -256,7 +256,7 @@ void MovementArbiter::Update(uint32 diff)
                 if (_currentRequest->CanBeInterrupted())
                 {
                     shouldInterrupt = true;
-                    _statistics.interruptedRequests.fetch_add(1, std::memory_order_relaxed);
+                    _statistics.interruptedRequests.fetch_add(1, ::std::memory_order_relaxed);
 
                     if (_diagnosticLogging)
                     {
@@ -293,7 +293,7 @@ void MovementArbiter::Update(uint32 diff)
                 }
 
                 // Filter out lower priority request
-                _statistics.lowPriorityFiltered.fetch_add(1, std::memory_order_relaxed);
+                _statistics.lowPriorityFiltered.fetch_add(1, ::std::memory_order_relaxed);
                 return;
             }
         }
@@ -308,7 +308,7 @@ void MovementArbiter::Update(uint32 diff)
     ExecuteMovementRequest(winningRequest);
 
     // Update statistics
-    _statistics.executedRequests.fetch_add(1, std::memory_order_relaxed);
+    _statistics.executedRequests.fetch_add(1, ::std::memory_order_relaxed);
 
     if (_diagnosticLogging)
         LogRequest(winningRequest, "EXECUTED");
@@ -505,7 +505,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
 
 bool MovementArbiter::IsDuplicate(MovementRequest const& request) const
 {
-    std::lock_guard<std::mutex> lock(_deduplicationMutex);
+    ::std::lock_guard<::std::mutex> lock(_deduplicationMutex);
 
     uint64 hash = request.GetSpatialTemporalHash();
     auto it = _recentRequests.find(hash);
@@ -524,7 +524,7 @@ bool MovementArbiter::IsDuplicate(MovementRequest const& request) const
 
 void MovementArbiter::UpdateDeduplicationCache(uint32 currentTime)
 {
-    std::lock_guard<std::mutex> lock(_deduplicationMutex);
+    ::std::lock_guard<::std::mutex> lock(_deduplicationMutex);
 
     // Remove entries older than deduplication window
     auto it = _recentRequests.begin();
@@ -543,9 +543,9 @@ void MovementArbiter::UpdateDeduplicationCache(uint32 currentTime)
 
 void MovementArbiter::ClearPendingRequests()
 {
-    std::lock_guard<std::mutex> lock(_queueMutex);
+    ::std::lock_guard<::std::mutex> lock(_queueMutex);
     _pendingRequests.clear();
-    _statistics.currentQueueSize.store(0, std::memory_order_relaxed);
+    _statistics.currentQueueSize.store(0, ::std::memory_order_relaxed);
 
     if (_diagnosticLogging)
     {
@@ -560,7 +560,7 @@ void MovementArbiter::StopMovement()
     ClearPendingRequests();
 
     {
-        std::lock_guard<std::mutex> lock(_currentRequestMutex);
+        ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
         _currentRequest.reset();
     }
 
@@ -591,14 +591,14 @@ void MovementArbiter::ResetStatistics()
     }
 }
 
-std::string MovementArbiter::GetDiagnosticString() const
+::std::string MovementArbiter::GetDiagnosticString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "MovementArbiter Diagnostics for " << _bot->GetName() << ":\n";
     oss << "  Pending Requests: " << GetPendingRequestCount() << "\n";
 
     {
-        std::lock_guard<std::mutex> lock(_currentRequestMutex);
+        ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
         if (_currentRequest.has_value())
         {
             oss << "  Current Request: " << _currentRequest->ToString() << "\n";
@@ -627,15 +627,15 @@ void MovementArbiter::LogStatistics() const
 
 MovementArbiterConfig MovementArbiter::GetConfig() const
 {
-    std::lock_guard<std::mutex> lock(_configMutex);
+    ::std::lock_guard<::std::mutex> lock(_configMutex);
     return _config;
 }
 
 void MovementArbiter::SetConfig(MovementArbiterConfig const& config)
 {
-    std::lock_guard<std::mutex> lock(_configMutex);
+    ::std::lock_guard<::std::mutex> lock(_configMutex);
     _config = config;
-    _diagnosticLogging.store(config.enableDiagnosticLogging, std::memory_order_relaxed);
+    _diagnosticLogging.store(config.enableDiagnosticLogging, ::std::memory_order_relaxed);
 
     TC_LOG_DEBUG("playerbot.movement.arbiter",
         "MovementArbiter: Updated configuration for bot {}",
@@ -644,10 +644,10 @@ void MovementArbiter::SetConfig(MovementArbiterConfig const& config)
 
 void MovementArbiter::SetDiagnosticLogging(bool enable)
 {
-    _diagnosticLogging.store(enable, std::memory_order_relaxed);
+    _diagnosticLogging.store(enable, ::std::memory_order_relaxed);
 
     {
-        std::lock_guard<std::mutex> lock(_configMutex);
+        ::std::lock_guard<::std::mutex> lock(_configMutex);
         _config.enableDiagnosticLogging = enable;
     }
 }
@@ -658,20 +658,20 @@ void MovementArbiter::SetDiagnosticLogging(bool enable)
 
 Optional<MovementRequest> MovementArbiter::GetCurrentRequest() const
 {
-    std::lock_guard<std::mutex> lock(_currentRequestMutex);
+    ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
     return _currentRequest;
 }
 
 uint32 MovementArbiter::GetPendingRequestCount() const
 {
-    return _statistics.currentQueueSize.load(std::memory_order_relaxed);
+    return _statistics.currentQueueSize.load(::std::memory_order_relaxed);
 }
 
 // ============================================================================
 // MovementArbiter - Internal Helpers
 // ============================================================================
 
-void MovementArbiter::LogRequest(MovementRequest const& request, std::string const& action) const
+void MovementArbiter::LogRequest(MovementRequest const& request, ::std::string const& action) const
 {
     TC_LOG_DEBUG("playerbot.movement.arbiter",
         "MovementArbiter: {} - {}", action, request.ToString());
@@ -682,17 +682,17 @@ void MovementArbiter::UpdatePriorityStatistics(PlayerBotMovementPriority priorit
     uint8 value = static_cast<uint8>(priority);
 
     if (value >= 240)
-        _statistics.criticalRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.criticalRequests.fetch_add(1, ::std::memory_order_relaxed);
     else if (value >= 200)
-        _statistics.veryHighRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.veryHighRequests.fetch_add(1, ::std::memory_order_relaxed);
     else if (value >= 150)
-        _statistics.highRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.highRequests.fetch_add(1, ::std::memory_order_relaxed);
     else if (value >= 100)
-        _statistics.mediumRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.mediumRequests.fetch_add(1, ::std::memory_order_relaxed);
     else if (value >= 50)
-        _statistics.lowRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.lowRequests.fetch_add(1, ::std::memory_order_relaxed);
     else
-        _statistics.minimalRequests.fetch_add(1, std::memory_order_relaxed);
+        _statistics.minimalRequests.fetch_add(1, ::std::memory_order_relaxed);
 }
 
 } // namespace Playerbot

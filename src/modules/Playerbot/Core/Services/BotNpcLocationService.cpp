@@ -42,7 +42,7 @@ bool BotNpcLocationService::Initialize()
     TC_LOG_INFO("module.playerbot.services", "Initializing BotNpcLocationService...");
     TC_LOG_INFO("module.playerbot.services", "========================================");
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Build all caches
     BuildCreatureSpawnCache();
@@ -52,8 +52,8 @@ bool BotNpcLocationService::Initialize()
     BuildServiceNpcCache();
     BuildQuestPOICache();
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
     // Log statistics
     CacheStats stats = GetCacheStats();
@@ -467,9 +467,9 @@ BotNpcLocationService::CacheStats BotNpcLocationService::GetCacheStats() const
 
 NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     Player* bot,
-    std::vector<SpawnLocationData> const& locations,
+    ::std::vector<SpawnLocationData> const& locations,
     float maxRange,
-    std::string const& sourceName)
+    ::std::string const& sourceName)
 {
     NpcLocationResult result;
 
@@ -580,7 +580,7 @@ NpcLocationResult BotNpcLocationService::TryFindLiveCreature(Player* bot, uint32
     NpcLocationResult result;
 
     // Use spatial grid to find live creatures (best quality - spawned and available NOW)
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureEntry, maxRange);
 
     Creature* closest = nullptr;
@@ -621,7 +621,7 @@ NpcLocationResult BotNpcLocationService::TryFindLiveGameObject(Player* bot, uint
     NpcLocationResult result;
 
     // Use spatial grid to find live GameObjects
-    std::list<GameObject*> nearbyObjects;
+    ::std::list<GameObject*> nearbyObjects;
     bot->GetGameObjectListWithEntryInGrid(nearbyObjects, objectEntry, maxRange);
 
     GameObject* closest = nullptr;

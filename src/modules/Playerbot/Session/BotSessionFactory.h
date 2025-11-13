@@ -55,30 +55,30 @@ public:
     void Shutdown();
 
     // === SESSION CREATION ===
-    std::shared_ptr<BotSession> CreateBotSession(ObjectGuid characterGuid, SpawnRequest const& request);
-    std::shared_ptr<BotSession> CreateBotSession(uint32 accountId, ObjectGuid characterGuid);
+    ::std::shared_ptr<BotSession> CreateBotSession(ObjectGuid characterGuid, SpawnRequest const& request);
+    ::std::shared_ptr<BotSession> CreateBotSession(uint32 accountId, ObjectGuid characterGuid);
 
     // === BATCH CREATION ===
-    std::vector<std::shared_ptr<BotSession>> CreateBotSessions(
-        std::vector<ObjectGuid> const& characterGuids,
+    ::std::vector<::std::shared_ptr<BotSession>> CreateBotSessions(
+        ::std::vector<ObjectGuid> const& characterGuids,
         SpawnRequest const& baseRequest);
 
     // === SESSION CONFIGURATION ===
-    bool ConfigureSession(std::shared_ptr<BotSession> session, SpawnRequest const& request);
-    bool ValidateSession(std::shared_ptr<BotSession> session) const;
+    bool ConfigureSession(::std::shared_ptr<BotSession> session, SpawnRequest const& request);
+    bool ValidateSession(::std::shared_ptr<BotSession> session) const;
 
     // === SESSION TEMPLATES ===
-    void RegisterSessionTemplate(std::string const& templateName, SpawnRequest const& templateRequest);
-    std::shared_ptr<BotSession> CreateFromTemplate(std::string const& templateName, ObjectGuid characterGuid);
+    void RegisterSessionTemplate(::std::string const& templateName, SpawnRequest const& templateRequest);
+    ::std::shared_ptr<BotSession> CreateFromTemplate(::std::string const& templateName, ObjectGuid characterGuid);
 
     // === PERFORMANCE METRICS ===
     struct FactoryStats
     {
-        std::atomic<uint32> sessionsCreated{0};
-        std::atomic<uint32> creationFailures{0};
-        std::atomic<uint32> configurationFailures{0};
-        std::atomic<uint64> avgCreationTimeUs{0};
-        std::atomic<uint32> templatesUsed{0};
+        ::std::atomic<uint32> sessionsCreated{0};
+        ::std::atomic<uint32> creationFailures{0};
+        ::std::atomic<uint32> configurationFailures{0};
+        ::std::atomic<uint64> avgCreationTimeUs{0};
+        ::std::atomic<uint32> templatesUsed{0};
 
         // Delete copy constructor and assignment operator for atomic members
         FactoryStats() = default;
@@ -96,41 +96,41 @@ public:
 
 private:
     // === SESSION CREATION IMPLEMENTATION ===
-    std::shared_ptr<BotSession> CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid);
-    bool InitializeSessionComponents(std::shared_ptr<BotSession> session, SpawnRequest const& request);
+    ::std::shared_ptr<BotSession> CreateSessionInternal(uint32 accountId, ObjectGuid characterGuid);
+    bool InitializeSessionComponents(::std::shared_ptr<BotSession> session, SpawnRequest const& request);
 
     // === CONFIGURATION APPLICATION ===
-    void ApplyBaseConfiguration(std::shared_ptr<BotSession> session, SpawnRequest const& request);
-    void ApplyClassSpecificConfiguration(std::shared_ptr<BotSession> session, uint8 playerClass);
-    void ApplyLevelConfiguration(std::shared_ptr<BotSession> session, uint8 level);
-    void ApplyZoneConfiguration(std::shared_ptr<BotSession> session, uint32 zoneId);
+    void ApplyBaseConfiguration(::std::shared_ptr<BotSession> session, SpawnRequest const& request);
+    void ApplyClassSpecificConfiguration(::std::shared_ptr<BotSession> session, uint8 playerClass);
+    void ApplyLevelConfiguration(::std::shared_ptr<BotSession> session, uint8 level);
+    void ApplyZoneConfiguration(::std::shared_ptr<BotSession> session, uint32 zoneId);
 
     // === SESSION VALIDATION ===
     bool ValidateAccountAccess(uint32 accountId) const;
     bool ValidateCharacterData(ObjectGuid characterGuid) const;
-    bool ValidateSessionConfiguration(std::shared_ptr<BotSession> session) const;
+    bool ValidateSessionConfiguration(::std::shared_ptr<BotSession> session) const;
 
     // === SESSION TEMPLATES ===
     struct SessionTemplate
     {
-        std::string name;
+        ::std::string name;
         SpawnRequest baseRequest;
-        std::unordered_map<std::string, std::string> configOverrides;
+        ::std::unordered_map<::std::string, ::std::string> configOverrides;
         uint32 usageCount = 0;
     };
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _templateMutex;
-    std::unordered_map<std::string, SessionTemplate> _sessionTemplates;
+    ::std::unordered_map<::std::string, SessionTemplate> _sessionTemplates;
 
     void LoadDefaultTemplates();
-    SessionTemplate const* GetTemplate(std::string const& templateName) const;
+    SessionTemplate const* GetTemplate(::std::string const& templateName) const;
 
     // === CACHING ===
     struct ConfigurationCache
     {
-        std::unordered_map<uint8, std::string> classConfigurations; // class -> config
-        std::unordered_map<uint32, std::string> zoneConfigurations; // zoneId -> config
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::unordered_map<uint8, ::std::string> classConfigurations; // class -> config
+        ::std::unordered_map<uint32, ::std::string> zoneConfigurations; // zoneId -> config
+        ::std::chrono::steady_clock::time_point lastUpdate;
         bool isValid = false;
     };
 
@@ -143,11 +143,11 @@ private:
     // === PERFORMANCE TRACKING ===
     mutable FactoryStats _stats;
     void RecordCreation(uint64 durationMicroseconds, bool success);
-    void RecordTemplateUsage(std::string const& templateName);
+    void RecordTemplateUsage(::std::string const& templateName);
 
     // === ERROR HANDLING ===
-    void HandleCreationError(std::string const& error, ObjectGuid characterGuid);
-    std::shared_ptr<BotSession> CreateFallbackSession(ObjectGuid characterGuid);
+    void HandleCreationError(::std::string const& error, ObjectGuid characterGuid);
+    ::std::shared_ptr<BotSession> CreateFallbackSession(ObjectGuid characterGuid);
 
     // === CONFIGURATION ===
     static constexpr uint32 CACHE_VALIDITY_MS = 60000;    // 1 minute

@@ -102,7 +102,7 @@ void DiseaseManager::CleanupExpiredDiseases()
     {
         auto& diseases = it->second;
         diseases.erase(
-            std::remove_if(diseases.begin(), diseases.end(),
+            ::std::remove_if(diseases.begin(), diseases.end(),
                 [currentTime](const DiseaseInfo& disease) {
                     return currentTime >= disease.expirationTime;
                 }),

@@ -64,26 +64,26 @@ protected:
 
 private:
     // Performance tracking
-    std::atomic<uint32> _manaSpent{0};
-    std::atomic<uint32> _damageDealt{0};
-    std::atomic<uint32> _spellsCast{0};
-    std::atomic<uint32> _interruptedCasts{0};
-    std::atomic<uint32> _criticalHits{0};
-    std::atomic<uint32> _successfulPolymorphs{0};
-    std::atomic<uint32> _successfulCounterspells{0};
+    ::std::atomic<uint32> _manaSpent{0};
+    ::std::atomic<uint32> _damageDealt{0};
+    ::std::atomic<uint32> _spellsCast{0};
+    ::std::atomic<uint32> _interruptedCasts{0};
+    ::std::atomic<uint32> _criticalHits{0};
+    ::std::atomic<uint32> _successfulPolymorphs{0};
+    ::std::atomic<uint32> _successfulCounterspells{0};
     uint32 _lastPolymorph;
     uint32 _lastCounterspell;
     uint32 _lastBlink;
 
     // Combat system integration
-    std::unique_ptr<BotThreatManager> _threatManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PositionManager> _positionManager;
-    std::unique_ptr<InterruptManager> _interruptManager;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PositionManager> _positionManager;
+    ::std::unique_ptr<InterruptManager> _interruptManager;
 
     // Shared utility tracking
-    std::unordered_map<ObjectGuid, uint32> _polymorphTargets;
-    std::unordered_map<ObjectGuid, uint32> _slowTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _polymorphTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _slowTargets;
     uint32 _lastManaShield;
     uint32 _lastIceBarrier;
 
@@ -129,11 +129,11 @@ private:
     void UseBanish(::Unit* target);
 
     // AoE abilities
-    void UseAoEAbilities(const std::vector<::Unit*>& enemies);
-    void UseBlizzard(const std::vector<::Unit*>& enemies);
-    void UseFlamestrike(const std::vector<::Unit*>& enemies);
-    void UseArcaneExplosion(const std::vector<::Unit*>& enemies);
-    void UseConeOfCold(const std::vector<::Unit*>& enemies);
+    void UseAoEAbilities(const ::std::vector<::Unit*>& enemies);
+    void UseBlizzard(const ::std::vector<::Unit*>& enemies);
+    void UseFlamestrike(const ::std::vector<::Unit*>& enemies);
+    void UseArcaneExplosion(const ::std::vector<::Unit*>& enemies);
+    void UseConeOfCold(const ::std::vector<::Unit*>& enemies);
 
     // Positioning and movement
     void UpdateMagePositioning();
@@ -167,18 +167,18 @@ private:
 
     // Combat metrics and analytics
     struct CombatMetrics {
-        std::atomic<uint32> totalDamage{0};
-        std::atomic<uint32> totalHealing{0};
-        std::atomic<uint32> totalManaSpent{0};
-        std::atomic<float> averageCastTime{0.0f};
-        std::atomic<float> criticalHitRate{0.0f};
-        std::atomic<float> interruptSuccessRate{0.0f};
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        ::std::atomic<uint32> totalDamage{0};
+        ::std::atomic<uint32> totalHealing{0};
+        ::std::atomic<uint32> totalManaSpent{0};
+        ::std::atomic<float> averageCastTime{0.0f};
+        ::std::atomic<float> criticalHitRate{0.0f};
+        ::std::atomic<float> interruptSuccessRate{0.0f};
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastMetricsUpdate;
         void Reset() {
             totalDamage = 0; totalHealing = 0; totalManaSpent = 0;
             averageCastTime = 0.0f; criticalHitRate = 0.0f; interruptSuccessRate = 0.0f;
-            combatStartTime = std::chrono::steady_clock::now();
+            combatStartTime = ::std::chrono::steady_clock::now();
             lastMetricsUpdate = combatStartTime;
         }
     } _combatMetrics;
@@ -246,7 +246,7 @@ private:
     };
 
     // Spell school mappings
-    static inline const std::unordered_map<uint32, MageSchool> _spellSchools = {
+    static inline const ::std::unordered_map<uint32, MageSchool> _spellSchools = {
         // Arcane spells
         {ARCANE_MISSILES, MageSchool::ARCANE},
         {ARCANE_BLAST, MageSchool::ARCANE},

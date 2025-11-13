@@ -293,7 +293,7 @@ namespace Playerbot
          *
          * @return Vector of current dangers
          */
-        std::vector<DangerZone> GetDangerZones() const;
+        ::std::vector<DangerZone> GetDangerZones() const;
 
         /**
          * @brief Check if position is in any danger zone
@@ -332,7 +332,7 @@ namespace Playerbot
 
     private:
         Player* _bot;
-        std::vector<DangerZone> _dangerZones;
+        ::std::vector<DangerZone> _dangerZones;
         MovementCommand _currentCommand;
         uint32 _lastUpdate;
         CombatSituation _currentSituation;

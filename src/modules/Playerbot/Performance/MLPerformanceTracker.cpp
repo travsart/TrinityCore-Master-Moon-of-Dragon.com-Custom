@@ -25,7 +25,7 @@ MLPerformanceTracker::MLPerformanceTracker()
     , _totalMLOperations(0)
     , _totalMLTimeUs(0)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
 }
 
 MLPerformanceTracker::~MLPerformanceTracker()
@@ -59,19 +59,19 @@ void MLPerformanceTracker::Shutdown()
     TC_LOG_INFO("playerbot.ml", "Shutting down ML Performance Tracker");
 
     // Generate final report
-    std::string report;
+    ::std::string report;
     GenerateMLPerformanceReport(report);
     TC_LOG_INFO("playerbot.ml", "Final ML Performance Report:\n%s", report.c_str());
 
     _initialized = false;
 }
 
-void MLPerformanceTracker::StartOperation(uint32_t botGuid, MLOperationType operation, const std::string& context)
+void MLPerformanceTracker::StartOperation(uint32_t botGuid, MLOperationType operation, const ::std::string& context)
 {
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_operationsMutex);
+    ::std::lock_guard lock(_operationsMutex);
 
     ActiveOperation op;
     op.type = operation;
@@ -86,7 +86,7 @@ void MLPerformanceTracker::EndOperation(uint32_t botGuid, MLOperationType operat
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_operationsMutex);
+    ::std::lock_guard lock(_operationsMutex);
 
     auto botIt = _activeOperations.find(botGuid);
     if (botIt == _activeOperations.end())
@@ -126,7 +126,7 @@ void MLPerformanceTracker::RecordSample(const MLPerformanceSample& sample)
 
     // Store sample
     {
-        std::lock_guard lock(_samplesMutex);
+        ::std::lock_guard lock(_samplesMutex);
         _recentSamples.push_back(sample);
 
         // Maintain sample buffer size
@@ -166,7 +166,7 @@ void MLPerformanceTracker::RecordPrediction(uint32_t botGuid, bool correct)
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
 
     _botStatistics[botGuid].totalPredictions++;
     if (correct)
@@ -178,7 +178,7 @@ void MLPerformanceTracker::RecordTrainingStep(uint32_t botGuid, float loss, floa
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
 
     auto& stats = _botStatistics[botGuid];
     stats.totalTrainingSteps++;
@@ -198,7 +198,7 @@ void MLPerformanceTracker::RecordModelUpdate(uint32_t botGuid, uint64_t experien
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
 
     auto& stats = _botStatistics[botGuid];
     stats.modelUpdates++;
@@ -210,7 +210,7 @@ void MLPerformanceTracker::RecordInference(uint32_t botGuid, uint64_t durationUs
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
     _botStatistics[botGuid].totalInferenceTimeUs += durationUs;
 }
 
@@ -219,7 +219,7 @@ void MLPerformanceTracker::RecordTraining(uint32_t botGuid, uint64_t durationUs)
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
     _botStatistics[botGuid].totalTrainingTimeUs += durationUs;
 }
 
@@ -228,7 +228,7 @@ void MLPerformanceTracker::RecordMemoryUsage(uint32_t botGuid, MLOperationType o
     if (!_enabled)
         return;
 
-    std::lock_guard lock(_memoryMutex);
+    ::std::lock_guard lock(_memoryMutex);
 
     uint64_t oldUsage = _memoryUsage[botGuid][operation];
     _memoryUsage[botGuid][operation] = bytes;
@@ -244,7 +244,7 @@ uint64_t MLPerformanceTracker::GetTotalMLMemoryUsage() const
 
 uint64_t MLPerformanceTracker::GetBotMLMemoryUsage(uint32_t botGuid) const
 {
-    std::lock_guard lock(_memoryMutex);
+    ::std::lock_guard lock(_memoryMutex);
 
     auto it = _memoryUsage.find(botGuid);
     if (it == _memoryUsage.end())
@@ -261,7 +261,7 @@ uint64_t MLPerformanceTracker::GetBotMLMemoryUsage(uint32_t botGuid) const
 
 ModelStatistics MLPerformanceTracker::GetModelStatistics(uint32_t botGuid) const
 {
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
 
     auto it = _botStatistics.find(botGuid);
     if (it != _botStatistics.end())
@@ -297,7 +297,7 @@ float MLPerformanceTracker::GetOperationThroughput(MLOperationType operation) co
 
 uint32_t MLPerformanceTracker::GetActiveMLBots() const
 {
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
     return _botStatistics.size();
 }
 
@@ -319,15 +319,15 @@ bool MLPerformanceTracker::IsMLPerformanceAcceptable() const
     return true;
 }
 
-std::vector<std::string> MLPerformanceTracker::GetPerformanceIssues() const
+::std::vector<::std::string> MLPerformanceTracker::GetPerformanceIssues() const
 {
-    std::vector<std::string> issues;
+    ::std::vector<::std::string> issues;
 
     // Check CPU usage
     float cpuUsage = CalculateMLCpuUsage();
     if (cpuUsage > _maxMLOverheadPercent)
     {
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "ML CPU usage too high: " << cpuUsage << "% (max: " << _maxMLOverheadPercent << "%)";
         issues.push_back(ss.str());
     }
@@ -336,7 +336,7 @@ std::vector<std::string> MLPerformanceTracker::GetPerformanceIssues() const
     float avgInferenceTime = GetOperationAverageTime(MLOperationType::NEURAL_FORWARD_PASS);
     if (avgInferenceTime > _limits.maxInferenceTimeUs)
     {
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "Inference time too slow: " << avgInferenceTime << "us (target: " << _limits.maxInferenceTimeUs << "us)";
         issues.push_back(ss.str());
     }
@@ -345,7 +345,7 @@ std::vector<std::string> MLPerformanceTracker::GetPerformanceIssues() const
     float avgTrainingTime = GetOperationAverageTime(MLOperationType::BATCH_LEARNING);
     if (avgTrainingTime > _limits.maxTrainingTimeUs)
     {
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "Training time too slow: " << avgTrainingTime << "us (max: " << _limits.maxTrainingTimeUs << "us)";
         issues.push_back(ss.str());
     }
@@ -354,7 +354,7 @@ std::vector<std::string> MLPerformanceTracker::GetPerformanceIssues() const
     uint64_t avgMemoryPerBot = GetActiveMLBots() > 0 ? (_totalMLMemory / GetActiveMLBots()) : 0;
     if (avgMemoryPerBot > _limits.maxMemoryPerBot)
     {
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "ML memory usage too high: " << (avgMemoryPerBot / 1048576.0f) << "MB per bot (max: "
             << (_limits.maxMemoryPerBot / 1048576.0f) << "MB)";
         issues.push_back(ss.str());
@@ -363,15 +363,15 @@ std::vector<std::string> MLPerformanceTracker::GetPerformanceIssues() const
     return issues;
 }
 
-void MLPerformanceTracker::GenerateMLPerformanceReport(std::string& report) const
+void MLPerformanceTracker::GenerateMLPerformanceReport(::std::string& report) const
 {
-    std::stringstream ss;
+    ::std::stringstream ss;
 
     ss << "===== ML Performance Report =====\n";
 
     // System overview
-    auto now = std::chrono::steady_clock::now();
-    auto runtime = std::chrono::duration_cast<std::chrono::seconds>(now - _startTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto runtime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - _startTime).count();
     ss << "Runtime: " << runtime << " seconds\n";
     ss << "Active ML Bots: " << GetActiveMLBots() << "\n";
     ss << "Total ML Operations: " << _totalMLOperations.load() << "\n";
@@ -387,7 +387,7 @@ void MLPerformanceTracker::GenerateMLPerformanceReport(std::string& report) cons
         if (count == 0)
             continue;
 
-        std::string opName;
+        ::std::string opName;
         switch (operation)
         {
             case MLOperationType::FEATURE_EXTRACTION: opName = "Feature Extraction"; break;
@@ -428,7 +428,7 @@ void MLPerformanceTracker::GenerateMLPerformanceReport(std::string& report) cons
     float totalAvgReward = 0.0f;
 
     {
-        std::lock_guard lock(_statsMutex);
+        ::std::lock_guard lock(_statsMutex);
         for (const auto& [botGuid, stats] : _botStatistics)
         {
             totalBots++;
@@ -470,9 +470,9 @@ void MLPerformanceTracker::GenerateMLPerformanceReport(std::string& report) cons
     report = ss.str();
 }
 
-std::vector<std::string> MLPerformanceTracker::GetOptimizationSuggestions() const
+::std::vector<::std::string> MLPerformanceTracker::GetOptimizationSuggestions() const
 {
-    std::vector<std::string> suggestions;
+    ::std::vector<::std::string> suggestions;
 
     // Check if should reduce complexity
     if (ShouldReduceMLComplexity())
@@ -545,14 +545,14 @@ bool MLPerformanceTracker::ShouldIncreaseMLBatchSize() const
 
 uint64_t MLPerformanceTracker::GetCurrentTimeMicroseconds() const
 {
-    return std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    return ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 float MLPerformanceTracker::CalculateMLCpuUsage() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(now - _startTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto runtime = ::std::chrono::duration_cast<::std::chrono::microseconds>(now - _startTime).count();
 
     if (runtime == 0)
         return 0.0f;
@@ -562,7 +562,7 @@ float MLPerformanceTracker::CalculateMLCpuUsage() const
 }
 
 // ScopedMLOperation Implementation
-ScopedMLOperation::ScopedMLOperation(uint32_t botGuid, MLOperationType operation, const std::string& context)
+ScopedMLOperation::ScopedMLOperation(uint32_t botGuid, MLOperationType operation, const ::std::string& context)
     : _botGuid(botGuid)
     , _operation(operation)
     , _context(context)
@@ -570,14 +570,14 @@ ScopedMLOperation::ScopedMLOperation(uint32_t botGuid, MLOperationType operation
     , _success(true)
     , _memoryUsed(0)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
     sMLPerformanceTracker.StartOperation(_botGuid, _operation, _context);
 }
 
 ScopedMLOperation::~ScopedMLOperation()
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - _startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - _startTime);
 
     sMLPerformanceTracker.EndOperation(_botGuid, _operation, _success, _samplesProcessed);
     sMLPerformanceTracker.RecordInference(_botGuid, duration.count());

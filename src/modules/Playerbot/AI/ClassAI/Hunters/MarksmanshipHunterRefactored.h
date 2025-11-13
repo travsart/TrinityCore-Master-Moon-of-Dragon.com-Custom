@@ -517,7 +517,7 @@ protected:
 
             _lastSteadyShot = GameTime::GetGameTimeMS();
 
-            this->_resource = std::min<uint32>(this->_resource + 10, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
             return;
         }
@@ -597,7 +597,7 @@ protected:
 
             this->CastSpell(SPELL_STEADY_SHOT, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 10, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
             return;
         }
@@ -698,7 +698,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -1156,7 +1156,7 @@ private:
 
                                 this->_lastSteadyShot = GameTime::GetGameTimeMS();
 
-                                this->_resource = std::min<uint32>(this->_resource + 10, 100);
+                                this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
                                 return NodeStatus::SUCCESS;
 

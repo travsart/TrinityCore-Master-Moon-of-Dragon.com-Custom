@@ -128,7 +128,7 @@ public:
 
     void GenerateFragments(uint32 count)
     {
-        _fragmentCount = std::min<uint32>(_fragmentCount + count, _maxFragments);
+        _fragmentCount = ::std::min<uint32>(_fragmentCount + count, _maxFragments);
         _lastFragmentTime = GameTime::GetGameTimeMS();
     }
 
@@ -779,7 +779,7 @@ private:
     Position GetEyeBeamPosition(Unit* target)
     {
         // Position to hit maximum enemies in a line
-        std::vector<Unit*> enemies = GetEnemiesInRangeVector(20.0f);
+        ::std::vector<Unit*> enemies = GetEnemiesInRangeVector(20.0f);
 
         if (enemies.size() <= 1)
 
@@ -882,7 +882,7 @@ private:
     {
         uint32 count = 0;
 
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -922,7 +922,7 @@ private:
 
             float targetAngle = this->GetBot()->GetRelativeAngle(enemy);
 
-            float angleDiff = std::abs(targetAngle - angle);
+            float angleDiff = ::std::abs(targetAngle - angle);
 
             // Normalize angle difference
 
@@ -939,11 +939,11 @@ private:
         return count;
     }
 
-    std::vector<Unit*> GetEnemiesInRangeVector(float range) const
+    ::std::vector<Unit*> GetEnemiesInRangeVector(float range) const
     {
-        std::vector<Unit*> enemies;
+        ::std::vector<Unit*> enemies;
 
-        std::list<Unit*> unitList;
+        ::std::list<Unit*> unitList;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), unitList, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -984,7 +984,7 @@ private:
 
     void GenerateFury(uint32 amount)
     {
-        _resource = std::min<uint32>(_resource + amount, _maxResource);
+        _resource = ::std::min<uint32>(_resource + amount, _maxResource);
     }
 
     // ========================================================================

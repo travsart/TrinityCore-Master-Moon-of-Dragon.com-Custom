@@ -57,8 +57,8 @@ struct EssenceResourceAug
 class AugmentationBuffTracker
 {
 public:
-    std::unordered_map<ObjectGuid, uint32> _ebonMightTargets;
-    std::unordered_map<ObjectGuid, uint32> _prescienceTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _ebonMightTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _prescienceTargets;
 
     void ApplyEbonMight(ObjectGuid guid) { _ebonMightTargets[guid] = GameTime::GetGameTimeMS() + 10000; }
     void ApplyPrescience(ObjectGuid guid) { _prescienceTargets[guid] = GameTime::GetGameTimeMS() + 18000; }
@@ -128,7 +128,7 @@ public:
         // Priority 5: Generate essence
         if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
             this->CastSpell(target, AZURE_STRIKE_AUG);
-            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
 
@@ -140,7 +140,7 @@ protected:
     {
         if (this->_resource.essence < 1) return false;
 
-        std::vector<Unit*> allies = GetGroupDPS();
+        ::std::vector<Unit*> allies = GetGroupDPS();
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasEbonMight(ally->GetGUID())) {
                 if (this->CanCastSpell(EBON_MIGHT, ally)) {
@@ -158,7 +158,7 @@ protected:
     {
         if (this->_resource.essence < 1) return false;
 
-        std::vector<Unit*> allies = GetGroupDPS();
+        ::std::vector<Unit*> allies = GetGroupDPS();
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasPrescience(ally->GetGUID())) {
                 if (this->CanCastSpell(PRESCIENCE, ally)) {
@@ -172,9 +172,9 @@ protected:
         return false;
     }
 
-    std::vector<Unit*> GetGroupDPS() const
+    ::std::vector<Unit*> GetGroupDPS() const
     {
-        std::vector<Unit*> dps;
+        ::std::vector<Unit*> dps;
         Player* bot = this->GetBot();
         if (!bot) return dps;
 
@@ -293,7 +293,7 @@ protected:
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
                             this->CastSpell(target, AZURE_STRIKE_AUG);
-                            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+                            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;

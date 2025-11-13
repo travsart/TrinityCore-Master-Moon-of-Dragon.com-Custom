@@ -58,7 +58,7 @@ enum class NodeType : uint8
 class BehaviorNode
 {
 public:
-    explicit BehaviorNode(const std::string& name)
+    explicit BehaviorNode(const ::std::string& name)
         : _name(name)
         , _type(NodeType::LEAF)
     {}
@@ -78,11 +78,11 @@ public:
      */
     virtual void Reset() {}
 
-    [[nodiscard]] const std::string& GetName() const { return _name; }
+    [[nodiscard]] const ::std::string& GetName() const { return _name; }
     [[nodiscard]] NodeType GetType() const { return _type; }
 
 protected:
-    std::string _name;
+    ::std::string _name;
     NodeType _type;
 };
 
@@ -101,14 +101,14 @@ protected:
 class SequenceNode : public BehaviorNode
 {
 public:
-    explicit SequenceNode(const std::string& name)
+    explicit SequenceNode(const ::std::string& name)
         : BehaviorNode(name)
         , _currentChild(0)
     {
         _type = NodeType::COMPOSITE;
     }
 
-    void AddChild(std::shared_ptr<BehaviorNode> child)
+    void AddChild(::std::shared_ptr<BehaviorNode> child)
     {
         _children.push_back(child);
     }
@@ -145,7 +145,7 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<BehaviorNode>> _children;
+    ::std::vector<::std::shared_ptr<BehaviorNode>> _children;
     size_t _currentChild;
 };
 
@@ -160,14 +160,14 @@ private:
 class SelectorNode : public BehaviorNode
 {
 public:
-    explicit SelectorNode(const std::string& name)
+    explicit SelectorNode(const ::std::string& name)
         : BehaviorNode(name)
         , _currentChild(0)
     {
         _type = NodeType::COMPOSITE;
     }
 
-    void AddChild(std::shared_ptr<BehaviorNode> child)
+    void AddChild(::std::shared_ptr<BehaviorNode> child)
     {
         _children.push_back(child);
     }
@@ -204,7 +204,7 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<BehaviorNode>> _children;
+    ::std::vector<::std::shared_ptr<BehaviorNode>> _children;
     size_t _currentChild;
 };
 
@@ -219,7 +219,7 @@ private:
 class InverterNode : public BehaviorNode
 {
 public:
-    InverterNode(const std::string& name, std::shared_ptr<BehaviorNode> child)
+    InverterNode(const ::std::string& name, ::std::shared_ptr<BehaviorNode> child)
         : BehaviorNode(name)
         , _child(child)
     {
@@ -244,7 +244,7 @@ public:
     }
 
 private:
-    std::shared_ptr<BehaviorNode> _child;
+    ::std::shared_ptr<BehaviorNode> _child;
 };
 
 /**
@@ -254,7 +254,7 @@ private:
 class RepeaterNode : public BehaviorNode
 {
 public:
-    RepeaterNode(const std::string& name, std::shared_ptr<BehaviorNode> child, uint32 maxRepeats = 0)
+    RepeaterNode(const ::std::string& name, ::std::shared_ptr<BehaviorNode> child, uint32 maxRepeats = 0)
         : BehaviorNode(name)
         , _child(child)
         , _maxRepeats(maxRepeats)
@@ -303,7 +303,7 @@ public:
     }
 
 private:
-    std::shared_ptr<BehaviorNode> _child;
+    ::std::shared_ptr<BehaviorNode> _child;
     uint32 _maxRepeats;
     uint32 _currentRepeats;
 };
@@ -319,9 +319,9 @@ private:
 class ConditionNode : public BehaviorNode
 {
 public:
-    using ConditionFunc = std::function<bool(Player*, Unit*)>;
+    using ConditionFunc = ::std::function<bool(Player*, Unit*)>;
 
-    ConditionNode(const std::string& name, ConditionFunc condition)
+    ConditionNode(const ::std::string& name, ConditionFunc condition)
         : BehaviorNode(name)
         , _condition(condition)
     {
@@ -344,9 +344,9 @@ private:
 class ActionNode : public BehaviorNode
 {
 public:
-    using ActionFunc = std::function<NodeStatus(Player*, Unit*)>;
+    using ActionFunc = ::std::function<NodeStatus(Player*, Unit*)>;
 
-    ActionNode(const std::string& name, ActionFunc action)
+    ActionNode(const ::std::string& name, ActionFunc action)
         : BehaviorNode(name)
         , _action(action)
     {
@@ -395,12 +395,12 @@ private:
 class TC_GAME_API BehaviorTree
 {
 public:
-    explicit BehaviorTree(const std::string& name);
+    explicit BehaviorTree(const ::std::string& name);
 
     /**
      * @brief Set the root node of the tree
      */
-    void SetRoot(std::shared_ptr<BehaviorNode> root);
+    void SetRoot(::std::shared_ptr<BehaviorNode> root);
 
     /**
      * @brief Execute one tick of the behavior tree
@@ -422,7 +422,7 @@ public:
     /**
      * @brief Get tree name
      */
-    [[nodiscard]] const std::string& GetName() const { return _name; }
+    [[nodiscard]] const ::std::string& GetName() const { return _name; }
 
     /**
      * @brief Check if tree is currently running
@@ -440,8 +440,8 @@ public:
     void EnableDebugLogging(bool enable) { _debugLogging = enable; }
 
 private:
-    std::string _name;
-    std::shared_ptr<BehaviorNode> _root;
+    ::std::string _name;
+    ::std::shared_ptr<BehaviorNode> _root;
     NodeStatus _lastStatus;
     bool _debugLogging;
 

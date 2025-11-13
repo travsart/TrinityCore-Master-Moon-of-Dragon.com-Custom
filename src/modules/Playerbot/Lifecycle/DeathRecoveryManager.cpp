@@ -103,9 +103,9 @@ void DeathRecoveryStatistics::RecordFailure()
     ++failedResurrections;
 }
 
-std::string DeathRecoveryStatistics::ToString() const
+::std::string DeathRecoveryStatistics::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Death Recovery Statistics:\n"
         << "  Total Deaths: " << totalDeaths << "\n"
         << "  Corpse Resurrections: " << corpseResurrections << "\n"
@@ -176,7 +176,7 @@ void DeathRecoveryManager::OnDeath()
     }
 
     m_stats.RecordDeath();
-    m_deathTime = std::chrono::steady_clock::now();
+    m_deathTime = ::std::chrono::steady_clock::now();
     m_method = ResurrectionMethod::UNDECIDED;
     m_spiritHealerGuid = ObjectGuid::Empty;
     m_navigationActive = false;
@@ -395,8 +395,8 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
     // This allows the Ghost spell (8326) to stabilize and prevents
     // Spell.cpp:603 assertion: m_spellModTakingSpell != this
 
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_teleportAckTime).count();
 
     // Wait minimum 100ms for spell system to stabilize
@@ -423,7 +423,7 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
             data << int32(0);                 // AckIndex (not validated)
             data << int32(GameTime::GetGameTimeMS());       // MoveTime (not validated)
             // Create MoveTeleportAck packet object and parse the data
-            WorldPackets::Movement::MoveTeleportAck ackPacket(std::move(data));
+            WorldPackets::Movement::MoveTeleportAck ackPacket(::std::move(data));
             ackPacket.Read();  // Parse the packet data into struct fields
 
             // Directly call the handler (as if packet was received from client)
@@ -435,7 +435,7 @@ void DeathRecoveryManager::HandlePendingTeleportAck(uint32 diff)
 
             m_needsTeleportAck = false;
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("playerbot.death", " Bot {} EXCEPTION in deferred teleport ack: {}",
                 m_bot->GetName(), e.what());
@@ -511,8 +511,8 @@ void DeathRecoveryManager::HandleRunningToCorpse(uint32 diff)
     }
 
     // Update navigation periodically
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastNav = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastNav = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_lastNavigationUpdate).count();
 
     if (timeSinceLastNav >= m_config.navigationUpdateInterval)
@@ -733,8 +733,8 @@ void DeathRecoveryManager::HandleMovingToSpiritHealer(uint32 diff)
     }
 
     // Update navigation
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastNav = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastNav = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_lastNavigationUpdate).count();
 
     if (timeSinceLastNav >= m_config.navigationUpdateInterval)
@@ -742,7 +742,7 @@ void DeathRecoveryManager::HandleMovingToSpiritHealer(uint32 diff)
         if (NavigateToSpiritHealer())
         {
             m_lastNavigationUpdate = now;
-            LogDebug("Navigating to spirit healer, distance: " + std::to_string(distance));
+            LogDebug("Navigating to spirit healer, distance: " + ::std::to_string(distance));
         }
         else
         {
@@ -1038,8 +1038,8 @@ bool DeathRecoveryManager::NavigateToCorpse()
     {
         // CORPSE RUN MOVEMENT FIX: Throttle movement updates to 500ms to prevent spell mod crashes
         // Rapid movement recalculation causes Spell.cpp:603 assertion failure (m_spellModTakingSpell corruption)
-        auto now = std::chrono::steady_clock::now();
-        auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastNavigationUpdate);
+        auto now = ::std::chrono::steady_clock::now();
+        auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - m_lastNavigationUpdate);
 
         if (m_navigationActive && timeSinceLastUpdate.count() < 500)
         {
@@ -1125,11 +1125,11 @@ bool DeathRecoveryManager::InteractWithCorpse()
 {
     // RACE CONDITION FIX: Single mutex-protected critical section
     // Replaces three-layer protection (mutex + debounce + atomic) that had race windows
-    std::lock_guard<std::timed_mutex> lock(_resurrectionMutex);
+    ::std::lock_guard<::std::timed_mutex> lock(_resurrectionMutex);
     
     // Check atomic debounce inside mutex protection (prevents TOCTOU race)
     uint64 now = GameTime::GetGameTimeMS();
-    uint64 lastAttempt = _lastResurrectionAttemptMs.load(std::memory_order_acquire);
+    uint64 lastAttempt = _lastResurrectionAttemptMs.load(::std::memory_order_acquire);
     
     if (now - lastAttempt < RESURRECTION_DEBOUNCE_MS)
     {
@@ -1140,7 +1140,7 @@ bool DeathRecoveryManager::InteractWithCorpse()
     
     // Check atomic resurrection flag inside mutex protection (prevents concurrent resurrections)
     bool expectedFalse = false;
-    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true, std::memory_order_acq_rel))
+    if (!_resurrectionInProgress.compare_exchange_strong(expectedFalse, true, ::std::memory_order_acq_rel))
     {
         TC_LOG_WARN("playerbot.death", "Bot {} InteractWithCorpse: Resurrection flag already set, rejecting concurrent attempt",
             m_bot ? m_bot->GetName() : "nullptr");
@@ -1148,12 +1148,12 @@ bool DeathRecoveryManager::InteractWithCorpse()
     }
     
     // Update last attempt timestamp atomically
-    _lastResurrectionAttemptMs.store(now, std::memory_order_release);
+    _lastResurrectionAttemptMs.store(now, ::std::memory_order_release);
     
     // RAII guard to reset resurrection flag on exit (exception-safe)
     struct ResurrectionGuard {
-        std::atomic<bool>& flag;
-        ~ResurrectionGuard() { flag.store(false, std::memory_order_release); }
+        ::std::atomic<bool>& flag;
+        ~ResurrectionGuard() { flag.store(false, ::std::memory_order_release); }
     } guard{_resurrectionInProgress};
 
     // Match TrinityCore's HandleReclaimCorpse validation checks
@@ -1391,8 +1391,8 @@ bool DeathRecoveryManager::ExecuteGraveyardResurrection()
 
 uint64 DeathRecoveryManager::GetTimeSinceDeath() const
 {
-    auto now = std::chrono::steady_clock::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(now - m_deathTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    return ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - m_deathTime).count();
 }
 
 bool DeathRecoveryManager::IsGhost() const
@@ -1434,7 +1434,7 @@ Creature* DeathRecoveryManager::FindNearestSpiritHealer() const
     if (!m_bot)
         return nullptr;
 
-    std::list<Creature*> spiritHealers;
+    ::std::list<Creature*> spiritHealers;
     Trinity::AllCreaturesOfEntryInRange checker(m_bot, 0, m_config.spiritHealerSearchRadius);
     Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(m_bot, spiritHealers, checker);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1452,7 +1452,7 @@ Creature* DeathRecoveryManager::FindNearestSpiritHealer() const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), m_config.spiritHealerSearchRadius);
 
     // Process results (replace old loop)
@@ -1576,7 +1576,7 @@ bool DeathRecoveryManager::AcceptBattleResurrection(ObjectGuid casterGuid, uint3
 bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 {
     // GHOST AURA FIX: Mutex protection to prevent concurrent resurrection attempts
-    std::unique_lock<std::timed_mutex> lock(_resurrectionMutex, std::chrono::milliseconds(100));
+    ::std::unique_lock<::std::timed_mutex> lock(_resurrectionMutex, ::std::chrono::milliseconds(100));
     if (!lock.owns_lock())
     {
         TC_LOG_WARN("playerbot.death", " Bot {} ForceResurrection: Resurrection already in progress, skipping concurrent attempt",
@@ -1595,7 +1595,7 @@ bool DeathRecoveryManager::ForceResurrection(ResurrectionMethod method)
 
     // RAII guard to reset resurrection flag on exit
     struct ResurrectionGuard {
-        std::atomic<bool>& flag;
+        ::std::atomic<bool>& flag;
         ~ResurrectionGuard() { flag.store(false); }
     } guard{_resurrectionInProgress};
 
@@ -1687,7 +1687,7 @@ bool DeathRecoveryManager::IsResurrectionTimedOut() const
     return GetTimeSinceDeath() > m_config.resurrectionTimeout;
 }
 
-void DeathRecoveryManager::HandleResurrectionFailure(std::string const& reason)
+void DeathRecoveryManager::HandleResurrectionFailure(::std::string const& reason)
 {
     TC_LOG_ERROR("playerbot.death", "Bot {} resurrection failed: {}",
         m_bot ? m_bot->GetName() : "nullptr", reason);
@@ -1695,11 +1695,11 @@ void DeathRecoveryManager::HandleResurrectionFailure(std::string const& reason)
     TransitionToState(DeathRecoveryState::RESURRECTION_FAILED, reason);
 }
 
-void DeathRecoveryManager::TransitionToState(DeathRecoveryState newState, std::string const& reason)
+void DeathRecoveryManager::TransitionToState(DeathRecoveryState newState, ::std::string const& reason)
 {
     DeathRecoveryState oldState = m_state.load();
     m_state = newState;
-    m_lastStateTransition = std::chrono::steady_clock::now();
+    m_lastStateTransition = ::std::chrono::steady_clock::now();
     m_stateTimer = 0;
 
     if (m_config.logDebugInfo)
@@ -1737,7 +1737,7 @@ void DeathRecoveryManager::UpdateCorpseDistance() const
         corpseLocation.GetPositionY(),
         corpseLocation.GetPositionZ());
 
-    m_lastCorpseDistanceCheck = std::chrono::steady_clock::now();
+    m_lastCorpseDistanceCheck = ::std::chrono::steady_clock::now();
 }
 
 bool DeathRecoveryManager::IsInSpecialZone() const
@@ -1754,7 +1754,7 @@ bool DeathRecoveryManager::WillReceiveResurrectionSickness() const
     return m_bot->GetLevel() > 10 && m_method == ResurrectionMethod::SPIRIT_HEALER;
 }
 
-void DeathRecoveryManager::LogDebug(std::string const& message) const
+void DeathRecoveryManager::LogDebug(::std::string const& message) const
 {
     if (m_config.logDebugInfo)
     {

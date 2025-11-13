@@ -32,7 +32,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::SaveBotStateAsync(
         Player const* player,
-        std::function<void(PersistenceResult)> callback)
+        ::std::function<void(PersistenceResult)> callback)
     {
         // Validate player
         if (!player)
@@ -158,7 +158,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::SaveInventoryAsync(
         Player const* player,
-        std::function<void(PersistenceResult)> callback)
+        ::std::function<void(PersistenceResult)> callback)
     {
         if (!player)
         {
@@ -169,7 +169,7 @@ namespace Playerbot
         }
 
         // Capture inventory snapshot
-        std::vector<InventoryItemSnapshot> items;
+        ::std::vector<InventoryItemSnapshot> items;
         if (!CaptureInventorySnapshot(player, items))
         {
             TC_LOG_ERROR("playerbot.persistence",
@@ -211,7 +211,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::LoadInventory(
         ObjectGuid botGuid,
-        std::vector<InventoryItemSnapshot>& items)
+        ::std::vector<InventoryItemSnapshot>& items)
     {
         if (!botGuid.IsPlayer())
         {
@@ -271,7 +271,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::SaveEquipmentAsync(
         Player const* player,
-        std::function<void(PersistenceResult)> callback)
+        ::std::function<void(PersistenceResult)> callback)
     {
         if (!player)
         {
@@ -282,7 +282,7 @@ namespace Playerbot
         }
 
         // Capture equipment snapshot
-        std::vector<EquipmentItemSnapshot> equipment;
+        ::std::vector<EquipmentItemSnapshot> equipment;
         if (!CaptureEquipmentSnapshot(player, equipment))
         {
             TC_LOG_ERROR("playerbot.persistence",
@@ -322,7 +322,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::LoadEquipment(
         ObjectGuid botGuid,
-        std::vector<EquipmentItemSnapshot>& equipment)
+        ::std::vector<EquipmentItemSnapshot>& equipment)
     {
         if (!botGuid.IsPlayer())
         {
@@ -381,7 +381,7 @@ namespace Playerbot
 
     PersistenceResult BotStatePersistence::SaveCompleteSnapshot(
         Player const* player,
-        std::function<void(PersistenceResult)> callback)
+        ::std::function<void(PersistenceResult)> callback)
     {
         if (!player)
         {
@@ -409,7 +409,7 @@ namespace Playerbot
         trans->Append(stateStmt);
 
         // Inventory
-        std::vector<InventoryItemSnapshot> items;
+        ::std::vector<InventoryItemSnapshot> items;
         CaptureInventorySnapshot(player, items);
         for (auto const& item : items)
         {
@@ -419,7 +419,7 @@ namespace Playerbot
         }
 
         // Equipment
-        std::vector<EquipmentItemSnapshot> equipment;
+        ::std::vector<EquipmentItemSnapshot> equipment;
         CaptureEquipmentSnapshot(player, equipment);
         for (auto const& equip : equipment)
         {
@@ -586,7 +586,7 @@ namespace Playerbot
 
     bool BotStatePersistence::CaptureInventorySnapshot(
         Player const* player,
-        std::vector<InventoryItemSnapshot>& items)
+        ::std::vector<InventoryItemSnapshot>& items)
     {
         if (!player)
             return false;
@@ -629,7 +629,7 @@ namespace Playerbot
 
     bool BotStatePersistence::CaptureEquipmentSnapshot(
         Player const* player,
-        std::vector<EquipmentItemSnapshot>& equipment)
+        ::std::vector<EquipmentItemSnapshot>& equipment)
     {
         if (!player)
             return false;
@@ -662,12 +662,12 @@ namespace Playerbot
         return true;
     }
 
-    std::string BotStatePersistence::SerializeEnchantments(Item const* item)
+    ::std::string BotStatePersistence::SerializeEnchantments(Item const* item)
     {
         if (!item)
             return "";
 
-        std::ostringstream oss;
+        ::std::ostringstream oss;
 
         // Serialize enchantments (simplified format: "enchantId1:duration1;enchantId2:duration2")
         // In production, this would use Item::GetEnchantment() methods
@@ -687,12 +687,12 @@ namespace Playerbot
         return oss.str();
     }
 
-    std::string BotStatePersistence::SerializeGems(Item const* item)
+    ::std::string BotStatePersistence::SerializeGems(Item const* item)
     {
         if (!item)
             return "";
 
-        std::ostringstream oss;
+        ::std::ostringstream oss;
 
         // Serialize gems (simplified format: "gemId1,gemId2,gemId3")
         // In production, this would use Item::GetGem() methods

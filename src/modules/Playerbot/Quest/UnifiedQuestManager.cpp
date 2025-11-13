@@ -27,11 +27,11 @@ UnifiedQuestManager* UnifiedQuestManager::instance()
 }
 
 UnifiedQuestManager::UnifiedQuestManager()
-    : _pickup(std::make_unique<PickupModule>())
-    , _completion(std::make_unique<CompletionModule>())
-    , _validation(std::make_unique<ValidationModule>())
-    , _turnIn(std::make_unique<TurnInModule>())
-    , _dynamic(std::make_unique<DynamicModule>())
+    : _pickup(::std::make_unique<PickupModule>())
+    , _completion(::std::make_unique<CompletionModule>())
+    , _validation(::std::make_unique<ValidationModule>())
+    , _turnIn(::std::make_unique<TurnInModule>())
+    , _dynamic(::std::make_unique<DynamicModule>())
 {
     TC_LOG_INFO("playerbot.quest", "UnifiedQuestManager initialized - consolidating 5 quest managers");
 }
@@ -66,18 +66,18 @@ void UnifiedQuestManager::PickupModule::PickupQuestsInArea(Player* bot, float ra
     QuestPickup::instance()->PickupQuestsInArea(bot, radius);
 }
 
-std::vector<uint32> UnifiedQuestManager::PickupModule::DiscoverNearbyQuests(Player* bot, float scanRadius)
+::std::vector<uint32> UnifiedQuestManager::PickupModule::DiscoverNearbyQuests(Player* bot, float scanRadius)
 {
     _questsDiscovered++;
     return QuestPickup::instance()->DiscoverNearbyQuests(bot, scanRadius);
 }
 
-std::vector<QuestGiverInfo> UnifiedQuestManager::PickupModule::ScanForQuestGivers(Player* bot, float scanRadius)
+::std::vector<QuestGiverInfo> UnifiedQuestManager::PickupModule::ScanForQuestGivers(Player* bot, float scanRadius)
 {
     return QuestPickup::instance()->ScanForQuestGivers(bot, scanRadius);
 }
 
-std::vector<uint32> UnifiedQuestManager::PickupModule::GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::PickupModule::GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot)
 {
     return QuestPickup::instance()->GetAvailableQuestsFromGiver(questGiverGuid, bot);
 }
@@ -97,12 +97,12 @@ bool UnifiedQuestManager::PickupModule::MeetsQuestRequirements(uint32 questId, P
     return QuestPickup::instance()->MeetsQuestRequirements(questId, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::PickupModule::FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter)
+::std::vector<uint32> UnifiedQuestManager::PickupModule::FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter)
 {
     return QuestPickup::instance()->FilterQuests(questIds, bot, filter);
 }
 
-std::vector<uint32> UnifiedQuestManager::PickupModule::PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy)
+::std::vector<uint32> UnifiedQuestManager::PickupModule::PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy)
 {
     return QuestPickup::instance()->PrioritizeQuests(questIds, bot, strategy);
 }
@@ -208,7 +208,7 @@ bool UnifiedQuestManager::CompletionModule::FindObjectiveTarget(Player* bot, Que
     return QuestCompletion::instance()->FindObjectiveTarget(bot, objective);
 }
 
-std::vector<Position> UnifiedQuestManager::CompletionModule::GetObjectiveLocations(const QuestObjectiveData& objective)
+::std::vector<Position> UnifiedQuestManager::CompletionModule::GetObjectiveLocations(const QuestObjectiveData& objective)
 {
     return QuestCompletion::instance()->GetObjectiveLocations(objective);
 }
@@ -248,12 +248,12 @@ void UnifiedQuestManager::CompletionModule::OptimizeObjectiveSequence(Player* bo
     QuestCompletion::instance()->OptimizeObjectiveSequence(bot, questId);
 }
 
-void UnifiedQuestManager::CompletionModule::FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds)
+void UnifiedQuestManager::CompletionModule::FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds)
 {
     QuestCompletion::instance()->FindEfficientCompletionPath(bot, questIds);
 }
 
-void UnifiedQuestManager::CompletionModule::MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives)
+void UnifiedQuestManager::CompletionModule::MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives)
 {
     QuestCompletion::instance()->MinimizeTravelTime(bot, objectives);
 }
@@ -296,7 +296,7 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestRequirements(uint32 que
     return QuestValidation::instance()->ValidateQuestRequirements(questId, bot);
 }
 
-std::vector<std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
+::std::vector<::std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
 {
     return QuestValidation::instance()->GetValidationErrors(questId, bot);
 }
@@ -336,7 +336,7 @@ bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 que
     return QuestValidation::instance()->HasCompletedPrerequisites(questId, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingPrerequisites(uint32 questId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingPrerequisites(uint32 questId, Player* bot)
 {
     return QuestValidation::instance()->GetMissingPrerequisites(questId, bot);
 }
@@ -371,7 +371,7 @@ bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Pl
     return QuestValidation::instance()->HasInventorySpace(questId, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
 {
     return QuestValidation::instance()->GetMissingQuestItems(questId, bot);
 }
@@ -476,33 +476,33 @@ void UnifiedQuestManager::ValidationModule::CleanupExpiredCache()
     QuestValidation::instance()->CleanupExpiredCache();
 }
 
-std::unordered_map<uint32, ValidationResult> UnifiedQuestManager::ValidationModule::ValidateMultipleQuests(
-    const std::vector<uint32>& questIds, Player* bot)
+::std::unordered_map<uint32, ValidationResult> UnifiedQuestManager::ValidationModule::ValidateMultipleQuests(
+    const ::std::vector<uint32>& questIds, Player* bot)
 {
     return QuestValidation::instance()->ValidateMultipleQuests(questIds, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::ValidationModule::FilterValidQuests(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::ValidationModule::FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot)
 {
     return QuestValidation::instance()->FilterValidQuests(questIds, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::ValidationModule::GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates)
+::std::vector<uint32> UnifiedQuestManager::ValidationModule::GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates)
 {
     return QuestValidation::instance()->GetEligibleQuests(bot, candidates);
 }
 
-std::string UnifiedQuestManager::ValidationModule::GetDetailedValidationReport(uint32 questId, Player* bot)
+::std::string UnifiedQuestManager::ValidationModule::GetDetailedValidationReport(uint32 questId, Player* bot)
 {
     return QuestValidation::instance()->GetDetailedValidationReport(questId, bot);
 }
 
-void UnifiedQuestManager::ValidationModule::LogValidationFailure(uint32 questId, Player* bot, const std::string& reason)
+void UnifiedQuestManager::ValidationModule::LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason)
 {
     QuestValidation::instance()->LogValidationFailure(questId, bot, reason);
 }
 
-std::vector<std::string> UnifiedQuestManager::ValidationModule::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
+::std::vector<::std::string> UnifiedQuestManager::ValidationModule::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
 {
     return QuestValidation::instance()->GetRecommendationsForFailedQuest(questId, bot);
 }
@@ -537,7 +537,7 @@ void UnifiedQuestManager::TurnInModule::ScheduleQuestTurnIn(Player* bot, uint32 
     QuestTurnIn::instance()->ScheduleQuestTurnIn(bot, questId, delayMs);
 }
 
-std::vector<uint32> UnifiedQuestManager::TurnInModule::GetCompletedQuests(Player* bot)
+::std::vector<uint32> UnifiedQuestManager::TurnInModule::GetCompletedQuests(Player* bot)
 {
     return QuestTurnIn::instance()->GetCompletedQuests(bot);
 }
@@ -562,12 +562,12 @@ void UnifiedQuestManager::TurnInModule::PlanOptimalTurnInRoute(Player* bot)
     QuestTurnIn::instance()->PlanOptimalTurnInRoute(bot);
 }
 
-TurnInBatch UnifiedQuestManager::TurnInModule::CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds)
+TurnInBatch UnifiedQuestManager::TurnInModule::CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds)
 {
     return QuestTurnIn::instance()->CreateTurnInBatch(bot, questIds);
 }
 
-void UnifiedQuestManager::TurnInModule::OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns)
+void UnifiedQuestManager::TurnInModule::OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns)
 {
     QuestTurnIn::instance()->OptimizeTurnInSequence(bot, turnIns);
 }
@@ -602,13 +602,13 @@ void UnifiedQuestManager::TurnInModule::AnalyzeQuestRewards(QuestTurnInData& tur
     QuestTurnIn::instance()->AnalyzeQuestRewards(turnInData, bot);
 }
 
-uint32 UnifiedQuestManager::TurnInModule::SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
+uint32 UnifiedQuestManager::TurnInModule::SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
 {
     _rewardsSelected++;
     return QuestTurnIn::instance()->SelectOptimalReward(rewards, bot, strategy);
 }
 
-void UnifiedQuestManager::TurnInModule::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot)
+void UnifiedQuestManager::TurnInModule::EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     QuestTurnIn::instance()->EvaluateItemUpgrades(rewards, bot);
 }
@@ -733,7 +733,7 @@ void UnifiedQuestManager::TurnInModule::SetBatchTurnInThreshold(uint32 botGuid, 
     QuestTurnIn::instance()->SetBatchTurnInThreshold(botGuid, threshold);
 }
 
-void UnifiedQuestManager::TurnInModule::HandleTurnInError(Player* bot, uint32 questId, const std::string& error)
+void UnifiedQuestManager::TurnInModule::HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error)
 {
     QuestTurnIn::instance()->HandleTurnInError(bot, questId, error);
 }
@@ -767,12 +767,12 @@ TurnInMetrics UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
 // DYNAMIC MODULE IMPLEMENTATION (delegates to DynamicQuestSystem)
 // ============================================================================
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::DiscoverAvailableQuests(Player* bot)
+::std::vector<uint32> UnifiedQuestManager::DynamicModule::DiscoverAvailableQuests(Player* bot)
 {
     return DynamicQuestSystem::instance()->DiscoverAvailableQuests(bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+::std::vector<uint32> UnifiedQuestManager::DynamicModule::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
 {
     return DynamicQuestSystem::instance()->GetRecommendedQuests(bot, strategy);
 }
@@ -793,7 +793,7 @@ QuestPriority UnifiedQuestManager::DynamicModule::CalculateQuestPriority(uint32 
     return DynamicQuestSystem::instance()->CalculateQuestPriority(questId, bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::DynamicModule::SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot)
 {
     _questsOptimized++;
     return DynamicQuestSystem::instance()->SortQuestsByPriority(questIds, bot);
@@ -849,7 +849,7 @@ Position UnifiedQuestManager::DynamicModule::GetNextQuestLocation(Player* bot, u
     return DynamicQuestSystem::instance()->GetNextQuestLocation(bot, questId);
 }
 
-std::vector<Position> UnifiedQuestManager::DynamicModule::GenerateQuestPath(Player* bot, uint32 questId)
+::std::vector<Position> UnifiedQuestManager::DynamicModule::GenerateQuestPath(Player* bot, uint32 questId)
 {
     return DynamicQuestSystem::instance()->GenerateQuestPath(bot, questId);
 }
@@ -889,7 +889,7 @@ void UnifiedQuestManager::DynamicModule::TrackQuestChains(Player* bot)
     DynamicQuestSystem::instance()->TrackQuestChains(bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::GetQuestChain(uint32 questId)
+::std::vector<uint32> UnifiedQuestManager::DynamicModule::GetQuestChain(uint32 questId)
 {
     return DynamicQuestSystem::instance()->GetQuestChain(questId);
 }
@@ -909,7 +909,7 @@ void UnifiedQuestManager::DynamicModule::OptimizeZoneQuests(Player* bot)
     DynamicQuestSystem::instance()->OptimizeZoneQuests(bot);
 }
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::GetZoneQuests(uint32 zoneId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::DynamicModule::GetZoneQuests(uint32 zoneId, Player* bot)
 {
     return DynamicQuestSystem::instance()->GetZoneQuests(zoneId, bot);
 }
@@ -986,13 +986,13 @@ void UnifiedQuestManager::PickupAvailableQuests(Player* bot)
 void UnifiedQuestManager::PickupQuestsInArea(Player* bot, float radius)
 { _pickup->PickupQuestsInArea(bot, radius); }
 
-std::vector<uint32> UnifiedQuestManager::DiscoverNearbyQuests(Player* bot, float scanRadius)
+::std::vector<uint32> UnifiedQuestManager::DiscoverNearbyQuests(Player* bot, float scanRadius)
 { return _pickup->DiscoverNearbyQuests(bot, scanRadius); }
 
-std::vector<QuestGiverInfo> UnifiedQuestManager::ScanForQuestGivers(Player* bot, float scanRadius)
+::std::vector<QuestGiverInfo> UnifiedQuestManager::ScanForQuestGivers(Player* bot, float scanRadius)
 { return _pickup->ScanForQuestGivers(bot, scanRadius); }
 
-std::vector<uint32> UnifiedQuestManager::GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot)
 { return _pickup->GetAvailableQuestsFromGiver(questGiverGuid, bot); }
 
 QuestEligibility UnifiedQuestManager::CheckQuestEligibility(uint32 questId, Player* bot)
@@ -1004,10 +1004,10 @@ bool UnifiedQuestManager::CanAcceptQuest(uint32 questId, Player* bot)
 bool UnifiedQuestManager::MeetsQuestRequirements(uint32 questId, Player* bot)
 { return _pickup->MeetsQuestRequirements(questId, bot); }
 
-std::vector<uint32> UnifiedQuestManager::FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter)
+::std::vector<uint32> UnifiedQuestManager::FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter)
 { return _pickup->FilterQuests(questIds, bot, filter); }
 
-std::vector<uint32> UnifiedQuestManager::PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy)
+::std::vector<uint32> UnifiedQuestManager::PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy)
 { return _pickup->PrioritizeQuests(questIds, bot, strategy); }
 
 bool UnifiedQuestManager::ShouldAcceptQuest(uint32 questId, Player* bot)
@@ -1068,7 +1068,7 @@ void UnifiedQuestManager::NavigateToObjective(Player* bot, const QuestObjectiveD
 bool UnifiedQuestManager::FindObjectiveTarget(Player* bot, QuestObjectiveData& objective)
 { return _completion->FindObjectiveTarget(bot, objective); }
 
-std::vector<Position> UnifiedQuestManager::GetObjectiveLocations(const QuestObjectiveData& objective)
+::std::vector<Position> UnifiedQuestManager::GetObjectiveLocations(const QuestObjectiveData& objective)
 { return _completion->GetObjectiveLocations(objective); }
 
 Position UnifiedQuestManager::GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective)
@@ -1092,10 +1092,10 @@ void UnifiedQuestManager::OptimizeQuestCompletionOrder(Player* bot)
 void UnifiedQuestManager::OptimizeObjectiveSequence(Player* bot, uint32 questId)
 { _completion->OptimizeObjectiveSequence(bot, questId); }
 
-void UnifiedQuestManager::FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds)
+void UnifiedQuestManager::FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds)
 { _completion->FindEfficientCompletionPath(bot, questIds); }
 
-void UnifiedQuestManager::MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives)
+void UnifiedQuestManager::MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives)
 { _completion->MinimizeTravelTime(bot, objectives); }
 
 void UnifiedQuestManager::DetectStuckState(Player* bot, uint32 questId)
@@ -1117,7 +1117,7 @@ bool UnifiedQuestManager::ValidateQuest(uint32 questId, Player* bot)
 bool UnifiedQuestManager::ValidateQuestRequirements(uint32 questId, Player* bot)
 { return _validation->ValidateQuestRequirements(questId, bot); }
 
-std::vector<std::string> UnifiedQuestManager::GetValidationErrors(uint32 questId, Player* bot)
+::std::vector<::std::string> UnifiedQuestManager::GetValidationErrors(uint32 questId, Player* bot)
 { return _validation->GetValidationErrors(questId, bot); }
 
 bool UnifiedQuestManager::ValidateLevelRequirements(uint32 questId, Player* bot)
@@ -1141,7 +1141,7 @@ bool UnifiedQuestManager::ValidateQuestChain(uint32 questId, Player* bot)
 bool UnifiedQuestManager::HasCompletedPrerequisites(uint32 questId, Player* bot)
 { return _validation->HasCompletedPrerequisites(questId, bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetMissingPrerequisites(uint32 questId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::GetMissingPrerequisites(uint32 questId, Player* bot)
 { return _validation->GetMissingPrerequisites(questId, bot); }
 
 bool UnifiedQuestManager::ValidateReputationRequirements(uint32 questId, Player* bot)
@@ -1162,7 +1162,7 @@ bool UnifiedQuestManager::HasRequiredItems(uint32 questId, Player* bot)
 bool UnifiedQuestManager::HasInventorySpace(uint32 questId, Player* bot)
 { return _validation->HasInventorySpace(questId, bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetMissingQuestItems(uint32 questId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::GetMissingQuestItems(uint32 questId, Player* bot)
 { return _validation->GetMissingQuestItems(questId, bot); }
 
 bool UnifiedQuestManager::ValidateQuestAvailability(uint32 questId, Player* bot)
@@ -1225,23 +1225,23 @@ void UnifiedQuestManager::InvalidateValidationCache(uint32 botGuid)
 void UnifiedQuestManager::CleanupExpiredCache()
 { _validation->CleanupExpiredCache(); }
 
-std::unordered_map<uint32, ValidationResult> UnifiedQuestManager::ValidateMultipleQuests(
-    const std::vector<uint32>& questIds, Player* bot)
+::std::unordered_map<uint32, ValidationResult> UnifiedQuestManager::ValidateMultipleQuests(
+    const ::std::vector<uint32>& questIds, Player* bot)
 { return _validation->ValidateMultipleQuests(questIds, bot); }
 
-std::vector<uint32> UnifiedQuestManager::FilterValidQuests(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot)
 { return _validation->FilterValidQuests(questIds, bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates)
+::std::vector<uint32> UnifiedQuestManager::GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates)
 { return _validation->GetEligibleQuests(bot, candidates); }
 
-std::string UnifiedQuestManager::GetDetailedValidationReport(uint32 questId, Player* bot)
+::std::string UnifiedQuestManager::GetDetailedValidationReport(uint32 questId, Player* bot)
 { return _validation->GetDetailedValidationReport(questId, bot); }
 
-void UnifiedQuestManager::LogValidationFailure(uint32 questId, Player* bot, const std::string& reason)
+void UnifiedQuestManager::LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason)
 { _validation->LogValidationFailure(questId, bot, reason); }
 
-std::vector<std::string> UnifiedQuestManager::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
+::std::vector<::std::string> UnifiedQuestManager::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
 { return _validation->GetRecommendationsForFailedQuest(questId, bot); }
 
 // TurnIn Module delegation (continuing pattern)
@@ -1257,7 +1257,7 @@ void UnifiedQuestManager::ProcessBatchTurnIn(Player* bot, const TurnInBatch& bat
 void UnifiedQuestManager::ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs)
 { _turnIn->ScheduleQuestTurnIn(bot, questId, delayMs); }
 
-std::vector<uint32> UnifiedQuestManager::GetCompletedQuests(Player* bot)
+::std::vector<uint32> UnifiedQuestManager::GetCompletedQuests(Player* bot)
 { return _turnIn->GetCompletedQuests(bot); }
 
 bool UnifiedQuestManager::IsQuestReadyForTurnIn(uint32 questId, Player* bot)
@@ -1272,10 +1272,10 @@ void UnifiedQuestManager::HandleQuestCompletion(Player* bot, uint32 questId)
 void UnifiedQuestManager::PlanOptimalTurnInRoute(Player* bot)
 { _turnIn->PlanOptimalTurnInRoute(bot); }
 
-TurnInBatch UnifiedQuestManager::CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds)
+TurnInBatch UnifiedQuestManager::CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds)
 { return _turnIn->CreateTurnInBatch(bot, questIds); }
 
-void UnifiedQuestManager::OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns)
+void UnifiedQuestManager::OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns)
 { _turnIn->OptimizeTurnInSequence(bot, turnIns); }
 
 void UnifiedQuestManager::MinimizeTurnInTravel(Player* bot)
@@ -1296,10 +1296,10 @@ bool UnifiedQuestManager::IsAtQuestGiver(Player* bot, uint32 questGiverGuid)
 void UnifiedQuestManager::AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot)
 { _turnIn->AnalyzeQuestRewards(turnInData, bot); }
 
-uint32 UnifiedQuestManager::SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
+uint32 UnifiedQuestManager::SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
 { return _turnIn->SelectOptimalReward(rewards, bot, strategy); }
 
-void UnifiedQuestManager::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot)
+void UnifiedQuestManager::EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
 { _turnIn->EvaluateItemUpgrades(rewards, bot); }
 
 float UnifiedQuestManager::CalculateItemValue(const QuestRewardItem& reward, Player* bot)
@@ -1374,7 +1374,7 @@ RewardSelectionStrategy UnifiedQuestManager::GetRewardSelectionStrategy(uint32 b
 void UnifiedQuestManager::SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold)
 { _turnIn->SetBatchTurnInThreshold(botGuid, threshold); }
 
-void UnifiedQuestManager::HandleTurnInError(Player* bot, uint32 questId, const std::string& error)
+void UnifiedQuestManager::HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error)
 { _turnIn->HandleTurnInError(bot, questId, error); }
 
 void UnifiedQuestManager::RecoverFromTurnInFailure(Player* bot, uint32 questId)
@@ -1387,10 +1387,10 @@ void UnifiedQuestManager::ValidateTurnInState(Player* bot, uint32 questId)
 { _turnIn->ValidateTurnInState(bot, questId); }
 
 // Dynamic Module delegation (continuing pattern)
-std::vector<uint32> UnifiedQuestManager::DiscoverAvailableQuests(Player* bot)
+::std::vector<uint32> UnifiedQuestManager::DiscoverAvailableQuests(Player* bot)
 { return _dynamic->DiscoverAvailableQuests(bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+::std::vector<uint32> UnifiedQuestManager::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
 { return _dynamic->GetRecommendedQuests(bot, strategy); }
 
 bool UnifiedQuestManager::AssignQuestToBot(uint32 questId, Player* bot)
@@ -1402,7 +1402,7 @@ void UnifiedQuestManager::AutoAssignQuests(Player* bot, uint32 maxQuests)
 QuestPriority UnifiedQuestManager::CalculateQuestPriority(uint32 questId, Player* bot)
 { return _dynamic->CalculateQuestPriority(questId, bot); }
 
-std::vector<uint32> UnifiedQuestManager::SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot)
 { return _dynamic->SortQuestsByPriority(questIds, bot); }
 
 bool UnifiedQuestManager::ShouldAbandonQuest(uint32 questId, Player* bot)
@@ -1435,7 +1435,7 @@ bool UnifiedQuestManager::CanShareQuest(uint32 questId, Player* from, Player* to
 Position UnifiedQuestManager::GetNextQuestLocation(Player* bot, uint32 questId)
 { return _dynamic->GetNextQuestLocation(bot, questId); }
 
-std::vector<Position> UnifiedQuestManager::GenerateQuestPath(Player* bot, uint32 questId)
+::std::vector<Position> UnifiedQuestManager::GenerateQuestPath(Player* bot, uint32 questId)
 { return _dynamic->GenerateQuestPath(bot, questId); }
 
 void UnifiedQuestManager::HandleQuestNavigation(Player* bot, uint32 questId)
@@ -1459,7 +1459,7 @@ void UnifiedQuestManager::OptimizeQuestOrder(Player* bot)
 void UnifiedQuestManager::TrackQuestChains(Player* bot)
 { _dynamic->TrackQuestChains(bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetQuestChain(uint32 questId)
+::std::vector<uint32> UnifiedQuestManager::GetQuestChain(uint32 questId)
 { return _dynamic->GetQuestChain(questId); }
 
 uint32 UnifiedQuestManager::GetNextQuestInChainDynamic(uint32 completedQuestId)
@@ -1471,7 +1471,7 @@ void UnifiedQuestManager::AdvanceQuestChain(Player* bot, uint32 completedQuestId
 void UnifiedQuestManager::OptimizeZoneQuests(Player* bot)
 { _dynamic->OptimizeZoneQuests(bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetZoneQuests(uint32 zoneId, Player* bot)
+::std::vector<uint32> UnifiedQuestManager::GetZoneQuests(uint32 zoneId, Player* bot)
 { return _dynamic->GetZoneQuests(zoneId, bot); }
 
 void UnifiedQuestManager::PlanZoneCompletion(Player* bot, uint32 zoneId)
@@ -1507,7 +1507,7 @@ void UnifiedQuestManager::EnableQuestGrouping(uint32 botGuid, bool enable)
 
 void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     auto startTime = GameTime::GetGameTimeMS();
     _totalOperations++;
 
@@ -1532,9 +1532,9 @@ void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
     _totalProcessingTimeMs += (endTime - startTime);
 }
 
-std::string UnifiedQuestManager::GetQuestRecommendation(Player* bot, uint32 questId)
+::std::string UnifiedQuestManager::GetQuestRecommendation(Player* bot, uint32 questId)
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     // Validate eligibility
     bool isValid = _validation->ValidateQuest(questId, bot);
@@ -1559,7 +1559,7 @@ std::string UnifiedQuestManager::GetQuestRecommendation(Player* bot, uint32 ques
 
 void UnifiedQuestManager::OptimizeBotQuestLoad(Player* bot)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // Optimize quest order
     _dynamic->OptimizeQuestOrder(bot);
@@ -1574,9 +1574,9 @@ void UnifiedQuestManager::OptimizeBotQuestLoad(Player* bot)
     _dynamic->OptimizeZoneQuests(bot);
 }
 
-std::string UnifiedQuestManager::GetQuestStatistics() const
+::std::string UnifiedQuestManager::GetQuestStatistics() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "=== Unified Quest Manager Statistics ===\n";
     oss << "Total Operations: " << _totalOperations.load() << "\n";
     oss << "Total Processing Time (ms): " << _totalProcessingTimeMs.load() << "\n";

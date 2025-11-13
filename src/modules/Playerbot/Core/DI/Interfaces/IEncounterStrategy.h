@@ -40,7 +40,7 @@ public:
     // Core strategy management
     virtual void ExecuteEncounterStrategy(Group* group, uint32 encounterId) = 0;
     virtual void UpdateEncounterExecution(Group* group, uint32 encounterId, uint32 diff) = 0;
-    virtual void HandleEncounterMechanic(Group* group, uint32 encounterId, const std::string& mechanic) = 0;
+    virtual void HandleEncounterMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) = 0;
     virtual void AdaptStrategyToGroupComposition(Group* group, uint32 encounterId) = 0;
 
     // Phase-based encounter management
@@ -52,7 +52,7 @@ public:
     virtual void HandleTankSwapMechanic(Group* group, Player* currentTank, Player* newTank) = 0;
     virtual void HandleStackingDebuffMechanic(Group* group, Player* affectedPlayer) = 0;
     virtual void HandleAoEDamageMechanic(Group* group, const Position& dangerZone, float radius) = 0;
-    virtual void HandleAddSpawnMechanic(Group* group, const std::vector<Unit*>& adds) = 0;
+    virtual void HandleAddSpawnMechanic(Group* group, const ::std::vector<Unit*>& adds) = 0;
     virtual void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId) = 0;
     virtual void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining) = 0;
 
@@ -67,9 +67,9 @@ public:
 
     // Positioning and movement strategies
     virtual void UpdateEncounterPositioning(Group* group, uint32 encounterId) = 0;
-    virtual void HandleMovementMechanic(Group* group, uint32 encounterId, const std::string& mechanic) = 0;
+    virtual void HandleMovementMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) = 0;
     virtual Position CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role) = 0;
-    virtual void AvoidMechanicAreas(Group* group, const std::vector<Position>& dangerAreas) = 0;
+    virtual void AvoidMechanicAreas(Group* group, const ::std::vector<Position>& dangerAreas) = 0;
 
     // Cooldown and resource management
     virtual void CoordinateGroupCooldowns(Group* group, uint32 encounterId) = 0;

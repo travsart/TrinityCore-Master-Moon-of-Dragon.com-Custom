@@ -35,9 +35,9 @@ BotGearFactory::BotGearFactory()
 
 void BotGearFactory::Initialize()
 {
-    std::lock_guard<std::mutex> lock(_initMutex);
+    ::std::lock_guard<::std::mutex> lock(_initMutex);
 
-    if (_cacheReady.load(std::memory_order_acquire))
+    if (_cacheReady.load(::std::memory_order_acquire))
     {
         TC_LOG_WARN("playerbot.gear", "BotGearFactory: Already initialized");
         return;
@@ -48,10 +48,10 @@ void BotGearFactory::Initialize()
     InitializeQualityDistributions();
     BuildGearCache();
 
-    _cacheReady.store(true, std::memory_order_release);
+    _cacheReady.store(true, ::std::memory_order_release);
 
     TC_LOG_INFO("playerbot.gear", "BotGearFactory: Initialization complete. Cache size: {} items",
-                _stats.cacheSize.load(std::memory_order_relaxed));
+                _stats.cacheSize.load(::std::memory_order_relaxed));
 }
 
 void BotGearFactory::InitializeQualityDistributions()
@@ -338,7 +338,7 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
                 itemsEquipped, bagsAdded, consumablesAdded, itemsFailed);
 
     // Update statistics
-    _stats.itemsApplied.fetch_add(itemsEquipped, std::memory_order_relaxed);
+    _stats.itemsApplied.fetch_add(itemsEquipped, ::std::memory_order_relaxed);
 
     return itemsFailed == 0;
 }
@@ -355,9 +355,9 @@ uint32 BotGearFactory::GetItemLevelForCharLevel(uint32 charLevel)
     return 5 + ((charLevel - 1) * (593 - 5)) / (80 - 1);
 }
 
-std::vector<uint32> BotGearFactory::GetBagItemsForLevel(uint32 level)
+::std::vector<uint32> BotGearFactory::GetBagItemsForLevel(uint32 level)
 {
-    std::vector<uint32> bags;
+    ::std::vector<uint32> bags;
 
     // Simple bag progression
     if (level < 10)
@@ -384,9 +384,9 @@ std::vector<uint32> BotGearFactory::GetBagItemsForLevel(uint32 level)
     return bags;
 }
 
-std::map<uint32, uint32> BotGearFactory::GetConsumablesForClass(uint8 cls, uint32 level)
+::std::map<uint32, uint32> BotGearFactory::GetConsumablesForClass(uint8 cls, uint32 level)
 {
-    std::map<uint32, uint32> consumables;
+    ::std::map<uint32, uint32> consumables;
 
     // Food (all classes)
     if (level < 25)
@@ -489,7 +489,7 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     // Select highest scored item
     if (!qualityFiltered.empty())
     {
-        auto best = std::max_element(qualityFiltered.begin(), qualityFiltered.end(),
+        auto best = ::std::max_element(qualityFiltered.begin(), qualityFiltered.end(),
             [](CachedItem const& a, CachedItem const& b)
             {
                 return a.statScore < b.statScore;
@@ -501,7 +501,7 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
     return 0;
 }
 
-std::vector<CachedItem> const* BotGearFactory::GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const
+::std::vector<CachedItem> const* BotGearFactory::GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const
 {
     // Lookup in cache: _gearCache[cls][specId][level][slot]
     auto clsIt = _gearCache.find(cls);
@@ -528,9 +528,9 @@ std::vector<CachedItem> const* BotGearFactory::GetItemsForSlot(uint8 cls, uint32
     return &slotIt->second;
 }
 
-std::vector<CachedItem> BotGearFactory::FilterByQuality(std::vector<CachedItem> const& items, uint32 quality) const
+::std::vector<CachedItem> BotGearFactory::FilterByQuality(::std::vector<CachedItem> const& items, uint32 quality) const
 {
-    std::vector<CachedItem> filtered;
+    ::std::vector<CachedItem> filtered;
     filtered.reserve(items.size() / 3);  // Estimate
 
     for (auto const& item : items)
@@ -542,7 +542,7 @@ std::vector<CachedItem> BotGearFactory::FilterByQuality(std::vector<CachedItem> 
     return filtered;
 }
 
-std::vector<uint8> BotGearFactory::GetAllowedArmorTypes(uint8 cls) const
+::std::vector<uint8> BotGearFactory::GetAllowedArmorTypes(uint8 cls) const
 {
     switch (cls)
     {

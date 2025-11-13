@@ -58,13 +58,13 @@ public:
 
     // Main spawning interface (maintains BotSpawner API compatibility)
     bool SpawnBot(SpawnRequest const& request);
-    uint32 SpawnBots(std::vector<SpawnRequest> const& requests);
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests);
 
     // Population management
     void SpawnToPopulationTarget();
     void UpdatePopulationTargets();
     void DespawnBot(ObjectGuid guid, bool forced = false);
-    bool DespawnBot(ObjectGuid guid, std::string const& reason);
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason);
 
     // Information queries
     uint32 GetActiveBotCount() const;
@@ -85,23 +85,23 @@ private:
     // Async spawn workflow
     void ProcessSpawnRequest(SpawnRequest const& request);
     void OnCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request);
-    void OnSessionCreated(std::shared_ptr<class BotSession> session, SpawnRequest const& request);
+    void OnSessionCreated(::std::shared_ptr<class BotSession> session, SpawnRequest const& request);
     void OnSpawnCompleted(bool success, ObjectGuid guid, SpawnRequest const& request);
 
     // Error handling and recovery
-    void HandleSpawnFailure(SpawnRequest const& request, std::string const& reason);
+    void HandleSpawnFailure(SpawnRequest const& request, ::std::string const& reason);
     bool AttemptSpawnRecovery(SpawnRequest const& request);
 
     // Component instances
-    std::unique_ptr<BotResourcePool> _resourcePool;
-    std::unique_ptr<BotPerformanceMonitor> _performanceMonitor;
-    std::unique_ptr<BotPopulationManager> _populationManager;
-    std::unique_ptr<BotCharacterSelector> _characterSelector;
-    std::unique_ptr<BotSessionFactory> _sessionFactory;
+    ::std::unique_ptr<BotResourcePool> _resourcePool;
+    ::std::unique_ptr<BotPerformanceMonitor> _performanceMonitor;
+    ::std::unique_ptr<BotPopulationManager> _populationManager;
+    ::std::unique_ptr<BotCharacterSelector> _characterSelector;
+    ::std::unique_ptr<BotSessionFactory> _sessionFactory;
 
     // State tracking
-    std::atomic<bool> _enabled{true};
-    std::atomic<uint32> _activeSpawnRequests{0};
+    ::std::atomic<bool> _enabled{true};
+    ::std::atomic<uint32> _activeSpawnRequests{0};
 
     // Non-copyable
     BotSpawnOrchestrator(BotSpawnOrchestrator const&) = delete;

@@ -205,7 +205,7 @@ public:
     void RemoveEcho(ObjectGuid targetGuid)
     {
         _echoes.erase(
-            std::remove_if(_echoes.begin(), _echoes.end(),
+            ::std::remove_if(_echoes.begin(), _echoes.end(),
                 [targetGuid](const Echo& echo) { return echo.targetGuid == targetGuid; }),
             _echoes.end()
         );
@@ -231,7 +231,7 @@ public:
 
         // Remove expired echoes
         _echoes.erase(
-            std::remove_if(_echoes.begin(), _echoes.end(),
+            ::std::remove_if(_echoes.begin(), _echoes.end(),
                 [](const Echo& echo) { return echo.IsExpired(); }),
             _echoes.end()
         );
@@ -241,12 +241,12 @@ public:
 
     [[nodiscard]] bool HasEcho(ObjectGuid targetGuid) const
     {
-        return std::any_of(_echoes.begin(), _echoes.end(),
+        return ::std::any_of(_echoes.begin(), _echoes.end(),
             [targetGuid](const Echo& echo) { return echo.targetGuid == targetGuid; });
     }
 
 private:
-    std::vector<Echo> _echoes;
+    ::std::vector<Echo> _echoes;
     uint32 _maxEchoes;
 };
 
@@ -303,7 +303,7 @@ public:
         }
 
         // Get group members for healing
-        std::vector<Unit*> group = GetGroupMembers();
+        ::std::vector<Unit*> group = GetGroupMembers();
         if (group.empty())
             return;
 
@@ -317,7 +317,7 @@ public:
     }
 
 protected:
-    void ExecuteHealingRotation(const std::vector<Unit*>& group)
+    void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
         uint32 essence = this->_resource.essence;
 
@@ -342,7 +342,7 @@ protected:
             GenerateEssence();
     }
 
-    bool HandleEmergencyHealing(const std::vector<Unit*>& group)
+    bool HandleEmergencyHealing(const ::std::vector<Unit*>& group)
     {
         uint32 criticalCount = 0;
         for (Unit* member : group)
@@ -370,7 +370,7 @@ protected:
         return false;
     }
 
-    bool HandleEchoMaintenance(const std::vector<Unit*>& group)
+    bool HandleEchoMaintenance(const ::std::vector<Unit*>& group)
     {
         // Maintain 3-4 echoes on injured allies
         uint32 activeEchoes = _echoTracker.GetActiveEchoCount();
@@ -396,7 +396,7 @@ protected:
         return false;
     }
 
-    bool HandleHoTMaintenance(const std::vector<Unit*>& group)
+    bool HandleHoTMaintenance(const ::std::vector<Unit*>& group)
     {
         // Dream Breath for group-wide HoT
         uint32 injuredCount = 0;
@@ -417,7 +417,7 @@ protected:
         return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {
         // Emerald Blossom for AoE healing
         uint32 injuredCount = 0;
@@ -457,16 +457,16 @@ protected:
         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target))
         {
             this->CastSpell(target, AZURE_STRIKE_PRES);
-            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
 
-    Unit* GetLowestHealthTarget(const std::vector<Unit*>& group) const
+    Unit* GetLowestHealthTarget(const ::std::vector<Unit*>& group) const
     {
         return bot::ai::HealingTargetSelector::SelectTarget(this->GetBot(), 30.0f, 100.0f);
     }
 
-    Unit* GetMostInjuredTarget(const std::vector<Unit*>& group) const
+    Unit* GetMostInjuredTarget(const ::std::vector<Unit*>& group) const
     {
         Unit* mostInjured = nullptr;
         float lowestPct = 100.0f;
@@ -483,9 +483,9 @@ protected:
         return mostInjured;
     }
 
-    [[nodiscard]] std::vector<Unit*> GetGroupMembers() const
+    [[nodiscard]] ::std::vector<Unit*> GetGroupMembers() const
     {
-        std::vector<Unit*> members;
+        ::std::vector<Unit*> members;
         Player* bot = this->GetBot();
         if (!bot) return members;
 
@@ -809,7 +809,7 @@ protected:
                         Unit* target = this->FindNearbyEnemy();
                         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target)) {
                             this->CastSpell(target, AZURE_STRIKE_PRES);
-                            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+                            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;

@@ -104,7 +104,7 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
     for (auto const& lock : packet.LockList)
     {
         // Extract boss states from completed mask
-        std::vector<uint32> bossStates;
+        ::std::vector<uint32> bossStates;
         uint32 mask = lock.CompletedMask;
         for (uint32 i = 0; i < 32 && mask; ++i)
         {
@@ -117,7 +117,7 @@ void ParseTypedInstanceInfo(WorldSession* session, WorldPackets::Instance::Insta
             bot->GetGUID(),
             lock.MapID,
             static_cast<uint32>(lock.InstanceID),
-            std::move(bossStates)
+            ::std::move(bossStates)
         );
 
         InstanceEventBus::instance()->PublishEvent(event);
@@ -190,7 +190,7 @@ void ParseTypedRaidInstanceMessage(WorldSession* session, WorldPackets::Instance
     InstanceEvent event = InstanceEvent::InstanceMessageReceived(
         bot->GetGUID(),
         packet.MapID,
-        std::string(packet.WarningMessage)
+        ::std::string(packet.WarningMessage)
     );
 
     InstanceEventBus::instance()->PublishEvent(event);

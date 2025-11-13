@@ -77,18 +77,18 @@ bool BotLevelDistribution::LoadConfig()
     return true;
 }
 
-void BotLevelDistribution::LoadBrackets(TeamId faction, std::string const& prefix)
+void BotLevelDistribution::LoadBrackets(TeamId faction, ::std::string const& prefix)
 {
     auto& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
     auto& levelMap = (faction == TEAM_ALLIANCE) ? m_allianceLevelMap : m_hordeLevelMap;
 
     for (uint32 i = 1; i <= m_numBrackets; ++i)
     {
-        std::string rangeKey;
+        ::std::string rangeKey;
         rangeKey.reserve(32);
         rangeKey = prefix;
         rangeKey += ".Range";
-        rangeKey += std::to_string(i);
+        rangeKey += ::std::to_string(i);
 
         uint32 minLevel = sPlayerbotConfig->GetInt(rangeKey + ".Min", 0);
         uint32 maxLevel = sPlayerbotConfig->GetInt(rangeKey + ".Max", 0);
@@ -154,19 +154,19 @@ bool BotLevelDistribution::ValidateConfig() const
     }
 
     // Validate percentage sums
-    float allianceSum = std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
+    float allianceSum = ::std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
         [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
 
-    float hordeSum = std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
+    float hordeSum = ::std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
         [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
 
-    if (std::abs(allianceSum - 100.0f) > 1.0f)
+    if (::std::abs(allianceSum - 100.0f) > 1.0f)
     {
         TC_LOG_WARN("playerbot", "BotLevelDistribution: Alliance percentages sum to {:.2f}% (should be 100%)",
             allianceSum);
     }
 
-    if (std::abs(hordeSum - 100.0f) > 1.0f)
+    if (::std::abs(hordeSum - 100.0f) > 1.0f)
     {
         TC_LOG_WARN("playerbot", "BotLevelDistribution: Horde percentages sum to {:.2f}% (should be 100%)",
             hordeSum);
@@ -192,10 +192,10 @@ bool BotLevelDistribution::ValidateConfig() const
 void BotLevelDistribution::NormalizeBracketPercentages()
 {
     // Normalize Alliance
-    float allianceSum = std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
+    float allianceSum = ::std::accumulate(m_allianceBrackets.begin(), m_allianceBrackets.end(), 0.0f,
         [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
 
-    if (allianceSum > 0.0f && std::abs(allianceSum - 100.0f) > 0.01f)
+    if (allianceSum > 0.0f && ::std::abs(allianceSum - 100.0f) > 0.01f)
     {
         float factor = 100.0f / allianceSum;
         for (auto& bracket : m_allianceBrackets)
@@ -207,10 +207,10 @@ void BotLevelDistribution::NormalizeBracketPercentages()
     }
 
     // Normalize Horde
-    float hordeSum = std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
+    float hordeSum = ::std::accumulate(m_hordeBrackets.begin(), m_hordeBrackets.end(), 0.0f,
         [](float sum, LevelBracket const& bracket) { return sum + bracket.targetPercentage; });
 
-    if (hordeSum > 0.0f && std::abs(hordeSum - 100.0f) > 0.01f)
+    if (hordeSum > 0.0f && ::std::abs(hordeSum - 100.0f) > 0.01f)
     {
         float factor = 100.0f / hordeSum;
         for (auto& bracket : m_hordeBrackets)
@@ -248,7 +248,7 @@ LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) 
         return nullptr;
 
     // Calculate total bots for this faction
-    uint32 totalBots = std::accumulate(brackets.begin(), brackets.end(), 0u,
+    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
         [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
 
     // If no bots yet, use target distribution
@@ -268,7 +268,7 @@ LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) 
     }
 
     // Calculate priorities (negative deviation = needs more bots)
-    std::vector<float> priorities;
+    ::std::vector<float> priorities;
     priorities.reserve(brackets.size());
 
     for (auto const& bracket : brackets)
@@ -284,7 +284,7 @@ LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) 
     }
 
     // Normalize priorities to probabilities
-    float totalPriority = std::accumulate(priorities.begin(), priorities.end(), 0.0f);
+    float totalPriority = ::std::accumulate(priorities.begin(), priorities.end(), 0.0f);
     if (totalPriority <= 0.0f)
         return &brackets[rand() % brackets.size()];
 
@@ -360,17 +360,17 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
     }
 
     // Calculate deviation statistics
-    std::vector<float> deviations;
+    ::std::vector<float> deviations;
     float maxDeviation = 0.0f;
     float maxDevBracket = 0.0f;
-    std::string maxDevName;
+    ::std::string maxDevName;
 
     for (auto const& bracket : m_allianceBrackets)
     {
         if (bracket.IsWithinTolerance(stats.allianceBots))
             ++stats.bracketsWithinTolerance;
 
-        float deviation = std::abs(bracket.GetDeviation(stats.allianceBots));
+        float deviation = ::std::abs(bracket.GetDeviation(stats.allianceBots));
         deviations.push_back(deviation);
 
         if (deviation > maxDeviation)
@@ -378,9 +378,9 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
             maxDeviation = deviation;
             maxDevBracket = bracket.GetDeviation(stats.allianceBots);
             maxDevName = "Alliance L";
-            maxDevName += std::to_string(bracket.minLevel);
+            maxDevName += ::std::to_string(bracket.minLevel);
             maxDevName += "-";
-            maxDevName += std::to_string(bracket.maxLevel);
+            maxDevName += ::std::to_string(bracket.maxLevel);
         }
     }
 
@@ -389,7 +389,7 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
         if (bracket.IsWithinTolerance(stats.hordeBots))
             ++stats.bracketsWithinTolerance;
 
-        float deviation = std::abs(bracket.GetDeviation(stats.hordeBots));
+        float deviation = ::std::abs(bracket.GetDeviation(stats.hordeBots));
         deviations.push_back(deviation);
 
         if (deviation > maxDeviation)
@@ -397,14 +397,14 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
             maxDeviation = deviation;
             maxDevBracket = bracket.GetDeviation(stats.hordeBots);
             maxDevName = "Horde L";
-            maxDevName += std::to_string(bracket.minLevel);
+            maxDevName += ::std::to_string(bracket.minLevel);
             maxDevName += "-";
-            maxDevName += std::to_string(bracket.maxLevel);
+            maxDevName += ::std::to_string(bracket.maxLevel);
         }
     }
 
     stats.averageDeviation = deviations.empty() ? 0.0f :
-        std::accumulate(deviations.begin(), deviations.end(), 0.0f) / deviations.size();
+        ::std::accumulate(deviations.begin(), deviations.end(), 0.0f) / deviations.size();
     stats.maxDeviation = maxDeviation;
 
     if (maxDevBracket > 0.0f)
@@ -415,12 +415,12 @@ DistributionStats BotLevelDistribution::GetDistributionStats() const
     return stats;
 }
 
-std::vector<LevelBracket const*> BotLevelDistribution::GetUnderpopulatedBrackets(TeamId faction) const
+::std::vector<LevelBracket const*> BotLevelDistribution::GetUnderpopulatedBrackets(TeamId faction) const
 {
-    std::vector<LevelBracket const*> result;
+    ::std::vector<LevelBracket const*> result;
     auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
 
-    uint32 totalBots = std::accumulate(brackets.begin(), brackets.end(), 0u,
+    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
         [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
 
     if (totalBots == 0)
@@ -433,7 +433,7 @@ std::vector<LevelBracket const*> BotLevelDistribution::GetUnderpopulatedBrackets
     }
 
     // Sort by priority (most underpopulated first)
-    std::sort(result.begin(), result.end(),
+    ::std::sort(result.begin(), result.end(),
         [totalBots](LevelBracket const* a, LevelBracket const* b) {
             return a->GetDeviation(totalBots) < b->GetDeviation(totalBots);
         });
@@ -441,12 +441,12 @@ std::vector<LevelBracket const*> BotLevelDistribution::GetUnderpopulatedBrackets
     return result;
 }
 
-std::vector<LevelBracket const*> BotLevelDistribution::GetOverpopulatedBrackets(TeamId faction) const
+::std::vector<LevelBracket const*> BotLevelDistribution::GetOverpopulatedBrackets(TeamId faction) const
 {
-    std::vector<LevelBracket const*> result;
+    ::std::vector<LevelBracket const*> result;
     auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
 
-    uint32 totalBots = std::accumulate(brackets.begin(), brackets.end(), 0u,
+    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
         [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
 
     if (totalBots == 0)
@@ -459,7 +459,7 @@ std::vector<LevelBracket const*> BotLevelDistribution::GetOverpopulatedBrackets(
     }
 
     // Sort by deviation (most overpopulated first)
-    std::sort(result.begin(), result.end(),
+    ::std::sort(result.begin(), result.end(),
         [totalBots](LevelBracket const* a, LevelBracket const* b) {
             return a->GetDeviation(totalBots) > b->GetDeviation(totalBots);
         });
@@ -471,7 +471,7 @@ bool BotLevelDistribution::IsDistributionBalanced(TeamId faction) const
 {
     auto const& brackets = (faction == TEAM_ALLIANCE) ? m_allianceBrackets : m_hordeBrackets;
 
-    uint32 totalBots = std::accumulate(brackets.begin(), brackets.end(), 0u,
+    uint32 totalBots = ::std::accumulate(brackets.begin(), brackets.end(), 0u,
         [](uint32 sum, LevelBracket const& bracket) { return sum + bracket.GetCount(); });
 
     if (totalBots == 0)
@@ -522,16 +522,16 @@ void BotLevelDistribution::PrintDistributionReport() const
     TC_LOG_INFO("playerbot", "====================================");
 }
 
-std::string BotLevelDistribution::GetDistributionSummary() const
+::std::string BotLevelDistribution::GetDistributionSummary() const
 {
     DistributionStats stats = GetDistributionStats();
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Total Bots: " << stats.totalBots
         << " | Alliance: " << stats.allianceBots
         << " | Horde: " << stats.hordeBots
         << " | Balanced: " << stats.bracketsWithinTolerance << "/" << stats.totalBrackets
-        << " | Avg Deviation: " << std::fixed << std::setprecision(1) << (stats.averageDeviation * 100.0f) << "%";
+        << " | Avg Deviation: " << ::std::fixed << ::std::setprecision(1) << (stats.averageDeviation * 100.0f) << "%";
 
     return oss.str();
 }

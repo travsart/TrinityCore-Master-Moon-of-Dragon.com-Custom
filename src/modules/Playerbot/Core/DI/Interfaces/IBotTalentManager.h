@@ -112,7 +112,7 @@ public:
     /**
      * Get all available specs for a class
      */
-    virtual std::vector<uint8> GetAvailableSpecs(uint8 cls) const = 0;
+    virtual ::std::vector<uint8> GetAvailableSpecs(uint8 cls) const = 0;
 
     // ====================================================================
     // TALENT LOADOUT QUERIES (Thread-safe)
@@ -132,7 +132,7 @@ public:
     /**
      * Get all loadouts for a class/spec combination
      */
-    virtual std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const = 0;
+    virtual ::std::vector<TalentLoadout const*> GetAllLoadouts(uint8 cls, uint8 specId) const = 0;
 
     // ====================================================================
     // TALENT APPLICATION (MAIN THREAD ONLY)
@@ -247,7 +247,7 @@ public:
     /**
      * Get formatted loadout summary
      */
-    virtual std::string GetLoadoutSummary() const = 0;
+    virtual ::std::string GetLoadoutSummary() const = 0;
 };
 
 } // namespace Playerbot

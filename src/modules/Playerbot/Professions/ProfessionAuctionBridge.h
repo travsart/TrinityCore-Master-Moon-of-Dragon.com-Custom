@@ -110,10 +110,10 @@ struct ProfessionAuctionProfile
     bool buyMaterialsForLeveling = true;    // Auto-buy materials to level professions
 
     // Material management
-    std::unordered_map<uint32, MaterialStockpileConfig> materialConfigs;
+    ::std::unordered_map<uint32, MaterialStockpileConfig> materialConfigs;
 
     // Crafted item management
-    std::unordered_map<uint32, CraftedItemAuctionConfig> craftedItemConfigs;
+    ::std::unordered_map<uint32, CraftedItemAuctionConfig> craftedItemConfigs;
 
     ProfessionAuctionProfile() = default;
 };
@@ -123,14 +123,14 @@ struct ProfessionAuctionProfile
  */
 struct ProfessionAuctionStatistics
 {
-    std::atomic<uint32> materialsListedCount{0};
-    std::atomic<uint32> materialsSoldCount{0};
-    std::atomic<uint32> craftedsListedCount{0};
-    std::atomic<uint32> craftedsSoldCount{0};
-    std::atomic<uint32> goldEarnedFromMaterials{0};
-    std::atomic<uint32> goldEarnedFromCrafts{0};
-    std::atomic<uint32> goldSpentOnMaterials{0};
-    std::atomic<uint32> materialsBought{0};
+    ::std::atomic<uint32> materialsListedCount{0};
+    ::std::atomic<uint32> materialsSoldCount{0};
+    ::std::atomic<uint32> craftedsListedCount{0};
+    ::std::atomic<uint32> craftedsSoldCount{0};
+    ::std::atomic<uint32> goldEarnedFromMaterials{0};
+    ::std::atomic<uint32> goldEarnedFromCrafts{0};
+    ::std::atomic<uint32> goldSpentOnMaterials{0};
+    ::std::atomic<uint32> materialsBought{0};
 
     void Reset()
     {
@@ -258,7 +258,7 @@ public:
      * Get materials needed for next profession skill-up
      * Queries ProfessionManager for optimal leveling recipe
      */
-    std::vector<std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const override;
+    ::std::vector<::std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const override;
 
     /**
      * Check if material is available on auction house at good price
@@ -352,7 +352,7 @@ private:
         uint32 stackCount;
         uint32 quality;
     };
-    std::vector<ItemInfo> GetProfessionItemsInInventory(::Player* player, bool materialsOnly = false) const;
+    ::std::vector<ItemInfo> GetProfessionItemsInInventory(::Player* player, bool materialsOnly = false) const;
 
     /**
      * Calculate material cost for crafted item
@@ -379,16 +379,16 @@ private:
     // ============================================================================
 
     // Auction profiles (playerGuid -> profile)
-    std::unordered_map<uint32, ProfessionAuctionProfile> _profiles;
+    ::std::unordered_map<uint32, ProfessionAuctionProfile> _profiles;
 
     // Last auction check time (playerGuid -> timestamp)
-    std::unordered_map<uint32, uint32> _lastAuctionCheckTimes;
+    ::std::unordered_map<uint32, uint32> _lastAuctionCheckTimes;
 
     // Active auction IDs for tracking (playerGuid -> auction IDs)
-    std::unordered_map<uint32, std::vector<uint32>> _activeAuctionIds;
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _activeAuctionIds;
 
     // Statistics
-    std::unordered_map<uint32, ProfessionAuctionStatistics> _playerStatistics;
+    ::std::unordered_map<uint32, ProfessionAuctionStatistics> _playerStatistics;
     ProfessionAuctionStatistics _globalStatistics;
 
     // Reference to existing auction house (set in Initialize)

@@ -50,34 +50,34 @@ public:
     void GenerateProductionReport();
 
 private:
-    std::unique_ptr<AutomatedTestRunner> m_testRunner;
-    std::unique_ptr<TestEnvironment> m_testEnv;
-    std::unique_ptr<PerformanceValidator> m_validator;
+    ::std::unique_ptr<AutomatedTestRunner> m_testRunner;
+    ::std::unique_ptr<TestEnvironment> m_testEnv;
+    ::std::unique_ptr<PerformanceValidator> m_validator;
 
     // Demo state
     bool m_isRunning = false;
-    std::vector<std::string> m_demoResults;
+    ::std::vector<::std::string> m_demoResults;
     PerformanceMetrics m_overallMetrics;
 
     // Demo scenarios
     struct DemoScenario
     {
-        std::string name;
-        std::string description;
-        std::function<bool()> executeFunc;
+        ::std::string name;
+        ::std::string description;
+        ::std::function<bool()> executeFunc;
         uint32 expectedDurationSeconds;
         bool isRequired;
     };
 
-    std::vector<DemoScenario> m_scenarios;
+    ::std::vector<DemoScenario> m_scenarios;
 
     // Helper methods
     void InitializeScenarios();
-    void PrintHeader(const std::string& title);
-    void PrintStep(const std::string& step);
-    void PrintResult(const std::string& result, bool success);
-    void WaitForUserInput(const std::string& prompt = "Press Enter to continue...");
-    void ShowProgressBar(uint32 current, uint32 total, const std::string& operation);
+    void PrintHeader(const ::std::string& title);
+    void PrintStep(const ::std::string& step);
+    void PrintResult(const ::std::string& result, bool success);
+    void WaitForUserInput(const ::std::string& prompt = "Press Enter to continue...");
+    void ShowProgressBar(uint32 current, uint32 total, const ::std::string& operation);
 
     // Scenario implementations
     bool ExecuteGroupInvitationDemo();
@@ -100,8 +100,8 @@ ProductionValidationDemo::ProductionValidationDemo()
     config.stopOnFirstFailure = false;
     config.verboseLogging = true;
 
-    m_testRunner = std::make_unique<AutomatedTestRunner>(config);
-    m_validator = std::make_unique<PerformanceValidator>();
+    m_testRunner = ::std::make_unique<AutomatedTestRunner>(config);
+    m_validator = ::std::make_unique<PerformanceValidator>();
 
     InitializeScenarios();
 }
@@ -158,45 +158,45 @@ bool ProductionValidationDemo::RunFullValidationDemo()
 {
     PrintHeader("PLAYERBOT GROUP FUNCTIONALITY - PRODUCTION VALIDATION DEMO");
 
-    std::cout << "This demonstration will showcase the complete PlayerBot group functionality system,\n";
-    std::cout << "validating all key features for production readiness.\n\n";
+    ::std::cout << "This demonstration will showcase the complete PlayerBot group functionality system,\n";
+    ::std::cout << "validating all key features for production readiness.\n\n";
 
-    std::cout << "Demo includes:\n";
+    ::std::cout << "Demo includes:\n";
     for (size_t i = 0; i < m_scenarios.size(); ++i)
     {
-        std::cout << "  " << (i + 1) << ". " << m_scenarios[i].name
+        ::std::cout << "  " << (i + 1) << ". " << m_scenarios[i].name
                   << " (" << m_scenarios[i].expectedDurationSeconds << "s)";
         if (m_scenarios[i].isRequired)
-            std::cout << " [REQUIRED]";
-        std::cout << "\n";
+            ::std::cout << " [REQUIRED]";
+        ::std::cout << "\n";
     }
 
     uint32 totalEstimatedTime = 0;
     for (const auto& scenario : m_scenarios)
         totalEstimatedTime += scenario.expectedDurationSeconds;
 
-    std::cout << "\nEstimated total time: " << (totalEstimatedTime / 60) << " minutes\n\n";
+    ::std::cout << "\nEstimated total time: " << (totalEstimatedTime / 60) << " minutes\n\n";
 
     WaitForUserInput("Press Enter to begin the demonstration...");
 
     m_isRunning = true;
     bool overallSuccess = true;
-    auto demoStartTime = std::chrono::high_resolution_clock::now();
+    auto demoStartTime = ::std::chrono::high_resolution_clock::now();
 
     for (size_t i = 0; i < m_scenarios.size(); ++i)
     {
         const auto& scenario = m_scenarios[i];
 
-        PrintHeader("SCENARIO " + std::to_string(i + 1) + ": " + scenario.name);
-        std::cout << scenario.description << "\n\n";
+        PrintHeader("SCENARIO " + ::std::to_string(i + 1) + ": " + scenario.name);
+        ::std::cout << scenario.description << "\n\n";
 
-        auto scenarioStart = std::chrono::high_resolution_clock::now();
+        auto scenarioStart = ::std::chrono::high_resolution_clock::now();
         bool scenarioSuccess = scenario.executeFunc();
-        auto scenarioEnd = std::chrono::high_resolution_clock::now();
+        auto scenarioEnd = ::std::chrono::high_resolution_clock::now();
 
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(scenarioEnd - scenarioStart);
+        auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(scenarioEnd - scenarioStart);
 
-        PrintResult("Scenario completed in " + std::to_string(duration.count()) + " seconds", scenarioSuccess);
+        PrintResult("Scenario completed in " + ::std::to_string(duration.count()) + " seconds", scenarioSuccess);
 
         if (scenarioSuccess)
         {
@@ -208,40 +208,40 @@ bool ProductionValidationDemo::RunFullValidationDemo()
             if (scenario.isRequired)
             {
                 overallSuccess = false;
-                std::cout << "\n  CRITICAL: Required scenario failed. Continuing with non-critical scenarios...\n";
+                ::std::cout << "\n  CRITICAL: Required scenario failed. Continuing with non-critical scenarios...\n";
             }
         }
 
-        std::cout << "\n";
+        ::std::cout << "\n";
         if (i < m_scenarios.size() - 1)
         {
             WaitForUserInput("Press Enter for next scenario...");
         }
     }
 
-    auto demoEndTime = std::chrono::high_resolution_clock::now();
-    auto totalDuration = std::chrono::duration_cast<std::chrono::minutes>(demoEndTime - demoStartTime);
+    auto demoEndTime = ::std::chrono::high_resolution_clock::now();
+    auto totalDuration = ::std::chrono::duration_cast<::std::chrono::minutes>(demoEndTime - demoStartTime);
 
     PrintHeader("DEMONSTRATION SUMMARY");
-    std::cout << "Total demonstration time: " << totalDuration.count() << " minutes\n\n";
+    ::std::cout << "Total demonstration time: " << totalDuration.count() << " minutes\n\n";
 
-    std::cout << "Scenario Results:\n";
+    ::std::cout << "Scenario Results:\n";
     for (const auto& result : m_demoResults)
     {
-        std::cout << "  " << result << "\n";
+        ::std::cout << "  " << result << "\n";
     }
 
-    std::cout << "\nOverall Status: " << (overallSuccess ? " PRODUCTION READY" : "  NEEDS ATTENTION") << "\n\n";
+    ::std::cout << "\nOverall Status: " << (overallSuccess ? " PRODUCTION READY" : "  NEEDS ATTENTION") << "\n\n";
 
     if (!overallSuccess)
     {
-        std::cout << "Some required scenarios failed. Please review the output above for details.\n";
-        std::cout << "The system may need additional configuration or bug fixes before production deployment.\n";
+        ::std::cout << "Some required scenarios failed. Please review the output above for details.\n";
+        ::std::cout << "The system may need additional configuration or bug fixes before production deployment.\n";
     }
     else
     {
-        std::cout << " All critical scenarios passed! The PlayerBot group functionality system\n";
-        std::cout << "   is validated and ready for production deployment.\n";
+        ::std::cout << " All critical scenarios passed! The PlayerBot group functionality system\n";
+        ::std::cout << "   is validated and ready for production deployment.\n";
     }
 
     m_isRunning = false;
@@ -252,7 +252,7 @@ bool ProductionValidationDemo::RunQuickValidationDemo()
 {
     PrintHeader("QUICK VALIDATION DEMO");
 
-    std::cout << "Running essential tests only (estimated 3 minutes)...\n\n";
+    ::std::cout << "Running essential tests only (estimated 3 minutes)...\n\n";
 
     // Run only required scenarios
     bool success = true;
@@ -277,21 +277,21 @@ bool ProductionValidationDemo::RunInteractiveDemo()
 {
     PrintHeader("INTERACTIVE DEMO MODE");
 
-    std::cout << "Select scenarios to run:\n";
+    ::std::cout << "Select scenarios to run:\n";
     for (size_t i = 0; i < m_scenarios.size(); ++i)
     {
-        std::cout << "  " << (i + 1) << ". " << m_scenarios[i].name;
+        ::std::cout << "  " << (i + 1) << ". " << m_scenarios[i].name;
         if (m_scenarios[i].isRequired)
-            std::cout << " [REQUIRED]";
-        std::cout << "\n";
+            ::std::cout << " [REQUIRED]";
+        ::std::cout << "\n";
     }
 
-    std::cout << "\nEnter scenario numbers separated by spaces (e.g., 1 3 5), or 'all' for all scenarios: ";
+    ::std::cout << "\nEnter scenario numbers separated by spaces (e.g., 1 3 5), or 'all' for all scenarios: ";
 
-    std::string input;
-    std::getline(std::cin, input);
+    ::std::string input;
+    ::std::getline(::std::cin, input);
 
-    std::vector<size_t> selectedScenarios;
+    ::std::vector<size_t> selectedScenarios;
     if (input == "all")
     {
         for (size_t i = 0; i < m_scenarios.size(); ++i)
@@ -299,7 +299,7 @@ bool ProductionValidationDemo::RunInteractiveDemo()
     }
     else
     {
-        std::istringstream iss(input);
+        ::std::istringstream iss(input);
         int num;
         while (iss >> num)
         {
@@ -310,7 +310,7 @@ bool ProductionValidationDemo::RunInteractiveDemo()
 
     if (selectedScenarios.empty())
     {
-        std::cout << "No valid scenarios selected.\n";
+        ::std::cout << "No valid scenarios selected.\n";
         return false;
     }
 
@@ -338,16 +338,16 @@ bool ProductionValidationDemo::ExecuteGroupInvitationDemo()
 
     // Set up test scenario
     auto leader = m_testEnv->CreateTestBot("HumanLeader");
-    std::vector<std::unique_ptr<BotTestData>> bots;
+    ::std::vector<::std::unique_ptr<BotTestData>> bots;
 
     for (int i = 1; i <= 4; ++i)
     {
-        bots.push_back(m_testEnv->CreateTestBot("DemoBot" + std::to_string(i)));
+        bots.push_back(m_testEnv->CreateTestBot("DemoBot" + ::std::to_string(i)));
     }
 
     PrintStep("Sending group invitations to 4 bots...");
 
-    auto invitationStart = std::chrono::high_resolution_clock::now();
+    auto invitationStart = ::std::chrono::high_resolution_clock::now();
 
     // Simulate invitation process
     uint32 acceptedInvitations = 0;
@@ -356,19 +356,19 @@ bool ProductionValidationDemo::ExecuteGroupInvitationDemo()
         ShowProgressBar(acceptedInvitations + 1, 4, "Sending invitations");
 
         // Simulate network delay and processing time
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(200));
 
         // Simulate invitation acceptance (in real system, this would be automatic)
         bot->hasAcceptedInvitation = true;
         acceptedInvitations++;
 
-        std::cout << "   " << bot->name << " accepted invitation\n";
+        ::std::cout << "   " << bot->name << " accepted invitation\n";
     }
 
-    auto invitationEnd = std::chrono::high_resolution_clock::now();
-    auto invitationTime = std::chrono::duration_cast<std::chrono::milliseconds>(invitationEnd - invitationStart);
+    auto invitationEnd = ::std::chrono::high_resolution_clock::now();
+    auto invitationTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(invitationEnd - invitationStart);
 
-    PrintResult("All invitations processed in " + std::to_string(invitationTime.count()) + "ms",
+    PrintResult("All invitations processed in " + ::std::to_string(invitationTime.count()) + "ms",
                 acceptedInvitations == 4);
 
     // Update metrics
@@ -383,9 +383,9 @@ bool ProductionValidationDemo::ExecuteGroupInvitationDemo()
 
     if (groupFormed)
     {
-        std::cout << "   Group successfully formed with " << acceptedInvitations << " members\n";
-        std::cout << "   All bots show as 'In Group' status\n";
-        std::cout << "   Group leader properly assigned\n";
+        ::std::cout << "   Group successfully formed with " << acceptedInvitations << " members\n";
+        ::std::cout << "   All bots show as 'In Group' status\n";
+        ::std::cout << "   Group leader properly assigned\n";
     }
 
     return groupFormed && invitationTime.count() < 3000; // Should complete within 3 seconds
@@ -400,21 +400,21 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
     Position startPos(100.0f, 100.0f, 0.0f, 0.0f);
     group->groupPosition = startPos;
 
-    std::vector<std::unique_ptr<BotTestData>> bots;
+    ::std::vector<::std::unique_ptr<BotTestData>> bots;
     for (int i = 1; i <= 4; ++i)
     {
-        auto bot = m_testEnv->CreateTestBot("FollowBot" + std::to_string(i));
+        auto bot = m_testEnv->CreateTestBot("FollowBot" + ::std::to_string(i));
         bot->position = m_testEnv->GetFormationPosition(startPos, i - 1, 5.0f);
         bot->isFollowingLeader = true;
 
         m_testEnv->AddBotToGroup(*group, *bot);
-        bots.push_back(std::move(bot));
+        bots.push_back(::std::move(bot));
     }
 
     PrintStep("Initial formation established. Testing leader movement...");
 
     // Test several movement scenarios
-    std::vector<std::pair<std::string, Position>> movements = {
+    ::std::vector<::std::pair<::std::string, Position>> movements = {
         {"Short distance movement", Position(120.0f, 120.0f, 0.0f, 0.0f)},
         {"Medium distance movement", Position(200.0f, 150.0f, 0.0f, 0.0f)},
         {"Long distance movement", Position(500.0f, 300.0f, 0.0f, 0.0f)},
@@ -428,7 +428,7 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
     {
         PrintStep("Testing: " + description);
 
-        auto moveStart = std::chrono::high_resolution_clock::now();
+        auto moveStart = ::std::chrono::high_resolution_clock::now();
 
         // Simulate leader movement
         group->groupPosition = destination;
@@ -443,23 +443,23 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
         // Simulate following delay
         float distance = startPos.GetExactDist(&destination);
         uint32 followDelay = static_cast<uint32>(distance / 7.0f * 1000); // 7 yards per second
-        std::this_thread::sleep_for(std::chrono::milliseconds(followDelay));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(followDelay));
 
-        auto moveEnd = std::chrono::high_resolution_clock::now();
-        auto followTime = std::chrono::duration_cast<std::chrono::microseconds>(moveEnd - moveStart);
+        auto moveEnd = ::std::chrono::high_resolution_clock::now();
+        auto followTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(moveEnd - moveStart);
 
-        maxFollowTime = std::max(maxFollowTime, static_cast<uint64>(followTime.count()));
+        maxFollowTime = ::std::max(maxFollowTime, static_cast<uint64>(followTime.count()));
 
         // Validate formation
         bool formationValid = m_testEnv->ValidateGroupFormation(*group, 15.0f);
 
         if (formationValid)
         {
-            std::cout << "   Bots maintained formation during movement (" << followTime.count() / 1000 << "ms)\n";
+            ::std::cout << "   Bots maintained formation during movement (" << followTime.count() / 1000 << "ms)\n";
         }
         else
         {
-            std::cout << "   Formation broken during movement\n";
+            ::std::cout << "   Formation broken during movement\n";
             allMovementsSuccessful = false;
         }
 
@@ -470,7 +470,7 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
     PrintStep("Testing teleportation (>100 yard movement)...");
 
     Position teleportDestination(1000.0f, 1000.0f, 0.0f, 0.0f);
-    auto teleportStart = std::chrono::high_resolution_clock::now();
+    auto teleportStart = ::std::chrono::high_resolution_clock::now();
 
     // Simulate instant teleport
     group->groupPosition = teleportDestination;
@@ -479,14 +479,14 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
         bots[i]->position = m_testEnv->GetFormationPosition(teleportDestination, i, 5.0f);
     }
 
-    auto teleportEnd = std::chrono::high_resolution_clock::now();
-    auto teleportTime = std::chrono::duration_cast<std::chrono::microseconds>(teleportEnd - teleportStart);
+    auto teleportEnd = ::std::chrono::high_resolution_clock::now();
+    auto teleportTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(teleportEnd - teleportStart);
 
     bool teleportSuccessful = m_testEnv->ValidateGroupFormation(*group, 15.0f);
 
     if (teleportSuccessful)
     {
-        std::cout << "   Teleportation successful (" << teleportTime.count() / 1000 << "ms)\n";
+        ::std::cout << "   Teleportation successful (" << teleportTime.count() / 1000 << "ms)\n";
     }
 
     // Update metrics
@@ -507,15 +507,15 @@ bool ProductionValidationDemo::ExecuteCombatCoordinationDemo()
     Position combatPos(300.0f, 300.0f, 0.0f, 0.0f);
     group->groupPosition = combatPos;
 
-    std::vector<std::unique_ptr<BotTestData>> bots;
+    ::std::vector<::std::unique_ptr<BotTestData>> bots;
     for (int i = 1; i <= 4; ++i)
     {
-        auto bot = m_testEnv->CreateTestBot("CombatBot" + std::to_string(i));
+        auto bot = m_testEnv->CreateTestBot("CombatBot" + ::std::to_string(i));
         bot->position = m_testEnv->GetFormationPosition(combatPos, i - 1, 8.0f); // Wider combat formation
         bot->isFollowingLeader = true;
 
         m_testEnv->AddBotToGroup(*group, *bot);
-        bots.push_back(std::move(bot));
+        bots.push_back(::std::move(bot));
     }
 
     PrintStep("Leader engaging first target...");
@@ -524,14 +524,14 @@ bool ProductionValidationDemo::ExecuteCombatCoordinationDemo()
     ObjectGuid enemy1 = ObjectGuid::Create<HighGuid::Creature>(1001);
     ObjectGuid enemy2 = ObjectGuid::Create<HighGuid::Creature>(1002);
 
-    auto combatStart = std::chrono::high_resolution_clock::now();
+    auto combatStart = ::std::chrono::high_resolution_clock::now();
 
     // Simulate leader engaging enemy
     group->isInCombat = true;
     group->currentTarget = enemy1;
 
     // Simulate bot response time
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(500));
 
     // All bots should engage the same target
     uint32 botsEngaged = 0;
@@ -540,36 +540,36 @@ bool ProductionValidationDemo::ExecuteCombatCoordinationDemo()
         bot->isInCombat = true;
         bot->isAssistingTarget = true;
         botsEngaged++;
-        std::cout << "   " << bot->name << " engaged target\n";
+        ::std::cout << "   " << bot->name << " engaged target\n";
     }
 
-    auto engagementEnd = std::chrono::high_resolution_clock::now();
-    auto engagementTime = std::chrono::duration_cast<std::chrono::microseconds>(engagementEnd - combatStart);
+    auto engagementEnd = ::std::chrono::high_resolution_clock::now();
+    auto engagementTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(engagementEnd - combatStart);
 
     bool initialEngagementSuccessful = (botsEngaged == 4) &&
                                        m_testEnv->ValidateTargetAssistance(*group, enemy1) &&
                                        m_testEnv->ValidateCombatEngagement(*group);
 
-    PrintResult("Initial combat engagement (" + std::to_string(engagementTime.count() / 1000) + "ms)",
+    PrintResult("Initial combat engagement (" + ::std::to_string(engagementTime.count() / 1000) + "ms)",
                 initialEngagementSuccessful);
 
     PrintStep("Testing target switching...");
 
-    auto switchStart = std::chrono::high_resolution_clock::now();
+    auto switchStart = ::std::chrono::high_resolution_clock::now();
 
     // Leader switches to new target
     group->currentTarget = enemy2;
 
     // Simulate target switch delay
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(200));
 
     // Bots should switch targets
     bool targetSwitchSuccessful = m_testEnv->ValidateTargetAssistance(*group, enemy2);
 
-    auto switchEnd = std::chrono::high_resolution_clock::now();
-    auto switchTime = std::chrono::duration_cast<std::chrono::microseconds>(switchEnd - switchStart);
+    auto switchEnd = ::std::chrono::high_resolution_clock::now();
+    auto switchTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(switchEnd - switchStart);
 
-    PrintResult("Target switching (" + std::to_string(switchTime.count() / 1000) + "ms)",
+    PrintResult("Target switching (" + ::std::to_string(switchTime.count() / 1000) + "ms)",
                 targetSwitchSuccessful);
 
     PrintStep("Testing combat completion...");
@@ -612,13 +612,13 @@ bool ProductionValidationDemo::ExecutePerformanceValidationDemo()
     m_overallMetrics.memoryUsagePeak = simulatedMemoryPerBot * botCount;
 
     bool memoryValid = m_validator->ValidateMemoryMetrics(m_overallMetrics, botCount);
-    PrintResult("Memory usage (" + std::to_string(simulatedMemoryPerBot / (1024 * 1024)) + "MB per bot)", memoryValid);
+    PrintResult("Memory usage (" + ::std::to_string(simulatedMemoryPerBot / (1024 * 1024)) + "MB per bot)", memoryValid);
 
     // Test CPU usage
     PrintStep("Validating CPU usage...");
     m_overallMetrics.cpuUsagePeak = 75.0f; // 75% CPU usage (within 90% limit)
     bool cpuValid = m_validator->ValidateCpuMetrics(m_overallMetrics, botCount);
-    PrintResult("CPU usage (" + std::to_string(m_overallMetrics.cpuUsagePeak) + "%)", cpuValid);
+    PrintResult("CPU usage (" + ::std::to_string(m_overallMetrics.cpuUsagePeak) + "%)", cpuValid);
 
     // Test response times
     PrintStep("Validating response times...");
@@ -629,18 +629,18 @@ bool ProductionValidationDemo::ExecutePerformanceValidationDemo()
     PrintStep("Validating operation success rates...");
     bool successRateValid = m_validator->ValidateSuccessRates(m_overallMetrics);
     float currentSuccessRate = m_overallMetrics.GetSuccessRate() * 100.0f;
-    PrintResult("Success rate (" + std::to_string(static_cast<int>(currentSuccessRate)) + "%)", successRateValid);
+    PrintResult("Success rate (" + ::std::to_string(static_cast<int>(currentSuccessRate)) + "%)", successRateValid);
 
     // Overall performance validation
     bool overallPerformanceValid = m_validator->ValidateAllMetrics(m_overallMetrics, botCount);
 
-    std::cout << "\n Performance Summary:\n";
-    std::cout << "  Memory per bot: " << (simulatedMemoryPerBot / (1024 * 1024)) << " MB (limit: 10 MB)\n";
-    std::cout << "  CPU usage: " << m_overallMetrics.cpuUsagePeak << "% (limit: 90%)\n";
-    std::cout << "  Success rate: " << currentSuccessRate << "% (minimum: 95%)\n";
-    std::cout << "  Invitation time: " << (m_overallMetrics.invitationAcceptanceTime / 1000) << " ms (limit: 3000 ms)\n";
-    std::cout << "  Combat engagement: " << (m_overallMetrics.combatEngagementTime / 1000) << " ms (limit: 3000 ms)\n";
-    std::cout << "  Target switching: " << (m_overallMetrics.targetSwitchTime / 1000) << " ms (limit: 1000 ms)\n";
+    ::std::cout << "\n Performance Summary:\n";
+    ::std::cout << "  Memory per bot: " << (simulatedMemoryPerBot / (1024 * 1024)) << " MB (limit: 10 MB)\n";
+    ::std::cout << "  CPU usage: " << m_overallMetrics.cpuUsagePeak << "% (limit: 90%)\n";
+    ::std::cout << "  Success rate: " << currentSuccessRate << "% (minimum: 95%)\n";
+    ::std::cout << "  Invitation time: " << (m_overallMetrics.invitationAcceptanceTime / 1000) << " ms (limit: 3000 ms)\n";
+    ::std::cout << "  Combat engagement: " << (m_overallMetrics.combatEngagementTime / 1000) << " ms (limit: 3000 ms)\n";
+    ::std::cout << "  Target switching: " << (m_overallMetrics.targetSwitchTime / 1000) << " ms (limit: 1000 ms)\n";
 
     return overallPerformanceValid;
 }
@@ -653,10 +653,10 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
     constexpr uint32 BOTS_PER_GROUP = 4;
     constexpr uint32 TEST_DURATION = 30; // seconds
 
-    std::cout << "  Testing " << STRESS_GROUPS << " concurrent groups (" << (STRESS_GROUPS * BOTS_PER_GROUP) << " total bots)\n";
-    std::cout << "  Duration: " << TEST_DURATION << " seconds\n\n";
+    ::std::cout << "  Testing " << STRESS_GROUPS << " concurrent groups (" << (STRESS_GROUPS * BOTS_PER_GROUP) << " total bots)\n";
+    ::std::cout << "  Duration: " << TEST_DURATION << " seconds\n\n";
 
-    auto stressStart = std::chrono::high_resolution_clock::now();
+    auto stressStart = ::std::chrono::high_resolution_clock::now();
 
     // Simulate stress test
     for (uint32 second = 0; second < TEST_DURATION; ++second)
@@ -667,11 +667,11 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
         m_overallMetrics.totalOperations += STRESS_GROUPS * BOTS_PER_GROUP * 10; // 10 operations per bot per second
         m_overallMetrics.successfulOperations += STRESS_GROUPS * BOTS_PER_GROUP * 9; // 90% success rate under stress
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(1000));
     }
 
-    auto stressEnd = std::chrono::high_resolution_clock::now();
-    auto stressDuration = std::chrono::duration_cast<std::chrono::seconds>(stressEnd - stressStart);
+    auto stressEnd = ::std::chrono::high_resolution_clock::now();
+    auto stressDuration = ::std::chrono::duration_cast<::std::chrono::seconds>(stressEnd - stressStart);
 
     PrintStep("Validating system stability under stress...");
 
@@ -684,11 +684,11 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
     if (stressSuccessRate < 0.85f) // 85% minimum under stress
     {
         stressTestPassed = false;
-        std::cout << "   Success rate dropped below acceptable threshold under stress\n";
+        ::std::cout << "   Success rate dropped below acceptable threshold under stress\n";
     }
     else
     {
-        std::cout << "   Success rate maintained at " << (stressSuccessRate * 100.0f) << "% under stress\n";
+        ::std::cout << "   Success rate maintained at " << (stressSuccessRate * 100.0f) << "% under stress\n";
     }
 
     // Simulate memory and CPU checks under stress
@@ -696,14 +696,14 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
     if (stressMemoryUsage > totalBots * 15ULL * 1024 * 1024) // 15MB limit under stress
     {
         stressTestPassed = false;
-        std::cout << "   Memory usage exceeded stress limits\n";
+        ::std::cout << "   Memory usage exceeded stress limits\n";
     }
     else
     {
-        std::cout << "   Memory usage within stress limits\n";
+        ::std::cout << "   Memory usage within stress limits\n";
     }
 
-    PrintResult("Stress test completed in " + std::to_string(stressDuration.count()) + " seconds", stressTestPassed);
+    PrintResult("Stress test completed in " + ::std::to_string(stressDuration.count()) + " seconds", stressTestPassed);
 
     return stressTestPassed;
 }
@@ -716,84 +716,84 @@ bool ProductionValidationDemo::ExecuteEdgeCaseDemo()
 
     // Test 1: Leader disconnection
     PrintStep("Scenario 1: Leader disconnection");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    std::cout << "   Bots detected leader disconnection\n";
-    std::cout << "   Bots stopped following gracefully\n";
-    std::cout << "   Group disbanded safely\n";
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(500));
+    ::std::cout << "   Bots detected leader disconnection\n";
+    ::std::cout << "   Bots stopped following gracefully\n";
+    ::std::cout << "   Group disbanded safely\n";
 
     // Test 2: Member disconnection
     PrintStep("Scenario 2: Member disconnection during combat");
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::cout << "   Remaining members continued combat\n";
-    std::cout << "   Formation adjusted automatically\n";
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(300));
+    ::std::cout << "   Remaining members continued combat\n";
+    ::std::cout << "   Formation adjusted automatically\n";
 
     // Test 3: Invalid invitations
     PrintStep("Scenario 3: Invalid invitation handling");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    std::cout << "   Full group invitation properly rejected\n";
-    std::cout << "   Self-invitation properly rejected\n";
-    std::cout << "   Cross-faction invitation properly handled\n";
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(200));
+    ::std::cout << "   Full group invitation properly rejected\n";
+    ::std::cout << "   Self-invitation properly rejected\n";
+    ::std::cout << "   Cross-faction invitation properly handled\n";
 
     // Test 4: Map transitions
     PrintStep("Scenario 4: Map transition handling");
-    std::this_thread::sleep_for(std::chrono::milliseconds(400));
-    std::cout << "   Group maintained during map change\n";
-    std::cout << "   Bots repositioned correctly in new zone\n";
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(400));
+    ::std::cout << "   Group maintained during map change\n";
+    ::std::cout << "   Bots repositioned correctly in new zone\n";
 
     // Test 5: Resource exhaustion recovery
     PrintStep("Scenario 5: Resource exhaustion recovery");
-    std::this_thread::sleep_for(std::chrono::milliseconds(600));
-    std::cout << "   System recovered from memory pressure\n";
-    std::cout << "   Database reconnection successful\n";
-    std::cout << "   Network timeout handling worked\n";
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(600));
+    ::std::cout << "   System recovered from memory pressure\n";
+    ::std::cout << "   Database reconnection successful\n";
+    ::std::cout << "   Network timeout handling worked\n";
 
     PrintResult("All edge cases handled successfully", allEdgeCasesPassed);
 
     return allEdgeCasesPassed;
 }
 
-void ProductionValidationDemo::PrintHeader(const std::string& title)
+void ProductionValidationDemo::PrintHeader(const ::std::string& title)
 {
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << std::setw(30 + title.length() / 2) << title << "\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    ::std::cout << "\n" << ::std::string(60, '=') << "\n";
+    ::std::cout << ::std::setw(30 + title.length() / 2) << title << "\n";
+    ::std::cout << ::std::string(60, '=') << "\n\n";
 }
 
-void ProductionValidationDemo::PrintStep(const std::string& step)
+void ProductionValidationDemo::PrintStep(const ::std::string& step)
 {
-    std::cout << " " << step << "\n";
+    ::std::cout << " " << step << "\n";
 }
 
-void ProductionValidationDemo::PrintResult(const std::string& result, bool success)
+void ProductionValidationDemo::PrintResult(const ::std::string& result, bool success)
 {
-    std::cout << (success ? "" : "") << " " << result << "\n";
+    ::std::cout << (success ? "" : "") << " " << result << "\n";
 }
 
-void ProductionValidationDemo::WaitForUserInput(const std::string& prompt)
+void ProductionValidationDemo::WaitForUserInput(const ::std::string& prompt)
 {
-    std::cout << prompt;
-    std::cin.ignore();
+    ::std::cout << prompt;
+    ::std::cin.ignore();
 }
 
-void ProductionValidationDemo::ShowProgressBar(uint32 current, uint32 total, const std::string& operation)
+void ProductionValidationDemo::ShowProgressBar(uint32 current, uint32 total, const ::std::string& operation)
 {
     const uint32 barWidth = 40;
     float progress = static_cast<float>(current) / total;
     uint32 filledWidth = static_cast<uint32>(barWidth * progress);
 
-    std::cout << "\r" << operation << ": [";
+    ::std::cout << "\r" << operation << ": [";
     for (uint32 i = 0; i < barWidth; ++i)
     {
         if (i < filledWidth)
-            std::cout << "";
+            ::std::cout << "";
         else
-            std::cout << "";
+            ::std::cout << "";
     }
-    std::cout << "] " << std::setw(3) << static_cast<int>(progress * 100) << "%";
-    std::cout.flush();
+    ::std::cout << "] " << ::std::setw(3) << static_cast<int>(progress * 100) << "%";
+    ::std::cout.flush();
 
     if (current == total)
-        std::cout << "\n";
+        ::std::cout << "\n";
 }
 
 } // namespace Test
@@ -807,12 +807,12 @@ int main(int argc, char** argv)
 {
     using namespace Playerbot::Test;
 
-    std::cout << "PlayerBot Group Functionality - Production Validation Demo\n";
-    std::cout << "=========================================================\n\n";
+    ::std::cout << "PlayerBot Group Functionality - Production Validation Demo\n";
+    ::std::cout << "=========================================================\n\n";
 
     if (argc > 1)
     {
-        std::string mode = argv[1];
+        ::std::string mode = argv[1];
         if (mode == "--quick")
         {
             ProductionValidationDemo demo;
@@ -825,11 +825,11 @@ int main(int argc, char** argv)
         }
         else if (mode == "--help")
         {
-            std::cout << "Usage: ProductionValidationDemo [--quick|--interactive|--help]\n";
-            std::cout << "  --quick:       Run essential tests only (3 minutes)\n";
-            std::cout << "  --interactive: Select specific scenarios to run\n";
-            std::cout << "  --help:        Show this help message\n";
-            std::cout << "  (no args):     Run full demonstration\n";
+            ::std::cout << "Usage: ProductionValidationDemo [--quick|--interactive|--help]\n";
+            ::std::cout << "  --quick:       Run essential tests only (3 minutes)\n";
+            ::std::cout << "  --interactive: Select specific scenarios to run\n";
+            ::std::cout << "  --help:        Show this help message\n";
+            ::std::cout << "  (no args):     Run full demonstration\n";
             return 0;
         }
     }

@@ -160,15 +160,15 @@ public:
         return count;
     }
 
-    [[nodiscard]] std::optional<EffectInfo> GetDotInfo(ObjectGuid targetGuid, uint32 spellId) const
+    [[nodiscard]] ::std::optional<EffectInfo> GetDotInfo(ObjectGuid targetGuid, uint32 spellId) const
     {
         auto targetIt = _activeDots.find(targetGuid);
         if (targetIt == _activeDots.end())
-            return std::nullopt;
+            return ::std::nullopt;
 
         auto dotIt = targetIt->second.find(spellId);
         if (dotIt == targetIt->second.end())
-            return std::nullopt;
+            return ::std::nullopt;
 
         return dotIt->second;
     }
@@ -214,8 +214,8 @@ public:
     }
 
 private:
-    std::unordered_map<uint32, EffectInfo> _dotDefinitions;
-    std::unordered_map<ObjectGuid, std::unordered_map<uint32, EffectInfo>> _activeDots;
+    ::std::unordered_map<uint32, EffectInfo> _dotDefinitions;
+    ::std::unordered_map<ObjectGuid, ::std::unordered_map<uint32, EffectInfo>> _activeDots;
 };
 
 // ============================================================================
@@ -343,8 +343,8 @@ public:
     }
 
 private:
-    std::unordered_map<uint32, EffectInfo> _hotDefinitions;
-    std::unordered_map<ObjectGuid, std::unordered_map<uint32, EffectInfo>> _activeHots;
+    ::std::unordered_map<uint32, EffectInfo> _hotDefinitions;
+    ::std::unordered_map<ObjectGuid, ::std::unordered_map<uint32, EffectInfo>> _activeHots;
 };
 
 // ============================================================================
@@ -373,7 +373,7 @@ public:
         EffectInfo& buff = _activeBuffs[spellId];
         buff.spellId = spellId;
         buff.duration = duration;
-        buff.stacks = std::min(stacks, maxStacks);
+        buff.stacks = ::std::min(stacks, maxStacks);
         buff.active = true;
         buff.endTime = GameTime::GetGameTimeMS() + duration;
     }
@@ -449,8 +449,8 @@ public:
     }
 
 private:
-    std::unordered_map<uint32, EffectInfo> _buffDefinitions;
-    std::unordered_map<uint32, EffectInfo> _activeBuffs;
+    ::std::unordered_map<uint32, EffectInfo> _buffDefinitions;
+    ::std::unordered_map<uint32, EffectInfo> _activeBuffs;
 };
 
 } // namespace Playerbot

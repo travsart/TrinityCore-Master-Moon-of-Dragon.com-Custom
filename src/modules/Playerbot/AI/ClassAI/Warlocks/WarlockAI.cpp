@@ -138,14 +138,14 @@ enum WarlockSpells
 WarlockAI::WarlockAI(Player* bot) :
     ClassAI(bot),
     _warlockMetrics{},
-    _threatManager(std::make_unique<BotThreatManager>(bot)),
-    _targetSelector(std::make_unique<TargetSelector>(bot, _threatManager.get())),
-    _positionManager(std::make_unique<PositionManager>(bot, _threatManager.get())),
-    _interruptManager(std::make_unique<InterruptManager>(bot)),
+    _threatManager(::std::make_unique<BotThreatManager>(bot)),
+    _targetSelector(::std::make_unique<TargetSelector>(bot, _threatManager.get())),
+    _positionManager(::std::make_unique<PositionManager>(bot, _threatManager.get())),
+    _interruptManager(::std::make_unique<InterruptManager>(bot)),
     _currentSoulShards(0),
     _petActive(false),
     _petHealthPercent(0),
-    _lastPetCheck(std::chrono::steady_clock::now()),
+    _lastPetCheck(::std::chrono::steady_clock::now()),
     _optimalManaThreshold(0.4f),
     _lowManaMode(false),
     _lastLifeTapTime(0),
@@ -179,7 +179,7 @@ void WarlockAI::UpdateRotation(::Unit* target)
 
     Player* bot = GetBot();
 
-    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance    TC_LOG_ERROR("module.playerbot", " WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
+    float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance    TC_LOG_ERROR("module.playerbot", " WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
 
                  bot->GetName(), bot->GetLevel(), target->GetName(), distance);
 
@@ -206,8 +206,8 @@ void WarlockAI::UpdateRotation(::Unit* target)
     auto* behaviors = GetCombatBehaviors();
 
     // Update combat metrics
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _warlockMetrics.lastUpdate).count() > COMBAT_METRICS_UPDATE_INTERVAL)
+    auto now = ::std::chrono::steady_clock::now();
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _warlockMetrics.lastUpdate).count() > COMBAT_METRICS_UPDATE_INTERVAL)
     {
         _warlockMetrics.lastUpdate = now;
         UpdateCombatMetrics();
@@ -360,7 +360,7 @@ bool WarlockAI::HandleInterrupt(Unit* target)
 
     // Shadowfury - stun interrupt
     if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))    {
-        float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance        if (distance <= 30.0f)
+        float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance        if (distance <= 30.0f)
         {
 
             bot->CastSpell(CastSpellTargetArg(target), SHADOWFURY);
@@ -976,7 +976,7 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     Player* bot = GetBot();    if (!bot)
         return nullptr;
 
-    std::list<Unit*> enemies;
+    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(bot, bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -994,7 +994,7 @@ Unit* WarlockAI::GetNearestEnemy(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1040,7 +1040,7 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     Player* bot = GetBot();    if (!bot)
         return 0;
 
-    std::list<Unit*> enemies;
+    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(bot, bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1058,7 +1058,7 @@ uint32 WarlockAI::GetNearbyEnemyCount(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1162,8 +1162,8 @@ void WarlockAI::UpdateCombatMetrics()
         _warlockMetrics.manaEfficiency = static_cast<float>(_warlockMetrics.damageDealt) / _warlockMetrics.manaSpent;
     }    // Update pet uptime
     if (_petActive.load())
-    {        auto now = std::chrono::steady_clock::now();
-        auto combatDuration = std::chrono::duration_cast<std::chrono::seconds>(now - _warlockMetrics.combatStartTime).count();        if (combatDuration > 0)
+    {        auto now = ::std::chrono::steady_clock::now();
+        auto combatDuration = ::std::chrono::duration_cast<::std::chrono::seconds>(now - _warlockMetrics.combatStartTime).count();        if (combatDuration > 0)
         {
 
             _warlockMetrics.petUptime = 100.0f; // Pet is currently active
@@ -1270,8 +1270,8 @@ void WarlockAI::OnCombatEnd()
     ClassAI::OnCombatEnd();
 
     // Log combat metrics
-    auto combatDuration = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::steady_clock::now() - _warlockMetrics.combatStartTime).count();
+    auto combatDuration = ::std::chrono::duration_cast<::std::chrono::seconds>(
+        ::std::chrono::steady_clock::now() - _warlockMetrics.combatStartTime).count();
 
     if (combatDuration > 0)
     {
@@ -1413,8 +1413,8 @@ void WarlockAI::UpdateWarlockBuffs()
 
 void WarlockAI::UpdatePetCheck()
 {
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastPetCheck).count() < PET_CHECK_INTERVAL)
+    auto now = ::std::chrono::steady_clock::now();
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastPetCheck).count() < PET_CHECK_INTERVAL)
         return;
 
     _lastPetCheck = now;
@@ -1662,7 +1662,7 @@ void WarlockAI::ManageWarlockCooldowns(){
 void WarlockAI::OptimizeSoulShardUsage()
 {
     // Optimize soul shard usage based on availability and need
-    std::lock_guard lock(_soulShardMutex);
+    ::std::lock_guard lock(_soulShardMutex);
 
     // Determine conservation mode based on shard count
     bool shouldConserve = (_currentSoulShards.load() < 5);

@@ -57,7 +57,7 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
 
     uint32 playerGuid = player->GetGUID().GetCounter();uint32 currentTime = GameTime::GetGameTimeMS();
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Check if enough time passed since last auction check
     if (currentTime - _lastAuctionCheckTimes[playerGuid] < AUCTION_CHECK_INTERVAL)
@@ -91,7 +91,7 @@ void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled){
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();_profiles[playerGuid].autoSellEnabled = enabled;
 }
@@ -101,7 +101,7 @@ bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();auto it = _profiles.find(playerGuid);
     if (it == _profiles.end())
         return false;
@@ -111,13 +111,13 @@ bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
 
 void ProfessionAuctionBridge::SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _profiles[playerGuid] = profile;
 }
 
 ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _profiles.find(playerGuid);if (it != _profiles.end())
         return it->second;
@@ -190,7 +190,7 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
 
     if (success)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();_playerStatistics[playerGuid].materialsListedCount++;
         _globalStatistics.materialsListedCount++;
 
@@ -296,7 +296,7 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
 
     if (success)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         uint32 playerGuid = player->GetGUID().GetCounter();_playerStatistics[playerGuid].craftedsListedCount++;
         _globalStatistics.craftedsListedCount++;
 
@@ -355,7 +355,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
                 {
                     budgetRemaining -= totalCost;
 
-                    std::lock_guard lock(_mutex);
+                    ::std::lock_guard lock(_mutex);
                     uint32 playerGuid = player->GetGUID().GetCounter();_playerStatistics[playerGuid].materialsBought += quantity;
                     _playerStatistics[playerGuid].goldSpentOnMaterials += totalCost;
                     _globalStatistics.materialsBought += quantity;
@@ -366,9 +366,9 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
     }
 }
 
-std::vector<std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const
+::std::vector<::std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const
 {
-    std::vector<std::pair<uint32, uint32>> materials;
+    ::std::vector<::std::pair<uint32, uint32>> materials;
 
     if (!player)
         return materials;
@@ -400,7 +400,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
         return false;
 
     // Get similar auctions for this item
-    std::vector<AuctionItem> auctions = _auctionHouse->GetSimilarAuctions(itemId, 50);
+    ::std::vector<AuctionItem> auctions = _auctionHouse->GetSimilarAuctions(itemId, 50);
     if (auctions.empty())
     {
         TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: No auctions found for item {}", itemId);
@@ -408,14 +408,14 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
     }
 
     // Sort by price per item (lowest first)
-    std::sort(auctions.begin(), auctions.end(),
+    ::std::sort(auctions.begin(), auctions.end(),
         [](const AuctionItem& a, const AuctionItem& b) {
             return a.pricePerItem < b.pricePerItem;
         });
 
     uint32 totalBought = 0;
     uint32 totalGoldSpent = 0;
-    std::vector<uint32> boughtAuctionIds;
+    ::std::vector<uint32> boughtAuctionIds;
 
     for (const AuctionItem& auction : auctions)
     {
@@ -436,7 +436,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
         }
 
         // Calculate how many we can buy from this auction
-        uint32 buyAmount = std::min(quantity - totalBought, auction.stackCount);
+        uint32 buyAmount = ::std::min(quantity - totalBought, auction.stackCount);
         uint32 cost = (auction.buyoutPrice / auction.stackCount) * buyAmount;
 
         // Check if player has enough gold
@@ -480,7 +480,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
 
 void ProfessionAuctionBridge::SetMaterialStockpile(uint32 playerGuid, uint32 itemId, MaterialStockpileConfig const& config)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();
@@ -490,7 +490,7 @@ void ProfessionAuctionBridge::SetMaterialStockpile(uint32 playerGuid, uint32 ite
 
 void ProfessionAuctionBridge::SetCraftedItemAuction(uint32 playerGuid, uint32 itemId, CraftedItemAuctionConfig const& config)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = ProfessionAuctionProfile();
@@ -540,7 +540,7 @@ void ProfessionAuctionBridge::SynchronizeWithAuctionHouse(::Player* player)
 
 ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     static ProfessionAuctionStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -557,7 +557,7 @@ ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetGlobalStatistics(
 
 void ProfessionAuctionBridge::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);if (it != _playerStatistics.end())
         it->second.Reset();
@@ -600,9 +600,9 @@ void ProfessionAuctionBridge::InitializeCraftedItemConfigs()
 // AUCTION HELPERS
 // ============================================================================
 
-std::vector<ProfessionAuctionBridge::ItemInfo> ProfessionAuctionBridge::GetProfessionItemsInInventory(::Player* player, bool materialsOnly) const
+::std::vector<ProfessionAuctionBridge::ItemInfo> ProfessionAuctionBridge::GetProfessionItemsInInventory(::Player* player, bool materialsOnly) const
 {
-    std::vector<ItemInfo> items;
+    ::std::vector<ItemInfo> items;
 
     if (!player)
         return items;
@@ -655,7 +655,7 @@ uint32 ProfessionAuctionBridge::CalculateMaterialCost(::Player* player, uint32 i
         return 0;
 
     // Search all production professions for recipe that creates this item
-    static const std::vector<ProfessionType> productionProfessions = {
+    static const ::std::vector<ProfessionType> productionProfessions = {
         ProfessionType::ALCHEMY,
         ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING,
@@ -669,7 +669,7 @@ uint32 ProfessionAuctionBridge::CalculateMaterialCost(::Player* player, uint32 i
     for (ProfessionType profession : productionProfessions)
     {
         // Get all recipes for this profession
-        std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
+        ::std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
 
         for (const RecipeInfo& recipe : recipes)
         {
@@ -738,7 +738,7 @@ bool ProfessionAuctionBridge::IsProfessionMaterial(uint32 itemId) const
 bool ProfessionAuctionBridge::IsCraftedItem(uint32 itemId, ProfessionType& outProfession) const
 {
     // Search all production professions for recipe that creates this item
-    static const std::vector<ProfessionType> productionProfessions = {
+    static const ::std::vector<ProfessionType> productionProfessions = {
         ProfessionType::ALCHEMY,
         ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING,
@@ -753,7 +753,7 @@ bool ProfessionAuctionBridge::IsCraftedItem(uint32 itemId, ProfessionType& outPr
     for (ProfessionType profession : productionProfessions)
     {
         // Get all recipes for this profession
-        std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
+        ::std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
 
         for (const RecipeInfo& recipe : recipes)
         {

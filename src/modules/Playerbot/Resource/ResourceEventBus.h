@@ -62,12 +62,12 @@ struct ResourceEvent
     int32 amount;
     int32 maxAmount;
     bool isRegen;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 
     // Helper constructors
     static ResourceEvent PowerChanged(ObjectGuid player, Powers type, int32 amt, int32 max);
@@ -90,7 +90,7 @@ public:
     bool PublishEvent(ResourceEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<ResourceEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<ResourceEventType> const& types) override;
     bool SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
@@ -106,21 +106,21 @@ public:
     // Diagnostics
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<ResourceEvent> GetQueueSnapshot() const override;
+    ::std::vector<ResourceEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};
-        std::atomic<uint64_t> totalDeliveries{0};
-        std::atomic<uint64_t> averageProcessingTimeUs{0};
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};
+        ::std::atomic<uint64_t> totalDeliveries{0};
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0};
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -133,16 +133,16 @@ private:
     bool DeliverEvent(BotAI* subscriber, ResourceEvent const& event);
     bool ValidateEvent(ResourceEvent const& event) const;
     uint32 CleanupExpiredEvents();
-    void UpdateMetrics(std::chrono::microseconds processingTime);
-    void LogEvent(ResourceEvent const& event, std::string const& action) const;
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
+    void LogEvent(ResourceEvent const& event, ::std::string const& action) const;
 
     // Event queue
-    std::priority_queue<ResourceEvent> _eventQueue;
+    ::std::priority_queue<ResourceEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     // Subscriber management
-    std::unordered_map<ResourceEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<ResourceEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriberMutex;
 
     // Configuration

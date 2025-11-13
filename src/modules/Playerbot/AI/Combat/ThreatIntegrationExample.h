@@ -31,8 +31,8 @@ public:
     static void SetupDungeonGroup(Group* group)
     {
         // Create coordinators
-        auto threatCoordinator = std::make_unique<ThreatCoordinator>(group);
-        auto interruptCoordinator = std::make_unique<InterruptCoordinator>(group);
+        auto threatCoordinator = ::std::make_unique<ThreatCoordinator>(group);
+        auto interruptCoordinator = ::std::make_unique<InterruptCoordinator>(group);
 
         // Configure threat thresholds for dungeon content
         threatCoordinator->SetTankThreatThreshold(130.0f);    // Tanks maintain 130% threat
@@ -355,9 +355,9 @@ public:
     }
 
 private:
-    std::unique_ptr<ThreatCoordinator> _threatCoordinator;
-    std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
-    std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<ThreatCoordinator> _threatCoordinator;
+    ::std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
     uint32 _perfCounter = 0;
 };
 

@@ -106,10 +106,10 @@ private:
     uint32 _healingDone;
     uint32 _totemsDeploy;
     uint32 _shocksUsed;
-    std::unordered_map<uint32, uint32> _abilityUsage;
+    ::std::unordered_map<uint32, uint32> _abilityUsage;
 
     // Totem management system (5 types: FIRE, EARTH, WATER, AIR, NONE)
-    std::array<TotemInfo, 5> _activeTotems;
+    ::std::array<TotemInfo, 5> _activeTotems;
     uint32 _lastTotemUpdate;
     uint32 _lastTotemCheck;
 

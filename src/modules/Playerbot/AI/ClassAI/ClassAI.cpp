@@ -49,17 +49,17 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     _lastTargetSwitch(0)
 {
     // Initialize component managers for class-specific mechanics
-    _actionQueue = std::make_unique<ActionPriorityQueue>();
-    _cooldownManager = std::make_unique<CooldownManager>();
-    _resourceManager = std::make_unique<ResourceManager>(bot);
+    _actionQueue = ::std::make_unique<ActionPriorityQueue>();
+    _cooldownManager = ::std::make_unique<CooldownManager>();
+    _resourceManager = ::std::make_unique<ResourceManager>(bot);
 
     // Initialize unified combat behavior system
     // This provides advanced combat coordination across all managers
     try {
-        _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
+        _combatBehaviors = ::std::make_unique<CombatBehaviorIntegration>(bot);        TC_LOG_DEBUG("playerbot.classai", "CombatBehaviorIntegration initialized for bot {}",
                      bot ? bot->GetName() : "null");
     }
-    catch (const std::exception& e) {
+    catch (const ::std::exception& e) {
         TC_LOG_ERROR("playerbot.classai", "Failed to initialize CombatBehaviorIntegration for bot {}: {}",
                      bot ? bot->GetName() : "null", e.what());
         _combatBehaviors = nullptr;
@@ -217,7 +217,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
             UpdateRotation(_currentCombatTarget);
             TC_LOG_ERROR("module.playerbot", " UpdateRotation call completed without exception");
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot", " EXCEPTION in UpdateRotation: {}", e.what());
         }
@@ -424,7 +424,7 @@ void ClassAI::UpdateTargeting(){
         if (!spatialGrid)
             return nullptr;
     }    // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and find nearest enemy
@@ -633,7 +633,7 @@ bool ClassAI::RequestBotSpellCast(uint32 spellId, ::Unit* target)
     }
 
     // Queue the new spell
-    _pendingSpellCastRequest = std::make_unique<BotSpellCastRequest>(spellId, target);    TC_LOG_DEBUG("module.playerbot.classai", "Bot {} queued spell {} targeting {}",
+    _pendingSpellCastRequest = ::std::make_unique<BotSpellCastRequest>(spellId, target);    TC_LOG_DEBUG("module.playerbot.classai", "Bot {} queued spell {} targeting {}",
                 GetBot()->GetName(), spellId,
                 target ? target->GetName() : "self");
 
@@ -990,7 +990,7 @@ bool ClassAI::ShouldMoveToTarget(::Unit* target) const{
     // ClassAI doesn't control movement, just provides information
     // Actual movement is handled by BotAI strategies
     float optimalRange = const_cast<ClassAI*>(this)->GetOptimalRange(target);
-    float currentDistance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 
     return currentDistance > optimalRange;
 }
@@ -1000,7 +1000,7 @@ float ClassAI::GetDistanceToTarget(::Unit* target) const
     if (!target || !GetBot())
         return 0.0f;
 
-    return std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    return ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // ============================================================================
@@ -1017,7 +1017,7 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetRelativeAngle(target);
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);    pos.m_positionZ = target->GetPositionZ();    pos.SetOrientation(target->GetOrientation());
+    pos.m_positionX = target->GetPositionX() - optimalRange * ::std::cos(angle);    pos.m_positionY = target->GetPositionY() - optimalRange * ::std::sin(angle);    pos.m_positionZ = target->GetPositionZ();    pos.SetOrientation(target->GetOrientation());
 
     return pos;
 }
@@ -1026,7 +1026,7 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
 // PERFORMANCE METRICS
 // ============================================================================
 
-void ClassAI::RecordPerformanceMetric(std::string const& metric, uint32 value)
+void ClassAI::RecordPerformanceMetric(::std::string const& metric, uint32 value)
 {
     // Record class-specific performance metrics
     TC_LOG_TRACE("playerbot.performance", "ClassAI metric {} = {} for bot {}",

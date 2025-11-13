@@ -518,7 +518,7 @@ void DemonHunterAI::HandleMobility(::Unit* target)
     if (behaviors->NeedsRepositioning())
     {
         Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Fel Rush to close gap or reposition
+        float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Fel Rush to close gap or reposition
         if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
         {
             if (CastSpell(target, FEL_RUSH))
@@ -747,7 +747,7 @@ bool DemonHunterAI::CanUseAbility(uint32 spellId)
     return true;
 }void DemonHunterAI::OnCombatStart(::Unit* target)
 {
-    _dhMetrics.combatStartTime = std::chrono::steady_clock::now();
+    _dhMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat started for player {}",
                  
@@ -871,7 +871,7 @@ void DemonHunterAI::SpendPain(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentPain = _bot->GetPower(POWER_PAIN);    _bot->SetPower(POWER_PAIN, std::max(0, currentPain - static_cast<int32>(amount)));
+    int32 currentPain = _bot->GetPower(POWER_PAIN);    _bot->SetPower(POWER_PAIN, ::std::max(0, currentPain - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GeneratePain(uint32 amount)
@@ -880,7 +880,7 @@ void DemonHunterAI::GeneratePain(uint32 amount)
         return;
 
     int32 currentPain = _bot->GetPower(POWER_PAIN);    int32 maxPain = _bot->GetMaxPower(POWER_PAIN);
-    _bot->SetPower(POWER_PAIN, std::min(maxPain, currentPain + static_cast<int32>(amount)));
+    _bot->SetPower(POWER_PAIN, ::std::min(maxPain, currentPain + static_cast<int32>(amount)));
 }
 
 bool DemonHunterAI::HasPain(uint32 amount)
@@ -892,7 +892,7 @@ void DemonHunterAI::SpendFury(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentFury = _bot->GetPower(POWER_FURY);    _bot->SetPower(POWER_FURY, std::max(0, currentFury - static_cast<int32>(amount)));
+    int32 currentFury = _bot->GetPower(POWER_FURY);    _bot->SetPower(POWER_FURY, ::std::max(0, currentFury - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GenerateFury(uint32 amount)
@@ -901,7 +901,7 @@ void DemonHunterAI::GenerateFury(uint32 amount)
         return;
 
     int32 currentFury = _bot->GetPower(POWER_FURY);    int32 maxFury = _bot->GetMaxPower(POWER_FURY);
-    _bot->SetPower(POWER_FURY, std::min(maxFury, currentFury + static_cast<int32>(amount)));
+    _bot->SetPower(POWER_FURY, ::std::min(maxFury, currentFury + static_cast<int32>(amount)));
 }
 
 bool DemonHunterAI::HasFury(uint32 amount)
@@ -1082,13 +1082,13 @@ void DemonHunterAI::CastShear(::Unit* target)
     }
 }
 
-std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
+::std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
 {
-    std::vector<::Unit*> targets;
+    ::std::vector<::Unit*> targets;
     if (!_bot)
         return targets;
 
-    std::list<Unit*> targetList;
+    ::std::list<Unit*> targetList;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targetList, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1105,7 +1105,7 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1139,7 +1139,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1156,7 +1156,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1244,13 +1244,13 @@ void DemonHunterAI::OnTargetChanged(::Unit* newTarget)
 
 void DemonHunterAI::UpdateMetrics(uint32 diff)
 {
-    _dhMetrics.lastMetricsUpdate = std::chrono::steady_clock::now();
+    _dhMetrics.lastMetricsUpdate = ::std::chrono::steady_clock::now();
 }
 
 void DemonHunterAI::AnalyzeCombatEffectiveness()
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - _dhMetrics.combatStartTime).count();
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(endTime - _dhMetrics.combatStartTime).count();
 
     if (duration > 0)
     {

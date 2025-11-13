@@ -64,7 +64,7 @@ public:
 
     void GenerateInsanity(uint32 amount)
     {
-        _insanity = std::min(_insanity + amount, _maxInsanity);
+        _insanity = ::std::min(_insanity + amount, _maxInsanity);
     }
 
     void SpendInsanity(uint32 amount)
@@ -246,8 +246,8 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _vampiricTouchTargets; // GUID -> expiration time
-    std::unordered_map<ObjectGuid, uint32> _shadowWordPainTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _vampiricTouchTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _shadowWordPainTargets; // GUID -> expiration time
 };
 
 class ShadowPriestRefactored : public RangedDpsSpecialization<ManaResource>, public PriestSpecialization
