@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "description": "Display project status and current phase",
+        "command": "echo '=== TrinityCore Playerbot - German Windows Environment ===' && echo 'Branch: playerbot-dev' && echo 'Baseline: a933e3dae4 (Remote branch with orphaned null check fixes)' && echo 'Compiler: MSVC 14.44 (Visual Studio 2022 Enterprise)' && echo 'Target: worldserver (RelWithDebInfo)' && echo 'Language: German (error messages in German)' && echo '' && echo 'Mission: Fix compilation errors until worldserver.exe builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
+      },
+      {
+        "description": "Check git branch and status",
+        "command": "git branch --show-current && git log --oneline -1 && git status --short"
+      },
+      {
+        "description": "Read project configuration",
+        "command": "cat .claude/project.json"
+      }
+    ]
+  },
+  "preferences": {
+    "build": {
+      "parallel_jobs": 8,
+      "timeout": 1800,
+      "log_errors_only": true
+    },
+    "git": {
+      "auto_commit": false,
+      "commit_message_prefix": "fix(playerbot):",
+      "branch": "playerbot-dev"
+    },
+    "language": {
+      "error_messages": "german",
+      "documentation": "english"
+    }
+  }
+}
