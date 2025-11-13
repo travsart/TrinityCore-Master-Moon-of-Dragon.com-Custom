@@ -24,6 +24,7 @@
 #include "Unit.h"
 #include "Group.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 
 namespace Playerbot
 {
