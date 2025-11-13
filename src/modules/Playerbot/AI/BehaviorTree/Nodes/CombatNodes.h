@@ -212,10 +212,15 @@ public:
             return _status;
         }
 
-        if (bot->GetPower(Powers(spellInfo->Power)) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+        // TrinityCore 11.2: CalcPowerCost returns vector of all power costs
+        auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        for (auto const& cost : powerCosts)
         {
-            _status = BTStatus::FAILURE;
-            return _status;
+            if (bot->GetPower(cost.Power) < cost.Amount)
+            {
+                _status = BTStatus::FAILURE;
+                return _status;
+            }
         }
 
         blackboard.Set<uint32>("ReadySpell", _spellId);
