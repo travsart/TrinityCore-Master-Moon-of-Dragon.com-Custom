@@ -99,17 +99,11 @@ void IntegratedAIContext::PropagateToGroup(std::string const& key)
 
     if (key.empty())
     {
-        // Propagate all keys (selective based on naming convention)
-        auto keys = _localBlackboard->GetKeys();
-        for (auto const& k : keys)
-        {
-            // Only propagate keys starting with "share_"
-            if (k.find("share_") == 0)
-            {
-                // Would need type-erased copy here
-                // This is a simplified placeholder
-            }
-        }
+        // TODO: Propagate all keys (selective based on naming convention)
+        // BTBlackboard doesn't expose GetKeys() method
+        // Would need type-erased copy here - placeholder removed for compilation
+        // See: https://github.com/TrinityCore/TrinityCore/issues/xxxxx
+        return;
     }
     else
     {
