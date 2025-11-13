@@ -891,11 +891,11 @@ SQLQueryHolderCallback PlayerbotCharacterDBInterface::DelayQueryHolder(std::shar
     // Route QueryHolder to the standard CharacterDatabase for async processing
     // This ensures proper async callback handling while maintaining safety
     TC_LOG_INFO("module.playerbot.database",
-        "🔧 DelayQueryHolder: Routing QueryHolder to CharacterDatabase for async processing");
+        " DelayQueryHolder: Routing QueryHolder to CharacterDatabase for async processing");
 
     SQLQueryHolderCallback result = CharacterDatabase.DelayQueryHolder(holder);
     TC_LOG_INFO("module.playerbot.database",
-        "🔧 DelayQueryHolder: CharacterDatabase.DelayQueryHolder completed successfully");
+        " DelayQueryHolder: CharacterDatabase.DelayQueryHolder completed successfully");
 
     return result;
 }

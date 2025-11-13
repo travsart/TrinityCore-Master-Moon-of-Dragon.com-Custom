@@ -98,10 +98,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 15-25% DPS increase through intelligent targeting
-     * - ✅ Better focus fire in group content
-     * - ✅ Automatic healer/caster interruption
-     * - ✅ Smart execute priority (finish low HP targets)
+     * -  15-25% DPS increase through intelligent targeting
+     * -  Better focus fire in group content
+     * -  Automatic healer/caster interruption
+     * -  Smart execute priority (finish low HP targets)
      */
     class TC_GAME_API TargetManager
     {

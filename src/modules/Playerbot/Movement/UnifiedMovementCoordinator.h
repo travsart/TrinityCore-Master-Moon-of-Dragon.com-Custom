@@ -37,10 +37,10 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedMovementCoordinator
- *   ├─> ArbiterModule       (movement request arbitration)
- *   ├─> PathfindingModule   (path calculation, caching)
- *   ├─> FormationModule     (group formations)
- *   └─> PositionModule      (combat positioning)
+ *   > ArbiterModule       (movement request arbitration)
+ *   > PathfindingModule   (path calculation, caching)
+ *   > FormationModule     (group formations)
+ *   > PositionModule      (combat positioning)
  * ```
  *
  * **Thread Safety:**

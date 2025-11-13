@@ -115,7 +115,7 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
-            TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
+            TC_LOG_DEBUG("module.playerbot.session", " Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
         }
 
         // Mark login as complete

@@ -1235,7 +1235,7 @@ private:
                 "Has threat and HP < 50%");
 
 
-            TC_LOG_INFO("module.playerbot", "✨ DISCIPLINE PRIEST: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", " DISCIPLINE PRIEST: Registered {} spells in ActionPriorityQueue",
 
                 queue->GetSpellCount());
         }
@@ -1748,7 +1748,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 DISCIPLINE PRIEST: BehaviorTree initialized with Atonement flow");
+            TC_LOG_INFO("module.playerbot", " DISCIPLINE PRIEST: BehaviorTree initialized with Atonement flow");
         }
     }
 

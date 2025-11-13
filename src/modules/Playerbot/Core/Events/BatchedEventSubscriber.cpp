@@ -182,7 +182,7 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
         std::chrono::steady_clock::now() - startTime);
 
     TC_LOG_INFO("module.playerbot.batch",
-                "✅ Batched subscription complete: {} managers, {} total events in {}μs (avg: {}μs per event)",
+                " Batched subscription complete: {} managers, {} total events in {}μs (avg: {}μs per event)",
                 (questManager ? 1 : 0) + (tradeManager ? 1 : 0) + (auctionManager ? 1 : 0),
                 totalSubscriptions,
                 duration.count(),

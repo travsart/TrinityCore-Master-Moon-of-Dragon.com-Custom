@@ -846,7 +846,7 @@ private:
                 SpellCategory::DAMAGE_SINGLE);
 
 
-            TC_LOG_INFO("module.playerbot", "🛡️  PROTECTION WARRIOR: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  PROTECTION WARRIOR: Registered {} spells in ActionPriorityQueue",
 
                 queue->GetSpellCount());
         }
@@ -1261,7 +1261,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 PROTECTION WARRIOR: BehaviorTree initialized with tank flow");
+            TC_LOG_INFO("module.playerbot", " PROTECTION WARRIOR: BehaviorTree initialized with tank flow");
         }
     }
 

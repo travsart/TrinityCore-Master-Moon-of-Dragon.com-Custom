@@ -1096,7 +1096,7 @@ private:
             }, "Has talent, 30+ Focus, 3+ enemies (AoE burst)");
 
 
-            TC_LOG_INFO("module.playerbot", "🗡️ SURVIVAL HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SURVIVAL HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -1461,7 +1461,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 SURVIVAL HUNTER: BehaviorTree initialized with 4-tier melee DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SURVIVAL HUNTER: BehaviorTree initialized with 4-tier melee DPS rotation");
         }
     }
 

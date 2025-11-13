@@ -78,13 +78,13 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "Scenario: " << scenario << "\n";
     report << "Bot Count: " << botCount << "\n";
     report << "Duration: " << GetDuration() << " seconds\n";
-    report << "Status: " << (MeetsPerformanceTargets() ? "✅ PASS" : "❌ FAIL") << "\n\n";
+    report << "Status: " << (MeetsPerformanceTargets() ? " PASS" : " FAIL") << "\n\n";
 
     report << "--- CPU Metrics ---\n";
     report << "Average CPU: " << std::fixed << std::setprecision(2) << avgCpuUsage << "%\n";
     report << "Peak CPU: " << peakCpuUsage << "%\n";
     report << "CPU per Bot: " << cpuPerBot << "% ";
-    report << (cpuPerBot <= 0.1f ? "✅" : "❌") << " (Target: <0.1%)\n\n";
+    report << (cpuPerBot <= 0.1f ? "" : "") << " (Target: <0.1%)\n\n";
 
     report << "--- Memory Metrics ---\n";
     report << "Initial Memory: " << (initialMemory / 1024 / 1024) << " MB\n";
@@ -92,18 +92,18 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "Final Memory: " << (finalMemory / 1024 / 1024) << " MB\n";
     report << "Memory Growth: " << (memoryGrowth / 1024 / 1024) << " MB\n";
     report << "Avg Memory per Bot: " << (avgMemoryPerBot / 1024 / 1024) << " MB ";
-    report << (avgMemoryPerBot <= 10 * 1024 * 1024 ? "✅" : "❌") << " (Target: <10MB)\n\n";
+    report << (avgMemoryPerBot <= 10 * 1024 * 1024 ? "" : "") << " (Target: <10MB)\n\n";
 
     report << "--- Spell Casting Metrics ---\n";
     report << "Total Casts: " << totalSpellCasts << "\n";
     report << "Successful: " << successfulCasts << "\n";
     report << "Failed: " << failedCasts << "\n";
     report << "Success Rate: " << std::fixed << std::setprecision(2) << (spellCastSuccessRate * 100.0f) << "% ";
-    report << (spellCastSuccessRate >= 0.99f ? "✅" : "❌") << " (Target: >99%)\n\n";
+    report << (spellCastSuccessRate >= 0.99f ? "" : "") << " (Target: >99%)\n\n";
 
     report << "--- Latency Metrics ---\n";
     report << "Avg Spell Cast Latency: " << (avgSpellCastLatency / 1000.0) << " ms ";
-    report << (avgSpellCastLatency <= 10000 ? "✅" : "❌") << " (Target: <10ms)\n";
+    report << (avgSpellCastLatency <= 10000 ? "" : "") << " (Target: <10ms)\n";
     report << "Min Latency: " << (minSpellCastLatency / 1000.0) << " ms\n";
     report << "Max Latency: " << (maxSpellCastLatency / 1000.0) << " ms\n";
     report << "P95 Latency: " << (p95SpellCastLatency / 1000.0) << " ms\n";
@@ -118,16 +118,16 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "--- Main Thread Metrics ---\n";
     report << "Avg Cycle Time: " << (avgMainThreadCycleTime / 1000.0) << " ms\n";
     report << "Max Cycle Time: " << (maxMainThreadCycleTime / 1000.0) << " ms ";
-    report << (maxMainThreadCycleTime <= 5000 ? "✅" : "❌") << " (Target: <5ms)\n";
+    report << (maxMainThreadCycleTime <= 5000 ? "" : "") << " (Target: <5ms)\n";
     report << "Blocking Events (>5ms): " << mainThreadBlockingEvents << "\n\n";
 
     report << "--- Server Metrics ---\n";
     report << "Avg TPS: " << std::fixed << std::setprecision(1) << avgTicksPerSecond << " ";
-    report << (avgTicksPerSecond >= 20.0f ? "✅" : "❌") << " (Target: >20 TPS)\n";
+    report << (avgTicksPerSecond >= 20.0f ? "" : "") << " (Target: >20 TPS)\n";
     report << "Min TPS: " << minTicksPerSecond << "\n";
     report << "Uptime: " << uptime << " seconds\n";
     report << "Crashes: " << crashCount << " ";
-    report << (crashCount == 0 ? "✅" : "❌") << " (Target: 0)\n\n";
+    report << (crashCount == 0 ? "" : "") << " (Target: 0)\n\n";
 
     report << "--- Bot Behavior Metrics ---\n";
     report << "Bots in Combat: " << botsInCombat << "\n";
@@ -383,7 +383,7 @@ bool Week4PerformanceTest::RunAllScenarios()
         allPassed &= passed;
 
         TC_LOG_INFO("test.week4", "Scenario {} result: {}",
-            scenarios[i].name, passed ? "✅ PASS" : "❌ FAIL");
+            scenarios[i].name, passed ? " PASS" : " FAIL");
 
         // Export metrics to CSV
         std::string csvPath = "week4_performance_metrics.csv";
@@ -395,7 +395,7 @@ bool Week4PerformanceTest::RunAllScenarios()
 
     TC_LOG_INFO("test.week4", "\n============================================");
     TC_LOG_INFO("test.week4", "Week 4 Test Suite Complete");
-    TC_LOG_INFO("test.week4", "Overall Result: {}", allPassed ? "✅ ALL PASSED" : "❌ SOME FAILED");
+    TC_LOG_INFO("test.week4", "Overall Result: {}", allPassed ? " ALL PASSED" : " SOME FAILED");
     TC_LOG_INFO("test.week4", "============================================");
 
     return allPassed;
@@ -516,7 +516,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
 
     TC_LOG_INFO("test.week4", "Scenario {} complete", scenario.name);
     TC_LOG_INFO("test.week4", "Result: {}",
-        _currentMetrics.MeetsPerformanceTargets() ? "✅ PASS" : "❌ FAIL");
+        _currentMetrics.MeetsPerformanceTargets() ? " PASS" : " FAIL");
 
     // Print report to log
     TC_LOG_INFO("test.week4", "\n{}", _currentMetrics.GenerateReport());
@@ -1040,7 +1040,7 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
             ++passedCount;
     }
 
-    report << "**Overall Result**: " << (passedCount == _allResults.size() ? "✅ ALL PASSED" : "❌ SOME FAILED") << "\n\n";
+    report << "**Overall Result**: " << (passedCount == _allResults.size() ? " ALL PASSED" : " SOME FAILED") << "\n\n";
     report << "**Passed**: " << passedCount << " / " << _allResults.size() << "\n\n";
 
     report << "---\n\n";
@@ -1065,31 +1065,31 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
         [](Week4TestMetrics const& m) { return m.cpuPerBot > 0.1f; });
 
     if (anyLatencyIssues)
-        report << "⚠️ **Latency Optimization Needed**: Some scenarios exceeded 10ms spell cast latency. Consider packet batching optimization.\n\n";
+        report << " **Latency Optimization Needed**: Some scenarios exceeded 10ms spell cast latency. Consider packet batching optimization.\n\n";
 
     if (anyMemoryIssues)
-        report << "⚠️ **Memory Optimization Needed**: Memory per bot exceeded 10MB target. Investigate memory leaks or excessive caching.\n\n";
+        report << " **Memory Optimization Needed**: Memory per bot exceeded 10MB target. Investigate memory leaks or excessive caching.\n\n";
 
     if (anyCpuIssues)
-        report << "⚠️ **CPU Optimization Needed**: CPU usage per bot exceeded 0.1% target. Profile hot paths and optimize validation logic.\n\n";
+        report << " **CPU Optimization Needed**: CPU usage per bot exceeded 0.1% target. Profile hot paths and optimize validation logic.\n\n";
 
     if (!anyLatencyIssues && !anyMemoryIssues && !anyCpuIssues)
-        report << "✅ **No Issues Detected**: All performance targets met. System ready for production testing.\n\n";
+        report << " **No Issues Detected**: All performance targets met. System ready for production testing.\n\n";
 
     report << "---\n\n";
     report << "## Next Steps\n\n";
 
     if (passedCount == _allResults.size())
     {
-        report << "1. ✅ Week 4 testing COMPLETE\n";
-        report << "2. 📋 Proceed with Priority 1 tasks (Quest pathfinding, Vendor purchases, etc.)\n";
-        report << "3. 📋 Schedule production deployment planning\n\n";
+        report << "1.  Week 4 testing COMPLETE\n";
+        report << "2.  Proceed with Priority 1 tasks (Quest pathfinding, Vendor purchases, etc.)\n";
+        report << "3.  Schedule production deployment planning\n\n";
     }
     else
     {
-        report << "1. ⚠️ Address failed scenarios\n";
-        report << "2. 🔧 Implement recommended optimizations\n";
-        report << "3. 🔄 Re-run failed tests after fixes\n\n";
+        report << "1.  Address failed scenarios\n";
+        report << "2.  Implement recommended optimizations\n";
+        report << "3.  Re-run failed tests after fixes\n\n";
     }
 
     report.close();

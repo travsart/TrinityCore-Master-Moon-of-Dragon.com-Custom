@@ -272,7 +272,7 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
     if (!quest || !_bot)
         return false;
     // CRITICAL DEBUG: Log prerequisite check for all quests
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 HasPrerequisites: Quest {} '{}' - GetPrevQuestId()={}, GetNextQuestInChain()={}",
+    TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} '{}' - GetPrevQuestId()={}, GetNextQuestInChain()={}",
                  quest->GetQuestId(), quest->GetLogTitle(), quest->GetPrevQuestId(), quest->GetNextQuestInChain());
 
     // Check previous quest in chain
@@ -281,18 +281,18 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
         // Positive = must complete, Negative = must NOT complete
         int32 prevQuestId = quest->GetPrevQuestId();
 
-        TC_LOG_ERROR("module.playerbot.quest", "🔒 HasPrerequisites: Quest {} requires PrevQuestID={}, checking if bot has rewarded it...",
+        TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} requires PrevQuestID={}, checking if bot has rewarded it...",
                      quest->GetQuestId(), prevQuestId);
 
         if (prevQuestId > 0)
         {
             bool hasRewarded = _bot->GetQuestRewardStatus(prevQuestId);
-            TC_LOG_ERROR("module.playerbot.quest", "🎯 HasPrerequisites: Bot {} GetQuestRewardStatus({})={}, quest {} prerequisite check={}",
+            TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Bot {} GetQuestRewardStatus({})={}, quest {} prerequisite check={}",
                          _bot->GetName(), prevQuestId, hasRewarded, quest->GetQuestId(), hasRewarded ? "PASS" : "FAIL");
 
             if (!hasRewarded)
             {
-                TC_LOG_ERROR("module.playerbot.quest", "❌ HasPrerequisites: Quest {} REJECTED - prerequisite quest {} not completed",
+                TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} REJECTED - prerequisite quest {} not completed",
                              quest->GetQuestId(), prevQuestId);
                 return false; // Previous quest not completed
             }
@@ -301,7 +301,7 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
         {
             if (_bot->GetQuestRewardStatus(-prevQuestId))
             {
-                TC_LOG_ERROR("module.playerbot.quest", "❌ HasPrerequisites: Quest {} REJECTED - must NOT have completed quest {}",
+                TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} REJECTED - must NOT have completed quest {}",
                              quest->GetQuestId(), -prevQuestId);
                 return false; // Must NOT have completed this quest
             }

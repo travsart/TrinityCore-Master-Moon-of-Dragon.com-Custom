@@ -475,7 +475,7 @@ private:
                 },
                 "Enrage not active");
 
-            TC_LOG_INFO("module.playerbot", "⚔️  FURY WARRIOR: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  FURY WARRIOR: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -688,7 +688,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 FURY WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+            TC_LOG_INFO("module.playerbot", " FURY WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
 

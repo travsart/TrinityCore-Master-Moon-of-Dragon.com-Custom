@@ -105,7 +105,7 @@ bool CombatStateManager::OnInitialize()
     dispatcher->Subscribe(StateMachine::EventType::DAMAGE_TAKEN, this);
 
     TC_LOG_INFO("module.playerbot.combat",
-        "CombatStateManager: ✅ Initialized for bot '{}' - subscribed to DAMAGE_TAKEN events",
+        "CombatStateManager:  Initialized for bot '{}' - subscribed to DAMAGE_TAKEN events",
         botPtr->GetName());
 
     // Log configuration
@@ -152,7 +152,7 @@ void CombatStateManager::OnShutdown()
     BehaviorManager::OnShutdown();
 
     TC_LOG_INFO("module.playerbot.combat",
-        "CombatStateManager: ✅ Shutdown complete for bot '{}'",
+        "CombatStateManager:  Shutdown complete for bot '{}'",
         botPtr ? botPtr->GetName() : "Unknown");
 }
 
@@ -424,7 +424,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
     }
 
     TC_LOG_INFO("module.playerbot.combat",
-        "🎯 CombatStateManager: Bot '{}' entering combat with '{}' (Level {} {})",
+        " CombatStateManager: Bot '{}' entering combat with '{}' (Level {} {})",
         botPtr->GetName(),
         attacker->GetName(),
         attacker->GetLevel(),
@@ -435,7 +435,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
     if (!combatSet)
     {
         TC_LOG_WARN("module.playerbot.combat",
-            "⚠️ CombatStateManager: SetInCombatWith() returned false for bot '{}' vs '{}'",
+            " CombatStateManager: SetInCombatWith() returned false for bot '{}' vs '{}'",
             botPtr->GetName(), attacker->GetName());
     }
 
@@ -461,7 +461,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
         m_statistics.combatStateTriggered.fetch_add(1, std::memory_order_relaxed);
 
         TC_LOG_DEBUG("module.playerbot.combat",
-            "✅ CombatStateManager: Combat state ACTIVE for bot '{}' (attacker: '{}')",
+            " CombatStateManager: Combat state ACTIVE for bot '{}' (attacker: '{}')",
             botPtr->GetName(), attacker->GetName());
     }
     else
@@ -469,7 +469,7 @@ void CombatStateManager::EnterCombatWith(Unit* attacker)
         m_statistics.combatStateFailures.fetch_add(1, std::memory_order_relaxed);
 
         TC_LOG_ERROR("module.playerbot.combat",
-            "❌ CombatStateManager: FAILURE - SetInCombatWith() called but IsInCombat() still FALSE for bot '{}'! "
+            " CombatStateManager: FAILURE - SetInCombatWith() called but IsInCombat() still FALSE for bot '{}'! "
             "This indicates a Trinity API issue or incompatible unit state.",
             botPtr->GetName());
 

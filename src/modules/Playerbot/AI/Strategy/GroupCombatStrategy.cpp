@@ -75,7 +75,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     Player* bot = ai->GetBot();
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - inCombat={}, hasGroup={}",
+        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombat: Bot {} - inCombat={}, hasGroup={}",
                     bot->GetName(), bot->IsInCombat(), bot->GetGroup() != nullptr);
         lastDiagLog = currentTime;
     }
@@ -88,7 +88,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     bool groupInCombat = IsGroupInCombat(ai);
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - groupInCombat={}",
+        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombat: Bot {} - groupInCombat={}",
                     bot->GetName(), groupInCombat);
     }
 
@@ -145,7 +145,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     if (targetCreature->CanHaveThreatList())
                     {
                         targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
-                        TC_LOG_ERROR("module.playerbot.strategy", "🎯 THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
+                        TC_LOG_ERROR("module.playerbot.strategy", " THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
                                     bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
                     }
 
@@ -153,7 +153,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     if (CreatureAI* ai = targetCreature->AI())
                     {
                         ai->AttackStart(bot);
-                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ CREATURE ENGAGED: {} AttackStart() called on bot {}",
+                        TC_LOG_ERROR("module.playerbot.strategy", " CREATURE ENGAGED: {} AttackStart() called on bot {}",
                                     targetCreature->GetName(), bot->GetName());
                     }
                 }
@@ -165,7 +165,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 bot->SetInCombatWith(target);
                 target->SetInCombatWith(bot);
 
-                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
+                TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
                             bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
                 // Don't return - allow ClassAI combat updates to proceed
                 // Note: OnCombatUpdate() is called from BotAI::UpdateAI() when IsInCombat() returns true
@@ -190,12 +190,12 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 {
                     mm->MoveChase(target, optimalRange);
 
-                    TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
+                    TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
                                 bot->GetName(), target->GetName(), optimalRange, distance);
                 }
                 else
                 {
-                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭️ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
                 }
             }
             break;
@@ -236,7 +236,7 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
                     if (!bot->IsInCombat() && !bot->GetVictim())
                     {
                         float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
+                        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
                                     bot->GetName(), target->GetName(), distance, member->GetName());
                     }
                     break;
@@ -267,7 +267,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 Checking group members for combat (bot is {}):", bot->GetName());
+        TC_LOG_ERROR("module.playerbot.strategy", " Checking group members for combat (bot is {}):", bot->GetName());
         TC_LOG_ERROR("module.playerbot.strategy", "   Group GUID: {}, MemberCount: {}, Leader: {}",
                     group->GetGUID().ToString(),
                     group->GetMembersCount(),
@@ -312,7 +312,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
     }
 
     if (shouldLog)
-        TC_LOG_ERROR("module.playerbot.strategy", "  ❌ No group members in combat detected");
+        TC_LOG_ERROR("module.playerbot.strategy", "   No group members in combat detected");
 
     return false;
 }

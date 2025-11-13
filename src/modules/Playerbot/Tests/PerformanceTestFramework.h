@@ -511,11 +511,11 @@ namespace Playerbot
 
             if (result.targetsMet)
             {
-                TC_LOG_INFO("playerbot.perf", "Result: PASSED ✓");
+                TC_LOG_INFO("playerbot.perf", "Result: PASSED ");
             }
             else
             {
-                TC_LOG_WARN("playerbot.perf", "Result: FAILED ✗");
+                TC_LOG_WARN("playerbot.perf", "Result: FAILED ");
             }
             TC_LOG_INFO("playerbot.perf", "");
         }

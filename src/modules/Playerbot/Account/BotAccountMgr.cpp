@@ -86,7 +86,7 @@ void BotAccountMgr::Shutdown()
     }
 
     TC_LOG_INFO("module.playerbot.account",
-        "✅ BotAccountMgr shutdown: {} accounts saved", _accounts.size());
+        " BotAccountMgr shutdown: {} accounts saved", _accounts.size());
 }
 
 void BotAccountMgr::ProcessPendingCallbacks()
@@ -163,7 +163,7 @@ void BotAccountMgr::LoadConfigurationValues()
     _targetPoolSize.store(std::max(10U, requiredAccounts / 4));
 
     TC_LOG_ERROR("module.playerbot",
-        "🔧 BotAccountMgr Config: MaxBotsTotal={}, AutoCreate={}, ConfiguredAccounts={}, CalculatedAccounts={}, RequiredAccounts={}, PoolTarget={}",
+        " BotAccountMgr Config: MaxBotsTotal={}, AutoCreate={}, ConfiguredAccounts={}, CalculatedAccounts={}, RequiredAccounts={}, PoolTarget={}",
         _maxBotsTotal.load(), _autoCreateAccounts.load(), configuredAccounts, calculatedAccounts,
         _requiredAccounts.load(), _targetPoolSize.load());
 }
@@ -353,12 +353,12 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
                 {
                     createdAccounts.push_back(accountId);
                     TC_LOG_DEBUG("module.playerbot.account",
-                        "✅ Account {} created and validated ({}/{})", accountId, i + 1, count);
+                        " Account {} created and validated ({}/{})", accountId, i + 1, count);
                 }
                 else
                 {
                     TC_LOG_ERROR("module.playerbot.account",
-                        "❌ Account {} creation reported success but not found in database!", accountId);
+                        " Account {} creation reported success but not found in database!", accountId);
                 }
             }
             else
@@ -374,7 +374,7 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
         }
 
         TC_LOG_INFO("module.playerbot.account",
-            "✅ Batch creation complete: {}/{} accounts created and validated",
+            " Batch creation complete: {}/{} accounts created and validated",
             createdAccounts.size(), count);
 
         if (callback)
@@ -437,7 +437,7 @@ void BotAccountMgr::RefillAccountPool()
                 }
 
                 TC_LOG_INFO("module.playerbot.account",
-                    "✅ Account pool refilled: {} accounts now available",
+                    " Account pool refilled: {} accounts now available",
                     GetPoolSize());
 
                 _poolRefillInProgress.store(0);
@@ -624,7 +624,7 @@ void BotAccountMgr::DeleteBotAccount(uint32 bnetAccountId,
         _totalAccounts.fetch_sub(1);
 
         TC_LOG_INFO("module.playerbot.account",
-            "✅ Deleted bot account {}", bnetAccountId);
+            " Deleted bot account {}", bnetAccountId);
 
         if (callback) callback(true);
     }
@@ -676,7 +676,7 @@ void BotAccountMgr::DeleteAllBotAccounts(std::function<void(uint32 deleted)> cal
         }
 
         TC_LOG_WARN("module.playerbot.account",
-            "✅ Deleted {}/{} bot accounts", deleted, accountIds.size());
+            " Deleted {}/{} bot accounts", deleted, accountIds.size());
 
         if (callback) callback(deleted);
     }).detach();

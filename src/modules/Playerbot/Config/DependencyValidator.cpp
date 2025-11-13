@@ -43,39 +43,39 @@ bool DependencyValidator::ValidateAllDependencies()
 
     // Validate Intel TBB
     if (!ValidateTBB()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Intel TBB validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Intel TBB validation failed");
         success = false;
     }
 
     // Validate Parallel Hashmap
     if (!ValidatePhmap()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Parallel Hashmap validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Parallel Hashmap validation failed");
         success = false;
     }
 
     // Validate Boost
     if (!ValidateBoost()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Boost validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Boost validation failed");
         success = false;
     }
 
     // Validate MySQL
     if (!ValidateMySQL()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ MySQL validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " MySQL validation failed");
         success = false;
     }
 
     // Validate system requirements
     if (!ValidateSystemRequirements()) {
-        TC_LOG_WARN("module.playerbot.dependencies", "⚠️  System requirements validation failed");
+        TC_LOG_WARN("module.playerbot.dependencies", "  System requirements validation failed");
         // Don't fail build, but warn about potential performance issues
     }
 
     if (success) {
-        TC_LOG_INFO("module.playerbot.dependencies", "✅ All enterprise dependencies validated successfully");
-        TC_LOG_INFO("module.playerbot.dependencies", "🚀 Playerbot ready for high-performance operations");
+        TC_LOG_INFO("module.playerbot.dependencies", " All enterprise dependencies validated successfully");
+        TC_LOG_INFO("module.playerbot.dependencies", " Playerbot ready for high-performance operations");
     } else {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Dependency validation failed - Playerbot will be disabled");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Dependency validation failed - Playerbot will be disabled");
     }
 
     return success;
@@ -101,7 +101,7 @@ bool DependencyValidator::ValidateTBB()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Intel TBB {}.{} validated with concurrency tests", major, minor);
+            " Intel TBB {}.{} validated with concurrency tests", major, minor);
         return true;
     }
     catch (std::exception const& e) {
@@ -193,7 +193,7 @@ bool DependencyValidator::ValidatePhmap()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Parallel Hashmap validated with performance tests");
+            " Parallel Hashmap validated with performance tests");
         return true;
     }
     catch (std::exception const& e) {
@@ -277,7 +277,7 @@ bool DependencyValidator::ValidateBoost()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Boost {}.{}.{} validated with component tests", major, minor, patch);
+            " Boost {}.{}.{} validated with component tests", major, minor, patch);
         return true;
     }
     catch (std::exception const& e) {
@@ -421,7 +421,7 @@ bool DependencyValidator::ValidateMySQL()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ MySQL {}.{}.{} client library validated", major, minor, patch);
+            " MySQL {}.{}.{} client library validated", major, minor, patch);
         return true;
     }
     catch (std::exception const& e) {
@@ -544,7 +544,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "Intel TBB",
         GetTBBVersion(),
-        ValidateTBB() ? "✅ OK" : "❌ FAILED",
+        ValidateTBB() ? " OK" : " FAILED",
         true,
         ValidateTBB() ? "" : "Intel Threading Building Blocks not available or version insufficient"
     });
@@ -552,7 +552,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "Parallel Hashmap",
         GetPhmapVersion(),
-        ValidatePhmap() ? "✅ OK" : "❌ FAILED",
+        ValidatePhmap() ? " OK" : " FAILED",
         true,
         ValidatePhmap() ? "" : "Parallel Hashmap not available or functionality test failed"
     });
@@ -560,7 +560,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "Boost",
         GetBoostVersion(),
-        ValidateBoost() ? "✅ OK" : "❌ FAILED",
+        ValidateBoost() ? " OK" : " FAILED",
         true,
         ValidateBoost() ? "" : "Boost libraries not available or version insufficient"
     });
@@ -568,7 +568,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "MySQL",
         GetMySQLVersion(),
-        ValidateMySQL() ? "✅ OK" : "❌ FAILED",
+        ValidateMySQL() ? " OK" : " FAILED",
         true,
         ValidateMySQL() ? "" : "MySQL client library not available or version insufficient"
     });

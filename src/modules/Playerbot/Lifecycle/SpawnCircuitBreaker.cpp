@@ -61,7 +61,7 @@ bool SpawnCircuitBreaker::Initialize()
     _lastDurationUpdate = GameTime::Now();
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.circuit", "✅ SpawnCircuitBreaker initialized successfully");
+    TC_LOG_INFO("module.playerbot.circuit", " SpawnCircuitBreaker initialized successfully");
     return true;
 }
 
@@ -263,7 +263,7 @@ void SpawnCircuitBreaker::TransitionTo(CircuitState newState, std::string_view r
 
     // Log state transition
     TC_LOG_WARN("module.playerbot.circuit",
-        "🔴 Circuit breaker state transition: {} → {} - {}",
+        " Circuit breaker state transition: {} → {} - {}",
         GetCircuitStateName(oldState),
         GetCircuitStateName(newState),
         reason);

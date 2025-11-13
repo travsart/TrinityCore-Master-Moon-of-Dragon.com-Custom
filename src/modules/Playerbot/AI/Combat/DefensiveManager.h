@@ -109,10 +109,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 30% better survivability for tanks/healers
-     * - ✅ Intelligent defensive rotation
-     * - ✅ Emergency handling (prevent deaths)
-     * - ✅ Avoid defensive waste (stacking, overuse)
+     * -  30% better survivability for tanks/healers
+     * -  Intelligent defensive rotation
+     * -  Emergency handling (prevent deaths)
+     * -  Avoid defensive waste (stacking, overuse)
      */
     class TC_GAME_API DefensiveManager
     {

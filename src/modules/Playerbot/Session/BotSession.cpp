@@ -356,7 +356,7 @@ BotSession::BotSession(uint32 bnetAccountId)
         LOCALE_enUS,                   // Locale
         0,                             // Recruiter
         false,                         // Is recruiter
-        true),                         // is_bot = true ⭐ CRITICAL FIX: Makes IsBot() work correctly!
+        true),                         // is_bot = true  CRITICAL FIX: Makes IsBot() work correctly!
     _bnetAccountId(bnetAccountId),
     _simulatedLatency(50)
 {
@@ -377,13 +377,13 @@ BotSession::BotSession(uint32 bnetAccountId)
     _active.store(true);
     _loginState.store(LoginState::NONE);
 
-    TC_LOG_INFO("module.playerbot.session", "🤖 BotSession constructor complete for account {} (GetAccountId: {})", bnetAccountId, GetAccountId());
+    TC_LOG_INFO("module.playerbot.session", " BotSession constructor complete for account {} (GetAccountId: {})", bnetAccountId, GetAccountId());
 }
 
 // Factory method that creates BotSession with better socket handling
 std::shared_ptr<BotSession> BotSession::Create(uint32 bnetAccountId)
 {
-    TC_LOG_INFO("module.playerbot.session", "🏭 BotSession::Create() factory method called for account {}", bnetAccountId);
+    TC_LOG_INFO("module.playerbot.session", " BotSession::Create() factory method called for account {}", bnetAccountId);
 
     // Create BotSession using regular constructor
     auto session = std::make_shared<BotSession>(bnetAccountId);
@@ -574,7 +574,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     // CRITICAL MEMORY CORRUPTION DETECTION: Comprehensive session validation
     if (!_active.load() || _destroyed.load()) {
         if (thisUpdateId <= 200) { // Log first 200 per-session failures
-            TC_LOG_WARN("module.playerbot.session", "🔍 Update #{} EARLY RETURN: _active={} _destroyed={}",
+            TC_LOG_WARN("module.playerbot.session", " Update #{} EARLY RETURN: _active={} _destroyed={}",
                 thisUpdateId, _active.load(), _destroyed.load());
         }
         return false;
@@ -594,14 +594,14 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     // CRITICAL SAFETY: Validate session integrity before any operations
     uint32 accountId = GetAccountId();
     if (accountId == 0) {
-        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: GetAccountId() returned 0", thisUpdateId);
+        TC_LOG_ERROR("module.playerbot.session", " Update #{} EARLY RETURN: GetAccountId() returned 0", thisUpdateId);
         _active.store(false);
         return false;
     }
 
     // MEMORY CORRUPTION DETECTION: Validate critical member variables
     if (_bnetAccountId == 0 || _bnetAccountId != accountId) {
-        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: Account ID mismatch - BnetAccount: {}, GetAccount: {}",
+        TC_LOG_ERROR("module.playerbot.session", " Update #{} EARLY RETURN: Account ID mismatch - BnetAccount: {}, GetAccount: {}",
             thisUpdateId, _bnetAccountId, accountId);
         _active.store(false);
         return false;
@@ -610,7 +610,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
     // THREAD SAFETY: Validate we're not in a recursive Update call
     static thread_local bool inUpdateCall = false;
     if (inUpdateCall) {
-        TC_LOG_ERROR("module.playerbot.session", "🔍 Update #{} EARLY RETURN: Recursive call detected for account {}", thisUpdateId, accountId);
+        TC_LOG_ERROR("module.playerbot.session", " Update #{} EARLY RETURN: Recursive call detected for account {}", thisUpdateId, accountId);
         return false;
     }
 
@@ -723,7 +723,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         opHandle->Call(this, *packet);
 
                         TC_LOG_DEBUG("playerbot.packets",
-                            "✅ Bot {} executed opcode {} ({}) handler successfully",
+                            " Bot {} executed opcode {} ({}) handler successfully",
                             GetPlayerName(),
                             opHandle->Name,
                             static_cast<uint32>(opcode));
@@ -736,7 +736,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         // Bots don't have traditional logout, but include for completeness
                         opHandle->Call(this, *packet);
                         TC_LOG_DEBUG("playerbot.packets",
-                            "✅ Bot {} executed opcode {} (STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT)",
+                            " Bot {} executed opcode {} (STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT)",
                             GetPlayerName(), opHandle->Name);
                         break;
                     }
@@ -750,7 +750,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                             opHandle->Call(this, *packet);
 
                             TC_LOG_DEBUG("playerbot.packets",
-                                "✅ Bot {} executed opcode {} (STATUS_TRANSFER)",
+                                " Bot {} executed opcode {} (STATUS_TRANSFER)",
                                 GetPlayerName(), opHandle->Name);
                         }
                         else
@@ -769,7 +769,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                         opHandle->Call(this, *packet);
 
                         TC_LOG_DEBUG("playerbot.packets",
-                            "✅ Bot {} executed opcode {} (STATUS_AUTHED)",
+                            " Bot {} executed opcode {} (STATUS_AUTHED)",
                             GetPlayerName(), opHandle->Name);
                         break;
                     }
@@ -777,7 +777,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     case STATUS_NEVER:
                     {
                         TC_LOG_ERROR("playerbot.packets",
-                            "❌ Bot {} received NEVER-allowed opcode {} ({})",
+                            " Bot {} received NEVER-allowed opcode {} ({})",
                             GetPlayerName(),
                             opHandle->Name,
                             static_cast<uint32>(opcode));
@@ -787,7 +787,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     case STATUS_UNHANDLED:
                     {
                         TC_LOG_ERROR("playerbot.packets",
-                            "❌ Bot {} received UNHANDLED opcode {} ({})",
+                            " Bot {} received UNHANDLED opcode {} ({})",
                             GetPlayerName(),
                             opHandle->Name,
                             static_cast<uint32>(opcode));
@@ -806,7 +806,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                     default:
                     {
                         TC_LOG_ERROR("playerbot.packets",
-                            "❌ Bot {} received opcode {} with UNKNOWN status {}",
+                            " Bot {} received opcode {} with UNKNOWN status {}",
                             GetPlayerName(),
                             opHandle->Name,
                             static_cast<uint32>(opHandle->Status));
@@ -963,7 +963,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
                 if (shouldLog)
                 {
-                    TC_LOG_INFO("module.playerbot.session", "🔍 BotSession Update Check - valid:{}, inWorld:{}, ai:{}, active:{}, account:{}",
+                    TC_LOG_INFO("module.playerbot.session", " BotSession Update Check - valid:{}, inWorld:{}, ai:{}, active:{}, account:{}",
                                 validSnapshot, inWorldSnapshot, aiSnapshot != nullptr, activeSnapshot, accountId);
                 }
 
@@ -971,7 +971,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 if (validSnapshot && inWorldSnapshot && aiSnapshot && activeSnapshot) {
                     if (shouldLog)
                     {
-                        TC_LOG_INFO("module.playerbot.session", "✅ ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
+                        TC_LOG_INFO("module.playerbot.session", " ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
                     }
                     try {
                         // Call UpdateAI using snapshot pointer (guaranteed non-null and stable)
@@ -1204,7 +1204,7 @@ uint32 BotSession::ProcessDeferredPackets()
                     opHandle->Call(this, *packet);
 
                     TC_LOG_DEBUG("playerbot.packets.deferred",
-                        "✅ Bot {} executed deferred opcode {} ({}) on main thread",
+                        " Bot {} executed deferred opcode {} ({}) on main thread",
                         GetPlayerName(),
                         opHandle->Name,
                         static_cast<uint32>(opcode));
@@ -1225,7 +1225,7 @@ uint32 BotSession::ProcessDeferredPackets()
                 default:
                 {
                     TC_LOG_ERROR("playerbot.packets.deferred",
-                        "❌ Bot {} deferred packet has invalid status: {} (opcode {})",
+                        " Bot {} deferred packet has invalid status: {} (opcode {})",
                         GetPlayerName(),
                         static_cast<uint32>(opHandle->Status),
                         opHandle->Name);
@@ -1319,7 +1319,7 @@ bool BotSession::LoginCharacter(ObjectGuid characterGuid)
             HandleBotPlayerLogin(static_cast<BotLoginQueryHolder const&>(holder));
         });
 
-        TC_LOG_INFO("module.playerbot.session", "✅ ASYNC bot login initiated for character {} - waiting for database callback", characterGuid.ToString());
+        TC_LOG_INFO("module.playerbot.session", " ASYNC bot login initiated for character {} - waiting for database callback", characterGuid.ToString());
         // Login state will be updated in HandleBotPlayerLogin callback
         return true;
     }
@@ -1418,14 +1418,14 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         if (!map)
         {
             TC_LOG_ERROR("module.playerbot.session",
-                "❌ CRITICAL: Bot {} cannot create/find map! MapId={} InstanceId={} - Login FAILED",
+                " CRITICAL: Bot {} cannot create/find map! MapId={} InstanceId={} - Login FAILED",
                 pCurrChar->GetName(), mapId, instanceId);
             _loginState.store(LoginState::LOGIN_FAILED);
             m_playerLoading.Clear();
             return;
         }
 
-        TC_LOG_DEBUG("module.playerbot.session", "✅ Bot {} map ready: MapId={} InstanceId={} MapPtr=0x{:X}",
+        TC_LOG_DEBUG("module.playerbot.session", " Bot {} map ready: MapId={} InstanceId={} MapPtr=0x{:X}",
             pCurrChar->GetName(), mapId, instanceId, reinterpret_cast<uintptr_t>(map));
 
         // Now safely add bot to the map
@@ -1477,7 +1477,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         }
         if (botPhases.empty()) botPhases = "NONE";
 
-        TC_LOG_INFO("module.playerbot.session", "✅ Bot {} phase initialization complete (TrinityCore pattern + packet simulation) - Phases: [{}]",
+        TC_LOG_INFO("module.playerbot.session", " Bot {} phase initialization complete (TrinityCore pattern + packet simulation) - Phases: [{}]",
             pCurrChar->GetName(), botPhases);
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
 
@@ -1494,14 +1494,14 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                 if (Player* player = GetPlayer())
                 {
                     Group* group = player->GetGroup();
-                    TC_LOG_ERROR("module.playerbot.session", "🔍 Bot {} login group check: player={}, group={}",
+                    TC_LOG_ERROR("module.playerbot.session", " Bot {} login group check: player={}, group={}",
                                 player->GetName(), (void*)player, (void*)group);
                     if (group)
                     {
-                        TC_LOG_INFO("module.playerbot.session", "🔄 Bot {} is already in group at login - activating strategies", player->GetName());
+                        TC_LOG_INFO("module.playerbot.session", " Bot {} is already in group at login - activating strategies", player->GetName());
                         if (BotAI* ai = GetAI())
                         {
-                            TC_LOG_ERROR("module.playerbot.session", "📞 About to call OnGroupJoined with group={}", (void*)group);
+                            TC_LOG_ERROR("module.playerbot.session", " About to call OnGroupJoined with group={}", (void*)group);
                             ai->OnGroupJoined(group);
                         }
                     }
@@ -1513,7 +1513,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                     //          Must check HasPlayerFlag(PLAYER_FLAGS_GHOST) to detect ghost state
                     if (player->isDead() || player->HasPlayerFlag(PLAYER_FLAGS_GHOST))
                     {
-                        TC_LOG_INFO("module.playerbot.session", "💀 Bot {} is dead/ghost at login (isDead={}, isGhost={}, deathState={}, health={}/{}) - triggering death recovery",
+                        TC_LOG_INFO("module.playerbot.session", " Bot {} is dead/ghost at login (isDead={}, isGhost={}, deathState={}, health={}/{}) - triggering death recovery",
                             player->GetName(),
                             player->isDead(),
                             player->HasPlayerFlag(PLAYER_FLAGS_GHOST),
@@ -1525,12 +1525,12 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                         {
                             if (ai->GetDeathRecoveryManager())
                             {
-                                TC_LOG_INFO("module.playerbot.session", "📞 Calling OnDeath to initialize death recovery for bot {}", player->GetName());
+                                TC_LOG_INFO("module.playerbot.session", " Calling OnDeath to initialize death recovery for bot {}", player->GetName());
                                 ai->GetDeathRecoveryManager()->OnDeath();
                             }
                             else
                             {
-                                TC_LOG_ERROR("module.playerbot.session", "❌ DeathRecoveryManager not initialized for dead bot {}", player->GetName());
+                                TC_LOG_ERROR("module.playerbot.session", " DeathRecoveryManager not initialized for dead bot {}", player->GetName());
                             }
                         }
                     }
@@ -1553,13 +1553,13 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             // No longer need to manually clear - KillAllEvents() will properly clean up spell mods
             player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen
-            TC_LOG_DEBUG("module.playerbot.session", "🧹 Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
+            TC_LOG_DEBUG("module.playerbot.session", " Bot {} cleared login spell events to prevent m_spellModTakingSpell crash", player->GetName());
         }
 
         // Mark login as complete
         _loginState.store(LoginState::LOGIN_COMPLETE);
 
-        TC_LOG_INFO("module.playerbot.session", "✅ ASYNC bot login successful for character {}", characterGuid.ToString());
+        TC_LOG_INFO("module.playerbot.session", " ASYNC bot login successful for character {}", characterGuid.ToString());
     }
     catch (std::exception const& e)
     {
@@ -1751,7 +1751,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
             // Verify that the bot now has a group invitation
             if (bot->GetGroupInvite() == inviterGroup)
             {
-                TC_LOG_INFO("module.playerbot.group", "✅ Confirmed: Bot {} has group invitation state set", bot->GetName());
+                TC_LOG_INFO("module.playerbot.group", " Confirmed: Bot {} has group invitation state set", bot->GetName());
 
                 // CLEAN APPROACH: Auto-accept and join the group using TrinityCore API
                 // This removes the legacy GroupInvitationHandler fallback path
@@ -1759,7 +1759,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                 // Accept the invitation by adding bot to the group
                 if (inviterGroup->AddMember(bot))
                 {
-                    TC_LOG_INFO("module.playerbot.group", "✅ Bot {} successfully joined group {} (inviter: {})",
+                    TC_LOG_INFO("module.playerbot.group", " Bot {} successfully joined group {} (inviter: {})",
                         bot->GetName(), inviterGroup->GetGUID().ToString(), inviterName);
 
                     // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event for instant reaction
@@ -1768,33 +1768,33 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                     {
                         Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, bot->GetGUID(), inviterGroup->GetLeaderGUID());
                         _ai->GetEventDispatcher()->Dispatch(std::move(evt));
-                        TC_LOG_INFO("module.playerbot.group", "📢 GROUP_JOINED event dispatched for bot {}", bot->GetName());
+                        TC_LOG_INFO("module.playerbot.group", " GROUP_JOINED event dispatched for bot {}", bot->GetName());
                     }
 
                     // Activate follow behavior through BotAI lifecycle hook
                     if (_ai)
                     {
-                        TC_LOG_ERROR("module.playerbot.group", "🔥 CALLING OnGroupJoined for bot {} with group {}",
+                        TC_LOG_ERROR("module.playerbot.group", " CALLING OnGroupJoined for bot {} with group {}",
                                     bot->GetName(), (void*)inviterGroup);
                         _ai->OnGroupJoined(inviterGroup);
-                        TC_LOG_ERROR("module.playerbot.group", "✅ OnGroupJoined COMPLETED for bot {}", bot->GetName());
+                        TC_LOG_ERROR("module.playerbot.group", " OnGroupJoined COMPLETED for bot {}", bot->GetName());
                     }
                     else
                     {
-                        TC_LOG_ERROR("module.playerbot.group", "❌ CRITICAL: _ai is NULL for bot {}", bot->GetName());
+                        TC_LOG_ERROR("module.playerbot.group", " CRITICAL: _ai is NULL for bot {}", bot->GetName());
                     }
 
-                    TC_LOG_INFO("module.playerbot.group", "✅ Bot {} follow behavior activated", bot->GetName());
+                    TC_LOG_INFO("module.playerbot.group", " Bot {} follow behavior activated", bot->GetName());
                 }
                 else
                 {
-                    TC_LOG_ERROR("module.playerbot.group", "❌ Failed to add bot {} to group {} (AddMember failed)",
+                    TC_LOG_ERROR("module.playerbot.group", " Failed to add bot {} to group {} (AddMember failed)",
                         bot->GetName(), inviterGroup->GetGUID().ToString());
                 }
             }
             else
             {
-                TC_LOG_ERROR("module.playerbot.group", "❌ Bot {} group invitation state not set after AddInvite", bot->GetName());
+                TC_LOG_ERROR("module.playerbot.group", " Bot {} group invitation state not set after AddInvite", bot->GetName());
             }
         }
         else

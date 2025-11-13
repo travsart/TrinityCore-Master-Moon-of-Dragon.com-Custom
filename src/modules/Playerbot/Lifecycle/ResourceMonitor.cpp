@@ -162,7 +162,7 @@ bool ResourceMonitor::Initialize()
 #endif
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.resource", "✅ ResourceMonitor initialized successfully");
+    TC_LOG_INFO("module.playerbot.resource", " ResourceMonitor initialized successfully");
     return true;
 }
 

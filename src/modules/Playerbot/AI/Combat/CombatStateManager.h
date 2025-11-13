@@ -112,12 +112,12 @@ namespace Events
  * ```
  *
  * DAMAGE SOURCE HANDLING:
- * - Unit Attacks (melee/spell): ✅ Enters combat with attacker
- * - Periodic Auras (DoTs):     ✅ Enters combat with caster
- * - AreaTriggers (fire):       ✅ Enters combat with creator
- * - Environmental (fall/lava): ✅ Filtered (self-damage)
- * - Friendly Fire:             ✅ Filtered (IsFriendlyTo check)
- * - Null Attacker:             ✅ Filtered (ObjectGuid::Empty)
+ * - Unit Attacks (melee/spell):  Enters combat with attacker
+ * - Periodic Auras (DoTs):      Enters combat with caster
+ * - AreaTriggers (fire):        Enters combat with creator
+ * - Environmental (fall/lava):  Filtered (self-damage)
+ * - Friendly Fire:              Filtered (IsFriendlyTo check)
+ * - Null Attacker:              Filtered (ObjectGuid::Empty)
  *
  * CONFIGURATION:
  * - Enabled by default when bot AI initializes

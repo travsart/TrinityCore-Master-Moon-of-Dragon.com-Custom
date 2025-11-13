@@ -102,13 +102,13 @@ struct TransitionValidation {
  *      ↓
  *   LOADING_CHARACTER
  *      ↓
- *   IN_WORLD  ←────────────┐
- *      ↓                    │
- *   CHECKING_GROUP         │ (retry on failure)
- *      ↓                    │
- *   ACTIVATING_STRATEGIES  │
- *      ↓                    │
- *   READY ──────────────────┘
+ *   IN_WORLD  ←
+ *      ↓                    
+ *   CHECKING_GROUP          (retry on failure)
+ *      ↓                    
+ *   ACTIVATING_STRATEGIES  
+ *      ↓                    
+ *   READY 
  *      ↓
  *   (any state can go to FAILED on error)
  *

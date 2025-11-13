@@ -40,87 +40,87 @@ public:
         // Test 1: Database Query Execution
         if (!TestDatabaseQueryExecution())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Database Query Execution Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Database Query Execution Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Database Query Execution Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Database Query Execution Test");
         }
 
         // Test 2: SynchronousLoginQueryHolder
         if (!TestSynchronousQueryHolder())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: SynchronousLoginQueryHolder Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: SynchronousLoginQueryHolder Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: SynchronousLoginQueryHolder Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: SynchronousLoginQueryHolder Test");
         }
 
         // Test 3: Complete Bot Login Flow
         if (!TestCompleteBotLoginFlow())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Complete Bot Login Flow Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Complete Bot Login Flow Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Complete Bot Login Flow Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Complete Bot Login Flow Test");
         }
 
         // Test 4: Error Handling and Edge Cases
         if (!TestErrorHandlingAndEdgeCases())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Error Handling and Edge Cases Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Error Handling and Edge Cases Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Error Handling and Edge Cases Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Error Handling and Edge Cases Test");
         }
 
         // Test 5: Memory Safety
         if (!TestMemorySafety())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Memory Safety Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Memory Safety Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Memory Safety Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Memory Safety Test");
         }
 
         // Test 6: Performance Validation
         if (!TestPerformanceCharacteristics())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Performance Characteristics Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Performance Characteristics Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Performance Characteristics Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Performance Characteristics Test");
         }
 
         // Test 7: Thread Safety
         if (!TestThreadSafety())
         {
-            TC_LOG_ERROR("test.playerbot", "❌ FAILED: Thread Safety Test");
+            TC_LOG_ERROR("test.playerbot", " FAILED: Thread Safety Test");
             allTestsPassed = false;
         }
         else
         {
-            TC_LOG_INFO("test.playerbot", "✅ PASSED: Thread Safety Test");
+            TC_LOG_INFO("test.playerbot", " PASSED: Thread Safety Test");
         }
 
         if (allTestsPassed)
         {
-            TC_LOG_INFO("test.playerbot", "🎉 ALL TESTS PASSED: Synchronous login system is working correctly");
+            TC_LOG_INFO("test.playerbot", " ALL TESTS PASSED: Synchronous login system is working correctly");
         }
         else
         {
-            TC_LOG_ERROR("test.playerbot", "💥 SOME TESTS FAILED: Review failures above");
+            TC_LOG_ERROR("test.playerbot", " SOME TESTS FAILED: Review failures above");
         }
 
         TC_LOG_INFO("test.playerbot", "=== Synchronous Login Integration Tests Complete ===");
@@ -245,40 +245,40 @@ private:
 
             if (loginResult)
             {
-                TC_LOG_INFO("test.playerbot", "✅ Synchronous login completed successfully in {} ms", loginDuration.count());
+                TC_LOG_INFO("test.playerbot", " Synchronous login completed successfully in {} ms", loginDuration.count());
 
                 // Verify login state
                 if (botSession->IsLoginComplete())
                 {
-                    TC_LOG_INFO("test.playerbot", "✅ Login state correctly shows LOGIN_COMPLETE");
+                    TC_LOG_INFO("test.playerbot", " Login state correctly shows LOGIN_COMPLETE");
                 }
                 else
                 {
-                    TC_LOG_ERROR("test.playerbot", "❌ Login state incorrect after successful login");
+                    TC_LOG_ERROR("test.playerbot", " Login state incorrect after successful login");
                     return false;
                 }
 
                 // Verify player object creation
                 if (botSession->GetPlayer())
                 {
-                    TC_LOG_INFO("test.playerbot", "✅ Player object successfully created");
+                    TC_LOG_INFO("test.playerbot", " Player object successfully created");
                 }
                 else
                 {
-                    TC_LOG_ERROR("test.playerbot", "❌ Player object is null after successful login");
+                    TC_LOG_ERROR("test.playerbot", " Player object is null after successful login");
                     return false;
                 }
             }
             else
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Synchronous login failed");
+                TC_LOG_ERROR("test.playerbot", " Synchronous login failed");
                 return false;
             }
 
             // Performance validation - synchronous login should be fast
             if (loginDuration.count() > 5000) // 5 seconds threshold
             {
-                TC_LOG_WARN("test.playerbot", "⚠️  Synchronous login took {} ms - may be slower than expected", loginDuration.count());
+                TC_LOG_WARN("test.playerbot", "  Synchronous login took {} ms - may be slower than expected", loginDuration.count());
             }
 
             return true;
@@ -311,12 +311,12 @@ private:
 
             if (result1)
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Login should have failed for invalid character GUID");
+                TC_LOG_ERROR("test.playerbot", " Login should have failed for invalid character GUID");
                 return false;
             }
             else
             {
-                TC_LOG_INFO("test.playerbot", "✅ Correctly rejected invalid character GUID");
+                TC_LOG_INFO("test.playerbot", " Correctly rejected invalid character GUID");
             }
 
             // Test 2: Empty GUID
@@ -325,22 +325,22 @@ private:
 
             if (result2)
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Login should have failed for empty GUID");
+                TC_LOG_ERROR("test.playerbot", " Login should have failed for empty GUID");
                 return false;
             }
             else
             {
-                TC_LOG_INFO("test.playerbot", "✅ Correctly rejected empty GUID");
+                TC_LOG_INFO("test.playerbot", " Correctly rejected empty GUID");
             }
 
             // Test 3: Verify login state after failure
             if (botSession->IsLoginFailed())
             {
-                TC_LOG_INFO("test.playerbot", "✅ Login state correctly shows LOGIN_FAILED after invalid attempts");
+                TC_LOG_INFO("test.playerbot", " Login state correctly shows LOGIN_FAILED after invalid attempts");
             }
             else
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Login state should be LOGIN_FAILED after invalid attempts");
+                TC_LOG_ERROR("test.playerbot", " Login state should be LOGIN_FAILED after invalid attempts");
                 return false;
             }
 
@@ -376,14 +376,14 @@ private:
                 // Test session creation/destruction
                 if (!botSession->IsActive())
                 {
-                    TC_LOG_ERROR("test.playerbot", "❌ Bot session {} not active during memory test", i);
+                    TC_LOG_ERROR("test.playerbot", " Bot session {} not active during memory test", i);
                     return false;
                 }
 
                 // Let session go out of scope to test destructor
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ Memory safety test completed - no crashes detected");
+            TC_LOG_INFO("test.playerbot", " Memory safety test completed - no crashes detected");
             return true;
         }
         catch (std::exception const& e)
@@ -441,12 +441,12 @@ private:
             auto totalTime = std::accumulate(timings.begin(), timings.end(), std::chrono::milliseconds(0));
             auto avgTime = totalTime / numTests;
 
-            TC_LOG_INFO("test.playerbot", "✅ Average synchronous login time: {} ms", avgTime.count());
+            TC_LOG_INFO("test.playerbot", " Average synchronous login time: {} ms", avgTime.count());
 
             // Performance validation - should be reasonable
             if (avgTime.count() > 10000) // 10 seconds is too slow
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Average login time {} ms is too slow", avgTime.count());
+                TC_LOG_ERROR("test.playerbot", " Average login time {} ms is too slow", avgTime.count());
                 return false;
             }
 
@@ -518,17 +518,17 @@ private:
 
             if (completedThreads.load() != numThreads)
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Not all threads completed: {} / {}", completedThreads.load(), numThreads);
+                TC_LOG_ERROR("test.playerbot", " Not all threads completed: {} / {}", completedThreads.load(), numThreads);
                 return false;
             }
 
             if (!testPassed.load())
             {
-                TC_LOG_ERROR("test.playerbot", "❌ Thread safety test failed");
+                TC_LOG_ERROR("test.playerbot", " Thread safety test failed");
                 return false;
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ Thread safety test passed - {} threads completed successfully", numThreads);
+            TC_LOG_INFO("test.playerbot", " Thread safety test passed - {} threads completed successfully", numThreads);
             return true;
         }
         catch (std::exception const& e)

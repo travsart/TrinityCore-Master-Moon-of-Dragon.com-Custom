@@ -41,11 +41,11 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedQuestManager
- *   ├─> PickupModule      (quest discovery, acceptance)
- *   ├─> CompletionModule  (objective tracking, execution)
- *   ├─> ValidationModule  (requirement validation)
- *   ├─> TurnInModule      (quest turn-in, rewards)
- *   └─> DynamicModule     (quest assignment, optimization)
+ *   > PickupModule      (quest discovery, acceptance)
+ *   > CompletionModule  (objective tracking, execution)
+ *   > ValidationModule  (requirement validation)
+ *   > TurnInModule      (quest turn-in, rewards)
+ *   > DynamicModule     (quest assignment, optimization)
  * ```
  *
  * **Thread Safety:**

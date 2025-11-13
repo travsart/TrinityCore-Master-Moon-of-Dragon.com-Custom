@@ -31,7 +31,7 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         if (distToDestination > minDistanceChange)
         {
             // Different destination - issue new movement
-            TC_LOG_DEBUG("module.playerbot", "🔄 BotMovement: Bot {} changing destination to ({:.2f},{:.2f},{:.2f})",
+            TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} changing destination to ({:.2f},{:.2f},{:.2f})",
                          bot->GetName(), destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
             mm->MovePoint(pointId, destination);
             return true;
@@ -39,14 +39,14 @@ bool BotMovementUtil::MoveToPosition(Player* bot, Position const& destination, u
         else
         {
             // Already moving to same destination - don't re-issue command
-            TC_LOG_DEBUG("module.playerbot", "⏭️ BotMovement: Bot {} already moving to destination, skipping", bot->GetName());
+            TC_LOG_DEBUG("module.playerbot", "⏭ BotMovement: Bot {} already moving to destination, skipping", bot->GetName());
             return true;
         }
     }
     else
     {
         // Not currently in point movement - issue new command
-        TC_LOG_DEBUG("module.playerbot", "🎯 BotMovement: Bot {} moving to ({:.2f},{:.2f},{:.2f})",
+        TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} moving to ({:.2f},{:.2f},{:.2f})",
                      bot->GetName(), destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
         mm->MovePoint(pointId, destination);
         return true;
@@ -73,7 +73,7 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
     float currentDistance = std::sqrt(bot->GetExactDistSq(unit)); // Calculate once from squared distance
     if (currentDistance <= distance)
     {
-        TC_LOG_DEBUG("module.playerbot", "✅ BotMovement: Bot {} already within {:.1f}yd of {} (current: {:.1f}yd)",
+        TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} already within {:.1f}yd of {} (current: {:.1f}yd)",
                      bot->GetName(), distance, unit->GetName(), currentDistance);
         return true;
     }
@@ -89,7 +89,7 @@ bool BotMovementUtil::MoveToUnit(Player* bot, Unit* unit, float distance, uint32
     // Move backwards from unit position along its facing direction
     destination.m_positionX -= targetDistance * std::cos(angle);
     destination.m_positionY -= targetDistance * std::sin(angle);
-    TC_LOG_DEBUG("module.playerbot", "🎯 BotMovement: Bot {} moving to within {:.1f}yd of {} at ({:.2f},{:.2f},{:.2f})",
+    TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} moving to within {:.1f}yd of {} at ({:.2f},{:.2f},{:.2f})",
                  bot->GetName(), distance, unit->GetName(),
                  destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
 
@@ -113,13 +113,13 @@ bool BotMovementUtil::ChaseTarget(Player* bot, Unit* target, float distance)
 
         if (std::abs(currentDistance - distance) <= tolerance)
         {
-            TC_LOG_DEBUG("module.playerbot", "⏭️ BotMovement: Bot {} already chasing at optimal distance", bot->GetName());
+            TC_LOG_DEBUG("module.playerbot", "⏭ BotMovement: Bot {} already chasing at optimal distance", bot->GetName());
             return true;
         }
     }
 
     // Start or update chase
-    TC_LOG_DEBUG("module.playerbot", "🏃 BotMovement: Bot {} chasing {} at {:.1f}yd",
+    TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} chasing {} at {:.1f}yd",
                  bot->GetName(), target->GetName(), distance);
     mm->MoveChase(target, distance);
     return true;
@@ -135,7 +135,7 @@ void BotMovementUtil::StopMovement(Player* bot)
     if (MotionMaster* mm = bot->GetMotionMaster())
         mm->Clear();
 
-    TC_LOG_DEBUG("module.playerbot", "🛑 BotMovement: Bot {} stopped movement", bot->GetName());
+    TC_LOG_DEBUG("module.playerbot", " BotMovement: Bot {} stopped movement", bot->GetName());
 }
 
 bool BotMovementUtil::IsMoving(Player* bot)

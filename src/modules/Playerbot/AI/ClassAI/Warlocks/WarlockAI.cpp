@@ -175,25 +175,25 @@ WarlockAI::~WarlockAI() = default;
 void WarlockAI::UpdateRotation(::Unit* target)
 {
     // CRITICAL: Use module.playerbot logger to prove function entry
-    TC_LOG_ERROR("module.playerbot", "🔥🔥🔥 WARLOCK UpdateRotation() ENTERED! 🔥🔥🔥");
+    TC_LOG_ERROR("module.playerbot", " WARLOCK UpdateRotation() ENTERED! ");
 
     Player* bot = GetBot();
 
-    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance    TC_LOG_ERROR("module.playerbot", "🎯 WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
+    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance    TC_LOG_ERROR("module.playerbot", " WarlockAI::UpdateRotation - Bot {} (level {}) attacking {} at {:.1f}yd",
 
                  bot->GetName(), bot->GetLevel(), target->GetName(), distance);
 
     // Check if bot should use baseline rotation (levels 1-9 or no spec)
     if (BaselineRotationManager::ShouldUseBaselineRotation(bot))
     {
-        TC_LOG_ERROR("module.playerbot", "📋 Bot {} using BASELINE rotation (level {})",
+        TC_LOG_ERROR("module.playerbot", " Bot {} using BASELINE rotation (level {})",
 
                      bot->GetName(), bot->GetLevel());
 
         static BaselineRotationManager baselineManager;
         baselineManager.HandleAutoSpecialization(bot);
 
-        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);        TC_LOG_ERROR("module.playerbot", "📋 BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
+        bool executed = baselineManager.ExecuteBaselineRotation(bot, target);        TC_LOG_ERROR("module.playerbot", " BaselineRotation result: {}", executed ? "SUCCESS" : "FAILED");
 
         // No fallback for casters - if rotation failed, just return
         // Do NOT use AttackerStateUpdate (melee) for a caster class

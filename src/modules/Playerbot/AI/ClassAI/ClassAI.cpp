@@ -92,14 +92,14 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - lastSpellQueueLog > 500) // Every 500ms
     {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 OnCombatUpdate: Checking spell queue for bot {} - hasPending={}",
+        TC_LOG_ERROR("module.playerbot.classai", " OnCombatUpdate: Checking spell queue for bot {} - hasPending={}",
                     GetBot()->GetName(), _pendingSpellCastRequest != nullptr);
         lastSpellQueueLog = currentTime;
     }
 
     if (CanExecutePendingSpell())
     {
-        TC_LOG_ERROR("module.playerbot.classai", "✅ OnCombatUpdate: Calling ExecutePendingSpell for bot {}",
+        TC_LOG_ERROR("module.playerbot.classai", " OnCombatUpdate: Calling ExecutePendingSpell for bot {}",
                     GetBot()->GetName());
         ExecutePendingSpell();
     }
@@ -116,7 +116,7 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     static uint32 lastCombatLog = 0;
     if (currentTime - lastCombatLog > 2000) // Every 2 seconds (reuse currentTime from spell queue check)
     {
-        TC_LOG_ERROR("module.playerbot", "⚔️ ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
+        TC_LOG_ERROR("module.playerbot", " ClassAI::OnCombatUpdate: Bot {} - currentTarget={}, combatTime={}ms, behaviors={}",
                      GetBot()->GetName(),
                      _currentCombatTarget ? _currentCombatTarget->GetName() : "NONE",
                      _combatTime,
@@ -185,12 +185,12 @@ void ClassAI::OnCombatUpdate(uint32 diff)
     // Class-specific combat updates
     if (_currentCombatTarget)
     {
-        TC_LOG_ERROR("module.playerbot", "🗡️ Calling UpdateRotation for {} (class {}) with target {}",
+        TC_LOG_ERROR("module.playerbot", " Calling UpdateRotation for {} (class {}) with target {}",
                      GetBot()->GetName(), GetBot()->GetClass(), _currentCombatTarget->GetName());
 
         // DIAGNOSTIC: Check if this is actually the derived class
         const char* className = typeid(*this).name();
-        TC_LOG_ERROR("module.playerbot", "🔍 AI Type: {}", className);
+        TC_LOG_ERROR("module.playerbot", " AI Type: {}", className);
 
         // FIX FOR ISSUE #3: Ensure melee bots continuously face their target
         // This prevents the "facing wrong direction" bug where melee bots don't attack
@@ -205,35 +205,35 @@ void ClassAI::OnCombatUpdate(uint32 diff)
         // CombatMovementStrategy which provides superior role-based positioning.
         // ClassAI now focuses solely on ability rotation and cooldown management.
 
-        TC_LOG_ERROR("module.playerbot", "⏩ About to call UpdateRotation() virtual method");
-        TC_LOG_ERROR("module.playerbot", "⏩ Target valid: {}, target name: {}",
+        TC_LOG_ERROR("module.playerbot", " About to call UpdateRotation() virtual method");
+        TC_LOG_ERROR("module.playerbot", " Target valid: {}, target name: {}",
                      _currentCombatTarget != nullptr,
                      _currentCombatTarget ? _currentCombatTarget->GetName() : "NULL");
 
         // Update class-specific rotation
         try
         {
-            TC_LOG_ERROR("module.playerbot", "⏩⏩⏩ INSIDE TRY BLOCK - calling UpdateRotation");
+            TC_LOG_ERROR("module.playerbot", " INSIDE TRY BLOCK - calling UpdateRotation");
             UpdateRotation(_currentCombatTarget);
-            TC_LOG_ERROR("module.playerbot", "⏩⏩⏩ UpdateRotation call completed without exception");
+            TC_LOG_ERROR("module.playerbot", " UpdateRotation call completed without exception");
         }
         catch (std::exception const& e)
         {
-            TC_LOG_ERROR("module.playerbot", "❌❌❌ EXCEPTION in UpdateRotation: {}", e.what());
+            TC_LOG_ERROR("module.playerbot", " EXCEPTION in UpdateRotation: {}", e.what());
         }
         catch (...)
         {
-            TC_LOG_ERROR("module.playerbot", "❌❌❌ UNKNOWN EXCEPTION in UpdateRotation");
+            TC_LOG_ERROR("module.playerbot", " UNKNOWN EXCEPTION in UpdateRotation");
         }
 
-        TC_LOG_ERROR("module.playerbot", "✅ Returned from UpdateRotation()");
+        TC_LOG_ERROR("module.playerbot", " Returned from UpdateRotation()");
 
         // Update class-specific cooldowns
         UpdateCooldowns(diff);
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot", "⚠️ NO TARGET in combat for {}, applying buffs instead", GetBot()->GetName());
+        TC_LOG_ERROR("module.playerbot", " NO TARGET in combat for {}, applying buffs instead", GetBot()->GetName());
 
         // No target in combat - try to apply buffs
         UpdateBuffs();
@@ -686,12 +686,12 @@ bool ClassAI::CanExecutePendingSpell() const
 {
     // DIAGNOSTIC: Log every check to trace execution flow
 
-    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} has pending spell {} queued",
+    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} has pending spell {} queued",
                 GetBot() ? GetBot()->GetName() : "NULL", _pendingSpellCastRequest->spellId);
 
     if (!GetBot())
     {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: NO BOT");        return false;
+        TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: NO BOT");        return false;
     }
 
     // CRITICAL FIX: Don't check UNIT_STATE_CASTING for bots    // Unlike players who have packet-driven spell casting, bots queue spells
@@ -707,27 +707,27 @@ bool ClassAI::CanExecutePendingSpell() const
 
     // Check if bot is currently casting a different spell    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
+        TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
                     GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
         return false;
     }
 
-    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} NOT casting, checking GCD", GetBot()->GetName());
+    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} NOT casting, checking GCD", GetBot()->GetName());
 
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_pendingSpellCastRequest->spellId,
                                                           GetBot()->GetMap()->GetDifficultyID());
 
-    TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Spell info valid, checking GCD");
+    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Spell info valid, checking GCD");
 
     // Wait for global cooldown to expire completely (not just ≤400ms)
     auto gcdRemaining = GetBot()->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo);
     if (gcdRemaining > 0ms)
     {
-        TC_LOG_ERROR("module.playerbot.classai", "🔍 CanExecutePendingSpell: Bot {} GCD NOT READY ({} ms remaining) for spell {}",
+        TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} GCD NOT READY ({} ms remaining) for spell {}",
                     GetBot()->GetName(), gcdRemaining.count(), _pendingSpellCastRequest->spellId);
         return false;    }
 
-    TC_LOG_ERROR("module.playerbot.classai", "✅ CanExecutePendingSpell: Bot {} READY TO EXECUTE spell {}",
+    TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} READY TO EXECUTE spell {}",
                 GetBot()->GetName(), _pendingSpellCastRequest->spellId);
 
     return true;
@@ -781,7 +781,7 @@ void ClassAI::ExecutePendingSpell()
     // Players auto-face when casting, bots need to do it explicitly
     if (target && target != bot)    {
         bot->SetFacingToObject(target);
-        TC_LOG_ERROR("module.playerbot.classai", "🎯 Bot {} facing target {} before spell cast",
+        TC_LOG_ERROR("module.playerbot.classai", " Bot {} facing target {} before spell cast",
                     bot->GetName(), target->GetName());
     }
 
@@ -809,13 +809,13 @@ void ClassAI::ExecutePendingSpell()
 
     if (result == SPELL_CAST_OK)
     {
-        TC_LOG_ERROR("module.playerbot.classai", "✅ Bot {} executed queued spell {} on {} - queued for {}ms",
+        TC_LOG_ERROR("module.playerbot.classai", " Bot {} executed queued spell {} on {} - queued for {}ms",
                     bot->GetName(), spellId,
                     target ? target->GetName() : "self", queuedDuration);
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot.classai", "⚠️ Bot {} spell {} failed with result {} - queued for {}ms",                    bot->GetName(), spellId,
+        TC_LOG_ERROR("module.playerbot.classai", " Bot {} spell {} failed with result {} - queued for {}ms",                    bot->GetName(), spellId,
                     uint32(result), queuedDuration);
     }
 

@@ -45,7 +45,7 @@
  */
 void ReportCriticalSocketCrashBug()
 {
-    TC_LOG_FATAL("test.playerbot", "🚨 CRITICAL BUG REPORT: ACCESS_VIOLATION ROOT CAUSE IDENTIFIED");
+    TC_LOG_FATAL("test.playerbot", " CRITICAL BUG REPORT: ACCESS_VIOLATION ROOT CAUSE IDENTIFIED");
     TC_LOG_FATAL("test.playerbot", "");
     TC_LOG_FATAL("test.playerbot", "BUG: WorldSession::IsBot() is NOT virtual");
     TC_LOG_FATAL("test.playerbot", "");
@@ -69,7 +69,7 @@ void ReportCriticalSocketCrashBug()
     TC_LOG_FATAL("test.playerbot", "2. Add override keyword to BotSession::IsBot()");
     TC_LOG_FATAL("test.playerbot", "3. Ensure _isBot is properly initialized in WorldSession constructor");
     TC_LOG_FATAL("test.playerbot", "");
-    TC_LOG_FATAL("test.playerbot", "🚨 END CRITICAL BUG REPORT");
+    TC_LOG_FATAL("test.playerbot", " END CRITICAL BUG REPORT");
 }
 
 /**
@@ -77,7 +77,7 @@ void ReportCriticalSocketCrashBug()
  */
 void ShowRecommendedFix()
 {
-    TC_LOG_INFO("test.playerbot", "💡 RECOMMENDED FIX IMPLEMENTATION:");
+    TC_LOG_INFO("test.playerbot", " RECOMMENDED FIX IMPLEMENTATION:");
     TC_LOG_INFO("test.playerbot", "");
     TC_LOG_INFO("test.playerbot", "FILE: src/server/game/Server/WorldSession.h");
     TC_LOG_INFO("test.playerbot", "CHANGE line 1026 from:");
@@ -92,8 +92,8 @@ void ShowRecommendedFix()
     TC_LOG_INFO("test.playerbot", "    bool IsBot() const override { return true; }");
     TC_LOG_INFO("test.playerbot", "");
     TC_LOG_INFO("test.playerbot", "This will ensure that:");
-    TC_LOG_INFO("test.playerbot", "✅ BotSession::IsBot() is properly called through polymorphism");
-    TC_LOG_INFO("test.playerbot", "✅ All BUILD_PLAYERBOT guards in WorldSession.cpp will work");
-    TC_LOG_INFO("test.playerbot", "✅ Socket operations will be properly protected");
-    TC_LOG_INFO("test.playerbot", "✅ ACCESS_VIOLATION crashes will be prevented");
+    TC_LOG_INFO("test.playerbot", " BotSession::IsBot() is properly called through polymorphism");
+    TC_LOG_INFO("test.playerbot", " All BUILD_PLAYERBOT guards in WorldSession.cpp will work");
+    TC_LOG_INFO("test.playerbot", " Socket operations will be properly protected");
+    TC_LOG_INFO("test.playerbot", " ACCESS_VIOLATION crashes will be prevented");
 }

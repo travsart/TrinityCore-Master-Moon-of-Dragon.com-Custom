@@ -47,7 +47,7 @@ bool BotDatabasePool::Initialize(std::string const& connectionString, uint8 asyn
     _initialized.store(true);
 
     TC_LOG_INFO("module.playerbot.database",
-        "✅ BotDatabasePool initialized: {} async + {} sync threads, {} connections",
+        " BotDatabasePool initialized: {} async + {} sync threads, {} connections",
         _asyncThreads, _syncThreads, _connections.size());
 
     return true;
@@ -81,7 +81,7 @@ void BotDatabasePool::Shutdown()
 
     _initialized.store(false);
 
-    TC_LOG_INFO("module.playerbot.database", "✅ BotDatabasePool shutdown complete");
+    TC_LOG_INFO("module.playerbot.database", " BotDatabasePool shutdown complete");
 }
 
 void BotDatabasePool::ExecuteAsync(CharacterDatabasePreparedStatement* stmt,

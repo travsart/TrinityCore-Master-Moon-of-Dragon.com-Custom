@@ -193,7 +193,7 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
     // DIAGNOSTIC: Log current motion type every time to detect conflicts
     TC_LOG_ERROR("module.playerbot.strategy",
-        "🔍 SoloCombatStrategy: Bot {} motion check - currentMotion={} ({}), distance={:.1f}yd, optimal={:.1f}yd",
+        " SoloCombatStrategy: Bot {} motion check - currentMotion={} ({}), distance={:.1f}yd, optimal={:.1f}yd",
         bot->GetName(),
         static_cast<uint32>(currentMotion),
         currentMotion == CHASE_MOTION_TYPE ? "CHASE" :
@@ -217,7 +217,7 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         mm->MoveChase(target, optimalRange);
 
         TC_LOG_ERROR("module.playerbot.strategy",
-            "⚔️ SoloCombatStrategy: Bot {} STARTED CHASING {} at {:.1f}yd range (was motion type {})",
+            " SoloCombatStrategy: Bot {} STARTED CHASING {} at {:.1f}yd range (was motion type {})",
             bot->GetName(), target->GetName(), optimalRange, static_cast<uint32>(currentMotion));
     }
     else
@@ -225,7 +225,7 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         // Already chasing - DON'T interfere! Let MotionMaster handle it.
         // ChaseMovementGenerator will automatically adjust position as the bot/target moves.
         TC_LOG_TRACE("module.playerbot.strategy",
-            "✅ SoloCombatStrategy: Bot {} ALREADY CHASING {} (distance {:.1f}/{:.1f}yd) - letting MotionMaster handle positioning",
+            " SoloCombatStrategy: Bot {} ALREADY CHASING {} (distance {:.1f}/{:.1f}yd) - letting MotionMaster handle positioning",
             bot->GetName(), target->GetName(), currentDistance, optimalRange);
     }
 

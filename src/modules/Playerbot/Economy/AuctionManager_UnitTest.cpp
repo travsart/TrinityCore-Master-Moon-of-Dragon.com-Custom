@@ -45,7 +45,7 @@ namespace Playerbot::Testing
             assert(sBotAuctionMgr != nullptr);
             assert(sBotAuctionMgr->GetUpdateInterval() > 0);
 
-            std::cout << "✓ Initialization test passed" << std::endl;
+            std::cout << " Initialization test passed" << std::endl;
         }
 
         static void TestPriceCalculation()
@@ -74,7 +74,7 @@ namespace Playerbot::Testing
             uint64 quickSalePrice = sBotAuctionMgr->CalculateUndercutPrice(10000, AuctionStrategy::QUICK_SALE);
             assert(quickSalePrice == 8000);
 
-            std::cout << "✓ Price calculation test passed" << std::endl;
+            std::cout << " Price calculation test passed" << std::endl;
         }
 
         static void TestMarketAnalysis()
@@ -98,7 +98,7 @@ namespace Playerbot::Testing
 
             std::cout << "  Item " << testItemId << " market condition: " << static_cast<int>(condition) << std::endl;
 
-            std::cout << "✓ Market analysis test passed" << std::endl;
+            std::cout << " Market analysis test passed" << std::endl;
         }
 
         static void TestAuctionCreation()
@@ -117,7 +117,7 @@ namespace Playerbot::Testing
             // Test deposit calculation
             // Note: Requires mock Item* for actual test
 
-            std::cout << "✓ Auction creation test passed (validation only)" << std::endl;
+            std::cout << " Auction creation test passed (validation only)" << std::endl;
         }
 
         static void TestBidding()
@@ -135,7 +135,7 @@ namespace Playerbot::Testing
             uint64 expectedBid = currentBid + CalculatePct(currentBid, 5);
             assert(optimalBid == expectedBid || optimalBid == 0); // 0 means use buyout
 
-            std::cout << "✓ Bidding test passed" << std::endl;
+            std::cout << " Bidding test passed" << std::endl;
         }
 
         static void TestCommodityTrading()
@@ -148,7 +148,7 @@ namespace Playerbot::Testing
             // Test commodity-specific logic
             // Note: Requires actual auction house and player for full test
 
-            std::cout << "✓ Commodity trading test passed (configuration only)" << std::endl;
+            std::cout << " Commodity trading test passed (configuration only)" << std::endl;
         }
 
         static void TestFlipOpportunities()
@@ -175,7 +175,7 @@ namespace Playerbot::Testing
             notViable = testOpp.IsViable(1000, 50); // Risk too high
             assert(notViable == false);
 
-            std::cout << "✓ Flip opportunities test passed" << std::endl;
+            std::cout << " Flip opportunities test passed" << std::endl;
         }
 
         static void TestStatistics()
@@ -199,7 +199,7 @@ namespace Playerbot::Testing
             assert(stats.NetProfit == 5000);
             assert(stats.SuccessRate == 50.0f); // 1 sold out of 2 created
 
-            std::cout << "✓ Statistics test passed" << std::endl;
+            std::cout << " Statistics test passed" << std::endl;
         }
 
         static void TestConfiguration()
@@ -224,7 +224,7 @@ namespace Playerbot::Testing
             std::cout << "  Min Profit: " << minProfit << " copper" << std::endl;
             std::cout << "  Default Strategy: " << static_cast<int>(strategy) << std::endl;
 
-            std::cout << "✓ Configuration test passed" << std::endl;
+            std::cout << " Configuration test passed" << std::endl;
         }
 
         static void TestThreadSafety()
@@ -244,7 +244,7 @@ namespace Playerbot::Testing
                 // Should not crash with mutex protection
             }
 
-            std::cout << "✓ Thread safety test passed (basic check)" << std::endl;
+            std::cout << " Thread safety test passed (basic check)" << std::endl;
         }
     };
 

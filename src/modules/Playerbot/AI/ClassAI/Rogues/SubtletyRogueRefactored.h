@@ -601,7 +601,7 @@ private:
                        this->_resource.comboPoints >= 5;
             }, "35+ Energy, 3+ enemies, 5+ CP (AoE finisher)");
 
-            TC_LOG_INFO("module.playerbot", "🗡️ SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -798,7 +798,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

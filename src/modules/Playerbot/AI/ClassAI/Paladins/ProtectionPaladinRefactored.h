@@ -926,7 +926,7 @@ private:
                 SpellCategory::DEFENSIVE);
 
 
-            TC_LOG_INFO("module.playerbot", "🛡️  PROTECTION PALADIN: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  PROTECTION PALADIN: Registered {} spells in ActionPriorityQueue",
 
                 queue->GetSpellCount());
         }
@@ -1374,7 +1374,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 PROTECTION PALADIN: BehaviorTree initialized with tank flow");
+            TC_LOG_INFO("module.playerbot", " PROTECTION PALADIN: BehaviorTree initialized with tank flow");
         }
     }
 

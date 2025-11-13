@@ -62,7 +62,7 @@ QuestManager* LazyManagerFactory::GetQuestManager()
                 std::chrono::steady_clock::now() - start);
 
             RecordInitTime("QuestManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ QuestManager created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " QuestManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }
@@ -88,7 +88,7 @@ TradeManager* LazyManagerFactory::GetTradeManager()
                 std::chrono::steady_clock::now() - start);
 
             RecordInitTime("TradeManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ TradeManager created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " TradeManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }
@@ -113,7 +113,7 @@ GatheringManager* LazyManagerFactory::GetGatheringManager()
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - start);
             RecordInitTime("GatheringManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ GatheringManager created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " GatheringManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }
@@ -139,7 +139,7 @@ AuctionManager* LazyManagerFactory::GetAuctionManager()
                 std::chrono::steady_clock::now() - start);
 
             RecordInitTime("AuctionManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ AuctionManager created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " AuctionManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }
@@ -162,7 +162,7 @@ GroupCoordinator* LazyManagerFactory::GetGroupCoordinator()
                 std::chrono::steady_clock::now() - start);
 
             RecordInitTime("GroupCoordinator", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ GroupCoordinator created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " GroupCoordinator created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }
@@ -184,7 +184,7 @@ DeathRecoveryManager* LazyManagerFactory::GetDeathRecoveryManager()
                 std::chrono::steady_clock::now() - start);
 
             RecordInitTime("DeathRecoveryManager", duration);
-            TC_LOG_INFO("module.playerbot.lazy", "✅ DeathRecoveryManager created for bot {} in {}ms", _bot->GetName(), duration.count());
+            TC_LOG_INFO("module.playerbot.lazy", " DeathRecoveryManager created for bot {} in {}ms", _bot->GetName(), duration.count());
 
             return manager;
         }

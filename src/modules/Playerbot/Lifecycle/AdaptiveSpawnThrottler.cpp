@@ -74,7 +74,7 @@ bool AdaptiveSpawnThrottler::Initialize(ResourceMonitor* resourceMonitor, SpawnC
     _currentSpawnInterval = _config.baseSpawnIntervalMs;
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.throttler", "✅ AdaptiveSpawnThrottler initialized successfully");
+    TC_LOG_INFO("module.playerbot.throttler", " AdaptiveSpawnThrottler initialized successfully");
     return true;
 }
 

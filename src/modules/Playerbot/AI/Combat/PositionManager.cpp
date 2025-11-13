@@ -58,7 +58,7 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
         if (_bot->IsNonMeleeSpellCast(false))
         {
             result.failureReason = "Bot is casting, movement would interrupt spell";
-            TC_LOG_DEBUG("playerbot.position", "⏸️ Bot {} - Movement blocked, currently casting",
+            TC_LOG_DEBUG("playerbot.position", "⏸ Bot {} - Movement blocked, currently casting",
                          _bot->GetName());
             return result;
         }
@@ -206,7 +206,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         // Already moving to same destination - don't re-issue command within 500ms
         result.success = true;
         result.failureReason = "Already moving to target position";
-        TC_LOG_DEBUG("playerbot.position", "⏭️ Bot {} - Duplicate movement prevented, already moving to ({:.2f}, {:.2f}, {:.2f})",
+        TC_LOG_DEBUG("playerbot.position", "⏭ Bot {} - Duplicate movement prevented, already moving to ({:.2f}, {:.2f}, {:.2f})",
                      _bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ());
 
         return result;
@@ -221,7 +221,7 @@ MovementResult PositionManager::ExecuteMovement(const Position& targetPos, Movem
         // Increase movement speed for urgent repositioning
         // Note: TrinityCore handles speed through auras/spells, not direct modification
         // This is a marker for future sprint ability integration
-        TC_LOG_DEBUG("playerbot.position", "🏃 Bot {} - Sprint required for urgent movement (priority: {})",
+        TC_LOG_DEBUG("playerbot.position", " Bot {} - Sprint required for urgent movement (priority: {})",
                      _bot->GetName(), static_cast<uint8>(priority));
 
         // Future: Trigger sprint ability here if available

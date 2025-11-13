@@ -54,7 +54,7 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     _session->HandleQueuedMessagesEnd(queuedMessagesEnd);
 
     TC_LOG_INFO("module.playerbot.packet",
-        "✅ Bot {} successfully simulated CMSG_QUEUED_MESSAGES_END - time sync initialized",
+        " Bot {} successfully simulated CMSG_QUEUED_MESSAGES_END - time sync initialized",
         bot->GetName());
 }
 
@@ -86,7 +86,7 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     _session->HandleMoveInitActiveMoverComplete(moveInitComplete);
 
     TC_LOG_INFO("module.playerbot.packet",
-        "✅ Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
+        " Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
         bot->GetName());
 }
 

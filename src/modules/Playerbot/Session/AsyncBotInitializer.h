@@ -53,15 +53,15 @@ class LazyManagerFactory;
  * ```
  * Main Thread (World Update):
  *   BotSession::LoginCharacter()
- *     └─> AsyncBotInitializer::InitializeAsync()  [<1ms - just queue]
- *           └─> Returns immediately
+ *     > AsyncBotInitializer::InitializeAsync()  [<1ms - just queue]
+ *           > Returns immediately
  *
  * Background Worker Thread:
- *   ├─> Create LazyManagerFactory          [10ms]
- *   ├─> Create MovementArbiter              [5ms]
- *   ├─> Create EventDispatcher             [2ms]
- *   ├─> Batched event subscription         [0.1ms]
- *   └─> Callback: OnInitComplete()         [instant]
+ *   > Create LazyManagerFactory          [10ms]
+ *   > Create MovementArbiter              [5ms]
+ *   > Create EventDispatcher             [2ms]
+ *   > Batched event subscription         [0.1ms]
+ *   > Callback: OnInitComplete()         [instant]
  *
  * Result: World update never blocks, bots init in parallel
  * ```

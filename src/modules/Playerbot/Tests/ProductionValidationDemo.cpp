@@ -200,15 +200,15 @@ bool ProductionValidationDemo::RunFullValidationDemo()
 
         if (scenarioSuccess)
         {
-            m_demoResults.push_back("✓ " + scenario.name + " - PASSED");
+            m_demoResults.push_back(" " + scenario.name + " - PASSED");
         }
         else
         {
-            m_demoResults.push_back("✗ " + scenario.name + " - FAILED");
+            m_demoResults.push_back(" " + scenario.name + " - FAILED");
             if (scenario.isRequired)
             {
                 overallSuccess = false;
-                std::cout << "\n⚠️  CRITICAL: Required scenario failed. Continuing with non-critical scenarios...\n";
+                std::cout << "\n  CRITICAL: Required scenario failed. Continuing with non-critical scenarios...\n";
             }
         }
 
@@ -231,7 +231,7 @@ bool ProductionValidationDemo::RunFullValidationDemo()
         std::cout << "  " << result << "\n";
     }
 
-    std::cout << "\nOverall Status: " << (overallSuccess ? "✅ PRODUCTION READY" : "⚠️  NEEDS ATTENTION") << "\n\n";
+    std::cout << "\nOverall Status: " << (overallSuccess ? " PRODUCTION READY" : "  NEEDS ATTENTION") << "\n\n";
 
     if (!overallSuccess)
     {
@@ -240,7 +240,7 @@ bool ProductionValidationDemo::RunFullValidationDemo()
     }
     else
     {
-        std::cout << "🎉 All critical scenarios passed! The PlayerBot group functionality system\n";
+        std::cout << " All critical scenarios passed! The PlayerBot group functionality system\n";
         std::cout << "   is validated and ready for production deployment.\n";
     }
 
@@ -362,7 +362,7 @@ bool ProductionValidationDemo::ExecuteGroupInvitationDemo()
         bot->hasAcceptedInvitation = true;
         acceptedInvitations++;
 
-        std::cout << "  ✓ " << bot->name << " accepted invitation\n";
+        std::cout << "   " << bot->name << " accepted invitation\n";
     }
 
     auto invitationEnd = std::chrono::high_resolution_clock::now();
@@ -383,9 +383,9 @@ bool ProductionValidationDemo::ExecuteGroupInvitationDemo()
 
     if (groupFormed)
     {
-        std::cout << "  ✓ Group successfully formed with " << acceptedInvitations << " members\n";
-        std::cout << "  ✓ All bots show as 'In Group' status\n";
-        std::cout << "  ✓ Group leader properly assigned\n";
+        std::cout << "   Group successfully formed with " << acceptedInvitations << " members\n";
+        std::cout << "   All bots show as 'In Group' status\n";
+        std::cout << "   Group leader properly assigned\n";
     }
 
     return groupFormed && invitationTime.count() < 3000; // Should complete within 3 seconds
@@ -455,11 +455,11 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
 
         if (formationValid)
         {
-            std::cout << "  ✓ Bots maintained formation during movement (" << followTime.count() / 1000 << "ms)\n";
+            std::cout << "   Bots maintained formation during movement (" << followTime.count() / 1000 << "ms)\n";
         }
         else
         {
-            std::cout << "  ✗ Formation broken during movement\n";
+            std::cout << "   Formation broken during movement\n";
             allMovementsSuccessful = false;
         }
 
@@ -486,7 +486,7 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
 
     if (teleportSuccessful)
     {
-        std::cout << "  ✓ Teleportation successful (" << teleportTime.count() / 1000 << "ms)\n";
+        std::cout << "   Teleportation successful (" << teleportTime.count() / 1000 << "ms)\n";
     }
 
     // Update metrics
@@ -540,7 +540,7 @@ bool ProductionValidationDemo::ExecuteCombatCoordinationDemo()
         bot->isInCombat = true;
         bot->isAssistingTarget = true;
         botsEngaged++;
-        std::cout << "  ✓ " << bot->name << " engaged target\n";
+        std::cout << "   " << bot->name << " engaged target\n";
     }
 
     auto engagementEnd = std::chrono::high_resolution_clock::now();
@@ -634,7 +634,7 @@ bool ProductionValidationDemo::ExecutePerformanceValidationDemo()
     // Overall performance validation
     bool overallPerformanceValid = m_validator->ValidateAllMetrics(m_overallMetrics, botCount);
 
-    std::cout << "\n📊 Performance Summary:\n";
+    std::cout << "\n Performance Summary:\n";
     std::cout << "  Memory per bot: " << (simulatedMemoryPerBot / (1024 * 1024)) << " MB (limit: 10 MB)\n";
     std::cout << "  CPU usage: " << m_overallMetrics.cpuUsagePeak << "% (limit: 90%)\n";
     std::cout << "  Success rate: " << currentSuccessRate << "% (minimum: 95%)\n";
@@ -684,11 +684,11 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
     if (stressSuccessRate < 0.85f) // 85% minimum under stress
     {
         stressTestPassed = false;
-        std::cout << "  ✗ Success rate dropped below acceptable threshold under stress\n";
+        std::cout << "   Success rate dropped below acceptable threshold under stress\n";
     }
     else
     {
-        std::cout << "  ✓ Success rate maintained at " << (stressSuccessRate * 100.0f) << "% under stress\n";
+        std::cout << "   Success rate maintained at " << (stressSuccessRate * 100.0f) << "% under stress\n";
     }
 
     // Simulate memory and CPU checks under stress
@@ -696,11 +696,11 @@ bool ProductionValidationDemo::ExecuteStressTestDemo()
     if (stressMemoryUsage > totalBots * 15ULL * 1024 * 1024) // 15MB limit under stress
     {
         stressTestPassed = false;
-        std::cout << "  ✗ Memory usage exceeded stress limits\n";
+        std::cout << "   Memory usage exceeded stress limits\n";
     }
     else
     {
-        std::cout << "  ✓ Memory usage within stress limits\n";
+        std::cout << "   Memory usage within stress limits\n";
     }
 
     PrintResult("Stress test completed in " + std::to_string(stressDuration.count()) + " seconds", stressTestPassed);
@@ -717,35 +717,35 @@ bool ProductionValidationDemo::ExecuteEdgeCaseDemo()
     // Test 1: Leader disconnection
     PrintStep("Scenario 1: Leader disconnection");
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    std::cout << "  ✓ Bots detected leader disconnection\n";
-    std::cout << "  ✓ Bots stopped following gracefully\n";
-    std::cout << "  ✓ Group disbanded safely\n";
+    std::cout << "   Bots detected leader disconnection\n";
+    std::cout << "   Bots stopped following gracefully\n";
+    std::cout << "   Group disbanded safely\n";
 
     // Test 2: Member disconnection
     PrintStep("Scenario 2: Member disconnection during combat");
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::cout << "  ✓ Remaining members continued combat\n";
-    std::cout << "  ✓ Formation adjusted automatically\n";
+    std::cout << "   Remaining members continued combat\n";
+    std::cout << "   Formation adjusted automatically\n";
 
     // Test 3: Invalid invitations
     PrintStep("Scenario 3: Invalid invitation handling");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    std::cout << "  ✓ Full group invitation properly rejected\n";
-    std::cout << "  ✓ Self-invitation properly rejected\n";
-    std::cout << "  ✓ Cross-faction invitation properly handled\n";
+    std::cout << "   Full group invitation properly rejected\n";
+    std::cout << "   Self-invitation properly rejected\n";
+    std::cout << "   Cross-faction invitation properly handled\n";
 
     // Test 4: Map transitions
     PrintStep("Scenario 4: Map transition handling");
     std::this_thread::sleep_for(std::chrono::milliseconds(400));
-    std::cout << "  ✓ Group maintained during map change\n";
-    std::cout << "  ✓ Bots repositioned correctly in new zone\n";
+    std::cout << "   Group maintained during map change\n";
+    std::cout << "   Bots repositioned correctly in new zone\n";
 
     // Test 5: Resource exhaustion recovery
     PrintStep("Scenario 5: Resource exhaustion recovery");
     std::this_thread::sleep_for(std::chrono::milliseconds(600));
-    std::cout << "  ✓ System recovered from memory pressure\n";
-    std::cout << "  ✓ Database reconnection successful\n";
-    std::cout << "  ✓ Network timeout handling worked\n";
+    std::cout << "   System recovered from memory pressure\n";
+    std::cout << "   Database reconnection successful\n";
+    std::cout << "   Network timeout handling worked\n";
 
     PrintResult("All edge cases handled successfully", allEdgeCasesPassed);
 
@@ -761,12 +761,12 @@ void ProductionValidationDemo::PrintHeader(const std::string& title)
 
 void ProductionValidationDemo::PrintStep(const std::string& step)
 {
-    std::cout << "🔄 " << step << "\n";
+    std::cout << " " << step << "\n";
 }
 
 void ProductionValidationDemo::PrintResult(const std::string& result, bool success)
 {
-    std::cout << (success ? "✅" : "❌") << " " << result << "\n";
+    std::cout << (success ? "" : "") << " " << result << "\n";
 }
 
 void ProductionValidationDemo::WaitForUserInput(const std::string& prompt)
@@ -785,9 +785,9 @@ void ProductionValidationDemo::ShowProgressBar(uint32 current, uint32 total, con
     for (uint32 i = 0; i < barWidth; ++i)
     {
         if (i < filledWidth)
-            std::cout << "█";
+            std::cout << "";
         else
-            std::cout << "░";
+            std::cout << "";
     }
     std::cout << "] " << std::setw(3) << static_cast<int>(progress * 100) << "%";
     std::cout.flush();

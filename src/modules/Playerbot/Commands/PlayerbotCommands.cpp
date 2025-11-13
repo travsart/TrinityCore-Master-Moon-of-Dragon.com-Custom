@@ -871,14 +871,14 @@ namespace Playerbot
     {
         std::ostringstream oss;
 
-        oss << "1. wedge     - V-shaped penetration formation (30� angle)\n";
+        oss << "1. wedge     - V-shaped penetration formation (30 angle)\n";
         oss << "2. diamond   - Balanced 4-point diamond with interior fill\n";
         oss << "3. square    - Defensive square (tanks corners, healers center)\n";
-        oss << "4. arrow     - Tight arrowhead assault formation (20� angle)\n";
+        oss << "4. arrow     - Tight arrowhead assault formation (20 angle)\n";
         oss << "5. line      - Horizontal line for maximum width coverage\n";
         oss << "6. column    - Vertical single-file march formation\n";
         oss << "7. scatter   - Random dispersal for anti-AoE tactics\n";
-        oss << "8. circle    - 360� perimeter coverage formation\n";
+        oss << "8. circle    - 360 perimeter coverage formation\n";
         oss << "\n";
         oss << "Usage: .bot formation <type>\n";
         oss << "Example: .bot formation wedge";

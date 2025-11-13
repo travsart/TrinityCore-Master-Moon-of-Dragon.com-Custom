@@ -871,7 +871,7 @@ private:
             }, "20+ Focus, 3+ enemies (AoE)");
 
 
-            TC_LOG_INFO("module.playerbot", "🎯 MARKSMANSHIP HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " MARKSMANSHIP HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -1202,7 +1202,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 MARKSMANSHIP HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " MARKSMANSHIP HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

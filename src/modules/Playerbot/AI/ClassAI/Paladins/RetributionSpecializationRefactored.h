@@ -378,7 +378,7 @@ protected:
                 SpellPriority::LOW,
                 SpellCategory::DAMAGE_AOE);
 
-            TC_LOG_INFO("module.playerbot", "⚔️  RETRIBUTION PALADIN: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  RETRIBUTION PALADIN: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -568,7 +568,7 @@ protected:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 RETRIBUTION PALADIN: BehaviorTree initialized with DPS flow");
+            TC_LOG_INFO("module.playerbot", " RETRIBUTION PALADIN: BehaviorTree initialized with DPS flow");
         }
     }
 

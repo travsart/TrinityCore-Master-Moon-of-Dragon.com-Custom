@@ -1081,13 +1081,13 @@ void AddSC_playerbot_event_scripts()
     // Root Cause: OnPlayerRepop fires BEFORE RepopAtGraveyard() teleport occurs.
     // Solution: Let DeathRecoveryManager handle resurrection after corpse run completes.
     // TODO: DELETE BotResurrectionScript.h/cpp files - no longer needed
-    // TC_LOG_INFO("module.playerbot.scripts", "🔧 DEBUG: About to instantiate BotResurrectionScript...");
+    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: About to instantiate BotResurrectionScript...");
     // new Playerbot::BotResurrectionScript();
-    // TC_LOG_INFO("module.playerbot.scripts", "✅ DEBUG: BotResurrectionScript instantiated successfully");
-    TC_LOG_INFO("module.playerbot.scripts", "⚠️  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
+    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: BotResurrectionScript instantiated successfully");
+    TC_LOG_INFO("module.playerbot.scripts", "  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
 
     TC_LOG_INFO("module.playerbot.scripts",
-        "✅ Playerbot Event Scripts registered:");
+        " Playerbot Event Scripts registered:");
     TC_LOG_INFO("module.playerbot.scripts",
         "   - WorldScript: Event system updates");
     TC_LOG_INFO("module.playerbot.scripts",

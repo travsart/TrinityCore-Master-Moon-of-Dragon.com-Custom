@@ -224,7 +224,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // ROOT CAUSE OF SERVER HANG: "ENTERPRISE FIX V2" removed all throttling, causing:
     // - 296 bots spawning immediately at server startup
-    // - 296 � 66 async queries = 19,536 database queries flooding connection pool
+    // - 296  66 async queries = 19,536 database queries flooding connection pool
     // - ProcessQueryCallbacks() overwhelmed, world thread hangs 60+ seconds
     //
     // NEW SOLUTION: Queue-based rate-limited spawning
@@ -369,7 +369,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             // Store session
             _botSessions[playerGuid] = botSession;
 
-            // Initiate async login (1 bot � 66 queries)
+            // Initiate async login (1 bot  66 queries)
             if (!botSession->LoginCharacter(playerGuid))
             {
                 TC_LOG_ERROR("module.playerbot.session",
@@ -481,8 +481,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     //
     // PHASE A THREADPOOL INTEGRATION: Replace sequential bot updates with parallel execution
     //
-    // Before (Sequential): 145 bots � 1ms = 145ms
-    // After (Parallel, 8 threads): 145 bots � 8 threads = 18 bots/thread � 1ms = 18ms (7x speedup)
+    // Before (Sequential): 145 bots  1ms = 145ms
+    // After (Parallel, 8 threads): 145 bots  8 threads = 18 bots/thread  1ms = 18ms (7x speedup)
     //
     // Architecture:
     // 1. Submit each bot update as a task to ThreadPool with mapped priority

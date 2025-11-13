@@ -452,7 +452,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
     std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
         spatialGrid->QueryNearbyCreatures(bot->GetPosition(), scanRadius);
 
-    TC_LOG_DEBUG("playerbot.quest", "🔍 QUEST SCAN: Bot {} found {} creatures in {}y radius",
+    TC_LOG_DEBUG("playerbot.quest", " QUEST SCAN: Bot {} found {} creatures in {}y radius",
                  bot->GetName(), nearbyCreatures.size(), scanRadius);
 
     uint32 creatureQuestGiverCount = 0;
@@ -471,7 +471,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
         if (questRelations.begin() != questRelations.end())
         {
             creatureQuestGiverCount++;
-            TC_LOG_DEBUG("playerbot.quest", "   📋 Creature entry {} has quests", entry);
+            TC_LOG_DEBUG("playerbot.quest", "    Creature entry {} has quests", entry);
 
             QuestGiverInfo info(entry, QuestGiverType::NPC_CREATURE, snapshot.position);
             info.zoneId = snapshot.zoneId;  // From snapshot (populated on main thread)
@@ -484,17 +484,17 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
                 questsChecked++;
                 if (quest && bot->CanTakeQuest(quest, false))
                 {
-                    TC_LOG_DEBUG("playerbot.quest", "      ✅ Quest {} - CAN TAKE", *it);
+                    TC_LOG_DEBUG("playerbot.quest", "       Quest {} - CAN TAKE", *it);
                     info.availableQuests.push_back(*it);
                 }
                 else
                 {
                     questsRejected++;
                     if (quest)
-                        TC_LOG_DEBUG("playerbot.quest", "      ❌ Quest {} - CANNOT TAKE (CanTakeQuest=false)",
+                        TC_LOG_DEBUG("playerbot.quest", "       Quest {} - CANNOT TAKE (CanTakeQuest=false)",
                                      *it);
                     else
-                        TC_LOG_DEBUG("playerbot.quest", "      ❌ Quest {} - INVALID (no template)", *it);
+                        TC_LOG_DEBUG("playerbot.quest", "       Quest {} - INVALID (no template)", *it);
                 }
             }
 
@@ -503,7 +503,7 @@ std::vector<QuestGiverInfo> QuestPickup::ScanForQuestGivers(Player* bot, float s
         }
     }
 
-    TC_LOG_DEBUG("playerbot.quest", "🔍 CREATURE SCAN SUMMARY: {} creatures scanned, {} quest givers found, {} quests checked, {} rejected",
+    TC_LOG_DEBUG("playerbot.quest", " CREATURE SCAN SUMMARY: {} creatures scanned, {} quest givers found, {} quests checked, {} rejected",
                  nearbyCreatures.size(), creatureQuestGiverCount, questsChecked, questsRejected);
 
     // DEADLOCK FIX: Scan for game object quest givers using spatial grid snapshots

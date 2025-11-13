@@ -570,7 +570,7 @@ private:
             queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
             queue->RegisterSpell(SPELL_CLEAVE, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
 
-            TC_LOG_INFO("module.playerbot", "⚔️  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -706,7 +706,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+            TC_LOG_INFO("module.playerbot", " ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
 

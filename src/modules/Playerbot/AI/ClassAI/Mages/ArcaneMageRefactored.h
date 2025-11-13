@@ -536,7 +536,7 @@ private:
                 return bot && bot->GetPowerPct(POWER_MANA) < 20;
             }, "Mana < 20% (channel mana regen)");
 
-            TC_LOG_INFO("module.playerbot", "🔮 ARCANE MAGE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " ARCANE MAGE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         auto* behaviorTree = ai->GetBehaviorTree();
@@ -666,7 +666,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 ARCANE MAGE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " ARCANE MAGE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

@@ -688,7 +688,7 @@ std::string ContinuousDiagnosticLogger::RenderMiniGraph(const std::deque<double>
 
     // Render graph
     std::stringstream ss;
-    const char* blocks[] = {" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
+    const char* blocks[] = {" ", "", "", "", "", "", "", "", ""};
     const int numBlocks = 9;
 
     for (double val : sampledValues)

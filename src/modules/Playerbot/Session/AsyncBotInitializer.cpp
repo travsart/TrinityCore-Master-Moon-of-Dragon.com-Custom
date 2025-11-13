@@ -57,7 +57,7 @@ void AsyncBotInitializer::Initialize(size_t numWorkerThreads)
     }
 
     TC_LOG_INFO("module.playerbot.async",
-                "✅ AsyncBotInitializer started with {} worker threads", numWorkerThreads);
+                " AsyncBotInitializer started with {} worker threads", numWorkerThreads);
 }
 
 void AsyncBotInitializer::Shutdown()
@@ -279,7 +279,7 @@ AsyncBotInitializer::InitResult AsyncBotInitializer::ProcessInitTask(InitTask ta
 
     TC_LOG_INFO("module.playerbot.async",
                 "{} Bot {} initialization in {}ms",
-                success ? "✅" : "❌",
+                success ? "" : "",
                 task.bot->GetName(),
                 duration.count());
 

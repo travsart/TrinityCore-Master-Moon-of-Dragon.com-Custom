@@ -749,7 +749,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
                             if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                             {
                                 TC_LOG_INFO("playerbot.equipment",
-                                           "🎯 UPGRADE FOUND: Player {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
+                                           " UPGRADE FOUND: Player {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
                                            player->GetName(),
                                            proto->GetName(DEFAULT_LOCALE),
                                            currentItem ? currentItem->GetTemplate()->GetName(DEFAULT_LOCALE) : "Empty Slot",
@@ -787,7 +787,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
                     if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                     {
                         TC_LOG_INFO("playerbot.equipment",
-                                   "🎯 UPGRADE FOUND: Player {} - {} (Score improvement: {:.2f})",
+                                   " UPGRADE FOUND: Player {} - {} (Score improvement: {:.2f})",
                                    player->GetName(), proto->GetName(DEFAULT_LOCALE), result.scoreDifference);
 
                         EquipItemInSlot(player, item, equipSlot);
@@ -801,7 +801,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
 
     if (upgradesFound > 0)
     {
-        TC_LOG_INFO("playerbot.equipment", "✅ AutoEquip Complete: Player {} equipped {} upgrades",
+        TC_LOG_INFO("playerbot.equipment", " AutoEquip Complete: Player {} equipped {} upgrades",
                    player->GetName(), upgradesFound);
     }
 }
@@ -1546,12 +1546,12 @@ void EquipmentManager::EquipItemInSlot(::Player* player, ::Item* item, uint8 slo
         player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
         player->EquipItem(dest, item, true);
 
-        TC_LOG_INFO("playerbot.equipment", "✅ Equipped {} in slot {} for player {}",
+        TC_LOG_INFO("playerbot.equipment", " Equipped {} in slot {} for player {}",
                    item->GetTemplate()->GetName(DEFAULT_LOCALE), slot, player->GetName());
     }
     else
     {
-        TC_LOG_ERROR("playerbot.equipment", "❌ Failed to equip {} for player {} (Error: {})",
+        TC_LOG_ERROR("playerbot.equipment", " Failed to equip {} for player {} (Error: {})",
                      item->GetTemplate()->GetName(DEFAULT_LOCALE), player->GetName(), static_cast<uint32>(result));
     }
 }

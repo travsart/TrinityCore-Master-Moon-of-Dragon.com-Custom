@@ -1073,7 +1073,7 @@ private:
             queue->RegisterSpell(HOLY_PURIFY, SpellPriority::LOW, SpellCategory::UTILITY);
 
 
-            TC_LOG_INFO("module.playerbot", "✨ HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
         }
 
         auto* behaviorTree = ai->GetBehaviorTree();
@@ -1259,7 +1259,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 HOLY PRIEST: BehaviorTree initialized");
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: BehaviorTree initialized");
         }
     }
 

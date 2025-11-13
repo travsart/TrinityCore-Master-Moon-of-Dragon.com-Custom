@@ -192,7 +192,7 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
 
 void LeaderFollowBehavior::OnActivate(BotAI* ai)
 {
-    TC_LOG_ERROR("module.playerbot", "🎬🎬🎬 LeaderFollowBehavior::OnActivate() CALLED for bot {}",
+    TC_LOG_ERROR("module.playerbot", " LeaderFollowBehavior::OnActivate() CALLED for bot {}",
                  ai && ai->GetBot() ? ai->GetBot()->GetName() : "NULL");
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate START ===");
     if (!ai || !ai->GetBot())
@@ -253,11 +253,11 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot", "🎯 LeaderFollowBehavior::OnActivate: About to call SetFollowTarget({}) for bot {}",
+    TC_LOG_ERROR("module.playerbot", " LeaderFollowBehavior::OnActivate: About to call SetFollowTarget({}) for bot {}",
                  leader->GetName(), bot->GetName());
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Calling SetFollowTarget({}) ===", leader->GetName());
     SetFollowTarget(leader);
-    TC_LOG_ERROR("module.playerbot", "✅ SetFollowTarget() completed for bot {}", bot->GetName());
+    TC_LOG_ERROR("module.playerbot", " SetFollowTarget() completed for bot {}", bot->GetName());
 
     _currentGroup = group;
     _formationRole = DetermineFormationRole(bot);
@@ -317,12 +317,12 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     static uint32 updateCounter = 0;
     if (++updateCounter % 100 == 0)
     {
-        TC_LOG_ERROR("module.playerbot", "🔄 UpdateFollowBehavior CALLED {} times", updateCounter);
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior CALLED {} times", updateCounter);
     }
 
     if (!ai || !ai->GetBot())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ UpdateFollowBehavior: NULL ai or bot");
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: NULL ai or bot");
         return;
     }
 
@@ -348,7 +348,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
 
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot", "🎯 UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
                     bot->GetName(), static_cast<uint8>(_state),
                     (void*)_followTarget.player, _followTarget.guid.ToString());
     }
@@ -383,7 +383,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     // CRITICAL DEBUG: Log state at entry (already throttled above via shouldLog)
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot", "🔧 UpdateFollowBehavior: Bot {} state={}",
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: Bot {} state={}",
                     bot->GetName(), static_cast<uint8>(_state));
     }
 
@@ -647,20 +647,20 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
 {
     if (!ai || !ai->GetBot())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: NULL ai or bot");
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: NULL ai or bot");
         return false;
     }
 
     Player* bot = ai->GetBot();
 
-    TC_LOG_ERROR("module.playerbot", "📍 MoveToFollowPosition CALLED: Bot {} target=({:.2f},{:.2f},{:.2f}) state={}",
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition CALLED: Bot {} target=({:.2f},{:.2f},{:.2f}) state={}",
                  bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ(),
                  static_cast<uint8>(_state));
 
     // Validate target position
     if (targetPos.GetPositionX() == 0.0f && targetPos.GetPositionY() == 0.0f)
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: Bot {} has invalid target position (0,0,0)", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} has invalid target position (0,0,0)", bot->GetName());
         return false;
     }
 
@@ -668,28 +668,28 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
     float distance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
     if (distance <= POSITION_TOLERANCE)
     {
-        TC_LOG_ERROR("module.playerbot", "⛔ MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
         return true;
     }
 
-    TC_LOG_ERROR("module.playerbot", "🚀 MoveToFollowPosition: Bot {} initiating movement (dist={:.2f})", bot->GetName(), distance);
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} initiating movement (dist={:.2f})", bot->GetName(), distance);
     // SIMPLIFIED: Skip complex pathfinding for now, use direct movement
     // This ensures movement works reliably
     // Pathfinding can be re-enabled after basic movement is confirmed working
 
-    TC_LOG_ERROR("module.playerbot", "⚡ MoveToFollowPosition: Bot {} using DIRECT movement", bot->GetName());
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} using DIRECT movement", bot->GetName());
 
     // Start movement using StartMovement which has comprehensive error handling
     bool result = StartMovement(bot, targetPos);
     if (result)
     {
-        TC_LOG_ERROR("module.playerbot", "✅ MoveToFollowPosition: Bot {} movement initiated successfully", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} movement initiated successfully", bot->GetName());
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: Bot {} movement FAILED", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} movement FAILED", bot->GetName());
     }
 
     return result;
@@ -752,21 +752,21 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     // Check current distance
     float currentDistance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
 
-    TC_LOG_ERROR("module.playerbot", "🚶 UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
+    TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
                  bot->GetName(), currentDistance, _config.minDistance, _config.maxDistance);
 
     // Determine if we need to move
     if (currentDistance < _config.minDistance)
     {
         // Too close, back up slightly
-        TC_LOG_ERROR("module.playerbot", "⛔ UpdateMovement: Bot {} TOO CLOSE, stopping", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} TOO CLOSE, stopping", bot->GetName());
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
     }
     else if (currentDistance > _config.maxDistance)
     {
         // Too far, need to catch up
-        TC_LOG_ERROR("module.playerbot", "🏃 UpdateMovement: Bot {} TOO FAR (dist={:.2f}), catching up", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} TOO FAR (dist={:.2f}), catching up", bot->GetName(), currentDistance);
         // Only set state to CATCHING_UP if not already in that state
         // This prevents spamming state changes every frame
         if (_state != FollowState::CATCHING_UP)
@@ -778,7 +778,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     else if (currentDistance > _config.minDistance + POSITION_TOLERANCE)
     {
         // Normal following distance - transition back to FOLLOWING if we were catching up
-        TC_LOG_ERROR("module.playerbot", "✅ UpdateMovement: Bot {} NORMAL FOLLOW (dist={:.2f}), moving", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} NORMAL FOLLOW (dist={:.2f}), moving", bot->GetName(), currentDistance);
         // Transition from CATCHING_UP back to FOLLOWING when we're back in range
         if (_state == FollowState::CATCHING_UP)
         {
@@ -791,7 +791,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     else
     {
         // In position
-        TC_LOG_ERROR("module.playerbot", "✋ UpdateMovement: Bot {} IN POSITION (dist={:.2f}), waiting", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} IN POSITION (dist={:.2f}), waiting", bot->GetName(), currentDistance);
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
     }
@@ -1262,14 +1262,14 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
 
     if (!bot->IsAlive())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ StartMovement: Bot {} is dead, cannot move", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} is dead, cannot move", bot->GetName());
         return false;
     }
 
     MotionMaster* motionMaster = bot->GetMotionMaster();
     if (!motionMaster)
     {
-        TC_LOG_ERROR("module.playerbot", "❌ StartMovement: Bot {} has NULL MotionMaster", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} has NULL MotionMaster", bot->GetName());
         return false;
     }
 
@@ -1294,7 +1294,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
             // If there's leftover combat movement (CHASE/POINT), clear it first
             if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
             {
-                TC_LOG_ERROR("module.playerbot", "🧹 StartMovement: Clearing leftover {} motion for bot {}",
+                TC_LOG_ERROR("module.playerbot", " StartMovement: Clearing leftover {} motion for bot {}",
                             static_cast<uint32>(currentType), bot->GetName());
                 motionMaster->Clear();
             }
@@ -1316,7 +1316,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
                 bool accepted = botAI->GetMovementArbiter()->RequestMovement(req);
                 if (accepted)
                 {
-                    TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                    TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
                                 bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
                 }
                 else
@@ -1330,13 +1330,13 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
             {
                 // FALLBACK: Direct MotionMaster call if arbiter not available
                 motionMaster->MoveFollow(leader, followDist, followAngle);
-                TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
                             bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
             }
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot", "⏭️ StartMovement: Bot {} already following, skipping", bot->GetName());
+            TC_LOG_DEBUG("module.playerbot", "⏭ StartMovement: Bot {} already following, skipping", bot->GetName());
         }
 
         return true;

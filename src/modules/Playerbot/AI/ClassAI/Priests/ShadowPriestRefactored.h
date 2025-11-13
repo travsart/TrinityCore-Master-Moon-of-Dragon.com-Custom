@@ -718,7 +718,7 @@ private:
                 return target && this->GetEnemiesInRange(40.0f) >= 3;
             }, "3+ enemies (AoE filler)");
 
-            TC_LOG_INFO("module.playerbot", "💀 SHADOW PRIEST: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SHADOW PRIEST: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -928,7 +928,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 SHADOW PRIEST: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SHADOW PRIEST: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

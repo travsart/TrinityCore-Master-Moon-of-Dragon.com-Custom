@@ -60,7 +60,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     if (targetPosition.GetExactDist2d(0.0f, 0.0f) > 0.1f)
     {
         state.lastKnownPosition = targetPosition;
-        TC_LOG_ERROR("module.playerbot.quest", "🎯 StartTrackingObjective: Bot {} - Using target spawn location ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+        TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - Using target spawn location ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
                     bot->GetName(),
                     targetPosition.GetPositionX(), targetPosition.GetPositionY(), targetPosition.GetPositionZ(),
                     objective.questId, objective.objectiveIndex);
@@ -68,7 +68,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     else
     {
         state.lastKnownPosition = bot->GetPosition();
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+        TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
                     bot->GetName(),
                     bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
                     objective.questId, objective.objectiveIndex);
@@ -89,7 +89,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
         objectiveCount = _botObjectiveStates[botGuid].size();
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
+    TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
                 bot->GetName(), objective.questId, objective.objectiveIndex, objectiveCount);
 
     // Update analytics
@@ -321,7 +321,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
 
     if (!bot)
         return targets;
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
+    TC_LOG_ERROR("module.playerbot.quest", " ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
                  bot->GetName(), objectId, radius);
     TC_LOG_ERROR("module.playerbot.quest", "  Bot position: ({:.1f}, {:.1f}, {:.1f}) Map: {}",
                  bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
@@ -340,7 +340,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
         if (object)
         {
             foundCount++;
-            TC_LOG_ERROR("module.playerbot.quest", "  ✅ Found GO {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, spawned={}, state={}",
+            TC_LOG_ERROR("module.playerbot.quest", "   Found GO {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, spawned={}, state={}",
                          foundCount, object->GetEntry(),
                          object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(),
                          bot->GetExactDist(object),
@@ -352,7 +352,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
     // If no GameObjects found, try searching for Creatures (some quests use creature triggers)
     if (targets.empty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "  ⚠️ No GameObjects found, searching for Creatures with entry {}...", objectId);
+        TC_LOG_ERROR("module.playerbot.quest", "   No GameObjects found, searching for Creatures with entry {}...", objectId);
 
         std::list<Creature*> nearbyCreatures;
         bot->GetCreatureListWithEntryInGrid(nearbyCreatures, objectId, radius);
@@ -365,7 +365,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
             if (creature && creature->IsAlive())
             {
                 foundCount++;
-                TC_LOG_ERROR("module.playerbot.quest", "  ✅ Found Creature {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, name={}",
+                TC_LOG_ERROR("module.playerbot.quest", "   Found Creature {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, name={}",
                              foundCount, creature->GetEntry(),
                              creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(),
                              bot->GetExactDist(creature),
@@ -375,7 +375,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
         }
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "  📊 ScanForGameObjects result: {} valid targets found (returned {} GUIDs)",
+    TC_LOG_ERROR("module.playerbot.quest", "   ScanForGameObjects result: {} valid targets found (returned {} GUIDs)",
                  foundCount, targets.size());
 
     return targets;
@@ -447,7 +447,7 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
         return priorities;
 
     std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
-    TC_LOG_ERROR("module.playerbot.quest", "🔢 CalculateObjectivePriorities: Bot {} has {} active objectives",
+    TC_LOG_ERROR("module.playerbot.quest", " CalculateObjectivePriorities: Bot {} has {} active objectives",
                 bot->GetName(), activeObjectives.size());
 
     for (const auto& state : activeObjectives)
@@ -466,7 +466,7 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
                                (priority.efficiencyFactor * 0.3f) +
                                (priority.proximityFactor * 0.2f);
 
-        TC_LOG_ERROR("module.playerbot.quest", "  📊 Quest {} Objective {}: urgency={:.2f}, difficulty={:.2f}, efficiency={:.2f}, proximity={:.2f}, TOTAL={:.2f}",
+        TC_LOG_ERROR("module.playerbot.quest", "   Quest {} Objective {}: urgency={:.2f}, difficulty={:.2f}, efficiency={:.2f}, proximity={:.2f}, TOTAL={:.2f}",
                     state.questId, state.objectiveIndex,
                     priority.urgencyFactor, priority.difficultyFactor, priority.efficiencyFactor, priority.proximityFactor,
                     priority.priorityScore);
@@ -1177,12 +1177,12 @@ Position ObjectiveTracker::FindObjectiveTargetLocation(Player* bot, const QuestO
 
     if (result.isValid)
     {
-        TC_LOG_DEBUG("module.playerbot.quest", "✅ FindObjectiveTargetLocation: Quest {} Objective {} resolved via {} - Quality: {}, Distance: {:.1f}",
+        TC_LOG_DEBUG("module.playerbot.quest", " FindObjectiveTargetLocation: Quest {} Objective {} resolved via {} - Quality: {}, Distance: {:.1f}",
                     objective.questId, objective.objectiveIndex, result.sourceName, result.qualityScore, result.distance);
         return result.position;
     }
 
-    TC_LOG_WARN("module.playerbot.quest", "❌ FindObjectiveTargetLocation: Failed to resolve Quest {} Objective {} - returning invalid position",
+    TC_LOG_WARN("module.playerbot.quest", " FindObjectiveTargetLocation: Failed to resolve Quest {} Objective {} - returning invalid position",
                 objective.questId, objective.objectiveIndex);
     return invalidPosition;
 

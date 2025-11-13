@@ -829,7 +829,7 @@ private:
             }, "40+ Focus, 3+ enemies (AoE filler + Beast Cleave)");
 
 
-            TC_LOG_INFO("module.playerbot", "🏹 BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -1136,7 +1136,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

@@ -602,7 +602,7 @@ private:
                        PositionUtils::GetDistance(bot, target) > 10.0f;
             }, "40+ Energy, > 10 yards, no proc (ranged builder)");
 
-            TC_LOG_INFO("module.playerbot", "🏴‍☠️ OUTLAW ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " OUTLAW ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -764,7 +764,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 OUTLAW ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " OUTLAW ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

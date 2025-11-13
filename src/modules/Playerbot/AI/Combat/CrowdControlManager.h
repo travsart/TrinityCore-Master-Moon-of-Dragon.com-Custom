@@ -97,10 +97,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 20% better group coordination in dungeons
-     * - ✅ Prevent premature CC breaks
-     * - ✅ Automatic CC chaining
-     * - ✅ Smart target assignment
+     * -  20% better group coordination in dungeons
+     * -  Prevent premature CC breaks
+     * -  Automatic CC chaining
+     * -  Smart target assignment
      */
     class TC_GAME_API CrowdControlManager
     {

@@ -145,10 +145,10 @@ struct DecisionResult
  * @endcode
  *
  * **Expected Impact**:
- * - ✅ Eliminate decision conflicts
- * - ✅ 20-30% better action selection
- * - ✅ Debuggable decision reasoning
- * - ✅ Coordinated multi-system behavior
+ * -  Eliminate decision conflicts
+ * -  20-30% better action selection
+ * -  Debuggable decision reasoning
+ * -  Coordinated multi-system behavior
  */
 class TC_GAME_API DecisionFusionSystem
 {

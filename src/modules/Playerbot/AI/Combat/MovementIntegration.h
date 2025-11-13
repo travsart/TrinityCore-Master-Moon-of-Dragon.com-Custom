@@ -140,10 +140,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 40% fewer deaths from avoidable damage
-     * - ✅ Better DPS uptime (stay in range)
-     * - ✅ Improved healing effectiveness (positioning)
-     * - ✅ Group coordination (formations)
+     * -  40% fewer deaths from avoidable damage
+     * -  Better DPS uptime (stay in range)
+     * -  Improved healing effectiveness (positioning)
+     * -  Group coordination (formations)
      */
     class TC_GAME_API MovementIntegration
     {

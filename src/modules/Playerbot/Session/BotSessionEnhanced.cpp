@@ -209,7 +209,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
             std::chrono::duration_cast<std::chrono::milliseconds>(loginDuration).count());
 
         TC_LOG_INFO("module.playerbot.session",
-                   "✅ Bot {} successfully logged in and entered world in {} ms",
+                   " Bot {} successfully logged in and entered world in {} ms",
                    newPlayer->GetName(),
                    loginMs);
 

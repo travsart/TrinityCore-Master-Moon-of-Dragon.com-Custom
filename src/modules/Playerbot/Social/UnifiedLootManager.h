@@ -36,9 +36,9 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedLootManager
- *   ├─> AnalysisModule     (item scoring, upgrade detection)
- *   ├─> CoordinationModule (session management, orchestration)
- *   └─> DistributionModule (roll handling, distribution)
+ *   > AnalysisModule     (item scoring, upgrade detection)
+ *   > CoordinationModule (session management, orchestration)
+ *   > DistributionModule (roll handling, distribution)
  * ```
  *
  * **Thread Safety:**

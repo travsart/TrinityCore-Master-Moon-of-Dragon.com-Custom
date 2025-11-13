@@ -731,7 +731,7 @@ private:
                 SpellPriority::LOW,
                 SpellCategory::DEFENSIVE);
 
-            TC_LOG_INFO("module.playerbot", "✨ HOLY PALADIN: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", " HOLY PALADIN: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -984,7 +984,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 HOLY PALADIN: BehaviorTree initialized with healer flow");
+            TC_LOG_INFO("module.playerbot", " HOLY PALADIN: BehaviorTree initialized with healer flow");
         }
     }
 
