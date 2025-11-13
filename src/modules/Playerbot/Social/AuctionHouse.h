@@ -93,6 +93,86 @@ struct AuctionSearchQuery
         , usableOnly(false) {}
 };
 
+// Auction profile configuration
+struct AuctionProfile
+{
+    AuctionStrategy primaryStrategy;
+    AuctionStrategy secondaryStrategy;
+    uint32 maxBiddingBudget;
+    uint32 maxListingBudget;
+    float bargainThreshold; // Buy if price is below this % of market value
+    float profitMargin; // Minimum profit margin for flipping
+    std::vector<uint32> preferredItemTypes;
+    std::vector<uint32> avoidedItemTypes;
+    std::unordered_set<uint32> watchList; // Items to monitor
+    std::unordered_set<uint32> blackList; // Never buy these items
+    bool autoRelist; // Automatically relist unsold items
+    bool autoBuyConsumables;
+    bool autoSellJunk;
+    uint32 maxAuctionsActive;
+
+    AuctionProfile() : primaryStrategy(AuctionStrategy::CONSERVATIVE)
+        , secondaryStrategy(AuctionStrategy::OPPORTUNISTIC), maxBiddingBudget(10000)
+        , maxListingBudget(5000), bargainThreshold(0.7f), profitMargin(0.2f)
+        , autoRelist(true), autoBuyConsumables(false), autoSellJunk(true)
+        , maxAuctionsActive(10) {}
+};
+
+// Auction session tracking
+struct AuctionSession
+{
+    uint32 sessionId;
+    uint32 playerGuid;
+    AuctionActionType actionType;
+    std::vector<AuctionItem> searchResults;
+    std::vector<uint32> targetAuctions;
+    std::queue<std::pair<AuctionActionType, uint32>> actionQueue;
+    uint32 sessionStartTime;
+    uint32 budgetUsed;
+    uint32 itemsSold;
+    uint32 itemsBought;
+    bool isActive;
+
+    AuctionSession(uint32 id, uint32 pGuid) : sessionId(id), playerGuid(pGuid)
+        , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(GameTime::GetGameTimeMS())
+        , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
+};
+
+// Auction performance metrics
+struct AuctionMetrics
+{
+    std::atomic<uint32> auctionsCreated{0};
+    std::atomic<uint32> auctionsWon{0};
+    std::atomic<uint32> auctionsLost{0};
+    std::atomic<uint32> itemsSold{0};
+    std::atomic<uint32> itemsBought{0};
+    std::atomic<uint32> totalGoldSpent{0};
+    std::atomic<uint32> totalGoldEarned{0};
+    std::atomic<float> averageProfitMargin{0.2f};
+    std::atomic<float> successRate{0.8f};
+    std::atomic<uint32> marketScans{0};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    void Reset() {
+        auctionsCreated = 0; auctionsWon = 0; auctionsLost = 0;
+        itemsSold = 0; itemsBought = 0; totalGoldSpent = 0;
+        totalGoldEarned = 0; averageProfitMargin = 0.2f; successRate = 0.8f;
+        marketScans = 0; lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    uint32 GetNetProfit() const {
+        uint32 earned = totalGoldEarned.load();
+        uint32 spent = totalGoldSpent.load();
+        return earned > spent ? earned - spent : 0;
+    }
+
+    float GetWinRate() const {
+        uint32 won = auctionsWon.load();
+        uint32 total = won + auctionsLost.load();
+        return total > 0 ? (float)won / total : 0.0f;
+    }
+};
+
 /**
  * @brief Advanced auction house system for automated buying and selling
  *
@@ -126,53 +206,10 @@ public:
     void UpdateMarketData() override;
 
     // Advanced auction features
-    struct AuctionProfile
-    {
-        AuctionStrategy primaryStrategy;
-        AuctionStrategy secondaryStrategy;
-        uint32 maxBiddingBudget;
-        uint32 maxListingBudget;
-        float bargainThreshold; // Buy if price is below this % of market value
-        float profitMargin; // Minimum profit margin for flipping
-        std::vector<uint32> preferredItemTypes;
-        std::vector<uint32> avoidedItemTypes;
-        std::unordered_set<uint32> watchList; // Items to monitor
-        std::unordered_set<uint32> blackList; // Never buy these items
-        bool autoRelist; // Automatically relist unsold items
-        bool autoBuyConsumables;
-        bool autoSellJunk;
-        uint32 maxAuctionsActive;
-
-        AuctionProfile() : primaryStrategy(AuctionStrategy::CONSERVATIVE)
-            , secondaryStrategy(AuctionStrategy::OPPORTUNISTIC), maxBiddingBudget(10000)
-            , maxListingBudget(5000), bargainThreshold(0.7f), profitMargin(0.2f)
-            , autoRelist(true), autoBuyConsumables(false), autoSellJunk(true)
-            , maxAuctionsActive(10) {}
-    };
-
     void SetAuctionProfile(uint32 playerGuid, const AuctionProfile& profile) override;
     AuctionProfile GetAuctionProfile(uint32 playerGuid) override;
 
     // Auction monitoring and automation
-    struct AuctionSession
-    {
-        uint32 sessionId;
-        uint32 playerGuid;
-        AuctionActionType actionType;
-        std::vector<AuctionItem> searchResults;
-        std::vector<uint32> targetAuctions;
-        std::queue<std::pair<AuctionActionType, uint32>> actionQueue;
-        uint32 sessionStartTime;
-        uint32 budgetUsed;
-        uint32 itemsSold;
-        uint32 itemsBought;
-        bool isActive;
-
-        AuctionSession(uint32 id, uint32 pGuid) : sessionId(id), playerGuid(pGuid)
-            , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(GameTime::GetGameTimeMS())
-            , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
-    };
-
     uint32 StartAuctionSession(Player* player, AuctionActionType primaryAction) override;
     void UpdateAuctionSession(uint32 sessionId) override;
     void CompleteAuctionSession(uint32 sessionId) override;
@@ -205,40 +242,6 @@ public:
     void TrackCompetitorBehavior(uint32 sellerGuid, const AuctionItem& auction) override;
 
     // Performance monitoring
-    struct AuctionMetrics
-    {
-        std::atomic<uint32> auctionsCreated{0};
-        std::atomic<uint32> auctionsWon{0};
-        std::atomic<uint32> auctionsLost{0};
-        std::atomic<uint32> itemsSold{0};
-        std::atomic<uint32> itemsBought{0};
-        std::atomic<uint32> totalGoldSpent{0};
-        std::atomic<uint32> totalGoldEarned{0};
-        std::atomic<float> averageProfitMargin{0.2f};
-        std::atomic<float> successRate{0.8f};
-        std::atomic<uint32> marketScans{0};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset() {
-            auctionsCreated = 0; auctionsWon = 0; auctionsLost = 0;
-            itemsSold = 0; itemsBought = 0; totalGoldSpent = 0;
-            totalGoldEarned = 0; averageProfitMargin = 0.2f; successRate = 0.8f;
-            marketScans = 0; lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        uint32 GetNetProfit() const {
-            uint32 earned = totalGoldEarned.load();
-            uint32 spent = totalGoldSpent.load();
-            return earned > spent ? earned - spent : 0;
-        }
-
-        float GetWinRate() const {
-            uint32 won = auctionsWon.load();
-            uint32 total = won + auctionsLost.load();
-            return total > 0 ? (float)won / total : 0.0f;
-        }
-    };
-
     AuctionMetrics GetPlayerAuctionMetrics(uint32 playerGuid) override;
     AuctionMetrics GetGlobalAuctionMetrics() override;
 
