@@ -12,6 +12,7 @@
 #include "SpellInfo.h"
 #include "Player.h"
 #include "Log.h"
+#include "DB2Stores.h"
 #include <algorithm>
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 
@@ -704,12 +705,9 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
     uint32 baseGCD = 1500;
 
     // Some spells have custom GCDs (e.g., some DoTs have no GCD, some abilities have 1.0s GCD)
-    // Check spell attributes for GCD exceptions
-    if (spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
+    // Check if spell has no GCD (StartRecoveryTime = 0 means no GCD)
+    if (spellInfo->StartRecoveryTime == 0)
         return 0; // No GCD
-
-    if (spellInfo->HasAttribute(SPELL_ATTR5_HASTE_AFFECTS_DURATION))
-        ; // GCD is affected by haste (default behavior)
 
     // Apply haste to GCD
     // WoW GCD formula: GCD = base_GCD / (1 + haste_percent / 100)
@@ -740,7 +738,7 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
         {
             hastePct = player->GetRatingBonusValue(CR_HASTE_SPELL);
             hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_CASTING_SPEED);
-            hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_SPELL_HASTE);
+            hastePct += player->GetTotalAuraModifier(SPELL_AURA_HASTE_SPELLS);
         }
 
         // Apply haste to GCD
@@ -868,7 +866,7 @@ uint32 CooldownCalculator::ApplyCooldownReduction(uint32 cooldownMs, Player* cas
         else
         {
             hastePct = caster->GetRatingBonusValue(CR_HASTE_SPELL);
-            hastePct += caster->GetTotalAuraModifier(SPELL_AURA_MOD_SPELL_HASTE);
+            hastePct += caster->GetTotalAuraModifier(SPELL_AURA_HASTE_SPELLS);
         }
 
         if (hastePct > 0.0f)
