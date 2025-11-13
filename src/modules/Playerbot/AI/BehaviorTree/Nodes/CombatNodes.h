@@ -24,6 +24,7 @@
 #include "Unit.h"
 #include "Spell.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "SharedDefines.h"
 #include "GameTime.h"
 
