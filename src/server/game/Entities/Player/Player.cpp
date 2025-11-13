@@ -141,6 +141,7 @@
 #include "WorldSession.h"
 #include "WorldStateMgr.h"
 #include "WorldStatePackets.h"
+#include "../../modules/Playerbot/Core/PlayerBotHooks.h"
 #include <boost/dynamic_bitset.hpp>
 #include <G3D/g3dmath.h>
 #include <sstream>
@@ -1171,6 +1172,10 @@ void Player::setDeathState(DeathState s)
 
         // reset all death criterias
         FailCriteria(CriteriaFailEvent::Death, 0);
+
+        // PLAYERBOT HOOK: Notify bots of death
+        if (Playerbot::PlayerBotHooks::OnPlayerDeath)
+            Playerbot::PlayerBotHooks::OnPlayerDeath(this);
     }
 
     Unit::setDeathState(s);
@@ -4433,6 +4438,10 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
             }
         }
     }
+
+    // PLAYERBOT HOOK: Notify bots of resurrection
+    if (Playerbot::PlayerBotHooks::OnPlayerResurrected)
+        Playerbot::PlayerBotHooks::OnPlayerResurrected(this);
 }
 
 void Player::KillPlayer()
@@ -13134,6 +13143,17 @@ void Player::TradeCancel(bool sendback)
         delete trader->m_trade;
         trader->m_trade = nullptr;
     }
+}
+
+void Player::InitiateTrade(Player* trader)
+{
+    // PlayerBot integration: minimal core hook for trade initiation
+    // Pattern from TradeHandler.cpp:714-715
+    if (!trader || m_trade || trader->m_trade)
+        return;
+
+    m_trade = new TradeData(this, trader);
+    trader->m_trade = new TradeData(trader, this);
 }
 
 void Player::UpdateSoulboundTradeItems()
@@ -24719,7 +24739,12 @@ void Player::SendInitialPacketsAfterAddToMap()
 
     GetSession()->SendLoadCUFProfiles();
 
-    CastSpell(this, 836, true);                             // LOGINEFFECT
+    // Skip LOGINEFFECT for bots - visual effect requires client rendering
+    // Bots don't send CMSG_CAST_SPELL ACKs, causing m_spellModTakingSpell assertion failures (Spell.cpp:603)
+#ifdef BUILD_PLAYERBOT
+    if (!GetSession()->IsBot())
+#endif
+        CastSpell(this, 836, true);                         // LOGINEFFECT
 
     // set some aura effects that send packet to player client after add player to map
     // SendMessageToSet not send it to player not it map, only for aura that not changed anything at re-apply

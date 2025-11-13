@@ -27,6 +27,7 @@
 #include "GroupReference.h"
 #include "Hash.h"
 #include "ItemDefines.h"
+#include "IteratorPair.h"
 #include "ItemEnchantmentMgr.h"
 #include "MapReference.h"
 #include "PetDefines.h"
@@ -1589,6 +1590,7 @@ class TC_GAME_API Player final : public Unit, public GridObject<Player>
         Player* GetTrader() const;
         TradeData* GetTradeData() const { return m_trade; }
         void TradeCancel(bool sendback);
+        void InitiateTrade(Player* trader); // PlayerBot integration: minimal core hook
 
         CinematicMgr* GetCinematicMgr() const { return _cinematicMgr.get(); }
 

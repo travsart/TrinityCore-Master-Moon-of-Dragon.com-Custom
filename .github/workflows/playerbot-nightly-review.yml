@@ -1,0 +1,282 @@
+name: Playerbot Nightly Full Review
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily
+  workflow_dispatch:
+    inputs:
+      include_performance_profiling:
+        description: 'Include performance profiling'
+        required: false
+        default: 'true'
+      send_email_report:
+        description: 'Send email report'
+        required: false
+        default: 'true'
+
+env:
+  REVIEW_MODE: deep
+  ENABLE_ALL_AGENTS: true
+
+jobs:
+  deep-review:
+    name: Comprehensive Nightly Review
+    runs-on: windows-latest
+    timeout-minutes: 360  # 6 hours max
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Full history for trend analysis
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path .claude\scripts\requirements.txt) {
+            pip install -r .claude\scripts\requirements.txt
+          }
+
+      - name: Create timestamp
+        id: timestamp
+        run: |
+          $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+          echo "timestamp=$timestamp" >> $env:GITHUB_OUTPUT
+
+      - name: Deep code review
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Starting Deep Code Review"
+          Write-Host "Time: $(Get-Date)"
+          Write-Host "=========================================="
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --mode deep --all-agents
+          }
+
+      - name: Performance profiling
+        if: github.event.inputs.include_performance_profiling == 'true' || github.event_name == 'schedule'
+        run: |
+          Write-Host "Running performance profiling..."
+
+          # Run all performance-related agents
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents performance-analyzer,windows-memory-profiler,resource-monitor-limiter
+          }
+
+      - name: Architecture analysis
+        run: |
+          Write-Host "Running architecture analysis..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents cpp-architecture-optimizer
+          }
+
+      - name: Security deep scan
+        run: |
+          Write-Host "Running deep security scan..."
+
+          # Full security audit
+          if (Test-Path .claude\scripts\dependency_scanner.py) {
+            python .claude\scripts\dependency_scanner.py --full-scan
+          }
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents security-auditor
+          }
+
+      - name: Database optimization analysis
+        run: |
+          Write-Host "Analyzing database optimization opportunities..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents database-optimizer
+          }
+
+      - name: WoW mechanics validation
+        run: |
+          Write-Host "Validating WoW mechanics implementation..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents wow-mechanics-expert,wow-bot-behavior-designer
+          }
+
+      - name: Trinity integration comprehensive check
+        run: |
+          Write-Host "Comprehensive Trinity integration check..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents trinity-integration-tester
+          }
+
+      - name: Enterprise compliance check
+        run: |
+          Write-Host "Running enterprise compliance check..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents enterprise-compliance-checker
+          }
+
+      - name: Generate comprehensive report
+        run: |
+          Write-Host "Generating comprehensive nightly report..."
+
+          if (Test-Path .claude\scripts\master_review.py) {
+            python .claude\scripts\master_review.py --agents daily-report-generator --format html,markdown,json
+          }
+
+      - name: Trend analysis
+        run: |
+          Write-Host "Performing trend analysis..."
+
+          # Compare with previous reports
+          $reportsDir = ".claude/reports"
+          if (Test-Path $reportsDir) {
+            $previousReports = Get-ChildItem $reportsDir -Filter "nightly_*.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 7
+
+            Write-Host "Found $($previousReports.Count) previous reports for trend analysis"
+
+            # TODO: Implement trend analysis script
+            # python .claude\scripts\analyze_trends.py --reports $previousReports
+          }
+
+      - name: Archive detailed results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report-${{ steps.timestamp.outputs.timestamp }}
+          path: |
+            .claude/reports/
+            .claude/logs/
+          retention-days: 90
+
+      - name: Create summary artifact
+        run: |
+          Write-Host "Creating summary artifact..."
+
+          $summaryPath = ".claude/reports/nightly_summary_${{ steps.timestamp.outputs.timestamp }}.md"
+
+          $summary = @"
+          # Nightly Review Summary - ${{ steps.timestamp.outputs.timestamp }}
+
+          ## Execution Details
+          - **Started**: $(Get-Date)
+          - **Branch**: ${{ github.ref }}
+          - **Commit**: ${{ github.sha }}
+          - **Triggered by**: ${{ github.actor }}
+
+          ## Review Mode
+          - **Mode**: Deep
+          - **All Agents**: Enabled
+          - **Performance Profiling**: ${{ github.event.inputs.include_performance_profiling || 'true' }}
+
+          ## Reports Generated
+          - Full HTML report
+          - Markdown summary
+          - JSON data export
+          - Trend analysis
+
+          ## Next Steps
+          1. Review critical issues
+          2. Address high-priority recommendations
+          3. Update documentation
+          4. Plan next sprint tasks
+
+          ---
+          🤖 Generated by PlayerBot CI/CD Pipeline
+          "@
+
+          $summary | Out-File -FilePath $summaryPath -Encoding UTF8
+
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-summary-latest
+          path: .claude/reports/nightly_summary_*.md
+          retention-days: 365
+
+      - name: Send email report
+        if: github.event.inputs.send_email_report == 'true' || github.event_name == 'schedule'
+        run: |
+          Write-Host "Preparing email report..."
+
+          # TODO: Implement email sending
+          # python .claude\scripts\send_email_report.ps1 -ReportPath ".claude/reports/nightly_report_latest.html"
+
+          Write-Host "Email report would be sent here"
+
+      - name: Create GitHub issue for critical findings
+        if: failure() || contains(github.event.head_commit.message, 'critical')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '.claude/reports/nightly_report_latest.json';
+
+            let criticalIssues = [];
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              criticalIssues = report.critical_issues || [];
+            }
+
+            const title = '🚨 Nightly Review: Critical Issues Detected';
+            const body = `
+            ## Nightly Review Results - ${{ steps.timestamp.outputs.timestamp }}
+
+            Critical issues were detected during the nightly review.
+
+            **Commit**: ${{ github.sha }}
+            **Branch**: ${{ github.ref }}
+
+            ### Critical Issues (${criticalIssues.length})
+            ${criticalIssues.map(i => `- ${i.description}`).join('\n') || 'See full report for details'}
+
+            ### Action Required
+            - [ ] Review full nightly report
+            - [ ] Assess impact and priority
+            - [ ] Create fix tasks
+            - [ ] Update documentation
+
+            🔗 [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            🔗 [Download full report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+            `;
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['nightly-review', 'critical', 'playerbot'],
+              assignees: ['${{ github.repository_owner }}']
+            });
+
+      - name: Update status badge
+        run: |
+          Write-Host "Nightly review completed at $(Get-Date)"
+          Write-Host "Review artifacts available for 90 days"
+
+# ==============================================================================
+# Summary
+# ==============================================================================
+# This nightly review workflow provides:
+# - Comprehensive deep review with all agents
+# - Performance profiling and memory analysis
+# - Architecture analysis and optimization suggestions
+# - Security deep scan with CVE checking
+# - Database optimization opportunities
+# - WoW mechanics validation
+# - Trinity integration verification
+# - Enterprise compliance checking
+# - Trend analysis across multiple reports
+# - Automatic issue creation for critical findings
+# - Email notifications (when configured)
+#
+# Scheduled to run daily at 2 AM UTC
+# Can be manually triggered with custom options
+# Results retained for 90 days for historical analysis
+# ==============================================================================

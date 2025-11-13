@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Apply SpellEvent destructor bugfix to Spell.cpp"""
+
+import sys
+
+def apply_fix():
+    filepath = "src/server/game/Spells/Spell.cpp"
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    # Find the SpellEvent destructor (around line 8445)
+    insert_line = None
+    for i, line in enumerate(lines):
+        if i >= 8440 and "if (m_Spell->getState() != SPELL_STATE_FINISHED)" in line:
+            # Find the line after "m_Spell->cancel();"
+            for j in range(i+1, min(i+5, len(lines))):
+                if "m_Spell->cancel();" in lines[j]:
+                    insert_line = j + 1
+                    # Skip existing blank line if present
+                    while insert_line < len(lines) and lines[insert_line].strip() == "":
+                        insert_line += 1
+                    break
+            break
+
+    if insert_line is None:
+        print("ERROR: Could not find insertion point in SpellEvent destructor")
+        sys.exit(1)
+
+    # Check if fix is already applied
+    for i in range(max(0, insert_line-5), min(len(lines), insert_line+10)):
+        if "SetSpellModTakingSpell" in lines[i] and "~SpellEvent" in "".join(lines[max(0, i-20):i]):
+            print("Fix already applied, skipping")
+            return
+
+    # Prepare the fix code
+    fix_lines = [
+        "\n",
+        "    // BUGFIX: Clear spell mod taking spell before destruction to prevent assertion failure (Spell.cpp:603)\n",
+        "    // When KillAllEvents() is called (logout, map change, instance reset), spell events are destroyed\n",
+        "    // without going through the normal delayed handler that clears m_spellModTakingSpell.\n",
+        "    // This causes ASSERT(m_caster->ToPlayer()->m_spellModTakingSpell != this) to fail in ~Spell()\n",
+        "    if (m_Spell->GetCaster() && m_Spell->GetCaster()->GetTypeId() == TYPEID_PLAYER)\n",
+        "        m_Spell->GetCaster()->ToPlayer()->SetSpellModTakingSpell(m_Spell, false);\n",
+        "\n"
+    ]
+
+    # Insert the fix
+    lines = lines[:insert_line] + fix_lines + lines[insert_line:]
+
+    # Write back
+    with open(filepath, 'w', encoding='utf-8', newline='\n') as f:
+        f.writelines(lines)
+
+    print(f"DONE: Applied SpellEvent destructor fix at line {insert_line}")
+    print(f"Added {len(fix_lines)} lines")
+
+if __name__ == "__main__":
+    apply_fix()
