@@ -395,35 +395,33 @@ uint32 ClassAI::GetSpellCooldown(uint32 spellId)
 // SPELL CASTING
 // ============================================================================
 
-bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
+SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
+    // If no target specified, self-cast
+    if (!target)
+        target = GetBot();
+
     if (!target || !spellId || !GetBot())
-        return false;
+        return SPELL_FAILED_ERROR;
 
     if (!IsSpellUsable(spellId))
-        return false;
+        return SPELL_FAILED_NOT_READY;
 
     if (!IsInRange(target, spellId))
-        return false;
+        return SPELL_FAILED_OUT_OF_RANGE;
 
     if (!HasLineOfSight(target))
-        return false;
+        return SPELL_FAILED_LINE_OF_SIGHT;
 
     // Cast the spell
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
-        return false;
+        return SPELL_FAILED_SPELL_UNAVAILABLE;
 
     GetBot()->CastSpell(target, spellId, false);
     ConsumeResource(spellId);
     _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
-    return true;
-}
-
-bool ClassAI::CastSpell(uint32 spellId)
-{
-    // Self-cast version
-    return CastSpell(GetBot(), spellId);
+    return SPELL_CAST_OK;
 }
 
 // ============================================================================

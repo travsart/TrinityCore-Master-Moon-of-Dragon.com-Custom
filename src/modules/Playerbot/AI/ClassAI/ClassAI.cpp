@@ -842,14 +842,14 @@ void ClassAI::CancelPendingSpell()
 // SPELL CASTING
 // ============================================================================
 
-bool ClassAI::CastSpell(::Unit* target, uint32 spellId)
+SpellCastResult ClassAI::CastSpell(uint32 spellId, ::Unit* target /*= nullptr*/)
 {
+    // If no target specified, self-cast
+    if (!target)
+        target = GetBot();
+
     if (!target || !spellId || !GetBot())
-        return false;
-if (!checkTarget)
-{
-    return nullptr;
-}
+        return SPELL_FAILED_ERROR;
 
     // MIGRATION COMPLETE (2025-10-30):
     // Replaced direct CastSpell() API call with packet-based SpellPacketBuilder.
@@ -859,10 +859,11 @@ if (!checkTarget)
 
     // Pre-validation (ClassAI-specific checks before packet building)
     if (!IsSpellUsable(spellId))
-    {        TC_LOG_TRACE("playerbot.classai.spell",
+    {
+        TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} not usable for bot {}",
                      spellId, GetBot()->GetName());
-        return false;
+        return SPELL_FAILED_NOT_READY;
     }
 
     if (!IsInRange(target, spellId))
@@ -870,14 +871,15 @@ if (!checkTarget)
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} target out of range for bot {}",
                      spellId, GetBot()->GetName());
-        return false;    }
+        return SPELL_FAILED_OUT_OF_RANGE;
+    }
 
     if (!HasLineOfSight(target))
     {
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} target no LOS for bot {}",
                      spellId, GetBot()->GetName());
-        return false;
+        return SPELL_FAILED_LINE_OF_SIGHT;
     }
 
     // Get spell info for validation and cooldown tracking
@@ -887,7 +889,7 @@ if (!checkTarget)
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} not found in spell data for bot {}",
                      spellId, GetBot()->GetName());
-        return false;
+        return SPELL_FAILED_SPELL_UNAVAILABLE;
     }
 
     // Build packet with validation
@@ -899,7 +901,8 @@ if (!checkTarget)
     options.skipRangeCheck = false;    // Check spell range (double-check after ClassAI check)
     options.logFailures = true;        // Log validation failures
 
-    auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
+    auto result = SpellPacketBuilder::BuildCastSpellPacket(GetBot(), spellId, target, options);
+    if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {
         // Packet successfully queued to main thread
 
@@ -911,7 +914,7 @@ if (!checkTarget)
         TC_LOG_DEBUG("playerbot.classai.spell",
                      "ClassAI queued CMSG_CAST_SPELL for spell {} (bot: {}, target: {})",
                      spellId, GetBot()->GetName(), target->GetName());
-        return true;
+        return SPELL_CAST_OK;
     }
     else
     {
@@ -919,12 +922,10 @@ if (!checkTarget)
         TC_LOG_TRACE("playerbot.classai.spell",
                      "ClassAI spell {} validation failed for bot {}: {} ({})",
                      spellId, GetBot()->GetName(),
-                     static_cast<uint8>(result.result),                     result.failureReason);        return false;    }}
-
-bool ClassAI::CastSpell(uint32 spellId)
-{
-    // Self-cast version
-    return CastSpell(GetBot(), spellId);
+                     static_cast<uint8>(result.result),
+                     result.failureReason);
+        return SPELL_FAILED_ERROR;
+    }
 }
 
 // ============================================================================

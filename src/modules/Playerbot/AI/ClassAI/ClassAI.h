@@ -275,9 +275,8 @@ public:
     float GetSpellRange(uint32 spellId);
     uint32 GetSpellCooldown(uint32 spellId);
 
-    // Spell casting
-    bool CastSpell(::Unit* target, uint32 spellId);
-    bool CastSpell(uint32 spellId); // Self-cast
+    // Spell casting (overrides BotAI virtual method)
+    SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr) override;
 
     // Target selection helpers
     ::Unit* GetBestAttackTarget();
