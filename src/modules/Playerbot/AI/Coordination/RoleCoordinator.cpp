@@ -22,6 +22,7 @@
 #include "Unit.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -17,6 +17,7 @@
 #include "Log.h"  // For TC_LOG_DEBUG
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 #include "../../Packets/SpellPacketBuilder.h"  // PHASE 0 WEEK 3: Packet-based spell casting
+#include "GameTime.h"
 
 namespace Playerbot
 {

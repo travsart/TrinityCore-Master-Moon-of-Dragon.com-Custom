@@ -18,6 +18,7 @@
 #include <atomic>
 #include <unordered_set>
 #include <vector>
+#include "GameTime.h"
 
 class Player;
 class Pet;

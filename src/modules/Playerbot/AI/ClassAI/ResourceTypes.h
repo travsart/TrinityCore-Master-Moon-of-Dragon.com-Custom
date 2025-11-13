@@ -14,6 +14,7 @@
 #include <array>
 #include <atomic>
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot
 {

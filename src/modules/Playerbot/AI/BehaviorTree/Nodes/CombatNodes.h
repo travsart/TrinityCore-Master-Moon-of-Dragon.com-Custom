@@ -25,6 +25,7 @@
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SharedDefines.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -13,6 +13,7 @@
 #include "LootDistribution.h"
 #include "Log.h"
 #include <sstream>
+#include "GameTime.h"
 
 namespace Playerbot
 {

@@ -19,6 +19,7 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
+#include "GameTime.h"
 
 namespace Playerbot
 {

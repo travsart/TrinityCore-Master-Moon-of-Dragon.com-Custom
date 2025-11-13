@@ -13,6 +13,7 @@
 #include <thread>
 #include <atomic>
 #include <stdexcept>
+#include "GameTime.h"
 
 namespace Playerbot
 {
