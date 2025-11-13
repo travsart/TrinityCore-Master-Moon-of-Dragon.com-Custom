@@ -468,7 +468,7 @@ private:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 

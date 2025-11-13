@@ -374,13 +374,11 @@ std::shared_ptr<BTNode> BehaviorTreeFactory::BuildFollowLeaderTree()
             Player* bot = ai->GetBot();
             if (!bot) return false;
 
-            Player* leader = ai->GetMaster();
-            if (!leader) {
-                Group* group = bot->GetGroup();
-                if (group) {
-                    ObjectGuid leaderGuid = group->GetLeaderGUID();
-                    leader = ObjectAccessor::FindPlayer(leaderGuid);
-                }
+            Player* leader = nullptr;
+            Group* group = bot->GetGroup();
+            if (group) {
+                ObjectGuid leaderGuid = group->GetLeaderGUID();
+                leader = ObjectAccessor::FindPlayer(leaderGuid);
             }
 
             if (!leader) return false;

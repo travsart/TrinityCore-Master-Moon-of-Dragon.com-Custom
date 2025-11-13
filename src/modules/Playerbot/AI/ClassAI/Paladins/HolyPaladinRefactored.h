@@ -575,7 +575,7 @@ private:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Healer Focus)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 
