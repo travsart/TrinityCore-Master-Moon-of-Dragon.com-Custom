@@ -10,6 +10,7 @@
 #include "Unit.h"
 #include "Log.h"
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // ============================================================================
@@ -376,3 +377,4 @@ std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

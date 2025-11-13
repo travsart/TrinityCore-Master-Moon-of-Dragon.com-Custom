@@ -147,7 +147,7 @@ bool IntegratedAIContext::IsInGroup() const
     if (!_bot)
         return false;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return false;
 
@@ -159,7 +159,7 @@ bool IntegratedAIContext::IsInRaid() const
     if (!_bot)
         return false;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return false;
 
@@ -172,7 +172,7 @@ ObjectGuid IntegratedAIContext::GetBotGuid() const
     if (!_bot)
         return ObjectGuid::Empty;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return ObjectGuid::Empty;
 
@@ -184,7 +184,7 @@ uint32 IntegratedAIContext::GetGroupId() const
     if (!_bot)
         return 0;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return 0;
 
@@ -205,7 +205,7 @@ uint32 IntegratedAIContext::GetZoneId() const
     if (!_bot)
         return 0;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return 0;
 
@@ -287,7 +287,7 @@ BTStatus BTAttackGroupFocusTarget::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 
@@ -310,7 +310,7 @@ BTStatus BTShareThreatInfo::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 
@@ -336,7 +336,7 @@ BTStatus BTRequestGroupAssistance::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 

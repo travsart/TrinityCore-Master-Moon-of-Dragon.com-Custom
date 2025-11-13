@@ -670,7 +670,7 @@ private:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Disc Healer + Atonement)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 

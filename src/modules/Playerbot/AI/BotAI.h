@@ -50,6 +50,9 @@ class MovementArbiter;
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
+// TrinityCore forward declarations
+enum SpellCastResult : int32;
+
 // Phase 3: Tactical Coordination forward declarations
 namespace Coordination
 {
@@ -235,6 +238,22 @@ public:
     void SetTarget(ObjectGuid guid) { _currentTarget = guid; }
     ObjectGuid GetTarget() const { return _currentTarget; }
     ::Unit* GetTargetUnit() const;
+
+    // ========================================================================
+    // SPELL CASTING - Combat spell execution
+    // ========================================================================
+
+    /**
+     * @brief Cast a spell on a target (virtual - overridden by ClassAI)
+     * @param spellId Spell ID to cast
+     * @param target Target unit (nullptr for self-cast)
+     * @return SpellCastResult indicating success or failure reason
+     */
+    virtual SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr)
+    {
+        // Base implementation returns failure - ClassAI overrides with actual casting logic
+        return SPELL_FAILED_ERROR;
+    }
 
     // ========================================================================
     // MOVEMENT CONTROL - Strategy-driven movement

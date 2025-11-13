@@ -471,7 +471,7 @@ private:
         using namespace bot::ai;
         using namespace BehaviorTreeBuilder;
 
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
 
         auto* queue = ai->GetActionPriorityQueue();
         if (queue)

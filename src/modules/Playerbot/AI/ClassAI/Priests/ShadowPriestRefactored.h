@@ -623,7 +623,7 @@ private:
         using namespace bot::ai;
         using namespace BehaviorTreeBuilder;
 
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
 
         // ========================================================================
         // ActionPriorityQueue: Register Shadow Priest spells with priorities

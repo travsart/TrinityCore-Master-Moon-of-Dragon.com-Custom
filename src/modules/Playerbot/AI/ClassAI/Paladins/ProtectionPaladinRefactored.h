@@ -500,7 +500,7 @@ private:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Tank + Holy Power Focus)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 

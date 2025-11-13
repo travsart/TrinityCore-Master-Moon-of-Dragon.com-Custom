@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <sstream>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Constructor with default weights
@@ -681,3 +682,4 @@ float DecisionFusionSystem::EvaluateScoringCategory(
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot
