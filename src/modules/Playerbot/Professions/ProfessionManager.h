@@ -149,6 +149,29 @@ struct ProfessionAutomationProfile
     ProfessionAutomationProfile() = default;
 };
 
+// Profession performance monitoring
+struct ProfessionMetrics
+{
+    std::atomic<uint32> professionsLearned{0};
+    std::atomic<uint32> recipesLearned{0};
+    std::atomic<uint32> itemsCrafted{0};
+    std::atomic<uint32> resourcesGathered{0};
+    std::atomic<uint32> skillPointsGained{0};
+    std::atomic<uint32> goldSpentOnMaterials{0};
+    std::atomic<uint32> goldEarnedFromCrafts{0};
+
+    void Reset()
+    {
+        professionsLearned = 0;
+        recipesLearned = 0;
+        itemsCrafted = 0;
+        resourcesGathered = 0;
+        skillPointsGained = 0;
+        goldSpentOnMaterials = 0;
+        goldEarnedFromCrafts = 0;
+    }
+};
+
 /**
  * @brief Complete profession manager for all bot profession operations
  */
@@ -326,28 +349,6 @@ public:
     // ============================================================================
     // METRICS
     // ============================================================================
-
-    struct ProfessionMetrics
-    {
-        std::atomic<uint32> professionsLearned{0};
-        std::atomic<uint32> recipesLearned{0};
-        std::atomic<uint32> itemsCrafted{0};
-        std::atomic<uint32> resourcesGathered{0};
-        std::atomic<uint32> skillPointsGained{0};
-        std::atomic<uint32> goldSpentOnMaterials{0};
-        std::atomic<uint32> goldEarnedFromCrafts{0};
-
-        void Reset()
-        {
-            professionsLearned = 0;
-            recipesLearned = 0;
-            itemsCrafted = 0;
-            resourcesGathered = 0;
-            skillPointsGained = 0;
-            goldSpentOnMaterials = 0;
-            goldEarnedFromCrafts = 0;
-        }
-    };
 
     ProfessionMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
     ProfessionMetrics const& GetGlobalMetrics() const override;
