@@ -80,8 +80,11 @@ struct RogueMetrics
     {
         if (energyUsed > 0)
         {
+
             float efficiency = static_cast<float>(comboGenerated) / energyUsed * 100.0f;
+
             float current = energyEfficiency.load();
+
             energyEfficiency = (current * 0.8f) + (efficiency * 0.2f);
         }
     }
@@ -98,14 +101,19 @@ public:
 
         if (success)
         {
+
             _successfulCasts[spellId]++;
+
             _totalEnergyUsed += energyCost;
 
             // Track finisher usage
+
             if (IsFinisher(spellId))
+
                 _finisherCount++;
         }
         else
+
             _failedCasts[spellId]++;
 
         _lastGCD = now;
@@ -127,11 +135,14 @@ public:
 
         if (successful != _successfulCasts.end())
         {
+
             success = successful->second;
+
             total += success;
         }
 
         if (failed != _failedCasts.end())
+
             total += failed->second;
 
         return total > 0 ? (float)success / total : 0.0f;
@@ -148,7 +159,9 @@ private:
     bool IsFinisher(uint32 spellId) const
     {
         return spellId == RogueAI::SLICE_AND_DICE || spellId == RogueAI::RUPTURE ||
+
                spellId == RogueAI::EVISCERATE || spellId == RogueAI::KIDNEY_SHOT ||
+
                spellId == RogueAI::EXPOSE_ARMOR || spellId == RogueAI::ENVENOM;
     }
 
@@ -182,22 +195,39 @@ Position RogueCombatPositioning::CalculateOptimalPosition(Unit* target, RogueSpe
         case RogueSpec::ASSASSINATION:
         case RogueSpec::SUBTLETY:
             // Assassination and Subtlety prefer behind target for Backstab/Ambush
+
             {
-                float angle = target->GetOrientation() + M_PI; // 180 degrees behind                float distance = 3.0f; // Close melee range
-                float x = target->GetPositionX() + distance * std::cos(angle);                float y = target->GetPositionY() + distance * std::sin(angle);
+
+                float angle = target->GetOrientation() + M_PI; // 180 degrees behind
+                float distance = 3.0f; // Close melee range
+
+                float x = target->GetPositionX() + distance * std::cos(angle);
+                float y = target->GetPositionY() + distance * std::sin(angle);
                 
-                float z = target->GetPositionZ();                return Position(x, y, z, angle);
+
+                float z = target->GetPositionZ();
+                return Position(x, y, z, angle);
+
             }
 
         case RogueSpec::COMBAT:
             // Combat can attack from any angle, prefer frontal positioning
+
             {
-                float angle = target->GetOrientation(); // Face to face                float distance = 4.0f; // Slightly further for Blade Flurry AoE
-                float x = target->GetPositionX() + distance * std::cos(angle);                float y = target->GetPositionY() + distance * std::sin(angle);                float z = target->GetPositionZ();                
+
+                float angle = target->GetOrientation(); // Face to face
+                float distance = 4.0f; // Slightly further for Blade Flurry AoE
+
+                float x = target->GetPositionX() + distance * std::cos(angle);
+                float y = target->GetPositionY() + distance * std::sin(angle);
+                float z = target->GetPositionZ();
+
                 return Position(x, y, z, target->GetOrientation());
+
             }
 
         default:
+
             return _bot->GetPosition();
     }
 }
@@ -207,15 +237,19 @@ float RogueCombatPositioning::GetOptimalRange(RogueSpec spec) const
     switch (spec)
     {
         case RogueSpec::ASSASSINATION:
+
             return 3.0f; // Close range for Mutilate/Envenom
 
         case RogueSpec::COMBAT:
+
             return 5.0f; // Standard melee range, benefits Blade Flurry
 
         case RogueSpec::SUBTLETY:
+
             return 3.5f; // Close range for Backstab/Hemorrhage
 
         default:
+
             return 5.0f; // Default melee range
     }
 }
@@ -274,9 +308,11 @@ void RogueAI::UpdateRotation(Unit* target)
         // Execute baseline rotation
         if (!priorityTarget)
         {
+
             return nullptr;
         }
         if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+
             return;
 
         // Fallback to basic melee attack if nothing else worked
@@ -299,20 +335,32 @@ void RogueAI::UpdateRotation(Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
+
                              if (!interruptTarget)
+
                              {
+
                                  return;
+
                              }
         if (interruptTarget && CanUseAbility(KICK))
         {
             // Cast Kick on the interrupt target
+
             if (CastSpell(interruptTarget, KICK))
+
             {
+
                 RecordInterruptAttempt(interruptTarget, KICK, true);
+
                 _metrics->interruptsExecuted++;
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} interrupted {} with Kick",
+
                              GetBot()->GetName(), interruptTarget->GetName());
+
                 return;
+
             }
         }
     }
@@ -323,6 +371,7 @@ void RogueAI::UpdateRotation(Unit* target)
         // Use defensive cooldowns when health is critical
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
+
             return;
     }
 
@@ -332,13 +381,21 @@ void RogueAI::UpdateRotation(Unit* target)
         Unit* priorityTarget = behaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
         {
+
             OnTargetChanged(priorityTarget);
+
             target = priorityTarget;
+
                          if (!priorityTarget)
+
                          {
+
                              return;
+
                          }
+
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} switching target to {}",
+
                          GetBot()->GetName(), priorityTarget->GetName());
         }
     }
@@ -350,26 +407,42 @@ void RogueAI::UpdateRotation(Unit* target)
         uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         if (static_cast<uint32>(spec) == 1 && CanUseAbility(BLADE_FLURRY)) // Combat/Outlaw is spec 1
         {
+
             if (CastSpell(BLADE_FLURRY))
+
             {
+
                 RecordAbilityUsage(BLADE_FLURRY);
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Blade Flurry for AoE",
+
                              GetBot()->GetName());
+
                 return;
+
             }
         }
 
         // Fan of Knives for AoE combo point generation
         if (CanUseAbility(FAN_OF_KNIVES))
         {
+
             if (CastSpell(FAN_OF_KNIVES))
+
             {
+
                 RecordAbilityUsage(FAN_OF_KNIVES);
+
                 _combatMetrics->RecordAbilityUsage(FAN_OF_KNIVES, true, 35);
+
                 _combatMetrics->RecordComboPointGeneration(GetNearbyEnemyCount(10.0f));
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} using Fan of Knives for AoE",
+
                              GetBot()->GetName());
+
                 return;
+
             }
         }
     }
@@ -381,81 +454,149 @@ void RogueAI::UpdateRotation(Unit* target)
         uint32 spec = static_cast<uint32>(GetBot()->GetPrimarySpecialization());
         switch (spec)
         {
+
             case 0: // Assassination
                 // Vendetta for damage amplification
+
                 if (CanUseAbility(VENDETTA))
+
                 {
+
                     if (CastSpell(target, VENDETTA))
+
                     {
+
                         RecordAbilityUsage(VENDETTA);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Vendetta",
+
                                      GetBot()->GetName());
+
                     }
+
                 }
                 // Cold Blood for guaranteed crit
+
                 if (CanUseAbility(COLD_BLOOD))
+
                 {
+
                     if (CastSpell(COLD_BLOOD))
+
                     {
+
                         RecordAbilityUsage(COLD_BLOOD);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Cold Blood",
+
                                      GetBot()->GetName());
+
                     }
+
                 }
+
                 break;
+
 
             case 1: // Combat/Outlaw
                 // Adrenaline Rush for energy regeneration
+
                 if (CanUseAbility(ADRENALINE_RUSH))
+
                 {
+
                     if (CastSpell(ADRENALINE_RUSH))
+
                     {
+
                         RecordAbilityUsage(ADRENALINE_RUSH);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Adrenaline Rush",
+
                                      GetBot()->GetName());
+
                     }
+
                 }
                 // Killing Spree for burst damage
+
                 if (CanUseAbility(KILLING_SPREE))
+
                 {
+
                     if (CastSpell(target, KILLING_SPREE))
+
                     {
+
                         RecordAbilityUsage(KILLING_SPREE);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Killing Spree",
+
                                      GetBot()->GetName());
+
                         return;
+
                     }
+
                 }
+
                 break;
+
 
             case 2: // Subtlety
                 // Shadow Dance for enhanced abilities
+
                 if (CanUseAbility(SHADOW_DANCE))
+
                 {
+
                     if (CastSpell(SHADOW_DANCE))
+
                     {
+
                         RecordAbilityUsage(SHADOW_DANCE);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Shadow Dance",
+
                                      GetBot()->GetName());
+
                     }
+
                 }
                 // Shadowstep for mobility and damage
+
                 if (CanUseAbility(SHADOWSTEP))
+
                 {
+
                     if (CastSpell(target, SHADOWSTEP))
+
                     {
+
                         RecordAbilityUsage(SHADOWSTEP);
+
                         _metrics->cooldownsUsed++;
+
                         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used Shadowstep",
+
                                      GetBot()->GetName());
+
                         return;
+
                     }
+
                 }
+
                 break;
         }
     }    // Priority 6: Stealth and Openers
@@ -464,16 +605,28 @@ void RogueAI::UpdateRotation(Unit* target)
         // Enter stealth for opener opportunity
         if (CanUseAbility(STEALTH))
         {
-            float distance = GetBot()->GetDistance(target);            if (distance > 5.0f && distance < 25.0f)
+
+            float distance = GetBot()->GetDistance(target);
+            if (distance > 5.0f && distance < 25.0f)
+
             {
+
                 if (CastSpell(STEALTH))
+
                 {
+
                     _metrics->stealthOpeners++;
+
                     _stealthsUsed++;
+
                     TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} entering Stealth for opener",
+
                                  GetBot()->GetName());
+
                     return;
+
                 }
+
             }
         }
     }
@@ -482,6 +635,7 @@ void RogueAI::UpdateRotation(Unit* target)
     if (HasAura(STEALTH) || HasAura(VANISH) || HasAura(SHADOW_DANCE))
     {
         if (ExecuteStealthOpener(target))
+
             return;
     }    // Priority 7: Execute normal rotation (all specs use baseline logic in RogueAI)
     ExecuteRogueBasicRotation(target);
@@ -509,11 +663,17 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     {
         if (CanUseAbility(SLICE_AND_DICE))
         {
+
             if (CastSpell(target, SLICE_AND_DICE))
+
             {
+
                 RecordAbilityUsage(SLICE_AND_DICE);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
     }
@@ -522,11 +682,17 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     if (comboPoints >= 3 && !target->HasAura(RUPTURE, GetBot()->GetGUID()))    {
         if (CanUseAbility(RUPTURE))
         {
+
             if (CastSpell(target, RUPTURE))
+
             {
+
                 RecordAbilityUsage(RUPTURE);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
     }
@@ -535,11 +701,17 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     if (comboPoints >= 3 && !target->HasAura(EXPOSE_ARMOR))    {
         if (CanUseAbility(EXPOSE_ARMOR))
         {
+
             if (CastSpell(target, EXPOSE_ARMOR))
+
             {
+
                 RecordAbilityUsage(EXPOSE_ARMOR);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
     }
@@ -548,11 +720,17 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     if (comboPoints >= 4 && target->GetTypeId() == TYPEID_PLAYER)    {
         if (CanUseAbility(KIDNEY_SHOT))
         {
+
             if (CastSpell(target, KIDNEY_SHOT))
+
             {
+
                 RecordAbilityUsage(KIDNEY_SHOT);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
     }
@@ -562,11 +740,17 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     {
         if (CanUseAbility(EVISCERATE))
         {
+
             if (CastSpell(target, EVISCERATE))
+
             {
+
                 RecordAbilityUsage(EVISCERATE);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
     }
@@ -577,25 +761,40 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         // Try to get behind target for Backstab
         if (_positioning->IsBehindTarget(target) && CanUseAbility(BACKSTAB))
         {
+
             if (CastSpell(target, BACKSTAB))
+
             {
+
                 RecordAbilityUsage(BACKSTAB);
+
                 _combatMetrics->RecordAbilityUsage(BACKSTAB, true, 60);
+
                 _combatMetrics->RecordComboPointGeneration(1);
+
                 _metrics->backstabsLanded++;
+
                 return;
+
             }
         }
 
         // Use Sinister Strike as default builder
         if (CanUseAbility(SINISTER_STRIKE))
         {
+
             if (CastSpell(target, SINISTER_STRIKE))
+
             {
+
                 RecordAbilityUsage(SINISTER_STRIKE);
+
                 _combatMetrics->RecordAbilityUsage(SINISTER_STRIKE, true, 45);
+
                 _combatMetrics->RecordComboPointGeneration(1);
+
                 return;
+
             }
         }
     }
@@ -605,6 +804,7 @@ void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success)
     if (success)
     {
         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} successfully interrupted {} with spell {}",
+
                      GetBot()->GetName(), target->GetName(), spellId);
     }
 }
@@ -621,9 +821,13 @@ void RogueAI::UseDefensiveCooldowns()
     {
         if (CastSpell(EVASION))
         {
+
             RecordAbilityUsage(EVASION);
+
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Evasion (defensive)",
+
                          GetBot()->GetName());
+
             return;
         }
     }
@@ -634,12 +838,19 @@ void RogueAI::UseDefensiveCooldowns()
     {
         if (CanUseAbility(CLOAK_OF_SHADOWS))
         {
+
             if (CastSpell(CLOAK_OF_SHADOWS))
+
             {
+
                 RecordAbilityUsage(CLOAK_OF_SHADOWS);
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Cloak of Shadows",
+
                              GetBot()->GetName());
+
                 return;
+
             }
         }
     }
@@ -649,9 +860,13 @@ void RogueAI::UseDefensiveCooldowns()
     {
         if (CastSpell(1966))
         {
+
             RecordAbilityUsage(1966);
+
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used Feint for damage reduction",
+
                          GetBot()->GetName());
+
             return;
         }
     }
@@ -661,10 +876,15 @@ void RogueAI::UseDefensiveCooldowns()
     {
         if (CastSpell(VANISH))
         {
+
             RecordAbilityUsage(VANISH);
+
             _lastVanish = GameTime::GetGameTimeMS();
+
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used Vanish (emergency escape)",
+
                          GetBot()->GetName());
+
             return;
         }
     }
@@ -676,12 +896,19 @@ void RogueAI::UseDefensiveCooldowns()
         uint32 combatReadiness = 74001; // Combat Readiness spell ID
         if (CanUseAbility(combatReadiness))
         {
+
             if (CastSpell(combatReadiness))
+
             {
+
                 RecordAbilityUsage(combatReadiness);
+
                 TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Combat Readiness",
+
                              GetBot()->GetName());
+
                 return;
+
             }
         }
     }
@@ -707,6 +934,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
+
             return 0;
     }
 
@@ -730,6 +958,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
  {
  }
         if (!entity)
+
             continue;
         // Original filtering logic from searcher goes here
     }
@@ -738,6 +967,7 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
     for (auto& target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))
+
             count++;
     }
 
@@ -748,6 +978,7 @@ void RogueAI::RecordAbilityUsage(uint32 spellId)
 {
     // Record ability usage for performance tracking
     TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} used ability {}",
+
                  GetBot()->GetName(), spellId);
 }
 
@@ -760,6 +991,7 @@ void RogueAI::OnTargetChanged(Unit* newTarget)
     _comboPointsUsed = 0;
 
     TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} changed target to {}",
+
                  GetBot()->GetName(), newTarget->GetName());
 }
 
@@ -777,8 +1009,11 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     {
         if (CanUseAbility(STEALTH))
         {
+
             CastSpell(STEALTH);
+
             _metrics->stealthOpeners++;
+
             return;
         }
     }
@@ -787,6 +1022,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     if (HasAura(STEALTH) && distance <= 5.0f)
     {
         if (ExecuteStealthOpener(target))
+
             return;
     }
 
@@ -796,24 +1032,34 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
         // Maintain Slice and Dice
         if (comboPoints >= 2 && !HasAura(SLICE_AND_DICE))
         {
+
             if (CanUseAbility(SLICE_AND_DICE))
+
             {
+
                 CastSpell(target, SLICE_AND_DICE);
+
                 _metrics->totalFinishersExecuted++;
+
                 return;
+
             }
         }
 
         // Use finishers at 5 combo points
         if (comboPoints >= 5)
         {
+
             if (ExecuteFinisher(target))
+
                 return;
         }
 
         // Build combo points
         if (energy >= 40)        {
+
             if (BuildComboPoints(target))
+
                 return;
         }
     }
@@ -823,11 +1069,17 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     {
         if (_interruptManager->IsSpellInterruptWorthy(target->GetCurrentSpell(CURRENT_GENERIC_SPELL) ? target->GetCurrentSpell(CURRENT_GENERIC_SPELL)->GetSpellInfo()->Id : 0, target))
         {
+
             if (CanUseAbility(KICK))
+
             {
+
                 CastSpell(target, KICK);
+
                 _metrics->interruptsExecuted++;
+
                 return;
+
             }
         }
     }
@@ -877,9 +1129,13 @@ bool RogueAI::ExecuteFinisher(Unit* target)
     {
         if (CanUseAbility(SLICE_AND_DICE))
         {
+
             CastSpell(target, SLICE_AND_DICE);
+
             _combatMetrics->RecordAbilityUsage(SLICE_AND_DICE, true, 25);
+
             _metrics->totalFinishersExecuted++;
+
             return true;
         }
     }
@@ -889,9 +1145,13 @@ bool RogueAI::ExecuteFinisher(Unit* target)
     {
         if (CanUseAbility(RUPTURE))
         {
+
             CastSpell(target, RUPTURE);
+
             _combatMetrics->RecordAbilityUsage(RUPTURE, true, 25);
+
             _metrics->totalFinishersExecuted++;
+
             return true;
         }
     }
@@ -938,27 +1198,44 @@ bool RogueAI::BuildComboPoints(Unit* target)
     switch (spec)
     {
         case 0: // Assassination
+
             if (CanUseAbility(MUTILATE))
+
             {
+
                 CastSpell(target, MUTILATE);
+
                 _combatMetrics->RecordAbilityUsage(MUTILATE, true, 60);
+
                 _combatMetrics->RecordComboPointGeneration(2);
+
                 return true;
+
             }
+
             break;
 
         case 2: // Subtlety
+
             if (CanUseAbility(HEMORRHAGE))
+
             {
+
                 CastSpell(target, HEMORRHAGE);
+
                 _combatMetrics->RecordAbilityUsage(HEMORRHAGE, true, 35);
+
                 _combatMetrics->RecordComboPointGeneration(1);
+
                 return true;
+
             }
+
             break;
 
         case 1: // Combat/Outlaw
             // Combat prefers Sinister Strike
+
             break;
     }
 
@@ -1001,7 +1278,9 @@ void RogueAI::UpdateBuffs()
     {
         if (!HasAura(STEALTH) && CanUseAbility(STEALTH))
         {
+
             CastSpell(STEALTH);
+
             _lastStealth = currentTime;
         }
     }
@@ -1022,21 +1301,33 @@ void RogueAI::ApplyPoisons()
         uint32 poisonSpell = 0;
         switch (spec)
         {
+
             case 0: // Assassination
+
                 poisonSpell = DEADLY_POISON;
+
                 break;
+
             case 1: // Combat/Outlaw
+
                 poisonSpell = INSTANT_POISON;
+
                 break;
+
             case 2: // Subtlety
+
                 poisonSpell = WOUND_POISON;
+
                 break;
         }
 
         if (poisonSpell && CanUseAbility(poisonSpell))
         {
+
             CastSpell(poisonSpell);
+
             _metrics->poisonApplications++;
+
             TC_LOG_DEBUG("playerbot", "RogueAI: Applied main hand poison");
         }
     }
@@ -1049,21 +1340,33 @@ void RogueAI::ApplyPoisons()
         uint32 poisonSpell = 0;
         switch (spec)
         {
+
             case 0: // Assassination
+
                 poisonSpell = INSTANT_POISON;
+
                 break;
+
             case 1: // Combat/Outlaw
+
                 poisonSpell = CRIPPLING_POISON;
+
                 break;
+
             case 2: // Subtlety
+
                 poisonSpell = MIND_NUMBING_POISON;
+
                 break;
         }
 
         if (poisonSpell && CanUseAbility(poisonSpell))
         {
+
             CastSpell(poisonSpell);
+
             _metrics->poisonApplications++;
+
             TC_LOG_DEBUG("playerbot", "RogueAI: Applied off hand poison");
         }
     }
@@ -1114,8 +1417,11 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
     {
         if (cost.Power == POWER_ENERGY)
         {
+
             uint32 currentEnergy = GetBot()->GetPower(POWER_ENERGY);
+
             if (currentEnergy < cost.Amount)
+
                 return false;
         }
     }
@@ -1124,6 +1430,7 @@ bool RogueAI::HasEnoughResource(uint32 spellId)
     if (IsFinisher(spellId))
     {        uint8 comboPoints = GetBot()->GetPower(POWER_COMBO_POINTS);
         if (comboPoints < 1)
+
             return false;
     }
 
@@ -1156,7 +1463,9 @@ void RogueAI::ConsumeResource(uint32 spellId)
     {
         if (cost.Power == POWER_ENERGY)
         {
+
             _metrics->totalEnergySpent += cost.Amount;
+
             _energySpent += cost.Amount;
         }
     }
@@ -1206,7 +1515,9 @@ void RogueAI::OnCombatStart(Unit* target)
     {
         if (CanUseAbility(EVASION))
         {
+
             CastSpell(EVASION);
+
             TC_LOG_DEBUG("playerbot", "RogueAI: Activated Evasion (defensive)");
         }
     }
@@ -1232,6 +1543,7 @@ void RogueAI::OnCombatEnd()
     }
 
     TC_LOG_DEBUG("playerbot", "RogueAI: Combat ended. Energy spent: {}, CP generated: {}, Finishers: {}",
+
                  _energySpent, _comboPointsUsed, _metrics->totalFinishersExecuted.load());
 }
 
@@ -1244,47 +1556,85 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
     switch (spec)
     {
         case 0: // Assassination
+
             if (CanUseAbility(COLD_BLOOD))
+
             {
+
                 CastSpell(COLD_BLOOD);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             if (CanUseAbility(VENDETTA))
+
             {
+
                 CastSpell(target, VENDETTA);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             break;
 
         case 1: // Combat/Outlaw
+
             if (CanUseAbility(BLADE_FLURRY))
+
             {
+
                 CastSpell(BLADE_FLURRY);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             if (CanUseAbility(ADRENALINE_RUSH))
+
             {
+
                 CastSpell(ADRENALINE_RUSH);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             if (CanUseAbility(KILLING_SPREE))
+
             {
+
                 CastSpell(target, KILLING_SPREE);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             break;
 
         case 2: // Subtlety
+
             if (CanUseAbility(SHADOW_DANCE))
+
             {
+
                 CastSpell(SHADOW_DANCE);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             if (CanUseAbility(SHADOWSTEP))
+
             {
+
                 CastSpell(target, SHADOWSTEP);
+
                 _metrics->cooldownsUsed++;
+
             }
+
             break;
     }
 }
