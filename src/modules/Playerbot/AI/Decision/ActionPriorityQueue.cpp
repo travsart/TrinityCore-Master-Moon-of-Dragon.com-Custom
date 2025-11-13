@@ -13,6 +13,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // ============================================================================
@@ -369,3 +370,4 @@ const PrioritizedSpell* ActionPriorityQueue::FindSpell(uint32 spellId) const
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

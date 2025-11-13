@@ -20,6 +20,7 @@
 class Player;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Forward declarations
@@ -260,3 +261,4 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
