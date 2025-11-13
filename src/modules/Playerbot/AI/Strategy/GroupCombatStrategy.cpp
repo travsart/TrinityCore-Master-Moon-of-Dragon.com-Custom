@@ -19,6 +19,7 @@
 #include "Log.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

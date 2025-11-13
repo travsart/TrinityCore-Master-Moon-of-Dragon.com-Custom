@@ -9,6 +9,7 @@
 #include "Log.h"
 #include "Timer.h"
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot {
 

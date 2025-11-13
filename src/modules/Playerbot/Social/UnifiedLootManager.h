@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 #include <atomic>
+#include "GameTime.h"
 
 namespace Playerbot
 {

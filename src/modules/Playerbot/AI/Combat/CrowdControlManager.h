@@ -11,6 +11,7 @@
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include <vector>
+#include "GameTime.h"
 
 class Player;
 class Unit;

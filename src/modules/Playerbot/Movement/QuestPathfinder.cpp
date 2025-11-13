@@ -27,6 +27,7 @@
 #include "World.h"
 #include <algorithm>
 #include <cmath>
+#include "GameTime.h"
 
 namespace Playerbot
 {

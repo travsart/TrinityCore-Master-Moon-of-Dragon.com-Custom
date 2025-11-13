@@ -16,6 +16,7 @@
 #include "SpellInfo.h"
 #include "Log.h"
 #include "SpellMgr.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

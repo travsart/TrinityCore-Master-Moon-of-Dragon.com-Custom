@@ -34,6 +34,7 @@
 #include "LootItemType.h"  // For LootItemType enum used in RewardQuest
 #include "UnitAI.h"
 #include <limits>
+#include "GameTime.h"
 
 namespace Playerbot
 {

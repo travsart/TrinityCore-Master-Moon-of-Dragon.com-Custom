@@ -11,6 +11,7 @@
 #include "Log.h"
 #include "Timer.h"
 #include <sstream>
+#include "GameTime.h"
 
 namespace Playerbot
 {

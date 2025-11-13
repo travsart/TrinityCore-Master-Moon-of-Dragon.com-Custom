@@ -15,6 +15,7 @@
 #include "Map.h"
 #include <algorithm>
 #include <execution>
+#include "GameTime.h"
 
 namespace Playerbot
 {

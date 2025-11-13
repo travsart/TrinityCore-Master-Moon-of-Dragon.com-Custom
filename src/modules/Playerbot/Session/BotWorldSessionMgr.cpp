@@ -20,6 +20,7 @@
 #include "../Spatial/SpatialGridScheduler.h"
 #include <chrono>
 #include <queue>
+#include "GameTime.h"
 
 namespace Playerbot {
 

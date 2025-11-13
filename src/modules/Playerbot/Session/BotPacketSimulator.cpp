@@ -20,6 +20,7 @@
 #include "AuthenticationPackets.h"
 #include "MovementPackets.h"
 #include "MiscPackets.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {

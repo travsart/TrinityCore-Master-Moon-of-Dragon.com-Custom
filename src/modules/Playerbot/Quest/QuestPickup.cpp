@@ -28,6 +28,7 @@
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 2G: For snapshot-based player validation
 #include "../Threading/BotActionQueue.h"    // OPTION B: Lock-free action queue
+#include "GameTime.h"
 
 namespace Playerbot
 {

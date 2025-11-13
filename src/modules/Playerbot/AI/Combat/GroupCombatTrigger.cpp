@@ -19,6 +19,7 @@
 #include "../Actions/TargetAssistAction.h"
 #include "../Actions/Action.h"
 #include <algorithm>
+#include "GameTime.h"
 
 namespace Playerbot
 {

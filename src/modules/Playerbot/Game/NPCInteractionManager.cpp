@@ -31,6 +31,7 @@
 #include <algorithm>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
+#include "GameTime.h"
 
 namespace Playerbot
 {
