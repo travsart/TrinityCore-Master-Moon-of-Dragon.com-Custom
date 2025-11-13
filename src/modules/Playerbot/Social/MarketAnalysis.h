@@ -65,6 +65,96 @@ struct MarketSnapshot
         , salesVelocity(0) {}
 };
 
+// Market metrics for liquidity and efficiency tracking
+struct MarketMetrics
+{
+    float liquidity; // How easily items can be bought/sold
+    float efficiency; // Price stability and fair value alignment
+    float competitiveness; // Number of active sellers
+    float seasonality; // Cyclical price patterns
+    float momentum; // Rate of price change
+    MarketTrend currentTrend;
+    uint32 lastAnalysisTime;
+
+    MarketMetrics() : liquidity(0.5f), efficiency(0.8f), competitiveness(0.6f)
+        , seasonality(0.0f), momentum(0.0f), currentTrend(MarketTrend::STABLE)
+        , lastAnalysisTime(GameTime::GetGameTimeMS()) {}
+};
+
+// Price analysis and forecasting data
+struct PriceAnalysis
+{
+    float fairValue; // Calculated "true" market value
+    float supportLevel; // Price floor based on historical data
+    float resistanceLevel; // Price ceiling based on historical data
+    float volatility; // Price variability measure
+    float momentum; // Price change acceleration
+    float confidence; // Reliability of the analysis (0.0-1.0)
+    std::vector<float> movingAverages; // 7-day, 14-day, 30-day averages
+
+    PriceAnalysis() : fairValue(0.0f), supportLevel(0.0f), resistanceLevel(0.0f)
+        , volatility(0.0f), momentum(0.0f), confidence(0.5f) {}
+};
+
+// Market opportunity identification
+struct MarketOpportunity
+{
+    uint32 itemId;
+    std::string itemName;
+    MarketSegment segment;
+    float currentPrice;
+    float targetPrice;
+    float potentialProfit;
+    float riskLevel;
+    uint32 timeToTarget; // Estimated hours to reach target
+    std::string reason;
+    float confidence;
+
+    MarketOpportunity() : itemId(0), segment(MarketSegment::EQUIPMENT)
+        , currentPrice(0.0f), targetPrice(0.0f), potentialProfit(0.0f)
+        , riskLevel(0.5f), timeToTarget(0), confidence(0.5f) {}
+};
+
+// Competitive analysis data
+struct CompetitorAnalysis
+{
+    std::vector<uint32> majorSellers;
+    std::unordered_map<uint32, float> sellerMarketShare; // sellerGuid -> market share
+    std::unordered_map<uint32, float> sellerPricingStyle; // sellerGuid -> aggressiveness
+    float marketConcentration; // How dominated by few sellers
+    uint32 averageListingDuration;
+    float averageUndercutAmount;
+
+    CompetitorAnalysis() : marketConcentration(0.5f), averageListingDuration(86400)
+        , averageUndercutAmount(0.05f) {}
+};
+
+// Analysis performance metrics
+struct AnalysisMetrics
+{
+    std::atomic<uint32> predictionsGenerated{0};
+    std::atomic<uint32> accuratePredictions{0};
+    std::atomic<uint32> opportunitiesIdentified{0};
+    std::atomic<uint32> profitableOpportunities{0};
+    std::atomic<float> averageAccuracy{0.7f};
+    std::atomic<float> averageProfitability{0.15f};
+    std::atomic<uint32> marketUpdates{0};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    void Reset() {
+        predictionsGenerated = 0; accuratePredictions = 0;
+        opportunitiesIdentified = 0; profitableOpportunities = 0;
+        averageAccuracy = 0.7f; averageProfitability = 0.15f;
+        marketUpdates = 0; lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetPredictionAccuracy() const {
+        uint32 total = predictionsGenerated.load();
+        uint32 accurate = accuratePredictions.load();
+        return total > 0 ? (float)accurate / total : 0.0f;
+    }
+};
+
 /**
  * @brief Advanced market analysis system for auction house intelligence
  *
@@ -89,63 +179,16 @@ public:
     void TrackMarketMovement();
 
     // Advanced market metrics
-    struct MarketMetrics
-    {
-        float liquidity; // How easily items can be bought/sold
-        float efficiency; // Price stability and fair value alignment
-        float competitiveness; // Number of active sellers
-        float seasonality; // Cyclical price patterns
-        float momentum; // Rate of price change
-        MarketTrend currentTrend;
-        uint32 lastAnalysisTime;
-
-        MarketMetrics() : liquidity(0.5f), efficiency(0.8f), competitiveness(0.6f)
-            , seasonality(0.0f), momentum(0.0f), currentTrend(MarketTrend::STABLE)
-            , lastAnalysisTime(GameTime::GetGameTimeMS()) {}
-    };
-
     MarketMetrics GetMarketMetrics(uint32 itemId) override;
     MarketMetrics GetSegmentMetrics(MarketSegment segment) override;
 
     // Price analysis and forecasting
-    struct PriceAnalysis
-    {
-        float fairValue; // Calculated "true" market value
-        float supportLevel; // Price floor based on historical data
-        float resistanceLevel; // Price ceiling based on historical data
-        float volatility; // Price variability measure
-        float momentum; // Price change acceleration
-        float confidence; // Reliability of the analysis (0.0-1.0)
-        std::vector<float> movingAverages; // 7-day, 14-day, 30-day averages
-
-        PriceAnalysis() : fairValue(0.0f), supportLevel(0.0f), resistanceLevel(0.0f)
-            , volatility(0.0f), momentum(0.0f), confidence(0.5f) {}
-    };
-
     PriceAnalysis AnalyzePrice(uint32 itemId) override;
     float CalculateFairValue(uint32 itemId) override;
     std::pair<float, float> GetPriceRange(uint32 itemId, float confidence = 0.95f);
     bool IsPriceAnomaly(uint32 itemId, uint32 price) override;
 
     // Market opportunity identification
-    struct MarketOpportunity
-    {
-        uint32 itemId;
-        std::string itemName;
-        MarketSegment segment;
-        float currentPrice;
-        float targetPrice;
-        float potentialProfit;
-        float riskLevel;
-        uint32 timeToTarget; // Estimated hours to reach target
-        std::string reason;
-        float confidence;
-
-        MarketOpportunity() : itemId(0), segment(MarketSegment::EQUIPMENT)
-            , currentPrice(0.0f), targetPrice(0.0f), potentialProfit(0.0f)
-            , riskLevel(0.5f), timeToTarget(0), confidence(0.5f) {}
-    };
-
     std::vector<MarketOpportunity> IdentifyOpportunities(Player* player, uint32 budgetLimit = 0) override;
     std::vector<MarketOpportunity> FindArbitrageOpportunities();
     std::vector<MarketOpportunity> FindFlipOpportunities(uint32 maxInvestment);
@@ -153,19 +196,6 @@ public:
     bool IsGoodSellingOpportunity(uint32 itemId, uint32 price) override;
 
     // Competitive analysis
-    struct CompetitorAnalysis
-    {
-        std::vector<uint32> majorSellers;
-        std::unordered_map<uint32, float> sellerMarketShare; // sellerGuid -> market share
-        std::unordered_map<uint32, float> sellerPricingStyle; // sellerGuid -> aggressiveness
-        float marketConcentration; // How dominated by few sellers
-        uint32 averageListingDuration;
-        float averageUndercutAmount;
-
-        CompetitorAnalysis() : marketConcentration(0.5f), averageListingDuration(86400)
-            , averageUndercutAmount(0.05f) {}
-    };
-
     CompetitorAnalysis AnalyzeCompetition(uint32 itemId) override;
     std::vector<uint32> GetTopSellers(uint32 itemId, uint32 count = 5) override;
     float GetSellerReputationScore(uint32 sellerGuid);
@@ -185,31 +215,6 @@ public:
     MarketTrend GetSegmentTrend(MarketSegment segment) override;
 
     // Performance and accuracy tracking
-    struct AnalysisMetrics
-    {
-        std::atomic<uint32> predictionsGenerated{0};
-        std::atomic<uint32> accuratePredictions{0};
-        std::atomic<uint32> opportunitiesIdentified{0};
-        std::atomic<uint32> profitableOpportunities{0};
-        std::atomic<float> averageAccuracy{0.7f};
-        std::atomic<float> averageProfitability{0.15f};
-        std::atomic<uint32> marketUpdates{0};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset() {
-            predictionsGenerated = 0; accuratePredictions = 0;
-            opportunitiesIdentified = 0; profitableOpportunities = 0;
-            averageAccuracy = 0.7f; averageProfitability = 0.15f;
-            marketUpdates = 0; lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetPredictionAccuracy() const {
-            uint32 total = predictionsGenerated.load();
-            uint32 accurate = accuratePredictions.load();
-            return total > 0 ? (float)accurate / total : 0.0f;
-        }
-    };
-
     AnalysisMetrics const& GetAnalysisMetrics() const override { return _metrics; }
 
     // Configuration and learning
