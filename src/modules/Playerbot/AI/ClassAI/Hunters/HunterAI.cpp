@@ -101,7 +101,7 @@ void HunterAI::UpdateRotation(::Unit* target)
         // Fallback to basic ranged attack        if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
 
         {
-        _bot->CastSpell(target, ARCANE_SHOT, false);
+        _bot->CastSpell(CastSpellTargetArg(target), ARCANE_SHOT);
         }
         return;
     }
@@ -1346,7 +1346,7 @@ float HunterAI::GetPetHealthPercent() const
 }void HunterAI::HealPet()
 {    if (!_bot->HasSpell(MEND_PET) || !CanUseAbility(MEND_PET))        return;    Pet* pet = GetPet();
     if (pet && pet->IsAlive())
-    {        _bot->CastSpell(pet, MEND_PET, false);
+    {        _bot->CastSpell(CastSpellTargetArg(pet), MEND_PET);
     }
 }
 
@@ -1354,12 +1354,12 @@ void HunterAI::RevivePet()
 {
     
     if (!_bot->HasSpell(REVIVE_PET) || !CanUseAbility(REVIVE_PET))
-        return;    _bot->CastSpell(_bot, REVIVE_PET, false);
+        return;    _bot->CastSpell(CastSpellTargetArg(REVIVE_PET), _bot);
 }
 
 void HunterAI::CallPet()
 {    if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
-        return;    _bot->CastSpell(_bot, CALL_PET, false);
+        return;    _bot->CastSpell(CastSpellTargetArg(CALL_PET), _bot);
 }
 
 // Trap management implementation

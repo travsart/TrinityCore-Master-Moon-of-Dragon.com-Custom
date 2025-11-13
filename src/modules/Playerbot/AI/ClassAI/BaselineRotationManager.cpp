@@ -468,7 +468,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
         if (bot->HasSpell(CHARGE))
         {
 
-            bot->CastSpell(target, CHARGE, false);
+            bot->CastSpell(CastSpellTargetArg(target), CHARGE);
 
             return true;
         }
@@ -478,7 +478,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     if (target->GetHealthPct() <= 20.0f && bot->HasSpell(EXECUTE))    {
         if (bot->GetPower(POWER_RAGE) >= 15)        {
 
-            bot->CastSpell(target, EXECUTE, false);
+            bot->CastSpell(CastSpellTargetArg(target), EXECUTE);
 
             return true;
         }
@@ -487,13 +487,13 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     // Victory Rush for healing
     if (bot->HasSpell(VICTORY_RUSH) && bot->HasAura(32216)) // Victory Rush proc
     {
-        bot->CastSpell(target, VICTORY_RUSH, false);
+        bot->CastSpell(CastSpellTargetArg(target), VICTORY_RUSH);
         return true;
     }
 
     // Slam as rage dump
     if (bot->HasSpell(SLAM) && bot->GetPower(POWER_RAGE) >= 20)    {
-        bot->CastSpell(target, SLAM, false);
+        bot->CastSpell(CastSpellTargetArg(target), SLAM);
         return true;
     }
 
@@ -502,7 +502,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
         if (target->GetHealthPct() < 30.0f)
         {
 
-            bot->CastSpell(target, HAMSTRING, false);
+            bot->CastSpell(CastSpellTargetArg(target), HAMSTRING);
 
             return true;
         }
@@ -515,7 +515,7 @@ void WarriorBaselineRotation::ApplyBuffs(Player* bot){
     // Battle Shout
     if (bot->HasSpell(BATTLE_SHOUT) && !bot->HasAura(BATTLE_SHOUT))
     {
-        bot->CastSpell(bot, BATTLE_SHOUT, false);
+        bot->CastSpell(CastSpellTargetArg(bot), BATTLE_SHOUT);
     }
 }
 

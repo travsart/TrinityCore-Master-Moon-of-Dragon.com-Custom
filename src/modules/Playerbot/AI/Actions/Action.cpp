@@ -123,9 +123,9 @@ bool Action::DoCast(BotAI* ai, uint32 spellId, ::Unit* target)
 
     // Cast the spell
     if (target)
-        bot->CastSpell(spellId, false, target);
+        bot->CastSpell(CastSpellTargetArg(target), spellId);
     else
-        bot->CastSpell(spellId, false, bot);
+        bot->CastSpell(CastSpellTargetArg(bot), spellId);
 
     return true;
 }

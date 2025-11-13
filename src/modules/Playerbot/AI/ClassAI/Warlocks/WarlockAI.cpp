@@ -348,7 +348,7 @@ bool WarlockAI::HandleInterrupt(Unit* target)
 
             {
 
-                pet->CastSpell(SPELL_LOCK, false, target);
+                pet->CastSpell(CastSpellTargetArg(target), SPELL_LOCK);
 
                 _petAbilityCooldowns[SPELL_LOCK] = GameTime::GetGameTimeMS();
 
@@ -363,7 +363,7 @@ bool WarlockAI::HandleInterrupt(Unit* target)
         float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance        if (distance <= 30.0f)
         {
 
-            bot->CastSpell(target, SHADOWFURY, false);
+            bot->CastSpell(CastSpellTargetArg(target), SHADOWFURY);
 
             return true;
         }
@@ -385,7 +385,7 @@ bool WarlockAI::HandleDefensives()
         if (bot->HasSpell(UNENDING_RESOLVE) && !bot->GetSpellHistory()->HasCooldown(UNENDING_RESOLVE))
         {
 
-            bot->CastSpell(bot, UNENDING_RESOLVE, false);
+            bot->CastSpell(CastSpellTargetArg(bot), UNENDING_RESOLVE);
 
             return true;
         }
@@ -394,7 +394,7 @@ bool WarlockAI::HandleDefensives()
         if (bot->HasSpell(DARK_PACT) && !bot->GetSpellHistory()->HasCooldown(DARK_PACT))
         {
 
-            bot->CastSpell(bot, DARK_PACT, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DARK_PACT);
 
             return true;
         }
@@ -407,14 +407,14 @@ bool WarlockAI::HandleDefensives()
     {        // Shadow Ward/Nether Ward
         if (bot->HasSpell(NETHER_WARD) && !bot->GetSpellHistory()->HasCooldown(NETHER_WARD))        {
 
-            bot->CastSpell(bot, NETHER_WARD, false);
+            bot->CastSpell(CastSpellTargetArg(bot), NETHER_WARD);
 
             return true;
         
         }
         else if (bot->HasSpell(SHADOW_WARD) && !bot->GetSpellHistory()->HasCooldown(SHADOW_WARD))        {
 
-            bot->CastSpell(bot, SHADOW_WARD, false);
+            bot->CastSpell(CastSpellTargetArg(bot), SHADOW_WARD);
 
             return true;
         }        // Death Coil for heal + fear
@@ -426,7 +426,7 @@ bool WarlockAI::HandleDefensives()
             if (nearestEnemy)
             {
 
-                bot->CastSpell(nearestEnemy, DEATH_COIL, false);
+                bot->CastSpell(CastSpellTargetArg(nearestEnemy), DEATH_COIL);
 
                 return true;
 
@@ -440,7 +440,7 @@ bool WarlockAI::HandleDefensives()
 
             if (GetNearbyEnemyCount(10.0f) >= 2)
             {
-            bot->CastSpell(bot, HOWL_OF_TERROR, false);
+            bot->CastSpell(CastSpellTargetArg(bot), HOWL_OF_TERROR);
 
                 return true;
                 }
@@ -448,7 +448,7 @@ bool WarlockAI::HandleDefensives()
         Unit* target = bot->GetVictim();        if (target && bot->HasSpell(DRAIN_LIFE) && !bot->IsNonMeleeSpellCast(false))
         {
 
-            bot->CastSpell(target, DRAIN_LIFE, false);
+            bot->CastSpell(CastSpellTargetArg(target), DRAIN_LIFE);
 
             return true;
         }
@@ -477,7 +477,7 @@ bool WarlockAI::HandlePetManagement()
         // Health Funnel
         if (bot->HasSpell(HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))        {
 
-            bot->CastSpell(pet, HEALTH_FUNNEL, false);
+            bot->CastSpell(CastSpellTargetArg(pet), HEALTH_FUNNEL);
             return true;
         }
 
@@ -489,7 +489,7 @@ bool WarlockAI::HandlePetManagement()
 
             {
 
-                pet->CastSpell(pet, CONSUME_SHADOWS, false);
+                pet->CastSpell(CastSpellTargetArg(pet), CONSUME_SHADOWS);
 
                 _petAbilityCooldowns[CONSUME_SHADOWS] = GameTime::GetGameTimeMS();
 
@@ -502,7 +502,7 @@ bool WarlockAI::HandlePetManagement()
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
 
-            bot->CastSpell(bot, DEMONIC_EMPOWERMENT, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DEMONIC_EMPOWERMENT);
 
             return true;
         }
@@ -567,7 +567,7 @@ bool WarlockAI::SummonPet()
         uint32 soulShards = bot->GetItemCount(6265);        if (soulShards > 0)
         {
 
-            bot->CastSpell(summonSpell, false, bot);
+            bot->CastSpell(CastSpellTargetArg(bot), summonSpell);
 
             _lastPetSummon = GameTime::GetGameTimeMS();
 
@@ -596,7 +596,7 @@ bool WarlockAI::HandleCrowdControl(Unit* target){    if (!target)
         float distanceSq = bot->GetExactDistSq(target);        if (!target->HasAura(FEAR) && distanceSq <= (20.0f * 20.0f)) // 400.0f
 
         {
-        bot->CastSpell(target, FEAR, false);
+        bot->CastSpell(CastSpellTargetArg(target), FEAR);
 
             _lastFear = now;
             _fearsUsed++;
@@ -612,14 +612,14 @@ bool WarlockAI::HandleCrowdControl(Unit* target){    if (!target)
         if (bot->HasSpell(BANISH) && !target->HasAura(BANISH))
         {
 
-            bot->CastSpell(target, BANISH, false);
+            bot->CastSpell(CastSpellTargetArg(target), BANISH);
 
             return true;
         }
     }
 
     // Curse of Exhaustion - slow for kiting    if (bot->HasSpell(CURSE_OF_EXHAUSTION) && !target->HasAura(CURSE_OF_EXHAUSTION))    {
-        bot->CastSpell(target, CURSE_OF_EXHAUSTION, false);
+        bot->CastSpell(CastSpellTargetArg(target), CURSE_OF_EXHAUSTION);
         return true;
     }    return false;
 }
@@ -639,27 +639,27 @@ bool WarlockAI::HandleAoERotation(Unit* target)
     if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)    {
         if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))        {
 
-            bot->CastSpell(target, SEED_OF_CORRUPTION, false);
+            bot->CastSpell(CastSpellTargetArg(target), SEED_OF_CORRUPTION);
 
             return true;
         }
     }    // Rain of Fire    if (bot->HasSpell(RAIN_OF_FIRE) && !bot->GetSpellHistory()->HasCooldown(RAIN_OF_FIRE))
     {
         // Note: Ground-targeted spell, needs special handling
-        bot->CastSpell(target, RAIN_OF_FIRE, false);
+        bot->CastSpell(CastSpellTargetArg(target), RAIN_OF_FIRE);
         return true;
     }
 
     // Cataclysm (if available)    
     if (bot->HasSpell(CATACLYSM) && !bot->GetSpellHistory()->HasCooldown(CATACLYSM))
     {
-        bot->CastSpell(target, CATACLYSM, false);
+        bot->CastSpell(CastSpellTargetArg(target), CATACLYSM);
         return true;
     }    // Fire and Brimstone for Destruction (267)    if (static_cast<uint32>(spec) == 267)
     {        if (bot->HasSpell(FIRE_AND_BRIMSTONE) && !bot->HasAura(FIRE_AND_BRIMSTONE))
         {
 
-            bot->CastSpell(bot, FIRE_AND_BRIMSTONE, false);
+            bot->CastSpell(CastSpellTargetArg(bot), FIRE_AND_BRIMSTONE);
 
             return true;
         }
@@ -667,7 +667,7 @@ bool WarlockAI::HandleAoERotation(Unit* target)
 
     // Mannoroth's Fury    if (bot->HasSpell(MANNOROTH_FURY) && !bot->GetSpellHistory()->HasCooldown(MANNOROTH_FURY))
     {
-        bot->CastSpell(bot, MANNOROTH_FURY, false);
+        bot->CastSpell(CastSpellTargetArg(bot), MANNOROTH_FURY);
         return true;
     }
 
@@ -695,7 +695,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
         if (bot->HasSpell(DARK_SOUL_MISERY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_MISERY))
         {
 
-            bot->CastSpell(bot, DARK_SOUL_MISERY, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_MISERY);
 
             usedCooldown = true;
         }
@@ -706,21 +706,21 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
         if (bot->HasSpell(METAMORPHOSIS) && !bot->GetSpellHistory()->HasCooldown(METAMORPHOSIS))
         {
 
-            bot->CastSpell(bot, METAMORPHOSIS, false);
+            bot->CastSpell(CastSpellTargetArg(bot), METAMORPHOSIS);
 
             usedCooldown = true;
         }
         // Dark Soul: Knowledge        if (bot->HasSpell(DARK_SOUL_KNOWLEDGE) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_KNOWLEDGE))
         {
 
-            bot->CastSpell(bot, DARK_SOUL_KNOWLEDGE, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_KNOWLEDGE);
 
             usedCooldown = true;
         }
     }    else if (static_cast<uint32>(spec) == 267) // Destruction
     {        if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))        {
 
-            bot->CastSpell(bot, DARK_SOUL_INSTABILITY, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_INSTABILITY);
 
             usedCooldown = true;
         }
@@ -740,7 +740,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
                 {
 
-                    bot->CastSpell(target, SUMMON_INFERNAL, false);
+                    bot->CastSpell(CastSpellTargetArg(target), SUMMON_INFERNAL);
 
                     usedCooldown = true;
 
@@ -761,7 +761,7 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
 
                 {
 
-                    bot->CastSpell(target, SUMMON_DOOMGUARD, false);
+                    bot->CastSpell(CastSpellTargetArg(target), SUMMON_DOOMGUARD);
 
                     usedCooldown = true;
 
@@ -802,7 +802,7 @@ void WarlockAI::HandleSoulShardManagement()
         if (bot->HasSpell(CREATE_HEALTHSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_HEALTHSTONE))
         {
 
-            bot->CastSpell(bot, CREATE_HEALTHSTONE, false);
+            bot->CastSpell(CastSpellTargetArg(bot), CREATE_HEALTHSTONE);
         }
     }
 
@@ -810,7 +810,7 @@ void WarlockAI::HandleSoulShardManagement()
     {        if (bot->HasSpell(CREATE_SOULSTONE) && !bot->GetSpellHistory()->HasCooldown(CREATE_SOULSTONE))
         {
 
-            bot->CastSpell(bot, CREATE_SOULSTONE, false);
+            bot->CastSpell(CastSpellTargetArg(bot), CREATE_SOULSTONE);
         }
     }
 }
@@ -825,7 +825,7 @@ bool WarlockAI::HandleInstantCasts(Unit* target){
     // Corruption - instant with talent
     if (bot->HasSpell(CORRUPTION) && !target->HasAura(CORRUPTION))
     {
-        bot->CastSpell(target, CORRUPTION, false);
+        bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
         return true;
     }
 
@@ -842,7 +842,7 @@ bool WarlockAI::HandleInstantCasts(Unit* target){
 
             {
 
-                bot->CastSpell(target, CONFLAGRATE, false);
+                bot->CastSpell(CastSpellTargetArg(target), CONFLAGRATE);
 
                 return true;
 
@@ -856,7 +856,7 @@ bool WarlockAI::HandleInstantCasts(Unit* target){
         if (!bot->GetSpellHistory()->HasCooldown(SHADOWBURN))
         {
 
-            bot->CastSpell(target, SHADOWBURN, false);
+            bot->CastSpell(CastSpellTargetArg(target), SHADOWBURN);
 
             return true;
         }
@@ -879,7 +879,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
     // Corruption - primary DoT
     if (bot->HasSpell(CORRUPTION) && !target->HasAura(CORRUPTION))
     {
-        bot->CastSpell(target, CORRUPTION, false);
+        bot->CastSpell(CastSpellTargetArg(target), CORRUPTION);
         _dotTracker[targetGuid][CORRUPTION] = now;
         return true;
     }
@@ -891,7 +891,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
         if (bot->HasSpell(UNSTABLE_AFFLICTION) && !target->HasAura(UNSTABLE_AFFLICTION))
         {
 
-            bot->CastSpell(target, UNSTABLE_AFFLICTION, false);
+            bot->CastSpell(CastSpellTargetArg(target), UNSTABLE_AFFLICTION);
 
             _dotTracker[targetGuid][UNSTABLE_AFFLICTION] = now;
             return true;
@@ -900,7 +900,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
         if (bot->HasSpell(HAUNT) && !bot->GetSpellHistory()->HasCooldown(HAUNT))
         {
 
-            bot->CastSpell(target, HAUNT, false);
+            bot->CastSpell(CastSpellTargetArg(target), HAUNT);
 
             _dotTracker[targetGuid][HAUNT] = now;
 
@@ -911,7 +911,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
         // Immolate        if (bot->HasSpell(IMMOLATE) && !target->HasAura(IMMOLATE))
 
         {
-        bot->CastSpell(target, IMMOLATE, false);
+        bot->CastSpell(CastSpellTargetArg(target), IMMOLATE);
 
             _dotTracker[targetGuid][IMMOLATE] = now;
 
@@ -922,7 +922,7 @@ bool WarlockAI::ApplyDoTToTarget(Unit* target){
         // Corruption is usually enough, Hand of Gul'dan for AoE        if (bot->HasSpell(HAND_OF_GULDAN) && !bot->GetSpellHistory()->HasCooldown(HAND_OF_GULDAN))
         {
 
-            bot->CastSpell(target, HAND_OF_GULDAN, false);
+            bot->CastSpell(CastSpellTargetArg(target), HAND_OF_GULDAN);
 
             return true;
         }
@@ -964,7 +964,7 @@ bool WarlockAI::ApplyCurse(Unit* target){
     // Apply curse if available
     if (curseSpell && bot->HasSpell(curseSpell))
     {
-        bot->CastSpell(curseSpell, false, target);
+        bot->CastSpell(CastSpellTargetArg(target), curseSpell);
         return true;
     }
 
@@ -1389,10 +1389,10 @@ void WarlockAI::UpdateWarlockBuffs()
     {
         if (bot->HasSpell(FEL_ARMOR))
 
-            bot->CastSpell(bot, FEL_ARMOR, false);
+            bot->CastSpell(CastSpellTargetArg(bot), FEL_ARMOR);
         else if (bot->HasSpell(DEMON_ARMOR))
 
-            bot->CastSpell(bot, DEMON_ARMOR, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DEMON_ARMOR);
     }
 
     // Soul Link for Demonology (266)
@@ -1400,14 +1400,14 @@ void WarlockAI::UpdateWarlockBuffs()
         if (bot->HasSpell(SOUL_LINK) && !bot->HasAura(SOUL_LINK) && _petActive.load())
         {
 
-            bot->CastSpell(bot, SOUL_LINK, false);
+            bot->CastSpell(CastSpellTargetArg(bot), SOUL_LINK);
         }
     }
 
     // Dark Intent buff
     if (bot->HasSpell(DARK_INTENT) && !bot->HasAura(DARK_INTENT))
     {
-        bot->CastSpell(bot, DARK_INTENT, false);
+        bot->CastSpell(CastSpellTargetArg(bot), DARK_INTENT);
     }
 }
 
@@ -1489,7 +1489,7 @@ void WarlockAI::ManageLifeTapTiming()
         if (bot->HasSpell(LIFE_TAP) && !bot->GetSpellHistory()->HasCooldown(LIFE_TAP))
         {
 
-            bot->CastSpell(bot, LIFE_TAP, false);
+            bot->CastSpell(CastSpellTargetArg(bot), LIFE_TAP);
 
             _lastLifeTapTime = now;
 
@@ -1637,7 +1637,7 @@ void WarlockAI::ManageWarlockCooldowns(){
         if (bot->HasSpell(DEMONIC_EMPOWERMENT) && !bot->GetSpellHistory()->HasCooldown(DEMONIC_EMPOWERMENT))
         {
 
-            bot->CastSpell(bot, DEMONIC_EMPOWERMENT, false);
+            bot->CastSpell(CastSpellTargetArg(bot), DEMONIC_EMPOWERMENT);
         }
     }
 
@@ -1652,7 +1652,7 @@ void WarlockAI::ManageWarlockCooldowns(){
 
             {
 
-                bot->CastSpell(bot, METAMORPHOSIS, false);
+                bot->CastSpell(CastSpellTargetArg(bot), METAMORPHOSIS);
 
             }
         }
@@ -1690,7 +1690,7 @@ void WarlockAI::OptimizeSoulShardUsage()
 
             {
 
-                bot->CastSpell(target, SEED_OF_CORRUPTION, false);
+                bot->CastSpell(CastSpellTargetArg(target), SEED_OF_CORRUPTION);
 
             }
         }
@@ -1704,7 +1704,7 @@ void WarlockAI::OptimizeSoulShardUsage()
 
             {
 
-                bot->CastSpell(target, RAIN_OF_FIRE, false);
+                bot->CastSpell(CastSpellTargetArg(target), RAIN_OF_FIRE);
 
             }
         }

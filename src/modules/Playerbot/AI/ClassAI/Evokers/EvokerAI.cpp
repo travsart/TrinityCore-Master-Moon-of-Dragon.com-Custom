@@ -729,7 +729,7 @@ void EvokerAI::ReleaseEmpoweredSpell()
     ::Unit* target = _currentEmpoweredSpell.target;
 
     if (target && CanUseAbility(spellId))
-    {        _bot->CastSpell(spellId, false, target);
+    {        _bot->CastSpell(CastSpellTargetArg(target), spellId);
         ConsumeResource(spellId);
         _empoweredSpellsCast++;
     }
@@ -778,7 +778,7 @@ void EvokerAI::ProcessEchoHealing(){
     for (auto& echo : _activeEchoes)
     {        if (echo.ShouldHeal() && echo.target)
         {
-            // Perform echo healing            _bot->CastSpell(echo.target, ECHO, false);
+            // Perform echo healing            _bot->CastSpell(CastSpellTargetArg(echo.target), ECHO);
             echo.ProcessHeal();
             _echoHealsPerformed++;
         }
@@ -821,7 +821,7 @@ void EvokerAI::ShiftToAspect(EvokerAspect aspect)
     }
 
     if (CanUseAbility(aspectSpellId))
-    {        _bot->CastSpell(aspectSpellId, false, _bot);
+    {        _bot->CastSpell(CastSpellTargetArg(_bot), aspectSpellId);
         _currentAspect = aspect;
         _lastAspectShift = _aspectCooldown;
         _canShiftAspect = false;
@@ -991,7 +991,7 @@ void EvokerAI::CastAzureStrike(::Unit* target)
     if (!target || !CanUseAbility(AZURE_STRIKE))
         return;
 
-    _bot->CastSpell(target, AZURE_STRIKE, false);
+    _bot->CastSpell(CastSpellTargetArg(target), AZURE_STRIKE);
     ConsumeResource(AZURE_STRIKE);
 }
 
@@ -1000,7 +1000,7 @@ void EvokerAI::CastLivingFlame(::Unit* target)
     if (!target || !CanUseAbility(LIVING_FLAME))
         return;
 
-    _bot->CastSpell(target, LIVING_FLAME, false);
+    _bot->CastSpell(CastSpellTargetArg(target), LIVING_FLAME);
     ConsumeResource(LIVING_FLAME);
 }
 
@@ -1018,7 +1018,7 @@ void EvokerAI::CastDisintegrate(::Unit* target)
     if (!target || !CanUseAbility(DISINTEGRATE))
         return;
 
-    _bot->CastSpell(target, DISINTEGRATE, false);
+    _bot->CastSpell(CastSpellTargetArg(target), DISINTEGRATE);
     _lastDisintegrate = GameTime::GetGameTimeMS();
     ConsumeResource(DISINTEGRATE);
 }
@@ -1028,7 +1028,7 @@ void EvokerAI::CastPyre(::Unit* target)
     if (!target || !CanUseAbility(PYRE))
         return;
 
-    _bot->CastSpell(target, PYRE, false);
+    _bot->CastSpell(CastSpellTargetArg(target), PYRE);
     ConsumeResource(PYRE);
 }
 
@@ -1082,7 +1082,7 @@ void EvokerAI::CastEmeraldBlossom()
     if (!CanUseAbility(EMERALD_BLOSSOM))
         return;
 
-    _bot->CastSpell(_bot, EMERALD_BLOSSOM, false);
+    _bot->CastSpell(CastSpellTargetArg(EMERALD_BLOSSOM), _bot);
     ConsumeResource(EMERALD_BLOSSOM);
 }
 
@@ -1091,7 +1091,7 @@ void EvokerAI::CastVerdantEmbrace(::Unit* target)
     if (!target || !CanUseAbility(VERDANT_EMBRACE))
         return;
 
-    _bot->CastSpell(target, VERDANT_EMBRACE, false);
+    _bot->CastSpell(CastSpellTargetArg(target), VERDANT_EMBRACE);
     _lastVerdantEmbrace = GameTime::GetGameTimeMS();
     ConsumeResource(VERDANT_EMBRACE);
 }
@@ -1129,7 +1129,7 @@ void EvokerAI::CastEbonMight(::Unit* target)
     if (!target || !CanUseAbility(EBON_MIGHT))
         return;
 
-    _bot->CastSpell(target, EBON_MIGHT, false);
+    _bot->CastSpell(CastSpellTargetArg(target), EBON_MIGHT);
     _lastEbon = GameTime::GetGameTimeMS();
     ConsumeResource(EBON_MIGHT);
 }
@@ -1139,7 +1139,7 @@ void EvokerAI::CastPrescience(::Unit* target)
     if (!target || !CanUseAbility(PRESCIENCE))
         return;
 
-    _bot->CastSpell(target, PRESCIENCE, false);
+    _bot->CastSpell(CastSpellTargetArg(target), PRESCIENCE);
     ConsumeResource(PRESCIENCE);
 }
 
@@ -1148,7 +1148,7 @@ void EvokerAI::CastHover()
     if (!CanUseAbility(HOVER))
         return;
 
-    _bot->CastSpell(_bot, HOVER, false);
+    _bot->CastSpell(CastSpellTargetArg(HOVER), _bot);
     _isHovering = true;
     _hoverRemaining = 8000; // 8 seconds
 }

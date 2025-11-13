@@ -67,7 +67,7 @@ void DemonHunterAI::UpdateRotation(::Unit* target)
         if (baselineManager.ExecuteBaselineRotation(_bot, target))            return;
 
         // Fallback to basic melee attack if nothing else worked        if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
-        {            _bot->CastSpell(target, DEMONS_BITE, false);
+        {            _bot->CastSpell(CastSpellTargetArg(target), DEMONS_BITE);
         }
         return;
     }
