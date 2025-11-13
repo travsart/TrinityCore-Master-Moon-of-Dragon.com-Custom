@@ -88,9 +88,9 @@ struct TargetPriority
  *     if (!group) return nullptr;
  *     Player* lowestHealthAlly = nullptr;
  *     float lowestHealth = 100.0f;
- *     for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+ *     for (GroupReference& ref : group->GetMembers())
  *     {
- *         Player* member = ref->GetSource();
+ *         Player* member = ref.GetSource();
  *         if (!member || member->isDead()) continue;
  *         float healthPct = member->GetHealthPct();
  *         if (healthPct < lowestHealth)

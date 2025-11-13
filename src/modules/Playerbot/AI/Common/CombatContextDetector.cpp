@@ -261,9 +261,9 @@ bool CombatContextDetector::IsGroupFightingBoss(Player const* player)
         return false;
 
     // Check all group members
-    for (GroupReference* groupRef = group->GetFirstMember(); groupRef != nullptr; groupRef = groupRef->next())
+    for (GroupReference& groupRef : group->GetMembers())
     {
-        Player* member = groupRef->GetSource();
+        Player* member = groupRef.GetSource();
         if (!member)
             continue;
 

@@ -53,9 +53,9 @@ RaidOrchestrator::RaidOrchestrator(Group* raid)
     {
         // Check if this subgroup has members
         bool hasMembers = false;
-        for (GroupReference* ref = _raid->GetFirstMember(); ref; ref = ref->next())
+        for (GroupReference& ref : _raid->GetMembers())
         {
-            Player* member = ref->GetSource();
+            Player* member = ref.GetSource();
             if (member && member->GetSubGroup() == groupId)
             {
                 hasMembers = true;
@@ -368,9 +368,9 @@ void RaidOrchestrator::UpdateCombatState()
     bool wasInCombat = _inCombat;
     _inCombat = false;
 
-    for (GroupReference* ref = _raid->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _raid->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (member && member->IsInCombat())
         {
             _inCombat = true;
@@ -416,9 +416,9 @@ void RaidOrchestrator::UpdateRaidStats()
     float totalMana = 0.0f;
     float maxMana = 0.0f;
 
-    for (GroupReference* ref = _raid->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _raid->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member)
             continue;
 
@@ -459,9 +459,9 @@ void RaidOrchestrator::DetectBossEncounter()
     ObjectGuid bossGuid;
     uint32 bossEntry = 0;
 
-    for (GroupReference* ref = _raid->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _raid->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || !member->IsInCombat())
             continue;
 
@@ -485,7 +485,7 @@ void RaidOrchestrator::DetectBossEncounter()
     auto strategy = BossStrategyRegistry::GetStrategy(bossEntry);
     if (strategy)
     {
-        Creature* boss = ObjectAccessor::GetCreature(*_raid->GetFirstMember()->GetSource(), bossGuid);
+        Creature* boss = ObjectAccessor::GetCreature(*_raid->GetMembers().begin()->GetSource(), bossGuid);
         if (boss)
         {
             float healthPct = boss->GetHealthPct();
@@ -553,9 +553,9 @@ void RaidOrchestrator::UpdateAddPriorities()
     // Scan for adds and prioritize by threat/health/type
     std::vector<ObjectGuid> adds;
 
-    for (GroupReference* ref = _raid->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference& ref : _raid->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || !member->IsInCombat())
             continue;
 

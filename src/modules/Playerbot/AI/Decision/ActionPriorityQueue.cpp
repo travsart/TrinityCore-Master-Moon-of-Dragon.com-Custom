@@ -283,7 +283,7 @@ bool ActionPriorityQueue::IsOnCooldown(Player* bot, uint32 spellId) const
         return true;
 
     // Check if spell is on cooldown
-    if (bot->HasSpellCooldown(spellId))
+    if (bot->GetSpellHistory()->HasCooldown(spellId))
         return true;
 
     // Check global cooldown

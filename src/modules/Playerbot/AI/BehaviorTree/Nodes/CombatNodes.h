@@ -198,7 +198,7 @@ public:
         }
 
         // Check if spell is on cooldown
-        if (bot->HasSpellCooldown(_spellId))
+        if (bot->GetSpellHistory()->HasCooldown(_spellId))
         {
             _status = BTStatus::FAILURE;
             return _status;
@@ -591,7 +591,7 @@ public:
         }
 
         // Check if spell is ready
-        if (!bot->HasSpell(_spellId) || bot->HasSpellCooldown(_spellId))
+        if (!bot->HasSpell(_spellId) || bot->GetSpellHistory()->HasCooldown(_spellId))
         {
             _status = BTStatus::FAILURE;
             return _status;
