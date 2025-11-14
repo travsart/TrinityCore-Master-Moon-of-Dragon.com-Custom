@@ -476,22 +476,16 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
         if (isTank)
         {
             // Check if tank is currently tanking (has aggro)
-            if (ThreatManager* threatMgr = unit->GetThreatManager())
+            ThreatManager& threatMgr = unit->GetThreatManager();
+            if (threatMgr.GetCurrentVictim())
             {
-                if (threatMgr->GetCurrentVictim())
-                {
-                    // Tank is actively tanking - high threat priority
-                    multiplier = 2.5f;
-                }
-                else
-                {
-                    // Tank needs to establish threat
-                    multiplier = 2.0f;
-                }
+                // Tank is actively tanking - high threat priority
+                multiplier = 2.5f;
             }
             else
             {
-                multiplier = 1.8f; // Tank role baseline
+                // Tank needs to establish threat
+                multiplier = 2.0f;
             }
         }
         // HEALER PRIORITY: Healers should avoid threat
@@ -507,29 +501,27 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
             multiplier = 1.0f;
 
             // Check if DPS is about to pull aggro (threat too high)
-            if (ThreatManager* threatMgr = unit->GetThreatManager())
+            ThreatManager& threatMgr = unit->GetThreatManager();
+            // If threat is approaching tank's threat, reduce priority
+            // (to avoid accidental pulls)
+            Unit* victim = threatMgr.GetCurrentVictim();
+            if (victim && victim != unit)
             {
-                // If threat is approaching tank's threat, reduce priority
-                // (to avoid accidental pulls)
-                Unit* victim = threatMgr->GetCurrentVictim();
-                if (victim && victim != unit)
-                {
-                    float myThreat = threatMgr->GetThreat(unit);
-                    float tankThreat = threatMgr->GetThreat(victim);
+                float myThreat = threatMgr.GetThreat(unit);
+                float tankThreat = threatMgr.GetThreat(victim);
 
-                    if (tankThreat > 0.0f)
+                if (tankThreat > 0.0f)
+                {
+                    float threatPercent = (myThreat / tankThreat) * 100.0f;
+                    if (threatPercent > 90.0f)
                     {
-                        float threatPercent = (myThreat / tankThreat) * 100.0f;
-                        if (threatPercent > 90.0f)
-                        {
-                            // About to pull aggro - reduce priority
-                            multiplier = 0.7f;
-                        }
-                        else if (threatPercent > 110.0f)
-                        {
-                            // Already pulled aggro - very low priority
-                            multiplier = 0.3f;
-                        }
+                        // About to pull aggro - reduce priority
+                        multiplier = 0.7f;
+                    }
+                    else if (threatPercent > 110.0f)
+                    {
+                        // Already pulled aggro - very low priority
+                        multiplier = 0.3f;
                     }
                 }
             }

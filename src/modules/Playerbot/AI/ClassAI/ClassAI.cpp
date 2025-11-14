@@ -922,10 +922,12 @@ void ClassAI::CancelPendingSpell()
                      result.failureReason);
         return SPELL_FAILED_ERROR;
     }
-	bool ClassAI::CastSpell(spellId, uint32 spellId)
+}
+
+bool ClassAI::CastSpell(uint32 spellId)
 {
     // Self-cast version
-    return CastSpell(GetBot());
+    return CastSpell(spellId, GetBot());
 }
 
 // ============================================================================
