@@ -24,6 +24,8 @@ enum class LootRollType : uint8;
 enum class LootPriority : uint8;
 enum class LootDecisionStrategy : uint8;
 struct PlayerLootProfile;
+struct LootFairnessTracker;
+struct LootMetrics;
 
 class TC_GAME_API ILootDistribution
 {

@@ -734,12 +734,8 @@ namespace Playerbot
                 // Show description if available
 
                 if (!entry.description.empty())
-
                 {
-
-                    handler->PSendSysMessage("
-                    # %s", entry.description.c_str());
-
+                    handler->PSendSysMessage("# %s", entry.description.c_str());
                 }
 
             }
@@ -939,12 +935,8 @@ namespace Playerbot
             oss << "  Current:  " << cpuTrend.values.back() << "%\n";
 
             oss << "  Average:  " << cpuTrend.GetAverage() << "%\n";
-
-            oss << "  Min:
-            " << cpuTrend.GetMin() << "%\n";
-
-            oss << "  Max:
-            " << cpuTrend.GetMax() << "%\n";
+            oss << "  Min:      " << cpuTrend.GetMin() << "%\n";
+            oss << "  Max:      " << cpuTrend.GetMax() << "%\n";
         }
         else
         {
@@ -960,12 +952,8 @@ namespace Playerbot
             oss << "  Current:  " << memoryTrend.values.back() << " MB\n";
 
             oss << "  Average:  " << memoryTrend.GetAverage() << " MB\n";
-
-            oss << "  Min:
-            " << memoryTrend.GetMin() << " MB\n";
-
-            oss << "  Max:
-            " << memoryTrend.GetMax() << " MB\n";
+            oss << "  Min:      " << memoryTrend.GetMin() << " MB\n";
+            oss << "  Max:      " << memoryTrend.GetMax() << " MB\n";
         }
         else
         {
@@ -981,12 +969,8 @@ namespace Playerbot
             oss << "  Current:  " << static_cast<uint32>(botCountTrend.values.back()) << "\n";
 
             oss << "  Average:  " << static_cast<uint32>(botCountTrend.GetAverage()) << "\n";
-
-            oss << "  Min:
-            " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
-
-            oss << "  Max:
-            " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
+            oss << "  Min:      " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
+            oss << "  Max:      " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
         }
         else
         {
@@ -1002,12 +986,8 @@ namespace Playerbot
             oss << "  Current:  " << queryTimeTrend.values.back() << " ms\n";
 
             oss << "  Average:  " << queryTimeTrend.GetAverage() << " ms\n";
-
-            oss << "  Min:
-            " << queryTimeTrend.GetMin() << " ms\n";
-
-            oss << "  Max:
-            " << queryTimeTrend.GetMax() << " ms\n";
+            oss << "  Min:      " << queryTimeTrend.GetMin() << " ms\n";
+            oss << "  Max:      " << queryTimeTrend.GetMax() << " ms\n";
         }
         else
         {

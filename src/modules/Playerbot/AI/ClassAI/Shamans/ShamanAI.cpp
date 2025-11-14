@@ -805,7 +805,8 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target)
     return false;
 }
 
-bool ShamanAI::HandlePurgeDispel(::Unit* target){
+bool ShamanAI::HandlePurgeDispel(::Unit* target)
+{
     if (!target)
         return false;
 
@@ -1845,7 +1846,8 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
     return false;}
 
 // Enhancement rotation implementation
-bool ShamanAI::UpdateEnhancementRotation(::Unit* target){
+bool ShamanAI::UpdateEnhancementRotation(::Unit* target)
+{
     if (!target || !IsInMeleeRange(target))
         return false;
 
@@ -1894,7 +1896,8 @@ bool ShamanAI::UpdateEnhancementRotation(::Unit* target){
     return false;
 }
 
-bool ShamanAI::HandleStormstrike(::Unit* target){
+bool ShamanAI::HandleStormstrike(::Unit* target)
+{
     if (!target || !CanUseAbility(SPELL_STORMSTRIKE))
         return false;
 
@@ -1914,7 +1917,8 @@ bool ShamanAI::HandleStormstrike(::Unit* target){
     return false;
 }
 
-bool ShamanAI::HandleLavaLash(::Unit* target){
+bool ShamanAI::HandleLavaLash(::Unit* target)
+{
     if (!target || !CanUseAbility(SPELL_LAVA_LASH))
         return false;
 
@@ -1942,7 +1946,8 @@ bool ShamanAI::HandleMaelstromWeapon()
     // PHASE 5F: Thread-safe spatial grid validation
     auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
-    Unit* target = nullptr;    if (snapshot_target)
+    Unit* target = nullptr;
+    if (snapshot_target)
     {
 
     }
@@ -1970,7 +1975,8 @@ bool ShamanAI::HandleMaelstromWeapon()
 }
 
 // Restoration rotation implementation
-bool ShamanAI::UpdateRestorationRotation(::Unit* target){
+bool ShamanAI::UpdateRestorationRotation(::Unit* target)
+{
     // Priority healing for group members
     Player* lowestHealth = GetLowestHealthGroupMember();
 
@@ -2057,7 +2063,8 @@ bool ShamanAI::UpdateRestorationRotation(::Unit* target){
     return false;
 }
 
-bool ShamanAI::HandleRiptide(Player* target){
+bool ShamanAI::HandleRiptide(Player* target)
+{
     if (!target || !CanUseAbility(SPELL_RIPTIDE))
         return false;
 
@@ -2081,7 +2088,8 @@ bool ShamanAI::HandleChainHeal()
     if (!CanUseAbility(SPELL_CHAIN_HEAL))
         return false;
 
-    Player* target = GetLowestHealthGroupMember();    if (target)
+    Player* target = GetLowestHealthGroupMember();
+    if (target)
     {
         if (CastSpell(SPELL_CHAIN_HEAL, target))
         {
@@ -2343,7 +2351,8 @@ bool ShamanAI::ShouldUseAscendance() const
         // PHASE 5F: Thread-safe spatial grid validation
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
-        Unit* target = nullptr;        if (snapshot_target)
+        Unit* target = nullptr;
+        if (snapshot_target)
         {
 
         }
@@ -2546,7 +2555,8 @@ bool ShamanAI::HandleCrashLightning()
         // PHASE 5F: Thread-safe spatial grid validation
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
-        Unit* target = nullptr;        if (snapshot_target)
+        Unit* target = nullptr;
+        if (snapshot_target)
         {
 
         }
@@ -2679,7 +2689,8 @@ bool ShamanAI::HandleElementalBlast(::Unit* target)
     return false;
 }
 
-bool ShamanAI::HandleHealingWave(Player* target){
+bool ShamanAI::HandleHealingWave(Player* target)
+{
     if (!target || !CanUseAbility(SPELL_HEALING_WAVE))
         return false;
 
@@ -2846,7 +2857,8 @@ bool ShamanAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void ShamanAI::OnCombatStart(::Unit* target){
+void ShamanAI::OnCombatStart(::Unit* target)
+{
     if (!GetBot() || !target)
         return;
 
@@ -2871,7 +2883,8 @@ void ShamanAI::OnCombatStart(::Unit* target){
 
     // Initialize combat tracking
     _combatTime = 0;
-    _inCombat = true;    SetTarget(target->GetGUID());
+    _inCombat = true;
+    SetTarget(target->GetGUID());
 }
 
 void ShamanAI::OnCombatEnd()
@@ -2984,7 +2997,8 @@ Position ShamanAI::GetOptimalPosition(::Unit* target)
     // Fallback to spec-based positioning
     float optimalRange = GetOptimalRange(target);
     float angle = GetBot()->GetAbsoluteAngle(target);
-    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
+    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);
+    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float ShamanAI::GetOptimalRange(::Unit* target)
@@ -3284,7 +3298,8 @@ bool ShamanAI::ShouldUseBloodlust() const
         // PHASE 5F: Thread-safe spatial grid validation
         auto snapshot_target = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), _currentTarget);
 
-        Unit* target = nullptr;        if (snapshot_target)
+        Unit* target = nullptr;
+        if (snapshot_target)
         {
 
         }

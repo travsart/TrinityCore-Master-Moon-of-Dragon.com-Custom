@@ -85,7 +85,7 @@ if (!interruptTarget)
                                      return;
                                  }
             {
-                if (CastSpell(interruptTarget, SPEAR_HAND_STRIKE))
+                if (CastSpell(SPEAR_HAND_STRIKE, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, SPEAR_HAND_STRIKE, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} interrupted {} with Spear Hand Strike",
@@ -104,7 +104,7 @@ if (!interruptTarget)
                                      return;
                                  }
             {
-                if (CastSpell(interruptTarget, PARALYSIS))
+                if (CastSpell(PARALYSIS, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, PARALYSIS, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} paralyzed {} to interrupt",
@@ -181,7 +181,7 @@ if (!interruptTarget)
         {
             if (HasEnoughChi(3))
             {
-                if (CastSpell(target, FISTS_OF_FURY))
+                if (CastSpell(FISTS_OF_FURY, target))
                 {
                     ConsumeChiForAbility(FISTS_OF_FURY, 3);
                     RecordAbilityUsage(FISTS_OF_FURY);
@@ -197,7 +197,7 @@ if (!interruptTarget)
         {
             if (HasEnoughEnergy(40))
             {
-                if (CastSpell(target, KEG_SMASH))
+                if (CastSpell(KEG_SMASH, target))
                 {
                     ConsumeEnergyForAbility(KEG_SMASH, 40);
                     GenerateChi(2); // Keg Smash generates Chi
@@ -243,7 +243,7 @@ if (!interruptTarget)
             {
                 if (HasEnoughChi(3))
                 {
-                    if (CastSpell(target, TOUCH_OF_DEATH))
+                    if (CastSpell(TOUCH_OF_DEATH, target))
                     {
                         ConsumeChiForAbility(TOUCH_OF_DEATH, 3);
                         RecordAbilityUsage(TOUCH_OF_DEATH);
@@ -371,7 +371,7 @@ void MonkAI::UpdateBuffs()
             {
                 if (bot->HasSpell(IRONSKIN_BREW) && HasEnoughResource(IRONSKIN_BREW))
                 {
-                    if (CastSpell(bot, IRONSKIN_BREW))
+                    if (CastSpell(IRONSKIN_BREW, bot))
                     {
                         ConsumeResource(IRONSKIN_BREW);
                         RecordAbilityUsage(IRONSKIN_BREW);
@@ -383,7 +383,7 @@ void MonkAI::UpdateBuffs()
             // Use Fortifying Brew defensively
             if (bot->GetHealthPct() < 40.0f && bot->HasSpell(FORTIFYING_BREW))
             {
-                if (CastSpell(bot, FORTIFYING_BREW))
+                if (CastSpell(FORTIFYING_BREW, bot))
                 {
                     RecordAbilityUsage(FORTIFYING_BREW);
                     TC_LOG_DEBUG("module.playerbot.monk", "Brewmaster {} used Fortifying Brew", bot->GetName());
@@ -397,7 +397,7 @@ void MonkAI::UpdateBuffs()
             // Maintain Thunder Focus Tea charges for optimal healing
             if (bot->HasSpell(THUNDER_FOCUS_TEA) && !bot->HasAura(THUNDER_FOCUS_TEA))
             {
-                if (CastSpell(bot, THUNDER_FOCUS_TEA))
+                if (CastSpell(THUNDER_FOCUS_TEA, bot))
                 {
                     RecordAbilityUsage(THUNDER_FOCUS_TEA);
                     TC_LOG_DEBUG("module.playerbot.monk", "Mistweaver {} prepared Thunder Focus Tea", bot->GetName());
@@ -407,7 +407,7 @@ void MonkAI::UpdateBuffs()
             // Use Mana Tea when low on mana
             if (bot->GetPowerPct(POWER_MANA) < 50.0f && bot->HasSpell(MANA_TEA))
             {
-                if (CastSpell(bot, MANA_TEA))
+                if (CastSpell(MANA_TEA, bot))
                 {
                     RecordAbilityUsage(MANA_TEA);
                     TC_LOG_DEBUG("module.playerbot.monk", "Mistweaver {} used Mana Tea", bot->GetName());
@@ -426,7 +426,7 @@ void MonkAI::UpdateBuffs()
                 {
                     if (!bot->HasAura(STORM_EARTH_AND_FIRE))
                     {
-                        if (CastSpell(target, STORM_EARTH_AND_FIRE))
+                        if (CastSpell(STORM_EARTH_AND_FIRE, target))
                         {
                             RecordAbilityUsage(STORM_EARTH_AND_FIRE);
                             TC_LOG_DEBUG("module.playerbot.monk", "Windwalker {} activated Storm Earth and Fire", bot->GetName());
@@ -442,7 +442,7 @@ void MonkAI::UpdateBuffs()
                 uint32 currentEnergy = _energyManager.current.load();
                 if (currentChi < 2 && currentEnergy < 40)
                 {
-                    if (CastSpell(bot, ENERGIZING_ELIXIR))
+                    if (CastSpell(ENERGIZING_ELIXIR, bot))
                     {
                         _chiManager.GenerateChi(2);
                         _energyManager.current.store(::std::min(_energyManager.current.load() + 50, _energyManager.maximum.load()));
@@ -476,7 +476,7 @@ void MonkAI::UpdateBuffs()
         // Diffuse Magic - reduce magic damage
         if (bot->HasSpell(DIFFUSE_MAGIC) && !bot->HasAura(DIFFUSE_MAGIC))
         {
-            if (CastSpell(bot, DIFFUSE_MAGIC))
+            if (CastSpell(DIFFUSE_MAGIC, bot))
             {
                 RecordAbilityUsage(DIFFUSE_MAGIC);
                 _defensiveCooldownsUsed.store(_defensiveCooldownsUsed.load() + 1);
@@ -941,7 +941,7 @@ void MonkAI::ManageResourceGeneration(::Unit* target)
     {
         if (_chiManager.current.load() < _chiManager.maximum.load() - 1)
         {
-            if (CastSpell(target, TIGER_PALM))
+            if (CastSpell(TIGER_PALM, target))
             {
                 ConsumeEnergyForAbility(TIGER_PALM, 50);
                 GenerateChi(2);
@@ -1067,7 +1067,7 @@ void MonkAI::UseDefensiveCooldowns()
                              }
         if (healTarget && healTarget->GetHealthPct() < 30.0f)
         {
-            if (CastSpell(healTarget, LIFE_COCOON))
+            if (CastSpell(LIFE_COCOON, healTarget))
             {
                 RecordAbilityUsage(LIFE_COCOON);
                 TC_LOG_DEBUG("module.playerbot.ai", "Monk {} cast Life Cocoon on {}",
@@ -1106,7 +1106,7 @@ void MonkAI::HandleMobilityAbilities(::Unit* target, const Position& optimalPos)
     {
         if (CanUseAbility(FLYING_SERPENT_KICK))
         {
-            if (CastSpell(target, FLYING_SERPENT_KICK))
+            if (CastSpell(FLYING_SERPENT_KICK, target))
             {
                 _lastMobilityUse = GameTime::GetGameTimeMS();
                 RecordAbilityUsage(FLYING_SERPENT_KICK);
@@ -1155,7 +1155,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     // Rising Sun Kick on cooldown
     if (CanUseAbility(RISING_SUN_KICK) && HasEnoughChi(2))
     {
-        if (CastSpell(target, RISING_SUN_KICK))
+        if (CastSpell(RISING_SUN_KICK, target))
         {
             ConsumeChiForAbility(RISING_SUN_KICK, 2);
             RecordAbilityUsage(RISING_SUN_KICK);
@@ -1166,7 +1166,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     // Whirling Dragon Punch combo finisher
     if (CanUseAbility(WHIRLING_DRAGON_PUNCH))
     {
-        if (CastSpell(target, WHIRLING_DRAGON_PUNCH))
+        if (CastSpell(WHIRLING_DRAGON_PUNCH, target))
         {
             RecordAbilityUsage(WHIRLING_DRAGON_PUNCH);
             return;
@@ -1176,7 +1176,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     // Fists of Fury for burst damage
     if (CanUseAbility(FISTS_OF_FURY) && HasEnoughChi(3))
     {
-        if (CastSpell(target, FISTS_OF_FURY))
+        if (CastSpell(FISTS_OF_FURY, target))
         {
             ConsumeChiForAbility(FISTS_OF_FURY, 3);
             RecordAbilityUsage(FISTS_OF_FURY);
@@ -1189,7 +1189,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     {
         if (!_comboTracker.WillBreakCombo(BLACKOUT_KICK))
         {
-            if (CastSpell(target, BLACKOUT_KICK))
+            if (CastSpell(BLACKOUT_KICK, target))
             {
                 ConsumeChiForAbility(BLACKOUT_KICK, 1);
                 RecordAbilityUsage(BLACKOUT_KICK);
@@ -1201,7 +1201,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     // Chi Wave/Chi Burst for ranged damage
     if (CanUseAbility(CHI_WAVE))
     {
-        if (CastSpell(target, CHI_WAVE))
+        if (CastSpell(CHI_WAVE, target))
         {
             RecordAbilityUsage(CHI_WAVE);
             return;
@@ -1213,7 +1213,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     {
         if (_chiManager.current.load() < _chiManager.maximum.load())
         {
-            if (CastSpell(target, TIGER_PALM))
+            if (CastSpell(TIGER_PALM, target))
             {
                 ConsumeEnergyForAbility(TIGER_PALM, 50);
                 GenerateChi(2);
@@ -1228,7 +1228,7 @@ void MonkAI::ExecuteWindwalkerRotation(::Unit* target)
     {
         if (GetBot()->GetDistance(target) > 5.0f)
         {
-            if (CastSpell(target, CRACKLING_JADE_LIGHTNING))
+            if (CastSpell(CRACKLING_JADE_LIGHTNING, target))
             {
                 ConsumeEnergyForAbility(CRACKLING_JADE_LIGHTNING, 20);
                 GenerateChi(1);
@@ -1277,7 +1277,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     // Keg Smash for threat and damage
     if (CanUseAbility(KEG_SMASH) && HasEnoughEnergy(40))
     {
-        if (CastSpell(target, KEG_SMASH))
+        if (CastSpell(KEG_SMASH, target))
         {
             ConsumeEnergyForAbility(KEG_SMASH, 40);
             GenerateChi(2);
@@ -1300,7 +1300,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     // Blackout Strike for brew generation
     if (CanUseAbility(BLACKOUT_KICK) && HasEnoughChi(1))
     {
-        if (CastSpell(target, BLACKOUT_KICK))
+        if (CastSpell(BLACKOUT_KICK, target))
         {
             ConsumeChiForAbility(BLACKOUT_KICK, 1);
             RecordAbilityUsage(BLACKOUT_KICK);
@@ -1311,7 +1311,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     // Tiger Palm for threat
     if (CanUseAbility(TIGER_PALM) && HasEnoughEnergy(25))
     {
-        if (CastSpell(target, TIGER_PALM))
+        if (CastSpell(TIGER_PALM, target))
         {
             ConsumeEnergyForAbility(TIGER_PALM, 25);
             GenerateChi(1);
@@ -1351,7 +1351,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Emergency healing with Life Cocoon
         if (targetHealthPct < 30.0f && CanUseAbility(LIFE_COCOON))
         {
-            if (CastSpell(healTarget, LIFE_COCOON))
+            if (CastSpell(LIFE_COCOON, healTarget))
             {
                 RecordAbilityUsage(LIFE_COCOON);
                 return;
@@ -1363,7 +1363,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         {
             if (HasEnoughChi(3))
             {
-                if (CastSpell(healTarget, ENVELOPING_MIST))
+                if (CastSpell(ENVELOPING_MIST, healTarget))
                 {
                     ConsumeChiForAbility(ENVELOPING_MIST, 3);
                     RecordAbilityUsage(ENVELOPING_MIST);
@@ -1375,7 +1375,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Vivify for quick heal
         if (targetHealthPct < 70.0f && CanUseAbility(VIVIFY))
         {
-            if (CastSpell(healTarget, VIVIFY))
+            if (CastSpell(VIVIFY, healTarget))
             {
                 RecordAbilityUsage(VIVIFY);
                 return;
@@ -1385,7 +1385,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Renewing Mist for HoT
         if (!healTarget->HasAura(RENEWING_MIST) && CanUseAbility(RENEWING_MIST))
         {
-            if (CastSpell(healTarget, RENEWING_MIST))
+            if (CastSpell(RENEWING_MIST, healTarget))
             {
                 RecordAbilityUsage(RENEWING_MIST);
                 return;
@@ -1397,7 +1397,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         {
             if (!GetBot()->IsNonMeleeSpellCast(false))
             {
-                if (CastSpell(healTarget, SOOTHING_MIST))
+                if (CastSpell(SOOTHING_MIST, healTarget))
                 {
                     RecordAbilityUsage(SOOTHING_MIST);
                     return;
@@ -1437,7 +1437,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Tiger Palm for Teachings of the Monastery
         if (CanUseAbility(TIGER_PALM) && HasEnoughEnergy(50))
         {
-            if (CastSpell(target, TIGER_PALM))
+            if (CastSpell(TIGER_PALM, target))
             {
                 ConsumeEnergyForAbility(TIGER_PALM, 50);
                 GenerateChi(1);
@@ -1449,7 +1449,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Blackout Kick for damage
         if (CanUseAbility(BLACKOUT_KICK) && HasEnoughChi(1))
         {
-            if (CastSpell(target, BLACKOUT_KICK))
+            if (CastSpell(BLACKOUT_KICK, target))
             {
                 ConsumeChiForAbility(BLACKOUT_KICK, 1);
                 RecordAbilityUsage(BLACKOUT_KICK);
@@ -1460,7 +1460,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         // Rising Sun Kick for damage
         if (CanUseAbility(RISING_SUN_KICK) && HasEnoughChi(2))
         {
-            if (CastSpell(target, RISING_SUN_KICK))
+            if (CastSpell(RISING_SUN_KICK, target))
             {
                 ConsumeChiForAbility(RISING_SUN_KICK, 2);
                 RecordAbilityUsage(RISING_SUN_KICK);

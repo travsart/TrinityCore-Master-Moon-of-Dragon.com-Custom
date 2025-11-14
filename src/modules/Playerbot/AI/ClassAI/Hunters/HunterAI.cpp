@@ -179,7 +179,7 @@ bool HunterAI::HandleInterrupts(::Unit* target)
 
             {
 
-                if (CastSpell(interruptTarget, COUNTER_SHOT))
+                if (CastSpell(COUNTER_SHOT, interruptTarget))
 
                 {
 
@@ -201,7 +201,7 @@ bool HunterAI::HandleInterrupts(::Unit* target)
 
             {
 
-                if (CastSpell(interruptTarget, SILENCING_SHOT))
+                if (CastSpell(SILENCING_SHOT, interruptTarget))
                 {
 
                     _combatMetrics.interrupts++;
@@ -422,7 +422,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
             {
 
-                if (CastSpell(target, CONCUSSIVE_SHOT))
+                if (CastSpell(CONCUSSIVE_SHOT, target))
 
                 {
 
@@ -515,7 +515,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {        if (_bot->HasSpell(KILL_COMMAND) && CanUseAbility(KILL_COMMAND))
         {
 
-            if (CastSpell(target, KILL_COMMAND))
+            if (CastSpell(KILL_COMMAND, target))
 
             {
 
@@ -579,7 +579,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 {
 
-                    if (CastSpell(priorityTarget, HUNTER_S_MARK))
+                    if (CastSpell(HUNTER_S_MARK, priorityTarget))
 
                     {
 
@@ -694,7 +694,7 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
 
             {
 
-                if (CastSpell(ccTarget, SCATTER_SHOT))
+                if (CastSpell(SCATTER_SHOT, ccTarget))
                 {
 
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Scatter Shot on {}",
@@ -719,7 +719,7 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
 
             {
 
-                if (CastSpell(ccTarget, CONCUSSIVE_SHOT))
+                if (CastSpell(CONCUSSIVE_SHOT, ccTarget))
 
                 {
 
@@ -760,7 +760,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
 
             {
 
-                if (CastSpell(target, MULTI_SHOT))
+                if (CastSpell(MULTI_SHOT, target))
 
                 {
 
@@ -792,7 +792,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
 
             {
 
-                if (CastSpell(target, EXPLOSIVE_SHOT))
+                if (CastSpell(EXPLOSIVE_SHOT, target))
                 {
 
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} using Explosive Shot for AoE",
@@ -809,7 +809,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
         // Barrage for modern AoE
         if (nearbyEnemies >= 3 && _bot->HasSpell(BARRAGE) && CanUseAbility(BARRAGE))        {
 
-            if (CastSpell(target, BARRAGE))
+            if (CastSpell(BARRAGE, target))
 
             {
 
@@ -990,7 +990,7 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
 
     // Kill Shot if target is low health    if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
     {
-        if (CastSpell(target, KILL_SHOT))
+        if (CastSpell(KILL_SHOT, target))
         {
 
             RecordShotResult(true, false);

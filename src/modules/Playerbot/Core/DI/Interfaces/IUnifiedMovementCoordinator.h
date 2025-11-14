@@ -38,11 +38,56 @@ struct PositionInfo;
 struct PositionWeights;
 struct AoEZone;
 struct PositionMetrics;
-enum class FormationType : uint8;
-enum class FormationRole : uint8;
+
+// Full enum definitions needed for default parameters
+enum class FormationType : uint8
+{
+    NONE = 0,               // No formation
+    LINE = 1,               // Single line formation
+    COLUMN = 2,             // Single column formation
+    WEDGE = 3,              // V-shaped wedge formation
+    DIAMOND = 4,            // Diamond formation
+    CIRCLE = 5,             // Circular formation
+    BOX = 6,                // Rectangular box formation
+    SPREAD = 7,             // Spread out formation
+    STACK = 8,              // Tight stacked formation
+    COMBAT_LINE = 9,        // Combat line with roles
+    DUNGEON = 10,           // Dungeon formation (tank front, etc.)
+    RAID = 11,              // Raid formation with groups
+    ESCORT = 12,            // Escort formation around VIP
+    FLANKING = 13,          // Flanking formation
+    DEFENSIVE = 14          // Defensive circle formation
+};
+
+enum class FormationRole : uint8
+{
+    LEADER = 0,             // Formation leader (usually tank or group leader)
+    TANK = 1,               // Tanking role in formation
+    MELEE_DPS = 2,          // Melee damage dealers
+    RANGED_DPS = 3,         // Ranged damage dealers
+    HEALER = 4,             // Healers
+    SUPPORT = 5,            // Support/utility members
+    SCOUT = 6,              // Scouts/advance guard
+    REAR_GUARD = 7,         // Rear guard protection
+    FLANKER = 8,            // Flanking positions
+    RESERVE = 9             // Reserve/flexible position
+};
+
+enum class PositionType : uint8
+{
+    MELEE_COMBAT = 0,       // Close combat positioning (2-5 yards)
+    RANGED_DPS = 1,         // Ranged damage positioning (20-40 yards)
+    HEALING = 2,            // Healing positioning (15-35 yards)
+    KITING = 3,             // Kiting/mobility positioning (variable)
+    FLANKING = 4,           // Flanking/behind target
+    TANKING = 5,            // Tank positioning (front of enemy)
+    SUPPORT = 6,            // Support/utility positioning
+    RETREAT = 7,            // Retreat/escape positioning
+    FORMATION = 8           // Group formation positioning
+};
+
 enum class FormationMovementState : uint8;
 enum class FormationIntegrity : uint8;
-enum class PositionType : uint8;
 enum class MovementPriority : uint8;
 enum class PositionValidation : uint32;
 enum class PlayerBotMovementPriority;

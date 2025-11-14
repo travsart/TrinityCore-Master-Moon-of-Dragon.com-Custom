@@ -86,7 +86,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
             // Try Rebuke first (instant interrupt)
             if (CanUseAbility(REBUKE))
             {
-                if (CastSpell(interruptTarget, REBUKE))
+                if (CastSpell(REBUKE, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, REBUKE, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} interrupted {} with Rebuke",
@@ -98,7 +98,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
             // Try Hammer of Justice as secondary interrupt (stun)
             if (CanUseAbility(HAMMER_OF_JUSTICE))
             {
-                if (CastSpell(interruptTarget, HAMMER_OF_JUSTICE))
+                if (CastSpell(HAMMER_OF_JUSTICE, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, HAMMER_OF_JUSTICE, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} stunned {} with Hammer of Justice",
@@ -309,7 +309,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         // Try Blade of Justice first (better damage)
         if (CanUseAbility(BLADE_OF_JUSTICE))
         {
-            if (CastSpell(target, BLADE_OF_JUSTICE))
+            if (CastSpell(BLADE_OF_JUSTICE, target))
             {
                 RecordAbilityUsage(BLADE_OF_JUSTICE);
                 _paladinMetrics.holyPowerGenerated += 2;
@@ -320,7 +320,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         // Fallback to Crusader Strike
         if (CanUseAbility(CRUSADER_STRIKE))
         {
-            if (CastSpell(target, CRUSADER_STRIKE))
+            if (CastSpell(CRUSADER_STRIKE, target))
             {
                 RecordAbilityUsage(CRUSADER_STRIKE);
                 _paladinMetrics.holyPowerGenerated += 1;
@@ -331,7 +331,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         // Judgment for ranged Holy Power generation
         if (CanUseAbility(JUDGMENT))
         {
-            if (CastSpell(target, JUDGMENT))
+            if (CastSpell(JUDGMENT, target))
             {
                 RecordAbilityUsage(JUDGMENT);
                 _paladinMetrics.holyPowerGenerated += 1;
@@ -357,7 +357,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         // Use Templar's Verdict for single target
         if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) < 2 && CanUseAbility(TEMPLARS_VERDICT))
         {
-            if (CastSpell(target, TEMPLARS_VERDICT))
+            if (CastSpell(TEMPLARS_VERDICT, target))
             {
                 RecordAbilityUsage(TEMPLARS_VERDICT);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -380,7 +380,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     // Use Hammer of Wrath on low health targets
     if (target->GetHealthPct() < 20.0f && CanUseAbility(HAMMER_OF_WRATH))
     {
-        if (CastSpell(target, HAMMER_OF_WRATH))
+        if (CastSpell(HAMMER_OF_WRATH, target))
         {
             RecordAbilityUsage(HAMMER_OF_WRATH);
             return;
@@ -513,7 +513,7 @@ void PaladinAI::UseDefensiveCooldowns()
             {
                 Player* member = itr.GetSource();
                 if (member && member != GetBot() && member->GetHealthPct() < 30.0f)                {
-                    if (CastSpell(member, BLESSING_OF_PROTECTION))
+                    if (CastSpell(BLESSING_OF_PROTECTION, member))
                     {
                         RecordAbilityUsage(BLESSING_OF_PROTECTION);
                         TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} cast Blessing of Protection on {}",
@@ -566,7 +566,7 @@ void PaladinAI::UseOffensiveCooldowns()
     // Execution Sentence on primary target
     Unit* target = GetBot()->GetSelectedUnit();    if (target && CanUseAbility(EXECUTION_SENTENCE))
     {
-        if (CastSpell(target, EXECUTION_SENTENCE))
+        if (CastSpell(EXECUTION_SENTENCE, target))
         {
             RecordAbilityUsage(EXECUTION_SENTENCE);
             TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} cast Execution Sentence on {}",
@@ -745,7 +745,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Blade of Justice generates 2 Holy Power
     if (CanUseAbility(BLADE_OF_JUSTICE))
     {
-        if (CastSpell(target, BLADE_OF_JUSTICE))
+        if (CastSpell(BLADE_OF_JUSTICE, target))
         {
             RecordAbilityUsage(BLADE_OF_JUSTICE);
             _paladinMetrics.holyPowerGenerated += 2;
@@ -756,7 +756,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Crusader Strike generates 1 Holy Power
     if (CanUseAbility(CRUSADER_STRIKE))
     {
-        if (CastSpell(target, CRUSADER_STRIKE))
+        if (CastSpell(CRUSADER_STRIKE, target))
         {
             RecordAbilityUsage(CRUSADER_STRIKE);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -767,7 +767,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Hammer of the Righteous for Protection (AoE generator, spec ID 1)
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection && CanUseAbility(HAMMER_OF_THE_RIGHTEOUS))
     {
-        if (CastSpell(target, HAMMER_OF_THE_RIGHTEOUS))
+        if (CastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
             RecordAbilityUsage(HAMMER_OF_THE_RIGHTEOUS);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -778,7 +778,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Judgment generates 1 Holy Power
     if (CanUseAbility(JUDGMENT))
     {
-        if (CastSpell(target, JUDGMENT))
+        if (CastSpell(JUDGMENT, target))
         {
             RecordAbilityUsage(JUDGMENT);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -836,7 +836,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
                 }
             }
 
-            if (CastSpell(healTarget, WORD_OF_GLORY))
+            if (CastSpell(WORD_OF_GLORY, healTarget))
             {
                 RecordAbilityUsage(WORD_OF_GLORY);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -862,7 +862,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
     // Templar's Verdict for single target
     if (CanUseAbility(TEMPLARS_VERDICT))
     {
-        if (CastSpell(target, TEMPLARS_VERDICT))
+        if (CastSpell(TEMPLARS_VERDICT, target))
         {
             RecordAbilityUsage(TEMPLARS_VERDICT);
             _paladinMetrics.holyPowerSpent += 3;
@@ -873,7 +873,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
     // Final Verdict (if talented)
     if (CanUseAbility(FINAL_VERDICT))
     {
-        if (CastSpell(target, FINAL_VERDICT))
+        if (CastSpell(FINAL_VERDICT, target))
         {
             RecordAbilityUsage(FINAL_VERDICT);
             _paladinMetrics.holyPowerSpent += 3;

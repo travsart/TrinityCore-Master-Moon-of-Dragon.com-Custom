@@ -289,11 +289,11 @@ public:
     // OnTauntRequired - uses unified ThreatAssistant service (Phase 5C integration)
     void TauntTarget(::Unit* target) override    {
         // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = target ? target : ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(HAND_OF_RECKONING, tauntTarget))
         {
 
-            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, HAND_OF_RECKONING);
+            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, HAND_OF_RECKONING);
 
             TC_LOG_DEBUG("playerbot", "Protection: Taunt cast on {} via ThreatAssistant", tauntTarget->GetName());
         }
@@ -743,7 +743,7 @@ private:
                 [](Player* bot, Unit* target) {
                     // Taunt when target not on tank
 
-                    return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                    return target && !::bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
 
                 },
 
@@ -1114,7 +1114,7 @@ private:
 
                     Condition("Target not on tank", [](Player* bot, Unit* target) {
 
-                        return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                        return target && !::bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
 
                     }),
 
@@ -1124,7 +1124,7 @@ private:
 
                         {
 
-                            bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, HAND_OF_RECKONING);
+                            ::bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, HAND_OF_RECKONING);
 
                             return NodeStatus::SUCCESS;
 
