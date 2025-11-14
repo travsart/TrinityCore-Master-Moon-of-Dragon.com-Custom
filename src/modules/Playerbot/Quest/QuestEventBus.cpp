@@ -31,8 +31,8 @@ QuestEvent QuestEvent::QuestAccepted(ObjectGuid player, uint32 questId)
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::INCOMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -46,8 +46,8 @@ QuestEvent QuestEvent::QuestCompleted(ObjectGuid player, uint32 questId)
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::COMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -61,8 +61,8 @@ QuestEvent QuestEvent::ObjectiveProgress(ObjectGuid player, uint32 questId, uint
     event.objectiveId = objId;
     event.objectiveCount = count;
     event.state = QuestState::INCOMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(15000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(15000);
     return event;
 }
 
@@ -79,12 +79,12 @@ bool QuestEvent::IsValid() const
 
 bool QuestEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string QuestEvent::ToString() const
+::std::string QuestEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[QuestEvent] Type: " << static_cast<uint32>(type)
         << ", Player: " << playerGuid.ToString()
         << ", Quest: " << questId
@@ -99,7 +99,7 @@ std::string QuestEvent::ToString() const
 
 QuestEventBus::QuestEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.quest", "QuestEventBus initialized");
 }
 
@@ -123,7 +123,7 @@ bool QuestEventBus::PublishEvent(QuestEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -145,17 +145,17 @@ bool QuestEventBus::PublishEvent(QuestEvent const& event)
     return true;
 }
 
-bool QuestEventBus::Subscribe(BotAI* subscriber, std::vector<QuestEventType> const& types)
+bool QuestEventBus::Subscribe(BotAI* subscriber, ::std::vector<QuestEventType> const& types)
 {
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (QuestEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
             continue;
         if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
             return false;
@@ -170,9 +170,9 @@ bool QuestEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
 
     _globalSubscribers.push_back(subscriber);
@@ -184,25 +184,25 @@ void QuestEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 }
 
 uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _cleanupTimer += diff;
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -212,10 +212,10 @@ uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<QuestEvent> eventsToProcess;
+    ::std::vector<QuestEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -235,11 +235,11 @@ uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (QuestEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -261,8 +261,8 @@ uint32 QuestEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         _stats.totalEventsProcessed++;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -277,9 +277,9 @@ uint32 QuestEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void QuestEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<QuestEvent> remainingEvents;
+    ::std::vector<QuestEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -298,13 +298,13 @@ void QuestEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 QuestEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 QuestEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -326,7 +326,7 @@ bool QuestEventBus::DeliverEvent(BotAI* subscriber, QuestEvent const& event)
         TC_LOG_TRACE("module.playerbot.quest", "QuestEventBus: Delivered event to subscriber");
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.quest", "QuestEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -340,10 +340,10 @@ bool QuestEventBus::ValidateEvent(QuestEvent const& event) const
 
 uint32 QuestEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<QuestEvent> validEvents;
+    ::std::vector<QuestEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -362,7 +362,7 @@ uint32 QuestEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void QuestEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void QuestEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -370,29 +370,29 @@ void QuestEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void QuestEventBus::LogEvent(QuestEvent const& event, std::string const& action) const
+void QuestEventBus::LogEvent(QuestEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.quest", "QuestEventBus: {} event - {}", action, event.ToString());
 }
 
 void QuestEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.quest", "=== QuestEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void QuestEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.quest", "=== QuestEventBus Queue: {} events ===", _eventQueue.size());
 }
 
-std::vector<QuestEvent> QuestEventBus::GetQueueSnapshot() const
+::std::vector<QuestEvent> QuestEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<QuestEvent> snapshot;
-    std::priority_queue<QuestEvent> tempQueue = _eventQueue;
+    ::std::vector<QuestEvent> snapshot;
+    ::std::priority_queue<QuestEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -411,15 +411,15 @@ void QuestEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string QuestEventBus::Statistics::ToString() const
+::std::string QuestEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

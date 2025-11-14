@@ -226,7 +226,7 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
     {
         if (shouldLog)
         {
-            TC_LOG_INFO("module.playerbot.script", "🔄 UpdateBotSystems: Calling sBotWorldSessionMgr->UpdateSessions(), active bots: {}",
+            TC_LOG_INFO("module.playerbot.script", " UpdateBotSystems: Calling sBotWorldSessionMgr->UpdateSessions(), active bots: {}",
                         Playerbot::sBotWorldSessionMgr->GetBotCount());
         }
         try
@@ -254,7 +254,7 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
     }
     else if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.script", "❌ UpdateBotSystems: sBotWorldSessionMgr is NULL!");
+        TC_LOG_ERROR("module.playerbot.script", " UpdateBotSystems: sBotWorldSessionMgr is NULL!");
     }
 
     if (shouldLog)

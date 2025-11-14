@@ -109,7 +109,7 @@ private:
 
     ObjectGuid _mainTank;
     ObjectGuid _offTank;
-    std::unordered_map<ObjectGuid, ObjectGuid> _tankAssignments; // Target → Tank
+    ::std::unordered_map<ObjectGuid, ObjectGuid> _tankAssignments; // Target → Tank
     uint32 _lastTankSwapTime = 0;
     uint32 _tankSwapCooldown = 30000; // 30s between swaps
 };
@@ -149,7 +149,7 @@ public:
      * @param cooldownType Cooldown type (e.g., "raid_heal")
      * @return Healer GUID or empty
      */
-    ObjectGuid GetNextCooldownHealer(std::string const& cooldownType) const;
+    ObjectGuid GetNextCooldownHealer(::std::string const& cooldownType) const;
 
     /**
      * @brief Use healing cooldown
@@ -157,13 +157,13 @@ public:
      * @param cooldownType Cooldown type
      * @param durationMs Duration in milliseconds
      */
-    void UseHealingCooldown(ObjectGuid healerGuid, std::string const& cooldownType, uint32 durationMs);
+    void UseHealingCooldown(ObjectGuid healerGuid, ::std::string const& cooldownType, uint32 durationMs);
 
     /**
      * @brief Get resurrection priority list
      * @return Ordered list of dead players by priority
      */
-    std::vector<ObjectGuid> GetResurrectionPriority() const;
+    ::std::vector<ObjectGuid> GetResurrectionPriority() const;
 
 private:
     void UpdateHealingAssignments(GroupCoordinator* group);
@@ -175,12 +175,12 @@ private:
     {
         ObjectGuid healerGuid;
         ObjectGuid targetGuid;
-        std::string assignmentType; // "tank", "group", "raid"
+        ::std::string assignmentType; // "tank", "group", "raid"
         uint32 priority;
     };
 
-    std::vector<HealingAssignment> _healingAssignments;
-    std::unordered_map<ObjectGuid, std::unordered_map<std::string, uint32>> _healerCooldowns; // Healer → Cooldown → ExpireTime
+    ::std::vector<HealingAssignment> _healingAssignments;
+    ::std::unordered_map<ObjectGuid, ::std::unordered_map<::std::string, uint32>> _healerCooldowns; // Healer → Cooldown → ExpireTime
 };
 
 /**
@@ -235,7 +235,7 @@ public:
      * @param targetGuid Target GUID
      * @param ccType CC type (e.g., "polymorph", "trap", "hex")
      */
-    void AssignCC(ObjectGuid dpsGuid, ObjectGuid targetGuid, std::string const& ccType);
+    void AssignCC(ObjectGuid dpsGuid, ObjectGuid targetGuid, ::std::string const& ccType);
 
     /**
      * @brief Request burst window
@@ -267,13 +267,13 @@ private:
     {
         ObjectGuid dpsGuid;
         ObjectGuid targetGuid;
-        std::string ccType;
+        ::std::string ccType;
         uint32 assignedTime;
     };
 
     ObjectGuid _focusTarget;
-    std::vector<InterruptAssignment> _interruptRotation;
-    std::vector<CCAssignment> _ccAssignments;
+    ::std::vector<InterruptAssignment> _interruptRotation;
+    ::std::vector<CCAssignment> _ccAssignments;
 
     // Burst window coordination
     bool _inBurstWindow = false;
@@ -314,9 +314,9 @@ public:
     DPSCoordinator* GetDPSCoordinator() { return _dpsCoordinator.get(); }
 
 private:
-    std::unique_ptr<TankCoordinator> _tankCoordinator;
-    std::unique_ptr<HealerCoordinator> _healerCoordinator;
-    std::unique_ptr<DPSCoordinator> _dpsCoordinator;
+    ::std::unique_ptr<TankCoordinator> _tankCoordinator;
+    ::std::unique_ptr<HealerCoordinator> _healerCoordinator;
+    ::std::unique_ptr<DPSCoordinator> _dpsCoordinator;
 };
 
 } // namespace Coordination

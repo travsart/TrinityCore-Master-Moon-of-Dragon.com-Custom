@@ -92,7 +92,7 @@ public:
             return;
         }
 
-        _queue.Push(std::move(action));
+        _queue.Push(::std::move(action));
     }
 
     /**

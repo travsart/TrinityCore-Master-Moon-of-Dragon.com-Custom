@@ -19,7 +19,7 @@ namespace Playerbot
 {
 
 SpatialGridScheduler::SpatialGridScheduler()
-    : _lastUpdateTime(std::chrono::steady_clock::now())
+    : _lastUpdateTime(::std::chrono::steady_clock::now())
 {
     TC_LOG_INFO("playerbot.spatial",
         "SpatialGridScheduler initialized with {}ms update interval",
@@ -28,21 +28,21 @@ SpatialGridScheduler::SpatialGridScheduler()
 
 void SpatialGridScheduler::UpdateAllGrids(uint32 diff)
 {
-    if (!_enabled.load(std::memory_order_relaxed))
+    if (!_enabled.load(::std::memory_order_relaxed))
         return;
 
     // Accumulate time
     _timeSinceLastUpdate += diff;
 
     // Check if enough time has passed
-    uint32 interval = _updateInterval.load(std::memory_order_relaxed);
+    uint32 interval = _updateInterval.load(::std::memory_order_relaxed);
     if (_timeSinceLastUpdate < interval)
     {
-        _skippedUpdates.fetch_add(1, std::memory_order_relaxed);
+        _skippedUpdates.fetch_add(1, ::std::memory_order_relaxed);
         return;
     }
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Update all spatial grids
     // This is the ONLY place where spatial grids are updated
@@ -81,12 +81,12 @@ void SpatialGridScheduler::UpdateAllGrids(uint32 diff)
     _lastUpdateTime = startTime;
 
     // Update statistics
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
-    _lastUpdateDurationMs.store(static_cast<uint32>(duration.count()), std::memory_order_relaxed);
-    _totalUpdateTimeMs.fetch_add(duration.count(), std::memory_order_relaxed);
-    _totalUpdates.fetch_add(1, std::memory_order_relaxed);
+    _lastUpdateDurationMs.store(static_cast<uint32>(duration.count()), ::std::memory_order_relaxed);
+    _totalUpdateTimeMs.fetch_add(duration.count(), ::std::memory_order_relaxed);
+    _totalUpdates.fetch_add(1, ::std::memory_order_relaxed);
 
     if (duration.count() > 10)  // Warn if update takes >10ms
     {
@@ -104,19 +104,19 @@ void SpatialGridScheduler::UpdateAllGrids(uint32 diff)
 
 void SpatialGridScheduler::UpdateMapGrid(uint32 mapId, bool forceUpdate)
 {
-    if (!_enabled.load(std::memory_order_relaxed) && !forceUpdate)
+    if (!_enabled.load(::std::memory_order_relaxed) && !forceUpdate)
         return;
 
     // Rate limiting unless forced
     if (!forceUpdate)
     {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUpdateTime);
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdateTime);
 
-        uint32 interval = _updateInterval.load(std::memory_order_relaxed);
+        uint32 interval = _updateInterval.load(::std::memory_order_relaxed);
         if (elapsed.count() < static_cast<int64>(interval))
         {
-            _skippedUpdates.fetch_add(1, std::memory_order_relaxed);
+            _skippedUpdates.fetch_add(1, ::std::memory_order_relaxed);
             return;
         }
     }
@@ -125,16 +125,16 @@ void SpatialGridScheduler::UpdateMapGrid(uint32 mapId, bool forceUpdate)
     DoubleBufferedSpatialGrid* grid = sSpatialGridManager.GetGrid(mapId);
     if (grid)
     {
-        auto startTime = std::chrono::steady_clock::now();
+        auto startTime = ::std::chrono::steady_clock::now();
 
         grid->Update();
 
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
-        _lastUpdateDurationMs.store(static_cast<uint32>(duration.count()), std::memory_order_relaxed);
-        _totalUpdateTimeMs.fetch_add(duration.count(), std::memory_order_relaxed);
-        _totalUpdates.fetch_add(1, std::memory_order_relaxed);
+        _lastUpdateDurationMs.store(static_cast<uint32>(duration.count()), ::std::memory_order_relaxed);
+        _totalUpdateTimeMs.fetch_add(duration.count(), ::std::memory_order_relaxed);
+        _totalUpdates.fetch_add(1, ::std::memory_order_relaxed);
         _lastUpdateTime = startTime;
 
         TC_LOG_TRACE("playerbot.spatial",
@@ -146,8 +146,8 @@ void SpatialGridScheduler::UpdateMapGrid(uint32 mapId, bool forceUpdate)
 void SpatialGridScheduler::SetUpdateInterval(uint32 intervalMs)
 {
     // Enforce minimum interval to prevent excessive updates
-    uint32 clampedInterval = std::max(50u, intervalMs);
-    _updateInterval.store(clampedInterval, std::memory_order_relaxed);
+    uint32 clampedInterval = ::std::max(50u, intervalMs);
+    _updateInterval.store(clampedInterval, ::std::memory_order_relaxed);
 
     TC_LOG_INFO("playerbot.spatial",
         "SpatialGridScheduler update interval set to {}ms",
@@ -158,13 +158,13 @@ SpatialGridScheduler::Statistics SpatialGridScheduler::GetStatistics() const
 {
     Statistics stats;
 
-    stats.totalUpdates = _totalUpdates.load(std::memory_order_relaxed);
-    stats.skippedUpdates = _skippedUpdates.load(std::memory_order_relaxed);
-    stats.lastUpdateDurationMs = _lastUpdateDurationMs.load(std::memory_order_relaxed);
+    stats.totalUpdates = _totalUpdates.load(::std::memory_order_relaxed);
+    stats.skippedUpdates = _skippedUpdates.load(::std::memory_order_relaxed);
+    stats.lastUpdateDurationMs = _lastUpdateDurationMs.load(::std::memory_order_relaxed);
     stats.lastUpdateTime = _lastUpdateTime;
 
     // Calculate average
-    uint64 totalTime = _totalUpdateTimeMs.load(std::memory_order_relaxed);
+    uint64 totalTime = _totalUpdateTimeMs.load(::std::memory_order_relaxed);
     if (stats.totalUpdates > 0)
         stats.averageUpdateDurationMs = static_cast<uint32>(totalTime / stats.totalUpdates);
     else

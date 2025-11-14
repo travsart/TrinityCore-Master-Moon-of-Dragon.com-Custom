@@ -38,7 +38,7 @@ public:
      * @param count Number of tanks needed
      * @return Vector of tank bot Player pointers (may be fewer than requested)
      */
-    virtual std::vector<Player*> FindTanks(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
+    virtual ::std::vector<Player*> FindTanks(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
 
     /**
      * @brief Find available healer bots within level range
@@ -48,7 +48,7 @@ public:
      * @param count Number of healers needed
      * @return Vector of healer bot Player pointers (may be fewer than requested)
      */
-    virtual std::vector<Player*> FindHealers(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
+    virtual ::std::vector<Player*> FindHealers(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
 
     /**
      * @brief Find available DPS bots within level range
@@ -58,7 +58,7 @@ public:
      * @param count Number of DPS needed
      * @return Vector of DPS bot Player pointers (may be fewer than requested)
      */
-    virtual std::vector<Player*> FindDPS(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
+    virtual ::std::vector<Player*> FindDPS(uint8 minLevel, uint8 maxLevel, uint32 count) = 0;
 
     /**
      * @brief Check if a bot is available for LFG queueing

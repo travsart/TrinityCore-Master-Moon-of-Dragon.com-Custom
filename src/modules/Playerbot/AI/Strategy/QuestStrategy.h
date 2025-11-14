@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Strategy.h"
-#include "Quest/ObjectiveTracker.h"
+#include "../../Quest/ObjectiveTracker.h"
 #include "Movement/BotMovementUtil.h"
 #include "Player.h"
 #include "QuestDef.h"
@@ -67,29 +67,29 @@ private:
     // Core quest execution
     void ProcessQuestObjectives(BotAI* ai);
     void SearchForQuestGivers(BotAI* ai);
-    void NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
-    void EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
-    void CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
-    void ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
+    void NavigateToObjective(BotAI* ai, ObjectiveState const& objective);
+    void EngageQuestTargets(BotAI* ai, ObjectiveState const& objective);
+    void CollectQuestItems(BotAI* ai, ObjectiveState const& objective);
+    void ExploreQuestArea(BotAI* ai, ObjectiveState const& objective);
     void TurnInQuest(BotAI* ai, uint32 questId);
 
     // Quest item usage system (for quests that require using items on targets)
-    void UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
+    void UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& objective);
 
     // Objective analysis
-    ObjectiveTracker::ObjectivePriority GetCurrentObjective(BotAI* ai) const;
+    ObjectivePriority GetCurrentObjective(BotAI* ai) const;
     bool HasActiveObjectives(BotAI* ai) const;
-    bool ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveTracker::ObjectiveState const& objective) const;
+    bool ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveState const& objective) const;
 
     // Movement helpers
     bool MoveToObjectiveLocation(BotAI* ai, Position const& location);
     bool MoveToQuestGiver(BotAI* ai, uint32 questId);
-    Position GetObjectivePosition(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
+    Position GetObjectivePosition(BotAI* ai, ObjectiveState const& objective) const;
 
     // Target detection
-    ::Unit* FindQuestTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
-    GameObject* FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
-    ::Item* FindQuestItem(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
+    ::Unit* FindQuestTarget(BotAI* ai, ObjectiveState const& objective) const;
+    GameObject* FindQuestObject(BotAI* ai, ObjectiveState const& objective) const;
+    ::Item* FindQuestItem(BotAI* ai, ObjectiveState const& objective) const;
 
     // Quest turn-in system (multi-tier fallback)
     struct QuestEnderLocation
@@ -122,7 +122,7 @@ private:
     // Quest area wandering (for respawn waiting)
     uint32 _lastWanderTime;
     uint32 _currentWanderPointIndex;
-    std::vector<Position> _questAreaWanderPoints;
+    ::std::vector<Position> _questAreaWanderPoints;
 
     // Performance tracking
     uint32 _objectivesCompleted;
@@ -130,11 +130,11 @@ private:
     uint32 _averageObjectiveTime;
 
     // Quest acceptance manager (enterprise-grade auto-acceptance)
-    std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
+    ::std::unique_ptr<QuestAcceptanceManager> _acceptanceManager;
 
     // Helper methods for area wandering
-    bool ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const;
-    void InitializeQuestAreaWandering(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective);
+    bool ShouldWanderInQuestArea(BotAI* ai, ObjectiveState const& objective) const;
+    void InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const& objective);
     void WanderInQuestArea(BotAI* ai);
 
     // Item loot source detection

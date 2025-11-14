@@ -33,6 +33,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Feral Druid Spell IDs
 constexpr uint32 FERAL_SHRED = 5221;
 constexpr uint32 FERAL_RAKE = 1822;
@@ -284,10 +294,10 @@ if (!thrash)
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _rakeTargets;
-    std::unordered_map<ObjectGuid, uint32> _ripTargets;
-    std::unordered_map<ObjectGuid, uint32> _thrashTargets;
-    std::unordered_map<ObjectGuid, uint32> _moonfireTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _rakeTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _ripTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _thrashTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _moonfireTargets;
 };
 
 // Bloodtalons proc tracker
@@ -865,7 +875,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     void ConsumeComboPoints(uint32 amount)
@@ -1080,7 +1090,7 @@ private:
 
                             }),
 
-                            Action("Cast Incarnation", [this](Player* bot) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot) {
 
                                 if (this->CanCastSpell(FERAL_INCARNATION_KING, bot))
 
@@ -1104,7 +1114,7 @@ private:
 
                         Sequence("Berserk", {
 
-                            Action("Cast Berserk", [this](Player* bot) {
+                            bot::ai::Action("Cast Berserk", [this](Player* bot) {
 
                                 if (this->CanCastSpell(FERAL_BERSERK, bot))
 
@@ -1152,7 +1162,7 @@ private:
 
                             }),
 
-                            Action("Cast Primal Wrath", [this](Player* bot) {
+                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1184,7 +1194,7 @@ private:
 
                             }),
 
-                            Action("Cast Rip", [this](Player* bot) {
+                            bot::ai::Action("Cast Rip", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1224,7 +1234,7 @@ private:
 
                             }),
 
-                            Action("Cast Ferocious Bite", [this](Player* bot) {
+                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1276,7 +1286,7 @@ private:
 
                             }),
 
-                            Action("Cast Tiger's Fury", [this](Player* bot) {
+                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot) {
 
                                 if (this->CanCastSpell(FERAL_TIGERS_FURY, bot))
 
@@ -1310,7 +1320,7 @@ private:
 
                             }),
 
-                            Action("Cast Rake", [this](Player* bot) {
+                            bot::ai::Action("Cast Rake", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1352,7 +1362,7 @@ private:
 
                             }),
 
-                            Action("Cast Thrash", [this](Player* bot) {
+                            bot::ai::Action("Cast Thrash", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1390,7 +1400,7 @@ private:
 
                             }),
 
-                            Action("Cast Moonfire", [this](Player* bot) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1440,7 +1450,7 @@ private:
 
                             }),
 
-                            Action("Cast Brutal Slash", [this](Player* bot) {
+                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1476,7 +1486,7 @@ private:
 
                             }),
 
-                            Action("Cast Swipe", [this](Player* bot) {
+                            bot::ai::Action("Cast Swipe", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1506,7 +1516,7 @@ private:
 
                             }),
 
-                            Action("Cast Shred", [this](Player* bot) {
+                            bot::ai::Action("Cast Shred", [this](Player* bot) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 

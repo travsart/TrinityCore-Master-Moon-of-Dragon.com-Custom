@@ -41,9 +41,9 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     _lastTargetSwitch(0)
 {
     // Initialize component managers for class-specific mechanics
-    _actionQueue = std::make_unique<ActionPriorityQueue>();
-    _cooldownManager = std::make_unique<CooldownManager>();
-    _resourceManager = std::make_unique<ResourceManager>(bot);    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
+    _actionQueue = ::std::make_unique<ActionPriorityQueue>();
+    _cooldownManager = ::std::make_unique<CooldownManager>();
+    _resourceManager = ::std::make_unique<ResourceManager>(bot);    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
                  bot ? bot->GetName() : "null");
 }
 
@@ -194,7 +194,7 @@ void ClassAI::UpdateTargeting()
     float nearestDistanceSq = maxRange * maxRange; // Use squared distance for comparison
 
     // Find nearest enemy within range
-    std::list<::Unit*> targets;
+    ::std::list<::Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), maxRange);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -212,7 +212,7 @@ void ClassAI::UpdateTargeting()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), maxRange);
 
     // Process results (replace old searcher logic)
@@ -484,7 +484,7 @@ bool ClassAI::ShouldMoveToTarget(::Unit* target) const
     // ClassAI doesn't control movement, just provides information
     // Actual movement is handled by BotAI strategies
     float optimalRange = const_cast<ClassAI*>(this)->GetOptimalRange(target);
-    float currentDistance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 
     return currentDistance > optimalRange;
 }
@@ -494,7 +494,7 @@ float ClassAI::GetDistanceToTarget(::Unit* target) const
     if (!target || !GetBot())
         return 0.0f;
 
-    return std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    return ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // ============================================================================
@@ -511,8 +511,8 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
     float angle = GetBot()->GetAngle(target);
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - optimalRange * std::cos(angle);
-    pos.m_positionY = target->GetPositionY() - optimalRange * std::sin(angle);
+    pos.m_positionX = target->GetPositionX() - optimalRange * ::std::cos(angle);
+    pos.m_positionY = target->GetPositionY() - optimalRange * ::std::sin(angle);
     pos.m_positionZ = target->GetPositionZ();
     pos.SetOrientation(target->GetOrientation());
 
@@ -523,7 +523,7 @@ Position ClassAI::GetOptimalPosition(::Unit* target)
 // PERFORMANCE METRICS
 // ============================================================================
 
-void ClassAI::RecordPerformanceMetric(std::string const& metric, uint32 value)
+void ClassAI::RecordPerformanceMetric(::std::string const& metric, uint32 value)
 {
     // Record class-specific performance metrics
     TC_LOG_TRACE("playerbot.performance", "ClassAI metric {} = {} for bot {}",

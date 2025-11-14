@@ -47,8 +47,8 @@ void ParseTypedHealthUpdate(WorldSession* session, WorldPackets::Combat::HealthU
     event.amount = static_cast<int32>(packet.Health);
     event.maxAmount = static_cast<int32>(unit->GetMaxHealth());
     event.isRegen = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     ResourceEventBus::instance()->PublishEvent(event);
 
@@ -117,8 +117,8 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
         event.amount = powerInfo.Power;
         event.maxAmount = maxPower;
         event.isRegen = false;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::seconds(5);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
         ResourceEventBus::instance()->PublishEvent(event);
 
@@ -159,8 +159,8 @@ void ParseTypedBreakTarget(WorldSession* session, WorldPackets::Combat::BreakTar
     event.amount = 0;
     event.maxAmount = 0;
     event.isRegen = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     ResourceEventBus::instance()->PublishEvent(event);
 

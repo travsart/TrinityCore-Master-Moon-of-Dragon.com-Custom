@@ -28,6 +28,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // MISTWEAVER MONK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -173,7 +183,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -284,7 +294,7 @@ public:
         UpdateMistweaverState();
 
         // Get group members
-        std::vector<Unit*> group = GetGroupMembers();
+        ::std::vector<Unit*> group = GetGroupMembers();
         if (group.empty())
 
             return;
@@ -299,7 +309,7 @@ public:
     }
 
 protected:
-    void ExecuteHealingRotation(const std::vector<Unit*>& group)
+    void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
         // Priority 1: Emergency healing
         if (HandleEmergencyHealing(group))
@@ -330,7 +340,7 @@ protected:
         HandleSoothingMist(group);
     }
 
-    bool HandleEmergencyHealing(const std::vector<Unit*>& group)
+    bool HandleEmergencyHealing(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
 
@@ -423,7 +433,7 @@ protected:
         return false;
     }
 
-    bool HandleThunderFocusTea(const std::vector<Unit*>& group)
+    bool HandleThunderFocusTea(const ::std::vector<Unit*>& group)
     {
         if (!_thunderFocusTeaActive)
         {
@@ -498,7 +508,7 @@ protected:
         return false;
     }
 
-    bool HandleReNewingMist(const std::vector<Unit*>& group)
+    bool HandleReNewingMist(const ::std::vector<Unit*>& group)
     {
         // Maintain Renewing Mist on targets
         uint32 activeCount = _renewingMistTracker.GetActiveCount();
@@ -534,7 +544,7 @@ protected:
         return false;
     }
 
-    bool HandleEssenceFont(const std::vector<Unit*>& group)
+    bool HandleEssenceFont(const ::std::vector<Unit*>& group)
     {
         // Use Essence Font for AoE healing
         uint32 injuredCount = 0;
@@ -559,7 +569,7 @@ protected:
         return false;
     }
 
-    bool HandleSingleTargetHealing(const std::vector<Unit*>& group)
+    bool HandleSingleTargetHealing(const ::std::vector<Unit*>& group)
     {
         Unit* target = SelectHealingTarget(group);
         if (!target)
@@ -589,7 +599,7 @@ protected:
         return false;
     }
 
-    bool HandleSoothingMist(const std::vector<Unit*>& group)    {
+    bool HandleSoothingMist(const ::std::vector<Unit*>& group)    {
         // If not channeling, start on lowest target
         if (!_soothingMistTracker.IsChanneling())
         {
@@ -679,7 +689,7 @@ private:
             this->_resource.mana = this->GetBot()->GetPower(POWER_MANA);
     }
 
-    Unit* SelectHealingTarget(const std::vector<Unit*>& group)
+    Unit* SelectHealingTarget(const ::std::vector<Unit*>& group)
     {
         // Use unified HealingTargetSelector service (Phase 5B integration)
         // Eliminates 15+ lines of duplicated healing target logic
@@ -954,7 +964,7 @@ private:
 
                         Sequence("Revival", {
 
-                            Action("Cast Revival", [this](Player* bot) {
+                            bot::ai::Action("Cast Revival", [this](Player* bot) {
 
                                 if (this->CanCastSpell(REVIVAL, bot)) {
 
@@ -982,7 +992,7 @@ private:
 
                             }),
 
-                            Action("Cast Life Cocoon", [this](Player*) {
+                            bot::ai::Action("Cast Life Cocoon", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1034,7 +1044,7 @@ private:
 
                             }),
 
-                            Action("Cast Yu'lon", [this](Player* bot) {
+                            bot::ai::Action("Cast Yu'lon", [this](Player* bot) {
 
                                 if (this->CanCastSpell(INVOKE_YULON, bot)) {
 
@@ -1070,7 +1080,7 @@ private:
 
                             }),
 
-                            Action("Cast Essence Font", [this](Player* bot) {
+                            bot::ai::Action("Cast Essence Font", [this](Player* bot) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1112,7 +1122,7 @@ private:
 
                             }),
 
-                            Action("Cast Renewing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Renewing Mist", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1140,7 +1150,7 @@ private:
 
                             }),
 
-                            Action("Cast Enveloping Mist", [this](Player*) {
+                            bot::ai::Action("Cast Enveloping Mist", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1194,7 +1204,7 @@ private:
 
                             }),
 
-                            Action("Cast Vivify", [this](Player*) {
+                            bot::ai::Action("Cast Vivify", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1220,7 +1230,7 @@ private:
 
                             }),
 
-                            Action("Cast Soothing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Soothing Mist", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 

@@ -406,7 +406,7 @@ float InterruptRotationManager::CalculateInterrupterScore(const InterrupterBot& 
         score += 5.0f;
     }
 
-    return std::max(0.0f, score);
+    return ::std::max(0.0f, score);
 }
 
 ObjectGuid InterruptRotationManager::GetNextInRotation() const
@@ -768,13 +768,13 @@ void InterruptRotationManager::ProcessDelayedInterrupts()
     }
 }
 
-void InterruptRotationManager::CoordinateGroupInterrupts(const std::vector<Unit*>& casters)
+void InterruptRotationManager::CoordinateGroupInterrupts(const ::std::vector<Unit*>& casters)
 {
     if (casters.empty())
         return;
 
     // Sort casters by threat/priority
-    std::vector<std::pair<Unit*, float>> prioritizedCasters;
+    ::std::vector<::std::pair<Unit*, float>> prioritizedCasters;
 
     for (Unit* caster : casters)
     {
@@ -792,7 +792,7 @@ void InterruptRotationManager::CoordinateGroupInterrupts(const std::vector<Unit*
     }
 
     // Sort by priority
-    std::sort(prioritizedCasters.begin(), prioritizedCasters.end(),
+    ::std::sort(prioritizedCasters.begin(), prioritizedCasters.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     // Assign interrupters with coordination delay
@@ -895,7 +895,7 @@ void InterruptRotationManager::CleanupExpiredData()
 
     // Remove completed or expired casts
     _activeCasts.erase(
-        std::remove_if(_activeCasts.begin(), _activeCasts.end(),
+        ::std::remove_if(_activeCasts.begin(), _activeCasts.end(),
             [currentTime](const ActiveCast& cast) {
                 return cast.castEndTime < currentTime || cast.interrupted;
             }),
@@ -937,7 +937,7 @@ bool InterruptRotationManager::CanReachInTime(const InterrupterBot& bot, Unit* t
     if (!botUnit)
         return false;
 
-    float distance = std::sqrt(botUnit->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(botUnit->GetExactDistSq(target)); // Calculate once from squared distance
     float range = bot.range + _config.interruptRangeBuffer;
 
     if (distance <= range)
@@ -966,7 +966,7 @@ void InterruptRotationManager::UpdateRangeStatus(Unit* target)
             continue;
 
         // Use snapshot position for distance calculation (lock-free)
-        float distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
+        float distance = ::std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
         interrupter.isInRange = (distance <= interrupter.range + _config.interruptRangeBuffer);
     }
 }
@@ -1029,9 +1029,9 @@ void InterruptRotationManager::InitializeGlobalDatabase()
     s_databaseInitialized = true;
 }
 
-std::vector<uint32> InterruptRotationManager::GetClassInterrupts(uint8 classId)
+::std::vector<uint32> InterruptRotationManager::GetClassInterrupts(uint8 classId)
 {
-    std::vector<uint32> interrupts;
+    ::std::vector<uint32> interrupts;
 
     switch (classId)
     {

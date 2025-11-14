@@ -59,7 +59,7 @@ struct SimpleResource
 
     uint32 Consume(uint32 amount)
     {
-        uint32 consumed = std::min(amount, current);
+        uint32 consumed = ::std::min(amount, current);
         current -= consumed;
         return consumed;
     }
@@ -67,7 +67,7 @@ struct SimpleResource
     uint32 Add(uint32 amount)
     {
         uint32 oldCurrent = current;
-        current = std::min(current + amount, maximum);
+        current = ::std::min(current + amount, maximum);
         return current - oldCurrent;
     }
 
@@ -76,7 +76,7 @@ struct SimpleResource
         if (regenerates && regenRate > 0.0f)
         {
             float regen = (regenRate * deltaMs) / 1000.0f;
-            current = std::min(current + (uint32)regen, maximum);
+            current = ::std::min(current + (uint32)regen, maximum);
         }
 
         if (!inCombat && decays && decayRate > 0.0f)
@@ -155,7 +155,7 @@ struct ComboPointResource : public DualResource
         // Handle Anticipation talent (stores overflow combo points)
         if (overflow > 0 && anticipation < 10)
         {
-            anticipation = std::min(anticipation + overflow, 10u);
+            anticipation = ::std::min(anticipation + overflow, 10u);
         }
     }
 
@@ -166,7 +166,7 @@ struct ComboPointResource : public DualResource
         // Transfer Anticipation stacks if any
         if (anticipation > 0)
         {
-            uint32 transfer = std::min(anticipation, secondary.maximum);
+            uint32 transfer = ::std::min(anticipation, secondary.maximum);
             secondary.current = transfer;
             anticipation -= transfer;
         }
@@ -241,7 +241,7 @@ struct RuneResource
     static constexpr uint32 RUNE_COOLDOWN_MS = 10000;
     static constexpr float RUNIC_POWER_DECAY_RATE = 2.0f; // per second
 
-    std::array<RuneInfo, MAX_RUNES> runes;
+    ::std::array<RuneInfo, MAX_RUNES> runes;
     uint32 runicPower;
     uint32 maxRunicPower;
 
@@ -308,7 +308,7 @@ struct RuneResource
     // Generate Runic Power
     void GenerateRunicPower(uint32 amount)
     {
-        runicPower = std::min(runicPower + amount, maxRunicPower);
+        runicPower = ::std::min(runicPower + amount, maxRunicPower);
     }
 
     // Spend Runic Power
@@ -360,7 +360,7 @@ struct EssenceResource
 
     SimpleResource mana;                                       // Primary resource
     uint8 essenceCharges;                                     // Current charges
-    std::array<uint32, MAX_ESSENCE_CHARGES> rechargeTimers;   // Per-charge timers
+    ::std::array<uint32, MAX_ESSENCE_CHARGES> rechargeTimers;   // Per-charge timers
 
     EssenceResource() : mana(100000, 0.0f, 0.0f), essenceCharges(MAX_ESSENCE_CHARGES)
     {
@@ -375,7 +375,7 @@ struct EssenceResource
 
     void ConsumeEssence(uint8 charges = 1)
     {
-        charges = std::min(charges, essenceCharges);
+        charges = ::std::min(charges, essenceCharges);
         essenceCharges -= charges;
 
         // Start recharge timers for consumed charges
@@ -461,7 +461,7 @@ struct SoulShardResource
     void GenerateSoulFragments(uint32 fragments)
     {
         uint32 maxFragments = MAX_SOUL_SHARDS * SHARD_FRACTION_DIVISOR;
-        soulFragments = std::min(soulFragments + fragments, maxFragments);
+        soulFragments = ::std::min(soulFragments + fragments, maxFragments);
     }
 
     void ConsumeSoulShards(float shards)
@@ -476,7 +476,7 @@ struct SoulShardResource
         // Generate 0.1-0.3 shards based on damage percentage
         float damagePercent = (float)damage / targetMaxHealth;
         uint32 fragments = (uint32)(damagePercent * 3); // 0-3 fragments
-        GenerateSoulFragments(std::min(fragments, 3u));
+        GenerateSoulFragments(::std::min(fragments, 3u));
     }
 };
 
@@ -561,7 +561,7 @@ struct MaelstromResource
     // Enhancement-specific Maelstrom Weapon stacks
     void AddMaelstromWeaponStack()
     {
-        maelstromWeaponStacks = std::min(maelstromWeaponStacks + 1, 10u);
+        maelstromWeaponStacks = ::std::min(maelstromWeaponStacks + 1, 10u);
     }
 
     bool ConsumeMaelstromWeapon(uint32 stacks = 5)

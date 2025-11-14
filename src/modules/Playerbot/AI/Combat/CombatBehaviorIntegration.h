@@ -72,7 +72,7 @@ namespace Playerbot
         Unit* target;
         uint32 spellId;
         Position position;
-        std::string reason;
+        ::std::string reason;
         uint32 timestamp;
 
         RecommendedAction() : type(CombatActionType::NONE), urgency(ActionUrgency::NORMAL),
@@ -183,16 +183,16 @@ namespace Playerbot
         Player* _bot;
 
         // Manager instances
-        std::unique_ptr<CombatStateAnalyzer> _stateAnalyzer;
-        std::unique_ptr<AdaptiveBehaviorManager> _behaviorManager;
-        std::unique_ptr<TargetManager> _targetManager;
-        std::unique_ptr<InterruptManager> _interruptManager;
-        std::unique_ptr<CrowdControlManager> _crowdControlManager;
-        std::unique_ptr<DefensiveManager> _defensiveManager;
-        std::unique_ptr<MovementIntegration> _movementIntegration;
+        ::std::unique_ptr<CombatStateAnalyzer> _stateAnalyzer;
+        ::std::unique_ptr<AdaptiveBehaviorManager> _behaviorManager;
+        ::std::unique_ptr<TargetManager> _targetManager;
+        ::std::unique_ptr<InterruptManager> _interruptManager;
+        ::std::unique_ptr<CrowdControlManager> _crowdControlManager;
+        ::std::unique_ptr<DefensiveManager> _defensiveManager;
+        ::std::unique_ptr<MovementIntegration> _movementIntegration;
 
         // Action queue and recommendations
-        std::vector<RecommendedAction> _actionQueue;
+        ::std::vector<RecommendedAction> _actionQueue;
         mutable Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE> _actionQueueMutex;  // Protects _actionQueue from concurrent access
         RecommendedAction _currentAction;
         uint32 _lastActionTime;
@@ -213,8 +213,8 @@ namespace Playerbot
         // Success tracking
         uint32 _successfulActions;
         uint32 _failedActions;
-        std::map<CombatActionType, uint32> _actionCounts;
-        std::map<CombatActionType, uint32> _actionSuccesses;
+        ::std::map<CombatActionType, uint32> _actionCounts;
+        ::std::map<CombatActionType, uint32> _actionSuccesses;
     };
 
     // Inline helper functions for ClassAI integration

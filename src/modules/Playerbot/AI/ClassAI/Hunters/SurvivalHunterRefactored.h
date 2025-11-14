@@ -39,6 +39,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Survival Hunter Spell IDs
 enum SurvivalSpells
 {
@@ -224,7 +234,7 @@ public:
         else
         {
 
-            _stacks = std::min<uint32>(_stacks + 1, _maxStacks);
+            _stacks = ::std::min<uint32>(_stacks + 1, _maxStacks);
 
             _windowEndTime = currentTime + 14000; // Refresh window
         }
@@ -616,7 +626,7 @@ protected:
 
             _lastKillCommand = GameTime::GetGameTimeMS();
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -648,7 +658,7 @@ protected:
 
             this->ConsumeResource(30);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100); // Returns some focus
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100); // Returns some focus
 
             return;
         }
@@ -672,7 +682,7 @@ protected:
 
             this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -723,7 +733,7 @@ protected:
 
             this->CastSpell(SPELL_KILL_COMMAND_SURV, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 15, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
             return;
         }
@@ -796,7 +806,7 @@ private:
 
             {
 
-                this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                this->_resource = ::std::min<uint32>(this->_resource + 20, 100);
 
             }
         }
@@ -823,7 +833,7 @@ private:
             return;
 
         // Get enemies in range
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), 8.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -900,7 +910,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return SPELL_STEEL_TRAP; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -916,7 +926,7 @@ private:
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
-        float x = target->GetPositionX() + 15.0f * std::cos(angle);        float y = target->GetPositionY() + 15.0f * std::sin(angle);        return Position(x, y, target->GetPositionZ());
+        float x = target->GetPositionX() + 15.0f * ::std::cos(angle);        float y = target->GetPositionY() + 15.0f * ::std::sin(angle);        return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 
@@ -1096,7 +1106,7 @@ private:
             }, "Has talent, 30+ Focus, 3+ enemies (AoE burst)");
 
 
-            TC_LOG_INFO("module.playerbot", "🗡️ SURVIVAL HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SURVIVAL HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -1129,7 +1139,7 @@ private:
 
                             }),
 
-                            Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_COORDINATED_ASSAULT))
 
@@ -1176,7 +1186,7 @@ private:
 
                             }),
 
-                            Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 uint32 bombSpell = this->_bombManager.GetBombSpell();
 
@@ -1203,7 +1213,7 @@ private:
 
                             }),
 
-                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
 
@@ -1213,7 +1223,7 @@ private:
 
                                     this->_lastKillCommand = GameTime::GetGameTimeMS();
 
-                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1234,7 +1244,7 @@ private:
 
                             }),
 
-                            Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1283,7 +1293,7 @@ private:
 
                             }),
 
-                            Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 
@@ -1316,7 +1326,7 @@ private:
 
                             }),
 
-                            Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_FLANKING_STRIKE))
 
@@ -1326,7 +1336,7 @@ private:
 
                                     this->ConsumeResource(30);
 
-                                    this->_resource = std::min<uint32>(this->_resource + 15, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 15, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1374,7 +1384,7 @@ private:
 
                                     }),
 
-                                    Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    bot::ai::Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 30)
 
@@ -1403,7 +1413,7 @@ private:
 
                                     }),
 
-                                    Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    bot::ai::Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 35)
 
@@ -1430,7 +1440,7 @@ private:
 
                         Sequence("Single Target Filler", {
 
-                            Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 
@@ -1461,7 +1471,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 SURVIVAL HUNTER: BehaviorTree initialized with 4-tier melee DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SURVIVAL HUNTER: BehaviorTree initialized with 4-tier melee DPS rotation");
         }
     }
 

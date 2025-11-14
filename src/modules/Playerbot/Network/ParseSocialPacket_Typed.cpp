@@ -108,7 +108,7 @@ void ParseTypedGuildInvite(WorldSession* session, WorldPackets::Guild::GuildInvi
         return;
 
     // Get inviter name from session or packet data
-    std::string inviterName = packet.InviterName;
+    ::std::string inviterName = packet.InviterName;
 
     SocialEvent event = SocialEvent::GuildInviteReceived(
         packet.InviterVirtualRealmAddress > 0 ? ObjectGuid::Create<HighGuid::Player>(packet.InviterVirtualRealmAddress) : ObjectGuid::Empty,
@@ -139,7 +139,7 @@ void ParseTypedGuildEvent(WorldSession* session, WorldPackets::Guild::GuildEvent
     if (!guild)
         return;
 
-    std::string message = packet.Name + (packet.LoggedOn ? " has come online" : " has gone offline");
+    ::std::string message = packet.Name + (packet.LoggedOn ? " has come online" : " has gone offline");
 
     SocialEvent event = SocialEvent::GuildEventReceived(
         bot->GetGUID(),

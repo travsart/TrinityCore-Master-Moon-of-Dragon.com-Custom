@@ -264,8 +264,8 @@ private:
 
 private:
     // Timing tracking
-    std::chrono::steady_clock::time_point m_startTime;
-    std::chrono::steady_clock::time_point m_readyTime;
+    ::std::chrono::steady_clock::time_point m_startTime;
+    ::std::chrono::steady_clock::time_point m_readyTime;
 
     // State-specific data
     bool m_characterDataLoaded{false};
@@ -279,7 +279,7 @@ private:
 
     // Error handling
     uint32 m_lastErrorTime{0};
-    std::string m_lastErrorReason;
+    ::std::string m_lastErrorReason;
     uint32 m_failedAttempts{0};
 
     // Timeout protection (prevent infinite initialization)
@@ -288,7 +288,7 @@ private:
     static constexpr uint32 MAX_RETRY_ATTEMPTS = 3;   // Max retries before permanent failure
 
     // State entry times for timeout tracking
-    std::chrono::steady_clock::time_point m_stateEntryTime;
+    ::std::chrono::steady_clock::time_point m_stateEntryTime;
 };
 
 } // namespace StateMachine

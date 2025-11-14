@@ -130,7 +130,7 @@ public:
 
     // Core identification
     MOCK_METHOD(MockGuid, GetGUID, (), (const));
-    MOCK_METHOD(std::string, GetName, (), (const));
+    MOCK_METHOD(::std::string, GetName, (), (const));
     MOCK_METHOD(uint32, GetEntry, (), (const));
 
     // Health and Power
@@ -186,12 +186,12 @@ public:
 
 protected:
     MockGuid m_guid;
-    std::string m_name;
+    ::std::string m_name;
     uint32 m_entry = 0;
     uint32 m_health = 1;
     uint32 m_maxHealth = 1;
-    std::unordered_map<MockPowers, uint32> m_power;
-    std::unordered_map<MockPowers, uint32> m_maxPower;
+    ::std::unordered_map<MockPowers, uint32> m_power;
+    ::std::unordered_map<MockPowers, uint32> m_maxPower;
     Position m_position;
     bool m_inCombat = false;
     bool m_alive = true;
@@ -246,7 +246,7 @@ private:
     uint8 m_race = 1; // Human
     uint8 m_level = 1;
     uint32 m_spec = 0;
-    std::unordered_set<uint32> m_spells;
+    ::std::unordered_set<uint32> m_spells;
     MockGroup* m_group = nullptr;
 };
 
@@ -260,7 +260,7 @@ public:
     MockSpellInfo(uint32 spellId);
 
     MOCK_METHOD(uint32, GetId, (), (const));
-    MOCK_METHOD(std::string, GetName, (), (const));
+    MOCK_METHOD(::std::string, GetName, (), (const));
     MOCK_METHOD(uint32, GetManaCost, (), (const));
     MOCK_METHOD(uint32, GetManaCostPercentage, (), (const));
     MOCK_METHOD(uint32, GetCooldown, (), (const));
@@ -344,12 +344,12 @@ public:
 
     // Helper methods
     void AddMemberHelper(MockPlayer* player) { m_members.push_back(player); }
-    std::vector<MockPlayer*> const& GetMembers() const { return m_members; }
+    ::std::vector<MockPlayer*> const& GetMembers() const { return m_members; }
 
 private:
     MockGuid m_guid;
     MockGuid m_leaderGuid;
-    std::vector<MockPlayer*> m_members;
+    ::std::vector<MockPlayer*> m_members;
 };
 
 // ============================================================================
@@ -364,7 +364,7 @@ public:
     MOCK_METHOD(MockPlayer*, GetPlayer, (), (const));
     MOCK_METHOD(bool, IsBot, (), (const));
     MOCK_METHOD(uint32, GetAccountId, (), (const));
-    MOCK_METHOD(std::string, GetPlayerName, (), (const));
+    MOCK_METHOD(::std::string, GetPlayerName, (), (const));
 
     void SetPlayer(MockPlayer* player) { m_player = player; }
     void SetIsBot(bool isBot) { m_isBot = isBot; }
@@ -390,8 +390,8 @@ public:
     MOCK_METHOD(void, SetTarget, (MockGuid));
 
     // Value system (for shared bot values)
-    MOCK_METHOD(float, GetValue, (std::string const&), (const));
-    MOCK_METHOD(void, SetValue, (std::string const&, float));
+    MOCK_METHOD(float, GetValue, (::std::string const&), (const));
+    MOCK_METHOD(void, SetValue, (::std::string const&, float));
 
     void SetBot(MockPlayer* bot) { m_bot = bot; }
 
@@ -407,26 +407,26 @@ class MockFactory
 {
 public:
     // Player creation
-    static std::shared_ptr<MockPlayer> CreateMockPlayer(
+    static ::std::shared_ptr<MockPlayer> CreateMockPlayer(
         uint8 classId = CLASS_PRIEST,
         uint8 level = 80,
         uint32 spec = 0
     );
 
     // Enemy creation
-    static std::shared_ptr<MockUnit> CreateMockEnemy(
+    static ::std::shared_ptr<MockUnit> CreateMockEnemy(
         uint32 level = 80,
         uint32 health = 10000
     );
 
     // Friendly NPC creation
-    static std::shared_ptr<MockUnit> CreateMockAlly(
+    static ::std::shared_ptr<MockUnit> CreateMockAlly(
         uint32 level = 80,
         uint32 health = 10000
     );
 
     // Spell info creation
-    static std::shared_ptr<MockSpellInfo> CreateMockSpellInfo(
+    static ::std::shared_ptr<MockSpellInfo> CreateMockSpellInfo(
         uint32 spellId,
         uint32 manaCost = 100,
         uint32 cooldown = 0,
@@ -434,7 +434,7 @@ public:
     );
 
     // Aura creation
-    static std::shared_ptr<MockAura> CreateMockAura(
+    static ::std::shared_ptr<MockAura> CreateMockAura(
         uint32 spellId,
         MockUnit* caster,
         MockUnit* target,
@@ -442,18 +442,18 @@ public:
     );
 
     // Group creation
-    static std::shared_ptr<MockGroup> CreateMockGroup(
+    static ::std::shared_ptr<MockGroup> CreateMockGroup(
         MockPlayer* leader
     );
 
     // Session creation
-    static std::shared_ptr<MockWorldSession> CreateMockSession(
+    static ::std::shared_ptr<MockWorldSession> CreateMockSession(
         MockPlayer* player,
         bool isBot = true
     );
 
     // BotAI creation
-    static std::shared_ptr<MockBotAI> CreateMockBotAI(
+    static ::std::shared_ptr<MockBotAI> CreateMockBotAI(
         MockPlayer* bot
     );
 
@@ -477,7 +477,7 @@ public:
     );
 
 private:
-    static std::atomic<uint64> s_guidCounter;
+    static ::std::atomic<uint64> s_guidCounter;
     static MockGuid GenerateGUID();
 };
 
@@ -487,27 +487,27 @@ private:
 
 struct CombatScenario
 {
-    std::shared_ptr<MockPlayer> player;
-    std::shared_ptr<MockBotAI> botAI;
-    std::vector<std::shared_ptr<MockUnit>> enemies;
-    std::shared_ptr<MockGroup> group; // Optional
+    ::std::shared_ptr<MockPlayer> player;
+    ::std::shared_ptr<MockBotAI> botAI;
+    ::std::vector<::std::shared_ptr<MockUnit>> enemies;
+    ::std::shared_ptr<MockGroup> group; // Optional
 };
 
 struct HealingScenario
 {
-    std::shared_ptr<MockPlayer> healer;
-    std::shared_ptr<MockBotAI> healerAI;
-    std::shared_ptr<MockGroup> group;
-    std::vector<std::shared_ptr<MockPlayer>> groupMembers;
+    ::std::shared_ptr<MockPlayer> healer;
+    ::std::shared_ptr<MockBotAI> healerAI;
+    ::std::shared_ptr<MockGroup> group;
+    ::std::vector<::std::shared_ptr<MockPlayer>> groupMembers;
 };
 
 struct GroupScenario
 {
-    std::shared_ptr<MockGroup> group;
-    std::shared_ptr<MockPlayer> tank;
-    std::shared_ptr<MockPlayer> healer;
-    std::vector<std::shared_ptr<MockPlayer>> dps;
-    std::shared_ptr<MockUnit> boss;
+    ::std::shared_ptr<MockGroup> group;
+    ::std::shared_ptr<MockPlayer> tank;
+    ::std::shared_ptr<MockPlayer> healer;
+    ::std::vector<::std::shared_ptr<MockPlayer>> dps;
+    ::std::shared_ptr<MockUnit> boss;
 };
 
 // ============================================================================
@@ -547,10 +547,10 @@ struct GroupScenario
 // Performance assertions
 #define EXPECT_EXECUTION_TIME_UNDER_MICROS(operation, limitMicros) \
     { \
-        auto start = std::chrono::high_resolution_clock::now(); \
+        auto start = ::std::chrono::high_resolution_clock::now(); \
         operation; \
-        auto end = std::chrono::high_resolution_clock::now(); \
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count(); \
+        auto end = ::std::chrono::high_resolution_clock::now(); \
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count(); \
         EXPECT_LE(duration, limitMicros) << "Operation took " << duration << "µs, expected <" << limitMicros << "µs"; \
     }
 

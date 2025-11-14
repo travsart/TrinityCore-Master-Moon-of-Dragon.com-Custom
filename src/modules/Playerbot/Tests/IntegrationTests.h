@@ -61,20 +61,20 @@ enum class TestResult : uint8
 struct TestCase
 {
     uint32 testId;
-    std::string testName;
-    std::string description;
+    ::std::string testName;
+    ::std::string description;
     TestCategory category;
     TestPhase currentPhase;
     TestResult result;
     uint32 executionTime;
     uint32 timeoutLimit;
-    std::vector<std::string> prerequisites;
-    std::vector<std::string> assertions;
-    std::vector<std::string> errors;
-    std::function<bool()> setupFunction;
-    std::function<bool()> executeFunction;
-    std::function<bool()> validateFunction;
-    std::function<void()> cleanupFunction;
+    ::std::vector<::std::string> prerequisites;
+    ::std::vector<::std::string> assertions;
+    ::std::vector<::std::string> errors;
+    ::std::function<bool()> setupFunction;
+    ::std::function<bool()> executeFunction;
+    ::std::function<bool()> validateFunction;
+    ::std::function<void()> cleanupFunction;
     uint32 startTime;
     uint32 endTime;
     bool isEnabled;
@@ -100,7 +100,7 @@ public:
     void RunAllTests();
     void RunTestCategory(TestCategory category);
     bool RunSingleTest(uint32 testId);
-    void RunTestSuite(const std::string& suiteName);
+    void RunTestSuite(const ::std::string& suiteName);
 
     // Test management
     uint32 RegisterTest(const TestCase& testCase);
@@ -174,10 +174,10 @@ public:
     // Performance and stress testing
     struct PerformanceTest
     {
-        std::string testName;
+        ::std::string testName;
         uint32 botCount;
         uint32 duration;
-        std::vector<std::string> operations;
+        ::std::vector<::std::string> operations;
         float cpuUsageLimit;
         size_t memoryUsageLimit;
         uint32 operationsPerSecond;
@@ -202,19 +202,19 @@ public:
         uint32 skippedTests;
         uint32 totalExecutionTime;
         float successRate;
-        std::vector<std::pair<std::string, std::string>> failureReasons;
-        std::unordered_map<TestCategory, uint32> categoryResults;
-        std::chrono::steady_clock::time_point reportTime;
+        ::std::vector<::std::pair<::std::string, ::std::string>> failureReasons;
+        ::std::unordered_map<TestCategory, uint32> categoryResults;
+        ::std::chrono::steady_clock::time_point reportTime;
 
         TestReport() : totalTests(0), passedTests(0), failedTests(0)
             , skippedTests(0), totalExecutionTime(0), successRate(0.0f)
-            , reportTime(std::chrono::steady_clock::now()) {}
+            , reportTime(::std::chrono::steady_clock::now()) {}
     };
 
     TestReport GenerateTestReport();
-    void ExportTestResults(const std::string& filename);
-    void LogTestExecution(uint32 testId, const std::string& details);
-    std::vector<TestCase> GetFailedTests();
+    void ExportTestResults(const ::std::string& filename);
+    void LogTestExecution(uint32 testId, const ::std::string& details);
+    ::std::vector<TestCase> GetFailedTests();
 
     // Test environment management
     void SetupTestEnvironment();
@@ -231,7 +231,7 @@ public:
     bool ValidateTradeCompletion(Player* player1, Player* player2);
 
     // Mock and simulation helpers
-    void SimulateGroupScenario(const std::string& scenarioName);
+    void SimulateGroupScenario(const ::std::string& scenarioName);
     void SimulateCombatEncounter(Group* group);
     void SimulateMarketActivity();
     void SimulateGuildInteraction(Guild* guild);
@@ -244,7 +244,7 @@ public:
     bool ValidateSystemIntegrity();
 
     // Test configuration
-    void LoadTestConfiguration(const std::string& configFile);
+    void LoadTestConfiguration(const ::std::string& configFile);
     void SetTestVerbosity(uint32 level);
     void EnableTestLogging(bool enable);
     void SetParallelExecution(bool enable);
@@ -260,38 +260,38 @@ private:
     ~IntegrationTests() = default;
 
     // Core test data
-    std::unordered_map<uint32, TestCase> _testCases; // testId -> test case
-    std::unordered_map<TestCategory, std::vector<uint32>> _categoryTests; // category -> testIds
-    std::unordered_map<std::string, std::vector<uint32>> _testSuites; // suiteName -> testIds
-    std::atomic<uint32> _nextTestId{1};
+    ::std::unordered_map<uint32, TestCase> _testCases; // testId -> test case
+    ::std::unordered_map<TestCategory, ::std::vector<uint32>> _categoryTests; // category -> testIds
+    ::std::unordered_map<::std::string, ::std::vector<uint32>> _testSuites; // suiteName -> testIds
+    ::std::atomic<uint32> _nextTestId{1};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _testMutex;
 
     // Test execution management
-    std::queue<uint32> _testQueue;
-    std::unordered_map<uint32, std::vector<uint32>> _testDependencies; // testId -> dependencies
-    std::atomic<bool> _testsRunning{false};
-    std::atomic<uint32> _currentlyExecuting{0};
+    ::std::queue<uint32> _testQueue;
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _testDependencies; // testId -> dependencies
+    ::std::atomic<bool> _testsRunning{false};
+    ::std::atomic<uint32> _currentlyExecuting{0};
 
     // Test environment
-    std::vector<Player*> _testPlayers;
+    ::std::vector<Player*> _testPlayers;
     Group* _testGroup;
     Guild* _testGuild;
-    std::unordered_map<std::string, std::string> _testConfiguration;
+    ::std::unordered_map<::std::string, ::std::string> _testConfiguration;
 
     // Performance monitoring
     struct TestMetrics
     {
-        std::atomic<uint32> testsExecuted{0};
-        std::atomic<uint32> testsPassed{0};
-        std::atomic<uint32> testsFailed{0};
-        std::atomic<uint32> totalExecutionTime{0};
-        std::atomic<float> averageExecutionTime{0.0f};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> testsExecuted{0};
+        ::std::atomic<uint32> testsPassed{0};
+        ::std::atomic<uint32> testsFailed{0};
+        ::std::atomic<uint32> totalExecutionTime{0};
+        ::std::atomic<float> averageExecutionTime{0.0f};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Reset() {
             testsExecuted = 0; testsPassed = 0; testsFailed = 0;
             totalExecutionTime = 0; averageExecutionTime = 0.0f;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
     };
 
@@ -318,24 +318,24 @@ private:
     // Validation implementations
     bool ValidateTestPrerequisites(const TestCase& test);
     bool ExecuteTestAssertions(const TestCase& test);
-    void RecordTestResult(uint32 testId, TestResult result, const std::string& details = "");
-    void HandleTestFailure(uint32 testId, const std::string& reason);
+    void RecordTestResult(uint32 testId, TestResult result, const ::std::string& details = "");
+    void HandleTestFailure(uint32 testId, const ::std::string& reason);
 
     // Test environment helpers
-    Player* CreateTestPlayer(const std::string& name, uint8 playerClass);
-    Group* CreateTestGroup(const std::vector<Player*>& players);
-    Guild* CreateTestGuild(const std::string& guildName);
+    Player* CreateTestPlayer(const ::std::string& name, uint8 playerClass);
+    Group* CreateTestGroup(const ::std::vector<Player*>& players);
+    Guild* CreateTestGuild(const ::std::string& guildName);
     void CleanupTestPlayer(Player* player);
 
     // Performance testing implementations
     bool MeasureCPUUsage(float& usage);
     bool MeasureMemoryUsage(size_t& usage);
-    void ProfileSystemPerformance(const std::string& operation);
+    void ProfileSystemPerformance(const ::std::string& operation);
     bool ValidatePerformanceCriteria(const PerformanceTest& test);
 
     // Simulation implementations
     void SimulatePlayerActions(Player* player, uint32 duration);
-    void SimulateGroupActivity(Group* group, const std::string& activity);
+    void SimulateGroupActivity(Group* group, const ::std::string& activity);
     void SimulateMarketTransactions(uint32 transactionCount);
     void GenerateRealisticTestScenarios();
 

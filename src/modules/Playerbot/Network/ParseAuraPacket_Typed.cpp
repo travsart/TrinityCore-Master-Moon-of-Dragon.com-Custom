@@ -33,7 +33,7 @@ void ParseTypedAuraUpdate(WorldSession* session, WorldPackets::Spells::AuraUpdat
         event.spellId = auraInfo.AuraData.has_value() ? auraInfo.AuraData->SpellID : 0;
         event.auraSlot = auraInfo.Slot;
         event.stackCount = auraInfo.AuraData.has_value() ? auraInfo.AuraData->Applications : 0;
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
         AuraEventBus::instance()->PublishEvent(event);
     }
 
@@ -58,7 +58,7 @@ void ParseTypedSetFlatSpellModifier(WorldSession* session, WorldPackets::Spells:
         event.spellId = 0;
         event.auraSlot = static_cast<uint32>(modData.ModIndex);
         event.stackCount = 0;
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
 
         AuraEventBus::instance()->PublishEvent(event);
     }
@@ -84,7 +84,7 @@ void ParseTypedSetPctSpellModifier(WorldSession* session, WorldPackets::Spells::
         event.spellId = 0;
         event.auraSlot = static_cast<uint32>(modData.ModIndex);
         event.stackCount = 0;
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
 
         AuraEventBus::instance()->PublishEvent(event);
     }
@@ -110,7 +110,7 @@ void ParseTypedDispelFailed(WorldSession* session, WorldPackets::Spells::DispelF
         event.spellId = spellId;
         event.auraSlot = 0;
         event.stackCount = 0;
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
 
         AuraEventBus::instance()->PublishEvent(event);
     }

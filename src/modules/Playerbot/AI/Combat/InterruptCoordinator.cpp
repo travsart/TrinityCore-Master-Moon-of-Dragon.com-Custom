@@ -21,7 +21,7 @@ namespace Playerbot
 {
 
 InterruptCoordinatorFixed::InterruptCoordinatorFixed(Group* group)
-    : _group(group), _lastUpdate(std::chrono::steady_clock::now())
+    : _group(group), _lastUpdate(::std::chrono::steady_clock::now())
 {
     TC_LOG_DEBUG("module.playerbot.interrupt",
         "InterruptCoordinatorFixed initialized for group with single-mutex design");
@@ -68,7 +68,7 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
     }
     // Thread-safe state update with SINGLE LOCK
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
         _state.botInfo[info.botGuid] = info;
         _state.botAI[info.botGuid] = ai;
     }
@@ -81,7 +81,7 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
 void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 {
     // Thread-safe removal with SINGLE LOCK
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     _state.botInfo.erase(botGuid);
     _state.botAI.erase(botGuid);
@@ -89,7 +89,7 @@ void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 
     // Remove any pending assignments
     _state.pendingAssignments.erase(
-        std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+        ::std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
             [botGuid](InterruptAssignment const& assignment) {
                 return assignment.assignedBot == botGuid;
             }),
@@ -100,7 +100,7 @@ void InterruptCoordinatorFixed::UnregisterBot(ObjectGuid botGuid)
 void InterruptCoordinatorFixed::UpdateBotCooldown(ObjectGuid botGuid, uint32 cooldownMs)
 {
     // Optimized with shared lock for read, upgrade to unique only if needed
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
     auto it = _state.botInfo.find(botGuid);
     if (it != _state.botInfo.end())
     {
@@ -134,12 +134,12 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
 
     // Thread-safe insertion with SINGLE LOCK
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
         _state.activeCasts[caster->GetGUID()] = castInfo;
     }
 
     // Update metrics atomically (lock-free)
-    _metrics.spellsDetected.fetch_add(1, std::memory_order_relaxed);
+    _metrics.spellsDetected.fetch_add(1, ::std::memory_order_relaxed);
 
     TC_LOG_DEBUG("module.playerbot.interrupt",
         "Enemy cast detected: {} casting spell {} (priority: {}, duration: {}ms)",
@@ -149,20 +149,20 @@ void InterruptCoordinatorFixed::OnEnemyCastStart(Unit* caster, uint32 spellId, u
 void InterruptCoordinatorFixed::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId)
 {
     // Thread-safe update with SINGLE LOCK
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     auto it = _state.activeCasts.find(casterGuid);
     if (it != _state.activeCasts.end() && it->second.spellId == spellId)
     {
         it->second.wasInterrupted = true;
-        _metrics.interruptsSuccessful.fetch_add(1, std::memory_order_relaxed);
+        _metrics.interruptsSuccessful.fetch_add(1, ::std::memory_order_relaxed);
     }
 }
 
 void InterruptCoordinatorFixed::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
 {
     // Thread-safe removal with SINGLE LOCK
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
     _state.activeCasts.erase(casterGuid);
 }
 
@@ -171,7 +171,7 @@ void InterruptCoordinatorFixed::Update(uint32 diff)
     if (!_active || !_group)
         return;
 
-    _updateCount.fetch_add(1, std::memory_order_relaxed);
+    _updateCount.fetch_add(1, ::std::memory_order_relaxed);
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Execute ready assignments
@@ -188,7 +188,7 @@ void InterruptCoordinatorFixed::Update(uint32 diff)
 
     // Clean up completed casts
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
 
         for (auto it = _state.activeCasts.begin(); it != _state.activeCasts.end(); )
         {
@@ -206,17 +206,17 @@ void InterruptCoordinatorFixed::Update(uint32 diff)
 
 void InterruptCoordinatorFixed::AssignInterrupters()
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Copy data for processing (minimize lock time)
     CoordinatorState localState;
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
         localState = _state;  // Fast copy under read lock
     }
 
-    std::vector<InterruptAssignment> newAssignments;
+    ::std::vector<InterruptAssignment> newAssignments;
 
     // Process each active cast
     for (auto& [casterGuid, castInfo] : localState.activeCasts)
@@ -238,7 +238,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
         // Sort by distance (if position manager available)
         if (_positionManager)
         {
-            std::sort(availableBots.begin(), availableBots.end(),
+            ::std::sort(availableBots.begin(), availableBots.end(),
                 [this, casterGuid](ObjectGuid a, ObjectGuid b) {
                     return GetBotDistanceToTarget(a, casterGuid) <
                            GetBotDistanceToTarget(b, casterGuid);
@@ -277,13 +277,13 @@ void InterruptCoordinatorFixed::AssignInterrupters()
             castInfo.assignedBots++;
         }
 
-        _metrics.interruptsAssigned.fetch_add(1, std::memory_order_relaxed);
+        _metrics.interruptsAssigned.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     // Apply new assignments with SINGLE LOCK
     if (!newAssignments.empty())
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
 
         for (auto const& assignment : newAssignments)
         {
@@ -293,18 +293,18 @@ void InterruptCoordinatorFixed::AssignInterrupters()
     }
 
     // Track assignment time
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-    _metrics.assignmentTime.fetch_add(duration.count(), std::memory_order_relaxed);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+    _metrics.assignmentTime.fetch_add(duration.count(), ::std::memory_order_relaxed);
 }
 
 void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
 {
-    std::vector<InterruptAssignment*> readyAssignments;
+    ::std::vector<InterruptAssignment*> readyAssignments;
 
     // Find ready assignments with minimal lock time
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
 
         for (auto& assignment : _state.pendingAssignments)
         {
@@ -328,7 +328,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
         // Get bot AI
         BotAI* botAI = nullptr;
         {
-            std::lock_guard lock(_stateMutex);
+            ::std::lock_guard lock(_stateMutex);
             auto it = _state.botAI.find(assignment->assignedBot);
             if (it != _state.botAI.end())
                 botAI = it->second;
@@ -343,7 +343,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
                 assignment->assignedBot.ToString(), assignment->targetSpell);
 
             assignment->executed = true;
-            _metrics.interruptsExecuted.fetch_add(1, std::memory_order_relaxed);
+            _metrics.interruptsExecuted.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         assignment->inProgress = false;
@@ -352,10 +352,10 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     // Clean up executed assignments
     if (!readyAssignments.empty())
     {
-        std::lock_guard lock(_stateMutex);
+        ::std::lock_guard lock(_stateMutex);
 
         _state.pendingAssignments.erase(
-            std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+            ::std::remove_if(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
                 [](InterruptAssignment const& a) { return a.executed; }),
             _state.pendingAssignments.end()
         );
@@ -370,11 +370,11 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     }
 }
 
-std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(CastingSpellInfo const& castInfo) const
+::std::vector<ObjectGuid> InterruptCoordinatorFixed::GetAvailableInterrupters(CastingSpellInfo const& castInfo) const
 {
-    std::vector<ObjectGuid> available;
+    ::std::vector<ObjectGuid> available;
 
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     for (auto const& [guid, info] : _state.botInfo)
     {
@@ -422,12 +422,12 @@ uint32 InterruptCoordinatorFixed::CalculateInterruptTime(CastingSpellInfo const&
     uint32 totalCastTime = castInfo.castEndTime - castInfo.castStartTime;
     uint32 targetTime = castInfo.castStartTime + (totalCastTime * 7 / 10); // 70% through cast
 
-    return std::max(currentTime + _minInterruptDelay, targetTime);
+    return ::std::max(currentTime + _minInterruptDelay, targetTime);
 }
 
 bool InterruptCoordinatorFixed::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId) const
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     // Check for pending assignments for this bot
     for (auto const& assignment : _state.pendingAssignments)
@@ -447,7 +447,7 @@ bool InterruptCoordinatorFixed::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGui
 
 uint32 InterruptCoordinatorFixed::GetNextInterruptTime(ObjectGuid botGuid) const
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     for (auto const& assignment : _state.pendingAssignments)
     {
@@ -462,9 +462,9 @@ uint32 InterruptCoordinatorFixed::GetNextInterruptTime(ObjectGuid botGuid) const
 
 bool InterruptCoordinatorFixed::HasPendingInterrupt(ObjectGuid botGuid) const
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
-    return std::any_of(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
+    return ::std::any_of(_state.pendingAssignments.begin(), _state.pendingAssignments.end(),
         [botGuid](InterruptAssignment const& assignment) {
             return assignment.assignedBot == botGuid && !assignment.executed;
         });
@@ -489,14 +489,14 @@ InterruptPriority InterruptCoordinatorFixed::GetSpellPriority(uint32 spellId) co
 InterruptCoordinatorFixed::InterruptMetrics InterruptCoordinatorFixed::GetMetrics() const
 {
     return InterruptMetrics{
-        {_metrics.spellsDetected.load(std::memory_order_relaxed)},
-        {_metrics.interruptsAssigned.load(std::memory_order_relaxed)},
-        {_metrics.interruptsExecuted.load(std::memory_order_relaxed)},
-        {_metrics.interruptsSuccessful.load(std::memory_order_relaxed)},
-        {_metrics.interruptsFailed.load(std::memory_order_relaxed)},
-        {_metrics.assignmentTime.load(std::memory_order_relaxed)},
-        {_metrics.rotationInterrupts.load(std::memory_order_relaxed)},
-        {_metrics.priorityInterrupts.load(std::memory_order_relaxed)}
+        {_metrics.spellsDetected.load(::std::memory_order_relaxed)},
+        {_metrics.interruptsAssigned.load(::std::memory_order_relaxed)},
+        {_metrics.interruptsExecuted.load(::std::memory_order_relaxed)},
+        {_metrics.interruptsSuccessful.load(::std::memory_order_relaxed)},
+        {_metrics.interruptsFailed.load(::std::memory_order_relaxed)},
+        {_metrics.assignmentTime.load(::std::memory_order_relaxed)},
+        {_metrics.rotationInterrupts.load(::std::memory_order_relaxed)},
+        {_metrics.priorityInterrupts.load(::std::memory_order_relaxed)}
     };
 }
 
@@ -505,11 +505,11 @@ void InterruptCoordinatorFixed::ResetMetrics()
     _metrics.Reset();
 }
 
-std::string InterruptCoordinatorFixed::GetStatusString() const
+::std::string InterruptCoordinatorFixed::GetStatusString() const
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
-    std::stringstream ss;
+    ::std::stringstream ss;
     ss << "InterruptCoordinator Status:\n";
     ss << "  Active Bots: " << _state.botInfo.size() << "\n";
     ss << "  Active Casts: " << _state.activeCasts.size() << "\n";
@@ -544,18 +544,18 @@ void InterruptCoordinatorFixed::RotateInterrupters()
 {
     // Implement rotation logic to distribute interrupt duties
     // This prevents the same bots from always interrupting
-    _metrics.rotationInterrupts.fetch_add(1, std::memory_order_relaxed);
+    _metrics.rotationInterrupts.fetch_add(1, ::std::memory_order_relaxed);
 }
 
-std::vector<InterruptAssignment> InterruptCoordinatorFixed::GetPendingAssignments() const
+::std::vector<InterruptAssignment> InterruptCoordinatorFixed::GetPendingAssignments() const
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
     return _state.pendingAssignments;
 }
 
 void InterruptCoordinatorFixed::OnInterruptExecuted(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, bool success)
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     // Find and mark assignment as executed
     for (auto& assignment : _state.pendingAssignments)
@@ -569,9 +569,9 @@ void InterruptCoordinatorFixed::OnInterruptExecuted(ObjectGuid botGuid, ObjectGu
 
             // Update metrics
             if (success)
-                _metrics.interruptsSuccessful.fetch_add(1, std::memory_order_relaxed);
+                _metrics.interruptsSuccessful.fetch_add(1, ::std::memory_order_relaxed);
             else
-                _metrics.interruptsFailed.fetch_add(1, std::memory_order_relaxed);
+                _metrics.interruptsFailed.fetch_add(1, ::std::memory_order_relaxed);
 
             TC_LOG_DEBUG("module.playerbot.interrupt",
                 "Interrupt executed: Bot {} interrupted spell {} on target {} - {}",
@@ -583,9 +583,9 @@ void InterruptCoordinatorFixed::OnInterruptExecuted(ObjectGuid botGuid, ObjectGu
     }
 }
 
-void InterruptCoordinatorFixed::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, std::string const& reason)
+void InterruptCoordinatorFixed::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid targetGuid, uint32 spellId, ::std::string const& reason)
 {
-    std::lock_guard lock(_stateMutex);
+    ::std::lock_guard lock(_stateMutex);
 
     // Find and mark assignment as failed
     for (auto& assignment : _state.pendingAssignments)
@@ -596,7 +596,7 @@ void InterruptCoordinatorFixed::OnInterruptFailed(ObjectGuid botGuid, ObjectGuid
         {
             assignment.executed = true;
             _state.assignedBots.erase(botGuid);
-            _metrics.interruptsFailed.fetch_add(1, std::memory_order_relaxed);
+            _metrics.interruptsFailed.fetch_add(1, ::std::memory_order_relaxed);
 
             TC_LOG_DEBUG("module.playerbot.interrupt",
                 "Interrupt failed: Bot {} failed to interrupt spell {} on target {} - Reason: {}",

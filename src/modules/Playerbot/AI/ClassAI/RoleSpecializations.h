@@ -106,7 +106,7 @@ protected:
         Unit* bestTarget = nullptr;
         float lowestHealth = 100.0f;
 
-        std::list<Unit*> hostileUnits;
+        ::std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this->GetBot(), this->GetBot(), 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_search(this->GetBot(), hostileUnits, u_check);
         this->GetBot()->VisitNearbyObject(40.0f, u_search);
@@ -282,7 +282,7 @@ protected:
         if (currentTime - _lastShieldBlock > 12000) // 12 second recharge
         {
 
-            _shieldBlockCharges = std::min<uint32>(_shieldBlockCharges + 1, 2);
+            _shieldBlockCharges = ::std::min<uint32>(_shieldBlockCharges + 1, 2);
         }
 
         // Use shield block on high damage
@@ -329,7 +329,7 @@ protected:
     void ManageDoTs()
     {
         // Get all valid targets
-        std::list<Unit*> targets = GetValidDotTargets();
+        ::std::list<Unit*> targets = GetValidDotTargets();
 
         // Sort by missing DoTs
         targets.sort([this](Unit* a, Unit* b) {
@@ -358,9 +358,9 @@ protected:
         }
     }
 
-    std::list<Unit*> GetValidDotTargets() const
+    ::std::list<Unit*> GetValidDotTargets() const
     {
-        std::list<Unit*> targets;        std::list<Unit*> hostileUnits;
+        ::std::list<Unit*> targets;        ::std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(this->GetBot(), this->GetBot(), 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_search(this->GetBot(), hostileUnits, u_check);
         this->GetBot()->VisitNearbyObject(40.0f, u_search);
@@ -430,7 +430,7 @@ protected:
 
     virtual void ApplyMissingDoTs(Unit* target) = 0;
     virtual void RefreshDot(Unit* target, uint32 spellId) = 0;
-    virtual std::vector<uint32> GetRequiredDotSpells() const = 0;
+    virtual ::std::vector<uint32> GetRequiredDotSpells() const = 0;
 
 private:
     uint32 _maxDotsPerTarget;
@@ -510,7 +510,7 @@ protected:
 
             return 0;
 
-        std::list<Unit*> hostileUnits;
+        ::std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 10.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> u_searcher(bot, hostileUnits, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -583,10 +583,10 @@ public:
     {
         uint32 spellId;
         float priority;
-        std::function<bool()> condition;
+        ::std::function<bool()> condition;
     };
 
-    void AddAbility(uint32 spellId, float priority, std::function<bool()> condition = nullptr)
+    void AddAbility(uint32 spellId, float priority, ::std::function<bool()> condition = nullptr)
     {
         _abilities.push_back({spellId, priority, condition});
         SortAbilities();
@@ -608,7 +608,7 @@ public:
         return 0;
     }    void UpdatePriority(uint32 spellId, float newPriority)
     {
-        auto it = std::find_if(_abilities.begin(), _abilities.end(),
+        auto it = ::std::find_if(_abilities.begin(), _abilities.end(),
 
             [spellId](const AbilityPriority& a) { return a.spellId == spellId; });
 
@@ -624,7 +624,7 @@ public:
 private:
     void SortAbilities()
     {
-        std::sort(_abilities.begin(), _abilities.end(),
+        ::std::sort(_abilities.begin(), _abilities.end(),
 
             [](const AbilityPriority& a, const AbilityPriority& b) {
 
@@ -633,7 +633,7 @@ private:
             });
     }
 
-    std::vector<AbilityPriority> _abilities;
+    ::std::vector<AbilityPriority> _abilities;
 };
 
 /**
@@ -685,7 +685,7 @@ private:
         return (static_cast<uint64>(spellId) << 32) | target->GetGUID().GetCounter();
     }
 
-    std::unordered_map<uint64, Snapshot> _snapshots;
+    ::std::unordered_map<uint64, Snapshot> _snapshots;
 };
 
 } // namespace Playerbot

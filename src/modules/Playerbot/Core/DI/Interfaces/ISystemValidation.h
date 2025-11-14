@@ -44,7 +44,7 @@ public:
 
     // Core validation framework
     virtual ValidationResult ValidateSystem(SystemComponent component, ValidationLevel level = ValidationLevel::STANDARD) = 0;
-    virtual std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD) = 0;
+    virtual ::std::vector<ValidationResult> ValidateAllSystems(ValidationLevel level = ValidationLevel::STANDARD) = 0;
     virtual bool RunSystemHealthCheck() = 0;
     virtual void PerformSystemDiagnostics() = 0;
 
@@ -67,7 +67,7 @@ public:
 
     // Performance validation
     virtual PerformanceValidation ValidateSystemPerformance(SystemComponent component) = 0;
-    virtual std::vector<PerformanceValidation> ValidateAllPerformance() = 0;
+    virtual ::std::vector<PerformanceValidation> ValidateAllPerformance() = 0;
     virtual bool ValidateMemoryUsage() = 0;
     virtual bool ValidateResponseTimes() = 0;
 
@@ -87,14 +87,14 @@ public:
     // Runtime validation
     virtual void EnableContinuousValidation(bool enable) = 0;
     virtual void SetValidationInterval(uint32 intervalMs) = 0;
-    virtual void RegisterValidationTrigger(const std::string& triggerName, std::function<bool()> validator) = 0;
-    virtual void ValidateOnEvent(const std::string& eventName) = 0;
+    virtual void RegisterValidationTrigger(const ::std::string& triggerName, ::std::function<bool()> validator) = 0;
+    virtual void ValidateOnEvent(const ::std::string& eventName) = 0;
 
     // Validation reporting
     virtual SystemHealthReport GenerateHealthReport() = 0;
-    virtual void ExportValidationReport(const std::string& filename) = 0;
+    virtual void ExportValidationReport(const ::std::string& filename) = 0;
     virtual void LogValidationResults(const ValidationResult& result) = 0;
-    virtual std::vector<std::string> GetCriticalIssues() = 0;
+    virtual ::std::vector<::std::string> GetCriticalIssues() = 0;
 
     // Automated fixing and recovery
     virtual bool AttemptAutomaticFix(const ValidationResult& result) = 0;
@@ -106,15 +106,15 @@ public:
     virtual ValidationMetrics GetValidationMetrics() = 0;
 
     // Advanced validation features
-    virtual void SetupValidationSchedule(const std::string& schedule) = 0;
+    virtual void SetupValidationSchedule(const ::std::string& schedule) = 0;
     virtual void ValidateAfterSystemChanges() = 0;
     virtual void ValidateBeforeCriticalOperations() = 0;
     virtual void MonitorSystemDegradation() = 0;
 
     // Custom validation rules
-    virtual void AddCustomValidationRule(const std::string& ruleName, std::function<bool(SystemComponent)> rule) = 0;
-    virtual void RemoveCustomValidationRule(const std::string& ruleName) = 0;
-    virtual std::vector<std::string> GetActiveValidationRules() = 0;
+    virtual void AddCustomValidationRule(const ::std::string& ruleName, ::std::function<bool(SystemComponent)> rule) = 0;
+    virtual void RemoveCustomValidationRule(const ::std::string& ruleName) = 0;
+    virtual ::std::vector<::std::string> GetActiveValidationRules() = 0;
 
     // Update and maintenance
     virtual void Update(uint32 diff) = 0;

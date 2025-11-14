@@ -34,6 +34,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Restoration Druid Spell IDs
 constexpr uint32 RESTO_REJUVENATION = 774;
 constexpr uint32 RESTO_REGROWTH = 8936;
@@ -140,7 +150,7 @@ public:
         return count;
     }
 
-    void Update(const std::vector<Unit*>& group)
+    void Update(const ::std::vector<Unit*>& group)
     {
         for (Unit* member : group)
         {
@@ -264,10 +274,10 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _rejuvenationTargets;
-    std::unordered_map<ObjectGuid, uint32> _lifebloomTargets;
-    std::unordered_map<ObjectGuid, uint32> _wildGrowthTargets;
-    std::unordered_map<ObjectGuid, uint32> _cenarionWardTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _rejuvenationTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _lifebloomTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _wildGrowthTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _cenarionWardTargets;
 };
 
 // Swiftmend target tracker (requires a HoT to cast)
@@ -338,7 +348,7 @@ public:
 
         UpdateRestorationState();
 
-        std::vector<Unit*> group = GetGroupMembers();
+        ::std::vector<Unit*> group = GetGroupMembers();
         if (group.empty())
 
             group.push_back(bot); // Solo healing (self)
@@ -433,7 +443,7 @@ private:
                 }
     }
 
-    void ExecuteHealingRotation(const std::vector<Unit*>& group)
+    void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
         _hotTracker.Update(group);
 
@@ -476,7 +486,7 @@ private:
         HandleDPSRotation();
     }
 
-    bool HandleEmergencyHealing(const std::vector<Unit*>& group)
+    bool HandleEmergencyHealing(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -594,7 +604,7 @@ private:
         return false;
     }
 
-    bool HandleLifebloom(const std::vector<Unit*>& group)
+    bool HandleLifebloom(const ::std::vector<Unit*>& group)
     {
         // Maintain Lifebloom on primary tank
         Unit* tank = GetMainTank(group);
@@ -632,7 +642,7 @@ private:
         }
 
         return false;
-    }    bool HandleRejuvenation(const std::vector<Unit*>& group)
+    }    bool HandleRejuvenation(const ::std::vector<Unit*>& group)
     {
         uint32 activeRejuvs = _hotTracker.GetActiveRejuvenationCount();
 
@@ -667,7 +677,7 @@ private:
         return false;
     }
 
-    bool HandleWildGrowth(const std::vector<Unit*>& group)
+    bool HandleWildGrowth(const ::std::vector<Unit*>& group)
     {
         // Count injured allies without Wild Growth        uint32 needsHealing = 0;
         for (Unit* member : group)
@@ -729,7 +739,7 @@ private:
         return false;
     }
 
-    bool HandleSwiftmend(const std::vector<Unit*>& group)
+    bool HandleSwiftmend(const ::std::vector<Unit*>& group)
     {
         if (!_swiftmendTracker.CanUseSwiftmend())
 
@@ -765,7 +775,7 @@ private:
 
         return false;    }
 
-    bool HandleCenarionWard(const std::vector<Unit*>& group)
+    bool HandleCenarionWard(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         
@@ -810,7 +820,7 @@ private:
         return false;
     }
 
-    bool HandleRegrowth(const std::vector<Unit*>& group)
+    bool HandleRegrowth(const ::std::vector<Unit*>& group)
     {
         // Use Regrowth for direct healing when needed
         for (Unit* member : group)
@@ -863,9 +873,9 @@ private:
         }
     }
 
-    [[nodiscard]] std::vector<Unit*> GetGroupMembers() const
+    [[nodiscard]] ::std::vector<Unit*> GetGroupMembers() const
     {
-        std::vector<Unit*> members;
+        ::std::vector<Unit*> members;
 
         Player* bot = this->GetBot();
         if (!bot)
@@ -892,7 +902,7 @@ private:
         return members;
     }
 
-    [[nodiscard]] Unit* GetGroupMemberNeedingHealing(const std::vector<Unit*>& group, float healthThreshold) const
+    [[nodiscard]] Unit* GetGroupMemberNeedingHealing(const ::std::vector<Unit*>& group, float healthThreshold) const
     {
         Unit* mostInjured = nullptr;
         float lowestHealth = 100.0f;
@@ -914,7 +924,7 @@ private:
         return mostInjured;
     }
 
-    [[nodiscard]] Unit* GetMainTank(const std::vector<Unit*>& group) const
+    [[nodiscard]] Unit* GetMainTank(const ::std::vector<Unit*>& group) const
     {
         // Find the group member with tank role or highest threat
         for (Unit* member : group)
@@ -1218,7 +1228,7 @@ private:
 
                         Sequence("Tranquility", {
 
-                            Action("Cast Tranquility", [this](Player* bot) {
+                            bot::ai::Action("Cast Tranquility", [this](Player* bot) {
 
                                 if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
 
@@ -1238,7 +1248,7 @@ private:
 
                         Sequence("Nature's Swiftness", {
 
-                            Action("Instant Regrowth", [this](Player* bot) {
+                            bot::ai::Action("Instant Regrowth", [this](Player* bot) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1300,7 +1310,7 @@ private:
 
                             }),
 
-                            Action("Cast Incarnation", [this](Player* bot) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot) {
 
                                 if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
 
@@ -1322,7 +1332,7 @@ private:
 
                         Sequence("Ironbark Tank", {
 
-                            Action("Cast Ironbark", [this](Player*) {
+                            bot::ai::Action("Cast Ironbark", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1360,7 +1370,7 @@ private:
 
                         Sequence("Lifebloom Tank", {
 
-                            Action("Cast Lifebloom", [this](Player*) {
+                            bot::ai::Action("Cast Lifebloom", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1404,7 +1414,7 @@ private:
 
                             }),
 
-                            Action("Cast Wild Growth", [this](Player*) {
+                            bot::ai::Action("Cast Wild Growth", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1438,7 +1448,7 @@ private:
 
                             }),
 
-                            Action("Cast Rejuvenation", [this](Player*) {
+                            bot::ai::Action("Cast Rejuvenation", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1484,7 +1494,7 @@ private:
 
                             }),
 
-                            Action("Cast Swiftmend", [this](Player*) {
+                            bot::ai::Action("Cast Swiftmend", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1520,7 +1530,7 @@ private:
 
                         Sequence("Regrowth", {
 
-                            Action("Cast Regrowth", [this](Player*) {
+                            bot::ai::Action("Cast Regrowth", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1564,7 +1574,7 @@ private:
 
                     }),
 
-                    Action("Cast Moonfire", [this](Player* bot) {
+                    bot::ai::Action("Cast Moonfire", [this](Player* bot) {
 
                         Unit* target = bot->GetVictim();
 

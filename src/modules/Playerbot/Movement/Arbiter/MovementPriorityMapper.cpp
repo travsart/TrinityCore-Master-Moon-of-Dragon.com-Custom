@@ -18,9 +18,9 @@ namespace Playerbot
 // TrinityCorePriority::ToString()
 // ============================================================================
 
-std::string TrinityCorePriority::ToString() const
+::std::string TrinityCorePriority::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "TrinityCorePriority{";
 
     // Priority
@@ -173,7 +173,7 @@ TrinityCorePriority MovementPriorityMapper::Map(PlayerBotMovementPriority pbPrio
 // MovementPriorityMapper::GetPriorityName()
 // ============================================================================
 
-std::string MovementPriorityMapper::GetPriorityName(PlayerBotMovementPriority priority)
+::std::string MovementPriorityMapper::GetPriorityName(PlayerBotMovementPriority priority)
 {
     switch (priority)
     {
@@ -237,7 +237,7 @@ std::string MovementPriorityMapper::GetPriorityName(PlayerBotMovementPriority pr
 
         default:
         {
-            std::ostringstream oss;
+            ::std::ostringstream oss;
             oss << "UNKNOWN_PRIORITY_" << static_cast<int>(priority);
             return oss.str();
         }
@@ -248,7 +248,7 @@ std::string MovementPriorityMapper::GetPriorityName(PlayerBotMovementPriority pr
 // MovementPriorityMapper::GetPriorityDescription()
 // ============================================================================
 
-std::string MovementPriorityMapper::GetPriorityDescription(PlayerBotMovementPriority priority)
+::std::string MovementPriorityMapper::GetPriorityDescription(PlayerBotMovementPriority priority)
 {
     switch (priority)
     {
@@ -330,7 +330,7 @@ bool MovementPriorityMapper::IsValidPriority(uint8 value)
 // MovementPriorityMapper::GetCategoryName()
 // ============================================================================
 
-std::string MovementPriorityMapper::GetCategoryName(PlayerBotMovementPriority priority)
+::std::string MovementPriorityMapper::GetCategoryName(PlayerBotMovementPriority priority)
 {
     uint8 value = static_cast<uint8>(priority);
 

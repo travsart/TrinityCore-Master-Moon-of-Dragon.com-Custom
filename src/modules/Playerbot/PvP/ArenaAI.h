@@ -197,7 +197,7 @@ public:
     /**
      * Get kill target priority
      */
-    std::vector<::Unit*> GetKillTargetPriority(::Player* player) const override;
+    ::std::vector<::Unit*> GetKillTargetPriority(::Player* player) const override;
 
     // ============================================================================
     // POSITIONING
@@ -362,14 +362,14 @@ public:
 
     struct ArenaMetrics
     {
-        std::atomic<uint32> matchesWon{0};
-        std::atomic<uint32> matchesLost{0};
-        std::atomic<uint32> kills{0};
-        std::atomic<uint32> deaths{0};
-        std::atomic<uint32> pillarKites{0};
-        std::atomic<uint32> successfulBursts{0};
-        std::atomic<uint32> coordCCs{0};
-        std::atomic<uint32> rating{1500}; // Starting rating
+        ::std::atomic<uint32> matchesWon{0};
+        ::std::atomic<uint32> matchesLost{0};
+        ::std::atomic<uint32> kills{0};
+        ::std::atomic<uint32> deaths{0};
+        ::std::atomic<uint32> pillarKites{0};
+        ::std::atomic<uint32> successfulBursts{0};
+        ::std::atomic<uint32> coordCCs{0};
+        ::std::atomic<uint32> rating{1500}; // Starting rating
 
         void Reset()
         {
@@ -410,8 +410,8 @@ private:
     ArenaBracket GetArenaBracket(::Player* player) const;
     TeamComposition GetTeamComposition(::Player* player) const;
     TeamComposition GetEnemyTeamComposition(::Player* player) const;
-    std::vector<::Player*> GetTeammates(::Player* player) const;
-    std::vector<::Unit*> GetEnemyTeam(::Player* player) const;
+    ::std::vector<::Player*> GetTeammates(::Player* player) const;
+    ::std::vector<::Unit*> GetEnemyTeam(::Player* player) const;
     bool IsInLineOfSight(::Player* player, ::Unit* target) const;
     float GetOptimalRangeForClass(::Player* player) const;
     bool IsTeammateInDanger(::Player* teammate) const;
@@ -443,33 +443,33 @@ private:
     // ============================================================================
 
     // Arena profiles
-    std::unordered_map<uint32, ArenaProfile> _playerProfiles;
+    ::std::unordered_map<uint32, ArenaProfile> _playerProfiles;
 
     // Match states
-    std::unordered_map<uint32, ArenaMatchState> _matchStates;
+    ::std::unordered_map<uint32, ArenaMatchState> _matchStates;
 
     // Team compositions (playerGuid -> composition)
-    std::unordered_map<uint32, TeamComposition> _teamCompositions;
-    std::unordered_map<uint32, TeamComposition> _enemyCompositions;
+    ::std::unordered_map<uint32, TeamComposition> _teamCompositions;
+    ::std::unordered_map<uint32, TeamComposition> _enemyCompositions;
 
     // Focus targets (playerGuid -> target GUID)
-    std::unordered_map<uint32, ObjectGuid> _focusTargets;
+    ::std::unordered_map<uint32, ObjectGuid> _focusTargets;
 
     // Pillar database (mapId -> pillars)
-    std::unordered_map<uint32, std::vector<ArenaPillar>> _arenaP illars;
+    ::std::unordered_map<uint32, ::std::vector<ArenaPillar>> _arenaP illars;
 
     // Burst coordination (playerGuid -> burst ready)
-    std::unordered_map<uint32, bool> _burstReady;
+    ::std::unordered_map<uint32, bool> _burstReady;
 
     // Metrics
-    std::unordered_map<uint32, ArenaMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, ArenaMetrics> _playerMetrics;
     ArenaMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 ARENA_UPDATE_INTERVAL = 100;  // 100ms
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 
     // Constants
     static constexpr float PILLAR_RANGE = 30.0f;

@@ -34,6 +34,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Marksmanship Hunter Spell IDs
 enum MarksmanshipSpells
 {
@@ -517,7 +527,7 @@ protected:
 
             _lastSteadyShot = GameTime::GetGameTimeMS();
 
-            this->_resource = std::min<uint32>(this->_resource + 10, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
             return;
         }
@@ -597,7 +607,7 @@ protected:
 
             this->CastSpell(SPELL_STEADY_SHOT, target);
 
-            this->_resource = std::min<uint32>(this->_resource + 10, 100);
+            this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
             return;
         }
@@ -698,7 +708,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -871,7 +881,7 @@ private:
             }, "20+ Focus, 3+ enemies (AoE)");
 
 
-            TC_LOG_INFO("module.playerbot", "🎯 MARKSMANSHIP HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " MARKSMANSHIP HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -905,7 +915,7 @@ private:
 
                             }),
 
-                            Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_TRUESHOT))
 
@@ -938,7 +948,7 @@ private:
 
                             }),
 
-                            Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DOUBLE_TAP))
 
@@ -971,7 +981,7 @@ private:
 
                             }),
 
-                            Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_RAPID_FIRE))
 
@@ -1021,7 +1031,7 @@ private:
 
                             }),
 
-                            Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_AIMED_SHOT))
 
@@ -1072,7 +1082,7 @@ private:
 
                             }),
 
-                            Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1105,7 +1115,7 @@ private:
 
                             }),
 
-                            Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
 
@@ -1150,13 +1160,13 @@ private:
 
                             }),
 
-                            Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 this->CastSpell(SPELL_STEADY_SHOT, target);
 
                                 this->_lastSteadyShot = GameTime::GetGameTimeMS();
 
-                                this->_resource = std::min<uint32>(this->_resource + 10, 100);
+                                this->_resource = ::std::min<uint32>(this->_resource + 10, 100);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1173,7 +1183,7 @@ private:
 
                             }),
 
-                            Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1202,7 +1212,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 MARKSMANSHIP HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " MARKSMANSHIP HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

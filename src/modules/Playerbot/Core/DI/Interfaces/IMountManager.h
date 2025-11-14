@@ -47,7 +47,7 @@ public:
     virtual bool CanUseDragonriding(::Player* player) const = 0;
 
     // Mount collection
-    virtual std::vector<MountInfo> GetPlayerMounts(::Player* player) const = 0;
+    virtual ::std::vector<MountInfo> GetPlayerMounts(::Player* player) const = 0;
     virtual bool KnowsMount(::Player* player, uint32 spellId) const = 0;
     virtual bool LearnMount(::Player* player, uint32 spellId) = 0;
     virtual uint32 GetMountCount(::Player* player) const = 0;

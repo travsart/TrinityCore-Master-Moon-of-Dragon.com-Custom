@@ -72,12 +72,12 @@ struct QuestEvent
     uint32 objectiveId;
     int32 objectiveCount;
     QuestState state;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 
     // Helper constructors
     static QuestEvent QuestAccepted(ObjectGuid player, uint32 questId);
@@ -100,7 +100,7 @@ public:
     bool PublishEvent(QuestEvent const& event) override;
 
     // Subscription management
-    bool Subscribe(BotAI* subscriber, std::vector<QuestEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<QuestEventType> const& types) override;
     bool SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
@@ -116,21 +116,21 @@ public:
     // Diagnostics
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<QuestEvent> GetQueueSnapshot() const override;
+    ::std::vector<QuestEvent> GetQueueSnapshot() const override;
 
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};
-        std::atomic<uint64_t> totalDeliveries{0};
-        std::atomic<uint64_t> averageProcessingTimeUs{0};
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};
+        ::std::atomic<uint64_t> totalDeliveries{0};
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0};
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -143,16 +143,16 @@ private:
     bool DeliverEvent(BotAI* subscriber, QuestEvent const& event);
     bool ValidateEvent(QuestEvent const& event) const;
     uint32 CleanupExpiredEvents();
-    void UpdateMetrics(std::chrono::microseconds processingTime);
-    void LogEvent(QuestEvent const& event, std::string const& action) const;
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
+    void LogEvent(QuestEvent const& event, ::std::string const& action) const;
 
     // Event queue
-    std::priority_queue<QuestEvent> _eventQueue;
+    ::std::priority_queue<QuestEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _queueMutex;
 
     // Subscriber management
-    std::unordered_map<QuestEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<QuestEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _subscriberMutex;
 
     // Configuration

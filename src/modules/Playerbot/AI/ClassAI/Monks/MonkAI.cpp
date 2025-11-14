@@ -449,7 +449,7 @@ void MonkAI::UpdateBuffs()
                     if (CastSpell(bot, ENERGIZING_ELIXIR))
                     {
                         _chiManager.GenerateChi(2);
-                        _energyManager.current.store(std::min(_energyManager.current.load() + 50, _energyManager.maximum.load()));
+                        _energyManager.current.store(::std::min(_energyManager.current.load() + 50, _energyManager.maximum.load()));
                         RecordAbilityUsage(ENERGIZING_ELIXIR);
                         TC_LOG_DEBUG("module.playerbot.monk", "Windwalker {} used Energizing Elixir", bot->GetName());
                     }
@@ -1149,7 +1149,7 @@ Position MonkAI::CalculateRollDestination(::Unit* target)
 
     // Roll towards target but not past it
     float angle = GetBot()->GetAbsoluteAngle(target);
-    float distance = std::min(ROLL_DISTANCE, GetBot()->GetDistance(target) - 3.0f);
+    float distance = ::std::min(ROLL_DISTANCE, GetBot()->GetDistance(target) - 3.0f);
 
     return GetBot()->GetFirstCollisionPosition(distance, angle);
 }
@@ -1497,7 +1497,7 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
     Unit* lowestAlly = nullptr;
     float lowestHealthPct = 100.0f;
 
-    std::list<Unit*> allies;
+    ::std::list<Unit*> allies;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(GetBot(), allies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1515,7 +1515,7 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1562,7 +1562,7 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> allies;
+    ::std::list<Unit*> allies;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(GetBot(), allies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1580,7 +1580,7 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1623,7 +1623,7 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1641,7 +1641,7 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1780,7 +1780,7 @@ void MonkAI::HandleAdvancedWindwalkerManagement()
 void MonkAI::RecordAbilityUsage(uint32 spellId)
 {
     // Track ability usage for performance monitoring
-    _monkMetrics.totalAbilitiesUsed.fetch_add(1, std::memory_order_relaxed);
+    _monkMetrics.totalAbilitiesUsed.fetch_add(1, ::std::memory_order_relaxed);
 }
 
 } // namespace Playerbot

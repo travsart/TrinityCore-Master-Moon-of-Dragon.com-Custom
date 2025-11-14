@@ -73,8 +73,8 @@ namespace Playerbot
         // Initialize vendor interaction manager
         if (m_bot)
         {
-            m_vendorManager = std::make_unique<VendorInteractionManager>(m_bot);
-            m_flightMasterManager = std::make_unique<FlightMasterManager>(m_bot);
+            m_vendorManager = ::std::make_unique<VendorInteractionManager>(m_bot);
+            m_flightMasterManager = ::std::make_unique<FlightMasterManager>(m_bot);
         }
     }
 
@@ -262,7 +262,7 @@ namespace Playerbot
         return success;
     }
 
-    bool NPCInteractionManager::BuyFromVendor(Creature* vendor, std::vector<uint32> const& itemsToBuy)
+    bool NPCInteractionManager::BuyFromVendor(Creature* vendor, ::std::vector<uint32> const& itemsToBuy)
     {
         if (!vendor || itemsToBuy.empty() || !m_vendorManager)
             return false;
@@ -291,7 +291,7 @@ namespace Playerbot
         if (!vendor)
             return false;
 
-        std::vector<Item*> junkItems = GetJunkItems();
+        ::std::vector<Item*> junkItems = GetJunkItems();
         if (junkItems.empty())
             return false;
 
@@ -384,7 +384,7 @@ namespace Playerbot
         if (!m_autoTrain || !CanAffordTraining())
             return false;
 
-        std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
+        ::std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
         if (spells.empty())
             return false;
 
@@ -415,11 +415,11 @@ namespace Playerbot
         return m_bot->GetMoney() >= m_maxTrainingCost;
     }
 
-    std::vector<uint32> NPCInteractionManager::GetAffordableSpells(Creature* trainer) const
+    ::std::vector<uint32> NPCInteractionManager::GetAffordableSpells(Creature* trainer) const
     {
-        std::vector<uint32> affordable;
+        ::std::vector<uint32> affordable;
 
-        std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
+        ::std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
         for (auto const& spellInfo : spells)
         {
             if (spellInfo.canLearn && m_bot->GetMoney() >= spellInfo.cost)
@@ -537,7 +537,7 @@ namespace Playerbot
     // NPC Discovery
     Creature* NPCInteractionManager::FindNearestQuestGiver() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -570,7 +570,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestVendor() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -603,7 +603,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestTrainer() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -636,7 +636,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestRepairVendor() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -669,7 +669,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestInnkeeper() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -702,7 +702,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestFlightMaster() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -735,7 +735,7 @@ namespace Playerbot
 
     Creature* NPCInteractionManager::FindNearestAuctioneer() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& npcInfo : m_nearbyNPCs)
@@ -839,7 +839,7 @@ namespace Playerbot
     bool NPCInteractionManager::NeedToBuyReagents() const
     {
         // Simplified - check if we have less than required amount
-        std::vector<uint32> requiredReagents = GetRequiredReagents();
+        ::std::vector<uint32> requiredReagents = GetRequiredReagents();
         return !requiredReagents.empty();
     }
 
@@ -887,7 +887,7 @@ namespace Playerbot
         if (!trainer)
             return 0;
 
-        std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
+        ::std::vector<TrainerSpellInfo> spells = EvaluateTrainerSpells(trainer);
 
         uint32 totalCost = 0;
         for (auto const& spellInfo : spells)
@@ -1053,9 +1053,9 @@ namespace Playerbot
     }
 
     // Vendor Logic
-    std::vector<NPCInteractionManager::VendorItemInfo> NPCInteractionManager::EvaluateVendorItems(Creature* vendor) const
+    ::std::vector<NPCInteractionManager::VendorItemInfo> NPCInteractionManager::EvaluateVendorItems(Creature* vendor) const
     {
-        std::vector<VendorItemInfo> items;
+        ::std::vector<VendorItemInfo> items;
 
         if (!vendor || !IsVendor(vendor))
             return items;
@@ -1066,9 +1066,9 @@ namespace Playerbot
         return items;
     }
 
-    std::vector<Item*> NPCInteractionManager::GetJunkItems() const
+    ::std::vector<Item*> NPCInteractionManager::GetJunkItems() const
     {
-        std::vector<Item*> junkItems;
+        ::std::vector<Item*> junkItems;
         // Check inventory
         for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
         {
@@ -1095,9 +1095,9 @@ namespace Playerbot
         return junkItems;
     }
 
-    std::vector<uint32> NPCInteractionManager::GetRequiredReagents() const
+    ::std::vector<uint32> NPCInteractionManager::GetRequiredReagents() const
     {
-        std::vector<uint32> reagents;
+        ::std::vector<uint32> reagents;
 
         // This would check class-specific reagents
         // Simplified for now
@@ -1167,9 +1167,9 @@ namespace Playerbot
     }
 
     // Trainer Logic
-    std::vector<NPCInteractionManager::TrainerSpellInfo> NPCInteractionManager::EvaluateTrainerSpells(Creature* trainer) const
+    ::std::vector<NPCInteractionManager::TrainerSpellInfo> NPCInteractionManager::EvaluateTrainerSpells(Creature* trainer) const
     {
-        std::vector<TrainerSpellInfo> spells;
+        ::std::vector<TrainerSpellInfo> spells;
 
         if (!trainer || !IsTrainer(trainer))
             return spells;
@@ -1248,7 +1248,7 @@ namespace Playerbot
     {
         m_nearbyNPCs.clear();
 
-        std::list<Creature*> creatures;
+        ::std::list<Creature*> creatures;
         Trinity::AnyUnitInObjectRangeCheck checker(m_bot, NPC_SCAN_RANGE, true, true);
         Trinity::CreatureListSearcher searcher(m_bot, creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1266,7 +1266,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         m_bot->GetPosition(), NPC_SCAN_RANGE);
 
     // Process results (replace old loop)
@@ -1357,13 +1357,13 @@ namespace Playerbot
     // Performance Tracking
     void NPCInteractionManager::StartPerformanceTimer()
     {
-        m_performanceStart = std::chrono::high_resolution_clock::now();
+        m_performanceStart = ::std::chrono::high_resolution_clock::now();
     }
 
     void NPCInteractionManager::EndPerformanceTimer()
     {
-        auto end = std::chrono::high_resolution_clock::now();
-        m_lastUpdateDuration = std::chrono::duration_cast<std::chrono::microseconds>(end - m_performanceStart);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        m_lastUpdateDuration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - m_performanceStart);
         m_totalUpdateTime += m_lastUpdateDuration;
         m_updateCount++;
     }
@@ -1386,7 +1386,7 @@ namespace Playerbot
     }
 
     // Flight Master Logic
-    std::vector<uint32> NPCInteractionManager::GetKnownFlightPaths() const
+    ::std::vector<uint32> NPCInteractionManager::GetKnownFlightPaths() const
     {
         if (!m_flightMasterManager)
             return {};

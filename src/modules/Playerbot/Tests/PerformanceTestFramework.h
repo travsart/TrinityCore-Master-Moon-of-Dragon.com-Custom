@@ -206,21 +206,21 @@ namespace Playerbot
             PerformanceMetrics metrics;
             metrics.operationCount = botCount;
 
-            std::vector<double> loginTimes;
+            ::std::vector<double> loginTimes;
             loginTimes.reserve(botCount);
 
-            auto totalStart = std::chrono::high_resolution_clock::now();
+            auto totalStart = ::std::chrono::high_resolution_clock::now();
 
             // Simulate bot logins
             for (uint32 i = 0; i < botCount; ++i)
             {
-                auto start = std::chrono::high_resolution_clock::now();
+                auto start = ::std::chrono::high_resolution_clock::now();
 
                 // Actual login operation would be called here
                 // For testing: SimulateBotLogin(i);
 
-                auto end = std::chrono::high_resolution_clock::now();
-                double timeMs = std::chrono::duration<double, std::milli>(end - start).count();
+                auto end = ::std::chrono::high_resolution_clock::now();
+                double timeMs = ::std::chrono::duration<double, ::std::milli>(end - start).count();
                 loginTimes.push_back(timeMs);
 
                 if (timeMs < 100.0) // Target: <100ms per login
@@ -229,8 +229,8 @@ namespace Playerbot
                     metrics.failureCount++;
             }
 
-            auto totalEnd = std::chrono::high_resolution_clock::now();
-            metrics.totalTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd - totalStart).count();
+            auto totalEnd = ::std::chrono::high_resolution_clock::now();
+            metrics.totalTimeMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(totalEnd - totalStart).count();
 
             // Calculate statistics
             CalculateStatistics(loginTimes, metrics);
@@ -255,21 +255,21 @@ namespace Playerbot
             PerformanceMetrics metrics;
             metrics.operationCount = botCount;
 
-            std::vector<double> updateTimes;
+            ::std::vector<double> updateTimes;
             updateTimes.reserve(botCount);
 
-            auto totalStart = std::chrono::high_resolution_clock::now();
+            auto totalStart = ::std::chrono::high_resolution_clock::now();
 
             // Simulate bot updates (typical update cycle)
             for (uint32 i = 0; i < botCount; ++i)
             {
-                auto start = std::chrono::high_resolution_clock::now();
+                auto start = ::std::chrono::high_resolution_clock::now();
 
                 // Actual update operation would be called here
                 // For testing: SimulateBotUpdate(i);
 
-                auto end = std::chrono::high_resolution_clock::now();
-                double timeMs = std::chrono::duration<double, std::milli>(end - start).count();
+                auto end = ::std::chrono::high_resolution_clock::now();
+                double timeMs = ::std::chrono::duration<double, ::std::milli>(end - start).count();
                 updateTimes.push_back(timeMs);
 
                 if (timeMs < 10.0) // Target: <10ms per update
@@ -278,8 +278,8 @@ namespace Playerbot
                     metrics.failureCount++;
             }
 
-            auto totalEnd = std::chrono::high_resolution_clock::now();
-            metrics.totalTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd - totalStart).count();
+            auto totalEnd = ::std::chrono::high_resolution_clock::now();
+            metrics.totalTimeMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(totalEnd - totalStart).count();
 
             // Calculate statistics
             CalculateStatistics(updateTimes, metrics);
@@ -304,21 +304,21 @@ namespace Playerbot
             PerformanceMetrics metrics;
             metrics.operationCount = botCount;
 
-            std::vector<double> logoutTimes;
+            ::std::vector<double> logoutTimes;
             logoutTimes.reserve(botCount);
 
-            auto totalStart = std::chrono::high_resolution_clock::now();
+            auto totalStart = ::std::chrono::high_resolution_clock::now();
 
             // Simulate bot logouts
             for (uint32 i = 0; i < botCount; ++i)
             {
-                auto start = std::chrono::high_resolution_clock::now();
+                auto start = ::std::chrono::high_resolution_clock::now();
 
                 // Actual logout operation would be called here
                 // For testing: SimulateBotLogout(i);
 
-                auto end = std::chrono::high_resolution_clock::now();
-                double timeMs = std::chrono::duration<double, std::milli>(end - start).count();
+                auto end = ::std::chrono::high_resolution_clock::now();
+                double timeMs = ::std::chrono::duration<double, ::std::milli>(end - start).count();
                 logoutTimes.push_back(timeMs);
 
                 if (timeMs < 50.0) // Target: <50ms per logout
@@ -327,8 +327,8 @@ namespace Playerbot
                     metrics.failureCount++;
             }
 
-            auto totalEnd = std::chrono::high_resolution_clock::now();
-            metrics.totalTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd - totalStart).count();
+            auto totalEnd = ::std::chrono::high_resolution_clock::now();
+            metrics.totalTimeMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(totalEnd - totalStart).count();
 
             // Calculate statistics
             CalculateStatistics(logoutTimes, metrics);
@@ -396,7 +396,7 @@ namespace Playerbot
          * @param samples Timing samples (ms)
          * @param[out] metrics Metrics to populate
          */
-        void CalculateStatistics(std::vector<double> const& samples, PerformanceMetrics& metrics)
+        void CalculateStatistics(::std::vector<double> const& samples, PerformanceMetrics& metrics)
         {
             if (samples.empty())
                 return;
@@ -408,8 +408,8 @@ namespace Playerbot
             metrics.avgTimeMs = sum / samples.size();
 
             // Min/Max
-            metrics.minTimeMs = *std::min_element(samples.begin(), samples.end());
-            metrics.maxTimeMs = *std::max_element(samples.begin(), samples.end());
+            metrics.minTimeMs = *::std::min_element(samples.begin(), samples.end());
+            metrics.maxTimeMs = *::std::max_element(samples.begin(), samples.end());
 
             // Standard deviation
             double variance = 0.0;
@@ -419,7 +419,7 @@ namespace Playerbot
                 variance += diff * diff;
             }
             variance /= samples.size();
-            metrics.stdDevMs = std::sqrt(variance);
+            metrics.stdDevMs = ::std::sqrt(variance);
 
             // Throughput (operations per second)
             if (metrics.totalTimeMs > 0)
@@ -511,11 +511,11 @@ namespace Playerbot
 
             if (result.targetsMet)
             {
-                TC_LOG_INFO("playerbot.perf", "Result: PASSED ✓");
+                TC_LOG_INFO("playerbot.perf", "Result: PASSED ");
             }
             else
             {
-                TC_LOG_WARN("playerbot.perf", "Result: FAILED ✗");
+                TC_LOG_WARN("playerbot.perf", "Result: FAILED ");
             }
             TC_LOG_INFO("playerbot.perf", "");
         }

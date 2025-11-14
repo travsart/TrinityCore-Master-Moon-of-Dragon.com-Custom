@@ -418,7 +418,7 @@ void AdaptiveBehaviorManager::RegisterProfile(const BehaviorProfile& profile)
     _profiles.push_back(profile);
 }
 
-void AdaptiveBehaviorManager::ActivateProfile(const std::string& name)
+void AdaptiveBehaviorManager::ActivateProfile(const ::std::string& name)
 {
     for (BehaviorProfile& profile : _profiles)
     {
@@ -430,7 +430,7 @@ void AdaptiveBehaviorManager::ActivateProfile(const std::string& name)
     }
 }
 
-void AdaptiveBehaviorManager::DeactivateProfile(const std::string& name)
+void AdaptiveBehaviorManager::DeactivateProfile(const ::std::string& name)
 {
     for (BehaviorProfile& profile : _profiles)
     {
@@ -442,7 +442,7 @@ void AdaptiveBehaviorManager::DeactivateProfile(const std::string& name)
     }
 }
 
-bool AdaptiveBehaviorManager::IsProfileActive(const std::string& name) const
+bool AdaptiveBehaviorManager::IsProfileActive(const ::std::string& name) const
 {
     for (const BehaviorProfile& profile : _profiles)
     {
@@ -457,9 +457,9 @@ const BehaviorProfile* AdaptiveBehaviorManager::GetActiveProfile() const
     return _activeProfile;
 }
 
-std::vector<std::string> AdaptiveBehaviorManager::GetActiveProfileNames() const
+::std::vector<::std::string> AdaptiveBehaviorManager::GetActiveProfileNames() const
 {
-    std::vector<std::string> names;
+    ::std::vector<::std::string> names;
     for (const BehaviorProfile& profile : _profiles)
     {
         if (profile.isActive)
@@ -660,7 +660,7 @@ uint32 AdaptiveBehaviorManager::GetAverageUpdateTime() const
     return _totalUpdateTime / _updateCount;
 }
 
-void AdaptiveBehaviorManager::RecordDecisionOutcome(const std::string& decision, bool success)
+void AdaptiveBehaviorManager::RecordDecisionOutcome(const ::std::string& decision, bool success)
 {
     DecisionOutcome& outcome = _decisionHistory[decision];
     if (success)
@@ -673,7 +673,7 @@ void AdaptiveBehaviorManager::RecordDecisionOutcome(const std::string& decision,
         outcome.successRate = static_cast<float>(outcome.successCount) / total * 100.0f;
 }
 
-float AdaptiveBehaviorManager::GetDecisionSuccessRate(const std::string& decision) const
+float AdaptiveBehaviorManager::GetDecisionSuccessRate(const ::std::string& decision) const
 {
     auto it = _decisionHistory.find(decision);
     if (it != _decisionHistory.end())
@@ -836,7 +836,7 @@ float AdaptiveBehaviorManager::CalculateRoleScore(BotRole role) const
     // Gear score bonus (simplified)
     score += GetGearScore() / 100.0f;
 
-    return std::min(100.0f, score);
+    return ::std::min(100.0f, score);
 }
 
 bool AdaptiveBehaviorManager::IsRoleNeeded(BotRole role) const
@@ -1125,7 +1125,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     float roleEffectiveness = _roleAssignment.roleEffectiveness / 100.0f; // Normalize to 0-1
 
     // Base confidence on role effectiveness
-    vote.confidence = std::min(std::max(roleEffectiveness, 0.3f), 0.8f); // Clamp 0.3-0.8
+    vote.confidence = ::std::min(::std::max(roleEffectiveness, 0.3f), 0.8f); // Clamp 0.3-0.8
 
     // Base urgency on context and active strategies
     vote.urgency = 0.5f; // Default medium urgency
@@ -1173,7 +1173,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // 5. ROLE-SPECIFIC ACTION REASONING
     // ========================================================================
 
-    std::string reasoning = "AdaptiveBehavior: ";
+    ::std::string reasoning = "AdaptiveBehavior: ";
 
     switch (primaryRole)
     {
@@ -1289,7 +1289,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
         reasoning += " (" + _activeProfile->name + ")";
 
     // Clamp urgency to 0-1 range
-    vote.urgency = std::min(std::max(vote.urgency, 0.0f), 1.0f);
+    vote.urgency = ::std::min(::std::max(vote.urgency, 0.0f), 1.0f);
 
     vote.reasoning = reasoning;
 

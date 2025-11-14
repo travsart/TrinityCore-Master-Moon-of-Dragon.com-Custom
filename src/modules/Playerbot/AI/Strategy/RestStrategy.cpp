@@ -430,8 +430,8 @@ Item* RestStrategy::FindBandage(BotAI* ai) const
             continue;
 
         // Check item name contains "Bandage"
-        std::string itemName = proto->GetName(DEFAULT_LOCALE);
-        if (itemName.find("Bandage") != std::string::npos)
+        ::std::string itemName = proto->GetName(DEFAULT_LOCALE);
+        if (itemName.find("Bandage") != ::std::string::npos)
             return item;
     }
 
@@ -450,8 +450,8 @@ Item* RestStrategy::FindBandage(BotAI* ai) const
                 if (!proto)
                     continue;
 
-                std::string itemName = proto->GetName(DEFAULT_LOCALE);
-                if (itemName.find("Bandage") != std::string::npos)
+                ::std::string itemName = proto->GetName(DEFAULT_LOCALE);
+                if (itemName.find("Bandage") != ::std::string::npos)
                     return item;
             }
         }

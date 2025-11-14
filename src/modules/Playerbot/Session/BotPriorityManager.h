@@ -128,7 +128,7 @@ public:
 
     // Health monitoring
     void DetectStalledBots(uint32 currentTime, uint32 stallThresholdMs) override;
-    std::vector<ObjectGuid> GetStalledBots() const override;
+    ::std::vector<ObjectGuid> GetStalledBots() const override;
 
     // Administrative
     void RemoveBot(ObjectGuid botGuid) override;
@@ -157,7 +157,7 @@ private:
 
     // Metrics storage
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _metricsMutex;
-    std::unordered_map<ObjectGuid, BotUpdateMetrics> _botMetrics;
+    ::std::unordered_map<ObjectGuid, BotUpdateMetrics> _botMetrics;
 
     // Configuration (loaded from playerbots.conf)
     struct PriorityConfig
@@ -166,13 +166,13 @@ private:
         uint32 updateIntervalTicks{1};
     };
 
-    std::array<PriorityConfig, 5> _priorityConfigs;
+    ::std::array<PriorityConfig, 5> _priorityConfigs;
 
     // Default configuration (optimal for 5000 bots)
     void LoadDefaultConfiguration();
 
     // Initialization state
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 // Global instance accessor

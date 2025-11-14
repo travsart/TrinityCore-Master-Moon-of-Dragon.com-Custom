@@ -37,8 +37,8 @@
 namespace Playerbot
 {
     // Static member initialization - modern singleton pattern
-    std::unique_ptr<InteractionManager> InteractionManager::s_instance;
-    std::once_flag InteractionManager::s_initFlag;
+    ::std::unique_ptr<InteractionManager> InteractionManager::s_instance;
+    ::std::once_flag InteractionManager::s_initFlag;
 
     InteractionManager::InteractionManager()
     {
@@ -63,7 +63,7 @@ namespace Playerbot
         m_config.enableMetrics = true;
         m_config.logInteractions = false;
 
-        m_lastCacheClean = std::chrono::steady_clock::now();
+        m_lastCacheClean = ::std::chrono::steady_clock::now();
     }
 
     InteractionManager::~InteractionManager()
@@ -73,9 +73,9 @@ namespace Playerbot
 
     InteractionManager* InteractionManager::Instance()
     {
-        std::call_once(s_initFlag, []()
+        ::std::call_once(s_initFlag, []()
         {
-            s_instance = std::make_unique<InteractionManager>();
+            s_instance = ::std::make_unique<InteractionManager>();
         });
         return s_instance.get();
     }
@@ -104,9 +104,9 @@ namespace Playerbot
 
     void InteractionManager::InitializeHandlers()
     {
-        m_gossipHandler = std::make_unique<GossipHandler>();
-        m_validator = std::make_unique<InteractionValidator>();
-        m_vendorHandler = std::make_unique<VendorInteraction>();
+        m_gossipHandler = ::std::make_unique<GossipHandler>();
+        m_validator = ::std::make_unique<InteractionValidator>();
+        m_vendorHandler = ::std::make_unique<VendorInteraction>();
         // m_trainerHandler = std::make_unique<TrainerInteraction>();  // TODO: Create TrainerInteraction class
         // m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();  // TODO: Create InnkeeperInteraction class
         // m_flightHandler = std::make_unique<FlightMasterInteraction>();  // TODO: Create FlightMasterInteraction class
@@ -160,8 +160,8 @@ namespace Playerbot
             return;
 
         // Clean NPC type cache every 5 minutes
-        auto now = std::chrono::steady_clock::now();
-        if (now - m_lastCacheClean > std::chrono::minutes(5))
+        auto now = ::std::chrono::steady_clock::now();
+        if (now - m_lastCacheClean > ::std::chrono::minutes(5))
         {
             m_npcTypeCache.clear();
             m_lastCacheClean = now;
@@ -178,7 +178,7 @@ namespace Playerbot
             if (lastTime != m_lastInteractionTime.end())
             {
                 auto timeSinceLast = now - lastTime->second;
-                if (timeSinceLast < std::chrono::milliseconds(MIN_INTERACTION_DELAY))
+                if (timeSinceLast < ::std::chrono::milliseconds(MIN_INTERACTION_DELAY))
                     break; // Wait more
             }
 
@@ -206,7 +206,7 @@ namespace Playerbot
         }
 
         // Update active interactions
-        std::vector<ObjectGuid> toRemove;
+        ::std::vector<ObjectGuid> toRemove;
         for (auto& [guid, context] : m_activeInteractions)
         {
             if (Player* bot = ObjectAccessor::FindPlayer(guid))
@@ -279,12 +279,12 @@ namespace Playerbot
         }
 
         // Create interaction context
-        auto context = std::make_unique<InteractionContext>();
+        auto context = ::std::make_unique<InteractionContext>();
         context->botGuid = bot->GetGUID();
         context->targetGuid = target->GetGUID();
         context->type = type;
         context->state = InteractionState::Approaching;
-        context->startTime = std::chrono::steady_clock::now();
+        context->startTime = ::std::chrono::steady_clock::now();
         context->attemptCount = 0;
         context->maxAttempts = 3;
 
@@ -298,13 +298,13 @@ namespace Playerbot
             }
         }
         // Store context
-        m_activeInteractions[bot->GetGUID()] = std::move(context);
+        m_activeInteractions[bot->GetGUID()] = ::std::move(context);
         // Record metrics
         ++m_totalInteractionsStarted;
-        m_lastInteractionTime[bot->GetGUID()] = std::chrono::steady_clock::now();
+        m_lastInteractionTime[bot->GetGUID()] = ::std::chrono::steady_clock::now();
         if (m_config.logInteractions)
         {
-            std::string msg = "Starting ";
+            ::std::string msg = "Starting ";
             msg += InteractionTypeToString(type);
             msg += " interaction";
             LogInteraction(bot, msg);
@@ -410,7 +410,7 @@ namespace Playerbot
         Creature* nearest = nullptr;
         float minDist = maxRange;
 
-        std::list<Creature*> creatures;
+        ::std::list<Creature*> creatures;
         Trinity::AllCreaturesOfEntryInRange checker(bot, 0, maxRange);
         Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(bot, creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -428,7 +428,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), maxRange);
 
     // Process results (replace old loop)
@@ -768,10 +768,10 @@ namespace Playerbot
 
         if (m_config.logInteractions)
         {
-            std::string msg = "State transition: ";
-            msg += std::to_string(static_cast<int>(context->state));
+            ::std::string msg = "State transition: ";
+            msg += ::std::to_string(static_cast<int>(context->state));
             msg += " -> ";
-            msg += std::to_string(static_cast<int>(newState));
+            msg += ::std::to_string(static_cast<int>(newState));
             LogInteraction(bot, msg);
         }
 
@@ -800,8 +800,8 @@ namespace Playerbot
 
         // Move to target - use GetAbsoluteAngle instead of GetAngle
         float angle = bot->GetAbsoluteAngle(target);
-        float destX = target->GetPositionX() - (m_config.interactionRange - 0.5f) * std::cos(angle);
-        float destY = target->GetPositionY() - (m_config.interactionRange - 0.5f) * std::sin(angle);
+        float destX = target->GetPositionX() - (m_config.interactionRange - 0.5f) * ::std::cos(angle);
+        float destY = target->GetPositionY() - (m_config.interactionRange - 0.5f) * ::std::sin(angle);
         float destZ = target->GetPositionZ();
 
         bot->GetMotionMaster()->MovePoint(0, destX, destY, destZ);
@@ -820,7 +820,7 @@ namespace Playerbot
 
         if (m_config.logInteractions)
         {
-            LogInteraction(bot, "Error: " + std::string(InteractionResultToString(error)));
+            LogInteraction(bot, "Error: " + ::std::string(InteractionResultToString(error)));
         }
 
         // Increment attempt count
@@ -853,15 +853,15 @@ namespace Playerbot
         bot->SetSelection(ObjectGuid::Empty);
 
         // Wait a bit before retry
-        context->startTime = std::chrono::steady_clock::now();
-        context->timeout = std::chrono::milliseconds(2000);
+        context->startTime = ::std::chrono::steady_clock::now();
+        context->timeout = ::std::chrono::milliseconds(2000);
 
         if (m_config.logInteractions)
         {
-            std::string msg = "Attempting recovery, attempt ";
-            msg += std::to_string(context->attemptCount + 1);
+            ::std::string msg = "Attempting recovery, attempt ";
+            msg += ::std::to_string(context->attemptCount + 1);
             msg += "/";
-            msg += std::to_string(context->maxAttempts);
+            msg += ::std::to_string(context->maxAttempts);
             LogInteraction(bot, msg);
         }
 
@@ -1020,7 +1020,7 @@ namespace Playerbot
                     {
                         // SendPrepareGossip was removed - use PlayerTalkClass->SendGossipMenu instead
                         // GossipMenuIds is now a vector in TrinityCore 11.2, use first entry if available
-                        std::vector<uint32> const& gossipMenuIds = creature->GetCreatureTemplate()->GossipMenuIds;
+                        ::std::vector<uint32> const& gossipMenuIds = creature->GetCreatureTemplate()->GossipMenuIds;
                         uint32 gossipMenuId = gossipMenuIds.empty() ? 0 : gossipMenuIds[0];
                         bot->PlayerTalkClass->SendGossipMenu(gossipMenuId, creature->GetGUID());
                         context.state = InteractionState::WaitingGossip;
@@ -1094,8 +1094,8 @@ namespace Playerbot
             return;
 
         // Record metrics
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - context->startTime);
+        auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+            ::std::chrono::steady_clock::now() - context->startTime);
 
         m_metrics[context->type].RecordAttempt(
             result == InteractionResult::Success || result == InteractionResult::PartialSuccess,
@@ -1111,8 +1111,8 @@ namespace Playerbot
 
         if (m_config.logInteractions)
         {
-            LogInteraction(bot, "Completed " + std::string(InteractionTypeToString(context->type)) +
-                         " interaction with result: " + std::string(InteractionResultToString(result)));
+            LogInteraction(bot, "Completed " + ::std::string(InteractionTypeToString(context->type)) +
+                         " interaction with result: " + ::std::string(InteractionResultToString(result)));
         }
     }
     bool InteractionManager::CheckTimeout(const InteractionContext& context) const
@@ -1120,7 +1120,7 @@ namespace Playerbot
         return context.IsExpired();
     }
 
-    void InteractionManager::LogInteraction(Player* bot, const std::string& message) const
+    void InteractionManager::LogInteraction(Player* bot, const ::std::string& message) const
     {
         if (bot)
         {

@@ -79,7 +79,7 @@ namespace Playerbot
      */
     struct PerformanceSnapshot
     {
-        std::chrono::system_clock::time_point timestamp;
+        ::std::chrono::system_clock::time_point timestamp;
         BotActivityMetrics activity;
         SystemResourceMetrics resources;
         DatabaseMetrics database;
@@ -103,12 +103,12 @@ namespace Playerbot
      */
     struct TrendData
     {
-        std::vector<std::chrono::system_clock::time_point> timestamps;
-        std::vector<double> values;
+        ::std::vector<::std::chrono::system_clock::time_point> timestamps;
+        ::std::vector<double> values;
 
         void AddDataPoint(double value)
         {
-            timestamps.push_back(std::chrono::system_clock::now());
+            timestamps.push_back(::std::chrono::system_clock::now());
             values.push_back(value);
 
             // Keep last 60 data points (for 1 hour of 1-minute samples)
@@ -136,7 +136,7 @@ namespace Playerbot
             if (values.empty())
                 return 0.0;
 
-            return *std::min_element(values.begin(), values.end());
+            return *::std::min_element(values.begin(), values.end());
         }
 
         double GetMax() const
@@ -144,7 +144,7 @@ namespace Playerbot
             if (values.empty())
                 return 0.0;
 
-            return *std::max_element(values.begin(), values.end());
+            return *::std::max_element(values.begin(), values.end());
         }
     };
 
@@ -183,9 +183,9 @@ namespace Playerbot
     struct PerformanceAlert
     {
         AlertLevel level;
-        std::string category;                   // CPU, Memory, Database, Bots
-        std::string message;
-        std::chrono::system_clock::time_point timestamp;
+        ::std::string category;                   // CPU, Memory, Database, Bots
+        ::std::string message;
+        ::std::chrono::system_clock::time_point timestamp;
         double currentValue;
         double thresholdValue;
     };

@@ -14,8 +14,8 @@ namespace Playerbot
 {
 
 // Static member definitions
-std::unordered_map<uint32, SpellInterruptConfig> InterruptDatabase::_spellDatabase;
-std::unordered_map<uint32, std::unordered_map<uint32, InterruptPriority>> InterruptDatabase::_dungeonOverrides;
+::std::unordered_map<uint32, SpellInterruptConfig> InterruptDatabase::_spellDatabase;
+::std::unordered_map<uint32, ::std::unordered_map<uint32, InterruptPriority>> InterruptDatabase::_dungeonOverrides;
 bool InterruptDatabase::_initialized = false;
 
 void InterruptDatabase::Initialize()
@@ -266,12 +266,12 @@ bool InterruptDatabase::IsQuickResponseRequired(uint32 spellId)
     return config && config->requiresQuickResponse;
 }
 
-std::vector<uint32> InterruptDatabase::GetCriticalSpells()
+::std::vector<uint32> InterruptDatabase::GetCriticalSpells()
 {
     if (!_initialized)
         Initialize();
 
-    std::vector<uint32> criticalSpells;
+    ::std::vector<uint32> criticalSpells;
     for (auto const& [spellId, config] : _spellDatabase)
     {
         if (config.basePriority == InterruptPriority::CRITICAL || config.alwaysInterrupt)
@@ -280,12 +280,12 @@ std::vector<uint32> InterruptDatabase::GetCriticalSpells()
     return criticalSpells;
 }
 
-std::vector<uint32> InterruptDatabase::GetSpellsByCategory(SpellCategory category)
+::std::vector<uint32> InterruptDatabase::GetSpellsByCategory(SpellCategory category)
 {
     if (!_initialized)
         Initialize();
 
-    std::vector<uint32> spells;
+    ::std::vector<uint32> spells;
     for (auto const& [spellId, config] : _spellDatabase)
     {
         if (config.category == category)
@@ -298,9 +298,9 @@ std::vector<uint32> InterruptDatabase::GetSpellsByCategory(SpellCategory categor
 namespace InterruptAbilities
 {
 
-std::vector<ClassInterruptAbility> GetClassInterrupts(uint8 playerClass, uint32 spec)
+::std::vector<ClassInterruptAbility> GetClassInterrupts(uint8 playerClass, uint32 spec)
 {
-    std::vector<ClassInterruptAbility> abilities;
+    ::std::vector<ClassInterruptAbility> abilities;
 
     switch (playerClass)
     {
@@ -541,7 +541,7 @@ uint32 GetSchoolLockoutDuration(uint32 spellId)
 } // namespace InterruptAbilities
 
 // Mythic+ scaling implementation
-std::unordered_map<uint8, MythicPlusConfig> MythicPlusInterruptScaling::_configs = {
+::std::unordered_map<uint8, MythicPlusConfig> MythicPlusInterruptScaling::_configs = {
     {2,  {2,  0.95f, 1.0f, false, 1}},
     {3,  {3,  0.93f, 1.0f, false, 1}},
     {4,  {4,  0.91f, 1.0f, false, 1}},
@@ -625,7 +625,7 @@ RotationTemplate const BALANCED = {
     true
 };
 
-RotationTemplate const* GetOptimalTemplate(std::vector<Player*> const& group)
+RotationTemplate const* GetOptimalTemplate(::std::vector<Player*> const& group)
 {
     uint32 meleeCount = 0;
     uint32 rangedCount = 0;
@@ -661,7 +661,7 @@ RotationTemplate const* GetOptimalTemplate(std::vector<Player*> const& group)
 } // namespace RotationTemplates
 
 // Performance optimizer
-std::unordered_map<uint32, InterruptPerformanceData> InterruptOptimizer::_performanceData;
+::std::unordered_map<uint32, InterruptPerformanceData> InterruptOptimizer::_performanceData;
 
 void InterruptOptimizer::RecordInterruptAttempt(uint32 spellId, bool success, float reactionTime)
 {

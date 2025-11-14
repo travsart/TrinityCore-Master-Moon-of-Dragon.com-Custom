@@ -192,12 +192,12 @@ private:
         uint32 healingDone;
         uint32 damageDealt;
         float holyPowerEfficiency;
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastMetricsUpdate;
     };
 
     PaladinMetrics _paladinMetrics;
-    std::map<uint32, uint32> _abilityUsage;
+    ::std::map<uint32, uint32> _abilityUsage;
     uint32 _successfulInterrupts;
 };
 

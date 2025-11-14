@@ -147,7 +147,7 @@ private:
         ObjectGuid masterLooterGuid;
 
         // Target icons (8 raid markers)
-        std::array<ObjectGuid, 8> targetIcons;
+        ::std::array<ObjectGuid, 8> targetIcons;
 
         // Difficulty settings
         uint8 dungeonDifficulty{0};
@@ -161,14 +161,14 @@ private:
         bool isRaid{false};
 
         // Member subgroups (for change detection)
-        std::unordered_map<ObjectGuid, uint8> memberSubgroups;
+        ::std::unordered_map<ObjectGuid, uint8> memberSubgroups;
 
         // Last update timestamp
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::chrono::steady_clock::time_point lastUpdate;
     };
 
     // State cache: GroupGUID → GroupState
-    static inline std::unordered_map<ObjectGuid, GroupState> _groupStates;
+    static inline ::std::unordered_map<ObjectGuid, GroupState> _groupStates;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupStatesMutex;
 
     // Polling helper functions
@@ -195,10 +195,10 @@ private:
         uint64_t totalPolls{0};
         uint64_t eventsDetected{0};
         uint64_t averagePollTimeUs{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     static inline PollStatistics _pollStats;

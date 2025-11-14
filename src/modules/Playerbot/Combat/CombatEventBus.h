@@ -133,8 +133,8 @@ struct CombatEvent
     uint32 schoolMask;          // Spell school mask
     uint32 flags;               // Combat flags (crit, resist, block, etc.)
 
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
+    ::std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point expiryTime;
 
     // Helper constructors
     static CombatEvent SpellCastStart(ObjectGuid caster, ObjectGuid target, uint32 spellId, uint32 castTime);
@@ -156,7 +156,7 @@ struct CombatEvent
 
     bool IsValid() const;
     bool IsExpired() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 /**
@@ -177,7 +177,7 @@ public:
     bool PublishEvent(CombatEvent const& event) override;
 
     // Subscription
-    bool Subscribe(BotAI* subscriber, std::vector<CombatEventType> const& types) override;
+    bool Subscribe(BotAI* subscriber, ::std::vector<CombatEventType> const& types) override;
     bool SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
@@ -189,16 +189,16 @@ public:
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64_t> totalEventsPublished{0};
-        std::atomic<uint64_t> totalEventsProcessed{0};
-        std::atomic<uint64_t> totalEventsDropped{0};
-        std::atomic<uint64_t> totalDeliveries{0};
-        std::atomic<uint64_t> averageProcessingTimeUs{0};
-        std::atomic<uint32_t> peakQueueSize{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalEventsPublished{0};
+        ::std::atomic<uint64_t> totalEventsProcessed{0};
+        ::std::atomic<uint64_t> totalEventsDropped{0};
+        ::std::atomic<uint64_t> totalDeliveries{0};
+        ::std::atomic<uint64_t> averageProcessingTimeUs{0};
+        ::std::atomic<uint32_t> peakQueueSize{0};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset();
-        std::string ToString() const;
+        ::std::string ToString() const;
     };
 
     Statistics const& GetStatistics() const { return _stats; }
@@ -216,7 +216,7 @@ public:
     // Debugging
     void DumpSubscribers() const override;
     void DumpEventQueue() const override;
-    std::vector<CombatEvent> GetQueueSnapshot() const override;
+    ::std::vector<CombatEvent> GetQueueSnapshot() const override;
 
 private:
     CombatEventBus();
@@ -228,20 +228,20 @@ private:
     bool DeliverEvent(BotAI* subscriber, CombatEvent const& event);
     bool ValidateEvent(CombatEvent const& event) const;
     uint32 CleanupExpiredEvents();
-    void UpdateMetrics(std::chrono::microseconds processingTime);
-    void LogEvent(CombatEvent const& event, std::string const& action) const;
+    void UpdateMetrics(::std::chrono::microseconds processingTime);
+    void LogEvent(CombatEvent const& event, ::std::string const& action) const;
 
 private:
-    std::priority_queue<CombatEvent> _eventQueue;
+    ::std::priority_queue<CombatEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TARGET_SELECTOR> _queueMutex;
 
-    std::unordered_map<CombatEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<CombatEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TARGET_SELECTOR> _subscriberMutex;
 
-    std::atomic<uint32_t> _maxQueueSize{10000};
-    std::atomic<uint32_t> _eventTTLMs{5000};  // Combat events expire faster (5s vs 30s)
-    std::atomic<uint32_t> _batchSize{100};
+    ::std::atomic<uint32_t> _maxQueueSize{10000};
+    ::std::atomic<uint32_t> _eventTTLMs{5000};  // Combat events expire faster (5s vs 30s)
+    ::std::atomic<uint32_t> _batchSize{100};
 
     Statistics _stats;
 

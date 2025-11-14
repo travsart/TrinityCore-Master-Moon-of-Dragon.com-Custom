@@ -89,7 +89,7 @@ void InventoryManager::Update(uint32 diff)
     if (!_bot || !_bot->IsInWorld())
         return;
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Throttle updates based on configuration
     _lastUpdateTime += diff;
@@ -639,7 +639,7 @@ uint32 InventoryManager::ConsolidateStacks()
         return 0;
 
     uint32 freedSlots = 0;
-    std::unordered_map<uint32, std::vector<Item*>> stackableItems;
+    ::std::unordered_map<uint32, ::std::vector<Item*>> stackableItems;
 
     // Find all stackable items
     for (Item* item : GetAllItems())
@@ -662,7 +662,7 @@ uint32 InventoryManager::ConsolidateStacks()
             continue;
 
         // Sort by stack size (largest first)
-        std::sort(items.begin(), items.end(),
+        ::std::sort(items.begin(), items.end(),
             [](Item* a, Item* b) { return a->GetCount() > b->GetCount(); });
 
         // Merge smaller stacks into larger ones
@@ -681,7 +681,7 @@ uint32 InventoryManager::ConsolidateStacks()
                     continue;
 
                 uint32 space = maxStack - targetStack->GetCount();
-                uint32 toMove = std::min(space, sourceStack->GetCount());
+                uint32 toMove = ::std::min(space, sourceStack->GetCount());
 
                 if (toMove > 0)
                 {
@@ -716,7 +716,7 @@ void InventoryManager::SortBags()
         return;
 
     // Collect all items
-    std::vector<std::pair<Item*, float>> itemsWithScore;
+    ::std::vector<::std::pair<Item*, float>> itemsWithScore;
 
     for (Item* item : GetAllItems())
     {
@@ -730,7 +730,7 @@ void InventoryManager::SortBags()
     }
 
     // Sort by score (highest first)
-    std::sort(itemsWithScore.begin(), itemsWithScore.end(),
+    ::std::sort(itemsWithScore.begin(), itemsWithScore.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     // Reorganize items in bags (best items in main backpack)
@@ -845,7 +845,7 @@ uint32 InventoryManager::DestroyItemsForSpace(uint32 slots)
     uint32 freedSlots = 0;
 
     // Destroy items by priority (grey quality first, lowest value first)
-    std::vector<std::pair<Item*, float>> destroyableItems;
+    ::std::vector<::std::pair<Item*, float>> destroyableItems;
 
     for (Item* item : GetAllItems())
     {
@@ -870,7 +870,7 @@ uint32 InventoryManager::DestroyItemsForSpace(uint32 slots)
     }
 
     // Sort by priority (lowest first)
-    std::sort(destroyableItems.begin(), destroyableItems.end(),
+    ::std::sort(destroyableItems.begin(), destroyableItems.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; });
 
     // Destroy items until we have enough space
@@ -900,7 +900,7 @@ uint32 InventoryManager::SellVendorTrash(Creature* vendor)
         return 0;
 
     uint32 totalGold = 0;
-    std::vector<Item*> itemsToSell;
+    ::std::vector<Item*> itemsToSell;
 
     // Find all vendor trash items
     for (Item* item : GetAllItems())
@@ -1160,7 +1160,7 @@ bool InventoryManager::UseDrink()
 // ITEM QUERIES
 // ============================================================================
 
-std::vector<Item*> InventoryManager::GetAllItems() const
+::std::vector<Item*> InventoryManager::GetAllItems() const
 {
     if (_inventoryItems.empty())
         const_cast<InventoryManager*>(this)->UpdateInventoryCache();
@@ -1168,9 +1168,9 @@ std::vector<Item*> InventoryManager::GetAllItems() const
     return _inventoryItems;
 }
 
-std::vector<Item*> InventoryManager::GetItemsByQuality(uint32 quality) const
+::std::vector<Item*> InventoryManager::GetItemsByQuality(uint32 quality) const
 {
-    std::vector<Item*> items;
+    ::std::vector<Item*> items;
 
     for (Item* item : GetAllItems())
     {
@@ -1346,9 +1346,9 @@ void InventoryManager::InvalidateCaches()
     _inventoryItems.clear();
     _lootedObjects.clear();
 }
-std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
+::std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
 {
-    std::vector<ObjectGuid> lootables;
+    ::std::vector<ObjectGuid> lootables;
 
     if (!_bot)
         return lootables;
@@ -1368,7 +1368,7 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     }
 
     // Query nearby creatures (lock-free!)
-    std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> creatureGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     for (ObjectGuid guid : creatureGuids)
@@ -1390,7 +1390,7 @@ std::vector<ObjectGuid> InventoryManager::FindLootableObjects(float range) const
     }
 
     // Query nearby game objects (lock-free!)
-    std::vector<ObjectGuid> goGuids = spatialGrid->QueryNearbyGameObjectGuids(
+    ::std::vector<ObjectGuid> goGuids = spatialGrid->QueryNearbyGameObjectGuids(
         _bot->GetPosition(), range);
 
     for (ObjectGuid guid : goGuids)
@@ -1469,7 +1469,7 @@ bool InventoryManager::CanUseItem(ItemTemplate const* proto) const
     return true;
 }
 
-void InventoryManager::LogAction(std::string const& action, Item* item) const
+void InventoryManager::LogAction(::std::string const& action, Item* item) const
 {
     if (!item)
     {
@@ -1482,10 +1482,10 @@ void InventoryManager::LogAction(std::string const& action, Item* item) const
     }
 }
 
-void InventoryManager::UpdateMetrics(std::chrono::steady_clock::time_point startTime)
+void InventoryManager::UpdateMetrics(::std::chrono::steady_clock::time_point startTime)
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     // Update average
     if (_metrics.averageUpdateTime.count() == 0)

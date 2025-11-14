@@ -115,7 +115,7 @@ bool StartupSpawnOrchestrator::Initialize(SpawnPriorityQueue* priorityQueue, Ada
     _startupBegun = false;
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.orchestrator", "✅ StartupSpawnOrchestrator initialized successfully");
+    TC_LOG_INFO("module.playerbot.orchestrator", " StartupSpawnOrchestrator initialized successfully");
     return true;
 }
 
@@ -164,7 +164,7 @@ void StartupSpawnOrchestrator::BeginStartup()
     }
 
     TC_LOG_INFO("module.playerbot.orchestrator",
-        "🚀 Beginning phased startup sequence (initial delay: {}s)",
+        " Beginning phased startup sequence (initial delay: {}s)",
         _config.initialDelaySeconds);
 
     _startupBeginTime = GameTime::Now();
@@ -245,12 +245,12 @@ OrchestratorMetrics StartupSpawnOrchestrator::GetMetrics() const
 
     if (_startupBegun)
     {
-        metrics.totalElapsedTime = std::chrono::duration_cast<Milliseconds>(
+        metrics.totalElapsedTime = ::std::chrono::duration_cast<Milliseconds>(
             GameTime::Now() - _startupBeginTime);
 
         if (_currentPhase != StartupPhase::IDLE && _currentPhase != StartupPhase::COMPLETED)
         {
-            metrics.timeInCurrentPhase = std::chrono::duration_cast<Milliseconds>(
+            metrics.timeInCurrentPhase = ::std::chrono::duration_cast<Milliseconds>(
                 GameTime::Now() - _phaseStartTime);
         }
     }
@@ -259,7 +259,7 @@ OrchestratorMetrics StartupSpawnOrchestrator::GetMetrics() const
     const PhaseConfig* phaseConfig = GetCurrentPhaseConfig();
     if (phaseConfig && phaseConfig->targetBotsToSpawn > 0)
     {
-        metrics.currentPhaseProgress = std::min(1.0f,
+        metrics.currentPhaseProgress = ::std::min(1.0f,
             static_cast<float>(_botsSpawnedThisPhase) / phaseConfig->targetBotsToSpawn);
     }
 
@@ -318,17 +318,17 @@ void StartupSpawnOrchestrator::TransitionToPhase(StartupPhase newPhase)
     _phaseStartTime = GameTime::Now();
     _botsSpawnedThisPhase = 0;
 
-    const char* emoji = "📊";
+    const char* emoji = "";
     if (newPhase == StartupPhase::COMPLETED)
-        emoji = "✅";
+        emoji = "";
     else if (newPhase == StartupPhase::CRITICAL_BOTS)
-        emoji = "🔴";
+        emoji = "";
     else if (newPhase == StartupPhase::HIGH_PRIORITY)
-        emoji = "🟠";
+        emoji = "";
     else if (newPhase == StartupPhase::NORMAL_BOTS)
-        emoji = "🟢";
+        emoji = "";
     else if (newPhase == StartupPhase::LOW_PRIORITY)
-        emoji = "🔵";
+        emoji = "";
 
     TC_LOG_INFO("module.playerbot.orchestrator",
         "{} Startup phase transition: {} → {} (bots spawned: {})",
@@ -347,7 +347,7 @@ bool StartupSpawnOrchestrator::ShouldTransitionPhase() const
     if (!phaseConfig)
         return true;  // Invalid config, transition anyway
 
-    Milliseconds timeInPhase = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeInPhase = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _phaseStartTime);
 
     // Must meet minimum duration
@@ -400,7 +400,7 @@ float StartupSpawnOrchestrator::CalculateOverallProgress() const
         return 0.0f;
 
     // Calculate progress as: botsSpawned / totalTarget
-    return std::min(1.0f, static_cast<float>(_botsSpawnedTotal) / totalTargetBots);
+    return ::std::min(1.0f, static_cast<float>(_botsSpawnedTotal) / totalTargetBots);
 }
 
 // ============================================================================

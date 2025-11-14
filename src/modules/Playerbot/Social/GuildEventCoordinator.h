@@ -64,9 +64,9 @@ struct GuildEvent
     uint32 eventId;
     uint32 guildId;
     uint32 organizerGuid;
-    std::string organizerName;
-    std::string eventTitle;
-    std::string eventDescription;
+    ::std::string organizerName;
+    ::std::string eventTitle;
+    ::std::string eventDescription;
     GuildEventType eventType;
     EventStatus status;
     EventPriority priority;
@@ -74,10 +74,10 @@ struct GuildEvent
     uint32 duration;
     uint32 maxParticipants;
     uint32 minParticipants;
-    std::vector<uint32> invitedMembers;
-    std::vector<uint32> confirmedMembers;
-    std::vector<uint32> declinedMembers;
-    std::unordered_map<uint32, std::string> memberRoles; // memberGuid -> role
+    ::std::vector<uint32> invitedMembers;
+    ::std::vector<uint32> confirmedMembers;
+    ::std::vector<uint32> declinedMembers;
+    ::std::unordered_map<uint32, ::std::string> memberRoles; // memberGuid -> role
     uint32 creationTime;
     uint32 lastUpdateTime;
     bool isRecurring;
@@ -131,11 +131,11 @@ public:
         bool enableEventPlanning;
         bool enableEventParticipation;
         bool enableEventLeadership;
-        std::vector<GuildEventType> preferredEventTypes;
-        std::vector<GuildEventType> availableLeadershipTypes;
+        ::std::vector<GuildEventType> preferredEventTypes;
+        ::std::vector<GuildEventType> availableLeadershipTypes;
         float planningProactiveness; // How often to propose events
         float participationRate; // Likelihood to join events
-        std::vector<std::pair<uint32, uint32>> availabilityWindows; // startTime, endTime pairs
+        ::std::vector<::std::pair<uint32, uint32>> availabilityWindows; // startTime, endTime pairs
         uint32 maxEventsPerWeek;
         bool autoAcceptInvitations;
 
@@ -152,9 +152,9 @@ public:
     {
         uint32 playerGuid;
         uint32 guildId;
-        std::vector<uint32> organizedEvents;
-        std::vector<uint32> participatedEvents;
-        std::unordered_map<GuildEventType, uint32> eventTypePreferences;
+        ::std::vector<uint32> organizedEvents;
+        ::std::vector<uint32> participatedEvents;
+        ::std::unordered_map<GuildEventType, uint32> eventTypePreferences;
         uint32 totalEventsCreated;
         uint32 totalEventsAttended;
         float organizationRating;
@@ -179,10 +179,10 @@ public:
     void OptimizeEventScheduling(Player* player) override;
     void AnalyzeGuildEventPatterns(uint32 guildId) override;
     void SuggestOptimalEventTimes(uint32 guildId);
-    std::vector<GuildEventType> RecommendEventTypes(Player* player);
+    ::std::vector<GuildEventType> RecommendEventTypes(Player* player);
 
     // Event communication and updates
-    void BroadcastEventUpdates(uint32 eventId, const std::string& updateMessage) override;
+    void BroadcastEventUpdates(uint32 eventId, const ::std::string& updateMessage) override;
     void SendEventReminders(uint32 eventId) override;
     void NotifyEventChanges(uint32 eventId);
     void UpdateEventStatus(uint32 eventId, EventStatus newStatus) override;
@@ -202,20 +202,20 @@ public:
     // Performance monitoring
     struct EventMetrics
     {
-        std::atomic<uint32> eventsCreated{0};
-        std::atomic<uint32> eventsCompleted{0};
-        std::atomic<uint32> eventsCancelled{0};
-        std::atomic<uint32> totalParticipants{0};
-        std::atomic<float> averageAttendance{0.75f};
-        std::atomic<float> organizationEfficiency{0.8f};
-        std::atomic<float> memberSatisfaction{0.85f};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> eventsCreated{0};
+        ::std::atomic<uint32> eventsCompleted{0};
+        ::std::atomic<uint32> eventsCancelled{0};
+        ::std::atomic<uint32> totalParticipants{0};
+        ::std::atomic<float> averageAttendance{0.75f};
+        ::std::atomic<float> organizationEfficiency{0.8f};
+        ::std::atomic<float> memberSatisfaction{0.85f};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Reset() {
             eventsCreated = 0; eventsCompleted = 0; eventsCancelled = 0;
             totalParticipants = 0; averageAttendance = 0.75f;
             organizationEfficiency = 0.8f; memberSatisfaction = 0.85f;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
 
         float GetCompletionRate() const {
@@ -229,10 +229,10 @@ public:
     EventMetrics GetPlayerEventMetrics(uint32 playerGuid) override;
 
     // Event templates and presets
-    void CreateEventTemplate(const std::string& templateName, const GuildEvent& templateData);
-    GuildEvent LoadEventTemplate(const std::string& templateName);
-    std::vector<std::string> GetAvailableTemplates();
-    void CustomizeEventFromTemplate(GuildEvent& event, const std::string& templateName);
+    void CreateEventTemplate(const ::std::string& templateName, const GuildEvent& templateData);
+    GuildEvent LoadEventTemplate(const ::std::string& templateName);
+    ::std::vector<::std::string> GetAvailableTemplates();
+    void CustomizeEventFromTemplate(GuildEvent& event, const ::std::string& templateName);
 
     // Seasonal and special events
     void PlanSeasonalEvents(uint32 guildId);
@@ -247,7 +247,7 @@ public:
     void SetEventAutoSignup(uint32 playerGuid, GuildEventType eventType, bool autoSignup);
 
     // Error handling and recovery
-    void HandleEventError(uint32 eventId, const std::string& error);
+    void HandleEventError(uint32 eventId, const ::std::string& error);
     void RecoverFromEventFailure(uint32 eventId);
     void HandleMissingOrganizer(uint32 eventId);
     void EmergencyEventCancellation(uint32 eventId);
@@ -263,27 +263,27 @@ private:
     ~GuildEventCoordinator() = default;
 
     // Core event data
-    std::unordered_map<uint32, GuildEvent> _guildEvents; // eventId -> event
-    std::unordered_map<uint32, EventCoordinationProfile> _playerProfiles; // playerGuid -> profile
-    std::unordered_map<uint32, EventParticipation> _playerParticipation; // playerGuid -> participation
-    std::atomic<uint32> _nextEventId{1};
+    ::std::unordered_map<uint32, GuildEvent> _guildEvents; // eventId -> event
+    ::std::unordered_map<uint32, EventCoordinationProfile> _playerProfiles; // playerGuid -> profile
+    ::std::unordered_map<uint32, EventParticipation> _playerParticipation; // playerGuid -> participation
+    ::std::atomic<uint32> _nextEventId{1};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _eventMutex;
 
     // Guild event tracking
-    std::unordered_map<uint32, std::vector<uint32>> _guildActiveEvents; // guildId -> eventIds
-    std::unordered_map<uint32, EventMetrics> _guildMetrics; // guildId -> metrics
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _guildActiveEvents; // guildId -> eventIds
+    ::std::unordered_map<uint32, EventMetrics> _guildMetrics; // guildId -> metrics
 
     // Event templates
-    std::unordered_map<std::string, GuildEvent> _eventTemplates; // templateName -> template
-    std::unordered_map<GuildEventType, std::vector<std::string>> _typeTemplates; // eventType -> templateNames
+    ::std::unordered_map<::std::string, GuildEvent> _eventTemplates; // templateName -> template
+    ::std::unordered_map<GuildEventType, ::std::vector<::std::string>> _typeTemplates; // eventType -> templateNames
 
     // Event scheduling intelligence
     struct GuildEventScheduler
     {
         uint32 guildId;
-        std::vector<std::pair<uint32, uint32>> popularTimes; // startTime, endTime
-        std::unordered_map<uint32, float> memberAvailability; // memberGuid -> availability score
-        std::vector<uint32> conflictingEvents;
+        ::std::vector<::std::pair<uint32, uint32>> popularTimes; // startTime, endTime
+        ::std::unordered_map<uint32, float> memberAvailability; // memberGuid -> availability score
+        ::std::vector<uint32> conflictingEvents;
         uint32 optimalEventDuration;
         float averageAttendanceRate;
 
@@ -291,7 +291,7 @@ private:
             , averageAttendanceRate(0.75f) {}
     };
 
-    std::unordered_map<uint32, GuildEventScheduler> _guildSchedulers; // guildId -> scheduler
+    ::std::unordered_map<uint32, GuildEventScheduler> _guildSchedulers; // guildId -> scheduler
 
     // Performance tracking
     EventMetrics _globalMetrics;
@@ -304,7 +304,7 @@ private:
 
     // Event planning algorithms
     uint32 FindOptimalEventTime(uint32 guildId, GuildEventType eventType, uint32 duration);
-    std::vector<uint32> SelectEventParticipants(uint32 eventId);
+    ::std::vector<uint32> SelectEventParticipants(uint32 eventId);
     void OptimizeEventComposition(uint32 eventId);
     bool IsEventViable(const GuildEvent& event);
 
@@ -317,8 +317,8 @@ private:
     // Communication helpers
     void SendEventInvitation(uint32 playerGuid, uint32 eventId);
     void BroadcastEventAnnouncement(uint32 eventId);
-    void UpdateEventParticipants(uint32 eventId, const std::string& message);
-    void LogEventActivity(uint32 eventId, const std::string& activity);
+    void UpdateEventParticipants(uint32 eventId, const ::std::string& message);
+    void LogEventActivity(uint32 eventId, const ::std::string& activity);
 
     // Performance optimization
     void OptimizeEventScheduling(uint32 guildId);

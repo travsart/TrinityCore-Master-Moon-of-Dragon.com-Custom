@@ -98,9 +98,9 @@ namespace Playerbot
         return score;
     }
 
-    std::vector<uint32> QuestSelectionStrategy::SelectQuestPath(std::vector<uint32> const& available, Player* bot) const
+    ::std::vector<uint32> QuestSelectionStrategy::SelectQuestPath(::std::vector<uint32> const& available, Player* bot) const
     {
-        std::vector<std::pair<uint32, float>> scoredQuests;
+        ::std::vector<::std::pair<uint32, float>> scoredQuests;
 
         for (uint32 questId : available)
         {
@@ -112,11 +112,11 @@ namespace Playerbot
         }
 
         // Sort by score
-        std::sort(scoredQuests.begin(), scoredQuests.end(),
+        ::std::sort(scoredQuests.begin(), scoredQuests.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         // Return sorted quest IDs
-        std::vector<uint32> result;
+        ::std::vector<uint32> result;
         for (auto const& [questId, score] : scoredQuests)
             result.push_back(questId);
 
@@ -216,8 +216,8 @@ namespace Playerbot
         , m_maxTravelDistance(1000)
         , m_minQuestLevel(0.75f)  // 75% of bot level
         , m_maxQuestLevel(1.10f)  // 110% of bot level
-        , m_strategy(std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL))
-        , m_cache(std::make_unique<QuestCache>())
+        , m_strategy(::std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL))
+        , m_cache(::std::make_unique<QuestCache>())
     {
     }
 
@@ -264,8 +264,8 @@ namespace Playerbot
         }
 
         // Update atomic state flags for strategies
-        _hasActiveQuests.store(!m_cache->GetActiveQuests().empty(), std::memory_order_release);
-        _activeQuestCount.store(m_cache->GetActiveQuests().size(), std::memory_order_release);
+        _hasActiveQuests.store(!m_cache->GetActiveQuests().empty(), ::std::memory_order_release);
+        _activeQuestCount.store(m_cache->GetActiveQuests().size(), ::std::memory_order_release);
     }
 
     void QuestManager::OnShutdown()
@@ -533,7 +533,7 @@ namespace Playerbot
 
     void QuestManager::ScanCreatureQuestGivers()
     {
-        std::list<Creature*> creatures;
+        ::std::list<Creature*> creatures;
         Trinity::AnyUnitInObjectRangeCheck checker(GetBot(), QUEST_GIVER_SCAN_RANGE, true, true);
         Trinity::CreatureListSearcher searcher(GetBot(), creatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -551,7 +551,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), QUEST_GIVER_SCAN_RANGE);
 
     // Process results (replace old searcher logic)
@@ -611,7 +611,7 @@ namespace Playerbot
 
     void QuestManager::ScanGameObjectQuestGivers()
     {
-        std::list<GameObject*> objects;
+        ::std::list<GameObject*> objects;
         Trinity::AllWorldObjectsInRange checker(GetBot(), QUEST_GIVER_SCAN_RANGE);
         Trinity::GameObjectListSearcher searcher(GetBot(), objects, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -629,7 +629,7 @@ namespace Playerbot
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         GetBot()->GetPosition(), QUEST_GIVER_SCAN_RANGE);
 
     // Process results (replace old searcher logic)
@@ -730,28 +730,28 @@ namespace Playerbot
         }
     }
 
-    std::vector<uint32> QuestManager::GetAvailableQuests() const
+    ::std::vector<uint32> QuestManager::GetAvailableQuests() const
     {
         return m_availableQuests;
     }
 
-    std::vector<uint32> QuestManager::GetActiveQuests() const
+    ::std::vector<uint32> QuestManager::GetActiveQuests() const
     {
         return m_cache->GetActiveQuests();
     }
 
-    std::vector<uint32> QuestManager::GetCompletableQuests() const
+    ::std::vector<uint32> QuestManager::GetCompletableQuests() const
     {
         return m_cache->GetCompletableQuests();
     }
 
-    uint32 QuestManager::SelectBestQuest(std::vector<uint32> const& availableQuests)
+    uint32 QuestManager::SelectBestQuest(::std::vector<uint32> const& availableQuests)
     {
         if (availableQuests.empty())
             return 0;
 
         // Evaluate all available quests
-        std::vector<QuestPriority> priorities;
+        ::std::vector<QuestPriority> priorities;
         for (uint32 questId : availableQuests)
         {
             Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
@@ -763,7 +763,7 @@ namespace Playerbot
         }
 
         // Sort by score
-        std::sort(priorities.begin(), priorities.end(),
+        ::std::sort(priorities.begin(), priorities.end(),
             [](QuestPriority const& a, QuestPriority const& b) { return a.score > b.score; });
 
         // Return best quest
@@ -831,7 +831,7 @@ namespace Playerbot
             return 0.0f;
 
         // Normalize to 0-100 scale (assuming max XP per quest ~10000)
-        return std::min(100.0f, xp / 100.0f);
+        return ::std::min(100.0f, xp / 100.0f);
     }
 
     float QuestManager::CalculateGoldValue(Quest const* quest) const
@@ -842,7 +842,7 @@ namespace Playerbot
         uint32 gold = GetBot()->GetQuestMoneyReward(quest);
 
         // Normalize to 0-100 scale (assuming max gold ~100g)
-        return std::min(100.0f, gold / 10000.0f);
+        return ::std::min(100.0f, gold / 10000.0f);
     }
 
     float QuestManager::CalculateItemValue(Quest const* quest) const
@@ -873,13 +873,13 @@ namespace Playerbot
                 if (ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId))
                 {
                     float itemScore = CalculateItemScore(itemTemplate);
-                    totalValue = std::max(totalValue, itemScore * quest->RewardChoiceItemCount[i]);
+                    totalValue = ::std::max(totalValue, itemScore * quest->RewardChoiceItemCount[i]);
                 }
             }
         }
 
         // Normalize to 0-100 scale
-        return std::min(100.0f, totalValue);
+        return ::std::min(100.0f, totalValue);
     }
 
     float QuestManager::CalculateReputationValue(Quest const* quest) const
@@ -898,12 +898,12 @@ namespace Playerbot
                 if (repValue == 0 && quest->RewardFactionOverride[i])
                     repValue = quest->RewardFactionOverride[i];
 
-                totalRep += std::abs(repValue) / 100.0f;
+                totalRep += ::std::abs(repValue) / 100.0f;
             }
         }
 
         // Normalize to 0-100 scale
-        return std::min(100.0f, totalRep);
+        return ::std::min(100.0f, totalRep);
     }
 
     float QuestManager::CalculateDistanceScore(Quest const* quest) const
@@ -916,12 +916,12 @@ namespace Playerbot
 
         for (auto const& giver : m_questGivers)
         {
-            minDistance = std::min(minDistance, giver.distance);
+            minDistance = ::std::min(minDistance, giver.distance);
         }
 
         // Calculate score (closer = higher score)
         float score = 100.0f * (1.0f - (minDistance / m_maxTravelDistance));
-        return std::max(0.0f, score);
+        return ::std::max(0.0f, score);
     }
 
     float QuestManager::CalculateLevelScore(Quest const* quest) const
@@ -942,15 +942,15 @@ namespace Playerbot
 
         // Within good range = high score
         if (levelDiff >= -2 && levelDiff <= 2)
-            return 80.0f - (std::abs(levelDiff) * 10.0f);
+            return 80.0f - (::std::abs(levelDiff) * 10.0f);
 
         // Outside optimal range
         if (levelDiff < -5)
-            return std::max(0.0f, 30.0f + levelDiff);  // Too low level
+            return ::std::max(0.0f, 30.0f + levelDiff);  // Too low level
         if (levelDiff > 5)
-            return std::max(0.0f, 30.0f - levelDiff);  // Too high level
+            return ::std::max(0.0f, 30.0f - levelDiff);  // Too high level
 
-        return 50.0f - (std::abs(levelDiff) * 5.0f);
+        return 50.0f - (::std::abs(levelDiff) * 5.0f);
     }
 
     float QuestManager::CalculateGroupBonus(Quest const* quest) const
@@ -1130,7 +1130,7 @@ namespace Playerbot
                 if (requiredCount > 0)
                 {
                     float objProgress = (float)currentCount / (float)requiredCount;
-                    totalProgress += std::min(1.0f, objProgress);
+                    totalProgress += ::std::min(1.0f, objProgress);
                     if (objIndex < progress.objectiveProgress.size())
                         progress.objectiveProgress[objIndex] = currentCount;
                 }
@@ -1165,7 +1165,7 @@ namespace Playerbot
 
     Creature* QuestManager::FindNearestQuestGiver() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         Creature* nearest = nullptr;
 
         for (auto const& giver : m_questGivers)
@@ -1198,7 +1198,7 @@ namespace Playerbot
 
     GameObject* QuestManager::FindNearestQuestObject() const
     {
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
         GameObject* nearest = nullptr;
 
         for (auto const& giver : m_questGivers)
@@ -1397,7 +1397,7 @@ namespace Playerbot
             return;
 
         // Sort available quests by priority
-        std::sort(m_availableQuests.begin(), m_availableQuests.end(),
+        ::std::sort(m_availableQuests.begin(), m_availableQuests.end(),
             [this](uint32 a, uint32 b)
             {
                 Quest const* questA = sObjectMgr->GetQuestTemplate(a);
@@ -1446,7 +1446,7 @@ namespace Playerbot
             return;  // Enough space
 
         // Build list of active quests with priorities
-        std::vector<QuestPriority> activeQuests;
+        ::std::vector<QuestPriority> activeQuests;
 
         for (auto const& questId : m_cache->GetActiveQuests())
         {
@@ -1463,11 +1463,11 @@ namespace Playerbot
         }
 
         // Sort by priority (lowest first)
-        std::sort(activeQuests.begin(), activeQuests.end(),
+        ::std::sort(activeQuests.begin(), activeQuests.end(),
             [](QuestPriority const& a, QuestPriority const& b) { return a.score < b.score; });
 
         // Abandon lowest priority quests
-        uint32 toAbandon = std::min(5u, (uint32)activeQuests.size());
+        uint32 toAbandon = ::std::min(5u, (uint32)activeQuests.size());
         uint32 abandoned = 0;
 
         for (uint32 i = 0; i < toAbandon && GetQuestLogSpace() < 5; ++i)
@@ -1550,14 +1550,14 @@ namespace Playerbot
         // Check previous quest requirements
         if (quest->GetPrevQuestId())
         {
-            if (GetBot()->GetQuestRewardStatus(std::abs(quest->GetPrevQuestId())) != (quest->GetPrevQuestId() > 0))
+            if (GetBot()->GetQuestRewardStatus(::std::abs(quest->GetPrevQuestId())) != (quest->GetPrevQuestId() > 0))
                 return false;
         }
 
         // Check next quest in chain
         if (quest->GetNextQuestId())
         {
-            if (GetBot()->GetQuestStatus(std::abs(static_cast<int32>(quest->GetNextQuestId()))) != QUEST_STATUS_NONE)
+            if (GetBot()->GetQuestStatus(::std::abs(static_cast<int32>(quest->GetNextQuestId()))) != QUEST_STATUS_NONE)
                 return false;
         }
 

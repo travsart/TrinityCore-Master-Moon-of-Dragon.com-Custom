@@ -51,7 +51,7 @@ protected:
     void SimulateSpawnLatency(uint64 microseconds)
     {
         auto timer = monitor->CreateSpawnTimer();
-        std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
+        ::std::this_thread::sleep_for(::std::chrono::microseconds(microseconds));
         // Timer automatically records on destruction
     }
 
@@ -124,7 +124,7 @@ TEST_F(BotPerformanceMonitorTest, ScopedTimerRecordsAutomatically)
     // Test that scoped timer automatically records duration
     {
         auto timer = monitor->CreateSpawnTimer();
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
+        ::std::this_thread::sleep_for(::std::chrono::microseconds(1000));
         // Timer destructor should record ~1000 microseconds
     }
 
@@ -274,7 +274,7 @@ TEST_F(BotPerformanceMonitorTest, TimerCanBeCancelled)
 {
     auto timer = monitor->CreateSpawnTimer();
 
-    std::this_thread::sleep_for(std::chrono::microseconds(500));
+    ::std::this_thread::sleep_for(::std::chrono::microseconds(500));
     timer->Cancel();  // Should prevent recording
 
     // Timer destruction after cancellation should not record metrics
@@ -318,7 +318,7 @@ TEST_F(BotPerformanceMonitorTest, ResetCountersClearsAllMetrics)
 TEST_F(BotPerformanceMonitorTest, HandlesHighFrequencyUpdates)
 {
     // Simulate high-frequency metric recording (like in 5000 bot scenario)
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 10000; ++i)
     {
@@ -331,8 +331,8 @@ TEST_F(BotPerformanceMonitorTest, HandlesHighFrequencyUpdates)
         monitor->RecordSpawnLatency(500 + (i % 100));  // Varying latency
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end - start);
 
     // Recording 10,000 metrics should complete quickly (under 100ms)
     EXPECT_LT(duration.count(), 100);
@@ -351,7 +351,7 @@ TEST_F(BotPerformanceMonitorTest, ThreadSafeMetricRecording)
     const int numThreads = 10;
     const int recordsPerThread = 1000;
 
-    std::vector<std::thread> threads;
+    ::std::vector<::std::thread> threads;
 
     for (int t = 0; t < numThreads; ++t)
     {

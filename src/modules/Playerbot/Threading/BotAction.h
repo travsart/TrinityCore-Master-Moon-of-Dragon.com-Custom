@@ -85,7 +85,7 @@ struct BotAction
     Position position;          // For MOVE_TO_POSITION
 
     // Text data (optional)
-    std::string text;           // For SEND_CHAT_MESSAGE, CUSTOM
+    ::std::string text;           // For SEND_CHAT_MESSAGE, CUSTOM
 
     // Priority (higher = more urgent)
     uint8 priority{0};
@@ -163,7 +163,7 @@ struct BotAction
         return action;
     }
 
-    static BotAction SendChatMessage(ObjectGuid bot, std::string const& message, uint32 timestamp)
+    static BotAction SendChatMessage(ObjectGuid bot, ::std::string const& message, uint32 timestamp)
     {
         BotAction action;
         action.type = BotActionType::SEND_CHAT_MESSAGE;
@@ -181,7 +181,7 @@ struct BotAction
 struct BotActionResult
 {
     bool success{false};
-    std::string errorMessage;
+    ::std::string errorMessage;
 
     static BotActionResult Success()
     {
@@ -190,7 +190,7 @@ struct BotActionResult
         return result;
     }
 
-    static BotActionResult Failure(std::string const& error)
+    static BotActionResult Failure(::std::string const& error)
     {
         BotActionResult result;
         result.success = false;

@@ -73,7 +73,7 @@ public:
      * @return true if subscription was successful
      * @note Subscriber must call Unsubscribe before destruction
      */
-    virtual bool Subscribe(BotAI* subscriber, std::vector<QuestEventType> const& types) = 0;
+    virtual bool Subscribe(BotAI* subscriber, ::std::vector<QuestEventType> const& types) = 0;
 
     /**
      * @brief Subscribe to all quest event types
@@ -150,7 +150,7 @@ public:
      * @brief Get snapshot of current queue
      * @return Vector of queued events
      */
-    virtual std::vector<QuestEvent> GetQueueSnapshot() const = 0;
+    virtual ::std::vector<QuestEvent> GetQueueSnapshot() const = 0;
 };
 
 } // namespace Playerbot

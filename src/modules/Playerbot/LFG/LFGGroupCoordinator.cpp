@@ -70,8 +70,8 @@ void LFGGroupCoordinator::Shutdown()
 {
     TC_LOG_INFO("server.loading", "Shutting down LFG Group Coordinator...");
 
-    std::lock_guard lockTeleport(_teleportMutex);
-    std::lock_guard lockGroup(_groupMutex);
+    ::std::lock_guard lockTeleport(_teleportMutex);
+    ::std::lock_guard lockGroup(_groupMutex);
 
     _pendingTeleports.clear();
     _groupFormations.clear();
@@ -102,7 +102,7 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
 
     // Track group formation
     {
-        std::lock_guard lock(_groupMutex);
+        ::std::lock_guard lock(_groupMutex);
 
         GroupFormationInfo& info = _groupFormations[groupGuid];
         info.groupGuid = groupGuid;
@@ -145,7 +145,7 @@ bool LFGGroupCoordinator::OnGroupReady(ObjectGuid groupGuid)
 
     uint32 dungeonId = 0;
     {
-        std::lock_guard lock(_groupMutex);
+        ::std::lock_guard lock(_groupMutex);
         auto itr = _groupFormations.find(groupGuid);
         if (itr == _groupFormations.end())
         {
@@ -200,7 +200,7 @@ bool LFGGroupCoordinator::TeleportPlayerToDungeon(Player* player, uint32 dungeon
 
     // Get dungeon name for notification
     lfg::LFGDungeonData const* dungeonData = sLFGMgr->GetLFGDungeon(dungeonId);
-    std::string dungeonName = dungeonData ? dungeonData->name : "Unknown Dungeon";
+    ::std::string dungeonName = dungeonData ? dungeonData->name : "Unknown Dungeon";
 
     // Send notification
     NotifyTeleportStart(player, dungeonName);
@@ -332,7 +332,7 @@ bool LFGGroupCoordinator::GetDungeonEntrance(uint32 dungeonId, uint32& mapId, fl
 
 void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId, uint32 timestamp)
 {
-    std::lock_guard lock(_teleportMutex);
+    ::std::lock_guard lock(_teleportMutex);
 
     TeleportInfo& info = _pendingTeleports[playerGuid];
     info.playerGuid = playerGuid;
@@ -346,7 +346,7 @@ void LFGGroupCoordinator::TrackTeleport(ObjectGuid playerGuid, uint32 dungeonId,
 
 void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 {
-    std::lock_guard lock(_teleportMutex);
+    ::std::lock_guard lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
     if (itr != _pendingTeleports.end())
@@ -358,13 +358,13 @@ void LFGGroupCoordinator::ClearTeleport(ObjectGuid playerGuid)
 
 bool LFGGroupCoordinator::HasPendingTeleport(ObjectGuid playerGuid) const
 {
-    std::lock_guard lock(_teleportMutex);
+    ::std::lock_guard lock(_teleportMutex);
     return _pendingTeleports.find(playerGuid) != _pendingTeleports.end();
 }
 
 uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) const
 {
-    std::lock_guard lock(_teleportMutex);
+    ::std::lock_guard lock(_teleportMutex);
 
     auto itr = _pendingTeleports.find(playerGuid);
     if (itr != _pendingTeleports.end())
@@ -379,10 +379,10 @@ uint32 LFGGroupCoordinator::GetPendingTeleportDungeon(ObjectGuid playerGuid) con
 
 void LFGGroupCoordinator::ProcessTeleportTimeouts()
 {
-    std::lock_guard lock(_teleportMutex);
+    ::std::lock_guard lock(_teleportMutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
-    std::vector<ObjectGuid> timedOut;
+    ::std::vector<ObjectGuid> timedOut;
 
     // Find timed-out teleports
     for (auto const& [guid, info] : _pendingTeleports)
@@ -422,7 +422,7 @@ bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, f
 
     // Check if coordinates are reasonable (not extreme values)
     float const MAX_COORD = 100000.0f;
-    if (std::abs(x) > MAX_COORD || std::abs(y) > MAX_COORD || std::abs(z) > MAX_COORD)
+    if (::std::abs(x) > MAX_COORD || ::std::abs(y) > MAX_COORD || ::std::abs(z) > MAX_COORD)
     {
         TC_LOG_ERROR("lfg.playerbot", "Extreme entrance coordinates ({}, {}, {}) for map {}",
             x, y, z, mapId);
@@ -432,7 +432,7 @@ bool LFGGroupCoordinator::ValidateEntranceData(uint32 mapId, float x, float y, f
     return true;
 }
 
-void LFGGroupCoordinator::NotifyTeleportStart(Player* player, std::string const& dungeonName)
+void LFGGroupCoordinator::NotifyTeleportStart(Player* player, ::std::string const& dungeonName)
 {
     if (!player)
         return;
@@ -444,7 +444,7 @@ void LFGGroupCoordinator::NotifyTeleportStart(Player* player, std::string const&
         player->GetName(), dungeonName);
 }
 
-void LFGGroupCoordinator::HandleTeleportFailure(Player* player, std::string const& reason)
+void LFGGroupCoordinator::HandleTeleportFailure(Player* player, ::std::string const& reason)
 {
     if (!player)
         return;

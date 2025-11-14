@@ -62,7 +62,7 @@ enum class PetFamily : uint8
 struct BattlePetInfo
 {
     uint32 speciesId;
-    std::string name;
+    ::std::string name;
     PetFamily family;
     uint32 level;
     uint32 xp;
@@ -74,7 +74,7 @@ struct BattlePetInfo
     bool isFavorite;
     bool isRare;
     bool isTradeable;
-    std::vector<uint32> abilities; // Ability IDs
+    ::std::vector<uint32> abilities; // Ability IDs
 
     BattlePetInfo() : speciesId(0), family(PetFamily::BEAST), level(1), xp(0),
         quality(PetQuality::COMMON), health(100), maxHealth(100), power(10), speed(10),
@@ -86,8 +86,8 @@ struct BattlePetInfo
  */
 struct PetTeam
 {
-    std::string teamName;
-    std::vector<uint32> petSpeciesIds; // Up to 3 pets
+    ::std::string teamName;
+    ::std::vector<uint32> petSpeciesIds; // Up to 3 pets
     bool isActive;
 
     PetTeam() : isActive(false) {}
@@ -145,7 +145,7 @@ public:
     /**
      * Get all pets player owns
      */
-    std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const override;
+    ::std::vector<BattlePetInfo> GetPlayerPets(::Player* player) const override;
 
     /**
      * Check if player owns pet
@@ -218,7 +218,7 @@ public:
     /**
      * Get pets that need leveling
      */
-    std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const override;
+    ::std::vector<BattlePetInfo> GetPetsNeedingLevel(::Player* player) const override;
 
     /**
      * Calculate XP required for next level
@@ -242,17 +242,17 @@ public:
     /**
      * Create pet team
      */
-    bool CreatePetTeam(::Player* player, std::string const& teamName, std::vector<uint32> const& petSpeciesIds) override;
+    bool CreatePetTeam(::Player* player, ::std::string const& teamName, ::std::vector<uint32> const& petSpeciesIds) override;
 
     /**
      * Get all pet teams
      */
-    std::vector<PetTeam> GetPlayerTeams(::Player* player) const override;
+    ::std::vector<PetTeam> GetPlayerTeams(::Player* player) const override;
 
     /**
      * Set active team
      */
-    bool SetActiveTeam(::Player* player, std::string const& teamName) override;
+    bool SetActiveTeam(::Player* player, ::std::string const& teamName) override;
 
     /**
      * Get active team
@@ -262,7 +262,7 @@ public:
     /**
      * Optimize team composition based on opponent
      */
-    std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const override;
+    ::std::vector<uint32> OptimizeTeamForOpponent(::Player* player, PetFamily opponentFamily) const override;
 
     // ============================================================================
     // PET HEALING
@@ -305,7 +305,7 @@ public:
     /**
      * Get rare pets in current zone
      */
-    std::vector<uint32> GetRarePetsInZone(::Player* player) const override;
+    ::std::vector<uint32> GetRarePetsInZone(::Player* player) const override;
 
     /**
      * Navigate to rare pet spawn
@@ -325,12 +325,12 @@ public:
 
     struct PetMetrics
     {
-        std::atomic<uint32> petsCollected{0};
-        std::atomic<uint32> battlesWon{0};
-        std::atomic<uint32> battlesLost{0};
-        std::atomic<uint32> raresCaptured{0};
-        std::atomic<uint32> petsLeveled{0};
-        std::atomic<uint32> totalXPGained{0};
+        ::std::atomic<uint32> petsCollected{0};
+        ::std::atomic<uint32> battlesWon{0};
+        ::std::atomic<uint32> battlesLost{0};
+        ::std::atomic<uint32> raresCaptured{0};
+        ::std::atomic<uint32> petsLeveled{0};
+        ::std::atomic<uint32> totalXPGained{0};
 
         void Reset()
         {
@@ -379,47 +379,47 @@ private:
     // ============================================================================
 
     // Pet database (speciesId -> BattlePetInfo)
-    std::unordered_map<uint32, BattlePetInfo> _petDatabase;
+    ::std::unordered_map<uint32, BattlePetInfo> _petDatabase;
 
     // Player pet collections (playerGuid -> set of species IDs)
-    std::unordered_map<uint32, std::unordered_set<uint32>> _playerPets;
+    ::std::unordered_map<uint32, ::std::unordered_set<uint32>> _playerPets;
 
     // Player pet instances (playerGuid -> speciesId -> BattlePetInfo)
-    std::unordered_map<uint32, std::unordered_map<uint32, BattlePetInfo>> _playerPetInstances;
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, BattlePetInfo>> _playerPetInstances;
 
     // Player pet teams (playerGuid -> teams)
-    std::unordered_map<uint32, std::vector<PetTeam>> _playerTeams;
+    ::std::unordered_map<uint32, ::std::vector<PetTeam>> _playerTeams;
 
     // Active team (playerGuid -> team name)
-    std::unordered_map<uint32, std::string> _activeTeams;
+    ::std::unordered_map<uint32, ::std::string> _activeTeams;
 
     // Player automation profiles
-    std::unordered_map<uint32, PetBattleAutomationProfile> _playerProfiles;
+    ::std::unordered_map<uint32, PetBattleAutomationProfile> _playerProfiles;
 
     // Rare pet spawn locations (speciesId -> spawn positions)
-    std::unordered_map<uint32, std::vector<Position>> _rarePetSpawns;
+    ::std::unordered_map<uint32, ::std::vector<Position>> _rarePetSpawns;
 
     // Ability database (abilityId -> damage, family, etc.)
     struct AbilityInfo
     {
         uint32 abilityId;
-        std::string name;
+        ::std::string name;
         PetFamily family;
         uint32 damage;
         uint32 cooldown;
         bool isMultiTurn;
     };
-    std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
+    ::std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
 
     // Metrics
-    std::unordered_map<uint32, PetMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, PetMetrics> _playerMetrics;
     PetMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 
     // Type effectiveness chart
     static constexpr float TYPE_STRONG = 1.5f;    // 50% bonus damage

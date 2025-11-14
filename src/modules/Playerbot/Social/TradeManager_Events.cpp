@@ -58,9 +58,9 @@ namespace Playerbot
                 TradeEventData tradeData;
                 try
                 {
-                    tradeData = std::any_cast<TradeEventData>(event.eventData);
+                    tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "TradeManager::OnEventInternal: Failed to cast TRADE_INITIATED data: {}", e.what());
                     ForceUpdate();
@@ -82,7 +82,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} accepted trade with {} (Gold offered: {}, Gold received: {}, Items: {})",
                             bot->GetName(), tradeData.partnerGuid.ToString(),
                             tradeData.goldOffered, tradeData.goldReceived, tradeData.itemCount);
@@ -103,7 +103,7 @@ namespace Playerbot
 
                         // Trade accepted successfully - OnTradeAccepted() called by core
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} accepted trade (no details)", bot->GetName());
                     }
@@ -119,11 +119,11 @@ namespace Playerbot
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} trade cancelled with partner {}",
                             bot->GetName(), tradeData.partnerGuid.ToString());
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} trade cancelled", bot->GetName());
                     }
@@ -141,7 +141,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Item added to trade for bot {} (total items: {})",
                             bot->GetName(), tradeData.itemCount);
 
@@ -151,7 +151,7 @@ namespace Playerbot
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} trade items validation failed", bot->GetName());
                         }
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
 
                 ForceUpdate();
@@ -165,7 +165,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Gold added to trade for bot {} (offered: {}, received: {})",
                             bot->GetName(), tradeData.goldOffered, tradeData.goldReceived);
 
@@ -178,7 +178,7 @@ namespace Playerbot
                             return;
                         }
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
                 ForceUpdate();
                 break;
@@ -191,7 +191,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        GoldTransactionData goldData = std::any_cast<GoldTransactionData>(event.eventData);
+                        GoldTransactionData goldData = ::std::any_cast<GoldTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} received {} copper (source: {})",
                             bot->GetName(), goldData.amount,
                             goldData.source == 0 ? "quest" :
@@ -202,7 +202,7 @@ namespace Playerbot
                         // Update statistics
                         // Statistics tracking is handled in TradeManager Update() cycle
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} received gold (no details)", bot->GetName());
                     }
@@ -219,7 +219,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        GoldTransactionData goldData = std::any_cast<GoldTransactionData>(event.eventData);
+                        GoldTransactionData goldData = ::std::any_cast<GoldTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} spent {} copper (source: {})",
                             bot->GetName(), goldData.amount,
                             goldData.source == 2 ? "auction" :
@@ -233,7 +233,7 @@ namespace Playerbot
                                 bot->GetName(), currentGold);
                         }
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} spent gold (no details)", bot->GetName());
                     }
@@ -263,7 +263,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} purchased item {} from vendor {} (Price: {} copper, Qty: {})",
                             bot->GetName(), vendorData.itemEntry, vendorData.vendorGuid.ToString(),
                             vendorData.price, vendorData.quantity);
@@ -271,7 +271,7 @@ namespace Playerbot
                         // Update purchase statistics
                         // Statistics handled in TradeManager Update() cycle
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} purchased from vendor (no details)", bot->GetName());
                     }
@@ -288,14 +288,14 @@ namespace Playerbot
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} sold item {} to vendor {} (Price: {} copper, Qty: {})",
                             bot->GetName(), vendorData.itemEntry, vendorData.vendorGuid.ToString(),
                             vendorData.price, vendorData.quantity);
 
                         // Update sale statistics
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} sold to vendor (no details)", bot->GetName());
                     }
@@ -312,7 +312,7 @@ namespace Playerbot
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} paid repair cost {} copper to vendor {}",
                             bot->GetName(), vendorData.price, vendorData.vendorGuid.ToString());
 
@@ -325,7 +325,7 @@ namespace Playerbot
 
                         // Update repair statistics
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} paid repair cost (no details)", bot->GetName());
                     }

@@ -57,7 +57,7 @@ DungeonBehavior::DungeonBehavior()
 bool DungeonBehavior::EnterDungeon(Group* group, uint32 dungeonId)
 {
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     // Check if dungeon data exists
     auto dungeonItr = _dungeonDatabase.find(dungeonId);
@@ -117,7 +117,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     if (!group)
         return;
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -228,7 +228,7 @@ void DungeonBehavior::HandleDungeonCompletion(Group* group)
     if (!group)
         return;
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -268,7 +268,7 @@ void DungeonBehavior::HandleDungeonWipe(Group* group)
     if (!group)
         return;
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -309,7 +309,7 @@ void DungeonBehavior::StartEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -372,7 +372,7 @@ void DungeonBehavior::CompleteEncounter(Group* group, uint32 encounterId)
     if (!group)
         return;
 
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
 
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr == _groupDungeonStates.end())
@@ -414,7 +414,7 @@ void DungeonBehavior::HandleEncounterWipe(Group* group, uint32 encounterId)
         group->GetGUID().GetCounter(), encounter.encounterName);
 
     // Record failed encounter
-    std::lock_guard lock(_dungeonMutex);
+    ::std::lock_guard lock(_dungeonMutex);
     auto stateItr = _groupDungeonStates.find(group->GetGUID().GetCounter());
     if (stateItr != _groupDungeonStates.end())
     {
@@ -562,7 +562,7 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
     if (!cc || !cc->GetGroup())
         return;
     // Identify targets requiring crowd control
-    std::vector<Unit*> ccTargets;
+    ::std::vector<Unit*> ccTargets;
     // Scan for adds or specific mechanic targets
     for (auto const& member : cc->GetGroup()->GetMemberSlots())
     {
@@ -571,7 +571,7 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
             continue;
 
         // Look for nearby enemies that need CC
-        std::list<Creature*> nearbyCreatures;
+        ::std::list<Creature*> nearbyCreatures;
         Trinity::AnyUnitInObjectRangeCheck checker(groupMember, 40.0f, true, true);
         Trinity::CreatureListSearcher searcher(groupMember, nearbyCreatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -589,7 +589,7 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         groupMember->GetPosition(), 40.0f);
 
     // Process results (replace old loop)
@@ -757,7 +757,7 @@ Position DungeonBehavior::GetOptimalPosition(Player* player, DungeonRole role, c
     return optimalPos;
 }
 
-void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas)
+void DungeonBehavior::AvoidDangerousAreas(Player* player, const ::std::vector<Position>& dangerousAreas)
 {
     if (!player || dangerousAreas.empty())
         return;
@@ -775,7 +775,7 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
 
             // Calculate safe position away from danger
             float angle = dangerZone.GetAngle(&currentPos) + M_PI; // Opposite direction
-            nearestSafeSpot.RelocateOffset({std::cos(angle) * 15.0f, std::sin(angle) * 15.0f, 0.0f});
+            nearestSafeSpot.RelocateOffset({::std::cos(angle) * 15.0f, ::std::sin(angle) * 15.0f, 0.0f});
             break;
         }
     }
@@ -807,13 +807,13 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
 // TRASH MOB HANDLING
 // ============================================================================
 
-void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& trashMobIds)
+void DungeonBehavior::HandleTrashMobs(Group* group, const ::std::vector<uint32>& trashMobIds)
 {
     if (!group || trashMobIds.empty())
         return;
 
     // Scan for trash mobs in range
-    std::vector<Unit*> trashMobs;
+    ::std::vector<Unit*> trashMobs;
 
     for (auto const& member : group->GetMemberSlots())
     {
@@ -821,7 +821,7 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
         if (!player || !player->IsInWorld())
             continue;
 
-        std::list<Creature*> nearbyCreatures;
+        ::std::list<Creature*> nearbyCreatures;
         Trinity::AnyUnitInObjectRangeCheck checker(player, 50.0f, true, true);
         Trinity::CreatureListSearcher searcher(player, nearbyCreatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -839,7 +839,7 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         player->GetPosition(), 50.0f);
 
     // Process results (replace old loop)
@@ -858,7 +858,7 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
                 continue;
 
             // Check if this is a trash mob we should handle
-            if (std::find(trashMobIds.begin(), trashMobIds.end(), creature->GetEntry()) != trashMobIds.end())
+            if (::std::find(trashMobIds.begin(), trashMobIds.end(), creature->GetEntry()) != trashMobIds.end())
             {
                 trashMobs.push_back(creature);
             }
@@ -871,7 +871,7 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const std::vector<uint32>& t
     }
 }
 
-void DungeonBehavior::PullTrashGroup(Group* group, const std::vector<Unit*>& trashMobs)
+void DungeonBehavior::PullTrashGroup(Group* group, const ::std::vector<Unit*>& trashMobs)
 {
     if (!group || trashMobs.empty())
         return;
@@ -888,12 +888,12 @@ void DungeonBehavior::PullTrashGroup(Group* group, const std::vector<Unit*>& tra
     // Coordinate crowd control if needed
     if (trashMobs.size() > 3)
     {
-        std::vector<Unit*> ccTargets(trashMobs.begin() + 2, trashMobs.end());
+        ::std::vector<Unit*> ccTargets(trashMobs.begin() + 2, trashMobs.end());
         CoordinateCrowdControl(group, ccTargets);
     }
 }
 
-void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs)
+void DungeonBehavior::AssignTrashTargets(Group* group, const ::std::vector<Unit*>& trashMobs)
 {
     if (!group || trashMobs.empty())
         return;
@@ -921,7 +921,7 @@ void DungeonBehavior::AssignTrashTargets(Group* group, const std::vector<Unit*>&
     }
 }
 
-void DungeonBehavior::ExecuteTrashStrategy(Group* group, const std::vector<Unit*>& trashMobs)
+void DungeonBehavior::ExecuteTrashStrategy(Group* group, const ::std::vector<Unit*>& trashMobs)
 {
     if (!group || trashMobs.empty())
         return;
@@ -935,7 +935,7 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const std::vector<Unit*
             // Pull one at a time, CC rest
             if (trashMobs.size() > 1)
             {
-                std::vector<Unit*> ccTargets(trashMobs.begin() + 1, trashMobs.end());
+                ::std::vector<Unit*> ccTargets(trashMobs.begin() + 1, trashMobs.end());
                 CoordinateCrowdControl(group, ccTargets);
             }
             break;
@@ -949,7 +949,7 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const std::vector<Unit*
             // Kill priority targets, CC extras
             if (trashMobs.size() > 2)
             {
-                std::vector<Unit*> ccTargets(trashMobs.begin() + 2, trashMobs.end());
+                ::std::vector<Unit*> ccTargets(trashMobs.begin() + 2, trashMobs.end());
                 CoordinateCrowdControl(group, ccTargets);
             }
             break;
@@ -1011,13 +1011,13 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
     }
 
     // Handle encounter-specific mechanics
-    for (std::string const& mechanic : encounter.mechanics)
+    for (::std::string const& mechanic : encounter.mechanics)
     {
         HandleBossMechanics(group, encounter.encounterId, mechanic);
     }
 }
 
-void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, const std::string& mechanic)
+void DungeonBehavior::HandleBossMechanics(Group* group, uint32 encounterId, const ::std::string& mechanic)
 {
     if (!group)
         return;
@@ -1215,8 +1215,8 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
         return;
 
     // Find healers in group
-    std::vector<Player*> healers;
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> healers;
+    ::std::vector<Player*> groupMembers;
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);
@@ -1269,7 +1269,7 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
         return;
 
     // Find DPS players
-    std::vector<Player*> dpsPlayers;
+    ::std::vector<Player*> dpsPlayers;
 
     for (auto const& member : group->GetMemberSlots())
     {
@@ -1300,9 +1300,9 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
     for (Player* dps : dpsPlayers)
     {
         // Scan for appropriate targets
-        std::vector<Unit*> enemies;
+        ::std::vector<Unit*> enemies;
 
-        std::list<Creature*> nearbyCreatures;
+        ::std::list<Creature*> nearbyCreatures;
         Trinity::AnyUnitInObjectRangeCheck checker(dps, 40.0f, true, true);
         Trinity::CreatureListSearcher searcher(dps, nearbyCreatures, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1320,7 +1320,7 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         dps->GetPosition(), 40.0f);
 
     // Process results (replace old loop)

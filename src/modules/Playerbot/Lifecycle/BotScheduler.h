@@ -41,7 +41,7 @@ struct ScheduleEntry
     };
 
     ObjectGuid botGuid;
-    std::chrono::system_clock::time_point executeTime;
+    ::std::chrono::system_clock::time_point executeTime;
     Action action;
     uint32 data1 = 0;        // Action-specific data
     uint32 data2 = 0;        // Action-specific data
@@ -58,28 +58,28 @@ struct ScheduledAction
 {
     ObjectGuid botGuid;
     ScheduleEntry::Action action;
-    std::chrono::system_clock::time_point when;
-    std::string patternName;
+    ::std::chrono::system_clock::time_point when;
+    ::std::string patternName;
     uint32 data1 = 0;
     uint32 data2 = 0;
 
     ScheduledAction() = default;
-    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, std::chrono::system_clock::time_point time)
+    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, ::std::chrono::system_clock::time_point time)
         : botGuid(guid), action(act), when(time) {}
-    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, std::chrono::system_clock::time_point time, std::string const& pattern)
+    ScheduledAction(ObjectGuid guid, ScheduleEntry::Action act, ::std::chrono::system_clock::time_point time, ::std::string const& pattern)
         : botGuid(guid), action(act), when(time), patternName(pattern) {}
 };
 
 // Activity pattern for realistic bot behavior
 struct ActivityPattern
 {
-    std::string name;
+    ::std::string name;
 
     // Active hour ranges (24-hour format)
-    std::vector<std::pair<uint32, uint32>> activeHours;
+    ::std::vector<::std::pair<uint32, uint32>> activeHours;
 
     // Active days of week (0=Sunday, 6=Saturday)
-    std::vector<uint32> activeDays;
+    ::std::vector<uint32> activeDays;
 
     // Behavioral parameters
     float loginProbability = 1.0f;        // Base login probability
@@ -98,17 +98,17 @@ struct ActivityPattern
 struct BotScheduleState
 {
     ObjectGuid guid;
-    std::string patternName;
-    std::chrono::system_clock::time_point nextLogin;
-    std::chrono::system_clock::time_point nextLogout;
-    std::chrono::system_clock::time_point lastActivity;
-    std::chrono::system_clock::time_point lastLogin;
-    std::chrono::system_clock::time_point currentSessionStart;
-    std::chrono::system_clock::time_point nextRetry;
+    ::std::string patternName;
+    ::std::chrono::system_clock::time_point nextLogin;
+    ::std::chrono::system_clock::time_point nextLogout;
+    ::std::chrono::system_clock::time_point lastActivity;
+    ::std::chrono::system_clock::time_point lastLogin;
+    ::std::chrono::system_clock::time_point currentSessionStart;
+    ::std::chrono::system_clock::time_point nextRetry;
     uint32 totalSessions = 0;
     uint32 totalPlaytime = 0;           // Total seconds played
     uint32 consecutiveFailures = 0;
-    std::string lastFailureReason;
+    ::std::string lastFailureReason;
     bool isScheduled = false;
     bool isActive = false;
 };
@@ -133,14 +133,14 @@ struct SchedulerConfig
 // Scheduler statistics
 struct SchedulerStats
 {
-    std::atomic<uint32> totalScheduled{0};
-    std::atomic<uint32> totalExecuted{0};
-    std::atomic<uint32> loginActions{0};
-    std::atomic<uint32> logoutActions{0};
-    std::atomic<uint32> missedActions{0};
-    std::atomic<uint64> averageExecutionTime{0}; // microseconds
-    std::atomic<uint32> activeSchedules{0};
-    std::atomic<uint32> queueSize{0};
+    ::std::atomic<uint32> totalScheduled{0};
+    ::std::atomic<uint32> totalExecuted{0};
+    ::std::atomic<uint32> loginActions{0};
+    ::std::atomic<uint32> logoutActions{0};
+    ::std::atomic<uint32> missedActions{0};
+    ::std::atomic<uint64> averageExecutionTime{0}; // microseconds
+    ::std::atomic<uint32> activeSchedules{0};
+    ::std::atomic<uint32> queueSize{0};
 
     float GetExecutionRate() const
     {
@@ -178,27 +178,27 @@ public:
 
     // Activity pattern management
     void LoadActivityPatterns() override;
-    void RegisterPattern(std::string const& name, ActivityPattern const& pattern) override;
-    ActivityPattern const* GetPattern(std::string const& name) const override;
-    std::vector<std::string> GetAvailablePatterns() const override;
-    bool RemovePattern(std::string const& name) override;
+    void RegisterPattern(::std::string const& name, ActivityPattern const& pattern) override;
+    ActivityPattern const* GetPattern(::std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailablePatterns() const override;
+    bool RemovePattern(::std::string const& name) override;
 
     // Bot scheduling operations
-    void ScheduleBot(ObjectGuid guid, std::string const& patternName = "default") override;
+    void ScheduleBot(ObjectGuid guid, ::std::string const& patternName = "default") override;
     void UnscheduleBot(ObjectGuid guid) override;
     void ScheduleAction(ScheduleEntry const& entry) override;
-    void ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::time_point when) override;
-    void ScheduleLogout(ObjectGuid guid, std::chrono::system_clock::time_point when) override;
+    void ScheduleLogin(ObjectGuid guid, ::std::chrono::system_clock::time_point when) override;
+    void ScheduleLogout(ObjectGuid guid, ::std::chrono::system_clock::time_point when) override;
 
     // Pattern assignment and management
-    void AssignPattern(ObjectGuid guid, std::string const& patternName) override;
-    std::string GetBotPattern(ObjectGuid guid) const override;
+    void AssignPattern(ObjectGuid guid, ::std::string const& patternName) override;
+    ::std::string GetBotPattern(ObjectGuid guid) const override;
     BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const override;
 
     // Time calculation algorithms
-    std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) override;
-    std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) override;
-    std::chrono::system_clock::time_point CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration);
+    ::std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) override;
+    ::std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) override;
+    ::std::chrono::system_clock::time_point CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration);
 
     // Schedule processing and execution
     void ProcessSchedule() override;
@@ -209,18 +209,18 @@ public:
     bool IsBotScheduled(ObjectGuid guid) const override;
     bool IsBotActive(ObjectGuid guid) const override;
     uint32 GetScheduledBotCount() const override;
-    std::vector<ObjectGuid> GetScheduledBots() const;
-    std::vector<ScheduleEntry> GetUpcomingActions(uint32 minutes = 60) const;
+    ::std::vector<ObjectGuid> GetScheduledBots() const;
+    ::std::vector<ScheduleEntry> GetUpcomingActions(uint32 minutes = 60) const;
 
     // Statistics and monitoring
     SchedulerStats const& GetStats() const override { return _stats; }
     void ResetStats() override;
 
     // Lifecycle management interface
-    std::vector<ScheduledAction> GetBotsReadyForLogin(uint32 maxCount = 10);
-    std::vector<ScheduledAction> GetBotsReadyForLogout(uint32 maxCount = 10);
+    ::std::vector<ScheduledAction> GetBotsReadyForLogin(uint32 maxCount = 10);
+    ::std::vector<ScheduledAction> GetBotsReadyForLogout(uint32 maxCount = 10);
     void OnBotLoggedIn(ObjectGuid guid) override;
-    void OnBotLoginFailed(ObjectGuid guid, std::string const& reason = "") override;
+    void OnBotLoginFailed(ObjectGuid guid, ::std::string const& reason = "") override;
     void SetEnabled(bool enabled) override { _enabled = enabled; }
     bool IsEnabled() const override { return _enabled.load(); }
     void UpdateScheduleDatabase();
@@ -236,16 +236,16 @@ private:
 
     // Internal scheduling logic
     void ScheduleInternal(ObjectGuid guid, ScheduleEntry::Action action,
-                         std::chrono::system_clock::time_point when, uint32 data1 = 0, uint32 data2 = 0);
+                         ::std::chrono::system_clock::time_point when, uint32 data1 = 0, uint32 data2 = 0);
     void UpdateBotScheduleState(ObjectGuid guid);
     void RecalculateSchedule(ObjectGuid guid);
 
     // Time calculation helpers
     bool IsCurrentlyActiveTime(ActivityPattern const& pattern) const;
     bool IsPeakHour(uint32 hour) const;
-    float GetTimeMultiplier(std::chrono::system_clock::time_point time, ActivityPattern const& pattern) const;
+    float GetTimeMultiplier(::std::chrono::system_clock::time_point time, ActivityPattern const& pattern) const;
     uint32 GetRandomSessionDuration(ActivityPattern const& pattern) const;
-    std::chrono::system_clock::time_point AddJitter(std::chrono::system_clock::time_point time, uint32 jitterMinutes) const;
+    ::std::chrono::system_clock::time_point AddJitter(::std::chrono::system_clock::time_point time, uint32 jitterMinutes) const;
 
     // Pattern management helpers
     void LoadDefaultPatterns();
@@ -258,8 +258,8 @@ private:
     // Database operations
     void LoadBotSchedules();
     void SaveBotSchedule(BotScheduleState const& state);
-    void LoadPatternFromDatabase(std::string const& name);
-    void SavePatternToDatabase(std::string const& name, ActivityPattern const& pattern);
+    void LoadPatternFromDatabase(::std::string const& name);
+    void SavePatternToDatabase(::std::string const& name, ActivityPattern const& pattern);
 
     // Internal data structures
     SchedulerConfig _config;
@@ -267,22 +267,22 @@ private:
 
     // Thread-safe activity pattern storage
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _patternMutex;
-    std::unordered_map<std::string, ActivityPattern> _activityPatterns;
+    ::std::unordered_map<::std::string, ActivityPattern> _activityPatterns;
 
     // Thread-safe bot schedule state storage (TBB removed)
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleMutex;
-    std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
+    ::std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
     // Priority queue for scheduled actions (TBB removed)
-    std::priority_queue<ScheduleEntry> _scheduleQueue;
+    ::std::priority_queue<ScheduleEntry> _scheduleQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleQueueMutex;
 
     // Runtime state
-    std::atomic<bool> _enabled{true};
+    ::std::atomic<bool> _enabled{true};
 
     // Timing and update management
-    std::chrono::steady_clock::time_point _lastUpdate;
-    std::chrono::steady_clock::time_point _lastDatabaseSync;
+    ::std::chrono::steady_clock::time_point _lastUpdate;
+    ::std::chrono::steady_clock::time_point _lastDatabaseSync;
     uint32 _lastProcessTime = 0;
 
     // Performance monitoring

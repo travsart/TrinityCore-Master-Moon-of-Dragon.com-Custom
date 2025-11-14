@@ -26,14 +26,14 @@ namespace Playerbot::StateMachine
 BotStateMachine::BotStateMachine(Player* bot, BotInitState initialState, TransitionPolicy policy)
     : m_bot(bot)
     , m_policy(policy)
-    , m_lastStateChangeTime(std::chrono::steady_clock::now())
-    , m_lastUpdateTime(std::chrono::steady_clock::now())
+    , m_lastStateChangeTime(::std::chrono::steady_clock::now())
+    , m_lastUpdateTime(::std::chrono::steady_clock::now())
 {
     // Initialize state info
-    m_stateInfo.current.store(initialState, std::memory_order_release);
-    m_stateInfo.previous.store(BotInitState::CREATED, std::memory_order_release);
-    m_stateInfo.flags.store(StateFlags::NONE, std::memory_order_release);
-    m_stateInfo.transitionTime = std::chrono::steady_clock::now();
+    m_stateInfo.current.store(initialState, ::std::memory_order_release);
+    m_stateInfo.previous.store(BotInitState::CREATED, ::std::memory_order_release);
+    m_stateInfo.flags.store(StateFlags::NONE, ::std::memory_order_release);
+    m_stateInfo.transitionTime = ::std::chrono::steady_clock::now();
     m_stateInfo.entryTime = m_stateInfo.transitionTime;
 
     // Initialize transition history with empty events
@@ -65,12 +65,12 @@ BotStateMachine::~BotStateMachine()
 
 BotInitState BotStateMachine::GetCurrentState() const
 {
-    return m_stateInfo.current.load(std::memory_order_acquire);
+    return m_stateInfo.current.load(::std::memory_order_acquire);
 }
 
 BotInitState BotStateMachine::GetPreviousState() const
 {
-    return m_stateInfo.previous.load(std::memory_order_acquire);
+    return m_stateInfo.previous.load(::std::memory_order_acquire);
 }
 
 bool BotStateMachine::IsInState(BotInitState state) const
@@ -78,39 +78,39 @@ bool BotStateMachine::IsInState(BotInitState state) const
     return GetCurrentState() == state;
 }
 
-bool BotStateMachine::IsInAnyState(const std::vector<BotInitState>& states) const
+bool BotStateMachine::IsInAnyState(const ::std::vector<BotInitState>& states) const
 {
     BotInitState current = GetCurrentState();
-    return std::any_of(states.begin(), states.end(),
+    return ::std::any_of(states.begin(), states.end(),
         [current](BotInitState state) { return state == current; });
 }
 
 bool BotStateMachine::HasFlags(StateFlags flags) const
 {
-    StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
+    StateFlags currentFlags = m_stateInfo.flags.load(::std::memory_order_acquire);
     return (static_cast<uint32>(currentFlags) & static_cast<uint32>(flags)) == static_cast<uint32>(flags);
 }
 
 uint32 BotStateMachine::GetRetryCount() const
 {
-    return m_retryCount.load(std::memory_order_acquire);
+    return m_retryCount.load(::std::memory_order_acquire);
 }
 
 // ========================================================================
 // STATE TRANSITIONS
 // ========================================================================
 
-TransitionValidation BotStateMachine::TransitionTo(BotInitState newState, std::string_view reason, bool force)
+TransitionValidation BotStateMachine::TransitionTo(BotInitState newState, ::std::string_view reason, bool force)
 {
-    return TransitionInternal(newState, reason, std::nullopt, force);
+    return TransitionInternal(newState, reason, ::std::nullopt, force);
 }
 
-TransitionValidation BotStateMachine::TransitionOnEvent(EventType event, BotInitState newState, std::string_view reason)
+TransitionValidation BotStateMachine::TransitionOnEvent(EventType event, BotInitState newState, ::std::string_view reason)
 {
     return TransitionInternal(newState, reason, event, false);
 }
 
-TransitionValidation BotStateMachine::ForceTransition(BotInitState newState, std::string_view reason)
+TransitionValidation BotStateMachine::ForceTransition(BotInitState newState, ::std::string_view reason)
 {
     if (m_loggingEnabled)
     {
@@ -119,7 +119,7 @@ TransitionValidation BotStateMachine::ForceTransition(BotInitState newState, std
             m_bot ? m_bot->GetName() : "null", reason);
     }
 
-    return TransitionInternal(newState, reason, std::nullopt, true);
+    return TransitionInternal(newState, reason, ::std::nullopt, true);
 }
 
 TransitionValidation BotStateMachine::Reset()
@@ -129,14 +129,14 @@ TransitionValidation BotStateMachine::Reset()
 
 TransitionValidation BotStateMachine::TransitionInternal(
     BotInitState newState,
-    std::string_view reason,
-    std::optional<EventType> event,
+    ::std::string_view reason,
+    ::std::optional<EventType> event,
     bool force)
 {
     // Measure transition time
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
-    std::lock_guard lock(m_stateMutex);
+    ::std::lock_guard lock(m_stateMutex);
 
     BotInitState currentState = GetCurrentState();
 
@@ -171,9 +171,9 @@ TransitionValidation BotStateMachine::TransitionInternal(
     OnExit(currentState, newState);
 
     // Update state atomically
-    BotInitState previousState = m_stateInfo.current.exchange(newState, std::memory_order_acq_rel);
-    m_stateInfo.previous.store(previousState, std::memory_order_release);
-    m_stateInfo.transitionTime = std::chrono::steady_clock::now();
+    BotInitState previousState = m_stateInfo.current.exchange(newState, ::std::memory_order_acq_rel);
+    m_stateInfo.previous.store(previousState, ::std::memory_order_release);
+    m_stateInfo.transitionTime = ::std::chrono::steady_clock::now();
     m_stateInfo.entryTime = m_stateInfo.transitionTime;
     m_lastStateChangeTime = m_stateInfo.transitionTime;
 
@@ -185,19 +185,19 @@ TransitionValidation BotStateMachine::TransitionInternal(
     transitionEvent.fromState = previousState;
     transitionEvent.toState = newState;
     transitionEvent.eventType = event.value_or(EventType::NONE);
-    transitionEvent.timestamp = std::chrono::steady_clock::now();
+    transitionEvent.timestamp = ::std::chrono::steady_clock::now();
     transitionEvent.success = true;
     transitionEvent.forced = force;
     LogTransition(transitionEvent);
 
     // Update performance metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto durationMicros = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
-    m_totalTransitionTimeMicros.fetch_add(durationMicros, std::memory_order_relaxed);
-    m_totalTransitions.fetch_add(1, std::memory_order_relaxed);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto durationMicros = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
+    m_totalTransitionTimeMicros.fetch_add(durationMicros, ::std::memory_order_relaxed);
+    m_totalTransitions.fetch_add(1, ::std::memory_order_relaxed);
 
     // Reset retry count on successful transition
-    m_retryCount.store(0, std::memory_order_release);
+    m_retryCount.store(0, ::std::memory_order_release);
 
     if (m_loggingEnabled)
     {
@@ -216,11 +216,11 @@ TransitionValidation BotStateMachine::TransitionInternal(
 
 void BotStateMachine::SetFlags(StateFlags flags)
 {
-    std::lock_guard lock(m_stateMutex);
-    StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
+    ::std::lock_guard lock(m_stateMutex);
+    StateFlags currentFlags = m_stateInfo.flags.load(::std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) | static_cast<uint32>(flags));
-    m_stateInfo.flags.store(newFlags, std::memory_order_release);
+    m_stateInfo.flags.store(newFlags, ::std::memory_order_release);
 
     if (m_loggingEnabled)
     {
@@ -231,11 +231,11 @@ void BotStateMachine::SetFlags(StateFlags flags)
 
 void BotStateMachine::ClearFlags(StateFlags flags)
 {
-    std::lock_guard lock(m_stateMutex);
-    StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
+    ::std::lock_guard lock(m_stateMutex);
+    StateFlags currentFlags = m_stateInfo.flags.load(::std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) & ~static_cast<uint32>(flags));
-    m_stateInfo.flags.store(newFlags, std::memory_order_release);
+    m_stateInfo.flags.store(newFlags, ::std::memory_order_release);
 
     if (m_loggingEnabled)
     {
@@ -246,11 +246,11 @@ void BotStateMachine::ClearFlags(StateFlags flags)
 
 void BotStateMachine::ToggleFlags(StateFlags flags)
 {
-    std::lock_guard lock(m_stateMutex);
-    StateFlags currentFlags = m_stateInfo.flags.load(std::memory_order_acquire);
+    ::std::lock_guard lock(m_stateMutex);
+    StateFlags currentFlags = m_stateInfo.flags.load(::std::memory_order_acquire);
     StateFlags newFlags = static_cast<StateFlags>(
         static_cast<uint32>(currentFlags) ^ static_cast<uint32>(flags));
-    m_stateInfo.flags.store(newFlags, std::memory_order_release);
+    m_stateInfo.flags.store(newFlags, ::std::memory_order_release);
 
     if (m_loggingEnabled)
     {
@@ -263,10 +263,10 @@ void BotStateMachine::ToggleFlags(StateFlags flags)
 // HISTORY & DIAGNOSTICS
 // ========================================================================
 
-std::vector<TransitionEvent> BotStateMachine::GetTransitionHistory() const
+::std::vector<TransitionEvent> BotStateMachine::GetTransitionHistory() const
 {
-    std::lock_guard lock(m_stateMutex);
-    std::vector<TransitionEvent> history;
+    ::std::lock_guard lock(m_stateMutex);
+    ::std::vector<TransitionEvent> history;
 
     // Build history from circular buffer
     for (uint32 i = 0; i < 10; ++i)
@@ -275,29 +275,29 @@ std::vector<TransitionEvent> BotStateMachine::GetTransitionHistory() const
         const TransitionEvent& event = m_transitionHistory[index];
 
         // Skip uninitialized entries
-        if (event.timestamp != std::chrono::steady_clock::time_point{})
+        if (event.timestamp != ::std::chrono::steady_clock::time_point{})
         {
             history.push_back(event);
         }
     }
 
     // Sort by timestamp (oldest first)
-    std::sort(history.begin(), history.end(),
+    ::std::sort(history.begin(), history.end(),
         [](const TransitionEvent& a, const TransitionEvent& b) {
             return a.timestamp < b.timestamp;
         });
     return history;
 }
 
-std::optional<TransitionEvent> BotStateMachine::GetLastTransition() const
+::std::optional<TransitionEvent> BotStateMachine::GetLastTransition() const
 {
-    std::lock_guard lock(m_stateMutex);
+    ::std::lock_guard lock(m_stateMutex);
 
     if (m_historyIndex == 0)
     {
         // Check if we have any transitions
-        if (m_transitionHistory[9].timestamp == std::chrono::steady_clock::time_point{})
-            return std::nullopt;
+        if (m_transitionHistory[9].timestamp == ::std::chrono::steady_clock::time_point{})
+            return ::std::nullopt;
         return m_transitionHistory[9];
     }
 
@@ -306,19 +306,19 @@ std::optional<TransitionEvent> BotStateMachine::GetLastTransition() const
 
 uint32 BotStateMachine::GetTimeInCurrentState() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStateChangeTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - m_lastStateChangeTime);
     return static_cast<uint32>(duration.count());
 }
 
 uint64 BotStateMachine::GetTransitionCount() const
 {
-    return m_totalTransitions.load(std::memory_order_acquire);
+    return m_totalTransitions.load(::std::memory_order_acquire);
 }
 
 void BotStateMachine::DumpState() const
 {
-    std::lock_guard lock(m_stateMutex);
+    ::std::lock_guard lock(m_stateMutex);
 
     TC_LOG_INFO("bot.statemachine", "=== State Machine Dump for Bot {} ===",
         m_bot ? m_bot->GetName() : "null");
@@ -346,8 +346,8 @@ void BotStateMachine::DumpState() const
         TC_LOG_INFO("bot.statemachine", "=== Last {} Transitions ===", history.size());
         for (const auto& event : history)
         {
-            auto timeSinceTransition = std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::steady_clock::now() - event.timestamp).count();
+            auto timeSinceTransition = ::std::chrono::duration_cast<::std::chrono::seconds>(
+                ::std::chrono::steady_clock::now() - event.timestamp).count();
 
             TC_LOG_INFO("bot.statemachine", "  {} -> {} ({}s ago, {}, {})",
                 GetStateName(event.fromState), GetStateName(event.toState),
@@ -364,7 +364,7 @@ void BotStateMachine::DumpState() const
 
 void BotStateMachine::SetPolicy(TransitionPolicy policy)
 {
-    std::lock_guard lock(m_stateMutex);
+    ::std::lock_guard lock(m_stateMutex);
     TransitionPolicy oldPolicy = m_policy;
     m_policy = policy;
 
@@ -408,7 +408,7 @@ void BotStateMachine::OnExit(BotInitState currentState, BotInitState nextState)
 void BotStateMachine::OnTransitionFailed(BotInitState from, BotInitState to, TransitionValidation result)
 {
     // Increment retry counter
-    m_retryCount.fetch_add(1, std::memory_order_relaxed);
+    m_retryCount.fetch_add(1, ::std::memory_order_relaxed);
 
     // Default implementation logs failure
     if (m_loggingEnabled)
@@ -446,7 +446,7 @@ void BotStateMachine::OnUpdate(uint32 diff)
 {
     // Default implementation does nothing
     // Derived classes can override for state-specific updates
-    m_lastUpdateTime = std::chrono::steady_clock::now();
+    m_lastUpdateTime = ::std::chrono::steady_clock::now();
 }
 
 // ========================================================================

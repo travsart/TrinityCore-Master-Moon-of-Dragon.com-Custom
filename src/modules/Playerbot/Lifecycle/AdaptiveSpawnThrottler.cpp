@@ -74,7 +74,7 @@ bool AdaptiveSpawnThrottler::Initialize(ResourceMonitor* resourceMonitor, SpawnC
     _currentSpawnInterval = _config.baseSpawnIntervalMs;
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.throttler", "✅ AdaptiveSpawnThrottler initialized successfully");
+    TC_LOG_INFO("module.playerbot.throttler", " AdaptiveSpawnThrottler initialized successfully");
     return true;
 }
 
@@ -121,7 +121,7 @@ bool AdaptiveSpawnThrottler::CanSpawnNow() const
     }
 
     // 3. Check if enough time passed since last spawn
-    Milliseconds timeSinceLastSpawn = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeSinceLastSpawn = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _lastSpawnTime);
 
     if (timeSinceLastSpawn < Milliseconds(_currentSpawnInterval))
@@ -155,7 +155,7 @@ void AdaptiveSpawnThrottler::RecordSpawnSuccess()
         _currentSpawnInterval, _recentSpawnTimes.size());
 }
 
-void AdaptiveSpawnThrottler::RecordSpawnFailure(std::string_view reason)
+void AdaptiveSpawnThrottler::RecordSpawnFailure(::std::string_view reason)
 {
     if (!_initialized)
         return;
@@ -188,7 +188,7 @@ Milliseconds AdaptiveSpawnThrottler::GetTimeUntilNextSpawn() const
     if (!_initialized)
         return Milliseconds(0);
 
-    Milliseconds timeSinceLastSpawn = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeSinceLastSpawn = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _lastSpawnTime);
 
     Milliseconds intervalMs = Milliseconds(_currentSpawnInterval);
@@ -217,13 +217,13 @@ ThrottlerMetrics AdaptiveSpawnThrottler::GetMetrics() const
     metrics.totalSpawnsThrottled = _totalSpawnsThrottled;
     metrics.burstPreventionTriggers = _burstPreventionCount;
 
-    metrics.timeSinceLastSpawn = std::chrono::duration_cast<Milliseconds>(
+    metrics.timeSinceLastSpawn = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - _lastSpawnTime);
 
     // Calculate average spawn interval from recent spawns
     if (_recentSpawnTimes.size() >= 2)
     {
-        Milliseconds totalDuration = std::chrono::duration_cast<Milliseconds>(
+        Milliseconds totalDuration = ::std::chrono::duration_cast<Milliseconds>(
             _recentSpawnTimes.back() - _recentSpawnTimes.front());
         metrics.averageSpawnInterval = Milliseconds(
             totalDuration.count() / (_recentSpawnTimes.size() - 1));
@@ -271,7 +271,7 @@ uint32 AdaptiveSpawnThrottler::CalculateSpawnInterval() const
 
     // Clamp to configured min/max
     uint32 finalInterval = static_cast<uint32>(interval);
-    finalInterval = std::clamp(finalInterval, _config.minSpawnIntervalMs, _config.maxSpawnIntervalMs);
+    finalInterval = ::std::clamp(finalInterval, _config.minSpawnIntervalMs, _config.maxSpawnIntervalMs);
 
     return finalInterval;
 }

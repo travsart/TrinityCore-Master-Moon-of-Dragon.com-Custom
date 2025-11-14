@@ -42,7 +42,7 @@ struct ObjectiveState
     uint32 timeStarted;
     uint32 estimatedTimeRemaining;
     float completionVelocity;
-    std::vector<uint32> targetIds;
+    ::std::vector<uint32> targetIds;
     Position lastKnownPosition;
     bool isOptimized;
     uint32 failureCount;
@@ -65,7 +65,7 @@ struct ObjectivePriority
     float difficultyFactor;
     float efficiencyFactor;
     float proximityFactor;
-    std::string reasoning;
+    ::std::string reasoning;
 
     ObjectivePriority(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
         , priorityScore(5.0f), urgencyFactor(1.0f), difficultyFactor(1.0f)
@@ -74,21 +74,21 @@ struct ObjectivePriority
 
 struct ObjectiveAnalytics
 {
-    std::atomic<uint32> objectivesStarted{0};
-    std::atomic<uint32> objectivesCompleted{0};
-    std::atomic<uint32> objectivesFailed{0};
-    std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
-    std::atomic<float> averageSuccessRate{0.9f};
-    std::atomic<float> targetDetectionAccuracy{0.85f};
-    std::atomic<uint32> targetsFound{0};
-    std::atomic<uint32> targetsMissed{0};
-    std::chrono::steady_clock::time_point lastAnalyticsUpdate;
+    ::std::atomic<uint32> objectivesStarted{0};
+    ::std::atomic<uint32> objectivesCompleted{0};
+    ::std::atomic<uint32> objectivesFailed{0};
+    ::std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
+    ::std::atomic<float> averageSuccessRate{0.9f};
+    ::std::atomic<float> targetDetectionAccuracy{0.85f};
+    ::std::atomic<uint32> targetsFound{0};
+    ::std::atomic<uint32> targetsMissed{0};
+    ::std::chrono::steady_clock::time_point lastAnalyticsUpdate;
 
     void Reset() {
         objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
         averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
         targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;
-        lastAnalyticsUpdate = std::chrono::steady_clock::now();
+        lastAnalyticsUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -118,20 +118,20 @@ public:
     float CalculateObjectiveVelocity(Player* bot, uint32 questId, uint32 objectiveIndex) override;
 
     // Target detection and analysis
-    std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective) override;
-    std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f) override;
-    std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) override;
-    std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) override;
+    ::std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective) override;
+    ::std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f) override;
+    ::std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) override;
+    ::std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) override;
 
     // Objective state management
     ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex) override;
     void UpdateObjectiveState(Player* bot, const ObjectiveState& state);
-    std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
+    ::std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
 
     // Intelligent objective prioritization
-    std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
+    ::std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
     ObjectivePriority GetHighestPriorityObjective(Player* bot) override;
-    void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities);
+    void OptimizeObjectiveSequence(Player* bot, ::std::vector<ObjectivePriority>& priorities);
 
     // Target availability and spawn tracking
     void TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId) override;
@@ -143,7 +143,7 @@ public:
     void MonitorTargetCompetition(Player* bot, uint32 targetId) override;
     bool IsTargetContested(uint32 targetId, float radius = 50.0f) override;
     void HandleTargetCompetition(Player* bot, uint32 targetId) override;
-    std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation) override;
+    ::std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation) override;
 
     // Group objective coordination
     void CoordinateGroupObjectives(Group* group, uint32 questId) override;
@@ -163,7 +163,7 @@ public:
 
     // Error detection and recovery
     void DetectTrackingErrors(Player* bot) override;
-    void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error) override;
+    void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const ::std::string& error) override;
     void HandleStuckObjective(Player* bot, ObjectiveState& state);
     void RecoverTrackingState(Player* bot, uint32 questId) override;
     void ValidateObjectiveConsistency(Player* bot) override;
@@ -189,16 +189,16 @@ private:
     ~ObjectiveTracker() = default;
 
     // Tracking data storage
-    std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives
-    std::unordered_map<uint32, std::vector<ObjectivePriority>> _botObjectivePriorities; // botGuid -> priorities
-    std::unordered_map<uint32, ObjectiveAnalytics> _botAnalytics;
+    ::std::unordered_map<uint32, ::std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives
+    ::std::unordered_map<uint32, ::std::vector<ObjectivePriority>> _botObjectivePriorities; // botGuid -> priorities
+    ::std::unordered_map<uint32, ObjectiveAnalytics> _botAnalytics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _trackingMutex;
 
     // Target tracking and caching
     struct TargetTrackingData
     {
         uint32 targetId;
-        std::vector<Position> knownLocations;
+        ::std::vector<Position> knownLocations;
         uint32 lastSeenTime;
         uint32 respawnTime;
         bool isAvailable;
@@ -213,12 +213,12 @@ private:
             , isAvailable(true), competitionLevel(0), spawnProbability(1.0f) {}
     };
 
-    std::unordered_map<uint32, TargetTrackingData> _targetTracking; // targetId -> data
+    ::std::unordered_map<uint32, TargetTrackingData> _targetTracking; // targetId -> data
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _targetMutex;
 
     // Group coordination data
-    std::unordered_map<uint32, std::unordered_map<uint32, uint32>> _groupObjectiveAssignments; // groupId -> memberGuid -> objectiveIndex
-    std::unordered_map<uint32, uint32> _groupObjectiveSyncTime; // groupId -> lastSyncTime
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, uint32>> _groupObjectiveAssignments; // groupId -> memberGuid -> objectiveIndex
+    ::std::unordered_map<uint32, uint32> _groupObjectiveSyncTime; // groupId -> lastSyncTime
 
     // Performance tracking
     ObjectiveAnalytics _globalAnalytics;
@@ -240,7 +240,7 @@ private:
     float CalculateProximityFactor(Player* bot, const ObjectiveState& state);
 
     // Target detection algorithms
-    std::vector<uint32> ScanAreaForTargets(const Position& center, float radius, uint32 targetId);
+    ::std::vector<uint32> ScanAreaForTargets(const Position& center, float radius, uint32 targetId);
     void UpdateTargetAvailability(uint32 targetId, const Position& location);
     void PredictTargetSpawns(uint32 targetId);
     void AnalyzeTargetCompetition(uint32 targetId, const Position& location);
@@ -259,7 +259,7 @@ private:
     // Analytics and reporting
     void UpdateTrackingAnalytics(uint32 botGuid, const ObjectiveState& state, bool wasSuccessful);
     void GenerateTrackingReport(Player* bot);
-    void LogTrackingEvent(uint32 botGuid, const std::string& event, const std::string& details = "");
+    void LogTrackingEvent(uint32 botGuid, const ::std::string& event, const ::std::string& details = "");
 
     // Constants
     static constexpr uint32 TRACKING_UPDATE_INTERVAL = 2000; // 2 seconds

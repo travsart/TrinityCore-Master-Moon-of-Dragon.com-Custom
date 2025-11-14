@@ -55,34 +55,34 @@ struct PerformanceMetric
     uint64_t value;              // Microseconds or bytes
     uint64_t timestamp;          // Microseconds since epoch
     uint32_t botGuid;
-    std::string context;         // Additional context information
+    ::std::string context;         // Additional context information
 
     PerformanceMetric() : type(MetricType::AI_DECISION_TIME), value(0), timestamp(0), botGuid(0) {}
-    PerformanceMetric(MetricType t, uint64_t v, uint32_t guid, std::string ctx = "")
-        : type(t), value(v), timestamp(GetMicrosecondTimestamp()), botGuid(guid), context(std::move(ctx)) {}
+    PerformanceMetric(MetricType t, uint64_t v, uint32_t guid, ::std::string ctx = "")
+        : type(t), value(v), timestamp(GetMicrosecondTimestamp()), botGuid(guid), context(::std::move(ctx)) {}
 
 private:
     static uint64_t GetMicrosecondTimestamp()
     {
-        return std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+        return ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 };
 
 // Aggregated statistics for a metric type
 struct MetricStatistics
 {
-    std::atomic<uint64_t> totalSamples{0};
-    std::atomic<uint64_t> totalValue{0};
-    std::atomic<uint64_t> minValue{UINT64_MAX};
-    std::atomic<uint64_t> maxValue{0};
-    std::atomic<uint64_t> lastValue{0};
-    std::atomic<uint64_t> lastUpdate{0};
+    ::std::atomic<uint64_t> totalSamples{0};
+    ::std::atomic<uint64_t> totalValue{0};
+    ::std::atomic<uint64_t> minValue{UINT64_MAX};
+    ::std::atomic<uint64_t> maxValue{0};
+    ::std::atomic<uint64_t> lastValue{0};
+    ::std::atomic<uint64_t> lastUpdate{0};
 
     // Percentile tracking
-    std::atomic<uint64_t> p50{0};  // Median
-    std::atomic<uint64_t> p95{0};  // 95th percentile
-    std::atomic<uint64_t> p99{0};  // 99th percentile
+    ::std::atomic<uint64_t> p50{0};  // Median
+    ::std::atomic<uint64_t> p95{0};  // 95th percentile
+    ::std::atomic<uint64_t> p99{0};  // 99th percentile
 
     void Update(uint64_t value);
     double GetAverage() const;
@@ -98,14 +98,14 @@ struct PerformanceAlert
     uint64_t value;
     uint64_t threshold;
     uint64_t timestamp;
-    std::string message;
-    std::string stackTrace;
+    ::std::string message;
+    ::std::string stackTrace;
 
-    PerformanceAlert(AlertLevel lvl, MetricType type, uint32_t guid, uint64_t val, uint64_t thresh, std::string msg)
-        : level(lvl), metricType(type), botGuid(guid), value(val), threshold(thresh), message(std::move(msg))
+    PerformanceAlert(AlertLevel lvl, MetricType type, uint32_t guid, uint64_t val, uint64_t thresh, ::std::string msg)
+        : level(lvl), metricType(type), botGuid(guid), value(val), threshold(thresh), message(::std::move(msg))
     {
-        timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+        timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 };
 
@@ -113,31 +113,31 @@ struct PerformanceAlert
 class TC_GAME_API PerformanceTimer
 {
 public:
-    PerformanceTimer() : _startTime(std::chrono::steady_clock::now()) {}
+    PerformanceTimer() : _startTime(::std::chrono::steady_clock::now()) {}
 
-    void Reset() { _startTime = std::chrono::steady_clock::now(); }
+    void Reset() { _startTime = ::std::chrono::steady_clock::now(); }
 
     uint64_t GetElapsedMicroseconds() const
     {
-        auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::microseconds>(now - _startTime).count();
+        auto now = ::std::chrono::steady_clock::now();
+        return ::std::chrono::duration_cast<::std::chrono::microseconds>(now - _startTime).count();
     }
 
     uint64_t GetElapsedNanoseconds() const
     {
-        auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(now - _startTime).count();
+        auto now = ::std::chrono::steady_clock::now();
+        return ::std::chrono::duration_cast<::std::chrono::nanoseconds>(now - _startTime).count();
     }
 
 private:
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _startTime;
 };
 
 // RAII Performance measurement helper
 class TC_GAME_API ScopedPerformanceMeasurement
 {
 public:
-    ScopedPerformanceMeasurement(MetricType type, uint32_t botGuid, std::string context = "");
+    ScopedPerformanceMeasurement(MetricType type, uint32_t botGuid, ::std::string context = "");
     ~ScopedPerformanceMeasurement();
 
     // Disable copy/move
@@ -149,7 +149,7 @@ public:
 private:
     MetricType _type;
     uint32_t _botGuid;
-    std::string _context;
+    ::std::string _context;
     PerformanceTimer _timer;
 };
 
@@ -170,24 +170,24 @@ public:
 
     // Metric recording
     void RecordMetric(const PerformanceMetric& metric);
-    void RecordMetric(MetricType type, uint64_t value, uint32_t botGuid, const std::string& context = "");
+    void RecordMetric(MetricType type, uint64_t value, uint32_t botGuid, const ::std::string& context = "");
 
     // Specialized recording methods
-    void RecordAIDecisionTime(uint32_t botGuid, uint64_t microseconds, const std::string& context = "");
-    void RecordMemoryUsage(uint32_t botGuid, uint64_t bytes, const std::string& context = "");
-    void RecordDatabaseQueryTime(uint32_t botGuid, uint64_t microseconds, const std::string& query = "");
+    void RecordAIDecisionTime(uint32_t botGuid, uint64_t microseconds, const ::std::string& context = "");
+    void RecordMemoryUsage(uint32_t botGuid, uint64_t bytes, const ::std::string& context = "");
+    void RecordDatabaseQueryTime(uint32_t botGuid, uint64_t microseconds, const ::std::string& query = "");
     void RecordSpellCastTime(uint32_t botGuid, uint64_t microseconds, uint32_t spellId);
-    void RecordMovementCalculation(uint32_t botGuid, uint64_t microseconds, const std::string& context = "");
+    void RecordMovementCalculation(uint32_t botGuid, uint64_t microseconds, const ::std::string& context = "");
 
     // Statistics retrieval
     MetricStatistics GetStatistics(MetricType type) const;
     MetricStatistics GetBotStatistics(uint32_t botGuid, MetricType type) const;
-    std::vector<PerformanceAlert> GetRecentAlerts(uint32_t maxCount = 100) const;
+    ::std::vector<PerformanceAlert> GetRecentAlerts(uint32_t maxCount = 100) const;
 
     // Performance analysis
     bool IsPerformanceAcceptable(MetricType type, uint64_t value) const;
     void CheckPerformanceThresholds(const PerformanceMetric& metric);
-    void GeneratePerformanceReport(std::string& report) const;
+    void GeneratePerformanceReport(::std::string& report) const;
 
     // Configuration
     void SetThreshold(MetricType type, AlertLevel level, uint64_t threshold);
@@ -208,7 +208,7 @@ public:
     // Data management
     void FlushMetrics();
     void ArchiveOldMetrics(uint64_t olderThanMicroseconds);
-    void ExportMetrics(const std::string& filename) const;
+    void ExportMetrics(const ::std::string& filename) const;
 
 private:
     BotPerformanceMonitor() = default;
@@ -222,7 +222,7 @@ private:
 
     // Alert generation
     void GenerateAlert(AlertLevel level, MetricType type, uint32_t botGuid,
-                      uint64_t value, uint64_t threshold, const std::string& message);
+                      uint64_t value, uint64_t threshold, const ::std::string& message);
 
     // Default thresholds initialization
     void InitializeDefaultThresholds();
@@ -232,39 +232,39 @@ private:
     void StopWorkerThreads();
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _shutdownRequested{false};
 
     // Metrics storage
-    mutable std::recursive_mutex _metricsMutex;
-    std::queue<PerformanceMetric> _metricsQueue;
-    std::unordered_map<MetricType, MetricStatistics> _globalStatistics;
-    std::unordered_map<uint32_t, std::unordered_map<MetricType, MetricStatistics>> _botStatistics;
+    mutable ::std::recursive_mutex _metricsMutex;
+    ::std::queue<PerformanceMetric> _metricsQueue;
+    ::std::unordered_map<MetricType, MetricStatistics> _globalStatistics;
+    ::std::unordered_map<uint32_t, ::std::unordered_map<MetricType, MetricStatistics>> _botStatistics;
 
     // Alerts
-    mutable std::recursive_mutex _alertsMutex;
-    std::queue<PerformanceAlert> _alertsQueue;
-    std::vector<PerformanceAlert> _recentAlerts;
+    mutable ::std::recursive_mutex _alertsMutex;
+    ::std::queue<PerformanceAlert> _alertsQueue;
+    ::std::vector<PerformanceAlert> _recentAlerts;
     static constexpr size_t MAX_RECENT_ALERTS = 1000;
 
     // Thresholds (microseconds or bytes)
-    std::unordered_map<MetricType, std::unordered_map<AlertLevel, uint64_t>> _thresholds;
+    ::std::unordered_map<MetricType, ::std::unordered_map<AlertLevel, uint64_t>> _thresholds;
 
     // Bot tracking
-    mutable std::recursive_mutex _botsMutex;
-    std::unordered_set<uint32_t> _registeredBots;
-    std::unordered_map<uint32_t, uint64_t> _botMemoryUsage;
+    mutable ::std::recursive_mutex _botsMutex;
+    ::std::unordered_set<uint32_t> _registeredBots;
+    ::std::unordered_map<uint32_t, uint64_t> _botMemoryUsage;
 
     // Worker threads
-    std::vector<std::thread> _workerThreads;
-    std::condition_variable _metricsCondition;
-    std::condition_variable _alertsCondition;
+    ::std::vector<::std::thread> _workerThreads;
+    ::std::condition_variable _metricsCondition;
+    ::std::condition_variable _alertsCondition;
 
     // System metrics
-    mutable std::recursive_mutex _systemMetricsMutex;
-    std::atomic<uint64_t> _totalSystemMemory{0};
-    std::atomic<double> _systemCpuUsage{0.0};
-    std::atomic<uint64_t> _lastSystemUpdate{0};
+    mutable ::std::recursive_mutex _systemMetricsMutex;
+    ::std::atomic<uint64_t> _totalSystemMemory{0};
+    ::std::atomic<double> _systemCpuUsage{0.0};
+    ::std::atomic<uint64_t> _lastSystemUpdate{0};
 
     // Performance constants
     static constexpr uint64_t DEFAULT_AI_DECISION_WARNING_US = 50000;      // 50ms

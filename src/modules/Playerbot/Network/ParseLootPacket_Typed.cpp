@@ -39,8 +39,8 @@ void ParseTypedLootResponse(WorldSession* session, WorldPackets::Loot::LootRespo
     event.itemEntry = 0;
     event.itemCount = packet.Items.size();
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -65,8 +65,8 @@ void ParseTypedLootReleaseResponse(WorldSession* session, WorldPackets::Loot::Lo
     event.itemEntry = 0;
     event.itemCount = 0;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -91,8 +91,8 @@ void ParseTypedLootRemoved(WorldSession* session, WorldPackets::Loot::LootRemove
     event.itemEntry = 0;  // Slot ID is in packet.LootListID
     event.itemCount = 0;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -117,8 +117,8 @@ void ParseTypedLootMoneyNotify(WorldSession* session, WorldPackets::Loot::LootMo
     event.itemEntry = 0;
     event.itemCount = packet.Money;  // Store copper amount in itemCount
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -143,8 +143,8 @@ void ParseTypedStartLootRoll(WorldSession* session, WorldPackets::Loot::StartLoo
     event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(packet.RollTime);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(packet.RollTime);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -169,8 +169,8 @@ void ParseTypedLootRoll(WorldSession* session, WorldPackets::Loot::LootRollBroad
     event.itemEntry = packet.Item.Loot.ItemID;
     event.itemCount = packet.Roll;  // Store roll value in itemCount
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(5);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(5);
 
     LootEventBus::instance()->PublishEvent(event);
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received LOOT_ROLL (typed): player={}, rollType={}, roll={}",
@@ -194,8 +194,8 @@ void ParseTypedLootRollWon(WorldSession* session, WorldPackets::Loot::LootRollWo
     event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -220,8 +220,8 @@ void ParseTypedLootAllPassed(WorldSession* session, WorldPackets::Loot::LootAllP
     event.itemEntry = packet.Item.Loot.ItemID;  // WoW 11.2: LootItemData has ItemInstance Loot
     event.itemCount = packet.Item.Quantity;
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 
@@ -246,8 +246,8 @@ void ParseTypedMasterLootCandidateList(WorldSession* session, WorldPackets::Loot
     event.itemEntry = 0;
     event.itemCount = packet.Players.size();
     event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     LootEventBus::instance()->PublishEvent(event);
 

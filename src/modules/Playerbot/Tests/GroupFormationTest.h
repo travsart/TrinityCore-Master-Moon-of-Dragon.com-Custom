@@ -225,7 +225,7 @@ namespace Playerbot
 
             // Verify tanks at corners (first 4 positions should be tanks)
             uint32 tanksAtCorners = 0;
-            for (size_t i = 0; i < std::min(size_t(4), square.positions.size()); ++i)
+            for (size_t i = 0; i < ::std::min(size_t(4), square.positions.size()); ++i)
             {
                 if (square.positions[i].preferredRole == BotRole::TANK)
                     tanksAtCorners++;
@@ -475,7 +475,7 @@ namespace Playerbot
 
             bool passed = true;
 
-            std::vector<uint32> botCounts = {5, 10, 15, 20, 25, 30, 35, 40};
+            ::std::vector<uint32> botCounts = {5, 10, 15, 20, 25, 30, 35, 40};
 
             for (uint32 botCount : botCounts)
             {
@@ -582,7 +582,7 @@ namespace Playerbot
             GroupFormationManager::RotatePosition(testX, testY, M_PI / 2.0f, rotatedX, rotatedY);
 
             // After 90° rotation, (5, 0) should become approximately (0, 5)
-            if (std::abs(rotatedX) > 0.1f || std::abs(rotatedY - 5.0f) > 0.1f)
+            if (::std::abs(rotatedX) > 0.1f || ::std::abs(rotatedY - 5.0f) > 0.1f)
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: Rotation math incorrect (got ({:.2f}, {:.2f}), expected (0, 5))", rotatedX, rotatedY);
                 passed = false;
@@ -640,15 +640,15 @@ namespace Playerbot
             bool passed = true;
 
             // Target: < 1ms for 40 bots
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = ::std::chrono::high_resolution_clock::now();
 
             for (int i = 0; i < 100; ++i)
             {
                 FormationLayout wedge = GroupFormationManager::CreateFormation(FormationType::WEDGE, 40, 3.0f);
             }
 
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            auto end = ::std::chrono::high_resolution_clock::now();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
             float avgTimeMs = duration / 100.0f / 1000.0f;
 
             TC_LOG_INFO("playerbot.test", "Formation creation average time: {:.3f}ms (100 iterations, 40 bots)", avgTimeMs);

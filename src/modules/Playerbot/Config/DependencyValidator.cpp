@@ -43,39 +43,39 @@ bool DependencyValidator::ValidateAllDependencies()
 
     // Validate Intel TBB
     if (!ValidateTBB()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Intel TBB validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Intel TBB validation failed");
         success = false;
     }
 
     // Validate Parallel Hashmap
     if (!ValidatePhmap()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Parallel Hashmap validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Parallel Hashmap validation failed");
         success = false;
     }
 
     // Validate Boost
     if (!ValidateBoost()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Boost validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Boost validation failed");
         success = false;
     }
 
     // Validate MySQL
     if (!ValidateMySQL()) {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ MySQL validation failed");
+        TC_LOG_ERROR("module.playerbot.dependencies", " MySQL validation failed");
         success = false;
     }
 
     // Validate system requirements
     if (!ValidateSystemRequirements()) {
-        TC_LOG_WARN("module.playerbot.dependencies", "⚠️  System requirements validation failed");
+        TC_LOG_WARN("module.playerbot.dependencies", "  System requirements validation failed");
         // Don't fail build, but warn about potential performance issues
     }
 
     if (success) {
-        TC_LOG_INFO("module.playerbot.dependencies", "✅ All enterprise dependencies validated successfully");
-        TC_LOG_INFO("module.playerbot.dependencies", "🚀 Playerbot ready for high-performance operations");
+        TC_LOG_INFO("module.playerbot.dependencies", " All enterprise dependencies validated successfully");
+        TC_LOG_INFO("module.playerbot.dependencies", " Playerbot ready for high-performance operations");
     } else {
-        TC_LOG_ERROR("module.playerbot.dependencies", "❌ Dependency validation failed - Playerbot will be disabled");
+        TC_LOG_ERROR("module.playerbot.dependencies", " Dependency validation failed - Playerbot will be disabled");
     }
 
     return success;
@@ -101,10 +101,10 @@ bool DependencyValidator::ValidateTBB()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Intel TBB {}.{} validated with concurrency tests", major, minor);
+            " Intel TBB {}.{} validated with concurrency tests", major, minor);
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Intel TBB validation exception: {}", e.what());
         return false;
@@ -138,7 +138,7 @@ bool DependencyValidator::TestTBBConcurrency()
         });
 
         // Consumer
-        std::atomic<int> consumed{0};
+        ::std::atomic<int> consumed{0};
         arena.execute([&]() {
             int value;
             while (queue.try_pop(value)) {
@@ -154,15 +154,15 @@ bool DependencyValidator::TestTBBConcurrency()
         }
 
         // Test parallel_for performance
-        std::vector<int> test_data(10000);
-        auto start = std::chrono::high_resolution_clock::now();
+        ::std::vector<int> test_data(10000);
+        auto start = ::std::chrono::high_resolution_clock::now();
 
         tbb::parallel_for(0, 10000, [&](int i) {
             test_data[i] = i * 2 + 1;
         });
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 
         TC_LOG_DEBUG("module.playerbot.dependencies",
             "TBB parallel_for processed 10k items in {}μs", duration.count());
@@ -177,7 +177,7 @@ bool DependencyValidator::TestTBBConcurrency()
 
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies", "TBB concurrency test exception: {}", e.what());
         return false;
     }
@@ -193,10 +193,10 @@ bool DependencyValidator::ValidatePhmap()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Parallel Hashmap validated with performance tests");
+            " Parallel Hashmap validated with performance tests");
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Parallel Hashmap validation exception: {}", e.what());
         return false;
@@ -207,12 +207,12 @@ bool DependencyValidator::TestPhmapPerformance()
 {
     try {
         // Test parallel_flat_hash_map basic functionality
-        phmap::parallel_flat_hash_map<uint32, std::string> test_map;
+        phmap::parallel_flat_hash_map<uint32, ::std::string> test_map;
 
         // Insert test data
         constexpr uint32 TEST_SIZE = 10000;
         for (uint32 i = 0; i < TEST_SIZE; ++i) {
-            test_map[i] = "test_value_" + std::to_string(i);
+            test_map[i] = "test_value_" + ::std::to_string(i);
         }
 
         if (test_map.size() != TEST_SIZE) {
@@ -222,10 +222,10 @@ bool DependencyValidator::TestPhmapPerformance()
         }
 
         // Test concurrent access
-        std::atomic<uint32> found_count{0};
+        ::std::atomic<uint32> found_count{0};
         tbb::parallel_for(uint32(0), TEST_SIZE, [&](uint32 i) {
             auto it = test_map.find(i);
-            if (it != test_map.end() && it->second == "test_value_" + std::to_string(i)) {
+            if (it != test_map.end() && it->second == "test_value_" + ::std::to_string(i)) {
                 found_count.fetch_add(1);
             }
         });
@@ -237,7 +237,7 @@ bool DependencyValidator::TestPhmapPerformance()
         }
 
         // Test parallel_node_hash_map for complex objects
-        phmap::parallel_node_hash_map<uint32, std::vector<int>> node_map;
+        phmap::parallel_node_hash_map<uint32, ::std::vector<int>> node_map;
         node_map[1] = {1, 2, 3, 4, 5};
         node_map[2] = {6, 7, 8, 9, 10};
 
@@ -249,7 +249,7 @@ bool DependencyValidator::TestPhmapPerformance()
 
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Parallel hashmap performance test exception: {}", e.what());
         return false;
@@ -277,10 +277,10 @@ bool DependencyValidator::ValidateBoost()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ Boost {}.{}.{} validated with component tests", major, minor, patch);
+            " Boost {}.{}.{} validated with component tests", major, minor, patch);
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Boost validation exception: {}", e.what());
         return false;
@@ -303,8 +303,8 @@ bool DependencyValidator::TestBoostComponents()
         }
 
         // Test object_pool
-        boost::object_pool<std::vector<int>> pool;
-        std::vector<std::vector<int>*> objects;
+        boost::object_pool<::std::vector<int>> pool;
+        ::std::vector<::std::vector<int>*> objects;
 
         for (int i = 0; i < 1000; ++i) {
             auto* obj = pool.malloc();
@@ -313,7 +313,7 @@ bool DependencyValidator::TestBoostComponents()
                     "Boost object_pool allocation failed at iteration {}", i);
                 return false;
             }
-            new(obj) std::vector<int>{i, i + 1, i + 2};
+            new(obj) ::std::vector<int>{i, i + 1, i + 2};
             objects.push_back(obj);
         }
 
@@ -328,23 +328,23 @@ bool DependencyValidator::TestBoostComponents()
         constexpr int QUEUE_TEST_SIZE = 500;
 
         // Producer thread
-        std::thread producer([&]() {
+        ::std::thread producer([&]() {
             for (int i = 0; i < QUEUE_TEST_SIZE; ++i) {
                 while (!queue.push(i)) {
-                    std::this_thread::yield();
+                    ::std::this_thread::yield();
                 }
             }
         });
 
         // Consumer thread
-        std::atomic<int> consumed{0};
-        std::thread consumer([&]() {
+        ::std::atomic<int> consumed{0};
+        ::std::thread consumer([&]() {
             int value;
             while (consumed.load() < QUEUE_TEST_SIZE) {
                 if (queue.pop(value)) {
                     consumed.fetch_add(1);
                 }
-                std::this_thread::yield();
+                ::std::this_thread::yield();
             }
         });
 
@@ -361,7 +361,7 @@ bool DependencyValidator::TestBoostComponents()
         boost::asio::io_context ctx;
         bool timer_executed = false;
 
-        boost::asio::steady_timer timer(ctx, std::chrono::milliseconds(1));
+        boost::asio::steady_timer timer(ctx, ::std::chrono::milliseconds(1));
         timer.async_wait([&](boost::system::error_code const&) {
             timer_executed = true;
         });
@@ -375,7 +375,7 @@ bool DependencyValidator::TestBoostComponents()
 
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Boost components test exception: {}", e.what());
         return false;
@@ -394,19 +394,19 @@ bool DependencyValidator::ValidateMySQL()
         }
 
         // Parse version string (format: "8.0.33")
-        std::string versionStr(version);
+        ::std::string versionStr(version);
         size_t first_dot = versionStr.find('.');
         size_t second_dot = versionStr.find('.', first_dot + 1);
 
-        if (first_dot == std::string::npos || second_dot == std::string::npos) {
+        if (first_dot == ::std::string::npos || second_dot == ::std::string::npos) {
             TC_LOG_ERROR("module.playerbot.dependencies",
                 "Cannot parse MySQL version: {}", version);
             return false;
         }
 
-        int major = std::stoi(versionStr.substr(0, first_dot));
-        int minor = std::stoi(versionStr.substr(first_dot + 1, second_dot - first_dot - 1));
-        int patch = std::stoi(versionStr.substr(second_dot + 1));
+        int major = ::std::stoi(versionStr.substr(0, first_dot));
+        int minor = ::std::stoi(versionStr.substr(first_dot + 1, second_dot - first_dot - 1));
+        int patch = ::std::stoi(versionStr.substr(second_dot + 1));
 
         if (major < 8 || (major == 8 && minor == 0 && patch < 33)) {
             TC_LOG_ERROR("module.playerbot.dependencies",
@@ -421,10 +421,10 @@ bool DependencyValidator::ValidateMySQL()
         }
 
         TC_LOG_INFO("module.playerbot.dependencies",
-            "✅ MySQL {}.{}.{} client library validated", major, minor, patch);
+            " MySQL {}.{}.{} client library validated", major, minor, patch);
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "MySQL validation exception: {}", e.what());
         return false;
@@ -456,7 +456,7 @@ bool DependencyValidator::TestMySQLConnectivity()
         TC_LOG_DEBUG("module.playerbot.dependencies", "MySQL connectivity test passed (basic handle creation)");
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "MySQL connectivity test exception: {}", e.what());
         return false;
@@ -492,7 +492,7 @@ bool DependencyValidator::CheckMemoryRequirements()
     try {
         // Basic memory allocation test
         constexpr size_t TEST_SIZE = 1024 * 1024 * 100; // 100MB
-        auto buffer = std::make_unique<char[]>(TEST_SIZE);
+        auto buffer = ::std::make_unique<char[]>(TEST_SIZE);
 
         if (!buffer) {
             TC_LOG_WARN("module.playerbot.dependencies", "Failed to allocate 100MB test buffer");
@@ -507,7 +507,7 @@ bool DependencyValidator::CheckMemoryRequirements()
         TC_LOG_DEBUG("module.playerbot.dependencies", "Memory requirements check passed");
         return true;
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_WARN("module.playerbot.dependencies", "Memory requirements check failed: {}", e.what());
         return false;
     }
@@ -516,7 +516,7 @@ bool DependencyValidator::CheckMemoryRequirements()
 bool DependencyValidator::CheckCPURequirements()
 {
     // Verify we have at least 2 hardware threads for parallel operations
-    unsigned int hardware_threads = std::thread::hardware_concurrency();
+    unsigned int hardware_threads = ::std::thread::hardware_concurrency();
 
     if (hardware_threads < 2) {
         TC_LOG_WARN("module.playerbot.dependencies",
@@ -537,14 +537,14 @@ bool DependencyValidator::CheckDiskRequirements()
     return true;
 }
 
-std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
+::std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
 {
-    std::vector<DependencyInfo> dependencies;
+    ::std::vector<DependencyInfo> dependencies;
 
     dependencies.push_back({
         "Intel TBB",
         GetTBBVersion(),
-        ValidateTBB() ? "✅ OK" : "❌ FAILED",
+        ValidateTBB() ? " OK" : " FAILED",
         true,
         ValidateTBB() ? "" : "Intel Threading Building Blocks not available or version insufficient"
     });
@@ -552,7 +552,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "Parallel Hashmap",
         GetPhmapVersion(),
-        ValidatePhmap() ? "✅ OK" : "❌ FAILED",
+        ValidatePhmap() ? " OK" : " FAILED",
         true,
         ValidatePhmap() ? "" : "Parallel Hashmap not available or functionality test failed"
     });
@@ -560,7 +560,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "Boost",
         GetBoostVersion(),
-        ValidateBoost() ? "✅ OK" : "❌ FAILED",
+        ValidateBoost() ? " OK" : " FAILED",
         true,
         ValidateBoost() ? "" : "Boost libraries not available or version insufficient"
     });
@@ -568,7 +568,7 @@ std::vector<DependencyInfo> DependencyValidator::GetDependencyStatus()
     dependencies.push_back({
         "MySQL",
         GetMySQLVersion(),
-        ValidateMySQL() ? "✅ OK" : "❌ FAILED",
+        ValidateMySQL() ? " OK" : " FAILED",
         true,
         ValidateMySQL() ? "" : "MySQL client library not available or version insufficient"
     });
@@ -584,7 +584,7 @@ void DependencyValidator::LogDependencyReport()
     TC_LOG_INFO("module.playerbot.dependencies", "{:<20} | {:<15} | {:<10} | {}",
         "Component", "Version", "Status", "Notes");
     TC_LOG_INFO("module.playerbot.dependencies", "{}+{}+{}+{}",
-        std::string(20, '-'), std::string(15, '-'), std::string(10, '-'), std::string(30, '-'));
+        ::std::string(20, '-'), ::std::string(15, '-'), ::std::string(10, '-'), ::std::string(30, '-'));
 
     for (auto const& dep : dependencies) {
         TC_LOG_INFO("module.playerbot.dependencies",
@@ -595,26 +595,26 @@ void DependencyValidator::LogDependencyReport()
     TC_LOG_INFO("module.playerbot.dependencies", "=========================================");
 }
 
-std::string DependencyValidator::GetTBBVersion()
+::std::string DependencyValidator::GetTBBVersion()
 {
-    return std::to_string(TBB_VERSION_MAJOR) + "." + std::to_string(TBB_VERSION_MINOR);
+    return ::std::to_string(TBB_VERSION_MAJOR) + "." + ::std::to_string(TBB_VERSION_MINOR);
 }
 
-std::string DependencyValidator::GetBoostVersion()
+::std::string DependencyValidator::GetBoostVersion()
 {
     int major = BOOST_VERSION / 100000;
     int minor = (BOOST_VERSION / 100) % 1000;
     int patch = BOOST_VERSION % 100;
-    return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+    return ::std::to_string(major) + "." + ::std::to_string(minor) + "." + ::std::to_string(patch);
 }
 
-std::string DependencyValidator::GetMySQLVersion()
+::std::string DependencyValidator::GetMySQLVersion()
 {
     const char* version = mysql_get_client_info();
-    return version ? std::string(version) : "Unknown";
+    return version ? ::std::string(version) : "Unknown";
 }
 
-std::string DependencyValidator::GetPhmapVersion()
+::std::string DependencyValidator::GetPhmapVersion()
 {
     // Parallel hashmap doesn't expose version at runtime
     return "1.3.8+";

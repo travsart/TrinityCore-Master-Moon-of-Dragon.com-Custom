@@ -108,7 +108,7 @@ public:
      * @param player Player context
      * @return Vector of (statType, priority) pairs
      */
-    virtual std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) = 0;
+    virtual ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player) = 0;
 
     /**
      * @brief Calculate item level weight
@@ -182,7 +182,7 @@ public:
      * @param item Loot item
      * @return Vector of (playerGuid, score) pairs, sorted by score
      */
-    virtual std::vector<std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item) = 0;
+    virtual ::std::vector<::std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item) = 0;
 
     /**
      * @brief Check if item contested in group

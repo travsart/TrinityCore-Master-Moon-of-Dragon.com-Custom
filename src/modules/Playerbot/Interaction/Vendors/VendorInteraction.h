@@ -100,7 +100,7 @@ namespace Playerbot
          * @param vendor The vendor NPC
          * @return List of items worth buying
          */
-        std::vector<VendorInteractionData::ItemToBuy> AnalyzeVendorInventory(Player* bot, Creature* vendor);
+        ::std::vector<VendorInteractionData::ItemToBuy> AnalyzeVendorInventory(Player* bot, Creature* vendor);
 
         /**
          * @brief Check if item is an upgrade for bot
@@ -116,14 +116,14 @@ namespace Playerbot
          * @param items Items to buy
          * @return Total cost in copper
          */
-        uint32 CalculateTotalCost(Player* bot, const std::vector<VendorInteractionData::ItemToBuy>& items) const;
+        uint32 CalculateTotalCost(Player* bot, const ::std::vector<VendorInteractionData::ItemToBuy>& items) const;
 
         /**
          * @brief Get items bot should sell
          * @param bot The bot player
          * @return List of items to sell
          */
-        std::vector<VendorInteractionData::ItemToSell> GetItemsToSell(Player* bot) const;
+        ::std::vector<VendorInteractionData::ItemToSell> GetItemsToSell(Player* bot) const;
 
         /**
          * @brief Check if bot needs specific item
@@ -258,21 +258,21 @@ namespace Playerbot
          * @brief Sort items by sell priority
          * @param items Items to sort
          */
-        void SortBySellPriority(std::vector<VendorInteractionData::ItemToSell>& items) const;
+        void SortBySellPriority(::std::vector<VendorInteractionData::ItemToSell>& items) const;
 
         /**
          * @brief Sort items by buy priority
          * @param items Items to sort
          */
-        void SortByBuyPriority(std::vector<VendorInteractionData::ItemToBuy>& items) const;
+        void SortByBuyPriority(::std::vector<VendorInteractionData::ItemToBuy>& items) const;
 
     private:
         // Thread safety
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
 
         // Sub-managers
-        std::unique_ptr<RepairManager> m_repairManager;
-        std::unique_ptr<VendorDatabase> m_vendorDatabase;
+        ::std::unique_ptr<RepairManager> m_repairManager;
+        ::std::unique_ptr<VendorDatabase> m_vendorDatabase;
 
         // Configuration
         bool m_autoSellJunk = true;
@@ -280,7 +280,7 @@ namespace Playerbot
         bool m_autoBuyReagents = true;
 
         // Class reagent lists
-        std::unordered_map<uint8, std::vector<uint32>> m_classReagents = {
+        ::std::unordered_map<uint8, ::std::vector<uint32>> m_classReagents = {
             {CLASS_WARRIOR, {}},
             {CLASS_PALADIN, {17033}},  // Symbol of Kings
             {CLASS_HUNTER, {2512, 2515, 3030, 3033}},  // Arrows and bullets
@@ -294,21 +294,21 @@ namespace Playerbot
         };
 
         // Item evaluation cache
-        mutable std::unordered_map<uint32, bool> m_upgradeCache;
-        mutable std::unordered_map<uint32, bool> m_junkCache;
+        mutable ::std::unordered_map<uint32, bool> m_upgradeCache;
+        mutable ::std::unordered_map<uint32, bool> m_junkCache;
 
         // Active vendor sessions
         struct VendorSession
         {
             ObjectGuid vendorGuid;
-            std::vector<VendorInteractionData::ItemToBuy> plannedPurchases;
-            std::vector<VendorInteractionData::ItemToSell> plannedSales;
+            ::std::vector<VendorInteractionData::ItemToBuy> plannedPurchases;
+            ::std::vector<VendorInteractionData::ItemToSell> plannedSales;
             bool needsRepair = false;
             uint32 repairCost = 0;
             uint32 totalCost = 0;
-            std::chrono::steady_clock::time_point startTime;
+            ::std::chrono::steady_clock::time_point startTime;
         };
-        std::unordered_map<ObjectGuid, VendorSession> m_activeSessions;
+        ::std::unordered_map<ObjectGuid, VendorSession> m_activeSessions;
 
         // Metrics
         VendorMetrics m_metrics;

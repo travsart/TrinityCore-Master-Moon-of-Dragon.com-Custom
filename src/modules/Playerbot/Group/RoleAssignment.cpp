@@ -37,7 +37,7 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
     _groupStrategies[groupId] = strategy;
@@ -102,7 +102,7 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
     if (!player)
@@ -135,7 +135,7 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     auto it1 = _playerProfiles.find(player1Guid);
     auto it2 = _playerProfiles.find(player2Guid);
@@ -178,9 +178,9 @@ PlayerRoleProfile RoleAssignment::AnalyzePlayerCapabilities(Player* player)
     return profile;
 }
 
-std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group* group)
+::std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group* group)
 {
-    std::vector<RoleScore> scores;
+    ::std::vector<RoleScore> scores;
 
     if (!player)
         return scores;
@@ -202,7 +202,7 @@ std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group
     }
 
     // Sort by total score (highest first)
-    std::sort(scores.begin(), scores.end(),
+    ::std::sort(scores.begin(), scores.end(),
               [](const RoleScore& a, const RoleScore& b) {
                   return a.totalScore > b.totalScore;
               });
@@ -215,7 +215,7 @@ GroupRole RoleAssignment::RecommendRole(Player* player, Group* group)
     if (!player)
         return GroupRole::NONE;
 
-    std::vector<RoleScore> scores = CalculateRoleScores(player, group);
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, group);
 
     if (!scores.empty())
         return scores[0].role;
@@ -230,7 +230,7 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
     if (!group)
         return composition;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     // Count assigned roles
     for (GroupReference const& itr : group->GetMembers())
@@ -278,9 +278,9 @@ bool RoleAssignment::IsCompositionViable(const GroupComposition& composition)
     return composition.compositionScore >= COMPOSITION_SCORE_THRESHOLD;
 }
 
-std::vector<GroupRole> RoleAssignment::GetMissingRoles(Group* group)
+::std::vector<GroupRole> RoleAssignment::GetMissingRoles(Group* group)
 {
-    std::vector<GroupRole> missingRoles;
+    ::std::vector<GroupRole> missingRoles;
 
     GroupComposition composition = AnalyzeGroupComposition(group);
 
@@ -535,8 +535,8 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
     profile.overallRating = 5.0f;
 
     // Initialize alternative roles
-    std::vector<RoleScore> scores = CalculateRoleScores(player, nullptr);
-    for (size_t i = 1; i < std::min(scores.size(), size_t(3)); ++i)
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, nullptr);
+    for (size_t i = 1; i < ::std::min(scores.size(), size_t(3)); ++i)
     {
         if (scores[i].totalScore >= MIN_ROLE_EFFECTIVENESS)
             profile.alternativeRoles.push_back(scores[i].role);
@@ -714,9 +714,9 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
     // Normalize score to 0.0 - 1.0 range
     float averageItemLevel = totalItemLevel / itemCount;
-    float itemLevelScore = std::min(1.0f, averageItemLevel / 300.0f); // Normalize around ilvl 300
+    float itemLevelScore = ::std::min(1.0f, averageItemLevel / 300.0f); // Normalize around ilvl 300
 
-    float roleAppropriateness = std::min(1.0f, gearScore / (itemCount * 50.0f)); // Normalize based on stats
+    float roleAppropriateness = ::std::min(1.0f, gearScore / (itemCount * 50.0f)); // Normalize based on stats
 
     // Combined score (70% item level, 30% role-appropriate stats)
     float finalScore = (itemLevelScore * 0.7f) + (roleAppropriateness * 0.3f);
@@ -729,7 +729,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
 float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role)
 {
-    std::lock_guard lock(_performanceMutex);
+    ::std::lock_guard lock(_performanceMutex);
 
     auto playerIt = _rolePerformance.find(playerGuid);
     if (playerIt == _rolePerformance.end())
@@ -751,8 +751,8 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     uint8 playerClass = player->GetClass();
 
     // Get group composition
-    std::unordered_map<uint8, uint32> classCounts; // class -> count
-    std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
+    ::std::unordered_map<uint8, uint32> classCounts; // class -> count
+    ::std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
 
     for (GroupReference const& itr : group->GetMembers())
     {
@@ -949,7 +949,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     }
 
     // Cap synergy score between 0.0 and 1.0
-    synergyScore = std::max(0.0f, std::min(1.0f, synergyScore));
+    synergyScore = ::std::max(0.0f, ::std::min(1.0f, synergyScore));
 
     TC_LOG_DEBUG("playerbot", "RoleAssignment: Synergy score for player {} (class {}) in role {}: {:.2f}",
                  player->GetName(), playerClass, static_cast<uint8>(role), synergyScore);
@@ -962,7 +962,7 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
     if (!player)
         return GroupRole::NONE;
 
-    std::vector<RoleScore> scores = CalculateRoleScores(player, group);
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, group);
 
     if (scores.empty())
         return GroupRole::NONE;
@@ -1025,7 +1025,7 @@ float RoleAssignment::CalculateCompositionScore(const GroupComposition& composit
     else if (composition.totalMembers > 5)
         score -= 0.5f;
 
-    return std::max(0.0f, std::min(10.0f, score));
+    return ::std::max(0.0f, ::std::min(10.0f, score));
 }
 
 void RoleAssignment::ExecuteOptimalStrategy(Group* group)
@@ -1034,7 +1034,7 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
         return;
 
     // Get all members and their optimal roles
-    std::vector<std::pair<Player*, GroupRole>> assignments;
+    ::std::vector<::std::pair<Player*, GroupRole>> assignments;
 
     for (GroupReference const& itr : group->GetMembers())
     {
@@ -1046,7 +1046,7 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
     }
 
     // Sort by role priority (tank > healer > dps)
-    std::sort(assignments.begin(), assignments.end(),
+    ::std::sort(assignments.begin(), assignments.end(),
               [](const auto& a, const auto& b) {
                   return static_cast<int>(a.second) < static_cast<int>(b.second);
               });
@@ -1073,7 +1073,7 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
         return;
 
     // Analyze gear for each possible role
-    std::vector<GroupRole> roles = {
+    ::std::vector<GroupRole> roles = {
         GroupRole::TANK,
         GroupRole::HEALER,
         GroupRole::MELEE_DPS,
@@ -1175,7 +1175,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
     if (!player)
         return;
 
-    std::lock_guard lock(_performanceMutex);
+    ::std::lock_guard lock(_performanceMutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -1201,7 +1201,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
         uint32 failCount = performance.failedEncounters.load();
 
         // Base experience from encounter count (logarithmic growth)
-        float experienceBase = std::min(1.0f, std::log10(static_cast<float>(encounterCount) + 1.0f) / 2.0f);
+        float experienceBase = ::std::min(1.0f, ::std::log10(static_cast<float>(encounterCount) + 1.0f) / 2.0f);
 
         // Performance modifier (50% weight)
         float performanceMod = avgEffectiveness * 0.5f;
@@ -1216,7 +1216,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
 
         // Calculate final experience score
         float experienceScore = experienceBase + performanceMod + successMod + consistencyMod;
-        experienceScore = std::max(0.0f, std::min(1.0f, experienceScore)); // Clamp to [0, 1]
+        experienceScore = ::std::max(0.0f, ::std::min(1.0f, experienceScore)); // Clamp to [0, 1]
 
         // Update role score
         auto& roleScore = profile.roleScores[role];
@@ -1267,7 +1267,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
     }
 
     // Sort alternative roles by experience score (descending)
-    std::sort(profile.alternativeRoles.begin(), profile.alternativeRoles.end(),
+    ::std::sort(profile.alternativeRoles.begin(), profile.alternativeRoles.end(),
               [&profile](GroupRole a, GroupRole b) {
                   return profile.roleScores[a].experienceScore > profile.roleScores[b].experienceScore;
               });
@@ -1332,7 +1332,7 @@ void RoleAssignment::CleanupInactiveProfiles()
 
 void RoleAssignment::UpdateRoleStatistics()
 {
-    _globalStatistics.lastStatsUpdate = std::chrono::steady_clock::now();
+    _globalStatistics.lastStatsUpdate = ::std::chrono::steady_clock::now();
 }
 
 RoleAssignment::RoleStatistics RoleAssignment::GetGlobalRoleStatistics()

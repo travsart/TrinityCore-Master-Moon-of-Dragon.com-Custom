@@ -182,9 +182,9 @@ void ThreatAbilitiesDB::Initialize()
     _classAbilities[CLASS_EVOKER] = { WING_BUFFET, TAIL_SWIPE, LANDSLIDE, QUELL, BLESSING_OF_THE_BRONZE };
 }
 
-std::vector<ThreatAbilityData> ThreatAbilitiesDB::GetClassAbilities(Classes playerClass, uint32 spec) const
+::std::vector<ThreatAbilityData> ThreatAbilitiesDB::GetClassAbilities(Classes playerClass, uint32 spec) const
 {
-    std::vector<ThreatAbilityData> result;
+    ::std::vector<ThreatAbilityData> result;
 
     auto it = _classAbilities.find(playerClass);
     if (it != _classAbilities.end())
@@ -210,9 +210,9 @@ ThreatAbilityData const* ThreatAbilitiesDB::GetAbility(uint32 spellId) const
     return it != _abilities.end() ? &it->second : nullptr;
 }
 
-std::vector<ThreatAbilityData> ThreatAbilitiesDB::GetAbilitiesByType(ThreatAbilityType type) const
+::std::vector<ThreatAbilityData> ThreatAbilitiesDB::GetAbilitiesByType(ThreatAbilityType type) const
 {
-    std::vector<ThreatAbilityData> result;
+    ::std::vector<ThreatAbilityData> result;
 
     for (const auto& [spellId, ability] : _abilities)
     {

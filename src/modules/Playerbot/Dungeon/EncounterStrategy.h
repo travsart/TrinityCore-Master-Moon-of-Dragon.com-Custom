@@ -110,7 +110,7 @@ public:
     // Core strategy management
     void ExecuteEncounterStrategy(Group* group, uint32 encounterId) override;
     void UpdateEncounterExecution(Group* group, uint32 encounterId, uint32 diff) override;
-    void HandleEncounterMechanic(Group* group, uint32 encounterId, const std::string& mechanic) override;
+    void HandleEncounterMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) override;
     void AdaptStrategyToGroupComposition(Group* group, uint32 encounterId) override;
 
     // Phase-based encounter management
@@ -122,20 +122,20 @@ public:
     void HandleTankSwapMechanic(Group* group, Player* currentTank, Player* newTank) override;
     void HandleStackingDebuffMechanic(Group* group, Player* affectedPlayer) override;
     void HandleAoEDamageMechanic(Group* group, const Position& dangerZone, float radius) override;
-    void HandleAddSpawnMechanic(Group* group, const std::vector<Unit*>& adds) override;
+    void HandleAddSpawnMechanic(Group* group, const ::std::vector<Unit*>& adds) override;
     void HandleChanneledSpellMechanic(Group* group, Unit* caster, uint32 spellId) override;
     void HandleEnrageMechanic(Group* group, Unit* boss, uint32 timeRemaining) override;
 
     // Role-specific strategy execution
     struct TankStrategy
     {
-        std::function<void(Player*, Group*, const DungeonEncounter&)> positioningStrategy;
-        std::function<void(Player*, Group*, Unit*)> threatManagementStrategy;
-        std::function<void(Player*, Group*, const std::string&)> mechanicResponseStrategy;
-        std::function<void(Player*, Group*)> cooldownUsageStrategy;
+        ::std::function<void(Player*, Group*, const DungeonEncounter&)> positioningStrategy;
+        ::std::function<void(Player*, Group*, Unit*)> threatManagementStrategy;
+        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+        ::std::function<void(Player*, Group*)> cooldownUsageStrategy;
 
-        std::vector<uint32> priorityCooldowns;
-        std::vector<std::string> keyMechanics;
+        ::std::vector<uint32> priorityCooldowns;
+        ::std::vector<::std::string> keyMechanics;
         Position optimalPosition;
         float threatThreshold;
         bool requiresMovement;
@@ -143,13 +143,13 @@ public:
 
     struct HealerStrategy
     {
-        std::function<void(Player*, Group*, const DungeonEncounter&)> healingPriorityStrategy;
-        std::function<void(Player*, Group*)> manaManagementStrategy;
-        std::function<void(Player*, Group*, const std::string&)> mechanicResponseStrategy;
-        std::function<void(Player*, Group*)> dispelStrategy;
+        ::std::function<void(Player*, Group*, const DungeonEncounter&)> healingPriorityStrategy;
+        ::std::function<void(Player*, Group*)> manaManagementStrategy;
+        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+        ::std::function<void(Player*, Group*)> dispelStrategy;
 
-        std::vector<uint32> emergencyCooldowns;
-        std::vector<uint32> dispelPriorities;
+        ::std::vector<uint32> emergencyCooldowns;
+        ::std::vector<uint32> dispelPriorities;
         Position safePosition;
         float healingThreshold;
         bool requiresMovement;
@@ -157,13 +157,13 @@ public:
 
     struct DpsStrategy
     {
-        std::function<void(Player*, Group*, const std::vector<Unit*>&)> targetPriorityStrategy;
-        std::function<void(Player*, Group*, const DungeonEncounter&)> damageOptimizationStrategy;
-        std::function<void(Player*, Group*, const std::string&)> mechanicResponseStrategy;
-        std::function<void(Player*, Group*)> cooldownRotationStrategy;
+        ::std::function<void(Player*, Group*, const ::std::vector<Unit*>&)> targetPriorityStrategy;
+        ::std::function<void(Player*, Group*, const DungeonEncounter&)> damageOptimizationStrategy;
+        ::std::function<void(Player*, Group*, const ::std::string&)> mechanicResponseStrategy;
+        ::std::function<void(Player*, Group*)> cooldownRotationStrategy;
 
-        std::vector<uint32> burstCooldowns;
-        std::vector<uint32> targetPriorities;
+        ::std::vector<uint32> burstCooldowns;
+        ::std::vector<uint32> targetPriorities;
         Position optimalPosition;
         float threatLimit;
         bool canMoveDuringCast;
@@ -175,9 +175,9 @@ public:
 
     // Positioning and movement strategies
     void UpdateEncounterPositioning(Group* group, uint32 encounterId) override;
-    void HandleMovementMechanic(Group* group, uint32 encounterId, const std::string& mechanic) override;
+    void HandleMovementMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic) override;
     Position CalculateOptimalPosition(Player* player, uint32 encounterId, DungeonRole role) override;
-    void AvoidMechanicAreas(Group* group, const std::vector<Position>& dangerAreas) override;
+    void AvoidMechanicAreas(Group* group, const ::std::vector<Position>& dangerAreas) override;
 
     // Cooldown and resource management
     void CoordinateGroupCooldowns(Group* group, uint32 encounterId) override;
@@ -201,14 +201,14 @@ public:
     // Performance monitoring
     struct StrategyMetrics
     {
-        std::atomic<uint32> strategiesExecuted{0};
-        std::atomic<uint32> strategiesSuccessful{0};
-        std::atomic<uint32> mechanicsHandled{0};
-        std::atomic<uint32> mechanicsSuccessful{0};
-        std::atomic<float> averageExecutionTime{300000.0f}; // 5 minutes
-        std::atomic<float> strategySuccessRate{0.85f};
-        std::atomic<float> mechanicSuccessRate{0.9f};
-        std::atomic<uint32> adaptationsPerformed{0};
+        ::std::atomic<uint32> strategiesExecuted{0};
+        ::std::atomic<uint32> strategiesSuccessful{0};
+        ::std::atomic<uint32> mechanicsHandled{0};
+        ::std::atomic<uint32> mechanicsSuccessful{0};
+        ::std::atomic<float> averageExecutionTime{300000.0f}; // 5 minutes
+        ::std::atomic<float> strategySuccessRate{0.85f};
+        ::std::atomic<float> mechanicSuccessRate{0.9f};
+        ::std::atomic<uint32> adaptationsPerformed{0};
 
         void Reset() {
             strategiesExecuted = 0; strategiesSuccessful = 0; mechanicsHandled = 0;
@@ -231,36 +231,36 @@ private:
     ~EncounterStrategy() = default;
 
     // Strategy database
-    std::unordered_map<uint32, TankStrategy> _tankStrategies; // encounterId -> strategy
-    std::unordered_map<uint32, HealerStrategy> _healerStrategies;
-    std::unordered_map<uint32, DpsStrategy> _dpsStrategies;
-    std::unordered_map<uint32, StrategyMetrics> _encounterMetrics;
+    ::std::unordered_map<uint32, TankStrategy> _tankStrategies; // encounterId -> strategy
+    ::std::unordered_map<uint32, HealerStrategy> _healerStrategies;
+    ::std::unordered_map<uint32, DpsStrategy> _dpsStrategies;
+    ::std::unordered_map<uint32, StrategyMetrics> _encounterMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _strategyMutex;
 
     // Encounter mechanics database
     struct EncounterMechanic
     {
-        std::string mechanicName;
-        std::string description;
+        ::std::string mechanicName;
+        ::std::string description;
         uint32 triggerCondition;
         uint32 duration;
         float dangerLevel;
-        std::vector<std::string> counterMeasures;
-        std::function<void(Group*, const EncounterMechanic&)> handler;
+        ::std::vector<::std::string> counterMeasures;
+        ::std::function<void(Group*, const EncounterMechanic&)> handler;
 
-        EncounterMechanic(const std::string& name, const std::string& desc)
+        EncounterMechanic(const ::std::string& name, const ::std::string& desc)
             : mechanicName(name), description(desc), triggerCondition(0)
             , duration(0), dangerLevel(5.0f) {}
     };
 
-    std::unordered_map<uint32, std::vector<EncounterMechanic>> _encounterMechanics; // encounterId -> mechanics
+    ::std::unordered_map<uint32, ::std::vector<EncounterMechanic>> _encounterMechanics; // encounterId -> mechanics
 
     // Adaptive learning system
     struct StrategyLearningData
     {
-        std::unordered_map<uint32, uint32> mechanicFailures; // mechanicHash -> failure count
-        std::unordered_map<uint32, uint32> mechanicSuccesses; // mechanicHash -> success count
-        std::unordered_map<uint32, float> strategyEffectiveness; // strategyHash -> effectiveness
+        ::std::unordered_map<uint32, uint32> mechanicFailures; // mechanicHash -> failure count
+        ::std::unordered_map<uint32, uint32> mechanicSuccesses; // mechanicHash -> success count
+        ::std::unordered_map<uint32, float> strategyEffectiveness; // strategyHash -> effectiveness
         uint32 totalEncountersAttempted;
         uint32 totalEncountersSuccessful;
         uint32 lastLearningUpdate;
@@ -269,12 +269,12 @@ private:
             , lastLearningUpdate(GameTime::GetGameTimeMS()) {}
     };
 
-    std::unordered_map<uint32, StrategyLearningData> _learningData; // encounterId -> learning data
+    ::std::unordered_map<uint32, StrategyLearningData> _learningData; // encounterId -> learning data
 
     // Configuration
-    std::atomic<bool> _adaptiveStrategiesEnabled{true};
-    std::atomic<uint32> _mechanicResponseTime{2000}; // 2 seconds
-    std::atomic<float> _strategyComplexity{0.7f}; // 70% complexity
+    ::std::atomic<bool> _adaptiveStrategiesEnabled{true};
+    ::std::atomic<uint32> _mechanicResponseTime{2000}; // 2 seconds
+    ::std::atomic<float> _strategyComplexity{0.7f}; // 70% complexity
 
     // Global metrics
     StrategyMetrics _globalMetrics;
@@ -289,7 +289,7 @@ private:
     // Strategy execution helpers
     void ExecuteRoleStrategy(Player* player, uint32 encounterId, DungeonRole role);
     void HandleSpecificMechanic(Group* group, const EncounterMechanic& mechanic);
-    void CoordinateGroupResponse(Group* group, const std::string& mechanic);
+    void CoordinateGroupResponse(Group* group, const ::std::string& mechanic);
     void ValidateStrategyExecution(Group* group, uint32 encounterId);
 
     // Positioning algorithms
@@ -299,10 +299,10 @@ private:
     void UpdateGroupFormation(Group* group, uint32 encounterId);
 
     // Learning and adaptation
-    void UpdateLearningData(uint32 encounterId, const std::string& mechanic, bool wasSuccessful);
+    void UpdateLearningData(uint32 encounterId, const ::std::string& mechanic, bool wasSuccessful);
     void AdaptStrategyComplexity(uint32 encounterId);
     void OptimizeStrategyBasedOnLearning(uint32 encounterId);
-    uint32 GenerateMechanicHash(const std::string& mechanic);
+    uint32 GenerateMechanicHash(const ::std::string& mechanic);
 
     // Performance analysis
     void AnalyzeGroupPerformance(Group* group, uint32 encounterId);

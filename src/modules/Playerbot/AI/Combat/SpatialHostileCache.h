@@ -85,22 +85,22 @@ public:
     ~CellCache();
 
     // Thread-safe read (lock-free)
-    std::vector<HostileEntry> GetHostiles() const;
+    ::std::vector<HostileEntry> GetHostiles() const;
 
     // Writer thread only
-    void UpdateHostiles(std::vector<HostileEntry>&& hostiles);
+    void UpdateHostiles(::std::vector<HostileEntry>&& hostiles);
 
     uint32 GetLastUpdateTime() const { return _lastUpdate.load(); }
     bool IsStale(uint32 currentTime) const;
 
 private:
     // RCU pattern: atomic pointer to immutable data
-    mutable std::atomic<std::vector<HostileEntry>*> _hostiles;
-    std::atomic<uint32> _lastUpdate;
-    std::atomic<uint32> _version;
+    mutable ::std::atomic<::std::vector<HostileEntry>*> _hostiles;
+    ::std::atomic<uint32> _lastUpdate;
+    ::std::atomic<uint32> _version;
 
     // Memory pool for vector recycling
-    static thread_local boost::object_pool<std::vector<HostileEntry>> s_vectorPool;
+    static thread_local boost::object_pool<::std::vector<HostileEntry>> s_vectorPool;
 };
 
 /**
@@ -113,7 +113,7 @@ public:
     ~ZoneCache();
 
     // Query interface (thread-safe, lock-free reads)
-    std::vector<HostileEntry> FindHostilesInRange(
+    ::std::vector<HostileEntry> FindHostilesInRange(
         float x, float y, float z, float range,
         uint32 maxResults = 100) const;
 
@@ -129,17 +129,17 @@ public:
 private:
     uint32 GetCellIndex(float x, float y) const;
     void GetCellsInRange(float x, float y, float range,
-                        std::vector<uint32>& cells) const;
+                        ::std::vector<uint32>& cells) const;
 
     const uint32 _zoneId;
-    std::atomic<uint32> _totalHostiles;
-    std::atomic<uint32> _lastFullUpdate;
+    ::std::atomic<uint32> _totalHostiles;
+    ::std::atomic<uint32> _lastFullUpdate;
 
     // Spatial index: 16x16 grid of cells
-    std::unique_ptr<CellCache> _cells[CELLS_PER_ZONE];
+    ::std::unique_ptr<CellCache> _cells[CELLS_PER_ZONE];
 
     // Staging area for updates (writer thread only)
-    std::unordered_map<uint32, std::vector<HostileEntry>> _stagingCells;
+    ::std::unordered_map<uint32, ::std::vector<HostileEntry>> _stagingCells;
 
     // Zone boundaries for cell calculation
     float _minX, _maxX, _minY, _maxY;
@@ -160,7 +160,7 @@ public:
     void Shutdown();
 
     // Bot query interface (main thread, lock-free)
-    std::vector<HostileEntry> FindHostilesForBot(
+    ::std::vector<HostileEntry> FindHostilesForBot(
         Player* bot, float range,
         uint32 maxResults = 50);
 
@@ -198,20 +198,20 @@ private:
 
     // Zone caches with RCU protection
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::SPATIAL_GRID> _zoneCacheMutex;
-    std::unordered_map<uint32, std::unique_ptr<ZoneCache>> _zoneCaches;
+    ::std::unordered_map<uint32, ::std::unique_ptr<ZoneCache>> _zoneCaches;
 
     // Update queue (lock-free SPSC)
     boost::lockfree::spsc_queue<uint32, boost::lockfree::capacity<1024>> _updateQueue;
 
     // Worker thread management
-    std::atomic<bool> _running;
-    std::unique_ptr<std::thread> _workerThread;
+    ::std::atomic<bool> _running;
+    ::std::unique_ptr<::std::thread> _workerThread;
 
     // Statistics tracking
-    mutable std::atomic<uint32> _totalQueries;
-    mutable std::atomic<uint32> _cacheHits;
-    mutable std::atomic<uint32> _cacheMisses;
-    mutable std::atomic<uint64> _totalQueryTimeUs;
+    mutable ::std::atomic<uint32> _totalQueries;
+    mutable ::std::atomic<uint32> _cacheHits;
+    mutable ::std::atomic<uint32> _cacheMisses;
+    mutable ::std::atomic<uint64> _totalQueryTimeUs;
 
     // Memory pools
     boost::object_pool<HostileEntry> _entryPool;
@@ -232,7 +232,7 @@ public:
     ~BotLocalHostileCache();
 
     // Query with local caching
-    std::vector<HostileEntry> GetHostilesInRange(float range);
+    ::std::vector<HostileEntry> GetHostilesInRange(float range);
 
     // Cache management
     void InvalidateCache();
@@ -244,11 +244,11 @@ private:
     {
         float range;
         uint32 timestamp;
-        std::vector<HostileEntry> hostiles;
+        ::std::vector<HostileEntry> hostiles;
     };
 
     Player* _bot;
-    std::vector<CacheEntry> _cache;
+    ::std::vector<CacheEntry> _cache;
     uint32 _lastAccessTime;
     bool _inCombat;
 

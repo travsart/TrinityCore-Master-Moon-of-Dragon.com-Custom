@@ -54,13 +54,13 @@ public:
     BTBlackboard() = default;
 
     template<typename T>
-    void Set(std::string const& key, T const& value)
+    void Set(::std::string const& key, T const& value)
     {
         _data[key] = value;
     }
 
     template<typename T>
-    bool Get(std::string const& key, T& outValue) const
+    bool Get(::std::string const& key, T& outValue) const
     {
         auto it = _data.find(key);
         if (it == _data.end())
@@ -68,28 +68,28 @@ public:
 
         try
         {
-            outValue = std::any_cast<T>(it->second);
+            outValue = ::std::any_cast<T>(it->second);
             return true;
         }
-        catch (std::bad_any_cast const&)
+        catch (::std::bad_any_cast const&)
         {
             return false;
         }
     }
 
     template<typename T>
-    T GetOr(std::string const& key, T const& defaultValue) const
+    T GetOr(::std::string const& key, T const& defaultValue) const
     {
         T value;
         return Get(key, value) ? value : defaultValue;
     }
 
-    bool Has(std::string const& key) const
+    bool Has(::std::string const& key) const
     {
         return _data.find(key) != _data.end();
     }
 
-    void Remove(std::string const& key)
+    void Remove(::std::string const& key)
     {
         _data.erase(key);
     }
@@ -100,7 +100,7 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, std::any> _data;
+    ::std::unordered_map<::std::string, ::std::any> _data;
 };
 
 /**
@@ -109,7 +109,7 @@ private:
 class TC_GAME_API BTNode
 {
 public:
-    BTNode(std::string const& name) : _name(name), _status(BTStatus::INVALID) {}
+    BTNode(::std::string const& name) : _name(name), _status(BTStatus::INVALID) {}
     virtual ~BTNode() = default;
 
     /**
@@ -131,7 +131,7 @@ public:
     /**
      * @brief Get node name
      */
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
 
     /**
      * @brief Get last execution status
@@ -139,7 +139,7 @@ public:
     BTStatus GetStatus() const { return _status; }
 
 protected:
-    std::string _name;
+    ::std::string _name;
     BTStatus _status;
 };
 
@@ -149,9 +149,9 @@ protected:
 class TC_GAME_API BTComposite : public BTNode
 {
 public:
-    BTComposite(std::string const& name) : BTNode(name), _currentChild(0) {}
+    BTComposite(::std::string const& name) : BTNode(name), _currentChild(0) {}
 
-    void AddChild(std::shared_ptr<BTNode> child)
+    void AddChild(::std::shared_ptr<BTNode> child)
     {
         _children.push_back(child);
     }
@@ -165,7 +165,7 @@ public:
     }
 
 protected:
-    std::vector<std::shared_ptr<BTNode>> _children;
+    ::std::vector<::std::shared_ptr<BTNode>> _children;
     size_t _currentChild;
 };
 
@@ -176,7 +176,7 @@ protected:
 class TC_GAME_API BTSequence : public BTComposite
 {
 public:
-    BTSequence(std::string const& name) : BTComposite(name) {}
+    BTSequence(::std::string const& name) : BTComposite(name) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
     {
@@ -215,7 +215,7 @@ public:
 class TC_GAME_API BTSelector : public BTComposite
 {
 public:
-    BTSelector(std::string const& name) : BTComposite(name) {}
+    BTSelector(::std::string const& name) : BTComposite(name) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
     {
@@ -272,13 +272,13 @@ public:
 class TC_GAME_API BTScoredSelector : public BTComposite
 {
 public:
-    using ScoringFunction = std::function<float(BotAI*, BTBlackboard&)>;
+    using ScoringFunction = ::std::function<float(BotAI*, BTBlackboard&)>;
 
     /**
      * @brief Construct scored selector node
      * @param name Node name for debugging
      */
-    BTScoredSelector(std::string const& name)
+    BTScoredSelector(::std::string const& name)
         : BTComposite(name)
         , _debugLogging(false)
     {
@@ -289,7 +289,7 @@ public:
      * @param child Child node to execute if highest scoring
      * @param scoringFunc Function that returns action score (0.0 = lowest, higher = better)
      */
-    void AddChild(std::shared_ptr<BTNode> child, ScoringFunction scoringFunc)
+    void AddChild(::std::shared_ptr<BTNode> child, ScoringFunction scoringFunc)
     {
         BTComposite::AddChild(child);
         _scoringFunctions.push_back(scoringFunc);
@@ -310,7 +310,7 @@ public:
         }
 
         // Score all children
-        std::vector<std::pair<size_t, float>> scores;
+        ::std::vector<::std::pair<size_t, float>> scores;
         scores.reserve(_children.size());
 
         for (size_t i = 0; i < _children.size(); ++i)
@@ -326,7 +326,7 @@ public:
         }
 
         // Sort by score (highest first)
-        std::sort(scores.begin(), scores.end(),
+        ::std::sort(scores.begin(), scores.end(),
             [](const auto& a, const auto& b) { return a.second > b.second; });
 
         // Try highest scoring children first
@@ -383,7 +383,7 @@ public:
     }
 
 private:
-    std::vector<ScoringFunction> _scoringFunctions;
+    ::std::vector<ScoringFunction> _scoringFunctions;
     bool _debugLogging;
 };
 
@@ -393,7 +393,7 @@ private:
 class TC_GAME_API BTDecorator : public BTNode
 {
 public:
-    BTDecorator(std::string const& name, std::shared_ptr<BTNode> child)
+    BTDecorator(::std::string const& name, ::std::shared_ptr<BTNode> child)
         : BTNode(name), _child(child) {}
 
     void Reset() override
@@ -404,7 +404,7 @@ public:
     }
 
 protected:
-    std::shared_ptr<BTNode> _child;
+    ::std::shared_ptr<BTNode> _child;
 };
 
 /**
@@ -413,7 +413,7 @@ protected:
 class TC_GAME_API BTInverter : public BTDecorator
 {
 public:
-    BTInverter(std::string const& name, std::shared_ptr<BTNode> child)
+    BTInverter(::std::string const& name, ::std::shared_ptr<BTNode> child)
         : BTDecorator(name, child) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
@@ -443,7 +443,7 @@ public:
 class TC_GAME_API BTRepeater : public BTDecorator
 {
 public:
-    BTRepeater(std::string const& name, std::shared_ptr<BTNode> child, int32 count = -1)
+    BTRepeater(::std::string const& name, ::std::shared_ptr<BTNode> child, int32 count = -1)
         : BTDecorator(name, child), _maxRepeats(count), _currentRepeat(0) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
@@ -494,7 +494,7 @@ private:
 class TC_GAME_API BTLeaf : public BTNode
 {
 public:
-    BTLeaf(std::string const& name) : BTNode(name) {}
+    BTLeaf(::std::string const& name) : BTNode(name) {}
 };
 
 /**
@@ -503,9 +503,9 @@ public:
 class TC_GAME_API BTCondition : public BTLeaf
 {
 public:
-    using ConditionFunc = std::function<bool(BotAI*, BTBlackboard&)>;
+    using ConditionFunc = ::std::function<bool(BotAI*, BTBlackboard&)>;
 
-    BTCondition(std::string const& name, ConditionFunc func)
+    BTCondition(::std::string const& name, ConditionFunc func)
         : BTLeaf(name), _func(func) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
@@ -531,9 +531,9 @@ private:
 class TC_GAME_API BTAction : public BTLeaf
 {
 public:
-    using ActionFunc = std::function<BTStatus(BotAI*, BTBlackboard&)>;
+    using ActionFunc = ::std::function<BTStatus(BotAI*, BTBlackboard&)>;
 
-    BTAction(std::string const& name, ActionFunc func)
+    BTAction(::std::string const& name, ActionFunc func)
         : BTLeaf(name), _func(func) {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override
@@ -560,7 +560,7 @@ class TC_GAME_API BehaviorTree
 public:
     BehaviorTree() : _root(nullptr) {}
 
-    void SetRoot(std::shared_ptr<BTNode> root)
+    void SetRoot(::std::shared_ptr<BTNode> root)
     {
         _root = root;
     }
@@ -584,7 +584,7 @@ public:
     BTBlackboard const& GetBlackboard() const { return _blackboard; }
 
 private:
-    std::shared_ptr<BTNode> _root;
+    ::std::shared_ptr<BTNode> _root;
     BTBlackboard _blackboard;
 };
 

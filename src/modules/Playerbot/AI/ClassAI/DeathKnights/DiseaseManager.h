@@ -64,7 +64,7 @@ public:
 
 private:
     Player* _bot;
-    std::unordered_map<ObjectGuid, std::vector<DiseaseInfo>> _activeDiseases;
+    ::std::unordered_map<ObjectGuid, ::std::vector<DiseaseInfo>> _activeDiseases;
 
     // Disease spell IDs
     static constexpr uint32 BLOOD_PLAGUE_SPELL = 55078;

@@ -48,13 +48,13 @@ void BotPacketSimulator::SimulateQueuedMessagesEnd()
     WorldPacket packet(CMSG_QUEUED_MESSAGES_END);
     packet << _simulatedClientTime;  // Write timestamp
     // Construct packet structure from WorldPacket
-    WorldPackets::Auth::QueuedMessagesEnd queuedMessagesEnd(std::move(packet));
+    WorldPackets::Auth::QueuedMessagesEnd queuedMessagesEnd(::std::move(packet));
     queuedMessagesEnd.Read();  // Extract data from WorldPacket
     // Call the handler directly (packet forging)
     _session->HandleQueuedMessagesEnd(queuedMessagesEnd);
 
     TC_LOG_INFO("module.playerbot.packet",
-        "✅ Bot {} successfully simulated CMSG_QUEUED_MESSAGES_END - time sync initialized",
+        " Bot {} successfully simulated CMSG_QUEUED_MESSAGES_END - time sync initialized",
         bot->GetName());
 }
 
@@ -80,13 +80,13 @@ void BotPacketSimulator::SimulateMoveInitActiveMoverComplete()
     WorldPacket packet(CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE);
     packet << _simulatedClientTime;  // Write ticks
     // Construct packet structure from WorldPacket
-    WorldPackets::Movement::MoveInitActiveMoverComplete moveInitComplete(std::move(packet));
+    WorldPackets::Movement::MoveInitActiveMoverComplete moveInitComplete(::std::move(packet));
     moveInitComplete.Read();  // Extract data from WorldPacket
     // Call the handler directly (packet forging)
     _session->HandleMoveInitActiveMoverComplete(moveInitComplete);
 
     TC_LOG_INFO("module.playerbot.packet",
-        "✅ Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
+        " Bot {} successfully simulated CMSG_MOVE_INIT_ACTIVE_MOVER_COMPLETE - visibility enabled, flag set automatically",
         bot->GetName());
 }
 
@@ -105,7 +105,7 @@ void BotPacketSimulator::SimulateTimeSyncResponse(uint32 counter)
     packet << _simulatedClientTime;  // Write ClientTime (second)
 
     // Construct packet structure from WorldPacket
-    WorldPackets::Misc::TimeSyncResponse timeSyncResponse(std::move(packet));
+    WorldPackets::Misc::TimeSyncResponse timeSyncResponse(::std::move(packet));
     timeSyncResponse.Read();  // Extract data from WorldPacket
 
     // Call the handler directly

@@ -44,7 +44,7 @@ struct PositionerStats
     uint32 capitalCities{0};
     uint32 botsPlaced{0};
     uint32 teleportsFailed{0};
-    std::unordered_map<uint32, uint32> placementsPerZone;  // zoneId -> count
+    ::std::unordered_map<uint32, uint32> placementsPerZone;  // zoneId -> count
 };
 
 /**
@@ -112,7 +112,7 @@ public:
      * @param faction Bot faction
      * @return Vector of valid zone placements
      */
-    virtual std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const = 0;
+    virtual ::std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const = 0;
 
     /**
      * @brief Get random capital city for faction
@@ -159,7 +159,7 @@ public:
      * @param zoneId Zone ID
      * @return Zone name or empty string
      */
-    virtual std::string GetZoneName(uint32 zoneId) const = 0;
+    virtual ::std::string GetZoneName(uint32 zoneId) const = 0;
 
     /**
      * @brief Check if zone is valid for level/faction
@@ -189,7 +189,7 @@ public:
      * @brief Get formatted zone summary
      * @return Summary string
      */
-    virtual std::string GetZoneSummary() const = 0;
+    virtual ::std::string GetZoneSummary() const = 0;
 };
 
 } // namespace Playerbot

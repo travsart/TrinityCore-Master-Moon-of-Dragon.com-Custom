@@ -36,23 +36,23 @@ public:
     virtual bool HasProfession(::Player* player, ProfessionType profession) const = 0;
     virtual uint16 GetProfessionSkill(::Player* player, ProfessionType profession) const = 0;
     virtual uint16 GetMaxProfessionSkill(::Player* player, ProfessionType profession) const = 0;
-    virtual std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const = 0;
+    virtual ::std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const = 0;
     virtual bool UnlearnProfession(::Player* player, ProfessionType profession) = 0;
 
     // Auto-learn system
     virtual void AutoLearnProfessionsForClass(::Player* player) = 0;
-    virtual std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const = 0;
+    virtual ::std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const = 0;
     virtual bool IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const = 0;
     virtual ProfessionCategory GetProfessionCategory(ProfessionType profession) const = 0;
-    virtual std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const = 0;
+    virtual ::std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const = 0;
     virtual bool IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const = 0;
     virtual uint16 GetRaceProfessionBonus(uint8 raceId, ProfessionType profession) const = 0;
 
     // Recipe management
     virtual bool LearnRecipe(::Player* player, uint32 recipeId) = 0;
     virtual bool KnowsRecipe(::Player* player, uint32 recipeId) const = 0;
-    virtual std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const = 0;
-    virtual std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const = 0;
+    virtual ::std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const = 0;
+    virtual ::std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const = 0;
     virtual RecipeInfo const* GetOptimalLevelingRecipe(::Player* player, ProfessionType profession) const = 0;
     virtual bool CanCraftRecipe(::Player* player, RecipeInfo const& recipe) const = 0;
     virtual float GetSkillUpChance(::Player* player, RecipeInfo const& recipe) const = 0;
@@ -63,7 +63,7 @@ public:
     virtual void QueueCraft(::Player* player, uint32 recipeId, uint32 quantity) = 0;
     virtual void ProcessCraftingQueue(::Player* player, uint32 diff) = 0;
     virtual bool HasMaterialsForRecipe(::Player* player, RecipeInfo const& recipe) const = 0;
-    virtual std::vector<std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const = 0;
+    virtual ::std::vector<::std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const = 0;
 
     // Automation profiles
     virtual void SetAutomationProfile(uint32 playerGuid, ProfessionAutomationProfile const& profile) = 0;

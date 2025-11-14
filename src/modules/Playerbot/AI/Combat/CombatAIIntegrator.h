@@ -44,25 +44,25 @@ class ThreatAbilities;
 struct CombatMetrics
 {
     // CPU metrics
-    std::atomic<uint64_t> totalCpuCycles{0};
-    std::atomic<uint32_t> updateCount{0};
-    std::atomic<float> avgCpuPercent{0.0f};
+    ::std::atomic<uint64_t> totalCpuCycles{0};
+    ::std::atomic<uint32_t> updateCount{0};
+    ::std::atomic<float> avgCpuPercent{0.0f};
 
     // Memory metrics
-    std::atomic<size_t> memoryUsed{0};
-    std::atomic<size_t> peakMemory{0};
+    ::std::atomic<size_t> memoryUsed{0};
+    ::std::atomic<size_t> peakMemory{0};
 
     // Component timing
-    std::chrono::microseconds positioningTime{0};
-    std::chrono::microseconds interruptTime{0};
-    std::chrono::microseconds threatTime{0};
-    std::chrono::microseconds targetingTime{0};
+    ::std::chrono::microseconds positioningTime{0};
+    ::std::chrono::microseconds interruptTime{0};
+    ::std::chrono::microseconds threatTime{0};
+    ::std::chrono::microseconds targetingTime{0};
 
     // Combat statistics
-    std::atomic<uint32_t> interruptsSuccessful{0};
-    std::atomic<uint32_t> interruptsAttempted{0};
-    std::atomic<uint32_t> positionChanges{0};
-    std::atomic<uint32_t> threatAdjustments{0};
+    ::std::atomic<uint32_t> interruptsSuccessful{0};
+    ::std::atomic<uint32_t> interruptsAttempted{0};
+    ::std::atomic<uint32_t> positionChanges{0};
+    ::std::atomic<uint32_t> threatAdjustments{0};
 
     void Reset()
     {
@@ -71,10 +71,10 @@ struct CombatMetrics
         avgCpuPercent = 0.0f;
         memoryUsed = 0;
         peakMemory = 0;
-        positioningTime = std::chrono::microseconds{0};
-        interruptTime = std::chrono::microseconds{0};
-        threatTime = std::chrono::microseconds{0};
-        targetingTime = std::chrono::microseconds{0};
+        positioningTime = ::std::chrono::microseconds{0};
+        interruptTime = ::std::chrono::microseconds{0};
+        threatTime = ::std::chrono::microseconds{0};
+        targetingTime = ::std::chrono::microseconds{0};
         interruptsSuccessful = 0;
         interruptsAttempted = 0;
         positionChanges = 0;
@@ -131,10 +131,10 @@ enum class CombatPhase
 struct IntegrationResult
 {
     bool success = false;
-    std::string errorMessage;
+    ::std::string errorMessage;
     CombatPhase phase = CombatPhase::NONE;
     uint32_t actionsExecuted = 0;
-    std::chrono::microseconds executionTime{0};
+    ::std::chrono::microseconds executionTime{0};
 };
 
 // Main combat AI integration class
@@ -209,7 +209,7 @@ private:
 
     // Performance monitoring
     void StartMetricCapture();
-    void EndMetricCapture(std::chrono::microseconds elapsed);
+    void EndMetricCapture(::std::chrono::microseconds elapsed);
     bool IsWithinPerformanceLimits() const;
 
     // Memory management
@@ -222,24 +222,24 @@ private:
     ClassAI* _classAI;
 
     // Phase 2 Combat Components
-    std::unique_ptr<RoleBasedCombatPositioning> _positioning;
-    std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
-    std::unique_ptr<ThreatCoordinator> _threatCoordinator;
-    std::unique_ptr<FormationManager> _formationManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PathfindingManager> _pathfinding;
-    std::unique_ptr<LineOfSightManager> _losManager;
-    std::unique_ptr<ObstacleAvoidanceManager> _obstacleAvoidance;
-    std::unique_ptr<KitingManager> _kitingManager;
+    ::std::unique_ptr<RoleBasedCombatPositioning> _positioning;
+    ::std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
+    ::std::unique_ptr<ThreatCoordinator> _threatCoordinator;
+    ::std::unique_ptr<FormationManager> _formationManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PathfindingManager> _pathfinding;
+    ::std::unique_ptr<LineOfSightManager> _losManager;
+    ::std::unique_ptr<ObstacleAvoidanceManager> _obstacleAvoidance;
+    ::std::unique_ptr<KitingManager> _kitingManager;
 
     // Support systems
-    std::unique_ptr<InterruptDatabase> _interruptDB;
-    std::unique_ptr<InterruptAwareness> _interruptAwareness;
-    std::unique_ptr<MechanicAwareness> _mechanicAwareness;
-    std::unique_ptr<ThreatAbilities> _threatAbilities;
+    ::std::unique_ptr<InterruptDatabase> _interruptDB;
+    ::std::unique_ptr<InterruptAwareness> _interruptAwareness;
+    ::std::unique_ptr<MechanicAwareness> _mechanicAwareness;
+    ::std::unique_ptr<ThreatAbilities> _threatAbilities;
 
     // Combat state
-    std::atomic<bool> _inCombat{false};
+    ::std::atomic<bool> _inCombat{false};
     CombatPhase _currentPhase{CombatPhase::NONE};
     Unit* _currentTarget{nullptr};
     Group* _group{nullptr};
@@ -268,14 +268,14 @@ private:
 class TC_GAME_API CombatAIFactory
 {
 public:
-    static std::unique_ptr<CombatAIIntegrator> CreateCombatAI(Player* bot);
-    static std::unique_ptr<CombatAIIntegrator> CreateCombatAI(Player* bot, CombatAIConfig const& config);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateCombatAI(Player* bot);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateCombatAI(Player* bot, CombatAIConfig const& config);
 
     // Specialized creation for different roles
-    static std::unique_ptr<CombatAIIntegrator> CreateTankCombatAI(Player* bot);
-    static std::unique_ptr<CombatAIIntegrator> CreateHealerCombatAI(Player* bot);
-    static std::unique_ptr<CombatAIIntegrator> CreateMeleeDPSCombatAI(Player* bot);
-    static std::unique_ptr<CombatAIIntegrator> CreateRangedDPSCombatAI(Player* bot);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateTankCombatAI(Player* bot);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateHealerCombatAI(Player* bot);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateMeleeDPSCombatAI(Player* bot);
+    static ::std::unique_ptr<CombatAIIntegrator> CreateRangedDPSCombatAI(Player* bot);
 };
 
 } // namespace Playerbot

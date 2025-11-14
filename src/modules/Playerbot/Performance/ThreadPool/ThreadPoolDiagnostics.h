@@ -92,19 +92,19 @@ struct WaitLocationInfo
     uint32 timeoutMs;              // Timeout value in milliseconds
     uint32 lineNumber;             // Source line number
     const char* fileName;          // Source file name
-    std::chrono::steady_clock::time_point enterTime;
+    ::std::chrono::steady_clock::time_point enterTime;
 
     // Calculate wait duration
-    std::chrono::milliseconds GetWaitDuration() const
+    ::std::chrono::milliseconds GetWaitDuration() const
     {
-        auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::milliseconds>(now - enterTime);
+        auto now = ::std::chrono::steady_clock::now();
+        return ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - enterTime);
     }
 
     // Format as string for logging
-    std::string ToString() const
+    ::std::string ToString() const
     {
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << functionName << "() at " << fileName << ":" << lineNumber
            << " [" << waitType << ", timeout=" << timeoutMs << "ms"
            << ", waiting=" << GetWaitDuration().count() << "ms]";
@@ -119,16 +119,16 @@ struct StateTransition
 {
     WorkerState fromState;
     WorkerState toState;
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point timestamp;
     const char* location;  // Code location of transition
 
-    std::string ToString() const
+    ::std::string ToString() const
     {
         // Calculate elapsed time since epoch in milliseconds
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             timestamp.time_since_epoch()).count();
 
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "[+" << elapsed << "ms] "
            << WorkerStateToString(fromState)
            << " -> " << WorkerStateToString(toState);
@@ -146,26 +146,26 @@ class LatencyHistogram
 {
 private:
     // Exponential buckets: 0-1ms, 1-2ms, 2-4ms, 4-8ms, etc.
-    std::array<std::atomic<uint64>, BucketCount> _buckets{};
-    std::atomic<uint64> _count{0};
-    std::atomic<uint64> _sum{0};  // Total microseconds
-    std::atomic<uint64> _min{UINT64_MAX};
-    std::atomic<uint64> _max{0};
+    ::std::array<::std::atomic<uint64>, BucketCount> _buckets{};
+    ::std::atomic<uint64> _count{0};
+    ::std::atomic<uint64> _sum{0};  // Total microseconds
+    ::std::atomic<uint64> _min{UINT64_MAX};
+    ::std::atomic<uint64> _max{0};
 
 public:
-    void Record(std::chrono::microseconds latency)
+    void Record(::std::chrono::microseconds latency)
     {
         uint64 us = latency.count();
 
         // Update basic stats
-        _count.fetch_add(1, std::memory_order_relaxed);
-        _sum.fetch_add(us, std::memory_order_relaxed);
+        _count.fetch_add(1, ::std::memory_order_relaxed);
+        _sum.fetch_add(us, ::std::memory_order_relaxed);
 
         // Update min/max
-        uint64 currentMin = _min.load(std::memory_order_relaxed);
+        uint64 currentMin = _min.load(::std::memory_order_relaxed);
         while (us < currentMin && !_min.compare_exchange_weak(currentMin, us)) {}
 
-        uint64 currentMax = _max.load(std::memory_order_relaxed);
+        uint64 currentMax = _max.load(::std::memory_order_relaxed);
         while (us > currentMax && !_max.compare_exchange_weak(currentMax, us)) {}
 
         // Determine bucket (exponential)
@@ -176,7 +176,7 @@ public:
             threshold *= 2;
             bucket++;
         }
-        _buckets[bucket].fetch_add(1, std::memory_order_relaxed);
+        _buckets[bucket].fetch_add(1, ::std::memory_order_relaxed);
     }
 
     struct Stats
@@ -194,14 +194,14 @@ public:
     Stats GetStats() const
     {
         Stats stats{};
-        stats.count = _count.load(std::memory_order_relaxed);
+        stats.count = _count.load(::std::memory_order_relaxed);
         if (stats.count == 0)
             return stats;
 
-        stats.sum = _sum.load(std::memory_order_relaxed);
+        stats.sum = _sum.load(::std::memory_order_relaxed);
         stats.avgMicros = static_cast<double>(stats.sum) / stats.count;
-        stats.minMicros = _min.load(std::memory_order_relaxed);
-        stats.maxMicros = _max.load(std::memory_order_relaxed);
+        stats.minMicros = _min.load(::std::memory_order_relaxed);
+        stats.maxMicros = _max.load(::std::memory_order_relaxed);
 
         // Calculate percentiles from histogram
         uint64 p50Target = stats.count / 2;
@@ -213,7 +213,7 @@ public:
 
         for (size_t i = 0; i < BucketCount; ++i)
         {
-            cumulative += _buckets[i].load(std::memory_order_relaxed);
+            cumulative += _buckets[i].load(::std::memory_order_relaxed);
 
             if (cumulative >= p50Target && stats.p50Micros == 0)
                 stats.p50Micros = threshold;
@@ -234,11 +234,11 @@ public:
     void Reset()
     {
         for (auto& bucket : _buckets)
-            bucket.store(0, std::memory_order_relaxed);
-        _count.store(0, std::memory_order_relaxed);
-        _sum.store(0, std::memory_order_relaxed);
-        _min.store(UINT64_MAX, std::memory_order_relaxed);
-        _max.store(0, std::memory_order_relaxed);
+            bucket.store(0, ::std::memory_order_relaxed);
+        _count.store(0, ::std::memory_order_relaxed);
+        _sum.store(0, ::std::memory_order_relaxed);
+        _min.store(UINT64_MAX, ::std::memory_order_relaxed);
+        _max.store(0, ::std::memory_order_relaxed);
     }
 };
 
@@ -250,20 +250,20 @@ public:
 struct WorkerDiagnostics
 {
     // Current state
-    std::atomic<WorkerState> currentState{WorkerState::UNINITIALIZED};
-    std::chrono::steady_clock::time_point stateEnterTime;
+    ::std::atomic<WorkerState> currentState{WorkerState::UNINITIALIZED};
+    ::std::chrono::steady_clock::time_point stateEnterTime;
 
     // Current wait location (if waiting)
-    std::optional<WaitLocationInfo> currentWait;
+    ::std::optional<WaitLocationInfo> currentWait;
     Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> waitMutex;  // Protects currentWait
 
     // State history (ring buffer)
     static constexpr size_t STATE_HISTORY_SIZE = 100;
-    std::array<StateTransition, STATE_HISTORY_SIZE> stateHistory;
-    std::atomic<uint32> stateHistoryIndex{0};
+    ::std::array<StateTransition, STATE_HISTORY_SIZE> stateHistory;
+    ::std::atomic<uint32> stateHistoryIndex{0};
 
     // Time spent in each state (microseconds)
-    std::array<std::atomic<uint64>, static_cast<size_t>(WorkerState::COUNT)> timeInState{};
+    ::std::array<::std::atomic<uint64>, static_cast<size_t>(WorkerState::COUNT)> timeInState{};
 
     // Task execution metrics
     LatencyHistogram<20> taskLatency;      // Submission to completion
@@ -271,52 +271,52 @@ struct WorkerDiagnostics
     LatencyHistogram<20> queueWaitTime;    // Time spent in queue
 
     // Steal metrics
-    std::atomic<uint64> stealAttempts{0};
-    std::atomic<uint64> stealSuccesses{0};
-    std::atomic<uint64> stealFailures{0};
-    std::atomic<uint64> victimSleeping{0};  // Steal attempts on sleeping workers
+    ::std::atomic<uint64> stealAttempts{0};
+    ::std::atomic<uint64> stealSuccesses{0};
+    ::std::atomic<uint64> stealFailures{0};
+    ::std::atomic<uint64> victimSleeping{0};  // Steal attempts on sleeping workers
 
     // Performance counters
-    std::atomic<uint64> tasksExecuted{0};
-    std::atomic<uint64> tasksFailed{0};
-    std::atomic<uint64> wakeupCount{0};
-    std::atomic<uint64> spuriousWakeups{0};  // Wakeups with no work available
+    ::std::atomic<uint64> tasksExecuted{0};
+    ::std::atomic<uint64> tasksFailed{0};
+    ::std::atomic<uint64> wakeupCount{0};
+    ::std::atomic<uint64> spuriousWakeups{0};  // Wakeups with no work available
 
     // Deadlock detection
-    std::atomic<uint32> consecutiveSleepCycles{0};
-    std::chrono::steady_clock::time_point lastWorkTime;
+    ::std::atomic<uint32> consecutiveSleepCycles{0};
+    ::std::chrono::steady_clock::time_point lastWorkTime;
 
     /**
      * @brief Set new state and record transition
      */
     void SetState(WorkerState newState, const char* location = nullptr)
     {
-        WorkerState oldState = currentState.exchange(newState, std::memory_order_relaxed);
+        WorkerState oldState = currentState.exchange(newState, ::std::memory_order_relaxed);
 
         if (oldState != newState)
         {
-            auto now = std::chrono::steady_clock::now();
+            auto now = ::std::chrono::steady_clock::now();
 
             // Update time in previous state
             if (oldState < WorkerState::COUNT)
             {
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(
                     now - stateEnterTime).count();
                 timeInState[static_cast<size_t>(oldState)].fetch_add(
-                    duration, std::memory_order_relaxed);
+                    duration, ::std::memory_order_relaxed);
             }
 
             stateEnterTime = now;
 
             // Record transition in history
-            uint32 index = stateHistoryIndex.fetch_add(1, std::memory_order_relaxed) % STATE_HISTORY_SIZE;
+            uint32 index = stateHistoryIndex.fetch_add(1, ::std::memory_order_relaxed) % STATE_HISTORY_SIZE;
             stateHistory[index] = StateTransition{oldState, newState, now, location};
 
             // Update work time if transitioning to/from EXECUTING
             if (newState == WorkerState::EXECUTING)
             {
                 lastWorkTime = now;
-                consecutiveSleepCycles.store(0, std::memory_order_relaxed);
+                consecutiveSleepCycles.store(0, ::std::memory_order_relaxed);
             }
         }
     }
@@ -327,10 +327,10 @@ struct WorkerDiagnostics
     void EnterWait(const char* func, const char* type, uint32 timeout,
                    const char* file, uint32 line)
     {
-        std::lock_guard<std::mutex> lock(waitMutex);
+        ::std::lock_guard lock(waitMutex);
         currentWait = WaitLocationInfo{
             func, type, timeout, line, file,
-            std::chrono::steady_clock::now()
+            ::std::chrono::steady_clock::now()
         };
     }
 
@@ -339,26 +339,26 @@ struct WorkerDiagnostics
      */
     void ExitWait()
     {
-        std::lock_guard<std::mutex> lock(waitMutex);
+        ::std::lock_guard lock(waitMutex);
         currentWait.reset();
     }
 
     /**
      * @brief Get current wait info (thread-safe copy)
      */
-    std::optional<WaitLocationInfo> GetCurrentWait() const
+    ::std::optional<WaitLocationInfo> GetCurrentWait() const
     {
-        std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(waitMutex));
+        ::std::lock_guard lock(const_cast<decltype(waitMutex)&>(waitMutex));
         return currentWait;
     }
 
     /**
      * @brief Get state history (recent transitions)
      */
-    std::vector<StateTransition> GetStateHistory(size_t maxCount = 50) const
+    ::std::vector<StateTransition> GetStateHistory(size_t maxCount = 50) const
     {
-        std::vector<StateTransition> history;
-        uint32 currentIndex = stateHistoryIndex.load(std::memory_order_relaxed);
+        ::std::vector<StateTransition> history;
+        uint32 currentIndex = stateHistoryIndex.load(::std::memory_order_relaxed);
         uint32 startIndex = currentIndex > maxCount ? currentIndex - maxCount : 0;
 
         for (uint32 i = startIndex; i < currentIndex; ++i)
@@ -372,17 +372,17 @@ struct WorkerDiagnostics
     /**
      * @brief Generate diagnostic report
      */
-    std::string GenerateReport(uint32 workerId) const
+    ::std::string GenerateReport(uint32 workerId) const
     {
-        std::stringstream report;
+        ::std::stringstream report;
 
         // Header
         report << "=== Worker " << workerId << " Diagnostic Report ===\n";
 
         // Current state
-        WorkerState state = currentState.load(std::memory_order_relaxed);
-        auto stateTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - stateEnterTime).count();
+        WorkerState state = currentState.load(::std::memory_order_relaxed);
+        auto stateTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+            ::std::chrono::steady_clock::now() - stateEnterTime).count();
         report << "Current State: " << WorkerStateToString(state)
                << " (for " << stateTime << "ms)\n";
 
@@ -408,7 +408,7 @@ struct WorkerDiagnostics
         report << "\nSteal Statistics:\n";
         report << "  Attempts: " << attempts << "\n";
         report << "  Successes: " << successes << "\n";
-        report << "  Success Rate: " << std::fixed << std::setprecision(1)
+        report << "  Success Rate: " << ::std::fixed << ::std::setprecision(1)
                << stealRate << "%\n";
         report << "  Victim Sleeping: " << victimSleeping.load() << "\n";
 
@@ -417,19 +417,19 @@ struct WorkerDiagnostics
         uint64 totalTime = 0;
         for (size_t i = 0; i < static_cast<size_t>(WorkerState::COUNT); ++i)
         {
-            totalTime += timeInState[i].load(std::memory_order_relaxed);
+            totalTime += timeInState[i].load(::std::memory_order_relaxed);
         }
 
         if (totalTime > 0)
         {
             for (size_t i = 0; i < static_cast<size_t>(WorkerState::COUNT); ++i)
             {
-                uint64 stateTime = timeInState[i].load(std::memory_order_relaxed);
+                uint64 stateTime = timeInState[i].load(::std::memory_order_relaxed);
                 if (stateTime > 0)
                 {
                     double percent = 100.0 * stateTime / totalTime;
                     report << "  " << WorkerStateToString(static_cast<WorkerState>(i))
-                           << ": " << std::fixed << std::setprecision(1)
+                           << ": " << ::std::fixed << ::std::setprecision(1)
                            << percent << "%\n";
                 }
             }
@@ -441,7 +441,7 @@ struct WorkerDiagnostics
         {
             report << "\nTask Latency (us):\n";
             report << "  Count: " << taskStats.count << "\n";
-            report << "  Avg: " << std::fixed << std::setprecision(0)
+            report << "  Avg: " << ::std::fixed << ::std::setprecision(0)
                    << taskStats.avgMicros << "\n";
             report << "  Min: " << taskStats.minMicros << "\n";
             report << "  Max: " << taskStats.maxMicros << "\n";

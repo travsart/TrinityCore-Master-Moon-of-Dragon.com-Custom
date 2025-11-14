@@ -103,18 +103,18 @@ private:
     void RecordAbilityUsage(uint32 spellId);
     void OnTargetChanged(Unit* newTarget);
     // Combat systems
-    std::unique_ptr<BotThreatManager> _threatManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PositionManager> _positionManager;
-    std::unique_ptr<InterruptManager> _interruptManager;
-    std::unique_ptr<CooldownManager> _cooldownManager;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PositionManager> _positionManager;
+    ::std::unique_ptr<InterruptManager> _interruptManager;
+    ::std::unique_ptr<CooldownManager> _cooldownManager;
 
     // Death Knight-specific systems
-    std::unique_ptr<DeathKnightMetrics> _metrics;
-    std::unique_ptr<DeathKnightCombatMetrics> _combatMetrics;
-    std::unique_ptr<DeathKnightCombatPositioning> _positioning;
-    std::unique_ptr<RuneManager> _runeManager;
-    std::unique_ptr<DiseaseManager> _diseaseManager;
+    ::std::unique_ptr<DeathKnightMetrics> _metrics;
+    ::std::unique_ptr<DeathKnightCombatMetrics> _combatMetrics;
+    ::std::unique_ptr<DeathKnightCombatPositioning> _positioning;
+    ::std::unique_ptr<RuneManager> _runeManager;
+    ::std::unique_ptr<DiseaseManager> _diseaseManager;
 
     // Specialization
     DeathKnightSpec _detectedSpec;
@@ -130,7 +130,7 @@ private:
     uint32 _successfulInterrupts;
 
     // Ability usage tracking
-    std::unordered_map<uint32, uint32> _abilityUsage;
+    ::std::unordered_map<uint32, uint32> _abilityUsage;
 };
 
 } // namespace Playerbot

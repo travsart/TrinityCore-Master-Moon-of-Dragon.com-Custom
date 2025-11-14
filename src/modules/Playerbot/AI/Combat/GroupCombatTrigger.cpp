@@ -24,7 +24,7 @@
 namespace Playerbot
 {
 
-GroupCombatTrigger::GroupCombatTrigger(std::string const& name)
+GroupCombatTrigger::GroupCombatTrigger(::std::string const& name)
     : CombatTrigger(name)
 {
     // Set higher priority for group combat triggers
@@ -95,7 +95,7 @@ TriggerResult GroupCombatTrigger::Evaluate(BotAI* ai) const
     // Create the assist action - use default name from TargetAssistAction constructor
     result.triggered = true;
     result.urgency = CalculateUrgency(ai);
-    result.suggestedAction = std::make_shared<TargetAssistAction>();  // Uses "target_assist" as name
+    result.suggestedAction = ::std::make_shared<TargetAssistAction>();  // Uses "target_assist" as name
     result.context.target = target;
 
     // Log the trigger
@@ -145,7 +145,7 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
     if (totalMembers > 0)
     {
         float combatRatio = static_cast<float>(membersInCombat) / totalMembers;
-        urgency = std::min(1.0f, urgency + (combatRatio * 0.2f));
+        urgency = ::std::min(1.0f, urgency + (combatRatio * 0.2f));
     }
 
     return urgency;
@@ -159,7 +159,7 @@ bool GroupCombatTrigger::IsGroupInCombat(Group* group) const
     // Check cache first if enabled
     if (_cachingEnabled)
     {
-        std::lock_guard lock(_cacheMutex);
+        ::std::lock_guard lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (it != _combatCache.end() && IsCacheValid(group))
         {
@@ -207,12 +207,12 @@ bool GroupCombatTrigger::ShouldEngageCombat(Player* bot, Group* group) const
     // Check engagement delay
     if (_engagementDelayMs > 0)
     {
-        std::lock_guard lock(_cacheMutex);
+        ::std::lock_guard lock(_cacheMutex);
         auto it = _combatCache.find(group->GetGUID());
         if (it != _combatCache.end())
         {
-            auto elapsed = std::chrono::steady_clock::now() - it->second.combatStartTime;
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() < _engagementDelayMs)
+            auto elapsed = ::std::chrono::steady_clock::now() - it->second.combatStartTime;
+            if (::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count() < _engagementDelayMs)
                 return false; // Still in delay period
         }
     }
@@ -237,7 +237,7 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
     if (!group)
         return nullptr;
 
-    std::unordered_map<ObjectGuid, uint32> targetCounts;
+    ::std::unordered_map<ObjectGuid, uint32> targetCounts;
     Unit* leaderTarget = nullptr;
 
     // Count targets being attacked by group members
@@ -346,19 +346,19 @@ void GroupCombatTrigger::UpdateGroupCombatState(Group* group, bool inCombat)
     if (!group)
         return;
 
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto& info = _combatCache[group->GetGUID()];
     // Track combat state changes
     if (!info.inCombat && inCombat)
     {
         // Group entering combat
-        info.combatStartTime = std::chrono::steady_clock::now();
+        info.combatStartTime = ::std::chrono::steady_clock::now();
         const_cast<CombatStats&>(_stats).totalEngagements++;
     }
 
     info.inCombat = inCombat;
-    info.lastUpdateTime = std::chrono::steady_clock::now();
+    info.lastUpdateTime = ::std::chrono::steady_clock::now();
 
     // Update member targets
     info.memberTargets.clear();
@@ -383,14 +383,14 @@ uint32 GroupCombatTrigger::GetCombatDuration(Group* group) const
     if (!group)
         return 0;
 
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto it = _combatCache.find(group->GetGUID());
     if (it == _combatCache.end() || !it->second.inCombat)
         return 0;
 
-    auto elapsed = std::chrono::steady_clock::now() - it->second.combatStartTime;
-    return static_cast<uint32>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+    auto elapsed = ::std::chrono::steady_clock::now() - it->second.combatStartTime;
+    return static_cast<uint32>(::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count());
 }
 
 bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
@@ -398,7 +398,7 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
     if (!bot || !target)
         return false;
 
-    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
 
     // Check maximum range
     if (distance > _maxEngagementRange)
@@ -410,7 +410,7 @@ bool GroupCombatTrigger::IsInEngagementRange(Player* bot, Unit* target) const
         bot->GetClass() == CLASS_PALADIN || bot->GetClass() == CLASS_MONK)
     {
         // Allow slightly more range for melee to account for movement
-        return distance <= std::max(10.0f, MIN_ENGAGEMENT_RANGE * 2);
+        return distance <= ::std::max(10.0f, MIN_ENGAGEMENT_RANGE * 2);
     }
 
     // Ranged classes can engage from further
@@ -464,7 +464,7 @@ bool GroupCombatTrigger::IsTargetEngaged(Group* group, Unit* target) const
 
 void GroupCombatTrigger::SetUpdateInterval(uint32 intervalMs)
 {
-    _updateIntervalMs = std::clamp(intervalMs, MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
+    _updateIntervalMs = ::std::clamp(intervalMs, MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
 }
 
 bool GroupCombatTrigger::UpdateCombatCache(Group* group) const
@@ -498,8 +498,8 @@ bool GroupCombatTrigger::IsCacheValid(Group* group) const
     if (it == _combatCache.end())
         return false;
 
-    auto elapsed = std::chrono::steady_clock::now() - it->second.lastUpdateTime;
-    return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() < _updateIntervalMs;
+    auto elapsed = ::std::chrono::steady_clock::now() - it->second.lastUpdateTime;
+    return ::std::chrono::duration_cast<::std::chrono::milliseconds>(elapsed).count() < _updateIntervalMs;
 }
 
 float GroupCombatTrigger::CalculateTargetPriority(Group* group, Unit* target) const
@@ -549,7 +549,7 @@ uint32 GroupCombatTrigger::CountMembersOnTarget(Group* group, Unit* target) cons
     return count;
 }
 
-void GroupCombatTrigger::LogCombatEvent(std::string const& event, Player* bot, Unit* target) const
+void GroupCombatTrigger::LogCombatEvent(::std::string const& event, Player* bot, Unit* target) const
 {
     if (!bot)
         return;
@@ -572,7 +572,7 @@ void GroupCombatTrigger::LogCombatEvent(std::string const& event, Player* bot, U
     }
 }
 
-void GroupCombatTrigger::UpdateStatistics(bool assistingLeader, std::chrono::milliseconds engagementTime)
+void GroupCombatTrigger::UpdateStatistics(bool assistingLeader, ::std::chrono::milliseconds engagementTime)
 {
     _stats.groupCombatTriggers++;
 
@@ -583,14 +583,14 @@ void GroupCombatTrigger::UpdateStatistics(bool assistingLeader, std::chrono::mil
     if (_stats.totalEngagements > 0)
     {
         auto total = _stats.averageEngagementTime.count() * (_stats.totalEngagements - 1);
-        _stats.averageEngagementTime = std::chrono::milliseconds((total + engagementTime.count()) / _stats.totalEngagements);
+        _stats.averageEngagementTime = ::std::chrono::milliseconds((total + engagementTime.count()) / _stats.totalEngagements);
     }
     else
     {
         _stats.averageEngagementTime = engagementTime;
     }
 
-    _stats.lastEngagement = std::chrono::steady_clock::now();
+    _stats.lastEngagement = ::std::chrono::steady_clock::now();
 }
 
 } // namespace Playerbot

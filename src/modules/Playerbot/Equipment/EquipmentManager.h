@@ -92,7 +92,7 @@ struct StatPriority
 {
     uint8 classId;
     uint8 specId;
-    std::vector<std::pair<StatType, float>> statWeights; // stat -> weight (0.0-1.0)
+    ::std::vector<::std::pair<StatType, float>> statWeights; // stat -> weight (0.0-1.0)
 
     StatPriority() : classId(0), specId(0) {}
     StatPriority(uint8 cls, uint8 spec) : classId(cls), specId(spec) {}
@@ -119,7 +119,7 @@ struct ItemComparisonResult
     float newItemScore = 0.0f;
     uint32 currentItemLevel = 0;
     uint32 newItemLevel = 0;
-    std::string upgradeReason;
+    ::std::string upgradeReason;
 
     ItemComparisonResult() = default;
 };
@@ -181,7 +181,7 @@ public:
      * Identify all junk items in player's inventory
      * Returns item GUIDs that should be sold to vendor
      */
-    std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) override;
+    ::std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) override;
 
     /**
      * Check if specific item is junk (grey quality, low ilvl, wrong stats)
@@ -206,7 +206,7 @@ public:
      * Get list of consumables this player needs to restock
      * Returns itemId -> quantity needed
      */
-    std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) override;
+    ::std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) override;
 
     /**
      * Check if player has sufficient consumables for their class
@@ -216,7 +216,7 @@ public:
     /**
      * Get class-specific consumable requirements (food, potions, reagents)
      */
-    std::vector<uint32> GetClassConsumables(uint8 classId);
+    ::std::vector<uint32> GetClassConsumables(uint8 classId);
 
     /**
      * Check current consumable quantities
@@ -309,7 +309,7 @@ public:
         float minUpgradeThreshold = 5.0f; // Minimum % improvement to equip
         uint32 minItemLevelToKeep = 1;    // Sell items below this ilvl
         bool keepValuableBoE = true;
-        std::unordered_set<uint32> neverSellItems; // Item IDs to always keep
+        ::std::unordered_set<uint32> neverSellItems; // Item IDs to always keep
 
         EquipmentAutomationProfile() = default;
     };
@@ -323,11 +323,11 @@ public:
 
     struct EquipmentMetrics
     {
-        std::atomic<uint32> itemsEquipped{0};
-        std::atomic<uint32> upgradesFound{0};
-        std::atomic<uint32> junkItemsSold{0};
-        std::atomic<uint32> totalGoldFromJunk{0};
-        std::atomic<float> averageItemScore{0.0f};
+        ::std::atomic<uint32> itemsEquipped{0};
+        ::std::atomic<uint32> upgradesFound{0};
+        ::std::atomic<uint32> junkItemsSold{0};
+        ::std::atomic<uint32> totalGoldFromJunk{0};
+        ::std::atomic<float> averageItemScore{0.0f};
 
         void Reset()
         {
@@ -347,13 +347,13 @@ private:
     ~EquipmentManager() = default;
 
     // Stat priority database (classId + specId -> StatPriority)
-    std::unordered_map<uint16, StatPriority> _statPriorities; // key = (classId << 8) | specId
+    ::std::unordered_map<uint16, StatPriority> _statPriorities; // key = (classId << 8) | specId
 
     // Player automation profiles
-    std::unordered_map<uint32, EquipmentAutomationProfile> _playerProfiles;
+    ::std::unordered_map<uint32, EquipmentAutomationProfile> _playerProfiles;
 
     // Metrics tracking
-    std::unordered_map<uint32, EquipmentMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, EquipmentMetrics> _playerMetrics;
     EquipmentMetrics _globalMetrics;
 
     // FIX #23: CRITICAL - Change to recursive_mutex to prevent deadlock
@@ -402,18 +402,18 @@ private:
     // Consumable helpers
     uint32 GetRecommendedFoodLevel(::Player* player);
     uint32 GetRecommendedPotionLevel(::Player* player);
-    std::vector<uint32> GetClassReagents(uint8 classId);
+    ::std::vector<uint32> GetClassReagents(uint8 classId);
 
     // Stat extraction from ItemTemplate (TrinityCore 11.2 API)
     int32 ExtractStatValue(ItemTemplate const* proto, StatType stat);
-    float CalculateTotalStats(ItemTemplate const* proto, std::vector<std::pair<StatType, float>> const& weights);
+    float CalculateTotalStats(ItemTemplate const* proto, ::std::vector<::std::pair<StatType, float>> const& weights);
 
     // Metrics updates
     void UpdateMetrics(uint32 playerGuid, bool wasEquipped, bool wasUpgrade, uint32 goldValue = 0);
 
     // Utility
     uint16 MakeStatPriorityKey(uint8 classId, uint8 specId) const { return (static_cast<uint16>(classId) << 8) | specId; }
-    void LogEquipmentDecision(::Player* player, std::string const& action, std::string const& reason);
+    void LogEquipmentDecision(::Player* player, ::std::string const& action, ::std::string const& reason);
 };
 
 } // namespace Playerbot

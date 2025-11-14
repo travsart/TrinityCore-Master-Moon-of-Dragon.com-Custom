@@ -62,11 +62,11 @@ namespace Playerbot
             Type type;
             uint32 targetId;
             uint32 duration;
-            std::chrono::steady_clock::time_point startTime;
+            ::std::chrono::steady_clock::time_point startTime;
 
             Task(Type t, uint32 id = 0, uint32 dur = 1000)
                 : type(t), targetId(id), duration(dur)
-                , startTime(std::chrono::steady_clock::now()) {}
+                , startTime(::std::chrono::steady_clock::now()) {}
         };
 
         /**
@@ -98,7 +98,7 @@ namespace Playerbot
          * Thread-safe: Lock-free atomic operation
          * Performance: <0.001ms guaranteed
          */
-        bool HasPendingTasks() const { return m_hasTasks.load(std::memory_order_acquire); }
+        bool HasPendingTasks() const { return m_hasTasks.load(::std::memory_order_acquire); }
 
         /**
          * @brief Check if currently processing a task
@@ -107,7 +107,7 @@ namespace Playerbot
          * Thread-safe: Lock-free atomic operation
          * Performance: <0.001ms guaranteed
          */
-        bool IsProcessingTask() const { return m_isProcessing.load(std::memory_order_acquire); }
+        bool IsProcessingTask() const { return m_isProcessing.load(::std::memory_order_acquire); }
 
         /**
          * @brief Get current task type
@@ -118,7 +118,7 @@ namespace Playerbot
          */
         Task::Type GetCurrentTaskType() const
         {
-            return static_cast<Task::Type>(m_currentTaskType.load(std::memory_order_acquire));
+            return static_cast<Task::Type>(m_currentTaskType.load(::std::memory_order_acquire));
         }
 
         /**
@@ -128,7 +128,7 @@ namespace Playerbot
          * Thread-safe: Lock-free atomic operation
          * Performance: <0.001ms guaranteed
          */
-        uint32 GetPendingTaskCount() const { return m_taskCount.load(std::memory_order_acquire); }
+        uint32 GetPendingTaskCount() const { return m_taskCount.load(::std::memory_order_acquire); }
 
         /**
          * @brief Get total tasks completed since creation
@@ -137,7 +137,7 @@ namespace Playerbot
          * Thread-safe: Lock-free atomic operation
          * Performance: <0.001ms guaranteed
          */
-        uint32 GetCompletedTaskCount() const { return m_completedTasks.load(std::memory_order_acquire); }
+        uint32 GetCompletedTaskCount() const { return m_completedTasks.load(::std::memory_order_acquire); }
 
         /**
          * @brief Clear all pending tasks
@@ -155,8 +155,8 @@ namespace Playerbot
          */
         bool IsIdle() const
         {
-            return !m_isProcessing.load(std::memory_order_acquire) &&
-                   !m_hasTasks.load(std::memory_order_acquire);
+            return !m_isProcessing.load(::std::memory_order_acquire) &&
+                   !m_hasTasks.load(::std::memory_order_acquire);
         }
 
     protected:
@@ -196,16 +196,16 @@ namespace Playerbot
         void UpdateStateFlags();
 
         // Task queue and current task
-        std::deque<Task> m_taskQueue;          ///< Queue of pending tasks
-        std::unique_ptr<Task> m_currentTask;   ///< Currently processing task
+        ::std::deque<Task> m_taskQueue;          ///< Queue of pending tasks
+        ::std::unique_ptr<Task> m_currentTask;   ///< Currently processing task
 
         // Atomic state flags for lock-free queries from strategies
-        std::atomic<bool> m_hasTasks{false};           ///< True if tasks are queued
-        std::atomic<bool> m_isProcessing{false};       ///< True if processing a task
-        std::atomic<uint32> m_currentTaskType{0};      ///< Current task type (Task::Type)
-        std::atomic<uint32> m_taskCount{0};            ///< Number of pending tasks
-        std::atomic<uint32> m_completedTasks{0};       ///< Total completed tasks
-        std::atomic<uint32> m_failedTasks{0};          ///< Total failed tasks
+        ::std::atomic<bool> m_hasTasks{false};           ///< True if tasks are queued
+        ::std::atomic<bool> m_isProcessing{false};       ///< True if processing a task
+        ::std::atomic<uint32> m_currentTaskType{0};      ///< Current task type (Task::Type)
+        ::std::atomic<uint32> m_taskCount{0};            ///< Number of pending tasks
+        ::std::atomic<uint32> m_completedTasks{0};       ///< Total completed tasks
+        ::std::atomic<uint32> m_failedTasks{0};          ///< Total failed tasks
 
         // Performance tracking
         uint32 m_maxQueueSize{100};                    ///< Maximum queue size

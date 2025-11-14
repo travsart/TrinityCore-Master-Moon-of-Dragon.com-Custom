@@ -72,7 +72,7 @@ struct CoordinationTarget
     uint32 priority;
     ThreatLevel threatLevel;
     float estimatedTimeToKill;
-    std::unordered_set<uint32> assignedMembers;
+    ::std::unordered_set<uint32> assignedMembers;
     Position lastKnownPosition;
     uint32 lastSeen;
 
@@ -86,9 +86,9 @@ struct MovementWaypoint
     Position position;
     float waitTime;
     bool isRequired;
-    std::string description;
+    ::std::string description;
 
-    MovementWaypoint(const Position& pos, float wait = 0.0f, bool required = false, const std::string& desc = "")
+    MovementWaypoint(const Position& pos, float wait = 0.0f, bool required = false, const ::std::string& desc = "")
         : position(pos), waitTime(wait), isRequired(required), description(desc) {}
 };
 
@@ -98,9 +98,9 @@ struct FormationSlot
     Position relativePosition;
     float maxDistance;
     bool isFlexible;
-    std::string roleDescription;
+    ::std::string roleDescription;
 
-    FormationSlot(uint32 guid, const Position& pos, float maxDist = 5.0f, bool flexible = true, const std::string& role = "")
+    FormationSlot(uint32 guid, const Position& pos, float maxDist = 5.0f, bool flexible = true, const ::std::string& role = "")
         : memberGuid(guid), relativePosition(pos), maxDistance(maxDist), isFlexible(flexible), roleDescription(role) {}
 };
 
@@ -111,9 +111,9 @@ public:
     ~GroupCoordination() = default;
 
     // Command execution
-    void ExecuteCommand(CoordinationCommand command, const std::vector<uint32>& targets = {});
-    void IssueCommand(uint32 memberGuid, CoordinationCommand command, const std::vector<uint32>& targets = {});
-    void BroadcastCommand(CoordinationCommand command, const std::vector<uint32>& targets = {});
+    void ExecuteCommand(CoordinationCommand command, const ::std::vector<uint32>& targets = {});
+    void IssueCommand(uint32 memberGuid, CoordinationCommand command, const ::std::vector<uint32>& targets = {});
+    void BroadcastCommand(CoordinationCommand command, const ::std::vector<uint32>& targets = {});
 
     // Target coordination
     void SetPrimaryTarget(ObjectGuid targetGuid, uint32 priority = 100);
@@ -121,17 +121,17 @@ public:
     void RemoveTarget(ObjectGuid targetGuid);
     void UpdateTargetPriorities();
     ObjectGuid GetPrimaryTarget() const;
-    std::vector<ObjectGuid> GetTargetPriorityList() const;
+    ::std::vector<ObjectGuid> GetTargetPriorityList() const;
 
     // Formation management
-    void SetFormation(const std::vector<FormationSlot>& formation);
+    void SetFormation(const ::std::vector<FormationSlot>& formation);
     void UpdateFormation(const Position& leaderPosition);
     Position GetFormationPosition(uint32 memberGuid) const;
     bool IsInFormation(uint32 memberGuid, float tolerance = 2.0f) const;
-    void AdjustFormation(const std::vector<uint32>& members);
+    void AdjustFormation(const ::std::vector<uint32>& members);
 
     // Movement coordination
-    void SetMovementPath(const std::vector<MovementWaypoint>& waypoints);
+    void SetMovementPath(const ::std::vector<MovementWaypoint>& waypoints);
     void MoveToPosition(const Position& destination, bool maintainFormation = true);
     void FollowLeader(uint32 leaderGuid, float distance = 5.0f);
     Position GetNextWaypoint() const;
@@ -145,10 +145,10 @@ public:
     void HandleEmergencySituation(ThreatLevel level);
 
     // Spell and ability coordination
-    void CoordinateCooldowns(const std::vector<uint32>& spellIds);
+    void CoordinateCooldowns(const ::std::vector<uint32>& spellIds);
     void RequestInterrupt(ObjectGuid targetGuid, uint32 spellId);
-    void CoordinateDispelling(const std::vector<uint32>& debuffTypes);
-    void HandleCrowdControl(const std::vector<ObjectGuid>& targets);
+    void CoordinateDispelling(const ::std::vector<uint32>& debuffTypes);
+    void HandleCrowdControl(const ::std::vector<ObjectGuid>& targets);
 
     // Threat management
     void UpdateThreatAssessment();
@@ -157,28 +157,28 @@ public:
     void BalanceThreat();
 
     // Communication
-    void SendCoordinationMessage(const std::string& message, uint32 targetMember = 0);
-    void LogCoordinationEvent(const std::string& event);
-    void NotifyMembersOfChange(const std::string& change);
+    void SendCoordinationMessage(const ::std::string& message, uint32 targetMember = 0);
+    void LogCoordinationEvent(const ::std::string& event);
+    void NotifyMembersOfChange(const ::std::string& change);
 
     // Performance monitoring
     struct CoordinationMetrics
     {
-        std::atomic<uint32> commandsIssued{0};
-        std::atomic<uint32> commandsExecuted{0};
-        std::atomic<float> responseTime{0.0f};
-        std::atomic<float> formationCompliance{1.0f};
-        std::atomic<float> targetSwitchEfficiency{1.0f};
-        std::atomic<float> combatCoordination{1.0f};
-        std::atomic<uint32> successfulEncounters{0};
-        std::atomic<uint32> failedEncounters{0};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> commandsIssued{0};
+        ::std::atomic<uint32> commandsExecuted{0};
+        ::std::atomic<float> responseTime{0.0f};
+        ::std::atomic<float> formationCompliance{1.0f};
+        ::std::atomic<float> targetSwitchEfficiency{1.0f};
+        ::std::atomic<float> combatCoordination{1.0f};
+        ::std::atomic<uint32> successfulEncounters{0};
+        ::std::atomic<uint32> failedEncounters{0};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         void Reset() {
             commandsIssued = 0; commandsExecuted = 0; responseTime = 0.0f;
             formationCompliance = 1.0f; targetSwitchEfficiency = 1.0f;
             combatCoordination = 1.0f; successfulEncounters = 0; failedEncounters = 0;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
     };
 
@@ -195,62 +195,62 @@ public:
 
 private:
     uint32 _groupId;
-    std::atomic<bool> _isActive{true};
+    ::std::atomic<bool> _isActive{true};
 
     // Target management
-    std::unordered_map<ObjectGuid, CoordinationTarget> _targets;
+    ::std::unordered_map<ObjectGuid, CoordinationTarget> _targets;
     ObjectGuid _primaryTarget;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _targetMutex;
 
     // Formation data
-    std::vector<FormationSlot> _formation;
+    ::std::vector<FormationSlot> _formation;
     Position _formationCenter;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _formationMutex;
 
     // Movement data
-    std::queue<MovementWaypoint> _movementPath;
+    ::std::queue<MovementWaypoint> _movementPath;
     Position _currentDestination;
     bool _maintainFormationDuringMove;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _movementMutex;
 
     // Combat state
-    std::atomic<bool> _inCombat{false};
+    ::std::atomic<bool> _inCombat{false};
     EncounterPhase _currentPhase;
     ThreatLevel _overallThreat;
-    std::chrono::steady_clock::time_point _combatStartTime;
+    ::std::chrono::steady_clock::time_point _combatStartTime;
 
     // Command queue
     struct CoordinationCommandData
     {
         CoordinationCommand command;
-        std::vector<uint32> targets;
+        ::std::vector<uint32> targets;
         uint32 issuerGuid;
         uint32 timestamp;
         uint32 priority;
 
-        CoordinationCommandData(CoordinationCommand cmd, const std::vector<uint32>& tgts, uint32 issuer, uint32 prio = 100)
+        CoordinationCommandData(CoordinationCommand cmd, const ::std::vector<uint32>& tgts, uint32 issuer, uint32 prio = 100)
             : command(cmd), targets(tgts), issuerGuid(issuer), timestamp(GameTime::GetGameTimeMS()), priority(prio) {}
     };
 
-    std::priority_queue<CoordinationCommandData> _commandQueue;
+    ::std::priority_queue<CoordinationCommandData> _commandQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _commandMutex;
 
     // Cooldown coordination
     struct CooldownCoordination
     {
-        std::unordered_map<uint32, uint32> spellCooldowns; // spellId -> expiry time
-        std::unordered_set<uint32> reservedCooldowns;
-        std::queue<uint32> cooldownQueue;
+        ::std::unordered_map<uint32, uint32> spellCooldowns; // spellId -> expiry time
+        ::std::unordered_set<uint32> reservedCooldowns;
+        ::std::queue<uint32> cooldownQueue;
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> cooldownMutex;
 
         bool IsSpellOnCooldown(uint32 spellId) const {
-            std::lock_guard lock(cooldownMutex);
+            ::std::lock_guard lock(cooldownMutex);
             auto it = spellCooldowns.find(spellId);
             return it != spellCooldowns.end() && it->second > GameTime::GetGameTimeMS();
         }
 
         void SetSpellCooldown(uint32 spellId, uint32 duration) {
-            std::lock_guard lock(cooldownMutex);
+            ::std::lock_guard lock(cooldownMutex);
             spellCooldowns[spellId] = GameTime::GetGameTimeMS() + duration;
         }
     } _cooldownCoordination;

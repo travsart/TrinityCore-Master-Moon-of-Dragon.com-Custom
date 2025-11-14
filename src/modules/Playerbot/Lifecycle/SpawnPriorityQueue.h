@@ -49,7 +49,7 @@ namespace Playerbot
         SpawnPriority priority;         ///< Spawn priority level
         TimePoint requestTime;          ///< When request was created
         uint32 retryCount = 0;          ///< Number of spawn retry attempts
-        std::string reason;             ///< Reason for spawn (for debugging/metrics)
+        ::std::string reason;             ///< Reason for spawn (for debugging/metrics)
         SpawnRequest originalRequest;   ///< Full original spawn request with all parameters
 
         /**
@@ -77,7 +77,7 @@ namespace Playerbot
          */
         Milliseconds GetAge() const
         {
-            return std::chrono::duration_cast<Milliseconds>(GameTime::Now() - requestTime);
+            return ::std::chrono::duration_cast<Milliseconds>(GameTime::Now() - requestTime);
         }
     };
 
@@ -165,7 +165,7 @@ namespace Playerbot
          * 1. Priority level (CRITICAL > HIGH > NORMAL > LOW)
          * 2. Request age (older requests first within same priority)
          */
-        std::optional<PrioritySpawnRequest> DequeueNextRequest();
+        ::std::optional<PrioritySpawnRequest> DequeueNextRequest();
 
         /**
          * @brief Get queue size for specific priority level
@@ -219,7 +219,7 @@ namespace Playerbot
          * @param priority Priority level to query
          * @return Vector of requests at this priority
          */
-        std::vector<PrioritySpawnRequest> GetRequestsByPriority(SpawnPriority priority) const;
+        ::std::vector<PrioritySpawnRequest> GetRequestsByPriority(SpawnPriority priority) const;
 
     private:
         /**
@@ -232,10 +232,10 @@ namespace Playerbot
 
     private:
         // Priority queue using max-heap
-        std::priority_queue<PrioritySpawnRequest> _queue;
+        ::std::priority_queue<PrioritySpawnRequest> _queue;
 
         // Fast lookup for duplicate detection (GUID → exists)
-        std::unordered_map<ObjectGuid, bool> _requestLookup;
+        ::std::unordered_map<ObjectGuid, bool> _requestLookup;
 
         // Metrics tracking
         mutable uint64 _totalRequestsEnqueued = 0;

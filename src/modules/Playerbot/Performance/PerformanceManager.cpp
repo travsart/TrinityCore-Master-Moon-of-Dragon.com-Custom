@@ -83,9 +83,9 @@ void PerformanceManager::StopProfiling()
     TC_LOG_INFO("playerbot.performance", "Profiling disabled");
 }
 
-void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
+void PerformanceManager::GeneratePerformanceReport(const ::std::string& filename)
 {
-    std::ofstream report(filename);
+    ::std::ofstream report(filename);
     if (!report.is_open())
     {
         TC_LOG_ERROR("playerbot.performance", "Failed to open performance report file: {}", filename);
@@ -101,7 +101,7 @@ void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
     report << "  Active Threads: " << threadPool.GetActiveThreads() << "\n";
     report << "  Queued Tasks: " << threadPool.GetQueuedTasks() << "\n";
     report << "  Average Latency: " << threadPool.GetAverageLatency().count() << " us\n";
-    report << "  Throughput: " << std::fixed << std::setprecision(2) << threadPool.GetThroughput() << " tasks/sec\n\n";
+    report << "  Throughput: " << ::std::fixed << ::std::setprecision(2) << threadPool.GetThroughput() << " tasks/sec\n\n";
 
     // Memory metrics
     BotMemoryManager& memMgr = BotMemoryManager::Instance();
@@ -115,9 +115,9 @@ void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
     report << "Query Optimizer Statistics:\n";
     report << "  Total Queries: " << queryMetrics.totalQueries << "\n";
     report << "  Cached Queries: " << queryMetrics.cachedQueries << "\n";
-    report << "  Cache Hit Rate: " << std::fixed << std::setprecision(2)
+    report << "  Cache Hit Rate: " << ::std::fixed << ::std::setprecision(2)
            << (queryMetrics.GetCacheHitRate() * 100.0) << "%\n";
-    report << "  Average Latency: " << std::fixed << std::setprecision(2)
+    report << "  Average Latency: " << ::std::fixed << ::std::setprecision(2)
            << queryMetrics.GetAverageLatency() << " us\n";
     report << "  Slow Queries: " << queryMetrics.slowQueries << "\n\n";
 
@@ -130,7 +130,7 @@ void PerformanceManager::GeneratePerformanceReport(const std::string& filename)
         {
             report << "  " << section << ":\n";
             report << "    Calls: " << data.callCount << "\n";
-            report << "    Average: " << std::fixed << std::setprecision(2) << data.GetAverage() << " us\n";
+            report << "    Average: " << ::std::fixed << ::std::setprecision(2) << data.GetAverage() << " us\n";
             report << "    Min: " << data.minTime << " us\n";
             report << "    Max: " << data.maxTime << " us\n";
         }

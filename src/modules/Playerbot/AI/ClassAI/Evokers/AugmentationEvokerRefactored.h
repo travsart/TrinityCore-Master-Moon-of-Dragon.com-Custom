@@ -20,6 +20,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 enum AugmentationEvokerSpells
 {
     // Core Buffs
@@ -57,8 +67,8 @@ struct EssenceResourceAug
 class AugmentationBuffTracker
 {
 public:
-    std::unordered_map<ObjectGuid, uint32> _ebonMightTargets;
-    std::unordered_map<ObjectGuid, uint32> _prescienceTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _ebonMightTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _prescienceTargets;
 
     void ApplyEbonMight(ObjectGuid guid) { _ebonMightTargets[guid] = GameTime::GetGameTimeMS() + 10000; }
     void ApplyPrescience(ObjectGuid guid) { _prescienceTargets[guid] = GameTime::GetGameTimeMS() + 18000; }
@@ -128,7 +138,7 @@ public:
         // Priority 5: Generate essence
         if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
             this->CastSpell(target, AZURE_STRIKE_AUG);
-            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
 
@@ -140,7 +150,7 @@ protected:
     {
         if (this->_resource.essence < 1) return false;
 
-        std::vector<Unit*> allies = GetGroupDPS();
+        ::std::vector<Unit*> allies = GetGroupDPS();
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasEbonMight(ally->GetGUID())) {
                 if (this->CanCastSpell(EBON_MIGHT, ally)) {
@@ -158,7 +168,7 @@ protected:
     {
         if (this->_resource.essence < 1) return false;
 
-        std::vector<Unit*> allies = GetGroupDPS();
+        ::std::vector<Unit*> allies = GetGroupDPS();
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasPrescience(ally->GetGUID())) {
                 if (this->CanCastSpell(PRESCIENCE, ally)) {
@@ -172,9 +182,9 @@ protected:
         return false;
     }
 
-    std::vector<Unit*> GetGroupDPS() const
+    ::std::vector<Unit*> GetGroupDPS() const
     {
-        std::vector<Unit*> dps;
+        ::std::vector<Unit*> dps;
         Player* bot = this->GetBot();
         if (!bot) return dps;
 
@@ -262,12 +272,12 @@ protected:
                     Condition("Has essence", [this](Player*) { return this->_resource.essence >= 1; }),
                     Selector("Apply buffs", {
                         Sequence("Ebon Might", {
-                            Action("Cast Ebon Might", [this](Player*) {
+                            bot::ai::Action("Cast Ebon Might", [this](Player*) {
                                 return this->MaintainEbonMight() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Prescience", {
-                            Action("Cast Prescience", [this](Player*) {
+                            bot::ai::Action("Cast Prescience", [this](Player*) {
                                 return this->MaintainPrescience() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         })
@@ -276,7 +286,7 @@ protected:
                 Sequence("Deal Damage", {
                     Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
                     Condition("3+ essence", [this](Player*) { return this->_resource.essence >= 3; }),
-                    Action("Cast Breath of Eons", [this](Player* bot) {
+                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
                             this->CastSpell(target, BREATH_OF_EONS);
@@ -289,11 +299,11 @@ protected:
                 Sequence("Generate Essence", {
                     Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
                     Condition("< 4 essence", [this](Player*) { return this->_resource.essence < 4; }),
-                    Action("Cast Azure Strike", [this](Player* bot) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
                             this->CastSpell(target, AZURE_STRIKE_AUG);
-                            this->_resource.essence = std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+                            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;

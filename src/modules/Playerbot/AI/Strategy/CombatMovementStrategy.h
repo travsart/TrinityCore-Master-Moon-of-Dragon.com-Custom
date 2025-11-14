@@ -264,7 +264,7 @@ namespace Playerbot
          * @param targetPos The target position
          * @param reason The reason for movement
          */
-        void LogPositionUpdate(Player* player, Position const& targetPos, std::string const& reason) const;
+        void LogPositionUpdate(Player* player, Position const& targetPos, ::std::string const& reason) const;
 
     private:
         // State tracking
@@ -277,7 +277,7 @@ namespace Playerbot
         ObjectGuid _lastTargetGuid;                    ///< GUID of last combat target
 
         // Performance optimization
-        mutable std::chrono::steady_clock::time_point _lastDangerCheck;  ///< Last danger zone check timestamp
+        mutable ::std::chrono::steady_clock::time_point _lastDangerCheck;  ///< Last danger zone check timestamp
         mutable bool _lastDangerResult;                                  ///< Cached danger check result
 
         // Configuration

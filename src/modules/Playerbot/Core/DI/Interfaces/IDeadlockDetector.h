@@ -42,8 +42,8 @@ public:
     virtual void Shutdown() = 0;
 
     // Thread registration
-    virtual void RegisterThread(std::thread::id threadId, std::string const& name) = 0;
-    virtual void UnregisterThread(std::thread::id threadId) = 0;
+    virtual void RegisterThread(::std::thread::id threadId, ::std::string const& name) = 0;
+    virtual void UnregisterThread(::std::thread::id threadId) = 0;
 
     // Deadlock detection
     virtual DeadlockReport DetectFutureDeadlock(
@@ -51,14 +51,14 @@ public:
         uint32 futureIndex,
         uint32 totalFutures,
         uint32 waitTimeMs,
-        std::thread::id waitingThreadId) = 0;
+        ::std::thread::id waitingThreadId) = 0;
 
     // Call stack capture
-    virtual std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64) = 0;
-    virtual ThreadState CaptureThreadState(std::thread::id threadId) = 0;
+    virtual ::std::vector<CallStackFrame> CaptureCallStack(uint32 skipFrames = 0, uint32 maxFrames = 64) = 0;
+    virtual ThreadState CaptureThreadState(::std::thread::id threadId) = 0;
 
     // Diagnostic output
-    virtual void DumpDeadlockReport(DeadlockReport const& report, std::string const& outputFile) = 0;
+    virtual void DumpDeadlockReport(DeadlockReport const& report, ::std::string const& outputFile) = 0;
     virtual void LogDeadlockReport(DeadlockReport const& report) = 0;
 
     // Visual Studio integration
@@ -68,11 +68,11 @@ public:
     // Configuration
     virtual void SetCallStackCaptureEnabled(bool enabled) = 0;
     virtual void SetAutoLaunchDebugger(bool enabled) = 0;
-    virtual void SetDumpDirectory(std::string const& dir) = 0;
+    virtual void SetDumpDirectory(::std::string const& dir) = 0;
 
     // Statistics
     virtual uint32 GetTotalDeadlocksDetected() const = 0;
-    virtual std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const = 0;
+    virtual ::std::vector<DeadlockReport> GetRecentDeadlocks(uint32 count = 10) const = 0;
 };
 
 } // namespace Diagnostics

@@ -89,7 +89,7 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
     }
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(tauntSpellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(tauntSpellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 

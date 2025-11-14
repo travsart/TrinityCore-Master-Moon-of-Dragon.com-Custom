@@ -66,7 +66,7 @@ namespace Playerbot
         }
 
         // Find item in vendor inventory
-        std::optional<uint32> vendorSlotOpt = FindVendorSlot(vendor, request.itemId);
+        ::std::optional<uint32> vendorSlotOpt = FindVendorSlot(vendor, request.itemId);
         if (!vendorSlotOpt.has_value())
         {
             TC_LOG_WARN("playerbot.vendor",
@@ -110,12 +110,12 @@ namespace Playerbot
         }
     }
 
-    std::vector<VendorPurchaseRecommendation> VendorPurchaseManager::GetPurchaseRecommendations(
+    ::std::vector<VendorPurchaseRecommendation> VendorPurchaseManager::GetPurchaseRecommendations(
         Player const* player,
         Creature const* vendor,
         uint64 goldBudget) const
     {
-        std::vector<VendorPurchaseRecommendation> recommendations;
+        ::std::vector<VendorPurchaseRecommendation> recommendations;
 
         // Validate inputs
         if (!player || !vendor)
@@ -196,7 +196,7 @@ namespace Playerbot
             // Generate purchase reason
             if (isUpgrade)
             {
-                rec.reason = "Gear upgrade (score: " + std::to_string(static_cast<int>(upgradeScore)) + ")";
+                rec.reason = "Gear upgrade (score: " + ::std::to_string(static_cast<int>(upgradeScore)) + ")";
             }
             else if (itemTemplate->GetClass() == ITEM_CLASS_CONSUMABLE)
             {
@@ -214,7 +214,7 @@ namespace Playerbot
         }
 
         // Sort by priority (CRITICAL first, then HIGH, etc.)
-        std::sort(recommendations.begin(), recommendations.end(),
+        ::std::sort(recommendations.begin(), recommendations.end(),
             [](auto const& a, auto const& b)
             {
                 if (a.priority != b.priority)
@@ -239,16 +239,16 @@ namespace Playerbot
         return recommendations;
     }
 
-    std::optional<uint32> VendorPurchaseManager::FindVendorSlot(
+    ::std::optional<uint32> VendorPurchaseManager::FindVendorSlot(
         Creature const* vendor,
         uint32 itemId)
     {
         if (!vendor)
-            return std::nullopt;
+            return ::std::nullopt;
 
         VendorItemData const* vendorItems = vendor->GetVendorItems();
         if (!vendorItems || vendorItems->Empty())
-            return std::nullopt;
+            return ::std::nullopt;
 
         // Linear search through vendor inventory
         uint32 itemCount = vendorItems->GetItemCount();
@@ -259,7 +259,7 @@ namespace Playerbot
                 return slot;
         }
 
-        return std::nullopt;
+        return ::std::nullopt;
     }
 
     bool VendorPurchaseManager::IsItemUpgrade(
@@ -553,7 +553,7 @@ namespace Playerbot
 
         // Apply reputation discount
         float discount = player->GetReputationPriceDiscount(vendor);
-        totalPrice = static_cast<uint64>(std::floor(totalPrice * discount));
+        totalPrice = static_cast<uint64>(::std::floor(totalPrice * discount));
 
         // Ensure minimum price of 1 copper if item has base price
         if (basePrice > 0 && totalPrice == 0)

@@ -2275,18 +2275,18 @@ TEST_F(Phase1StateMachineTest, Performance_FullReport) {
     std::cout << "\nTotal: 115/115 PASSED (100%)\n" << std::endl;
 
     std::cout << "Performance Metrics:" << std::endl;
-    std::cout << "- State query latency:      <0.001ms ✓" << std::endl;
-    std::cout << "- Transition latency:       <0.01ms ✓" << std::endl;
-    std::cout << "- Safe ref cache hit:       <0.001ms ✓" << std::endl;
-    std::cout << "- Safe ref cache miss:      <0.01ms ✓" << std::endl;
-    std::cout << "- Initialization time:      <100ms ✓" << std::endl;
-    std::cout << "- Memory per bot:           <1KB ✓\n" << std::endl;
+    std::cout << "- State query latency:      <0.001ms " << std::endl;
+    std::cout << "- Transition latency:       <0.01ms " << std::endl;
+    std::cout << "- Safe ref cache hit:       <0.001ms " << std::endl;
+    std::cout << "- Safe ref cache miss:      <0.01ms " << std::endl;
+    std::cout << "- Initialization time:      <100ms " << std::endl;
+    std::cout << "- Memory per bot:           <1KB \n" << std::endl;
 
     std::cout << "Issue Fixes Validated:" << std::endl;
-    std::cout << "✓ Issue #1: Bot in group at login now follows correctly" << std::endl;
-    std::cout << "✓ Issue #4: Leader logout no longer crashes server\n" << std::endl;
+    std::cout << " Issue #1: Bot in group at login now follows correctly" << std::endl;
+    std::cout << " Issue #4: Leader logout no longer crashes server\n" << std::endl;
 
-    std::cout << "Phase 1: READY FOR PRODUCTION ✓" << std::endl;
+    std::cout << "Phase 1: READY FOR PRODUCTION " << std::endl;
     std::cout << "========================================" << std::endl;
 
     SUCCEED();

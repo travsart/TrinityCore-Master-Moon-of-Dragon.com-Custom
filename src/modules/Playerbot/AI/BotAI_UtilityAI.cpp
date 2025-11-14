@@ -42,57 +42,57 @@ void BotAI::InitializeUtilityAI()
 {
     TC_LOG_DEBUG("playerbot.utility", "Initializing Utility AI for bot {}", _bot->GetName());
 
-    _utilityAI = std::make_unique<UtilityAI>();
+    _utilityAI = ::std::make_unique<UtilityAI>();
 
     // ========================================================================
     // BEHAVIOR 1: COMBAT
     // ========================================================================
-    auto combatBehavior = std::make_shared<UtilityBehavior>("Combat");
-    combatBehavior->AddEvaluator(std::make_shared<CombatEngageEvaluator>());
-    combatBehavior->AddEvaluator(std::make_shared<DefensiveCooldownEvaluator>());
+    auto combatBehavior = ::std::make_shared<UtilityBehavior>("Combat");
+    combatBehavior->AddEvaluator(::std::make_shared<CombatEngageEvaluator>());
+    combatBehavior->AddEvaluator(::std::make_shared<DefensiveCooldownEvaluator>());
     _utilityAI->AddBehavior(combatBehavior);
 
     // ========================================================================
     // BEHAVIOR 2: HEALING (Healer role only)
     // ========================================================================
-    auto healingBehavior = std::make_shared<UtilityBehavior>("Healing");
-    healingBehavior->AddEvaluator(std::make_shared<HealAllyEvaluator>());
+    auto healingBehavior = ::std::make_shared<UtilityBehavior>("Healing");
+    healingBehavior->AddEvaluator(::std::make_shared<HealAllyEvaluator>());
     _utilityAI->AddBehavior(healingBehavior);
 
     // ========================================================================
     // BEHAVIOR 3: TANKING (Tank role only)
     // ========================================================================
-    auto tankingBehavior = std::make_shared<UtilityBehavior>("Tanking");
-    tankingBehavior->AddEvaluator(std::make_shared<TankThreatEvaluator>());
-    tankingBehavior->AddEvaluator(std::make_shared<DefensiveCooldownEvaluator>());
+    auto tankingBehavior = ::std::make_shared<UtilityBehavior>("Tanking");
+    tankingBehavior->AddEvaluator(::std::make_shared<TankThreatEvaluator>());
+    tankingBehavior->AddEvaluator(::std::make_shared<DefensiveCooldownEvaluator>());
     _utilityAI->AddBehavior(tankingBehavior);
 
     // ========================================================================
     // BEHAVIOR 4: FLEE (All roles - survival)
     // ========================================================================
-    auto fleeBehavior = std::make_shared<UtilityBehavior>("Flee");
-    fleeBehavior->AddEvaluator(std::make_shared<FleeEvaluator>());
+    auto fleeBehavior = ::std::make_shared<UtilityBehavior>("Flee");
+    fleeBehavior->AddEvaluator(::std::make_shared<FleeEvaluator>());
     _utilityAI->AddBehavior(fleeBehavior);
 
     // ========================================================================
     // BEHAVIOR 5: MANA REGENERATION (Mana users only)
     // ========================================================================
-    auto manaRegenBehavior = std::make_shared<UtilityBehavior>("ManaRegeneration");
-    manaRegenBehavior->AddEvaluator(std::make_shared<ManaRegenerationEvaluator>());
+    auto manaRegenBehavior = ::std::make_shared<UtilityBehavior>("ManaRegeneration");
+    manaRegenBehavior->AddEvaluator(::std::make_shared<ManaRegenerationEvaluator>());
     _utilityAI->AddBehavior(manaRegenBehavior);
 
     // ========================================================================
     // BEHAVIOR 6: AOE DAMAGE (DPS role - multi-target)
     // ========================================================================
-    auto aoeBehavior = std::make_shared<UtilityBehavior>("AoEDamage");
-    aoeBehavior->AddEvaluator(std::make_shared<AoEDamageEvaluator>());
+    auto aoeBehavior = ::std::make_shared<UtilityBehavior>("AoEDamage");
+    aoeBehavior->AddEvaluator(::std::make_shared<AoEDamageEvaluator>());
     _utilityAI->AddBehavior(aoeBehavior);
 
     // ========================================================================
     // BEHAVIOR 7: DISPEL (Healer/Support only)
     // ========================================================================
-    auto dispelBehavior = std::make_shared<UtilityBehavior>("Dispel");
-    dispelBehavior->AddEvaluator(std::make_shared<DispelEvaluator>());
+    auto dispelBehavior = ::std::make_shared<UtilityBehavior>("Dispel");
+    dispelBehavior->AddEvaluator(::std::make_shared<DispelEvaluator>());
     _utilityAI->AddBehavior(dispelBehavior);
 
     // Initialize state
@@ -126,8 +126,8 @@ void BotAI::UpdateUtilityDecision(uint32 diff)
     // Log behavior transitions
     if (newBehavior != _activeUtilityBehavior)
     {
-        std::string oldName = _activeUtilityBehavior ? _activeUtilityBehavior->GetName() : "None";
-        std::string newName = newBehavior ? newBehavior->GetName() : "None";
+        ::std::string oldName = _activeUtilityBehavior ? _activeUtilityBehavior->GetName() : "None";
+        ::std::string newName = newBehavior ? newBehavior->GetName() : "None";
 
         TC_LOG_DEBUG("playerbot.utility", "Bot {} utility behavior transition: {} -> {} (score: {:.3f})",
             _bot->GetName(),
@@ -150,7 +150,7 @@ void BotAI::UpdateUtilityDecision(uint32 diff)
     if (TC_LOG_WILL_LOG("playerbot.utility.detailed", LOG_LEVEL_TRACE))
     {
         auto ranked = _utilityAI->GetRankedBehaviors(_lastUtilityContext);
-        size_t count = std::min<size_t>(3, ranked.size());
+        size_t count = ::std::min<size_t>(3, ranked.size());
 
         TC_LOG_TRACE("playerbot.utility.detailed", "Bot {} top {} behaviors:",
             _bot->GetName(), count);

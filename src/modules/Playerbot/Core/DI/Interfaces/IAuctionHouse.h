@@ -44,14 +44,14 @@ public:
     // Intelligent auction strategies
     virtual void ExecuteAuctionStrategy(Player* player, AuctionStrategy strategy) = 0;
     virtual void ScanForBargains(Player* player) = 0;
-    virtual void AutoSellItems(Player* player, const std::vector<uint32>& itemGuids) = 0;
+    virtual void AutoSellItems(Player* player, const ::std::vector<uint32>& itemGuids) = 0;
     virtual void AutoBuyNeededItems(Player* player) = 0;
     virtual void ManageActiveAuctions(Player* player) = 0;
 
     // Market analysis and price discovery
     virtual float GetMarketPrice(uint32 itemId, uint32 stackSize) = 0;
     virtual float GetPriceHistory(uint32 itemId, uint32 days) = 0;
-    virtual std::vector<AuctionItem> GetSimilarAuctions(uint32 itemId, uint32 maxResults) = 0;
+    virtual ::std::vector<AuctionItem> GetSimilarAuctions(uint32 itemId, uint32 maxResults) = 0;
     virtual bool IsPriceBelowMarket(uint32 itemId, uint32 price, float threshold) = 0;
     virtual void UpdateMarketData() = 0;
 
@@ -87,7 +87,7 @@ public:
 
     // Competition analysis
     virtual void AnalyzeCompetition(uint32 itemId) = 0;
-    virtual std::vector<uint32> GetFrequentSellers(uint32 itemId) = 0;
+    virtual ::std::vector<uint32> GetFrequentSellers(uint32 itemId) = 0;
     virtual float GetCompetitorUndercutRate(uint32 sellerGuid) = 0;
     virtual void TrackCompetitorBehavior(uint32 sellerGuid, const AuctionItem& auction) = 0;
 
@@ -109,7 +109,7 @@ public:
     virtual void RemoveFromWatchList(uint32 playerGuid, uint32 itemId) = 0;
 
     // Error handling and recovery
-    virtual void HandleAuctionError(uint32 sessionId, const std::string& error) = 0;
+    virtual void HandleAuctionError(uint32 sessionId, const ::std::string& error) = 0;
     virtual void RecoverFromAuctionFailure(uint32 sessionId) = 0;
     virtual void HandleInsufficientFunds(Player* player, uint32 requiredAmount) = 0;
     virtual void HandleAuctionTimeout(uint32 auctionId) = 0;

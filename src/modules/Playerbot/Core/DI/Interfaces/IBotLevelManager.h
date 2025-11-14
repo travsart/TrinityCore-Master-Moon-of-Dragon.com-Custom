@@ -128,7 +128,7 @@ public:
      * @param bots          Vector of bot player objects
      * @return              Number of tasks submitted
      */
-    virtual uint32 CreateBotsAsync(std::vector<Player*> const& bots) = 0;
+    virtual uint32 CreateBotsAsync(::std::vector<Player*> const& bots) = 0;
 
     /**
      * Process queued bot creation tasks (main thread only)
@@ -189,7 +189,7 @@ public:
     /**
      * Get formatted statistics summary
      */
-    virtual std::string GetSummary() const = 0;
+    virtual ::std::string GetSummary() const = 0;
 
     // ====================================================================
     // CONFIGURATION

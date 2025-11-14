@@ -27,7 +27,7 @@ InstanceEvent InstanceEvent::InstanceReset(ObjectGuid playerGuid, uint32 mapId)
     event.encounterId = 0;
     event.encounterFrame = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -41,7 +41,7 @@ InstanceEvent InstanceEvent::InstanceResetFailed(ObjectGuid playerGuid, uint32 m
     event.instanceId = 0;
     event.encounterId = 0;
     event.encounterFrame = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -55,22 +55,22 @@ InstanceEvent InstanceEvent::EncounterFrameUpdate(ObjectGuid playerGuid, uint32 
     event.mapId = 0;
     event.instanceId = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
-InstanceEvent InstanceEvent::RaidInfoReceived(ObjectGuid playerGuid, uint32 mapId, uint32 instanceId, std::vector<uint32> bossStates)
+InstanceEvent InstanceEvent::RaidInfoReceived(ObjectGuid playerGuid, uint32 mapId, uint32 instanceId, ::std::vector<uint32> bossStates)
 {
     InstanceEvent event;
     event.type = InstanceEventType::RAID_INFO_RECEIVED;
     event.playerGuid = playerGuid;
     event.mapId = mapId;
     event.instanceId = instanceId;
-    event.bossStates = std::move(bossStates);
+    event.bossStates = ::std::move(bossStates);
     event.encounterId = 0;
     event.encounterFrame = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -84,7 +84,7 @@ InstanceEvent InstanceEvent::RaidGroupOnlyWarning(ObjectGuid playerGuid)
     event.encounterId = 0;
     event.encounterFrame = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -98,22 +98,22 @@ InstanceEvent InstanceEvent::InstanceSaveCreated(ObjectGuid playerGuid, uint32 m
     event.encounterId = 0;
     event.encounterFrame = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
-InstanceEvent InstanceEvent::InstanceMessageReceived(ObjectGuid playerGuid, uint32 mapId, std::string message)
+InstanceEvent InstanceEvent::InstanceMessageReceived(ObjectGuid playerGuid, uint32 mapId, ::std::string message)
 {
     InstanceEvent event;
     event.type = InstanceEventType::INSTANCE_MESSAGE_RECEIVED;
     event.playerGuid = playerGuid;
     event.mapId = mapId;
-    event.message = std::move(message);
+    event.message = ::std::move(message);
     event.instanceId = 0;
     event.encounterId = 0;
     event.encounterFrame = 0;
     event.errorCode = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -143,9 +143,9 @@ bool InstanceEvent::IsValid() const
     }
 }
 
-std::string InstanceEvent::ToString() const
+::std::string InstanceEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "InstanceEvent[";
 
     switch (type)
@@ -197,7 +197,7 @@ bool InstanceEventBus::PublishEvent(InstanceEvent const& event)
 
     // Update statistics
     {
-        std::lock_guard lock(_subscriberMutex);
+        ::std::lock_guard lock(_subscriberMutex);
         ++_eventCounts[event.type];
         ++_totalEventsPublished;
     }
@@ -209,17 +209,17 @@ bool InstanceEventBus::PublishEvent(InstanceEvent const& event)
     return true;
 }
 
-void InstanceEventBus::Subscribe(BotAI* subscriber, std::vector<InstanceEventType> const& types)
+void InstanceEventBus::Subscribe(BotAI* subscriber, ::std::vector<InstanceEventType> const& types)
 {
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto type : types)
     {
         auto& typeSubscribers = _subscribers[type];
-        if (std::find(typeSubscribers.begin(), typeSubscribers.end(), subscriber) == typeSubscribers.end())
+        if (::std::find(typeSubscribers.begin(), typeSubscribers.end(), subscriber) == typeSubscribers.end())
         {
             typeSubscribers.push_back(subscriber);
             TC_LOG_DEBUG("playerbot.events", "InstanceEventBus: Subscriber {} registered for type {}",
@@ -233,9 +233,9 @@ void InstanceEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
         _globalSubscribers.push_back(subscriber);
         TC_LOG_DEBUG("playerbot.events", "InstanceEventBus: Subscriber {} registered for ALL events",
@@ -248,34 +248,34 @@ void InstanceEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& [type, subscribers] : _subscribers)
     {
-        subscribers.erase(std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
+        subscribers.erase(::std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
     }
 
     // Remove from global subscriptions
-    _globalSubscribers.erase(std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+    _globalSubscribers.erase(::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end());
 
     TC_LOG_DEBUG("playerbot.events", "InstanceEventBus: Subscriber {} unregistered", static_cast<void*>(subscriber));
 }
 
-uint32 InstanceEventBus::SubscribeCallback(EventHandler handler, std::vector<InstanceEventType> const& types)
+uint32 InstanceEventBus::SubscribeCallback(EventHandler handler, ::std::vector<InstanceEventType> const& types)
 {
     if (!handler)
         return 0;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     CallbackSubscription sub;
     sub.id = _nextCallbackId++;
-    sub.handler = std::move(handler);
+    sub.handler = ::std::move(handler);
     sub.types = types;
 
-    _callbackSubscriptions.push_back(std::move(sub));
+    _callbackSubscriptions.push_back(::std::move(sub));
 
     TC_LOG_DEBUG("playerbot.events", "InstanceEventBus: Callback {} registered for {} types",
         sub.id, types.size());
@@ -285,10 +285,10 @@ uint32 InstanceEventBus::SubscribeCallback(EventHandler handler, std::vector<Ins
 
 void InstanceEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
-        std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
+        ::std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
             [subscriptionId](CallbackSubscription const& sub) { return sub.id == subscriptionId; }),
         _callbackSubscriptions.end());
 
@@ -297,14 +297,14 @@ void InstanceEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 InstanceEventBus::GetEventCount(InstanceEventType type) const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     auto it = _eventCounts.find(type);
     return it != _eventCounts.end() ? it->second : 0;
 }
 
 void InstanceEventBus::DeliverEvent(InstanceEvent const& event)
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Deliver to type-specific subscribers
     auto it = _subscribers.find(event.type);
@@ -327,7 +327,7 @@ void InstanceEventBus::DeliverEvent(InstanceEvent const& event)
     // Deliver to callback subscriptions
     for (auto const& sub : _callbackSubscriptions)
     {
-        if (sub.types.empty() || std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
+        if (sub.types.empty() || ::std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
         {
             sub.handler(event);
         }

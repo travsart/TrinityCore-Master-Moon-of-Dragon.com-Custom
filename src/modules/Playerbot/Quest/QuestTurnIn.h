@@ -61,8 +61,8 @@ struct QuestRewardItem
     float upgradeValue;
     float vendorValue;
     bool isClassAppropriate;
-    std::vector<uint32> itemStats;
-    std::string description;
+    ::std::vector<uint32> itemStats;
+    ::std::string description;
 
     QuestRewardItem(uint32 id, uint32 count) : itemId(id), itemCount(count)
         , itemValue(0.0f), upgradeValue(0.0f), vendorValue(0.0f)
@@ -78,12 +78,12 @@ struct QuestTurnInData
     bool isCompleted;
     bool requiresTravel;
     uint32 estimatedTravelTime;
-    std::vector<QuestRewardItem> availableRewards;
+    ::std::vector<QuestRewardItem> availableRewards;
     uint32 selectedRewardIndex;
     RewardSelectionStrategy rewardStrategy;
     uint32 turnInPriority;
     uint32 scheduledTurnInTime;
-    std::string turnInReason;
+    ::std::string turnInReason;
 
     QuestTurnInData(uint32 qId, uint32 bGuid, uint32 gGuid) : questId(qId), botGuid(bGuid)
         , questGiverGuid(gGuid), isCompleted(false), requiresTravel(true)
@@ -95,8 +95,8 @@ struct QuestTurnInData
 struct TurnInBatch
 {
     uint32 botGuid;
-    std::vector<uint32> questIds;
-    std::vector<uint32> questGiverGuids;
+    ::std::vector<uint32> questIds;
+    ::std::vector<uint32> questGiverGuids;
     Position centralLocation;
     uint32 totalTravelTime;
     uint32 batchPriority;
@@ -110,16 +110,16 @@ struct TurnInBatch
 // Turn-in performance monitoring
 struct TurnInMetrics
 {
-    std::atomic<uint32> questsTurnedIn{0};
-    std::atomic<uint32> turnInAttempts{0};
-    std::atomic<uint32> successfulTurnIns{0};
-    std::atomic<uint32> failedTurnIns{0};
-    std::atomic<float> averageTurnInTime{15000.0f}; // 15 seconds
-    std::atomic<float> turnInSuccessRate{0.95f};
-    std::atomic<uint32> totalTravelDistance{0};
-    std::atomic<uint32> rewardsSelected{0};
-    std::atomic<float> rewardSelectionAccuracy{0.85f};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> questsTurnedIn{0};
+    ::std::atomic<uint32> turnInAttempts{0};
+    ::std::atomic<uint32> successfulTurnIns{0};
+    ::std::atomic<uint32> failedTurnIns{0};
+    ::std::atomic<float> averageTurnInTime{15000.0f}; // 15 seconds
+    ::std::atomic<float> turnInSuccessRate{0.95f};
+    ::std::atomic<uint32> totalTravelDistance{0};
+    ::std::atomic<uint32> rewardsSelected{0};
+    ::std::atomic<float> rewardSelectionAccuracy{0.85f};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     // Delete copy operations (atomics are not copyable)
     TurnInMetrics() = default;
@@ -130,7 +130,7 @@ struct TurnInMetrics
         questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;
         failedTurnIns = 0; averageTurnInTime = 15000.0f; turnInSuccessRate = 0.95f;
         totalTravelDistance = 0; rewardsSelected = 0; rewardSelectionAccuracy = 0.85f;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetSuccessRate() const {
@@ -150,7 +150,7 @@ struct TurnInMetrics
         uint32 totalTravelDistance;
         uint32 rewardsSelected;
         float rewardSelectionAccuracy;
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         float GetSuccessRate() const {
             return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
@@ -186,15 +186,15 @@ public:
     void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs = 0) override;
 
     // Quest completion detection
-    std::vector<uint32> GetCompletedQuests(Player* bot) override;
+    ::std::vector<uint32> GetCompletedQuests(Player* bot) override;
     bool IsQuestReadyForTurnIn(uint32 questId, Player* bot) override;
     void MonitorQuestCompletion(Player* bot) override;
     void HandleQuestCompletion(Player* bot, uint32 questId) override;
 
     // Turn-in planning and optimization
     void PlanOptimalTurnInRoute(Player* bot) override;
-    TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds) override;
-    void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns) override;
+    TurnInBatch CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds) override;
+    void OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns) override;
     void MinimizeTurnInTravel(Player* bot) override;
 
     // Quest giver location and navigation
@@ -205,8 +205,8 @@ public:
 
     // Reward selection and optimization
     void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot) override;
-    uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) override;
-    void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot) override;
+    uint32 SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) override;
+    void EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot) override;
     float CalculateItemValue(const QuestRewardItem& reward, Player* bot) override;
 
     // Group turn-in coordination
@@ -247,7 +247,7 @@ public:
     void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold) override;
 
     // Error handling and recovery
-    void HandleTurnInError(Player* bot, uint32 questId, const std::string& error) override;
+    void HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error) override;
     void RecoverFromTurnInFailure(Player* bot, uint32 questId) override;
     void RetryFailedTurnIn(Player* bot, uint32 questId) override;
     void ValidateTurnInState(Player* bot, uint32 questId) override;
@@ -263,24 +263,24 @@ private:
     ~QuestTurnIn() = default;
 
     // Core data structures
-    std::unordered_map<uint32, std::vector<QuestTurnInData>> _botTurnInQueues; // botGuid -> turnIns
-    std::unordered_map<uint32, TurnInStrategy> _botTurnInStrategies;
-    std::unordered_map<uint32, RewardSelectionStrategy> _botRewardStrategies;
-    std::unordered_map<uint32, TurnInMetrics> _botMetrics;
+    ::std::unordered_map<uint32, ::std::vector<QuestTurnInData>> _botTurnInQueues; // botGuid -> turnIns
+    ::std::unordered_map<uint32, TurnInStrategy> _botTurnInStrategies;
+    ::std::unordered_map<uint32, RewardSelectionStrategy> _botRewardStrategies;
+    ::std::unordered_map<uint32, TurnInMetrics> _botMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _turnInMutex;
 
     // Batch processing
-    std::unordered_map<uint32, TurnInBatch> _scheduledBatches; // botGuid -> batch
-    std::queue<std::pair<uint32, uint32>> _scheduledTurnIns; // <botGuid, questId>
+    ::std::unordered_map<uint32, TurnInBatch> _scheduledBatches; // botGuid -> batch
+    ::std::queue<::std::pair<uint32, uint32>> _scheduledTurnIns; // <botGuid, questId>
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _batchMutex;
 
     // Quest giver database
-    std::unordered_map<uint32, uint32> _questToTurnInNpc; // questId -> npcGuid
-    std::unordered_map<uint32, Position> _questGiverLocations; // npcGuid -> position
-    std::unordered_map<uint32, std::vector<uint32>> _npcQuests; // npcGuid -> questIds
+    ::std::unordered_map<uint32, uint32> _questToTurnInNpc; // questId -> npcGuid
+    ::std::unordered_map<uint32, Position> _questGiverLocations; // npcGuid -> position
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _npcQuests; // npcGuid -> questIds
 
     // Reward analysis cache
-    std::unordered_map<uint32, std::vector<QuestRewardItem>> _questRewardCache; // questId -> rewards
+    ::std::unordered_map<uint32, ::std::vector<QuestRewardItem>> _questRewardCache; // questId -> rewards
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _rewardMutex;
 
     // Performance tracking
@@ -294,16 +294,16 @@ private:
     void ExecuteTurnInWorkflow(Player* bot, const QuestTurnInData& turnInData);
 
     // Reward selection algorithms
-    uint32 SelectHighestValueReward(const std::vector<QuestRewardItem>& rewards, Player* bot);
-    uint32 SelectBestUpgradeReward(const std::vector<QuestRewardItem>& rewards, Player* bot);
-    uint32 SelectHighestVendorValueReward(const std::vector<QuestRewardItem>& rewards, Player* bot);
-    uint32 SelectStatPriorityReward(const std::vector<QuestRewardItem>& rewards, Player* bot);
-    uint32 SelectClassAppropriateReward(const std::vector<QuestRewardItem>& rewards, Player* bot);
+    uint32 SelectHighestValueReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
+    uint32 SelectBestUpgradeReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
+    uint32 SelectHighestVendorValueReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
+    uint32 SelectStatPriorityReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
+    uint32 SelectClassAppropriateReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
 
     // Navigation and pathfinding
-    std::vector<Position> PlanTurnInRoute(Player* bot, const std::vector<uint32>& questGiverGuids);
+    ::std::vector<Position> PlanTurnInRoute(Player* bot, const ::std::vector<uint32>& questGiverGuids);
     float CalculateTravelTime(Player* bot, const Position& destination);
-    void OptimizeTravelRoute(Player* bot, std::vector<uint32>& questGiverGuids);
+    void OptimizeTravelRoute(Player* bot, ::std::vector<uint32>& questGiverGuids);
 
     // Dialog and interaction
     void InteractWithQuestGiver(Player* bot, uint32 questGiverGuid);
@@ -322,7 +322,7 @@ private:
     void BatchTurnInOperations();
 
     // Error handling
-    void LogTurnInError(Player* bot, uint32 questId, const std::string& error);
+    void LogTurnInError(Player* bot, uint32 questId, const ::std::string& error);
     void HandleQuestGiverNotFound(Player* bot, uint32 questId);
     void HandleInvalidQuestState(Player* bot, uint32 questId);
     void HandleRewardSelectionFailure(Player* bot, uint32 questId);

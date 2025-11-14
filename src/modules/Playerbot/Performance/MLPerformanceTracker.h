@@ -49,7 +49,7 @@ struct MLPerformanceSample
     uint32_t samplesProcessed;
     float accuracy;            // For operations with accuracy metrics
     bool success;
-    std::string context;
+    ::std::string context;
 
     uint64_t GetDuration() const { return endTime - startTime; }
     float GetThroughput() const
@@ -62,15 +62,15 @@ struct MLPerformanceSample
 // ML model statistics
 struct ModelStatistics
 {
-    std::atomic<uint64_t> totalPredictions{0};
-    std::atomic<uint64_t> correctPredictions{0};
-    std::atomic<uint64_t> totalTrainingSteps{0};
-    std::atomic<float> averageLoss{0.0f};
-    std::atomic<float> averageReward{0.0f};
-    std::atomic<uint64_t> totalExperiences{0};
-    std::atomic<uint64_t> modelUpdates{0};
-    std::atomic<uint64_t> totalInferenceTimeUs{0};
-    std::atomic<uint64_t> totalTrainingTimeUs{0};
+    ::std::atomic<uint64_t> totalPredictions{0};
+    ::std::atomic<uint64_t> correctPredictions{0};
+    ::std::atomic<uint64_t> totalTrainingSteps{0};
+    ::std::atomic<float> averageLoss{0.0f};
+    ::std::atomic<float> averageReward{0.0f};
+    ::std::atomic<uint64_t> totalExperiences{0};
+    ::std::atomic<uint64_t> modelUpdates{0};
+    ::std::atomic<uint64_t> totalInferenceTimeUs{0};
+    ::std::atomic<uint64_t> totalTrainingTimeUs{0};
 
     float GetAccuracy() const
     {
@@ -101,7 +101,7 @@ public:
     bool IsEnabled() const { return _enabled; }
 
     // Performance recording
-    void StartOperation(uint32_t botGuid, MLOperationType operation, const std::string& context = "");
+    void StartOperation(uint32_t botGuid, MLOperationType operation, const ::std::string& context = "");
     void EndOperation(uint32_t botGuid, MLOperationType operation, bool success = true,
                      uint32_t samplesProcessed = 1);
     void RecordSample(const MLPerformanceSample& sample);
@@ -126,11 +126,11 @@ public:
 
     // Performance analysis
     bool IsMLPerformanceAcceptable() const;
-    std::vector<std::string> GetPerformanceIssues() const;
-    void GenerateMLPerformanceReport(std::string& report) const;
+    ::std::vector<::std::string> GetPerformanceIssues() const;
+    void GenerateMLPerformanceReport(::std::string& report) const;
 
     // Optimization suggestions
-    std::vector<std::string> GetOptimizationSuggestions() const;
+    ::std::vector<::std::string> GetOptimizationSuggestions() const;
     bool ShouldReduceMLComplexity() const;
     bool ShouldIncreaseMLBatchSize() const;
 
@@ -159,45 +159,45 @@ private:
 
     // System state
     bool _initialized;
-    std::atomic<bool> _enabled;
+    ::std::atomic<bool> _enabled;
 
     // Active operations tracking
     struct ActiveOperation
     {
         MLOperationType type;
         uint64_t startTime;
-        std::string context;
+        ::std::string context;
     };
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _operationsMutex;
-    std::unordered_map<uint32_t, std::unordered_map<MLOperationType, ActiveOperation>> _activeOperations;
+    ::std::unordered_map<uint32_t, ::std::unordered_map<MLOperationType, ActiveOperation>> _activeOperations;
 
     // Performance samples
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _samplesMutex;
-    std::deque<MLPerformanceSample> _recentSamples;
+    ::std::deque<MLPerformanceSample> _recentSamples;
     static constexpr size_t MAX_SAMPLES = 10000;
 
     // Model statistics per bot
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _statsMutex;
-    std::unordered_map<uint32_t, ModelStatistics> _botStatistics;
+    ::std::unordered_map<uint32_t, ModelStatistics> _botStatistics;
 
     // Operation metrics
     struct OperationMetrics
     {
-        std::atomic<uint64_t> totalCount{0};
-        std::atomic<uint64_t> totalTimeUs{0};
-        std::atomic<uint64_t> totalSamples{0};
-        std::atomic<uint64_t> failureCount{0};
-        std::atomic<uint64_t> maxTimeUs{0};
-        std::atomic<uint64_t> minTimeUs{UINT64_MAX};
+        ::std::atomic<uint64_t> totalCount{0};
+        ::std::atomic<uint64_t> totalTimeUs{0};
+        ::std::atomic<uint64_t> totalSamples{0};
+        ::std::atomic<uint64_t> failureCount{0};
+        ::std::atomic<uint64_t> maxTimeUs{0};
+        ::std::atomic<uint64_t> minTimeUs{UINT64_MAX};
     };
 
-    std::unordered_map<MLOperationType, OperationMetrics> _operationMetrics;
+    ::std::unordered_map<MLOperationType, OperationMetrics> _operationMetrics;
 
     // Memory tracking
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _memoryMutex;
-    std::unordered_map<uint32_t, std::unordered_map<MLOperationType, uint64_t>> _memoryUsage;
-    std::atomic<uint64_t> _totalMLMemory{0};
+    ::std::unordered_map<uint32_t, ::std::unordered_map<MLOperationType, uint64_t>> _memoryUsage;
+    ::std::atomic<uint64_t> _totalMLMemory{0};
 
     // Performance configuration
     float _maxMLOverheadPercent;
@@ -205,9 +205,9 @@ private:
     PerformanceLimits _limits;
 
     // System metrics
-    std::chrono::steady_clock::time_point _startTime;
-    std::atomic<uint64_t> _totalMLOperations{0};
-    std::atomic<uint64_t> _totalMLTimeUs{0};
+    ::std::chrono::steady_clock::time_point _startTime;
+    ::std::atomic<uint64_t> _totalMLOperations{0};
+    ::std::atomic<uint64_t> _totalMLTimeUs{0};
 
     // Helper methods
     uint64_t GetCurrentTimeMicroseconds() const;
@@ -221,7 +221,7 @@ private:
 class TC_GAME_API ScopedMLOperation
 {
 public:
-    ScopedMLOperation(uint32_t botGuid, MLOperationType operation, const std::string& context = "");
+    ScopedMLOperation(uint32_t botGuid, MLOperationType operation, const ::std::string& context = "");
     ~ScopedMLOperation();
 
     void SetSamplesProcessed(uint32_t count) { _samplesProcessed = count; }
@@ -231,11 +231,11 @@ public:
 private:
     uint32_t _botGuid;
     MLOperationType _operation;
-    std::string _context;
+    ::std::string _context;
     uint32_t _samplesProcessed;
     bool _success;
     uint64_t _memoryUsed;
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _startTime;
 };
 
 #define sMLPerformanceTracker MLPerformanceTracker::Instance()

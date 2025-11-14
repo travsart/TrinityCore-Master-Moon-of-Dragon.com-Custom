@@ -33,7 +33,7 @@ class SocketCrashAnalyzer
 public:
     static void AnalyzeSocketCrashScenarios()
     {
-        TC_LOG_INFO("test.playerbot", "🔍 Starting Socket Crash Analysis");
+        TC_LOG_INFO("test.playerbot", " Starting Socket Crash Analysis");
         TC_LOG_INFO("test.playerbot", "Target: ACCESS_VIOLATION at Socket.h:230 (_openState.fetch_or)");
 
         TestScenario1_DirectSocketAccess();
@@ -43,7 +43,7 @@ public:
         TestScenario5_AtomicOperationValidation();
         TestScenario6_UnguardedCodePaths();
 
-        TC_LOG_INFO("test.playerbot", "🔍 Socket Crash Analysis Complete");
+        TC_LOG_INFO("test.playerbot", " Socket Crash Analysis Complete");
     }
 
 private:
@@ -53,19 +53,19 @@ private:
      */
     static void TestScenario1_DirectSocketAccess()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 1: Direct Socket Access Analysis");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 1: Direct Socket Access Analysis");
 
         try {
             auto botSession = BotSession::Create(99999);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ BotSession created, analyzing socket access patterns...");
+            TC_LOG_INFO("test.playerbot", " BotSession created, analyzing socket access patterns...");
 
             // Test 1.1: Check if m_Socket array contains null pointers as expected
-            TC_LOG_INFO("test.playerbot", "🔍 Testing socket array state...");
+            TC_LOG_INFO("test.playerbot", " Testing socket array state...");
 
             // We can't directly access m_Socket as it's private, but we can test the public interface
             bool disconnected = botSession->PlayerDisconnected();
@@ -77,17 +77,17 @@ private:
             TC_LOG_INFO("test.playerbot", "HasSocket(): {}, IsSocketOpen(): {}", hasSocket, socketOpen);
 
             // Test the dangerous CloseSocket() method that should be overridden
-            TC_LOG_INFO("test.playerbot", "🔍 Testing CloseSocket() override...");
+            TC_LOG_INFO("test.playerbot", " Testing CloseSocket() override...");
             botSession->CloseSocket(); // This should be safe due to override
-            TC_LOG_INFO("test.playerbot", "✅ CloseSocket() call completed without crash");
+            TC_LOG_INFO("test.playerbot", " CloseSocket() call completed without crash");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 1 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 1 Exception: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 1 Unknown exception");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 1 Unknown exception");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 1 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 1 Complete");
     }
 
     /**
@@ -96,12 +96,12 @@ private:
      */
     static void TestScenario2_WorldSessionUpdatePaths()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 2: WorldSession Update Path Analysis");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 2: WorldSession Update Path Analysis");
 
         try {
             auto botSession = BotSession::Create(99998);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
 
@@ -114,13 +114,13 @@ private:
             } filter;
 
             // Test 2.1: Safe Update path (ProcessUnsafe = false)
-            TC_LOG_INFO("test.playerbot", "🔍 Testing SAFE update path...");
+            TC_LOG_INFO("test.playerbot", " Testing SAFE update path...");
             filter.unsafe_mode = false;
             bool result1 = botSession->Update(100, filter);
             TC_LOG_INFO("test.playerbot", "Safe update result: {}", result1);
 
             // Test 2.2: Unsafe Update path (ProcessUnsafe = true) - this triggers socket cleanup code
-            TC_LOG_INFO("test.playerbot", "🔍 Testing UNSAFE update path (potential crash location)...");
+            TC_LOG_INFO("test.playerbot", " Testing UNSAFE update path (potential crash location)...");
             filter.unsafe_mode = true;
 
             // This is the critical test - the unsafe path contains the socket cleanup code
@@ -129,7 +129,7 @@ private:
             TC_LOG_INFO("test.playerbot", "Unsafe update result: {}", result2);
 
             // Test 2.3: Force timeout condition
-            TC_LOG_INFO("test.playerbot", "🔍 Testing timeout condition...");
+            TC_LOG_INFO("test.playerbot", " Testing timeout condition...");
 
             // Set timeout to trigger idle connection check
             botSession->ResetTimeOutTime(false);
@@ -141,12 +141,12 @@ private:
             TC_LOG_INFO("test.playerbot", "Timeout condition update result: {}", result3);
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 2 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 2 Exception: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 2 Unknown exception");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 2 Unknown exception");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 2 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 2 Complete");
     }
 
     /**
@@ -155,15 +155,15 @@ private:
      */
     static void TestScenario3_GuardEffectiveness()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 3: Guard Effectiveness Analysis");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 3: Guard Effectiveness Analysis");
 
 #ifdef BUILD_PLAYERBOT
-        TC_LOG_INFO("test.playerbot", "✅ BUILD_PLAYERBOT is defined");
+        TC_LOG_INFO("test.playerbot", " BUILD_PLAYERBOT is defined");
 
         try {
             auto botSession = BotSession::Create(99997);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
 
@@ -172,13 +172,13 @@ private:
             TC_LOG_INFO("test.playerbot", "IsBot() during construction: {}", isBot);
 
             if (!isBot) {
-                TC_LOG_ERROR("test.playerbot", "❌ CRITICAL: IsBot() returns false - guards will NOT work!");
-                TC_LOG_ERROR("test.playerbot", "❌ This explains why socket crashes still occur");
+                TC_LOG_ERROR("test.playerbot", " CRITICAL: IsBot() returns false - guards will NOT work!");
+                TC_LOG_ERROR("test.playerbot", " This explains why socket crashes still occur");
             }
 
             // Test 3.2: Check if the WorldSession constructor properly sets the bot flag
             // We need to examine the actual WorldSession state
-            TC_LOG_INFO("test.playerbot", "🔍 Examining WorldSession constructor behavior...");
+            TC_LOG_INFO("test.playerbot", " Examining WorldSession constructor behavior...");
 
             // Create another session to test consistency
             auto botSession2 = BotSession::Create(99996);
@@ -187,22 +187,22 @@ private:
                 TC_LOG_INFO("test.playerbot", "Second session IsBot(): {}", isBot2);
 
                 if (isBot != isBot2) {
-                    TC_LOG_ERROR("test.playerbot", "❌ INCONSISTENT: IsBot() results vary between sessions!");
+                    TC_LOG_ERROR("test.playerbot", " INCONSISTENT: IsBot() results vary between sessions!");
                 }
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 3 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 3 Exception: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 3 Unknown exception");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 3 Unknown exception");
         }
 
 #else
-        TC_LOG_ERROR("test.playerbot", "❌ BUILD_PLAYERBOT is NOT defined - guards are inactive!");
-        TC_LOG_ERROR("test.playerbot", "❌ This explains the socket crashes - recompile with BUILD_PLAYERBOT=1");
+        TC_LOG_ERROR("test.playerbot", " BUILD_PLAYERBOT is NOT defined - guards are inactive!");
+        TC_LOG_ERROR("test.playerbot", " This explains the socket crashes - recompile with BUILD_PLAYERBOT=1");
 #endif
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 3 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 3 Complete");
     }
 
     /**
@@ -211,19 +211,19 @@ private:
      */
     static void TestScenario4_SocketLifecycle()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 4: Socket Lifecycle Analysis");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 4: Socket Lifecycle Analysis");
 
         try {
-            TC_LOG_INFO("test.playerbot", "🔍 Testing socket lifecycle during session destruction...");
+            TC_LOG_INFO("test.playerbot", " Testing socket lifecycle during session destruction...");
 
             {
                 auto botSession = BotSession::Create(99995);
                 if (!botSession) {
-                    TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                    TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                     return;
                 }
 
-                TC_LOG_INFO("test.playerbot", "✅ BotSession created in scope");
+                TC_LOG_INFO("test.playerbot", " BotSession created in scope");
 
                 // Force some operations that might set up state
                 class LifecycleFilter : public PacketFilter {
@@ -234,13 +234,13 @@ private:
 
                 botSession->Update(50, filter);
 
-                TC_LOG_INFO("test.playerbot", "✅ Update completed, about to leave scope...");
+                TC_LOG_INFO("test.playerbot", " Update completed, about to leave scope...");
             } // BotSession destructor should be called here
 
-            TC_LOG_INFO("test.playerbot", "✅ BotSession destroyed without crash");
+            TC_LOG_INFO("test.playerbot", " BotSession destroyed without crash");
 
             // Test rapid creation/destruction cycles
-            TC_LOG_INFO("test.playerbot", "🔍 Testing rapid creation/destruction cycles...");
+            TC_LOG_INFO("test.playerbot", " Testing rapid creation/destruction cycles...");
 
             for (int i = 0; i < 5; ++i) {
                 auto tempSession = BotSession::Create(99990 + i);
@@ -250,15 +250,15 @@ private:
                 }
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ Rapid cycles completed without crash");
+            TC_LOG_INFO("test.playerbot", " Rapid cycles completed without crash");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 4 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 4 Exception: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 4 Unknown exception");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 4 Unknown exception");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 4 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 4 Complete");
     }
 
     /**
@@ -267,16 +267,16 @@ private:
      */
     static void TestScenario5_AtomicOperationValidation()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 5: Atomic Operation Validation");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 5: Atomic Operation Validation");
 
         try {
             auto botSession = BotSession::Create(99994);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "🔍 Testing conditions that trigger _openState.fetch_or...");
+            TC_LOG_INFO("test.playerbot", " Testing conditions that trigger _openState.fetch_or...");
 
             // The crash occurs when CloseSocket() is called on a Socket object
             // where the _openState atomic variable is invalid/corrupted
@@ -298,15 +298,15 @@ private:
                 TC_LOG_DEBUG("test.playerbot", "CloseSocket() call {} completed", i);
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ All atomic operations completed safely");
+            TC_LOG_INFO("test.playerbot", " All atomic operations completed safely");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 5 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 5 Exception: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 5 Unknown exception");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 5 Unknown exception");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 5 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 5 Complete");
     }
 
     /**
@@ -315,16 +315,16 @@ private:
      */
     static void TestScenario6_UnguardedCodePaths()
     {
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 6: Unguarded Code Path Analysis");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 6: Unguarded Code Path Analysis");
 
         try {
             auto botSession = BotSession::Create(99993);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession for testing");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "🔍 Searching for unguarded socket access paths...");
+            TC_LOG_INFO("test.playerbot", " Searching for unguarded socket access paths...");
 
             // Test 6.1: Check for socket access during packet processing
             TC_LOG_INFO("test.playerbot", "Testing packet processing paths...");
@@ -359,16 +359,16 @@ private:
             // Look for operations that might not check IsBot() before accessing sockets
             // These would be the unguarded paths causing the crash
 
-            TC_LOG_INFO("test.playerbot", "✅ Unguarded path analysis completed");
+            TC_LOG_INFO("test.playerbot", " Unguarded path analysis completed");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 6 Exception: {}", e.what());
-            TC_LOG_ERROR("test.playerbot", "❌ This exception might indicate an unguarded code path!");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 6 Exception: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " This exception might indicate an unguarded code path!");
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ SCENARIO 6 Unknown exception - possible unguarded path!");
+            TC_LOG_ERROR("test.playerbot", " SCENARIO 6 Unknown exception - possible unguarded path!");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 SCENARIO 6 Complete");
+        TC_LOG_INFO("test.playerbot", " SCENARIO 6 Complete");
     }
 };
 
@@ -378,12 +378,12 @@ private:
  */
 void RunSocketCrashAnalysis()
 {
-    TC_LOG_INFO("test.playerbot", "🚨 SOCKET CRASH ANALYSIS STARTING");
-    TC_LOG_INFO("test.playerbot", "🚨 Purpose: Find root cause of ACCESS_VIOLATION at Socket.h:230");
-    TC_LOG_INFO("test.playerbot", "🚨 Crash signature: _openState.fetch_or() on invalid socket object");
+    TC_LOG_INFO("test.playerbot", " SOCKET CRASH ANALYSIS STARTING");
+    TC_LOG_INFO("test.playerbot", " Purpose: Find root cause of ACCESS_VIOLATION at Socket.h:230");
+    TC_LOG_INFO("test.playerbot", " Crash signature: _openState.fetch_or() on invalid socket object");
 
     SocketCrashAnalyzer::AnalyzeSocketCrashScenarios();
 
-    TC_LOG_INFO("test.playerbot", "🚨 SOCKET CRASH ANALYSIS COMPLETE");
-    TC_LOG_INFO("test.playerbot", "🚨 Check logs above for identified issues");
+    TC_LOG_INFO("test.playerbot", " SOCKET CRASH ANALYSIS COMPLETE");
+    TC_LOG_INFO("test.playerbot", " Check logs above for identified issues");
 }

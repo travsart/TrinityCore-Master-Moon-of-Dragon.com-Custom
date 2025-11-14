@@ -34,7 +34,7 @@ void ObjectCache::SetGroupLeader(Player* leader)
     _groupLeaderGuid = leader ? leader->GetGUID() : ObjectGuid::Empty;
 }
 
-void ObjectCache::SetGroupMembers(std::vector<Player*> const& members)
+void ObjectCache::SetGroupMembers(::std::vector<Player*> const& members)
 {
     _cachedGroupMembers = members;
     _groupMemberGuids.clear();
@@ -103,7 +103,7 @@ Player* ObjectCache::GetGroupLeader() const
     return nullptr;
 }
 
-std::vector<Player*> const& ObjectCache::GetGroupMembers() const
+::std::vector<Player*> const& ObjectCache::GetGroupMembers() const
 {
     if (!_cachedGroupMembers.empty())
         _stats.cacheHits++;

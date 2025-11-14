@@ -51,7 +51,7 @@ public:
      * @param bot Player to create AI for
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreateAI(Player* bot) = 0;
+    virtual ::std::unique_ptr<BotAI> CreateAI(Player* bot) = 0;
 
     /**
      * @brief Create class-specific AI
@@ -60,7 +60,7 @@ public:
      * @param classId Class ID (CLASS_WARRIOR, CLASS_MAGE, etc.)
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) = 0;
+    virtual ::std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) = 0;
 
     /**
      * @brief Create class and spec-specific AI
@@ -70,7 +70,7 @@ public:
      * @param spec Specialization ID
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) = 0;
+    virtual ::std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) = 0;
 
     /**
      * @brief Create specialized AI by type
@@ -79,7 +79,7 @@ public:
      * @param type AI type string (e.g., "pvp", "raid", "dungeon")
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type) = 0;
+    virtual ::std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, ::std::string const& type) = 0;
 
     /**
      * @brief Create PvP-oriented AI
@@ -87,7 +87,7 @@ public:
      * @param bot Player to create AI for
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreatePvPAI(Player* bot) = 0;
+    virtual ::std::unique_ptr<BotAI> CreatePvPAI(Player* bot) = 0;
 
     /**
      * @brief Create PvE-oriented AI
@@ -95,7 +95,7 @@ public:
      * @param bot Player to create AI for
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreatePvEAI(Player* bot) = 0;
+    virtual ::std::unique_ptr<BotAI> CreatePvEAI(Player* bot) = 0;
 
     /**
      * @brief Create raid-oriented AI
@@ -103,7 +103,7 @@ public:
      * @param bot Player to create AI for
      * @return Unique pointer to created AI, or nullptr on failure
      */
-    virtual std::unique_ptr<BotAI> CreateRaidAI(Player* bot) = 0;
+    virtual ::std::unique_ptr<BotAI> CreateRaidAI(Player* bot) = 0;
 
     /**
      * @brief Register custom AI creator
@@ -111,8 +111,8 @@ public:
      * @param type AI type identifier
      * @param creator Function that creates AI instance
      */
-    virtual void RegisterAICreator(std::string const& type,
-                                   std::function<std::unique_ptr<BotAI>(Player*)> creator) = 0;
+    virtual void RegisterAICreator(::std::string const& type,
+                                   ::std::function<::std::unique_ptr<BotAI>(Player*)> creator) = 0;
 
     /**
      * @brief Initialize default triggers for AI

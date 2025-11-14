@@ -138,46 +138,46 @@ bool BotSpawner::Initialize()
     TC_LOG_INFO("module.playerbot", "  - Initializing ResourceMonitor...");
     if (!_resourceMonitor.Initialize())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize ResourceMonitor");
+        TC_LOG_ERROR("module.playerbot", " Failed to initialize ResourceMonitor");
         return false;
     }
-    TC_LOG_INFO("module.playerbot", "  ✅ ResourceMonitor initialized successfully");
+    TC_LOG_INFO("module.playerbot", "   ResourceMonitor initialized successfully");
 
     // Step 5.2: Initialize SpawnCircuitBreaker
     TC_LOG_INFO("module.playerbot", "  - Initializing SpawnCircuitBreaker...");
     if (!_circuitBreaker.Initialize())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize SpawnCircuitBreaker");
+        TC_LOG_ERROR("module.playerbot", " Failed to initialize SpawnCircuitBreaker");
         return false;
     }
-    TC_LOG_INFO("module.playerbot", "  ✅ SpawnCircuitBreaker initialized successfully");
+    TC_LOG_INFO("module.playerbot", "   SpawnCircuitBreaker initialized successfully");
 
     // Step 5.3: Initialize AdaptiveSpawnThrottler (requires ResourceMonitor and CircuitBreaker)
     TC_LOG_INFO("module.playerbot", "  - Initializing AdaptiveSpawnThrottler...");
     if (!_throttler.Initialize(&_resourceMonitor, &_circuitBreaker))
     {
-        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize AdaptiveSpawnThrottler");
+        TC_LOG_ERROR("module.playerbot", " Failed to initialize AdaptiveSpawnThrottler");
         return false;
     }
-    TC_LOG_INFO("module.playerbot", "  ✅ AdaptiveSpawnThrottler initialized successfully");
+    TC_LOG_INFO("module.playerbot", "   AdaptiveSpawnThrottler initialized successfully");
 
     // Step 5.4: Initialize StartupSpawnOrchestrator (requires PriorityQueue and Throttler)
     TC_LOG_INFO("module.playerbot", "  - Initializing StartupSpawnOrchestrator...");
     if (!_orchestrator.Initialize(&_priorityQueue, &_throttler))
     {
-        TC_LOG_ERROR("module.playerbot", "❌ Failed to initialize StartupSpawnOrchestrator");
+        TC_LOG_ERROR("module.playerbot", " Failed to initialize StartupSpawnOrchestrator");
         return false;
     }
-    TC_LOG_INFO("module.playerbot", "  ✅ StartupSpawnOrchestrator initialized successfully");
+    TC_LOG_INFO("module.playerbot", "   StartupSpawnOrchestrator initialized successfully");
 
     // Step 5.5: Begin phased startup sequence
     TC_LOG_INFO("module.playerbot", "  - Beginning phased startup sequence...");
     _orchestrator.BeginStartup();
-    TC_LOG_INFO("module.playerbot", "  ✅ Phased startup sequence initiated");
+    TC_LOG_INFO("module.playerbot", "   Phased startup sequence initiated");
 
     // Mark Phase 2 as initialized
     _phase2Initialized = true;
-    TC_LOG_INFO("module.playerbot", "✅ Phase 2 Adaptive Throttling System fully initialized");
+    TC_LOG_INFO("module.playerbot", " Phase 2 Adaptive Throttling System fully initialized");
     TC_LOG_INFO("module.playerbot", "   - ResourceMonitor: Monitoring CPU, memory, DB, maps");
     TC_LOG_INFO("module.playerbot", "   - CircuitBreaker: Protecting against spawn failures");
     TC_LOG_INFO("module.playerbot", "   - SpawnThrottler: Dynamic spawn rate (0.2-20 bots/sec)");
@@ -301,7 +301,7 @@ void BotSpawner::Update(uint32 diff)
         // ====================================================================
         // Phase 2: Dequeue from appropriate queue
         // ====================================================================
-        std::vector<SpawnRequest> requestBatch;
+        ::std::vector<SpawnRequest> requestBatch;
 
         if (_phase2Initialized)
         {
@@ -426,7 +426,7 @@ void BotSpawner::Update(uint32 diff)
     }
 
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.spawner", "CRITICAL EXCEPTION in BotSpawner::Update: {}", ex.what());
         TC_LOG_ERROR("module.playerbot.spawner", "Disabling spawner to prevent further crashes");
@@ -514,12 +514,12 @@ bool BotSpawner::SpawnBot(SpawnRequest const& request)
     return SpawnBotInternal(request);
 }
 
-uint32 BotSpawner::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 BotSpawner::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     uint32 successCount = 0;
 
     // Collect valid requests first
-    std::vector<SpawnRequest> validRequests;
+    ::std::vector<SpawnRequest> validRequests;
     for (SpawnRequest const& request : requests)
     {
         if (ValidateSpawnRequest(request))
@@ -586,7 +586,7 @@ uint32 BotSpawner::SpawnBots(std::vector<SpawnRequest> const& requests)
         else
         {
             // Phase 2 DISABLED: Use legacy spawn queue (backward compatibility)
-            std::lock_guard lock(_spawnQueueMutex);
+            ::std::lock_guard lock(_spawnQueueMutex);
             for (SpawnRequest const& request : validRequests)
             {
                 _spawnQueue.push(request);
@@ -605,7 +605,7 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 {
     TC_LOG_TRACE("module.playerbot.spawner", "SpawnBotInternal called for zone {}, account {}", request.zoneId, request.accountId);
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
     _stats.spawnAttempts.fetch_add(1);
 
     // Select character for spawning - ASYNC PATTERN for 5000 bot scalability
@@ -639,7 +639,7 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 
 bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
 {
-    TC_LOG_INFO("module.playerbot.spawner", "🎮 Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
+    TC_LOG_INFO("module.playerbot.spawner", " Creating bot session for account {}, character {}", accountId, characterGuid.ToString());
 
     // DISABLED: Legacy BotSessionMgr creates invalid account IDs
     // Use the BotSessionMgr to create a new bot session with ASYNC character login (legacy approach)
@@ -647,7 +647,7 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
     // if (!session)
     // {
     //     TC_LOG_ERROR("module.playerbot.spawner",
-    //         "🎮 Failed to create async bot session for account {}", accountId);
+    //         " Failed to create async bot session for account {}", accountId);
     //     return false;
     // }
 
@@ -655,12 +655,12 @@ bool BotSpawner::CreateBotSession(uint32 accountId, ObjectGuid characterGuid)
     if (!Playerbot::sBotWorldSessionMgr->AddPlayerBot(characterGuid, accountId))
     {
         TC_LOG_ERROR("module.playerbot.spawner",
-            "🎮 Failed to create native WorldSession for character {}", characterGuid.ToString());
+            " Failed to create native WorldSession for character {}", characterGuid.ToString());
         return false; // Fail if the primary system fails
     }
 
     TC_LOG_INFO("module.playerbot.spawner",
-        "🎮 Successfully created bot session and started async login for character {} for account {}",
+        " Successfully created bot session and started async login for character {} for account {}",
         characterGuid.ToString(), accountId);
 
     return true;
@@ -775,7 +775,7 @@ ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)
     TC_LOG_TRACE("module.playerbot.spawner", "Selecting character for spawn request");
 
     // Get available accounts if not specified
-    std::vector<uint32> accounts;
+    ::std::vector<uint32> accounts;
     if (request.accountId != 0)
     {
         TC_LOG_TRACE("module.playerbot.spawner", "Using specified account {}", request.accountId);
@@ -806,13 +806,13 @@ ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)
     for (uint32 accountId : accounts)
     {
         TC_LOG_TRACE("module.playerbot.spawner", "Checking account {} for characters", accountId);
-        std::vector<ObjectGuid> characters = GetAvailableCharacters(accountId, request);
+        ::std::vector<ObjectGuid> characters = GetAvailableCharacters(accountId, request);
         if (!characters.empty())
         {
             TC_LOG_TRACE("module.playerbot.spawner", "Found {} existing characters for account {}", characters.size(), accountId);
             // CRITICAL FIX: Use DETERMINISTIC character selection instead of random to prevent session conflicts
             // Always pick the first character (lowest GUID) to ensure consistency
-            TC_LOG_INFO("module.playerbot.spawner", "🎲 DETERMINISTIC: Selecting first character {} from {} available for account {}",
+            TC_LOG_INFO("module.playerbot.spawner", " DETERMINISTIC: Selecting first character {} from {} available for account {}",
                 characters[0].ToString(), characters.size(), accountId);
             return characters[0];
         }
@@ -841,12 +841,12 @@ ObjectGuid BotSpawner::SelectCharacterForSpawn(SpawnRequest const& request)
     return ObjectGuid::Empty;
 }
 
-void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
+void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, ::std::function<void(ObjectGuid)> callback)
 {
     TC_LOG_TRACE("module.playerbot.spawner", "Selecting character for spawn request asynchronously");
 
     // Get available accounts if not specified
-    std::vector<uint32> accounts;
+    ::std::vector<uint32> accounts;
     if (request.accountId != 0)
     {
         TC_LOG_TRACE("module.playerbot.spawner", "Using specified account {}", request.accountId);
@@ -875,12 +875,12 @@ void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, std::
     }
 
     // Start async recursive character selection for 5000 bot scalability
-    SelectCharacterAsyncRecursive(std::move(accounts), 0, request, std::move(callback));
+    SelectCharacterAsyncRecursive(::std::move(accounts), 0, request, ::std::move(callback));
 }
 
-std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, SpawnRequest const& request)
+::std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, SpawnRequest const& request)
 {
-    std::vector<ObjectGuid> availableCharacters;
+    ::std::vector<ObjectGuid> availableCharacters;
 
     // ========================================================================
     // HIGH PRIORITY TODO FIXED: Add level/race/class filtering
@@ -890,7 +890,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     try
     {
         // Build SQL query with proper filtering
-        std::ostringstream query;
+        ::std::ostringstream query;
         query << "SELECT guid, level, race, class FROM characters WHERE account = " << accountId;
 
         // Add filters if specified in SpawnRequest
@@ -936,7 +936,7 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
             } while (result->NextRow());
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "Database error while getting characters for account {}: {}", accountId, e.what());
@@ -967,43 +967,43 @@ std::vector<ObjectGuid> BotSpawner::GetAvailableCharacters(uint32 accountId, Spa
     return availableCharacters;
 }
 
-void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, std::function<void(std::vector<ObjectGuid>)> callback)
+void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, ::std::function<void(::std::vector<ObjectGuid>)> callback)
 {
     // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking - use safe statement access to prevent memory corruption
     CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID, "CHAR_SEL_CHARS_BY_ACCOUNT_ID");
     if (!stmt) {
-        callback(std::vector<ObjectGuid>());
+        callback(::std::vector<ObjectGuid>());
         return;
     }
     stmt->setUInt32(0, accountId);
 
     auto queryCallback = [this, accountId, request, callback](PreparedQueryResult result) mutable
     {
-        TC_LOG_INFO("module.playerbot.spawner", "🔧 GetAvailableCharactersAsync callback for account {}, result: {}",
+        TC_LOG_INFO("module.playerbot.spawner", " GetAvailableCharactersAsync callback for account {}, result: {}",
             accountId, result ? "has data" : "null");
 
-        std::vector<ObjectGuid> availableCharacters;
+        ::std::vector<ObjectGuid> availableCharacters;
 
         try
         {
             if (result)
             {
                 availableCharacters.reserve(result->GetRowCount());
-                TC_LOG_INFO("module.playerbot.spawner", "🔧 Found {} characters for account {}", result->GetRowCount(), accountId);
+                TC_LOG_INFO("module.playerbot.spawner", " Found {} characters for account {}", result->GetRowCount(), accountId);
                 do
                 {
                     Field* fields = result->Fetch();
                     ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64());
                     availableCharacters.push_back(characterGuid);
-                    TC_LOG_INFO("module.playerbot.spawner", "🔧 Character found: {}", characterGuid.ToString());
+                    TC_LOG_INFO("module.playerbot.spawner", " Character found: {}", characterGuid.ToString());
                 } while (result->NextRow());
             }
             else
             {
-                TC_LOG_INFO("module.playerbot.spawner", "🔧 No characters found for account {}", accountId);
+                TC_LOG_INFO("module.playerbot.spawner", " No characters found for account {}", accountId);
             }
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.spawner",
                 "Database error while processing characters for account {}: {}", accountId, e.what());
@@ -1026,18 +1026,18 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
         }
 
         // Always call callback with results (empty on error)
-        callback(std::move(availableCharacters));
+        callback(::std::move(availableCharacters));
     };
 
     // Use PlayerbotCharacterDBInterface for safe async execution with automatic sync/async routing
     TC_LOG_INFO("module.playerbot.spawner",
-        "🔍 About to execute AsyncQuery for CHAR_SEL_CHARS_BY_ACCOUNT_ID (statement {}) on playerbot_characters database through PlayerbotCharacterDBInterface",
+        " About to execute AsyncQuery for CHAR_SEL_CHARS_BY_ACCOUNT_ID (statement {}) on playerbot_characters database through PlayerbotCharacterDBInterface",
         static_cast<uint32>(CHAR_SEL_CHARS_BY_ACCOUNT_ID));
 
-    sPlayerbotCharDB->ExecuteAsync(stmt, std::move(queryCallback));
+    sPlayerbotCharDB->ExecuteAsync(stmt, ::std::move(queryCallback));
 }
 
-void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, size_t index, SpawnRequest const& request, std::function<void(ObjectGuid)> callback)
+void BotSpawner::SelectCharacterAsyncRecursive(::std::vector<uint32> accounts, size_t index, SpawnRequest const& request, ::std::function<void(ObjectGuid)> callback)
 {
     if (index >= accounts.size())
     {
@@ -1049,29 +1049,29 @@ void BotSpawner::SelectCharacterAsyncRecursive(std::vector<uint32> accounts, siz
     uint32 accountId = accounts[index];
     TC_LOG_TRACE("module.playerbot.spawner", "Async checking account {} for characters", accountId);
 
-    GetAvailableCharactersAsync(accountId, request, [this, accounts = std::move(accounts), index, request, callback](std::vector<ObjectGuid> characters) mutable
+    GetAvailableCharactersAsync(accountId, request, [this, accounts = ::std::move(accounts), index, request, callback](::std::vector<ObjectGuid> characters) mutable
     {
         if (!characters.empty())
         {
-            TC_LOG_INFO("module.playerbot.spawner", "🎯 Found {} existing characters for account {}", characters.size(), accounts[index]);
+            TC_LOG_INFO("module.playerbot.spawner", " Found {} existing characters for account {}", characters.size(), accounts[index]);
             // Pick a random character from available ones
             uint32 charIndex = urand(0, characters.size() - 1);
             ObjectGuid selectedGuid = characters[charIndex];
-            TC_LOG_INFO("module.playerbot.spawner", "🎯 Selected character {} for spawning", selectedGuid.ToString());
+            TC_LOG_INFO("module.playerbot.spawner", " Selected character {} for spawning", selectedGuid.ToString());
             callback(selectedGuid);
         }
         else
         {
-            TC_LOG_INFO("module.playerbot.spawner", "🎯 No characters found for account {}, trying next account", accounts[index]);
+            TC_LOG_INFO("module.playerbot.spawner", " No characters found for account {}, trying next account", accounts[index]);
             // Try next account
-            SelectCharacterAsyncRecursive(std::move(accounts), index + 1, request, callback);
+            SelectCharacterAsyncRecursive(::std::move(accounts), index + 1, request, callback);
         }
     });
 }
 
 void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnRequest const& request)
 {
-    TC_LOG_INFO("module.playerbot.spawner", "🚀 ContinueSpawnWithCharacter called for {}", characterGuid.ToString());
+    TC_LOG_INFO("module.playerbot.spawner", " ContinueSpawnWithCharacter called for {}", characterGuid.ToString());
 
     // Get the actual account ID from the character
     uint32 actualAccountId = GetAccountIdFromCharacter(characterGuid);
@@ -1085,7 +1085,7 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
         return;
     }
 
-    TC_LOG_INFO("module.playerbot.spawner", "🚀 Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
+    TC_LOG_INFO("module.playerbot.spawner", " Continuing spawn with character {} for account {}", characterGuid.ToString(), actualAccountId);
 
     // Create bot session
     if (!CreateBotSession(actualAccountId, characterGuid))
@@ -1110,7 +1110,7 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
         _botsByZone[zoneId].push_back(characterGuid);
 
         // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_add(1, std::memory_order_release);
+        _activeBotCount.fetch_add(1, ::std::memory_order_release);
     }
 
     // Update statistics
@@ -1154,7 +1154,7 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
             return accountId;
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.spawner",
             "Database error while getting account ID for character {}: {}", characterGuid.ToString(), e.what());
@@ -1183,14 +1183,14 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
         _activeBots.erase(it);
 
         // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
-        _activeBotCount.fetch_sub(1, std::memory_order_release);
+        _activeBotCount.fetch_sub(1, ::std::memory_order_release);
 
         // Remove from zone tracking
         auto zoneIt = _botsByZone.find(zoneId);
         if (zoneIt != _botsByZone.end())
         {
             auto& bots = zoneIt->second;
-            bots.erase(std::remove(bots.begin(), bots.end(), guid), bots.end());
+            bots.erase(::std::remove(bots.begin(), bots.end(), guid), bots.end());
         }
     }
 
@@ -1220,7 +1220,7 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
 
 void BotSpawner::DespawnAllBots()
 {
-    std::vector<ObjectGuid> botsToRemove;
+    ::std::vector<ObjectGuid> botsToRemove;
     {
         for (auto const& [guid, zoneId] : _activeBots)
         {
@@ -1250,7 +1250,7 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
     {
         // For now, assume players are distributed across starter zones
         // This ensures bots spawn when real players are online
-        playerCount = std::max(1u, realPlayerSessions);
+        playerCount = ::std::max(1u, realPlayerSessions);
         TC_LOG_TRACE("module.playerbot.spawner", "Zone {} has {} real players (cached count)",
                      zoneId, playerCount);
     }
@@ -1272,7 +1272,7 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
         {
             it->second.playerCount = playerCount;
             it->second.botCount = botCount;
-            it->second.lastUpdate = std::chrono::system_clock::now();
+            it->second.lastUpdate = ::std::chrono::system_clock::now();
             zoneExists = true;
         }
     }
@@ -1311,7 +1311,7 @@ uint32 BotSpawner::GetActiveBotCount() const
 {
     // LOCK-FREE OPTIMIZATION: Use atomic counter for hot path
     // This method is called thousands of times per second with 5000 bots
-    return _activeBotCount.load(std::memory_order_acquire);
+    return _activeBotCount.load(::std::memory_order_acquire);
 }
 
 uint32 BotSpawner::GetActiveBotCount(uint32 zoneId) const
@@ -1347,8 +1347,8 @@ void BotSpawner::CalculateZoneTargets()
 {
     // DEADLOCK FIX: Minimize lock scope and avoid external calls while holding locks
 
-    std::vector<std::pair<uint32, ZonePopulation>> zonesCopy;
-    std::vector<std::pair<uint32, uint32>> targetUpdates;
+    ::std::vector<::std::pair<uint32, ZonePopulation>> zonesCopy;
+    ::std::vector<::std::pair<uint32, uint32>> targetUpdates;
 
     // Phase 1: Copy zone data with minimal lock scope
     {
@@ -1395,14 +1395,14 @@ uint32 BotSpawner::CalculateTargetBotCount(ZonePopulation const& zone) const
     // DYNAMIC SPAWNING: Only spawn minimum if we have players online
     if (!_config.enableDynamicSpawning || sWorld->GetActiveSessionCount() > 0)
     {
-        baseTarget = std::max(baseTarget, minimumBots);
+        baseTarget = ::std::max(baseTarget, minimumBots);
         TC_LOG_INFO("module.playerbot.spawner", "Zone {} - players: {}, ratio: {}, ratio target: {}, minimum: {}, final target: {}",
                zone.zoneId, zone.playerCount, _config.botToPlayerRatio,
                static_cast<uint32>(zone.playerCount * _config.botToPlayerRatio), minimumBots, baseTarget);
     }
 
     // Apply zone caps
-    baseTarget = std::min(baseTarget, _config.maxBotsPerZone);
+    baseTarget = ::std::min(baseTarget, _config.maxBotsPerZone);
 
     return baseTarget;
 }
@@ -1414,8 +1414,8 @@ void BotSpawner::SpawnToPopulationTarget()
     // DEADLOCK FIX: Use lock-free approach with data copying
     // Collect zone data first, then process without holding locks
 
-    std::vector<SpawnRequest> spawnRequests;
-    std::vector<std::pair<uint32, ZonePopulation>> zonesCopy;
+    ::std::vector<SpawnRequest> spawnRequests;
+    ::std::vector<::std::pair<uint32, ZonePopulation>> zonesCopy;
 
     // Phase 1: Copy zone data with minimal lock scope
     {
@@ -1490,8 +1490,8 @@ void BotSpawner::UpdatePopulationTargets()
     if (_zonePopulations.empty())
     {
         // These would be loaded from database or configuration
-        _zonePopulations[1] = {1, 0, 0, 0, 10, 1, 10, 0.5f, std::chrono::system_clock::now()};
-        _zonePopulations[2] = {2, 0, 0, 0, 15, 5, 15, 0.3f, std::chrono::system_clock::now()};
+        _zonePopulations[1] = {1, 0, 0, 0, 10, 1, 10, 0.5f, ::std::chrono::system_clock::now()};
+        _zonePopulations[2] = {2, 0, 0, 0, 15, 5, 15, 0.3f, ::std::chrono::system_clock::now()};
     }
 }
 
@@ -1508,7 +1508,7 @@ void BotSpawner::ResetStats()
     TC_LOG_INFO("module.playerbot.spawner", "Spawn statistics reset");
 }
 
-bool BotSpawner::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool BotSpawner::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     TC_LOG_DEBUG("module.playerbot.spawner", "Despawning bot {} with reason: {}", guid.ToString(), reason);
 
@@ -1549,12 +1549,12 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
     {
         // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character (prepared statement)
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
-        stmt->SetData(0, accountId);
+        stmt->setUInt32(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
         // Check current character count for this account (enforce 10 character limit) (prepared statement)
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
-        charStmt->SetData(0, accountId);
+        charStmt->setUInt32(0, accountId);
         PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
         if (charCountResult)
@@ -1565,13 +1565,13 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             if (currentCharCount >= 10)
             {
                 TC_LOG_WARN("module.playerbot.spawner",
-                    "❌ Account {} already has {} characters (limit: 10). Cannot create more.",
+                    " Account {} already has {} characters (limit: 10). Cannot create more.",
                     accountId, currentCharCount);
                 return ObjectGuid::Empty;
             }
 
             TC_LOG_DEBUG("module.playerbot.spawner",
-                "✅ Account {} validated: exists in database, has {}/10 characters",
+                " Account {} validated: exists in database, has {}/10 characters",
                 accountId, currentCharCount);
         }
 
@@ -1592,7 +1592,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
 
         // Get a unique name with the proper GUID
-        std::string name = sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
+        ::std::string name = sBotNameMgr->AllocateName(gender, characterGuid.GetCounter());
         if (name.empty())
         {
             TC_LOG_ERROR("module.playerbot.spawner", "Failed to allocate name for bot character creation");
@@ -1601,7 +1601,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         TC_LOG_TRACE("module.playerbot.spawner", "Allocated name '{}' for bot character", name);
 
         // Create character info structure
-        auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+        auto createInfo = ::std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
         createInfo->Name = name;
         createInfo->Race = race;
         createInfo->Class = classId;
@@ -1637,7 +1637,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         TC_LOG_TRACE("module.playerbot.spawner", "Bot session created successfully for account {}", accountId);
 
         // Use smart pointer with proper RAII cleanup to prevent memory leaks
-        std::unique_ptr<Player> newChar = std::make_unique<Player>(botSession);
+        ::std::unique_ptr<Player> newChar = ::std::make_unique<Player>(botSession);
 
         // REMOVED: MotionMaster initialization - this will be handled automatically during Player::Create()
         // The MotionMaster needs the Player to be fully constructed before initialization
@@ -1693,7 +1693,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
             LoginDatabase.CommitTransaction(loginTransaction);
             TC_LOG_TRACE("module.playerbot.spawner", "Database transactions committed successfully");
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             TC_LOG_ERROR("module.playerbot.spawner", "Failed to commit transactions: {}", e.what());
             sBotNameMgr->ReleaseName(name);
@@ -1709,7 +1709,7 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
 
         return characterGuid;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.spawner", "Exception during bot character creation for account {}: {}", accountId, e.what());
         return ObjectGuid::Empty;
@@ -1721,7 +1721,7 @@ void BotSpawner::OnPlayerLogin()
     if (!_enabled.load() || !_config.enableDynamicSpawning)
         return;
 
-    TC_LOG_INFO("module.playerbot.spawner", "🎮 Player logged in - triggering bot spawn check");
+    TC_LOG_INFO("module.playerbot.spawner", " Player logged in - triggering bot spawn check");
 
     // Force immediate spawn check
     CheckAndSpawnForPlayers();
@@ -1742,7 +1742,7 @@ void BotSpawner::CheckAndSpawnForPlayers()
 
     // RAII guard to ensure flag is reset even if exception occurs
     struct ScopeGuard {
-        std::atomic<bool>& flag;
+        ::std::atomic<bool>& flag;
         ~ScopeGuard() { flag.store(false); }
     } guard{_inCheckAndSpawn};
 
@@ -1759,28 +1759,28 @@ void BotSpawner::CheckAndSpawnForPlayers()
 
         // Ensure minimum bots
         uint32 minimumBots = 3; // sPlayerbotConfig->GetInt("Playerbot.MinimumBotsPerZone", 3);
-        targetBotCount = std::max(targetBotCount, minimumBots);
+        targetBotCount = ::std::max(targetBotCount, minimumBots);
 
         // Respect maximum limits
-        targetBotCount = std::min(targetBotCount, _config.maxBotsTotal);
+        targetBotCount = ::std::min(targetBotCount, _config.maxBotsTotal);
 
         if (currentBotCount < targetBotCount)
         {
             TC_LOG_INFO("module.playerbot.spawner",
-                "🎮 Real players detected! Players: {}, Current bots: {}, Target bots: {}",
+                " Real players detected! Players: {}, Current bots: {}, Target bots: {}",
                 realPlayerSessions, currentBotCount, targetBotCount);
 
             // Mark that we've triggered spawning for the first player
             if (!_firstPlayerSpawned.load() && realPlayerSessions > 0)
             {
                 _firstPlayerSpawned.store(true);
-                TC_LOG_INFO("module.playerbot.spawner", "🎮 First player detected - initiating initial bot spawn");
+                TC_LOG_INFO("module.playerbot.spawner", " First player detected - initiating initial bot spawn");
             }
 
             // DEADLOCK FIX: Force immediate spawn cycle by resetting timer
             // This allows Update() to handle spawning on next cycle WITHOUT recursive calls
             _lastTargetCalculation = 0; // Force immediate spawn in next Update() cycle
-            TC_LOG_INFO("module.playerbot.spawner", "🎮 Spawn cycle timer reset - bots will spawn in next Update()");
+            TC_LOG_INFO("module.playerbot.spawner", " Spawn cycle timer reset - bots will spawn in next Update()");
         }
     }
 
@@ -1797,14 +1797,14 @@ bool BotSpawner::CreateAndSpawnBot(
     uint8 classId,
     uint8 race,
     uint8 gender,
-    std::string const& name,
+    ::std::string const& name,
     ObjectGuid& outCharacterGuid)
 {
     TC_LOG_INFO("module.playerbot.spawner", "CreateAndSpawnBot: Creating new bot for account {} (race: {}, class: {}, gender: {}, name: '{}')",
         masterAccountId, race, classId, gender, name);
 
     // Step 1: Create the character
-    std::string errorMsg;
+    ::std::string errorMsg;
     BotCharacterCreator::CreateResult result = BotCharacterCreator::CreateBotCharacter(
         masterAccountId,
         race,

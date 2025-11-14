@@ -78,10 +78,10 @@ struct QuestMetadata
     uint32 requiredPlayers;
     uint32 estimatedDuration;  // in seconds
     float difficultyRating;    // 0.0 - 10.0
-    std::vector<uint32> prerequisites;
-    std::vector<uint32> followupQuests;
-    std::vector<uint32> requiredSkills;
-    std::vector<uint32> recommendedClasses;
+    ::std::vector<uint32> prerequisites;
+    ::std::vector<uint32> followupQuests;
+    ::std::vector<uint32> requiredSkills;
+    ::std::vector<uint32> recommendedClasses;
     Position questLocation;
     uint32 questGiver;
     bool isElite;
@@ -111,11 +111,11 @@ struct QuestProgress
     uint32 startTime;
     uint32 lastUpdateTime;
     float completionPercentage;
-    std::unordered_map<uint32, uint32> objectiveProgress; // objectiveIndex -> current count
-    std::unordered_map<uint32, uint32> objectiveTargets;  // objectiveIndex -> required count
-    std::vector<Position> visitedLocations;
-    std::vector<uint32> killedCreatures;
-    std::vector<uint32> collectedItems;
+    ::std::unordered_map<uint32, uint32> objectiveProgress; // objectiveIndex -> current count
+    ::std::unordered_map<uint32, uint32> objectiveTargets;  // objectiveIndex -> required count
+    ::std::vector<Position> visitedLocations;
+    ::std::vector<uint32> killedCreatures;
+    ::std::vector<uint32> collectedItems;
     bool isStuck;
     uint32 stuckTime;
     uint32 retryCount;
@@ -130,8 +130,8 @@ struct QuestReward
 {
     uint32 experience;
     uint32 gold;
-    std::vector<uint32> items;
-    std::vector<std::pair<uint32, uint32>> reputation; // factionId, amount
+    ::std::vector<uint32> items;
+    ::std::vector<::std::pair<uint32, uint32>> reputation; // factionId, amount
     uint32 talentPoints;
     float gearScore;
     float rewardValue;
@@ -142,25 +142,25 @@ struct QuestReward
 // Dynamic quest performance monitoring
 struct QuestMetrics
 {
-    std::atomic<uint32> questsStarted{0};
-    std::atomic<uint32> questsCompleted{0};
-    std::atomic<uint32> questsAbandoned{0};
-    std::atomic<uint32> questsFailed{0};
-    std::atomic<float> averageCompletionTime{1200.0f}; // 20 minutes
-    std::atomic<float> successRate{0.85f};
-    std::atomic<float> efficiencyRating{1.0f};
-    std::atomic<uint32> experienceGained{0};
-    std::atomic<uint32> goldEarned{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> questsStarted{0};
+    ::std::atomic<uint32> questsCompleted{0};
+    ::std::atomic<uint32> questsAbandoned{0};
+    ::std::atomic<uint32> questsFailed{0};
+    ::std::atomic<float> averageCompletionTime{1200.0f}; // 20 minutes
+    ::std::atomic<float> successRate{0.85f};
+    ::std::atomic<float> efficiencyRating{1.0f};
+    ::std::atomic<uint32> experienceGained{0};
+    ::std::atomic<uint32> goldEarned{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     // Default constructor
-    QuestMetrics() : lastUpdate(std::chrono::steady_clock::now()) {}
+    QuestMetrics() : lastUpdate(::std::chrono::steady_clock::now()) {}
 
     void Reset() {
         questsStarted = 0; questsCompleted = 0; questsAbandoned = 0; questsFailed = 0;
         averageCompletionTime = 1200.0f; successRate = 0.85f; efficiencyRating = 1.0f;
         experienceGained = 0; goldEarned = 0;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetCompletionRate() const {
@@ -206,14 +206,14 @@ public:
     static DynamicQuestSystem* instance();
 
     // Quest discovery and assignment
-    std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
-    std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
+    ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
+    ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
     bool AssignQuestToBot(uint32 questId, Player* bot) override;
     void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) override;
 
     // Quest prioritization
     QuestPriority CalculateQuestPriority(uint32 questId, Player* bot) override;
-    std::vector<uint32> SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot) override;
     bool ShouldAbandonQuest(uint32 questId, Player* bot) override;
 
     // Quest execution and coordination
@@ -230,7 +230,7 @@ public:
 
     // Quest pathfinding and navigation
     Position GetNextQuestLocation(Player* bot, uint32 questId) override;
-    std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) override;
+    ::std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) override;
     void HandleQuestNavigation(Player* bot, uint32 questId) override;
     bool IsQuestLocationReachable(Player* bot, const Position& location) override;
 
@@ -242,13 +242,13 @@ public:
 
     // Quest chain management
     void TrackQuestChains(Player* bot) override;
-    std::vector<uint32> GetQuestChain(uint32 questId) override;
+    ::std::vector<uint32> GetQuestChain(uint32 questId) override;
     uint32 GetNextQuestInChain(uint32 completedQuestId) override;
     void AdvanceQuestChain(Player* bot, uint32 completedQuestId) override;
 
     // Zone-based quest optimization
     void OptimizeZoneQuests(Player* bot) override;
-    std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) override;
+    ::std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) override;
     void PlanZoneCompletion(Player* bot, uint32 zoneId) override;
     bool ShouldMoveToNewZone(Player* bot) override;
 
@@ -277,24 +277,24 @@ private:
     ~DynamicQuestSystem() = default;
 
     // Core data structures
-    std::unordered_map<uint32, QuestMetadata> _questMetadata;
-    std::unordered_map<uint32, std::vector<QuestProgress>> _botQuestProgress; // botGuid -> quests
-    std::unordered_map<uint32, QuestStrategy> _botStrategies;
-    std::unordered_map<uint32, QuestMetrics> _botMetrics;
+    ::std::unordered_map<uint32, QuestMetadata> _questMetadata;
+    ::std::unordered_map<uint32, ::std::vector<QuestProgress>> _botQuestProgress; // botGuid -> quests
+    ::std::unordered_map<uint32, QuestStrategy> _botStrategies;
+    ::std::unordered_map<uint32, QuestMetrics> _botMetrics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _questMutex;
 
     // Quest chains and dependencies
-    std::unordered_map<uint32, std::vector<uint32>> _questChains; // questId -> chain
-    std::unordered_map<uint32, std::vector<uint32>> _questPrerequisites; // questId -> required quests
-    std::unordered_map<uint32, std::vector<uint32>> _questFollowups; // questId -> followup quests
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _questChains; // questId -> chain
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _questPrerequisites; // questId -> required quests
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _questFollowups; // questId -> followup quests
 
     // Zone optimization data
-    std::unordered_map<uint32, std::vector<uint32>> _zoneQuests; // zoneId -> questIds
-    std::unordered_map<uint32, std::vector<Position>> _questHotspots; // zoneId -> optimal locations
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _zoneQuests; // zoneId -> questIds
+    ::std::unordered_map<uint32, ::std::vector<Position>> _questHotspots; // zoneId -> optimal locations
 
     // Group quest coordination
-    std::unordered_map<uint32, std::vector<uint32>> _questGroups; // questId -> botGuids
-    std::queue<std::pair<uint32, uint32>> _groupQuestRequests; // <questId, requesterGuid>
+    ::std::unordered_map<uint32, ::std::vector<uint32>> _questGroups; // questId -> botGuids
+    ::std::queue<::std::pair<uint32, uint32>> _groupQuestRequests; // <questId, requesterGuid>
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _groupQuestMutex;
 
     // Helper functions
@@ -332,7 +332,7 @@ private:
     void AnalyzeQuestEfficiency(uint32 botGuid);
 
     // Gear optimization helpers
-    float CalculateGearScoreImprovement(Player* bot, const std::vector<uint32>& items);
+    float CalculateGearScoreImprovement(Player* bot, const ::std::vector<uint32>& items);
 
     // Quest metadata and chain helpers
     void PopulateQuestMetadata(uint32 questId);

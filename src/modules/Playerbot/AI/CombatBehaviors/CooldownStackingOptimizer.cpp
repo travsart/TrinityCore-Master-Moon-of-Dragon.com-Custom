@@ -265,7 +265,7 @@ CooldownStackingOptimizer::BossPhase CooldownStackingOptimizer::DetectBossPhase(
 
     // Check for adds
     uint32 addCount = 0;
-    std::list<Creature*> creatures;
+    ::std::list<Creature*> creatures;
     if (boss->GetTypeId() == TYPEID_UNIT)
     {
         boss->ToCreature()->GetCreatureListWithEntryInGrid(creatures, 0, 30.0f);  // 0 = any entry
@@ -339,7 +339,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
     uint32 windowEnd = now + lookAheadMs;
 
     // Find all available cooldowns in the window
-    std::vector<uint32> availableCooldowns;
+    ::std::vector<uint32> availableCooldowns;
     for (auto const& [spellId, data] : _cooldowns)
     {
         if (data.category == MAJOR_DPS || data.category == BURST)
@@ -401,7 +401,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
     return bestWindow;
 }
 
-float CooldownStackingOptimizer::CalculateStackedMultiplier(std::vector<uint32> const& cooldowns) const
+float CooldownStackingOptimizer::CalculateStackedMultiplier(::std::vector<uint32> const& cooldowns) const
 {
     if (cooldowns.empty())
         return 1.0f;
@@ -429,7 +429,7 @@ float CooldownStackingOptimizer::CalculateStackedMultiplier(std::vector<uint32> 
         else
         {
             // Non-stacking cooldown, take the best one
-            totalDamage = std::max(totalDamage, 1.0f + data.damageIncrease);
+            totalDamage = ::std::max(totalDamage, 1.0f + data.damageIncrease);
         }
     }
 
@@ -582,7 +582,7 @@ float CooldownStackingOptimizer::GetCooldownPriority(uint32 spellId) const
             priority *= 1.5f;
     }
 
-    return std::min(1.0f, priority);
+    return ::std::min(1.0f, priority);
 }
 
 // ============================================================================
@@ -901,7 +901,7 @@ float CooldownStackingOptimizer::ApplyDiminishingReturns(float baseMultiplier, u
 
     // Apply 10% reduction per additional stack
     float reduction = 1.0f - (0.1f * (stackCount - 1));
-    reduction = std::max(0.5f, reduction);  // Minimum 50% effectiveness
+    reduction = ::std::max(0.5f, reduction);  // Minimum 50% effectiveness
 
     return baseMultiplier * reduction;
 }

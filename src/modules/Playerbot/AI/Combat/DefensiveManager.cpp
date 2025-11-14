@@ -83,7 +83,7 @@ uint32 DefensiveManager::UseEmergencyDefensive()
         return 0;
 
     // Get emergency defensives only
-    std::vector<DefensiveCooldown*> emergencies;
+    ::std::vector<DefensiveCooldown*> emergencies;
 
     for (auto& defensive : _availableDefensives)
     {
@@ -95,7 +95,7 @@ uint32 DefensiveManager::UseEmergencyDefensive()
         return 0;
 
     // Sort by damage reduction (highest first)
-    std::sort(emergencies.begin(), emergencies.end(),
+    ::std::sort(emergencies.begin(), emergencies.end(),
         [](const DefensiveCooldown* a, const DefensiveCooldown* b) {
             return a->damageReduction > b->damageReduction;
         });
@@ -168,13 +168,13 @@ uint32 DefensiveManager::GetBestDefensive(float healthPercent, float incomingDam
         minPriority = DefensivePriority::LOW;
 
     // Get available defensives
-    std::vector<DefensiveCooldown*> available = GetAvailableDefensives(minPriority);
+    ::std::vector<DefensiveCooldown*> available = GetAvailableDefensives(minPriority);
 
     if (available.empty())
         return 0;
 
     // Sort by priority (emergency first, then damage reduction)
-    std::sort(available.begin(), available.end(),
+    ::std::sort(available.begin(), available.end(),
         [](const DefensiveCooldown* a, const DefensiveCooldown* b) {
             if (a->priority != b->priority)
                 return a->priority < b->priority;  // Lower enum value = higher priority
@@ -227,7 +227,7 @@ float DefensiveManager::EstimateIncomingDamage() const
 
     // Multiply by enemy count
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
+    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
     uint32 enemyCount = 0;
     for (HostileReference* ref : threatList)
@@ -237,7 +237,7 @@ float DefensiveManager::EstimateIncomingDamage() const
     }
 
     if (enemyCount > 0)
-        estimate *= std::min(enemyCount, 5u);  // Cap at 5× multiplier
+        estimate *= ::std::min(enemyCount, 5u);  // Cap at 5× multiplier
 
     return estimate;
 }
@@ -254,9 +254,9 @@ DefensiveCooldown* DefensiveManager::FindDefensive(uint32 spellId)
     return nullptr;
 }
 
-std::vector<DefensiveCooldown*> DefensiveManager::GetAvailableDefensives(DefensivePriority minPriority)
+::std::vector<DefensiveCooldown*> DefensiveManager::GetAvailableDefensives(DefensivePriority minPriority)
 {
-    std::vector<DefensiveCooldown*> available;
+    ::std::vector<DefensiveCooldown*> available;
 
     for (auto& defensive : _availableDefensives)
     {

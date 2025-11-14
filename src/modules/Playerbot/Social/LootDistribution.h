@@ -75,11 +75,11 @@ struct LootItem
     uint32 itemQuality;
     uint32 vendorValue;
     bool isClassRestricted;
-    std::vector<uint32> allowedClasses;
-    std::vector<uint32> allowedSpecs;
+    ::std::vector<uint32> allowedClasses;
+    ::std::vector<uint32> allowedSpecs;
     bool isBoundOnPickup;
     bool isBoundOnEquip;
-    std::string itemName;
+    ::std::string itemName;
 
     LootItem() : itemId(0), itemCount(0), lootSlot(0), itemTemplate(nullptr)
         , itemLevel(0), itemQuality(0), vendorValue(0), isClassRestricted(false)
@@ -97,9 +97,9 @@ struct LootRoll
     uint32 itemId;
     uint32 lootSlot;
     uint32 groupId;
-    std::unordered_map<uint32, LootRollType> playerRolls; // playerGuid -> roll type
-    std::unordered_map<uint32, uint32> rollValues; // playerGuid -> roll value (1-100)
-    std::unordered_set<uint32> eligiblePlayers;
+    ::std::unordered_map<uint32, LootRollType> playerRolls; // playerGuid -> roll type
+    ::std::unordered_map<uint32, uint32> rollValues; // playerGuid -> roll value (1-100)
+    ::std::unordered_set<uint32> eligiblePlayers;
     uint32 rollStartTime;
     uint32 rollTimeout;
     bool isCompleted;
@@ -136,10 +136,10 @@ struct PlayerLootProfile
     uint8 playerSpec;
     uint32 playerLevel;
     LootDecisionStrategy strategy;
-    std::unordered_map<uint32, LootPriority> itemPriorities; // itemId -> priority
-    std::unordered_set<uint32> neededItemTypes; // item subtypes needed
-    std::unordered_set<uint32> wantedItemTypes; // item subtypes wanted
-    std::unordered_set<uint32> blacklistedItems; // items to always pass
+    ::std::unordered_map<uint32, LootPriority> itemPriorities; // itemId -> priority
+    ::std::unordered_set<uint32> neededItemTypes; // item subtypes needed
+    ::std::unordered_set<uint32> wantedItemTypes; // item subtypes wanted
+    ::std::unordered_set<uint32> blacklistedItems; // items to always pass
     float greedThreshold; // minimum item value to greed (0.0-1.0)
     bool needMainSpecOnly;
     bool greedOffSpec;
@@ -218,10 +218,10 @@ public:
     // Loot fairness and distribution tracking
     struct LootFairnessTracker
     {
-        std::unordered_map<uint32, uint32> playerLootCount; // playerGuid -> items received
-        std::unordered_map<uint32, uint32> playerLootValue; // playerGuid -> total value received
-        std::unordered_map<uint32, uint32> playerNeedRolls; // playerGuid -> need rolls won
-        std::unordered_map<uint32, uint32> playerGreedRolls; // playerGuid -> greed rolls won
+        ::std::unordered_map<uint32, uint32> playerLootCount; // playerGuid -> items received
+        ::std::unordered_map<uint32, uint32> playerLootValue; // playerGuid -> total value received
+        ::std::unordered_map<uint32, uint32> playerNeedRolls; // playerGuid -> need rolls won
+        ::std::unordered_map<uint32, uint32> playerGreedRolls; // playerGuid -> greed rolls won
         uint32 totalItemsDistributed;
         uint32 totalValueDistributed;
         float fairnessScore; // 0.0 = unfair, 1.0 = perfectly fair
@@ -236,16 +236,16 @@ public:
     // Performance monitoring
     struct LootMetrics
     {
-        std::atomic<uint32> totalRollsInitiated{0};
-        std::atomic<uint32> totalRollsCompleted{0};
-        std::atomic<uint32> needRollsWon{0};
-        std::atomic<uint32> greedRollsWon{0};
-        std::atomic<uint32> itemsPassed{0};
-        std::atomic<uint32> rollTimeouts{0};
-        std::atomic<float> averageRollTime{30000.0f}; // 30 seconds
-        std::atomic<float> decisionAccuracy{0.9f};
-        std::atomic<float> playerSatisfaction{0.8f};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> totalRollsInitiated{0};
+        ::std::atomic<uint32> totalRollsCompleted{0};
+        ::std::atomic<uint32> needRollsWon{0};
+        ::std::atomic<uint32> greedRollsWon{0};
+        ::std::atomic<uint32> itemsPassed{0};
+        ::std::atomic<uint32> rollTimeouts{0};
+        ::std::atomic<float> averageRollTime{30000.0f}; // 30 seconds
+        ::std::atomic<float> decisionAccuracy{0.9f};
+        ::std::atomic<float> playerSatisfaction{0.8f};
+        ::std::chrono::steady_clock::time_point lastUpdate;
 
         LootMetrics() = default;
 
@@ -281,7 +281,7 @@ public:
             totalRollsInitiated = 0; totalRollsCompleted = 0; needRollsWon = 0;
             greedRollsWon = 0; itemsPassed = 0; rollTimeouts = 0;
             averageRollTime = 30000.0f; decisionAccuracy = 0.9f; playerSatisfaction = 0.8f;
-            lastUpdate = std::chrono::steady_clock::now();
+            lastUpdate = ::std::chrono::steady_clock::now();
         }
     };
 
@@ -290,7 +290,7 @@ public:
     LootMetrics GetGlobalLootMetrics();
 
     // Advanced loot features
-    void HandleReservedItems(Group* group, const std::vector<uint32>& reservedItems, Player* reserver);
+    void HandleReservedItems(Group* group, const ::std::vector<uint32>& reservedItems, Player* reserver);
     void ProcessLootCouncilDecision(Group* group, const LootItem& item, Player* recipient);
     void HandlePersonalLoot(Player* player, const LootItem& item);
     void ManageLootHistory(Group* group, const LootItem& item, Player* recipient);
@@ -324,20 +324,20 @@ private:
     ~LootDistribution() = default;
 
     // Core data structures
-    std::unordered_map<uint32, LootRoll> _activeLootRolls; // rollId -> roll data
-    std::unordered_map<uint32, PlayerLootProfile> _playerLootProfiles; // playerGuid -> profile
-    std::unordered_map<uint32, LootFairnessTracker> _groupFairnessTracking; // groupId -> fairness
-    std::unordered_map<uint32, LootMetrics> _playerMetrics; // playerGuid -> metrics
+    ::std::unordered_map<uint32, LootRoll> _activeLootRolls; // rollId -> roll data
+    ::std::unordered_map<uint32, PlayerLootProfile> _playerLootProfiles; // playerGuid -> profile
+    ::std::unordered_map<uint32, LootFairnessTracker> _groupFairnessTracking; // groupId -> fairness
+    ::std::unordered_map<uint32, LootMetrics> _playerMetrics; // playerGuid -> metrics
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _lootMutex;
 
     // Roll management
-    std::atomic<uint32> _nextRollId{1};
-    std::queue<uint32> _completedRolls;
-    std::unordered_map<uint32, uint32> _rollTimeouts; // rollId -> timeout time
+    ::std::atomic<uint32> _nextRollId{1};
+    ::std::queue<uint32> _completedRolls;
+    ::std::unordered_map<uint32, uint32> _rollTimeouts; // rollId -> timeout time
 
     // Loot analysis cache
-    std::unordered_map<uint32, std::unordered_map<uint32, LootPriority>> _itemPriorityCache; // playerGuid -> itemId -> priority
-    std::unordered_map<uint32, std::unordered_map<uint32, bool>> _upgradeCache; // playerGuid -> itemId -> isUpgrade
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, LootPriority>> _itemPriorityCache; // playerGuid -> itemId -> priority
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, bool>> _upgradeCache; // playerGuid -> itemId -> isUpgrade
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _cacheMutex;
 
     // Performance tracking
@@ -387,7 +387,7 @@ private:
 
     // Performance optimization
     void OptimizeLootProcessing();
-    void PreloadItemData(const std::vector<LootItem>& items);
+    void PreloadItemData(const ::std::vector<LootItem>& items);
     void CachePlayerEquipment(Player* player);
     void UpdateLootMetrics(uint32 playerGuid, const LootRoll& roll, bool wasWinner);
 

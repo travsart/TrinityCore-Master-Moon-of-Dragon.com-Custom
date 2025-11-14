@@ -32,7 +32,7 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         return;
 
     // Extract gossip option IDs
-    std::vector<uint32> options;
+    ::std::vector<uint32> options;
     options.reserve(packet.GossipOptions.size());
     for (auto const& option : packet.GossipOptions)
         options.push_back(option.GossipOptionID);
@@ -42,7 +42,7 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         packet.GossipGUID,
         packet.GossipID,
         packet.RandomTextID.value_or(0),
-        std::move(options)
+        ::std::move(options)
     );
 
     NPCEventBus::instance()->PublishEvent(event);
@@ -88,7 +88,7 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
         return;
 
     // Extract item IDs from vendor inventory
-    std::vector<uint32> items;
+    ::std::vector<uint32> items;
     items.reserve(packet.Items.size());
     for (auto const& vendorItem : packet.Items)
         items.push_back(vendorItem.Item.ItemID);
@@ -97,7 +97,7 @@ void ParseTypedVendorInventory(WorldSession* session, WorldPackets::NPC::VendorI
         bot->GetGUID(),
         packet.Vendor,
         0,  // Vendor entry not in packet
-        std::move(items)
+        ::std::move(items)
     );
 
     NPCEventBus::instance()->PublishEvent(event);
@@ -119,7 +119,7 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
         return;
 
     // Extract spell IDs from trainer list
-    std::vector<uint32> spells;
+    ::std::vector<uint32> spells;
     spells.reserve(packet.Spells.size());
     for (auto const& spell : packet.Spells)
         spells.push_back(spell.SpellID);
@@ -128,7 +128,7 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
         bot->GetGUID(),
         packet.TrainerGUID,
         packet.TrainerID,
-        std::move(spells)
+        ::std::move(spells)
     );
 
     NPCEventBus::instance()->PublishEvent(event);

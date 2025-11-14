@@ -72,8 +72,8 @@ struct PerformanceMetrics
     uint64 totalDamageDealt = 0;
     uint64 totalHealingDone = 0;
     uint64 totalDamageTaken = 0;
-    std::chrono::milliseconds totalCombatTime{0};
-    std::chrono::steady_clock::time_point combatStartTime;
+    ::std::chrono::milliseconds totalCombatTime{0};
+    ::std::chrono::steady_clock::time_point combatStartTime;
 };
 
 // Base class for ALL combat specializations
@@ -140,8 +140,8 @@ public:
 
     // Target management
     virtual ::Unit* SelectBestTarget();
-    virtual std::vector<::Unit*> GetNearbyEnemies(float range = 40.0f) const;
-    virtual std::vector<::Unit*> GetNearbyAllies(float range = 40.0f) const;
+    virtual ::std::vector<::Unit*> GetNearbyEnemies(float range = 40.0f) const;
+    virtual ::std::vector<::Unit*> GetNearbyAllies(float range = 40.0f) const;
     virtual bool IsValidTarget(::Unit* target) const;
     virtual float CalculateThreatLevel(::Unit* target) const;
 
@@ -213,7 +213,7 @@ protected:
     bool IsInRaid() const;
     Player* GetGroupTank() const;
     Player* GetGroupHealer() const;
-    std::vector<Player*> GetGroupMembers() const;
+    ::std::vector<Player*> GetGroupMembers() const;
 
     // Constants for common use
     static constexpr float MELEE_RANGE = 5.0f;
@@ -232,20 +232,20 @@ protected:
     ResourceType _primaryResource;
 
     // Cooldown tracking
-    std::unordered_map<uint32, uint32> _cooldowns;
+    ::std::unordered_map<uint32, uint32> _cooldowns;
     uint32 _globalCooldownEnd;
 
     // Buff tracking
-    std::unordered_map<uint32, uint32> _buffExpirationTimes;
+    ::std::unordered_map<uint32, uint32> _buffExpirationTimes;
 
     // DoT tracking (targetGuid -> (spellId -> expirationTime))
-    std::unordered_map<uint64, std::unordered_map<uint32, uint32>> _dotTracking;
+    ::std::unordered_map<uint64, ::std::unordered_map<uint32, uint32>> _dotTracking;
 
     // Proc tracking
-    std::unordered_map<uint32, uint32> _procExpirationTimes;
+    ::std::unordered_map<uint32, uint32> _procExpirationTimes;
 
     // Threat tracking
-    std::unordered_map<uint64, float> _threatTable;
+    ::std::unordered_map<uint64, float> _threatTable;
     uint32 _lastThreatUpdate;
 
     // Performance metrics
@@ -266,7 +266,7 @@ protected:
     uint32 _lastOptimalPositionCheck;
 
     // Group information caching
-    std::vector<Player*> _cachedGroupMembers;
+    ::std::vector<Player*> _cachedGroupMembers;
     uint32 _lastGroupUpdate;
     Player* _cachedTank;
     Player* _cachedHealer;

@@ -169,7 +169,7 @@ namespace
     // Helper function to calculate linear prediction
     float LinearPredict(float currentValue, float rateOfChange, float timeAhead)
     {
-        return std::max(0.0f, currentValue + (rateOfChange * timeAhead));
+        return ::std::max(0.0f, currentValue + (rateOfChange * timeAhead));
     }
 }
 
@@ -214,7 +214,7 @@ void DefensiveBehaviorManager::Update(uint32 diff)
     if (!_bot || !_bot->IsAlive())
         return;
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Update defensive state (throttled for performance)
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -229,7 +229,7 @@ void DefensiveBehaviorManager::Update(uint32 diff)
 
     // Clean up old external requests (older than 5 seconds)
     _externalRequests.erase(
-        std::remove_if(_externalRequests.begin(), _externalRequests.end(),
+        ::std::remove_if(_externalRequests.begin(), _externalRequests.end(),
             [currentTime](const ExternalDefensiveRequest& req) {
                 return (currentTime - req.requestTime) > 5000;
             }),
@@ -851,9 +851,9 @@ bool DefensiveBehaviorManager::ShouldUseBandage() const
 }
 
 // Get class-specific defensives (static)
-std::vector<DefensiveBehaviorManager::DefensiveCooldown> DefensiveBehaviorManager::GetClassDefensives(uint8 classId)
+::std::vector<DefensiveBehaviorManager::DefensiveCooldown> DefensiveBehaviorManager::GetClassDefensives(uint8 classId)
 {
-    std::vector<DefensiveCooldown> defensives;
+    ::std::vector<DefensiveCooldown> defensives;
 
     switch (classId)
     {
@@ -969,7 +969,7 @@ void DefensiveBehaviorManager::InitializeClassDefensives()
     if (!_bot)
         return;
 
-    std::vector<DefensiveCooldown> classDefensives = GetClassDefensives(_bot->GetClass());
+    ::std::vector<DefensiveCooldown> classDefensives = GetClassDefensives(_bot->GetClass());
     for (const auto& defensive : classDefensives)
     {
         // Only register if bot has the spell
@@ -1028,7 +1028,7 @@ uint32 DefensiveBehaviorManager::SelectBestDefensive(DefensivePriority priority)
         }
 
         // Sort by tier and score
-        std::sort(_sortedDefensives.begin(), _sortedDefensives.end(),
+        ::std::sort(_sortedDefensives.begin(), _sortedDefensives.end(),
             [this, priority](uint32 a, uint32 b) {
                 const DefensiveCooldown& cdA = _defensiveCooldowns.at(a);
                 const DefensiveCooldown& cdB = _defensiveCooldowns.at(b);
@@ -1090,7 +1090,7 @@ float DefensiveBehaviorManager::CalculateDefensiveScore(const DefensiveCooldown&
     score += static_cast<float>(cooldown.tier) * 20.0f;
 
     // Priority matching (use stronger defensives for higher priority)
-    float priorityMatch = std::abs(static_cast<float>(cooldown.tier) - static_cast<float>(priority));
+    float priorityMatch = ::std::abs(static_cast<float>(cooldown.tier) - static_cast<float>(priority));
     score -= priorityMatch * 10.0f;
 
     // Duration bonus (longer = better)
@@ -1110,7 +1110,7 @@ float DefensiveBehaviorManager::CalculateDefensiveScore(const DefensiveCooldown&
 
     // Health range bonus (if we're in optimal range)
     float healthMidpoint = (cooldown.minHealthPercent + cooldown.maxHealthPercent) / 2.0f;
-    float healthDistance = std::abs(_currentState.healthPercent - healthMidpoint);
+    float healthDistance = ::std::abs(_currentState.healthPercent - healthMidpoint);
     score -= healthDistance * 0.5f;
 
     return score;
@@ -1195,10 +1195,10 @@ bool DefensiveBehaviorManager::IsDamageMostlyPhysical() const
 }
 
 // Update performance metrics
-void DefensiveBehaviorManager::UpdateMetrics(std::chrono::steady_clock::time_point startTime)
+void DefensiveBehaviorManager::UpdateMetrics(::std::chrono::steady_clock::time_point startTime)
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto updateTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto updateTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     _metrics.updatesPerformed++;
 

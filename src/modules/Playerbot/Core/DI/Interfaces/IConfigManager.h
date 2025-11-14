@@ -52,20 +52,20 @@ namespace Playerbot
 class TC_GAME_API IConfigManager
 {
 public:
-    using ConfigValue = std::variant<bool, int32, uint32, float, std::string>;
-    using ChangeCallback = std::function<void(ConfigValue const&)>;
+    using ConfigValue = ::std::variant<bool, int32, uint32, float, ::std::string>;
+    using ChangeCallback = ::std::function<void(ConfigValue const&)>;
 
     struct ValidationRule
     {
-        std::string key;
-        std::function<bool(ConfigValue const&)> validator;
-        std::string errorMessage;
+        ::std::string key;
+        ::std::function<bool(ConfigValue const&)> validator;
+        ::std::string errorMessage;
     };
 
     struct ConfigEntry
     {
         ConfigValue value;
-        std::string description;
+        ::std::string description;
         ConfigValue defaultValue;
         bool persistent;
         bool readOnly;
@@ -85,7 +85,7 @@ public:
      * @param value New value
      * @return true if successful, false if validation failed
      */
-    virtual bool SetValue(std::string const& key, ConfigValue const& value) = 0;
+    virtual bool SetValue(::std::string const& key, ConfigValue const& value) = 0;
 
     /**
      * @brief Get boolean configuration value
@@ -93,7 +93,7 @@ public:
      * @param defaultValue Default value if not found
      * @return Configuration value or default
      */
-    virtual bool GetBool(std::string const& key, bool defaultValue) const = 0;
+    virtual bool GetBool(::std::string const& key, bool defaultValue) const = 0;
 
     /**
      * @brief Get signed integer configuration value
@@ -101,7 +101,7 @@ public:
      * @param defaultValue Default value if not found
      * @return Configuration value or default
      */
-    virtual int32 GetInt(std::string const& key, int32 defaultValue) const = 0;
+    virtual int32 GetInt(::std::string const& key, int32 defaultValue) const = 0;
 
     /**
      * @brief Get unsigned integer configuration value
@@ -109,7 +109,7 @@ public:
      * @param defaultValue Default value if not found
      * @return Configuration value or default
      */
-    virtual uint32 GetUInt(std::string const& key, uint32 defaultValue) const = 0;
+    virtual uint32 GetUInt(::std::string const& key, uint32 defaultValue) const = 0;
 
     /**
      * @brief Get float configuration value
@@ -117,7 +117,7 @@ public:
      * @param defaultValue Default value if not found
      * @return Configuration value or default
      */
-    virtual float GetFloat(std::string const& key, float defaultValue) const = 0;
+    virtual float GetFloat(::std::string const& key, float defaultValue) const = 0;
 
     /**
      * @brief Get string configuration value
@@ -125,20 +125,20 @@ public:
      * @param defaultValue Default value if not found
      * @return Configuration value or default
      */
-    virtual std::string GetString(std::string const& key, std::string const& defaultValue) const = 0;
+    virtual ::std::string GetString(::std::string const& key, ::std::string const& defaultValue) const = 0;
 
     /**
      * @brief Register configuration change callback
      * @param key Configuration key to monitor
      * @param callback Function to call when value changes
      */
-    virtual void RegisterCallback(std::string const& key, ChangeCallback callback) = 0;
+    virtual void RegisterCallback(::std::string const& key, ChangeCallback callback) = 0;
 
     /**
      * @brief Get all configuration entries
      * @return Map of all configuration entries
      */
-    virtual std::map<std::string, ConfigEntry> GetAllEntries() const = 0;
+    virtual ::std::map<::std::string, ConfigEntry> GetAllEntries() const = 0;
 
     /**
      * @brief Reset configuration to defaults
@@ -150,34 +150,34 @@ public:
      * @param filePath Path to configuration file (optional)
      * @return true if successful, false otherwise
      */
-    virtual bool SaveToFile(std::string const& filePath = "") const = 0;
+    virtual bool SaveToFile(::std::string const& filePath = "") const = 0;
 
     /**
      * @brief Load configuration from file
      * @param filePath Path to configuration file
      * @return true if successful, false otherwise
      */
-    virtual bool LoadFromFile(std::string const& filePath) = 0;
+    virtual bool LoadFromFile(::std::string const& filePath) = 0;
 
     /**
      * @brief Get last error message
      * @return Error description
      */
-    virtual std::string GetLastError() const = 0;
+    virtual ::std::string GetLastError() const = 0;
 
     /**
      * @brief Check if configuration key exists
      * @param key Configuration key
      * @return true if exists, false otherwise
      */
-    virtual bool HasKey(std::string const& key) const = 0;
+    virtual bool HasKey(::std::string const& key) const = 0;
 
     /**
      * @brief Get configuration entry (with metadata)
      * @param key Configuration key
      * @return Configuration entry or nullopt if not found
      */
-    virtual std::optional<ConfigEntry> GetEntry(std::string const& key) const = 0;
+    virtual ::std::optional<ConfigEntry> GetEntry(::std::string const& key) const = 0;
 };
 
 } // namespace Playerbot

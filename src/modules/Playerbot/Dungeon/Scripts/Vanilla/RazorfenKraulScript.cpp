@@ -239,7 +239,7 @@ public:
                 // Healing Stream Totem (high priority)
                 // Searing Totem (damage)
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Prioritize healing totems first
                 for (::Creature* add : adds)
@@ -288,7 +288,7 @@ public:
                 // Healing Stream Totem MUST die first
                 // Then Searing Totems
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Healing totems absolute priority
                 for (::Creature* add : adds)
@@ -328,7 +328,7 @@ public:
             case 4422: // Agathelos the Raging
             {
                 // Earth elemental - may spawn smaller elementals
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {
@@ -383,7 +383,7 @@ public:
                     Position behindPos = CalculateBehindPosition(player, boss);
                     float angle = player->GetAngle(boss);
                     float bossAngle = boss->GetOrientation();
-                    float angleDiff = std::abs(angle - bossAngle);
+                    float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind (within 90 degrees of back), move
                     if (angleDiff > M_PI / 2)
@@ -506,14 +506,14 @@ private:
         // Stoneclaw Totem: 3579, 3911, 3912, 3913
         // Fire Nova Totem: 3556, 3557, 5879, 5926
 
-        std::vector<uint32> totemEntries = {
+        ::std::vector<uint32> totemEntries = {
             3527, 3906, 3907, 5923,  // Healing Stream
             2523, 3902, 3903, 3904, 7400, 7402,  // Searing
             3579, 3911, 3912, 3913,  // Stoneclaw
             3556, 3557, 5879, 5926   // Fire Nova
         };
 
-        return std::find(totemEntries.begin(), totemEntries.end(), entry) != totemEntries.end();
+        return ::std::find(totemEntries.begin(), totemEntries.end(), entry) != totemEntries.end();
     }
 };
 

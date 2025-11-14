@@ -93,11 +93,11 @@ struct ThreatTarget
  * @endcode
  *
  * **Expected Impact**:
- * - ✅ Eliminate 500 lines of duplication
- * - ✅ Consistent threat management
- * - ✅ Easier to tune (one place)
- * - ✅ Better multi-tank coordination
- * - ✅ Smart target prioritization (protect healers first)
+ * -  Eliminate 500 lines of duplication
+ * -  Consistent threat management
+ * -  Easier to tune (one place)
+ * -  Better multi-tank coordination
+ * -  Smart target prioritization (protect healers first)
  */
 class TC_GAME_API ThreatAssistant
 {

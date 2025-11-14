@@ -45,7 +45,7 @@ bool BotTalentManager::LoadLoadouts()
 {
     TC_LOG_INFO("playerbot", "BotTalentManager: Loading talent loadouts...");
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Clear existing data
     _loadoutCache.clear();
@@ -66,7 +66,7 @@ bool BotTalentManager::LoadLoadouts()
     for (auto const& [key, loadout] : _loadoutCache)
     {
         auto& specs = _classSpecs[loadout.classId];
-        if (std::find(specs.begin(), specs.end(), loadout.specId) == specs.end())
+        if (::std::find(specs.begin(), specs.end(), loadout.specId) == specs.end())
         {
             specs.push_back(loadout.specId);
         }
@@ -89,11 +89,11 @@ bool BotTalentManager::LoadLoadouts()
     if (_stats.totalLoadouts > 0)
         _stats.averageTalentsPerLoadout /= _stats.totalLoadouts;
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto loadTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto loadTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime).count();
 
     // Mark as initialized
-    _initialized.store(true, std::memory_order_release);
+    _initialized.store(true, ::std::memory_order_release);
 
     TC_LOG_INFO("playerbot", "BotTalentManager: Loaded {} talent loadouts in {}ms",
         _stats.totalLoadouts, loadTime);
@@ -106,7 +106,7 @@ bool BotTalentManager::LoadLoadouts()
 void BotTalentManager::ReloadLoadouts()
 {
     TC_LOG_INFO("playerbot", "BotTalentManager: Reloading loadouts...");
-    _initialized.store(false, std::memory_order_release);
+    _initialized.store(false, ::std::memory_order_release);
     LoadLoadouts();
 }
 
@@ -137,34 +137,34 @@ void BotTalentManager::LoadLoadoutsFromDatabase()
         loadout.description = fields[6].GetString();
 
         // Parse talent string (comma-separated talent entry IDs)
-        std::string talentString = fields[4].GetString();
+        ::std::string talentString = fields[4].GetString();
         if (!talentString.empty())
         {
-            std::istringstream ss(talentString);
-            std::string token;
-            while (std::getline(ss, token, ','))
+            ::std::istringstream ss(talentString);
+            ::std::string token;
+            while (::std::getline(ss, token, ','))
             {
-                uint32 talentEntry = std::stoul(token);
+                uint32 talentEntry = ::std::stoul(token);
                 loadout.talentEntries.push_back(talentEntry);
             }
         }
 
         // Parse hero talent string
-        std::string heroTalentString = fields[5].GetString();
+        ::std::string heroTalentString = fields[5].GetString();
         if (!heroTalentString.empty())
         {
-            std::istringstream ss(heroTalentString);
-            std::string token;
-            while (std::getline(ss, token, ','))
+            ::std::istringstream ss(heroTalentString);
+            ::std::string token;
+            while (::std::getline(ss, token, ','))
             {
-                uint32 heroTalentEntry = std::stoul(token);
+                uint32 heroTalentEntry = ::std::stoul(token);
                 loadout.heroTalentEntries.push_back(heroTalentEntry);
             }
         }
 
         // Store in cache
         uint32 key = MakeLoadoutKey(loadout.classId, loadout.specId, loadout.minLevel);
-        _loadoutCache[key] = std::move(loadout);
+        _loadoutCache[key] = ::std::move(loadout);
         ++loadedCount;
 
     } while (result->NextRow());
@@ -194,7 +194,7 @@ void BotTalentManager::BuildDefaultLoadouts()
                 // Create loadouts for level brackets (1-10, 11-20, ... 71-80)
                 for (uint32 minLevel = 1; minLevel <= 80; minLevel += 10)
                 {
-                    uint32 maxLevel = std::min(minLevel + 9, 80u);
+                    uint32 maxLevel = ::std::min(minLevel + 9, 80u);
 
                     TalentLoadout loadout;
                     loadout.classId = cls;
@@ -207,7 +207,7 @@ void BotTalentManager::BuildDefaultLoadouts()
                     // For now, empty loadouts (TrinityCore will use defaults)
 
                     uint32 key = MakeLoadoutKey(cls, specData.specId, minLevel);
-                    _loadoutCache[key] = std::move(loadout);
+                    _loadoutCache[key] = ::std::move(loadout);
                 }
             }
         }
@@ -262,12 +262,12 @@ void BotTalentManager::ValidateLoadouts()
 SpecChoice BotTalentManager::SelectSpecialization(uint8 cls, TeamId faction, uint32 level)
 {
     // Wait for initialization
-    while (!_initialized.load(std::memory_order_acquire))
+    while (!_initialized.load(::std::memory_order_acquire))
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
     }
 
-    std::vector<uint8> availableSpecs = GetAvailableSpecs(cls);
+    ::std::vector<uint8> availableSpecs = GetAvailableSpecs(cls);
     if (availableSpecs.empty())
     {
         TC_LOG_ERROR("playerbot", "BotTalentManager: No available specs for class {}", cls);
@@ -299,11 +299,11 @@ SpecChoice BotTalentManager::SelectSpecialization(uint8 cls, TeamId faction, uin
 
 SpecChoice BotTalentManager::SelectSecondarySpecialization(uint8 cls, TeamId faction, uint32 level, uint8 primarySpec)
 {
-    std::vector<uint8> availableSpecs = GetAvailableSpecs(cls);
+    ::std::vector<uint8> availableSpecs = GetAvailableSpecs(cls);
 
     // Remove primary spec from options
     availableSpecs.erase(
-        std::remove(availableSpecs.begin(), availableSpecs.end(), primarySpec),
+        ::std::remove(availableSpecs.begin(), availableSpecs.end(), primarySpec),
         availableSpecs.end()
     );
 
@@ -317,7 +317,7 @@ SpecChoice BotTalentManager::SelectSecondarySpecialization(uint8 cls, TeamId fac
     uint8 selectedSpec = SelectComplementarySpec(cls, primarySpec);
 
     // Fallback to random if no complementary found
-    if (selectedSpec == 0 || std::find(availableSpecs.begin(), availableSpecs.end(), selectedSpec) == availableSpecs.end())
+    if (selectedSpec == 0 || ::std::find(availableSpecs.begin(), availableSpecs.end(), selectedSpec) == availableSpecs.end())
     {
         selectedSpec = availableSpecs[rand() % availableSpecs.size()];
     }
@@ -342,14 +342,14 @@ SpecChoice BotTalentManager::SelectSecondarySpecialization(uint8 cls, TeamId fac
     }
 }
 
-std::vector<uint8> BotTalentManager::GetAvailableSpecs(uint8 cls) const
+::std::vector<uint8> BotTalentManager::GetAvailableSpecs(uint8 cls) const
 {
     auto it = _classSpecs.find(cls);
     if (it != _classSpecs.end())
         return it->second;
 
     // Fallback to RoleDefinitions
-    std::vector<uint8> specs;
+    ::std::vector<uint8> specs;
     try
     {
         auto const& classData = RoleDefinitions::GetClassData(cls);
@@ -366,7 +366,7 @@ std::vector<uint8> BotTalentManager::GetAvailableSpecs(uint8 cls) const
     return specs;
 }
 
-uint8 BotTalentManager::SelectByDistribution(uint8 cls, std::vector<uint8> const& availableSpecs) const
+uint8 BotTalentManager::SelectByDistribution(uint8 cls, ::std::vector<uint8> const& availableSpecs) const
 {
     if (availableSpecs.empty())
         return 0;
@@ -404,7 +404,7 @@ float BotTalentManager::GetSpecPopularity(uint8 cls, uint8 specId) const
 
 TalentLoadout const* BotTalentManager::GetTalentLoadout(uint8 cls, uint8 specId, uint32 level) const
 {
-    if (!_initialized.load(std::memory_order_acquire))
+    if (!_initialized.load(::std::memory_order_acquire))
         return nullptr;
 
     uint32 key = FindBestLoadout(cls, specId, level);
@@ -435,9 +435,9 @@ uint32 BotTalentManager::FindBestLoadout(uint8 cls, uint8 specId, uint32 level) 
     return 0;
 }
 
-std::vector<TalentLoadout const*> BotTalentManager::GetAllLoadouts(uint8 cls, uint8 specId) const
+::std::vector<TalentLoadout const*> BotTalentManager::GetAllLoadouts(uint8 cls, uint8 specId) const
 {
-    std::vector<TalentLoadout const*> result;
+    ::std::vector<TalentLoadout const*> result;
 
     for (auto const& [key, loadout] : _loadoutCache)
     {
@@ -716,9 +716,9 @@ void BotTalentManager::PrintLoadoutReport() const
     TC_LOG_INFO("playerbot", "====================================");
 }
 
-std::string BotTalentManager::GetLoadoutSummary() const
+::std::string BotTalentManager::GetLoadoutSummary() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Loadouts: " << _stats.totalLoadouts
         << " | Applied: " << _stats.loadoutsApplied
         << " | Dual-Spec: " << _stats.dualSpecsSetup;

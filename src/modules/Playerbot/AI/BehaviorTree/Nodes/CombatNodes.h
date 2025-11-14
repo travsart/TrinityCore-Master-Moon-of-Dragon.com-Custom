@@ -26,6 +26,7 @@
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "SpellHistory.h"
 #include "SharedDefines.h"
 #include "GameTime.h"
 
@@ -205,7 +206,7 @@ public:
         }
 
         // Check if bot has enough resources (mana/rage/energy)
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
         if (!spellInfo)
         {
             _status = BTStatus::FAILURE;
@@ -238,8 +239,8 @@ private:
 class TC_GAME_API BTCastSpell : public BTLeaf
 {
 public:
-    BTCastSpell(_spellId(spellId, uint32 spellId)
-        : BTLeaf("CastSpell")), _castStartTime(0)
+    BTCastSpell(uint32 spellId)
+        : BTLeaf("CastSpell"), _spellId(spellId), _castStartTime(0)
     {}
 
     BTStatus Tick(BotAI* ai, BTBlackboard& blackboard) override

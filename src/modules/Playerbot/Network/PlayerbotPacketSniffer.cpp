@@ -50,7 +50,7 @@ void PlayerbotPacketSniffer::Initialize()
         counter.store(0);
     _totalProcessTimeUs.store(0);
     _peakProcessTimeUs.store(0);
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
 
     _initialized = true;
 
@@ -83,7 +83,7 @@ void PlayerbotPacketSniffer::OnPacketSend(WorldSession* session, WorldPacket con
     if (!player || !PlayerBotHooks::IsPlayerBot(player))
         return;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Categorize and route packet
     PacketCategory category = CategorizePacket(static_cast<OpcodeServer>(packet.GetOpcode()));
@@ -92,21 +92,21 @@ void PlayerbotPacketSniffer::OnPacketSend(WorldSession* session, WorldPacket con
         RouteToCategory(category, session, packet);
 
         // Update statistics
-        _categoryPackets[static_cast<uint8>(category)].fetch_add(1, std::memory_order_relaxed);
+        _categoryPackets[static_cast<uint8>(category)].fetch_add(1, ::std::memory_order_relaxed);
     }
 
-    _totalPackets.fetch_add(1, std::memory_order_relaxed);
+    _totalPackets.fetch_add(1, ::std::memory_order_relaxed);
 
     // Track processing time
-    auto endTime = std::chrono::high_resolution_clock::now();
-    uint64_t processingTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    uint64_t processingTimeUs = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
 
-    _totalProcessTimeUs.fetch_add(processingTimeUs, std::memory_order_relaxed);
+    _totalProcessTimeUs.fetch_add(processingTimeUs, ::std::memory_order_relaxed);
 
     // Update peak time (lock-free CAS loop)
-    uint64_t currentPeak = _peakProcessTimeUs.load(std::memory_order_relaxed);
+    uint64_t currentPeak = _peakProcessTimeUs.load(::std::memory_order_relaxed);
     while (processingTimeUs > currentPeak &&
-           !_peakProcessTimeUs.compare_exchange_weak(currentPeak, processingTimeUs, std::memory_order_relaxed));
+           !_peakProcessTimeUs.compare_exchange_weak(currentPeak, processingTimeUs, ::std::memory_order_relaxed));
 }
 
 void PlayerbotPacketSniffer::RouteToCategory(PacketCategory category, WorldSession* session, WorldPacket const& packet)
@@ -230,17 +230,17 @@ void PlayerbotPacketSniffer::ParseInstancePacket(WorldSession* session, WorldPac
 }
 
 // Statistics implementation
-std::string PlayerbotPacketSniffer::Statistics::ToString() const
+::std::string PlayerbotPacketSniffer::Statistics::ToString() const
 {
-    std::ostringstream ss;
+    ::std::ostringstream ss;
 
     ss << "\n=== PlayerbotPacketSniffer Statistics ===\n";
     ss << "Total Packets Processed: " << totalPacketsProcessed << "\n";
     ss << "Average Processing Time: " << avgProcessTimeUs << " μs\n";
     ss << "Peak Processing Time: " << peakProcessTimeUs << " μs\n";
 
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::steady_clock::now() - startTime).count();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(
+        ::std::chrono::steady_clock::now() - startTime).count();
     ss << "Uptime: " << uptime << " seconds\n";
 
     ss << "\nPackets per Category:\n";
@@ -253,13 +253,13 @@ std::string PlayerbotPacketSniffer::Statistics::ToString() const
     {
         if (packetsPerCategory[i] > 0)
         {
-            ss << "  " << std::setw(12) << std::left << categoryNames[i]
-               << ": " << std::setw(10) << std::right << packetsPerCategory[i];
+            ss << "  " << ::std::setw(12) << ::std::left << categoryNames[i]
+               << ": " << ::std::setw(10) << ::std::right << packetsPerCategory[i];
 
             if (totalPacketsProcessed > 0)
             {
                 float percentage = (float)packetsPerCategory[i] / totalPacketsProcessed * 100.0f;
-                ss << " (" << std::fixed << std::setprecision(2) << percentage << "%)";
+                ss << " (" << ::std::fixed << ::std::setprecision(2) << percentage << "%)";
             }
             ss << "\n";
         }
@@ -274,22 +274,22 @@ void PlayerbotPacketSniffer::Statistics::Reset()
     packetsPerCategory.fill(0);
     avgProcessTimeUs = 0;
     peakProcessTimeUs = 0;
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
 PlayerbotPacketSniffer::Statistics PlayerbotPacketSniffer::GetStatistics()
 {
     Statistics stats;
-    stats.totalPacketsProcessed = _totalPackets.load(std::memory_order_relaxed);
+    stats.totalPacketsProcessed = _totalPackets.load(::std::memory_order_relaxed);
 
     for (uint8 i = 0; i < static_cast<uint8>(PacketCategory::MAX_CATEGORY); ++i)
-        stats.packetsPerCategory[i] = _categoryPackets[i].load(std::memory_order_relaxed);
+        stats.packetsPerCategory[i] = _categoryPackets[i].load(::std::memory_order_relaxed);
 
-    uint64_t totalTime = _totalProcessTimeUs.load(std::memory_order_relaxed);
+    uint64_t totalTime = _totalProcessTimeUs.load(::std::memory_order_relaxed);
     stats.avgProcessTimeUs = stats.totalPacketsProcessed > 0 ?
         totalTime / stats.totalPacketsProcessed : 0;
 
-    stats.peakProcessTimeUs = _peakProcessTimeUs.load(std::memory_order_relaxed);
+    stats.peakProcessTimeUs = _peakProcessTimeUs.load(::std::memory_order_relaxed);
     stats.startTime = _startTime;
 
     return stats;

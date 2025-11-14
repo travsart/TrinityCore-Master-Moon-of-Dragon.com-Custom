@@ -37,10 +37,10 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedMovementCoordinator
- *   ├─> ArbiterModule       (movement request arbitration)
- *   ├─> PathfindingModule   (path calculation, caching)
- *   ├─> FormationModule     (group formations)
- *   └─> PositionModule      (combat positioning)
+ *   > ArbiterModule       (movement request arbitration)
+ *   > PathfindingModule   (path calculation, caching)
+ *   > FormationModule     (group formations)
+ *   > PositionModule      (combat positioning)
  * ```
  *
  * **Thread Safety:**
@@ -76,7 +76,7 @@ public:
     void Update(uint32 diff) override;
     MovementArbiterStatistics const& GetArbiterStatistics() const override;
     void ResetArbiterStatistics() override;
-    std::string GetArbiterDiagnosticString() const override;
+    ::std::string GetArbiterDiagnosticString() const override;
     void LogArbiterStatistics() const override;
     MovementArbiterConfig GetArbiterConfig() const override;
     void SetArbiterConfig(MovementArbiterConfig const& config) override;
@@ -112,7 +112,7 @@ public:
     // FORMATION MODULE INTERFACE
     // ========================================================================
 
-    bool JoinFormation(std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) override;
+    bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) override;
     bool LeaveFormation() override;
     bool ChangeFormation(FormationType newFormation) override;
     bool SetFormationLeader(Player* leader) override;
@@ -120,33 +120,33 @@ public:
     void UpdateFormation(uint32 diff) override;
     bool ExecuteFormationCommand(FormationCommand const& command) override;
     bool MoveFormationToPosition(Position const& targetPos, float orientation = 0.0f) override;
-    bool AdjustFormationForCombat(std::vector<Unit*> const& threats) override;
+    bool AdjustFormationForCombat(::std::vector<Unit*> const& threats) override;
     bool AddFormationMember(Player* player, FormationRole role = FormationRole::SUPPORT) override;
     bool RemoveFormationMember(Player* player) override;
     bool ChangeFormationMemberRole(Player* player, FormationRole newRole) override;
     FormationMember* GetFormationMember(Player* player) override;
-    std::vector<FormationMember> GetAllFormationMembers() const override;
+    ::std::vector<FormationMember> GetAllFormationMembers() const override;
     Position CalculateFormationPosition(FormationRole role, uint32 memberIndex) override;
-    std::vector<Position> CalculateAllFormationPositions() override;
+    ::std::vector<Position> CalculateAllFormationPositions() override;
     Position GetAssignedFormationPosition() const override;
     bool IsInFormationPosition(float tolerance = 2.0f) const override;
     FormationIntegrity AssessFormationIntegrity() override;
     float CalculateCohesionLevel() override;
-    std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) override;
+    ::std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) override;
     bool RequiresReformation() override;
     void CoordinateFormationMovement(Position const& destination) override;
     void MaintainFormationDuringMovement() override;
     bool CanMoveWithoutBreakingFormation(Position const& newPos) override;
     Position AdjustMovementForFormation(Position const& intendedPos) override;
-    void TransitionToCombatFormation(std::vector<Unit*> const& enemies) override;
+    void TransitionToCombatFormation(::std::vector<Unit*> const& enemies) override;
     void TransitionToTravelFormation() override;
-    void AdjustForThreatSpread(std::vector<Unit*> const& threats) override;
+    void AdjustForThreatSpread(::std::vector<Unit*> const& threats) override;
     void HandleFormationBreakage() override;
-    FormationType DetermineOptimalFormation(std::vector<Player*> const& members) override;
+    FormationType DetermineOptimalFormation(::std::vector<Player*> const& members) override;
     FormationConfig GetFormationConfig(FormationType formation) override;
     void SetFormationConfig(FormationType formation, FormationConfig const& config) override;
     void AdjustFormationForTerrain() override;
-    void AdjustFormationForObstacles(std::vector<Position> const& obstacles) override;
+    void AdjustFormationForObstacles(::std::vector<Position> const& obstacles) override;
     void AdjustFormationForGroupSize() override;
     void HandleMemberDisconnection(Player* disconnectedMember) override;
     FormationType GetCurrentFormation() const override;
@@ -179,30 +179,30 @@ public:
     MovementResult FindOptimalPosition(MovementContext const& context) override;
     MovementResult ExecuteMovement(Position const& targetPos, MovementPriority priority) override;
     PositionInfo EvaluatePosition(Position const& pos, MovementContext const& context) override;
-    std::vector<PositionInfo> EvaluatePositions(std::vector<Position> const& positions, MovementContext const& context) override;
-    std::vector<Position> GenerateCandidatePositions(MovementContext const& context) override;
+    ::std::vector<PositionInfo> EvaluatePositions(::std::vector<Position> const& positions, MovementContext const& context) override;
+    ::std::vector<Position> GenerateCandidatePositions(MovementContext const& context) override;
     Position FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle = 0.0f) override;
     Position FindMeleePosition(Unit* target, bool preferBehind = true) override;
     Position FindRangedPosition(Unit* target, float preferredRange = 25.0f) override;
-    Position FindHealingPosition(std::vector<Player*> const& allies) override;
+    Position FindHealingPosition(::std::vector<Player*> const& allies) override;
     Position FindKitingPosition(Unit* threat, float minDistance = 15.0f) override;
     Position FindTankPosition(Unit* target) override;
     Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_COMBAT) override;
-    Position FindHealerPosition(std::vector<Player*> const& groupMembers) override;
-    Position FindSupportPosition(std::vector<Player*> const& groupMembers) override;
+    Position FindHealerPosition(::std::vector<Player*> const& groupMembers) override;
+    Position FindSupportPosition(::std::vector<Player*> const& groupMembers) override;
     bool IsPositionSafe(Position const& pos, MovementContext const& context) override;
     bool IsInDangerZone(Position const& pos) override;
     Position FindSafePosition(Position const& fromPos, float minDistance = 10.0f) override;
-    Position FindEscapePosition(std::vector<Unit*> const& threats) override;
+    Position FindEscapePosition(::std::vector<Unit*> const& threats) override;
     void RegisterAoEZone(AoEZone const& zone) override;
     void UpdateAoEZones(uint32 currentTime) override;
     void ClearExpiredZones(uint32 currentTime) override;
-    std::vector<AoEZone> GetActiveZones() const override;
+    ::std::vector<AoEZone> GetActiveZones() const override;
     bool ValidatePosition(Position const& pos, PositionValidation flags) override;
     bool HasLineOfSight(Position const& from, Position const& to) override;
     bool IsWalkable(Position const& pos) override;
     float CalculateMovementCost(Position const& from, Position const& to) override;
-    Position FindFormationPositionForRole(std::vector<Player*> const& groupMembers, PositionType formationType) override;
+    Position FindFormationPositionForRole(::std::vector<Player*> const& groupMembers, PositionType formationType) override;
     bool ShouldMaintainGroupProximity() override;
     float GetOptimalGroupDistance(uint8 role) override;
     bool ShouldStrafe(Unit* target) override;
@@ -219,7 +219,7 @@ public:
     bool IsInEmergencyPosition() override;
     Position FindEmergencyEscapePosition() override;
     void RecordPositionSuccess(Position const& pos, PositionType type) override;
-    void RecordPositionFailure(Position const& pos, std::string const& reason) override;
+    void RecordPositionFailure(Position const& pos, ::std::string const& reason) override;
     float GetPositionSuccessRate(Position const& pos, float radius = 5.0f) override;
 
     // ========================================================================
@@ -227,9 +227,9 @@ public:
     // ========================================================================
 
     void CoordinateCompleteMovement(Player* bot, MovementContext const& context) override;
-    std::string GetMovementRecommendation(Player* bot, MovementContext const& context) override;
+    ::std::string GetMovementRecommendation(Player* bot, MovementContext const& context) override;
     void OptimizeBotMovement(Player* bot) override;
-    std::string GetMovementStatistics() const override;
+    ::std::string GetMovementStatistics() const override;
 
 private:
     // ========================================================================
@@ -251,7 +251,7 @@ private:
         void Update(uint32 diff);
         MovementArbiterStatistics const& GetStatistics() const;
         void ResetStatistics();
-        std::string GetDiagnosticString() const;
+        ::std::string GetDiagnosticString() const;
         void LogStatistics() const;
         MovementArbiterConfig GetConfig() const;
         void SetConfig(MovementArbiterConfig const& config);
@@ -260,8 +260,8 @@ private:
         bool HasPendingRequests() const;
 
     private:
-        std::unique_ptr<MovementArbiter> _arbiter;
-        std::atomic<uint64> _requestsProcessed{0};
+        ::std::unique_ptr<MovementArbiter> _arbiter;
+        ::std::atomic<uint64> _requestsProcessed{0};
     };
 
     /**
@@ -294,8 +294,8 @@ private:
         bool GetNearestWalkablePosition(Map* map, Position const& position, Position& walkable, float searchRange) const;
 
     private:
-        std::unique_ptr<PathfindingAdapter> _adapter;
-        std::atomic<uint64> _pathsCalculated{0};
+        ::std::unique_ptr<PathfindingAdapter> _adapter;
+        ::std::atomic<uint64> _pathsCalculated{0};
     };
 
     /**
@@ -307,7 +307,7 @@ private:
         explicit FormationModule(Player* bot);
 
         // Delegates to FormationManager instance
-        bool JoinFormation(std::vector<Player*> const& groupMembers, FormationType formation);
+        bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation);
         bool LeaveFormation();
         bool ChangeFormation(FormationType newFormation);
         bool SetFormationLeader(Player* leader);
@@ -315,33 +315,33 @@ private:
         void UpdateFormation(uint32 diff);
         bool ExecuteFormationCommand(FormationCommand const& command);
         bool MoveFormationToPosition(Position const& targetPos, float orientation);
-        bool AdjustFormationForCombat(std::vector<Unit*> const& threats);
+        bool AdjustFormationForCombat(::std::vector<Unit*> const& threats);
         bool AddMember(Player* player, FormationRole role);
         bool RemoveMember(Player* player);
         bool ChangeMemberRole(Player* player, FormationRole newRole);
         FormationMember* GetMember(Player* player);
-        std::vector<FormationMember> GetAllMembers() const;
+        ::std::vector<FormationMember> GetAllMembers() const;
         Position CalculateFormationPosition(FormationRole role, uint32 memberIndex);
-        std::vector<Position> CalculateAllFormationPositions();
+        ::std::vector<Position> CalculateAllFormationPositions();
         Position GetAssignedPosition() const;
         bool IsInFormationPosition(float tolerance) const;
         FormationIntegrity AssessIntegrity();
         float CalculateCohesion();
-        std::vector<Player*> GetOutOfPositionMembers(float tolerance);
+        ::std::vector<Player*> GetOutOfPositionMembers(float tolerance);
         bool RequiresReformation();
         void CoordinateMovement(Position const& destination);
         void MaintainFormationDuringMovement();
         bool CanMoveWithoutBreaking(Position const& newPos);
         Position AdjustMovementForFormation(Position const& intendedPos);
-        void TransitionToCombatFormation(std::vector<Unit*> const& enemies);
+        void TransitionToCombatFormation(::std::vector<Unit*> const& enemies);
         void TransitionToTravelFormation();
-        void AdjustForThreatSpread(std::vector<Unit*> const& threats);
+        void AdjustForThreatSpread(::std::vector<Unit*> const& threats);
         void HandleBreakage();
-        FormationType DetermineOptimalFormation(std::vector<Player*> const& members);
+        FormationType DetermineOptimalFormation(::std::vector<Player*> const& members);
         FormationConfig GetConfig(FormationType formation);
         void SetConfig(FormationType formation, FormationConfig const& config);
         void AdjustForTerrain();
-        void AdjustForObstacles(std::vector<Position> const& obstacles);
+        void AdjustForObstacles(::std::vector<Position> const& obstacles);
         void AdjustForGroupSize();
         void HandleMemberDisconnection(Player* disconnectedMember);
         FormationType GetCurrentFormation() const;
@@ -367,8 +367,8 @@ private:
         void HandleEmergencyRegroup(Position const& rallyPoint);
 
     private:
-        std::unique_ptr<FormationManager> _manager;
-        std::atomic<uint64> _formationsExecuted{0};
+        ::std::unique_ptr<FormationManager> _manager;
+        ::std::atomic<uint64> _formationsExecuted{0};
     };
 
     /**
@@ -384,30 +384,30 @@ private:
         MovementResult FindOptimalPosition(MovementContext const& context);
         MovementResult ExecuteMovement(Position const& targetPos, MovementPriority priority);
         PositionInfo EvaluatePosition(Position const& pos, MovementContext const& context);
-        std::vector<PositionInfo> EvaluatePositions(std::vector<Position> const& positions, MovementContext const& context);
-        std::vector<Position> GenerateCandidatePositions(MovementContext const& context);
+        ::std::vector<PositionInfo> EvaluatePositions(::std::vector<Position> const& positions, MovementContext const& context);
+        ::std::vector<Position> GenerateCandidatePositions(MovementContext const& context);
         Position FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle);
         Position FindMeleePosition(Unit* target, bool preferBehind);
         Position FindRangedPosition(Unit* target, float preferredRange);
-        Position FindHealingPosition(std::vector<Player*> const& allies);
+        Position FindHealingPosition(::std::vector<Player*> const& allies);
         Position FindKitingPosition(Unit* threat, float minDistance);
         Position FindTankPosition(Unit* target);
         Position FindDpsPosition(Unit* target, PositionType type);
-        Position FindHealerPosition(std::vector<Player*> const& groupMembers);
-        Position FindSupportPosition(std::vector<Player*> const& groupMembers);
+        Position FindHealerPosition(::std::vector<Player*> const& groupMembers);
+        Position FindSupportPosition(::std::vector<Player*> const& groupMembers);
         bool IsPositionSafe(Position const& pos, MovementContext const& context);
         bool IsInDangerZone(Position const& pos);
         Position FindSafePosition(Position const& fromPos, float minDistance);
-        Position FindEscapePosition(std::vector<Unit*> const& threats);
+        Position FindEscapePosition(::std::vector<Unit*> const& threats);
         void RegisterAoEZone(AoEZone const& zone);
         void UpdateAoEZones(uint32 currentTime);
         void ClearExpiredZones(uint32 currentTime);
-        std::vector<AoEZone> GetActiveZones() const;
+        ::std::vector<AoEZone> GetActiveZones() const;
         bool ValidatePosition(Position const& pos, PositionValidation flags);
         bool HasLineOfSight(Position const& from, Position const& to);
         bool IsWalkable(Position const& pos);
         float CalculateMovementCost(Position const& from, Position const& to);
-        Position FindFormationPosition(std::vector<Player*> const& groupMembers, PositionType formationType);
+        Position FindFormationPosition(::std::vector<Player*> const& groupMembers, PositionType formationType);
         bool ShouldMaintainGroupProximity();
         float GetOptimalGroupDistance(uint8 role);
         bool ShouldStrafe(Unit* target);
@@ -424,19 +424,19 @@ private:
         bool IsInEmergencyPosition();
         Position FindEmergencyEscapePosition();
         void RecordPositionSuccess(Position const& pos, PositionType type);
-        void RecordPositionFailure(Position const& pos, std::string const& reason);
+        void RecordPositionFailure(Position const& pos, ::std::string const& reason);
         float GetPositionSuccessRate(Position const& pos, float radius);
 
     private:
-        std::unique_ptr<PositionManager> _manager;
-        std::atomic<uint64> _positionsEvaluated{0};
+        ::std::unique_ptr<PositionManager> _manager;
+        ::std::atomic<uint64> _positionsEvaluated{0};
     };
 
     // Module instances
-    std::unique_ptr<ArbiterModule> _arbiter;
-    std::unique_ptr<PathfindingModule> _pathfinding;
-    std::unique_ptr<FormationModule> _formation;
-    std::unique_ptr<PositionModule> _position;
+    ::std::unique_ptr<ArbiterModule> _arbiter;
+    ::std::unique_ptr<PathfindingModule> _pathfinding;
+    ::std::unique_ptr<FormationModule> _formation;
+    ::std::unique_ptr<PositionModule> _position;
 
     // Bot reference
     Player* _bot;
@@ -445,8 +445,8 @@ private:
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _mutex;
 
     // Statistics
-    std::atomic<uint64> _totalOperations{0};
-    std::atomic<uint64> _totalProcessingTimeMs{0};
+    ::std::atomic<uint64> _totalOperations{0};
+    ::std::atomic<uint64> _totalProcessingTimeMs{0};
 };
 
 } // namespace Playerbot

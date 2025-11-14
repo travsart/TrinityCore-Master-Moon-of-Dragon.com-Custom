@@ -45,10 +45,10 @@ SpatialGridQueryHelpers::FindCreatureByGuid(Player* bot, ObjectGuid guid, float 
     return nullptr;
 }
 
-std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
 SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, bool requireAlive)
 {
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -115,10 +115,10 @@ SpatialGridQueryHelpers::FindPlayerByGuid(Player* bot, ObjectGuid guid, float se
     return nullptr;
 }
 
-std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
 SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
 {
-    std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -170,10 +170,10 @@ SpatialGridQueryHelpers::FindGameObjectByGuid(Player* bot, ObjectGuid guid, floa
     return nullptr;
 }
 
-std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
 SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
 {
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -220,10 +220,10 @@ SpatialGridQueryHelpers::FindDynamicObjectByGuid(Player* bot, ObjectGuid guid, f
     return nullptr;
 }
 
-std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
 SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float range)
 {
-    std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)
@@ -271,10 +271,10 @@ SpatialGridQueryHelpers::FindAreaTriggerByGuid(Player* bot, ObjectGuid guid, flo
     return nullptr;
 }
 
-std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
+::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
 SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float range)
 {
-    std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*> result;
+    ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*> result;
 
     auto spatialGrid = GetSpatialGrid(bot);
     if (!spatialGrid)

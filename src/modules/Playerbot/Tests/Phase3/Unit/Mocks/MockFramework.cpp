@@ -169,7 +169,7 @@ MockBotAI::MockBotAI()
 // MOCK FACTORY IMPLEMENTATIONS
 // ============================================================================
 
-std::atomic<uint64> MockFactory::s_guidCounter{1};
+::std::atomic<uint64> MockFactory::s_guidCounter{1};
 
 MockGuid MockFactory::GenerateGUID()
 {
@@ -179,12 +179,12 @@ MockGuid MockFactory::GenerateGUID()
     return MockGuid(value);
 }
 
-std::shared_ptr<MockPlayer> MockFactory::CreateMockPlayer(
+::std::shared_ptr<MockPlayer> MockFactory::CreateMockPlayer(
     uint8 classId,
     uint8 level,
     uint32 spec)
 {
-    auto player = std::make_shared<MockPlayer>();
+    auto player = ::std::make_shared<MockPlayer>();
     player->SetClass(classId);
     player->SetLevel(level);
     player->SetSpec(spec);
@@ -195,70 +195,70 @@ std::shared_ptr<MockPlayer> MockFactory::CreateMockPlayer(
     return player;
 }
 
-std::shared_ptr<MockUnit> MockFactory::CreateMockEnemy(
+::std::shared_ptr<MockUnit> MockFactory::CreateMockEnemy(
     uint32 level,
     uint32 health)
 {
-    auto enemy = std::make_shared<MockUnit>();
+    auto enemy = ::std::make_shared<MockUnit>();
     enemy->SetMaxHealth(health);
     enemy->SetHealth(health);
     enemy->SetCombatState(true);
     return enemy;
 }
 
-std::shared_ptr<MockUnit> MockFactory::CreateMockAlly(
+::std::shared_ptr<MockUnit> MockFactory::CreateMockAlly(
     uint32 level,
     uint32 health)
 {
-    auto ally = std::make_shared<MockUnit>();
+    auto ally = ::std::make_shared<MockUnit>();
     ally->SetMaxHealth(health);
     ally->SetHealth(health);
     return ally;
 }
 
-std::shared_ptr<MockSpellInfo> MockFactory::CreateMockSpellInfo(
+::std::shared_ptr<MockSpellInfo> MockFactory::CreateMockSpellInfo(
     uint32 spellId,
     uint32 manaCost,
     uint32 cooldown,
     uint32 castTime)
 {
-    auto spellInfo = std::make_shared<MockSpellInfo>(spellId);
+    auto spellInfo = ::std::make_shared<MockSpellInfo>(spellId);
     spellInfo->SetManaCost(manaCost);
     spellInfo->SetCooldown(cooldown);
     spellInfo->SetCastTime(castTime);
     return spellInfo;
 }
 
-std::shared_ptr<MockAura> MockFactory::CreateMockAura(
+::std::shared_ptr<MockAura> MockFactory::CreateMockAura(
     uint32 spellId,
     MockUnit* caster,
     MockUnit* target,
     uint32 duration)
 {
-    return std::make_shared<MockAura>(spellId, caster, target);
+    return ::std::make_shared<MockAura>(spellId, caster, target);
 }
 
-std::shared_ptr<MockGroup> MockFactory::CreateMockGroup(MockPlayer* leader)
+::std::shared_ptr<MockGroup> MockFactory::CreateMockGroup(MockPlayer* leader)
 {
-    auto group = std::make_shared<MockGroup>();
+    auto group = ::std::make_shared<MockGroup>();
     if (leader)
         group->AddMemberHelper(leader);
     return group;
 }
 
-std::shared_ptr<MockWorldSession> MockFactory::CreateMockSession(
+::std::shared_ptr<MockWorldSession> MockFactory::CreateMockSession(
     MockPlayer* player,
     bool isBot)
 {
-    auto session = std::make_shared<MockWorldSession>();
+    auto session = ::std::make_shared<MockWorldSession>();
     session->SetPlayer(player);
     session->SetIsBot(isBot);
     return session;
 }
 
-std::shared_ptr<MockBotAI> MockFactory::CreateMockBotAI(MockPlayer* bot)
+::std::shared_ptr<MockBotAI> MockFactory::CreateMockBotAI(MockPlayer* bot)
 {
-    auto botAI = std::make_shared<MockBotAI>();
+    auto botAI = ::std::make_shared<MockBotAI>();
     botAI->SetBot(bot);
     return botAI;
 }

@@ -30,7 +30,7 @@ public:
     MOCK_METHOD(void, Shutdown, (), (override));
     MOCK_METHOD(void, Update, (uint32 diff), (override));
     MOCK_METHOD(bool, CanAllocateSession, (), (const, override));
-    MOCK_METHOD(std::shared_ptr<BotSession>, AcquireSession, (), (override));
+    MOCK_METHOD(::std::shared_ptr<BotSession>, AcquireSession, (), (override));
     MOCK_METHOD(void, ReturnSession, (ObjectGuid sessionGuid), (override));
     MOCK_METHOD(uint32, GetAvailableSessionCount, (), (const, override));
     MOCK_METHOD(void, CleanupIdleSessions, (), (override));
@@ -56,7 +56,7 @@ public:
     MOCK_METHOD(uint32, GetTotalBotCount, (), (const, override));
     MOCK_METHOD(uint32, GetBotCountInZone, (uint32 zoneId), (const, override));
     MOCK_METHOD(void, AddBotToZone, (uint32 zoneId, ObjectGuid botGuid), (override));
-    MOCK_METHOD(std::vector<uint32>, GetUnderpopulatedZones, (), (const, override));
+    MOCK_METHOD(::std::vector<uint32>, GetUnderpopulatedZones, (), (const, override));
 };
 
 class MockBotCharacterSelector : public BotCharacterSelector
@@ -72,7 +72,7 @@ class MockBotSessionFactory : public BotSessionFactory
 public:
     MOCK_METHOD(bool, Initialize, (), (override));
     MOCK_METHOD(void, Shutdown, (), (override));
-    MOCK_METHOD(std::shared_ptr<BotSession>, CreateBotSession, (ObjectGuid characterGuid, SpawnRequest const& request), (override));
+    MOCK_METHOD(::std::shared_ptr<BotSession>, CreateBotSession, (ObjectGuid characterGuid, SpawnRequest const& request), (override));
 };
 
 /**
@@ -89,7 +89,7 @@ protected:
     void SetUp() override
     {
         // Create orchestrator instance
-        orchestrator = std::make_unique<BotSpawnOrchestrator>();
+        orchestrator = ::std::make_unique<BotSpawnOrchestrator>();
 
         // Setup mock expectations for successful initialization
         EXPECT_CALL(*mockResourcePool, Initialize())
@@ -119,14 +119,14 @@ protected:
     }
 
     // Test fixtures
-    std::unique_ptr<BotSpawnOrchestrator> orchestrator;
+    ::std::unique_ptr<BotSpawnOrchestrator> orchestrator;
 
     // Mock components (would need dependency injection in real implementation)
-    std::shared_ptr<MockBotResourcePool> mockResourcePool = std::make_shared<MockBotResourcePool>();
-    std::shared_ptr<MockBotPerformanceMonitor> mockPerformanceMonitor = std::make_shared<MockBotPerformanceMonitor>();
-    std::shared_ptr<MockBotPopulationManager> mockPopulationManager = std::make_shared<MockBotPopulationManager>();
-    std::shared_ptr<MockBotCharacterSelector> mockCharacterSelector = std::make_shared<MockBotCharacterSelector>();
-    std::shared_ptr<MockBotSessionFactory> mockSessionFactory = std::make_shared<MockBotSessionFactory>();
+    ::std::shared_ptr<MockBotResourcePool> mockResourcePool = ::std::make_shared<MockBotResourcePool>();
+    ::std::shared_ptr<MockBotPerformanceMonitor> mockPerformanceMonitor = ::std::make_shared<MockBotPerformanceMonitor>();
+    ::std::shared_ptr<MockBotPopulationManager> mockPopulationManager = ::std::make_shared<MockBotPopulationManager>();
+    ::std::shared_ptr<MockBotCharacterSelector> mockCharacterSelector = ::std::make_shared<MockBotCharacterSelector>();
+    ::std::shared_ptr<MockBotSessionFactory> mockSessionFactory = ::std::make_shared<MockBotSessionFactory>();
 
     // Helper methods
     SpawnRequest CreateTestSpawnRequest(uint32 zoneId = 1, uint32 mapId = 0) const
@@ -206,7 +206,7 @@ TEST_F(BotSpawnOrchestratorTest, SpawnBotFailsWhenZoneAtCapacity)
 TEST_F(BotSpawnOrchestratorTest, SpawnMultipleBotsSuccessfully)
 {
     // Test batch spawning of multiple bots
-    std::vector<SpawnRequest> requests;
+    ::std::vector<SpawnRequest> requests;
     for (int i = 0; i < 5; ++i)
     {
         requests.push_back(CreateTestSpawnRequest(i + 1));
@@ -214,10 +214,10 @@ TEST_F(BotSpawnOrchestratorTest, SpawnMultipleBotsSuccessfully)
 
     // Expect character selector to handle batch processing
     EXPECT_CALL(*mockCharacterSelector, ProcessBatchSelection(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke([](std::vector<SpawnRequest> const& reqs,
-                                     std::function<void(std::vector<ObjectGuid>)> callback) {
+        .WillOnce(::testing::Invoke([](::std::vector<SpawnRequest> const& reqs,
+                                     ::std::function<void(::std::vector<ObjectGuid>)> callback) {
             // Simulate successful character selection for all requests
-            std::vector<ObjectGuid> characters;
+            ::std::vector<ObjectGuid> characters;
             for (size_t i = 0; i < reqs.size(); ++i)
             {
                 characters.push_back(ObjectGuid::Create<HighGuid::Player>(i + 1));
@@ -236,7 +236,7 @@ TEST_F(BotSpawnOrchestratorTest, SpawnMultipleBotsSuccessfully)
 TEST_F(BotSpawnOrchestratorTest, SpawnToPopulationTargetCreatesNeededBots)
 {
     // Test that spawn-to-target creates bots for underpopulated zones
-    std::vector<uint32> underpopulatedZones = {1, 2, 3};
+    ::std::vector<uint32> underpopulatedZones = {1, 2, 3};
     EXPECT_CALL(*mockPopulationManager, GetUnderpopulatedZones())
         .WillOnce(::testing::Return(underpopulatedZones));
 
@@ -346,7 +346,7 @@ TEST_F(BotSpawnOrchestratorTest, SpawnLatencyWithinAcceptableRange)
     // Test that spawn operations complete within acceptable time limits
     orchestrator->Initialize();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     // Setup successful spawn path
     EXPECT_CALL(*mockResourcePool, CanAllocateSession())
@@ -357,8 +357,8 @@ TEST_F(BotSpawnOrchestratorTest, SpawnLatencyWithinAcceptableRange)
     SpawnRequest request = CreateTestSpawnRequest();
     orchestrator->SpawnBot(request);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 
     // Spawn should complete in under 1ms for scalability
     EXPECT_LT(duration.count(), 1000);  // 1000 microseconds = 1ms

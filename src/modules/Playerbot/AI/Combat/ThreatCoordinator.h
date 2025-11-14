@@ -51,7 +51,7 @@ struct BotThreatAssignment
     float currentThreatPercent;     // Current actual threat %
     bool useAbilities;               // Whether to use threat abilities
     uint32 lastAbilityTime;
-    std::vector<uint32> availableAbilities;
+    ::std::vector<uint32> availableAbilities;
 
     BotThreatAssignment() : assignedRole(ThreatRole::UNDEFINED),
                            targetThreatPercent(0.0f), currentThreatPercent(0.0f),
@@ -64,14 +64,14 @@ struct GroupThreatStatus
     ThreatState state;
     ObjectGuid primaryTank;
     ObjectGuid offTank;
-    std::vector<ObjectGuid> activeTargets;
-    std::unordered_map<ObjectGuid, float> targetThreatLevels;  // target -> highest threat %
-    std::unordered_map<ObjectGuid, ObjectGuid> targetTanks;    // target -> current tank
+    ::std::vector<ObjectGuid> activeTargets;
+    ::std::unordered_map<ObjectGuid, float> targetThreatLevels;  // target -> highest threat %
+    ::std::unordered_map<ObjectGuid, ObjectGuid> targetTanks;    // target -> current tank
     uint32 looseTargets;            // Number of targets not on tank
     uint32 criticalTargets;         // Targets attacking healers/dps
     bool requiresTaunt;
     bool requiresEmergencyResponse;
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     GroupThreatStatus() : state(ThreatState::STABLE), looseTargets(0),
                          criticalTargets(0), requiresTaunt(false),
@@ -85,7 +85,7 @@ struct ThreatResponseAction
     ObjectGuid targetUnit;
     uint32 abilitySpellId;
     ThreatAbilityType abilityType;
-    std::chrono::steady_clock::time_point executeTime;
+    ::std::chrono::steady_clock::time_point executeTime;
     uint32 priority;
     bool executed;
     bool succeeded;
@@ -95,21 +95,21 @@ struct ThreatResponseAction
 
     bool IsReady() const
     {
-        return std::chrono::steady_clock::now() >= executeTime;
+        return ::std::chrono::steady_clock::now() >= executeTime;
     }
 };
 
 // Performance metrics for threat coordination
 struct ThreatCoordinationMetrics
 {
-    std::atomic<uint32> threatUpdates{0};
-    std::atomic<uint32> tauntExecutions{0};
-    std::atomic<uint32> tauntSuccesses{0};
-    std::atomic<uint32> threatReductions{0};
-    std::atomic<uint32> emergencyResponses{0};
-    std::atomic<uint32> tankSwaps{0};
-    std::chrono::microseconds averageUpdateTime{0};
-    std::chrono::microseconds maxUpdateTime{0};
+    ::std::atomic<uint32> threatUpdates{0};
+    ::std::atomic<uint32> tauntExecutions{0};
+    ::std::atomic<uint32> tauntSuccesses{0};
+    ::std::atomic<uint32> threatReductions{0};
+    ::std::atomic<uint32> emergencyResponses{0};
+    ::std::atomic<uint32> tankSwaps{0};
+    ::std::chrono::microseconds averageUpdateTime{0};
+    ::std::chrono::microseconds maxUpdateTime{0};
     float averageThreatStability{0.0f};
     float tankControlRate{0.0f};  // % of time tank has aggro
 
@@ -121,8 +121,8 @@ struct ThreatCoordinationMetrics
         threatReductions = 0;
         emergencyResponses = 0;
         tankSwaps = 0;
-        averageUpdateTime = std::chrono::microseconds{0};
-        maxUpdateTime = std::chrono::microseconds{0};
+        averageUpdateTime = ::std::chrono::microseconds{0};
+        maxUpdateTime = ::std::chrono::microseconds{0};
         averageThreatStability = 0.0f;
         tankControlRate = 0.0f;
     }
@@ -190,7 +190,7 @@ public:
 
     // Target analysis
     Unit* GetHighestThreatTarget() const;
-    std::vector<Unit*> GetLooseTargets() const;
+    ::std::vector<Unit*> GetLooseTargets() const;
     ObjectGuid GetTargetTank(Unit* target) const;
 
     // === Configuration ===
@@ -223,7 +223,7 @@ public:
 
     // Debug information
     void LogThreatStatus() const;
-    std::string GetThreatReport() const;
+    ::std::string GetThreatReport() const;
 
     // === Advanced Features ===
 
@@ -276,7 +276,7 @@ private:
     void ExecuteMassTheatReduction();
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, std::string const& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, ::std::string const& operation);
     void UpdateStabilityMetrics();
 
     // Cleanup
@@ -293,18 +293,18 @@ private:
     Group* _group;
 
     // Bot management
-    std::unordered_map<ObjectGuid, std::unique_ptr<BotThreatManager>> _botThreatManagers;
-    std::unordered_map<ObjectGuid, BotThreatAssignment> _botAssignments;
-    std::unordered_map<ObjectGuid, BotAI*> _botAIs;
+    ::std::unordered_map<ObjectGuid, ::std::unique_ptr<BotThreatManager>> _botThreatManagers;
+    ::std::unordered_map<ObjectGuid, BotThreatAssignment> _botAssignments;
+    ::std::unordered_map<ObjectGuid, BotAI*> _botAIs;
 
     // Tank assignments
     ObjectGuid _primaryTank;
     ObjectGuid _offTank;
-    std::vector<ObjectGuid> _backupTanks;
+    ::std::vector<ObjectGuid> _backupTanks;
 
     // Current status
     GroupThreatStatus _groupStatus;
-    std::vector<ThreatResponseAction> _queuedResponses;
+    ::std::vector<ThreatResponseAction> _queuedResponses;
 
     // Configuration
     float _tankThreatThreshold = 130.0f;      // Tank should maintain 130% threat
@@ -325,8 +325,8 @@ private:
 
     // Performance tracking
     mutable ThreatCoordinationMetrics _metrics;
-    std::chrono::steady_clock::time_point _lastUpdate;
-    std::chrono::steady_clock::time_point _lastEmergencyCheck;
+    ::std::chrono::steady_clock::time_point _lastUpdate;
+    ::std::chrono::steady_clock::time_point _lastEmergencyCheck;
 
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _coordinatorMutex;

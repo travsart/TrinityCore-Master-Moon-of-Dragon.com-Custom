@@ -178,19 +178,19 @@ namespace Playerbot
         }
     }
 
-    std::optional<FlightMasterLocation> FlightMasterManager::FindNearestFlightMaster(
+    ::std::optional<FlightMasterLocation> FlightMasterManager::FindNearestFlightMaster(
         Player const* player,
         float maxDistance)
     {
         if (!player)
-            return std::nullopt;
+            return ::std::nullopt;
 
         Map* map = player->GetMap();
         if (!map)
-            return std::nullopt;
+            return ::std::nullopt;
 
         FlightMasterLocation nearest;
-        float minDistance = maxDistance > 0.0f ? maxDistance : std::numeric_limits<float>::max();
+        float minDistance = maxDistance > 0.0f ? maxDistance : ::std::numeric_limits<float>::max();
         bool found = false;
 
         // Iterate all creatures on map
@@ -211,7 +211,7 @@ namespace Playerbot
                 // Get associated taxi node
                 // Flight masters are associated with taxi nodes by proximity
                 TaxiNodesEntry const* nearestNode = nullptr;
-                float nearestNodeDist = std::numeric_limits<float>::max();
+                float nearestNodeDist = ::std::numeric_limits<float>::max();
 
                 for (TaxiNodesEntry const* node : sTaxiNodesStore)
                 {
@@ -225,7 +225,7 @@ namespace Playerbot
                     // Calculate distance from creature to taxi node
                     float dx = creature->GetPositionX() - node->Pos.X;
                     float dy = creature->GetPositionY() - node->Pos.Y;
-                    float dist = std::sqrt(dx * dx + dy * dy);
+                    float dist = ::std::sqrt(dx * dx + dy * dy);
 
                     if (dist < nearestNodeDist)
                     {
@@ -248,7 +248,7 @@ namespace Playerbot
             }
         }
 
-        return found ? std::make_optional(nearest) : std::nullopt;
+        return found ? ::std::make_optional(nearest) : ::std::nullopt;
     }
 
     uint32 FlightMasterManager::FindNearestTaxiNode(
@@ -256,7 +256,7 @@ namespace Playerbot
         uint32 mapId)
     {
         TaxiNodesEntry const* nearestNode = nullptr;
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
 
         // Iterate all taxi nodes
         for (TaxiNodesEntry const* node : sTaxiNodesStore)
@@ -275,7 +275,7 @@ namespace Playerbot
             // Calculate distance to position
             float dx = position.GetPositionX() - node->Pos.X;
             float dy = position.GetPositionY() - node->Pos.Y;
-            float distance = std::sqrt(dx * dx + dy * dy);
+            float distance = ::std::sqrt(dx * dx + dy * dy);
 
             if (distance < minDistance)
             {
@@ -287,14 +287,14 @@ namespace Playerbot
         return nearestNode ? nearestNode->ID : 0;
     }
 
-    std::optional<FlightPathInfo> FlightMasterManager::CalculateFlightPath(
+    ::std::optional<FlightPathInfo> FlightMasterManager::CalculateFlightPath(
         Player const* player,
         uint32 sourceNode,
         uint32 destinationNode,
         FlightPathStrategy strategy)
     {
         if (!player)
-            return std::nullopt;
+            return ::std::nullopt;
 
         // Get taxi node entries
         TaxiNodesEntry const* from = sTaxiNodesStore.LookupEntry(sourceNode);
@@ -305,19 +305,19 @@ namespace Playerbot
             TC_LOG_ERROR("playerbot.flight",
                 "FlightMasterManager: Invalid taxi nodes (source: {}, dest: {})",
                 sourceNode, destinationNode);
-            return std::nullopt;
+            return ::std::nullopt;
         }
 
         // Use TaxiPathGraph to find shortest path
-        std::vector<uint32> shortestPath;
-        std::size_t pathCost = TaxiPathGraph::GetCompleteNodeRoute(from, to, player, shortestPath);
+        ::std::vector<uint32> shortestPath;
+        ::std::size_t pathCost = TaxiPathGraph::GetCompleteNodeRoute(from, to, player, shortestPath);
 
         if (shortestPath.empty() || pathCost == 0)
         {
             TC_LOG_WARN("playerbot.flight",
                 "FlightMasterManager: No path found from node {} to node {}",
                 sourceNode, destinationNode);
-            return std::nullopt;
+            return ::std::nullopt;
         }
 
         // Build flight path info
@@ -420,7 +420,7 @@ namespace Playerbot
 
     uint32 FlightMasterManager::CalculateFlightCost(
         Player const* player,
-        std::vector<uint32> const& nodes)
+        ::std::vector<uint32> const& nodes)
     {
         if (!player || nodes.size() < 2)
             return 0;
@@ -446,7 +446,7 @@ namespace Playerbot
     }
 
     uint32 FlightMasterManager::EstimateFlightTime(
-        std::vector<uint32> const& nodes)
+        ::std::vector<uint32> const& nodes)
     {
         if (nodes.size() < 2)
             return 0;
@@ -465,7 +465,7 @@ namespace Playerbot
     }
 
     float FlightMasterManager::CalculateFlightDistance(
-        std::vector<uint32> const& nodes)
+        ::std::vector<uint32> const& nodes)
     {
         if (nodes.size() < 2)
             return 0.0f;
@@ -483,7 +483,7 @@ namespace Playerbot
                 float dx = to->Pos.X - from->Pos.X;
                 float dy = to->Pos.Y - from->Pos.Y;
                 float dz = to->Pos.Z - from->Pos.Z;
-                float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+                float distance = ::std::sqrt(dx * dx + dy * dy + dz * dz);
 
                 totalDistance += distance;
             }

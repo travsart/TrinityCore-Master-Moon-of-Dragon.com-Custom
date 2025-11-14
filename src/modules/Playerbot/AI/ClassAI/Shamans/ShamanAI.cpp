@@ -975,7 +975,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
         return false;
 
     // Count nearby enemies
-    std::list<Unit*> enemies;
+    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -994,7 +994,7 @@ bool ShamanAI::HandleAoEDecisions(::Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)
@@ -1819,7 +1819,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
         return false;
 
     // Use Chain Lightning if there are multiple targets
-    std::list<Unit*> enemies;
+    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 30.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1838,7 +1838,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 30.0f);
 
     // Process results (replace old searcher logic)
@@ -1868,7 +1868,7 @@ bool ShamanAI::HandleChainLightning(::Unit* target)
         if (CastSpell(SPELL_CHAIN_LIGHTNING, target))
         {
 
-            _elementalMaelstrom += 4 * std::min(static_cast<size_t>(5), enemies.size());
+            _elementalMaelstrom += 4 * ::std::min(static_cast<size_t>(5), enemies.size());
 
             TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} casting Chain Lightning",
 
@@ -2387,7 +2387,7 @@ bool ShamanAI::ShouldUseAscendance() const
         if (target && target->GetMaxHealth() > 1000000)
 
             return true;
-    }    std::list<Unit*> enemies;
+    }    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -2406,7 +2406,7 @@ bool ShamanAI::ShouldUseAscendance() const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)
@@ -2532,7 +2532,7 @@ bool ShamanAI::HandleCrashLightning()
         return false;
 
     // Use if multiple enemies nearby
-    std::list<Unit*> enemies;
+    ::std::list<Unit*> enemies;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 8.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -2551,7 +2551,7 @@ bool ShamanAI::HandleCrashLightning()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 8.0f);
 
     // Process results (replace old searcher logic)
@@ -2637,7 +2637,7 @@ bool ShamanAI::HandleEarthquake()
     // Use if enough maelstrom and multiple enemies
     if (_elementalMaelstrom >= 60)
     {
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), enemies, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -2656,7 +2656,7 @@ bool ShamanAI::HandleEarthquake()
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), 40.0f);
 
     // Process results (replace old searcher logic)
@@ -3020,7 +3020,7 @@ Position ShamanAI::GetOptimalPosition(::Unit* target)
     // Fallback to spec-based positioning
     float optimalRange = GetOptimalRange(target);
     float angle = GetBot()->GetAbsoluteAngle(target);
-    float x = target->GetPositionX() - optimalRange * std::cos(angle);    float y = target->GetPositionY() - optimalRange * std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
+    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float ShamanAI::GetOptimalRange(::Unit* target)

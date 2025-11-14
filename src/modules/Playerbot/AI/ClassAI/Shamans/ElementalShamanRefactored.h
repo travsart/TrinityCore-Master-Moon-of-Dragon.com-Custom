@@ -34,6 +34,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
 constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
 constexpr uint32 ELEM_LAVA_BURST = 51505;
@@ -66,7 +76,7 @@ public:
 
     void Generate(uint32 amount)
     {
-        _maelstrom = std::min(_maelstrom + amount, _maxMaelstrom);
+        _maelstrom = ::std::min(_maelstrom + amount, _maxMaelstrom);
     }
 
     void Spend(uint32 amount)
@@ -164,7 +174,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
 };
 
 // Lava Surge proc tracker (instant Lava Burst)
@@ -632,7 +642,7 @@ private:
             {
                 this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
                 _stormkeeperTracker.ConsumeStack();
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u)); // 4 per target hit
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u)); // 4 per target hit
                 return;
             }
         }
@@ -643,7 +653,7 @@ private:
             if (this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
             {
                 this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u));
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -665,7 +675,7 @@ private:
 
         uint32 count = 0;
         // Simplified enemy counting
-        return std::min(count, 10u);
+        return ::std::min(count, 10u);
     }
 
     void InitializeElementalMechanics()
@@ -774,7 +784,7 @@ private:
                     }),
                     Selector("Use burst cooldowns", {
                         Sequence("Fire Elemental", {
-                            Action("Summon Fire Elemental", [this](Player* bot) {
+                            bot::ai::Action("Summon Fire Elemental", [this](Player* bot) {
                                 if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
                                 {
                                     this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
@@ -787,7 +797,7 @@ private:
                             Condition("Has Ascendance and not active", [this](Player* bot) {
                                 return bot->HasSpell(ELEM_ASCENDANCE) && !this->_ascendanceActive;
                             }),
-                            Action("Cast Ascendance", [this](Player* bot) {
+                            bot::ai::Action("Cast Ascendance", [this](Player* bot) {
                                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                                 {
                                     this->CastSpell(bot, ELEM_ASCENDANCE);
@@ -802,7 +812,7 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_stormkeeperTracker.IsActive();
                             }),
-                            Action("Cast Stormkeeper", [this](Player* bot) {
+                            bot::ai::Action("Cast Stormkeeper", [this](Player* bot) {
                                 if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
                                 {
                                     this->CastSpell(bot, ELEM_STORMKEEPER);
@@ -826,7 +836,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_flameShockTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            Action("Cast Flame Shock", [this](Player* bot) {
+                            bot::ai::Action("Cast Flame Shock", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                                 {
@@ -843,7 +853,7 @@ private:
                                 return target && (this->_lavaSurgeTracker.IsActive() ||
                                        this->_flameShockTracker.HasFlameShock(target->GetGUID()));
                             }),
-                            Action("Cast Lava Burst", [this](Player* bot) {
+                            bot::ai::Action("Cast Lava Burst", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LAVA_BURST, target))
                                 {
@@ -860,7 +870,7 @@ private:
                             Condition("Has talent", [this](Player* bot) {
                                 return bot->HasSpell(ELEM_PRIMORDIAL_WAVE);
                             }),
-                            Action("Cast Primordial Wave", [this](Player* bot) {
+                            bot::ai::Action("Cast Primordial Wave", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
                                 {
@@ -883,7 +893,7 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            Action("Cast Earthquake", [this](Player* bot) {
+                            bot::ai::Action("Cast Earthquake", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTHQUAKE, target))
                                 {
@@ -895,7 +905,7 @@ private:
                             })
                         }),
                         Sequence("Earth Shock (ST)", {
-                            Action("Cast Earth Shock", [this](Player* bot) {
+                            bot::ai::Action("Cast Earth Shock", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTH_SHOCK, target))
                                 {
@@ -919,12 +929,12 @@ private:
                             Condition("2+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(40.0f) >= 2;
                             }),
-                            Action("Cast Chain Lightning", [this](Player* bot) {
+                            bot::ai::Action("Cast Chain Lightning", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
                                 {
                                     this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                                    uint32 enemies = std::min(this->GetEnemiesInRange(40.0f), 5u);
+                                    uint32 enemies = ::std::min(this->GetEnemiesInRange(40.0f), 5u);
                                     this->_maelstromTracker.Generate(4 * enemies);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -932,7 +942,7 @@ private:
                             })
                         }),
                         Sequence("Lightning Bolt (ST)", {
-                            Action("Cast Lightning Bolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Lightning Bolt", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
                                 {

@@ -41,11 +41,11 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedQuestManager
- *   ├─> PickupModule      (quest discovery, acceptance)
- *   ├─> CompletionModule  (objective tracking, execution)
- *   ├─> ValidationModule  (requirement validation)
- *   ├─> TurnInModule      (quest turn-in, rewards)
- *   └─> DynamicModule     (quest assignment, optimization)
+ *   > PickupModule      (quest discovery, acceptance)
+ *   > CompletionModule  (objective tracking, execution)
+ *   > ValidationModule  (requirement validation)
+ *   > TurnInModule      (quest turn-in, rewards)
+ *   > DynamicModule     (quest assignment, optimization)
  * ```
  *
  * **Thread Safety:**
@@ -82,14 +82,14 @@ public:
     bool PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId = 0) override;
     void PickupAvailableQuests(Player* bot) override;
     void PickupQuestsInArea(Player* bot, float radius = 50.0f) override;
-    std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) override;
-    std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) override;
-    std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) override;
+    ::std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) override;
+    ::std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) override;
+    ::std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) override;
     QuestEligibility CheckQuestEligibility(uint32 questId, Player* bot) override;
     bool CanAcceptQuest(uint32 questId, Player* bot) override;
     bool MeetsQuestRequirements(uint32 questId, Player* bot) override;
-    std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) override;
-    std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) override;
+    ::std::vector<uint32> FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) override;
+    ::std::vector<uint32> PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) override;
     bool ShouldAcceptQuest(uint32 questId, Player* bot) override;
 
     // ========================================================================
@@ -114,7 +114,7 @@ public:
     void HandleEscortObjective(Player* bot, QuestObjectiveData& objective) override;
     void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) override;
     bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) override;
-    std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
+    ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
     Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) override;
     void CoordinateGroupQuestCompletion(Group* group, uint32 questId) override;
     void ShareObjectiveProgress(Group* group, uint32 questId) override;
@@ -122,8 +122,8 @@ public:
     void HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex) override;
     void OptimizeQuestCompletionOrder(Player* bot) override;
     void OptimizeObjectiveSequence(Player* bot, uint32 questId) override;
-    void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds) override;
-    void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives) override;
+    void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds) override;
+    void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives) override;
     void DetectStuckState(Player* bot, uint32 questId) override;
     void HandleStuckObjective(Player* bot, QuestObjectiveData& objective) override;
     void RecoverFromStuckState(Player* bot, uint32 questId) override;
@@ -135,7 +135,7 @@ public:
 
     bool ValidateQuest(uint32 questId, Player* bot) override;
     bool ValidateQuestRequirements(uint32 questId, Player* bot) override;
-    std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot) override;
+    ::std::vector<::std::string> GetValidationErrors(uint32 questId, Player* bot) override;
     bool ValidateLevelRequirements(uint32 questId, Player* bot) override;
     bool ValidateClassRequirements(uint32 questId, Player* bot) override;
     bool ValidateRaceRequirements(uint32 questId, Player* bot) override;
@@ -143,14 +143,14 @@ public:
     bool ValidateQuestPrerequisites(uint32 questId, Player* bot) override;
     bool ValidateQuestChain(uint32 questId, Player* bot) override;
     bool HasCompletedPrerequisites(uint32 questId, Player* bot) override;
-    std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) override;
+    ::std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) override;
     bool ValidateReputationRequirements(uint32 questId, Player* bot) override;
     bool ValidateFactionRequirements(uint32 questId, Player* bot) override;
     bool HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId) override;
     bool ValidateItemRequirements(uint32 questId, Player* bot) override;
     bool HasRequiredItems(uint32 questId, Player* bot) override;
     bool HasInventorySpace(uint32 questId, Player* bot) override;
-    std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot) override;
+    ::std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot) override;
     bool ValidateQuestAvailability(uint32 questId, Player* bot) override;
     bool ValidateSeasonalAvailability(uint32 questId) override;
     bool ValidateDailyQuestLimits(uint32 questId, Player* bot) override;
@@ -171,13 +171,13 @@ public:
     void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result) override;
     void InvalidateValidationCache(uint32 botGuid) override;
     void CleanupExpiredCache() override;
-    std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-        const std::vector<uint32>& questIds, Player* bot) override;
-    std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot) override;
-    std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates) override;
-    std::string GetDetailedValidationReport(uint32 questId, Player* bot) override;
-    void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason) override;
-    std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) override;
+    ::std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
+        const ::std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates) override;
+    ::std::string GetDetailedValidationReport(uint32 questId, Player* bot) override;
+    void LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason) override;
+    ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) override;
 
     // ========================================================================
     // TURNIN MODULE INTERFACE
@@ -187,21 +187,21 @@ public:
     void ProcessQuestTurnIn(Player* bot, uint32 questId) override;
     void ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch) override;
     void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs = 0) override;
-    std::vector<uint32> GetCompletedQuests(Player* bot) override;
+    ::std::vector<uint32> GetCompletedQuests(Player* bot) override;
     bool IsQuestReadyForTurnIn(uint32 questId, Player* bot) override;
     void MonitorQuestCompletion(Player* bot) override;
     void HandleQuestCompletion(Player* bot, uint32 questId) override;
     void PlanOptimalTurnInRoute(Player* bot) override;
-    TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds) override;
-    void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns) override;
+    TurnInBatch CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds) override;
+    void OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns) override;
     void MinimizeTurnInTravel(Player* bot) override;
     bool FindQuestTurnInNpc(Player* bot, uint32 questId) override;
     Position GetQuestTurnInLocation(uint32 questId) override;
     bool NavigateToQuestGiver(Player* bot, uint32 questGiverGuid) override;
     bool IsAtQuestGiver(Player* bot, uint32 questGiverGuid) override;
     void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot) override;
-    uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) override;
-    void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot) override;
+    uint32 SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) override;
+    void EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot) override;
     float CalculateItemValue(const QuestRewardItem& reward, Player* bot) override;
     void CoordinateGroupTurnIns(Group* group) override;
     void SynchronizeGroupRewardSelection(Group* group, uint32 questId) override;
@@ -226,7 +226,7 @@ public:
     void SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy) override;
     RewardSelectionStrategy GetRewardSelectionStrategy(uint32 botGuid) override;
     void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold) override;
-    void HandleTurnInError(Player* bot, uint32 questId, const std::string& error) override;
+    void HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error) override;
     void RecoverFromTurnInFailure(Player* bot, uint32 questId) override;
     void RetryFailedTurnIn(Player* bot, uint32 questId) override;
     void ValidateTurnInState(Player* bot, uint32 questId) override;
@@ -235,12 +235,12 @@ public:
     // DYNAMIC MODULE INTERFACE
     // ========================================================================
 
-    std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
-    std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
+    ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
+    ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
     bool AssignQuestToBot(uint32 questId, Player* bot) override;
     void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) override;
     QuestPriority CalculateQuestPriority(uint32 questId, Player* bot) override;
-    std::vector<uint32> SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot) override;
     bool ShouldAbandonQuest(uint32 questId, Player* bot) override;
     void UpdateQuestProgressDynamic(Player* bot) override;
     void ExecuteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex) override;
@@ -251,7 +251,7 @@ public:
     void ShareQuestProgress(Group* group, uint32 questId) override;
     bool CanShareQuest(uint32 questId, Player* from, Player* to) override;
     Position GetNextQuestLocation(Player* bot, uint32 questId) override;
-    std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) override;
+    ::std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) override;
     void HandleQuestNavigation(Player* bot, uint32 questId) override;
     bool IsQuestLocationReachable(Player* bot, const Position& location) override;
     void AdaptQuestDifficulty(uint32 questId, Player* bot) override;
@@ -259,11 +259,11 @@ public:
     void RetryFailedObjective(Player* bot, uint32 questId, uint32 objectiveIndex) override;
     void OptimizeQuestOrder(Player* bot) override;
     void TrackQuestChains(Player* bot) override;
-    std::vector<uint32> GetQuestChain(uint32 questId) override;
+    ::std::vector<uint32> GetQuestChain(uint32 questId) override;
     uint32 GetNextQuestInChainDynamic(uint32 completedQuestId) override;
     void AdvanceQuestChain(Player* bot, uint32 completedQuestId) override;
     void OptimizeZoneQuests(Player* bot) override;
-    std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) override;
+    ::std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) override;
     void PlanZoneCompletion(Player* bot, uint32 zoneId) override;
     bool ShouldMoveToNewZone(Player* bot) override;
     QuestReward AnalyzeQuestReward(uint32 questId, Player* bot) override;
@@ -279,9 +279,9 @@ public:
     // ========================================================================
 
     void ProcessCompleteQuestFlow(Player* bot) override;
-    std::string GetQuestRecommendation(Player* bot, uint32 questId) override;
+    ::std::string GetQuestRecommendation(Player* bot, uint32 questId) override;
     void OptimizeBotQuestLoad(Player* bot) override;
-    std::string GetQuestStatistics() const override;
+    ::std::string GetQuestStatistics() const override;
     QuestMetrics GetBotQuestMetrics(uint32 botGuid) override;
     QuestMetrics GetGlobalQuestMetrics() override;
     TurnInMetrics GetBotTurnInMetrics(uint32 botGuid) override;
@@ -310,19 +310,19 @@ private:
         bool PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId = 0);
         void PickupAvailableQuests(Player* bot);
         void PickupQuestsInArea(Player* bot, float radius);
-        std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius);
-        std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius);
-        std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot);
+        ::std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius);
+        ::std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius);
+        ::std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot);
         QuestEligibility CheckQuestEligibility(uint32 questId, Player* bot);
         bool CanAcceptQuest(uint32 questId, Player* bot);
         bool MeetsQuestRequirements(uint32 questId, Player* bot);
-        std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter);
-        std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy);
+        ::std::vector<uint32> FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter);
+        ::std::vector<uint32> PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy);
         bool ShouldAcceptQuest(uint32 questId, Player* bot);
 
     private:
-        std::atomic<uint64> _questsPickedUp{0};
-        std::atomic<uint64> _questsDiscovered{0};
+        ::std::atomic<uint64> _questsPickedUp{0};
+        ::std::atomic<uint64> _questsDiscovered{0};
     };
 
     /**
@@ -350,7 +350,7 @@ private:
         void HandleEscortObjective(Player* bot, QuestObjectiveData& objective);
         void NavigateToObjective(Player* bot, const QuestObjectiveData& objective);
         bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective);
-        std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective);
+        ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective);
         Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective);
         void CoordinateGroupQuestCompletion(Group* group, uint32 questId);
         void ShareObjectiveProgress(Group* group, uint32 questId);
@@ -358,16 +358,16 @@ private:
         void HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex);
         void OptimizeQuestCompletionOrder(Player* bot);
         void OptimizeObjectiveSequence(Player* bot, uint32 questId);
-        void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds);
-        void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives);
+        void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds);
+        void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives);
         void DetectStuckState(Player* bot, uint32 questId);
         void HandleStuckObjective(Player* bot, QuestObjectiveData& objective);
         void RecoverFromStuckState(Player* bot, uint32 questId);
         void SkipProblematicObjective(Player* bot, QuestObjectiveData& objective);
 
     private:
-        std::atomic<uint64> _objectivesCompleted{0};
-        std::atomic<uint64> _questsCompleted{0};
+        ::std::atomic<uint64> _objectivesCompleted{0};
+        ::std::atomic<uint64> _questsCompleted{0};
     };
 
     /**
@@ -379,7 +379,7 @@ private:
         // Delegates to QuestValidation singleton
         bool ValidateQuest(uint32 questId, Player* bot);
         bool ValidateQuestRequirements(uint32 questId, Player* bot);
-        std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot);
+        ::std::vector<::std::string> GetValidationErrors(uint32 questId, Player* bot);
         bool ValidateLevelRequirements(uint32 questId, Player* bot);
         bool ValidateClassRequirements(uint32 questId, Player* bot);
         bool ValidateRaceRequirements(uint32 questId, Player* bot);
@@ -387,14 +387,14 @@ private:
         bool ValidateQuestPrerequisites(uint32 questId, Player* bot);
         bool ValidateQuestChain(uint32 questId, Player* bot);
         bool HasCompletedPrerequisites(uint32 questId, Player* bot);
-        std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot);
+        ::std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot);
         bool ValidateReputationRequirements(uint32 questId, Player* bot);
         bool ValidateFactionRequirements(uint32 questId, Player* bot);
         bool HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId);
         bool ValidateItemRequirements(uint32 questId, Player* bot);
         bool HasRequiredItems(uint32 questId, Player* bot);
         bool HasInventorySpace(uint32 questId, Player* bot);
-        std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot);
+        ::std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot);
         bool ValidateQuestAvailability(uint32 questId, Player* bot);
         bool ValidateSeasonalAvailability(uint32 questId);
         bool ValidateDailyQuestLimits(uint32 questId, Player* bot);
@@ -415,18 +415,18 @@ private:
         void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result);
         void InvalidateValidationCache(uint32 botGuid);
         void CleanupExpiredCache();
-        std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-            const std::vector<uint32>& questIds, Player* bot);
-        std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot);
-        std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates);
-        std::string GetDetailedValidationReport(uint32 questId, Player* bot);
-        void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason);
-        std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot);
+        ::std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
+            const ::std::vector<uint32>& questIds, Player* bot);
+        ::std::vector<uint32> FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot);
+        ::std::vector<uint32> GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates);
+        ::std::string GetDetailedValidationReport(uint32 questId, Player* bot);
+        void LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason);
+        ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot);
         ValidationMetrics GetValidationMetrics();
 
     private:
-        std::atomic<uint64> _validationsPerformed{0};
-        std::atomic<uint64> _validationsPassed{0};
+        ::std::atomic<uint64> _validationsPerformed{0};
+        ::std::atomic<uint64> _validationsPassed{0};
     };
 
     /**
@@ -440,21 +440,21 @@ private:
         void ProcessQuestTurnIn(Player* bot, uint32 questId);
         void ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch);
         void ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs);
-        std::vector<uint32> GetCompletedQuests(Player* bot);
+        ::std::vector<uint32> GetCompletedQuests(Player* bot);
         bool IsQuestReadyForTurnIn(uint32 questId, Player* bot);
         void MonitorQuestCompletion(Player* bot);
         void HandleQuestCompletion(Player* bot, uint32 questId);
         void PlanOptimalTurnInRoute(Player* bot);
-        TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds);
-        void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns);
+        TurnInBatch CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds);
+        void OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns);
         void MinimizeTurnInTravel(Player* bot);
         bool FindQuestTurnInNpc(Player* bot, uint32 questId);
         Position GetQuestTurnInLocation(uint32 questId);
         bool NavigateToQuestGiver(Player* bot, uint32 questGiverGuid);
         bool IsAtQuestGiver(Player* bot, uint32 questGiverGuid);
         void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot);
-        uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy);
-        void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot);
+        uint32 SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy);
+        void EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot);
         float CalculateItemValue(const QuestRewardItem& reward, Player* bot);
         void CoordinateGroupTurnIns(Group* group);
         void SynchronizeGroupRewardSelection(Group* group, uint32 questId);
@@ -479,7 +479,7 @@ private:
         void SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy);
         RewardSelectionStrategy GetRewardSelectionStrategy(uint32 botGuid);
         void SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold);
-        void HandleTurnInError(Player* bot, uint32 questId, const std::string& error);
+        void HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error);
         void RecoverFromTurnInFailure(Player* bot, uint32 questId);
         void RetryFailedTurnIn(Player* bot, uint32 questId);
         void ValidateTurnInState(Player* bot, uint32 questId);
@@ -487,8 +487,8 @@ private:
         TurnInMetrics GetGlobalTurnInMetrics();
 
     private:
-        std::atomic<uint64> _questsTurnedIn{0};
-        std::atomic<uint64> _rewardsSelected{0};
+        ::std::atomic<uint64> _questsTurnedIn{0};
+        ::std::atomic<uint64> _rewardsSelected{0};
     };
 
     /**
@@ -498,12 +498,12 @@ private:
     {
     public:
         // Delegates to DynamicQuestSystem singleton
-        std::vector<uint32> DiscoverAvailableQuests(Player* bot);
-        std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy);
+        ::std::vector<uint32> DiscoverAvailableQuests(Player* bot);
+        ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy);
         bool AssignQuestToBot(uint32 questId, Player* bot);
         void AutoAssignQuests(Player* bot, uint32 maxQuests);
         QuestPriority CalculateQuestPriority(uint32 questId, Player* bot);
-        std::vector<uint32> SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot);
+        ::std::vector<uint32> SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot);
         bool ShouldAbandonQuest(uint32 questId, Player* bot);
         void UpdateQuestProgressDynamic(Player* bot);
         void ExecuteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex);
@@ -514,7 +514,7 @@ private:
         void ShareQuestProgress(Group* group, uint32 questId);
         bool CanShareQuest(uint32 questId, Player* from, Player* to);
         Position GetNextQuestLocation(Player* bot, uint32 questId);
-        std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId);
+        ::std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId);
         void HandleQuestNavigation(Player* bot, uint32 questId);
         bool IsQuestLocationReachable(Player* bot, const Position& location);
         void AdaptQuestDifficulty(uint32 questId, Player* bot);
@@ -522,11 +522,11 @@ private:
         void RetryFailedObjective(Player* bot, uint32 questId, uint32 objectiveIndex);
         void OptimizeQuestOrder(Player* bot);
         void TrackQuestChains(Player* bot);
-        std::vector<uint32> GetQuestChain(uint32 questId);
+        ::std::vector<uint32> GetQuestChain(uint32 questId);
         uint32 GetNextQuestInChainDynamic(uint32 completedQuestId);
         void AdvanceQuestChain(Player* bot, uint32 completedQuestId);
         void OptimizeZoneQuests(Player* bot);
-        std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot);
+        ::std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot);
         void PlanZoneCompletion(Player* bot, uint32 zoneId);
         bool ShouldMoveToNewZone(Player* bot);
         QuestReward AnalyzeQuestReward(uint32 questId, Player* bot);
@@ -540,23 +540,23 @@ private:
         QuestMetrics GetGlobalQuestMetrics();
 
     private:
-        std::atomic<uint64> _questsAssigned{0};
-        std::atomic<uint64> _questsOptimized{0};
+        ::std::atomic<uint64> _questsAssigned{0};
+        ::std::atomic<uint64> _questsOptimized{0};
     };
 
     // Module instances
-    std::unique_ptr<PickupModule> _pickup;
-    std::unique_ptr<CompletionModule> _completion;
-    std::unique_ptr<ValidationModule> _validation;
-    std::unique_ptr<TurnInModule> _turnIn;
-    std::unique_ptr<DynamicModule> _dynamic;
+    ::std::unique_ptr<PickupModule> _pickup;
+    ::std::unique_ptr<CompletionModule> _completion;
+    ::std::unique_ptr<ValidationModule> _validation;
+    ::std::unique_ptr<TurnInModule> _turnIn;
+    ::std::unique_ptr<DynamicModule> _dynamic;
 
     // Global mutex for unified operations
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::QUEST_MANAGER> _mutex;
 
     // Statistics
-    std::atomic<uint64> _totalOperations{0};
-    std::atomic<uint64> _totalProcessingTimeMs{0};
+    ::std::atomic<uint64> _totalOperations{0};
+    ::std::atomic<uint64> _totalProcessingTimeMs{0};
 };
 
 } // namespace Playerbot

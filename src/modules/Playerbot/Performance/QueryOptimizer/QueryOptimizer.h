@@ -41,9 +41,9 @@ public:
     struct Configuration
     {
         size_t maxBatchSize{50};
-        std::chrono::milliseconds batchTimeout{100};
+        ::std::chrono::milliseconds batchTimeout{100};
         size_t cacheSize{1000};
-        std::chrono::milliseconds slowQueryThreshold{50};
+        ::std::chrono::milliseconds slowQueryThreshold{50};
         bool enableBatching{true};
         bool enableCaching{true};
     };
@@ -73,33 +73,33 @@ public:
 
     struct QueryMetrics
     {
-        std::atomic<uint64> totalQueries{0};
-        std::atomic<uint64> cachedQueries{0};
-        std::atomic<uint64> batchedQueries{0};
-        std::atomic<uint64> totalLatency{0};
-        std::atomic<uint64> slowQueries{0};
+        ::std::atomic<uint64> totalQueries{0};
+        ::std::atomic<uint64> cachedQueries{0};
+        ::std::atomic<uint64> batchedQueries{0};
+        ::std::atomic<uint64> totalLatency{0};
+        ::std::atomic<uint64> slowQueries{0};
 
         void RecordQuery(uint64 latencyUs, bool cached, bool batched)
         {
-            totalQueries.fetch_add(1, std::memory_order_relaxed);
-            totalLatency.fetch_add(latencyUs, std::memory_order_relaxed);
+            totalQueries.fetch_add(1, ::std::memory_order_relaxed);
+            totalLatency.fetch_add(latencyUs, ::std::memory_order_relaxed);
 
             if (cached)
-                cachedQueries.fetch_add(1, std::memory_order_relaxed);
+                cachedQueries.fetch_add(1, ::std::memory_order_relaxed);
             if (batched)
-                batchedQueries.fetch_add(1, std::memory_order_relaxed);
+                batchedQueries.fetch_add(1, ::std::memory_order_relaxed);
             if (latencyUs > 50000) // 50ms
-                slowQueries.fetch_add(1, std::memory_order_relaxed);
+                slowQueries.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         QueryMetricsSnapshot GetSnapshot() const
         {
             QueryMetricsSnapshot snapshot;
-            snapshot.totalQueries = totalQueries.load(std::memory_order_relaxed);
-            snapshot.cachedQueries = cachedQueries.load(std::memory_order_relaxed);
-            snapshot.batchedQueries = batchedQueries.load(std::memory_order_relaxed);
-            snapshot.totalLatency = totalLatency.load(std::memory_order_relaxed);
-            snapshot.slowQueries = slowQueries.load(std::memory_order_relaxed);
+            snapshot.totalQueries = totalQueries.load(::std::memory_order_relaxed);
+            snapshot.cachedQueries = cachedQueries.load(::std::memory_order_relaxed);
+            snapshot.batchedQueries = batchedQueries.load(::std::memory_order_relaxed);
+            snapshot.totalLatency = totalLatency.load(::std::memory_order_relaxed);
+            snapshot.slowQueries = slowQueries.load(::std::memory_order_relaxed);
             return snapshot;
         }
     };
@@ -122,11 +122,11 @@ public:
      */
     void ResetMetrics()
     {
-        _metrics.totalQueries.store(0, std::memory_order_relaxed);
-        _metrics.cachedQueries.store(0, std::memory_order_relaxed);
-        _metrics.batchedQueries.store(0, std::memory_order_relaxed);
-        _metrics.totalLatency.store(0, std::memory_order_relaxed);
-        _metrics.slowQueries.store(0, std::memory_order_relaxed);
+        _metrics.totalQueries.store(0, ::std::memory_order_relaxed);
+        _metrics.cachedQueries.store(0, ::std::memory_order_relaxed);
+        _metrics.batchedQueries.store(0, ::std::memory_order_relaxed);
+        _metrics.totalLatency.store(0, ::std::memory_order_relaxed);
+        _metrics.slowQueries.store(0, ::std::memory_order_relaxed);
     }
 
     /**

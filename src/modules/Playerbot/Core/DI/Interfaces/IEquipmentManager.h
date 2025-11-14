@@ -71,7 +71,7 @@ public:
         float newItemScore = 0.0f;
         uint32 currentItemLevel = 0;
         uint32 newItemLevel = 0;
-        std::string upgradeReason;
+        ::std::string upgradeReason;
     };
 
     /**
@@ -132,7 +132,7 @@ public:
      * @param player Player to scan
      * @return List of junk item GUIDs
      */
-    virtual std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) = 0;
+    virtual ::std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) = 0;
 
     /**
      * @brief Check if item is junk
@@ -162,7 +162,7 @@ public:
      * @param player Player to check
      * @return Map of itemId -> quantity needed
      */
-    virtual std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) = 0;
+    virtual ::std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) = 0;
 
     /**
      * @brief Check if player needs consumable restocking

@@ -19,15 +19,15 @@ namespace Playerbot
 // Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotSpawnEventBus::BotSpawnEventBus()
-    : _lastProcessing(std::chrono::steady_clock::now())
+    : _lastProcessing(::std::chrono::steady_clock::now())
 {
 }
 
 BotSpawnEventBus* BotSpawnEventBus::instance()
 {
-    std::lock_guard lock(_instanceMutex);
+    ::std::lock_guard lock(_instanceMutex);
     if (!_instance)
-        _instance = std::unique_ptr<BotSpawnEventBus>(new BotSpawnEventBus());
+        _instance = ::std::unique_ptr<BotSpawnEventBus>(new BotSpawnEventBus());
     return _instance.get();
 }
 
@@ -37,7 +37,7 @@ bool BotSpawnEventBus::Initialize()
         "Initializing BotSpawnEventBus for event-driven spawning architecture");
 
     ResetStats();
-    _lastProcessing = std::chrono::steady_clock::now();
+    _lastProcessing = ::std::chrono::steady_clock::now();
     _processingEnabled.store(true);
 
     TC_LOG_INFO("module.playerbot.events",
@@ -65,22 +65,22 @@ void BotSpawnEventBus::Shutdown()
 
     // Clear subscriptions
     {
-        std::lock_guard lock(_subscriptionMutex);
+        ::std::lock_guard lock(_subscriptionMutex);
         _subscriptions.clear();
     }
 
     // Clear queue
     {
-        std::lock_guard lock(_queueMutex);
-        std::queue<QueuedEvent> empty;
+        ::std::lock_guard lock(_queueMutex);
+        ::std::queue<QueuedEvent> empty;
         _eventQueue.swap(empty);
     }
 }
 
 void BotSpawnEventBus::Update(uint32 /*diff*/)
 {
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastProcessing);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastProcessing);
 
     if (elapsed.count() >= PROCESSING_INTERVAL_MS)
     {
@@ -91,7 +91,7 @@ void BotSpawnEventBus::Update(uint32 /*diff*/)
 
 // === EVENT PUBLISHING ===
 
-void BotSpawnEventBus::PublishEvent(std::shared_ptr<BotSpawnEvent> event)
+void BotSpawnEventBus::PublishEvent(::std::shared_ptr<BotSpawnEvent> event)
 {
     if (!event || !_processingEnabled.load())
         return;
@@ -111,7 +111,7 @@ void BotSpawnEventBus::PublishEvent(std::shared_ptr<BotSpawnEvent> event)
 
     // Queue the event
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             // Drop oldest event to make room
@@ -122,7 +122,7 @@ void BotSpawnEventBus::PublishEvent(std::shared_ptr<BotSpawnEvent> event)
         QueuedEvent queuedEvent;
         queuedEvent.event = event;
         queuedEvent.priority = GetEventPriority(event->type);
-        queuedEvent.queueTime = std::chrono::steady_clock::now();
+        queuedEvent.queueTime = ::std::chrono::steady_clock::now();
 
         _eventQueue.push(queuedEvent);
         _stats.queuedEvents.store(_eventQueue.size());
@@ -131,33 +131,33 @@ void BotSpawnEventBus::PublishEvent(std::shared_ptr<BotSpawnEvent> event)
     _stats.eventsPublished.fetch_add(1);
 }
 
-void BotSpawnEventBus::PublishSpawnRequest(SpawnRequest const& request, std::function<void(bool, ObjectGuid)> callback)
+void BotSpawnEventBus::PublishSpawnRequest(SpawnRequest const& request, ::std::function<void(bool, ObjectGuid)> callback)
 {
-    auto event = std::make_shared<SpawnRequestEvent>(request, std::move(callback));
+    auto event = ::std::make_shared<SpawnRequestEvent>(request, ::std::move(callback));
     PublishEvent(event);
 }
 
 void BotSpawnEventBus::PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request)
 {
-    auto event = std::make_shared<CharacterSelectedEvent>(characterGuid, request);
+    auto event = ::std::make_shared<CharacterSelectedEvent>(characterGuid, request);
     PublishEvent(event);
 }
 
-void BotSpawnEventBus::PublishSessionCreated(std::shared_ptr<BotSession> session, SpawnRequest const& request)
+void BotSpawnEventBus::PublishSessionCreated(::std::shared_ptr<BotSession> session, SpawnRequest const& request)
 {
-    auto event = std::make_shared<SessionCreatedEvent>(session, request);
+    auto event = ::std::make_shared<SessionCreatedEvent>(session, request);
     PublishEvent(event);
 }
 
-void BotSpawnEventBus::PublishSpawnCompleted(ObjectGuid botGuid, bool success, std::string const& details)
+void BotSpawnEventBus::PublishSpawnCompleted(ObjectGuid botGuid, bool success, ::std::string const& details)
 {
-    auto event = std::make_shared<SpawnCompletedEvent>(botGuid, success, details);
+    auto event = ::std::make_shared<SpawnCompletedEvent>(botGuid, success, details);
     PublishEvent(event);
 }
 
 void BotSpawnEventBus::PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount)
 {
-    auto event = std::make_shared<PopulationChangedEvent>(zoneId, oldCount, newCount);
+    auto event = ::std::make_shared<PopulationChangedEvent>(zoneId, oldCount, newCount);
     PublishEvent(event);
 }
 
@@ -165,14 +165,14 @@ void BotSpawnEventBus::PublishPopulationChanged(uint32 zoneId, uint32 oldCount, 
 
 BotSpawnEventBus::HandlerId BotSpawnEventBus::Subscribe(BotSpawnEventType eventType, EventHandler handler)
 {
-    std::lock_guard lock(_subscriptionMutex);
+    ::std::lock_guard lock(_subscriptionMutex);
 
     HandlerId id = _nextHandlerId.fetch_add(1);
 
     EventSubscription subscription;
     subscription.id = id;
     subscription.eventType = eventType;
-    subscription.handler = std::move(handler);
+    subscription.handler = ::std::move(handler);
     subscription.isGlobal = false;
 
     _subscriptions.push_back(subscription);
@@ -185,14 +185,14 @@ BotSpawnEventBus::HandlerId BotSpawnEventBus::Subscribe(BotSpawnEventType eventT
 
 BotSpawnEventBus::HandlerId BotSpawnEventBus::SubscribeToAll(EventHandler handler)
 {
-    std::lock_guard lock(_subscriptionMutex);
+    ::std::lock_guard lock(_subscriptionMutex);
 
     HandlerId id = _nextHandlerId.fetch_add(1);
 
     EventSubscription subscription;
     subscription.id = id;
     subscription.eventType = BotSpawnEventType::SPAWN_REQUESTED; // Unused for global
-    subscription.handler = std::move(handler);
+    subscription.handler = ::std::move(handler);
     subscription.isGlobal = true;
 
     _subscriptions.push_back(subscription);
@@ -204,9 +204,9 @@ BotSpawnEventBus::HandlerId BotSpawnEventBus::SubscribeToAll(EventHandler handle
 
 void BotSpawnEventBus::Unsubscribe(HandlerId handlerId)
 {
-    std::lock_guard lock(_subscriptionMutex);
+    ::std::lock_guard lock(_subscriptionMutex);
 
-    auto it = std::remove_if(_subscriptions.begin(), _subscriptions.end(),
+    auto it = ::std::remove_if(_subscriptions.begin(), _subscriptions.end(),
         [handlerId](EventSubscription const& sub) {
             return sub.id == handlerId;
         });
@@ -226,7 +226,7 @@ void BotSpawnEventBus::ProcessEvents()
         return;
 
     uint32 processed = 0;
-    auto processingStart = std::chrono::high_resolution_clock::now();
+    auto processingStart = ::std::chrono::high_resolution_clock::now();
 
     // Process events in batches for better performance
     while (processed < _batchSize)
@@ -235,7 +235,7 @@ void BotSpawnEventBus::ProcessEvents()
 
         // Get next event from queue
         {
-            std::lock_guard lock(_queueMutex);
+            ::std::lock_guard lock(_queueMutex);
             if (_eventQueue.empty())
                 break;
 
@@ -252,8 +252,8 @@ void BotSpawnEventBus::ProcessEvents()
     // Record processing performance
     if (processed > 0)
     {
-        auto processingEnd = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(processingEnd - processingStart);
+        auto processingEnd = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(processingEnd - processingStart);
         RecordEventProcessing(duration.count());
 
         _stats.eventsProcessed.fetch_add(processed);
@@ -262,12 +262,12 @@ void BotSpawnEventBus::ProcessEvents()
 
 void BotSpawnEventBus::ProcessEventsOfType(BotSpawnEventType eventType)
 {
-    std::vector<QueuedEvent> eventsToProcess;
-    std::vector<QueuedEvent> eventsToKeep;
+    ::std::vector<QueuedEvent> eventsToProcess;
+    ::std::vector<QueuedEvent> eventsToKeep;
 
     // Extract events of specific type
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty())
         {
@@ -295,15 +295,15 @@ void BotSpawnEventBus::ProcessEventsOfType(BotSpawnEventType eventType)
     }
 }
 
-void BotSpawnEventBus::ProcessEventInternal(std::shared_ptr<BotSpawnEvent> event)
+void BotSpawnEventBus::ProcessEventInternal(::std::shared_ptr<BotSpawnEvent> event)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     try
     {
         NotifySubscribers(event);
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.events",
             "Exception processing event {}: {}", static_cast<uint32>(event->type), ex.what());
@@ -314,14 +314,14 @@ void BotSpawnEventBus::ProcessEventInternal(std::shared_ptr<BotSpawnEvent> event
             "Unknown exception processing event {}", static_cast<uint32>(event->type));
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
     RecordEventProcessing(duration.count());
 }
 
-void BotSpawnEventBus::NotifySubscribers(std::shared_ptr<BotSpawnEvent> event)
+void BotSpawnEventBus::NotifySubscribers(::std::shared_ptr<BotSpawnEvent> event)
 {
-    std::lock_guard lock(_subscriptionMutex);
+    ::std::lock_guard lock(_subscriptionMutex);
 
     for (auto const& subscription : _subscriptions)
     {
@@ -331,7 +331,7 @@ void BotSpawnEventBus::NotifySubscribers(std::shared_ptr<BotSpawnEvent> event)
             {
                 subscription.handler(event);
             }
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
             {
                 TC_LOG_ERROR("module.playerbot.events",
                     "Exception in event handler {}: {}", subscription.id, ex.what());
@@ -370,7 +370,7 @@ uint32 BotSpawnEventBus::GetEventPriority(BotSpawnEventType eventType) const
     }
 }
 
-bool BotSpawnEventBus::ShouldDropEvent(std::shared_ptr<BotSpawnEvent> event) const
+bool BotSpawnEventBus::ShouldDropEvent(::std::shared_ptr<BotSpawnEvent> event) const
 {
     // Drop events if queue is near capacity
     uint32 currentQueueSize = _stats.queuedEvents.load();

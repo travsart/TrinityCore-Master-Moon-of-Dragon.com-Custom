@@ -59,15 +59,15 @@ private:
     BotSessionMgr& operator=(BotSessionMgr const&) = delete;
 
     // Simple data structures
-    std::unordered_map<uint32, std::unique_ptr<BotSession>> _sessions;
-    std::vector<BotSession*> _activeSessions;
+    ::std::unordered_map<uint32, ::std::unique_ptr<BotSession>> _sessions;
+    ::std::vector<BotSession*> _activeSessions;
 
     // Simple thread safety with deadlock prevention
     mutable OrderedRecursiveMutex<LockOrder::SESSION_MANAGER> _sessionsMutex;
 
     // State
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 } // namespace Playerbot

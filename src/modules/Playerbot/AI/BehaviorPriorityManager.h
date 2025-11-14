@@ -65,7 +65,7 @@ struct BehaviorMetadata {
     BehaviorPriority priority;
     bool exclusive;              // If true, no other behaviors can run
     bool allowsLowerPriority;    // If true, allows lower priority behaviors to run
-    std::set<BehaviorPriority> conflicts; // Priorities this conflicts with
+    ::std::set<BehaviorPriority> conflicts; // Priorities this conflicts with
 
     BehaviorMetadata()
         : strategy(nullptr)
@@ -160,13 +160,13 @@ public:
      * 3. Check mutual exclusion rules
      * 4. Return highest priority valid strategy
      */
-    Strategy* SelectActiveBehavior(std::vector<Strategy*>& activeStrategies);
+    Strategy* SelectActiveBehavior(::std::vector<Strategy*>& activeStrategies);
 
     /**
      * @brief Get all active strategies sorted by priority
      * @return Vector of strategies (highest priority first)
      */
-    std::vector<Strategy*> GetPrioritizedStrategies() const;
+    ::std::vector<Strategy*> GetPrioritizedStrategies() const;
 
     /**
      * @brief Check if two behaviors can coexist
@@ -224,16 +224,16 @@ public:
      * @param priority Priority to query
      * @return Set of conflicting priorities
      */
-    std::set<BehaviorPriority> GetConflicts(BehaviorPriority priority) const;
+    ::std::set<BehaviorPriority> GetConflicts(BehaviorPriority priority) const;
 
 private:
     BotAI* m_ai;
 
     // Strategy metadata by priority
-    std::map<BehaviorPriority, std::vector<BehaviorMetadata>> m_strategies;
+    ::std::map<BehaviorPriority, ::std::vector<BehaviorMetadata>> m_strategies;
 
     // Mutual exclusion rules
-    std::map<BehaviorPriority, std::set<BehaviorPriority>> m_exclusionRules;
+    ::std::map<BehaviorPriority, ::std::set<BehaviorPriority>> m_exclusionRules;
 
     // Current active priority
     BehaviorPriority m_activePriority{BehaviorPriority::SOLO};
@@ -246,7 +246,7 @@ private:
      */
     bool IsBlockedByExclusion(
         BehaviorPriority priority,
-        const std::vector<BehaviorPriority>& activePriorities
+        const ::std::vector<BehaviorPriority>& activePriorities
     ) const;
 
     /**
@@ -259,6 +259,6 @@ private:
 /**
  * @brief Helper: Convert priority to string
  */
-TC_GAME_API std::string_view ToString(BehaviorPriority priority);
+TC_GAME_API ::std::string_view ToString(BehaviorPriority priority);
 
 } // namespace Playerbot

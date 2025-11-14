@@ -255,7 +255,7 @@ private:
         ObjectGuid groupGuid;
         uint32 dungeonId;
         uint32 formationTime;       // When group was formed
-        std::vector<ObjectGuid> pendingTeleports; // Players waiting for teleport
+        ::std::vector<ObjectGuid> pendingTeleports; // Players waiting for teleport
     };
 
     // ========================================================================
@@ -293,7 +293,7 @@ private:
      * @param player Player to notify
      * @param dungeonName Name of the dungeon
      */
-    void NotifyTeleportStart(Player* player, std::string const& dungeonName);
+    void NotifyTeleportStart(Player* player, ::std::string const& dungeonName);
 
     /**
      * Handle teleport failure
@@ -301,7 +301,7 @@ private:
      * @param player Player who failed to teleport
      * @param reason Failure reason
      */
-    void HandleTeleportFailure(Player* player, std::string const& reason);
+    void HandleTeleportFailure(Player* player, ::std::string const& reason);
 
     // ========================================================================
     // DATA MEMBERS
@@ -310,8 +310,8 @@ private:
     bool _enabled;                                          ///< Whether coordinator is enabled
     uint32 _teleportTimeout;                                ///< Teleport timeout in milliseconds
 
-    std::unordered_map<ObjectGuid, TeleportInfo> _pendingTeleports;        ///< Pending teleportations
-    std::unordered_map<ObjectGuid, GroupFormationInfo> _groupFormations;   ///< Active group formations
+    ::std::unordered_map<ObjectGuid, TeleportInfo> _pendingTeleports;        ///< Pending teleportations
+    ::std::unordered_map<ObjectGuid, GroupFormationInfo> _groupFormations;   ///< Active group formations
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _teleportMutex;                      ///< Protects teleport data
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _groupMutex;                         ///< Protects group formation data

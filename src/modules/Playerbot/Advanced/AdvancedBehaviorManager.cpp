@@ -463,7 +463,7 @@ void AdvancedBehaviorManager::HandleTrashPull()
     }
 }
 
-void AdvancedBehaviorManager::PrioritizeCrowdControl(std::vector<Creature*> const& mobs)
+void AdvancedBehaviorManager::PrioritizeCrowdControl(::std::vector<Creature*> const& mobs)
 {
     if (!m_bot || mobs.empty())
         return;
@@ -642,7 +642,7 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
     if (!map)
         return;
 
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 20.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
@@ -661,7 +661,7 @@ void AdvancedBehaviorManager::DefendBase(GameObject* flag)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 m_bot->GetPosition(), 20.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -758,7 +758,7 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
     if (!map)
         return;
 
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     Position carrierPos = carrier->GetPosition();
     Trinity::AnyPlayerInPositionRangeCheck check(&carrierPos, 15.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
@@ -776,7 +776,7 @@ void AdvancedBehaviorManager::EscortFlagCarrier(Player* carrier)
 
         if (spatialGrid)
         {
-            std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
                 carrier->GetPosition(), 15.0f);
 
             for (ObjectGuid guid : nearbyGuids)
@@ -883,7 +883,7 @@ void AdvancedBehaviorManager::PrioritizeHealers()
     if (!map)
         return;
 
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 40.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
@@ -946,7 +946,7 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
     if (!map)
         return;
 
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 50.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
@@ -1032,9 +1032,9 @@ void AdvancedBehaviorManager::VisitEventVendors(WorldEventType type)
     // Framework in place for vendor integration
 }
 
-std::vector<AdvancedBehaviorManager::WorldEvent> AdvancedBehaviorManager::GetActiveEvents() const
+::std::vector<AdvancedBehaviorManager::WorldEvent> AdvancedBehaviorManager::GetActiveEvents() const
 {
-    std::vector<WorldEvent> activeEvents;
+    ::std::vector<WorldEvent> activeEvents;
 
     for (auto const& event : m_worldEvents)
     {
@@ -1055,13 +1055,13 @@ void AdvancedBehaviorManager::PursueAchievement(uint32 achievementId)
         return;
 
     // Add to pursuit list
-    if (std::find(m_pursuingAchievements.begin(), m_pursuingAchievements.end(), achievementId) == m_pursuingAchievements.end())
+    if (::std::find(m_pursuingAchievements.begin(), m_pursuingAchievements.end(), achievementId) == m_pursuingAchievements.end())
         m_pursuingAchievements.push_back(achievementId);
 }
 
-std::vector<AdvancedBehaviorManager::Achievement> AdvancedBehaviorManager::GetPursuitAchievements() const
+::std::vector<AdvancedBehaviorManager::Achievement> AdvancedBehaviorManager::GetPursuitAchievements() const
 {
-    std::vector<Achievement> achievements;
+    ::std::vector<Achievement> achievements;
 
     // Framework in place for achievement database lookup
     return achievements;
@@ -1167,9 +1167,9 @@ void AdvancedBehaviorManager::TrackRareSpawn(Creature* rare)
     m_trackedRares[rare->GetEntry()] = spawn;
 }
 
-std::vector<AdvancedBehaviorManager::RareSpawn> AdvancedBehaviorManager::GetTrackedRares() const
+::std::vector<AdvancedBehaviorManager::RareSpawn> AdvancedBehaviorManager::GetTrackedRares() const
 {
-    std::vector<RareSpawn> rares;
+    ::std::vector<RareSpawn> rares;
     rares.reserve(m_trackedRares.size());
 
     for (auto const& pair : m_trackedRares)
@@ -1211,7 +1211,7 @@ bool AdvancedBehaviorManager::LootTreasure(GameObject* treasure)
     return true;
 }
 
-std::vector<AdvancedBehaviorManager::Treasure> AdvancedBehaviorManager::GetDiscoveredTreasures() const
+::std::vector<AdvancedBehaviorManager::Treasure> AdvancedBehaviorManager::GetDiscoveredTreasures() const
 {
     return m_discoveredTreasures;
 }
@@ -1320,7 +1320,7 @@ void AdvancedBehaviorManager::StartBossFight(Creature* boss)
     if (m_currentBossFight)
         m_currentBossFight.reset();
 
-    m_currentBossFight = std::make_unique<ActiveBossFight>();
+    m_currentBossFight = ::std::make_unique<ActiveBossFight>();
     m_currentBossFight->boss = boss;
     m_currentBossFight->bossEntry = boss->GetEntry();
     m_currentBossFight->startTime = GameTime::GetGameTimeMS();
@@ -1409,7 +1409,7 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
     if (!map)
         return nullptr;
 
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     Position botPos = m_bot->GetPosition();
     Trinity::AnyPlayerInPositionRangeCheck check(&botPos, 40.0f, true);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(m_bot, nearbyPlayers, check);
@@ -1614,7 +1614,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
     }
 
     // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         m_bot->GetPosition(), 50.0f);
 
     // Resolve GUIDs to GameObject pointers and scan for treasures
@@ -1653,7 +1653,7 @@ void AdvancedBehaviorManager::UpdateDangerZones(uint32 diff)
 
     // Remove expired danger zones
     m_dangerZones.erase(
-        std::remove_if(m_dangerZones.begin(), m_dangerZones.end(),
+        ::std::remove_if(m_dangerZones.begin(), m_dangerZones.end(),
             [now](DangerZone const& zone) {
                 return now >= zone.expiryTime;
             }),
@@ -1679,8 +1679,8 @@ Position AdvancedBehaviorManager::FindSafePosition(Position const& currentPos) c
     float distance = 20.0f;
 
     Position safePos;
-    safePos.m_positionX = currentPos.GetPositionX() + distance * std::cos(angle);
-    safePos.m_positionY = currentPos.GetPositionY() + distance * std::sin(angle);
+    safePos.m_positionX = currentPos.GetPositionX() + distance * ::std::cos(angle);
+    safePos.m_positionY = currentPos.GetPositionY() + distance * ::std::sin(angle);
     safePos.m_positionZ = currentPos.GetPositionZ();
 
     // Verify position is safe
@@ -1691,8 +1691,8 @@ Position AdvancedBehaviorManager::FindSafePosition(Position const& currentPos) c
     for (uint32 i = 0; i < 8; ++i)
     {
         angle = (i * 45.0f) * (M_PI / 180.0f);
-        safePos.m_positionX = currentPos.GetPositionX() + distance * std::cos(angle);
-        safePos.m_positionY = currentPos.GetPositionY() + distance * std::sin(angle);
+        safePos.m_positionX = currentPos.GetPositionX() + distance * ::std::cos(angle);
+        safePos.m_positionY = currentPos.GetPositionY() + distance * ::std::sin(angle);
 
         if (!IsInDangerZone(safePos))
             return safePos;
@@ -1763,13 +1763,13 @@ void AdvancedBehaviorManager::RecordTreasureLoot(GameObject* treasure)
 
 void AdvancedBehaviorManager::StartPerformanceTimer()
 {
-    m_performanceStart = std::chrono::high_resolution_clock::now();
+    m_performanceStart = ::std::chrono::high_resolution_clock::now();
 }
 
 void AdvancedBehaviorManager::EndPerformanceTimer()
 {
-    auto end = std::chrono::high_resolution_clock::now();
-    m_lastUpdateDuration = std::chrono::duration_cast<std::chrono::microseconds>(end - m_performanceStart);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    m_lastUpdateDuration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - m_performanceStart);
     m_totalUpdateTime += m_lastUpdateDuration;
     m_updateCount++;
 }
@@ -1783,7 +1783,7 @@ void AdvancedBehaviorManager::UpdatePerformanceMetrics()
 
         if (m_updateCount >= 1000)
         {
-            m_totalUpdateTime = std::chrono::microseconds(0);
+            m_totalUpdateTime = ::std::chrono::microseconds(0);
             m_updateCount = 0;
         }
     }

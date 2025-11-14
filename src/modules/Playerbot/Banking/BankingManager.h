@@ -118,7 +118,7 @@ struct BotBankingProfile
     bool travelToBankerWhenNeeded = true;
 
     // Banking rules (itemId/class/subclass -> rule)
-    std::vector<BankingRule> customRules;
+    ::std::vector<BankingRule> customRules;
 
     BotBankingProfile() = default;
 };
@@ -141,7 +141,7 @@ struct BankingTransaction
     uint32 itemId;              // 0 for gold transactions
     uint32 quantity;
     uint32 goldAmount;          // For gold transactions
-    std::string reason;         // Why this transaction occurred
+    ::std::string reason;         // Why this transaction occurred
 
     BankingTransaction()
         : type(Type::DEPOSIT_GOLD), timestamp(0), itemId(0)
@@ -153,14 +153,14 @@ struct BankingTransaction
  */
 struct BankingStatistics
 {
-    std::atomic<uint32> totalDeposits{0};
-    std::atomic<uint32> totalWithdrawals{0};
-    std::atomic<uint32> goldDeposited{0};
-    std::atomic<uint32> goldWithdrawn{0};
-    std::atomic<uint32> itemsDeposited{0};
-    std::atomic<uint32> itemsWithdrawn{0};
-    std::atomic<uint32> bankTrips{0};
-    std::atomic<uint32> timeSpentBanking{0};        // Milliseconds
+    ::std::atomic<uint32> totalDeposits{0};
+    ::std::atomic<uint32> totalWithdrawals{0};
+    ::std::atomic<uint32> goldDeposited{0};
+    ::std::atomic<uint32> goldWithdrawn{0};
+    ::std::atomic<uint32> itemsDeposited{0};
+    ::std::atomic<uint32> itemsWithdrawn{0};
+    ::std::atomic<uint32> bankTrips{0};
+    ::std::atomic<uint32> timeSpentBanking{0};        // Milliseconds
 
     void Reset()
     {
@@ -192,7 +192,7 @@ struct BankSpaceInfo
     uint32 freeSlots;
     uint32 estimatedValue;      // Total value of items in bank (copper)
 
-    std::unordered_map<uint32, uint32> itemCounts; // itemId -> quantity
+    ::std::unordered_map<uint32, uint32> itemCounts; // itemId -> quantity
 
     BankSpaceInfo()
         : totalSlots(0), usedSlots(0), freeSlots(0), estimatedValue(0) {}
@@ -380,7 +380,7 @@ public:
     /**
      * Get recent banking transactions
      */
-    std::vector<BankingTransaction> GetRecentTransactions(uint32 playerGuid, uint32 count = 10);
+    ::std::vector<BankingTransaction> GetRecentTransactions(uint32 playerGuid, uint32 count = 10);
 
     /**
      * Record banking transaction
@@ -435,7 +435,7 @@ private:
         uint32 quantity;
         BankingPriority priority;
     };
-    std::vector<DepositCandidate> GetDepositCandidates(::Player* player);
+    ::std::vector<DepositCandidate> GetDepositCandidates(::Player* player);
 
     /**
      * Get materials to withdraw for crafting
@@ -444,9 +444,9 @@ private:
     {
         uint32 itemId;
         uint32 quantity;
-        std::string reason;
+        ::std::string reason;
     };
-    std::vector<WithdrawRequest> GetWithdrawRequests(::Player* player);
+    ::std::vector<WithdrawRequest> GetWithdrawRequests(::Player* player);
 
     // ========================================================================
     // INTEGRATION HELPERS
@@ -467,20 +467,20 @@ private:
     // ========================================================================
 
     // Banking profiles (playerGuid -> profile)
-    std::unordered_map<uint32, BotBankingProfile> _bankingProfiles;
+    ::std::unordered_map<uint32, BotBankingProfile> _bankingProfiles;
 
     // Transaction history (playerGuid -> transactions)
-    std::unordered_map<uint32, std::vector<BankingTransaction>> _transactionHistory;
+    ::std::unordered_map<uint32, ::std::vector<BankingTransaction>> _transactionHistory;
 
     // Statistics
-    std::unordered_map<uint32, BankingStatistics> _playerStatistics;
+    ::std::unordered_map<uint32, BankingStatistics> _playerStatistics;
     BankingStatistics _globalStatistics;
 
     // Last bank access times (playerGuid -> timestamp)
-    std::unordered_map<uint32, uint32> _lastBankAccessTimes;
+    ::std::unordered_map<uint32, uint32> _lastBankAccessTimes;
 
     // Currently banking (playerGuid -> true/false)
-    std::set<uint32> _currentlyBanking;
+    ::std::set<uint32> _currentlyBanking;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _mutex;
 

@@ -217,7 +217,7 @@ public:
                 // Glutton spawns disease clouds on ground
                 // Must move out of disease
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 15.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -300,7 +300,7 @@ public:
                 // AOE them down, don't focus single target
                 // Focus boss if few adds, focus adds if many
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // If 4+ adds, prioritize AOE (group should AOE)
                 // If < 4 adds, focus boss and let cleave/incidental damage kill adds
@@ -365,7 +365,7 @@ public:
                 // Mordresh summons bone constructs
                 // These hit hard - kill them
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 for (::Creature* add : adds)
                 {
@@ -407,7 +407,7 @@ public:
                     Position behindPos = CalculateBehindPosition(player, boss);
                     float angle = player->GetAngle(boss);
                     float bossAngle = boss->GetOrientation();
-                    float angleDiff = std::abs(angle - bossAngle);
+                    float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind, move
                     if (angleDiff > M_PI / 2)

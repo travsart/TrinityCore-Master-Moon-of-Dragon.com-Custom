@@ -63,17 +63,17 @@ public:
     virtual void UpdateGroupPositioning(Group* group, const DungeonEncounter& encounter) = 0;
     virtual void HandleSpecialPositioning(Group* group, uint32 encounterId) = 0;
     virtual Position GetOptimalPosition(Player* player, DungeonRole role, const DungeonEncounter& encounter) = 0;
-    virtual void AvoidDangerousAreas(Player* player, const std::vector<Position>& dangerousAreas) = 0;
+    virtual void AvoidDangerousAreas(Player* player, const ::std::vector<Position>& dangerousAreas) = 0;
 
     // Trash mob handling
-    virtual void HandleTrashMobs(Group* group, const std::vector<uint32>& trashMobIds) = 0;
-    virtual void PullTrashGroup(Group* group, const std::vector<Unit*>& trashMobs) = 0;
-    virtual void AssignTrashTargets(Group* group, const std::vector<Unit*>& trashMobs) = 0;
-    virtual void ExecuteTrashStrategy(Group* group, const std::vector<Unit*>& trashMobs) = 0;
+    virtual void HandleTrashMobs(Group* group, const ::std::vector<uint32>& trashMobIds) = 0;
+    virtual void PullTrashGroup(Group* group, const ::std::vector<Unit*>& trashMobs) = 0;
+    virtual void AssignTrashTargets(Group* group, const ::std::vector<Unit*>& trashMobs) = 0;
+    virtual void ExecuteTrashStrategy(Group* group, const ::std::vector<Unit*>& trashMobs) = 0;
 
     // Boss encounter strategies
     virtual void ExecuteBossStrategy(Group* group, const DungeonEncounter& encounter) = 0;
-    virtual void HandleBossMechanics(Group* group, uint32 encounterId, const std::string& mechanic) = 0;
+    virtual void HandleBossMechanics(Group* group, uint32 encounterId, const ::std::string& mechanic) = 0;
     virtual void AdaptToEncounterPhase(Group* group, uint32 encounterId, uint32 phase) = 0;
     virtual void HandleEnrageTimer(Group* group, const DungeonEncounter& encounter) = 0;
 
@@ -90,14 +90,14 @@ public:
     virtual void OptimizeDamageOutput(Group* group, const DungeonEncounter& encounter) = 0;
 
     // Crowd control and utility
-    virtual void CoordinateCrowdControl(Group* group, const std::vector<Unit*>& targets) = 0;
+    virtual void CoordinateCrowdControl(Group* group, const ::std::vector<Unit*>& targets) = 0;
     virtual void HandleCrowdControlBreaks(Group* group, Unit* target) = 0;
     virtual void ManageGroupUtilities(Group* group, const DungeonEncounter& encounter) = 0;
     virtual void HandleSpecialAbilities(Group* group, uint32 encounterId) = 0;
 
     // Loot and rewards management
     virtual void HandleEncounterLoot(Group* group, uint32 encounterId) = 0;
-    virtual void DistributeLoot(Group* group, const std::vector<uint32>& lootItems) = 0;
+    virtual void DistributeLoot(Group* group, const ::std::vector<uint32>& lootItems) = 0;
     virtual void HandleNeedGreedPass(Group* group, uint32 itemId, Player* player) = 0;
     virtual void OptimizeLootDistribution(Group* group) = 0;
 
@@ -112,7 +112,7 @@ public:
     virtual void UpdateDungeonStrategy(Group* group, EncounterStrategy strategy) = 0;
 
     // Error handling and recovery
-    virtual void HandleDungeonError(Group* group, const std::string& error) = 0;
+    virtual void HandleDungeonError(Group* group, const ::std::string& error) = 0;
     virtual void RecoverFromWipe(Group* group) = 0;
     virtual void HandlePlayerDisconnection(Group* group, Player* disconnectedPlayer) = 0;
     virtual void HandleGroupDisbandInDungeon(Group* group) = 0;

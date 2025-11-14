@@ -42,15 +42,15 @@ struct Position;
  */
 struct GroupStatistics
 {
-    std::atomic<uint32> totalDamageDealt{0};
-    std::atomic<uint32> totalHealingDone{0};
-    std::atomic<uint32> totalDamageTaken{0};
-    std::atomic<uint32> encountersCompleted{0};
-    std::atomic<uint32> wipes{0};
-    std::atomic<float> avgEncounterTime{0.0f};
-    std::atomic<float> groupEfficiency{1.0f};
-    std::chrono::steady_clock::time_point formationTime;
-    std::chrono::steady_clock::time_point lastCombat;
+    ::std::atomic<uint32> totalDamageDealt{0};
+    ::std::atomic<uint32> totalHealingDone{0};
+    ::std::atomic<uint32> totalDamageTaken{0};
+    ::std::atomic<uint32> encountersCompleted{0};
+    ::std::atomic<uint32> wipes{0};
+    ::std::atomic<float> avgEncounterTime{0.0f};
+    ::std::atomic<float> groupEfficiency{1.0f};
+    ::std::chrono::steady_clock::time_point formationTime;
+    ::std::chrono::steady_clock::time_point lastCombat;
 
     void Reset();
 };
@@ -82,7 +82,7 @@ public:
 
     // Group finder and matching
     virtual uint32 FindSuitableGroup(Player* player, GroupRole role) = 0;
-    virtual std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel) = 0;
+    virtual ::std::vector<uint32> FindMembersForGroup(uint32 groupId, GroupRole role, uint32 minLevel, uint32 maxLevel) = 0;
     virtual bool CanJoinGroup(Player* player, uint32 groupId, GroupRole role) = 0;
 
     // Group coordination
@@ -94,7 +94,7 @@ public:
     // Leadership and decision making
     virtual void AssignGroupLeader(uint32 groupId, uint32 newLeaderGuid) = 0;
     virtual void HandleLeaderDisconnect(uint32 groupId) = 0;
-    virtual void MakeGroupDecision(uint32 groupId, std::string const& decision) = 0;
+    virtual void MakeGroupDecision(uint32 groupId, ::std::string const& decision) = 0;
 
     // Combat coordination
     virtual void OnCombatStart(uint32 groupId, Unit* target) = 0;
@@ -108,8 +108,8 @@ public:
     virtual void FormationMove(uint32 groupId, Position const& destination) = 0;
 
     // Communication and chat
-    virtual void BroadcastToGroup(uint32 groupId, std::string const& message, ChatMsg type) = 0;
-    virtual void HandleGroupChat(uint32 groupId, Player* sender, std::string const& message) = 0;
+    virtual void BroadcastToGroup(uint32 groupId, ::std::string const& message, ChatMsg type) = 0;
+    virtual void HandleGroupChat(uint32 groupId, Player* sender, ::std::string const& message) = 0;
 
     // Statistics and monitoring
     virtual GroupStatistics GetGroupStatistics(uint32 groupId) = 0;

@@ -65,15 +65,15 @@ namespace Playerbot
         if (!map)
             return false;
 
-        auto startTime = std::chrono::high_resolution_clock::now();
+        auto startTime = ::std::chrono::high_resolution_clock::now();
         _totalQueries.fetch_add(1);
 
         // Use TrinityCore's built-in height calculation
         // Note: We use PhasingHandler::GetEmptyPhaseShift() as we don't have player context here
         float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(), x, y, z, true, maxSearchDist);
 
-        auto endTime = std::chrono::high_resolution_clock::now();
-        uint64 queryTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        auto endTime = ::std::chrono::high_resolution_clock::now();
+        uint64 queryTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
             endTime - startTime).count();
         _totalQueryTime.fetch_add(queryTime);
 
@@ -126,8 +126,8 @@ namespace Playerbot
             return false;
 
         // Generate random point
-        static thread_local std::mt19937 gen(std::chrono::steady_clock::now().time_since_epoch().count());
-        static thread_local std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+        static thread_local ::std::mt19937 gen(::std::chrono::steady_clock::now().time_since_epoch().count());
+        static thread_local ::std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
         // Simple random function for Detour
         auto frand = []() -> float { return dist(gen); };
@@ -368,8 +368,8 @@ namespace Playerbot
         return false;
     }
 
-    uint32 NavMeshInterface::FindSmoothPath(Map* map, std::vector<Position> const& path,
-                                           std::vector<Position>& smoothPath,
+    uint32 NavMeshInterface::FindSmoothPath(Map* map, ::std::vector<Position> const& path,
+                                           ::std::vector<Position>& smoothPath,
                                            uint32 maxSmoothPoints) const
     {
         if (!map || path.size() < 2)
@@ -385,7 +385,7 @@ namespace Playerbot
         }
 
         // Convert path to navmesh coordinates
-        std::vector<float> navPath;
+        ::std::vector<float> navPath;
         navPath.reserve(path.size() * 3);
         for (auto const& pos : path)
         {

@@ -56,7 +56,7 @@ protected:
     void SetUp() override
     {
         // Create mock Shadow Priest (level 80, spec 2)
-        mockPriest = std::make_shared<MockPriestPlayer>();
+        mockPriest = ::std::make_shared<MockPriestPlayer>();
         mockPriest->SetLevel(80);
         mockPriest->SetSpec(2); // Shadow specialization
         mockPriest->EnterShadowForm();
@@ -72,7 +72,7 @@ protected:
         ConfigureShadowPriestSpells();
 
         // Create default boss target
-        boss = std::make_shared<MockUnit>();
+        boss = ::std::make_shared<MockUnit>();
         boss->SetMaxHealth(500000);
         boss->SetHealth(500000);
         boss->SetCombatState(true);
@@ -157,12 +157,12 @@ protected:
     }
 
     // Helper: Create enemy pack for AoE testing
-    std::vector<std::shared_ptr<MockUnit>> CreateEnemyPack(uint32 count, uint32 health = 50000)
+    ::std::vector<::std::shared_ptr<MockUnit>> CreateEnemyPack(uint32 count, uint32 health = 50000)
     {
-        std::vector<std::shared_ptr<MockUnit>> enemies;
+        ::std::vector<::std::shared_ptr<MockUnit>> enemies;
         for (uint32 i = 0; i < count; ++i)
         {
-            auto enemy = std::make_shared<MockUnit>();
+            auto enemy = ::std::make_shared<MockUnit>();
             enemy->SetMaxHealth(health);
             enemy->SetHealth(health);
             enemy->SetCombatState(true);
@@ -172,9 +172,9 @@ protected:
     }
 
     // Test objects
-    std::shared_ptr<MockPriestPlayer> mockPriest;
-    std::shared_ptr<MockUnit> boss;
-    std::unique_ptr<ShadowSpecialization> shadowSpec;
+    ::std::shared_ptr<MockPriestPlayer> mockPriest;
+    ::std::shared_ptr<MockUnit> boss;
+    ::std::unique_ptr<ShadowSpecialization> shadowSpec;
 };
 
 // ============================================================================
@@ -662,7 +662,7 @@ TEST_F(ShadowPriestSpecializationTest, TargetSwitch_MaintainDoTsOnPrimaryTarget)
     mockPriest->ApplyDoT(SHADOW_WORD_PAIN, 18000);
     mockPriest->ApplyDoT(VAMPIRIC_TOUCH, 15000);
 
-    auto add = std::make_shared<MockUnit>();
+    auto add = ::std::make_shared<MockUnit>();
     add->SetMaxHealth(100000);
     add->SetHealth(100000);
 
@@ -676,7 +676,7 @@ TEST_F(ShadowPriestSpecializationTest, TargetSwitch_MaintainDoTsOnPrimaryTarget)
 TEST_F(ShadowPriestSpecializationTest, TargetSwitch_ApplyDoTsToHighPriorityAdd)
 {
     // Arrange: High-priority add spawns (low health, dangerous)
-    auto add = std::make_shared<MockUnit>();
+    auto add = ::std::make_shared<MockUnit>();
     add->SetMaxHealth(50000);
     add->SetHealth(50000);
 

@@ -25,8 +25,8 @@ namespace Playerbot
 {
 
 // Static member initialization
-std::atomic<uint64> PacketFilter::_totalFiltered{0};
-std::atomic<uint64> PacketFilter::_totalProcessed{0};
+::std::atomic<uint64> PacketFilter::_totalFiltered{0};
+::std::atomic<uint64> PacketFilter::_totalProcessed{0};
 
 /**
  * Bot-safe opcode whitelist
@@ -46,7 +46,7 @@ std::atomic<uint64> PacketFilter::_totalProcessed{0};
  * - Phase 3: Questing, NPCs, gossip
  * - Phase 4: Group, raid, PvP
  */
-std::unordered_set<OpcodeClient> const PacketFilter::_botSafeOpcodes = {
+::std::unordered_set<OpcodeClient> const PacketFilter::_botSafeOpcodes = {
     // Spell casting (Phase 0 - Week 1)
     CMSG_CAST_SPELL,                  // Primary spell casting
     CMSG_CANCEL_CAST,                 // Interrupt current cast
@@ -107,7 +107,7 @@ std::unordered_set<OpcodeClient> const PacketFilter::_botSafeOpcodes = {
  * - Combat spell processed before buff removal
  * - Inventory management waits until combat packets clear
  */
-std::unordered_map<OpcodeClient, uint8> const PacketFilter::_opcodePriorities = {
+::std::unordered_map<OpcodeClient, uint8> const PacketFilter::_opcodePriorities = {
     // CRITICAL PRIORITY (0-9) - Death recovery
     {CMSG_RECLAIM_CORPSE, 0},         // Highest - bot stuck until resurrected
     {CMSG_REPOP_REQUEST, 1},          // Very high - release spirit to continue
@@ -161,7 +161,7 @@ bool PacketFilter::ShouldProcessPacket(
         TC_LOG_ERROR("playerbot.packets",
             "PacketFilter::ShouldProcessPacket - nullptr session for opcode {}",
             GetOpcodeName(opcode));
-        _totalFiltered.fetch_add(1, std::memory_order_relaxed);
+        _totalFiltered.fetch_add(1, ::std::memory_order_relaxed);
         return false;
     }
 
@@ -173,7 +173,7 @@ bool PacketFilter::ShouldProcessPacket(
             GetOpcodeName(opcode),
             session->GetAccountId(),
             session->GetPlayerName());
-        _totalFiltered.fetch_add(1, std::memory_order_relaxed);
+        _totalFiltered.fetch_add(1, ::std::memory_order_relaxed);
         return false;
     }
 
@@ -186,7 +186,7 @@ bool PacketFilter::ShouldProcessPacket(
     //     return false;
 
     // Packet passed all filters
-    _totalProcessed.fetch_add(1, std::memory_order_relaxed);
+    _totalProcessed.fetch_add(1, ::std::memory_order_relaxed);
 
     TC_LOG_TRACE("playerbot.packets",
         "Allowed opcode {} for session {} (player {})",
@@ -259,7 +259,7 @@ char const* PacketFilter::GetOpcodeName(OpcodeClient opcode)
  */
 uint64 PacketFilter::GetTotalFiltered()
 {
-    return _totalFiltered.load(std::memory_order_relaxed);
+    return _totalFiltered.load(::std::memory_order_relaxed);
 }
 
 /**
@@ -271,7 +271,7 @@ uint64 PacketFilter::GetTotalFiltered()
  */
 uint64 PacketFilter::GetTotalProcessed()
 {
-    return _totalProcessed.load(std::memory_order_relaxed);
+    return _totalProcessed.load(::std::memory_order_relaxed);
 }
 
 } // namespace Playerbot

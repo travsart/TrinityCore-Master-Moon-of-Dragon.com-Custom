@@ -101,7 +101,7 @@ public:
     struct DispellerCapability
     {
         ObjectGuid botGuid;
-        std::vector<DispelType> canDispel;
+        ::std::vector<DispelType> canDispel;
         uint32 dispelCooldown = 0;      // MS remaining
         uint32 lastDispelTime = 0;      // World time MS
         uint32 manaPercent = 100;
@@ -111,7 +111,7 @@ public:
 
         bool CanDispelType(DispelType type) const
         {
-            return std::find(canDispel.begin(), canDispel.end(), type) != canDispel.end();
+            return ::std::find(canDispel.begin(), canDispel.end(), type) != canDispel.end();
         }
     };
 
@@ -302,8 +302,8 @@ public:
         uint32 failedDispels = 0;
         uint32 successfulPurges = 0;
         uint32 failedPurges = 0;
-        std::unordered_map<DispelType, uint32> dispelsByType;
-        std::unordered_map<uint32, uint32> commonDebuffs;  // auraId -> count
+        ::std::unordered_map<DispelType, uint32> dispelsByType;
+        ::std::unordered_map<uint32, uint32> commonDebuffs;  // auraId -> count
         uint32 manaSpentOnDispels = 0;
         uint32 assignmentsCreated = 0;
         uint32 assignmentsExpired = 0;
@@ -346,13 +346,13 @@ private:
      * Gather all debuffs on group members
      * @return Vector of debuff targets sorted by priority
      */
-    std::vector<DebuffTarget> GatherGroupDebuffs() const;
+    ::std::vector<DebuffTarget> GatherGroupDebuffs() const;
 
     /**
      * Gather all purgeable buffs on enemies
      * @return Vector of purge targets sorted by priority
      */
-    std::vector<PurgeTarget> GatherPurgeTargets() const;
+    ::std::vector<PurgeTarget> GatherPurgeTargets() const;
 
     /**
      * Check if unit is tank role
@@ -392,7 +392,7 @@ private:
     /**
      * Get bot's class-specific dispel capabilities
      */
-    std::vector<DispelType> GetClassDispelTypes(Classes botClass) const;
+    ::std::vector<DispelType> GetClassDispelTypes(Classes botClass) const;
 
     // ========================================================================
     // Member Variables
@@ -403,9 +403,9 @@ private:
     Group* m_group;                                     // Bot's group
 
     // Coordination state
-    std::vector<DispellerCapability> m_dispellers;     // Group dispeller capabilities
-    std::vector<DispelAssignment> m_assignments;       // Current assignments
-    std::unordered_set<ObjectGuid> m_recentlyDispelled; // Recently dispelled (prevent spam)
+    ::std::vector<DispellerCapability> m_dispellers;     // Group dispeller capabilities
+    ::std::vector<DispelAssignment> m_assignments;       // Current assignments
+    ::std::unordered_set<ObjectGuid> m_recentlyDispelled; // Recently dispelled (prevent spam)
 
     // Current bot state
     DispelAssignment m_currentAssignment;              // This bot's assignment
@@ -442,8 +442,8 @@ private:
     // Static Database Members
     // ========================================================================
 
-    static inline std::unordered_map<uint32, DebuffData> s_debuffDatabase;
-    static inline std::unordered_map<uint32, PurgeableBuff> s_purgeDatabase;
+    static inline ::std::unordered_map<uint32, DebuffData> s_debuffDatabase;
+    static inline ::std::unordered_map<uint32, PurgeableBuff> s_purgeDatabase;
     static inline bool s_databaseInitialized = false;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> s_databaseMutex;
 };

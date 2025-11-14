@@ -106,13 +106,13 @@ struct FollowTarget
 // Performance metrics for follow behavior
 struct FollowMetrics
 {
-    std::atomic<uint32> positionUpdates{0};
-    std::atomic<uint32> teleportCount{0};
-    std::atomic<uint32> pathRecalculations{0};
-    std::atomic<uint32> formationAdjustments{0};
-    std::atomic<uint32> lostLeaderEvents{0};
-    std::chrono::microseconds averageUpdateTime{0};
-    std::chrono::microseconds maxUpdateTime{0};
+    ::std::atomic<uint32> positionUpdates{0};
+    ::std::atomic<uint32> teleportCount{0};
+    ::std::atomic<uint32> pathRecalculations{0};
+    ::std::atomic<uint32> formationAdjustments{0};
+    ::std::atomic<uint32> lostLeaderEvents{0};
+    ::std::chrono::microseconds averageUpdateTime{0};
+    ::std::chrono::microseconds maxUpdateTime{0};
     float averageDistance = 0.0f;
     float maxDeviation = 0.0f;
 
@@ -123,8 +123,8 @@ struct FollowMetrics
         pathRecalculations = 0;
         formationAdjustments = 0;
         lostLeaderEvents = 0;
-        averageUpdateTime = std::chrono::microseconds{0};
-        maxUpdateTime = std::chrono::microseconds{0};
+        averageUpdateTime = ::std::chrono::microseconds{0};
+        maxUpdateTime = ::std::chrono::microseconds{0};
         averageDistance = 0.0f;
         maxDeviation = 0.0f;
     }
@@ -192,7 +192,7 @@ public:
     bool CheckLineOfSight(Player* bot, Player* leader);
     Position FindAlternativePosition(Player* bot, const Position& targetPos);
     bool IsPositionSafe(const Position& pos);
-    void HandleObstacles(Player* bot, std::vector<Position>& path);
+    void HandleObstacles(Player* bot, ::std::vector<Position>& path);
 
     // Combat following
     void UpdateCombatFollowing(BotAI* ai);
@@ -208,9 +208,9 @@ public:
 
     // Path management
     bool GenerateFollowPath(Player* bot, const Position& destination);
-    void OptimizePath(std::vector<Position>& path);
-    bool ValidatePath(const std::vector<Position>& path);
-    void SmoothPath(std::vector<Position>& path);
+    void OptimizePath(::std::vector<Position>& path);
+    bool ValidatePath(const ::std::vector<Position>& path);
+    void SmoothPath(::std::vector<Position>& path);
 
     // Emergency handling
     void HandleLostLeader(BotAI* ai);
@@ -277,7 +277,7 @@ private:
     float GetRoleBasedDistance(FormationRole role) const;
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, const std::string& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
     void UpdateAverages();
 
 private:
@@ -293,7 +293,7 @@ private:
     float _formationStrictness = 0.8f;
 
     // Path data
-    std::vector<Position> _currentPath;
+    ::std::vector<Position> _currentPath;
     uint32 _currentPathIndex = 0;
     bool _pathGenerated = false;
 
@@ -346,10 +346,10 @@ private:
 class TC_GAME_API FollowBehaviorFactory
 {
 public:
-    static std::unique_ptr<LeaderFollowBehavior> CreateFollowBehavior(FollowMode mode);
-    static std::unique_ptr<LeaderFollowBehavior> CreateRoleBasedFollowBehavior(FormationRole role);
-    static std::unique_ptr<LeaderFollowBehavior> CreateCombatFollowBehavior();
-    static std::unique_ptr<LeaderFollowBehavior> CreateFormationFollowBehavior(FormationType formation);
+    static ::std::unique_ptr<LeaderFollowBehavior> CreateFollowBehavior(FollowMode mode);
+    static ::std::unique_ptr<LeaderFollowBehavior> CreateRoleBasedFollowBehavior(FormationRole role);
+    static ::std::unique_ptr<LeaderFollowBehavior> CreateCombatFollowBehavior();
+    static ::std::unique_ptr<LeaderFollowBehavior> CreateFormationFollowBehavior(FormationType formation);
 };
 
 // Utility functions for follow behavior
@@ -374,7 +374,7 @@ public:
     // Path validation
     static bool IsPathClear(Player* bot, const Position& destination);
     static bool RequiresTeleport(Player* bot, Player* leader);
-    static std::vector<Position> SimplifyPath(const std::vector<Position>& path);
+    static ::std::vector<Position> SimplifyPath(const ::std::vector<Position>& path);
 
     // Group coordination
     static Position CalculateGroupCenterPosition(Group* group);

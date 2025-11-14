@@ -63,23 +63,23 @@ protected:
 
 private:
     // Enhanced performance tracking
-    std::atomic<uint32> _rageSpent{0};
-    std::atomic<uint32> _damageDealt{0};
-    std::atomic<uint32> _damageAbsorbed{0};
-    std::atomic<uint32> _threatGenerated{0};
-    std::atomic<uint32> _successfulCharges{0};
-    std::atomic<uint32> _successfulInterrupts{0};
+    ::std::atomic<uint32> _rageSpent{0};
+    ::std::atomic<uint32> _damageDealt{0};
+    ::std::atomic<uint32> _damageAbsorbed{0};
+    ::std::atomic<uint32> _threatGenerated{0};
+    ::std::atomic<uint32> _successfulCharges{0};
+    ::std::atomic<uint32> _successfulInterrupts{0};
     uint32 _lastStanceChange;
 
     // Combat system integration
-    std::unique_ptr<ThreatManager> _threatManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PositionManager> _positionManager;
-    std::unique_ptr<InterruptManager> _interruptManager;
-    std::unique_ptr<FormationManager> _formationManager;
+    ::std::unique_ptr<ThreatManager> _threatManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PositionManager> _positionManager;
+    ::std::unique_ptr<InterruptManager> _interruptManager;
+    ::std::unique_ptr<FormationManager> _formationManager;
 
     // Shared utility tracking
-    std::unordered_map<uint32, uint32> _abilityUsage;
+    ::std::unordered_map<uint32, uint32> _abilityUsage;
     uint32 _lastBattleShout;
     uint32 _lastCommandingShout;
     bool _needsIntercept;
@@ -104,19 +104,19 @@ private:
     ::Unit* GetBestChargeTarget();
     ::Unit* GetHighestThreatTarget();
     ::Unit* GetLowestHealthEnemy();
-    ::Unit* SelectOptimalTarget(const std::vector<::Unit*>& enemies);
+    ::Unit* SelectOptimalTarget(const ::std::vector<::Unit*>& enemies);
     float CalculateTargetPriority(::Unit* target);
 
     // Advanced combat mechanics
     void UpdateAdvancedCombatLogic(::Unit* target);
-    void HandleMultipleEnemies(const std::vector<::Unit*>& enemies);
+    void HandleMultipleEnemies(const ::std::vector<::Unit*>& enemies);
     void OptimizeStanceForSituation(::Unit* target);
     void ManageRageEfficiency();
     void ExecuteAdvancedRotation(::Unit* target);
 
     // Stance dancing optimization
     void OptimizeStanceDancing(::Unit* target);
-    WarriorStance DetermineOptimalStance(::Unit* target, const std::vector<::Unit*>& enemies);
+    WarriorStance DetermineOptimalStance(::Unit* target, const ::std::vector<::Unit*>& enemies);
     void HandleStanceSpecificAbilities(WarriorStance stance, ::Unit* target);
     void ManageTacticalStanceSwitching();
 
@@ -135,18 +135,18 @@ private:
 
     // Performance metrics and analytics
     struct WarriorMetrics {
-        std::atomic<uint32> totalAbilitiesUsed{0};
-        std::atomic<uint32> successfulStanceChanges{0};
-        std::atomic<uint32> rageDumpInstances{0};
-        std::atomic<float> averageRageEfficiency{0.0f};
-        std::atomic<float> stanceOptimizationScore{0.0f};
-        std::atomic<float> survivabilityScore{0.0f};
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        ::std::atomic<uint32> totalAbilitiesUsed{0};
+        ::std::atomic<uint32> successfulStanceChanges{0};
+        ::std::atomic<uint32> rageDumpInstances{0};
+        ::std::atomic<float> averageRageEfficiency{0.0f};
+        ::std::atomic<float> stanceOptimizationScore{0.0f};
+        ::std::atomic<float> survivabilityScore{0.0f};
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastMetricsUpdate;
         void Reset() {
             totalAbilitiesUsed = 0; successfulStanceChanges = 0; rageDumpInstances = 0;
             averageRageEfficiency = 0.0f; stanceOptimizationScore = 0.0f; survivabilityScore = 0.0f;
-            combatStartTime = std::chrono::steady_clock::now();
+            combatStartTime = ::std::chrono::steady_clock::now();
             lastMetricsUpdate = combatStartTime;
         }
     } _warriorMetrics;

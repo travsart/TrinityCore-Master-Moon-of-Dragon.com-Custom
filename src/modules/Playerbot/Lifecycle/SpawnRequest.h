@@ -33,7 +33,7 @@ struct SpawnRequest
     uint32 maxBotsPerZone = 50;
 
     // Callback on spawn completion
-    std::function<void(bool success, ObjectGuid guid)> callback;
+    ::std::function<void(bool success, ObjectGuid guid)> callback;
 };
 
 } // namespace Playerbot

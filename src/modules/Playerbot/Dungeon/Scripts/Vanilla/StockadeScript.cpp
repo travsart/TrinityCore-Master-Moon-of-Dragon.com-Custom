@@ -193,8 +193,8 @@ public:
                 {
                     // Move away briefly
                     float angle = boss->GetAngle(player) + M_PI; // Away from boss
-                    float x = player->GetPositionX() + 5.0f * std::cos(angle);
-                    float y = player->GetPositionY() + 5.0f * std::sin(angle);
+                    float x = player->GetPositionX() + 5.0f * ::std::cos(angle);
+                    float y = player->GetPositionY() + 5.0f * ::std::sin(angle);
                     float z = player->GetPositionZ();
                     TC_LOG_DEBUG("module.playerbot", "StockadeScript: Moving away from Bazil's Smoke Bomb");
                     player->GetMotionMaster()->MovePoint(0, x, y, z);

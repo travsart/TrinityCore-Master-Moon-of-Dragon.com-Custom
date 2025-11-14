@@ -43,7 +43,7 @@ namespace Playerbot
         m_questPrioritizeGroup = sPlayerbotConfig->GetBool("Playerbot.Quest.PrioritizeGroup", true);
 
         // Quest strategy
-        std::string strategy = sPlayerbotConfig->GetString("Playerbot.Quest.SelectionStrategy", "optimal");
+        ::std::string strategy = sPlayerbotConfig->GetString("Playerbot.Quest.SelectionStrategy", "optimal");
         if (strategy == "simple")
             m_questStrategy = 0;
         else if (strategy == "optimal")

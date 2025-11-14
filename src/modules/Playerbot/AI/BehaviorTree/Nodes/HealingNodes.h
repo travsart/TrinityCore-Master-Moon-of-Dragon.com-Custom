@@ -326,7 +326,7 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
             if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
             {
                 _status = BTStatus::FAILURE;
@@ -386,11 +386,11 @@ public:
         float manaCost; // Relative mana cost (for efficiency)
     };
 
-    BTSelectHealSpell(std::vector<HealSpellOption> const& spells)
+    BTSelectHealSpell(::std::vector<HealSpellOption> const& spells)
         : BTLeaf("SelectHealSpell"), _spells(spells)
     {
         // Sort by health threshold (descending)
-        std::sort(_spells.begin(), _spells.end(),
+        ::std::sort(_spells.begin(), _spells.end(),
             [](HealSpellOption const& a, HealSpellOption const& b)
             {
                 return a.healthThreshold > b.healthThreshold;
@@ -439,7 +439,7 @@ public:
     }
 
 private:
-    std::vector<HealSpellOption> _spells;
+    ::std::vector<HealSpellOption> _spells;
 };
 
 /**
@@ -582,7 +582,7 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
             if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
             {
                 _status = BTStatus::FAILURE;

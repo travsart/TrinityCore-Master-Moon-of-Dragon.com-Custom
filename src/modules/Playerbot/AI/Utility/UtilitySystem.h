@@ -91,7 +91,7 @@ struct UtilityContext
 class TC_GAME_API UtilityEvaluator
 {
 public:
-    UtilityEvaluator(std::string const& name, float weight = 1.0f)
+    UtilityEvaluator(::std::string const& name, float weight = 1.0f)
         : _name(name), _weight(weight) {}
 
     virtual ~UtilityEvaluator() = default;
@@ -106,7 +106,7 @@ public:
     /**
      * @brief Get the name of this evaluator
      */
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
 
     /**
      * @brief Get the weight multiplier
@@ -127,7 +127,7 @@ public:
     }
 
 protected:
-    std::string _name;
+    ::std::string _name;
     float _weight;
 
     // Utility curve functions
@@ -137,7 +137,7 @@ protected:
     static float InverseLinear(float x) { return 1.0f - x; }
     static float Logistic(float x, float steepness = 10.0f)
     {
-        return 1.0f / (1.0f + std::exp(-steepness * (x - 0.5f)));
+        return 1.0f / (1.0f + ::std::exp(-steepness * (x - 0.5f)));
     }
     static float Clamp(float value, float min = 0.0f, float max = 1.0f)
     {
@@ -154,13 +154,13 @@ protected:
 class TC_GAME_API UtilityBehavior
 {
 public:
-    UtilityBehavior(std::string const& name)
+    UtilityBehavior(::std::string const& name)
         : _name(name), _cachedScore(0.0f), _lastEvalTime(0) {}
 
     /**
      * @brief Add an evaluator to this behavior
      */
-    void AddEvaluator(std::shared_ptr<UtilityEvaluator> evaluator)
+    void AddEvaluator(::std::shared_ptr<UtilityEvaluator> evaluator)
     {
         _evaluators.push_back(evaluator);
     }
@@ -190,7 +190,7 @@ public:
     /**
      * @brief Get the behavior name
      */
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
 
     /**
      * @brief Get cached score (no recalculation)
@@ -205,14 +205,14 @@ public:
     /**
      * @brief Get all evaluators
      */
-    std::vector<std::shared_ptr<UtilityEvaluator>> const& GetEvaluators() const
+    ::std::vector<::std::shared_ptr<UtilityEvaluator>> const& GetEvaluators() const
     {
         return _evaluators;
     }
 
 private:
-    std::string _name;
-    std::vector<std::shared_ptr<UtilityEvaluator>> _evaluators;
+    ::std::string _name;
+    ::std::vector<::std::shared_ptr<UtilityEvaluator>> _evaluators;
     float _cachedScore;
     uint32 _lastEvalTime;
 };
@@ -229,7 +229,7 @@ public:
     /**
      * @brief Register a behavior
      */
-    void AddBehavior(std::shared_ptr<UtilityBehavior> behavior)
+    void AddBehavior(::std::shared_ptr<UtilityBehavior> behavior)
     {
         _behaviors.push_back(behavior);
     }
@@ -263,9 +263,9 @@ public:
     /**
      * @brief Get all behaviors sorted by score (descending)
      */
-    std::vector<std::pair<UtilityBehavior*, float>> GetRankedBehaviors(UtilityContext const& context)
+    ::std::vector<::std::pair<UtilityBehavior*, float>> GetRankedBehaviors(UtilityContext const& context)
     {
-        std::vector<std::pair<UtilityBehavior*, float>> ranked;
+        ::std::vector<::std::pair<UtilityBehavior*, float>> ranked;
 
         for (auto& behavior : _behaviors)
         {
@@ -273,7 +273,7 @@ public:
             ranked.emplace_back(behavior.get(), score);
         }
 
-        std::sort(ranked.begin(), ranked.end(),
+        ::std::sort(ranked.begin(), ranked.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         return ranked;
@@ -282,7 +282,7 @@ public:
     /**
      * @brief Get all registered behaviors
      */
-    std::vector<std::shared_ptr<UtilityBehavior>> const& GetBehaviors() const
+    ::std::vector<::std::shared_ptr<UtilityBehavior>> const& GetBehaviors() const
     {
         return _behaviors;
     }
@@ -296,7 +296,7 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<UtilityBehavior>> _behaviors;
+    ::std::vector<::std::shared_ptr<UtilityBehavior>> _behaviors;
 };
 
 } // namespace Playerbot

@@ -26,15 +26,15 @@ GroupCoordination::GroupCoordination(uint32 groupId)
 {
     _formationCenter = Position();
     _currentDestination = Position();
-    _combatStartTime = std::chrono::steady_clock::now();
+    _combatStartTime = ::std::chrono::steady_clock::now();
     _metrics.Reset();
 
     TC_LOG_DEBUG("playerbot", "GroupCoordination: Created coordination for group %u", groupId);
 }
 
-void GroupCoordination::ExecuteCommand(CoordinationCommand command, const std::vector<uint32>& targets)
+void GroupCoordination::ExecuteCommand(CoordinationCommand command, const ::std::vector<uint32>& targets)
 {
-    std::lock_guard lock(_commandMutex);
+    ::std::lock_guard lock(_commandMutex);
 
     CoordinationCommandData commandData(command, targets, 0, 100);
 
@@ -48,9 +48,9 @@ void GroupCoordination::ExecuteCommand(CoordinationCommand command, const std::v
                  static_cast<uint8>(command), _groupId);
 }
 
-void GroupCoordination::IssueCommand(uint32 memberGuid, CoordinationCommand command, const std::vector<uint32>& targets)
+void GroupCoordination::IssueCommand(uint32 memberGuid, CoordinationCommand command, const ::std::vector<uint32>& targets)
 {
-    std::lock_guard lock(_commandMutex);
+    ::std::lock_guard lock(_commandMutex);
 
     if (_commandQueue.size() >= MAX_COMMAND_QUEUE_SIZE)
     {
@@ -63,7 +63,7 @@ void GroupCoordination::IssueCommand(uint32 memberGuid, CoordinationCommand comm
     _metrics.commandsIssued.fetch_add(1);
 }
 
-void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std::vector<uint32>& targets)
+void GroupCoordination::BroadcastCommand(CoordinationCommand command, const ::std::vector<uint32>& targets)
 {
     // Execute command for all group members
     if (Group* group = sGroupMgr->GetGroupByGUID(_groupId))
@@ -80,7 +80,7 @@ void GroupCoordination::BroadcastCommand(CoordinationCommand command, const std:
 
 void GroupCoordination::SetPrimaryTarget(ObjectGuid targetGuid, uint32 priority)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     _primaryTarget = targetGuid;
 
@@ -100,14 +100,14 @@ void GroupCoordination::SetPrimaryTarget(ObjectGuid targetGuid, uint32 priority)
 
 void GroupCoordination::AddSecondaryTarget(ObjectGuid targetGuid, uint32 priority)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     _targets.emplace(targetGuid, CoordinationTarget(targetGuid, priority, ThreatLevel::MEDIUM));
 }
 
 void GroupCoordination::RemoveTarget(ObjectGuid targetGuid)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     _targets.erase(targetGuid);
 
@@ -130,27 +130,27 @@ void GroupCoordination::RemoveTarget(ObjectGuid targetGuid)
 
 ObjectGuid GroupCoordination::GetPrimaryTarget() const
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
     return _primaryTarget;
 }
 
-std::vector<ObjectGuid> GroupCoordination::GetTargetPriorityList() const
+::std::vector<ObjectGuid> GroupCoordination::GetTargetPriorityList() const
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
-    std::vector<std::pair<ObjectGuid, uint32>> targetPairs;
+    ::std::vector<::std::pair<ObjectGuid, uint32>> targetPairs;
     for (const auto& [guid, target] : _targets)
     {
         targetPairs.emplace_back(guid, target.priority);
     }
 
     // Sort by priority (highest first)
-    std::sort(targetPairs.begin(), targetPairs.end(),
+    ::std::sort(targetPairs.begin(), targetPairs.end(),
               [](const auto& a, const auto& b) {
                   return a.second > b.second;
               });
 
-    std::vector<ObjectGuid> priorityList;
+    ::std::vector<ObjectGuid> priorityList;
     for (const auto& pair : targetPairs)
     {
         priorityList.push_back(pair.first);
@@ -159,22 +159,22 @@ std::vector<ObjectGuid> GroupCoordination::GetTargetPriorityList() const
     return priorityList;
 }
 
-void GroupCoordination::SetFormation(const std::vector<FormationSlot>& formation)
+void GroupCoordination::SetFormation(const ::std::vector<FormationSlot>& formation)
 {
-    std::lock_guard lock(_formationMutex);
+    ::std::lock_guard lock(_formationMutex);
     _formation = formation;
 }
 
 void GroupCoordination::UpdateFormation(const Position& leaderPosition)
 {
-    std::lock_guard lock(_formationMutex);
+    ::std::lock_guard lock(_formationMutex);
     _formationCenter = leaderPosition;
     UpdateFormationPositions();
 }
 
 Position GroupCoordination::GetFormationPosition(uint32 memberGuid) const
 {
-    std::lock_guard lock(_formationMutex);
+    ::std::lock_guard lock(_formationMutex);
 
     for (const auto& slot : _formation)
     {
@@ -205,7 +205,7 @@ bool GroupCoordination::IsInFormation(uint32 memberGuid, float tolerance) const
 
 void GroupCoordination::MoveToPosition(const Position& destination, bool maintainFormation)
 {
-    std::lock_guard lock(_movementMutex);
+    ::std::lock_guard lock(_movementMutex);
 
     _currentDestination = destination;
     _maintainFormationDuringMove = maintainFormation;
@@ -231,7 +231,7 @@ void GroupCoordination::FollowLeader(uint32 leaderGuid, float distance)
 
 Position GroupCoordination::GetNextWaypoint() const
 {
-    std::lock_guard lock(_movementMutex);
+    ::std::lock_guard lock(_movementMutex);
 
     if (!_movementPath.empty())
         return _movementPath.front().position;
@@ -241,7 +241,7 @@ Position GroupCoordination::GetNextWaypoint() const
 
 bool GroupCoordination::HasReachedDestination() const
 {
-    std::lock_guard lock(_movementMutex);
+    ::std::lock_guard lock(_movementMutex);
 
     if (_movementPath.empty())
         return true;
@@ -259,7 +259,7 @@ void GroupCoordination::InitiateCombat(Unit* target)
         return;
 
     _inCombat.store(true);
-    _combatStartTime = std::chrono::steady_clock::now();
+    _combatStartTime = ::std::chrono::steady_clock::now();
     _currentPhase = EncounterPhase::ENGAGE;
 
     SetPrimaryTarget(target->GetGUID(), 150);
@@ -289,7 +289,7 @@ void GroupCoordination::EndCombat()
 
     // Clear combat targets
     {
-        std::lock_guard lock(_targetMutex);
+        ::std::lock_guard lock(_targetMutex);
         _targets.clear();
         _primaryTarget = ObjectGuid::Empty;
     }
@@ -362,8 +362,8 @@ void GroupCoordination::Update(uint32 diff)
 void GroupCoordination::UpdateMetrics()
 {
     // Calculate response time
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _metrics.lastUpdate);
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceUpdate = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _metrics.lastUpdate);
     _metrics.responseTime.store(timeSinceUpdate.count());
 
     // Update formation compliance
@@ -375,7 +375,7 @@ void GroupCoordination::UpdateMetrics()
 
 void GroupCoordination::ProcessCommandQueue()
 {
-    std::lock_guard lock(_commandMutex);
+    ::std::lock_guard lock(_commandMutex);
 
     while (!_commandQueue.empty())
     {
@@ -392,7 +392,7 @@ void GroupCoordination::ProcessCommandQueue()
 
 void GroupCoordination::UpdateTargetAssessment()
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     // Update target information
     for (auto& [guid, target] : _targets)
@@ -427,7 +427,7 @@ void GroupCoordination::UpdateFormationPositions()
 
 void GroupCoordination::UpdateMovementProgress()
 {
-    std::lock_guard lock(_movementMutex);
+    ::std::lock_guard lock(_movementMutex);
 
     if (!_movementPath.empty() && HasReachedDestination())
     {
@@ -463,7 +463,7 @@ void GroupCoordination::UpdateCombatTactics()
 
 float GroupCoordination::AssessFormationCompliance()
 {
-    std::lock_guard lock(_formationMutex);
+    ::std::lock_guard lock(_formationMutex);
 
     if (_formation.empty())
         return 1.0f;
@@ -481,7 +481,7 @@ float GroupCoordination::AssessFormationCompliance()
 
 void GroupCoordination::OptimizeTargetAssignments()
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     // Assign targets based on priority and member capabilities
     auto priorityList = GetTargetPriorityList();
@@ -527,7 +527,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
         case CoordinationCommand::SPREAD_OUT:
             // Increase formation spacing
             {
-                std::lock_guard lock(_formationMutex);
+                ::std::lock_guard lock(_formationMutex);
                 for (auto& slot : _formation)
                 {
                     slot.maxDistance *= 1.5f; // Increase spacing
@@ -538,7 +538,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
         case CoordinationCommand::STACK_UP:
             // Decrease formation spacing
             {
-                std::lock_guard lock(_formationMutex);
+                ::std::lock_guard lock(_formationMutex);
                 for (auto& slot : _formation)
                 {
                     slot.maxDistance *= 0.7f; // Decrease spacing
@@ -551,8 +551,8 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
             {
                 Position retreatPos = _formationCenter;
                 retreatPos.SetOrientation(retreatPos.GetOrientation() + M_PI); // Turn around
-                retreatPos.m_positionX += 20.0f * std::cos(retreatPos.GetOrientation());
-                retreatPos.m_positionY += 20.0f * std::sin(retreatPos.GetOrientation());
+                retreatPos.m_positionX += 20.0f * ::std::cos(retreatPos.GetOrientation());
+                retreatPos.m_positionY += 20.0f * ::std::sin(retreatPos.GetOrientation());
                 MoveToPosition(retreatPos, true);
             }
             break;
@@ -570,7 +570,7 @@ void GroupCoordination::HandleTankThreatManagement()
         return;
 
     // Identify all tanks in the group
-    std::vector<Player*> tanks;
+    ::std::vector<Player*> tanks;
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
@@ -603,7 +603,7 @@ void GroupCoordination::HandleTankThreatManagement()
         return;
 
     // Analyze threat levels for each tank
-    std::unordered_map<Player*, float> tankThreat;
+    ::std::unordered_map<Player*, float> tankThreat;
     Player* currentTank = nullptr;
     float highestThreat = 0.0f;
 
@@ -643,7 +643,7 @@ void GroupCoordination::HandleTankThreatManagement()
                              currentTank->GetName(), backupTank->GetName());
 
                 // Issue taunt command to backup tank
-                std::vector<uint32> targets;
+                ::std::vector<uint32> targets;
                 targets.push_back(_primaryTarget.GetCounter());
                 IssueCommand(backupTank->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
 
@@ -663,7 +663,7 @@ void GroupCoordination::HandleTankThreatManagement()
             if (tankThreat[tank] < backupThreatTarget * 0.5f) // If below 35% of main tank threat
             {
                 // Tell backup tank to build threat
-                std::vector<uint32> targets;
+                ::std::vector<uint32> targets;
                 targets.push_back(_primaryTarget.GetCounter());
                 IssueCommand(tank->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
             }
@@ -683,8 +683,8 @@ void GroupCoordination::HandleHealerPriorities()
         return;
 
     // Identify all healers in the group
-    std::vector<Player*> healers;
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> healers;
+    ::std::vector<Player*> groupMembers;
 
     for (GroupReference const& itr : group->GetMembers())
     {
@@ -730,7 +730,7 @@ void GroupCoordination::HandleHealerPriorities()
         }
     };
 
-    std::vector<HealingTarget> healingTargets;
+    ::std::vector<HealingTarget> healingTargets;
 
     for (Player* member : groupMembers)
     {
@@ -780,7 +780,7 @@ void GroupCoordination::HandleHealerPriorities()
     }
 
     // Sort by priority (highest first)
-    std::sort(healingTargets.begin(), healingTargets.end());
+    ::std::sort(healingTargets.begin(), healingTargets.end());
 
     // Assign healing targets to healers
     if (healers.size() == 1)
@@ -916,7 +916,7 @@ void GroupCoordination::HandleDPSTargeting()
         return;
 
     // Identify all DPS players in the group
-    std::vector<Player*> dpsPlayers;
+    ::std::vector<Player*> dpsPlayers;
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
@@ -939,7 +939,7 @@ void GroupCoordination::HandleDPSTargeting()
         return;
 
     // Get primary and secondary targets
-    std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
+    ::std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
     if (targetPriority.empty())
         return;
 
@@ -948,7 +948,7 @@ void GroupCoordination::HandleDPSTargeting()
     if (!primaryTarget.IsEmpty())
     {
         // Issue focus fire command to all DPS
-        std::vector<uint32> targets;
+        ::std::vector<uint32> targets;
         targets.push_back(primaryTarget.GetCounter());
         for (Player* dps : dpsPlayers)
         {
@@ -1000,7 +1000,7 @@ void GroupCoordination::HandleDPSTargeting()
 
             if (interrupter)
             {
-                std::vector<uint32> targets;
+                ::std::vector<uint32> targets;
                 targets.push_back(primaryTarget.GetCounter());
                 IssueCommand(interrupter->GetGUID().GetCounter(), CoordinationCommand::INTERRUPT_CAST, targets);
                 TC_LOG_DEBUG("playerbot", "GroupCoordination: Assigned {} to interrupt cast on primary target",
@@ -1041,7 +1041,7 @@ void GroupCoordination::HandleDPSTargeting()
 
                 if (assignedDPS)
                 {
-                    std::vector<uint32> targets;
+                    ::std::vector<uint32> targets;
                     targets.push_back(secondaryGuid.GetCounter());
                     IssueCommand(assignedDPS->GetGUID().GetCounter(), CoordinationCommand::ATTACK_TARGET, targets);
                     TC_LOG_DEBUG("playerbot", "GroupCoordination: DPS {} assigned to secondary target (threat: HIGH)",
@@ -1071,7 +1071,7 @@ void GroupCoordination::HandleSupportActions()
     if (!group)
         return;
 
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> groupMembers;
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
@@ -1086,10 +1086,10 @@ void GroupCoordination::HandleSupportActions()
     {
         Player* player;
         uint8 classId;
-        std::vector<uint32> providedBuffs;
+        ::std::vector<uint32> providedBuffs;
     };
 
-    std::vector<BuffProvider> buffProviders;
+    ::std::vector<BuffProvider> buffProviders;
 
     for (Player* member : groupMembers)
     {
@@ -1171,10 +1171,10 @@ void GroupCoordination::HandleSupportActions()
     }
 
     // Coordinate crowd control assignments
-    std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
+    ::std::vector<ObjectGuid> targetPriority = GetTargetPriorityList();
     if (targetPriority.size() > 2) // If multiple targets, coordinate CC
     {
-        std::vector<Player*> ccCapablePlayers;
+        ::std::vector<Player*> ccCapablePlayers;
         for (Player* member : groupMembers)
         {
             uint8 classId = member->GetClass();
@@ -1193,7 +1193,7 @@ void GroupCoordination::HandleSupportActions()
             ObjectGuid ccTarget = targetPriority[i];
             Player* ccPlayer = ccCapablePlayers[ccIndex];
 
-            std::vector<uint32> targets;
+            ::std::vector<uint32> targets;
             targets.push_back(ccTarget.GetCounter());
             IssueCommand(ccPlayer->GetGUID().GetCounter(), CoordinationCommand::CROWD_CONTROL, targets);
 

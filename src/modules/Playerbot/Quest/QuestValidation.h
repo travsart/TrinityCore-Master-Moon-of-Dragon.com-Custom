@@ -37,8 +37,8 @@ struct ValidationContext
     bool strictValidation;
     bool checkOptionalRequirements;
     bool validateFutureRequirements;
-    std::vector<std::string> warnings;
-    std::vector<std::string> errors;
+    ::std::vector<::std::string> warnings;
+    ::std::vector<::std::string> errors;
 
     ValidationContext(Player* p, uint32 qId) : bot(p), questId(qId), quest(nullptr)
         , validationTime(0), strictValidation(true)
@@ -49,8 +49,8 @@ struct ValidationResult
 {
     bool isValid;
     QuestEligibility eligibility;
-    std::vector<std::string> errors;
-    std::vector<std::string> warnings;
+    ::std::vector<::std::string> errors;
+    ::std::vector<::std::string> warnings;
     uint32 validationTime;
     uint32 cacheExpiry;
 
@@ -61,13 +61,13 @@ struct ValidationResult
 // Validation performance monitoring
 struct ValidationMetrics
 {
-    std::atomic<uint32> totalValidations{0};
-    std::atomic<uint32> passedValidations{0};
-    std::atomic<uint32> failedValidations{0};
-    std::atomic<uint32> cacheHits{0};
-    std::atomic<uint32> cacheMisses{0};
-    std::atomic<float> averageValidationTime{5.0f};
-    std::atomic<float> validationSuccessRate{0.85f};
+    ::std::atomic<uint32> totalValidations{0};
+    ::std::atomic<uint32> passedValidations{0};
+    ::std::atomic<uint32> failedValidations{0};
+    ::std::atomic<uint32> cacheHits{0};
+    ::std::atomic<uint32> cacheMisses{0};
+    ::std::atomic<float> averageValidationTime{5.0f};
+    ::std::atomic<float> validationSuccessRate{0.85f};
 
     // Default constructor
     ValidationMetrics() = default;
@@ -123,7 +123,7 @@ public:
     // Core validation methods
     bool ValidateQuestAcceptance(uint32 questId, Player* bot) override;
     QuestEligibility GetDetailedEligibility(uint32 questId, Player* bot) override;
-    std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot) override;
+    ::std::vector<::std::string> GetValidationErrors(uint32 questId, Player* bot) override;
     bool CanQuestBeStarted(uint32 questId, Player* bot) override;
 
     // Requirement validation
@@ -136,14 +136,14 @@ public:
     // Prerequisite validation
     bool ValidateQuestPrerequisites(uint32 questId, Player* bot) override;
     bool ValidateQuestChainPosition(uint32 questId, Player* bot) override;
-    std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) override;
+    ::std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) override;
     bool HasCompletedPrerequisiteQuests(uint32 questId, Player* bot) override;
 
     // Item and inventory validation
     bool ValidateRequiredItems(uint32 questId, Player* bot) override;
     bool ValidateInventorySpace(uint32 questId, Player* bot) override;
     bool ValidateQuestItemRequirements(uint32 questId, Player* bot) override;
-    std::vector<std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot) override; // itemId, count
+    ::std::vector<::std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot) override; // itemId, count
 
     // Status and state validation
     bool ValidateQuestStatus(uint32 questId, Player* bot) override;
@@ -156,7 +156,7 @@ public:
     bool ValidateReputationRequirements(uint32 questId, Player* bot) override;
     bool ValidateMinimumReputation(uint32 questId, Player* bot) override;
     bool ValidateMaximumReputation(uint32 questId, Player* bot) override;
-    std::vector<std::pair<uint32, int32>> GetReputationRequirements(uint32 questId) override; // factionId, standing
+    ::std::vector<::std::pair<uint32, int32>> GetReputationRequirements(uint32 questId) override; // factionId, standing
 
     // Time and availability validation
     bool ValidateQuestAvailability(uint32 questId, Player* bot) override;
@@ -189,15 +189,15 @@ public:
     void CleanupExpiredCache() override;
 
     // Batch validation for efficiency
-    std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-        const std::vector<uint32>& questIds, Player* bot) override;
-    std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot) override;
-    std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates) override;
+    ::std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
+        const ::std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot) override;
+    ::std::vector<uint32> GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates) override;
 
     // Error reporting and diagnostics
-    std::string GetDetailedValidationReport(uint32 questId, Player* bot) override;
-    void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason) override;
-    std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) override;
+    ::std::string GetDetailedValidationReport(uint32 questId, Player* bot) override;
+    void LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason) override;
+    ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) override;
 
     // Configuration and settings
     void SetStrictValidation(bool strict) { _strictValidation = strict; }
@@ -215,13 +215,13 @@ private:
     ~QuestValidation() = default;
 
     // Validation cache
-    std::unordered_map<uint64, ValidationResult> _validationCache; // (questId << 32 | botGuid) -> result
+    ::std::unordered_map<uint64, ValidationResult> _validationCache; // (questId << 32 | botGuid) -> result
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _cacheMutex;
 
     // Configuration
-    std::atomic<bool> _strictValidation{true};
-    std::atomic<bool> _enableCaching{true};
-    std::atomic<uint32> _cacheTimeoutMs{60000}; // 1 minute
+    ::std::atomic<bool> _strictValidation{true};
+    ::std::atomic<bool> _enableCaching{true};
+    ::std::atomic<uint32> _cacheTimeoutMs{60000}; // 1 minute
 
     // Performance tracking
     ValidationMetrics _metrics;
@@ -283,31 +283,31 @@ public:
         };
 
         Type type;
-        std::string description;
-        std::string solution;
+        ::std::string description;
+        ::std::string solution;
         uint32 requiredValue;
         uint32 currentValue;
-        std::vector<uint32> relatedIds; // quest IDs, item IDs, faction IDs, etc.
+        ::std::vector<uint32> relatedIds; // quest IDs, item IDs, faction IDs, etc.
         bool isBlocker; // true if this prevents quest acceptance
         uint32 estimatedTimeToResolve; // seconds
 
-        RequirementIssue(Type t, const std::string& desc, bool blocker = true)
+        RequirementIssue(Type t, const ::std::string& desc, bool blocker = true)
             : type(t), description(desc), isBlocker(blocker), estimatedTimeToResolve(0) {}
     };
 
-    static std::vector<RequirementIssue> AnalyzeQuestRequirements(uint32 questId, Player* bot);
-    static std::string GenerateRequirementReport(uint32 questId, Player* bot);
-    static std::vector<std::string> GetActionableRecommendations(uint32 questId, Player* bot);
+    static ::std::vector<RequirementIssue> AnalyzeQuestRequirements(uint32 questId, Player* bot);
+    static ::std::string GenerateRequirementReport(uint32 questId, Player* bot);
+    static ::std::vector<::std::string> GetActionableRecommendations(uint32 questId, Player* bot);
     static uint32 EstimateTimeToEligibility(uint32 questId, Player* bot);
 
 private:
-    static void AnalyzeLevelRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzeClassRaceRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzeSkillRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzeReputationRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzeItemRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzePrerequisiteRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
-    static void AnalyzeAvailabilityRequirements(const Quest* quest, Player* bot, std::vector<RequirementIssue>& issues);
+    static void AnalyzeLevelRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzeClassRaceRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzeSkillRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzeReputationRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzeItemRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzePrerequisiteRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
+    static void AnalyzeAvailabilityRequirements(const Quest* quest, Player* bot, ::std::vector<RequirementIssue>& issues);
 };
 
 } // namespace Playerbot

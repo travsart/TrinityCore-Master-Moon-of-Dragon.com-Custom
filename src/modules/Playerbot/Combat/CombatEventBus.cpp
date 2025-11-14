@@ -33,8 +33,8 @@ CombatEvent CombatEvent::SpellCastStart(ObjectGuid caster, ObjectGuid target, ui
     event.amount = static_cast<int32>(castTime);
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -50,8 +50,8 @@ CombatEvent CombatEvent::SpellCastGo(ObjectGuid caster, ObjectGuid target, uint3
     event.amount = 0;
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -67,8 +67,8 @@ CombatEvent CombatEvent::SpellDamage(ObjectGuid caster, ObjectGuid victim, uint3
     event.amount = damage;
     event.schoolMask = school;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -84,8 +84,8 @@ CombatEvent CombatEvent::SpellHeal(ObjectGuid caster, ObjectGuid target, uint32 
     event.amount = heal;
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -101,8 +101,8 @@ CombatEvent CombatEvent::SpellInterrupt(ObjectGuid interrupter, ObjectGuid victi
     event.amount = static_cast<int32>(interruptSpell);
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -118,8 +118,8 @@ CombatEvent CombatEvent::AttackStart(ObjectGuid attacker, ObjectGuid victim)
     event.amount = 0;
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -135,8 +135,8 @@ CombatEvent CombatEvent::AttackStop(ObjectGuid attacker, ObjectGuid victim, bool
     event.amount = nowDead ? 1 : 0;
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -152,8 +152,8 @@ CombatEvent CombatEvent::ThreatUpdate(ObjectGuid unit, ObjectGuid victim, int32 
     event.amount = threatChange;
     event.schoolMask = 0;
     event.flags = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -170,12 +170,12 @@ bool CombatEvent::IsValid() const
 
 bool CombatEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string CombatEvent::ToString() const
+::std::string CombatEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[CombatEvent] Type: " << static_cast<uint32>(type)
         << ", Caster: " << casterGuid.ToString()
         << ", Target: " << targetGuid.ToString()
@@ -190,7 +190,7 @@ std::string CombatEvent::ToString() const
 
 CombatEventBus::CombatEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.combat", "CombatEventBus initialized");
 }
 
@@ -214,7 +214,7 @@ bool CombatEventBus::PublishEvent(CombatEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -228,12 +228,12 @@ bool CombatEventBus::PublishEvent(CombatEvent const& event)
     return true;
 }
 
-bool CombatEventBus::Subscribe(BotAI* subscriber, std::vector<CombatEventType> const& types)
+bool CombatEventBus::Subscribe(BotAI* subscriber, ::std::vector<CombatEventType> const& types)
 {
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     for (CombatEventType type : types)
         _subscribers[type].push_back(subscriber);
     return true;
@@ -244,7 +244,7 @@ bool CombatEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     _globalSubscribers.push_back(subscriber);
     return true;
 }
@@ -254,16 +254,16 @@ void CombatEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 }
@@ -278,10 +278,10 @@ uint32 CombatEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<CombatEvent> eventsToProcess;
+    ::std::vector<CombatEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
             CombatEvent event = _eventQueue.top();
@@ -300,11 +300,11 @@ uint32 CombatEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (CombatEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -337,8 +337,8 @@ uint32 CombatEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void CombatEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
-    std::vector<CombatEvent> remainingEvents;
+    ::std::lock_guard lock(_queueMutex);
+    ::std::vector<CombatEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -380,9 +380,9 @@ bool CombatEventBus::ValidateEvent(CombatEvent const& event) const
 
 uint32 CombatEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     uint32 cleanedCount = 0;
-    std::vector<CombatEvent> validEvents;
+    ::std::vector<CombatEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -401,7 +401,7 @@ uint32 CombatEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void CombatEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void CombatEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -409,30 +409,30 @@ void CombatEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void CombatEventBus::LogEvent(CombatEvent const& event, std::string const& action) const
+void CombatEventBus::LogEvent(CombatEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.combat", "CombatEventBus: {} event - {}", action, event.ToString());
 }
 
 void CombatEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.combat", "=== CombatEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.combat", "Global subscribers: {}", _globalSubscribers.size());
 }
 
 void CombatEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.combat", "=== CombatEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.combat", "Queue size: {}", _eventQueue.size());
 }
 
-std::vector<CombatEvent> CombatEventBus::GetQueueSnapshot() const
+::std::vector<CombatEvent> CombatEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
-    std::vector<CombatEvent> snapshot;
-    std::priority_queue<CombatEvent> tempQueue = _eventQueue;
+    ::std::lock_guard lock(_queueMutex);
+    ::std::vector<CombatEvent> snapshot;
+    ::std::priority_queue<CombatEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -451,15 +451,15 @@ void CombatEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string CombatEventBus::Statistics::ToString() const
+::std::string CombatEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

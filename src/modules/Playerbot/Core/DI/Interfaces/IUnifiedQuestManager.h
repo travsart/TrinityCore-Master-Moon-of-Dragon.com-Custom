@@ -90,9 +90,9 @@ public:
     /**
      * @brief Quest discovery and scanning
      */
-    virtual std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) = 0;
-    virtual std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) = 0;
-    virtual std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) = 0;
+    virtual ::std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) = 0;
+    virtual ::std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) = 0;
+    virtual ::std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) = 0;
 
     /**
      * @brief Quest eligibility and validation
@@ -104,8 +104,8 @@ public:
     /**
      * @brief Quest filtering and prioritization
      */
-    virtual std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) = 0;
-    virtual std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) = 0;
+    virtual ::std::vector<uint32> FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) = 0;
+    virtual ::std::vector<uint32> PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) = 0;
     virtual bool ShouldAcceptQuest(uint32 questId, Player* bot) = 0;
 
     // ========================================================================
@@ -145,7 +145,7 @@ public:
      */
     virtual void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) = 0;
     virtual bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) = 0;
-    virtual std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) = 0;
+    virtual ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) = 0;
     virtual Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) = 0;
 
     /**
@@ -161,8 +161,8 @@ public:
      */
     virtual void OptimizeQuestCompletionOrder(Player* bot) = 0;
     virtual void OptimizeObjectiveSequence(Player* bot, uint32 questId) = 0;
-    virtual void FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds) = 0;
-    virtual void MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives) = 0;
+    virtual void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds) = 0;
+    virtual void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives) = 0;
 
     /**
      * @brief Stuck detection and recovery
@@ -181,7 +181,7 @@ public:
      */
     virtual bool ValidateQuest(uint32 questId, Player* bot) = 0;
     virtual bool ValidateQuestRequirements(uint32 questId, Player* bot) = 0;
-    virtual std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<::std::string> GetValidationErrors(uint32 questId, Player* bot) = 0;
 
     /**
      * @brief Level and class requirements
@@ -197,7 +197,7 @@ public:
     virtual bool ValidateQuestPrerequisites(uint32 questId, Player* bot) = 0;
     virtual bool ValidateQuestChain(uint32 questId, Player* bot) = 0;
     virtual bool HasCompletedPrerequisites(uint32 questId, Player* bot) = 0;
-    virtual std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) = 0;
 
     /**
      * @brief Reputation and faction validation
@@ -212,7 +212,7 @@ public:
     virtual bool ValidateItemRequirements(uint32 questId, Player* bot) = 0;
     virtual bool HasRequiredItems(uint32 questId, Player* bot) = 0;
     virtual bool HasInventorySpace(uint32 questId, Player* bot) = 0;
-    virtual std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetMissingQuestItems(uint32 questId, Player* bot) = 0;
 
     /**
      * @brief Time and availability validation
@@ -259,17 +259,17 @@ public:
     /**
      * @brief Batch validation for efficiency
      */
-    virtual std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-        const std::vector<uint32>& questIds, Player* bot) = 0;
-    virtual std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot) = 0;
-    virtual std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates) = 0;
+    virtual ::std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
+        const ::std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates) = 0;
 
     /**
      * @brief Error reporting and diagnostics
      */
-    virtual std::string GetDetailedValidationReport(uint32 questId, Player* bot) = 0;
-    virtual void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason) = 0;
-    virtual std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) = 0;
+    virtual ::std::string GetDetailedValidationReport(uint32 questId, Player* bot) = 0;
+    virtual void LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason) = 0;
+    virtual ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) = 0;
 
     // ========================================================================
     // TURNIN MODULE (from QuestTurnIn)
@@ -286,7 +286,7 @@ public:
     /**
      * @brief Quest completion detection
      */
-    virtual std::vector<uint32> GetCompletedQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetCompletedQuests(Player* bot) = 0;
     virtual bool IsQuestReadyForTurnIn(uint32 questId, Player* bot) = 0;
     virtual void MonitorQuestCompletion(Player* bot) = 0;
     virtual void HandleQuestCompletion(Player* bot, uint32 questId) = 0;
@@ -295,8 +295,8 @@ public:
      * @brief Turn-in planning and optimization
      */
     virtual void PlanOptimalTurnInRoute(Player* bot) = 0;
-    virtual TurnInBatch CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds) = 0;
-    virtual void OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns) = 0;
+    virtual TurnInBatch CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds) = 0;
+    virtual void OptimizeTurnInSequence(Player* bot, ::std::vector<QuestTurnInData>& turnIns) = 0;
     virtual void MinimizeTurnInTravel(Player* bot) = 0;
 
     /**
@@ -311,8 +311,8 @@ public:
      * @brief Reward selection and optimization
      */
     virtual void AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot) = 0;
-    virtual uint32 SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) = 0;
-    virtual void EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot) = 0;
+    virtual uint32 SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy) = 0;
+    virtual void EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot) = 0;
     virtual float CalculateItemValue(const QuestRewardItem& reward, Player* bot) = 0;
 
     /**
@@ -361,7 +361,7 @@ public:
     /**
      * @brief Error handling and recovery
      */
-    virtual void HandleTurnInError(Player* bot, uint32 questId, const std::string& error) = 0;
+    virtual void HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error) = 0;
     virtual void RecoverFromTurnInFailure(Player* bot, uint32 questId) = 0;
     virtual void RetryFailedTurnIn(Player* bot, uint32 questId) = 0;
     virtual void ValidateTurnInState(Player* bot, uint32 questId) = 0;
@@ -373,8 +373,8 @@ public:
     /**
      * @brief Quest discovery and assignment
      */
-    virtual std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
-    virtual std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) = 0;
+    virtual ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) = 0;
     virtual bool AssignQuestToBot(uint32 questId, Player* bot) = 0;
     virtual void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) = 0;
 
@@ -382,7 +382,7 @@ public:
      * @brief Quest prioritization
      */
     virtual QuestPriority CalculateQuestPriority(uint32 questId, Player* bot) = 0;
-    virtual std::vector<uint32> SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot) = 0;
     virtual bool ShouldAbandonQuest(uint32 questId, Player* bot) = 0;
 
     /**
@@ -405,7 +405,7 @@ public:
      * @brief Quest pathfinding and navigation
      */
     virtual Position GetNextQuestLocation(Player* bot, uint32 questId) = 0;
-    virtual std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) = 0;
+    virtual ::std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) = 0;
     virtual void HandleQuestNavigation(Player* bot, uint32 questId) = 0;
     virtual bool IsQuestLocationReachable(Player* bot, const Position& location) = 0;
 
@@ -421,7 +421,7 @@ public:
      * @brief Quest chain management (dynamic)
      */
     virtual void TrackQuestChains(Player* bot) = 0;
-    virtual std::vector<uint32> GetQuestChain(uint32 questId) = 0;
+    virtual ::std::vector<uint32> GetQuestChain(uint32 questId) = 0;
     virtual uint32 GetNextQuestInChainDynamic(uint32 completedQuestId) = 0;
     virtual void AdvanceQuestChain(Player* bot, uint32 completedQuestId) = 0;
 
@@ -429,7 +429,7 @@ public:
      * @brief Zone-based quest optimization
      */
     virtual void OptimizeZoneQuests(Player* bot) = 0;
-    virtual std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) = 0;
     virtual void PlanZoneCompletion(Player* bot, uint32 zoneId) = 0;
     virtual bool ShouldMoveToNewZone(Player* bot) = 0;
 
@@ -480,7 +480,7 @@ public:
      * @param questId Quest to evaluate
      * @return Detailed recommendation string
      */
-    virtual std::string GetQuestRecommendation(Player* bot, uint32 questId) = 0;
+    virtual ::std::string GetQuestRecommendation(Player* bot, uint32 questId) = 0;
 
     /**
      * @brief Optimize quest load for a bot
@@ -499,7 +499,7 @@ public:
      * @brief Get statistics for quest operations
      * @return Statistics string (for debugging/monitoring)
      */
-    virtual std::string GetQuestStatistics() const = 0;
+    virtual ::std::string GetQuestStatistics() const = 0;
 
     /**
      * @brief Performance monitoring

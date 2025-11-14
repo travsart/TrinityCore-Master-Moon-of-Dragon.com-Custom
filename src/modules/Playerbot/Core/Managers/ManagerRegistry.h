@@ -100,7 +100,7 @@ public:
      * Note: Managers should be registered during BotAI construction,
      * before Initialize() is called.
      */
-    bool RegisterManager(std::unique_ptr<IManagerBase> manager);
+    bool RegisterManager(::std::unique_ptr<IManagerBase> manager);
 
     /**
      * @brief Unregister a manager by ID
@@ -114,7 +114,7 @@ public:
      * Thread Safety: Uses mutex, safe to call from any thread
      * Performance: O(1) average case
      */
-    bool UnregisterManager(std::string const& managerId);
+    bool UnregisterManager(::std::string const& managerId);
 
     /**
      * @brief Get a manager by ID
@@ -131,7 +131,7 @@ public:
      * Note: The returned pointer is valid until the manager is unregistered
      * or the registry is destroyed. Do not store this pointer long-term.
      */
-    IManagerBase* GetManager(std::string const& managerId) const;
+    IManagerBase* GetManager(::std::string const& managerId) const;
 
     /**
      * @brief Check if a manager is registered
@@ -142,7 +142,7 @@ public:
      * Thread Safety: Uses shared lock, safe for concurrent read access
      * Performance: O(1) average case
      */
-    bool HasManager(std::string const& managerId) const;
+    bool HasManager(::std::string const& managerId) const;
 
     /**
      * @brief Initialize all registered managers
@@ -208,7 +208,7 @@ public:
      * Thread Safety: Uses shared lock, safe for concurrent read access
      * Performance: O(n) where n is number of managers
      */
-    std::vector<std::string> GetManagerIds() const;
+    ::std::vector<::std::string> GetManagerIds() const;
 
     /**
      * @brief Set a manager's active state
@@ -223,7 +223,7 @@ public:
      * Thread Safety: Uses mutex, safe to call from any thread
      * Performance: O(1) average case
      */
-    bool SetManagerActive(std::string const& managerId, bool active);
+    bool SetManagerActive(::std::string const& managerId, bool active);
 
     /**
      * @brief Get performance metrics for all managers
@@ -236,7 +236,7 @@ public:
      */
     struct ManagerMetrics
     {
-        std::string managerId;
+        ::std::string managerId;
         uint32 updateInterval;
         uint64 lastUpdateTime;
         uint64 totalUpdates;
@@ -244,7 +244,7 @@ public:
         float averageUpdateTimeMs;
         bool isActive;
     };
-    std::vector<ManagerMetrics> GetMetrics() const;
+    ::std::vector<ManagerMetrics> GetMetrics() const;
 
     /**
      * @brief Reset all manager metrics
@@ -261,7 +261,7 @@ private:
      */
     struct ManagerEntry
     {
-        std::unique_ptr<IManagerBase> manager;
+        ::std::unique_ptr<IManagerBase> manager;
         uint64 lastUpdateTime;
         uint64 totalUpdates;
         uint64 totalUpdateTimeMs;
@@ -278,7 +278,7 @@ private:
     /**
      * @brief Manager map: manager ID -> entry
      */
-    std::unordered_map<std::string, ManagerEntry> _managers;
+    ::std::unordered_map<::std::string, ManagerEntry> _managers;
 
     /**
      * @brief Manager initialization order (manager IDs)
@@ -286,7 +286,7 @@ private:
      * Preserved to ensure managers are initialized in registration order
      * and shut down in reverse order.
      */
-    std::vector<std::string> _initializationOrder;
+    ::std::vector<::std::string> _initializationOrder;
 
     /**
      * @brief Mutex protecting the manager map

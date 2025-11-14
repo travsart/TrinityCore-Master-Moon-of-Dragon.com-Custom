@@ -447,9 +447,9 @@ bool MountManager::CanUseDragonriding(::Player* player) const
 // Mount Collection
 // ============================================================================
 
-std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
+::std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
 {
-    std::vector<MountInfo> mounts;
+    ::std::vector<MountInfo> mounts;
 
     if (!player)
         return mounts;
@@ -967,7 +967,7 @@ bool MountManager::IsInDragonridingZone(::Player* player) const
     uint32 zoneId = GetCurrentZoneId(player);
 
     // Example Dragon Isles zones
-    std::vector<uint32> dragonIslesZones = {
+    ::std::vector<uint32> dragonIslesZones = {
         13644, // The Waking Shores
         13645, // Ohn'ahran Plains
         13646, // The Azure Span

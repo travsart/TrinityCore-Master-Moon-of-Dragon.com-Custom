@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -285,7 +285,7 @@ namespace Playerbot
          * @param type The interaction type
          * @return List of unmet requirements
          */
-        std::vector<std::string> GetMissingRequirements(::Player* bot, ::WorldObject* target,
+        ::std::vector<::std::string> GetMissingRequirements(::Player* bot, ::WorldObject* target,
                                                         InteractionType type) const;
 
         /**
@@ -313,7 +313,7 @@ namespace Playerbot
             uint32 totalValidations = 0;
             uint32 passedValidations = 0;
             uint32 failedValidations = 0;
-            std::unordered_map<InteractionType, uint32> failuresByType;
+            ::std::unordered_map<InteractionType, uint32> failuresByType;
         };
         ValidationMetrics GetMetrics() const;
 
@@ -362,11 +362,11 @@ namespace Playerbot
         bool m_strictMode = false;
 
         // Cooldown tracking
-        mutable std::unordered_map<ObjectGuid, std::unordered_map<InteractionType,
-                                   std::chrono::steady_clock::time_point>> m_cooldowns;
+        mutable ::std::unordered_map<ObjectGuid, ::std::unordered_map<InteractionType,
+                                   ::std::chrono::steady_clock::time_point>> m_cooldowns;
 
         // Interaction cooldown durations (ms)
-        std::unordered_map<InteractionType, uint32> m_cooldownDurations = {
+        ::std::unordered_map<InteractionType, uint32> m_cooldownDurations = {
             {InteractionType::Vendor, 1000},
             {InteractionType::Trainer, 2000},
             {InteractionType::Bank, 1000},
@@ -379,13 +379,13 @@ namespace Playerbot
         mutable ValidationMetrics m_metrics;
 
         // Cache for expensive checks
-        mutable std::unordered_map<ObjectGuid, std::chrono::steady_clock::time_point> m_lastValidation;
-        mutable std::unordered_map<ObjectGuid, bool> m_validationCache;
+        mutable ::std::unordered_map<ObjectGuid, ::std::chrono::steady_clock::time_point> m_lastValidation;
+        mutable ::std::unordered_map<ObjectGuid, bool> m_validationCache;
         const uint32 CACHE_DURATION_MS = 5000;
 
         // Item evaluation cache
-        mutable std::unordered_map<uint32, bool> m_usefulItemCache;
-        mutable std::unordered_map<uint32, bool> m_junkItemCache;
+        mutable ::std::unordered_map<uint32, bool> m_usefulItemCache;
+        mutable ::std::unordered_map<uint32, bool> m_junkItemCache;
 
         bool m_initialized = false;
     };

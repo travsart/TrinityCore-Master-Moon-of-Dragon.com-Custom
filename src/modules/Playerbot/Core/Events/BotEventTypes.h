@@ -67,12 +67,12 @@ namespace Events
         uint64 timestamp;
 
         // Event payload (Phase 4 will use variant for type safety)
-        std::string data;
+        ::std::string data;
 
         // Specialized event data (Phase 4 - type-safe event data)
         // NOTE: Use std::any for now to avoid circular dependency
         // Files that include BotEventData.h can cast this to EventDataVariant
-        std::any eventData;
+        ::std::any eventData;
 
         // Event metadata (Phase 4 will expand)
         uint32 eventId = 0;           // Unique event identifier
@@ -97,8 +97,8 @@ namespace Events
             , timestamp(GameTime::GetGameTimeMS())
             , data("")
         {
-            static std::atomic<uint32> s_eventIdCounter{1};
-            eventId = s_eventIdCounter.fetch_add(1, std::memory_order_relaxed);
+            static ::std::atomic<uint32> s_eventIdCounter{1};
+            eventId = s_eventIdCounter.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         // Constructor with target
@@ -109,8 +109,8 @@ namespace Events
             , timestamp(GameTime::GetGameTimeMS())
             , data("")
         {
-            static std::atomic<uint32> s_eventIdCounter{1};
-            eventId = s_eventIdCounter.fetch_add(1, std::memory_order_relaxed);
+            static ::std::atomic<uint32> s_eventIdCounter{1};
+            eventId = s_eventIdCounter.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         virtual ~BotEvent() = default;
@@ -151,13 +151,13 @@ namespace Events
      * - Callback chaining and composition
      * - Error handling and retry policies
      */
-    using EventCallback = std::function<void(const BotEvent&)>;
+    using EventCallback = ::std::function<void(const BotEvent&)>;
 
     /**
      * @brief Event filter predicate
      * Phase 4 will implement complex filtering logic
      */
-    using EventPredicate = std::function<bool(const BotEvent&)>;
+    using EventPredicate = ::std::function<bool(const BotEvent&)>;
 
     /**
      * @brief Event observer interface (Phase 4 will implement)

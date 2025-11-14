@@ -57,10 +57,10 @@ bool SpawnPriorityQueue::EnqueuePrioritySpawnRequest(PrioritySpawnRequest reques
     return true;
 }
 
-std::optional<PrioritySpawnRequest> SpawnPriorityQueue::DequeueNextRequest()
+::std::optional<PrioritySpawnRequest> SpawnPriorityQueue::DequeueNextRequest()
 {
     if (_queue.empty())
-        return std::nullopt;
+        return ::std::nullopt;
 
     // Get highest priority request
     PrioritySpawnRequest request = _queue.top();
@@ -92,7 +92,7 @@ size_t SpawnPriorityQueue::GetQueueSize(SpawnPriority priority) const
     size_t count = 0;
 
     // Create temporary copy of queue for counting
-    std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
+    ::std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
 
     while (!tempQueue.empty())
     {
@@ -129,7 +129,7 @@ bool SpawnPriorityQueue::RemoveRequest(ObjectGuid guid)
 
     // NOTE: This is O(N) operation requiring queue rebuild
     // Extract all requests except the one to remove
-    std::vector<PrioritySpawnRequest> tempRequests;
+    ::std::vector<PrioritySpawnRequest> tempRequests;
     bool found = false;
 
     while (!_queue.empty())
@@ -175,7 +175,7 @@ QueueMetrics SpawnPriorityQueue::GetMetrics() const
         return metrics;
 
     // Count requests by priority and find oldest
-    std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
+    ::std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
     TimePoint oldestTime = GameTime::Now();
 
     while (!tempQueue.empty())
@@ -207,7 +207,7 @@ QueueMetrics SpawnPriorityQueue::GetMetrics() const
     }
 
     // Calculate age of oldest request
-    metrics.oldestRequestAge = std::chrono::duration_cast<Milliseconds>(
+    metrics.oldestRequestAge = ::std::chrono::duration_cast<Milliseconds>(
         GameTime::Now() - oldestTime);
 
     // Calculate average queue time
@@ -220,12 +220,12 @@ QueueMetrics SpawnPriorityQueue::GetMetrics() const
     return metrics;
 }
 
-std::vector<PrioritySpawnRequest> SpawnPriorityQueue::GetRequestsByPriority(SpawnPriority priority) const
+::std::vector<PrioritySpawnRequest> SpawnPriorityQueue::GetRequestsByPriority(SpawnPriority priority) const
 {
-    std::vector<PrioritySpawnRequest> requests;
+    ::std::vector<PrioritySpawnRequest> requests;
 
     // Extract all requests at specified priority
-    std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
+    ::std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
 
     while (!tempQueue.empty())
     {
@@ -243,7 +243,7 @@ void SpawnPriorityQueue::RebuildLookupMap()
     _requestLookup.clear();
 
     // Rebuild lookup map from current queue
-    std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
+    ::std::priority_queue<PrioritySpawnRequest> tempQueue = _queue;
 
     while (!tempQueue.empty())
     {

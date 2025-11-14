@@ -96,7 +96,7 @@ namespace Playerbot
         Position destination;
 
         /// Path from player to destination
-        std::vector<Position> path;
+        ::std::vector<Position> path;
 
         /// Total path length in yards
         float pathLength = 0.0f;
@@ -335,7 +335,7 @@ namespace Playerbot
             Player const* player,
             Position const& destination,
             QuestPathfindingOptions const& options,
-            std::vector<Position>& path,
+            ::std::vector<Position>& path,
             float& pathLength);
 
         /**
@@ -350,7 +350,7 @@ namespace Playerbot
          */
         [[nodiscard]] static QuestHub const* SelectBestQuestHub(
             Player const* player,
-            std::vector<QuestHub const*> const& hubs,
+            ::std::vector<QuestHub const*> const& hubs,
             QuestPathfindingOptions::SelectionStrategy strategy);
 
         /**

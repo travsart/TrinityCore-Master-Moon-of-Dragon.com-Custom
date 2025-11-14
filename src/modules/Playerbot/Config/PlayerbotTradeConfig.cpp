@@ -44,7 +44,7 @@ namespace Playerbot
     bool PlayerbotTradeConfig::m_roundRobinEnabled = false;
     bool PlayerbotTradeConfig::m_lootBySpecEnabled = true;
 
-    std::vector<uint32> PlayerbotTradeConfig::m_protectedItems;
+    ::std::vector<uint32> PlayerbotTradeConfig::m_protectedItems;
 
     bool PlayerbotTradeConfig::m_tradeLoggingEnabled = true;
     bool PlayerbotTradeConfig::m_detailedLoggingEnabled = false;
@@ -87,12 +87,12 @@ namespace Playerbot
 
         // Protected items
         m_protectedItems.clear();
-        std::string protectedItemsStr = sPlayerbotConfig->GetString("Playerbot.Trade.ProtectedItems", "");
+        ::std::string protectedItemsStr = sPlayerbotConfig->GetString("Playerbot.Trade.ProtectedItems", "");
         if (!protectedItemsStr.empty())
         {
-            std::stringstream ss(protectedItemsStr);
-            std::string token;
-            while (std::getline(ss, token, ','))
+            ::std::stringstream ss(protectedItemsStr);
+            ::std::string token;
+            while (::std::getline(ss, token, ','))
             {
                 // Trim whitespace
                 token.erase(0, token.find_first_not_of(" \t"));
@@ -231,7 +231,7 @@ namespace Playerbot
 
     bool PlayerbotTradeConfig::IsItemProtected(uint32 itemEntry)
     {
-        return std::find(m_protectedItems.begin(), m_protectedItems.end(), itemEntry) != m_protectedItems.end();
+        return ::std::find(m_protectedItems.begin(), m_protectedItems.end(), itemEntry) != m_protectedItems.end();
     }
 
     void PlayerbotTradeConfig::AddProtectedItem(uint32 itemEntry)
@@ -245,7 +245,7 @@ namespace Playerbot
 
     void PlayerbotTradeConfig::RemoveProtectedItem(uint32 itemEntry)
     {
-        auto it = std::find(m_protectedItems.begin(), m_protectedItems.end(), itemEntry);
+        auto it = ::std::find(m_protectedItems.begin(), m_protectedItems.end(), itemEntry);
         if (it != m_protectedItems.end())
         {
             m_protectedItems.erase(it);

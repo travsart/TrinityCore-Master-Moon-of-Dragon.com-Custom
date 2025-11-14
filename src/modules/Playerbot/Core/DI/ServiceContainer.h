@@ -97,18 +97,18 @@ public:
     template<typename TInterface, typename TImpl>
     void RegisterSingleton()
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
 
         if (_services.find(typeId) != _services.end())
         {
-            throw std::runtime_error(
-                std::string("Service already registered: ") + typeId.name());
+            throw ::std::runtime_error(
+                ::std::string("Service already registered: ") + typeId.name());
         }
 
         // Create service instance immediately
-        _services[typeId] = std::make_shared<TImpl>();
+        _services[typeId] = ::std::make_shared<TImpl>();
     }
 
     /**
@@ -128,16 +128,16 @@ public:
      * @endcode
      */
     template<typename TInterface>
-    void RegisterInstance(std::shared_ptr<TInterface> instance)
+    void RegisterInstance(::std::shared_ptr<TInterface> instance)
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
 
         if (_services.find(typeId) != _services.end())
         {
-            throw std::runtime_error(
-                std::string("Service already registered: ") + typeId.name());
+            throw ::std::runtime_error(
+                ::std::string("Service already registered: ") + typeId.name());
         }
 
         _services[typeId] = instance;
@@ -162,21 +162,21 @@ public:
      * @endcode
      */
     template<typename TInterface>
-    void RegisterFactory(std::function<std::shared_ptr<TInterface>()> factory)
+    void RegisterFactory(::std::function<::std::shared_ptr<TInterface>()> factory)
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
 
         if (_services.find(typeId) != _services.end() ||
             _factories.find(typeId) != _factories.end())
         {
-            throw std::runtime_error(
-                std::string("Service already registered: ") + typeId.name());
+            throw ::std::runtime_error(
+                ::std::string("Service already registered: ") + typeId.name());
         }
 
         // Store factory as type-erased function
-        _factories[typeId] = [factory]() -> std::shared_ptr<void> {
+        _factories[typeId] = [factory]() -> ::std::shared_ptr<void> {
             return factory();
         };
     }
@@ -202,9 +202,9 @@ public:
      * @endcode
      */
     template<typename TInterface>
-    std::shared_ptr<TInterface> Resolve()
+    ::std::shared_ptr<TInterface> Resolve()
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
 
@@ -212,7 +212,7 @@ public:
         auto it = _services.find(typeId);
         if (it != _services.end())
         {
-            return std::static_pointer_cast<TInterface>(it->second);
+            return ::std::static_pointer_cast<TInterface>(it->second);
         }
 
         // Try to create from factory
@@ -224,7 +224,7 @@ public:
             _services[typeId] = service;
             _factories.erase(factoryIt);  // Factory no longer needed
 
-            return std::static_pointer_cast<TInterface>(service);
+            return ::std::static_pointer_cast<TInterface>(service);
         }
 
         // Service not registered
@@ -249,13 +249,13 @@ public:
      * @endcode
      */
     template<typename TInterface>
-    std::shared_ptr<TInterface> RequireService()
+    ::std::shared_ptr<TInterface> RequireService()
     {
         auto service = Resolve<TInterface>();
         if (!service)
         {
-            throw std::runtime_error(
-                std::string("Required service not registered: ") + typeid(TInterface).name());
+            throw ::std::runtime_error(
+                ::std::string("Required service not registered: ") + typeid(TInterface).name());
         }
         return service;
     }
@@ -277,7 +277,7 @@ public:
     template<typename TInterface>
     bool IsRegistered() const
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
         return _services.find(typeId) != _services.end() ||
@@ -302,7 +302,7 @@ public:
     template<typename TInterface>
     bool Unregister()
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         auto typeId = typeid(TInterface);
 
@@ -322,7 +322,7 @@ public:
      */
     void Clear()
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         _services.clear();
         _factories.clear();
@@ -337,17 +337,17 @@ public:
      */
     size_t GetServiceCount() const
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
         return _services.size() + _factories.size();
     }
 
 private:
     // Service instances (instantiated services)
-    std::unordered_map<std::type_index, std::shared_ptr<void>> _services;
+    ::std::unordered_map<::std::type_index, ::std::shared_ptr<void>> _services;
 
     // Service factories (lazy services)
-    std::unordered_map<std::type_index, std::function<std::shared_ptr<void>()>> _factories;
+    ::std::unordered_map<::std::type_index, ::std::function<::std::shared_ptr<void>()>> _factories;
 
     // Thread safety (Layer 1 - acquired before all other locks)
     mutable OrderedRecursiveMutex<LockOrder::CONFIG_MANAGER> _mutex;

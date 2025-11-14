@@ -48,7 +48,7 @@ public:
     virtual void ReloadDistributions() = 0;
 
     // Random selection
-    virtual std::pair<uint8, uint8> GetRandomRaceClassByDistribution() = 0;
+    virtual ::std::pair<uint8, uint8> GetRandomRaceClassByDistribution() = 0;
     virtual uint8 GetRandomGenderForRace(uint8 race) = 0;
     virtual uint8 GetRandomGenderForRaceClass(uint8 race, uint8 classId) = 0;
 
@@ -58,8 +58,8 @@ public:
     virtual uint8 GetMalePercentageForRace(uint8 race) const = 0;
 
     // Top combinations
-    virtual std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const = 0;
-    virtual std::vector<RaceClassCombination> GetPopularCombinations() const = 0;
+    virtual ::std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const = 0;
+    virtual ::std::vector<RaceClassCombination> GetPopularCombinations() const = 0;
 
     // Status
     virtual uint32 GetTotalCombinations() const = 0;

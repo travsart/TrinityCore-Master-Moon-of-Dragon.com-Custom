@@ -58,12 +58,12 @@ enum class TestCategory
 struct TestConfiguration
 {
     // Test selection
-    std::vector<TestCategory> categoriesToRun = {
+    ::std::vector<TestCategory> categoriesToRun = {
         TestCategory::UNIT,
         TestCategory::INTEGRATION,
         TestCategory::PERFORMANCE
     };
-    std::vector<TestSeverity> severityLevels = {
+    ::std::vector<TestSeverity> severityLevels = {
         TestSeverity::SMOKE,
         TestSeverity::FUNCTIONAL
     };
@@ -81,14 +81,14 @@ struct TestConfiguration
     // Test environment
     bool useRealDatabase = false;          // Use real database vs mock
     bool cleanupAfterTests = true;         // Clean up test data
-    std::string testDataPath = "./test_data/";
-    std::string reportOutputPath = "./test_reports/";
+    ::std::string testDataPath = "./test_data/";
+    ::std::string reportOutputPath = "./test_reports/";
 
     // Logging and output
     bool verboseLogging = false;
     bool generateJunitXml = false;
     bool generateCoverageReport = false;
-    std::string logLevel = "INFO";
+    ::std::string logLevel = "INFO";
 
     // Load test specific settings
     uint32 maxBotsForLoadTest = 100;
@@ -102,22 +102,22 @@ struct TestConfiguration
  */
 struct TestResult
 {
-    std::string testName;
-    std::string testSuite;
+    ::std::string testName;
+    ::std::string testSuite;
     TestCategory category;
     TestSeverity severity;
 
     bool passed = false;
-    std::string failureReason;
-    std::vector<std::string> warnings;
+    ::std::string failureReason;
+    ::std::vector<::std::string> warnings;
 
-    std::chrono::milliseconds executionTime{0};
+    ::std::chrono::milliseconds executionTime{0};
     PerformanceMetrics performanceMetrics;
 
     // Detailed result data
-    std::unordered_map<std::string, std::string> additionalData;
+    ::std::unordered_map<::std::string, ::std::string> additionalData;
 
-    std::string GetFormattedResult() const;
+    ::std::string GetFormattedResult() const;
     bool IsWithinPerformanceThresholds(const PerformanceThresholds& thresholds) const;
 };
 
@@ -127,7 +127,7 @@ struct TestResult
  */
 struct TestSuiteResult
 {
-    std::string suiteName;
+    ::std::string suiteName;
     TestCategory category;
 
     uint32 totalTests = 0;
@@ -135,13 +135,13 @@ struct TestSuiteResult
     uint32 failedTests = 0;
     uint32 skippedTests = 0;
 
-    std::chrono::milliseconds totalExecutionTime{0};
-    std::vector<TestResult> testResults;
+    ::std::chrono::milliseconds totalExecutionTime{0};
+    ::std::vector<TestResult> testResults;
     PerformanceMetrics aggregatedMetrics;
 
     float GetSuccessRate() const { return totalTests > 0 ? (float)passedTests / totalTests : 0.0f; }
     bool AllTestsPassed() const { return failedTests == 0 && totalTests > 0; }
-    std::string GenerateSummary() const;
+    ::std::string GenerateSummary() const;
 };
 
 /**
@@ -150,21 +150,21 @@ struct TestSuiteResult
  */
 struct TestRunResult
 {
-    std::string runId;
-    std::chrono::system_clock::time_point startTime;
-    std::chrono::system_clock::time_point endTime;
+    ::std::string runId;
+    ::std::chrono::system_clock::time_point startTime;
+    ::std::chrono::system_clock::time_point endTime;
     TestConfiguration configuration;
 
-    std::vector<TestSuiteResult> suiteResults;
+    ::std::vector<TestSuiteResult> suiteResults;
     uint32 totalTests = 0;
     uint32 passedTests = 0;
     uint32 failedTests = 0;
     uint32 skippedTests = 0;
 
     float GetOverallSuccessRate() const { return totalTests > 0 ? (float)passedTests / totalTests : 0.0f; }
-    std::chrono::milliseconds GetTotalExecutionTime() const;
+    ::std::chrono::milliseconds GetTotalExecutionTime() const;
     bool IsSuccessful() const { return failedTests == 0 && totalTests > 0; }
-    std::string GenerateFullReport() const;
+    ::std::string GenerateFullReport() const;
 };
 
 /**
@@ -176,12 +176,12 @@ class TestRegistry
 public:
     struct TestInfo
     {
-        std::string name;
-        std::string description;
+        ::std::string name;
+        ::std::string description;
         TestCategory category;
         TestSeverity severity;
-        std::vector<std::string> dependencies;
-        std::function<bool()> testFunction;
+        ::std::vector<::std::string> dependencies;
+        ::std::function<bool()> testFunction;
         uint32 expectedDurationSeconds;
     };
 
@@ -189,29 +189,29 @@ public:
 
     // Test registration
     void RegisterTest(const TestInfo& testInfo);
-    void RegisterTestSuite(const std::string& suiteName, TestCategory category, const std::vector<TestInfo>& tests);
+    void RegisterTestSuite(const ::std::string& suiteName, TestCategory category, const ::std::vector<TestInfo>& tests);
 
     // Test discovery
-    std::vector<TestInfo> GetTestsByCategory(TestCategory category) const;
-    std::vector<TestInfo> GetTestsBySeverity(TestSeverity severity) const;
-    std::vector<TestInfo> GetTestsByPattern(const std::string& pattern) const;
-    std::vector<TestInfo> GetAllTests() const;
+    ::std::vector<TestInfo> GetTestsByCategory(TestCategory category) const;
+    ::std::vector<TestInfo> GetTestsBySeverity(TestSeverity severity) const;
+    ::std::vector<TestInfo> GetTestsByPattern(const ::std::string& pattern) const;
+    ::std::vector<TestInfo> GetAllTests() const;
 
     // Test metadata
-    TestInfo GetTestInfo(const std::string& testName) const;
-    std::vector<std::string> GetTestDependencies(const std::string& testName) const;
-    bool IsTestRegistered(const std::string& testName) const;
+    TestInfo GetTestInfo(const ::std::string& testName) const;
+    ::std::vector<::std::string> GetTestDependencies(const ::std::string& testName) const;
+    bool IsTestRegistered(const ::std::string& testName) const;
 
     // Test suite management
-    std::vector<std::string> GetTestSuites() const;
-    std::vector<TestInfo> GetTestsInSuite(const std::string& suiteName) const;
+    ::std::vector<::std::string> GetTestSuites() const;
+    ::std::vector<TestInfo> GetTestsInSuite(const ::std::string& suiteName) const;
 
 private:
     TestRegistry() = default;
-    static std::unique_ptr<TestRegistry> s_instance;
+    static ::std::unique_ptr<TestRegistry> s_instance;
 
-    std::vector<TestInfo> m_registeredTests;
-    std::unordered_map<std::string, std::vector<TestInfo>> m_testSuites;
+    ::std::vector<TestInfo> m_registeredTests;
+    ::std::unordered_map<::std::string, ::std::vector<TestInfo>> m_testSuites;
 };
 
 /**
@@ -232,45 +232,45 @@ public:
     TestRunResult RunAllTests();
     TestRunResult RunTestsByCategory(TestCategory category);
     TestRunResult RunTestsBySeverity(TestSeverity severity);
-    TestRunResult RunTestsByPattern(const std::string& pattern);
-    TestRunResult RunSpecificTests(const std::vector<std::string>& testNames);
+    TestRunResult RunTestsByPattern(const ::std::string& pattern);
+    TestRunResult RunSpecificTests(const ::std::vector<::std::string>& testNames);
 
     // Test suite execution
-    TestSuiteResult RunTestSuite(const std::string& suiteName);
+    TestSuiteResult RunTestSuite(const ::std::string& suiteName);
 
     // Validation and reporting
     bool ValidateTestEnvironment();
     void GenerateReports(const TestRunResult& results);
-    void ExportResults(const TestRunResult& results, const std::string& format = "json");
+    void ExportResults(const TestRunResult& results, const ::std::string& format = "json");
 
     // Event callbacks
-    void SetTestStartCallback(std::function<void(const std::string&)> callback);
-    void SetTestCompleteCallback(std::function<void(const TestResult&)> callback);
-    void SetSuiteCompleteCallback(std::function<void(const TestSuiteResult&)> callback);
+    void SetTestStartCallback(::std::function<void(const ::std::string&)> callback);
+    void SetTestCompleteCallback(::std::function<void(const TestResult&)> callback);
+    void SetSuiteCompleteCallback(::std::function<void(const TestSuiteResult&)> callback);
 
     // Progress monitoring
-    void SetProgressCallback(std::function<void(uint32, uint32)> callback); // (completed, total)
+    void SetProgressCallback(::std::function<void(uint32, uint32)> callback); // (completed, total)
 
 private:
     TestConfiguration m_config;
-    std::unique_ptr<PerformanceValidator> m_performanceValidator;
-    std::unique_ptr<TestEnvironment> m_testEnvironment;
+    ::std::unique_ptr<PerformanceValidator> m_performanceValidator;
+    ::std::unique_ptr<TestEnvironment> m_testEnvironment;
 
     // Execution state
     bool m_running = false;
-    std::string m_currentRunId;
+    ::std::string m_currentRunId;
 
     // Callbacks
-    std::function<void(const std::string&)> m_testStartCallback;
-    std::function<void(const TestResult&)> m_testCompleteCallback;
-    std::function<void(const TestSuiteResult&)> m_suiteCompleteCallback;
-    std::function<void(uint32, uint32)> m_progressCallback;
+    ::std::function<void(const ::std::string&)> m_testStartCallback;
+    ::std::function<void(const TestResult&)> m_testCompleteCallback;
+    ::std::function<void(const TestSuiteResult&)> m_suiteCompleteCallback;
+    ::std::function<void(uint32, uint32)> m_progressCallback;
 
     // Internal execution methods
     TestResult ExecuteTest(const TestRegistry::TestInfo& testInfo);
-    TestSuiteResult ExecuteTestSuite(const std::string& suiteName, const std::vector<TestRegistry::TestInfo>& tests);
+    TestSuiteResult ExecuteTestSuite(const ::std::string& suiteName, const ::std::vector<TestRegistry::TestInfo>& tests);
     bool ShouldRunTest(const TestRegistry::TestInfo& testInfo) const;
-    std::string GenerateRunId() const;
+    ::std::string GenerateRunId() const;
 
     // Result processing
     void ProcessTestResult(TestResult& result);
@@ -302,9 +302,9 @@ public:
         bool requireMinimumCoverage = false;    // Require minimum test coverage
         float minimumCoveragePercent = 80.0f;   // Minimum coverage threshold
         bool generateArtifacts = true;          // Generate CI artifacts
-        std::string artifactPath = "./ci_artifacts/";
+        ::std::string artifactPath = "./ci_artifacts/";
         bool postResultsToWebhook = false;      // Post results to external service
-        std::string webhookUrl;
+        ::std::string webhookUrl;
     };
 
     explicit ContinuousIntegrationRunner(const CIConfiguration& config);
@@ -324,7 +324,7 @@ public:
 
 private:
     CIConfiguration m_ciConfig;
-    std::unique_ptr<AutomatedTestRunner> m_testRunner;
+    ::std::unique_ptr<AutomatedTestRunner> m_testRunner;
 
     bool ValidateCIEnvironment();
     TestConfiguration CreateCITestConfiguration();
@@ -341,13 +341,13 @@ public:
     struct ScheduleConfig
     {
         bool enableNightlyRuns = true;
-        std::string nightlyTime = "02:00";      // HH:MM format
+        ::std::string nightlyTime = "02:00";      // HH:MM format
         bool enableWeeklyStress = true;
-        std::string weeklyDay = "Sunday";
-        std::string weeklyTime = "04:00";
+        ::std::string weeklyDay = "Sunday";
+        ::std::string weeklyTime = "04:00";
         bool enableContinuousSmoke = false;
         uint32 smokeTestIntervalMinutes = 30;
-        std::string notificationEmail;
+        ::std::string notificationEmail;
         bool sendFailureNotifications = true;
     };
 
@@ -365,11 +365,11 @@ public:
 private:
     ScheduleConfig m_config;
     bool m_running = false;
-    std::unique_ptr<std::thread> m_schedulerThread;
+    ::std::unique_ptr<::std::thread> m_schedulerThread;
 
     void SchedulerLoop();
-    void ExecuteScheduledTest(const std::string& testType);
-    void SendNotification(const std::string& subject, const std::string& body);
+    void ExecuteScheduledTest(const ::std::string& testType);
+    void SendNotification(const ::std::string& subject, const ::std::string& body);
 };
 
 // Utility macros for test registration

@@ -81,7 +81,7 @@ bool ResourceManager::HasEnoughResource(uint32 spellId)
         return false;
 
     // Check spell power costs using modern API
-    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());    if (costs.empty())
+    ::std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());    if (costs.empty())
         return true; // No resource cost
 
     // Check if we have enough of each required resource
@@ -161,7 +161,7 @@ void ResourceManager::ConsumeResource(uint32 spellId)
         return;
 
     // Get power costs using modern API
-    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    ::std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
 
     for (const SpellPowerCost& powerCost : costs)
     {
@@ -212,7 +212,7 @@ void ResourceManager::SetResource(ResourceType type, uint32 amount)
     auto it = _resources.find(type);
     if (it != _resources.end())
     {
-        it->second.current = std::min(amount, it->second.maximum);
+        it->second.current = ::std::min(amount, it->second.maximum);
     }
 }
 
@@ -222,7 +222,7 @@ void ResourceManager::SetMaxResource(ResourceType type, uint32 amount)
     if (it != _resources.end())
     {
         it->second.maximum = amount;
-        it->second.current = std::min(it->second.current, amount);
+        it->second.current = ::std::min(it->second.current, amount);
     }
 }
 
@@ -233,7 +233,7 @@ uint32 ResourceManager::GetResourceIn(ResourceType type, uint32 timeMs)
     {
         float regenAmount = it->second.regenRate * (timeMs / 1000.0f);
         uint32 futureAmount = it->second.current + static_cast<uint32>(regenAmount);
-        return std::min(futureAmount, it->second.maximum);
+        return ::std::min(futureAmount, it->second.maximum);
     }
 
     return GetResource(type);
@@ -305,9 +305,9 @@ void ResourceManager::AddChi(uint32 amount)
     AddResource(ResourceType::CHI, amount);
 }
 
-std::vector<ResourceManager::RuneInfo> ResourceManager::GetRunes()
+::std::vector<ResourceManager::RuneInfo> ResourceManager::GetRunes()
 {
-    std::vector<RuneInfo> result;
+    ::std::vector<RuneInfo> result;
     for (uint32 i = 0; i < MAX_RUNES; ++i)
     {
         result.push_back(_runes[i]);
@@ -410,9 +410,9 @@ float ResourceManager::GetSpellResourceEfficiency(uint32 spellId)
     return 1.0f;
 }
 
-bool ResourceManager::CanAffordSpellSequence(const std::vector<uint32>& spellIds)
+bool ResourceManager::CanAffordSpellSequence(const ::std::vector<uint32>& spellIds)
 {
-    std::unordered_map<ResourceType, uint32> totalCosts;
+    ::std::unordered_map<ResourceType, uint32> totalCosts;
 
     for (uint32 spellId : spellIds)
     {
@@ -421,7 +421,7 @@ bool ResourceManager::CanAffordSpellSequence(const std::vector<uint32>& spellIds
         {
             // Get power costs for this spell
 
-            std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+            ::std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
 
             for (const SpellPowerCost& powerCost : costs)
 
@@ -487,9 +487,9 @@ bool ResourceManager::NeedsResourceEmergency()
     return IsResourceCritical(primaryResource);
 }
 
-std::vector<uint32> ResourceManager::GetResourceEmergencySpells()
+::std::vector<uint32> ResourceManager::GetResourceEmergencySpells()
 {
-    std::vector<uint32> emergencySpells;
+    ::std::vector<uint32> emergencySpells;
 
     if (!_bot)
         return emergencySpells;
@@ -882,27 +882,27 @@ bool ResourceManager::IsResourceTypeUsedBySpell(uint32 spellId, ResourceType typ
 // ResourceCalculator implementation
 
 // Meyer's singleton accessors for DLL-safe static data
-std::unordered_map<uint32, uint32>& ResourceCalculator::GetManaCostCache()
+::std::unordered_map<uint32, uint32>& ResourceCalculator::GetManaCostCache()
 {
-    static std::unordered_map<uint32, uint32> manaCostCache;
+    static ::std::unordered_map<uint32, uint32> manaCostCache;
     return manaCostCache;
 }
 
-std::unordered_map<uint32, uint32>& ResourceCalculator::GetRageCostCache()
+::std::unordered_map<uint32, uint32>& ResourceCalculator::GetRageCostCache()
 {
-    static std::unordered_map<uint32, uint32> rageCostCache;
+    static ::std::unordered_map<uint32, uint32> rageCostCache;
     return rageCostCache;
 }
 
-std::unordered_map<uint32, uint32>& ResourceCalculator::GetEnergyCostCache()
+::std::unordered_map<uint32, uint32>& ResourceCalculator::GetEnergyCostCache()
 {
-    static std::unordered_map<uint32, uint32> energyCostCache;
+    static ::std::unordered_map<uint32, uint32> energyCostCache;
     return energyCostCache;
 }
 
-std::recursive_mutex& ResourceCalculator::GetCacheMutex()
+::std::recursive_mutex& ResourceCalculator::GetCacheMutex()
 {
-    static std::recursive_mutex cacheMutex;
+    static ::std::recursive_mutex cacheMutex;
     return cacheMutex;
 }
 
@@ -911,7 +911,7 @@ uint32 ResourceCalculator::CalculateManaCost(uint32 spellId, Player* caster)
     if (!spellId || !caster)
         return 0;
 
-    std::lock_guard lock(GetCacheMutex());
+    ::std::lock_guard lock(GetCacheMutex());
     auto it = GetManaCostCache().find(spellId);
     if (it != GetManaCostCache().end())
         return it->second;
@@ -1084,7 +1084,7 @@ void ResourceCalculator::CacheSpellResourceCost(uint32 spellId)
     if (!spellInfo)
         return;
 
-    std::lock_guard lock(GetCacheMutex());
+    ::std::lock_guard lock(GetCacheMutex());
 
     // Cache costs for each power type the spell uses
     for (SpellPowerEntry const* powerEntry : spellInfo->PowerCosts)
@@ -1131,26 +1131,26 @@ ResourceMonitor& ResourceMonitor::Instance()
 
 void ResourceMonitor::RecordResourceUsage(uint32 botGuid, ResourceType type, uint32 amount)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].totalUsed += amount;
     _botResourceData[botGuid][type].sampleCount++;
 }
 
 void ResourceMonitor::RecordResourceWaste(uint32 botGuid, ResourceType type, uint32 amount)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].totalWasted += amount;
 }
 
 void ResourceMonitor::RecordResourceStarvation(uint32 botGuid, ResourceType type, uint32 duration)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
     _botResourceData[botGuid][type].starvationTime += duration;
 }
 
 float ResourceMonitor::GetAverageResourceUsage(ResourceType type)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     uint32 totalUsed = 0;
     uint32 totalSamples = 0;
@@ -1172,7 +1172,7 @@ float ResourceMonitor::GetAverageResourceUsage(ResourceType type)
 
 float ResourceMonitor::GetResourceWasteRate(ResourceType type)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     uint32 totalUsed = 0;
     uint32 totalWasted = 0;
@@ -1195,7 +1195,7 @@ float ResourceMonitor::GetResourceWasteRate(ResourceType type)
 
 uint32 ResourceMonitor::GetResourceStarvationTime(ResourceType type)
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     uint32 totalStarvation = 0;
     for (const auto& botPair : _botResourceData)
@@ -1211,11 +1211,11 @@ uint32 ResourceMonitor::GetResourceStarvationTime(ResourceType type)
     return totalStarvation;
 }
 
-std::vector<std::string> ResourceMonitor::GetResourceOptimizationSuggestions(uint32 botGuid)
+::std::vector<::std::string> ResourceMonitor::GetResourceOptimizationSuggestions(uint32 botGuid)
 {
-    std::vector<std::string> suggestions;
+    ::std::vector<::std::string> suggestions;
 
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
     auto botIt = _botResourceData.find(botGuid);
     if (botIt == _botResourceData.end())
         return suggestions;
@@ -1227,13 +1227,13 @@ std::vector<std::string> ResourceMonitor::GetResourceOptimizationSuggestions(uin
         if (data.totalWasted > data.totalUsed * 0.2f) // 20% waste threshold
         {
 
-            suggestions.push_back("Reduce resource waste for " + std::to_string(static_cast<uint32>(resourcePair.first)));
+            suggestions.push_back("Reduce resource waste for " + ::std::to_string(static_cast<uint32>(resourcePair.first)));
         }
 
         if (data.starvationTime > 10000) // 10 seconds of starvation
         {
 
-            suggestions.push_back("Improve resource management for " + std::to_string(static_cast<uint32>(resourcePair.first)));
+            suggestions.push_back("Improve resource management for " + ::std::to_string(static_cast<uint32>(resourcePair.first)));
         }
     }
 

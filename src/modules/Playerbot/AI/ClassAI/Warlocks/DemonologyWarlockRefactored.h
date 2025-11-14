@@ -28,6 +28,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // DEMONOLOGY WARLOCK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -113,7 +123,7 @@ struct ManaSoulShardResourceDemo
         // Mana regenerates naturally
         if (mana < maxMana) {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
-            mana = std::min(mana + regenAmount, maxMana);
+            mana = ::std::min(mana + regenAmount, maxMana);
         }
         available = mana > 0;
     }
@@ -221,7 +231,7 @@ public:
         // Wild Imps naturally despawn after 20 sec, but we track via spells
         // Decay imps over time
         if (_wildImpCount > 0 && rand() % 100 < 5) // 5% chance per update
-            _wildImpCount = std::max(0u, _wildImpCount - 1);
+            _wildImpCount = ::std::max(0u, _wildImpCount - 1);
     }
 
 private:
@@ -550,7 +560,7 @@ private:
 
     void GenerateSoulShard(uint32 amount)
     {
-        this->_resource.soulShards = std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
+        this->_resource.soulShards = ::std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
     }
 
     void ConsumeSoulShard(uint32 amount)
@@ -641,7 +651,7 @@ private:
                     Condition("3+ demons active", [this](Player*) {
                         return this->_demonTracker.GetActiveDemonCount() >= 3;
                     }),
-                    Action("Cast Demonic Tyrant", [this](Player* bot) {
+                    bot::ai::Action("Cast Demonic Tyrant", [this](Player* bot) {
                         if (this->CanCastSpell(SUMMON_DEMONIC_TYRANT, bot))
                         {
                             this->CastSpell(bot, SUMMON_DEMONIC_TYRANT);
@@ -662,7 +672,7 @@ private:
                             Condition("2+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            Action("Cast Call Dreadstalkers", [this](Player* bot) {
+                            bot::ai::Action("Cast Call Dreadstalkers", [this](Player* bot) {
                                 if (this->CanCastSpell(CALL_DREADSTALKERS, bot))
                                 {
                                     this->CastSpell(bot, CALL_DREADSTALKERS);
@@ -677,7 +687,7 @@ private:
                             Condition("1+ shard and has spell", [this](Player* bot) {
                                 return this->_resource.soulShards >= 1 && bot->HasSpell(SUMMON_VILEFIEND);
                             }),
-                            Action("Cast Summon Vilefiend", [this](Player* bot) {
+                            bot::ai::Action("Cast Summon Vilefiend", [this](Player* bot) {
                                 if (this->CanCastSpell(SUMMON_VILEFIEND, bot))
                                 {
                                     this->CastSpell(bot, SUMMON_VILEFIEND);
@@ -692,7 +702,7 @@ private:
                             Condition("3+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 3;
                             }),
-                            Action("Cast Hand of Gul'dan", [this](Player* bot) {
+                            bot::ai::Action("Cast Hand of Gul'dan", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(HAND_OF_GULDAN, target))
                                 {
@@ -717,7 +727,7 @@ private:
                             Condition("Demonic Core proc or 2+ shards", [this](Player*) {
                                 return this->_demonicCoreStacks > 0 || this->_resource.soulShards >= 2;
                             }),
-                            Action("Cast Demonbolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Demonbolt", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DEMONBOLT, target))
                                 {
@@ -736,7 +746,7 @@ private:
                             Condition("4+ Wild Imps", [this](Player*) {
                                 return this->_demonTracker.GetWildImpCount() >= 4;
                             }),
-                            Action("Cast Implosion", [this](Player* bot) {
+                            bot::ai::Action("Cast Implosion", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMPLOSION, target))
                                 {
@@ -751,7 +761,7 @@ private:
                             Condition("Has Guillotine talent", [this](Player* bot) {
                                 return bot->HasSpell(GUILLOTINE);
                             }),
-                            Action("Cast Guillotine", [this](Player* bot) {
+                            bot::ai::Action("Cast Guillotine", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(GUILLOTINE, target))
                                 {
@@ -769,7 +779,7 @@ private:
                     Condition("Has target and < 5 shards", [this](Player* bot) {
                         return bot && bot->GetVictim() && this->_resource.soulShards < 5;
                     }),
-                    Action("Cast Shadow Bolt", [this](Player* bot) {
+                    bot::ai::Action("Cast Shadow Bolt", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(SHADOW_BOLT_DEMO, target))
                         {

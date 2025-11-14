@@ -378,7 +378,7 @@ void ProfessionManager::Update(::Player* player, uint32 diff)
     ProfessionAutomationProfile const& profile = GetAutomationProfile(playerGuid);
     if (profile.autoLearnProfessions)
     {
-        std::vector<ProfessionSkillInfo> professions = GetPlayerProfessions(player);
+        ::std::vector<ProfessionSkillInfo> professions = GetPlayerProfessions(player);
         if (professions.empty())
         {
             AutoLearnProfessionsForClass(player);
@@ -413,7 +413,7 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
     {
         // Count current major professions
         uint32 majorProfessionCount = 0;
-        std::vector<ProfessionSkillInfo> currentProfessions = GetPlayerProfessions(player);
+        ::std::vector<ProfessionSkillInfo> currentProfessions = GetPlayerProfessions(player);
         for (ProfessionSkillInfo const& info : currentProfessions)
         {
             if (info.isPrimary)
@@ -430,7 +430,7 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
     }
 
     // Learn profession (set skill to 1, max based on level)
-    uint16 maxSkill = std::min<uint16>(player->GetLevel() * 5, 450);
+    uint16 maxSkill = ::std::min<uint16>(player->GetLevel() * 5, 450);
     player->SetSkill(skillId, 1, 1, maxSkill);
 
     TC_LOG_DEBUG("playerbots", "Player {} learned profession {} (max skill: {})",
@@ -468,15 +468,15 @@ uint16 ProfessionManager::GetMaxProfessionSkill(::Player* player, ProfessionType
     return player->GetMaxSkillValue(static_cast<uint32>(profession));
 }
 
-std::vector<ProfessionSkillInfo> ProfessionManager::GetPlayerProfessions(::Player* player) const
+::std::vector<ProfessionSkillInfo> ProfessionManager::GetPlayerProfessions(::Player* player) const
 {
-    std::vector<ProfessionSkillInfo> professions;
+    ::std::vector<ProfessionSkillInfo> professions;
 
     if (!player)
         return professions;
 
     // Check all profession types
-    static const std::vector<ProfessionType> allProfessions = {
+    static const ::std::vector<ProfessionType> allProfessions = {
         ProfessionType::ALCHEMY,
         ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING,
@@ -541,7 +541,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
 
     uint8 classId = player->GetClass();
     uint8 raceId = player->GetRace();
-    std::vector<ProfessionType> recommended = GetRecommendedProfessions(classId);
+    ::std::vector<ProfessionType> recommended = GetRecommendedProfessions(classId);
 
     if (recommended.empty())
     {
@@ -569,11 +569,11 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
     // Priority 2: Find beneficial pair for first profession
     if (firstProf != ProfessionType::NONE)
     {
-        std::vector<ProfessionType> beneficialPairs = GetBeneficialPairs(firstProf);
+        ::std::vector<ProfessionType> beneficialPairs = GetBeneficialPairs(firstProf);
         for (ProfessionType pair : beneficialPairs)
         {
             // Check if this pair is in our recommended list
-            if (std::find(recommended.begin(), recommended.end(), pair) != recommended.end())
+            if (::std::find(recommended.begin(), recommended.end(), pair) != recommended.end())
             {
                 secondProf = pair;
                 TC_LOG_INFO("playerbots", "Player {} selected {} as beneficial pair with {}",
@@ -622,7 +622,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
     LearnProfession(player, ProfessionType::FISHING);
 }
 
-std::vector<ProfessionType> ProfessionManager::GetRecommendedProfessions(uint8 classId) const
+::std::vector<ProfessionType> ProfessionManager::GetRecommendedProfessions(uint8 classId) const
 {
     auto it = _classRecommendations.find(classId);
     if (it != _classRecommendations.end())
@@ -633,8 +633,8 @@ std::vector<ProfessionType> ProfessionManager::GetRecommendedProfessions(uint8 c
 
 bool ProfessionManager::IsProfessionSuitableForClass(uint8 classId, ProfessionType profession) const
 {
-    std::vector<ProfessionType> recommended = GetRecommendedProfessions(classId);
-    return std::find(recommended.begin(), recommended.end(), profession) != recommended.end();
+    ::std::vector<ProfessionType> recommended = GetRecommendedProfessions(classId);
+    return ::std::find(recommended.begin(), recommended.end(), profession) != recommended.end();
 }
 
 ProfessionCategory ProfessionManager::GetProfessionCategory(ProfessionType profession) const
@@ -656,7 +656,7 @@ ProfessionCategory ProfessionManager::GetProfessionCategory(ProfessionType profe
     }
 }
 
-std::vector<ProfessionType> ProfessionManager::GetBeneficialPairs(ProfessionType profession) const
+::std::vector<ProfessionType> ProfessionManager::GetBeneficialPairs(ProfessionType profession) const
 {
     auto it = _professionPairs.find(profession);
     if (it != _professionPairs.end())
@@ -667,12 +667,12 @@ std::vector<ProfessionType> ProfessionManager::GetBeneficialPairs(ProfessionType
 
 bool ProfessionManager::IsBeneficialPair(ProfessionType prof1, ProfessionType prof2) const
 {
-    std::vector<ProfessionType> pairs1 = GetBeneficialPairs(prof1);
-    if (std::find(pairs1.begin(), pairs1.end(), prof2) != pairs1.end())
+    ::std::vector<ProfessionType> pairs1 = GetBeneficialPairs(prof1);
+    if (::std::find(pairs1.begin(), pairs1.end(), prof2) != pairs1.end())
         return true;
 
-    std::vector<ProfessionType> pairs2 = GetBeneficialPairs(prof2);
-    if (std::find(pairs2.begin(), pairs2.end(), prof1) != pairs2.end())
+    ::std::vector<ProfessionType> pairs2 = GetBeneficialPairs(prof2);
+    if (::std::find(pairs2.begin(), pairs2.end(), prof1) != pairs2.end())
         return true;
 
     return false;
@@ -857,9 +857,9 @@ bool ProfessionManager::KnowsRecipe(::Player* player, uint32 recipeId) const
     return player->HasSpell(it->second.spellId);
 }
 
-std::vector<RecipeInfo> ProfessionManager::GetRecipesForProfession(ProfessionType profession) const
+::std::vector<RecipeInfo> ProfessionManager::GetRecipesForProfession(ProfessionType profession) const
 {
-    std::vector<RecipeInfo> recipes;
+    ::std::vector<RecipeInfo> recipes;
 
     auto it = _professionRecipes.find(profession);
     if (it == _professionRecipes.end())
@@ -875,14 +875,14 @@ std::vector<RecipeInfo> ProfessionManager::GetRecipesForProfession(ProfessionTyp
     return recipes;
 }
 
-std::vector<RecipeInfo> ProfessionManager::GetCraftableRecipes(::Player* player, ProfessionType profession) const
+::std::vector<RecipeInfo> ProfessionManager::GetCraftableRecipes(::Player* player, ProfessionType profession) const
 {
-    std::vector<RecipeInfo> craftable;
+    ::std::vector<RecipeInfo> craftable;
 
     if (!player)
         return craftable;
 
-    std::vector<RecipeInfo> allRecipes = GetRecipesForProfession(profession);
+    ::std::vector<RecipeInfo> allRecipes = GetRecipesForProfession(profession);
 
     for (RecipeInfo const& recipe : allRecipes)
     {
@@ -898,7 +898,7 @@ RecipeInfo const* ProfessionManager::GetOptimalLevelingRecipe(::Player* player, 
     if (!player)
         return nullptr;
 
-    std::vector<RecipeInfo> craftable = GetCraftableRecipes(player, profession);
+    ::std::vector<RecipeInfo> craftable = GetCraftableRecipes(player, profession);
 
     RecipeInfo const* best = nullptr;
     float bestChance = 0.0f;
@@ -1075,9 +1075,9 @@ bool ProfessionManager::HasMaterialsForRecipe(::Player* player, RecipeInfo const
     return true;
 }
 
-std::vector<std::pair<uint32, uint32>> ProfessionManager::GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const
+::std::vector<::std::pair<uint32, uint32>> ProfessionManager::GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const
 {
-    std::vector<std::pair<uint32, uint32>> missing;
+    ::std::vector<::std::pair<uint32, uint32>> missing;
 
     if (!player)
         return missing;

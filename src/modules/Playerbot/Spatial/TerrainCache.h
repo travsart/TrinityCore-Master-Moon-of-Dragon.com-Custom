@@ -92,7 +92,7 @@ public:
         float waterLevel{0.0f};
         ZLiquidStatus liquidStatus{LIQUID_MAP_NO_WATER};
         bool isValid{false};
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
 
         /**
          * @brief Check if this cache entry has expired (older than TTL)
@@ -100,8 +100,8 @@ public:
          */
         bool IsExpired() const
         {
-            auto now = std::chrono::steady_clock::now();
-            auto age = std::chrono::duration_cast<std::chrono::seconds>(now - timestamp);
+            auto now = ::std::chrono::steady_clock::now();
+            auto age = ::std::chrono::duration_cast<::std::chrono::seconds>(now - timestamp);
             return age.count() > CACHE_TTL_SECONDS;
         }
     };
@@ -152,7 +152,7 @@ public:
      * terrainCache->WarmCache(hotspots, defaultPhaseShift);
      * @endcode
      */
-    void WarmCache(std::vector<Position> const& positions, PhaseShift const& phaseShift);
+    void WarmCache(::std::vector<Position> const& positions, PhaseShift const& phaseShift);
 
     /**
      * @brief Invalidate specific cell (force re-query on next access)
@@ -214,10 +214,10 @@ private:
      * - Grid: 512×512 cells, each 66.6666 yards
      * - Offset position to 0-based, divide by cell size, clamp to valid range
      */
-    std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
+    ::std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
 
     Map* _map;  // Map pointer (not owned, must remain valid)
-    std::array<std::array<TerrainData, GRID_SIZE>, GRID_SIZE> _grid;  // 512×512 terrain cache
+    ::std::array<::std::array<TerrainData, GRID_SIZE>, GRID_SIZE> _grid;  // 512×512 terrain cache
     mutable Statistics _stats;  // Performance counters (atomic updates)
 };
 

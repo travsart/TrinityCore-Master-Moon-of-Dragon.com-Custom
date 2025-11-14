@@ -52,7 +52,7 @@ public:
      * Constructor
      * @param name Trigger name for identification
      */
-    explicit GroupCombatTrigger(std::string const& name = "group_combat");
+    explicit GroupCombatTrigger(::std::string const& name = "group_combat");
 
     /**
      * Destructor
@@ -204,8 +204,8 @@ public:
         uint32 groupCombatTriggers = 0;
         uint32 leaderAssists = 0;
         uint32 targetSwitches = 0;
-        std::chrono::milliseconds averageEngagementTime{0};
-        std::chrono::steady_clock::time_point lastEngagement;
+        ::std::chrono::milliseconds averageEngagementTime{0};
+        ::std::chrono::steady_clock::time_point lastEngagement;
     };
 
     /**
@@ -225,10 +225,10 @@ private:
     {
         bool inCombat = false;
         ObjectGuid primaryTarget;
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastUpdateTime;
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastUpdateTime;
         uint32 membersInCombat = 0;
-        std::unordered_map<ObjectGuid, ObjectGuid> memberTargets; // member -> target mapping
+        ::std::unordered_map<ObjectGuid, ObjectGuid> memberTargets; // member -> target mapping
     };
 
     // Internal methods
@@ -268,17 +268,17 @@ private:
      * @param bot The bot involved
      * @param target Optional target involved
      */
-    void LogCombatEvent(std::string const& event, Player* bot, Unit* target = nullptr) const;
+    void LogCombatEvent(::std::string const& event, Player* bot, Unit* target = nullptr) const;
 
     /**
      * Update statistics after combat engagement
      * @param assistingLeader Whether bot is assisting leader
      * @param engagementTime Time taken to engage
      */
-    void UpdateStatistics(bool assistingLeader, std::chrono::milliseconds engagementTime);
+    void UpdateStatistics(bool assistingLeader, ::std::chrono::milliseconds engagementTime);
 
     // Member variables
-    mutable std::unordered_map<ObjectGuid, GroupCombatInfo> _combatCache; // Group combat state cache
+    mutable ::std::unordered_map<ObjectGuid, GroupCombatInfo> _combatCache; // Group combat state cache
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cacheMutex;                                       // Thread safety for cache
 
     // Configuration

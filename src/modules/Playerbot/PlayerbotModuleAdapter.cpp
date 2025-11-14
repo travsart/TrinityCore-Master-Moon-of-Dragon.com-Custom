@@ -74,7 +74,7 @@ void PlayerbotModuleAdapter::OnModuleStartup()
         s_initialized = true;
         TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Startup completed successfully - bot spawning active");
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Startup failed: {}", e.what());
     }
@@ -100,7 +100,7 @@ void PlayerbotModuleAdapter::OnModuleUpdate(uint32 diff)
         // Delegate to the main PlayerbotModule OnWorldUpdate which handles all the systems
         PlayerbotModule::OnWorldUpdate(diff);
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Update failed: {}", e.what());
     }
@@ -122,7 +122,7 @@ void PlayerbotModuleAdapter::OnModuleShutdown()
         s_initialized = false;
         TC_LOG_INFO("module.playerbot", "PlayerbotModuleAdapter: Shutdown completed");
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot", "PlayerbotModuleAdapter: Shutdown failed: {}", e.what());
     }

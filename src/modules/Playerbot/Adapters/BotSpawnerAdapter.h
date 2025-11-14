@@ -53,12 +53,12 @@ public:
 
     // === SPAWNING INTERFACE (IBotSpawner) ===
     bool SpawnBot(SpawnRequest const& request) override;
-    uint32 SpawnBots(std::vector<SpawnRequest> const& requests) override;
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) override;
 
     // === POPULATION MANAGEMENT (IBotSpawner) ===
     void SpawnToPopulationTarget() override;
     void UpdatePopulationTargets() override;
-    bool DespawnBot(ObjectGuid guid, std::string const& reason) override;
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason) override;
     void DespawnBot(ObjectGuid guid, bool forced = false) override;
 
     // === QUERIES (IBotSpawner) ===
@@ -91,7 +91,7 @@ public:
 
 private:
     // === ORCHESTRATOR DELEGATION ===
-    std::unique_ptr<BotSpawnOrchestrator> _orchestrator;
+    ::std::unique_ptr<BotSpawnOrchestrator> _orchestrator;
 
     // === CONFIGURATION STATE ===
     bool _enabled = true;
@@ -130,11 +130,11 @@ public:
     void Update(uint32 diff) override;
 
     bool SpawnBot(SpawnRequest const& request) override;
-    uint32 SpawnBots(std::vector<SpawnRequest> const& requests) override;
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) override;
 
     void SpawnToPopulationTarget() override;
     void UpdatePopulationTargets() override;
-    bool DespawnBot(ObjectGuid guid, std::string const& reason) override;
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason) override;
     void DespawnBot(ObjectGuid guid, bool forced = false) override;
 
     uint32 GetActiveBotCount() const override;
@@ -148,7 +148,7 @@ public:
     void SetEnabled(bool enabled) override;
 
 private:
-    std::unique_ptr<class BotSpawner> _legacySpawner;
+    ::std::unique_ptr<class BotSpawner> _legacySpawner;
     bool _migrationMode = true;  // Flag to indicate we're in migration mode
 };
 
@@ -168,9 +168,9 @@ public:
         AUTO         // Auto-detect based on configuration
     };
 
-    static std::unique_ptr<IBotSpawner> CreateSpawner(SpawnerType type = SpawnerType::AUTO);
+    static ::std::unique_ptr<IBotSpawner> CreateSpawner(SpawnerType type = SpawnerType::AUTO);
     static SpawnerType DetectBestSpawnerType();
-    static std::string GetSpawnerTypeName(SpawnerType type);
+    static ::std::string GetSpawnerTypeName(SpawnerType type);
 
 private:
     static bool IsOrchestratorAvailable();

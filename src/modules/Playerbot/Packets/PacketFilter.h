@@ -166,7 +166,7 @@ private:
      * - CMSG_ACCEPT_TRADE - Trading
      * - CMSG_QUEST_GIVER_ACCEPT_QUEST - Quest acceptance
      */
-    static std::unordered_set<OpcodeClient> const _botSafeOpcodes;
+    static ::std::unordered_set<OpcodeClient> const _botSafeOpcodes;
 
     /**
      * @brief Priority mapping for packet processing
@@ -180,11 +180,11 @@ private:
      * - 50-99: Low (buff management, inventory)
      * - 100: Default (unlisted opcodes)
      */
-    static std::unordered_map<OpcodeClient, uint8> const _opcodePriorities;
+    static ::std::unordered_map<OpcodeClient, uint8> const _opcodePriorities;
 
     // Statistics (mutable for const methods)
-    static std::atomic<uint64> _totalFiltered;
-    static std::atomic<uint64> _totalProcessed;
+    static ::std::atomic<uint64> _totalFiltered;
+    static ::std::atomic<uint64> _totalProcessed;
 };
 
 } // namespace Playerbot

@@ -24,7 +24,7 @@ TerrainCache::TerrainCache(Map* map)
         (GRID_SIZE * GRID_SIZE * sizeof(TerrainData)) / 1024);
 }
 
-std::pair<uint32, uint32> TerrainCache::GetCellCoords(Position const& pos) const
+::std::pair<uint32, uint32> TerrainCache::GetCellCoords(Position const& pos) const
 {
     // Convert world coordinates to grid cell indices
     // Map coordinate system:
@@ -41,8 +41,8 @@ std::pair<uint32, uint32> TerrainCache::GetCellCoords(Position const& pos) const
     uint32 cellY = static_cast<uint32>(offsetY / CELL_SIZE);
 
     // Clamp to valid range (handle edge cases where position is outside map bounds)
-    cellX = std::min(cellX, GRID_SIZE - 1);
-    cellY = std::min(cellY, GRID_SIZE - 1);
+    cellX = ::std::min(cellX, GRID_SIZE - 1);
+    cellY = ::std::min(cellY, GRID_SIZE - 1);
 
     return {cellX, cellY};
 }
@@ -102,7 +102,7 @@ TerrainCache::TerrainData TerrainCache::GetTerrainData(Position const& pos, Phas
 
     // Mark as valid and timestamp
     freshData.isValid = true;
-    freshData.timestamp = std::chrono::steady_clock::now();
+    freshData.timestamp = ::std::chrono::steady_clock::now();
 
     // Update cache
     if (cachedData.isValid)
@@ -113,7 +113,7 @@ TerrainCache::TerrainData TerrainCache::GetTerrainData(Position const& pos, Phas
     return freshData;
 }
 
-void TerrainCache::WarmCache(std::vector<Position> const& positions, PhaseShift const& phaseShift)
+void TerrainCache::WarmCache(::std::vector<Position> const& positions, PhaseShift const& phaseShift)
 {
     uint32 populated = 0;
 

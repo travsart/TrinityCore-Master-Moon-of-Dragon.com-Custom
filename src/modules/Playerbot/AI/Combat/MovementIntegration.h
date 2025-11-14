@@ -140,10 +140,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 40% fewer deaths from avoidable damage
-     * - ✅ Better DPS uptime (stay in range)
-     * - ✅ Improved healing effectiveness (positioning)
-     * - ✅ Group coordination (formations)
+     * -  40% fewer deaths from avoidable damage
+     * -  Better DPS uptime (stay in range)
+     * -  Improved healing effectiveness (positioning)
+     * -  Group coordination (formations)
      */
     class TC_GAME_API MovementIntegration
     {
@@ -293,7 +293,7 @@ namespace Playerbot
          *
          * @return Vector of current dangers
          */
-        std::vector<DangerZone> GetDangerZones() const;
+        ::std::vector<DangerZone> GetDangerZones() const;
 
         /**
          * @brief Check if position is in any danger zone
@@ -332,7 +332,7 @@ namespace Playerbot
 
     private:
         Player* _bot;
-        std::vector<DangerZone> _dangerZones;
+        ::std::vector<DangerZone> _dangerZones;
         MovementCommand _currentCommand;
         uint32 _lastUpdate;
         CombatSituation _currentSituation;

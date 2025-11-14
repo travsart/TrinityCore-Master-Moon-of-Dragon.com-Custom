@@ -69,27 +69,27 @@ namespace Playerbot
 
     private:
         // Bot spawning commands
-        static bool HandleBotSpawnCommand(ChatHandler* handler, std::string name,
-                                         std::optional<uint8> race,
-                                         std::optional<uint8> classId);
-        static bool HandleBotDeleteCommand(ChatHandler* handler, std::string name);
+        static bool HandleBotSpawnCommand(ChatHandler* handler, ::std::string name,
+                                         ::std::optional<uint8> race,
+                                         ::std::optional<uint8> classId);
+        static bool HandleBotDeleteCommand(ChatHandler* handler, ::std::string name);
         static bool HandleBotListCommand(ChatHandler* handler);
 
         // Bot teleportation commands
-        static bool HandleBotTeleportCommand(ChatHandler* handler, std::string name);
-        static bool HandleBotSummonCommand(ChatHandler* handler, std::string name);
+        static bool HandleBotTeleportCommand(ChatHandler* handler, ::std::string name);
+        static bool HandleBotSummonCommand(ChatHandler* handler, ::std::string name);
         static bool HandleBotSummonAllCommand(ChatHandler* handler);
 
         // Formation commands
-        static bool HandleBotFormationCommand(ChatHandler* handler, std::string formationType);
+        static bool HandleBotFormationCommand(ChatHandler* handler, ::std::string formationType);
         static bool HandleBotFormationListCommand(ChatHandler* handler);
 
         // Statistics and monitoring commands
         static bool HandleBotStatsCommand(ChatHandler* handler);
-        static bool HandleBotInfoCommand(ChatHandler* handler, std::string name);
+        static bool HandleBotInfoCommand(ChatHandler* handler, ::std::string name);
 
         // Configuration commands
-        static bool HandleBotConfigCommand(ChatHandler* handler, std::string key, std::string value);
+        static bool HandleBotConfigCommand(ChatHandler* handler, ::std::string key, ::std::string value);
         static bool HandleBotConfigShowCommand(ChatHandler* handler);
 
         // Monitoring dashboard commands
@@ -100,11 +100,11 @@ namespace Playerbot
         static bool HandleBotAlertsClearCommand(ChatHandler* handler);
 
         // Helper methods
-        static Player* FindBotByName(std::string const& name);
+        static Player* FindBotByName(::std::string const& name);
         static bool ValidateRaceClass(uint8 race, uint8 classId, ChatHandler* handler);
-        static std::string FormatBotList(std::vector<Player*> const& bots);
-        static std::string FormatBotStats();
-        static std::string FormatFormationList();
+        static ::std::string FormatBotList(::std::vector<Player*> const& bots);
+        static ::std::string FormatBotStats();
+        static ::std::string FormatFormationList();
     };
 
 } // namespace Playerbot

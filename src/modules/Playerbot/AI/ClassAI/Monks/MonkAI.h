@@ -80,14 +80,14 @@ private:
 
     // Advanced resource management systems
     struct ChiManagementSystem {
-        std::atomic<uint32> current{0};
-        std::atomic<uint32> maximum{5};
-        std::atomic<uint32> generated{0};
-        std::atomic<uint32> consumed{0};
-        std::atomic<uint32> lastGeneration{0};
-        std::atomic<float> efficiency{1.0f};
-        std::atomic<uint32> wastedChi{0};
-        std::queue<uint32> generationHistory;
+        ::std::atomic<uint32> current{0};
+        ::std::atomic<uint32> maximum{5};
+        ::std::atomic<uint32> generated{0};
+        ::std::atomic<uint32> consumed{0};
+        ::std::atomic<uint32> lastGeneration{0};
+        ::std::atomic<float> efficiency{1.0f};
+        ::std::atomic<uint32> wastedChi{0};
+        ::std::queue<uint32> generationHistory;
 
         // Make non-copyable due to atomic members
         ChiManagementSystem() = default;
@@ -96,7 +96,7 @@ private:
 
         void GenerateChi(uint32 amount) {
             uint32 oldChi = current.load();
-            uint32 newChi = std::min(oldChi + amount, maximum.load());
+            uint32 newChi = ::std::min(oldChi + amount, maximum.load());
             current.store(newChi);
             generated.store(generated.load() + amount);
             if (oldChi + amount > maximum.load()) {
@@ -132,14 +132,14 @@ private:
     } _chiManager;
 
     struct EnergyManagementSystem {
-        std::atomic<uint32> current{100};
-        std::atomic<uint32> maximum{100};
-        std::atomic<float> regenRate{10.0f};
-        std::atomic<uint32> lastRegen{0};
-        std::atomic<uint32> totalSpent{0};
-        std::atomic<uint32> totalRegen{0};
-        std::atomic<float> efficiency{1.0f};
-        std::queue<std::pair<uint32, uint32>> spendingHistory; // <amount, timestamp>
+        ::std::atomic<uint32> current{100};
+        ::std::atomic<uint32> maximum{100};
+        ::std::atomic<float> regenRate{10.0f};
+        ::std::atomic<uint32> lastRegen{0};
+        ::std::atomic<uint32> totalSpent{0};
+        ::std::atomic<uint32> totalRegen{0};
+        ::std::atomic<float> efficiency{1.0f};
+        ::std::queue<::std::pair<uint32, uint32>> spendingHistory; // <amount, timestamp>
 
         // Make non-copyable due to atomic members
         EnergyManagementSystem() = default;
@@ -159,7 +159,7 @@ private:
         void RegenerateEnergy(uint32 diff) {
             float regen = (regenRate * diff) / 1000.0f;
             uint32 oldEnergy = current.load();
-            uint32 newEnergy = std::min(static_cast<uint32>(oldEnergy + regen), maximum.load());
+            uint32 newEnergy = ::std::min(static_cast<uint32>(oldEnergy + regen), maximum.load());
             current.store(newEnergy);
             totalRegen.store(totalRegen.load() + (newEnergy - oldEnergy));
             lastRegen.store(GameTime::GetGameTimeMS());
@@ -179,14 +179,14 @@ private:
 
     // Stagger management system (Brewmaster)
     struct StaggerManagementSystem {
-        std::atomic<uint32> currentStagger{0};
-        std::atomic<uint32> totalAbsorbed{0};
-        std::atomic<uint32> totalPurified{0};
-        std::atomic<uint32> heavyStaggerTime{0};
-        std::atomic<uint32> moderateStaggerTime{0};
-        std::atomic<uint32> lightStaggerTime{0};
-        std::atomic<float> mitigationRatio{0.0f};
-        std::queue<std::pair<uint32, uint32>> staggerHistory; // <damage, timestamp>
+        ::std::atomic<uint32> currentStagger{0};
+        ::std::atomic<uint32> totalAbsorbed{0};
+        ::std::atomic<uint32> totalPurified{0};
+        ::std::atomic<uint32> heavyStaggerTime{0};
+        ::std::atomic<uint32> moderateStaggerTime{0};
+        ::std::atomic<uint32> lightStaggerTime{0};
+        ::std::atomic<float> mitigationRatio{0.0f};
+        ::std::queue<::std::pair<uint32, uint32>> staggerHistory; // <damage, timestamp>
 
         // Make non-copyable due to atomic members
         StaggerManagementSystem() = default;
@@ -248,11 +248,11 @@ private:
 
     // Martial arts form management
     struct FormManagementSystem {
-        std::atomic<MartialForm> currentForm{MartialForm::NONE};
-        std::atomic<uint32> lastFormChange{0};
-        std::atomic<uint32> formChanges{0};
-        std::array<std::atomic<uint32>, 4> formDuration{{0, 0, 0, 0}};
-        std::array<std::atomic<float>, 4> formEfficiency{{1.0f, 1.0f, 1.0f, 1.0f}};
+        ::std::atomic<MartialForm> currentForm{MartialForm::NONE};
+        ::std::atomic<uint32> lastFormChange{0};
+        ::std::atomic<uint32> formChanges{0};
+        ::std::array<::std::atomic<uint32>, 4> formDuration{{0, 0, 0, 0}};
+        ::std::array<::std::atomic<float>, 4> formEfficiency{{1.0f, 1.0f, 1.0f, 1.0f}};
 
         // Make non-copyable due to atomic members
         FormManagementSystem() = default;
@@ -296,32 +296,32 @@ private:
     } _formManager;
 
     // Enhanced performance tracking
-    std::atomic<uint32> _chiGenerated{0};
-    std::atomic<uint32> _chiSpent{0};
-    std::atomic<uint32> _energySpent{0};
-    std::atomic<uint32> _damageDealt{0};
-    std::atomic<uint32> _healingDone{0};
-    std::atomic<uint32> _staggerAbsorbed{0};
-    std::atomic<uint32> _staggerPurified{0};
-    std::atomic<uint32> _successfulComboStrikes{0};
-    std::atomic<uint32> _successfulInterrupts{0};
-    std::atomic<uint32> _mobilityUsages{0};
-    std::atomic<uint32> _defensiveCooldownsUsed{0};
+    ::std::atomic<uint32> _chiGenerated{0};
+    ::std::atomic<uint32> _chiSpent{0};
+    ::std::atomic<uint32> _energySpent{0};
+    ::std::atomic<uint32> _damageDealt{0};
+    ::std::atomic<uint32> _healingDone{0};
+    ::std::atomic<uint32> _staggerAbsorbed{0};
+    ::std::atomic<uint32> _staggerPurified{0};
+    ::std::atomic<uint32> _successfulComboStrikes{0};
+    ::std::atomic<uint32> _successfulInterrupts{0};
+    ::std::atomic<uint32> _mobilityUsages{0};
+    ::std::atomic<uint32> _defensiveCooldownsUsed{0};
 
     // Combat system integration
-    std::unique_ptr<BotThreatManager> _threatManager;
-    std::unique_ptr<TargetSelector> _targetSelector;
-    std::unique_ptr<PositionManager> _positionManager;
-    std::unique_ptr<InterruptManager> _interruptManager;
-    std::unique_ptr<FormationManager> _formationManager;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<TargetSelector> _targetSelector;
+    ::std::unique_ptr<PositionManager> _positionManager;
+    ::std::unique_ptr<InterruptManager> _interruptManager;
+    ::std::unique_ptr<FormationManager> _formationManager;
 
     // Combo strike tracking (Windwalker)
     struct ComboStrikeTracker {
-        std::atomic<uint32> lastAbility{0};
-        std::atomic<uint32> comboCount{0};
-        std::atomic<float> comboDamageBonus{1.0f};
-        std::queue<uint32> abilityHistory;
-        std::atomic<uint32> perfectCombos{0};
+        ::std::atomic<uint32> lastAbility{0};
+        ::std::atomic<uint32> comboCount{0};
+        ::std::atomic<float> comboDamageBonus{1.0f};
+        ::std::queue<uint32> abilityHistory;
+        ::std::atomic<uint32> perfectCombos{0};
 
         // Make non-copyable due to atomic members
         ComboStrikeTracker() = default;
@@ -377,13 +377,13 @@ private:
             }
         };
 
-        std::priority_queue<HealTarget> healQueue;
-        std::atomic<uint32> totalHealing{0};
-        std::atomic<uint32> overhealingDone{0};
-        std::atomic<float> healingEfficiency{1.0f};
-        std::atomic<bool> fistweavingMode{false};
+        ::std::priority_queue<HealTarget> healQueue;
+        ::std::atomic<uint32> totalHealing{0};
+        ::std::atomic<uint32> overhealingDone{0};
+        ::std::atomic<float> healingEfficiency{1.0f};
+        ::std::atomic<bool> fistweavingMode{false};
 
-        void UpdateHealingTargets(const std::vector<::Unit*>& allies) {
+        void UpdateHealingTargets(const ::std::vector<::Unit*>& allies) {
             while (!healQueue.empty()) healQueue.pop();
 
             for (auto* ally : allies) {
@@ -498,8 +498,8 @@ private:
     } _healingSystem;
 
     // Shared utility tracking
-    std::unordered_map<uint32, uint32> _abilityUsage;
-    std::unordered_map<uint32, uint32> _abilityCooldowns;
+    ::std::unordered_map<uint32, uint32> _abilityUsage;
+    ::std::unordered_map<uint32, uint32> _abilityCooldowns;
     uint32 _lastLegacyBuff;
     uint32 _lastMobilityUse;
     uint32 _lastDefensiveUse;
@@ -532,19 +532,19 @@ private:
     ::Unit* GetBestStunTarget();
     ::Unit* GetHighestThreatTarget();
     ::Unit* GetLowestHealthEnemy();
-    ::Unit* SelectOptimalTarget(const std::vector<::Unit*>& enemies);
+    ::Unit* SelectOptimalTarget(const ::std::vector<::Unit*>& enemies);
     float CalculateTargetPriority(::Unit* target);
 
     // Advanced combat mechanics
     void UpdateAdvancedCombatLogic(::Unit* target);
-    void HandleMultipleEnemies(const std::vector<::Unit*>& enemies);
+    void HandleMultipleEnemies(const ::std::vector<::Unit*>& enemies);
     void OptimizeFormForSituation(::Unit* target);
     void ManageResourceEfficiency();
     void ExecuteAdvancedRotation(::Unit* target);
 
     // Form management and optimization
     void OptimizeFormManagement(::Unit* target);
-    MartialForm DetermineOptimalForm(::Unit* target, const std::vector<::Unit*>& enemies);
+    MartialForm DetermineOptimalForm(::Unit* target, const ::std::vector<::Unit*>& enemies);
     void HandleFormSpecificAbilities(MartialForm form, ::Unit* target);
     void ManageTacticalFormSwitching();
 
@@ -594,18 +594,18 @@ private:
 
     // Performance metrics and analytics
     struct MonkMetrics {
-        std::atomic<uint32> totalAbilitiesUsed{0};
-        std::atomic<uint32> successfulCombos{0};
-        std::atomic<uint32> chiWasted{0};
-        std::atomic<uint32> energyWasted{0};
-        std::atomic<float> averageChiEfficiency{0.0f};
-        std::atomic<float> averageEnergyEfficiency{0.0f};
-        std::atomic<float> formOptimizationScore{0.0f};
-        std::atomic<float> healingEfficiencyScore{0.0f};
-        std::atomic<float> staggerMitigationScore{0.0f};
-        std::atomic<float> comboStrikeScore{0.0f};
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        ::std::atomic<uint32> totalAbilitiesUsed{0};
+        ::std::atomic<uint32> successfulCombos{0};
+        ::std::atomic<uint32> chiWasted{0};
+        ::std::atomic<uint32> energyWasted{0};
+        ::std::atomic<float> averageChiEfficiency{0.0f};
+        ::std::atomic<float> averageEnergyEfficiency{0.0f};
+        ::std::atomic<float> formOptimizationScore{0.0f};
+        ::std::atomic<float> healingEfficiencyScore{0.0f};
+        ::std::atomic<float> staggerMitigationScore{0.0f};
+        ::std::atomic<float> comboStrikeScore{0.0f};
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastMetricsUpdate;
 
         // Make non-copyable due to atomic members
         MonkMetrics() = default;
@@ -618,7 +618,7 @@ private:
             averageChiEfficiency.store(0.0f); averageEnergyEfficiency.store(0.0f);
             formOptimizationScore.store(0.0f); healingEfficiencyScore.store(0.0f);
             staggerMitigationScore.store(0.0f); comboStrikeScore.store(0.0f);
-            combatStartTime = std::chrono::steady_clock::now();
+            combatStartTime = ::std::chrono::steady_clock::now();
             lastMetricsUpdate = combatStartTime;
         }
     } _monkMetrics;

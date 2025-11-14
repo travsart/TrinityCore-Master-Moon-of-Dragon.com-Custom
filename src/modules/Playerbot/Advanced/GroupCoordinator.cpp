@@ -292,7 +292,7 @@ namespace Playerbot
 
     bool GroupCoordinator::CanFillRole(GroupRole role) const
     {
-        std::vector<RoleCapability> capabilities = AnalyzeRoleCapabilities();
+        ::std::vector<RoleCapability> capabilities = AnalyzeRoleCapabilities();
 
         for (auto const& cap : capabilities)
         {
@@ -459,13 +459,13 @@ namespace Playerbot
         if (!IsInGroup() || !m_autoShareQuests)
             return;
 
-        std::vector<uint32> shareable = GetShareableQuests();
+        ::std::vector<uint32> shareable = GetShareableQuests();
         for (uint32 questId : shareable)
             ShareQuest(questId);
     }
-    std::vector<uint32> GroupCoordinator::GetShareableQuests() const
+    ::std::vector<uint32> GroupCoordinator::GetShareableQuests() const
     {
-        std::vector<uint32> shareable;
+        ::std::vector<uint32> shareable;
 
         if (!m_bot)
             return shareable;
@@ -532,9 +532,9 @@ namespace Playerbot
         return GroupRole::DPS_MELEE;
     }
 
-    std::vector<Player*> GroupCoordinator::GetGroupMembers() const
+    ::std::vector<Player*> GroupCoordinator::GetGroupMembers() const
     {
-        std::vector<Player*> members;
+        ::std::vector<Player*> members;
 
         Group* group = GetGroup();
         if (!group)
@@ -748,9 +748,9 @@ namespace Playerbot
             m_bot->GetName().c_str(), static_cast<uint32>(oldState), static_cast<uint32>(newState));
     }
 
-    std::vector<GroupCoordinator::RoleCapability> GroupCoordinator::AnalyzeRoleCapabilities() const
+    ::std::vector<GroupCoordinator::RoleCapability> GroupCoordinator::AnalyzeRoleCapabilities() const
     {
-        std::vector<RoleCapability> capabilities;
+        ::std::vector<RoleCapability> capabilities;
 
         RoleCapability tank;
         tank.role = GroupRole::TANK;
@@ -883,11 +883,11 @@ namespace Playerbot
         return proto->GetBaseItemLevel() > currentItem->GetTemplate()->GetBaseItemLevel();
     }
 
-    std::vector<GroupCoordinator::ShareableQuest> GroupCoordinator::EvaluateQuestsToShare() const
+    ::std::vector<GroupCoordinator::ShareableQuest> GroupCoordinator::EvaluateQuestsToShare() const
     {
-        std::vector<ShareableQuest> quests;
+        ::std::vector<ShareableQuest> quests;
 
-        std::vector<uint32> shareable = GetShareableQuests();
+        ::std::vector<uint32> shareable = GetShareableQuests();
         Group* group = GetGroup();
         if (!group)
             return quests;
@@ -1101,13 +1101,13 @@ namespace Playerbot
 
     void GroupCoordinator::StartPerformanceTimer()
     {
-        m_performanceStart = std::chrono::high_resolution_clock::now();
+        m_performanceStart = ::std::chrono::high_resolution_clock::now();
     }
 
     void GroupCoordinator::EndPerformanceTimer()
     {
-        auto end = std::chrono::high_resolution_clock::now();
-        m_lastUpdateDuration = std::chrono::duration_cast<std::chrono::microseconds>(end - m_performanceStart);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        m_lastUpdateDuration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - m_performanceStart);
         m_totalUpdateTime += m_lastUpdateDuration;
         m_updateCount++;
     }

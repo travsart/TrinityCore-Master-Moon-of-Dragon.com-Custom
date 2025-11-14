@@ -147,7 +147,7 @@ namespace Playerbot
         }
 
         // CRITICAL FIX: Use FindAllHostiles() which returns GUIDs
-        std::vector<ObjectGuid> hostileGuids = FindAllHostiles(range);
+        ::std::vector<ObjectGuid> hostileGuids = FindAllHostiles(range);
         if (hostileGuids.empty())
             return ObjectGuid::Empty;
 
@@ -155,13 +155,13 @@ namespace Playerbot
         ObjectGuid nearestGuid = ObjectGuid::Empty;
         float nearestDist = range + 1.0f;
 
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         for (ObjectGuid const& guid : hostileGuids)
         {
             // Find snapshot for this GUID
-            auto it = std::find_if(nearbyCreatures.begin(), nearbyCreatures.end(),
+            auto it = ::std::find_if(nearbyCreatures.begin(), nearbyCreatures.end(),
                 [&guid](DoubleBufferedSpatialGrid::CreatureSnapshot const& c) { return c.guid == guid; });
 
             if (it == nearbyCreatures.end())
@@ -197,7 +197,7 @@ namespace Playerbot
             return ObjectGuid::Empty;
 
         // CRITICAL FIX: FindAllHostiles() now returns GUIDs instead of Unit* pointers
-        std::vector<ObjectGuid> hostileGuids = FindAllHostiles(range);
+        ::std::vector<ObjectGuid> hostileGuids = FindAllHostiles(range);
         if (hostileGuids.empty())
             return ObjectGuid::Empty;
 
@@ -217,14 +217,14 @@ namespace Playerbot
             }
         };
 
-        std::vector<PriorityTarget> priorityTargets;
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        ::std::vector<PriorityTarget> priorityTargets;
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         for (ObjectGuid const& guid : hostileGuids)
         {
             // Find snapshot for this GUID
-            auto it = std::find_if(nearbyCreatures.begin(), nearbyCreatures.end(),
+            auto it = ::std::find_if(nearbyCreatures.begin(), nearbyCreatures.end(),
                 [&guid](DoubleBufferedSpatialGrid::CreatureSnapshot const& c) { return c.guid == guid; });
 
             if (it == nearbyCreatures.end())
@@ -245,7 +245,7 @@ namespace Playerbot
             if (it->isWorldBoss)
                 priority = PRIORITY_CRITICAL;
             else if (it->isElite)
-                priority = std::min<uint8>(priority + 2, PRIORITY_ELITE);
+                priority = ::std::min<uint8>(priority + 2, PRIORITY_ELITE);
 
             PriorityTarget pt;
             pt.guid = guid;
@@ -258,15 +258,15 @@ namespace Playerbot
             return ObjectGuid::Empty;
 
         // Sort by priority and distance
-        std::sort(priorityTargets.begin(), priorityTargets.end());
+        ::std::sort(priorityTargets.begin(), priorityTargets.end());
 
         // Return best target GUID - main thread will validate hostility and queue action
         return priorityTargets.front().guid;
     }
 
-    std::vector<ObjectGuid> TargetScanner::FindAllHostiles(float range)
+    ::std::vector<ObjectGuid> TargetScanner::FindAllHostiles(float range)
     {
-        std::vector<ObjectGuid> hostileGuids;
+        ::std::vector<ObjectGuid> hostileGuids;
 
         if (m_scanMode == ScanMode::PASSIVE)
             return hostileGuids;
@@ -327,7 +327,7 @@ namespace Playerbot
         //                  → ZERO Map access from worker threads → NO DEADLOCKS!
         // ===========================================================================
         // Query nearby creature SNAPSHOTS (lock-free, thread-safe!)
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
             spatialGrid->QueryNearbyCreatures(m_bot->GetPosition(), range);
 
         TC_LOG_TRACE("playerbot.scanner",

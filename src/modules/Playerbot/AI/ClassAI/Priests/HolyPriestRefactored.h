@@ -35,6 +35,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Holy Priest Spell IDs
 constexpr uint32 HOLY_HEAL = 2050;
 constexpr uint32 HOLY_FLASH_HEAL = 2061;
@@ -141,7 +151,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
 };
 
 // Prayer of Mending tracker (bouncing heal)
@@ -204,7 +214,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
 };
 
 class HolyPriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
@@ -261,7 +271,7 @@ public:
         
         {
 
-            std::vector<Unit*> groupMembers;
+            ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -411,7 +421,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -440,7 +450,7 @@ private:
         return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Salvation (massive AoE heal)
         uint32 criticalHealthCount = 0;
@@ -582,7 +592,7 @@ private:
         return false;
     }
 
-    bool HandleHoTs(const std::vector<Unit*>& group)
+    bool HandleHoTs(const ::std::vector<Unit*>& group)
     {
         uint32 activeRenews = _renewTracker.GetActiveRenewCount();
 
@@ -651,7 +661,7 @@ private:
         return false;
     }
 
-    bool HandleHolyWords(const std::vector<Unit*>& group)
+    bool HandleHolyWords(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Serenity (big single-target heal)
         for (Unit* member : group)
@@ -727,7 +737,7 @@ private:
         return false;
     }
 
-    bool HandleAoEHealing(const std::vector<Unit*>& group)
+    bool HandleAoEHealing(const ::std::vector<Unit*>& group)
     {
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
@@ -842,7 +852,7 @@ private:
         return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {
         // Flash Heal for emergency
         for (Unit* member : group)
@@ -1073,7 +1083,7 @@ private:
             queue->RegisterSpell(HOLY_PURIFY, SpellPriority::LOW, SpellCategory::UTILITY);
 
 
-            TC_LOG_INFO("module.playerbot", "✨ HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
         }
 
         auto* behaviorTree = ai->GetBehaviorTree();
@@ -1104,7 +1114,7 @@ private:
 
                     Selector("Response", {
 
-                        Action("Guardian Spirit", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Guardian Spirit", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1128,7 +1138,7 @@ private:
 
                         }),
 
-                        Action("Flash Heal", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Flash Heal", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1163,7 +1173,7 @@ private:
 
                     Selector("HoT Priority", {
 
-                        Action("Prayer of Mending", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Prayer of Mending", [this](Player* bot, Unit*) {
 
                             if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
 
@@ -1193,7 +1203,7 @@ private:
 
                         }),
 
-                        Action("Renew", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Renew", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1228,7 +1238,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Action("Heal", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Heal", [this](Player* bot, Unit*) {
 
                         Group* g = bot->GetGroup();
 
@@ -1259,7 +1269,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 HOLY PRIEST: BehaviorTree initialized");
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: BehaviorTree initialized");
         }
     }
 

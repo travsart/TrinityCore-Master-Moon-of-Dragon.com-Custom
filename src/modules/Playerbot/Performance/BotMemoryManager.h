@@ -45,14 +45,14 @@ enum class MemoryCategory : uint8
 // Memory usage statistics for a single category
 struct CategoryMemoryStats
 {
-    std::atomic<uint64_t> totalAllocated{0};     // Total bytes allocated
-    std::atomic<uint64_t> totalDeallocated{0};   // Total bytes deallocated
-    std::atomic<uint64_t> currentUsage{0};       // Current bytes in use
-    std::atomic<uint64_t> peakUsage{0};          // Peak bytes usage
-    std::atomic<uint32_t> allocationCount{0};    // Number of allocations
-    std::atomic<uint32_t> deallocationCount{0};  // Number of deallocations
-    std::atomic<uint64_t> lastAllocation{0};     // Timestamp of last allocation
-    std::atomic<uint64_t> lastDeallocation{0};   // Timestamp of last deallocation
+    ::std::atomic<uint64_t> totalAllocated{0};     // Total bytes allocated
+    ::std::atomic<uint64_t> totalDeallocated{0};   // Total bytes deallocated
+    ::std::atomic<uint64_t> currentUsage{0};       // Current bytes in use
+    ::std::atomic<uint64_t> peakUsage{0};          // Peak bytes usage
+    ::std::atomic<uint32_t> allocationCount{0};    // Number of allocations
+    ::std::atomic<uint32_t> deallocationCount{0};  // Number of deallocations
+    ::std::atomic<uint64_t> lastAllocation{0};     // Timestamp of last allocation
+    ::std::atomic<uint64_t> lastDeallocation{0};   // Timestamp of last deallocation
 
     void RecordAllocation(uint64_t size);
     void RecordDeallocation(uint64_t size);
@@ -65,17 +65,17 @@ struct CategoryMemoryStats
 struct BotMemoryProfile
 {
     uint32_t botGuid;
-    std::array<CategoryMemoryStats, 13> categoryStats;
-    std::atomic<uint64_t> totalMemoryUsage{0};
-    std::atomic<uint64_t> peakMemoryUsage{0};
-    std::atomic<uint64_t> lastMemoryCheck{0};
-    std::atomic<uint32_t> memoryLeakCount{0};
-    std::atomic<uint32_t> memoryOptimizations{0};
+    ::std::array<CategoryMemoryStats, 13> categoryStats;
+    ::std::atomic<uint64_t> totalMemoryUsage{0};
+    ::std::atomic<uint64_t> peakMemoryUsage{0};
+    ::std::atomic<uint64_t> lastMemoryCheck{0};
+    ::std::atomic<uint32_t> memoryLeakCount{0};
+    ::std::atomic<uint32_t> memoryOptimizations{0};
 
     // Memory efficiency metrics
-    std::atomic<double> memoryEfficiency{1.0};    // 0.0 to 1.0 (higher is better)
-    std::atomic<double> fragmentationRatio{0.0};  // 0.0 to 1.0 (lower is better)
-    std::atomic<double> cacheHitRatio{0.0};       // 0.0 to 1.0 (higher is better)
+    ::std::atomic<double> memoryEfficiency{1.0};    // 0.0 to 1.0 (higher is better)
+    ::std::atomic<double> fragmentationRatio{0.0};  // 0.0 to 1.0 (lower is better)
+    ::std::atomic<double> cacheHitRatio{0.0};       // 0.0 to 1.0 (higher is better)
 
     BotMemoryProfile() : botGuid(0) {}
     explicit BotMemoryProfile(uint32_t guid) : botGuid(guid) {}
@@ -88,21 +88,21 @@ struct BotMemoryProfile
 // System-wide memory analytics
 struct SystemMemoryAnalytics
 {
-    std::atomic<uint64_t> totalSystemMemory{0};
-    std::atomic<uint64_t> totalBotMemory{0};
-    std::atomic<uint64_t> availableSystemMemory{0};
-    std::atomic<double> systemMemoryUsagePercent{0.0};
-    std::atomic<double> botMemoryUsagePercent{0.0};
+    ::std::atomic<uint64_t> totalSystemMemory{0};
+    ::std::atomic<uint64_t> totalBotMemory{0};
+    ::std::atomic<uint64_t> availableSystemMemory{0};
+    ::std::atomic<double> systemMemoryUsagePercent{0.0};
+    ::std::atomic<double> botMemoryUsagePercent{0.0};
 
     // Performance impact tracking
-    std::atomic<uint32_t> memoryPressureEvents{0};
-    std::atomic<uint32_t> garbageCollectionEvents{0};
-    std::atomic<uint64_t> totalGcTime{0}; // Microseconds
+    ::std::atomic<uint32_t> memoryPressureEvents{0};
+    ::std::atomic<uint32_t> garbageCollectionEvents{0};
+    ::std::atomic<uint64_t> totalGcTime{0}; // Microseconds
 
     // Memory optimization results
-    std::atomic<uint64_t> memoryReclaimed{0};
-    std::atomic<uint32_t> optimizationsPerformed{0};
-    std::atomic<double> averageOptimizationGain{0.0};
+    ::std::atomic<uint64_t> memoryReclaimed{0};
+    ::std::atomic<uint32_t> optimizationsPerformed{0};
+    ::std::atomic<double> averageOptimizationGain{0.0};
 
     void UpdateSystemMetrics();
     double CalculateMemoryPressure() const;
@@ -117,14 +117,14 @@ struct MemoryLeakEntry
     MemoryCategory category;
     uint32_t botGuid;
     uint64_t allocationTime;
-    std::string stackTrace;
-    std::string context;
+    ::std::string stackTrace;
+    ::std::string context;
 
-    MemoryLeakEntry(void* addr, uint64_t sz, MemoryCategory cat, uint32_t guid, std::string ctx)
-        : address(addr), size(sz), category(cat), botGuid(guid), context(std::move(ctx))
+    MemoryLeakEntry(void* addr, uint64_t sz, MemoryCategory cat, uint32_t guid, ::std::string ctx)
+        : address(addr), size(sz), category(cat), botGuid(guid), context(::std::move(ctx))
     {
-        allocationTime = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+        allocationTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 };
 
@@ -215,7 +215,7 @@ public:
         : _category(category), _botGuid(botGuid), _nextFree(0)
     {
         // Pre-allocate pool
-        _pool = static_cast<T*>(std::aligned_alloc(alignof(T), sizeof(T) * PoolSize));
+        _pool = static_cast<T*>(::std::aligned_alloc(alignof(T), sizeof(T) * PoolSize));
         if (_pool)
         {
             // Initialize free list
@@ -231,13 +231,13 @@ public:
     {
         if (_pool)
         {
-            std::free(_pool);
+            ::std::free(_pool);
         }
     }
 
     T* Allocate()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (_nextFree == SIZE_MAX)
             return nullptr; // Pool exhausted
@@ -256,7 +256,7 @@ public:
         if (!ptr || ptr < _pool || ptr >= _pool + PoolSize)
             return; // Invalid pointer
 
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         size_t index = ptr - _pool;
         *reinterpret_cast<size_t*>(ptr) = _nextFree;
@@ -278,9 +278,9 @@ private:
     MemoryCategory _category;
     uint32_t _botGuid;
     size_t _nextFree;
-    std::atomic<size_t> _allocatedCount{0};
-    std::atomic<size_t> _deallocatedCount{0};
-    mutable std::recursive_mutex _mutex;
+    ::std::atomic<size_t> _allocatedCount{0};
+    ::std::atomic<size_t> _deallocatedCount{0};
+    mutable ::std::recursive_mutex _mutex;
 };
 
 // Main memory management system
@@ -303,7 +303,7 @@ public:
     void UnregisterBot(uint32_t botGuid);
 
     // Memory tracking
-    void RecordAllocation(void* address, uint64_t size, MemoryCategory category, uint32_t botGuid, const std::string& context = "");
+    void RecordAllocation(void* address, uint64_t size, MemoryCategory category, uint32_t botGuid, const ::std::string& context = "");
     void RecordDeallocation(void* address, uint64_t size, MemoryCategory category, uint32_t botGuid);
 
     // Memory optimization
@@ -315,11 +315,11 @@ public:
     // Memory analysis
     BotMemoryProfile GetBotMemoryProfile(uint32_t botGuid) const;
     SystemMemoryAnalytics GetSystemAnalytics() const;
-    std::vector<uint32_t> GetHighMemoryUsageBots(uint32_t count = 10) const;
+    ::std::vector<uint32_t> GetHighMemoryUsageBots(uint32_t count = 10) const;
 
     // Leak detection
     void DetectMemoryLeaks();
-    std::vector<MemoryLeakEntry> GetSuspectedLeaks() const;
+    ::std::vector<MemoryLeakEntry> GetSuspectedLeaks() const;
     void ReportMemoryLeaks() const;
 
     // Cache management
@@ -338,13 +338,13 @@ public:
     void SetLeakDetectionEnabled(bool enabled) { _leakDetectionEnabled.store(enabled); }
 
     // Reporting
-    void GenerateMemoryReport(std::string& report, uint32_t botGuid = 0) const;
-    void GenerateLeakReport(std::string& report) const;
-    void GenerateOptimizationReport(std::string& report) const;
+    void GenerateMemoryReport(::std::string& report, uint32_t botGuid = 0) const;
+    void GenerateLeakReport(::std::string& report) const;
+    void GenerateOptimizationReport(::std::string& report) const;
 
     // Memory allocation helpers
     template<typename T>
-    TrackedPtr<T> AllocateTracked(MemoryCategory category, uint32_t botGuid, const std::string& context = "")
+    TrackedPtr<T> AllocateTracked(MemoryCategory category, uint32_t botGuid, const ::std::string& context = "")
     {
         T* ptr = new T();
         RecordAllocation(ptr, sizeof(T), category, botGuid, context);
@@ -352,21 +352,21 @@ public:
     }
 
     template<typename T>
-    std::shared_ptr<MemoryPool<T>> GetPool(MemoryCategory category, uint32_t botGuid)
+    ::std::shared_ptr<MemoryPool<T>> GetPool(MemoryCategory category, uint32_t botGuid)
     {
-        std::lock_guard lock(_poolsMutex);
+        ::std::lock_guard lock(_poolsMutex);
 
-        auto key = std::make_pair(static_cast<uint8_t>(category), botGuid);
+        auto key = ::std::make_pair(static_cast<uint8_t>(category), botGuid);
         auto it = _memoryPools.find(key);
 
         if (it == _memoryPools.end())
         {
-            auto pool = std::make_shared<MemoryPool<T>>(category, botGuid);
+            auto pool = ::std::make_shared<MemoryPool<T>>(category, botGuid);
             _memoryPools[key] = pool;
             return pool;
         }
 
-        return std::static_pointer_cast<MemoryPool<T>>(it->second);
+        return ::std::static_pointer_cast<MemoryPool<T>>(it->second);
     }
 
     // Statistics and monitoring
@@ -400,43 +400,43 @@ private:
     void EmergencyMemoryCleanup();
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _optimizationEnabled{true};
-    std::atomic<bool> _leakDetectionEnabled{true};
-    std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _optimizationEnabled{true};
+    ::std::atomic<bool> _leakDetectionEnabled{true};
+    ::std::atomic<bool> _shutdownRequested{false};
 
     // Memory tracking
-    mutable std::recursive_mutex _profilesMutex;
-    std::unordered_map<uint32_t, BotMemoryProfile> _botProfiles;
+    mutable ::std::recursive_mutex _profilesMutex;
+    ::std::unordered_map<uint32_t, BotMemoryProfile> _botProfiles;
 
-    mutable std::recursive_mutex _allocationsMutex;
-    std::unordered_map<void*, MemoryLeakEntry> _activeAllocations;
+    mutable ::std::recursive_mutex _allocationsMutex;
+    ::std::unordered_map<void*, MemoryLeakEntry> _activeAllocations;
 
     // System analytics
-    mutable std::recursive_mutex _systemAnalyticsMutex;
+    mutable ::std::recursive_mutex _systemAnalyticsMutex;
     SystemMemoryAnalytics _systemAnalytics;
 
     // Memory pools
-    mutable std::recursive_mutex _poolsMutex;
-    std::unordered_map<std::pair<uint8_t, uint32_t>, std::shared_ptr<void>,
-                      std::hash<std::pair<uint8_t, uint32_t>>> _memoryPools;
+    mutable ::std::recursive_mutex _poolsMutex;
+    ::std::unordered_map<::std::pair<uint8_t, uint32_t>, ::std::shared_ptr<void>,
+                      ::std::hash<::std::pair<uint8_t, uint32_t>>> _memoryPools;
 
     // Background processing
-    std::thread _maintenanceThread;
-    std::condition_variable _maintenanceCondition;
-    std::recursive_mutex _maintenanceMutex;
+    ::std::thread _maintenanceThread;
+    ::std::condition_variable _maintenanceCondition;
+    ::std::recursive_mutex _maintenanceMutex;
 
     // Configuration
-    std::atomic<double> _memoryPressureThreshold{0.8}; // 80% usage
-    std::atomic<uint64_t> _maxBotMemoryUsage{104857600}; // 100MB per bot
-    std::atomic<uint64_t> _garbageCollectionInterval{300000000}; // 5 minutes
-    std::atomic<uint64_t> _leakDetectionInterval{600000000}; // 10 minutes
+    ::std::atomic<double> _memoryPressureThreshold{0.8}; // 80% usage
+    ::std::atomic<uint64_t> _maxBotMemoryUsage{104857600}; // 100MB per bot
+    ::std::atomic<uint64_t> _garbageCollectionInterval{300000000}; // 5 minutes
+    ::std::atomic<uint64_t> _leakDetectionInterval{600000000}; // 10 minutes
 
     // Performance tracking
-    std::atomic<uint64_t> _totalOptimizations{0};
-    std::atomic<uint64_t> _totalMemoryReclaimed{0};
-    std::atomic<uint64_t> _lastOptimization{0};
-    std::atomic<uint64_t> _lastLeakDetection{0};
+    ::std::atomic<uint64_t> _totalOptimizations{0};
+    ::std::atomic<uint64_t> _totalMemoryReclaimed{0};
+    ::std::atomic<uint64_t> _lastOptimization{0};
+    ::std::atomic<uint64_t> _lastLeakDetection{0};
 
     // Constants
     static constexpr uint64_t DEFAULT_MAINTENANCE_INTERVAL_US = 60000000; // 60 seconds

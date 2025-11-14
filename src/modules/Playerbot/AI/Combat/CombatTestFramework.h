@@ -123,9 +123,9 @@ struct TestParticipant
     float maxMana;
     bool isBot;
     bool isAlive;
-    std::string name;
-    std::vector<uint32> testSpells;
-    std::unordered_map<std::string, float> customProperties;
+    ::std::string name;
+    ::std::vector<uint32> testSpells;
+    ::std::unordered_map<::std::string, float> customProperties;
 
     TestParticipant() : player(nullptr), creature(nullptr), role(TestRole::MELEE_DPS),
                        level(80), playerClass(1), health(100.0f), maxHealth(100.0f),
@@ -144,7 +144,7 @@ struct TestObstacle
     bool blocksLoS;
     bool isDynamic;
     uint32 lifespan;
-    std::string name;
+    ::std::string name;
 
     TestObstacle() : gameObject(nullptr), radius(1.0f), height(2.0f),
                     blocksMovement(true), blocksLoS(true), isDynamic(false), lifespan(0) {}
@@ -153,19 +153,19 @@ struct TestObstacle
 // Test scenario configuration
 struct TestScenario
 {
-    std::string name;
-    std::string description;
+    ::std::string name;
+    ::std::string description;
     TestScenarioType type;
     TestEnvironment environment;
     uint32 durationMs;
     uint32 maxParticipants;
     Position centerPosition;
     float arenaRadius;
-    std::vector<TestParticipant> participants;
-    std::vector<TestObstacle> obstacles;
-    std::vector<TestCriteria> successCriteria;
-    std::unordered_map<std::string, float> parameters;
-    std::vector<std::string> requiredSystems;
+    ::std::vector<TestParticipant> participants;
+    ::std::vector<TestObstacle> obstacles;
+    ::std::vector<TestCriteria> successCriteria;
+    ::std::unordered_map<::std::string, float> parameters;
+    ::std::vector<::std::string> requiredSystems;
 
     TestScenario() : type(TestScenarioType::BASIC_COMBAT), environment(TestEnvironment::OPEN_FIELD),
                     durationMs(60000), maxParticipants(10), arenaRadius(50.0f) {}
@@ -174,17 +174,17 @@ struct TestScenario
 // Test execution result
 struct TestResult
 {
-    std::string scenarioName;
+    ::std::string scenarioName;
     bool success;
     uint32 executionTimeMs;
     float overallScore;
-    std::unordered_map<TestCriteria, float> criteriaScores;
-    std::unordered_map<std::string, float> systemPerformance;
-    std::vector<std::string> failures;
-    std::vector<std::string> warnings;
-    std::string detailedLog;
-    std::chrono::steady_clock::time_point startTime;
-    std::chrono::steady_clock::time_point endTime;
+    ::std::unordered_map<TestCriteria, float> criteriaScores;
+    ::std::unordered_map<::std::string, float> systemPerformance;
+    ::std::vector<::std::string> failures;
+    ::std::vector<::std::string> warnings;
+    ::std::string detailedLog;
+    ::std::chrono::steady_clock::time_point startTime;
+    ::std::chrono::steady_clock::time_point endTime;
 
     TestResult() : success(false), executionTimeMs(0), overallScore(0.0f) {}
 };
@@ -192,28 +192,28 @@ struct TestResult
 // Performance metrics for combat systems
 struct CombatSystemMetrics
 {
-    std::string systemName;
-    std::atomic<uint32> updateCalls{0};
-    std::atomic<uint32> successfulOperations{0};
-    std::atomic<uint32> failedOperations{0};
-    std::chrono::microseconds totalExecutionTime{0};
-    std::chrono::microseconds minExecutionTime{std::chrono::microseconds::max()};
-    std::chrono::microseconds maxExecutionTime{0};
-    std::chrono::microseconds averageExecutionTime{0};
-    std::atomic<uint64> memoryUsage{0};
-    std::chrono::steady_clock::time_point lastReset;
+    ::std::string systemName;
+    ::std::atomic<uint32> updateCalls{0};
+    ::std::atomic<uint32> successfulOperations{0};
+    ::std::atomic<uint32> failedOperations{0};
+    ::std::chrono::microseconds totalExecutionTime{0};
+    ::std::chrono::microseconds minExecutionTime{::std::chrono::microseconds::max()};
+    ::std::chrono::microseconds maxExecutionTime{0};
+    ::std::chrono::microseconds averageExecutionTime{0};
+    ::std::atomic<uint64> memoryUsage{0};
+    ::std::chrono::steady_clock::time_point lastReset;
 
     void Reset()
     {
         updateCalls = 0;
         successfulOperations = 0;
         failedOperations = 0;
-        totalExecutionTime = std::chrono::microseconds{0};
-        minExecutionTime = std::chrono::microseconds::max();
-        maxExecutionTime = std::chrono::microseconds{0};
-        averageExecutionTime = std::chrono::microseconds{0};
+        totalExecutionTime = ::std::chrono::microseconds{0};
+        minExecutionTime = ::std::chrono::microseconds::max();
+        maxExecutionTime = ::std::chrono::microseconds{0};
+        averageExecutionTime = ::std::chrono::microseconds{0};
         memoryUsage = 0;
-        lastReset = std::chrono::steady_clock::now();
+        lastReset = ::std::chrono::steady_clock::now();
     }
 
     float GetSuccessRate() const
@@ -222,7 +222,7 @@ struct CombatSystemMetrics
         return total > 0 ? static_cast<float>(successfulOperations.load()) / total : 0.0f;
     }
 
-    void UpdateExecutionTime(std::chrono::microseconds executionTime)
+    void UpdateExecutionTime(::std::chrono::microseconds executionTime)
     {
         totalExecutionTime += executionTime;
         if (executionTime < minExecutionTime)
@@ -240,16 +240,16 @@ struct CombatSystemMetrics
 struct TestContext
 {
     TestScenario scenario;
-    std::vector<Player*> bots;
-    std::vector<Creature*> enemies;
+    ::std::vector<Player*> bots;
+    ::std::vector<Creature*> enemies;
     Group* testGroup;
-    std::unordered_map<std::string, CombatSystemMetrics> systemMetrics;
+    ::std::unordered_map<::std::string, CombatSystemMetrics> systemMetrics;
     bool isRunning;
     bool isPaused;
     uint32 currentTimeMs;
     uint32 lastUpdateMs;
-    std::string currentPhase;
-    std::vector<std::function<void()>> cleanupCallbacks;
+    ::std::string currentPhase;
+    ::std::vector<::std::function<void()>> cleanupCallbacks;
 
     TestContext() : testGroup(nullptr), isRunning(false), isPaused(false),
                    currentTimeMs(0), lastUpdateMs(0), currentPhase("Initialization") {}
@@ -267,16 +267,16 @@ public:
     void Update(uint32 diff);
 
     // Scenario management
-    bool LoadScenario(const std::string& scenarioFile);
+    bool LoadScenario(const ::std::string& scenarioFile);
     bool CreateScenario(const TestScenario& scenario);
-    std::vector<std::string> GetAvailableScenarios() const;
-    TestScenario* GetScenario(const std::string& name);
-    bool SaveScenario(const TestScenario& scenario, const std::string& filename);
+    ::std::vector<::std::string> GetAvailableScenarios() const;
+    TestScenario* GetScenario(const ::std::string& name);
+    bool SaveScenario(const TestScenario& scenario, const ::std::string& filename);
 
     // Test execution
-    TestResult ExecuteScenario(const std::string& scenarioName);
+    TestResult ExecuteScenario(const ::std::string& scenarioName);
     TestResult ExecuteScenario(const TestScenario& scenario);
-    bool StartScenario(const std::string& scenarioName);
+    bool StartScenario(const ::std::string& scenarioName);
     void StopCurrentScenario();
     void PauseCurrentScenario();
     void ResumeCurrentScenario();
@@ -285,7 +285,7 @@ public:
     bool AddParticipant(const TestParticipant& participant);
     bool RemoveParticipant(ObjectGuid guid);
     TestParticipant* GetParticipant(ObjectGuid guid);
-    std::vector<TestParticipant*> GetParticipantsByRole(TestRole role);
+    ::std::vector<TestParticipant*> GetParticipantsByRole(TestRole role);
     void ClearParticipants();
 
     // Environment setup
@@ -293,42 +293,42 @@ public:
     bool AddObstacle(const TestObstacle& obstacle);
     bool RemoveObstacle(ObjectGuid guid);
     void ClearObstacles();
-    bool SpawnTestCreatures(const std::vector<TestParticipant>& enemies);
+    bool SpawnTestCreatures(const ::std::vector<TestParticipant>& enemies);
 
     // Combat system integration
-    void RegisterCombatSystem(const std::string& name, void* system);
-    void UnregisterCombatSystem(const std::string& name);
-    bool IsCombatSystemRegistered(const std::string& name) const;
-    CombatSystemMetrics* GetSystemMetrics(const std::string& name);
+    void RegisterCombatSystem(const ::std::string& name, void* system);
+    void UnregisterCombatSystem(const ::std::string& name);
+    bool IsCombatSystemRegistered(const ::std::string& name) const;
+    CombatSystemMetrics* GetSystemMetrics(const ::std::string& name);
 
     // Performance monitoring
     void StartPerformanceMonitoring();
     void StopPerformanceMonitoring();
     void ResetMetrics();
-    std::unordered_map<std::string, CombatSystemMetrics> GetAllMetrics() const;
+    ::std::unordered_map<::std::string, CombatSystemMetrics> GetAllMetrics() const;
     float CalculateOverallPerformanceScore() const;
 
     // Test validation
     bool ValidateScenario(const TestScenario& scenario) const;
-    std::vector<std::string> GetScenarioValidationErrors(const TestScenario& scenario) const;
+    ::std::vector<::std::string> GetScenarioValidationErrors(const TestScenario& scenario) const;
     bool ValidateTestResults(const TestResult& result) const;
 
     // Criteria evaluation
     float EvaluateCriteria(TestCriteria criteria, const TestContext& context) const;
     bool CheckSuccessCriteria(const TestScenario& scenario, const TestContext& context) const;
-    std::unordered_map<TestCriteria, float> EvaluateAllCriteria(const TestContext& context) const;
+    ::std::unordered_map<TestCriteria, float> EvaluateAllCriteria(const TestContext& context) const;
 
     // Reporting and analysis
-    std::string GenerateDetailedReport(const TestResult& result) const;
-    std::string GeneratePerformanceReport() const;
-    bool SaveTestResults(const TestResult& result, const std::string& filename) const;
-    std::vector<TestResult> LoadTestHistory(const std::string& scenarioName) const;
+    ::std::string GenerateDetailedReport(const TestResult& result) const;
+    ::std::string GeneratePerformanceReport() const;
+    bool SaveTestResults(const TestResult& result, const ::std::string& filename) const;
+    ::std::vector<TestResult> LoadTestHistory(const ::std::string& scenarioName) const;
 
     // Debugging and visualization
     void EnableDebugMode(bool enable) { _debugMode = enable; }
     bool IsDebugMode() const { return _debugMode; }
-    void LogTestEvent(const std::string& event, const std::string& details = "");
-    std::vector<std::string> GetTestLog() const { return _testLog; }
+    void LogTestEvent(const ::std::string& event, const ::std::string& details = "");
+    ::std::vector<::std::string> GetTestLog() const { return _testLog; }
     void ClearTestLog() { _testLog.clear(); }
 
     // Scenario templates
@@ -342,10 +342,10 @@ public:
     TestScenario CreateBossEncounterScenario(uint32 bossId);
 
     // Statistics and analysis
-    float GetAverageExecutionTime(const std::string& scenarioName) const;
-    float GetScenarioSuccessRate(const std::string& scenarioName) const;
-    std::vector<std::string> GetMostFailedScenarios(uint32 count = 5) const;
-    std::unordered_map<std::string, float> GetSystemPerformanceRanking() const;
+    float GetAverageExecutionTime(const ::std::string& scenarioName) const;
+    float GetScenarioSuccessRate(const ::std::string& scenarioName) const;
+    ::std::vector<::std::string> GetMostFailedScenarios(uint32 count = 5) const;
+    ::std::unordered_map<::std::string, float> GetSystemPerformanceRanking() const;
 
     // Configuration
     void SetDefaultTestDuration(uint32 durationMs) { _defaultDurationMs = durationMs; }
@@ -356,7 +356,7 @@ public:
 
     // Query methods
     bool IsScenarioRunning() const { return _currentContext && _currentContext->isRunning; }
-    std::string GetCurrentScenarioName() const;
+    ::std::string GetCurrentScenarioName() const;
     uint32 GetCurrentScenarioTimeMs() const;
     float GetCurrentScenarioProgress() const;
     uint32 GetActiveParticipantCount() const;
@@ -376,14 +376,14 @@ private:
 
     // Environment helpers
     bool CreateTestArea(TestEnvironment environment, const Position& center, float radius);
-    void SpawnObstacles(const std::vector<TestObstacle>& obstacles, TestContext& context);
+    void SpawnObstacles(const ::std::vector<TestObstacle>& obstacles, TestContext& context);
     void CleanupEnvironment(TestContext& context);
     Position GenerateRandomPosition(const Position& center, float radius, float minDistance = 0.0f) const;
 
     // Combat system monitoring
     void MonitorCombatSystems(TestContext& context, uint32 diff);
-    void UpdateSystemMetrics(const std::string& systemName, std::chrono::microseconds executionTime, bool success);
-    void RecordSystemMemoryUsage(const std::string& systemName, uint64 memoryBytes);
+    void UpdateSystemMetrics(const ::std::string& systemName, ::std::chrono::microseconds executionTime, bool success);
+    void RecordSystemMemoryUsage(const ::std::string& systemName, uint64 memoryBytes);
 
     // Criteria evaluation helpers
     float EvaluateSurvivalCriteria(const TestContext& context) const;
@@ -398,8 +398,8 @@ private:
     // Utility methods
     bool ValidateParticipant(const TestParticipant& participant) const;
     bool ValidateEnvironment(TestEnvironment environment, const Position& center, float radius) const;
-    std::string GenerateUniqueTestId() const;
-    uint32 CalculateTestScore(const std::unordered_map<TestCriteria, float>& scores) const;
+    ::std::string GenerateUniqueTestId() const;
+    uint32 CalculateTestScore(const ::std::unordered_map<TestCriteria, float>& scores) const;
 
 private:
     // Framework state
@@ -414,22 +414,22 @@ private:
     uint32 _lastMonitoringUpdate;
 
     // Current test execution
-    std::unique_ptr<TestContext> _currentContext;
-    std::unordered_map<std::string, TestScenario> _scenarios;
-    std::unordered_map<std::string, void*> _registeredSystems;
+    ::std::unique_ptr<TestContext> _currentContext;
+    ::std::unordered_map<::std::string, TestScenario> _scenarios;
+    ::std::unordered_map<::std::string, void*> _registeredSystems;
 
     // Performance tracking
-    std::unordered_map<std::string, CombatSystemMetrics> _globalMetrics;
-    std::vector<TestResult> _testHistory;
+    ::std::unordered_map<::std::string, CombatSystemMetrics> _globalMetrics;
+    ::std::vector<TestResult> _testHistory;
     bool _performanceMonitoring;
 
     // Logging and debugging
-    std::vector<std::string> _testLog;
+    ::std::vector<::std::string> _testLog;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _logMutex;
 
     // Test result storage
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _resultMutex;
-    std::unordered_map<std::string, std::vector<TestResult>> _scenarioHistory;
+    ::std::unordered_map<::std::string, ::std::vector<TestResult>> _scenarioHistory;
 
     // Constants
     static constexpr uint32 DEFAULT_TEST_DURATION = 60000;          // 60 seconds
@@ -446,14 +446,14 @@ private:
 class TC_GAME_API ScenarioBuilder
 {
 public:
-    ScenarioBuilder(const std::string& name);
+    ScenarioBuilder(const ::std::string& name);
 
     // Scenario configuration
     ScenarioBuilder& SetType(TestScenarioType type);
     ScenarioBuilder& SetEnvironment(TestEnvironment environment);
     ScenarioBuilder& SetDuration(uint32 durationMs);
     ScenarioBuilder& SetArena(const Position& center, float radius);
-    ScenarioBuilder& SetDescription(const std::string& description);
+    ScenarioBuilder& SetDescription(const ::std::string& description);
 
     // Participant management
     ScenarioBuilder& AddBot(TestRole role, uint8 playerClass, uint8 level = 80);
@@ -475,8 +475,8 @@ public:
     ScenarioBuilder& RequireCoordination(float minScore);
 
     // System requirements
-    ScenarioBuilder& RequireSystem(const std::string& systemName);
-    ScenarioBuilder& SetParameter(const std::string& key, float value);
+    ScenarioBuilder& RequireSystem(const ::std::string& systemName);
+    ScenarioBuilder& SetParameter(const ::std::string& key, float value);
 
     // Build the scenario
     TestScenario Build() const;

@@ -41,7 +41,7 @@ MarketAnalysis::MarketAnalysis()
 
 MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
     MarketSnapshot snapshot;
     snapshot.itemId = itemId;
@@ -53,7 +53,7 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
         return snapshot;
 
     // Collect auction data from all auction houses
-    std::vector<float> prices;
+    ::std::vector<float> prices;
     uint32 totalVolume = 0;
 
     // Iterate through all auction houses (Alliance, Horde, Neutral)
@@ -92,14 +92,14 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
     if (!prices.empty())
     {
         // Calculate statistics
-        std::sort(prices.begin(), prices.end());
+        ::std::sort(prices.begin(), prices.end());
 
         snapshot.totalVolume = totalVolume;
         snapshot.minPrice = prices.front();
         snapshot.maxPrice = prices.back();
 
         // Calculate average
-        snapshot.averagePrice = std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
+        snapshot.averagePrice = ::std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
 
         // Calculate median
         size_t medianIndex = prices.size() / 2;
@@ -120,7 +120,7 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
 
 MarketTrend MarketAnalysis::GetMarketTrend(uint32 itemId, uint32 daysBack)
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
     auto historyIt = _priceHistory.find(itemId);
     if (historyIt == _priceHistory.end() || historyIt->second.size() < 2)
@@ -130,7 +130,7 @@ MarketTrend MarketAnalysis::GetMarketTrend(uint32 itemId, uint32 daysBack)
     uint32 cutoffTime = GameTime::GetGameTimeMS() - (daysBack * 24 * 60 * 60 * 1000);
 
     // Filter recent history
-    std::vector<float> recentPrices;
+    ::std::vector<float> recentPrices;
     for (const auto& snapshot : history)
     {
         if (snapshot.timestamp >= cutoffTime)
@@ -159,11 +159,11 @@ float MarketAnalysis::GetPricePrediction(uint32 itemId, uint32 hoursAhead)
     return combinedPrediction;
 }
 
-std::vector<uint32> MarketAnalysis::GetTrendingItems(MarketSegment segment)
+::std::vector<uint32> MarketAnalysis::GetTrendingItems(MarketSegment segment)
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
-    std::vector<uint32> trendingItems;
+    ::std::vector<uint32> trendingItems;
     auto segmentIt = _segmentItems.find(segment);
 
     if (segmentIt == _segmentItems.end())
@@ -180,7 +180,7 @@ std::vector<uint32> MarketAnalysis::GetTrendingItems(MarketSegment segment)
     }
 
     // Sort by trend strength (simplified)
-    std::sort(trendingItems.begin(), trendingItems.end());
+    ::std::sort(trendingItems.begin(), trendingItems.end());
 
     // Return top trending items
     if (trendingItems.size() > 10)
@@ -201,7 +201,7 @@ void MarketAnalysis::AnalyzeMarketConditions()
 
 void MarketAnalysis::UpdateMarketData(uint32 itemId, uint32 price, uint32 quantity, uint32 timestamp)
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
     if (timestamp == 0)
         timestamp = GameTime::GetGameTimeMS();
@@ -259,7 +259,7 @@ void MarketAnalysis::TrackMarketMovement()
 
 MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
     auto it = _itemMetrics.find(itemId);
     if (it != _itemMetrics.end())
@@ -318,7 +318,7 @@ MarketAnalysis::PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
     auto historyIt = _priceHistory.find(itemId);
     if (historyIt != _priceHistory.end() && !historyIt->second.empty())
     {
-        std::vector<float> prices;
+        ::std::vector<float> prices;
         for (const auto& snap : historyIt->second)
             prices.push_back(snap.averagePrice);
 
@@ -327,12 +327,12 @@ MarketAnalysis::PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
     }
 
     // Calculate confidence based on data quality
-    analysis.confidence = std::min(1.0f, float(snapshot.activeListings) / 10.0f);
+    analysis.confidence = ::std::min(1.0f, float(snapshot.activeListings) / 10.0f);
 
     // Calculate moving averages
     if (historyIt != _priceHistory.end())
     {
-        std::vector<float> prices;
+        ::std::vector<float> prices;
         for (const auto& snap : historyIt->second)
             prices.push_back(snap.averagePrice);
 
@@ -365,20 +365,20 @@ float MarketAnalysis::CalculateFairValue(uint32 itemId)
     return fairValue;
 }
 
-std::pair<float, float> MarketAnalysis::GetPriceRange(uint32 itemId, float confidence)
+::std::pair<float, float> MarketAnalysis::GetPriceRange(uint32 itemId, float confidence)
 {
     auto historyIt = _priceHistory.find(itemId);
     if (historyIt == _priceHistory.end() || historyIt->second.empty())
         return {0.0f, 0.0f};
 
-    std::vector<float> prices;
+    ::std::vector<float> prices;
     for (const auto& snapshot : historyIt->second)
         prices.push_back(snapshot.averagePrice);
 
     if (prices.empty())
         return {0.0f, 0.0f};
 
-    std::sort(prices.begin(), prices.end());
+    ::std::sort(prices.begin(), prices.end());
 
     float lowerBound = confidence / 2.0f;
     float upperBound = 1.0f - (confidence / 2.0f);
@@ -386,8 +386,8 @@ std::pair<float, float> MarketAnalysis::GetPriceRange(uint32 itemId, float confi
     size_t lowerIndex = static_cast<size_t>(prices.size() * lowerBound);
     size_t upperIndex = static_cast<size_t>(prices.size() * upperBound);
 
-    lowerIndex = std::min(lowerIndex, prices.size() - 1);
-    upperIndex = std::min(upperIndex, prices.size() - 1);
+    lowerIndex = ::std::min(lowerIndex, prices.size() - 1);
+    upperIndex = ::std::min(upperIndex, prices.size() - 1);
 
     return {prices[lowerIndex], prices[upperIndex]};
 }
@@ -399,13 +399,13 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     if (analysis.fairValue == 0.0f)
         return false;
 
-    float deviation = std::abs(float(price) - analysis.fairValue) / analysis.fairValue;
+    float deviation = ::std::abs(float(price) - analysis.fairValue) / analysis.fairValue;
     return deviation > ANOMALY_THRESHOLD * analysis.volatility;
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Scan for various types of opportunities
     auto priceDiscrepancies = ScanForPriceDiscrepancies();
@@ -421,7 +421,7 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportuni
     if (budgetLimit > 0)
     {
         opportunities.erase(
-            std::remove_if(opportunities.begin(), opportunities.end(),
+            ::std::remove_if(opportunities.begin(), opportunities.end(),
                 [budgetLimit](const MarketOpportunity& opp) {
                     return opp.currentPrice > budgetLimit;
                 }),
@@ -430,7 +430,7 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportuni
     }
 
     // Sort by potential profit and confidence
-    std::sort(opportunities.begin(), opportunities.end(),
+    ::std::sort(opportunities.begin(), opportunities.end(),
         [](const MarketOpportunity& a, const MarketOpportunity& b) {
             return (a.potentialProfit * a.confidence) > (b.potentialProfit * b.confidence);
         });
@@ -444,9 +444,9 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportuni
     return opportunities;
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Look for price differences between auction houses
     // This would require cross-server data in a real implementation
@@ -454,9 +454,9 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindArbitrageOppo
     return opportunities;
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Find items that can be bought low and sold high quickly
     for (const auto& historyPair : _priceHistory)
@@ -534,9 +534,9 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
     if (!auctionHouseMgr)
         return analysis;
 
-    std::unordered_map<uint32, uint32> sellerCounts; // sellerId -> auction count
-    std::vector<uint32> listingDurations;
-    std::vector<float> undercutAmounts;
+    ::std::unordered_map<uint32, uint32> sellerCounts; // sellerId -> auction count
+    ::std::vector<uint32> listingDurations;
+    ::std::vector<float> undercutAmounts;
 
     // Iterate through all auction houses (Alliance, Horde, Neutral)
     for (uint32 auctionHouseId = 1; auctionHouseId <= 3; ++auctionHouseId)
@@ -557,7 +557,7 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
                 {
                     sellerCounts[auction.Owner.GetCounter()]++;
                     // Calculate listing duration from StartTime to EndTime
-                    auto duration = std::chrono::duration_cast<std::chrono::hours>(auction.EndTime - auction.StartTime);
+                    auto duration = ::std::chrono::duration_cast<::std::chrono::hours>(auction.EndTime - auction.StartTime);
                     listingDurations.push_back(static_cast<uint32>(duration.count()));
                 }
             }
@@ -577,13 +577,13 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
         }
 
         // Sort by listing count
-        std::sort(analysis.majorSellers.begin(), analysis.majorSellers.end(),
+        ::std::sort(analysis.majorSellers.begin(), analysis.majorSellers.end(),
             [&sellerCounts](uint32 a, uint32 b) {
                 return sellerCounts[a] > sellerCounts[b];
             });
 
         // Calculate market share for top sellers
-        for (size_t i = 0; i < std::min(size_t(5), analysis.majorSellers.size()); ++i)
+        for (size_t i = 0; i < ::std::min(size_t(5), analysis.majorSellers.size()); ++i)
         {
             uint32 sellerId = analysis.majorSellers[i];
             float marketShare = float(sellerCounts[sellerId]) / float(totalListings);
@@ -599,21 +599,21 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
     // Calculate average listing duration
     if (!listingDurations.empty())
     {
-        analysis.averageListingDuration = std::accumulate(listingDurations.begin(),
+        analysis.averageListingDuration = ::std::accumulate(listingDurations.begin(),
                                                          listingDurations.end(), 0u) / listingDurations.size();
     }
 
     return analysis;
 }
 
-std::vector<uint32> MarketAnalysis::GetTopSellers(uint32 itemId, uint32 count)
+::std::vector<uint32> MarketAnalysis::GetTopSellers(uint32 itemId, uint32 count)
 {
     CompetitorAnalysis analysis = AnalyzeCompetition(itemId);
 
     if (analysis.majorSellers.size() <= count)
         return analysis.majorSellers;
 
-    std::vector<uint32> topSellers(analysis.majorSellers.begin(),
+    ::std::vector<uint32> topSellers(analysis.majorSellers.begin(),
                                   analysis.majorSellers.begin() + count);
     return topSellers;
 }
@@ -649,7 +649,7 @@ MarketTrend MarketAnalysis::GetSegmentTrend(MarketSegment segment)
         return MarketTrend::STABLE;
 
     // Analyze trends across all items in the segment
-    std::vector<MarketTrend> itemTrends;
+    ::std::vector<MarketTrend> itemTrends;
     for (uint32 itemId : segmentIt->second)
     {
         itemTrends.push_back(GetMarketTrend(itemId, 7));
@@ -687,7 +687,7 @@ MarketTrend MarketAnalysis::GetSegmentTrend(MarketSegment segment)
 
 void MarketAnalysis::SetAnalysisDepth(float depth)
 {
-    _analysisDepth = std::clamp(depth, 0.0f, 1.0f);
+    _analysisDepth = ::std::clamp(depth, 0.0f, 1.0f);
 }
 
 void MarketAnalysis::UpdatePredictionAccuracy(uint32 itemId, float predictedPrice, float actualPrice)
@@ -695,7 +695,7 @@ void MarketAnalysis::UpdatePredictionAccuracy(uint32 itemId, float predictedPric
     if (predictedPrice <= 0.0f || actualPrice <= 0.0f)
         return;
 
-    float error = std::abs(predictedPrice - actualPrice) / actualPrice;
+    float error = ::std::abs(predictedPrice - actualPrice) / actualPrice;
     bool accurate = error < 0.1f; // 10% tolerance
 
     if (accurate)
@@ -761,7 +761,7 @@ void MarketAnalysis::UpdateMovingAverages(uint32 itemId)
     if (history.size() < 7) // Need at least 7 data points
         return;
 
-    std::vector<float> prices;
+    ::std::vector<float> prices;
     for (const auto& snapshot : history)
         prices.push_back(snapshot.averagePrice);
 
@@ -773,12 +773,12 @@ void MarketAnalysis::UpdateMovingAverages(uint32 itemId)
     }
 }
 
-float MarketAnalysis::CalculateStandardDeviation(const std::vector<float>& prices)
+float MarketAnalysis::CalculateStandardDeviation(const ::std::vector<float>& prices)
 {
     if (prices.empty())
         return 0.0f;
 
-    float mean = std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
+    float mean = ::std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
 
     float sumSquaredDiffs = 0.0f;
     for (float price : prices)
@@ -787,16 +787,16 @@ float MarketAnalysis::CalculateStandardDeviation(const std::vector<float>& price
         sumSquaredDiffs += diff * diff;
     }
 
-    return std::sqrt(sumSquaredDiffs / prices.size());
+    return ::std::sqrt(sumSquaredDiffs / prices.size());
 }
 
-float MarketAnalysis::CalculateCorrelation(const std::vector<float>& series1, const std::vector<float>& series2)
+float MarketAnalysis::CalculateCorrelation(const ::std::vector<float>& series1, const ::std::vector<float>& series2)
 {
     if (series1.size() != series2.size() || series1.empty())
         return 0.0f;
 
-    float mean1 = std::accumulate(series1.begin(), series1.end(), 0.0f) / series1.size();
-    float mean2 = std::accumulate(series2.begin(), series2.end(), 0.0f) / series2.size();
+    float mean1 = ::std::accumulate(series1.begin(), series1.end(), 0.0f) / series1.size();
+    float mean2 = ::std::accumulate(series2.begin(), series2.end(), 0.0f) / series2.size();
 
     float numerator = 0.0f;
     float sumSq1 = 0.0f;
@@ -812,13 +812,13 @@ float MarketAnalysis::CalculateCorrelation(const std::vector<float>& series1, co
         sumSq2 += diff2 * diff2;
     }
 
-    float denominator = std::sqrt(sumSq1 * sumSq2);
+    float denominator = ::std::sqrt(sumSq1 * sumSq2);
     return (denominator > 0.0f) ? (numerator / denominator) : 0.0f;
 }
 
-std::vector<float> MarketAnalysis::CalculateMovingAverage(const std::vector<float>& prices, uint32 window)
+::std::vector<float> MarketAnalysis::CalculateMovingAverage(const ::std::vector<float>& prices, uint32 window)
 {
-    std::vector<float> movingAverages;
+    ::std::vector<float> movingAverages;
 
     if (prices.size() < window)
         return movingAverages;
@@ -835,12 +835,12 @@ std::vector<float> MarketAnalysis::CalculateMovingAverage(const std::vector<floa
     return movingAverages;
 }
 
-float MarketAnalysis::CalculateVolatility(const std::vector<float>& prices)
+float MarketAnalysis::CalculateVolatility(const ::std::vector<float>& prices)
 {
     if (prices.size() < 2)
         return 0.0f;
 
-    std::vector<float> returns;
+    ::std::vector<float> returns;
     for (size_t i = 1; i < prices.size(); ++i)
     {
         if (prices[i-1] > 0.0f)
@@ -850,7 +850,7 @@ float MarketAnalysis::CalculateVolatility(const std::vector<float>& prices)
     return CalculateStandardDeviation(returns);
 }
 
-MarketTrend MarketAnalysis::AnalyzeTrendDirection(const std::vector<float>& prices)
+MarketTrend MarketAnalysis::AnalyzeTrendDirection(const ::std::vector<float>& prices)
 {
     if (prices.size() < 3)
         return MarketTrend::STABLE;
@@ -858,12 +858,12 @@ MarketTrend MarketAnalysis::AnalyzeTrendDirection(const std::vector<float>& pric
     float trendStrength = CalculateTrendStrength(prices);
 
     // Calculate overall direction
-    float firstHalf = std::accumulate(prices.begin(), prices.begin() + prices.size()/2, 0.0f) / (prices.size()/2);
-    float secondHalf = std::accumulate(prices.begin() + prices.size()/2, prices.end(), 0.0f) / (prices.size() - prices.size()/2);
+    float firstHalf = ::std::accumulate(prices.begin(), prices.begin() + prices.size()/2, 0.0f) / (prices.size()/2);
+    float secondHalf = ::std::accumulate(prices.begin() + prices.size()/2, prices.end(), 0.0f) / (prices.size() - prices.size()/2);
 
     float change = (secondHalf - firstHalf) / firstHalf;
 
-    if (std::abs(change) < TREND_THRESHOLD)
+    if (::std::abs(change) < TREND_THRESHOLD)
         return MarketTrend::STABLE;
 
     if (change > 0)
@@ -876,7 +876,7 @@ MarketTrend MarketAnalysis::AnalyzeTrendDirection(const std::vector<float>& pric
     }
 }
 
-float MarketAnalysis::CalculateTrendStrength(const std::vector<float>& prices)
+float MarketAnalysis::CalculateTrendStrength(const ::std::vector<float>& prices)
 {
     if (prices.size() < 2)
         return 0.0f;
@@ -900,10 +900,10 @@ float MarketAnalysis::CalculateTrendStrength(const std::vector<float>& prices)
     float avgPrice = sumY / n;
 
     // Normalize slope by average price to get relative trend strength
-    return std::abs(slope) / avgPrice;
+    return ::std::abs(slope) / avgPrice;
 }
 
-bool MarketAnalysis::DetectTrendReversal(const std::vector<float>& prices)
+bool MarketAnalysis::DetectTrendReversal(const ::std::vector<float>& prices)
 {
     if (prices.size() < 10)
         return false;
@@ -911,8 +911,8 @@ bool MarketAnalysis::DetectTrendReversal(const std::vector<float>& prices)
     // Look for significant change in trend direction
     size_t midPoint = prices.size() / 2;
 
-    std::vector<float> firstHalf(prices.begin(), prices.begin() + midPoint);
-    std::vector<float> secondHalf(prices.begin() + midPoint, prices.end());
+    ::std::vector<float> firstHalf(prices.begin(), prices.begin() + midPoint);
+    ::std::vector<float> secondHalf(prices.begin() + midPoint, prices.end());
 
     MarketTrend firstTrend = AnalyzeTrendDirection(firstHalf);
     MarketTrend secondTrend = AnalyzeTrendDirection(secondHalf);
@@ -926,13 +926,13 @@ bool MarketAnalysis::DetectTrendReversal(const std::vector<float>& prices)
     return reversal;
 }
 
-float MarketAnalysis::CalculateMomentum(const std::vector<float>& prices)
+float MarketAnalysis::CalculateMomentum(const ::std::vector<float>& prices)
 {
     if (prices.size() < 5)
         return 0.0f;
 
     // Calculate rate of change over recent periods
-    size_t period = std::min(size_t(5), prices.size());
+    size_t period = ::std::min(size_t(5), prices.size());
     float recent = prices[prices.size() - 1];
     float past = prices[prices.size() - period];
 
@@ -949,7 +949,7 @@ float MarketAnalysis::PredictLinearRegression(uint32 itemId, uint32 hoursAhead)
         return 0.0f;
 
     const auto& history = historyIt->second;
-    std::vector<float> prices;
+    ::std::vector<float> prices;
     for (const auto& snapshot : history)
         prices.push_back(snapshot.averagePrice);
 
@@ -983,7 +983,7 @@ float MarketAnalysis::PredictMovingAverage(uint32 itemId, uint32 hoursAhead)
         return 0.0f;
 
     const auto& history = historyIt->second;
-    std::vector<float> prices;
+    ::std::vector<float> prices;
     for (const auto& snapshot : history)
         prices.push_back(snapshot.averagePrice);
 
@@ -1013,9 +1013,9 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     // This would use machine learning techniques in a full implementation
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Scan for items priced significantly below fair value
     for (const auto& historyPair : _priceHistory)
@@ -1045,9 +1045,9 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForPriceDiscr
     return opportunities;
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Look for items breaking out of established trends
     for (const auto& historyPair : _priceHistory)
@@ -1058,7 +1058,7 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreak
         if (history.size() < 20) // Need sufficient history
             continue;
 
-        std::vector<float> prices;
+        ::std::vector<float> prices;
         for (const auto& snapshot : history)
             prices.push_back(snapshot.averagePrice);
 
@@ -1087,9 +1087,9 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreak
     return opportunities;
 }
 
-std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
+::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
 {
-    std::vector<MarketOpportunity> opportunities;
+    ::std::vector<MarketOpportunity> opportunities;
 
     // Look for items that have deviated significantly from their mean and may revert
     for (const auto& historyPair : _priceHistory)
@@ -1100,22 +1100,22 @@ std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForMeanRevers
         if (history.size() < 30) // Need sufficient history for mean reversion
             continue;
 
-        std::vector<float> prices;
+        ::std::vector<float> prices;
         for (const auto& snapshot : history)
             prices.push_back(snapshot.averagePrice);
 
-        float mean = std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
+        float mean = ::std::accumulate(prices.begin(), prices.end(), 0.0f) / prices.size();
         float stdDev = CalculateStandardDeviation(prices);
         float currentPrice = prices.back();
 
         // Check if current price is more than 2 standard deviations from mean
-        if (std::abs(currentPrice - mean) > 2.0f * stdDev)
+        if (::std::abs(currentPrice - mean) > 2.0f * stdDev)
         {
             MarketOpportunity opp;
             opp.itemId = itemId;
             opp.currentPrice = currentPrice;
             opp.targetPrice = mean;
-            opp.potentialProfit = std::abs(mean - currentPrice);
+            opp.potentialProfit = ::std::abs(mean - currentPrice);
             opp.confidence = 0.7f;
             opp.timeToTarget = 72; // 3 days for mean reversion
             opp.reason = "Mean reversion opportunity";
@@ -1179,7 +1179,7 @@ void MarketAnalysis::UpdateTrendAnalysis()
         // Update trend information
         if (!historyPair.second.empty())
         {
-            std::vector<float> prices;
+            ::std::vector<float> prices;
             for (const auto& snapshot : historyPair.second)
                 prices.push_back(snapshot.averagePrice);
 
@@ -1191,7 +1191,7 @@ void MarketAnalysis::UpdateTrendAnalysis()
 
 void MarketAnalysis::CleanupOldData()
 {
-    std::lock_guard lock(_marketMutex);
+    ::std::lock_guard lock(_marketMutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
     uint32 cutoffTime = currentTime - (_maxHistoryDays * 24 * 60 * 60 * 1000);
@@ -1201,7 +1201,7 @@ void MarketAnalysis::CleanupOldData()
     {
         auto& history = historyPair.second;
         history.erase(
-            std::remove_if(history.begin(), history.end(),
+            ::std::remove_if(history.begin(), history.end(),
                 [cutoffTime](const MarketSnapshot& snapshot) {
                     return snapshot.timestamp < cutoffTime;
                 }),

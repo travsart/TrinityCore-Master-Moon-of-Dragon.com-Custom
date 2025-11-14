@@ -34,7 +34,7 @@ namespace Playerbot
 
 bool BotLoadTester::Initialize()
 {
-    std::lock_guard lock(_testMutex);
+    ::std::lock_guard lock(_testMutex);
 
     if (_enabled.load())
         return true;
@@ -50,7 +50,7 @@ bool BotLoadTester::Initialize()
     _thresholds = LoadTestThresholds();
 
     // Initialize alert system
-    _alertCallback = [](const std::string& type, const std::string& message) {
+    _alertCallback = [](const ::std::string& type, const ::std::string& message) {
         TC_LOG_ERROR("playerbot", "LoadTest Alert [{}]: {}", type, message);
     };
 
@@ -61,7 +61,7 @@ bool BotLoadTester::Initialize()
 
 void BotLoadTester::Shutdown()
 {
-    std::lock_guard lock(_testMutex);
+    ::std::lock_guard lock(_testMutex);
 
     if (!_enabled.load())
         return;
@@ -122,7 +122,7 @@ bool BotLoadTester::RunLoadTest(LoadTestScenario scenario, uint32_t botCount, ui
     }
 
     // Create test configurations
-    std::vector<BotLoadTestConfig> configs;
+    ::std::vector<BotLoadTestConfig> configs;
     configs.reserve(botCount);
 
     for (uint32_t i = 0; i < botCount; ++i)
@@ -137,7 +137,7 @@ bool BotLoadTester::RunLoadTest(LoadTestScenario scenario, uint32_t botCount, ui
     return ExecuteLoadTest(configs);
 }
 
-bool BotLoadTester::RunCustomTest(const std::vector<BotLoadTestConfig>& configs)
+bool BotLoadTester::RunCustomTest(const ::std::vector<BotLoadTestConfig>& configs)
 {
     if (!_enabled.load() || _testRunning.load())
         return false;
@@ -179,7 +179,7 @@ bool BotLoadTester::RunScalabilityTest(uint32_t startBots, uint32_t maxBots, uin
     TC_LOG_INFO("playerbot", "BotLoadTester: Starting scalability test - {} to {} bots (increment: {})",
                 startBots, maxBots, increment);
 
-    std::vector<LoadTestResults> scalabilityResults;
+    ::std::vector<LoadTestResults> scalabilityResults;
 
     for (uint32_t botCount = startBots; botCount <= maxBots; botCount += increment)
     {
@@ -193,7 +193,7 @@ bool BotLoadTester::RunScalabilityTest(uint32_t startBots, uint32_t maxBots, uin
 
         // Wait for test to complete
         while (_testRunning.load())
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
         scalabilityResults.push_back(_currentResults);
 
@@ -210,11 +210,11 @@ bool BotLoadTester::RunScalabilityTest(uint32_t startBots, uint32_t maxBots, uin
         }
 
         // Brief cooldown between tests
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(30));
     }
 
     // Generate scalability report
-    std::string report;
+    ::std::string report;
     GenerateScalabilityReport(report, scalabilityResults);
     TC_LOG_INFO("playerbot", "BotLoadTester: Scalability test completed\n{}", report);
 
@@ -229,14 +229,14 @@ bool BotLoadTester::RunStressTest(uint32_t botCount, uint32_t durationSeconds)
     TC_LOG_INFO("playerbot", "BotLoadTester: Starting stress test - {} bots for {} seconds", botCount, durationSeconds);
 
     // Run multiple stress scenarios in sequence
-    std::vector<LoadTestScenario> stressScenarios = {
+    ::std::vector<LoadTestScenario> stressScenarios = {
         LoadTestScenario::STRESS_TEST,
         LoadTestScenario::MEMORY_PRESSURE,
         LoadTestScenario::DATABASE_INTENSIVE,
         LoadTestScenario::NETWORK_SIMULATION
     };
 
-    std::vector<LoadTestResults> stressResults;
+    ::std::vector<LoadTestResults> stressResults;
 
     for (auto scenario : stressScenarios)
     {
@@ -250,12 +250,12 @@ bool BotLoadTester::RunStressTest(uint32_t botCount, uint32_t durationSeconds)
 
         // Wait for test to complete
         while (_testRunning.load())
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
         stressResults.push_back(_currentResults);
 
         // Brief recovery time between stress phases
-        std::this_thread::sleep_for(std::chrono::seconds(60));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(60));
     }
 
     TC_LOG_INFO("playerbot", "BotLoadTester: Stress test completed successfully");
@@ -280,17 +280,17 @@ bool BotLoadTester::RunEnduranceTest(uint32_t botCount, uint32_t durationHours)
     return RunLoadTest(LoadTestScenario::MIXED_ACTIVITIES, botCount, durationSeconds);
 }
 
-bool BotLoadTester::ExecuteLoadTest(const std::vector<BotLoadTestConfig>& configs)
+bool BotLoadTester::ExecuteLoadTest(const ::std::vector<BotLoadTestConfig>& configs)
 {
-    std::lock_guard lock(_testDataMutex);
+    ::std::lock_guard lock(_testDataMutex);
 
     _testRunning.store(true);
     _testPaused.store(false);
     _currentPhase.store(LoadTestPhase::PREPARATION);
     _currentTestConfigs = configs;
     _testBotGuids.clear();
-    _testStartTime.store(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count());
+    _testStartTime.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count());
 
     // Initialize current results
     _currentResults = LoadTestResults();
@@ -298,7 +298,7 @@ bool BotLoadTester::ExecuteLoadTest(const std::vector<BotLoadTestConfig>& config
     _currentResults.totalBots = static_cast<uint32_t>(configs.size());
 
     // Start test execution thread
-    _testExecutionThread = std::thread([this]() {
+    _testExecutionThread = ::std::thread([this]() {
         try
         {
             ExecuteTestPhase(LoadTestPhase::PREPARATION);
@@ -310,7 +310,7 @@ bool BotLoadTester::ExecuteLoadTest(const std::vector<BotLoadTestConfig>& config
 
             _currentPhase.store(LoadTestPhase::COMPLETED);
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot", "BotLoadTester: Test execution failed - {}", e.what());
             _currentPhase.store(LoadTestPhase::FAILED);
@@ -358,14 +358,14 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
                 if (_testPaused.load())
                 {
                     while (_testPaused.load() && !_shutdownRequested.load())
-                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
                 }
 
                 const auto& config = _currentTestConfigs[i];
                 ConfigureTestBot(config.botGuid, config);
                 _testBotGuids.push_back(config.botGuid);
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(spawnInterval));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(spawnInterval));
             }
             break;
         }
@@ -376,21 +376,21 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
 
             // Run test for the configured duration
             uint32_t testDuration = _currentTestConfigs.empty() ? _defaultTestDuration.load() : _currentTestConfigs[0].durationSeconds;
-            auto startTime = std::chrono::steady_clock::now();
-            auto endTime = startTime + std::chrono::seconds(testDuration);
+            auto startTime = ::std::chrono::steady_clock::now();
+            auto endTime = startTime + ::std::chrono::seconds(testDuration);
 
-            while (std::chrono::steady_clock::now() < endTime && !_shutdownRequested.load())
+            while (::std::chrono::steady_clock::now() < endTime && !_shutdownRequested.load())
             {
                 if (_testPaused.load())
                 {
                     while (_testPaused.load() && !_shutdownRequested.load())
-                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
                 }
 
                 // Update bot behaviors
                 for (uint32_t botGuid : _testBotGuids)
                 {
-                    auto it = std::find_if(_currentTestConfigs.begin(), _currentTestConfigs.end(),
+                    auto it = ::std::find_if(_currentTestConfigs.begin(), _currentTestConfigs.end(),
                         [botGuid](const BotLoadTestConfig& config) { return config.botGuid == botGuid; });
 
                     if (it != _currentTestConfigs.end())
@@ -400,7 +400,7 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
                 // Check performance thresholds
                 CheckPerformanceThresholds();
 
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ::std::this_thread::sleep_for(::std::chrono::seconds(1));
             }
             break;
         }
@@ -415,13 +415,13 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
                 ExecuteStressTest(botGuid);
             }
 
-            auto peakStart = std::chrono::steady_clock::now();
-            auto peakEnd = peakStart + std::chrono::seconds(60);
+            auto peakStart = ::std::chrono::steady_clock::now();
+            auto peakEnd = peakStart + ::std::chrono::seconds(60);
 
-            while (std::chrono::steady_clock::now() < peakEnd && !_shutdownRequested.load())
+            while (::std::chrono::steady_clock::now() < peakEnd && !_shutdownRequested.load())
             {
                 CheckPerformanceThresholds();
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(500));
             }
             break;
         }
@@ -442,7 +442,7 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
                 // Set bot to idle before despawning
                 ExecuteIdleBehavior(botGuid);
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(despawnInterval));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(despawnInterval));
             }
             break;
         }
@@ -751,26 +751,26 @@ void BotLoadTester::CheckPerformanceThresholds()
     }
 }
 
-void BotLoadTester::TriggerAlert(const std::string& alertType, const std::string& message)
+void BotLoadTester::TriggerAlert(const ::std::string& alertType, const ::std::string& message)
 {
     if (!_alertsEnabled.load())
         return;
 
-    std::lock_guard lock(_alertMutex);
+    ::std::lock_guard lock(_alertMutex);
 
     if (_alertCallback)
         _alertCallback(alertType, message);
 
-    _pendingAlerts.push(std::make_pair(alertType, message));
+    _pendingAlerts.push(::std::make_pair(alertType, message));
 
     // If this is a critical alert, consider stopping the test
-    if (alertType.find("CRITICAL") != std::string::npos)
+    if (alertType.find("CRITICAL") != ::std::string::npos)
     {
         HandleCriticalAlert(message);
     }
 }
 
-void BotLoadTester::HandleCriticalAlert(const std::string& message)
+void BotLoadTester::HandleCriticalAlert(const ::std::string& message)
 {
     TC_LOG_ERROR("playerbot", "BotLoadTester: CRITICAL ALERT - {}", message);
 
@@ -786,11 +786,11 @@ void BotLoadTester::StartRealTimeMonitoring()
 
     _monitoringActive.store(true);
 
-    _monitoringThread = std::thread([this]() {
+    _monitoringThread = ::std::thread([this]() {
         while (_monitoringActive.load() && !_shutdownRequested.load())
         {
             UpdateRealTimeMetrics();
-            std::this_thread::sleep_for(std::chrono::milliseconds(_metricsInterval.load()));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(_metricsInterval.load()));
         }
     });
 
@@ -839,8 +839,8 @@ void BotLoadTester::UpdateRealTimeMetrics()
 
     _monitorData.currentCpuUsage.store(cpuUsage);
     _monitorData.currentMemoryUsage.store(memoryUsage);
-    _monitorData.lastUpdateTime.store(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count());
+    _monitorData.lastUpdateTime.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
 LoadTestMonitorData BotLoadTester::GetCurrentMetrics() const
@@ -850,10 +850,10 @@ LoadTestMonitorData BotLoadTester::GetCurrentMetrics() const
 
 void BotLoadTester::AnalyzeTestResults()
 {
-    std::lock_guard lock(_testDataMutex);
+    ::std::lock_guard lock(_testDataMutex);
 
-    auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    auto endTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     _currentResults.testDurationMs = (endTime - _testStartTime.load()) / 1000;
     _currentResults.successfulBots = static_cast<uint32_t>(_testBotGuids.size());
@@ -903,21 +903,21 @@ double BotLoadTester::CalculateScalabilityMetric(uint32_t botCount, const LoadTe
         return 0.0;
 
     // Calculate efficiency based on multiple factors
-    double cpuEfficiency = std::max(0.0, (100.0 - results.averageCpuUsage) / 100.0);
-    double memoryEfficiency = std::max(0.0, 1.0 - (static_cast<double>(results.averageMemoryUsage) / (1024.0 * 1024.0 * 1024.0))); // 1GB baseline
-    double responseEfficiency = std::max(0.0, 1.0 - (static_cast<double>(results.averageResponseTime) / 100000.0)); // 100ms baseline
-    double tickEfficiency = std::min(1.0, results.averageTickRate / 50.0); // 50 FPS baseline
+    double cpuEfficiency = ::std::max(0.0, (100.0 - results.averageCpuUsage) / 100.0);
+    double memoryEfficiency = ::std::max(0.0, 1.0 - (static_cast<double>(results.averageMemoryUsage) / (1024.0 * 1024.0 * 1024.0))); // 1GB baseline
+    double responseEfficiency = ::std::max(0.0, 1.0 - (static_cast<double>(results.averageResponseTime) / 100000.0)); // 100ms baseline
+    double tickEfficiency = ::std::min(1.0, results.averageTickRate / 50.0); // 50 FPS baseline
 
     // Weighted average
     double scalabilityScore = (cpuEfficiency * 0.3 + memoryEfficiency * 0.2 +
                               responseEfficiency * 0.3 + tickEfficiency * 0.2) * 100.0;
 
-    return std::max(0.0, std::min(100.0, scalabilityScore));
+    return ::std::max(0.0, ::std::min(100.0, scalabilityScore));
 }
 
 void BotLoadTester::CleanupTestResources()
 {
-    std::lock_guard lock(_testDataMutex);
+    ::std::lock_guard lock(_testDataMutex);
 
     // Reset monitoring data
     _monitorData.currentBots.store(0);
@@ -968,7 +968,7 @@ bool BotLoadTester::CheckSystemRequirements(uint32_t botCount)
 
 void BotLoadTester::SaveTestResults(const LoadTestResults& results)
 {
-    std::lock_guard lock(_testDataMutex);
+    ::std::lock_guard lock(_testDataMutex);
 
     _testHistory.push_back(results);
     _totalTestsRun.fetch_add(1);
@@ -977,9 +977,9 @@ void BotLoadTester::SaveTestResults(const LoadTestResults& results)
     TC_LOG_INFO("playerbot", "BotLoadTester: Test results saved. Total tests run: {}", _totalTestsRun.load());
 }
 
-void BotLoadTester::GenerateLoadTestReport(std::string& report, const LoadTestResults& results) const
+void BotLoadTester::GenerateLoadTestReport(::std::string& report, const LoadTestResults& results) const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     oss << "=== Load Test Report ===\n";
     oss << "Scenario: " << static_cast<uint32_t>(results.scenario) << "\n";
@@ -989,22 +989,22 @@ void BotLoadTester::GenerateLoadTestReport(std::string& report, const LoadTestRe
     oss << "Test Duration: " << results.testDurationMs / 1000 << " seconds\n\n";
 
     oss << "=== Performance Metrics ===\n";
-    oss << "Average CPU Usage: " << std::fixed << std::setprecision(1) << results.averageCpuUsage << "%\n";
-    oss << "Peak CPU Usage: " << std::fixed << std::setprecision(1) << results.peakCpuUsage << "%\n";
+    oss << "Average CPU Usage: " << ::std::fixed << ::std::setprecision(1) << results.averageCpuUsage << "%\n";
+    oss << "Peak CPU Usage: " << ::std::fixed << ::std::setprecision(1) << results.peakCpuUsage << "%\n";
     oss << "Average Memory Usage: " << results.averageMemoryUsage / (1024 * 1024) << " MB\n";
     oss << "Peak Memory Usage: " << results.peakMemoryUsage / (1024 * 1024) << " MB\n";
     oss << "Average Response Time: " << results.averageResponseTime / 1000 << " ms\n";
     oss << "Max Response Time: " << results.maxResponseTime / 1000 << " ms\n";
-    oss << "Average Tick Rate: " << std::fixed << std::setprecision(1) << results.averageTickRate << " FPS\n\n";
+    oss << "Average Tick Rate: " << ::std::fixed << ::std::setprecision(1) << results.averageTickRate << " FPS\n\n";
 
     oss << "=== Database Metrics ===\n";
     oss << "Total Queries: " << results.totalQueries << "\n";
     oss << "Average Query Time: " << results.averageQueryTime / 1000 << " ms\n";
     oss << "Max Query Time: " << results.maxQueryTime / 1000 << " ms\n";
-    oss << "Queries per Second: " << std::fixed << std::setprecision(1) << results.queriesPerSecond << "\n\n";
+    oss << "Queries per Second: " << ::std::fixed << ::std::setprecision(1) << results.queriesPerSecond << "\n\n";
 
     oss << "=== Scalability Analysis ===\n";
-    oss << "Scalability Score: " << std::fixed << std::setprecision(1) << results.scalabilityScore << "%\n";
+    oss << "Scalability Score: " << ::std::fixed << ::std::setprecision(1) << results.scalabilityScore << "%\n";
     oss << "Max Stable Bots: " << results.maxStableBots << "\n";
     oss << "Recommended Bots: " << results.recommendedBots << "\n\n";
 

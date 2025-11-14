@@ -28,8 +28,8 @@ class WorldSessionIsBotInvestigation
 public:
     static void InvestigateIsBotImplementation()
     {
-        TC_LOG_INFO("test.playerbot", "🔬 INVESTIGATING IsBot() IMPLEMENTATION");
-        TC_LOG_INFO("test.playerbot", "🔬 Purpose: Verify that BUILD_PLAYERBOT guards are functional");
+        TC_LOG_INFO("test.playerbot", " INVESTIGATING IsBot() IMPLEMENTATION");
+        TC_LOG_INFO("test.playerbot", " Purpose: Verify that BUILD_PLAYERBOT guards are functional");
 
         TestWorldSessionConstructorBotFlag();
         TestIsBotOverrideConsistency();
@@ -37,7 +37,7 @@ public:
         TestGuardEffectivenessInWorldSession();
         AnalyzeSocketAccessCodePaths();
 
-        TC_LOG_INFO("test.playerbot", "🔬 IsBot() INVESTIGATION COMPLETE");
+        TC_LOG_INFO("test.playerbot", " IsBot() INVESTIGATION COMPLETE");
     }
 
 private:
@@ -47,13 +47,13 @@ private:
      */
     static void TestWorldSessionConstructorBotFlag()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 1: WorldSession Constructor Bot Flag");
+        TC_LOG_INFO("test.playerbot", " TEST 1: WorldSession Constructor Bot Flag");
 
         try {
             // Create a BotSession and examine its WorldSession base
             auto botSession = BotSession::Create(88888);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
@@ -62,23 +62,23 @@ private:
             TC_LOG_INFO("test.playerbot", "BotSession::IsBot() returns: {}", isBotResult);
 
             if (!isBotResult) {
-                TC_LOG_ERROR("test.playerbot", "❌ CRITICAL BUG FOUND: IsBot() returns false!");
-                TC_LOG_ERROR("test.playerbot", "❌ This means BUILD_PLAYERBOT guards will NOT protect against socket access");
-                TC_LOG_ERROR("test.playerbot", "❌ ROOT CAUSE OF CRASH IDENTIFIED");
+                TC_LOG_ERROR("test.playerbot", " CRITICAL BUG FOUND: IsBot() returns false!");
+                TC_LOG_ERROR("test.playerbot", " This means BUILD_PLAYERBOT guards will NOT protect against socket access");
+                TC_LOG_ERROR("test.playerbot", " ROOT CAUSE OF CRASH IDENTIFIED");
 
                 // Investigate why IsBot() is returning false
                 AnalyzeIsBotFailure(botSession);
             } else {
-                TC_LOG_INFO("test.playerbot", "✅ IsBot() correctly returns true");
+                TC_LOG_INFO("test.playerbot", " IsBot() correctly returns true");
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in constructor test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in constructor test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in constructor test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in constructor test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 1 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 1 COMPLETE");
     }
 
     /**
@@ -87,12 +87,12 @@ private:
      */
     static void TestIsBotOverrideConsistency()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 2: IsBot() Override Consistency");
+        TC_LOG_INFO("test.playerbot", " TEST 2: IsBot() Override Consistency");
 
         try {
             auto botSession = BotSession::Create(88887);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
@@ -106,21 +106,21 @@ private:
             TC_LOG_INFO("test.playerbot", "WorldSession pointer IsBot(): {}", worldSessionIsBot);
 
             if (botSessionIsBot != worldSessionIsBot) {
-                TC_LOG_ERROR("test.playerbot", "❌ INCONSISTENCY: IsBot() results differ!");
-                TC_LOG_ERROR("test.playerbot", "❌ This indicates a virtual function override issue");
+                TC_LOG_ERROR("test.playerbot", " INCONSISTENCY: IsBot() results differ!");
+                TC_LOG_ERROR("test.playerbot", " This indicates a virtual function override issue");
             } else if (!botSessionIsBot || !worldSessionIsBot) {
-                TC_LOG_ERROR("test.playerbot", "❌ Both calls return false - IsBot() not working");
+                TC_LOG_ERROR("test.playerbot", " Both calls return false - IsBot() not working");
             } else {
-                TC_LOG_INFO("test.playerbot", "✅ IsBot() override is consistent");
+                TC_LOG_INFO("test.playerbot", " IsBot() override is consistent");
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in override test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in override test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in override test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in override test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 2 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 2 COMPLETE");
     }
 
     /**
@@ -129,39 +129,39 @@ private:
      */
     static void TestCompileTimeVsRuntimeFlags()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 3: Compile-time vs Runtime Flags");
+        TC_LOG_INFO("test.playerbot", " TEST 3: Compile-time vs Runtime Flags");
 
 #ifdef BUILD_PLAYERBOT
-        TC_LOG_INFO("test.playerbot", "✅ BUILD_PLAYERBOT is defined at compile time");
+        TC_LOG_INFO("test.playerbot", " BUILD_PLAYERBOT is defined at compile time");
 
         // Test if the bot flag is actually used in WorldSession constructor
         try {
             auto botSession = BotSession::Create(88886);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
             bool isBot = botSession->IsBot();
             if (isBot) {
-                TC_LOG_INFO("test.playerbot", "✅ Runtime IsBot() matches compile-time flag");
+                TC_LOG_INFO("test.playerbot", " Runtime IsBot() matches compile-time flag");
             } else {
-                TC_LOG_ERROR("test.playerbot", "❌ MISMATCH: Compile-time BUILD_PLAYERBOT defined but runtime IsBot() false");
-                TC_LOG_ERROR("test.playerbot", "❌ This suggests the WorldSession constructor is not using the bot parameter");
+                TC_LOG_ERROR("test.playerbot", " MISMATCH: Compile-time BUILD_PLAYERBOT defined but runtime IsBot() false");
+                TC_LOG_ERROR("test.playerbot", " This suggests the WorldSession constructor is not using the bot parameter");
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception testing runtime flags: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception testing runtime flags: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception testing runtime flags");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception testing runtime flags");
         }
 
 #else
-        TC_LOG_ERROR("test.playerbot", "❌ BUILD_PLAYERBOT is NOT defined at compile time");
-        TC_LOG_ERROR("test.playerbot", "❌ This explains why IsBot() guards don't work - recompile with -DBUILD_PLAYERBOT=1");
+        TC_LOG_ERROR("test.playerbot", " BUILD_PLAYERBOT is NOT defined at compile time");
+        TC_LOG_ERROR("test.playerbot", " This explains why IsBot() guards don't work - recompile with -DBUILD_PLAYERBOT=1");
 #endif
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 3 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 3 COMPLETE");
     }
 
     /**
@@ -170,24 +170,24 @@ private:
      */
     static void TestGuardEffectivenessInWorldSession()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 4: Guard Effectiveness in WorldSession");
+        TC_LOG_INFO("test.playerbot", " TEST 4: Guard Effectiveness in WorldSession");
 
         try {
             auto botSession = BotSession::Create(88885);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
             // Test specific WorldSession methods that have BUILD_PLAYERBOT guards
-            TC_LOG_INFO("test.playerbot", "🔍 Testing guarded socket operations...");
+            TC_LOG_INFO("test.playerbot", " Testing guarded socket operations...");
 
             // Test PlayerDisconnected() - should return false for bots due to override
             bool disconnected = botSession->PlayerDisconnected();
             TC_LOG_INFO("test.playerbot", "PlayerDisconnected(): {}", disconnected);
 
             if (disconnected) {
-                TC_LOG_WARN("test.playerbot", "⚠️ PlayerDisconnected() returns true for bot - might indicate guard failure");
+                TC_LOG_WARN("test.playerbot", " PlayerDisconnected() returns true for bot - might indicate guard failure");
             }
 
             // Test IsConnectionIdle() - should return false for bots
@@ -195,11 +195,11 @@ private:
             TC_LOG_INFO("test.playerbot", "IsConnectionIdle(): {}", idle);
 
             if (idle) {
-                TC_LOG_WARN("test.playerbot", "⚠️ IsConnectionIdle() returns true for bot - might indicate guard failure");
+                TC_LOG_WARN("test.playerbot", " IsConnectionIdle() returns true for bot - might indicate guard failure");
             }
 
             // Test the Update method which contains the critical socket access code
-            TC_LOG_INFO("test.playerbot", "🔍 Testing Update method with unsafe filter...");
+            TC_LOG_INFO("test.playerbot", " Testing Update method with unsafe filter...");
 
             class UnsafeTestFilter : public PacketFilter {
             public:
@@ -213,20 +213,20 @@ private:
             TC_LOG_INFO("test.playerbot", "Unsafe Update result: {}", updateResult);
 
             if (!updateResult) {
-                TC_LOG_WARN("test.playerbot", "⚠️ Update returned false - might indicate guard intervention");
+                TC_LOG_WARN("test.playerbot", " Update returned false - might indicate guard intervention");
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ Guard effectiveness test completed without crash");
+            TC_LOG_INFO("test.playerbot", " Guard effectiveness test completed without crash");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in guard test: {}", e.what());
-            TC_LOG_ERROR("test.playerbot", "❌ This might indicate a guard failure leading to socket access");
+            TC_LOG_ERROR("test.playerbot", " Exception in guard test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " This might indicate a guard failure leading to socket access");
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in guard test");
-            TC_LOG_ERROR("test.playerbot", "❌ This might be the ACCESS_VIOLATION we're looking for");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in guard test");
+            TC_LOG_ERROR("test.playerbot", " This might be the ACCESS_VIOLATION we're looking for");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 4 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 4 COMPLETE");
     }
 
     /**
@@ -235,16 +235,16 @@ private:
      */
     static void AnalyzeSocketAccessCodePaths()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 5: Socket Access Code Path Analysis");
+        TC_LOG_INFO("test.playerbot", " TEST 5: Socket Access Code Path Analysis");
 
         try {
             auto botSession = BotSession::Create(88884);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "🔍 Analyzing code paths that lead to Socket::CloseSocket()...");
+            TC_LOG_INFO("test.playerbot", " Analyzing code paths that lead to Socket::CloseSocket()...");
 
             // Path 1: WorldSession::Update() timeout handling
             TC_LOG_INFO("test.playerbot", "Path 1: Timeout handling in WorldSession::Update()");
@@ -290,17 +290,17 @@ private:
                 // Destructor called here - should not crash due to guards
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ All socket access paths tested without crash");
+            TC_LOG_INFO("test.playerbot", " All socket access paths tested without crash");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in path analysis: {}", e.what());
-            TC_LOG_ERROR("test.playerbot", "❌ Found problematic socket access path");
+            TC_LOG_ERROR("test.playerbot", " Exception in path analysis: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Found problematic socket access path");
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in path analysis");
-            TC_LOG_ERROR("test.playerbot", "❌ This is likely the ACCESS_VIOLATION crash point");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in path analysis");
+            TC_LOG_ERROR("test.playerbot", " This is likely the ACCESS_VIOLATION crash point");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 5 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 5 COMPLETE");
     }
 
     /**
@@ -308,7 +308,7 @@ private:
      */
     static void AnalyzeIsBotFailure(std::shared_ptr<BotSession> const& botSession)
     {
-        TC_LOG_INFO("test.playerbot", "🔬 ANALYZING IsBot() FAILURE");
+        TC_LOG_INFO("test.playerbot", " ANALYZING IsBot() FAILURE");
 
         // Check if the BotSession class has the IsBot() override
         TC_LOG_INFO("test.playerbot", "BotSession class should override IsBot() to return true");
@@ -324,16 +324,16 @@ private:
             TC_LOG_INFO("test.playerbot", "Bot session account ID: {}", accountId);
 
             if (accountId == 0) {
-                TC_LOG_ERROR("test.playerbot", "❌ Account ID is 0 - constructor might have failed");
+                TC_LOG_ERROR("test.playerbot", " Account ID is 0 - constructor might have failed");
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception checking account ID: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception checking account ID: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception checking account ID");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception checking account ID");
         }
 
-        TC_LOG_INFO("test.playerbot", "🔬 IsBot() FAILURE ANALYSIS COMPLETE");
+        TC_LOG_INFO("test.playerbot", " IsBot() FAILURE ANALYSIS COMPLETE");
     }
 };
 
@@ -342,12 +342,12 @@ private:
  */
 void InvestigateIsBotImplementation()
 {
-    TC_LOG_INFO("test.playerbot", "🚨 STARTING IsBot() IMPLEMENTATION INVESTIGATION");
-    TC_LOG_INFO("test.playerbot", "🚨 CRITICAL: If IsBot() returns false, ALL socket guards will fail");
-    TC_LOG_INFO("test.playerbot", "🚨 This would directly cause ACCESS_VIOLATION at Socket.h:230");
+    TC_LOG_INFO("test.playerbot", " STARTING IsBot() IMPLEMENTATION INVESTIGATION");
+    TC_LOG_INFO("test.playerbot", " CRITICAL: If IsBot() returns false, ALL socket guards will fail");
+    TC_LOG_INFO("test.playerbot", " This would directly cause ACCESS_VIOLATION at Socket.h:230");
 
     WorldSessionIsBotInvestigation::InvestigateIsBotImplementation();
 
-    TC_LOG_INFO("test.playerbot", "🚨 IsBot() INVESTIGATION COMPLETE");
-    TC_LOG_INFO("test.playerbot", "🚨 Check logs above for critical findings");
+    TC_LOG_INFO("test.playerbot", " IsBot() INVESTIGATION COMPLETE");
+    TC_LOG_INFO("test.playerbot", " Check logs above for critical findings");
 }

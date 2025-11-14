@@ -33,9 +33,9 @@ public:
     /**
      * Get all group members below health threshold
      */
-    static std::vector<Unit*> GetInjuredGroupMembers(Player* bot, float healthPct)
+    static ::std::vector<Unit*> GetInjuredGroupMembers(Player* bot, float healthPct)
     {
-        std::vector<Unit*> injured;
+        ::std::vector<Unit*> injured;
 
         if (!bot)
             return injured;
@@ -166,7 +166,7 @@ public:
         uint32 maxNearby = CountEnemiesNear(currentTarget, range);
 
         // Check if another target has more nearby enemies
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
         Cell::VisitAllObjects(bot, searcher, 40.0f);
@@ -196,7 +196,7 @@ public:
             return 0;
 
         uint32 count = 0;
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(center, center, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(center, enemies, u_check);
         Cell::VisitAllObjects(center, searcher, range);
@@ -218,7 +218,7 @@ public:
         if (!bot)
             return nullptr;
 
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, maxRange);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
         Cell::VisitAllObjects(bot, searcher, maxRange);
@@ -392,7 +392,7 @@ public:
     /**
      * Check if any of the given auras are active
      */
-    static bool HasAnyAura(Unit* unit, const std::vector<uint32>& spellIds)
+    static bool HasAnyAura(Unit* unit, const ::std::vector<uint32>& spellIds)
     {
         if (!unit)
             return false;

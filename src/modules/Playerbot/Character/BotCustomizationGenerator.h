@@ -47,7 +47,7 @@ public:
      * @param gender Character gender (GENDER_MALE/FEMALE)
      * @return Array of customization choices ready for character creation
      */
-    static std::array<WorldPackets::Character::ChrCustomizationChoice, 250>
+    static ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250>
         GenerateCustomizations(uint8 race, uint8 gender);
 
     /**
@@ -59,13 +59,13 @@ public:
 private:
     struct CustomizationOption {
         uint32 optionId;
-        std::vector<uint32> availableChoices;
+        ::std::vector<uint32> availableChoices;
         bool isRequired;
         uint32 defaultChoice;
     };
 
     // Cache of valid customization options per race/gender
-    inline static std::unordered_map<uint64, std::vector<CustomizationOption>> _customizationCache;
+    inline static ::std::unordered_map<uint64, ::std::vector<CustomizationOption>> _customizationCache;
     inline static bool _initialized = false;
 
     /**
@@ -83,12 +83,12 @@ private:
     /**
      * @brief Get valid customization choices for an option
      */
-    static std::vector<uint32> GetValidChoicesForOption(uint32 optionId);
+    static ::std::vector<uint32> GetValidChoicesForOption(uint32 optionId);
 
     /**
      * @brief Select random choice from available options
      */
-    static uint32 GetRandomChoice(std::vector<uint32> const& choices);
+    static uint32 GetRandomChoice(::std::vector<uint32> const& choices);
 
     /**
      * @brief Check if customization option is required
@@ -104,7 +104,7 @@ private:
      * @brief Validate generated customizations against DBC requirements
      */
     static bool ValidateCustomizations(uint8 race, uint8 gender,
-        std::array<WorldPackets::Character::ChrCustomizationChoice, 250> const& customizations);
+        ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250> const& customizations);
 };
 
 } // namespace Playerbot

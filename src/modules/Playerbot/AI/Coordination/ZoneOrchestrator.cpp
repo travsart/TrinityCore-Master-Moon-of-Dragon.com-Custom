@@ -84,7 +84,7 @@ void ZoneOrchestrator::RegisterBot(Player* bot)
     ObjectGuid botGuid = bot->GetGUID();
 
     // Check if already registered
-    if (std::find(_bots.begin(), _bots.end(), botGuid) != _bots.end())
+    if (::std::find(_bots.begin(), _bots.end(), botGuid) != _bots.end())
         return;
 
     _bots.push_back(botGuid);
@@ -101,7 +101,7 @@ void ZoneOrchestrator::RegisterBot(Player* bot)
 
 void ZoneOrchestrator::UnregisterBot(ObjectGuid botGuid)
 {
-    auto it = std::find(_bots.begin(), _bots.end(), botGuid);
+    auto it = ::std::find(_bots.begin(), _bots.end(), botGuid);
     if (it != _bots.end())
     {
         _bots.erase(it);
@@ -111,12 +111,12 @@ void ZoneOrchestrator::UnregisterBot(ObjectGuid botGuid)
     }
 }
 
-void ZoneOrchestrator::AddRaid(std::unique_ptr<RaidOrchestrator> raid)
+void ZoneOrchestrator::AddRaid(::std::unique_ptr<RaidOrchestrator> raid)
 {
     if (!raid)
         return;
 
-    _raids.push_back(std::move(raid));
+    _raids.push_back(::std::move(raid));
 
     TC_LOG_DEBUG("playerbot.coordination", "Raid added to zone {} (total raids: {})",
         _zoneId, _raids.size());
@@ -171,9 +171,9 @@ void ZoneOrchestrator::CreateObjective(ZoneObjective const& objective)
     PrioritizeObjectives();
 }
 
-std::vector<ZoneObjective> ZoneOrchestrator::GetActiveObjectives() const
+::std::vector<ZoneObjective> ZoneOrchestrator::GetActiveObjectives() const
 {
-    std::vector<ZoneObjective> active;
+    ::std::vector<ZoneObjective> active;
 
     for (auto const& objective : _objectives)
     {
@@ -184,9 +184,9 @@ std::vector<ZoneObjective> ZoneOrchestrator::GetActiveObjectives() const
     return active;
 }
 
-void ZoneOrchestrator::CompleteObjective(std::string const& objectiveType)
+void ZoneOrchestrator::CompleteObjective(::std::string const& objectiveType)
 {
-    auto it = std::remove_if(_objectives.begin(), _objectives.end(),
+    auto it = ::std::remove_if(_objectives.begin(), _objectives.end(),
         [&objectiveType](ZoneObjective const& obj) {
             return obj.objectiveType == objectiveType;
         });
@@ -200,7 +200,7 @@ void ZoneOrchestrator::CompleteObjective(std::string const& objectiveType)
     }
 }
 
-uint32 ZoneOrchestrator::AssignBotsToObjective(std::string const& objectiveType, uint32 botCount)
+uint32 ZoneOrchestrator::AssignBotsToObjective(::std::string const& objectiveType, uint32 botCount)
 {
     // Find objective
     ZoneObjective* objective = nullptr;
@@ -219,7 +219,7 @@ uint32 ZoneOrchestrator::AssignBotsToObjective(std::string const& objectiveType,
     // Calculate how many bots we can assign
     uint32 available = static_cast<uint32>(_bots.size()) - objective->assignedBots;
     uint32 needed = objective->requiredBots - objective->assignedBots;
-    uint32 toAssign = std::min({botCount, available, needed});
+    uint32 toAssign = ::std::min({botCount, available, needed});
 
     objective->assignedBots += toAssign;
 
@@ -229,7 +229,7 @@ uint32 ZoneOrchestrator::AssignBotsToObjective(std::string const& objectiveType,
     return toAssign;
 }
 
-void ZoneOrchestrator::BroadcastMessage(std::string const& message, uint32 priority)
+void ZoneOrchestrator::BroadcastMessage(::std::string const& message, uint32 priority)
 {
     TC_LOG_DEBUG("playerbot.coordination", "Zone {} broadcast (priority {}): {}",
         _zoneId, priority, message);
@@ -301,7 +301,7 @@ ZoneOrchestrator::ZoneStats ZoneOrchestrator::GetZoneStats() const
         if (!bot)
             continue;
 
-        if (bot->IsInCombat() || bot->IsInGroup())
+        if (bot->IsInCombat() || bot->GetGroup() != nullptr)
             activeBots++;
 
         totalLevel += static_cast<float>(bot->GetLevel());
@@ -459,7 +459,7 @@ void ZoneOrchestrator::DetectZoneEvents()
 void ZoneOrchestrator::CleanupExpiredObjectives()
 {
     _objectives.erase(
-        std::remove_if(_objectives.begin(), _objectives.end(),
+        ::std::remove_if(_objectives.begin(), _objectives.end(),
             [](ZoneObjective const& obj) {
                 return !obj.IsActive();
             }),
@@ -470,7 +470,7 @@ void ZoneOrchestrator::CleanupExpiredObjectives()
 void ZoneOrchestrator::PrioritizeObjectives()
 {
     // Sort objectives by priority (highest first)
-    std::sort(_objectives.begin(), _objectives.end(),
+    ::std::sort(_objectives.begin(), _objectives.end(),
         [](ZoneObjective const& a, ZoneObjective const& b) {
             return a.priority > b.priority;
         });
@@ -498,7 +498,7 @@ void ZoneOrchestrator::OptimizeRaidComposition()
 // ZoneOrchestratorManager
 // ============================================================================
 
-std::unordered_map<uint32, std::unique_ptr<ZoneOrchestrator>> ZoneOrchestratorManager::_orchestrators;
+::std::unordered_map<uint32, ::std::unique_ptr<ZoneOrchestrator>> ZoneOrchestratorManager::_orchestrators;
 
 ZoneOrchestrator* ZoneOrchestratorManager::GetOrchestrator(uint32 zoneId)
 {
@@ -511,9 +511,9 @@ ZoneOrchestrator* ZoneOrchestratorManager::GetOrchestrator(uint32 zoneId)
 
 ZoneOrchestrator* ZoneOrchestratorManager::CreateOrchestrator(uint32 zoneId)
 {
-    auto orchestrator = std::make_unique<ZoneOrchestrator>(zoneId);
+    auto orchestrator = ::std::make_unique<ZoneOrchestrator>(zoneId);
     ZoneOrchestrator* ptr = orchestrator.get();
-    _orchestrators[zoneId] = std::move(orchestrator);
+    _orchestrators[zoneId] = ::std::move(orchestrator);
 
     TC_LOG_INFO("playerbot.coordination", "Created zone orchestrator for zone {}", zoneId);
 
@@ -538,7 +538,7 @@ void ZoneOrchestratorManager::UpdateAll(uint32 diff)
     }
 }
 
-std::unordered_map<uint32, std::unique_ptr<ZoneOrchestrator>> const& ZoneOrchestratorManager::GetAll()
+::std::unordered_map<uint32, ::std::unique_ptr<ZoneOrchestrator>> const& ZoneOrchestratorManager::GetAll()
 {
     return _orchestrators;
 }

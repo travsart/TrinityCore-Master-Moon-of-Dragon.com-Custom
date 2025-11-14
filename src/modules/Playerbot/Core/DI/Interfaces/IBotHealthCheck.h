@@ -52,7 +52,7 @@ public:
 
     // Stall detection
     virtual void CheckForStalledBots(uint32 currentTime) = 0;
-    virtual std::vector<ObjectGuid> GetStalledBots() const = 0;
+    virtual ::std::vector<ObjectGuid> GetStalledBots() const = 0;
     virtual bool IsBotStalled(ObjectGuid botGuid) const = 0;
 
     // Deadlock detection
@@ -61,14 +61,14 @@ public:
     virtual uint32 GetTimeSinceLastProgress() const = 0;
 
     // Error monitoring
-    virtual void RecordError(ObjectGuid botGuid, std::string const& errorType) = 0;
+    virtual void RecordError(ObjectGuid botGuid, ::std::string const& errorType) = 0;
     virtual float GetSystemErrorRate() const = 0;
     virtual bool IsErrorRateExcessive() const = 0;
 
     // Health status
     virtual HealthStatus GetSystemHealth() const = 0;
     virtual HealthStatus GetBotHealth(ObjectGuid botGuid) const = 0;
-    virtual std::vector<HealthCheckResult> GetRecentHealthIssues() const = 0;
+    virtual ::std::vector<HealthCheckResult> GetRecentHealthIssues() const = 0;
 
     // Recovery
     virtual void TriggerAutomaticRecovery(ObjectGuid botGuid) = 0;

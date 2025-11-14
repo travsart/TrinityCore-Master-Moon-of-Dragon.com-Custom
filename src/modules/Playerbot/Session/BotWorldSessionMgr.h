@@ -67,7 +67,7 @@ public:
     void TriggerCharacterLoginForAllSessions() override;
 
     // Chat command support - NEW APIs for command system
-    std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const override;
+    ::std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const override;
     void RemoveAllPlayerBots(uint32 accountId) override;
     uint32 GetBotCountByAccount(uint32 accountId) const override;
 
@@ -84,19 +84,19 @@ private:
     bool SynchronizeCharacterCache(ObjectGuid playerGuid);
 
     // Session management
-    std::unordered_map<ObjectGuid, std::shared_ptr<BotSession>> _botSessions;
-    std::unordered_set<ObjectGuid> _botsLoading;
+    ::std::unordered_map<ObjectGuid, ::std::shared_ptr<BotSession>> _botSessions;
+    ::std::unordered_set<ObjectGuid> _botsLoading;
 
     // CRITICAL FIX: Spawn throttling to prevent database overload
     // Queue pending bot spawns and process them at controlled rate
-    std::vector<std::pair<ObjectGuid, uint32>> _pendingSpawns;  // <playerGuid, masterAccountId>
+    ::std::vector<::std::pair<ObjectGuid, uint32>> _pendingSpawns;  // <playerGuid, masterAccountId>
     uint32 _spawnsProcessedThisTick{0};
     uint32 _maxSpawnsPerTick{10};  // From Playerbot.LevelManager.MaxBotsPerUpdate config
 
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _sessionsMutex;
-    std::atomic<bool> _initialized{false};
-    std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _enabled{false};
 
     // ENTERPRISE-GRADE PERFORMANCE SYSTEM (Phase 2)
     // Tracks ticks for priority scheduling
@@ -116,7 +116,7 @@ private:
     boost::lockfree::queue<ObjectGuid> _asyncDisconnections{1000};
 
     // Atomic counter for bot updates completed asynchronously
-    std::atomic<uint32> _asyncBotsUpdated{0};
+    ::std::atomic<uint32> _asyncBotsUpdated{0};
 };
 
 // Global instance accessor

@@ -28,6 +28,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // DESTRUCTION WARLOCK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -111,7 +121,7 @@ struct ManaSoulShardResourceDestro
     void Regenerate(uint32 diff) {
         if (mana < maxMana) {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
-            mana = std::min(mana + regenAmount, maxMana);
+            mana = ::std::min(mana + regenAmount, maxMana);
         }
         available = mana > 0;
     }
@@ -188,7 +198,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -347,7 +357,7 @@ public:
         {
             this->CastSpell(target, CONFLAGRATE);
             GenerateSoulShard(1);
-            _backdraftStacks = std::min(_backdraftStacks + 2, 4u); // Grants 2 stacks
+            _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u); // Grants 2 stacks
             return;
         }
 
@@ -425,7 +435,7 @@ public:
         {
             this->CastSpell(target, CONFLAGRATE);
             GenerateSoulShard(1);
-            _backdraftStacks = std::min(_backdraftStacks + 2, 4u);
+            _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u);
             return;
         }
 
@@ -582,7 +592,7 @@ private:
 
     void GenerateSoulShard(uint32 amount)
     {
-        this->_resource.soulShards = std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
+        this->_resource.soulShards = ::std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
     }
 
     void ConsumeSoulShard(uint32 amount)
@@ -599,7 +609,7 @@ private:
         ObjectGuid primaryGuid = primaryTarget->GetGUID();
 
         // Get all nearby enemies within 40 yards
-        std::list<::Unit*> nearbyEnemies;
+        ::std::list<::Unit*> nearbyEnemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, nearbyEnemies, u_check);
         Cell::VisitAllObjects(bot, searcher, 40.0f);
@@ -780,7 +790,7 @@ private:
                             Condition("Can summon Infernal", [this](Player* bot) {
                                 return this->CanCastSpell(SUMMON_INFERNAL, bot);
                             }),
-                            Action("Cast Summon Infernal", [this](Player* bot) {
+                            bot::ai::Action("Cast Summon Infernal", [this](Player* bot) {
                                 this->CastSpell(bot, SUMMON_INFERNAL);
                                 return NodeStatus::SUCCESS;
                             })
@@ -789,7 +799,7 @@ private:
                             Condition("Has Dark Soul talent", [this](Player* bot) {
                                 return bot->HasSpell(DARK_SOUL_INSTABILITY);
                             }),
-                            Action("Cast Dark Soul", [this](Player* bot) {
+                            bot::ai::Action("Cast Dark Soul", [this](Player* bot) {
                                 if (this->CanCastSpell(DARK_SOUL_INSTABILITY, bot))
                                 {
                                     this->CastSpell(bot, DARK_SOUL_INSTABILITY);
@@ -812,7 +822,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            Action("Cast Immolate", [this](Player* bot) {
+                            bot::ai::Action("Cast Immolate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMMOLATE, target))
                                 {
@@ -828,11 +838,11 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->CanCastSpell(CONFLAGRATE, target);
                             }),
-                            Action("Cast Conflagrate", [this](Player* bot) {
+                            bot::ai::Action("Cast Conflagrate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 this->CastSpell(target, CONFLAGRATE);
                                 this->GenerateSoulShard(1);
-                                this->_backdraftStacks = std::min(this->_backdraftStacks + 2, 4u);
+                                this->_backdraftStacks = ::std::min(this->_backdraftStacks + 2, 4u);
                                 return NodeStatus::SUCCESS;
                             })
                         })
@@ -849,7 +859,7 @@ private:
                             Condition("3+ enemies and 3+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            Action("Cast Rain of Fire", [this](Player* bot) {
+                            bot::ai::Action("Cast Rain of Fire", [this](Player* bot) {
                                 if (this->CanCastSpell(RAIN_OF_FIRE, bot))
                                 {
                                     this->CastSpell(bot, RAIN_OF_FIRE);
@@ -863,7 +873,7 @@ private:
                             Condition("2+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            Action("Cast Chaos Bolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CHAOS_BOLT, target))
                                 {
@@ -888,7 +898,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
                             }),
-                            Action("Cast Shadowburn", [this](Player* bot) {
+                            bot::ai::Action("Cast Shadowburn", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOWBURN, target))
                                 {
@@ -900,7 +910,7 @@ private:
                             })
                         }),
                         Sequence("Incinerate (filler)", {
-                            Action("Cast Incinerate", [this](Player* bot) {
+                            bot::ai::Action("Cast Incinerate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(INCINERATE, target))
                                 {

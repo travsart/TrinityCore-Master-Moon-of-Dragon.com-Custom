@@ -105,13 +105,13 @@ Unit* TargetManager::GetPriorityTarget()
     if (!_bot)
         return nullptr;
 
-    std::vector<Unit*> targets = GetCombatTargets();
+    ::std::vector<Unit*> targets = GetCombatTargets();
 
     if (targets.empty())
         return nullptr;
 
     // Score all targets
-    std::vector<std::pair<Unit*, float>> scoredTargets;
+    ::std::vector<::std::pair<Unit*, float>> scoredTargets;
 
     for (Unit* target : targets)
     {
@@ -126,7 +126,7 @@ Unit* TargetManager::GetPriorityTarget()
         return nullptr;
 
     // Sort by score (highest first)
-    std::sort(scoredTargets.begin(), scoredTargets.end(),
+    ::std::sort(scoredTargets.begin(), scoredTargets.end(),
         [](const auto& a, const auto& b) {
             return a.second > b.second;
         });
@@ -218,16 +218,16 @@ bool TargetManager::IsHighPriorityTarget(Unit* target)
     return priority == TargetPriority::CRITICAL || priority == TargetPriority::HIGH;
 }
 
-std::vector<Unit*> TargetManager::GetCombatTargets()
+::std::vector<Unit*> TargetManager::GetCombatTargets()
 {
-    std::vector<Unit*> targets;
+    ::std::vector<Unit*> targets;
 
     if (!_bot)
         return targets;
 
     // Get all enemies from threat list
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
+    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
     for (HostileReference* ref : threatList)
     {
@@ -379,7 +379,7 @@ float TargetManager::CalculateThreatLevel(Unit* target) const
     float botThreat = threatMgr.GetThreat(_bot);
 
     // Calculate relative threat (0.0-1.0)
-    return std::min(botThreat / maxThreat, 1.0f);
+    return ::std::min(botThreat / maxThreat, 1.0f);
 }
 
 float TargetManager::GetRecentDamage(Unit* target, const CombatMetrics& metrics) const
@@ -391,10 +391,10 @@ float TargetManager::GetRecentDamage(Unit* target, const CombatMetrics& metrics)
 
 void TargetManager::UpdateTargetCache(const CombatMetrics& metrics)
 {
-    std::vector<Unit*> targets = GetCombatTargets();
+    ::std::vector<Unit*> targets = GetCombatTargets();
 
     // Clear stale entries
-    std::unordered_set<ObjectGuid> activeGuids;
+    ::std::unordered_set<ObjectGuid> activeGuids;
     for (Unit* target : targets)
     {
         if (target)

@@ -66,7 +66,7 @@ public:
     explicit BotSession(uint32 bnetAccountId);
 
     // Factory method to create BotSession with dummy socket
-    static std::shared_ptr<BotSession> Create(uint32 bnetAccountId);
+    static ::std::shared_ptr<BotSession> Create(uint32 bnetAccountId);
 
     virtual ~BotSession();
 
@@ -104,7 +104,7 @@ public:
      * Called from: Bot worker threads (ProcessBotPackets)
      * Executed by: Main world thread (World::UpdateSessions)
      */
-    void QueueDeferredPacket(std::unique_ptr<WorldPacket> packet);
+    void QueueDeferredPacket(::std::unique_ptr<WorldPacket> packet);
 
     /**
      * @brief Process all deferred packets (main thread only!)
@@ -164,31 +164,31 @@ private:
 
 private:
     // Simple packet queues - NO TBB, NO BOOST
-    std::queue<std::unique_ptr<WorldPacket>> _incomingPackets;
-    std::queue<std::unique_ptr<WorldPacket>> _outgoingPackets;
-    mutable std::recursive_timed_mutex _packetMutex;
-    mutable std::timed_mutex _updateMutex;  // TIMED MUTEX: Prevents both deadlock AND race conditions
+    ::std::queue<::std::unique_ptr<WorldPacket>> _incomingPackets;
+    ::std::queue<::std::unique_ptr<WorldPacket>> _outgoingPackets;
+    mutable ::std::recursive_timed_mutex _packetMutex;
+    mutable ::std::timed_mutex _updateMutex;  // TIMED MUTEX: Prevents both deadlock AND race conditions
 
     // Deferred packet queue (main thread processing)
     // Packets that require serialization with Map::Update() to prevent race conditions
-    std::queue<std::unique_ptr<WorldPacket>> _deferredPackets;
+    ::std::queue<::std::unique_ptr<WorldPacket>> _deferredPackets;
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredPacketMutex; // Simple mutex (no recursion needed)
 
     // Bot state
-    std::atomic<bool> _active{true};
-    std::atomic<bool> _destroyed{false};
+    ::std::atomic<bool> _active{true};
+    ::std::atomic<bool> _destroyed{false};
 
     // DEADLOCK FIX: Lock-free packet processing flag
-    std::atomic<bool> _packetProcessing{false};
+    ::std::atomic<bool> _packetProcessing{false};
 
     // Synchronous login state machine
-    std::atomic<LoginState> _loginState{LoginState::NONE};
+    ::std::atomic<LoginState> _loginState{LoginState::NONE};
 
     // Bot AI system
     BotAI* _ai{nullptr};
 
     // Packet simulation system (Phase 1 refactoring)
-    std::unique_ptr<BotPacketSimulator> _packetSimulator;
+    ::std::unique_ptr<BotPacketSimulator> _packetSimulator;
 
     // Account information
     uint32 _bnetAccountId;

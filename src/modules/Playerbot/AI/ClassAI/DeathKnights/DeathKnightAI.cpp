@@ -47,18 +47,18 @@ static constexpr uint8 RUNE_DEATH = 3;
 // Performance metrics structure
 struct DeathKnightMetrics
 {
-    std::atomic<uint32> totalRunicPowerGenerated{0};
-    std::atomic<uint32> totalRunicPowerSpent{0};
-    std::atomic<uint32> totalRunesUsed{0};
-    std::atomic<uint32> diseasesApplied{0};
-    std::atomic<uint32> deathStrikesUsed{0};
-    std::atomic<uint32> deathGripsUsed{0};
-    std::atomic<uint32> interruptsExecuted{0};
-    std::atomic<uint32> cooldownsUsed{0};
-    std::atomic<float> averageReactionTime{0};
-    std::atomic<float> runeEfficiency{0};
-    std::atomic<float> diseaseUptime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> totalRunicPowerGenerated{0};
+    ::std::atomic<uint32> totalRunicPowerSpent{0};
+    ::std::atomic<uint32> totalRunesUsed{0};
+    ::std::atomic<uint32> diseasesApplied{0};
+    ::std::atomic<uint32> deathStrikesUsed{0};
+    ::std::atomic<uint32> deathGripsUsed{0};
+    ::std::atomic<uint32> interruptsExecuted{0};
+    ::std::atomic<uint32> cooldownsUsed{0};
+    ::std::atomic<float> averageReactionTime{0};
+    ::std::atomic<float> runeEfficiency{0};
+    ::std::atomic<float> diseaseUptime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -73,7 +73,7 @@ struct DeathKnightMetrics
         averageReactionTime = 0;
         runeEfficiency = 0;
         diseaseUptime = 0;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     void UpdateReactionTime(float deltaMs)
@@ -228,7 +228,7 @@ class DeathKnightCombatMetrics
 public:
     void RecordAbilityUsage(uint32 spellId, bool success, uint32 runesUsed = 0, uint32 powerCost = 0)
     {
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         _abilityTimings[spellId] = now;
 
         if (success)
@@ -277,16 +277,16 @@ public:
 
     bool IsOnGlobalCooldown() const
     {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastGCD);
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastGCD);
         return elapsed.count() < 1500; // 1.5 second GCD
     }
 
 private:
-    std::unordered_map<uint32, std::chrono::steady_clock::time_point> _abilityTimings;
-    std::unordered_map<uint32, uint32> _successfulCasts;
-    std::unordered_map<uint32, uint32> _failedCasts;
-    std::chrono::steady_clock::time_point _lastGCD;
+    ::std::unordered_map<uint32, ::std::chrono::steady_clock::time_point> _abilityTimings;
+    ::std::unordered_map<uint32, uint32> _successfulCasts;
+    ::std::unordered_map<uint32, uint32> _failedCasts;
+    ::std::chrono::steady_clock::time_point _lastGCD;
     uint32 _totalRunesUsed = 0;
     uint32 _totalRunicPowerUsed = 0;
     uint32 _totalRunicPowerGenerated = 0;
@@ -303,7 +303,7 @@ public:
             return _bot->GetPosition();
 
         Position optimalPos = _bot->GetPosition();
-        float currentDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        switch (detectedSpec)
+        float currentDistance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        switch (detectedSpec)
         {
 
             case DeathKnightSpec::BLOOD:
@@ -416,11 +416,11 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     DetectSpecialization();
 
     // Initialize performance tracking
-    _metrics = std::make_unique<DeathKnightMetrics>();
-    _combatMetrics = std::make_unique<DeathKnightCombatMetrics>();
-    _runeManager = std::make_unique<RuneManager>(bot);
-    _diseaseManager = std::make_unique<DiseaseManager>(bot);
-    _positioning = std::make_unique<DeathKnightCombatPositioning>(bot);    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
+    _metrics = ::std::make_unique<DeathKnightMetrics>();
+    _combatMetrics = ::std::make_unique<DeathKnightCombatMetrics>();
+    _runeManager = ::std::make_unique<RuneManager>(bot);
+    _diseaseManager = ::std::make_unique<DiseaseManager>(bot);
+    _positioning = ::std::make_unique<DeathKnightCombatPositioning>(bot);    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
 
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
 }
@@ -428,11 +428,11 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
 void DeathKnightAI::InitializeCombatSystems()
 {
     // Initialize advanced combat system components
-    _threatManager = std::make_unique<BotThreatManager>(GetBot());
-    _targetSelector = std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
-    _positionManager = std::make_unique<PositionManager>(GetBot(), _threatManager.get());
-    _interruptManager = std::make_unique<InterruptManager>(GetBot());
-    _cooldownManager = std::make_unique<CooldownManager>();
+    _threatManager = ::std::make_unique<BotThreatManager>(GetBot());
+    _targetSelector = ::std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
+    _positionManager = ::std::make_unique<PositionManager>(GetBot(), _threatManager.get());
+    _interruptManager = ::std::make_unique<InterruptManager>(GetBot());
+    _cooldownManager = ::std::make_unique<CooldownManager>();
 
     TC_LOG_DEBUG("playerbot", "DeathKnightAI combat systems initialized for {}", GetBot()->GetName());
 }
@@ -573,10 +573,10 @@ void DeathKnightAI::UpdateRotation(Unit* target)
     ExecuteSpecializationRotation(target);
 
     // Update performance metrics
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     _diseaseManager->UpdateDiseases(target);
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     _metrics->UpdateReactionTime(duration.count() / 1000.0f);
     _metrics->UpdateDiseaseUptime(_diseaseManager->GetDiseaseUptime());
 }
@@ -586,7 +586,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     if (!target || !GetBot())
         return;
 
-    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     uint32 runicPower = GetBot()->GetPower(POWER_RUNIC_POWER);
 
     // Apply diseases first
@@ -1279,7 +1279,7 @@ bool DeathKnightAI::HandleInterrupts(Unit* target)
     if (!interruptTarget || !interruptTarget->HasUnitState(UNIT_STATE_CASTING))
         return false;
 
-    float distance = std::sqrt(GetBot()->GetExactDistSq(interruptTarget)); // Calculate once from squared distance
+    float distance = ::std::sqrt(GetBot()->GetExactDistSq(interruptTarget)); // Calculate once from squared distance
 
     // Priority: Mind Freeze for melee range, Strangulate for ranged
     if (distance <= OPTIMAL_MELEE_RANGE && CanUseAbility(MIND_FREEZE))
@@ -1505,7 +1505,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
                  GetBot()->GetName(), priorityTarget->GetName());
 
     // Use Death Grip on new target if needed
-    float distance = std::sqrt(GetBot()->GetExactDistSq(priorityTarget)); // Calculate once from squared distance
+    float distance = ::std::sqrt(GetBot()->GetExactDistSq(priorityTarget)); // Calculate once from squared distance
     if (distance > DEATH_GRIP_MIN_RANGE && distance <= DEATH_GRIP_MAX_RANGE)
     {
         if (ShouldUseDeathGrip(priorityTarget) && CanUseAbility(DEATH_GRIP))
@@ -1988,7 +1988,7 @@ bool DeathKnightAI::ShouldUseDeathGrip(Unit* target) const
     if (currentTime - _lastDeathGrip < DEATH_GRIP_COOLDOWN)
         return false;
 
-    float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance < DEATH_GRIP_MIN_RANGE || distance > DEATH_GRIP_MAX_RANGE)
         return false;
 
@@ -2055,7 +2055,7 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -2074,7 +2074,7 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)

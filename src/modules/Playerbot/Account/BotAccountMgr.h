@@ -79,7 +79,7 @@ public:
      * @param requestedEmail Optional specific email, auto-generated if empty
      * @return BattleNet account ID, 0 on failure
      */
-    uint32 CreateBotAccount(std::string const& requestedEmail = "") override;
+    uint32 CreateBotAccount(::std::string const& requestedEmail = "") override;
 
     /**
      * Batch create multiple accounts
@@ -87,7 +87,7 @@ public:
      * @param callback Async callback with created account IDs
      */
     void CreateBotAccountsBatch(uint32 count,
-        std::function<void(std::vector<uint32>)> callback) override;
+        ::std::function<void(::std::vector<uint32>)> callback) override;
 
     // === ACCOUNT POOL MANAGEMENT ===
 
@@ -124,12 +124,12 @@ public:
      * @param callback Async completion callback
      */
     void DeleteBotAccount(uint32 bnetAccountId,
-        std::function<void(bool success)> callback = nullptr) override;
+        ::std::function<void(bool success)> callback = nullptr) override;
 
     /**
      * Delete all bot accounts (cleanup)
      */
-    void DeleteAllBotAccounts(std::function<void(uint32 deleted)> callback = nullptr) override;
+    void DeleteAllBotAccounts(::std::function<void(uint32 deleted)> callback = nullptr) override;
 
     // === CHARACTER LIMIT ENFORCEMENT ===
 
@@ -172,8 +172,8 @@ private:
 
     // === INTERNAL METHODS ===
 
-    std::string GenerateUniqueEmail();
-    std::string GenerateSecurePassword();
+    ::std::string GenerateUniqueEmail();
+    ::std::string GenerateSecurePassword();
     void StoreAccountMetadata(BotAccountInfo const& info);
     void LoadAccountMetadata();
     void ProcessAccountPoolRefill();
@@ -182,7 +182,7 @@ private:
     void LoadConfigurationValues();
 
     // Thread-safe callback queuing
-    void QueueCallback(std::function<void()> callback);
+    void QueueCallback(::std::function<void()> callback);
 
     // === DATA MEMBERS ===
 
@@ -194,37 +194,37 @@ private:
     using AccountMap = phmap::parallel_flat_hash_map<
         uint32,                     // BattleNet account ID
         BotAccountInfo,
-        std::hash<uint32>,
-        std::equal_to<>,
-        std::allocator<std::pair<uint32, BotAccountInfo>>,
+        ::std::hash<uint32>,
+        ::std::equal_to<>,
+        ::std::allocator<::std::pair<uint32, BotAccountInfo>>,
         4,                          // 4 submaps for concurrency
-        std::recursive_mutex        // CHANGED: std::shared_mutex -> std::recursive_mutex
+        ::std::recursive_mutex        // CHANGED: ::std::shared_mutex -> ::std::recursive_mutex
     >;
 
     AccountMap _accounts;
 
     // Pre-created account pool for instant availability
-    std::queue<uint32> _accountPool;
+    ::std::queue<uint32> _accountPool;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _poolMutex;
 
     // Email generation
-    std::atomic<uint32> _emailCounter{1};
-    std::string _emailDomain{"playerbot.local"};
+    ::std::atomic<uint32> _emailCounter{1};
+    ::std::string _emailDomain{"playerbot.local"};
 
     // Statistics
-    std::atomic<uint32> _totalAccounts{0};
-    std::atomic<uint32> _activeAccounts{0};
-    std::atomic<uint32> _poolRefillInProgress{0};
+    ::std::atomic<uint32> _totalAccounts{0};
+    ::std::atomic<uint32> _activeAccounts{0};
+    ::std::atomic<uint32> _poolRefillInProgress{0};
 
     // Configuration from playerbots.conf
-    std::atomic<uint32> _maxBotsTotal{1000};        // Playerbot.MaxBotsTotal
-    std::atomic<bool> _autoCreateAccounts{false};   // Playerbot.AutoCreateAccounts
-    std::atomic<uint32> _accountsToCreate{0};       // Playerbot.AccountsToCreate
-    std::atomic<uint32> _maxCharactersPerAccount{10}; // Trinity hardcoded limit
+    ::std::atomic<uint32> _maxBotsTotal{1000};        // Playerbot.MaxBotsTotal
+    ::std::atomic<bool> _autoCreateAccounts{false};   // Playerbot.AutoCreateAccounts
+    ::std::atomic<uint32> _accountsToCreate{0};       // Playerbot.AccountsToCreate
+    ::std::atomic<uint32> _maxCharactersPerAccount{10}; // Trinity hardcoded limit
 
     // Calculated values
-    std::atomic<uint32> _requiredAccounts{0};       // Calculated from config
-    std::atomic<uint32> _targetPoolSize{50};        // Pool size target
+    ::std::atomic<uint32> _requiredAccounts{0};       // Calculated from config
+    ::std::atomic<uint32> _targetPoolSize{50};        // Pool size target
 
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _accountsMutex;
@@ -232,10 +232,10 @@ private:
     // Callback processing for thread-safe operations
     struct PendingCallback
     {
-        std::function<void()> callback;
-        std::chrono::steady_clock::time_point submitTime;
+        ::std::function<void()> callback;
+        ::std::chrono::steady_clock::time_point submitTime;
     };
-    std::queue<PendingCallback> _pendingCallbacks;
+    ::std::queue<PendingCallback> _pendingCallbacks;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _callbackMutex;
 };
 

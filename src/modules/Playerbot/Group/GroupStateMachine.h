@@ -154,7 +154,7 @@ public:
      * @param states Vector of states to check
      * @return true if current state is in the list
      */
-    bool IsInAnyState(std::vector<GroupState> const& states) const;
+    bool IsInAnyState(::std::vector<GroupState> const& states) const;
 
     /**
      * Check if bot is in a group
@@ -237,7 +237,7 @@ public:
      * Callback function type for state entry/exit
      * Parameters: (oldState, newState, transition)
      */
-    using StateCallback = std::function<void(GroupState, GroupState, GroupStateTransition)>;
+    using StateCallback = ::std::function<void(GroupState, GroupState, GroupStateTransition)>;
 
     /**
      * Register callback for state entry
@@ -271,7 +271,7 @@ public:
         GroupState fromState;
         GroupState toState;
         GroupStateTransition transition;
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
         uint32 durationInPreviousStateMs;
     };
 
@@ -280,7 +280,7 @@ public:
      * @param maxEntries Maximum entries to return (0 = all)
      * @return Vector of recent state changes
      */
-    std::vector<StateHistoryEntry> GetHistory(uint32 maxEntries = 10) const;
+    ::std::vector<StateHistoryEntry> GetHistory(uint32 maxEntries = 10) const;
 
     /**
      * Clear state history
@@ -295,21 +295,21 @@ public:
      * Get string representation of current state
      * @return State name
      */
-    std::string GetStateName() const;
+    ::std::string GetStateName() const;
 
     /**
      * Get string representation of any state
      * @param state State to convert
      * @return State name
      */
-    static std::string GetStateName(GroupState state);
+    static ::std::string GetStateName(GroupState state);
 
     /**
      * Get string representation of transition
      * @param transition Transition to convert
      * @return Transition name
      */
-    static std::string GetTransitionName(GroupStateTransition transition);
+    static ::std::string GetTransitionName(GroupStateTransition transition);
 
     /**
      * Dump current state and history to log
@@ -320,7 +320,7 @@ public:
      * Generate state diagram (DOT format)
      * @return GraphViz DOT format string
      */
-    static std::string GenerateStateDiagram();
+    static ::std::string GenerateStateDiagram();
 
 private:
     /**
@@ -366,23 +366,23 @@ private:
     ObjectGuid _botGuid;                            ///< Bot this state machine belongs to
     GroupState _currentState;                        ///< Current state
     GroupState _previousState;                       ///< Previous state
-    std::chrono::steady_clock::time_point _stateEntryTime; ///< When current state was entered
+    ::std::chrono::steady_clock::time_point _stateEntryTime; ///< When current state was entered
     uint32 _transitionCount;                         ///< Total number of transitions
 
     // State tracking
     bool _wasRaidBeforeCombat;                       ///< Was raid before entering combat
 
     // Callbacks
-    std::unordered_map<GroupState, std::vector<StateCallback>> _entryCallbacks;
-    std::unordered_map<GroupState, std::vector<StateCallback>> _exitCallbacks;
-    std::vector<StateCallback> _anyTransitionCallbacks;
+    ::std::unordered_map<GroupState, ::std::vector<StateCallback>> _entryCallbacks;
+    ::std::unordered_map<GroupState, ::std::vector<StateCallback>> _exitCallbacks;
+    ::std::vector<StateCallback> _anyTransitionCallbacks;
 
     // History
-    std::vector<StateHistoryEntry> _history;
+    ::std::vector<StateHistoryEntry> _history;
     static constexpr uint32 MAX_HISTORY_SIZE = 50;
 
     // Transition validation table (inline to avoid DLL linkage issues)
-    static inline const std::unordered_map<GroupState, std::vector<GroupStateTransition>> _validTransitions = {
+    static inline const ::std::unordered_map<GroupState, ::std::vector<GroupStateTransition>> _validTransitions = {
         // NOT_IN_GROUP can only receive invites or be forced
         {GroupState::NOT_IN_GROUP, {
             GroupStateTransition::RECEIVE_INVITE

@@ -26,6 +26,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // FROST DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -91,17 +101,17 @@ struct FrostRuneRunicPowerResource
         if (totalRunes >= runesCost) {
             uint32 remaining = runesCost;
             if (bloodRunes > 0) {
-                uint32 toConsume = std::min(bloodRunes, remaining);
+                uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && frostRunes > 0) {
-                uint32 toConsume = std::min(frostRunes, remaining);
+                uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && unholyRunes > 0) {
-                uint32 toConsume = std::min(unholyRunes, remaining);
+                uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
             }
@@ -568,7 +578,7 @@ private:
 
     void GenerateRunicPower(uint32 amount)
     {
-        this->_resource.runicPower = std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
+        this->_resource.runicPower = ::std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
     }
 
     void ConsumeRunicPower(uint32 amount)
@@ -662,7 +672,7 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_pillarOfFrostActive;
                             }),
-                            Action("Cast Pillar", [this](Player* bot) {
+                            bot::ai::Action("Cast Pillar", [this](Player* bot) {
                                 if (this->CanCastSpell(FROST_PILLAR_OF_FROST, bot))
                                 {
                                     this->CastSpell(bot, FROST_PILLAR_OF_FROST);
@@ -677,7 +687,7 @@ private:
                             Condition("< 3 runes", [this](Player*) {
                                 return this->_resource.GetAvailableRunes() < 3;
                             }),
-                            Action("Cast ERW", [this](Player* bot) {
+                            bot::ai::Action("Cast ERW", [this](Player* bot) {
                                 if (this->CanCastSpell(FROST_EMPOWER_RUNE_WEAPON, bot))
                                 {
                                     this->CastSpell(bot, FROST_EMPOWER_RUNE_WEAPON);
@@ -699,7 +709,7 @@ private:
                             Condition("KM active and 2 runes", [this](Player*) {
                                 return this->_kmTracker.IsActive() && this->_resource.GetAvailableRunes() >= 2;
                             }),
-                            Action("Cast Obliterate", [this](Player* bot) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {
@@ -716,7 +726,7 @@ private:
                             Condition("Rime active", [this](Player*) {
                                 return this->_rimeTracker.IsActive();
                             }),
-                            Action("Cast Howling Blast", [this](Player* bot) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
@@ -736,7 +746,7 @@ private:
                     Condition("25+ RP and target", [this](Player* bot) {
                         return bot && bot->GetVictim() && this->_resource.runicPower >= 25;
                     }),
-                    Action("Cast Frost Strike", [this](Player* bot) {
+                    bot::ai::Action("Cast Frost Strike", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_FROST_STRIKE, target))
                         {
@@ -758,7 +768,7 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(10.0f) >= 3;
                             }),
-                            Action("Cast Howling Blast", [this](Player* bot) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
@@ -769,7 +779,7 @@ private:
                             })
                         }),
                         Sequence("Obliterate (ST)", {
-                            Action("Cast Obliterate", [this](Player* bot) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {

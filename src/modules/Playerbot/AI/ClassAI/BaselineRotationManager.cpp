@@ -93,8 +93,8 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     }
 
     // Sort abilities by priority (higher priority first)
-    std::vector<BaselineAbility> sorted = *abilities;
-    std::sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) {
+    ::std::vector<BaselineAbility> sorted = *abilities;
+    ::std::sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) {
         return a.priority > b.priority;
     });
 
@@ -232,7 +232,7 @@ float BaselineRotationManager::GetBaselineOptimalRange(Player* bot)
     return 25.0f;
 }
 
-std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilities(uint8 classId) const
+::std::vector<BaselineAbility> const* BaselineRotationManager::GetBaselineAbilities(uint8 classId) const
 {
     auto it = _baselineAbilities.find(classId);
     if (it != _baselineAbilities.end())
@@ -445,7 +445,7 @@ constexpr uint32 BATTLE_SHOUT = 6673;
 
 void BaselineRotationManager::InitializeWarriorBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
 
     // Priority order: Execute > Victory Rush > Slam > Hamstring
     abilities.emplace_back(EXECUTE, 9, 15, 0, 10.0f, true);           // Execute (high priority if target low health)
@@ -456,7 +456,7 @@ void BaselineRotationManager::InitializeWarriorBaseline()
     abilities.emplace_back(HAMSTRING, 7, 10, 0, 3.0f, true);          // Hamstring (slow fleeing enemies)
     abilities.emplace_back(CHARGE, 1, 0, 15000, 15.0f, false);        // Charge (engage)
 
-    _baselineAbilities[CLASS_WARRIOR] = std::move(abilities);
+    _baselineAbilities[CLASS_WARRIOR] = ::std::move(abilities);
 }
 
 bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
@@ -468,7 +468,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
         if (bot->HasSpell(CHARGE))
         {
 
-            bot->CastSpell(target, CHARGE, false);
+            bot->CastSpell(CastSpellTargetArg(target), CHARGE);
 
             return true;
         }
@@ -478,7 +478,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     if (target->GetHealthPct() <= 20.0f && bot->HasSpell(EXECUTE))    {
         if (bot->GetPower(POWER_RAGE) >= 15)        {
 
-            bot->CastSpell(target, EXECUTE, false);
+            bot->CastSpell(CastSpellTargetArg(target), EXECUTE);
 
             return true;
         }
@@ -487,13 +487,13 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     // Victory Rush for healing
     if (bot->HasSpell(VICTORY_RUSH) && bot->HasAura(32216)) // Victory Rush proc
     {
-        bot->CastSpell(target, VICTORY_RUSH, false);
+        bot->CastSpell(CastSpellTargetArg(target), VICTORY_RUSH);
         return true;
     }
 
     // Slam as rage dump
     if (bot->HasSpell(SLAM) && bot->GetPower(POWER_RAGE) >= 20)    {
-        bot->CastSpell(target, SLAM, false);
+        bot->CastSpell(CastSpellTargetArg(target), SLAM);
         return true;
     }
 
@@ -502,7 +502,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
         if (target->GetHealthPct() < 30.0f)
         {
 
-            bot->CastSpell(target, HAMSTRING, false);
+            bot->CastSpell(CastSpellTargetArg(target), HAMSTRING);
 
             return true;
         }
@@ -515,7 +515,7 @@ void WarriorBaselineRotation::ApplyBuffs(Player* bot){
     // Battle Shout
     if (bot->HasSpell(BATTLE_SHOUT) && !bot->HasAura(BATTLE_SHOUT))
     {
-        bot->CastSpell(bot, BATTLE_SHOUT, false);
+        bot->CastSpell(CastSpellTargetArg(bot), BATTLE_SHOUT);
     }
 }
 
@@ -525,14 +525,14 @@ void WarriorBaselineRotation::ApplyBuffs(Player* bot){
 
 void BaselineRotationManager::InitializePaladinBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
 
     abilities.emplace_back(35395, 1, 0, 6000, 10.0f, true);    // Crusader Strike
     abilities.emplace_back(20271, 3, 0, 8000, 9.0f, false);    // Judgment
     abilities.emplace_back(85673, 5, 0, 10000, 7.0f, false);   // Word of Glory (self-heal)
     abilities.emplace_back(853, 9, 0, 60000, 5.0f, false);     // Hammer of Justice (CC)
 
-    _baselineAbilities[CLASS_PALADIN] = std::move(abilities);
+    _baselineAbilities[CLASS_PALADIN] = ::std::move(abilities);
 }
 
 bool PaladinBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
@@ -551,14 +551,14 @@ void PaladinBaselineRotation::ApplyBuffs(Player* bot)
 
 void BaselineRotationManager::InitializeHunterBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
 
     abilities.emplace_back(19434, 1, 20, 3000, 10.0f, false);  // Aimed Shot
     abilities.emplace_back(185358, 3, 20, 0, 9.0f, false);     // Arcane Shot
     abilities.emplace_back(34026, 5, 30, 7500, 8.0f, false);   // Kill Command
     abilities.emplace_back(56641, 9, 0, 0, 5.0f, false);       // Steady Shot (focus builder)
 
-    _baselineAbilities[CLASS_HUNTER] = std::move(abilities);
+    _baselineAbilities[CLASS_HUNTER] = ::std::move(abilities);
 }
 
 bool HunterBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
@@ -577,82 +577,82 @@ void HunterBaselineRotation::ApplyBuffs(Player* bot)
 
 void BaselineRotationManager::InitializeRogueBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(1752, 1, 40, 0, 10.0f, true);  // Sinister Strike
     abilities.emplace_back(196819, 3, 35, 0, 9.0f, true); // Eviscerate (finisher)
-    _baselineAbilities[CLASS_ROGUE] = std::move(abilities);
+    _baselineAbilities[CLASS_ROGUE] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializePriestBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(585, 1, 0, 0, 10.0f, false);  // Smite
     abilities.emplace_back(589, 1, 0, 0, 9.0f, false);   // Shadow Word: Pain
-    _baselineAbilities[CLASS_PRIEST] = std::move(abilities);
+    _baselineAbilities[CLASS_PRIEST] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeDeathKnightBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(49998, 8, 40, 0, 10.0f, true);  // Death Strike
     abilities.emplace_back(45477, 8, 0, 8000, 9.0f, false); // Icy Touch
-    _baselineAbilities[CLASS_DEATH_KNIGHT] = std::move(abilities);
+    _baselineAbilities[CLASS_DEATH_KNIGHT] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeShamanBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(403, 1, 0, 0, 10.0f, false);    // Lightning Bolt
     abilities.emplace_back(73899, 1, 0, 0, 9.0f, true);    // Primal Strike
-    _baselineAbilities[CLASS_SHAMAN] = std::move(abilities);
+    _baselineAbilities[CLASS_SHAMAN] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeMageBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(116, 1, 0, 0, 10.0f, false);    // Frostbolt
     abilities.emplace_back(133, 1, 0, 0, 9.0f, false);     // Fireball
-    _baselineAbilities[CLASS_MAGE] = std::move(abilities);
+    _baselineAbilities[CLASS_MAGE] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeWarlockBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(686, 1, 0, 0, 10.0f, false);    // Shadow Bolt
     abilities.emplace_back(172, 1, 0, 0, 9.0f, false);     // Corruption
-    _baselineAbilities[CLASS_WARLOCK] = std::move(abilities);
+    _baselineAbilities[CLASS_WARLOCK] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeMonkBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(100780, 1, 50, 0, 10.0f, true);  // Tiger Palm
     abilities.emplace_back(100784, 1, 40, 0, 9.0f, true);   // Blackout Kick
-    _baselineAbilities[CLASS_MONK] = std::move(abilities);
+    _baselineAbilities[CLASS_MONK] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeDruidBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(5176, 1, 0, 0, 10.0f, false);    // Wrath
     abilities.emplace_back(8921, 1, 0, 0, 9.0f, false);     // Moonfire
-    _baselineAbilities[CLASS_DRUID] = std::move(abilities);
+    _baselineAbilities[CLASS_DRUID] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeDemonHunterBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(162243, 8, 40, 0, 10.0f, true);  // Demon's Bite
     abilities.emplace_back(162794, 8, 40, 0, 9.0f, true);   // Chaos Strike
-    _baselineAbilities[CLASS_DEMON_HUNTER] = std::move(abilities);
+    _baselineAbilities[CLASS_DEMON_HUNTER] = ::std::move(abilities);
 }
 
 void BaselineRotationManager::InitializeEvokerBaseline()
 {
-    std::vector<BaselineAbility> abilities;
+    ::std::vector<BaselineAbility> abilities;
     abilities.emplace_back(361469, 1, 0, 0, 10.0f, false);  // Azure Strike
     abilities.emplace_back(361500, 1, 0, 0, 9.0f, false);   // Living Flame
-    _baselineAbilities[CLASS_EVOKER] = std::move(abilities);
+    _baselineAbilities[CLASS_EVOKER] = ::std::move(abilities);
 }
 
 // Stub implementations for other baseline rotations

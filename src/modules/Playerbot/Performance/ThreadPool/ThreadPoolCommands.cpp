@@ -61,7 +61,7 @@ bool HandleThreadPoolStatusCommand(ChatHandler* handler, char const* /*args*/)
             if (worker && worker->GetDiagnostics())
             {
                 auto diag = worker->GetDiagnostics();
-                WorkerState state = diag->currentState.load(std::memory_order_relaxed);
+                WorkerState state = diag->currentState.load(::std::memory_order_relaxed);
 
                 handler->PSendSysMessage("  Worker %u: %s", i, WorkerStateToString(state));
 
@@ -198,12 +198,12 @@ bool HandleThreadPoolWorkerCommand(ChatHandler* handler, char const* args)
         auto diag = worker->GetDiagnostics();
         handler->SendSysMessage("\n=== Diagnostic Information ===");
 
-        std::string report = diag->GenerateReport(workerId);
+        ::std::string report = diag->GenerateReport(workerId);
 
         // Send report line by line (PSendSysMessage has length limits)
-        std::istringstream stream(report);
-        std::string line;
-        while (std::getline(stream, line))
+        ::std::istringstream stream(report);
+        ::std::string line;
+        while (::std::getline(stream, line))
         {
             handler->SendSysMessage(line.c_str());
         }

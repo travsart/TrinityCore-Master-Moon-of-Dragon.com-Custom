@@ -44,16 +44,16 @@ public:
      */
     struct ChangeEvent
     {
-        std::string key;
-        std::any oldValue;
-        std::any newValue;
+        ::std::string key;
+        ::std::any oldValue;
+        ::std::any newValue;
         uint32 timestamp;
     };
 
     /**
      * @brief Change listener callback
      */
-    using ChangeListener = std::function<void(ChangeEvent const&)>;
+    using ChangeListener = ::std::function<void(ChangeEvent const&)>;
 
     SharedBlackboard() = default;
     ~SharedBlackboard() = default;
@@ -64,12 +64,12 @@ public:
      * @param value Value to store
      */
     template<typename T>
-    void Set(std::string const& key, T const& value)
+    void Set(::std::string const& key, T const& value)
     {
-        std::unique_lock lock(_mutex);
+        ::std::unique_lock lock(_mutex);
 
         // Get old value for change event
-        std::any oldValue;
+        ::std::any oldValue;
         auto it = _data.find(key);
         if (it != _data.end())
             oldValue = it->second;
@@ -88,9 +88,9 @@ public:
      * @return True if key exists and type matches
      */
     template<typename T>
-    bool Get(std::string const& key, T& outValue) const
+    bool Get(::std::string const& key, T& outValue) const
     {
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         auto it = _data.find(key);
         if (it == _data.end())
@@ -98,10 +98,10 @@ public:
 
         try
         {
-            outValue = std::any_cast<T>(it->second);
+            outValue = ::std::any_cast<T>(it->second);
             return true;
         }
-        catch (std::bad_any_cast const&)
+        catch (::std::bad_any_cast const&)
         {
             return false;
         }
@@ -114,7 +114,7 @@ public:
      * @return Value or default
      */
     template<typename T>
-    T GetOr(std::string const& key, T const& defaultValue) const
+    T GetOr(::std::string const& key, T const& defaultValue) const
     {
         T value;
         if (Get(key, value))
@@ -127,9 +127,9 @@ public:
      * @param key Data key
      * @return True if key exists
      */
-    bool Has(std::string const& key) const
+    bool Has(::std::string const& key) const
     {
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
         return _data.find(key) != _data.end();
     }
 
@@ -137,9 +137,9 @@ public:
      * @brief Remove key (thread-safe)
      * @param key Data key to remove
      */
-    void Remove(std::string const& key)
+    void Remove(::std::string const& key)
     {
-        std::unique_lock lock(_mutex);
+        ::std::unique_lock lock(_mutex);
         _data.erase(key);
     }
 
@@ -148,7 +148,7 @@ public:
      */
     void Clear()
     {
-        std::unique_lock lock(_mutex);
+        ::std::unique_lock lock(_mutex);
         _data.clear();
     }
 
@@ -156,11 +156,11 @@ public:
      * @brief Get all keys (thread-safe)
      * @return Vector of all keys
      */
-    std::vector<std::string> GetKeys() const
+    ::std::vector<::std::string> GetKeys() const
     {
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
-        std::vector<std::string> keys;
+        ::std::vector<::std::string> keys;
         keys.reserve(_data.size());
 
         for (auto const& pair : _data)
@@ -175,7 +175,7 @@ public:
      * @param listener Callback function
      * @return Listener ID for unregistering
      */
-    uint32 RegisterListener(std::string const& key, ChangeListener listener);
+    uint32 RegisterListener(::std::string const& key, ChangeListener listener);
 
     /**
      * @brief Unregister change listener
@@ -189,8 +189,8 @@ public:
      */
     void CopyFrom(SharedBlackboard const& other)
     {
-        std::shared_lock otherLock(other._mutex);
-        std::unique_lock thisLock(_mutex);
+        ::std::shared_lock otherLock(other._mutex);
+        ::std::unique_lock thisLock(_mutex);
 
         _data = other._data;
     }
@@ -202,8 +202,8 @@ public:
      */
     void MergeFrom(SharedBlackboard const& other, bool overwrite = true)
     {
-        std::shared_lock otherLock(other._mutex);
-        std::unique_lock thisLock(_mutex);
+        ::std::shared_lock otherLock(other._mutex);
+        ::std::unique_lock thisLock(_mutex);
 
         for (auto const& pair : other._data)
         {
@@ -213,21 +213,21 @@ public:
     }
 
 private:
-    void NotifyChange(std::string const& key, std::any const& oldValue, std::any const& newValue);
+    void NotifyChange(::std::string const& key, ::std::any const& oldValue, ::std::any const& newValue);
 
-    mutable std::shared_mutex _mutex;
-    std::unordered_map<std::string, std::any> _data;
+    mutable ::std::shared_mutex _mutex;
+    ::std::unordered_map<::std::string, ::std::any> _data;
 
     struct ListenerEntry
     {
         uint32 id;
-        std::string key; // Empty = listen to all
+        ::std::string key; // Empty = listen to all
         ChangeListener callback;
     };
 
-    std::vector<ListenerEntry> _listeners;
+    ::std::vector<ListenerEntry> _listeners;
     uint32 _nextListenerId = 1;
-    mutable std::shared_mutex _listenerMutex;
+    mutable ::std::shared_mutex _listenerMutex;
 };
 
 /**
@@ -311,7 +311,7 @@ public:
      * @param groupId Group ID
      * @param key Key to propagate
      */
-    static void PropagateToGroup(ObjectGuid botGuid, uint32 groupId, std::string const& key);
+    static void PropagateToGroup(ObjectGuid botGuid, uint32 groupId, ::std::string const& key);
 
     /**
      * @brief Propagate value from group to raid
@@ -319,7 +319,7 @@ public:
      * @param raidId Raid ID
      * @param key Key to propagate
      */
-    static void PropagateToRaid(uint32 groupId, uint32 raidId, std::string const& key);
+    static void PropagateToRaid(uint32 groupId, uint32 raidId, ::std::string const& key);
 
     /**
      * @brief Propagate value from raid to zone
@@ -327,18 +327,18 @@ public:
      * @param zoneId Zone ID
      * @param key Key to propagate
      */
-    static void PropagateToZone(uint32 raidId, uint32 zoneId, std::string const& key);
+    static void PropagateToZone(uint32 raidId, uint32 zoneId, ::std::string const& key);
 
 private:
-    static std::unordered_map<ObjectGuid, std::unique_ptr<SharedBlackboard>> _botBlackboards;
-    static std::unordered_map<uint32, std::unique_ptr<SharedBlackboard>> _groupBlackboards;
-    static std::unordered_map<uint32, std::unique_ptr<SharedBlackboard>> _raidBlackboards;
-    static std::unordered_map<uint32, std::unique_ptr<SharedBlackboard>> _zoneBlackboards;
+    static ::std::unordered_map<ObjectGuid, ::std::unique_ptr<SharedBlackboard>> _botBlackboards;
+    static ::std::unordered_map<uint32, ::std::unique_ptr<SharedBlackboard>> _groupBlackboards;
+    static ::std::unordered_map<uint32, ::std::unique_ptr<SharedBlackboard>> _raidBlackboards;
+    static ::std::unordered_map<uint32, ::std::unique_ptr<SharedBlackboard>> _zoneBlackboards;
 
-    static std::shared_mutex _botMutex;
-    static std::shared_mutex _groupMutex;
-    static std::shared_mutex _raidMutex;
-    static std::shared_mutex _zoneMutex;
+    static ::std::shared_mutex _botMutex;
+    static ::std::shared_mutex _groupMutex;
+    static ::std::shared_mutex _raidMutex;
+    static ::std::shared_mutex _zoneMutex;
 };
 
 } // namespace Playerbot

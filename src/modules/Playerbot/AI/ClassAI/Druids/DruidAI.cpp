@@ -62,7 +62,7 @@ void DruidAI::UpdateRotation(::Unit* target)
         if (!GetBot()->IsNonMeleeSpellCast(false))
         {
 
-            float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+            float distance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
 
             if (distance <= 5.0f || GetBot()->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
 

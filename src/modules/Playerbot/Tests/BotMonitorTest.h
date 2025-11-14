@@ -53,9 +53,9 @@ namespace Playerbot
          */
         static bool RunAllTests()
         {
-            std::cout << "=================================================================\n";
-            std::cout << "BotMonitor Test Suite\n";
-            std::cout << "=================================================================\n\n";
+            ::std::cout << "=================================================================\n";
+            ::std::cout << "BotMonitor Test Suite\n";
+            ::std::cout << "=================================================================\n\n";
 
             bool allPassed = true;
 
@@ -75,12 +75,12 @@ namespace Playerbot
             allPassed &= TestResetStatistics();
             allPassed &= TestThreadSafety();
 
-            std::cout << "\n=================================================================\n";
+            ::std::cout << "\n=================================================================\n";
             if (allPassed)
-                std::cout << "ALL TESTS PASSED\n";
+                ::std::cout << "ALL TESTS PASSED\n";
             else
-                std::cout << "SOME TESTS FAILED\n";
-            std::cout << "=================================================================\n";
+                ::std::cout << "SOME TESTS FAILED\n";
+            ::std::cout << "=================================================================\n";
 
             return allPassed;
         }
@@ -88,7 +88,7 @@ namespace Playerbot
     private:
         static bool TestInitialization()
         {
-            std::cout << "Test 1: Initialization and Shutdown\n";
+            ::std::cout << "Test 1: Initialization and Shutdown\n";
 
             BotMonitor* monitor = sBotMonitor;
             assert(monitor != nullptr);
@@ -101,13 +101,13 @@ namespace Playerbot
 
             monitor->Shutdown();
 
-            std::cout << "  [PASS] Initialization and shutdown\n\n";
+            ::std::cout << "  [PASS] Initialization and shutdown\n\n";
             return true;
         }
 
         static bool TestActivityTracking()
         {
-            std::cout << "Test 2: Activity Tracking\n";
+            ::std::cout << "Test 2: Activity Tracking\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->Initialize();
@@ -139,13 +139,13 @@ namespace Playerbot
             monitor->RecordBotResurrection(botGuid1);
             snapshot3 = monitor->CaptureSnapshot();
 
-            std::cout << "  [PASS] Activity tracking (combat, questing, death)\n\n";
+            ::std::cout << "  [PASS] Activity tracking (combat, questing, death)\n\n";
             return true;
         }
 
         static bool TestPerformanceTracking()
         {
-            std::cout << "Test 3: Performance Tracking\n";
+            ::std::cout << "Test 3: Performance Tracking\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -168,13 +168,13 @@ namespace Playerbot
             snapshot = monitor->CaptureSnapshot();
             assert(snapshot.avgAIDecisionTimeMs > 0.0);
 
-            std::cout << "  [PASS] Performance tracking (update times, AI decisions)\n\n";
+            ::std::cout << "  [PASS] Performance tracking (update times, AI decisions)\n\n";
             return true;
         }
 
         static bool TestResourceTracking()
         {
-            std::cout << "Test 4: Resource Tracking\n";
+            ::std::cout << "Test 4: Resource Tracking\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -199,13 +199,13 @@ namespace Playerbot
             assert(snapshot.database.cacheMisses >= 1);
             assert(snapshot.database.cacheHitRate() > 0);
 
-            std::cout << "  [PASS] Resource tracking (database queries, cache)\n\n";
+            ::std::cout << "  [PASS] Resource tracking (database queries, cache)\n\n";
             return true;
         }
 
         static bool TestErrorWarningTracking()
         {
-            std::cout << "Test 5: Error and Warning Tracking\n";
+            ::std::cout << "Test 5: Error and Warning Tracking\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -218,13 +218,13 @@ namespace Playerbot
             assert(snapshot.errorCount >= 2);
             assert(snapshot.warningCount >= 1);
 
-            std::cout << "  [PASS] Error and warning tracking\n\n";
+            ::std::cout << "  [PASS] Error and warning tracking\n\n";
             return true;
         }
 
         static bool TestSnapshotCapture()
         {
-            std::cout << "Test 6: Snapshot Capture\n";
+            ::std::cout << "Test 6: Snapshot Capture\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -241,13 +241,13 @@ namespace Playerbot
             assert(snapshot.database.queryCount >= 1);
             assert(snapshot.uptimeSeconds >= 0);
 
-            std::cout << "  [PASS] Snapshot capture\n\n";
+            ::std::cout << "  [PASS] Snapshot capture\n\n";
             return true;
         }
 
         static bool TestSnapshotHistory()
         {
-            std::cout << "Test 7: Snapshot History\n";
+            ::std::cout << "Test 7: Snapshot History\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -256,22 +256,22 @@ namespace Playerbot
             for (int i = 0; i < 5; ++i)
             {
                 monitor->CaptureSnapshot();
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
             }
 
-            std::vector<PerformanceSnapshot> history = monitor->GetSnapshotHistory(3);
+            ::std::vector<PerformanceSnapshot> history = monitor->GetSnapshotHistory(3);
             assert(history.size() <= 3);
 
             PerformanceSnapshot latest = monitor->GetLatestSnapshot();
             assert(latest.uptimeSeconds >= 0);
 
-            std::cout << "  [PASS] Snapshot history\n\n";
+            ::std::cout << "  [PASS] Snapshot history\n\n";
             return true;
         }
 
         static bool TestTrendData()
         {
-            std::cout << "Test 8: Trend Data\n";
+            ::std::cout << "Test 8: Trend Data\n";
 
             TrendData trend;
 
@@ -291,13 +291,13 @@ namespace Playerbot
 
             assert(trend.values.size() == 60);
 
-            std::cout << "  [PASS] Trend data collection and windowing\n\n";
+            ::std::cout << "  [PASS] Trend data collection and windowing\n\n";
             return true;
         }
 
         static bool TestAlertThresholds()
         {
-            std::cout << "Test 9: Alert Thresholds\n";
+            ::std::cout << "Test 9: Alert Thresholds\n";
 
             BotMonitor* monitor = sBotMonitor;
 
@@ -314,13 +314,13 @@ namespace Playerbot
             assert(newThresholds.cpuWarning == 60.0);
             assert(newThresholds.cpuCritical == 80.0);
 
-            std::cout << "  [PASS] Alert thresholds get/set\n\n";
+            ::std::cout << "  [PASS] Alert thresholds get/set\n\n";
             return true;
         }
 
         static bool TestAlertTriggering()
         {
-            std::cout << "Test 10: Alert Triggering\n";
+            ::std::cout << "Test 10: Alert Triggering\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ClearAlertHistory();
@@ -328,16 +328,16 @@ namespace Playerbot
             // Alerts are triggered internally by CheckAlerts() during Update()
             // This test verifies the alert history retrieval
 
-            std::vector<PerformanceAlert> alerts = monitor->GetActiveAlerts(AlertLevel::WARNING);
+            ::std::vector<PerformanceAlert> alerts = monitor->GetActiveAlerts(AlertLevel::WARNING);
             // May be empty if no alerts triggered
 
-            std::cout << "  [PASS] Alert triggering mechanism\n\n";
+            ::std::cout << "  [PASS] Alert triggering mechanism\n\n";
             return true;
         }
 
         static bool TestAlertCallbacks()
         {
-            std::cout << "Test 11: Alert Callbacks\n";
+            ::std::cout << "Test 11: Alert Callbacks\n";
 
             BotMonitor* monitor = sBotMonitor;
 
@@ -349,31 +349,31 @@ namespace Playerbot
             // Note: Callback will only be invoked if an actual alert is triggered
             // during Update(). This test verifies callback registration succeeds.
 
-            std::cout << "  [PASS] Alert callback registration\n\n";
+            ::std::cout << "  [PASS] Alert callback registration\n\n";
             return true;
         }
 
         static bool TestAlertHistory()
         {
-            std::cout << "Test 12: Alert History\n";
+            ::std::cout << "Test 12: Alert History\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ClearAlertHistory();
 
-            std::vector<PerformanceAlert> history = monitor->GetAlertHistory(10);
+            ::std::vector<PerformanceAlert> history = monitor->GetAlertHistory(10);
             assert(history.size() == 0);  // Just cleared
 
             monitor->ClearAlertHistory();
             history = monitor->GetAlertHistory(10);
             assert(history.size() == 0);
 
-            std::cout << "  [PASS] Alert history and clear\n\n";
+            ::std::cout << "  [PASS] Alert history and clear\n\n";
             return true;
         }
 
         static bool TestStatisticsSummary()
         {
-            std::cout << "Test 13: Statistics Summary\n";
+            ::std::cout << "Test 13: Statistics Summary\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
@@ -383,17 +383,17 @@ namespace Playerbot
             monitor->RecordBotUpdateTime(botGuid, 5.0);
             monitor->RecordDatabaseQuery(10.0);
 
-            std::string summary = monitor->GetStatisticsSummary();
+            ::std::string summary = monitor->GetStatisticsSummary();
             assert(!summary.empty());
-            assert(summary.find("Playerbot Performance Summary") != std::string::npos);
+            assert(summary.find("Playerbot Performance Summary") != ::std::string::npos);
 
-            std::cout << "  [PASS] Statistics summary generation\n\n";
+            ::std::cout << "  [PASS] Statistics summary generation\n\n";
             return true;
         }
 
         static bool TestResetStatistics()
         {
-            std::cout << "Test 14: Reset Statistics\n";
+            ::std::cout << "Test 14: Reset Statistics\n";
 
             BotMonitor* monitor = sBotMonitor;
 
@@ -407,19 +407,19 @@ namespace Playerbot
             PerformanceSnapshot snapshot = monitor->CaptureSnapshot();
             assert(snapshot.errorCount == 0);
 
-            std::cout << "  [PASS] Reset statistics\n\n";
+            ::std::cout << "  [PASS] Reset statistics\n\n";
             return true;
         }
 
         static bool TestThreadSafety()
         {
-            std::cout << "Test 15: Thread Safety\n";
+            ::std::cout << "Test 15: Thread Safety\n";
 
             BotMonitor* monitor = sBotMonitor;
             monitor->ResetStatistics();
 
             // Launch multiple threads recording metrics concurrently
-            std::vector<std::thread> threads;
+            ::std::vector<::std::thread> threads;
             for (int i = 0; i < 5; ++i)
             {
                 threads.emplace_back([monitor, i]() {
@@ -428,7 +428,7 @@ namespace Playerbot
                     {
                         monitor->RecordBotUpdateTime(botGuid, j * 1.0);
                         monitor->RecordDatabaseQuery(j * 2.0);
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        ::std::this_thread::sleep_for(::std::chrono::milliseconds(1));
                     }
                 });
             }
@@ -440,7 +440,7 @@ namespace Playerbot
             // If thread-safe, all metrics recorded successfully
             assert(snapshot.database.queryCount >= 50);
 
-            std::cout << "  [PASS] Thread safety (concurrent access)\n\n";
+            ::std::cout << "  [PASS] Thread safety (concurrent access)\n\n";
             return true;
         }
     };

@@ -35,6 +35,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Beast Mastery Hunter Spell IDs
 enum BeastMasterySpells
 {
@@ -235,7 +245,7 @@ public:
     void ApplyBarbedShot()
     {
         // Barbed Shot applies/refreshes Pet Frenzy
-        _petFrenzyStacks = std::min<uint32>(_petFrenzyStacks + 1, 3);
+        _petFrenzyStacks = ::std::min<uint32>(_petFrenzyStacks + 1, 3);
         _petFrenzyExpireTime = GameTime::GetGameTimeMS() + 8000; // 8 second duration
     }
 
@@ -495,7 +505,7 @@ protected:
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
+            _resource = ::std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
 
             return;
         }
@@ -521,7 +531,7 @@ protected:
 
             this->ConsumeResource(35);
 
-            _resource = std::min<uint32>(_resource + 5, 100); // Small focus return
+            _resource = ::std::min<uint32>(_resource + 5, 100); // Small focus return
 
             return;
         }
@@ -552,7 +562,7 @@ protected:
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100);
+            _resource = ::std::min<uint32>(_resource + 20, 100);
 
             return;
         }
@@ -686,7 +696,7 @@ private:
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -829,7 +839,7 @@ private:
             }, "40+ Focus, 3+ enemies (AoE filler + Beast Cleave)");
 
 
-            TC_LOG_INFO("module.playerbot", "🏹 BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -863,7 +873,7 @@ private:
 
                             }),
 
-                            Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_BESTIAL_WRATH))
 
@@ -894,7 +904,7 @@ private:
 
                             }),
 
-                            Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
 
@@ -941,7 +951,7 @@ private:
 
                             }),
 
-                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND))
 
@@ -974,7 +984,7 @@ private:
 
                             }),
 
-                            Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DIRE_BEAST))
 
@@ -1025,7 +1035,7 @@ private:
 
                             }),
 
-                            Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->HasBarbedShotCharge())
 
@@ -1037,7 +1047,7 @@ private:
 
                                     this->_barbedShotCharges--;
 
-                                    this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 20, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1074,7 +1084,7 @@ private:
 
                             }),
 
-                            Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 40)
 
@@ -1103,7 +1113,7 @@ private:
 
                             }),
 
-                            Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 35)
 
@@ -1115,7 +1125,7 @@ private:
 
                                     this->ConsumeResource(35);
 
-                                    this->_resource = std::min<uint32>(this->_resource + 5, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 5, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1136,7 +1146,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

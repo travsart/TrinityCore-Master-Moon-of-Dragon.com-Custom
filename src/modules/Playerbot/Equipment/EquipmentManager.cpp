@@ -749,7 +749,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
                             if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                             {
                                 TC_LOG_INFO("playerbot.equipment",
-                                           "🎯 UPGRADE FOUND: Player {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
+                                           " UPGRADE FOUND: Player {} - {} is upgrade over {} (Score: {:.2f} -> {:.2f}, Reason: {})",
                                            player->GetName(),
                                            proto->GetName(DEFAULT_LOCALE),
                                            currentItem ? currentItem->GetTemplate()->GetName(DEFAULT_LOCALE) : "Empty Slot",
@@ -787,7 +787,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
                     if (result.isUpgrade && result.scoreDifference >= profile.minUpgradeThreshold)
                     {
                         TC_LOG_INFO("playerbot.equipment",
-                                   "🎯 UPGRADE FOUND: Player {} - {} (Score improvement: {:.2f})",
+                                   " UPGRADE FOUND: Player {} - {} (Score improvement: {:.2f})",
                                    player->GetName(), proto->GetName(DEFAULT_LOCALE), result.scoreDifference);
 
                         EquipItemInSlot(player, item, equipSlot);
@@ -801,7 +801,7 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
 
     if (upgradesFound > 0)
     {
-        TC_LOG_INFO("playerbot.equipment", "✅ AutoEquip Complete: Player {} equipped {} upgrades",
+        TC_LOG_INFO("playerbot.equipment", " AutoEquip Complete: Player {} equipped {} upgrades",
                    player->GetName(), upgradesFound);
     }
 }
@@ -837,8 +837,8 @@ ItemComparisonResult EquipmentManager::CompareItems(::Player* player, ::Item* cu
     if (profile.preferHigherItemLevel && result.newItemLevel > result.currentItemLevel + 5)
     {
         result.isUpgrade = true;
-        result.upgradeReason = "Higher item level (" + std::to_string(result.newItemLevel) + " vs " +
-                               std::to_string(result.currentItemLevel) + ")";
+        result.upgradeReason = "Higher item level (" + ::std::to_string(result.newItemLevel) + " vs " +
+                               ::std::to_string(result.currentItemLevel) + ")";
         return result;
     }
 
@@ -846,7 +846,7 @@ ItemComparisonResult EquipmentManager::CompareItems(::Player* player, ::Item* cu
     if (result.scoreDifference > profile.minUpgradeThreshold)
     {
         result.isUpgrade = true;
-        result.upgradeReason = "Better stat allocation (Score: " + std::to_string(result.scoreDifference) + " improvement)";
+        result.upgradeReason = "Better stat allocation (Score: " + ::std::to_string(result.scoreDifference) + " improvement)";
     }
 
     return result;
@@ -936,9 +936,9 @@ float EquipmentManager::CalculateItemTemplateScore(::Player* player, ItemTemplat
 // JUNK IDENTIFICATION - COMPLETE IMPLEMENTATION
 // ============================================================================
 
-std::vector<ObjectGuid> EquipmentManager::IdentifyJunkItems(::Player* player)
+::std::vector<ObjectGuid> EquipmentManager::IdentifyJunkItems(::Player* player)
 {
-    std::vector<ObjectGuid> junkItems;
+    ::std::vector<ObjectGuid> junkItems;
 
     if (!player)
         return junkItems;
@@ -1082,14 +1082,14 @@ bool EquipmentManager::IsValuableBoE(::Item* item)
 // CONSUMABLE MANAGEMENT - COMPLETE IMPLEMENTATION
 // ============================================================================
 
-std::unordered_map<uint32, uint32> EquipmentManager::GetConsumableNeeds(::Player* player)
+::std::unordered_map<uint32, uint32> EquipmentManager::GetConsumableNeeds(::Player* player)
 {
-    std::unordered_map<uint32, uint32> needs;
+    ::std::unordered_map<uint32, uint32> needs;
 
     if (!player)
         return needs;
 
-    std::vector<uint32> classConsumables = GetClassConsumables(player->GetClass());
+    ::std::vector<uint32> classConsumables = GetClassConsumables(player->GetClass());
     for (uint32 itemId : classConsumables)
     {
         uint32 currentCount = GetConsumableCount(player, itemId);
@@ -1124,9 +1124,9 @@ bool EquipmentManager::NeedsConsumableRestocking(::Player* player)
     return !needs.empty();
 }
 
-std::vector<uint32> EquipmentManager::GetClassConsumables(uint8 classId)
+::std::vector<uint32> EquipmentManager::GetClassConsumables(uint8 classId)
 {
-    std::vector<uint32> consumables;
+    ::std::vector<uint32> consumables;
 
     switch (classId)
     {
@@ -1546,12 +1546,12 @@ void EquipmentManager::EquipItemInSlot(::Player* player, ::Item* item, uint8 slo
         player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
         player->EquipItem(dest, item, true);
 
-        TC_LOG_INFO("playerbot.equipment", "✅ Equipped {} in slot {} for player {}",
+        TC_LOG_INFO("playerbot.equipment", " Equipped {} in slot {} for player {}",
                    item->GetTemplate()->GetName(DEFAULT_LOCALE), slot, player->GetName());
     }
     else
     {
-        TC_LOG_ERROR("playerbot.equipment", "❌ Failed to equip {} for player {} (Error: {})",
+        TC_LOG_ERROR("playerbot.equipment", " Failed to equip {} for player {} (Error: {})",
                      item->GetTemplate()->GetName(DEFAULT_LOCALE), player->GetName(), static_cast<uint32>(result));
     }
 }
@@ -1585,9 +1585,9 @@ uint32 EquipmentManager::GetRecommendedPotionLevel(::Player* player)
     return 5350; // Example: Conjured Water
 }
 
-std::vector<uint32> EquipmentManager::GetClassReagents(uint8 classId)
+::std::vector<uint32> EquipmentManager::GetClassReagents(uint8 classId)
 {
-    std::vector<uint32> reagents;
+    ::std::vector<uint32> reagents;
 
     // Class-specific reagents (modern WoW has fewer than classic)
     switch (classId)
@@ -1654,7 +1654,7 @@ int32 EquipmentManager::ExtractStatValue(ItemTemplate const* proto, StatType sta
     return 0;
 }
 
-float EquipmentManager::CalculateTotalStats(ItemTemplate const* proto, std::vector<std::pair<StatType, float>> const& weights)
+float EquipmentManager::CalculateTotalStats(ItemTemplate const* proto, ::std::vector<::std::pair<StatType, float>> const& weights)
 {
     if (!proto)
         return 0.0f;
@@ -1696,7 +1696,7 @@ void EquipmentManager::UpdateMetrics(uint32 playerGuid, bool wasEquipped, bool w
         _globalMetrics.totalGoldFromJunk += goldValue;
 }
 
-void EquipmentManager::LogEquipmentDecision(::Player* player, std::string const& action, std::string const& reason)
+void EquipmentManager::LogEquipmentDecision(::Player* player, ::std::string const& action, ::std::string const& reason)
 {
     if (player)
     {

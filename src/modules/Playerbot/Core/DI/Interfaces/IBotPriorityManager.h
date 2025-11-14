@@ -62,7 +62,7 @@ public:
 
     // Error detection
     virtual void DetectStalledBots(uint32 currentTime, uint32 stallThresholdMs) = 0;
-    virtual std::vector<ObjectGuid> GetStalledBots() const = 0;
+    virtual ::std::vector<ObjectGuid> GetStalledBots() const = 0;
 
     // Bot management
     virtual void RemoveBot(ObjectGuid botGuid) = 0;

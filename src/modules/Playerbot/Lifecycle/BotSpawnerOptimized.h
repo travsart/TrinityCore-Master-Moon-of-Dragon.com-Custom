@@ -55,59 +55,59 @@ public:
         uint32 level{0};
         uint32 classId{0};
         uint32 faction{0};
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
     };
 
     // Bot spawn statistics (all atomic for lock-free access)
     struct SpawnStatistics
     {
-        std::atomic<uint32> totalSpawned{0};
-        std::atomic<uint32> totalDespawned{0};
-        std::atomic<uint32> currentlyActive{0};
-        std::atomic<uint32> peakConcurrent{0};
-        std::atomic<uint32> failedSpawns{0};
-        std::atomic<uint64> totalSpawnTime{0}; // microseconds
-        std::atomic<uint32> spawnAttempts{0};
-        std::atomic<uint32> queueSize{0};
-        std::atomic<uint64> lastUpdateTime{0};
+        ::std::atomic<uint32> totalSpawned{0};
+        ::std::atomic<uint32> totalDespawned{0};
+        ::std::atomic<uint32> currentlyActive{0};
+        ::std::atomic<uint32> peakConcurrent{0};
+        ::std::atomic<uint32> failedSpawns{0};
+        ::std::atomic<uint64> totalSpawnTime{0}; // microseconds
+        ::std::atomic<uint32> spawnAttempts{0};
+        ::std::atomic<uint32> queueSize{0};
+        ::std::atomic<uint64> lastUpdateTime{0};
 
         void RecordSpawn(uint32 timeMicros)
         {
-            totalSpawned.fetch_add(1, std::memory_order_relaxed);
-            uint32 current = currentlyActive.fetch_add(1, std::memory_order_relaxed) + 1;
+            totalSpawned.fetch_add(1, ::std::memory_order_relaxed);
+            uint32 current = currentlyActive.fetch_add(1, ::std::memory_order_relaxed) + 1;
 
             // Update peak if needed
-            uint32 currentPeak = peakConcurrent.load(std::memory_order_relaxed);
+            uint32 currentPeak = peakConcurrent.load(::std::memory_order_relaxed);
             while (current > currentPeak &&
                    !peakConcurrent.compare_exchange_weak(currentPeak, current))
             {
                 // Retry until successful
             }
 
-            totalSpawnTime.fetch_add(timeMicros, std::memory_order_relaxed);
-            spawnAttempts.fetch_add(1, std::memory_order_relaxed);
+            totalSpawnTime.fetch_add(timeMicros, ::std::memory_order_relaxed);
+            spawnAttempts.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         void RecordDespawn()
         {
-            totalDespawned.fetch_add(1, std::memory_order_relaxed);
-            currentlyActive.fetch_sub(1, std::memory_order_relaxed);
+            totalDespawned.fetch_add(1, ::std::memory_order_relaxed);
+            currentlyActive.fetch_sub(1, ::std::memory_order_relaxed);
         }
 
         void RecordFailure()
         {
-            failedSpawns.fetch_add(1, std::memory_order_relaxed);
-            spawnAttempts.fetch_add(1, std::memory_order_relaxed);
+            failedSpawns.fetch_add(1, ::std::memory_order_relaxed);
+            spawnAttempts.fetch_add(1, ::std::memory_order_relaxed);
         }
     };
 
     // Zone population info
     struct ZonePopulation
     {
-        std::atomic<uint32> targetBots{0};
-        std::atomic<uint32> currentBots{0};
-        std::atomic<uint32> realPlayers{0};
-        std::atomic<uint64> lastUpdate{0};
+        ::std::atomic<uint32> targetBots{0};
+        ::std::atomic<uint32> currentBots{0};
+        ::std::atomic<uint32> realPlayers{0};
+        ::std::atomic<uint64> lastUpdate{0};
     };
 
     // Configuration
@@ -149,10 +149,10 @@ public:
 
     // Statistics and monitoring
     SpawnStatistics GetStatistics() const;
-    uint32 GetActiveBotCount() const { return _stats.currentlyActive.load(std::memory_order_relaxed); }
-    uint32 GetQueueSize() const { return _stats.queueSize.load(std::memory_order_relaxed); }
-    bool IsEnabled() const { return _enabled.load(std::memory_order_acquire); }
-    void SetEnabled(bool enabled) { _enabled.store(enabled, std::memory_order_release); }
+    uint32 GetActiveBotCount() const { return _stats.currentlyActive.load(::std::memory_order_relaxed); }
+    uint32 GetQueueSize() const { return _stats.queueSize.load(::std::memory_order_relaxed); }
+    bool IsEnabled() const { return _enabled.load(::std::memory_order_acquire); }
+    void SetEnabled(bool enabled) { _enabled.store(enabled, ::std::memory_order_release); }
 
     // Configuration
     Config const& GetConfig() const { return _config; }
@@ -180,7 +180,7 @@ private:
     using SpawnQueue = tbb::concurrent_queue<SpawnRequest>;
 
     // Ultra-high throughput map for bot sessions (5000+ bots)
-    using SessionMap = folly::ConcurrentHashMap<ObjectGuid, std::shared_ptr<void>>;
+    using SessionMap = folly::ConcurrentHashMap<ObjectGuid, ::std::shared_ptr<void>>;
 
     // Core data structures (all lock-free)
     BotMap _activeBots;
@@ -190,22 +190,22 @@ private:
 
     // Configuration and state
     Config _config;
-    std::atomic<bool> _enabled{true};
-    std::atomic<bool> _initialized{false};
-    std::atomic<bool> _processingQueue{false};
+    ::std::atomic<bool> _enabled{true};
+    ::std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _processingQueue{false};
 
     // Statistics (all atomic)
     SpawnStatistics _stats;
 
     // Timing
-    std::atomic<uint64> _lastUpdate{0};
-    std::atomic<uint64> _lastZoneUpdate{0};
-    std::atomic<uint64> _lastCleanup{0};
+    ::std::atomic<uint64> _lastUpdate{0};
+    ::std::atomic<uint64> _lastZoneUpdate{0};
+    ::std::atomic<uint64> _lastCleanup{0};
 
     // Performance monitoring
-    std::atomic<uint32> _updateCounter{0};
-    std::atomic<uint64> _totalUpdateTime{0}; // microseconds
-    std::atomic<uint32> _slowUpdates{0};     // Updates taking > 10ms
+    ::std::atomic<uint32> _updateCounter{0};
+    ::std::atomic<uint64> _totalUpdateTime{0}; // microseconds
+    ::std::atomic<uint32> _slowUpdates{0};     // Updates taking > 10ms
 
     // Constants
     static constexpr uint32 UPDATE_INTERVAL_MS = 100;

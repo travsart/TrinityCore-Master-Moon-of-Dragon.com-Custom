@@ -60,7 +60,7 @@ void GroupCoordinator::Update(uint32 diff)
     if (!_group)
         return;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Throttle updates
     _lastUpdateTime += diff;
@@ -109,8 +109,8 @@ void GroupCoordinator::Update(uint32 diff)
     CleanupExpiredData();
 
     // Track performance
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     _totalUpdateTime += duration.count();
 
     if (_totalUpdates % 100 == 0)
@@ -174,7 +174,7 @@ ObjectGuid GroupCoordinator::AssignInterrupt(ObjectGuid targetGuid)
 ObjectGuid GroupCoordinator::AssignDispel(ObjectGuid targetGuid)
 {
     // Find healer with dispel available
-    std::vector<ObjectGuid> healers = GetBotsByRole(GroupRole::HEALER);
+    ::std::vector<ObjectGuid> healers = GetBotsByRole(GroupRole::HEALER);
 
     for (ObjectGuid healerGuid : healers)
     {
@@ -203,7 +203,7 @@ ObjectGuid GroupCoordinator::AssignDispel(ObjectGuid targetGuid)
     return ObjectGuid::Empty;
 }
 
-bool GroupCoordinator::IsGroupCooldownAvailable(std::string const& cooldownName) const
+bool GroupCoordinator::IsGroupCooldownAvailable(::std::string const& cooldownName) const
 {
     auto it = _tacticalState.groupCooldowns.find(cooldownName);
     if (it == _tacticalState.groupCooldowns.end())
@@ -212,7 +212,7 @@ bool GroupCoordinator::IsGroupCooldownAvailable(std::string const& cooldownName)
     return GameTime::GetGameTimeMS() > it->second;
 }
 
-void GroupCoordinator::UseGroupCooldown(std::string const& cooldownName, uint32 durationMs)
+void GroupCoordinator::UseGroupCooldown(::std::string const& cooldownName, uint32 durationMs)
 {
     _tacticalState.groupCooldowns[cooldownName] = GameTime::GetGameTimeMS() + durationMs;
 
@@ -233,9 +233,9 @@ uint32 GroupCoordinator::GetRoleCount(GroupRole role) const
     return count;
 }
 
-std::vector<ObjectGuid> GroupCoordinator::GetBotsByRole(GroupRole role) const
+::std::vector<ObjectGuid> GroupCoordinator::GetBotsByRole(GroupRole role) const
 {
-    std::vector<ObjectGuid> bots;
+    ::std::vector<ObjectGuid> bots;
 
     for (auto const& pair : _roleAssignments)
     {
@@ -436,11 +436,11 @@ ObjectGuid GroupCoordinator::GetNextInterrupter() const
     uint32 now = GameTime::GetGameTimeMS();
 
     // Find bot with interrupt ready
-    std::vector<ObjectGuid> mdps = GetBotsByRole(GroupRole::MELEE_DPS);
-    std::vector<ObjectGuid> rdps = GetBotsByRole(GroupRole::RANGED_DPS);
+    ::std::vector<ObjectGuid> mdps = GetBotsByRole(GroupRole::MELEE_DPS);
+    ::std::vector<ObjectGuid> rdps = GetBotsByRole(GroupRole::RANGED_DPS);
 
     // Combine all DPS
-    std::vector<ObjectGuid> allDps;
+    ::std::vector<ObjectGuid> allDps;
     allDps.insert(allDps.end(), mdps.begin(), mdps.end());
     allDps.insert(allDps.end(), rdps.begin(), rdps.end());
 

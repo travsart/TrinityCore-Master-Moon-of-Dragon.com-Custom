@@ -56,7 +56,7 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
 
     // Find target using snapshot data (NO ObjectAccessor!)
     float searchRange = QUEST_COMBAT_RANGE;
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
         spatialGrid->QueryNearbyCreatures(bot->GetPosition(), searchRange);
 
     ObjectGuid targetGuid = ObjectGuid::Empty;
@@ -167,7 +167,7 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
 
     // Find NPC using snapshot data
     float searchRange = QUEST_SEARCH_RANGE;
-    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
         spatialGrid->QueryNearbyCreatures(bot->GetPosition(), searchRange);
 
     ObjectGuid npcGuid = ObjectGuid::Empty;
@@ -268,7 +268,7 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
 
     // Find GameObject using snapshot data
     float searchRange = QUEST_SEARCH_RANGE;
-    std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
+    ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
         spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), searchRange);
     ObjectGuid objectGuid = ObjectGuid::Empty;
     float minDistance = searchRange + 1.0f;
@@ -366,7 +366,7 @@ void QuestCompletion::HandleEscortObjective_LockFree(Player* bot, QuestObjective
     {
         // Find the escort NPC
         float searchRange = QUEST_SEARCH_RANGE;
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
             spatialGrid->QueryNearbyCreatures(bot->GetPosition(), searchRange);
 
         for (auto const& snapshot : creatures)
@@ -402,7 +402,7 @@ void QuestCompletion::HandleEscortObjective_LockFree(Player* bot, QuestObjective
     else
     {
         // We have an escort target, check if it's still valid
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
             spatialGrid->QueryNearbyCreatures(bot->GetPosition(), 100.0f);
 
         bool escortValid = false;

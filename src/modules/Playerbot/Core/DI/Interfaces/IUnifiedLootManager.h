@@ -110,7 +110,7 @@ public:
      * @param player Player to get priorities for
      * @return Vector of (statType, weight) pairs, sorted by priority
      */
-    virtual std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) = 0;
+    virtual ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player) = 0;
 
     // ========================================================================
     // COORDINATION MODULE (from LootCoordination)
@@ -147,21 +147,21 @@ public:
      * @param group Group context
      * @param items Items to distribute
      */
-    virtual void OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items) = 0;
+    virtual void OrchestrateLootDistribution(Group* group, ::std::vector<LootItem> const& items) = 0;
 
     /**
      * @brief Prioritize loot distribution order
      * @param group Group context
      * @param items Items to prioritize (modified in-place)
      */
-    virtual void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items) = 0;
+    virtual void PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items) = 0;
 
     /**
      * @brief Optimize loot sequence for efficiency
      * @param group Group context
      * @param items Items to optimize (modified in-place)
      */
-    virtual void OptimizeLootSequence(Group* group, std::vector<LootItem>& items) = 0;
+    virtual void OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items) = 0;
 
     /**
      * @brief Facilitate group discussion about loot
@@ -332,13 +332,13 @@ public:
      * @param item Item to evaluate
      * @return Detailed recommendation string
      */
-    virtual std::string GetLootRecommendation(Player* player, LootItem const& item) = 0;
+    virtual ::std::string GetLootRecommendation(Player* player, LootItem const& item) = 0;
 
     /**
      * @brief Get statistics for loot operations
      * @return Statistics string (for debugging/monitoring)
      */
-    virtual std::string GetLootStatistics() const = 0;
+    virtual ::std::string GetLootStatistics() const = 0;
 };
 
 } // namespace Playerbot

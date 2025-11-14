@@ -98,10 +98,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 15-25% DPS increase through intelligent targeting
-     * - ✅ Better focus fire in group content
-     * - ✅ Automatic healer/caster interruption
-     * - ✅ Smart execute priority (finish low HP targets)
+     * -  15-25% DPS increase through intelligent targeting
+     * -  Better focus fire in group content
+     * -  Automatic healer/caster interruption
+     * -  Smart execute priority (finish low HP targets)
      */
     class TC_GAME_API TargetManager
     {
@@ -171,7 +171,7 @@ namespace Playerbot
          *
          * @return Vector of all targetable enemies
          */
-        std::vector<Unit*> GetCombatTargets();
+        ::std::vector<Unit*> GetCombatTargets();
 
         /**
          * @brief Get target assessment info
@@ -202,7 +202,7 @@ namespace Playerbot
         ObjectGuid _currentTarget;
         uint32 _lastUpdate;
         uint32 _lastSwitchTime;
-        std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
+        ::std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
 
         static constexpr uint32 UPDATE_INTERVAL = 1000;      // 1 second
         static constexpr uint32 MIN_SWITCH_INTERVAL = 3000;  // 3 seconds

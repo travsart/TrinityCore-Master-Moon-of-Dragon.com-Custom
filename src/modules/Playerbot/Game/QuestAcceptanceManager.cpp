@@ -44,7 +44,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
 
     // Get all available quests from this NPC
     QuestRelationResult objectQR = sObjectMgr->GetCreatureQuestRelations(questGiver->GetEntry());
-    std::vector<std::pair<Quest const*, float>> eligibleQuests;
+    ::std::vector<::std::pair<Quest const*, float>> eligibleQuests;
 
     // Filter and score quests
     for (uint32 questId : objectQR)
@@ -72,7 +72,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
     }
 
     // Sort by priority (highest first)
-    std::sort(eligibleQuests.begin(), eligibleQuests.end(),
+    ::std::sort(eligibleQuests.begin(), eligibleQuests.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     TC_LOG_INFO("module.playerbot.quest", "Bot {} found {} eligible quests from {} (highest priority: {:.1f})",
@@ -272,7 +272,7 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
     if (!quest || !_bot)
         return false;
     // CRITICAL DEBUG: Log prerequisite check for all quests
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 HasPrerequisites: Quest {} '{}' - GetPrevQuestId()={}, GetNextQuestInChain()={}",
+    TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} '{}' - GetPrevQuestId()={}, GetNextQuestInChain()={}",
                  quest->GetQuestId(), quest->GetLogTitle(), quest->GetPrevQuestId(), quest->GetNextQuestInChain());
 
     // Check previous quest in chain
@@ -281,18 +281,18 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
         // Positive = must complete, Negative = must NOT complete
         int32 prevQuestId = quest->GetPrevQuestId();
 
-        TC_LOG_ERROR("module.playerbot.quest", "🔒 HasPrerequisites: Quest {} requires PrevQuestID={}, checking if bot has rewarded it...",
+        TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} requires PrevQuestID={}, checking if bot has rewarded it...",
                      quest->GetQuestId(), prevQuestId);
 
         if (prevQuestId > 0)
         {
             bool hasRewarded = _bot->GetQuestRewardStatus(prevQuestId);
-            TC_LOG_ERROR("module.playerbot.quest", "🎯 HasPrerequisites: Bot {} GetQuestRewardStatus({})={}, quest {} prerequisite check={}",
+            TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Bot {} GetQuestRewardStatus({})={}, quest {} prerequisite check={}",
                          _bot->GetName(), prevQuestId, hasRewarded, quest->GetQuestId(), hasRewarded ? "PASS" : "FAIL");
 
             if (!hasRewarded)
             {
-                TC_LOG_ERROR("module.playerbot.quest", "❌ HasPrerequisites: Quest {} REJECTED - prerequisite quest {} not completed",
+                TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} REJECTED - prerequisite quest {} not completed",
                              quest->GetQuestId(), prevQuestId);
                 return false; // Previous quest not completed
             }
@@ -301,7 +301,7 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
         {
             if (_bot->GetQuestRewardStatus(-prevQuestId))
             {
-                TC_LOG_ERROR("module.playerbot.quest", "❌ HasPrerequisites: Quest {} REJECTED - must NOT have completed quest {}",
+                TC_LOG_ERROR("module.playerbot.quest", " HasPrerequisites: Quest {} REJECTED - must NOT have completed quest {}",
                              quest->GetQuestId(), -prevQuestId);
                 return false; // Must NOT have completed this quest
             }
@@ -415,7 +415,7 @@ float QuestAcceptanceManager::GetXPPriority(Quest const* quest) const
 
     // Higher XP = higher priority
     // Scale: 1000 XP = 10 priority points
-    return std::min(50.0f, xp / 100.0f);
+    return ::std::min(50.0f, xp / 100.0f);
 }
 
 float QuestAcceptanceManager::GetGoldPriority(Quest const* quest) const
@@ -428,7 +428,7 @@ float QuestAcceptanceManager::GetGoldPriority(Quest const* quest) const
         return 0.0f;
 
     // Scale: 1 gold = 1 priority point
-    return std::min(20.0f, gold / 10000.0f);
+    return ::std::min(20.0f, gold / 10000.0f);
 }
 
 float QuestAcceptanceManager::GetReputationPriority(Quest const* quest) const
@@ -446,7 +446,7 @@ float QuestAcceptanceManager::GetReputationPriority(Quest const* quest) const
         }
     }
 
-    return std::min(15.0f, repPriority);
+    return ::std::min(15.0f, repPriority);
 }
 
 float QuestAcceptanceManager::GetItemRewardPriority(Quest const* quest) const
@@ -484,7 +484,7 @@ float QuestAcceptanceManager::GetItemRewardPriority(Quest const* quest) const
         }
     }
 
-    return std::min(25.0f, itemPriority);
+    return ::std::min(25.0f, itemPriority);
 }
 
 float QuestAcceptanceManager::GetZonePriority(Quest const* quest) const

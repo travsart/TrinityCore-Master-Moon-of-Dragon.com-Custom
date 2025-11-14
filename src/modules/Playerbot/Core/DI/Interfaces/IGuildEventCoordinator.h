@@ -64,7 +64,7 @@ public:
     virtual void AnalyzeGuildEventPatterns(uint32 guildId) = 0;
 
     // Event communication
-    virtual void BroadcastEventUpdates(uint32 eventId, const std::string& updateMessage) = 0;
+    virtual void BroadcastEventUpdates(uint32 eventId, const ::std::string& updateMessage) = 0;
     virtual void SendEventReminders(uint32 eventId) = 0;
     virtual void UpdateEventStatus(uint32 eventId, EventStatus newStatus) = 0;
 

@@ -44,7 +44,7 @@ Position TankPositioning::CalculateTankPosition(Unit* target, Group* group, cons
         return {};
 
     // Calculate optimal facing angle to face boss away from group
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> groupMembers;
     for (GroupReference const& ref : group->GetMembers())
         if (Player* member = ref.GetSource())
             if (member->IsAlive() && !member->IsGameMaster())
@@ -151,7 +151,7 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
     }
 }
 
-float TankPositioning::CalculateOptimalFacing(Unit* target, const std::vector<Player*>& groupMembers)
+float TankPositioning::CalculateOptimalFacing(Unit* target, const ::std::vector<Player*>& groupMembers)
 {
     if (groupMembers.empty())
         return target->GetOrientation();
@@ -174,13 +174,13 @@ float TankPositioning::CalculateOptimalFacing(Unit* target, const std::vector<Pl
 }
 bool TankPositioning::ShouldRotateBoss(Unit* target, float currentFacing, float desiredFacing)
 {
-    float angleDiff = std::abs(Position::NormalizeOrientation(currentFacing - desiredFacing));
+    float angleDiff = ::std::abs(Position::NormalizeOrientation(currentFacing - desiredFacing));
 
     // Only rotate if angle difference is significant (> 30 degrees)
     return angleDiff > (M_PI / 6);
 }
 
-void TankPositioning::ManageCleaveMechanics(Unit* target, const std::vector<Player*>& groupMembers)
+void TankPositioning::ManageCleaveMechanics(Unit* target, const ::std::vector<Player*>& groupMembers)
 {
     if (!_config.handleCleave || !target)
         return;
@@ -193,7 +193,7 @@ void TankPositioning::ManageCleaveMechanics(Unit* target, const std::vector<Play
         Position memberPos = member->GetPosition();
         float angleToPos = target->GetRelativeAngle(&memberPos);
         float targetFacing = target->GetOrientation();
-        float angleDiff = std::abs(Position::NormalizeOrientation(angleToPos - targetFacing));
+        float angleDiff = ::std::abs(Position::NormalizeOrientation(angleToPos - targetFacing));
 
         if (angleDiff < cleaveAngle / 2)
         {
@@ -252,8 +252,8 @@ bool TankPositioning::IsInSwapPosition(Player* tank, Player* otherTank, Unit* ta
     if (!tank || !otherTank || !target)
         return false;
 
-    float distance = std::sqrt(tank->GetExactDistSq(otherTank)); // Calculate once from squared distance
-    float angleiBetween = std::abs(target->GetRelativeAngle(tank) - target->GetRelativeAngle(otherTank));
+    float distance = ::std::sqrt(tank->GetExactDistSq(otherTank)); // Calculate once from squared distance
+    float angleiBetween = ::std::abs(target->GetRelativeAngle(tank) - target->GetRelativeAngle(otherTank));
 
     // Tanks should be at correct distance and angle for swap
     return distance >= _config.swapDistance * 0.8f &&
@@ -296,10 +296,10 @@ Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, f
     return bestPos;
 }
 
-std::vector<RolePositionScore> TankPositioning::EvaluateTankPositions(
-    const std::vector<Position>& candidates, const CombatPositionContext& context)
+::std::vector<RolePositionScore> TankPositioning::EvaluateTankPositions(
+    const ::std::vector<Position>& candidates, const CombatPositionContext& context)
 {
-    std::vector<RolePositionScore> scores;
+    ::std::vector<RolePositionScore> scores;
     scores.reserve(candidates.size());
 
     for (const Position& pos : candidates)
@@ -350,7 +350,7 @@ Position TankPositioning::CalculateFrontalPosition(Unit* target, float distance)
 }
 
 float TankPositioning::CalculateThreatAngle(const Position& tankPos, const Position& targetPos,
-                                            const std::vector<Player*>& group)
+                                            const ::std::vector<Player*>& group)
 {
     if (group.empty())
         return 0.0f;
@@ -358,16 +358,16 @@ float TankPositioning::CalculateThreatAngle(const Position& tankPos, const Posit
     float sumAngle = 0;
     for (const Player* member : group)
     {
-        float angle = std::atan2(member->GetPositionY() - targetPos.m_positionY,
+        float angle = ::std::atan2(member->GetPositionY() - targetPos.m_positionY,
                                  member->GetPositionX() - targetPos.m_positionX);
         sumAngle += angle;
     }
 
     float avgGroupAngle = sumAngle / group.size();
-    float tankAngle = std::atan2(tankPos.m_positionY - targetPos.m_positionY,
+    float tankAngle = ::std::atan2(tankPos.m_positionY - targetPos.m_positionY,
                                  tankPos.m_positionX - targetPos.m_positionX);
 
-    return std::abs(Position::NormalizeOrientation(tankAngle - avgGroupAngle - M_PI));
+    return ::std::abs(Position::NormalizeOrientation(tankAngle - avgGroupAngle - M_PI));
 }
 
 bool TankPositioning::ValidateTankPosition(const Position& pos, Unit* target,
@@ -398,8 +398,8 @@ float TankPositioning::ScoreTankPosition(const Position& pos, const CombatPositi
     float score = 100.0f;
 
     // Distance score
-    float distance = std::sqrt(context.primaryTarget->GetExactDistSq(pos)); // Calculate once from squared distance
-    float distanceScore = 100.0f - std::abs(distance - _config.optimalDistance) * 10.0f;
+    float distance = ::std::sqrt(context.primaryTarget->GetExactDistSq(pos)); // Calculate once from squared distance
+    float distanceScore = 100.0f - ::std::abs(distance - _config.optimalDistance) * 10.0f;
     score += distanceScore * 0.3f;
 
     // Threat angle score (facing boss away from group)
@@ -410,12 +410,12 @@ float TankPositioning::ScoreTankPosition(const Position& pos, const CombatPositi
     // Stability score (minimize movement)
     if (context.bot)
     {
-        float moveDistance = std::sqrt(context.bot->GetExactDistSq(pos)); // Calculate once from squared distance
+        float moveDistance = ::std::sqrt(context.bot->GetExactDistSq(pos)); // Calculate once from squared distance
         float stabilityScore = 100.0f - moveDistance * 2.0f;
         score += stabilityScore * 0.3f;
     }
 
-    return std::max(0.0f, std::min(100.0f, score));
+    return ::std::max(0.0f, ::std::min(100.0f, score));
 }
 
 // HealerPositioning Implementation
@@ -430,7 +430,7 @@ Position HealerPositioning::CalculateHealerPosition(Group* group, Unit* combatTa
     if (!group)
         return {};
 
-    std::vector<Player*> allies;
+    ::std::vector<Player*> allies;
     for (GroupReference const& ref : group->GetMembers())
         if (Player* member = ref.GetSource())
             if (member->IsAlive())
@@ -458,7 +458,7 @@ Position HealerPositioning::CalculateHealerPosition(Group* group, Unit* combatTa
     return healerPos;
 }
 
-Position HealerPositioning::CalculateRaidHealerPosition(const std::vector<Player*>& raidMembers,
+Position HealerPositioning::CalculateRaidHealerPosition(const ::std::vector<Player*>& raidMembers,
                                                        const CombatPositionContext& context)
 {
     if (raidMembers.empty())
@@ -510,7 +510,7 @@ Position HealerPositioning::CalculateTankHealerPosition(Player* tank, Unit* thre
     return healerPos;
 }
 
-bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const std::vector<Player*>& allies)
+bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const ::std::vector<Player*>& allies)
 {
     if (!healer || allies.empty())
         return false;
@@ -519,14 +519,14 @@ bool HealerPositioning::IsInOptimalHealingRange(Player* healer, const std::vecto
     for (const Player* ally : allies)
     {
         float distSq = healer->GetExactDistSq(ally);
-        maxDistSq = std::max(maxDistSq, distSq);
+        maxDistSq = ::std::max(maxDistSq, distSq);
     }
 
     return maxDistSq <= (_config.optimalRange * _config.optimalRange);
 }
 
 float HealerPositioning::CalculateHealingCoverage(const Position& healerPos,
-                                                 const std::vector<Player*>& allies)
+                                                 const ::std::vector<Player*>& allies)
 {
     if (allies.empty())
         return 0.0f;
@@ -541,7 +541,7 @@ float HealerPositioning::CalculateHealingCoverage(const Position& healerPos,
     return (float)inRange / allies.size() * 100.0f;
 }
 
-Position HealerPositioning::OptimizeHealingCoverage(Player* healer, const std::vector<Player*>& allies)
+Position HealerPositioning::OptimizeHealingCoverage(Player* healer, const ::std::vector<Player*>& allies)
 {
     if (!healer || allies.empty())
         return {};
@@ -583,7 +583,7 @@ Position HealerPositioning::FindSafeHealingSpot(Player* healer, Unit* threat,
 
     // Calculate safe position away from threat
     float angleFromThreat = threat->GetRelativeAngle(healer);
-    float safeDistance = std::max(_config.minSafeDistance, _config.optimalRange);
+    float safeDistance = ::std::max(_config.minSafeDistance, _config.optimalRange);
 
     Position safePos;
     safePos.m_positionX = threat->GetPositionX() + safeDistance * cos(angleFromThreat);
@@ -632,7 +632,7 @@ bool HealerPositioning::IsPositionSafeForHealing(const Position& pos, const Comb
     return true;
 }
 
-float HealerPositioning::CalculateSafetyScore(const Position& pos, const std::vector<Unit*>& threats)
+float HealerPositioning::CalculateSafetyScore(const Position& pos, const ::std::vector<Unit*>& threats)
 {
     float safetyScore = 100.0f;
 
@@ -646,10 +646,10 @@ float HealerPositioning::CalculateSafetyScore(const Position& pos, const std::ve
         }
     }
 
-    return std::max(0.0f, safetyScore);
+    return ::std::max(0.0f, safetyScore);
 }
 
-void HealerPositioning::MaintainLineOfSight(Player* healer, const std::vector<Player*>& allies)
+void HealerPositioning::MaintainLineOfSight(Player* healer, const ::std::vector<Player*>& allies)
 {
     if (!healer)
         return;
@@ -665,7 +665,7 @@ void HealerPositioning::MaintainLineOfSight(Player* healer, const std::vector<Pl
     }
 }
 
-bool HealerPositioning::HasLineOfSightToAll(const Position& healerPos, const std::vector<Player*>& allies)
+bool HealerPositioning::HasLineOfSightToAll(const Position& healerPos, const ::std::vector<Player*>& allies)
 {
     // Simplified - would need actual LOS checks
     for (const Player* ally : allies)
@@ -679,7 +679,7 @@ bool HealerPositioning::HasLineOfSightToAll(const Position& healerPos, const std
     return true;
 }
 
-Position HealerPositioning::FindBestLOSPosition(Player* healer, const std::vector<Player*>& priorityTargets)
+Position HealerPositioning::FindBestLOSPosition(Player* healer, const ::std::vector<Player*>& priorityTargets)
 {
     if (!healer || priorityTargets.empty())
         return {};
@@ -712,22 +712,22 @@ Position HealerPositioning::FindBestLOSPosition(Player* healer, const std::vecto
     return bestPos;
 }
 
-std::vector<Position> HealerPositioning::CalculateMultiHealerPositions(
-    const std::vector<Player*>& healers, const std::vector<Player*>& group)
+::std::vector<Position> HealerPositioning::CalculateMultiHealerPositions(
+    const ::std::vector<Player*>& healers, const ::std::vector<Player*>& group)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     if (healers.empty() || group.empty())
         return positions;
     // Divide healing assignments
-    int healersPerSection = std::max(1, (int)healers.size());
+    int healersPerSection = ::std::max(1, (int)healers.size());
     int playersPerHealer = group.size() / healersPerSection;
 
     // Assign positions based on coverage zones
     for (size_t i = 0; i < healers.size(); ++i)
     {
-        std::vector<Player*> assignment;
+        ::std::vector<Player*> assignment;
         size_t startIdx = i * playersPerHealer;
-        size_t endIdx = std::min(startIdx + playersPerHealer, group.size());
+        size_t endIdx = ::std::min(startIdx + playersPerHealer, group.size());
         for (size_t j = startIdx; j < endIdx; ++j)
             assignment.push_back(group[j]);
 
@@ -738,18 +738,18 @@ std::vector<Position> HealerPositioning::CalculateMultiHealerPositions(
     return positions;
 }
 
-void HealerPositioning::CoordinateHealerPositioning(const std::vector<Player*>& healers, Group* group)
+void HealerPositioning::CoordinateHealerPositioning(const ::std::vector<Player*>& healers, Group* group)
 {
     if (healers.empty() || !group)
         return;
 
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> groupMembers;
     for (GroupReference const& ref : group->GetMembers())
         if (Player* member = ref.GetSource())
             if (member->IsAlive())
                 groupMembers.push_back(member);
 
-    std::vector<Position> healerPositions = CalculateMultiHealerPositions(healers, groupMembers);
+    ::std::vector<Position> healerPositions = CalculateMultiHealerPositions(healers, groupMembers);
 
     for (size_t i = 0; i < healers.size() && i < healerPositions.size(); ++i)
     {
@@ -778,10 +778,10 @@ void HealerPositioning::CoordinateHealerPositioning(const std::vector<Player*>& 
     }
 }
 
-std::vector<RolePositionScore> HealerPositioning::EvaluateHealerPositions(
-    const std::vector<Position>& candidates, const CombatPositionContext& context)
+::std::vector<RolePositionScore> HealerPositioning::EvaluateHealerPositions(
+    const ::std::vector<Position>& candidates, const CombatPositionContext& context)
 {
-    std::vector<RolePositionScore> scores;
+    ::std::vector<RolePositionScore> scores;
     scores.reserve(candidates.size());
 
     for (const Position& pos : candidates)
@@ -814,7 +814,7 @@ float HealerPositioning::CalculateHealerScore(const Position& pos, const CombatP
     float score = 100.0f;
 
     // Coverage score
-    std::vector<Player*> allPlayers = context.tanks;
+    ::std::vector<Player*> allPlayers = context.tanks;
     allPlayers.insert(allPlayers.end(), context.meleeDPS.begin(), context.meleeDPS.end());
     allPlayers.insert(allPlayers.end(), context.rangedDPS.begin(), context.rangedDPS.end());
 
@@ -825,11 +825,11 @@ float HealerPositioning::CalculateHealerScore(const Position& pos, const CombatP
     if (context.primaryTarget)
     {
         float distance = pos.GetExactDist(context.primaryTarget->GetPosition());
-        float safetyBonus = std::min(50.0f, (distance / _config.minSafeDistance) * 25.0f);
+        float safetyBonus = ::std::min(50.0f, (distance / _config.minSafeDistance) * 25.0f);
         score += safetyBonus;
     }
 
-    return std::min(100.0f, score);
+    return ::std::min(100.0f, score);
 }
 
 bool HealerPositioning::ValidateHealerPosition(const Position& pos, const CombatPositionContext& context)
@@ -848,7 +848,7 @@ bool HealerPositioning::ValidateHealerPosition(const Position& pos, const Combat
     return true;
 }
 
-Position HealerPositioning::CalculateCenterOfCare(const std::vector<Player*>& allies)
+Position HealerPositioning::CalculateCenterOfCare(const ::std::vector<Player*>& allies)
 {
     Position center;
     if (allies.empty())
@@ -939,7 +939,7 @@ Position DPSPositioning::CalculateFlankPosition(Unit* target, bool leftFlank)
     return RotateAroundTarget(target, flankAngle, _config.meleeOptimalDistance);
 }
 
-void DPSPositioning::DistributeMeleePositions(const std::vector<Player*>& meleeDPS,
+void DPSPositioning::DistributeMeleePositions(const ::std::vector<Player*>& meleeDPS,
                                              Unit* target, Player* tank)
 {
     if (!target || meleeDPS.empty())
@@ -1014,7 +1014,7 @@ Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalR
     return rangedPos;
 }
 
-void DPSPositioning::SpreadRangedPositions(const std::vector<Player*>& rangedDPS,
+void DPSPositioning::SpreadRangedPositions(const ::std::vector<Player*>& rangedDPS,
                                           Unit* target, float spreadDistance)
 {
     if (!target || rangedDPS.empty())
@@ -1082,7 +1082,7 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
 
     float angleToTarget = target->GetRelativeAngle(dps);
     float targetFacing = target->GetOrientation();
-    float angleDiff = std::abs(Position::NormalizeOrientation(angleToTarget - targetFacing));
+    float angleDiff = ::std::abs(Position::NormalizeOrientation(angleToTarget - targetFacing));
 
     // Check if in cleave danger zone
     if (angleDiff < cleaveAngle / 2)
@@ -1090,7 +1090,7 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
         // Move out of cleave range
         float safeAngle = Position::NormalizeOrientation(
             targetFacing + (angleToTarget > targetFacing ? cleaveAngle/2 + 0.2f : -cleaveAngle/2 - 0.2f));
-        Position safePos = RotateAroundTarget(target, safeAngle, std::sqrt(dps->GetExactDistSq(target)));
+        Position safePos = RotateAroundTarget(target, safeAngle, ::std::sqrt(dps->GetExactDistSq(target)));
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
@@ -1124,7 +1124,7 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
 
     float angleToTarget = target->GetRelativeAngle(dps);
     float targetRear = Position::NormalizeOrientation(target->GetOrientation() + M_PI);
-    float angleDiff = std::abs(Position::NormalizeOrientation(angleToTarget - targetRear));
+    float angleDiff = ::std::abs(Position::NormalizeOrientation(angleToTarget - targetRear));
 
     // Check if in tail swipe danger zone
     if (angleDiff < swipeAngle / 2)
@@ -1163,7 +1163,7 @@ bool DPSPositioning::IsInCleaveDanger(const Position& pos, Unit* target, float c
 
     float angleToPos = target->GetRelativeAngle(&pos);
     float targetFacing = target->GetOrientation();
-    float angleDiff = std::abs(Position::NormalizeOrientation(angleToPos - targetFacing));
+    float angleDiff = ::std::abs(Position::NormalizeOrientation(angleToPos - targetFacing));
 
     return angleDiff < cleaveAngle / 2;
 }
@@ -1248,15 +1248,15 @@ float DPSPositioning::CalculateDPSEfficiency(const Position& pos, Player* dps, U
     // Distance efficiency
     float distance = pos.GetExactDist(target->GetPosition());
     float optimalRange = GetOptimalDPSRange(dps, target);
-    float rangePenalty = std::abs(distance - optimalRange) * 2.0f;
+    float rangePenalty = ::std::abs(distance - optimalRange) * 2.0f;
     efficiency -= rangePenalty;
 
     // Positional efficiency (for classes with positional requirements)
     // This would check class-specific requirements
 
-    return std::max(0.0f, efficiency);
+    return ::std::max(0.0f, efficiency);
 }
-Position DPSPositioning::CalculateAOEPosition(Player* dps, const std::vector<Unit*>& targets)
+Position DPSPositioning::CalculateAOEPosition(Player* dps, const ::std::vector<Unit*>& targets)
 {
     if (!dps || targets.empty())
         return {};
@@ -1287,7 +1287,7 @@ Position DPSPositioning::CalculateAOEPosition(Player* dps, const std::vector<Uni
     return aoePos;
 }
 
-Position DPSPositioning::CalculateCleaveDPSPosition(Player* dps, const std::vector<Unit*>& targets)
+Position DPSPositioning::CalculateCleaveDPSPosition(Player* dps, const ::std::vector<Unit*>& targets)
 {
     if (!dps || targets.size() < 2)
         return {};
@@ -1309,10 +1309,10 @@ Position DPSPositioning::CalculateCleaveDPSPosition(Player* dps, const std::vect
     return cleavePos;
 }
 
-std::vector<RolePositionScore> DPSPositioning::EvaluateDPSPositions(
-    const std::vector<Position>& candidates, Player* dps, const CombatPositionContext& context)
+::std::vector<RolePositionScore> DPSPositioning::EvaluateDPSPositions(
+    const ::std::vector<Position>& candidates, Player* dps, const CombatPositionContext& context)
 {
-    std::vector<RolePositionScore> scores;
+    ::std::vector<RolePositionScore> scores;
     scores.reserve(candidates.size());
 
     for (const Position& pos : candidates)
@@ -1351,7 +1351,7 @@ float DPSPositioning::CalculateDPSScore(const Position& pos, Player* dps,
     // Range score
     float distance = pos.GetExactDist(context.primaryTarget->GetPosition());
     float optimalRange = GetOptimalDPSRange(dps, context.primaryTarget);
-    float rangeScore = 100.0f - std::abs(distance - optimalRange) * 5.0f;
+    float rangeScore = 100.0f - ::std::abs(distance - optimalRange) * 5.0f;
     score = rangeScore * 0.4f;
 
     // Position score (behind/flank for melee)
@@ -1383,7 +1383,7 @@ float DPSPositioning::CalculateDPSScore(const Position& pos, Player* dps,
             if (other != dps)
             {
                 float dist = pos.GetExactDist(other->GetPosition());
-                minDistToOther = std::min(minDistToOther, dist);
+                minDistToOther = ::std::min(minDistToOther, dist);
             }
         }
 
@@ -1391,7 +1391,7 @@ float DPSPositioning::CalculateDPSScore(const Position& pos, Player* dps,
             score += 10.0f;
     }
 
-    return std::min(100.0f, score);
+    return ::std::min(100.0f, score);
 }
 
 bool DPSPositioning::ValidateDPSPosition(const Position& pos, Player* dps,
@@ -1460,9 +1460,9 @@ Position DPSPositioning::RotateAroundTarget(Unit* target, float angle, float dis
 
 // RoleBasedCombatPositioning Implementation
 RoleBasedCombatPositioning::RoleBasedCombatPositioning()
-    : _tankPositioning(std::make_unique<TankPositioning>()),
-      _healerPositioning(std::make_unique<HealerPositioning>()),
-      _dpsPositioning(std::make_unique<DPSPositioning>()),
+    : _tankPositioning(::std::make_unique<TankPositioning>()),
+      _healerPositioning(::std::make_unique<HealerPositioning>()),
+      _dpsPositioning(::std::make_unique<DPSPositioning>()),
       _positionManager(nullptr),
       _threatManager(nullptr),
       _formationManager(nullptr)
@@ -1484,7 +1484,7 @@ Position RoleBasedCombatPositioning::CalculateCombatPosition(Player* bot,
     if (!bot)
         return {};
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     // Determine role if not specified
     ThreatRole role = context.role;
@@ -1495,8 +1495,8 @@ Position RoleBasedCombatPositioning::CalculateCombatPosition(Player* bot,
     Position targetPos = CalculateRolePosition(bot, role, context);
 
     // Track performance
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::high_resolution_clock::now() - start);
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::high_resolution_clock::now() - start);
     TrackCalculationTime(duration);
 
     return targetPos;
@@ -1617,7 +1617,7 @@ void RoleBasedCombatPositioning::UpdateStrategy(Player* bot, CombatPositionStrat
     if (!bot)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _strategyCache[bot->GetGUID()] = newStrategy;
     _lastStrategyUpdate[bot->GetGUID()] = GameTime::GetGameTimeMS();
 }
@@ -1678,7 +1678,7 @@ bool RoleBasedCombatPositioning::ValidatePositionalRequirements(const Position& 
     {
         float angle = context.primaryTarget->GetRelativeAngle(&pos);
         float facing = context.primaryTarget->GetOrientation();
-        float diff = std::abs(Position::NormalizeOrientation(angle - facing));
+        float diff = ::std::abs(Position::NormalizeOrientation(angle - facing));
         if (diff < M_PI / 3)  // In frontal cone
             return false;
     }
@@ -1728,10 +1728,10 @@ void RoleBasedCombatPositioning::OptimizeRoleDistribution(Group* group)
     // This would involve checking specs, gear, and performance
 }
 
-std::unordered_map<ObjectGuid, Position> RoleBasedCombatPositioning::CalculateGroupFormation(
+::std::unordered_map<ObjectGuid, Position> RoleBasedCombatPositioning::CalculateGroupFormation(
     Group* group, Unit* target)
 {
-    std::unordered_map<ObjectGuid, Position> formation;
+    ::std::unordered_map<ObjectGuid, Position> formation;
 
     if (!group || !target)
         return formation;
@@ -1757,7 +1757,7 @@ std::unordered_map<ObjectGuid, Position> RoleBasedCombatPositioning::CalculateGr
     return formation;
 }
 
-void RoleBasedCombatPositioning::AdjustForMechanics(Player* bot, const std::vector<Position>& dangerZones)
+void RoleBasedCombatPositioning::AdjustForMechanics(Player* bot, const ::std::vector<Position>& dangerZones)
 {
     if (!bot || dangerZones.empty())
         return;
@@ -1825,8 +1825,8 @@ void RoleBasedCombatPositioning::ResetPerformanceMetrics()
 {
     _positionUpdates = 0;
     _calculationCount = 0;
-    _totalCalculationTime = std::chrono::microseconds{0};
-    _averageCalculationTime = std::chrono::microseconds{0};
+    _totalCalculationTime = ::std::chrono::microseconds{0};
+    _averageCalculationTime = ::std::chrono::microseconds{0};
 }
 
 void RoleBasedCombatPositioning::SetTankConfig(const TankPositionConfig& config)
@@ -1974,10 +1974,10 @@ Position RoleBasedCombatPositioning::CalculatePositionByStrategy(Player* bot,
     }
 }
 
-std::vector<Position> RoleBasedCombatPositioning::GenerateCandidatePositions(Player* bot,
+::std::vector<Position> RoleBasedCombatPositioning::GenerateCandidatePositions(Player* bot,
                                                                             const CombatPositionContext& context)
 {
-    std::vector<Position> candidates;
+    ::std::vector<Position> candidates;
     if (!bot || !context.primaryTarget)
         return candidates;
 
@@ -2033,7 +2033,7 @@ RolePositionScore RoleBasedCombatPositioning::EvaluatePosition(const Position& p
     ThreatRole role = context.role != ThreatRole::UNDEFINED ? context.role : DetermineRole(bot);
 
     // Evaluate based on role
-    std::vector<RolePositionScore> scores;
+    ::std::vector<RolePositionScore> scores;
 
     switch (role)
     {
@@ -2161,7 +2161,7 @@ void RoleBasedCombatPositioning::IdentifyDangerZones(Unit* target, CombatPositio
     // Additional mechanic-specific danger zones would be added here
 }
 
-void RoleBasedCombatPositioning::TrackCalculationTime(std::chrono::microseconds duration)
+void RoleBasedCombatPositioning::TrackCalculationTime(::std::chrono::microseconds duration)
 {
     _calculationCount++;
     _totalCalculationTime += duration;

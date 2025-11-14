@@ -20,7 +20,7 @@ namespace Playerbot
     void BotAI::InitializeStrategies()
     {
         // Initialize combat movement strategy
-        _combatMovementStrategy = std::make_unique<CombatMovementStrategy>();
+        _combatMovementStrategy = ::std::make_unique<CombatMovementStrategy>();
 
         // The strategy self-manages its priority (80)
         // It will automatically activate during combat
@@ -66,7 +66,7 @@ namespace Playerbot
     void BotAI::UpdateWithStrategyManager(uint32 diff)
     {
         // Sort strategies by priority
-        std::vector<Strategy*> activeStrategies;
+        ::std::vector<Strategy*> activeStrategies;
 
         if (_combatMovementStrategy && _combatMovementStrategy->IsActive(this))
             activeStrategies.push_back(_combatMovementStrategy.get());
@@ -76,7 +76,7 @@ namespace Playerbot
         //     activeStrategies.push_back(_idleStrategy.get());
 
         // Sort by priority (highest first)
-        std::sort(activeStrategies.begin(), activeStrategies.end(),
+        ::std::sort(activeStrategies.begin(), activeStrategies.end(),
             [](Strategy* a, Strategy* b) { return a->GetPriority() > b->GetPriority(); });
 
         // Execute strategies in priority order

@@ -49,7 +49,7 @@ public:
      * @param size Initial packet size (0 = default)
      * @return Unique pointer with custom deleter
      */
-    std::unique_ptr<WorldPacket, std::function<void(WorldPacket*)>> AcquirePacket(
+    ::std::unique_ptr<WorldPacket, ::std::function<void(WorldPacket*)>> AcquirePacket(
         uint16 opcode, size_t size = 0)
     {
         auto packet = _packetPool.Acquire();

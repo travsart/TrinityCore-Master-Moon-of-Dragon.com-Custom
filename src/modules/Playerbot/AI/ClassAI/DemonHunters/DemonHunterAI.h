@@ -138,7 +138,7 @@ private:
     void CastShear(::Unit* target);
 
     // Utility methods
-    std::vector<::Unit*> GetAoETargets(float range = 8.0f);
+    ::std::vector<::Unit*> GetAoETargets(float range = 8.0f);
     uint32 GetNearbyEnemyCount(float range) const;
     bool IsInMeleeRange(::Unit* target) const;
     bool IsTargetInterruptible(::Unit* target) const;
@@ -151,7 +151,7 @@ private:
     uint32 _lastDefensiveTime;
     uint32 _lastMobilityTime;
     uint32 _successfulInterrupts;
-    std::unordered_map<uint32, uint32> _abilityUsage;
+    ::std::unordered_map<uint32, uint32> _abilityUsage;
 
     // Metrics tracking
     struct DemonHunterMetrics
@@ -160,8 +160,8 @@ private:
         uint32 interruptsSucceeded;
         uint32 defensivesUsed;
         uint32 mobilityAbilitiesUsed;
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::steady_clock::time_point lastMetricsUpdate;
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::steady_clock::time_point lastMetricsUpdate;
     };
     DemonHunterMetrics _dhMetrics;
 

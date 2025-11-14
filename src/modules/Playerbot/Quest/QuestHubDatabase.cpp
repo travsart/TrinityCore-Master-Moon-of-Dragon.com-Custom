@@ -74,19 +74,19 @@ namespace Playerbot
     float QuestHub::GetDistanceFrom(Player const* player) const
     {
         if (!player)
-            return std::numeric_limits<float>::max();
+            return ::std::numeric_limits<float>::max();
 
         // Use 2D distance for performance (Z-axis less relevant for quest selection)
         float dx = player->GetPositionX() - location.GetPositionX();
         float dy = player->GetPositionY() - location.GetPositionY();
-        return std::sqrt(dx * dx + dy * dy);
+        return ::std::sqrt(dx * dx + dy * dy);
     }
 
     bool QuestHub::ContainsPosition(Position const& pos) const
     {
         float dx = pos.GetPositionX() - location.GetPositionX();
         float dy = pos.GetPositionY() - location.GetPositionY();
-        float distance = std::sqrt(dx * dx + dy * dy);
+        float distance = ::std::sqrt(dx * dx + dy * dy);
         return distance <= radius;
     }
 
@@ -100,12 +100,12 @@ namespace Playerbot
         // Level appropriateness scoring
         uint32 playerLevel = player->GetLevel();
         uint32 hubMidLevel = (minLevel + maxLevel) / 2;
-        int32 levelDiff = std::abs(static_cast<int32>(playerLevel) - static_cast<int32>(hubMidLevel));
+        int32 levelDiff = ::std::abs(static_cast<int32>(playerLevel) - static_cast<int32>(hubMidLevel));
 
         // Ideal: ±2 levels = full score
         // ±5 levels = 50% score
         // ±10 levels = 10% score
-        float levelScore = std::max(0.0f, 1.0f - (levelDiff / 10.0f));
+        float levelScore = ::std::max(0.0f, 1.0f - (levelDiff / 10.0f));
         score *= levelScore;
 
         // Distance penalty (closer is better)
@@ -115,7 +115,7 @@ namespace Playerbot
 
         // Quest availability bonus
         float questBonus = 1.0f + (questIds.size() * 0.1f); // 10% bonus per quest
-        score *= std::min(2.0f, questBonus); // Cap at 2x multiplier
+        score *= ::std::min(2.0f, questBonus); // Cap at 2x multiplier
 
         return score;
     }
@@ -134,7 +134,7 @@ namespace Playerbot
     {
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Initializing quest hub database...");
 
-        auto startTime = std::chrono::steady_clock::now();
+        auto startTime = ::std::chrono::steady_clock::now();
 
         try
         {
@@ -175,8 +175,8 @@ namespace Playerbot
 
             _initialized = true;
 
-            auto endTime = std::chrono::steady_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+            auto endTime = ::std::chrono::steady_clock::now();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
             TC_LOG_INFO("playerbot", "QuestHubDatabase: Initialization complete. "
                                      "{} hubs loaded in {} ms. Memory usage: {} KB",
@@ -184,7 +184,7 @@ namespace Playerbot
 
             return true;
         }
-        catch (std::exception const& ex)
+        catch (::std::exception const& ex)
         {
             TC_LOG_ERROR("playerbot", "QuestHubDatabase: Exception during initialization: {}", ex.what());
             return false;
@@ -196,7 +196,7 @@ namespace Playerbot
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Reloading quest hub database...");
 
         // Exclusive lock for writing
-        std::unique_lock lock(_mutex);
+        ::std::unique_lock lock(_mutex);
 
         // Clear existing data
         _questHubs.clear();
@@ -211,7 +211,7 @@ namespace Playerbot
         return Initialize();
     }
 
-    std::vector<QuestHub const*> QuestHubDatabase::GetQuestHubsForPlayer(
+    ::std::vector<QuestHub const*> QuestHubDatabase::GetQuestHubsForPlayer(
         Player const* player,
         uint32 maxCount) const
     {
@@ -219,10 +219,10 @@ namespace Playerbot
             return {};
 
         // Shared lock for reading
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         // Collect all appropriate hubs with their scores
-        std::vector<std::pair<QuestHub const*, float>> scoredHubs;
+        ::std::vector<::std::pair<QuestHub const*, float>> scoredHubs;
         scoredHubs.reserve(_questHubs.size());
 
         for (auto const& hub : _questHubs)
@@ -233,12 +233,12 @@ namespace Playerbot
         }
 
         // Sort by score (highest first)
-        std::sort(scoredHubs.begin(), scoredHubs.end(),
+        ::std::sort(scoredHubs.begin(), scoredHubs.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         // Extract top N hubs
-        std::vector<QuestHub const*> result;
-        result.reserve(std::min(maxCount, static_cast<uint32>(scoredHubs.size())));
+        ::std::vector<QuestHub const*> result;
+        result.reserve(::std::min(maxCount, static_cast<uint32>(scoredHubs.size())));
 
         for (size_t i = 0; i < scoredHubs.size() && i < maxCount; ++i)
             result.push_back(scoredHubs[i].first);
@@ -252,10 +252,10 @@ namespace Playerbot
             return nullptr;
 
         // Shared lock for reading
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         QuestHub const* nearest = nullptr;
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
 
         for (auto const& hub : _questHubs)
         {
@@ -279,7 +279,7 @@ namespace Playerbot
             return nullptr;
 
         // Shared lock for reading
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         auto it = _hubIdToIndex.find(hubId);
         if (it == _hubIdToIndex.end())
@@ -288,19 +288,19 @@ namespace Playerbot
         return &_questHubs[it->second];
     }
 
-    std::vector<QuestHub const*> QuestHubDatabase::GetQuestHubsInZone(uint32 zoneId) const
+    ::std::vector<QuestHub const*> QuestHubDatabase::GetQuestHubsInZone(uint32 zoneId) const
     {
         if (!_initialized)
             return {};
 
         // Shared lock for reading
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         auto it = _zoneIndex.find(zoneId);
         if (it == _zoneIndex.end())
             return {};
 
-        std::vector<QuestHub const*> result;
+        ::std::vector<QuestHub const*> result;
         result.reserve(it->second.size());
 
         for (size_t index : it->second)
@@ -311,13 +311,13 @@ namespace Playerbot
 
     QuestHub const* QuestHubDatabase::GetQuestHubAtPosition(
         Position const& pos,
-        std::optional<uint32> zoneId) const
+        ::std::optional<uint32> zoneId) const
     {
         if (!_initialized)
             return nullptr;
 
         // Shared lock for reading
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
 
         // If zone is specified, only check hubs in that zone
         if (zoneId.has_value())
@@ -347,13 +347,13 @@ namespace Playerbot
 
     size_t QuestHubDatabase::GetQuestHubCount() const
     {
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
         return _questHubs.size();
     }
 
     size_t QuestHubDatabase::GetMemoryUsage() const
     {
-        std::shared_lock lock(_mutex);
+        ::std::shared_lock lock(_mutex);
         return _memoryUsage;
     }
 
@@ -379,8 +379,8 @@ namespace Playerbot
         PreparedQueryResult result = WorldDatabase.Query(stmt);
 
         uint32 count = 0;
-        std::unordered_map<uint32, uint32> zoneDistribution;
-        std::unordered_map<uint32, uint32> mapDistribution;
+        ::std::unordered_map<uint32, uint32> zoneDistribution;
+        ::std::unordered_map<uint32, uint32> mapDistribution;
 
         do
         {
@@ -409,14 +409,14 @@ namespace Playerbot
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Loaded {} quest givers from database", count);
 
         // Log map distribution with expansion names
-        std::vector<std::pair<uint32, uint32>> mapCounts(mapDistribution.begin(), mapDistribution.end());
-        std::sort(mapCounts.begin(), mapCounts.end(),
+        ::std::vector<::std::pair<uint32, uint32>> mapCounts(mapDistribution.begin(), mapDistribution.end());
+        ::std::sort(mapCounts.begin(), mapCounts.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Quest giver distribution across {} maps:", mapCounts.size());
-        for (size_t i = 0; i < std::min(size_t(10), mapCounts.size()); ++i)
+        for (size_t i = 0; i < ::std::min(size_t(10), mapCounts.size()); ++i)
         {
-            std::string mapName;
+            ::std::string mapName;
             switch (mapCounts[i].first)
             {
                 case 0: mapName = "Eastern Kingdoms"; break;
@@ -430,19 +430,19 @@ namespace Playerbot
                 case 1220: mapName = "Broken Shore"; break;
                 default:
                     mapName = "Map ";
-                    mapName += std::to_string(mapCounts[i].first);
+                    mapName += ::std::to_string(mapCounts[i].first);
                     break;
             }
             TC_LOG_INFO("playerbot", "  {}: {} quest givers", mapName, mapCounts[i].second);
         }
 
         // Log top 5 zones by quest giver count
-        std::vector<std::pair<uint32, uint32>> zoneCounts(zoneDistribution.begin(), zoneDistribution.end());
-        std::sort(zoneCounts.begin(), zoneCounts.end(),
+        ::std::vector<::std::pair<uint32, uint32>> zoneCounts(zoneDistribution.begin(), zoneDistribution.end());
+        ::std::sort(zoneCounts.begin(), zoneCounts.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Top zones by quest giver count:");
-        for (size_t i = 0; i < std::min(size_t(5), zoneCounts.size()); ++i)
+        for (size_t i = 0; i < ::std::min(size_t(5), zoneCounts.size()); ++i)
         {
             TC_LOG_INFO("playerbot", "  Zone {}: {} quest givers", zoneCounts[i].first, zoneCounts[i].second);
         }
@@ -451,7 +451,7 @@ namespace Playerbot
         if (count > 0)
         {
             TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Sample quest giver positions:");
-            for (size_t i = 0; i < std::min(size_t(5), _tempQuestGivers.size()); ++i)
+            for (size_t i = 0; i < ::std::min(size_t(5), _tempQuestGivers.size()); ++i)
             {
                 TC_LOG_DEBUG("playerbot", "  Entry {} at ({:.2f}, {:.2f}, {:.2f}) in zone {}",
                     _tempQuestGivers[i].creatureEntry,
@@ -485,14 +485,14 @@ namespace Playerbot
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Clustering parameters - EPSILON={} yards, MIN_POINTS={}",
             EPSILON, MIN_POINTS);
 
-        std::vector<bool> visited(_tempQuestGivers.size(), false);
-        std::vector<int32> clusterIds(_tempQuestGivers.size(), -1); // -1 = noise
+        ::std::vector<bool> visited(_tempQuestGivers.size(), false);
+        ::std::vector<int32> clusterIds(_tempQuestGivers.size(), -1); // -1 = noise
         int32 currentClusterId = 0;
 
         // Lambda: Find neighbors within EPSILON
-        auto findNeighbors = [&](size_t index) -> std::vector<size_t>
+        auto findNeighbors = [&](size_t index) -> ::std::vector<size_t>
         {
-            std::vector<size_t> neighbors;
+            ::std::vector<size_t> neighbors;
             Position const& pos = _tempQuestGivers[index].position;
 
             for (size_t i = 0; i < _tempQuestGivers.size(); ++i)
@@ -503,7 +503,7 @@ namespace Playerbot
                 Position const& otherPos = _tempQuestGivers[i].position;
                 float dx = pos.GetPositionX() - otherPos.GetPositionX();
                 float dy = pos.GetPositionY() - otherPos.GetPositionY();
-                float distance = std::sqrt(dx * dx + dy * dy);
+                float distance = ::std::sqrt(dx * dx + dy * dy);
 
                 if (distance <= EPSILON)
                     neighbors.push_back(i);
@@ -513,8 +513,8 @@ namespace Playerbot
         };
 
         // Sample neighbor counts for diagnostic
-        std::vector<size_t> sampleNeighborCounts;
-        for (size_t i = 0; i < std::min(size_t(10), _tempQuestGivers.size()); ++i)
+        ::std::vector<size_t> sampleNeighborCounts;
+        for (size_t i = 0; i < ::std::min(size_t(10), _tempQuestGivers.size()); ++i)
         {
             sampleNeighborCounts.push_back(findNeighbors(i).size());
         }
@@ -534,7 +534,7 @@ namespace Playerbot
                 continue;
 
             visited[i] = true;
-            std::vector<size_t> neighbors = findNeighbors(i);
+            ::std::vector<size_t> neighbors = findNeighbors(i);
 
             if (neighbors.size() < MIN_POINTS)
             {
@@ -557,7 +557,7 @@ namespace Playerbot
                 if (!visited[neighborIdx])
                 {
                     visited[neighborIdx] = true;
-                    std::vector<size_t> neighborNeighbors = findNeighbors(neighborIdx);
+                    ::std::vector<size_t> neighborNeighbors = findNeighbors(neighborIdx);
 
                     if (neighborNeighbors.size() >= MIN_POINTS)
                     {
@@ -579,7 +579,7 @@ namespace Playerbot
             currentClusterId, noiseCount);
 
         // Create QuestHub objects from clusters
-        std::unordered_map<int32, std::vector<size_t>> clusterMap;
+        ::std::unordered_map<int32, ::std::vector<size_t>> clusterMap;
         uint32 noisePoints = 0;
 
         for (size_t i = 0; i < clusterIds.size(); ++i)
@@ -626,7 +626,7 @@ namespace Playerbot
 
             // Calculate center position (average of all quest giver positions)
             float sumX = 0.0f, sumY = 0.0f, sumZ = 0.0f;
-            std::set<uint32> uniqueCreatures;
+            ::std::set<uint32> uniqueCreatures;
             uint32 zoneId = 0;
 
             for (size_t idx : indices)
@@ -657,8 +657,8 @@ namespace Playerbot
                 Position const& pos = _tempQuestGivers[idx].position;
                 float dx = pos.GetPositionX() - hub.location.GetPositionX();
                 float dy = pos.GetPositionY() - hub.location.GetPositionY();
-                float dist = std::sqrt(dx * dx + dy * dy);
-                maxDist = std::max(maxDist, dist);
+                float dist = ::std::sqrt(dx * dx + dy * dy);
+                maxDist = ::std::max(maxDist, dist);
             }
             hub.radius = maxDist + 10.0f; // Add 10 yard buffer
 
@@ -667,9 +667,9 @@ namespace Playerbot
 
             // Generate name (will be refined with zone data)
             hub.name = "Quest Hub ";
-            hub.name += std::to_string(hub.hubId);
+            hub.name += ::std::to_string(hub.hubId);
 
-            _questHubs.push_back(std::move(hub));
+            _questHubs.push_back(::std::move(hub));
         }
 
         return static_cast<uint32>(_questHubs.size());
@@ -680,7 +680,7 @@ namespace Playerbot
         TC_LOG_INFO("playerbot", "QuestHubDatabase: Loading quest data for {} hubs...", _questHubs.size());
 
         // OPTIMIZATION: Collect ALL unique creature IDs from ALL hubs in a single pass
-        std::set<uint32> allCreatureIds;
+        ::std::set<uint32> allCreatureIds;
         for (auto const& hub : _questHubs)
         {
             allCreatureIds.insert(hub.creatureIds.begin(), hub.creatureIds.end());
@@ -691,31 +691,31 @@ namespace Playerbot
 
         // Build map of creature ID -> quest data
         // Tuple format: (questId, contentTuningId, unused, allowableRaces)
-        std::unordered_map<uint32, std::vector<std::tuple<uint32, uint32, uint32, uint64>>> creatureQuests;
+        ::std::unordered_map<uint32, ::std::vector<::std::tuple<uint32, uint32, uint32, uint64>>> creatureQuests;
 
         // BATCH QUERIES: Split large IN clause into chunks of 100 creatures to avoid crashes
         constexpr size_t BATCH_SIZE = 100;
-        std::vector<uint32> creatureIdVec(allCreatureIds.begin(), allCreatureIds.end());
+        ::std::vector<uint32> creatureIdVec(allCreatureIds.begin(), allCreatureIds.end());
 
         for (size_t batchStart = 0; batchStart < creatureIdVec.size(); batchStart += BATCH_SIZE)
         {
-            size_t batchEnd = std::min(batchStart + BATCH_SIZE, creatureIdVec.size());
+            size_t batchEnd = ::std::min(batchStart + BATCH_SIZE, creatureIdVec.size());
             size_t batchCount = batchEnd - batchStart;
 
             // Build IN clause for this batch
-            std::string creatureList;
+            ::std::string creatureList;
             size_t batchSize = batchEnd - batchStart;
             creatureList.reserve(batchSize * 8); // Pre-allocate approximate size
             for (size_t i = batchStart; i < batchEnd; ++i)
             {
                 if (i != batchStart)
                     creatureList += ",";
-                creatureList += std::to_string(creatureIdVec[i]);
+                creatureList += ::std::to_string(creatureIdVec[i]);
             }
 
             // Execute query for this batch
             // WoW 11.2: Level info is in DB2 via ContentTuningID, not in quest_template columns
-            std::string query = "SELECT DISTINCT qr.id, qr.quest, qt.ContentTuningID, qt.AllowableRaces "
+            ::std::string query = "SELECT DISTINCT qr.id, qr.quest, qt.ContentTuningID, qt.AllowableRaces "
                                "FROM creature_queststarter qr "
                                "INNER JOIN quest_template qt ON qr.quest = qt.ID "
                                "WHERE qr.id IN (" + creatureList + ")";
@@ -758,7 +758,7 @@ namespace Playerbot
             if (hub.creatureIds.empty())
                 continue;
 
-            std::set<uint32> uniqueQuests;
+            ::std::set<uint32> uniqueQuests;
 
             // Lookup quest data for each creature in this hub (fast in-memory operation)
             for (uint32 creatureId : hub.creatureIds)
@@ -803,7 +803,7 @@ namespace Playerbot
             // Refine hub name with zone info if available
             if (hub.zoneId > 0)
             {
-                hub.name = "Quest Hub (Zone " + std::to_string(hub.zoneId) + ")";
+                hub.name = "Quest Hub (Zone " + ::std::to_string(hub.zoneId) + ")";
             }
 
             ++hubsProcessed;

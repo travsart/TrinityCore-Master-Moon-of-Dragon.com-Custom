@@ -19,7 +19,7 @@ namespace Playerbot::Testing
     public:
         static void RunAllTests()
         {
-            std::cout << "=== BotAuctionManager Unit Tests ===" << std::endl;
+            ::std::cout << "=== BotAuctionManager Unit Tests ===" << ::std::endl;
 
             TestInitialization();
             TestPriceCalculation();
@@ -32,25 +32,25 @@ namespace Playerbot::Testing
             TestConfiguration();
             TestThreadSafety();
 
-            std::cout << "=== All Tests Passed ===" << std::endl;
+            ::std::cout << "=== All Tests Passed ===" << ::std::endl;
         }
 
     private:
         static void TestInitialization()
         {
-            std::cout << "Testing Initialization..." << std::endl;
+            ::std::cout << "Testing Initialization..." << ::std::endl;
 
             sBotAuctionMgr->Initialize();
 
             assert(sBotAuctionMgr != nullptr);
             assert(sBotAuctionMgr->GetUpdateInterval() > 0);
 
-            std::cout << "✓ Initialization test passed" << std::endl;
+            ::std::cout << " Initialization test passed" << ::std::endl;
         }
 
         static void TestPriceCalculation()
         {
-            std::cout << "Testing Price Calculation..." << std::endl;
+            ::std::cout << "Testing Price Calculation..." << ::std::endl;
 
             // Test optimal price calculation for different strategies
             uint32 testItemId = 12345;
@@ -74,12 +74,12 @@ namespace Playerbot::Testing
             uint64 quickSalePrice = sBotAuctionMgr->CalculateUndercutPrice(10000, AuctionStrategy::QUICK_SALE);
             assert(quickSalePrice == 8000);
 
-            std::cout << "✓ Price calculation test passed" << std::endl;
+            ::std::cout << " Price calculation test passed" << ::std::endl;
         }
 
         static void TestMarketAnalysis()
         {
-            std::cout << "Testing Market Analysis..." << std::endl;
+            ::std::cout << "Testing Market Analysis..." << ::std::endl;
 
             uint32 testItemId = 54321;
 
@@ -96,14 +96,14 @@ namespace Playerbot::Testing
             // Verify market condition assessment
             MarketCondition condition = sBotAuctionMgr->AssessMarketCondition(testItemId);
 
-            std::cout << "  Item " << testItemId << " market condition: " << static_cast<int>(condition) << std::endl;
+            ::std::cout << "  Item " << testItemId << " market condition: " << static_cast<int>(condition) << ::std::endl;
 
-            std::cout << "✓ Market analysis test passed" << std::endl;
+            ::std::cout << " Market analysis test passed" << ::std::endl;
         }
 
         static void TestAuctionCreation()
         {
-            std::cout << "Testing Auction Creation..." << std::endl;
+            ::std::cout << "Testing Auction Creation..." << ::std::endl;
 
             // Note: This test requires a valid Player* and Item*
             // In actual implementation, create test fixtures
@@ -117,12 +117,12 @@ namespace Playerbot::Testing
             // Test deposit calculation
             // Note: Requires mock Item* for actual test
 
-            std::cout << "✓ Auction creation test passed (validation only)" << std::endl;
+            ::std::cout << " Auction creation test passed (validation only)" << ::std::endl;
         }
 
         static void TestBidding()
         {
-            std::cout << "Testing Bidding..." << std::endl;
+            ::std::cout << "Testing Bidding..." << ::std::endl;
 
             uint32 testItemId = 99999;
             uint64 currentBid = 10000;
@@ -135,12 +135,12 @@ namespace Playerbot::Testing
             uint64 expectedBid = currentBid + CalculatePct(currentBid, 5);
             assert(optimalBid == expectedBid || optimalBid == 0); // 0 means use buyout
 
-            std::cout << "✓ Bidding test passed" << std::endl;
+            ::std::cout << " Bidding test passed" << ::std::endl;
         }
 
         static void TestCommodityTrading()
         {
-            std::cout << "Testing Commodity Trading..." << std::endl;
+            ::std::cout << "Testing Commodity Trading..." << ::std::endl;
 
             assert(sBotAuctionMgr->IsCommodityTradingEnabled() == true ||
                    sBotAuctionMgr->IsCommodityTradingEnabled() == false);
@@ -148,12 +148,12 @@ namespace Playerbot::Testing
             // Test commodity-specific logic
             // Note: Requires actual auction house and player for full test
 
-            std::cout << "✓ Commodity trading test passed (configuration only)" << std::endl;
+            ::std::cout << " Commodity trading test passed (configuration only)" << ::std::endl;
         }
 
         static void TestFlipOpportunities()
         {
-            std::cout << "Testing Flip Opportunities..." << std::endl;
+            ::std::cout << "Testing Flip Opportunities..." << ::std::endl;
 
             // Create mock flip opportunity
             FlipOpportunity testOpp;
@@ -175,12 +175,12 @@ namespace Playerbot::Testing
             notViable = testOpp.IsViable(1000, 50); // Risk too high
             assert(notViable == false);
 
-            std::cout << "✓ Flip opportunities test passed" << std::endl;
+            ::std::cout << " Flip opportunities test passed" << ::std::endl;
         }
 
         static void TestStatistics()
         {
-            std::cout << "Testing Statistics..." << std::endl;
+            ::std::cout << "Testing Statistics..." << ::std::endl;
 
             ObjectGuid testBotGuid = ObjectGuid::Create<HighGuid::Player>(12345);
 
@@ -199,12 +199,12 @@ namespace Playerbot::Testing
             assert(stats.NetProfit == 5000);
             assert(stats.SuccessRate == 50.0f); // 1 sold out of 2 created
 
-            std::cout << "✓ Statistics test passed" << std::endl;
+            ::std::cout << " Statistics test passed" << ::std::endl;
         }
 
         static void TestConfiguration()
         {
-            std::cout << "Testing Configuration..." << std::endl;
+            ::std::cout << "Testing Configuration..." << ::std::endl;
 
             // Test configuration loading
             uint32 updateInterval = sBotAuctionMgr->GetUpdateInterval();
@@ -219,17 +219,17 @@ namespace Playerbot::Testing
             AuctionStrategy strategy = sBotAuctionMgr->GetDefaultStrategy();
             assert(static_cast<int>(strategy) >= 0 && static_cast<int>(strategy) <= 5);
 
-            std::cout << "  Update Interval: " << updateInterval << "ms" << std::endl;
-            std::cout << "  Max Auctions: " << maxAuctions << std::endl;
-            std::cout << "  Min Profit: " << minProfit << " copper" << std::endl;
-            std::cout << "  Default Strategy: " << static_cast<int>(strategy) << std::endl;
+            ::std::cout << "  Update Interval: " << updateInterval << "ms" << ::std::endl;
+            ::std::cout << "  Max Auctions: " << maxAuctions << ::std::endl;
+            ::std::cout << "  Min Profit: " << minProfit << " copper" << ::std::endl;
+            ::std::cout << "  Default Strategy: " << static_cast<int>(strategy) << ::std::endl;
 
-            std::cout << "✓ Configuration test passed" << std::endl;
+            ::std::cout << " Configuration test passed" << ::std::endl;
         }
 
         static void TestThreadSafety()
         {
-            std::cout << "Testing Thread Safety..." << std::endl;
+            ::std::cout << "Testing Thread Safety..." << ::std::endl;
 
             // This is a basic check - full thread safety requires stress testing
             // with multiple threads accessing the manager concurrently
@@ -244,7 +244,7 @@ namespace Playerbot::Testing
                 // Should not crash with mutex protection
             }
 
-            std::cout << "✓ Thread safety test passed (basic check)" << std::endl;
+            ::std::cout << " Thread safety test passed (basic check)" << ::std::endl;
         }
     };
 
@@ -254,61 +254,61 @@ namespace Playerbot::Testing
     public:
         static void RunBenchmarks()
         {
-            std::cout << "\n=== BotAuctionManager Performance Benchmarks ===" << std::endl;
+            ::std::cout << "\n=== BotAuctionManager Performance Benchmarks ===" << ::std::endl;
 
             BenchmarkPriceCalculation();
             BenchmarkMarketScan();
             BenchmarkStatTracking();
 
-            std::cout << "=== Benchmarks Complete ===" << std::endl;
+            ::std::cout << "=== Benchmarks Complete ===" << ::std::endl;
         }
 
     private:
         static void BenchmarkPriceCalculation()
         {
-            std::cout << "Benchmarking Price Calculation..." << std::endl;
+            ::std::cout << "Benchmarking Price Calculation..." << ::std::endl;
 
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = ::std::chrono::high_resolution_clock::now();
 
             for (int i = 0; i < 10000; ++i)
             {
                 sBotAuctionMgr->CalculateOptimalPrice(i, AuctionStrategy::SMART_PRICING);
             }
 
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            auto end = ::std::chrono::high_resolution_clock::now();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 
-            std::cout << "  10,000 price calculations: " << duration.count() << " µs" << std::endl;
-            std::cout << "  Average per calculation: " << (duration.count() / 10000.0) << " µs" << std::endl;
+            ::std::cout << "  10,000 price calculations: " << duration.count() << " µs" << ::std::endl;
+            ::std::cout << "  Average per calculation: " << (duration.count() / 10000.0) << " µs" << ::std::endl;
         }
 
         static void BenchmarkMarketScan()
         {
-            std::cout << "Benchmarking Market Scan..." << std::endl;
+            ::std::cout << "Benchmarking Market Scan..." << ::std::endl;
 
             // Note: This requires actual auction house data
             // In production, this would scan real auctions
 
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = ::std::chrono::high_resolution_clock::now();
 
             for (int i = 0; i < 100; ++i)
             {
                 sBotAuctionMgr->SavePriceHistory(i, 10000);
             }
 
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            auto end = ::std::chrono::high_resolution_clock::now();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 
-            std::cout << "  100 price history updates: " << duration.count() << " µs" << std::endl;
+            ::std::cout << "  100 price history updates: " << duration.count() << " µs" << ::std::endl;
         }
 
         static void BenchmarkStatTracking()
         {
-            std::cout << "Benchmarking Stat Tracking..." << std::endl;
+            ::std::cout << "Benchmarking Stat Tracking..." << ::std::endl;
 
             ObjectGuid testGuid = ObjectGuid::Create<HighGuid::Player>(99999);
 
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = ::std::chrono::high_resolution_clock::now();
 
             for (int i = 0; i < 1000; ++i)
             {
@@ -316,11 +316,11 @@ namespace Playerbot::Testing
                 sBotAuctionMgr->RecordAuctionSold(testGuid, 15000, 10000);
             }
 
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            auto end = ::std::chrono::high_resolution_clock::now();
+            auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 
-            std::cout << "  2,000 stat operations: " << duration.count() << " µs" << std::endl;
-            std::cout << "  Average per operation: " << (duration.count() / 2000.0) << " µs" << std::endl;
+            ::std::cout << "  2,000 stat operations: " << duration.count() << " µs" << ::std::endl;
+            ::std::cout << "  Average per operation: " << (duration.count() / 2000.0) << " µs" << ::std::endl;
         }
     };
 }

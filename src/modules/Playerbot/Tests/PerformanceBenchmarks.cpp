@@ -168,9 +168,9 @@ void BenchmarkLevelDistribution()
 
     // Target: <0.1ms per selection
     if (result1.avgTimeMs > 0.1f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.1ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.1ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Benchmark: Level bracket selection (Horde)
     auto result2 = PerformanceBenchmark::Run("Level Bracket Selection (Horde)", 10000, []()
@@ -202,9 +202,9 @@ void BenchmarkGearFactory()
 
     // Target: <5ms per generation
     if (result1.avgTimeMs > 5.0f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<5ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<5ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Benchmark: Gear set generation (Level 80)
     auto result2 = PerformanceBenchmark::Run("Gear Set Generation (L80)", 1000, []()
@@ -215,9 +215,9 @@ void BenchmarkGearFactory()
     result2.Print();
 
     if (result2.avgTimeMs > 5.0f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<5ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<5ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 }
 
 // ====================================================================
@@ -241,9 +241,9 @@ void BenchmarkTalentManager()
 
     // Target: <0.1ms per selection
     if (result1.avgTimeMs > 0.1f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.1ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.1ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Benchmark: Talent loadout retrieval
     auto result2 = PerformanceBenchmark::Run("Talent Loadout Retrieval", 10000, []()
@@ -254,9 +254,9 @@ void BenchmarkTalentManager()
     result2.Print();
 
     if (result2.avgTimeMs > 0.1f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.1ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.1ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 }
 
 // ====================================================================
@@ -280,9 +280,9 @@ void BenchmarkWorldPositioner()
 
     // Target: <0.05ms per selection
     if (result1.avgTimeMs > 0.05f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.05ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.05ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Benchmark: Zone selection (Leveling zones)
     auto result2 = PerformanceBenchmark::Run("Zone Selection (L40 Leveling)", 10000, []()
@@ -293,9 +293,9 @@ void BenchmarkWorldPositioner()
     result2.Print();
 
     if (result2.avgTimeMs > 0.05f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.05ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.05ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Benchmark: Zone selection (Endgame zones)
     auto result3 = PerformanceBenchmark::Run("Zone Selection (L80 Endgame)", 10000, []()
@@ -306,9 +306,9 @@ void BenchmarkWorldPositioner()
     result3.Print();
 
     if (result3.avgTimeMs > 0.05f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<0.05ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<0.05ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 }
 
 // ====================================================================
@@ -341,13 +341,13 @@ void BenchmarkIntegratedWorkflow()
 
     // Target: <5ms total preparation time
     if (result.avgTimeMs > 5.0f)
-        std::cout << "⚠️  WARNING: Average time exceeds target (<5ms)\n\n";
+        std::cout << "  WARNING: Average time exceeds target (<5ms)\n\n";
     else
-        std::cout << "✅ PASS: Average time within target\n\n";
+        std::cout << " PASS: Average time within target\n\n";
 
     // Calculate throughput
     float botsPerSecond = result.opsPerSecond;
-    std::cout << "📊 Bot Creation Throughput: " << std::fixed << std::setprecision(1)
+    std::cout << " Bot Creation Throughput: " << std::fixed << std::setprecision(1)
               << botsPerSecond << " bots/second (worker thread prep only)\n\n";
 }
 
@@ -389,9 +389,9 @@ void BenchmarkMemoryUsage()
     uint64 actualMemory = totalCacheSize + 102400 + targetMemoryFor5000Bots;
 
     if (actualMemory < (10 * 1024 * 1024))
-        std::cout << "✅ PASS: Memory usage within target (<10MB for 5000 bots)\n\n";
+        std::cout << " PASS: Memory usage within target (<10MB for 5000 bots)\n\n";
     else
-        std::cout << "⚠️  WARNING: Memory usage exceeds target\n\n";
+        std::cout << "  WARNING: Memory usage exceeds target\n\n";
 }
 
 // ====================================================================
@@ -435,7 +435,7 @@ void BenchmarkScalability()
                   << std::fixed << std::setprecision(1) << std::setw(8) << botsPerSecond << " bots/sec\n";
     }
 
-    std::cout << "\n✅ Scalability test complete\n\n";
+    std::cout << "\n Scalability test complete\n\n";
 }
 
 // ====================================================================
@@ -484,7 +484,7 @@ int main()
         return 1;
     }
 
-    std::cout << "✅ All subsystems initialized\n";
+    std::cout << " All subsystems initialized\n";
 
     // Run benchmarks
     BenchmarkLevelDistribution();

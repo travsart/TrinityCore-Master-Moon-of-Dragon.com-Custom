@@ -28,6 +28,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
@@ -432,7 +442,7 @@ protected:
             {
                 this->CastSpell(this->GetBot(), SHURIKEN_STORM);
                 ConsumeEnergy(35);
-                GenerateComboPoints(std::min(enemyCount, 5u));
+                GenerateComboPoints(::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -470,7 +480,7 @@ private:
         if (timeDiff >= 100) // Every 100ms
         {
             uint32 energyRegen = (timeDiff / 100);
-            this->_resource.energy = std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
+            this->_resource.energy = ::std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
             lastRegenTime = now;
         }
     }
@@ -481,7 +491,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     bool IsBehindTarget(::Unit* target) const
@@ -601,7 +611,7 @@ private:
                        this->_resource.comboPoints >= 5;
             }, "35+ Energy, 3+ enemies, 5+ CP (AoE finisher)");
 
-            TC_LOG_INFO("module.playerbot", "🗡️ SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -621,7 +631,7 @@ private:
                             Condition("Not active", [this](Player* bot, Unit* target) {
                                 return !this->_symbolsOfDeathActive;
                             }),
-                            Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, bot))
                                 {
                                     this->CastSpell(bot, RogueAI::SYMBOLS_OF_DEATH);
@@ -637,7 +647,7 @@ private:
                                 return bot && bot->HasSpell(RogueAI::SHADOW_BLADES) &&
                                        !this->_shadowBladesActive;
                             }),
-                            Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SHADOW_BLADES, bot))
                                 {
                                     this->CastSpell(bot, RogueAI::SHADOW_BLADES);
@@ -657,7 +667,7 @@ private:
                         return target != nullptr &&
                                this->_shadowDanceTracker.ShouldUse(this->_resource.comboPoints);
                     }),
-                    Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(RogueAI::SHADOW_DANCE, bot))
                         {
                             this->CastSpell(bot, RogueAI::SHADOW_DANCE);
@@ -683,7 +693,7 @@ private:
                                        !this->HasRupture(target) &&
                                        this->_resource.energy >= 25;
                             }),
-                            Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
                                     this->CastSpell(target, RogueAI::RUPTURE);
@@ -701,7 +711,7 @@ private:
                                        this->_resource.comboPoints >= this->_resource.maxComboPoints &&
                                        this->_resource.energy >= 30;
                             }),
-                            Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SECRET_TECHNIQUE, target))
                                 {
                                     this->CastSpell(target, SECRET_TECHNIQUE);
@@ -717,7 +727,7 @@ private:
                             Condition("35+ Energy", [this](Player* bot, Unit* target) {
                                 return this->_resource.energy >= 35;
                             }),
-                            Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
                                     this->CastSpell(target, EVISCERATE_SUB);
@@ -744,7 +754,7 @@ private:
                             Condition("In stealth and 40+ Energy", [this](Player* bot, Unit* target) {
                                 return this->_inStealth && this->_resource.energy >= 40;
                             }),
-                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
                                     this->CastSpell(target, SHADOWSTRIKE_SUB);
@@ -763,7 +773,7 @@ private:
                             Condition("Behind target and 35+ Energy", [this](Player* bot, Unit* target) {
                                 return this->IsBehindTarget(target) && this->_resource.energy >= 35;
                             }),
-                            Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::BACKSTAB, target))
                                 {
                                     this->CastSpell(target, RogueAI::BACKSTAB);
@@ -782,7 +792,7 @@ private:
                             Condition("40+ Energy", [this](Player* bot, Unit* target) {
                                 return this->_resource.energy >= 40;
                             }),
-                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
                                     this->CastSpell(target, SHADOWSTRIKE_SUB);
@@ -798,7 +808,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

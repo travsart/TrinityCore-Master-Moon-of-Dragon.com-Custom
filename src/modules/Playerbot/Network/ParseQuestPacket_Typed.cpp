@@ -40,8 +40,8 @@ void ParseTypedQuestGiverStatus(WorldSession* session, WorldPackets::Quest::Ques
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_STATUS (typed): npc={}",
@@ -65,8 +65,8 @@ void ParseTypedQuestGiverQuestListMessage(WorldSession* session, WorldPackets::Q
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -91,8 +91,8 @@ void ParseTypedQuestGiverQuestDetails(WorldSession* session, WorldPackets::Quest
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -117,8 +117,8 @@ void ParseTypedQuestGiverRequestItems(WorldSession* session, WorldPackets::Quest
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -143,8 +143,8 @@ void ParseTypedQuestGiverOfferRewardMessage(WorldSession* session, WorldPackets:
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -169,8 +169,8 @@ void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Ques
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::COMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -200,8 +200,8 @@ void ParseTypedQuestGiverQuestFailed(WorldSession* session, WorldPackets::Quest:
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::COMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -226,8 +226,8 @@ void ParseTypedQuestUpdateAddCreditSimple(WorldSession* session, WorldPackets::Q
     event.objectiveId = packet.ObjectID;
     event.objectiveCount = 1;
     event.state = QuestState::INCOMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -252,8 +252,8 @@ void ParseTypedQuestUpdateAddCredit(WorldSession* session, WorldPackets::Quest::
     event.objectiveId = packet.ObjectID;
     event.objectiveCount = packet.Count;
     event.state = QuestState::INCOMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -278,8 +278,8 @@ void ParseTypedQuestUpdateComplete(WorldSession* session, WorldPackets::Quest::Q
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::COMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -306,8 +306,8 @@ void ParseTypedQuestUpdateFailedTimer(WorldSession* session, WorldPackets::Quest
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::COMPLETE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(10);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(10);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -332,8 +332,8 @@ void ParseTypedQuestConfirmAccept(WorldSession* session, WorldPackets::Quest::Qu
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 
@@ -358,8 +358,8 @@ void ParseTypedQuestPOIQueryResponse(WorldSession* session, WorldPackets::Query:
     event.objectiveId = 0;
     event.objectiveCount = 0;
     event.state = QuestState::NONE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::seconds(30);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::seconds(30);
 
     QuestEventBus::instance()->PublishEvent(event);
 

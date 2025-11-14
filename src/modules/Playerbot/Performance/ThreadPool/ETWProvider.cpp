@@ -193,8 +193,8 @@ void ETWProvider::LogWorkerStateChange(uint32 workerId, WorkerState fromState, W
     event.workerId = workerId;
     event.fromState = static_cast<uint32>(fromState);
     event.toState = static_cast<uint32>(toState);
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::WorkerStateChange, ETWLevel::Verbose,
               &event, sizeof(event));
@@ -215,8 +215,8 @@ void ETWProvider::LogTaskExecutionStart(uint32 workerId, uint64 taskId, TaskPrio
     event.workerId = workerId;
     event.taskId = taskId;
     event.priority = static_cast<uint32>(priority);
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::TaskExecutionStart, ETWLevel::Verbose,
               &event, sizeof(event));
@@ -237,8 +237,8 @@ void ETWProvider::LogTaskExecutionEnd(uint32 workerId, uint64 taskId, uint64 exe
     event.workerId = workerId;
     event.taskId = taskId;
     event.executionTimeMicros = executionTimeMicros;
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::TaskExecutionEnd, ETWLevel::Verbose,
               &event, sizeof(event));
@@ -252,8 +252,8 @@ void ETWProvider::LogWorkStealAttempt(uint32 thiefWorkerId, uint32 victimWorkerI
     WorkStealAttemptEvent event;
     event.thiefWorkerId = thiefWorkerId;
     event.victimWorkerId = victimWorkerId;
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::WorkStealAttempt, ETWLevel::Verbose,
               &event, sizeof(event));
@@ -268,8 +268,8 @@ void ETWProvider::LogWorkStealSuccess(uint32 thiefWorkerId, uint32 victimWorkerI
     event.thiefWorkerId = thiefWorkerId;
     event.victimWorkerId = victimWorkerId;
     event.taskCount = taskCount;
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::WorkStealSuccess, ETWLevel::Information,
               &event, sizeof(event));
@@ -285,8 +285,8 @@ void ETWProvider::LogDeadlockDetected(const DeadlockCheckResult& result)
     event.totalQueuedTasks = static_cast<uint32>(result.totalQueuedTasks);
     event.completedTasks = static_cast<uint32>(result.completedTasks);
     event.workerIssueCount = static_cast<uint32>(result.workerIssues.size());
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     // Copy description (truncate if needed)
     strncpy_s(event.description, sizeof(event.description) / sizeof(event.description[0]),
@@ -315,8 +315,8 @@ void ETWProvider::LogQueueDepthSample(size_t totalQueued, size_t criticalQueued,
     event.highQueued = highQueued;
     event.normalQueued = normalQueued;
     event.lowQueued = lowQueued;
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::QueueDepthSample, ETWLevel::Verbose,
               &event, sizeof(event));
@@ -346,8 +346,8 @@ void ETWProvider::LogThreadPoolShutdown(uint32 workerCount, uint64 totalTasksExe
     ThreadPoolShutdownEvent event;
     event.workerCount = workerCount;
     event.totalTasksExecuted = totalTasksExecuted;
-    event.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    event.timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     WriteEvent(ETWEventId::ThreadPoolShutdown, ETWLevel::Information,
               &event, sizeof(event));
@@ -398,7 +398,7 @@ bool ETWProvider::ShouldLogTaskExecution()
     if (_config.taskExecutionSampleRate == 1)
         return true;
 
-    uint32 counter = _taskExecutionCounter.fetch_add(1, std::memory_order_relaxed);
+    uint32 counter = _taskExecutionCounter.fetch_add(1, ::std::memory_order_relaxed);
     return (counter % _config.taskExecutionSampleRate) == 0;
 }
 
@@ -416,14 +416,14 @@ ETWEventScope::ETWEventScope(uint32 workerId, const char* eventName, uint64 even
     : _workerId(workerId)
     , _eventName(eventName)
     , _eventId(eventId)
-    , _startTime(std::chrono::steady_clock::now())
+    , _startTime(::std::chrono::steady_clock::now())
 {
 }
 
 ETWEventScope::~ETWEventScope()
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(
         endTime - _startTime).count();
 
     // Log as task execution

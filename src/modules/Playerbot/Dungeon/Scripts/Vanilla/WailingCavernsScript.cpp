@@ -311,7 +311,7 @@ public:
                 // Skum summons adds (Deviate Ravagers)
                 // Adds should be killed quickly as they overwhelm group
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 ::Creature* highestPriorityAdd = nullptr;
                 for (::Creature* add : adds)
@@ -360,7 +360,7 @@ public:
 
                     // Add some spread
                     float angle = player->GetAngle(boss) + (frand(-0.5f, 0.5f));
-                    meleePos.RelocateOffset({std::cos(angle) * 2.0f, std::sin(angle) * 2.0f, 0.0f});
+                    meleePos.RelocateOffset({::std::cos(angle) * 2.0f, ::std::sin(angle) * 2.0f, 0.0f});
 
                     if (player->GetExactDist(&meleePos) > 3.0f)
                     {

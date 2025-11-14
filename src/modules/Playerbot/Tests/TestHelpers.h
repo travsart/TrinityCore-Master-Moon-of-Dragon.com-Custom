@@ -41,19 +41,19 @@ struct PerformanceMetrics
 
     void Print() const
     {
-        std::cout << "Performance Metrics:\n";
-        std::cout << "  - Execution Time: " << executionTimeMs << " ms\n";
-        std::cout << "  - Iterations: " << iterations << "\n";
+        ::std::cout << "Performance Metrics:\n";
+        ::std::cout << "  - Execution Time: " << executionTimeMs << " ms\n";
+        ::std::cout << "  - Iterations: " << iterations << "\n";
         if (iterations > 1)
         {
-            std::cout << "  - Average: " << (avgTimeNs / 1000000.0) << " ms\n";
-            std::cout << "  - Min: " << (minTimeNs / 1000000.0) << " ms\n";
-            std::cout << "  - Max: " << (maxTimeNs / 1000000.0) << " ms\n";
+            ::std::cout << "  - Average: " << (avgTimeNs / 1000000.0) << " ms\n";
+            ::std::cout << "  - Min: " << (minTimeNs / 1000000.0) << " ms\n";
+            ::std::cout << "  - Max: " << (maxTimeNs / 1000000.0) << " ms\n";
         }
         if (targetNs > 0)
         {
-            std::cout << "  - Target: " << (targetNs / 1000000.0) << " ms\n";
-            std::cout << "  - Status: " << (withinTarget ? "PASS" : "FAIL") << "\n";
+            ::std::cout << "  - Target: " << (targetNs / 1000000.0) << " ms\n";
+            ::std::cout << "  - Status: " << (withinTarget ? "PASS" : "FAIL") << "\n";
         }
     }
 };
@@ -66,7 +66,7 @@ struct PerformanceMetrics
  * @return Performance metrics
  */
 inline PerformanceMetrics BenchmarkFunction(
-    std::function<void()> func,
+    ::std::function<void()> func,
     uint64_t iterations = 1,
     uint64_t targetMs = 0)
 {
@@ -74,24 +74,24 @@ inline PerformanceMetrics BenchmarkFunction(
     metrics.iterations = iterations;
     metrics.targetNs = targetMs * 1000000;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (uint64_t i = 0; i < iterations; ++i)
     {
-        auto iterStart = std::chrono::high_resolution_clock::now();
+        auto iterStart = ::std::chrono::high_resolution_clock::now();
         func();
-        auto iterEnd = std::chrono::high_resolution_clock::now();
+        auto iterEnd = ::std::chrono::high_resolution_clock::now();
 
-        uint64_t iterTimeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        uint64_t iterTimeNs = ::std::chrono::duration_cast<::std::chrono::nanoseconds>(
             iterEnd - iterStart).count();
 
-        metrics.minTimeNs = std::min(metrics.minTimeNs, iterTimeNs);
-        metrics.maxTimeNs = std::max(metrics.maxTimeNs, iterTimeNs);
+        metrics.minTimeNs = ::std::min(metrics.minTimeNs, iterTimeNs);
+        metrics.maxTimeNs = ::std::max(metrics.maxTimeNs, iterTimeNs);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = ::std::chrono::high_resolution_clock::now();
 
-    metrics.executionTimeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    metrics.executionTimeNs = ::std::chrono::duration_cast<::std::chrono::nanoseconds>(
         end - start).count();
     metrics.executionTimeMs = metrics.executionTimeNs / 1000000;
     metrics.executionTimeSec = metrics.executionTimeNs / 1000000000.0;
@@ -116,7 +116,7 @@ inline PerformanceMetrics BenchmarkFunction(
  * @param spec Specialization ID
  * @return Configured MockPlayer instance
  */
-inline std::shared_ptr<Test::MockPlayer> CreateTestBot(
+inline ::std::shared_ptr<Test::MockPlayer> CreateTestBot(
     uint8 classId,
     uint8 level = 80,
     uint32 spec = 0)
@@ -127,7 +127,7 @@ inline std::shared_ptr<Test::MockPlayer> CreateTestBot(
 /**
  * @brief Create a test bot with specific health percentage
  */
-inline std::shared_ptr<Test::MockPlayer> CreateTestBotWithHealth(
+inline ::std::shared_ptr<Test::MockPlayer> CreateTestBotWithHealth(
     uint8 classId,
     uint8 level,
     uint32 spec,
@@ -143,7 +143,7 @@ inline std::shared_ptr<Test::MockPlayer> CreateTestBotWithHealth(
 /**
  * @brief Create a test bot with specific power (mana/rage/energy)
  */
-inline std::shared_ptr<Test::MockPlayer> CreateTestBotWithPower(
+inline ::std::shared_ptr<Test::MockPlayer> CreateTestBotWithPower(
     uint8 classId,
     uint8 level,
     uint32 spec,
@@ -158,7 +158,7 @@ inline std::shared_ptr<Test::MockPlayer> CreateTestBotWithPower(
 /**
  * @brief Create a test bot in combat
  */
-inline std::shared_ptr<Test::MockPlayer> CreateTestBotInCombat(
+inline ::std::shared_ptr<Test::MockPlayer> CreateTestBotInCombat(
     uint8 classId,
     uint8 level = 80,
     uint32 spec = 0)
@@ -178,7 +178,7 @@ inline std::shared_ptr<Test::MockPlayer> CreateTestBotInCombat(
  * @param health Enemy health
  * @return Configured MockUnit instance
  */
-inline std::shared_ptr<Test::MockUnit> CreateMockEnemy(
+inline ::std::shared_ptr<Test::MockUnit> CreateMockEnemy(
     uint32 level = 80,
     uint32 health = 100000)
 {
@@ -188,12 +188,12 @@ inline std::shared_ptr<Test::MockUnit> CreateMockEnemy(
 /**
  * @brief Create multiple mock enemies for AoE testing
  */
-inline std::vector<std::shared_ptr<Test::MockUnit>> CreateMockEnemies(
+inline ::std::vector<::std::shared_ptr<Test::MockUnit>> CreateMockEnemies(
     uint32 count,
     uint32 level = 80,
     uint32 health = 100000)
 {
-    std::vector<std::shared_ptr<Test::MockUnit>> enemies;
+    ::std::vector<::std::shared_ptr<Test::MockUnit>> enemies;
     enemies.reserve(count);
 
     for (uint32 i = 0; i < count; ++i)
@@ -207,7 +207,7 @@ inline std::vector<std::shared_ptr<Test::MockUnit>> CreateMockEnemies(
 /**
  * @brief Create a boss enemy (high health, elite)
  */
-inline std::shared_ptr<Test::MockUnit> CreateBossEnemy(
+inline ::std::shared_ptr<Test::MockUnit> CreateBossEnemy(
     uint32 level = 80,
     uint32 health = 5000000)
 {
@@ -219,7 +219,7 @@ inline std::shared_ptr<Test::MockUnit> CreateBossEnemy(
 /**
  * @brief Create a low-health enemy for execute testing
  */
-inline std::shared_ptr<Test::MockUnit> CreateLowHealthEnemy(
+inline ::std::shared_ptr<Test::MockUnit> CreateLowHealthEnemy(
     uint32 level = 80,
     float healthPct = 20.0f)
 {
@@ -239,13 +239,13 @@ inline std::shared_ptr<Test::MockUnit> CreateLowHealthEnemy(
  * @param dps Number of DPS
  * @return Configured MockGroup with members
  */
-inline std::shared_ptr<Test::MockGroup> CreateMockGroup(
+inline ::std::shared_ptr<Test::MockGroup> CreateMockGroup(
     uint32 tanks = 1,
     uint32 healers = 1,
     uint32 dps = 3)
 {
-    auto group = std::make_shared<Test::MockGroup>();
-    std::vector<std::shared_ptr<Test::MockPlayer>> members;
+    auto group = ::std::make_shared<Test::MockGroup>();
+    ::std::vector<::std::shared_ptr<Test::MockPlayer>> members;
 
     // Add tanks (Warriors)
     for (uint32 i = 0; i < tanks; ++i)
@@ -295,8 +295,8 @@ inline std::shared_ptr<Test::MockGroup> CreateMockGroup(
  * @param updateInterval Update interval in milliseconds
  */
 inline void SimulateCombat(
-    std::shared_ptr<Test::MockPlayer> bot,
-    std::shared_ptr<Test::MockUnit> target,
+    ::std::shared_ptr<Test::MockPlayer> bot,
+    ::std::shared_ptr<Test::MockUnit> target,
     uint32 durationMs,
     uint32 updateInterval = 100)
 {
@@ -325,8 +325,8 @@ inline void SimulateCombat(
  * @brief Simulate AoE combat with multiple enemies
  */
 inline void SimulateAoECombat(
-    std::shared_ptr<Test::MockPlayer> bot,
-    std::vector<std::shared_ptr<Test::MockUnit>> targets,
+    ::std::shared_ptr<Test::MockPlayer> bot,
+    ::std::vector<::std::shared_ptr<Test::MockUnit>> targets,
     uint32 durationMs,
     uint32 updateInterval = 100)
 {
@@ -369,7 +369,7 @@ inline void SimulateAoECombat(
 /**
  * @brief Simulate quest acceptance
  */
-inline void AcceptQuest(std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
+inline void AcceptQuest(::std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
 {
     // Quest acceptance simulation
     // This would normally interact with QuestManager
@@ -379,7 +379,7 @@ inline void AcceptQuest(std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
 /**
  * @brief Simulate quest completion
  */
-inline void CompleteQuest(std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
+inline void CompleteQuest(::std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
 {
     // Quest completion simulation
     EXPECT_TRUE(bot) << "Bot must not be null";
@@ -479,7 +479,7 @@ inline void CompleteQuest(std::shared_ptr<Test::MockPlayer> bot, uint32 questId)
  * @brief Verify spell can be cast on target
  */
 inline bool CanCastSpell(uint32 spellId,
-    std::shared_ptr<Test::MockUnit> target, std::shared_ptr<Test::MockPlayer> bot)
+    ::std::shared_ptr<Test::MockUnit> target, ::std::shared_ptr<Test::MockPlayer> bot)
 {
     if (!bot || !target)
         return false;
@@ -500,7 +500,7 @@ inline bool CanCastSpell(uint32 spellId,
  * @brief Simulate spell cast
  */
 inline void CastSpell(uint32 spellId,
-    std::shared_ptr<Test::MockUnit> target, std::shared_ptr<Test::MockPlayer> bot)
+    ::std::shared_ptr<Test::MockUnit> target, ::std::shared_ptr<Test::MockPlayer> bot)
 {
     ASSERT_TRUE(CanCastSpell(spellId, target, bot))
         << "Cannot cast spell " << spellId;
@@ -516,7 +516,7 @@ inline void CastSpell(uint32 spellId,
 /**
  * @brief Set bot to out-of-mana condition
  */
-inline void SetBotOutOfMana(std::shared_ptr<Test::MockPlayer> bot)
+inline void SetBotOutOfMana(::std::shared_ptr<Test::MockPlayer> bot)
 {
     bot->SetPower(Test::POWER_MANA, 0);
 }
@@ -524,7 +524,7 @@ inline void SetBotOutOfMana(std::shared_ptr<Test::MockPlayer> bot)
 /**
  * @brief Set bot to low health condition
  */
-inline void SetBotLowHealth(std::shared_ptr<Test::MockPlayer> bot, float percent = 20.0f)
+inline void SetBotLowHealth(::std::shared_ptr<Test::MockPlayer> bot, float percent = 20.0f)
 {
     uint32 health = static_cast<uint32>(bot->GetMaxHealth() * (percent / 100.0f));
     bot->SetHealth(health);
@@ -533,7 +533,7 @@ inline void SetBotLowHealth(std::shared_ptr<Test::MockPlayer> bot, float percent
 /**
  * @brief Restore bot to full resources
  */
-inline void RestoreBotResources(std::shared_ptr<Test::MockPlayer> bot)
+inline void RestoreBotResources(::std::shared_ptr<Test::MockPlayer> bot)
 {
     bot->SetHealth(bot->GetMaxHealth());
     bot->SetPower(Test::POWER_MANA, bot->GetMaxPower(Test::POWER_MANA));
@@ -549,8 +549,8 @@ inline void RestoreBotResources(std::shared_ptr<Test::MockPlayer> bot)
  * @brief Simulate high threat situation
  */
 inline void SimulateHighThreat(
-    std::shared_ptr<Test::MockPlayer> bot,
-    std::shared_ptr<Test::MockUnit> target)
+    ::std::shared_ptr<Test::MockPlayer> bot,
+    ::std::shared_ptr<Test::MockUnit> target)
 {
     // Set bot as target's current target
     bot->SetInCombat(true);
@@ -560,9 +560,9 @@ inline void SimulateHighThreat(
  * @brief Simulate threat emergency (losing aggro)
  */
 inline void SimulateThreatEmergency(
-    std::shared_ptr<Test::MockPlayer> tank,
-    std::shared_ptr<Test::MockPlayer> dps,
-    std::shared_ptr<Test::MockUnit> target)
+    ::std::shared_ptr<Test::MockPlayer> tank,
+    ::std::shared_ptr<Test::MockPlayer> dps,
+    ::std::shared_ptr<Test::MockUnit> target)
 {
     // DPS has pulled aggro from tank
     tank->SetInCombat(true);
@@ -576,7 +576,7 @@ inline void SimulateThreatEmergency(
 /**
  * @brief Simulate cooldown expiry
  */
-inline void ExpireCooldowns(std::shared_ptr<Test::MockPlayer> bot)
+inline void ExpireCooldowns(::std::shared_ptr<Test::MockPlayer> bot)
 {
     // All cooldowns are now available
     // This would normally interact with a cooldown tracker
@@ -585,7 +585,7 @@ inline void ExpireCooldowns(std::shared_ptr<Test::MockPlayer> bot)
 /**
  * @brief Check if all defensive cooldowns are available
  */
-inline bool AllDefensiveCooldownsReady(std::shared_ptr<Test::MockPlayer> bot)
+inline bool AllDefensiveCooldownsReady(::std::shared_ptr<Test::MockPlayer> bot)
 {
     // Check defensive cooldown availability
     return true;

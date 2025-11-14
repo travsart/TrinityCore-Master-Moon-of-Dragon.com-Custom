@@ -33,7 +33,7 @@ ProfessionEvent ProfessionEvent::RecipeLearned(ObjectGuid playerGuid, Profession
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Recipe learned";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -50,7 +50,7 @@ ProfessionEvent ProfessionEvent::SkillUp(ObjectGuid playerGuid, ProfessionType p
     event.skillAfter = skillAfter;
     event.goldAmount = 0;
     event.reason = "Skill increased";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -67,7 +67,7 @@ ProfessionEvent ProfessionEvent::CraftingStarted(ObjectGuid playerGuid, Professi
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Crafting started";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -84,11 +84,11 @@ ProfessionEvent ProfessionEvent::CraftingCompleted(ObjectGuid playerGuid, Profes
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Crafting completed";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
-ProfessionEvent ProfessionEvent::CraftingFailed(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, std::string const& reason)
+ProfessionEvent ProfessionEvent::CraftingFailed(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId, ::std::string const& reason)
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::CRAFTING_FAILED;
@@ -101,7 +101,7 @@ ProfessionEvent ProfessionEvent::CraftingFailed(ObjectGuid playerGuid, Professio
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = reason;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -118,7 +118,7 @@ ProfessionEvent ProfessionEvent::MaterialsNeeded(ObjectGuid playerGuid, Professi
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Materials needed for crafting";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -135,7 +135,7 @@ ProfessionEvent ProfessionEvent::MaterialGathered(ObjectGuid playerGuid, Profess
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Material gathered from node";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -152,7 +152,7 @@ ProfessionEvent ProfessionEvent::MaterialPurchased(ObjectGuid playerGuid, uint32
     event.skillAfter = 0;
     event.goldAmount = goldSpent;
     event.reason = "Material purchased from auction house";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -169,7 +169,7 @@ ProfessionEvent ProfessionEvent::ItemBanked(ObjectGuid playerGuid, uint32 itemId
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Item deposited to bank";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -186,7 +186,7 @@ ProfessionEvent ProfessionEvent::ItemWithdrawn(ObjectGuid playerGuid, uint32 ite
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Item withdrawn from bank";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -203,7 +203,7 @@ ProfessionEvent ProfessionEvent::GoldBanked(ObjectGuid playerGuid, uint32 goldAm
     event.skillAfter = 0;
     event.goldAmount = goldAmount;
     event.reason = "Gold deposited to bank";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -220,7 +220,7 @@ ProfessionEvent ProfessionEvent::GoldWithdrawn(ObjectGuid playerGuid, uint32 gol
     event.skillAfter = 0;
     event.goldAmount = goldAmount;
     event.reason = "Gold withdrawn from bank";
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
     return event;
 }
 
@@ -271,9 +271,9 @@ bool ProfessionEvent::IsValid() const
     }
 }
 
-std::string ProfessionEvent::ToString() const
+::std::string ProfessionEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "ProfessionEvent[";
 
     switch (type)
@@ -341,7 +341,7 @@ bool ProfessionEventBus::PublishEvent(ProfessionEvent const& event)
         return false;
     }
 
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     TC_LOG_DEBUG("playerbot", "ProfessionEventBus::PublishEvent - Publishing: {}", event.ToString());
 
@@ -355,17 +355,17 @@ bool ProfessionEventBus::PublishEvent(ProfessionEvent const& event)
     return true;
 }
 
-void ProfessionEventBus::Subscribe(BotAI* subscriber, std::vector<ProfessionEventType> const& types)
+void ProfessionEventBus::Subscribe(BotAI* subscriber, ::std::vector<ProfessionEventType> const& types)
 {
     if (!subscriber)
         return;
 
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     for (ProfessionEventType type : types)
     {
         auto& subscribers = _subscribers[type];
-        if (std::find(subscribers.begin(), subscribers.end(), subscriber) == subscribers.end())
+        if (::std::find(subscribers.begin(), subscribers.end(), subscriber) == subscribers.end())
         {
             subscribers.push_back(subscriber);
             TC_LOG_DEBUG("playerbot", "ProfessionEventBus::Subscribe - BotAI subscribed to type {}", static_cast<uint8>(type));
@@ -378,9 +378,9 @@ void ProfessionEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) == _globalSubscribers.end())
     {
         _globalSubscribers.push_back(subscriber);
         TC_LOG_DEBUG("playerbot", "ProfessionEventBus::SubscribeAll - BotAI subscribed to all events");
@@ -392,27 +392,27 @@ void ProfessionEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     // Remove from type-specific subscriptions
     for (auto& pair : _subscribers)
     {
         auto& subscribers = pair.second;
-        subscribers.erase(std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
+        subscribers.erase(::std::remove(subscribers.begin(), subscribers.end(), subscriber), subscribers.end());
     }
 
     // Remove from global subscriptions
-    _globalSubscribers.erase(std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber), _globalSubscribers.end());
+    _globalSubscribers.erase(::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber), _globalSubscribers.end());
 
     TC_LOG_DEBUG("playerbot", "ProfessionEventBus::Unsubscribe - BotAI unsubscribed from all events");
 }
 
-uint32 ProfessionEventBus::SubscribeCallback(EventHandler handler, std::vector<ProfessionEventType> const& types)
+uint32 ProfessionEventBus::SubscribeCallback(EventHandler handler, ::std::vector<ProfessionEventType> const& types)
 {
     if (!handler)
         return 0;
 
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     uint32 subscriptionId = _nextCallbackId++;
 
@@ -430,10 +430,10 @@ uint32 ProfessionEventBus::SubscribeCallback(EventHandler handler, std::vector<P
 
 void ProfessionEventBus::UnsubscribeCallback(uint32 subscriptionId)
 {
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     _callbackSubscriptions.erase(
-        std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
+        ::std::remove_if(_callbackSubscriptions.begin(), _callbackSubscriptions.end(),
             [subscriptionId](const CallbackSubscription& sub) { return sub.id == subscriptionId; }),
         _callbackSubscriptions.end());
 
@@ -442,7 +442,7 @@ void ProfessionEventBus::UnsubscribeCallback(uint32 subscriptionId)
 
 uint64 ProfessionEventBus::GetEventCount(ProfessionEventType type) const
 {
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     auto itr = _eventCounts.find(type);
     if (itr != _eventCounts.end())
@@ -453,7 +453,7 @@ uint64 ProfessionEventBus::GetEventCount(ProfessionEventType type) const
 
 uint32 ProfessionEventBus::GetSubscriberCount(ProfessionEventType type) const
 {
-    std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
+    ::std::lock_guard<decltype(_subscriberMutex)> lock(_subscriberMutex);
 
     uint32 count = 0;
 
@@ -464,7 +464,7 @@ uint32 ProfessionEventBus::GetSubscriberCount(ProfessionEventType type) const
     // Add callback subscriptions for this type
     for (const CallbackSubscription& sub : _callbackSubscriptions)
     {
-        if (std::find(sub.types.begin(), sub.types.end(), type) != sub.types.end())
+        if (::std::find(sub.types.begin(), sub.types.end(), type) != sub.types.end())
             count++;
     }
 
@@ -502,14 +502,14 @@ void ProfessionEventBus::DeliverEvent(ProfessionEvent const& event)
     for (const CallbackSubscription& sub : _callbackSubscriptions)
     {
         // Check if this subscription includes this event type
-        if (std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
+        if (::std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
         {
             try
             {
                 sub.handler(event);
                 TC_LOG_TRACE("playerbot", "ProfessionEventBus::DeliverEvent - Delivered to callback subscription {}", sub.id);
             }
-            catch (const std::exception& e)
+            catch (const ::std::exception& e)
             {
                 TC_LOG_ERROR("playerbot", "ProfessionEventBus::DeliverEvent - Callback {} threw exception: {}", sub.id, e.what());
             }

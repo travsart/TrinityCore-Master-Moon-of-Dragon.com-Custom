@@ -34,7 +34,7 @@ constexpr float DANGER_DECAY_RATE = 0.1f;
 PositionStrategyBase::PositionStrategyBase(Map* map)
     : _map(map)
     , _formationType(FormationType::SPREAD)
-    , _spatialGrid(std::make_unique<SpatialGrid>())
+    , _spatialGrid(::std::make_unique<SpatialGrid>())
     , _useAdvancedPathfinding(true)
     , _enableCollisionAvoidance(true)
     , _enableDangerAvoidance(true)
@@ -55,24 +55,24 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     if (!bot || !target)
         return bot ? bot->GetPosition() : Position();
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Check cache first
     auto cached = GetCachedPosition(bot, target);
     if (cached.has_value())
     {
-        _stats.cacheHits.fetch_add(1, std::memory_order_relaxed);
+        _stats.cacheHits.fetch_add(1, ::std::memory_order_relaxed);
         return cached->position;
     }
 
-    _stats.cacheMisses.fetch_add(1, std::memory_order_relaxed);
+    _stats.cacheMisses.fetch_add(1, ::std::memory_order_relaxed);
 
     // Determine position based on bot role
     Position optimalPos;
-    float bestScore = -std::numeric_limits<float>::max();
+    float bestScore = -::std::numeric_limits<float>::max();
 
     // Generate candidate positions in a spiral pattern
-    std::vector<Position> candidates;
+    ::std::vector<Position> candidates;
     candidates.reserve(16);
 
     float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target    for (int ring = 0; ring < 2; ++ring)
@@ -116,7 +116,7 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     }
 
     // If no valid position found, use current position
-    if (bestScore == -std::numeric_limits<float>::max())
+    if (bestScore == -::std::numeric_limits<float>::max())
     {
         optimalPos = bot->GetPosition();    }
 
@@ -124,17 +124,17 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     CachePosition(bot, target, optimalPos, bestScore);
 
     // Update statistics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     RecordCalculationTime(duration.count());
-    _stats.positionsCalculated.fetch_add(1, std::memory_order_relaxed);
+    _stats.positionsCalculated.fetch_add(1, ::std::memory_order_relaxed);
 
     return optimalPos;
 }
 
 // Batch position calculation for multiple bots (optimized for massive scale)
-std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
-    std::span<PositionRequest> requests,
+::std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
+    ::std::span<PositionRequest> requests,
     FormationType formation)
 {
     if (requests.empty())
@@ -142,29 +142,29 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
 
     UpdatePeakBots(requests.size());
 
-    std::vector<Position> results;
+    ::std::vector<Position> results;
     results.reserve(requests.size());
 
     // Sort requests by priority
-    std::vector<PositionRequest*> sortedRequests;
+    ::std::vector<PositionRequest*> sortedRequests;
     sortedRequests.reserve(requests.size());
     for (auto& req : requests)
         sortedRequests.push_back(&req);
 
-    std::sort(sortedRequests.begin(), sortedRequests.end(),
+    ::std::sort(sortedRequests.begin(), sortedRequests.end(),
         [](const PositionRequest* a, const PositionRequest* b) {
 
             return static_cast<uint8_t>(a->priority) > static_cast<uint8_t>(b->priority);
         });
 
     // Process high-priority requests first
-    std::unordered_set<std::pair<uint32, uint32>, boost::hash<std::pair<uint32, uint32>>> occupiedCells;
+    ::std::unordered_set<::std::pair<uint32, uint32>, boost::hash<::std::pair<uint32, uint32>>> occupiedCells;
 
     // Use parallel execution for large batches
     if (sortedRequests.size() > 100)
     {
-        std::recursive_mutex resultMutex;
-        std::for_each(std::execution::par_unseq,
+        ::std::recursive_mutex resultMutex;
+        ::std::for_each(::std::execution::par_unseq,
 
             sortedRequests.begin(), sortedRequests.end(),
 
@@ -174,7 +174,7 @@ std::vector<Position> PositionStrategyBase::CalculateBatchPositions(
 
                 // Thread-safe result insertion
 
-                std::lock_guard lock(resultMutex);
+                ::std::lock_guard lock(resultMutex);
 
                 results.push_back(pos);
 
@@ -274,7 +274,7 @@ float PositionStrategyBase::EvaluatePositionScore(const Position& pos, Player* b
 }
 
 // Grid coordinate conversion
-std::pair<uint32, uint32> PositionStrategyBase::WorldToGrid(const Position& pos) const
+::std::pair<uint32, uint32> PositionStrategyBase::WorldToGrid(const Position& pos) const
 {
     // Normalize to positive coordinates
     float x = pos.GetPositionX() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
@@ -283,8 +283,8 @@ std::pair<uint32, uint32> PositionStrategyBase::WorldToGrid(const Position& pos)
     uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);    uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
 
     // Clamp to grid bounds
-    gridX = std::min(gridX, GRID_SIZE - 1);
-    gridY = std::min(gridY, GRID_SIZE - 1);
+    gridX = ::std::min(gridX, GRID_SIZE - 1);
+    gridY = ::std::min(gridY, GRID_SIZE - 1);
 
     return {gridX, gridY};
 }
@@ -295,7 +295,7 @@ void PositionStrategyBase::RegisterPosition(Player* bot, const Position& pos)
     if (!bot)
         return;
 
-    std::lock_guard lock(_positionMutex);
+    ::std::lock_guard lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();    // Unregister old position
     auto oldIt = _botPositions.find(guid);
@@ -316,7 +316,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
     if (!bot)
         return;
 
-    std::lock_guard lock(_positionMutex);
+    ::std::lock_guard lock(_positionMutex);
 
     uint64 guid = bot->GetGUID().GetRawValue();    auto it = _botPositions.find(guid);
     if (it != _botPositions.end())
@@ -330,7 +330,7 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
 // Danger zone management
 void PositionStrategyBase::AddDangerZone(const Position& center, float radius, float duration, float dangerLevel)
 {
-    std::lock_guard lock(_dangerMutex);
+    ::std::lock_guard lock(_dangerMutex);
 
     DangerZone zone;
     zone.center = center;
@@ -358,7 +358,7 @@ void PositionStrategyBase::AddDangerZone(const Position& center, float radius, f
 
             {
 
-                float cellDistance = std::sqrt(dx * dx + dy * dy) * GRID_CELL_SIZE;
+                float cellDistance = ::std::sqrt(dx * dx + dy * dy) * GRID_CELL_SIZE;
 
                 if (cellDistance <= radius)
 
@@ -384,10 +384,10 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
 {
     // Check grid danger
     auto grid = WorldToGrid(pos);
-    float gridDanger = (*_spatialGrid)[grid.first][grid.second].dangerLevel.load(std::memory_order_acquire);
+    float gridDanger = (*_spatialGrid)[grid.first][grid.second].dangerLevel.load(::std::memory_order_acquire);
 
     // Check specific danger zones
-    std::lock_guard lock(_dangerMutex);
+    ::std::lock_guard lock(_dangerMutex);
     float maxDanger = gridDanger;
 
     for (const auto& zone : _dangerZones)
@@ -398,7 +398,7 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
 
             float zoneDanger = zone.dangerLevel * (1.0f - distance / zone.radius);
 
-            maxDanger = std::max(maxDanger, zoneDanger);
+            maxDanger = ::std::max(maxDanger, zoneDanger);
         }
     }
 
@@ -407,13 +407,13 @@ float PositionStrategyBase::GetDangerLevel(const Position& pos) const
 
 void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 {
-    std::lock_guard lock(_dangerMutex);
+    ::std::lock_guard lock(_dangerMutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Remove expired danger zones
     _dangerZones.erase(
-        std::remove_if(_dangerZones.begin(), _dangerZones.end(),
+        ::std::remove_if(_dangerZones.begin(), _dangerZones.end(),
 
             [currentTime](const DangerZone& zone) {
 
@@ -430,15 +430,15 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 
             auto& cell = (*_spatialGrid)[x][y];
 
-            float currentDanger = cell.dangerLevel.load(std::memory_order_acquire);
+            float currentDanger = cell.dangerLevel.load(::std::memory_order_acquire);
 
             if (currentDanger > 0.0f)
 
             {
 
-                float newDanger = std::max(0.0f, currentDanger - DANGER_DECAY_RATE * diff / 1000.0f);
+                float newDanger = ::std::max(0.0f, currentDanger - DANGER_DECAY_RATE * diff / 1000.0f);
 
-                cell.dangerLevel.store(newDanger, std::memory_order_release);
+                cell.dangerLevel.store(newDanger, ::std::memory_order_release);
 
             }
         }
@@ -446,7 +446,7 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 }
 
 // A* pathfinding implementation
-std::vector<Position> PositionStrategyBase::CalculatePath(
+::std::vector<Position> PositionStrategyBase::CalculatePath(
     const Position& start,
     const Position& end,
     bool avoidDanger)
@@ -457,9 +457,9 @@ std::vector<Position> PositionStrategyBase::CalculatePath(
         return {start, end};
     }
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
-    std::vector<Position> path = FindPathAStar(start, end, avoidDanger);
+    ::std::vector<Position> path = FindPathAStar(start, end, avoidDanger);
 
     // Smooth the path
     if (path.size() > 2 && _pathSmoothingFactor > 0.0f)
@@ -467,15 +467,15 @@ std::vector<Position> PositionStrategyBase::CalculatePath(
         path = SmoothPath(path);
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     RecordCalculationTime(duration.count());
-    _stats.pathsCalculated.fetch_add(1, std::memory_order_relaxed);
+    _stats.pathsCalculated.fetch_add(1, ::std::memory_order_relaxed);
 
     return path;
 }
 
-std::vector<Position> PositionStrategyBase::FindPathAStar(
+::std::vector<Position> PositionStrategyBase::FindPathAStar(
     const Position& start,
     const Position& end,
     bool avoidDanger)
@@ -485,19 +485,19 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
         return a->f_cost() > b->f_cost();
     };
 
-    std::priority_queue<PathNode*, std::vector<PathNode*>, decltype(nodeCompare)> openSet(nodeCompare);
-    std::unordered_set<std::pair<uint32, uint32>, boost::hash<std::pair<uint32, uint32>>> closedSet;
-    std::vector<std::unique_ptr<PathNode>> nodePool;  // Memory management
+    ::std::priority_queue<PathNode*, ::std::vector<PathNode*>, decltype(nodeCompare)> openSet(nodeCompare);
+    ::std::unordered_set<::std::pair<uint32, uint32>, boost::hash<::std::pair<uint32, uint32>>> closedSet;
+    ::std::vector<::std::unique_ptr<PathNode>> nodePool;  // Memory management
 
     // Create start node
-    auto startNode = std::make_unique<PathNode>();
+    auto startNode = ::std::make_unique<PathNode>();
     startNode->pos = start;
     startNode->g_cost = 0.0f;
     startNode->h_cost = start.GetExactDist(&end);
     startNode->parent = nullptr;
 
     PathNode* startPtr = startNode.get();
-    nodePool.push_back(std::move(startNode));
+    nodePool.push_back(::std::move(startNode));
     openSet.push(startPtr);
 
     uint32 nodesProcessed = 0;
@@ -513,7 +513,7 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
         {
             // Reconstruct path
 
-            std::vector<Position> path;
+            ::std::vector<Position> path;
 
             while (current != nullptr)
 
@@ -525,7 +525,7 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
 
             }
 
-            std::reverse(path.begin(), path.end());
+            ::std::reverse(path.begin(), path.end());
 
             return path;
         }
@@ -556,7 +556,7 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
                     continue;
 
 
-                std::pair<uint32, uint32> neighborGrid = {static_cast<uint32>(nx), static_cast<uint32>(ny)};
+                ::std::pair<uint32, uint32> neighborGrid = {static_cast<uint32>(nx), static_cast<uint32>(ny)};
 
 
                 if (closedSet.count(neighborGrid) > 0)
@@ -596,7 +596,7 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
 
                 // Create new node
 
-                auto newNode = std::make_unique<PathNode>();
+                auto newNode = ::std::make_unique<PathNode>();
 
                 newNode->pos = neighborPos;
 
@@ -609,7 +609,7 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
 
                 PathNode* newPtr = newNode.get();
 
-                nodePool.push_back(std::move(newNode));
+                nodePool.push_back(::std::move(newNode));
 
                 openSet.push(newPtr);
 
@@ -618,11 +618,11 @@ std::vector<Position> PositionStrategyBase::FindPathAStar(
     }
 
     // No path found, return direct path    return {start, end};}// Formation calculations
-std::vector<Position> PositionStrategyBase::CalculateLineFormation(
-    std::vector<Player*> bots,
+::std::vector<Position> PositionStrategyBase::CalculateLineFormation(
+    ::std::vector<Player*> bots,
     Unit* target,    float spacing)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(bots.size());
 
     if (bots.empty() || !target)
@@ -652,12 +652,12 @@ std::vector<Position> PositionStrategyBase::CalculateLineFormation(
     return positions;
 }
 
-std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
-    std::vector<Player*> bots,
+::std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
+    ::std::vector<Player*> bots,
     Unit* target,
     float radius)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(bots.size());
 
     if (bots.empty() || !target)
@@ -679,7 +679,7 @@ std::vector<Position> PositionStrategyBase::CalculateCircleFormation(
 // Collision detection
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
-    std::lock_guard lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
+    ::std::lock_guard lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
     if (!excludeBot)
     {
         return;
@@ -701,10 +701,10 @@ bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Play
 float PositionStrategyBase::CalculateDistanceScore(const Position& pos, Unit* target, float optimalRange) const
 {
     float distance = pos.GetExactDist(target);
-    float diff = std::abs(distance - optimalRange);
+    float diff = ::std::abs(distance - optimalRange);
 
     // Gaussian-like scoring: best at optimal range, decreases with distance
-    return 50.0f * std::exp(-diff * diff / (2.0f * 5.0f * 5.0f));
+    return 50.0f * ::std::exp(-diff * diff / (2.0f * 5.0f * 5.0f));
 }
 
 float PositionStrategyBase::CalculateSafetyScore(const Position& pos) const
@@ -723,15 +723,15 @@ float PositionStrategyBase::CalculateTerrainScore(const Position& pos) const
     _map->GetHeight(nullptr, pos.GetPositionX() - 1.0f, pos.GetPositionY(), z3);
     _map->GetHeight(nullptr, pos.GetPositionX(), pos.GetPositionY() + 1.0f, z4);
 
-    float maxDiff = std::max({std::abs(z1 - z2), std::abs(z1 - z3), std::abs(z1 - z4)});
+    float maxDiff = ::std::max({::std::abs(z1 - z2), ::std::abs(z1 - z3), ::std::abs(z1 - z4)});
 
     // Prefer flatter terrain
-    return 20.0f * std::exp(-maxDiff);
+    return 20.0f * ::std::exp(-maxDiff);
 }
 
 float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Player* bot) const
 {
-    std::lock_guard lock(_positionMutex);
+    ::std::lock_guard lock(_positionMutex);
 
     float totalDistance = 0.0f;
     uint32 allyCount = 0;
@@ -765,15 +765,15 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
         return 15.0f * (avgDistance / 10.0f);  // Too close
 
     if (avgDistance > 15.0f)
-        return 15.0f * std::exp(-(avgDistance - 15.0f) / 10.0f);  // Too far
+        return 15.0f * ::std::exp(-(avgDistance - 15.0f) / 10.0f);  // Too far
 
     return 0.0f;
 }
 
 // Cache management
-std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bot, Unit* target) const
+::std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bot, Unit* target) const
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    auto it = _cache.entries.find(key);
 
@@ -787,12 +787,12 @@ std::optional<CachedPosition> PositionStrategyBase::GetCachedPosition(Player* bo
         }
     }
 
-    return std::nullopt;
+    return ::std::nullopt;
 }
 
 void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Position& pos, float score)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    CachedPosition cached;
     cached.position = pos;
@@ -815,7 +815,7 @@ void PositionStrategyBase::CleanupCache()
 {
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    std::erase_if(_cache.entries, [currentTime](const auto& pair) {
+    ::std::erase_if(_cache.entries, [currentTime](const auto& pair) {
         return currentTime - pair.second.calculatedTime > CACHE_DURATION_MS * 10;
     });
 }
@@ -829,15 +829,15 @@ void PositionStrategyBase::UpdateGridCell(uint32 x, uint32 y, int32 deltaOccupan
     auto& cell = (*_spatialGrid)[x][y];
     if (deltaOccupants > 0)
     {
-        cell.occupantCount.fetch_add(deltaOccupants, std::memory_order_acq_rel);
+        cell.occupantCount.fetch_add(deltaOccupants, ::std::memory_order_acq_rel);
     }
     else
     {
-        uint16_t current = cell.occupantCount.load(std::memory_order_acquire);
+        uint16_t current = cell.occupantCount.load(::std::memory_order_acquire);
         uint16_t newValue = (current > -deltaOccupants) ? current + deltaOccupants : 0;
-        cell.occupantCount.store(newValue, std::memory_order_release);
+        cell.occupantCount.store(newValue, ::std::memory_order_release);
     }
-    cell.lastUpdate.store(GameTime::GetGameTimeMS(), std::memory_order_release);
+    cell.lastUpdate.store(GameTime::GetGameTimeMS(), ::std::memory_order_release);
 }
 
 void PositionStrategyBase::UpdateGridDanger(uint32 x, uint32 y, float dangerLevel)
@@ -846,9 +846,9 @@ void PositionStrategyBase::UpdateGridDanger(uint32 x, uint32 y, float dangerLeve
         return;
 
     auto& cell = (*_spatialGrid)[x][y];
-    float current = cell.dangerLevel.load(std::memory_order_acquire);
-    float newDanger = std::max(current, dangerLevel);
-    cell.dangerLevel.store(newDanger, std::memory_order_release);
+    float current = cell.dangerLevel.load(::std::memory_order_acquire);
+    float newDanger = ::std::max(current, dangerLevel);
+    cell.dangerLevel.store(newDanger, ::std::memory_order_release);
 }
 
 void PositionStrategyBase::ClearGrid()
@@ -860,11 +860,11 @@ void PositionStrategyBase::ClearGrid()
 
             auto& cell = (*_spatialGrid)[x][y];
 
-            cell.occupantCount.store(0, std::memory_order_release);
+            cell.occupantCount.store(0, ::std::memory_order_release);
 
-            cell.dangerLevel.store(0.0f, std::memory_order_release);
+            cell.dangerLevel.store(0.0f, ::std::memory_order_release);
 
-            cell.lastUpdate.store(0, std::memory_order_release);
+            cell.lastUpdate.store(0, ::std::memory_order_release);
         }
     }
 }
@@ -882,29 +882,29 @@ Position PositionStrategyBase::GridToWorld(uint32 x, uint32 y) const
 void PositionStrategyBase::RecordCalculationTime(uint64_t microseconds)
 {
     // Update average using exponential moving average
-    uint32 current = _stats.averageCalculationTimeUs.load(std::memory_order_acquire);
+    uint32 current = _stats.averageCalculationTimeUs.load(::std::memory_order_acquire);
     uint32 newAvg = static_cast<uint32>(current * 0.9 + microseconds * 0.1);
-    _stats.averageCalculationTimeUs.store(newAvg, std::memory_order_release);
+    _stats.averageCalculationTimeUs.store(newAvg, ::std::memory_order_release);
 }
 
 void PositionStrategyBase::UpdatePeakBots(uint32 botCount)
 {
-    uint32 current = _stats.peakBotsProcessed.load(std::memory_order_acquire);
+    uint32 current = _stats.peakBotsProcessed.load(::std::memory_order_acquire);
     if (botCount > current)
     {
-        _stats.peakBotsProcessed.store(botCount, std::memory_order_release);
+        _stats.peakBotsProcessed.store(botCount, ::std::memory_order_release);
     }
 }
 
 void PositionStrategyBase::ResetStats()
 {
-    _stats.positionsCalculated.store(0, std::memory_order_release);
-    _stats.pathsCalculated.store(0, std::memory_order_release);
-    _stats.collisionChecks.store(0, std::memory_order_release);
-    _stats.cacheHits.store(0, std::memory_order_release);
-    _stats.cacheMisses.store(0, std::memory_order_release);
-    _stats.averageCalculationTimeUs.store(0, std::memory_order_release);
-    _stats.peakBotsProcessed.store(0, std::memory_order_release);
+    _stats.positionsCalculated.store(0, ::std::memory_order_release);
+    _stats.pathsCalculated.store(0, ::std::memory_order_release);
+    _stats.collisionChecks.store(0, ::std::memory_order_release);
+    _stats.cacheHits.store(0, ::std::memory_order_release);
+    _stats.cacheMisses.store(0, ::std::memory_order_release);
+    _stats.averageCalculationTimeUs.store(0, ::std::memory_order_release);
+    _stats.peakBotsProcessed.store(0, ::std::memory_order_release);
 }
 
 // Utility functions
@@ -931,7 +931,7 @@ bool PositionStrategyBase::IsPathClear(const Position& start, const Position& en
         nullptr);
 }
 
-float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& path) const
+float PositionStrategyBase::CalculatePathLength(const ::std::vector<Position>& path) const
 {
     if (path.size() < 2)
         return 0.0f;
@@ -946,7 +946,7 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
 }Position PositionStrategyBase::FindAlternativePosition(
     const Position& original,
     Player* bot,
-    const std::unordered_set<std::pair<uint32, uint32>, boost::hash<std::pair<uint32, uint32>>>& occupiedCells)
+    const ::std::unordered_set<::std::pair<uint32, uint32>, boost::hash<::std::pair<uint32, uint32>>>& occupiedCells)
 {
     // Search in expanding circles for unoccupied position
     for (int radius = 1; radius <= 3; ++radius)
@@ -958,7 +958,7 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
 
             {
 
-                if (std::abs(dx) != radius && std::abs(dy) != radius)
+                if (::std::abs(dx) != radius && ::std::abs(dy) != radius)
 
                     continue;  // Only check perimeter
                     float x = original.GetPositionX() + dx * GRID_CELL_SIZE;
@@ -988,12 +988,12 @@ float PositionStrategyBase::CalculatePathLength(const std::vector<Position>& pat
     return original;  // No alternative found
 }
 
-std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Position>& path)
+::std::vector<Position> PositionStrategyBase::SmoothPath(const ::std::vector<Position>& path)
 {
     if (path.size() < 3)
         return path;
 
-    std::vector<Position> smoothed;
+    ::std::vector<Position> smoothed;
     smoothed.reserve(path.size());
     smoothed.push_back(path[0]);
 
@@ -1015,17 +1015,17 @@ std::vector<Position> PositionStrategyBase::SmoothPath(const std::vector<Positio
 
 void PositionStrategyBase::ClearAllPositions()
 {
-    std::lock_guard lock(_positionMutex);
+    ::std::lock_guard lock(_positionMutex);
     _botPositions.clear();
     ClearGrid();
 }
 
-void PositionStrategyBase::UpdateFormationPositions(std::vector<Player*> bots, Unit* centerTarget)
+void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget)
 {
     if (bots.empty() || !centerTarget)
         return;
 
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
 
     switch (_formationType)
     {
@@ -1060,18 +1060,18 @@ void PositionStrategyBase::UpdateFormationPositions(std::vector<Player*> bots, U
     }
 }
 
-std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
-    std::vector<Player*> bots,
+::std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
+    ::std::vector<Player*> bots,
     Unit* target,
     float angle)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(bots.size());
 
     if (bots.empty() || !target)
         return positions;
 
-    float baseAngle = target->GetOrientation();    uint32 rows = static_cast<uint32>(std::sqrt(bots.size())) + 1;
+    float baseAngle = target->GetOrientation();    uint32 rows = static_cast<uint32>(::std::sqrt(bots.size())) + 1;
     float rowSpacing = 5.0f;
     float angleRad = angle * M_PI / 180.0f;
 
@@ -1101,23 +1101,23 @@ std::vector<Position> PositionStrategyBase::CalculateWedgeFormation(
     return positions;
 }
 
-std::vector<Position> PositionStrategyBase::CalculateSpreadFormation(
-    std::vector<Player*> bots,    Unit* target,
+::std::vector<Position> PositionStrategyBase::CalculateSpreadFormation(
+    ::std::vector<Player*> bots,    Unit* target,
     float minSpacing)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(bots.size());
 
     if (bots.empty() || !target)
         return positions;
 
     // Use Fibonacci spiral for even distribution
-    float goldenAngle = M_PI * (3.0f - std::sqrt(5.0f));  // Golden angle in radians
+    float goldenAngle = M_PI * (3.0f - ::std::sqrt(5.0f));  // Golden angle in radians
 
     for (size_t i = 0; i < bots.size(); ++i)
     {
         float angle = i * goldenAngle;
-        float radius = minSpacing * std::sqrt(i + 1);
+        float radius = minSpacing * ::std::sqrt(i + 1);
 
         float x = target->GetPositionX() + cos(angle) * radius;        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
 

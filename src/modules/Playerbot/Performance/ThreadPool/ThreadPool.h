@@ -86,24 +86,24 @@ template<typename T>
 class alignas(64) WorkStealingQueue
 {
 private:
-    static_assert(std::is_pointer_v<T>, "T must be a pointer type");
+    static_assert(::std::is_pointer_v<T>, "T must be a pointer type");
 
     static constexpr size_t INITIAL_CAPACITY = 1024;
     static constexpr size_t MAX_CAPACITY = 65536;
 
     struct Node
     {
-        std::atomic<T> data{nullptr};
+        ::std::atomic<T> data{nullptr};
 
         Node() = default;
         Node(T value) : data(value) {}
     };
 
     // Cache-line aligned atomic indices
-    alignas(64) std::atomic<int64_t> _bottom{0};
-    alignas(64) std::atomic<int64_t> _top{0};
-    alignas(64) std::unique_ptr<Node[]> _array;
-    alignas(64) std::atomic<size_t> _capacity{INITIAL_CAPACITY};
+    alignas(64) ::std::atomic<int64_t> _bottom{0};
+    alignas(64) ::std::atomic<int64_t> _top{0};
+    alignas(64) ::std::unique_ptr<Node[]> _array;
+    alignas(64) ::std::atomic<size_t> _capacity{INITIAL_CAPACITY};
 
     // Expansion lock (ordered to prevent deadlocks)
     Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SPATIAL_GRID> _expansionMutex;
@@ -138,9 +138,9 @@ public:
      */
     size_t Size() const
     {
-        int64_t bottom = _bottom.load(std::memory_order_relaxed);
-        int64_t top = _top.load(std::memory_order_relaxed);
-        return static_cast<size_t>(std::max<int64_t>(0, bottom - top));
+        int64_t bottom = _bottom.load(::std::memory_order_relaxed);
+        int64_t top = _top.load(::std::memory_order_relaxed);
+        return static_cast<size_t>(::std::max<int64_t>(0, bottom - top));
     }
 
     /**
@@ -153,7 +153,7 @@ public:
 
 private:
     void Expand();
-    size_t IndexMask() const { return _capacity.load(std::memory_order_relaxed) - 1; }
+    size_t IndexMask() const { return _capacity.load(::std::memory_order_relaxed) - 1; }
 };
 
 /**
@@ -169,9 +169,9 @@ public:
     virtual void Execute() = 0;
     virtual TaskPriority GetPriority() const = 0;
 
-    std::chrono::steady_clock::time_point submittedAt{std::chrono::steady_clock::now()};
-    std::chrono::steady_clock::time_point startedAt;
-    std::chrono::steady_clock::time_point completedAt;
+    ::std::chrono::steady_clock::time_point submittedAt{::std::chrono::steady_clock::now()};
+    ::std::chrono::steady_clock::time_point startedAt;
+    ::std::chrono::steady_clock::time_point completedAt;
 };
 
 /**
@@ -187,16 +187,16 @@ private:
 public:
     template<typename F>
     ConcreteTask(F&& func, TaskPriority priority)
-        : _func(std::forward<F>(func))
+        : _func(::std::forward<F>(func))
         , _priority(priority)
     {
     }
 
     void Execute() override
     {
-        startedAt = std::chrono::steady_clock::now();
+        startedAt = ::std::chrono::steady_clock::now();
         _func();
-        completedAt = std::chrono::steady_clock::now();
+        completedAt = ::std::chrono::steady_clock::now();
     }
 
     TaskPriority GetPriority() const override
@@ -220,27 +220,27 @@ private:
     friend class ThreadPool;
 
     ThreadPool* _pool;
-    std::thread _thread;
+    ::std::thread _thread;
     uint32 _workerId;
     uint32 _cpuCore;
 
     // State management
-    alignas(64) std::atomic<bool> _running{true};
-    alignas(64) std::atomic<bool> _sleeping{false};
+    alignas(64) ::std::atomic<bool> _running{true};
+    alignas(64) ::std::atomic<bool> _sleeping{false};
     // REMOVED in FIX D: _stealBackoff no longer needed with yield-based backoff
 
     // Local work queues (one per priority)
-    std::array<WorkStealingQueue<Task*>, static_cast<size_t>(TaskPriority::COUNT)> _localQueues;
+    ::std::array<WorkStealingQueue<Task*>, static_cast<size_t>(TaskPriority::COUNT)> _localQueues;
 
     // Performance metrics (atomic for thread-safety)
     struct alignas(64) Metrics
     {
-        std::atomic<uint64> tasksCompleted{0};
-        std::atomic<uint64> totalWorkTime{0};    // microseconds
-        std::atomic<uint64> totalIdleTime{0};    // microseconds
-        std::atomic<uint64> stealAttempts{0};
-        std::atomic<uint64> stealSuccesses{0};
-        std::atomic<uint32> contextSwitches{0};
+        ::std::atomic<uint64> tasksCompleted{0};
+        ::std::atomic<uint64> totalWorkTime{0};    // microseconds
+        ::std::atomic<uint64> totalIdleTime{0};    // microseconds
+        ::std::atomic<uint64> stealAttempts{0};
+        ::std::atomic<uint64> stealSuccesses{0};
+        ::std::atomic<uint32> contextSwitches{0};
 
         // Default constructor
         Metrics() = default;
@@ -264,14 +264,14 @@ private:
     };
 
     // Wake notification
-    std::mutex _wakeMutex;  // MUST be std::mutex for condition_variable compatibility
-    std::condition_variable _wakeCv;
+    ::std::mutex _wakeMutex;  // MUST be ::std::mutex for condition_variable compatibility
+    ::std::condition_variable _wakeCv;
 
     // Thread initialization state
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 
     // Diagnostics and debugging
-    std::unique_ptr<WorkerDiagnostics> _diagnostics;
+    ::std::unique_ptr<WorkerDiagnostics> _diagnostics;
 
 public:
     WorkerThread(ThreadPool* pool, uint32 workerId, uint32 cpuCore);
@@ -330,12 +330,12 @@ public:
     MetricsSnapshot GetMetrics() const
     {
         MetricsSnapshot snapshot;
-        snapshot.tasksCompleted = _metrics.tasksCompleted.load(std::memory_order_relaxed);
-        snapshot.totalWorkTime = _metrics.totalWorkTime.load(std::memory_order_relaxed);
-        snapshot.totalIdleTime = _metrics.totalIdleTime.load(std::memory_order_relaxed);
-        snapshot.stealAttempts = _metrics.stealAttempts.load(std::memory_order_relaxed);
-        snapshot.stealSuccesses = _metrics.stealSuccesses.load(std::memory_order_relaxed);
-        snapshot.contextSwitches = _metrics.contextSwitches.load(std::memory_order_relaxed);
+        snapshot.tasksCompleted = _metrics.tasksCompleted.load(::std::memory_order_relaxed);
+        snapshot.totalWorkTime = _metrics.totalWorkTime.load(::std::memory_order_relaxed);
+        snapshot.totalIdleTime = _metrics.totalIdleTime.load(::std::memory_order_relaxed);
+        snapshot.stealAttempts = _metrics.stealAttempts.load(::std::memory_order_relaxed);
+        snapshot.stealSuccesses = _metrics.stealSuccesses.load(::std::memory_order_relaxed);
+        snapshot.contextSwitches = _metrics.contextSwitches.load(::std::memory_order_relaxed);
         return snapshot;
     }
 
@@ -393,31 +393,31 @@ public:
         // Even on 2-core systems, we need enough workers to prevent blocking issues
         // With future.get() blocking pattern, insufficient workers = deadlock
         uint32 numThreads = []() -> uint32 {
-            uint32 hwCores = std::thread::hardware_concurrency();
-            uint32 threads = (hwCores > 6) ? (hwCores - 2) : std::max(4u, hwCores);
-            return std::max(4u, threads);  // Absolute minimum of 4
+            uint32 hwCores = ::std::thread::hardware_concurrency();
+            uint32 threads = (hwCores > 6) ? (hwCores - 2) : ::std::max(4u, hwCores);
+            return ::std::max(4u, threads);  // Absolute minimum of 4
         }();
         uint32 maxQueueSize = 10000;
         bool enableWorkStealing = true;
         bool enableCpuAffinity = false; // Disabled by default (requires admin on Windows)
         uint32 maxStealAttempts = 3;
-        std::chrono::milliseconds shutdownTimeout{5000};
-        std::chrono::milliseconds workerSleepTime{10}; // Sleep time when idle
+        ::std::chrono::milliseconds shutdownTimeout{5000};
+        ::std::chrono::milliseconds workerSleepTime{10}; // Sleep time when idle
     };
 
 private:
     Configuration _config;
 
     // Worker threads
-    std::vector<std::unique_ptr<WorkerThread>> _workers;
+    ::std::vector<::std::unique_ptr<WorkerThread>> _workers;
 
     // Task object pool (to avoid allocation during Submit)
     template<typename T>
     class ObjectPool
     {
     private:
-        std::vector<std::unique_ptr<T>> _pool;
-        std::queue<T*> _available;
+        ::std::vector<::std::unique_ptr<T>> _pool;
+        ::std::queue<T*> _available;
         Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::DATABASE_POOL> _mutex;
 
     public:
@@ -426,20 +426,20 @@ private:
             _pool.reserve(initialSize);
             for (size_t i = 0; i < initialSize; ++i)
             {
-                auto obj = std::make_unique<T>();
+                auto obj = ::std::make_unique<T>();
                 _available.push(obj.get());
-                _pool.push_back(std::move(obj));
+                _pool.push_back(::std::move(obj));
             }
         }
 
         T* Acquire()
         {
-            std::lock_guard lock(_mutex);
+            ::std::lock_guard lock(_mutex);
             if (_available.empty())
             {
-                auto obj = std::make_unique<T>();
+                auto obj = ::std::make_unique<T>();
                 T* ptr = obj.get();
-                _pool.push_back(std::move(obj));
+                _pool.push_back(::std::move(obj));
                 return ptr;
             }
 
@@ -450,7 +450,7 @@ private:
 
         void Release(T* obj)
         {
-            std::lock_guard lock(_mutex);
+            ::std::lock_guard lock(_mutex);
             _available.push(obj);
         }
     };
@@ -458,32 +458,32 @@ private:
     // Global metrics
     struct alignas(64) Metrics
     {
-        std::atomic<uint64> totalSubmitted{0};
-        std::atomic<uint64> totalCompleted{0};
-        std::atomic<uint64> totalFailed{0};
-        std::atomic<uint64> totalLatency{0}; // microseconds
-        std::array<std::atomic<uint64>, static_cast<size_t>(TaskPriority::COUNT)> tasksByPriority{};
-        std::atomic<uint64> peakQueueSize{0};
+        ::std::atomic<uint64> totalSubmitted{0};
+        ::std::atomic<uint64> totalCompleted{0};
+        ::std::atomic<uint64> totalFailed{0};
+        ::std::atomic<uint64> totalLatency{0}; // microseconds
+        ::std::array<::std::atomic<uint64>, static_cast<size_t>(TaskPriority::COUNT)> tasksByPriority{};
+        ::std::atomic<uint64> peakQueueSize{0};
     } _metrics;
 
     // Shutdown coordination
-    std::atomic<bool> _shutdown{false};
-    std::condition_variable _shutdownCv;
-    std::mutex _shutdownMutex;  // MUST be std::mutex for condition_variable compatibility
+    ::std::atomic<bool> _shutdown{false};
+    ::std::condition_variable _shutdownCv;
+    ::std::mutex _shutdownMutex;  // MUST be ::std::mutex for condition_variable compatibility
 
     // CRITICAL FIX: Deferred worker creation to prevent startup crash
     // Workers are not created in constructor, but lazily on first Submit() call
     // This prevents worker threads from starting before World is fully initialized
-    std::atomic<bool> _workersCreated{false};
+    ::std::atomic<bool> _workersCreated{false};
     Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _workerCreationMutex;
 
     // Async initialization support for non-blocking startup
-    std::future<void> _initFuture;
-    std::atomic<bool> _asyncInitInProgress{false};
+    ::std::future<void> _initFuture;
+    ::std::atomic<bool> _asyncInitInProgress{false};
 
     // Deadlock detection and diagnostics
-    std::unique_ptr<DeadlockDetector> _deadlockDetector;
-    std::atomic<bool> _diagnosticsEnabled{true};
+    ::std::unique_ptr<DeadlockDetector> _deadlockDetector;
+    ::std::atomic<bool> _diagnosticsEnabled{true};
 
 public:
     explicit ThreadPool(Configuration config = {});
@@ -502,33 +502,33 @@ public:
      */
     template<typename Func, typename... Args>
     auto Submit(TaskPriority priority, Func&& func, Args&&... args)
-        -> std::future<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>>
+        -> ::std::future<::std::invoke_result_t<::std::decay_t<Func>, ::std::decay_t<Args>...>>
     {
-        using ReturnType = std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>;
+        using ReturnType = ::std::invoke_result_t<::std::decay_t<Func>, ::std::decay_t<Args>...>;
 
-        if (_shutdown.load(std::memory_order_relaxed))
+        if (_shutdown.load(::std::memory_order_relaxed))
         {
-            throw std::runtime_error("ThreadPool is shutting down");
+            throw ::std::runtime_error("ThreadPool is shutting down");
         }
 
         // CRITICAL FIX: Ensure workers are created (lazy initialization on first Submit)
         EnsureWorkersCreated();
 
         // Create packaged task
-        auto boundFunc = std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
-        auto packagedTask = std::make_shared<std::packaged_task<ReturnType()>>(std::move(boundFunc));
-        std::future<ReturnType> future = packagedTask->get_future();
+        auto boundFunc = ::std::bind(::std::forward<Func>(func), ::std::forward<Args>(args)...);
+        auto packagedTask = ::std::make_shared<::std::packaged_task<ReturnType()>>(::std::move(boundFunc));
+        ::std::future<ReturnType> future = packagedTask->get_future();
 
         // Create task wrapper
-        auto task = new ConcreteTask<std::function<void()>>(
+        auto task = new ConcreteTask<::std::function<void()>>(
             [packagedTask]() { (*packagedTask)(); },
             priority
         );
 
         // Update metrics
-        _metrics.totalSubmitted.fetch_add(1, std::memory_order_relaxed);
+        _metrics.totalSubmitted.fetch_add(1, ::std::memory_order_relaxed);
         size_t priorityIndex = static_cast<size_t>(priority);
-        _metrics.tasksByPriority[priorityIndex].fetch_add(1, std::memory_order_relaxed);
+        _metrics.tasksByPriority[priorityIndex].fetch_add(1, ::std::memory_order_relaxed);
 
         // Select worker and submit
         uint32 workerId = SelectWorkerLeastLoaded();
@@ -543,9 +543,9 @@ public:
             if (!worker->SubmitLocal(task, priority))
             {
                 // All workers busy
-                _metrics.totalFailed.fetch_add(1, std::memory_order_relaxed);
+                _metrics.totalFailed.fetch_add(1, ::std::memory_order_relaxed);
                 delete task;
-                throw std::runtime_error("All worker queues are full");
+                throw ::std::runtime_error("All worker queues are full");
             }
         }
 
@@ -557,7 +557,7 @@ public:
         if (_config.enableWorkStealing && !_workers.empty())
         {
             // Wake 25% of workers (minimum 2, maximum 4) to help with work distribution
-            uint32 workersToWake = std::min(4u, std::max(2u, static_cast<uint32>(_workers.size()) / 4));
+            uint32 workersToWake = ::std::min(4u, ::std::max(2u, static_cast<uint32>(_workers.size()) / 4));
 
             for (uint32 i = 0; i < workersToWake; ++i)
             {
@@ -565,7 +565,7 @@ public:
                 if (randomWorker != workerId)
                 {
                     WorkerThread* helperWorker = _workers[randomWorker].get();
-                    if (helperWorker && helperWorker->_sleeping.load(std::memory_order_relaxed))
+                    if (helperWorker && helperWorker->_sleeping.load(::std::memory_order_relaxed))
                     {
                         helperWorker->Wake();
                     }
@@ -581,7 +581,7 @@ public:
             // Wake all sleeping workers to handle the load
             for (auto& w : _workers)
             {
-                if (w && w->_sleeping.load(std::memory_order_relaxed))
+                if (w && w->_sleeping.load(::std::memory_order_relaxed))
                 {
                     w->Wake();
                 }
@@ -599,16 +599,16 @@ public:
      * @return Vector of futures
      */
     template<typename Func>
-    std::vector<std::future<std::invoke_result_t<Func>>> SubmitBatch(
+    ::std::vector<::std::future<::std::invoke_result_t<Func>>> SubmitBatch(
         TaskPriority priority,
-        std::vector<Func>&& tasks);
+        ::std::vector<Func>&& tasks);
 
     /**
      * @brief Wait for all pending tasks to complete
      * @param timeout Maximum time to wait
      * @return true if all tasks completed, false if timeout
      */
-    bool WaitForCompletion(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());
+    bool WaitForCompletion(::std::chrono::milliseconds timeout = ::std::chrono::milliseconds::max());
 
     /**
      * @brief Initiate graceful shutdown
@@ -634,7 +634,7 @@ public:
     /**
      * @brief Get average task latency (submission to completion)
      */
-    std::chrono::microseconds GetAverageLatency() const;
+    ::std::chrono::microseconds GetAverageLatency() const;
 
     /**
      * @brief Get throughput (tasks/second)
@@ -662,7 +662,7 @@ public:
      */
     bool IsShuttingDown() const
     {
-        return _shutdown.load(std::memory_order_relaxed);
+        return _shutdown.load(::std::memory_order_relaxed);
     }
 
     /**
@@ -700,12 +700,12 @@ public:
     /**
      * @brief Generate comprehensive diagnostic report
      */
-    std::string GenerateDiagnosticReport() const;
+    ::std::string GenerateDiagnosticReport() const;
 
     /**
      * @brief Get worker diagnostic information
      */
-    std::vector<std::string> GetWorkerDiagnostics() const;
+    ::std::vector<::std::string> GetWorkerDiagnostics() const;
 
     /**
      * @brief Manually trigger deadlock check
@@ -728,7 +728,7 @@ private:
      */
     void EnsureWorkersCreated();
 
-    std::atomic<uint32> _nextWorker{0};
+    ::std::atomic<uint32> _nextWorker{0};
 };
 
 /**

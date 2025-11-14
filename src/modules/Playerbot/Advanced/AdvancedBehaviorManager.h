@@ -63,11 +63,11 @@ namespace Playerbot
         struct DungeonStrategy
         {
             uint32 dungeonId;
-            std::string dungeonName;
+            ::std::string dungeonName;
             uint32 recommendedLevel;
             uint32 maxPlayers;
-            std::vector<uint32> bossEntries;
-            std::unordered_map<uint32, std::string> bossStrategies;
+            ::std::vector<uint32> bossEntries;
+            ::std::unordered_map<uint32, ::std::string> bossStrategies;
         };
 
         bool EnterDungeon(uint32 dungeonId);
@@ -79,10 +79,10 @@ namespace Playerbot
         // Boss mechanics
         struct BossMechanic
         {
-            std::string mechanicName;
-            std::string description;
+            ::std::string mechanicName;
+            ::std::string description;
             uint32 spellId;
-            std::string response;           // How to respond
+            ::std::string response;           // How to respond
             uint32 priority;                // Priority level (1-10)
         };
 
@@ -94,7 +94,7 @@ namespace Playerbot
 
         // Trash mechanics
         void HandleTrashPull();
-        void PrioritizeCrowdControl(std::vector<Creature*> const& mobs);
+        void PrioritizeCrowdControl(::std::vector<Creature*> const& mobs);
         void HandlePatrolAvoidance();
 
         // PvP System
@@ -113,9 +113,9 @@ namespace Playerbot
         struct BattlegroundStrategy
         {
             BattlegroundType type;
-            std::string strategyName;
-            std::vector<std::string> objectives;
-            std::unordered_map<std::string, Position> keyLocations;
+            ::std::string strategyName;
+            ::std::vector<::std::string> objectives;
+            ::std::unordered_map<::std::string, Position> keyLocations;
         };
 
         bool QueueForBattleground(BattlegroundType type);
@@ -158,32 +158,32 @@ namespace Playerbot
         struct WorldEvent
         {
             WorldEventType type;
-            std::string eventName;
+            ::std::string eventName;
             uint32 startTime;
             uint32 endTime;
-            std::vector<uint32> questIds;
-            std::vector<uint32> vendorIds;
+            ::std::vector<uint32> questIds;
+            ::std::vector<uint32> vendorIds;
             bool isActive;
         };
 
         bool ParticipateInWorldEvent(WorldEventType type);
         void CompleteEventQuests(WorldEventType type);
         void VisitEventVendors(WorldEventType type);
-        std::vector<WorldEvent> GetActiveEvents() const;
+        ::std::vector<WorldEvent> GetActiveEvents() const;
 
         // Achievement System
         struct Achievement
         {
             uint32 achievementId;
-            std::string name;
-            std::string description;
+            ::std::string name;
+            ::std::string description;
             uint32 points;
-            std::vector<std::string> criteria;
+            ::std::vector<::std::string> criteria;
             bool isCompleted;
         };
 
         void PursueAchievement(uint32 achievementId);
-        std::vector<Achievement> GetPursuitAchievements() const;
+        ::std::vector<Achievement> GetPursuitAchievements() const;
         void CheckAchievementProgress(uint32 achievementId);
         void PrioritizeAchievements();
 
@@ -197,7 +197,7 @@ namespace Playerbot
         struct RareSpawn
         {
             uint32 entry;
-            std::string name;
+            ::std::string name;
             Position lastKnownPosition;
             uint32 respawnTime;
             uint32 lastSeenTime;
@@ -206,7 +206,7 @@ namespace Playerbot
         };
 
         void TrackRareSpawn(Creature* rare);
-        std::vector<RareSpawn> GetTrackedRares() const;
+        ::std::vector<RareSpawn> GetTrackedRares() const;
         bool ShouldEngageRare(Creature* rare) const;
 
         // Treasure Hunting
@@ -221,7 +221,7 @@ namespace Playerbot
 
         void FindNearbyTreasures();
         bool LootTreasure(GameObject* treasure);
-        std::vector<Treasure> GetDiscoveredTreasures() const;
+        ::std::vector<Treasure> GetDiscoveredTreasures() const;
 
         // Mount and Pet Collection
         void CollectMounts();
@@ -273,10 +273,10 @@ namespace Playerbot
             uint32 bossEntry;
             uint32 startTime;
             uint32 phase;
-            std::vector<BossMechanic> activeMechanics;
+            ::std::vector<BossMechanic> activeMechanics;
         };
 
-        std::unique_ptr<ActiveBossFight> m_currentBossFight;
+        ::std::unique_ptr<ActiveBossFight> m_currentBossFight;
         void StartBossFight(Creature* boss);
         void EndBossFight(bool victory);
         void UpdateBossFight(uint32 diff);
@@ -297,21 +297,21 @@ namespace Playerbot
 
         // Achievement logic
         void UpdateAchievementProgress(uint32 diff);
-        std::vector<uint32> m_pursuingAchievements;
+        ::std::vector<uint32> m_pursuingAchievements;
         void CalculateAchievementPriority();
 
         // Exploration logic
         void UpdateExploration(uint32 diff);
-        std::unordered_set<uint32> m_exploredZones;
-        std::unordered_set<uint32> m_discoveredFlightPaths;
+        ::std::unordered_set<uint32> m_exploredZones;
+        ::std::unordered_set<uint32> m_discoveredFlightPaths;
 
         // Rare spawn tracking
-        std::unordered_map<uint32, RareSpawn> m_trackedRares;
+        ::std::unordered_map<uint32, RareSpawn> m_trackedRares;
         void UpdateRareTracking(uint32 diff);
         void ScanForRares();
 
         // Treasure tracking
-        std::vector<Treasure> m_discoveredTreasures;
+        ::std::vector<Treasure> m_discoveredTreasures;
         void UpdateTreasureHunting(uint32 diff);
         void ScanForTreasures();
 
@@ -324,7 +324,7 @@ namespace Playerbot
             uint32 damagePerSecond;
         };
 
-        std::vector<DangerZone> m_dangerZones;
+        ::std::vector<DangerZone> m_dangerZones;
         void UpdateDangerZones(uint32 diff);
         bool IsInDangerZone(Position const& pos) const;
         Position FindSafePosition(Position const& currentPos) const;
@@ -362,9 +362,9 @@ namespace Playerbot
         WorldEventType m_activeEvent;
 
         // Strategy databases
-        std::unordered_map<uint32, DungeonStrategy> m_dungeonStrategies;
-        std::unordered_map<BattlegroundType, BattlegroundStrategy> m_bgStrategies;
-        std::vector<WorldEvent> m_worldEvents;
+        ::std::unordered_map<uint32, DungeonStrategy> m_dungeonStrategies;
+        ::std::unordered_map<BattlegroundType, BattlegroundStrategy> m_bgStrategies;
+        ::std::vector<WorldEvent> m_worldEvents;
 
         // Update intervals
         uint32 m_dungeonUpdateInterval;
@@ -386,9 +386,9 @@ namespace Playerbot
         Statistics m_stats;
 
         // Performance metrics
-        std::chrono::high_resolution_clock::time_point m_performanceStart;
-        std::chrono::microseconds m_lastUpdateDuration;
-        std::chrono::microseconds m_totalUpdateTime;
+        ::std::chrono::high_resolution_clock::time_point m_performanceStart;
+        ::std::chrono::microseconds m_lastUpdateDuration;
+        ::std::chrono::microseconds m_totalUpdateTime;
         uint32 m_updateCount;
         float m_cpuUsage;
     };

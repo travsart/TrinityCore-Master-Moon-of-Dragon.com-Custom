@@ -119,7 +119,7 @@ struct AIUpdateResult
     uint32 actionsExecuted = 0;
     uint32 triggersChecked = 0;
     uint32 strategiesEvaluated = 0;
-    std::chrono::microseconds updateTime{0};
+    ::std::chrono::microseconds updateTime{0};
 };
 
 class TC_GAME_API BotAI
@@ -177,12 +177,12 @@ public:
     // STRATEGY MANAGEMENT - Core behavior system
     // ========================================================================
 
-    void AddStrategy(std::unique_ptr<Strategy> strategy);
-    void RemoveStrategy(std::string const& name);
-    Strategy* GetStrategy(std::string const& name) const;
-    std::vector<Strategy*> GetActiveStrategies() const;
-    void ActivateStrategy(std::string const& name);
-    void DeactivateStrategy(std::string const& name);
+    void AddStrategy(::std::unique_ptr<Strategy> strategy);
+    void RemoveStrategy(::std::string const& name);
+    Strategy* GetStrategy(::std::string const& name) const;
+    ::std::vector<Strategy*> GetActiveStrategies() const;
+    void ActivateStrategy(::std::string const& name);
+    void DeactivateStrategy(::std::string const& name);
 
     // Priority-based strategy selection
     BehaviorPriorityManager* GetPriorityManager() { return _priorityManager.get(); }
@@ -192,12 +192,12 @@ public:
     // ACTION EXECUTION - Command pattern implementation
     // ========================================================================
 
-    bool ExecuteAction(std::string const& actionName);
-    bool ExecuteAction(std::string const& name, ActionContext const& context);
-    bool IsActionPossible(std::string const& actionName) const;
-    uint32 GetActionPriority(std::string const& actionName) const;
+    bool ExecuteAction(::std::string const& actionName);
+    bool ExecuteAction(::std::string const& name, ActionContext const& context);
+    bool IsActionPossible(::std::string const& actionName) const;
+    uint32 GetActionPriority(::std::string const& actionName) const;
 
-    void QueueAction(std::shared_ptr<Action> action, ActionContext const& context = {});
+    void QueueAction(::std::shared_ptr<Action> action, ActionContext const& context = {});
     void CancelCurrentAction();
     bool IsActionInProgress() const { return _currentAction != nullptr; }
 
@@ -360,8 +360,8 @@ public:
     bool RequestPointMovement(
         PlayerBotMovementPriority priority,
         Position const& position,
-        std::string const& reason = "",
-        std::string const& sourceSystem = "");
+        ::std::string const& reason = "",
+        ::std::string const& sourceSystem = "");
 
     /**
      * Convenience method: Request chase movement
@@ -375,8 +375,8 @@ public:
     bool RequestChaseMovement(
         PlayerBotMovementPriority priority,
         ObjectGuid targetGuid,
-        std::string const& reason = "",
-        std::string const& sourceSystem = "");
+        ::std::string const& reason = "",
+        ::std::string const& sourceSystem = "");
 
     /**
      * Convenience method: Request follow movement
@@ -392,8 +392,8 @@ public:
         PlayerBotMovementPriority priority,
         ObjectGuid targetGuid,
         float distance = 5.0f,
-        std::string const& reason = "",
-        std::string const& sourceSystem = "");
+        ::std::string const& reason = "",
+        ::std::string const& sourceSystem = "");
 
     /**
      * Stop all movement immediately
@@ -638,13 +638,13 @@ public:
 
     struct PerformanceMetrics
     {
-        std::atomic<uint32> totalUpdates{0};
-        std::atomic<uint32> actionsExecuted{0};
-        std::atomic<uint32> triggersProcessed{0};
-        std::atomic<uint32> strategiesEvaluated{0};
-        std::chrono::microseconds averageUpdateTime{0};
-        std::chrono::microseconds maxUpdateTime{0};
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::atomic<uint32> totalUpdates{0};
+        ::std::atomic<uint32> actionsExecuted{0};
+        ::std::atomic<uint32> triggersProcessed{0};
+        ::std::atomic<uint32> strategiesEvaluated{0};
+        ::std::chrono::microseconds averageUpdateTime{0};
+        ::std::chrono::microseconds maxUpdateTime{0};
+        ::std::chrono::steady_clock::time_point lastUpdate;
     };
 
     PerformanceMetrics const& GetPerformanceMetrics() const { return _performanceMetrics; }
@@ -702,7 +702,7 @@ protected:
     // ========================================================================
 
     Strategy* SelectBestStrategy();
-    std::shared_ptr<Action> SelectNextAction();
+    ::std::shared_ptr<Action> SelectNextAction();
     bool CanExecuteAction(Action* action) const;
     ActionResult ExecuteActionInternal(Action* action, ActionContext const& context);
 
@@ -711,7 +711,7 @@ protected:
 
     void InitializeDefaultStrategies();
     void UpdatePerformanceMetrics(uint32 updateTimeMs);
-    void LogAIDecision(std::string const& action, float score) const;
+    void LogAIDecision(::std::string const& action, float score) const;
 
     // ========================================================================
     // EVENT HANDLER HELPERS - Common event processing patterns
@@ -738,30 +738,30 @@ protected:
     ObjectGuid _currentTarget;
 
     // Strategy system
-    std::unordered_map<std::string, std::unique_ptr<Strategy>> _strategies;
-    std::vector<std::string> _activeStrategies;
-    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
+    ::std::unordered_map<::std::string, ::std::unique_ptr<Strategy>> _strategies;
+    ::std::vector<::std::string> _activeStrategies;
+    ::std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
     // Hybrid AI Decision System: Utility AI + Behavior Trees (Phase 2 Week 3)
-    std::unique_ptr<class HybridAIController> _hybridAI;
+    ::std::unique_ptr<class HybridAIController> _hybridAI;
 
     // Shared Blackboard: Thread-safe shared state system (Phase 4)
     SharedBlackboard* _sharedBlackboard = nullptr;
 
     // Action system
-    std::queue<std::pair<std::shared_ptr<Action>, ActionContext>> _actionQueue;
-    std::shared_ptr<Action> _currentAction;
+    ::std::queue<::std::pair<::std::shared_ptr<Action>, ActionContext>> _actionQueue;
+    ::std::shared_ptr<Action> _currentAction;
     ActionContext _currentContext;
 
     // Trigger system
-    std::vector<std::shared_ptr<Trigger>> _triggers;
-    std::priority_queue<TriggerResult, std::vector<TriggerResult>, TriggerResultComparator> _triggeredActions;
+    ::std::vector<::std::shared_ptr<Trigger>> _triggers;
+    ::std::priority_queue<TriggerResult, ::std::vector<TriggerResult>, TriggerResultComparator> _triggeredActions;
 
     // Value cache
-    std::unordered_map<std::string, float> _values;
+    ::std::unordered_map<::std::string, float> _values;
 
     // Group management
-    std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
+    ::std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
     bool _wasInGroup = false;
 
     // Solo strategy activation tracking
@@ -771,39 +771,39 @@ protected:
     bool _firstUpdateComplete = false;
 
     // Target scanning for autonomous engagement
-    std::unique_ptr<TargetScanner> _targetScanner;
+    ::std::unique_ptr<TargetScanner> _targetScanner;
 
     // Game system managers
-    std::unique_ptr<QuestManager> _questManager;
-    std::unique_ptr<TradeManager> _tradeManager;
-    std::unique_ptr<GatheringManager> _gatheringManager;
-    std::unique_ptr<AuctionManager> _auctionManager;
-    std::unique_ptr<GroupCoordinator> _groupCoordinator; // Advanced/GroupCoordinator - loot/quest/formation
+    ::std::unique_ptr<QuestManager> _questManager;
+    ::std::unique_ptr<TradeManager> _tradeManager;
+    ::std::unique_ptr<GatheringManager> _gatheringManager;
+    ::std::unique_ptr<AuctionManager> _auctionManager;
+    ::std::unique_ptr<GroupCoordinator> _groupCoordinator; // Advanced/GroupCoordinator - loot/quest/formation
 
     // Phase 3: Tactical Group Coordination (separate from Advanced/GroupCoordinator)
-    std::unique_ptr<Coordination::GroupCoordinator> _tacticalCoordinator;
+    ::std::unique_ptr<Coordination::GroupCoordinator> _tacticalCoordinator;
 
     // Death recovery system
-    std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
+    ::std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
     // Movement arbiter - Enterprise movement request arbitration
-    std::unique_ptr<MovementArbiter> _movementArbiter;
+    ::std::unique_ptr<MovementArbiter> _movementArbiter;
 
     // Combat state manager - Automatic combat state synchronization via DAMAGE_TAKEN events
-    std::unique_ptr<CombatStateManager> _combatStateManager;
+    ::std::unique_ptr<CombatStateManager> _combatStateManager;
 
     // Phase 7.1: Event system integration
-    std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
-    std::unique_ptr<ManagerRegistry> _managerRegistry;
+    ::std::unique_ptr<Events::EventDispatcher> _eventDispatcher;
+    ::std::unique_ptr<ManagerRegistry> _managerRegistry;
 
     // Phase 5E: Decision fusion system - Unified arbitration for all decision-making
-    std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
+    ::std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
 
     // Phase 5 Enhancement: Action priority queue - Spell priority management
-    std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
+    ::std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
 
     // Phase 5 Enhancement: Behavior tree - Hierarchical combat flow
-    std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
+    ::std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
@@ -877,19 +877,19 @@ public:
     static BotAIFactory* instance();
 
     // AI creation
-    std::unique_ptr<BotAI> CreateAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) override;
-    std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) override;
+    ::std::unique_ptr<BotAI> CreateAI(Player* bot) override;
+    ::std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId) override;
+    ::std::unique_ptr<BotAI> CreateClassAI(Player* bot, uint8 classId, uint8 spec) override;
 
     // Specialized AI creation
-    std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, std::string const& type) override;
-    std::unique_ptr<BotAI> CreatePvPAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreatePvEAI(Player* bot) override;
-    std::unique_ptr<BotAI> CreateRaidAI(Player* bot) override;
+    ::std::unique_ptr<BotAI> CreateSpecializedAI(Player* bot, ::std::string const& type) override;
+    ::std::unique_ptr<BotAI> CreatePvPAI(Player* bot) override;
+    ::std::unique_ptr<BotAI> CreatePvEAI(Player* bot) override;
+    ::std::unique_ptr<BotAI> CreateRaidAI(Player* bot) override;
 
     // AI registration
-    void RegisterAICreator(std::string const& type,
-                          std::function<std::unique_ptr<BotAI>(Player*)> creator) override;
+    void RegisterAICreator(::std::string const& type,
+                          ::std::function<::std::unique_ptr<BotAI>(Player*)> creator) override;
 
     // Initialization
     void InitializeDefaultTriggers(BotAI* ai) override;
@@ -899,7 +899,7 @@ private:
     void InitializeDefaultStrategies(BotAI* ai);
     void InitializeClassStrategies(BotAI* ai, uint8 classId, uint8 spec);
 
-    std::unordered_map<std::string, std::function<std::unique_ptr<BotAI>(Player*)>> _creators;
+    ::std::unordered_map<::std::string, ::std::function<::std::unique_ptr<BotAI>(Player*)>> _creators;
 };
 
 #define sBotAIFactory BotAIFactory::instance()

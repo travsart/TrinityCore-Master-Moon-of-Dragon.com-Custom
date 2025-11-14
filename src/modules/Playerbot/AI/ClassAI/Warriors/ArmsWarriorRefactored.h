@@ -29,6 +29,16 @@
 namespace Playerbot
 {
 
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+
 /**
  * Refactored Arms Warrior using template architecture
  *
@@ -89,6 +99,14 @@ public:
     using Base::_resource;
     using Base::IsInMeleeRange;
     using Base::CanUseAbility;
+
+    // BehaviorTree helper functions (must be accessible in member functions)
+    using bot::ai::Sequence;
+    using bot::ai::Selector;
+    using bot::ai::Condition;
+    using bot::ai::Inverter;
+    using bot::ai::Repeater;
+    using bot::ai::NodeStatus;
 
 private:
     // Forward declarations for methods called in constructor
@@ -355,7 +373,7 @@ protected:
             // Tactical Mastery allows retaining rage when switching
             if (this->HasTacticalMastery())
             {
-                _tacticalMasteryRage = std::min(this->_resource, 25u);
+                _tacticalMasteryRage = ::std::min(this->_resource, 25u);
             }
 
             this->SwitchToStance(optimalStance);
@@ -531,9 +549,9 @@ private:
             // Emergency spells
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                [](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && target->GetHealthPct() < 20.0f;
-                },
+                }},
                 "Target HP < 20% (Execute range)");
 
             // Critical cooldowns
@@ -553,24 +571,24 @@ private:
             // Medium priority
             queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(SPELL_WHIRLWIND,
-                [this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                     // Capture 'this' for member access if needed
-                    return bot->GetAttackersCount() >= 3;
-                },
+                    return bot->getAttackers().size() >= 3;
+                }},
                 "3+ targets (AoE)");
 
             queue->RegisterSpell(SPELL_REND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_REND,
-                [](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && !target->HasAura(SPELL_REND);
-                },
+                }},
                 "Rend not active on target");
 
             // Low priority fillers
             queue->RegisterSpell(SPELL_HEROIC_STRIKE, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
             queue->RegisterSpell(SPELL_CLEAVE, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
 
-            TC_LOG_INFO("module.playerbot", "⚔️  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  ARMS WARRIOR: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -589,7 +607,7 @@ private:
                         return target && target->GetHealthPct() < 20.0f;
                     }),
                     Selector("Execute Priority", {
-                        Action("Cast Execute", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Execute", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_EXECUTE, target))
                             {
                                 this->CastSpell(SPELL_EXECUTE, target);
@@ -597,7 +615,7 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_MORTAL_STRIKE, target);
@@ -618,7 +636,7 @@ private:
                                         target->GetMaxHealth() > 500000);
                     }),
                     Selector("Cooldown Priority", {
-                        Action("Cast Avatar", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Avatar", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_AVATAR, bot))
                             {
                                 this->CastSpell(SPELL_AVATAR, bot);
@@ -626,7 +644,7 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_BLADESTORM, bot))
                             {
                                 this->CastSpell(SPELL_BLADESTORM, bot);
@@ -646,7 +664,7 @@ private:
                         Condition("CS Active", [](Player* bot, Unit* target) {
                             return target && target->HasAura(SPELL_COLOSSUS_SMASH);
                         }),
-                        Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_COLOSSUS_SMASH, target))
                             {
                                 this->CastSpell(SPELL_COLOSSUS_SMASH, target);
@@ -658,7 +676,7 @@ private:
 
                     // Cast Mortal Strike on cooldown
                     Selector("Mortal Strike", {
-                        Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_MORTAL_STRIKE, target);
@@ -673,7 +691,7 @@ private:
                         Condition("Has Overpower Proc", [](Player* bot, Unit*) {
                             return bot->HasAura(SPELL_OVERPOWER_PROC);
                         }),
-                        Action("Cast Overpower", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Overpower", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_OVERPOWER, target))
                             {
                                 this->CastSpell(SPELL_OVERPOWER, target);
@@ -685,15 +703,15 @@ private:
 
                     // Filler spells
                     Selector("Filler", {
-                        Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
-                            if (bot->GetAttackersCount() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
+                        bot::ai::Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
+                            if (bot->getAttackers().size() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
                             {
                                 this->CastSpell(SPELL_WHIRLWIND, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_HEROIC_STRIKE, target);
@@ -706,7 +724,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+            TC_LOG_INFO("module.playerbot", " ARMS WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
 
@@ -717,8 +735,8 @@ private:
     // ========================================================================
 
     // Debuff tracking
-    std::unordered_map<ObjectGuid, uint32> _deepWoundsTracking;
-    std::unordered_map<ObjectGuid, uint32> _rendTracking;
+    ::std::unordered_map<ObjectGuid, uint32> _deepWoundsTracking;
+    ::std::unordered_map<ObjectGuid, uint32> _rendTracking;
 
     // State tracking
     bool _colossusSmashActive;

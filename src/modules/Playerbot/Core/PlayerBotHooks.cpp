@@ -170,8 +170,8 @@ void PlayerBotHooks::RegisterHooks()
         event.priority = EventPriority::HIGH;
         event.groupGuid = group->GetGUID();
         event.data1 = isRaid ? 1 : 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
 
@@ -193,8 +193,8 @@ void PlayerBotHooks::RegisterHooks()
         event.groupGuid = group->GetGUID();
         event.targetGuid = playerGuid;
         event.data1 = newSubgroup;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
 
@@ -230,8 +230,8 @@ void PlayerBotHooks::RegisterHooks()
         event.priority = EventPriority::LOW;
         event.groupGuid = group->GetGUID();
         event.data1 = threshold;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -249,8 +249,8 @@ void PlayerBotHooks::RegisterHooks()
         event.priority = EventPriority::LOW;
         event.groupGuid = group->GetGUID();
         event.targetGuid = masterLooterGuid;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -269,8 +269,8 @@ void PlayerBotHooks::RegisterHooks()
         event.groupGuid = group->GetGUID();
         event.targetGuid = memberGuid;
         event.data1 = isAssistant ? 1 : 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -288,8 +288,8 @@ void PlayerBotHooks::RegisterHooks()
         event.priority = EventPriority::LOW;
         event.groupGuid = group->GetGUID();
         event.targetGuid = tankGuid;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -307,8 +307,8 @@ void PlayerBotHooks::RegisterHooks()
         event.priority = EventPriority::LOW;
         event.groupGuid = group->GetGUID();
         event.targetGuid = assistGuid;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -343,8 +343,8 @@ void PlayerBotHooks::RegisterHooks()
         event.data1 = markerId;
         event.data2 = mapId;
         // Pack coordinates into data3 (simplified, not perfect but works)
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(60000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -378,8 +378,8 @@ void PlayerBotHooks::RegisterHooks()
         event.groupGuid = group->GetGUID();
         event.sourceGuid = memberGuid;
         event.data1 = ready ? 1 : 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -399,8 +399,8 @@ void PlayerBotHooks::RegisterHooks()
         event.data1 = allReady ? 1 : 0;
         event.data2 = respondedCount;
         event.data3 = totalMembers;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -434,8 +434,8 @@ void PlayerBotHooks::RegisterHooks()
         event.groupGuid = group->GetGUID();
         event.data1 = instanceId;
         event.data2 = permanent ? 1 : 0;
-        event.timestamp = std::chrono::steady_clock::now();
-        event.expiryTime = event.timestamp + std::chrono::milliseconds(60000);
+        event.timestamp = ::std::chrono::steady_clock::now();
+        event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000);
 
         GroupEventBus::instance()->PublishEvent(event);
     };
@@ -567,7 +567,7 @@ void PlayerBotHooks::IncrementHookCall(const char* hookName)
 
     // Map specific hook calls to stat counters
     // Using string comparison for simplicity (could optimize with enum)
-    std::string hook(hookName);
+    ::std::string hook(hookName);
 
     if (hook == "OnGroupMemberAdded")
         ++GetStats().memberAddedCalls;
@@ -610,9 +610,9 @@ void PlayerBotHooks::DumpStatistics()
     TC_LOG_INFO("module.playerbot", "{}", GetStats().ToString());
 }
 
-std::string PlayerBotHooks::HookStatistics::ToString() const
+::std::string PlayerBotHooks::HookStatistics::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Total Hook Calls: " << totalHookCalls
         << ", Member Added: " << memberAddedCalls
         << ", Member Removed: " << memberRemovedCalls

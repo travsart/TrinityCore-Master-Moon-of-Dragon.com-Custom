@@ -67,7 +67,7 @@ void DemonHunterAI::UpdateRotation(::Unit* target)
         if (baselineManager.ExecuteBaselineRotation(_bot, target))            return;
 
         // Fallback to basic melee attack if nothing else worked        if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
-        {            _bot->CastSpell(target, DEMONS_BITE, false);
+        {            _bot->CastSpell(CastSpellTargetArg(target), DEMONS_BITE);
         }
         return;
     }
@@ -162,7 +162,7 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
     // Disrupt - Main interrupt ability
     if (currentTime - _lastInterruptTime > INTERRUPT_COOLDOWN && CanUseAbility(DISRUPT))
     {
-        if (CastSpell(interruptTarget, DISRUPT))
+        if (CastSpell(DISRUPT, interruptTarget))
         {            RecordInterruptAttempt(interruptTarget, DISRUPT, true);
             _lastInterruptTime = currentTime;
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} interrupted {} with Disrupt",                         _bot->GetName(), interruptTarget->GetName());
@@ -171,7 +171,7 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
     }    // Sigil of Silence - AoE interrupt for casters
     if (CanUseAbility(SIGIL_OF_SILENCE))
     {
-        if (CastSpell(interruptTarget, SIGIL_OF_SILENCE))
+        if (CastSpell(SIGIL_OF_SILENCE, interruptTarget))
         {
             RecordInterruptAttempt(interruptTarget, SIGIL_OF_SILENCE, true);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} used Sigil of Silence on {}",
@@ -193,7 +193,7 @@ void DemonHunterAI::HandleInterrupts(::Unit* target)
     }    // Imprison - CC to stop casts on humanoids/beasts/demons
     if (CanUseAbility(IMPRISON))
     {
-        if (CastSpell(interruptTarget, IMPRISON))
+        if (CastSpell(IMPRISON, interruptTarget))
         {
             RecordInterruptAttempt(interruptTarget, IMPRISON, true);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} imprisoned {}",                         _bot->GetName(), interruptTarget->GetName());        }
@@ -264,7 +264,7 @@ void DemonHunterAI::HandleDefensives()
         // Fiery Brand - Damage reduction on target
         Unit* target = _bot->GetSelectedUnit();        if (target && healthPct < 60.0f && CanUseAbility(FIERY_BRAND))
         {
-            if (CastSpell(target, FIERY_BRAND))
+            if (CastSpell(FIERY_BRAND, target))
             {
                 RecordAbilityUsage(FIERY_BRAND);
                 _dhMetrics.defensivesUsed++;
@@ -324,7 +324,7 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
 
     // Eye Beam - Primary AoE ability for Havoc
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc && enemyCount >= 2 && CanUseAbility(EYE_BEAM))    {
-        if (CastSpell(target, EYE_BEAM))
+        if (CastSpell(EYE_BEAM, target))
         {
             RecordAbilityUsage(EYE_BEAM);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} channeling Eye Beam for AoE",
@@ -351,7 +351,7 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
     // Fel Barrage - Heavy AoE burst
     if (enemyCount >= 4 && CanUseAbility(FEL_BARRAGE))
     {
-        if (CastSpell(target, FEL_BARRAGE))
+        if (CastSpell(FEL_BARRAGE, target))
         {
             RecordAbilityUsage(FEL_BARRAGE);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Fel Barrage",
@@ -373,7 +373,7 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
     // Sigil of Flame - Ground-targeted AoE
     if (enemyCount >= 2 && CanUseAbility(SIGIL_OF_FLAME))
     {
-        if (CastSpell(target, SIGIL_OF_FLAME))
+        if (CastSpell(SIGIL_OF_FLAME, target))
         {            RecordAbilityUsage(SIGIL_OF_FLAME);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} placed Sigil of Flame",                         _bot->GetName());
             return;
@@ -385,7 +385,7 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
         // Spirit Bomb - Requires soul fragments
         if (enemyCount >= 3 && CanUseAbility(SPIRIT_BOMB))
         {
-            if (CastSpell(target, SPIRIT_BOMB))
+            if (CastSpell(SPIRIT_BOMB, target))
             {
                 RecordAbilityUsage(SPIRIT_BOMB);
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} detonated Spirit Bomb",
@@ -419,7 +419,7 @@ void DemonHunterAI::HandleCooldowns(::Unit* target)
 
     // Nemesis - Single target damage increase (Havoc)
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc && CanUseAbility(NEMESIS))    {
-        if (CastSpell(target, NEMESIS))
+        if (CastSpell(NEMESIS, target))
         {
             RecordAbilityUsage(NEMESIS);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} marked {} with Nemesis",
@@ -429,7 +429,7 @@ void DemonHunterAI::HandleCooldowns(::Unit* target)
 
     // Fel Barrage - AoE burst cooldown
     if (GetNearbyEnemyCount(8.0f) >= 3 && CanUseAbility(FEL_BARRAGE))
-    {        if (CastSpell(target, FEL_BARRAGE))
+    {        if (CastSpell(FEL_BARRAGE, target))
         {
             RecordAbilityUsage(FEL_BARRAGE);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} using Fel Barrage burst",
@@ -467,7 +467,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         // Generate fury with Demon's Bite
         if (currentFury < 40 && CanUseAbility(DEMONS_BITE))
         {
-            if (CastSpell(target, DEMONS_BITE))
+            if (CastSpell(DEMONS_BITE, target))
             {
                 RecordAbilityUsage(DEMONS_BITE);
                 return;
@@ -484,7 +484,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
             // Soul Cleave to spend pain and heal
             if (CanUseAbility(SOUL_CLEAVE))
             {
-                if (CastSpell(target, SOUL_CLEAVE))
+                if (CastSpell(SOUL_CLEAVE, target))
                 {
                     RecordAbilityUsage(SOUL_CLEAVE);
                     TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} spending pain with Soul Cleave",                                 _bot->GetName());
@@ -496,7 +496,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         // Generate pain with Shear
         if (currentPain < 30 && CanUseAbility(SHEAR))
         {
-            if (CastSpell(target, SHEAR))
+            if (CastSpell(SHEAR, target))
             {
                 RecordAbilityUsage(SHEAR);
                 return;
@@ -518,10 +518,10 @@ void DemonHunterAI::HandleMobility(::Unit* target)
     if (behaviors->NeedsRepositioning())
     {
         Position optimalPos = behaviors->GetOptimalPosition();
-        float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Fel Rush to close gap or reposition
+        float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Fel Rush to close gap or reposition
         if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
         {
-            if (CastSpell(target, FEL_RUSH))
+            if (CastSpell(FEL_RUSH, target))
             {
                 RecordAbilityUsage(FEL_RUSH);
                 _dhMetrics.mobilityAbilitiesUsed++;
@@ -585,7 +585,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         // Demon's Bite to generate fury
         if (CanUseAbility(DEMONS_BITE))
         {
-            if (CastSpell(target, DEMONS_BITE))
+            if (CastSpell(DEMONS_BITE, target))
             {
                 RecordAbilityUsage(DEMONS_BITE);
                 return;
@@ -600,7 +600,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         // Soul Cleave at high pain
         if (pain >= 30 && CanUseAbility(SOUL_CLEAVE))
         {
-            if (CastSpell(target, SOUL_CLEAVE))
+            if (CastSpell(SOUL_CLEAVE, target))
             {
                 RecordAbilityUsage(SOUL_CLEAVE);
                 return;
@@ -608,7 +608,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         }        // Shear to generate pain
         if (CanUseAbility(SHEAR))
         {
-            if (CastSpell(target, SHEAR))
+            if (CastSpell(SHEAR, target))
             {
                 RecordAbilityUsage(SHEAR);
                 return;
@@ -629,7 +629,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
     // Sigil of Flame for damage
     if (CanUseAbility(SIGIL_OF_FLAME))
     {
-        if (CastSpell(target, SIGIL_OF_FLAME))
+        if (CastSpell(SIGIL_OF_FLAME, target))
         {
             RecordAbilityUsage(SIGIL_OF_FLAME);
             return;
@@ -676,7 +676,7 @@ void DemonHunterAI::UpdateBuffs()
                 Unit* target = _bot->GetSelectedUnit();
                 if (target && _bot->GetDistance(target) > 5.0f && _bot->GetDistance(target) < 20.0f)
                 {
-                    if (CastSpell(target, FEL_RUSH))
+                    if (CastSpell(FEL_RUSH, target))
                     {
                         RecordAbilityUsage(FEL_RUSH);
                         TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} using Fel Rush for Momentum buff",
@@ -722,7 +722,7 @@ void DemonHunterAI::UpdateBuffs()
         Unit* target = _bot->GetVictim();
         if (target && !target->HasAura(FIERY_BRAND) && _bot->GetHealthPct() < 80.0f && CanUseAbility(FIERY_BRAND))
         {
-            if (CastSpell(target, FIERY_BRAND))
+            if (CastSpell(FIERY_BRAND, target))
             {
                 RecordAbilityUsage(FIERY_BRAND);
                 TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunter {} applied Fiery Brand debuff",
@@ -747,7 +747,7 @@ bool DemonHunterAI::CanUseAbility(uint32 spellId)
     return true;
 }void DemonHunterAI::OnCombatStart(::Unit* target)
 {
-    _dhMetrics.combatStartTime = std::chrono::steady_clock::now();
+    _dhMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.demonhunter", "DemonHunterAI combat started for player {}",
                  
@@ -871,7 +871,7 @@ void DemonHunterAI::SpendPain(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentPain = _bot->GetPower(POWER_PAIN);    _bot->SetPower(POWER_PAIN, std::max(0, currentPain - static_cast<int32>(amount)));
+    int32 currentPain = _bot->GetPower(POWER_PAIN);    _bot->SetPower(POWER_PAIN, ::std::max(0, currentPain - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GeneratePain(uint32 amount)
@@ -880,7 +880,7 @@ void DemonHunterAI::GeneratePain(uint32 amount)
         return;
 
     int32 currentPain = _bot->GetPower(POWER_PAIN);    int32 maxPain = _bot->GetMaxPower(POWER_PAIN);
-    _bot->SetPower(POWER_PAIN, std::min(maxPain, currentPain + static_cast<int32>(amount)));
+    _bot->SetPower(POWER_PAIN, ::std::min(maxPain, currentPain + static_cast<int32>(amount)));
 }
 
 bool DemonHunterAI::HasPain(uint32 amount)
@@ -892,7 +892,7 @@ void DemonHunterAI::SpendFury(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentFury = _bot->GetPower(POWER_FURY);    _bot->SetPower(POWER_FURY, std::max(0, currentFury - static_cast<int32>(amount)));
+    int32 currentFury = _bot->GetPower(POWER_FURY);    _bot->SetPower(POWER_FURY, ::std::max(0, currentFury - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GenerateFury(uint32 amount)
@@ -901,7 +901,7 @@ void DemonHunterAI::GenerateFury(uint32 amount)
         return;
 
     int32 currentFury = _bot->GetPower(POWER_FURY);    int32 maxFury = _bot->GetMaxPower(POWER_FURY);
-    _bot->SetPower(POWER_FURY, std::min(maxFury, currentFury + static_cast<int32>(amount)));
+    _bot->SetPower(POWER_FURY, ::std::min(maxFury, currentFury + static_cast<int32>(amount)));
 }
 
 bool DemonHunterAI::HasFury(uint32 amount)
@@ -987,7 +987,7 @@ void DemonHunterAI::UpdateVengeanceRotation(::Unit* target)
     // Spirit Bomb for AoE threat
     if (pain >= 30 && GetNearbyEnemyCount(8.0f) >= 2 && CanUseAbility(SPIRIT_BOMB))
     {
-        CastSpell(target, SPIRIT_BOMB);
+        CastSpell(SPIRIT_BOMB, target);
         return;
     }
 
@@ -1013,7 +1013,7 @@ void DemonHunterAI::HandleMetamorphosisAbilities(::Unit* target)
         // Use Annihilation instead of Chaos Strike
         if (CanUseAbility(ANNIHILATION) && HasFury(40))
         {
-            CastSpell(target, ANNIHILATION);
+            CastSpell(ANNIHILATION, target);
             return;
         }
 
@@ -1029,7 +1029,7 @@ void DemonHunterAI::HandleMetamorphosisAbilities(::Unit* target)
 void DemonHunterAI::CastEyeBeam(::Unit* target)
 {
     if (target && CanUseAbility(EYE_BEAM))
-    {        CastSpell(target, EYE_BEAM);
+    {        CastSpell(EYE_BEAM, target);
         ConsumeResource(EYE_BEAM);
     }
 }
@@ -1059,7 +1059,7 @@ void DemonHunterAI::CastDemonsBite(::Unit* target)
 {
     if (target && CanUseAbility(DEMONS_BITE))
     {
-        CastSpell(target, DEMONS_BITE);
+        CastSpell(DEMONS_BITE, target);
         ConsumeResource(DEMONS_BITE);
     }
 }
@@ -1068,7 +1068,7 @@ void DemonHunterAI::CastSoulCleave(::Unit* target)
 {
     if (target && CanUseAbility(SOUL_CLEAVE))
     {
-        CastSpell(target, SOUL_CLEAVE);
+        CastSpell(SOUL_CLEAVE, target);
         ConsumeResource(SOUL_CLEAVE);
     }
 }
@@ -1077,18 +1077,18 @@ void DemonHunterAI::CastShear(::Unit* target)
 {
     if (target && CanUseAbility(SHEAR))
     {
-        CastSpell(target, SHEAR);
+        CastSpell(SHEAR, target);
         ConsumeResource(SHEAR);
     }
 }
 
-std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
+::std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
 {
-    std::vector<::Unit*> targets;
+    ::std::vector<::Unit*> targets;
     if (!_bot)
         return targets;
 
-    std::list<Unit*> targetList;
+    ::std::list<Unit*> targetList;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targetList, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1105,7 +1105,7 @@ std::vector<::Unit*> DemonHunterAI::GetAoETargets(float range)
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1139,7 +1139,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1156,7 +1156,7 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -1244,13 +1244,13 @@ void DemonHunterAI::OnTargetChanged(::Unit* newTarget)
 
 void DemonHunterAI::UpdateMetrics(uint32 diff)
 {
-    _dhMetrics.lastMetricsUpdate = std::chrono::steady_clock::now();
+    _dhMetrics.lastMetricsUpdate = ::std::chrono::steady_clock::now();
 }
 
 void DemonHunterAI::AnalyzeCombatEffectiveness()
 {
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - _dhMetrics.combatStartTime).count();
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(endTime - _dhMetrics.combatStartTime).count();
 
     if (duration > 0)
     {

@@ -52,20 +52,20 @@ public:
     virtual float CalculateObjectiveVelocity(Player* bot, uint32 questId, uint32 objectiveIndex) = 0;
 
     // Target detection and analysis
-    virtual std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective) = 0;
-    virtual std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f) = 0;
-    virtual std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) = 0;
-    virtual std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) = 0;
+    virtual ::std::vector<uint32> DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective) = 0;
+    virtual ::std::vector<uint32> ScanForKillTargets(Player* bot, uint32 creatureId, float radius = 100.0f) = 0;
+    virtual ::std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) = 0;
+    virtual ::std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) = 0;
 
     // Objective state management
     virtual ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex) = 0;
     virtual void UpdateObjectiveState(Player* bot, const ObjectiveState& state) = 0;
-    virtual std::vector<ObjectiveState> GetActiveObjectives(Player* bot) = 0;
+    virtual ::std::vector<ObjectiveState> GetActiveObjectives(Player* bot) = 0;
 
     // Intelligent objective prioritization
-    virtual std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) = 0;
+    virtual ::std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) = 0;
     virtual ObjectivePriority GetHighestPriorityObjective(Player* bot) = 0;
-    virtual void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities) = 0;
+    virtual void OptimizeObjectiveSequence(Player* bot, ::std::vector<ObjectivePriority>& priorities) = 0;
 
     // Target availability and spawn tracking
     virtual void TrackTargetAvailability(Player* bot, uint32 questId, uint32 targetId) = 0;
@@ -77,7 +77,7 @@ public:
     virtual void MonitorTargetCompetition(Player* bot, uint32 targetId) = 0;
     virtual bool IsTargetContested(uint32 targetId, float radius = 50.0f) = 0;
     virtual void HandleTargetCompetition(Player* bot, uint32 targetId) = 0;
-    virtual std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation) = 0;
+    virtual ::std::vector<Position> FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation) = 0;
 
     // Group objective coordination
     virtual void CoordinateGroupObjectives(Group* group, uint32 questId) = 0;
@@ -97,7 +97,7 @@ public:
 
     // Error detection and recovery
     virtual void DetectTrackingErrors(Player* bot) = 0;
-    virtual void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error) = 0;
+    virtual void HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const ::std::string& error) = 0;
     virtual void HandleStuckObjective(Player* bot, ObjectiveState& state) = 0;
     virtual void RecoverTrackingState(Player* bot, uint32 questId) = 0;
     virtual void ValidateObjectiveConsistency(Player* bot) = 0;

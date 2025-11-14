@@ -101,7 +101,7 @@ namespace Playerbot
         uint64 goldCost;                ///< Total gold cost (after discounts)
         bool isUpgrade;                 ///< True if item is gear upgrade
         float upgradeScore;             ///< Upgrade score (0-100, higher = better)
-        std::string reason;             ///< Purchase reason (debugging)
+        ::std::string reason;             ///< Purchase reason (debugging)
 
         VendorPurchaseRecommendation()
             : itemId(0), vendorSlot(0), suggestedQuantity(1),
@@ -208,7 +208,7 @@ namespace Playerbot
          * Performance: < 5ms for 100 vendor items
          * Thread-safety: Thread-safe (read-only)
          */
-        [[nodiscard]] std::vector<VendorPurchaseRecommendation> GetPurchaseRecommendations(
+        [[nodiscard]] ::std::vector<VendorPurchaseRecommendation> GetPurchaseRecommendations(
             Player const* player,
             Creature const* vendor,
             uint64 goldBudget) const;
@@ -223,7 +223,7 @@ namespace Playerbot
          * Performance: O(n) where n = vendor items, ~0.1ms typical
          * Thread-safety: Thread-safe (read-only)
          */
-        [[nodiscard]] static std::optional<uint32> FindVendorSlot(
+        [[nodiscard]] static ::std::optional<uint32> FindVendorSlot(
             Creature const* vendor,
             uint32 itemId);
 

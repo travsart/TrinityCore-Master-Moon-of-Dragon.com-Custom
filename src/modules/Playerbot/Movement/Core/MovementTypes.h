@@ -24,7 +24,7 @@ namespace Playerbot
     enum class FormationType : uint8;  // Defined in AI/Combat/FormationManager.h
 
     // Type aliases for path representations
-    using PositionVector = std::vector<Position>;
+    using PositionVector = ::std::vector<Position>;
 
     /**
      * @enum MovementGeneratorType
@@ -162,10 +162,10 @@ namespace Playerbot
      */
     struct MovementPath
     {
-        std::vector<PathNode> nodes;
+        ::std::vector<PathNode> nodes;
         PathType pathType;
         float totalLength;
-        std::chrono::steady_clock::time_point generatedTime;
+        ::std::chrono::steady_clock::time_point generatedTime;
         uint32 generationCost; // CPU microseconds to generate
         bool isOptimized;
 
@@ -222,8 +222,8 @@ namespace Playerbot
         uint32 currentPathNode;
         uint32 stuckCounter;
         uint32 recalcCounter;
-        std::chrono::steady_clock::time_point lastUpdateTime;
-        std::chrono::steady_clock::time_point lastStuckCheck;
+        ::std::chrono::steady_clock::time_point lastUpdateTime;
+        ::std::chrono::steady_clock::time_point lastStuckCheck;
         bool isMoving;
         bool needsRecalc;
 
@@ -368,8 +368,8 @@ namespace Playerbot
     class MovementValidator;
     class NavMeshInterface;
 
-    using MovementGeneratorPtr = std::shared_ptr<MovementGenerator>;
-    using MovementPathPtr = std::shared_ptr<MovementPath>;
+    using MovementGeneratorPtr = ::std::shared_ptr<MovementGenerator>;
+    using MovementPathPtr = ::std::shared_ptr<MovementPath>;
 }
 
 #endif // TRINITY_PLAYERBOT_MOVEMENT_TYPES_H

@@ -90,7 +90,7 @@ struct BotLoadTestConfig
     bool enableCombat;
     bool enableMovement;
     bool enableSocial;
-    std::string customBehavior;
+    ::std::string customBehavior;
 
     BotLoadTestConfig() : botGuid(0), scenario(LoadTestScenario::IDLE_BOTS),
         durationSeconds(300), actionIntervalMs(1000), enableAI(true),
@@ -138,7 +138,7 @@ struct LoadTestResults
     uint32_t crashCount;
     uint32_t timeoutCount;
     uint32_t memoryLeaks;
-    std::vector<std::string> errorMessages;
+    ::std::vector<::std::string> errorMessages;
 
     // Scalability analysis
     double scalabilityScore;     // 0.0 to 100.0
@@ -160,21 +160,21 @@ struct LoadTestResults
 // Real-time load test monitoring data
 struct LoadTestMonitorData
 {
-    std::atomic<uint32_t> currentBots{0};
-    std::atomic<uint32_t> activeBots{0};
-    std::atomic<uint32_t> idleBots{0};
-    std::atomic<uint32_t> errorBots{0};
+    ::std::atomic<uint32_t> currentBots{0};
+    ::std::atomic<uint32_t> activeBots{0};
+    ::std::atomic<uint32_t> idleBots{0};
+    ::std::atomic<uint32_t> errorBots{0};
 
-    std::atomic<double> currentCpuUsage{0.0};
-    std::atomic<uint64_t> currentMemoryUsage{0};
-    std::atomic<uint64_t> currentResponseTime{0};
-    std::atomic<double> currentTickRate{0.0};
+    ::std::atomic<double> currentCpuUsage{0.0};
+    ::std::atomic<uint64_t> currentMemoryUsage{0};
+    ::std::atomic<uint64_t> currentResponseTime{0};
+    ::std::atomic<double> currentTickRate{0.0};
 
-    std::atomic<uint64_t> packetsLastSecond{0};
-    std::atomic<uint64_t> queriesLastSecond{0};
-    std::atomic<uint32_t> errorsLastSecond{0};
+    ::std::atomic<uint64_t> packetsLastSecond{0};
+    ::std::atomic<uint64_t> queriesLastSecond{0};
+    ::std::atomic<uint32_t> errorsLastSecond{0};
 
-    std::atomic<uint64_t> lastUpdateTime{0};
+    ::std::atomic<uint64_t> lastUpdateTime{0};
 
     void UpdateMetrics(const LoadTestResults& results)
     {
@@ -182,8 +182,8 @@ struct LoadTestMonitorData
         currentMemoryUsage.store(results.averageMemoryUsage);
         currentResponseTime.store(results.averageResponseTime);
         currentTickRate.store(results.averageTickRate);
-        lastUpdateTime.store(std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count());
+        lastUpdateTime.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count());
     }
 };
 
@@ -211,13 +211,13 @@ public:
 
     // Single scenario testing
     bool RunLoadTest(LoadTestScenario scenario, uint32_t botCount, uint32_t durationSeconds = 300);
-    bool RunCustomTest(const std::vector<BotLoadTestConfig>& configs);
+    bool RunCustomTest(const ::std::vector<BotLoadTestConfig>& configs);
 
     // Comprehensive testing suites
     bool RunScalabilityTest(uint32_t startBots = 10, uint32_t maxBots = 500, uint32_t increment = 10);
     bool RunStressTest(uint32_t botCount = 1000, uint32_t durationSeconds = 1800);
     bool RunEnduranceTest(uint32_t botCount = 200, uint32_t durationHours = 24);
-    bool RunPerformanceRegression(const std::vector<LoadTestScenario>& scenarios);
+    bool RunPerformanceRegression(const ::std::vector<LoadTestScenario>& scenarios);
 
     // Test control
     void StopCurrentTest();
@@ -229,7 +229,7 @@ public:
     LoadTestPhase GetCurrentPhase() const { return _currentPhase.load(); }
     LoadTestMonitorData GetCurrentMetrics() const;
     LoadTestResults GetLastResults() const;
-    std::vector<LoadTestResults> GetTestHistory() const;
+    ::std::vector<LoadTestResults> GetTestHistory() const;
 
     // Real-time monitoring
     void StartRealTimeMonitoring();
@@ -238,27 +238,27 @@ public:
 
     // Bot management during tests
     uint32_t GetActiveBotCount() const;
-    std::vector<uint32_t> GetTestBotGuids() const;
+    ::std::vector<uint32_t> GetTestBotGuids() const;
     bool IsBotInTest(uint32_t botGuid) const;
 
     // Performance analysis
-    double CalculateScalabilityScore(const std::vector<LoadTestResults>& results) const;
+    double CalculateScalabilityScore(const ::std::vector<LoadTestResults>& results) const;
     uint32_t FindOptimalBotCount(LoadTestScenario scenario) const;
-    std::vector<std::string> GenerateOptimizationRecommendations() const;
+    ::std::vector<::std::string> GenerateOptimizationRecommendations() const;
 
     // Reporting
-    void GenerateLoadTestReport(std::string& report, const LoadTestResults& results) const;
-    void GenerateScalabilityReport(std::string& report, const std::vector<LoadTestResults>& results) const;
-    void GeneratePerformanceComparison(std::string& report, LoadTestScenario scenario1, LoadTestScenario scenario2) const;
-    void ExportResults(const std::string& filename, const std::vector<LoadTestResults>& results) const;
+    void GenerateLoadTestReport(::std::string& report, const LoadTestResults& results) const;
+    void GenerateScalabilityReport(::std::string& report, const ::std::vector<LoadTestResults>& results) const;
+    void GeneratePerformanceComparison(::std::string& report, LoadTestScenario scenario1, LoadTestScenario scenario2) const;
+    void ExportResults(const ::std::string& filename, const ::std::vector<LoadTestResults>& results) const;
 
     // Test scenario management
     BotLoadTestConfig CreateScenarioConfig(LoadTestScenario scenario, uint32_t botGuid) const;
-    void RegisterCustomScenario(const std::string& name, std::function<void(uint32_t)> behavior);
-    std::vector<LoadTestScenario> GetAvailableScenarios() const;
+    void RegisterCustomScenario(const ::std::string& name, ::std::function<void(uint32_t)> behavior);
+    ::std::vector<LoadTestScenario> GetAvailableScenarios() const;
 
     // Alert and notification system
-    void SetAlertCallback(std::function<void(const std::string&, const std::string&)> callback);
+    void SetAlertCallback(::std::function<void(const ::std::string&, const ::std::string&)> callback);
     void EnableAlerts(bool enable) { _alertsEnabled.store(enable); }
 
     // Configuration
@@ -271,12 +271,12 @@ private:
     ~BotLoadTester() = default;
 
     // Test execution
-    bool ExecuteLoadTest(const std::vector<BotLoadTestConfig>& configs);
+    bool ExecuteLoadTest(const ::std::vector<BotLoadTestConfig>& configs);
     void ExecuteTestPhase(LoadTestPhase phase);
     void ProcessTestConfiguration();
 
     // Bot management
-    bool SpawnTestBots(const std::vector<BotLoadTestConfig>& configs);
+    bool SpawnTestBots(const ::std::vector<BotLoadTestConfig>& configs);
     void DespawnTestBots();
     void ConfigureTestBot(uint32_t botGuid, const BotLoadTestConfig& config);
     void UpdateBotBehavior(uint32_t botGuid, LoadTestScenario scenario);
@@ -311,8 +311,8 @@ private:
 
     // Alert system
     void CheckForAlerts();
-    void TriggerAlert(const std::string& alertType, const std::string& message);
-    void HandleCriticalAlert(const std::string& message);
+    void TriggerAlert(const ::std::string& alertType, const ::std::string& message);
+    void HandleCriticalAlert(const ::std::string& message);
 
     // Resource management
     void CleanupTestResources();
@@ -325,52 +325,52 @@ private:
     void ArchiveOldResults();
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _testRunning{false};
-    std::atomic<bool> _testPaused{false};
-    std::atomic<bool> _shutdownRequested{false};
-    std::atomic<bool> _monitoringActive{false};
-    std::atomic<bool> _verboseLogging{false};
-    std::atomic<bool> _alertsEnabled{true};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _testRunning{false};
+    ::std::atomic<bool> _testPaused{false};
+    ::std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _monitoringActive{false};
+    ::std::atomic<bool> _verboseLogging{false};
+    ::std::atomic<bool> _alertsEnabled{true};
 
     // Test state
-    std::atomic<LoadTestPhase> _currentPhase{LoadTestPhase::PREPARATION};
+    ::std::atomic<LoadTestPhase> _currentPhase{LoadTestPhase::PREPARATION};
     LoadTestThresholds _thresholds;
-    std::atomic<uint32_t> _maxConcurrentBots{500};
-    std::atomic<uint32_t> _defaultTestDuration{300};
-    std::atomic<uint32_t> _rampUpTime{60};
-    std::atomic<uint32_t> _rampDownTime{60};
-    std::atomic<uint32_t> _metricsInterval{1000};
+    ::std::atomic<uint32_t> _maxConcurrentBots{500};
+    ::std::atomic<uint32_t> _defaultTestDuration{300};
+    ::std::atomic<uint32_t> _rampUpTime{60};
+    ::std::atomic<uint32_t> _rampDownTime{60};
+    ::std::atomic<uint32_t> _metricsInterval{1000};
 
     // Test data
-    mutable std::recursive_mutex _testDataMutex;
-    std::vector<BotLoadTestConfig> _currentTestConfigs;
-    std::vector<uint32_t> _testBotGuids;
+    mutable ::std::recursive_mutex _testDataMutex;
+    ::std::vector<BotLoadTestConfig> _currentTestConfigs;
+    ::std::vector<uint32_t> _testBotGuids;
     LoadTestResults _currentResults;
-    std::vector<LoadTestResults> _testHistory;
+    ::std::vector<LoadTestResults> _testHistory;
     LoadTestMonitorData _monitorData;
 
     // Custom scenarios
-    mutable std::recursive_mutex _scenariosMutex;
-    std::unordered_map<std::string, std::function<void(uint32_t)>> _customScenarios;
+    mutable ::std::recursive_mutex _scenariosMutex;
+    ::std::unordered_map<::std::string, ::std::function<void(uint32_t)>> _customScenarios;
 
     // Threading
-    std::thread _testExecutionThread;
-    std::thread _monitoringThread;
-    std::thread _metricsThread;
-    std::condition_variable _testCondition;
-    std::recursive_mutex _testMutex;
+    ::std::thread _testExecutionThread;
+    ::std::thread _monitoringThread;
+    ::std::thread _metricsThread;
+    ::std::condition_variable _testCondition;
+    ::std::recursive_mutex _testMutex;
 
     // Alert system
-    std::function<void(const std::string&, const std::string&)> _alertCallback;
-    mutable std::recursive_mutex _alertMutex;
-    std::queue<std::pair<std::string, std::string>> _pendingAlerts;
+    ::std::function<void(const ::std::string&, const ::std::string&)> _alertCallback;
+    mutable ::std::recursive_mutex _alertMutex;
+    ::std::queue<::std::pair<::std::string, ::std::string>> _pendingAlerts;
 
     // Performance tracking
-    std::atomic<uint64_t> _testStartTime{0};
-    std::atomic<uint64_t> _lastMetricsUpdate{0};
-    std::atomic<uint64_t> _totalTestsRun{0};
-    std::atomic<uint64_t> _totalBotsSpawned{0};
+    ::std::atomic<uint64_t> _testStartTime{0};
+    ::std::atomic<uint64_t> _lastMetricsUpdate{0};
+    ::std::atomic<uint64_t> _totalTestsRun{0};
+    ::std::atomic<uint64_t> _totalBotsSpawned{0};
 
     // Random number generation - Removed thread-unsafe std::mt19937
     // Now using TrinityCore's thread-safe urand() and frand() functions

@@ -15,7 +15,7 @@ namespace Playerbot
 // Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotResourcePool::BotResourcePool()
-    : _lastCleanup(std::chrono::steady_clock::now())
+    : _lastCleanup(::std::chrono::steady_clock::now())
 {
 }
 
@@ -26,15 +26,15 @@ BotResourcePool::~BotResourcePool()
 
 BotResourcePool* BotResourcePool::instance()
 {
-    std::lock_guard lock(_instanceMutex);
+    ::std::lock_guard lock(_instanceMutex);
     if (!_instance)
-        _instance = std::unique_ptr<BotResourcePool>(new BotResourcePool());
+        _instance = ::std::unique_ptr<BotResourcePool>(new BotResourcePool());
     return _instance.get();
 }
 
 bool BotResourcePool::Initialize(uint32 initialPoolSize)
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     _initialPoolSize = initialPoolSize;
     _maxPoolSize = sPlayerbotConfig->GetUInt("Playerbot.Pool.MaxSize", 1000);
@@ -56,7 +56,7 @@ bool BotResourcePool::Initialize(uint32 initialPoolSize)
 
 void BotResourcePool::Shutdown()
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     TC_LOG_INFO("module.playerbot.pool",
         "Shutting down BotResourcePool. Stats - Created: {}, Reused: {}, Hit Rate: {:.2f}%",
@@ -76,8 +76,8 @@ void BotResourcePool::Shutdown()
 void BotResourcePool::Update(uint32 /*diff*/)
 {
     // Periodic cleanup and maintenance
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastCleanup).count() > CLEANUP_INTERVAL_MS)
+    auto now = ::std::chrono::steady_clock::now();
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastCleanup).count() > CLEANUP_INTERVAL_MS)
     {
         CleanupExpiredSessions();
         _lastCleanup = now;
@@ -98,7 +98,7 @@ void BotResourcePool::PreallocateSessions(uint32 count)
     }
 }
 
-std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId)
+::std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId)
 {
     try
     {
@@ -111,7 +111,7 @@ std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId
 
         return session;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.pool",
             "Failed to create BotSession for account {}: {}", accountId, e.what());
@@ -119,9 +119,9 @@ std::shared_ptr<BotSession> BotResourcePool::CreateFreshSession(uint32 accountId
     }
 }
 
-std::shared_ptr<BotSession> BotResourcePool::AcquireSession(uint32 accountId)
+::std::shared_ptr<BotSession> BotResourcePool::AcquireSession(uint32 accountId)
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     // Try to reuse a session from the pool
     if (!_sessionPool.empty())
@@ -173,12 +173,12 @@ std::shared_ptr<BotSession> BotResourcePool::AcquireSession(uint32 accountId)
     return session;
 }
 
-void BotResourcePool::ReleaseSession(std::shared_ptr<BotSession> session)
+void BotResourcePool::ReleaseSession(::std::shared_ptr<BotSession> session)
 {
     if (!session)
         return;
 
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     // Remove from active sessions
     auto it = _activeSessions.find(session);
@@ -205,15 +205,15 @@ void BotResourcePool::ReleaseSession(std::shared_ptr<BotSession> session)
     }
 
     // Periodic cleanup
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastCleanup).count() > CLEANUP_INTERVAL_MS)
+    auto now = ::std::chrono::steady_clock::now();
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastCleanup).count() > CLEANUP_INTERVAL_MS)
     {
         CleanupExpiredSessions();
         _lastCleanup = now;
     }
 }
 
-bool BotResourcePool::IsSessionReusable(std::shared_ptr<BotSession> const& session)
+bool BotResourcePool::IsSessionReusable(::std::shared_ptr<BotSession> const& session)
 {
     if (!session)
         return false;
@@ -286,7 +286,7 @@ bool BotResourcePool::CanAllocateSession() const
 
 void BotResourcePool::ReturnSession(ObjectGuid botGuid)
 {
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     // Find the session by bot GUID and return it to pool
     for (auto it = _activeSessions.begin(); it != _activeSessions.end(); ++it)
@@ -308,12 +308,12 @@ void BotResourcePool::ReturnSession(ObjectGuid botGuid)
     }
 }
 
-void BotResourcePool::AddSession(std::shared_ptr<BotSession> session)
+void BotResourcePool::AddSession(::std::shared_ptr<BotSession> session)
 {
     if (!session)
         return;
 
-    std::lock_guard lock(_poolMutex);
+    ::std::lock_guard lock(_poolMutex);
 
     _activeSessions.insert(session);
     _stats.sessionsActive.fetch_add(1);

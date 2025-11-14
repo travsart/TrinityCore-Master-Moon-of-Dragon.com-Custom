@@ -60,7 +60,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     if (targetPosition.GetExactDist2d(0.0f, 0.0f) > 0.1f)
     {
         state.lastKnownPosition = targetPosition;
-        TC_LOG_ERROR("module.playerbot.quest", "🎯 StartTrackingObjective: Bot {} - Using target spawn location ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+        TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - Using target spawn location ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
                     bot->GetName(),
                     targetPosition.GetPositionX(), targetPosition.GetPositionY(), targetPosition.GetPositionZ(),
                     objective.questId, objective.objectiveIndex);
@@ -68,7 +68,7 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     else
     {
         state.lastKnownPosition = bot->GetPosition();
-        TC_LOG_ERROR("module.playerbot.quest", "⚠️ StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
+        TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - NO target location found, using bot position ({:.1f}, {:.1f}, {:.1f}) for Quest {} Objective {}",
                     bot->GetName(),
                     bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
                     objective.questId, objective.objectiveIndex);
@@ -79,17 +79,17 @@ void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveD
     //   CleanupInactiveTracking: _trackingMutex → _targetMutex
     //   StartTrackingObjective: _targetMutex → _trackingMutex (DEADLOCK!)
     // By calling DetectObjectiveTargets() before the lock, we ensure consistent lock ordering.
-    std::vector<uint32> targets = DetectObjectiveTargets(bot, objective);
+    ::std::vector<uint32> targets = DetectObjectiveTargets(bot, objective);
     state.targetIds = targets;
 
     size_t objectiveCount = 0;
     {
-        std::lock_guard lock(_trackingMutex);
+        ::std::lock_guard lock(_trackingMutex);
         _botObjectiveStates[botGuid].push_back(state);
         objectiveCount = _botObjectiveStates[botGuid].size();
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "✅ StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
+    TC_LOG_ERROR("module.playerbot.quest", " StartTrackingObjective: Bot {} - Quest {} Objective {} registered (Total objectives: {})",
                 bot->GetName(), objective.questId, objective.objectiveIndex, objectiveCount);
 
     // Update analytics
@@ -102,14 +102,14 @@ void ObjectiveTracker::StopTrackingObjective(Player* bot, uint32 questId, uint32
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
 
     auto& states = statesIt->second;
     states.erase(
-        std::remove_if(states.begin(), states.end(),
+        ::std::remove_if(states.begin(), states.end(),
             [questId, objectiveIndex](const ObjectiveState& state) {
                 return state.questId == questId && state.objectiveIndex == objectiveIndex;
             }),
@@ -126,7 +126,7 @@ void ObjectiveTracker::UpdateObjectiveTracking(Player* bot, uint32 diff)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -158,7 +158,7 @@ void ObjectiveTracker::RefreshObjectiveStates(Player* bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -198,7 +198,7 @@ void ObjectiveTracker::UpdateProgressMetrics(Player* bot, const QuestObjectiveDa
     uint32 botGuid = bot->GetGUID().GetCounter();
     // Update bot-specific analytics
     auto& analytics = _botAnalytics[botGuid];
-    analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    analytics.lastAnalyticsUpdate = ::std::chrono::steady_clock::now();
 
     // Check objective completion
     if (objective.requiredCount <= objective.currentCount)
@@ -233,9 +233,9 @@ float ObjectiveTracker::CalculateObjectiveVelocity(Player* bot, uint32 questId, 
     return state.completionVelocity;
 }
 
-std::vector<uint32> ObjectiveTracker::DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective)
+::std::vector<uint32> ObjectiveTracker::DetectObjectiveTargets(Player* bot, const QuestObjectiveData& objective)
 {
-    std::vector<uint32> targets;
+    ::std::vector<uint32> targets;
 
     if (!bot)
         return targets;
@@ -263,15 +263,15 @@ std::vector<uint32> ObjectiveTracker::DetectObjectiveTargets(Player* bot, const 
     return targets;
 }
 
-std::vector<uint32> ObjectiveTracker::ScanForKillTargets(Player* bot, uint32 creatureId, float radius)
+::std::vector<uint32> ObjectiveTracker::ScanForKillTargets(Player* bot, uint32 creatureId, float radius)
 {
-    std::vector<uint32> targets;
+    ::std::vector<uint32> targets;
 
     if (!bot)
         return targets;
 
     // Search for creatures within radius
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureId, radius);
 
     for (Creature* creature : nearbyCreatures)
@@ -289,9 +289,9 @@ std::vector<uint32> ObjectiveTracker::ScanForKillTargets(Player* bot, uint32 cre
     return targets;
 }
 
-std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 itemId, float radius)
+::std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 itemId, float radius)
 {
-    std::vector<uint32> targets;
+    ::std::vector<uint32> targets;
 
     if (!bot)
         return targets;
@@ -300,7 +300,7 @@ std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 it
     // This would require knowledge of what creatures drop specific items
 
     // For now, we'll scan for game objects that might contain the item
-    std::list<GameObject*> nearbyObjects;
+    ::std::list<GameObject*> nearbyObjects;
     bot->GetGameObjectListWithEntryInGrid(nearbyObjects, 0, radius);
 
     for (GameObject* object : nearbyObjects)
@@ -315,20 +315,20 @@ std::vector<uint32> ObjectiveTracker::ScanForCollectibles(Player* bot, uint32 it
     return targets;
 }
 
-std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 objectId, float radius)
+::std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 objectId, float radius)
 {
-    std::vector<uint32> targets;
+    ::std::vector<uint32> targets;
 
     if (!bot)
         return targets;
-    TC_LOG_ERROR("module.playerbot.quest", "🔍 ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
+    TC_LOG_ERROR("module.playerbot.quest", " ScanForGameObjects: Bot {} searching for entry {} within {:.1f}yd radius",
                  bot->GetName(), objectId, radius);
     TC_LOG_ERROR("module.playerbot.quest", "  Bot position: ({:.1f}, {:.1f}, {:.1f}) Map: {}",
                  bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
                  bot->GetMapId());
 
     // Search for GameObjects first
-    std::list<GameObject*> nearbyObjects;
+    ::std::list<GameObject*> nearbyObjects;
     bot->GetGameObjectListWithEntryInGrid(nearbyObjects, objectId, radius);
 
     TC_LOG_ERROR("module.playerbot.quest", "  GetGameObjectListWithEntryInGrid returned {} objects",
@@ -340,7 +340,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
         if (object)
         {
             foundCount++;
-            TC_LOG_ERROR("module.playerbot.quest", "  ✅ Found GO {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, spawned={}, state={}",
+            TC_LOG_ERROR("module.playerbot.quest", "   Found GO {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, spawned={}, state={}",
                          foundCount, object->GetEntry(),
                          object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(),
                          bot->GetExactDist(object),
@@ -352,9 +352,9 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
     // If no GameObjects found, try searching for Creatures (some quests use creature triggers)
     if (targets.empty())
     {
-        TC_LOG_ERROR("module.playerbot.quest", "  ⚠️ No GameObjects found, searching for Creatures with entry {}...", objectId);
+        TC_LOG_ERROR("module.playerbot.quest", "   No GameObjects found, searching for Creatures with entry {}...", objectId);
 
-        std::list<Creature*> nearbyCreatures;
+        ::std::list<Creature*> nearbyCreatures;
         bot->GetCreatureListWithEntryInGrid(nearbyCreatures, objectId, radius);
 
         TC_LOG_ERROR("module.playerbot.quest", "  GetCreatureListWithEntryInGrid returned {} creatures",
@@ -365,7 +365,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
             if (creature && creature->IsAlive())
             {
                 foundCount++;
-                TC_LOG_ERROR("module.playerbot.quest", "  ✅ Found Creature {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, name={}",
+                TC_LOG_ERROR("module.playerbot.quest", "   Found Creature {}: entry={}, pos=({:.1f}, {:.1f}, {:.1f}), distance={:.1f}yd, name={}",
                              foundCount, creature->GetEntry(),
                              creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(),
                              bot->GetExactDist(creature),
@@ -375,7 +375,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
         }
     }
 
-    TC_LOG_ERROR("module.playerbot.quest", "  📊 ScanForGameObjects result: {} valid targets found (returned {} GUIDs)",
+    TC_LOG_ERROR("module.playerbot.quest", "   ScanForGameObjects result: {} valid targets found (returned {} GUIDs)",
                  foundCount, targets.size());
 
     return targets;
@@ -387,7 +387,7 @@ ObjectiveTracker::ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot
         return ObjectiveState(0, 0);
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return ObjectiveState(0, 0);
@@ -407,7 +407,7 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt == _botObjectiveStates.end())
         return;
@@ -423,15 +423,15 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
     }
 }
 
-std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
+::std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
 {
-    std::vector<ObjectiveState> activeObjectives;
+    ::std::vector<ObjectiveState> activeObjectives;
 
     if (!bot)
         return activeObjectives;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto statesIt = _botObjectiveStates.find(botGuid);
     if (statesIt != _botObjectiveStates.end())
         return statesIt->second;
@@ -439,15 +439,15 @@ std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjecti
     return activeObjectives;
 }
 
-std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
+::std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
 {
-    std::vector<ObjectivePriority> priorities;
+    ::std::vector<ObjectivePriority> priorities;
 
     if (!bot)
         return priorities;
 
-    std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
-    TC_LOG_ERROR("module.playerbot.quest", "🔢 CalculateObjectivePriorities: Bot {} has {} active objectives",
+    ::std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
+    TC_LOG_ERROR("module.playerbot.quest", " CalculateObjectivePriorities: Bot {} has {} active objectives",
                 bot->GetName(), activeObjectives.size());
 
     for (const auto& state : activeObjectives)
@@ -466,7 +466,7 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
                                (priority.efficiencyFactor * 0.3f) +
                                (priority.proximityFactor * 0.2f);
 
-        TC_LOG_ERROR("module.playerbot.quest", "  📊 Quest {} Objective {}: urgency={:.2f}, difficulty={:.2f}, efficiency={:.2f}, proximity={:.2f}, TOTAL={:.2f}",
+        TC_LOG_ERROR("module.playerbot.quest", "   Quest {} Objective {}: urgency={:.2f}, difficulty={:.2f}, efficiency={:.2f}, proximity={:.2f}, TOTAL={:.2f}",
                     state.questId, state.objectiveIndex,
                     priority.urgencyFactor, priority.difficultyFactor, priority.efficiencyFactor, priority.proximityFactor,
                     priority.priorityScore);
@@ -479,12 +479,12 @@ std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObje
 
 ObjectiveTracker::ObjectivePriority ObjectiveTracker::GetHighestPriorityObjective(Player* bot)
 {
-    std::vector<ObjectivePriority> priorities = CalculateObjectivePriorities(bot);
+    ::std::vector<ObjectivePriority> priorities = CalculateObjectivePriorities(bot);
 
     if (priorities.empty())
         return ObjectivePriority(0, 0);
 
-    std::sort(priorities.begin(), priorities.end(),
+    ::std::sort(priorities.begin(), priorities.end(),
         [](const ObjectivePriority& a, const ObjectivePriority& b) {
             return a.priorityScore > b.priorityScore;
         });
@@ -492,13 +492,13 @@ ObjectiveTracker::ObjectivePriority ObjectiveTracker::GetHighestPriorityObjectiv
     return priorities[0];
 }
 
-void ObjectiveTracker::OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities)
+void ObjectiveTracker::OptimizeObjectiveSequence(Player* bot, ::std::vector<ObjectivePriority>& priorities)
 {
     if (!bot || priorities.empty())
         return;
 
     // Sort by priority score
-    std::sort(priorities.begin(), priorities.end(),
+    ::std::sort(priorities.begin(), priorities.end(),
         [](const ObjectivePriority& a, const ObjectivePriority& b) {
             return a.priorityScore > b.priorityScore;
         });
@@ -511,7 +511,7 @@ void ObjectiveTracker::TrackTargetAvailability(Player* bot, uint32 questId, uint
 {
     if (!bot)
         return;
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     auto& trackingData = _targetTracking[targetId];
     trackingData.targetId = targetId;
@@ -530,7 +530,7 @@ void ObjectiveTracker::TrackTargetAvailability(Player* bot, uint32 questId, uint
 
 bool ObjectiveTracker::IsTargetAvailable(uint32 targetId, const Position& location, float radius)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
@@ -561,7 +561,7 @@ uint32 ObjectiveTracker::GetTargetRespawnTime(uint32 targetId)
 
 Position ObjectiveTracker::GetOptimalTargetLocation(uint32 targetId, const Position& playerPosition)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
@@ -592,12 +592,12 @@ void ObjectiveTracker::MonitorTargetCompetition(Player* bot, uint32 targetId)
 {
     if (!bot)
         return;
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     auto& trackingData = _targetTracking[targetId];
 
     // Scan for other players in the area competing for the same target
-    std::list<Player*> nearbyPlayers;
+    ::std::list<Player*> nearbyPlayers;
     bot->GetPlayerListInGrid(nearbyPlayers, 50.0f);
 
     uint32 competitionLevel = 0;
@@ -616,7 +616,7 @@ void ObjectiveTracker::MonitorTargetCompetition(Player* bot, uint32 targetId)
 
 bool ObjectiveTracker::IsTargetContested(uint32 targetId, float radius)
 {
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
 
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
@@ -631,7 +631,7 @@ void ObjectiveTracker::HandleTargetCompetition(Player* bot, uint32 targetId)
         return;
 
     // Find alternative locations for this target
-    std::vector<Position> alternatives = FindAlternativeTargetLocations(targetId, bot->GetPosition());
+    ::std::vector<Position> alternatives = FindAlternativeTargetLocations(targetId, bot->GetPosition());
     if (!alternatives.empty())
     {
         // Move to less contested area
@@ -641,11 +641,11 @@ void ObjectiveTracker::HandleTargetCompetition(Player* bot, uint32 targetId)
     }
 }
 
-std::vector<Position> ObjectiveTracker::FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation)
+::std::vector<Position> ObjectiveTracker::FindAlternativeTargetLocations(uint32 targetId, const Position& currentLocation)
 {
-    std::vector<Position> alternatives;
+    ::std::vector<Position> alternatives;
 
-    std::lock_guard lock(_targetMutex);
+    ::std::lock_guard lock(_targetMutex);
     auto trackingIt = _targetTracking.find(targetId);
     if (trackingIt == _targetTracking.end())
         return alternatives;
@@ -655,7 +655,7 @@ std::vector<Position> ObjectiveTracker::FindAlternativeTargetLocations(uint32 ta
     // Return known locations sorted by distance (farthest first to avoid competition)
     alternatives = data.knownLocations;
 
-    std::sort(alternatives.begin(), alternatives.end(),
+    ::std::sort(alternatives.begin(), alternatives.end(),
         [&currentLocation](const Position& a, const Position& b) {
             return currentLocation.GetExactDist(&a) > currentLocation.GetExactDist(&b);
         });
@@ -690,7 +690,7 @@ void ObjectiveTracker::DistributeObjectiveTargets(Group* group, uint32 questId, 
     if (!group)
         return;
     // Distribute targets among group members to avoid competition
-    std::vector<Player*> botMembers;
+    ::std::vector<Player*> botMembers;
     for (GroupReference const& itr : group->GetMembers())
     {
         Player* member = itr.GetSource();
@@ -719,7 +719,7 @@ void ObjectiveTracker::SynchronizeObjectiveProgress(Group* group, uint32 questId
     // Synchronize progress updates among group members
     uint32 groupId = group->GetDbStoreId();
 
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     _groupObjectiveSyncTime[groupId] = GameTime::GetGameTimeMS();
 
     // Share progress information among group members
@@ -744,7 +744,7 @@ void ObjectiveTracker::HandleObjectiveConflicts(Group* group, uint32 questId, ui
 
 const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
 {
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
     auto it = _botAnalytics.find(botGuid);
     if (it != _botAnalytics.end())
         return it->second;
@@ -822,7 +822,7 @@ void ObjectiveTracker::DetectTrackingErrors(Player* bot)
     if (!bot)
         return;
 
-    std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
+    ::std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
     for (const auto& state : activeObjectives)
     {
         if (!ValidateObjectiveState(bot, state))
@@ -832,7 +832,7 @@ void ObjectiveTracker::DetectTrackingErrors(Player* bot)
     }
 }
 
-void ObjectiveTracker::HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const std::string& error)
+void ObjectiveTracker::HandleTrackingFailure(Player* bot, uint32 questId, uint32 objectiveIndex, const ::std::string& error)
 {
     if (!bot)
         return;
@@ -865,7 +865,7 @@ void ObjectiveTracker::ValidateObjectiveConsistency(Player* bot)
     if (!bot)
         return;
 
-    std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
+    ::std::vector<ObjectiveState> activeObjectives = GetActiveObjectives(bot);
     for (const auto& state : activeObjectives)
     {
         if (!ValidateObjectiveState(bot, state))
@@ -878,7 +878,7 @@ void ObjectiveTracker::ValidateObjectiveConsistency(Player* bot)
 
 void ObjectiveTracker::SetTrackingPrecision(uint32 botGuid, float precision)
 {
-    precision = std::clamp(precision, 0.0f, 1.0f);
+    precision = ::std::clamp(precision, 0.0f, 1.0f);
     TC_LOG_DEBUG("playerbot.objectives", "Set tracking precision for bot {} to {}", botGuid, precision);
 }
 
@@ -996,7 +996,7 @@ float ObjectiveTracker::CalculateUrgencyFactor(Player* bot, const ObjectiveState
     if (activeTime > 1800000) // 30 minutes
         urgency += 0.2f;
 
-    return std::clamp(urgency, 0.0f, 1.0f);
+    return ::std::clamp(urgency, 0.0f, 1.0f);
 }
 
 float ObjectiveTracker::CalculateDifficultyFactor(Player* bot, const ObjectiveState& state)
@@ -1015,7 +1015,7 @@ float ObjectiveTracker::CalculateDifficultyFactor(Player* bot, const ObjectiveSt
     if (IsTargetContested(state.targetIds.empty() ? 0 : state.targetIds[0], 50.0f))
         difficulty += 0.2f;
 
-    return 1.0f - std::clamp(difficulty, 0.0f, 1.0f);
+    return 1.0f - ::std::clamp(difficulty, 0.0f, 1.0f);
 }
 
 float ObjectiveTracker::CalculateEfficiencyFactor(Player* bot, const ObjectiveState& state)
@@ -1033,7 +1033,7 @@ float ObjectiveTracker::CalculateEfficiencyFactor(Player* bot, const ObjectiveSt
     if (state.isStuck)
         efficiency -= 0.4f;
 
-    return std::clamp(efficiency, 0.0f, 1.0f);
+    return ::std::clamp(efficiency, 0.0f, 1.0f);
 }
 
 float ObjectiveTracker::CalculateProximityFactor(Player* bot, const ObjectiveState& state)
@@ -1050,7 +1050,7 @@ float ObjectiveTracker::CalculateProximityFactor(Player* bot, const ObjectiveSta
     else if (distance > 200.0f)
         proximity -= 0.2f;
 
-    return std::clamp(proximity, 0.0f, 1.0f);
+    return ::std::clamp(proximity, 0.0f, 1.0f);
 }
 
 void ObjectiveTracker::RefreshObjectiveState(Player* bot, ObjectiveState& state)
@@ -1177,12 +1177,12 @@ Position ObjectiveTracker::FindObjectiveTargetLocation(Player* bot, const QuestO
 
     if (result.isValid)
     {
-        TC_LOG_DEBUG("module.playerbot.quest", "✅ FindObjectiveTargetLocation: Quest {} Objective {} resolved via {} - Quality: {}, Distance: {:.1f}",
+        TC_LOG_DEBUG("module.playerbot.quest", " FindObjectiveTargetLocation: Quest {} Objective {} resolved via {} - Quality: {}, Distance: {:.1f}",
                     objective.questId, objective.objectiveIndex, result.sourceName, result.qualityScore, result.distance);
         return result.position;
     }
 
-    TC_LOG_WARN("module.playerbot.quest", "❌ FindObjectiveTargetLocation: Failed to resolve Quest {} Objective {} - returning invalid position",
+    TC_LOG_WARN("module.playerbot.quest", " FindObjectiveTargetLocation: Failed to resolve Quest {} Objective {} - returning invalid position",
                 objective.questId, objective.objectiveIndex);
     return invalidPosition;
 
@@ -1199,7 +1199,7 @@ void ObjectiveTracker::ResolveObjectiveConflicts(Group* group, uint32 questId, u
 
 void ObjectiveTracker::UpdateTrackingAnalytics(uint32 botGuid, const ObjectiveState& state, bool wasSuccessful)
 {
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
 
     auto& analytics = _botAnalytics[botGuid];
 
@@ -1214,8 +1214,8 @@ void ObjectiveTracker::UpdateTrackingAnalytics(uint32 botGuid, const ObjectiveSt
         _globalAnalytics.objectivesFailed++;
     }
 
-    analytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
-    _globalAnalytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    analytics.lastAnalyticsUpdate = ::std::chrono::steady_clock::now();
+    _globalAnalytics.lastAnalyticsUpdate = ::std::chrono::steady_clock::now();
 }
 
 void ObjectiveTracker::Update(uint32 diff)
@@ -1232,7 +1232,7 @@ void ObjectiveTracker::Update(uint32 diff)
     CleanupInactiveTracking();
 
     // Update global analytics
-    _globalAnalytics.lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    _globalAnalytics.lastAnalyticsUpdate = ::std::chrono::steady_clock::now();
 }
 
 void ObjectiveTracker::UpdateBotTracking(Player* bot, uint32 diff)
@@ -1245,7 +1245,7 @@ void ObjectiveTracker::UpdateBotTracking(Player* bot, uint32 diff)
 
 void ObjectiveTracker::CleanupInactiveTracking()
 {
-    std::lock_guard lock(_trackingMutex);
+    ::std::lock_guard lock(_trackingMutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 
@@ -1254,7 +1254,7 @@ void ObjectiveTracker::CleanupInactiveTracking()
     {
         auto& states = it->second;
         states.erase(
-            std::remove_if(states.begin(), states.end(),
+            ::std::remove_if(states.begin(), states.end(),
                 [currentTime](const ObjectiveState& state) {
                     return currentTime - state.lastUpdateTime > OBJECTIVE_TIMEOUT;
                 }),
@@ -1268,7 +1268,7 @@ void ObjectiveTracker::CleanupInactiveTracking()
     }
 
     // Clean up old target tracking data
-    std::lock_guard targetLock(_targetMutex);
+    ::std::lock_guard targetLock(_targetMutex);
     for (auto it = _targetTracking.begin(); it != _targetTracking.end();)
     {
         if (currentTime - it->second.lastSeenTime > TARGET_CACHE_DURATION)

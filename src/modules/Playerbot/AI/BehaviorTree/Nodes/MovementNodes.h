@@ -606,8 +606,8 @@ public:
         if (!_movementStarted)
         {
             float angle = target->GetOrientation() + M_PI; // 180 degrees behind
-            float x = target->GetPositionX() + _distance * std::cos(angle);
-            float y = target->GetPositionY() + _distance * std::sin(angle);
+            float x = target->GetPositionX() + _distance * ::std::cos(angle);
+            float y = target->GetPositionY() + _distance * ::std::sin(angle);
             float z = target->GetPositionZ();
 
             bot->GetMotionMaster()->MovePoint(0, x, y, z);
@@ -669,8 +669,8 @@ public:
         float angle = frand(0.0f, 2.0f * M_PI);
         float distance = frand(_searchRadius * 0.5f, _searchRadius);
 
-        float x = bot->GetPositionX() + distance * std::cos(angle);
-        float y = bot->GetPositionY() + distance * std::sin(angle);
+        float x = bot->GetPositionX() + distance * ::std::cos(angle);
+        float y = bot->GetPositionY() + distance * ::std::sin(angle);
         float z = bot->GetPositionZ();
 
         bot->UpdateGroundPositionZ(x, y, z);

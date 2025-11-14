@@ -12,7 +12,7 @@
 namespace Playerbot
 {
 
-Value::Value(std::string const& name) : _name(name)
+Value::Value(::std::string const& name) : _name(name)
 {
 }
 

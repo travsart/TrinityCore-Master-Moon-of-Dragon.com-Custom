@@ -49,7 +49,7 @@ bool GroupEventHandler::IsBotInEventGroup(GroupEvent const& event) const
     return botGroup->GetGUID() == event.groupGuid;
 }
 
-void GroupEventHandler::LogEventHandling(GroupEvent const& event, std::string const& action) const
+void GroupEventHandler::LogEventHandling(GroupEvent const& event, ::std::string const& action) const
 {
     TC_LOG_DEBUG("playerbot.group.handler", "{}: {} - Group: {}, Action: {}",
         GetHandlerName(),
@@ -655,29 +655,29 @@ bool DifficultyChangedHandler::HandleEvent(GroupEvent const& event)
 // HANDLER FACTORY
 // ============================================================================
 
-std::vector<std::unique_ptr<GroupEventHandler>> GroupEventHandlerFactory::CreateAllHandlers(BotAI* botAI)
+::std::vector<::std::unique_ptr<GroupEventHandler>> GroupEventHandlerFactory::CreateAllHandlers(BotAI* botAI)
 {
-    std::vector<std::unique_ptr<GroupEventHandler>> handlers;
+    ::std::vector<::std::unique_ptr<GroupEventHandler>> handlers;
 
     // Create all handler instances
-    handlers.push_back(std::make_unique<MemberJoinedHandler>(botAI));
-    handlers.push_back(std::make_unique<MemberLeftHandler>(botAI));
-    handlers.push_back(std::make_unique<LeaderChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<GroupDisbandedHandler>(botAI));
-    handlers.push_back(std::make_unique<LootMethodChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<TargetIconChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<ReadyCheckHandler>(botAI));
-    handlers.push_back(std::make_unique<RaidConvertedHandler>(botAI));
-    handlers.push_back(std::make_unique<SubgroupChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<RoleAssignmentHandler>(botAI));
-    handlers.push_back(std::make_unique<DifficultyChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<MemberJoinedHandler>(botAI));
+    handlers.push_back(::std::make_unique<MemberLeftHandler>(botAI));
+    handlers.push_back(::std::make_unique<LeaderChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<GroupDisbandedHandler>(botAI));
+    handlers.push_back(::std::make_unique<LootMethodChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<TargetIconChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<ReadyCheckHandler>(botAI));
+    handlers.push_back(::std::make_unique<RaidConvertedHandler>(botAI));
+    handlers.push_back(::std::make_unique<SubgroupChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<RoleAssignmentHandler>(botAI));
+    handlers.push_back(::std::make_unique<DifficultyChangedHandler>(botAI));
 
     TC_LOG_DEBUG("playerbot.group", "Created {} event handlers for bot", handlers.size());
 
     return handlers;
 }
 
-void GroupEventHandlerFactory::RegisterHandlers(std::vector<std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI)
+void GroupEventHandlerFactory::RegisterHandlers(::std::vector<::std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI)
 {
     if (!botAI)
         return;

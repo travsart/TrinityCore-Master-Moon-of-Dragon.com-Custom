@@ -51,12 +51,12 @@ enum class MovementPriority : uint8
 // Spatial grid cell for efficient position tracking
 struct GridCell
 {
-    std::atomic<uint16_t> occupantCount{0};
-    std::atomic<uint32_t> lastUpdate{0};
-    std::atomic<float> dangerLevel{0.0f};
+    ::std::atomic<uint16_t> occupantCount{0};
+    ::std::atomic<uint32_t> lastUpdate{0};
+    ::std::atomic<float> dangerLevel{0.0f};
 
-    bool IsOccupied() const { return occupantCount.load(std::memory_order_acquire) > 0; }
-    bool IsSafe() const { return dangerLevel.load(std::memory_order_acquire) < 0.3f; }
+    bool IsOccupied() const { return occupantCount.load(::std::memory_order_acquire) > 0; }
+    bool IsSafe() const { return dangerLevel.load(::std::memory_order_acquire) < 0.3f; }
 };
 
 // Position request for batch processing
@@ -92,14 +92,14 @@ public:
     virtual float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const;
 
     // Batch position calculation for multiple bots (optimized for 5000+ bots)
-    virtual std::vector<Position> CalculateBatchPositions(
-        std::span<PositionRequest> requests,
+    virtual ::std::vector<Position> CalculateBatchPositions(
+        ::std::span<PositionRequest> requests,
         FormationType formation = FormationType::SPREAD);
 
     // Formation management
     virtual void SetFormation(FormationType type) { _formationType = type; }
     virtual FormationType GetFormation() const { return _formationType; }
-    virtual void UpdateFormationPositions(std::vector<Player*> bots, Unit* centerTarget);
+    virtual void UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget);
 
     // Collision avoidance and spatial management
     virtual bool IsPositionOccupied(const Position& pos, float radius = 2.0f) const;
@@ -115,24 +115,24 @@ public:
     virtual void UpdateDangerZones(uint32 diff);
 
     // Path optimization
-    virtual std::vector<Position> CalculatePath(
+    virtual ::std::vector<Position> CalculatePath(
         const Position& start,
         const Position& end,
         bool avoidDanger = true);
 
-    virtual float CalculatePathLength(const std::vector<Position>& path) const;
+    virtual float CalculatePathLength(const ::std::vector<Position>& path) const;
     virtual bool IsPathClear(const Position& start, const Position& end) const;
 
     // Performance monitoring
     struct PerformanceStats
     {
-        std::atomic<uint64_t> positionsCalculated{0};
-        std::atomic<uint64_t> pathsCalculated{0};
-        std::atomic<uint64_t> collisionChecks{0};
-        std::atomic<uint64_t> cacheHits{0};
-        std::atomic<uint64_t> cacheMisses{0};
-        std::atomic<uint32_t> averageCalculationTimeUs{0};
-        std::atomic<uint32_t> peakBotsProcessed{0};
+        ::std::atomic<uint64_t> positionsCalculated{0};
+        ::std::atomic<uint64_t> pathsCalculated{0};
+        ::std::atomic<uint64_t> collisionChecks{0};
+        ::std::atomic<uint64_t> cacheHits{0};
+        ::std::atomic<uint64_t> cacheMisses{0};
+        ::std::atomic<uint32_t> averageCalculationTimeUs{0};
+        ::std::atomic<uint32_t> peakBotsProcessed{0};
     };
 
     const PerformanceStats& GetStats() const { return _stats; }
@@ -149,36 +149,36 @@ protected:
     static constexpr uint32 GRID_SIZE = 256;  // 256x256 grid
     static constexpr float GRID_CELL_SIZE = 4.0f;  // 4 yards per cell
 
-    using SpatialGrid = std::array<std::array<GridCell, GRID_SIZE>, GRID_SIZE>;
+    using SpatialGrid = ::std::array<::std::array<GridCell, GRID_SIZE>, GRID_SIZE>;
 
     // Convert world position to grid coordinates
-    std::pair<uint32, uint32> WorldToGrid(const Position& pos) const;
+    ::std::pair<uint32, uint32> WorldToGrid(const Position& pos) const;
     Position GridToWorld(uint32 x, uint32 y) const;
 
     // Internal positioning algorithms
     Position CalculateMeleePosition(Player* bot, Unit* target);
     Position CalculateRangedPosition(Player* bot, Unit* target);
     Position CalculateTankPosition(Player* bot, Unit* target);
-    Position CalculateHealerPosition(Player* bot, std::vector<Player*> allies);
+    Position CalculateHealerPosition(Player* bot, ::std::vector<Player*> allies);
 
     // Formation calculations
-    std::vector<Position> CalculateLineFormation(
-        std::vector<Player*> bots,
+    ::std::vector<Position> CalculateLineFormation(
+        ::std::vector<Player*> bots,
         Unit* target,
         float spacing = 3.0f);
 
-    std::vector<Position> CalculateWedgeFormation(
-        std::vector<Player*> bots,
+    ::std::vector<Position> CalculateWedgeFormation(
+        ::std::vector<Player*> bots,
         Unit* target,
         float angle = 45.0f);
 
-    std::vector<Position> CalculateCircleFormation(
-        std::vector<Player*> bots,
+    ::std::vector<Position> CalculateCircleFormation(
+        ::std::vector<Player*> bots,
         Unit* target,
         float radius = 15.0f);
 
-    std::vector<Position> CalculateSpreadFormation(
-        std::vector<Player*> bots,
+    ::std::vector<Position> CalculateSpreadFormation(
+        ::std::vector<Player*> bots,
         Unit* target,
         float minSpacing = 5.0f);
 
@@ -204,7 +204,7 @@ protected:
     };
 
     // Optimized A* implementation
-    std::vector<Position> FindPathAStar(
+    ::std::vector<Position> FindPathAStar(
         const Position& start,
         const Position& end,
         bool avoidDanger);
@@ -214,10 +214,10 @@ protected:
     FormationType _formationType;
 
     // Spatial grid for collision detection
-    std::unique_ptr<SpatialGrid> _spatialGrid;
+    ::std::unique_ptr<SpatialGrid> _spatialGrid;
 
     // Position tracking
-    std::unordered_map<uint64_t, Position> _botPositions;  // Bot GUID -> Position
+    ::std::unordered_map<uint64_t, Position> _botPositions;  // Bot GUID -> Position
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _positionMutex;
 
     // Danger zones
@@ -228,13 +228,13 @@ protected:
         float dangerLevel;
         uint32 expirationTime;
     };
-    std::vector<DangerZone> _dangerZones;
+    ::std::vector<DangerZone> _dangerZones;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _dangerMutex;
 
     // Position cache for performance
     struct PositionCache
     {
-        std::unordered_map<uint64_t, CachedPosition> entries;
+        ::std::unordered_map<uint64_t, CachedPosition> entries;
         uint32 lastCleanup;
     };
     mutable PositionCache _cache;
@@ -253,7 +253,7 @@ protected:
 private:
     // Cache management
     void CleanupCache();
-    std::optional<CachedPosition> GetCachedPosition(Player* bot, Unit* target) const;
+    ::std::optional<CachedPosition> GetCachedPosition(Player* bot, Unit* target) const;
     void CachePosition(Player* bot, Unit* target, const Position& pos, float score);
 
     // Grid management
@@ -301,11 +301,11 @@ public:
     explicit TankPositionStrategy(Map* map) : PositionStrategyBase(map) {}
 
     Position CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange) override;
-    void UpdateFormationPositions(std::vector<Player*> bots, Unit* centerTarget) override;
+    void UpdateFormationPositions(::std::vector<Player*> bots, Unit* centerTarget) override;
 
 private:
     Position GetTankingPosition(Unit* target, bool mainTank = true) const;
-    void PositionForCleave(Player* bot, std::vector<Unit*> enemies);
+    void PositionForCleave(Player* bot, ::std::vector<Unit*> enemies);
     float CalculateThreatPosition(Player* bot, Unit* target) const;
 };
 
@@ -318,9 +318,9 @@ public:
     float EvaluatePositionScore(const Position& pos, Player* bot, Unit* target) const override;
 
 private:
-    Position GetSafeHealingPosition(Player* bot, std::vector<Player*> allies) const;
-    bool CanReachAllAllies(const Position& pos, std::vector<Player*> allies) const;
-    float GetAverageAllyDistance(const Position& pos, std::vector<Player*> allies) const;
+    Position GetSafeHealingPosition(Player* bot, ::std::vector<Player*> allies) const;
+    bool CanReachAllAllies(const Position& pos, ::std::vector<Player*> allies) const;
+    float GetAverageAllyDistance(const Position& pos, ::std::vector<Player*> allies) const;
 };
 
 } // namespace Playerbot

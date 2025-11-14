@@ -27,6 +27,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // BLOOD DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -103,17 +113,17 @@ struct RuneRunicPowerResource
             // Consume runes in order: Blood -> Frost -> Unholy
             uint32 remaining = runesCost;
             if (bloodRunes > 0) {
-                uint32 toConsume = std::min(bloodRunes, remaining);
+                uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && frostRunes > 0) {
-                uint32 toConsume = std::min(frostRunes, remaining);
+                uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && unholyRunes > 0) {
-                uint32 toConsume = std::min(unholyRunes, remaining);
+                uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
             }
@@ -173,7 +183,7 @@ public:
 
     void ApplyMarrowrend(uint32 stacks)
     {
-        _boneShieldStacks = std::min(_boneShieldStacks + stacks, 10u);
+        _boneShieldStacks = ::std::min(_boneShieldStacks + stacks, 10u);
         _lastMarrowrendTime = GameTime::GetGameTimeMS();
     }
 
@@ -540,7 +550,7 @@ private:
 
     void GenerateRunicPower(uint32 amount)
     {
-        this->_resource.runicPower = std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
+        this->_resource.runicPower = ::std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
     }
 
     void ConsumeRunicPower(uint32 amount)
@@ -582,13 +592,13 @@ private:
         if (tree) {
             auto root = Selector("Blood DK Tank", {
                 Sequence("Emergency", { Condition("HP < 40%", [](Player* bot) { return bot && bot->GetHealthPct() < 40.0f; }),
-                    Action("Vampiric Blood", [this](Player* bot) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(bot, BLOOD_VAMPIRIC_BLOOD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Vampiric Blood", [this](Player* bot) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(bot, BLOOD_VAMPIRIC_BLOOD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot) { return bot && bot->GetHealthPct() < 70.0f; }),
-                    Action("Death Strike", [this](Player* bot) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(bot, BLOOD_DEATH_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Death Strike", [this](Player* bot) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(bot, BLOOD_DEATH_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Bone Shield", { Condition("< 5 stacks", [this](Player*) { return this->_boneShieldTracker.GetStacks() < 5; }),
-                    Action("Marrowrend", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(t, BLOOD_MARROWREND); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Marrowrend", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(t, BLOOD_MARROWREND); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Threat", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    Action("Heart Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(t, BLOOD_HEART_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Heart Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(t, BLOOD_HEART_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

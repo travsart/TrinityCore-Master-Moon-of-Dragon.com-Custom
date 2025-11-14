@@ -219,7 +219,7 @@ public:
                 // Walden throws potions creating ground effects
                 // Ice, fire, and poison puddles to avoid
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 15.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -295,7 +295,7 @@ public:
                 // Arugal summons Worgen adds via Shadow Port
                 // Adds should be picked up by tank and controlled
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Prioritize adds that are attacking healers
                 Group* group = player->GetGroup();
@@ -395,7 +395,7 @@ public:
                     // All non-tanks should be behind or to the side
                     float angle = boss->GetOrientation();
                     float playerAngle = boss->GetAngle(player);
-                    float angleDiff = std::abs(angle - playerAngle);
+                    float angleDiff = ::std::abs(angle - playerAngle);
 
                     // If player is in frontal arc (< 90 degrees), move
                     if (angleDiff < M_PI / 2.0f)

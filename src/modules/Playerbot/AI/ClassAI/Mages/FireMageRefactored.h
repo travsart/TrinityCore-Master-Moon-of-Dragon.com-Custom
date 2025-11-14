@@ -32,6 +32,16 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Fire Mage Spell IDs
 constexpr uint32 FIRE_FIREBALL = 133;
 constexpr uint32 FIRE_PYROBLAST = 11366;
@@ -512,7 +522,7 @@ private:
                     Selector("Use Combustion", {
                         Sequence("Cast Combustion", {
                             Condition("Not active", [this](Player*, Unit*) { return !this->_combustionActive; }),
-                            Action("Combustion", [this](Player* bot, Unit*) -> NodeStatus {
+                            bot::ai::Action("Combustion", [this](Player* bot, Unit*) -> NodeStatus {
                                 if (this->CanCastSpell(FIRE_COMBUSTION, bot)) {
                                     this->CastSpell(bot, FIRE_COMBUSTION);
                                     this->_combustionActive = true;
@@ -526,7 +536,7 @@ private:
                 }),
                 Sequence("Hot Streak", {
                     Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }),
-                    Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(FIRE_PYROBLAST, target)) {
                             this->CastSpell(target, FIRE_PYROBLAST);
                             this->_hotStreakTracker.ConsumeProc();
@@ -537,7 +547,7 @@ private:
                 }),
                 Sequence("Fire Blast", {
                     Condition("Has charge", [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }),
-                    Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->_fireBlastTracker.HasCharge()) {
                             this->CastSpell(target, FIRE_FIREBLAST);
                             this->_fireBlastTracker.UseCharge();
@@ -548,7 +558,7 @@ private:
                 }),
                 Sequence("Fireball", {
                     Condition("Has target", [this](Player*, Unit* target) { return target; }),
-                    Action("Fireball", [this](Player*, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Fireball", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(FIRE_FIREBALL, target)) {
                             this->CastSpell(target, FIRE_FIREBALL);
                             return NodeStatus::SUCCESS;

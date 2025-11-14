@@ -24,8 +24,8 @@ namespace Playerbot
 
 uint64 MovementRequest::GenerateRequestId()
 {
-    static std::atomic<uint64> counter{1};
-    return counter.fetch_add(1, std::memory_order_relaxed);
+    static ::std::atomic<uint64> counter{1};
+    return counter.fetch_add(1, ::std::memory_order_relaxed);
 }
 
 // ============================================================================
@@ -34,7 +34,7 @@ uint64 MovementRequest::GenerateRequestId()
 
 uint32 MovementRequest::GetCurrentThreadId()
 {
-    return static_cast<uint32>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    return static_cast<uint32>(::std::hash<::std::thread::id>{}(::std::this_thread::get_id()));
 }
 
 // ============================================================================
@@ -46,9 +46,9 @@ bool PointMovementParams::operator==(PointMovementParams const& other) const
     // Compare positions with small epsilon for floating point comparison
     constexpr float EPSILON = 0.001f;
 
-    if (std::abs(targetPos.GetPositionX() - other.targetPos.GetPositionX()) > EPSILON ||
-        std::abs(targetPos.GetPositionY() - other.targetPos.GetPositionY()) > EPSILON ||
-        std::abs(targetPos.GetPositionZ() - other.targetPos.GetPositionZ()) > EPSILON)
+    if (::std::abs(targetPos.GetPositionX() - other.targetPos.GetPositionX()) > EPSILON ||
+        ::std::abs(targetPos.GetPositionY() - other.targetPos.GetPositionY()) > EPSILON ||
+        ::std::abs(targetPos.GetPositionZ() - other.targetPos.GetPositionZ()) > EPSILON)
         return false;
 
     if (generatePath != other.generatePath)
@@ -57,17 +57,17 @@ bool PointMovementParams::operator==(PointMovementParams const& other) const
     // Compare Optional<float> values
     if (finalOrient.has_value() != other.finalOrient.has_value())
         return false;
-    if (finalOrient.has_value() && std::abs(*finalOrient - *other.finalOrient) > EPSILON)
+    if (finalOrient.has_value() && ::std::abs(*finalOrient - *other.finalOrient) > EPSILON)
         return false;
 
     if (speed.has_value() != other.speed.has_value())
         return false;
-    if (speed.has_value() && std::abs(*speed - *other.speed) > EPSILON)
+    if (speed.has_value() && ::std::abs(*speed - *other.speed) > EPSILON)
         return false;
 
     if (closeEnoughDistance.has_value() != other.closeEnoughDistance.has_value())
         return false;
-    if (closeEnoughDistance.has_value() && std::abs(*closeEnoughDistance - *other.closeEnoughDistance) > EPSILON)
+    if (closeEnoughDistance.has_value() && ::std::abs(*closeEnoughDistance - *other.closeEnoughDistance) > EPSILON)
         return false;
 
     return true;
@@ -84,10 +84,10 @@ bool ChaseMovementParams::operator==(ChaseMovementParams const& other) const
     if (range.has_value())
     {
         constexpr float EPSILON = 0.001f;
-        if (std::abs(range->MinRange - other.range->MinRange) > EPSILON ||
-            std::abs(range->MinTolerance - other.range->MinTolerance) > EPSILON ||
-            std::abs(range->MaxRange - other.range->MaxRange) > EPSILON ||
-            std::abs(range->MaxTolerance - other.range->MaxTolerance) > EPSILON)
+        if (::std::abs(range->MinRange - other.range->MinRange) > EPSILON ||
+            ::std::abs(range->MinTolerance - other.range->MinTolerance) > EPSILON ||
+            ::std::abs(range->MaxRange - other.range->MaxRange) > EPSILON ||
+            ::std::abs(range->MaxTolerance - other.range->MaxTolerance) > EPSILON)
             return false;
     }
 
@@ -97,8 +97,8 @@ bool ChaseMovementParams::operator==(ChaseMovementParams const& other) const
     if (angle.has_value())
     {
         constexpr float EPSILON = 0.001f;
-        if (std::abs(angle->RelativeAngle - other.angle->RelativeAngle) > EPSILON ||
-            std::abs(angle->Tolerance - other.angle->Tolerance) > EPSILON)
+        if (::std::abs(angle->RelativeAngle - other.angle->RelativeAngle) > EPSILON ||
+            ::std::abs(angle->Tolerance - other.angle->Tolerance) > EPSILON)
             return false;
     }
 
@@ -112,7 +112,7 @@ bool FollowMovementParams::operator==(FollowMovementParams const& other) const
     if (targetGuid != other.targetGuid)
         return false;
 
-    if (std::abs(distance - other.distance) > EPSILON)
+    if (::std::abs(distance - other.distance) > EPSILON)
         return false;
 
     // Compare Optional<ChaseAngle>
@@ -120,8 +120,8 @@ bool FollowMovementParams::operator==(FollowMovementParams const& other) const
         return false;
     if (angle.has_value())
     {
-        if (std::abs(angle->RelativeAngle - other.angle->RelativeAngle) > EPSILON ||
-            std::abs(angle->Tolerance - other.angle->Tolerance) > EPSILON)
+        if (::std::abs(angle->RelativeAngle - other.angle->RelativeAngle) > EPSILON ||
+            ::std::abs(angle->Tolerance - other.angle->Tolerance) > EPSILON)
             return false;
     }
 
@@ -138,13 +138,13 @@ bool JumpMovementParams::operator==(JumpMovementParams const& other) const
 {
     constexpr float EPSILON = 0.001f;
 
-    if (std::abs(targetPos.GetPositionX() - other.targetPos.GetPositionX()) > EPSILON ||
-        std::abs(targetPos.GetPositionY() - other.targetPos.GetPositionY()) > EPSILON ||
-        std::abs(targetPos.GetPositionZ() - other.targetPos.GetPositionZ()) > EPSILON)
+    if (::std::abs(targetPos.GetPositionX() - other.targetPos.GetPositionX()) > EPSILON ||
+        ::std::abs(targetPos.GetPositionY() - other.targetPos.GetPositionY()) > EPSILON ||
+        ::std::abs(targetPos.GetPositionZ() - other.targetPos.GetPositionZ()) > EPSILON)
         return false;
 
-    if (std::abs(speedXY - other.speedXY) > EPSILON ||
-        std::abs(speedZ - other.speedZ) > EPSILON)
+    if (::std::abs(speedXY - other.speedXY) > EPSILON ||
+        ::std::abs(speedZ - other.speedZ) > EPSILON)
         return false;
 
     if (eventId != other.eventId)
@@ -157,17 +157,17 @@ bool JumpMovementParams::operator==(JumpMovementParams const& other) const
 // MovementRequest Construction
 // ============================================================================
 
-MovementRequest::MovementRequest(PlayerBotMovementPriority priority, std::string reason)
+MovementRequest::MovementRequest(PlayerBotMovementPriority priority, ::std::string reason)
     : _requestId(GenerateRequestId())
     , _priority(priority)
     , _type(MovementRequestType::NONE)
-    , _reason(std::move(reason))
+    , _reason(::std::move(reason))
     , _sourceSystem("")
     , _sourceThreadId(GetCurrentThreadId())
     , _timestamp(GameTime::GetGameTimeMS())
     , _expectedDuration(0)
     , _allowInterrupt(true)
-    , _params(std::monostate{})
+    , _params(::std::monostate{})
 {
 }
 
@@ -182,12 +182,12 @@ MovementRequest MovementRequest::MakePointMovement(
     Optional<float> finalOrient,
     Optional<float> speed,
     Optional<float> closeEnoughDistance,
-    std::string reason,
-    std::string sourceSystem)
+    ::std::string reason,
+    ::std::string sourceSystem)
 {
-    MovementRequest req(priority, std::move(reason));
+    MovementRequest req(priority, ::std::move(reason));
     req._type = MovementRequestType::POINT;
-    req._sourceSystem = std::move(sourceSystem);
+    req._sourceSystem = ::std::move(sourceSystem);
 
     PointMovementParams params;
     params.targetPos = targetPos;
@@ -196,7 +196,7 @@ MovementRequest MovementRequest::MakePointMovement(
     params.speed = speed;
     params.closeEnoughDistance = closeEnoughDistance;
 
-    req._params = std::move(params);
+    req._params = ::std::move(params);
     return req;
 }
 
@@ -205,19 +205,19 @@ MovementRequest MovementRequest::MakeChaseMovement(
     ObjectGuid targetGuid,
     Optional<ChaseRange> range,
     Optional<ChaseAngle> angle,
-    std::string reason,
-    std::string sourceSystem)
+    ::std::string reason,
+    ::std::string sourceSystem)
 {
-    MovementRequest req(priority, std::move(reason));
+    MovementRequest req(priority, ::std::move(reason));
     req._type = MovementRequestType::CHASE;
-    req._sourceSystem = std::move(sourceSystem);
+    req._sourceSystem = ::std::move(sourceSystem);
 
     ChaseMovementParams params;
     params.targetGuid = targetGuid;
     params.range = range;
     params.angle = angle;
 
-    req._params = std::move(params);
+    req._params = ::std::move(params);
     return req;
 }
 
@@ -227,12 +227,12 @@ MovementRequest MovementRequest::MakeFollowMovement(
     float distance,
     Optional<ChaseAngle> angle,
     Optional<Milliseconds> duration,
-    std::string reason,
-    std::string sourceSystem)
+    ::std::string reason,
+    ::std::string sourceSystem)
 {
-    MovementRequest req(priority, std::move(reason));
+    MovementRequest req(priority, ::std::move(reason));
     req._type = MovementRequestType::FOLLOW;
-    req._sourceSystem = std::move(sourceSystem);
+    req._sourceSystem = ::std::move(sourceSystem);
 
     FollowMovementParams params;
     params.targetGuid = targetGuid;
@@ -240,18 +240,18 @@ MovementRequest MovementRequest::MakeFollowMovement(
     params.angle = angle;
     params.duration = duration;
 
-    req._params = std::move(params);
+    req._params = ::std::move(params);
     return req;
 }
 
 MovementRequest MovementRequest::MakeIdleMovement(
     PlayerBotMovementPriority priority,
-    std::string reason,
-    std::string sourceSystem)
+    ::std::string reason,
+    ::std::string sourceSystem)
 {
-    MovementRequest req(priority, std::move(reason));
+    MovementRequest req(priority, ::std::move(reason));
     req._type = MovementRequestType::IDLE;
-    req._sourceSystem = std::move(sourceSystem);
+    req._sourceSystem = ::std::move(sourceSystem);
     req._params = IdleMovementParams{};
     return req;
 }
@@ -262,12 +262,12 @@ MovementRequest MovementRequest::MakeJumpMovement(
     float speedXY,
     float speedZ,
     uint32 eventId,
-    std::string reason,
-    std::string sourceSystem)
+    ::std::string reason,
+    ::std::string sourceSystem)
 {
-    MovementRequest req(priority, std::move(reason));
+    MovementRequest req(priority, ::std::move(reason));
     req._type = MovementRequestType::JUMP;
-    req._sourceSystem = std::move(sourceSystem);
+    req._sourceSystem = ::std::move(sourceSystem);
 
     JumpMovementParams params;
     params.targetPos = targetPos;
@@ -285,37 +285,37 @@ MovementRequest MovementRequest::MakeJumpMovement(
 
 PointMovementParams const& MovementRequest::GetPointParams() const
 {
-    if (auto* params = std::get_if<PointMovementParams>(&_params))
+    if (auto* params = ::std::get_if<PointMovementParams>(&_params))
         return *params;
-    throw std::runtime_error("MovementRequest::GetPointParams() called on non-POINT request");
+    throw ::std::runtime_error("MovementRequest::GetPointParams() called on non-POINT request");
 }
 
 ChaseMovementParams const& MovementRequest::GetChaseParams() const
 {
-    if (auto* params = std::get_if<ChaseMovementParams>(&_params))
+    if (auto* params = ::std::get_if<ChaseMovementParams>(&_params))
         return *params;
-    throw std::runtime_error("MovementRequest::GetChaseParams() called on non-CHASE request");
+    throw ::std::runtime_error("MovementRequest::GetChaseParams() called on non-CHASE request");
 }
 
 FollowMovementParams const& MovementRequest::GetFollowParams() const
 {
-    if (auto* params = std::get_if<FollowMovementParams>(&_params))
+    if (auto* params = ::std::get_if<FollowMovementParams>(&_params))
         return *params;
-    throw std::runtime_error("MovementRequest::GetFollowParams() called on non-FOLLOW request");
+    throw ::std::runtime_error("MovementRequest::GetFollowParams() called on non-FOLLOW request");
 }
 
 JumpMovementParams const& MovementRequest::GetJumpParams() const
 {
-    if (auto* params = std::get_if<JumpMovementParams>(&_params))
+    if (auto* params = ::std::get_if<JumpMovementParams>(&_params))
         return *params;
-    throw std::runtime_error("MovementRequest::GetJumpParams() called on non-JUMP request");
+    throw ::std::runtime_error("MovementRequest::GetJumpParams() called on non-JUMP request");
 }
 
 IdleMovementParams const& MovementRequest::GetIdleParams() const
 {
-    if (auto* params = std::get_if<IdleMovementParams>(&_params))
+    if (auto* params = ::std::get_if<IdleMovementParams>(&_params))
         return *params;
-    throw std::runtime_error("MovementRequest::GetIdleParams() called on non-IDLE request");
+    throw ::std::runtime_error("MovementRequest::GetIdleParams() called on non-IDLE request");
 }
 
 // ============================================================================
@@ -324,21 +324,21 @@ IdleMovementParams const& MovementRequest::GetIdleParams() const
 
 Optional<PointMovementParams> MovementRequest::TryGetPointParams() const
 {
-    if (auto* params = std::get_if<PointMovementParams>(&_params))
+    if (auto* params = ::std::get_if<PointMovementParams>(&_params))
         return *params;
     return {};
 }
 
 Optional<ChaseMovementParams> MovementRequest::TryGetChaseParams() const
 {
-    if (auto* params = std::get_if<ChaseMovementParams>(&_params))
+    if (auto* params = ::std::get_if<ChaseMovementParams>(&_params))
         return *params;
     return {};
 }
 
 Optional<FollowMovementParams> MovementRequest::TryGetFollowParams() const
 {
-    if (auto* params = std::get_if<FollowMovementParams>(&_params))
+    if (auto* params = ::std::get_if<FollowMovementParams>(&_params))
         return *params;
     return {};
 }
@@ -347,9 +347,9 @@ Optional<FollowMovementParams> MovementRequest::TryGetFollowParams() const
 // Fluent Setters
 // ============================================================================
 
-MovementRequest& MovementRequest::SetSourceSystem(std::string sourceSystem)
+MovementRequest& MovementRequest::SetSourceSystem(::std::string sourceSystem)
 {
-    _sourceSystem = std::move(sourceSystem);
+    _sourceSystem = ::std::move(sourceSystem);
     return *this;
 }
 
@@ -490,9 +490,9 @@ bool MovementRequest::IsDuplicateOf(MovementRequest const& other) const
 // Debug String
 // ============================================================================
 
-std::string MovementRequest::ToString() const
+::std::string MovementRequest::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     oss << "MovementRequest{";
     oss << "id=" << _requestId;

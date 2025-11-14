@@ -127,7 +127,7 @@ private:
         bool inCombat = bot->IsInCombat();
 
         // Build list of available actions
-        std::vector<uint32> availableActions;
+        ::std::vector<uint32> availableActions;
 
         // Always consider these spells if ready
         if (this->IsSpellReady(ARCANE_BLAST))
@@ -178,7 +178,7 @@ private:
             return; // Nothing to do
 
         // Score all available actions
-        std::vector<bot::ai::ActionScore> scores = _scoringEngine.ScoreActions(
+        ::std::vector<bot::ai::ActionScore> scores = _scoringEngine.ScoreActions(
             availableActions,
             [this, charges, manaPercent, healthPercent, enemyCount, bot, target]
             (bot::ai::ScoringCategory category, uint32 actionId) -> float
@@ -191,19 +191,19 @@ private:
         if (_scoringEngine.IsDebugLoggingEnabled())
         {
             uint32 topCount = sConfigMgr->GetIntDefault("Playerbot.AI.Weighting.LogTopActions", 3);
-            std::vector<uint32> topActions = _scoringEngine.GetTopActions(scores, topCount);
+            ::std::vector<uint32> topActions = _scoringEngine.GetTopActions(scores, topCount);
 
             if (!topActions.empty())
             {
-                std::ostringstream oss;
+                ::std::ostringstream oss;
                 oss << "Top " << topActions.size() << " scored actions: ";
                 for (size_t i = 0; i < topActions.size(); ++i)
                 {
-                    auto scoreIt = std::find_if(scores.begin(), scores.end(),
+                    auto scoreIt = ::std::find_if(scores.begin(), scores.end(),
                         [id = topActions[i]](const bot::ai::ActionScore& s) { return s.actionId == id; });
 
                     if (scoreIt != scores.end())
-                        oss << topActions[i] << " (" << std::fixed << std::setprecision(1) << scoreIt->totalScore << ")";
+                        oss << topActions[i] << " (" << ::std::fixed << ::std::setprecision(1) << scoreIt->totalScore << ")";
 
                     if (i < topActions.size() - 1)
                         oss << ", ";
