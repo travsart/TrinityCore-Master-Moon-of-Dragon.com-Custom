@@ -349,7 +349,7 @@ protected:
         // Priority 4: Remorseless Winter (AoE slow)
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
+            this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;
@@ -383,7 +383,7 @@ protected:
         // Priority 8: Horn of Winter (talent, generate resources)
         if (totalRunes < 3 && rp < 70 && this->CanCastSpell(HORN_OF_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), HORN_OF_WINTER);
+            this->CastSpell(HORN_OF_WINTER, this->GetBot());
             GenerateRunicPower(25);
             return;
         }
@@ -397,7 +397,7 @@ protected:
         // Priority 1: Remorseless Winter
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
+            this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;

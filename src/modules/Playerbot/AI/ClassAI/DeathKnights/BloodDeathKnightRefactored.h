@@ -328,7 +328,7 @@ protected:
         {
             if (this->CanCastSpell(DEATHS_AND_DECAY_BLOOD, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), DEATHS_AND_DECAY_BLOOD);
+                this->CastSpell(DEATHS_AND_DECAY_BLOOD, this->GetBot());
                 _deathsAndDecayActive = true;
                 _deathsAndDecayEndTime = GameTime::GetGameTimeMS() + 10000;
                 ConsumeRunicPower(30);
@@ -339,7 +339,7 @@ protected:
         // Priority 4: Blood Boil (Crimson Scourge proc or normal)
         if (_crimsonScourgeProc || (totalRunes >= 2 && this->CanCastSpell(BLOOD_BOIL, this->GetBot())))
         {
-            this->CastSpell(this->GetBot(), BLOOD_BOIL);
+            this->CastSpell(BLOOD_BOIL, this->GetBot());
             if (_crimsonScourgeProc)
                 _crimsonScourgeProc = false;
             else
@@ -391,7 +391,7 @@ protected:
         {
             if (this->CanCastSpell(DEATHS_AND_DECAY_BLOOD, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), DEATHS_AND_DECAY_BLOOD);
+                this->CastSpell(DEATHS_AND_DECAY_BLOOD, this->GetBot());
                 _deathsAndDecayActive = true;
                 _deathsAndDecayEndTime = GameTime::GetGameTimeMS() + 10000;
                 ConsumeRunicPower(30);
@@ -402,7 +402,7 @@ protected:
         // Priority 3: Blood Boil (AoE threat)
         if (totalRunes >= 2 && this->CanCastSpell(BLOOD_BOIL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), BLOOD_BOIL);
+            this->CastSpell(BLOOD_BOIL, this->GetBot());
             ConsumeRunes(RuneType::BLOOD, 2);
             GenerateRunicPower(10);
             return;

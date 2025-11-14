@@ -363,7 +363,7 @@ protected:
             // Light of Dawn for AoE healing
             if (this->CanCastSpell(LIGHT_OF_DAWN, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), LIGHT_OF_DAWN);
+                this->CastSpell(LIGHT_OF_DAWN, this->GetBot());
                 ConsumeHolyPower(3);
                 return true;
             }

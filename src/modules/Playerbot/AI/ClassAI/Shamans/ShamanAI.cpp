@@ -3170,10 +3170,10 @@ void ShamanAI::UpdateUtilityBuffs()
     // Water walking when near water
     if (NearWater() && !HasAura(SPELL_WATER_WALKING, GetBot()))
     {
-        CastSpell(SPELL_WATER_WALKING);    }
+        CastSpell(GetBot(, SPELL_WATER_WALKING);    }
 
     // Ghost Wolf for movement speed when traveling
-    if (GetBot()->isMoving() && !GetBot()->IsInCombat() && !HasAura(SPELL_GHOST_WOLF, GetBot()))
+    if (GetBot()->isMoving() && !GetBot()->IsInCombat() && !HasAura(SPELL_GHOST_WOLF)))
     {
         // Use Ghost Wolf for long-distance travel
         CastSpell(SPELL_GHOST_WOLF);

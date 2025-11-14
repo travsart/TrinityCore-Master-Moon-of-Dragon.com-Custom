@@ -465,7 +465,7 @@ void MonkAI::UpdateBuffs()
         if (bot->HasSpell(TOUCH_OF_KARMA) && !bot->HasAura(TOUCH_OF_KARMA))
         {
             Unit* attacker = bot->GetVictim();
-            if (attacker && CastSpell(attacker, TOUCH_OF_KARMA))
+            if (attacker && CastSpell(TOUCH_OF_KARMA, attacker))
             {
                 RecordAbilityUsage(TOUCH_OF_KARMA);
                 _defensiveCooldownsUsed.store(_defensiveCooldownsUsed.load() + 1);

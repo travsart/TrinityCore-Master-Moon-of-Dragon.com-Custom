@@ -312,7 +312,7 @@ protected:
         // Priority 1: Summon Demonic Tyrant (when we have multiple demons out)
         if (demonCount >= 3 && this->CanCastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_DEMONIC_TYRANT);
+            this->CastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot());
             _demonTracker.SummonTyrant();
             _lastTyrantTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Demonic Tyrant ({} demons)", demonCount);
@@ -322,7 +322,7 @@ protected:
         // Priority 2: Call Dreadstalkers (core demon summon)
         if (shards >= 2 && this->CanCastSpell(CALL_DREADSTALKERS, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), CALL_DREADSTALKERS);
+            this->CastSpell(CALL_DREADSTALKERS, this->GetBot());
             _demonTracker.SummonDreadstalkers();
             ConsumeSoulShard(2);
             return;
@@ -331,7 +331,7 @@ protected:
         // Priority 3: Grimoire: Felguard (talent, major CD)
         if (this->CanCastSpell(GRIMOIRE_FELGUARD, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), GRIMOIRE_FELGUARD);
+            this->CastSpell(GRIMOIRE_FELGUARD, this->GetBot());
             
 
         // Register cooldowns using CooldownManager
@@ -354,7 +354,7 @@ protected:
         // Priority 4: Summon Vilefiend (talent)
         if (shards >= 1 && this->CanCastSpell(SUMMON_VILEFIEND, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_VILEFIEND);
+            this->CastSpell(SUMMON_VILEFIEND, this->GetBot());
             _demonTracker.SummonVilefiend();
             ConsumeSoulShard(1);
             return;
@@ -363,7 +363,7 @@ protected:
         // Priority 5: Nether Portal (talent, major CD)
         if (shards >= 1 && this->CanCastSpell(NETHER_PORTAL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), NETHER_PORTAL);
+            this->CastSpell(NETHER_PORTAL, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Demonology: Nether Portal");
             return;
         }
@@ -413,7 +413,7 @@ protected:
         // Priority 1: Summon Demonic Tyrant
         if (_demonTracker.GetActiveDemonCount() >= 3 && this->CanCastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_DEMONIC_TYRANT);
+            this->CastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot());
             _demonTracker.SummonTyrant();
             return;
         }
@@ -430,7 +430,7 @@ protected:
         // Priority 3: Call Dreadstalkers
         if (shards >= 2 && this->CanCastSpell(CALL_DREADSTALKERS, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), CALL_DREADSTALKERS);
+            this->CastSpell(CALL_DREADSTALKERS, this->GetBot());
             _demonTracker.SummonDreadstalkers();
             ConsumeSoulShard(2);
             return;
@@ -448,7 +448,7 @@ protected:
         // Priority 5: Summon Vilefiend
         if (shards >= 1 && this->CanCastSpell(SUMMON_VILEFIEND, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_VILEFIEND);
+            this->CastSpell(SUMMON_VILEFIEND, this->GetBot());
             _demonTracker.SummonVilefiend();
             ConsumeSoulShard(1);
             return;

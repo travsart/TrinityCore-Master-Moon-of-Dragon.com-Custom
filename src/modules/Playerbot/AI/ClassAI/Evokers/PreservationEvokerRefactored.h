@@ -362,7 +362,7 @@ protected:
         // Emerald Communion for 3+ critical
         if (criticalCount >= 3 && this->CanCastSpell(EMERALD_COMMUNION, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), EMERALD_COMMUNION);
+            this->CastSpell(EMERALD_COMMUNION, this->GetBot());
             return true;
         }
 
@@ -437,7 +437,7 @@ protected:
 
         if (injuredCount >= 3 && this->CanCastSpell(EMERALD_BLOSSOM, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), EMERALD_BLOSSOM);
+            this->CastSpell(EMERALD_BLOSSOM, this->GetBot());
             this->_resource.Consume(3);
             return true;
         }

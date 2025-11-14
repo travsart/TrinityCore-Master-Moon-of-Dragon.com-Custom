@@ -71,7 +71,7 @@ void MageAI::UpdateRotation(::Unit* target)
         default:
             // No spec or unknown spec, use basic rotation
             if (CanUseAbility(FROSTBOLT))
-                CastSpell(target, FROSTBOLT);
+                CastSpell(FROSTBOLT, target);
             break;
     }
 }

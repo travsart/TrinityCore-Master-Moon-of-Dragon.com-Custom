@@ -438,7 +438,7 @@ protected:
         // Priority 1: Starfall (AoE AP spender)
         if (ap >= 50 && !_starfallActive && this->CanCastSpell(STARFALL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), STARFALL);
+            this->CastSpell(STARFALL, this->GetBot());
             _starfallActive = true;
             _starfallEndTime = GameTime::GetGameTimeMS() + 8000;
             ConsumeAstralPower(50);
@@ -462,7 +462,7 @@ protected:
         // Priority 4: Fury of Elune (talent)
         if (this->CanCastSpell(FURY_OF_ELUNE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), FURY_OF_ELUNE);
+            this->CastSpell(FURY_OF_ELUNE, this->GetBot());
             return;
         }
 

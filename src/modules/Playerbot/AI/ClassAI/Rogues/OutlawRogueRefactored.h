@@ -278,13 +278,13 @@ public:
         Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, RogueAI::STEALTH);
+            this->CastSpell(RogueAI::STEALTH, bot);
         }
 
         // Defensive cooldowns
         if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
+            this->CastSpell(RogueAI::CLOAK_OF_SHADOWS, bot);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(FEINT_OUTLAW, bot))
@@ -306,7 +306,7 @@ protected:
         // Priority 1: Adrenaline Rush on cooldown
         if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
+            this->CastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot());
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -317,7 +317,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
+                this->CastSpell(ROLL_THE_BONES, this->GetBot());
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -376,7 +376,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
             {
-                this->CastSpell(target, RogueAI::SINISTER_STRIKE);
+                this->CastSpell(RogueAI::SINISTER_STRIKE, target);
                 _lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(45);
                 GenerateComboPoints(1);
@@ -411,7 +411,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::BLADE_FLURRY, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::BLADE_FLURRY);
+                this->CastSpell(RogueAI::BLADE_FLURRY, this->GetBot());
                 _bladeFlurryActive = true;
                 _bladeFlurryEndTime = GameTime::GetGameTimeMS() + 12000;
                 ConsumeEnergy(15);
@@ -422,7 +422,7 @@ protected:
         // Priority 2: Adrenaline Rush
         if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
+            this->CastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot());
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -433,7 +433,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
+                this->CastSpell(ROLL_THE_BONES, this->GetBot());
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -462,7 +462,7 @@ protected:
         // Ambush from stealth for high damage
         if (this->CanCastSpell(RogueAI::AMBUSH, target))
         {
-            this->CastSpell(target, RogueAI::AMBUSH);
+            this->CastSpell(RogueAI::AMBUSH, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -471,7 +471,7 @@ protected:
         // Cheap Shot for control
         if (this->CanCastSpell(RogueAI::CHEAP_SHOT, target))
         {
-            this->CastSpell(target, RogueAI::CHEAP_SHOT);
+            this->CastSpell(RogueAI::CHEAP_SHOT, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -659,7 +659,7 @@ private:
                             bot::ai::Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::ADRENALINE_RUSH);
+                                    this->CastSpell(RogueAI::ADRENALINE_RUSH, bot);
                                     this->_adrenalineRushActive = true;
                                     this->_adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -781,7 +781,7 @@ private:
                             bot::ai::Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::SINISTER_STRIKE);
+                                    this->CastSpell(RogueAI::SINISTER_STRIKE, target);
                                     this->_lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(45);
                                     this->GenerateComboPoints(1);

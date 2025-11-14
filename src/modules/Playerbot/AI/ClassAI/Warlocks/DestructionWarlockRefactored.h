@@ -311,7 +311,7 @@ public:
         // Priority 1: Use Summon Infernal (major CD)
         if (shards >= 2 && this->CanCastSpell(SUMMON_INFERNAL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_INFERNAL);
+            this->CastSpell(SUMMON_INFERNAL, this->GetBot());
             _lastInfernalTime = GameTime::GetGameTimeMS();
             
 
@@ -337,7 +337,7 @@ public:
         // Priority 2: Dark Soul: Instability (burst CD)
         if (this->CanCastSpell(DARK_SOUL_INSTABILITY, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), DARK_SOUL_INSTABILITY);
+            this->CastSpell(DARK_SOUL_INSTABILITY, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Destruction: Dark Soul Instability");
         }
 
@@ -464,7 +464,7 @@ public:
         // Priority 1: Summon Infernal
         if (shards >= 2 && this->CanCastSpell(SUMMON_INFERNAL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_INFERNAL);
+            this->CastSpell(SUMMON_INFERNAL, this->GetBot());
             _lastInfernalTime = GameTime::GetGameTimeMS();
             return;
         }
@@ -480,7 +480,7 @@ public:
         // Priority 3: Rain of Fire (AoE shard spender)
         if (shards >= 3 && this->CanCastSpell(RAIN_OF_FIRE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RAIN_OF_FIRE);
+            this->CastSpell(RAIN_OF_FIRE, this->GetBot());
             ConsumeSoulShard(3);
             return;
         }

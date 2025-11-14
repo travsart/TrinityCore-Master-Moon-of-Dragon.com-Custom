@@ -165,7 +165,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         if (currentSpec == EvokerSpec::PRESERVATION && healthPct < 40.0f && CanUseAbility(VERDANT_EMBRACE))
         {
             ::Unit* healTarget = GetLowestHealthAlly();
-            if (healTarget && CastSpell(healTarget, VERDANT_EMBRACE))
+            if (healTarget && CastSpell(VERDANT_EMBRACE, healTarget))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Verdant Embrace to escape",
                              

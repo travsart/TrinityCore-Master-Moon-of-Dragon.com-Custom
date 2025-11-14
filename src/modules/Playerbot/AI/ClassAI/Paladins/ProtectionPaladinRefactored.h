@@ -315,7 +315,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), SHIELD_OF_THE_RIGHTEOUS);
+                this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, this->GetBot());
 
                 _shieldTracker.ApplyShield();
 
@@ -390,7 +390,7 @@ protected:
         if (!_consecrationActive && this->CanCastSpell(CONSECRATION, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), CONSECRATION);
+            this->CastSpell(CONSECRATION, this->GetBot());
 
             _consecrationActive = true;
 
@@ -403,7 +403,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(BLESSED_HAMMER, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), BLESSED_HAMMER);
+            this->CastSpell(BLESSED_HAMMER, this->GetBot());
 
             GenerateHolyPower(1);
 
@@ -432,7 +432,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), SHIELD_OF_THE_RIGHTEOUS);
+                this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, this->GetBot());
 
                 _shieldTracker.ApplyShield();
 
@@ -456,7 +456,7 @@ protected:
         if (!_consecrationActive && this->CanCastSpell(CONSECRATION, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), CONSECRATION);
+            this->CastSpell(CONSECRATION, this->GetBot());
 
             _consecrationActive = true;
 

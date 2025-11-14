@@ -318,7 +318,7 @@ protected:
         {
             if (this->CanCastSpell(SUMMON_DARKGLARE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), SUMMON_DARKGLARE);
+                this->CastSpell(SUMMON_DARKGLARE, this->GetBot());
                 _lastDarkglareTime = GameTime::GetGameTimeMS();
                 
 

@@ -396,7 +396,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 {
 
-                    CastSpell(target, WING_CLIP);
+                    CastSpell(WING_CLIP, target);
 
                     return true;
 
@@ -980,12 +980,12 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
 
     // Apply Hunter's Mark if not present    if (!target->HasAura(HUNTER_S_MARK) && _bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
     {
-        CastSpell(target, HUNTER_S_MARK);
+        CastSpell(HUNTER_S_MARK, target);
     }
 
     // Apply Serpent Sting if not present    if (!target->HasAura(SERPENT_STING) && _bot->HasSpell(SERPENT_STING) && CanUseAbility(SERPENT_STING))
     {
-        CastSpell(target, SERPENT_STING);
+        CastSpell(SERPENT_STING, target);
     }
 
     // Kill Shot if target is low health    if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
@@ -1001,11 +1001,11 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
 
     // Fallback basic rotation (specialization rotations handled by refactored system)    if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
     {
-        CastSpell(target, STEADY_SHOT);
+        CastSpell(STEADY_SHOT, target);
         RecordShotResult(true, false);
     }    else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
     {
-        CastSpell(target, ARCANE_SHOT);
+        CastSpell(ARCANE_SHOT, target);
         RecordShotResult(true, false);
     }
 }

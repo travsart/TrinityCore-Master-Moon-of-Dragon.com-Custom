@@ -374,7 +374,7 @@ protected:
         // Priority 6: Dark Transformation (empower ghoul)
         if (rp >= 40 && !_petTracker.IsDarkTransformationActive() && this->CanCastSpell(DARK_TRANSFORMATION, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), DARK_TRANSFORMATION);
+            this->CastSpell(DARK_TRANSFORMATION, this->GetBot());
             _petTracker.ActivateDarkTransformation();
             ConsumeRunicPower(40);
             return;
@@ -428,7 +428,7 @@ protected:
         // Priority 3: Defile (talent, ground AoE)
         if (totalRunes >= 1 && this->CanCastSpell(DEFILE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), DEFILE);
+            this->CastSpell(DEFILE, this->GetBot());
             ConsumeRunes(RuneType::UNHOLY, 1);
             return;
         }
@@ -488,14 +488,14 @@ protected:
         // Army of the Dead
         if (this->CanCastSpell(ARMY_OF_THE_DEAD_UNHOLY, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), ARMY_OF_THE_DEAD_UNHOLY);
+            this->CastSpell(ARMY_OF_THE_DEAD_UNHOLY, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Unholy: Army of the Dead");
         }
 
         // Summon Gargoyle
         if (this->CanCastSpell(SUMMON_GARGOYLE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_GARGOYLE);
+            this->CastSpell(SUMMON_GARGOYLE, this->GetBot());
             _petTracker.SummonGargoyle();
             TC_LOG_DEBUG("playerbot", "Unholy: Summon Gargoyle");
         }
@@ -510,7 +510,7 @@ protected:
         // Unholy Blight (talent)
         if (this->CanCastSpell(UNHOLY_BLIGHT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), UNHOLY_BLIGHT);
+            this->CastSpell(UNHOLY_BLIGHT, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Unholy: Unholy Blight");
         }
     }
