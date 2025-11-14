@@ -171,7 +171,7 @@ protected:
         // Priority 1: Vendetta on cooldown
         if (this->CanCastSpell(VENDETTA, target))
         {
-            this->CastSpell(target, VENDETTA);
+            this->CastSpell(VENDETTA, target);
             _vendettaActive = true;
             _vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -216,7 +216,7 @@ protected:
             // Envenom for damage
             if (energy >= 35 && this->CanCastSpell(ENVENOM, target))
             {
-                this->CastSpell(target, ENVENOM);
+                this->CastSpell(ENVENOM, target);
                 _lastEnvenomTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -227,7 +227,7 @@ protected:
         // Priority 5: Kingsbane (talent)
         if (energy >= 35 && this->CanCastSpell(KINGSBANE, target))
         {
-            this->CastSpell(target, KINGSBANE);
+            this->CastSpell(KINGSBANE, target);
             ConsumeEnergy(35);
             return;
         }
@@ -237,7 +237,7 @@ protected:
         {
             if (this->CanCastSpell(MUTILATE, target))
             {
-                this->CastSpell(target, MUTILATE);
+                this->CastSpell(MUTILATE, target);
                 _lastMutilateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(50);
                 GenerateComboPoints(2);
@@ -517,7 +517,7 @@ private:
                             bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(VENDETTA, target))
                                 {
-                                    this->CastSpell(target, VENDETTA);
+                                    this->CastSpell(VENDETTA, target);
                                     this->_vendettaActive = true;
                                     this->_vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -601,7 +601,7 @@ private:
                             bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ENVENOM, target))
                                 {
-                                    this->CastSpell(target, ENVENOM);
+                                    this->CastSpell(ENVENOM, target);
                                     this->_lastEnvenomTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -619,7 +619,7 @@ private:
                             bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(KINGSBANE, target))
                                 {
-                                    this->CastSpell(target, KINGSBANE);
+                                    this->CastSpell(KINGSBANE, target);
                                     this->ConsumeEnergy(35);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -635,7 +635,7 @@ private:
                             bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(MUTILATE, target))
                                 {
-                                    this->CastSpell(target, MUTILATE);
+                                    this->CastSpell(MUTILATE, target);
                                     this->_lastMutilateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(50);
                                     this->GenerateComboPoints(2);

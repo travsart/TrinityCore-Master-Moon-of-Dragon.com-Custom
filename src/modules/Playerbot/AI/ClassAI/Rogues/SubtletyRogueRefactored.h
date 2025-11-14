@@ -313,7 +313,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 _lastShadowstrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
@@ -329,7 +329,7 @@ protected:
         {
             if (this->GetBot()->HasSpell(SECRET_TECHNIQUE) && this->CanCastSpell(SECRET_TECHNIQUE, target))
             {
-                this->CastSpell(target, SECRET_TECHNIQUE);
+                this->CastSpell(SECRET_TECHNIQUE, target);
                 ConsumeEnergy(30);
                 this->_resource.comboPoints = 0;
                 return;
@@ -341,7 +341,7 @@ protected:
         {
             if (this->CanCastSpell(EVISCERATE_SUB, target))
             {
-                this->CastSpell(target, EVISCERATE_SUB);
+                this->CastSpell(EVISCERATE_SUB, target);
                 _lastEviscerateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -381,7 +381,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
                 return;
@@ -714,7 +714,7 @@ private:
                             bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SECRET_TECHNIQUE, target))
                                 {
-                                    this->CastSpell(target, SECRET_TECHNIQUE);
+                                    this->CastSpell(SECRET_TECHNIQUE, target);
                                     this->ConsumeEnergy(30);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -730,7 +730,7 @@ private:
                             bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
-                                    this->CastSpell(target, EVISCERATE_SUB);
+                                    this->CastSpell(EVISCERATE_SUB, target);
                                     this->_lastEviscerateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -757,7 +757,7 @@ private:
                             bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->_lastShadowstrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
@@ -795,7 +795,7 @@ private:
                             bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
                                     return NodeStatus::SUCCESS;
