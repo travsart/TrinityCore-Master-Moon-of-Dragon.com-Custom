@@ -25,6 +25,7 @@
 #include "Map.h"
 #include "Log.h"
 #include "CellImpl.h"
+#include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include <chrono>
 #include "../../../Spatial/SpatialGridManager.h"

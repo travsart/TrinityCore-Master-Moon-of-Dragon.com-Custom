@@ -700,7 +700,10 @@ private:
     IcicleTracker _icicleTracker;
 
     bool _icyVeinsActive;
-    uint32 _icyVeinsEndTime;};
+    uint32 _icyVeinsEndTime;
+    uint32 _lastIcyVeinsTime;
+    uint32 _lastFrozenOrbTime;
+};
 
 } // namespace Playerbot
 

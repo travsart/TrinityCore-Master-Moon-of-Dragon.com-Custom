@@ -46,6 +46,7 @@ using bot::ai::NodeStatus;
 constexpr uint32 FIRE_FIREBALL = 133;
 constexpr uint32 FIRE_PYROBLAST = 11366;
 constexpr uint32 FIRE_FIRE_BLAST = 108853;
+constexpr uint32 FIRE_FIREBLAST = FIRE_FIRE_BLAST;  // Alias for consistency
 constexpr uint32 FIRE_SCORCH = 2948;
 constexpr uint32 FIRE_FLAMESTRIKE = 2120;
 constexpr uint32 FIRE_PHOENIX_FLAMES = 257541;

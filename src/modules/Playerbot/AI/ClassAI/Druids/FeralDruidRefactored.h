@@ -1565,7 +1565,9 @@ private:
     bool _berserkActive;
     uint32 _berserkEndTime;
 
-    uint32 _lastTigersFuryTime;};
+    uint32 _lastTigersFuryTime;
+    uint32 _lastBerserkTime;
+};
 
 } // namespace Playerbot
 
