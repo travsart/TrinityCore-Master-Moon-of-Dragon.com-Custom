@@ -19,6 +19,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "RogueResourceTypes.h"
+#include "RogueAI.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
