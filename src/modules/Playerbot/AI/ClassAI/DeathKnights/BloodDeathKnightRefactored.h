@@ -36,7 +36,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // BLOOD DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -592,13 +592,13 @@ private:
         if (tree) {
             auto root = Selector("Blood DK Tank", {
                 Sequence("Emergency", { Condition("HP < 40%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 40.0f; }),
-                    bot::ai::Action("Vampiric Blood", [this](Player* bot, Unit* target) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(BLOOD_VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    ::bot::ai::Action("Vampiric Blood", [this](Player* bot, Unit*) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(BLOOD_VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 70.0f; }),
-                    bot::ai::Action("Death Strike", [this](Player* bot, Unit* target) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(BLOOD_DEATH_STRIKE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    ::bot::ai::Action("Death Strike", [this](Player* bot, Unit*) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(BLOOD_DEATH_STRIKE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Bone Shield", { Condition("< 5 stacks", [this](Player*) { return this->_boneShieldTracker.GetStacks() < 5; }),
-                    bot::ai::Action("Marrowrend", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(BLOOD_MARROWREND, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Threat", { Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
-                    bot::ai::Action("Heart Strike", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(BLOOD_HEART_STRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    ::bot::ai::Action("Marrowrend", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(BLOOD_MARROWREND, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Threat", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
+                    ::bot::ai::Action("Heart Strike", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(BLOOD_HEART_STRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

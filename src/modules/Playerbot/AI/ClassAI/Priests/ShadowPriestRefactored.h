@@ -44,7 +44,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Shadow Priest Spell IDs
 constexpr uint32 SHADOW_MIND_BLAST = 8092;
 constexpr uint32 SHADOW_MIND_FLAY = 15407;
@@ -643,23 +643,23 @@ private:
         {
             // EMERGENCY: Survival cooldowns (HP < 30%)
             queue->RegisterSpell(SHADOW_DISPERSION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(SHADOW_DISPERSION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SHADOW_DISPERSION, [this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 25.0f;
             }, "Bot HP < 25% (immune + heal)");
 
             queue->RegisterSpell(SHADOW_DESPERATE_PRAYER, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(SHADOW_DESPERATE_PRAYER, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SHADOW_DESPERATE_PRAYER, [this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 40.0f;
             }, "Bot HP < 40% (instant heal)");
 
             // CRITICAL: Voidform entry and Insanity spenders
             queue->RegisterSpell(SHADOW_VOID_ERUPTION, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
-            queue->AddCondition(SHADOW_VOID_ERUPTION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SHADOW_VOID_ERUPTION, [this](Player* bot, Unit*) {
                 return this->_insanityTracker.GetInsanity() >= 60 && !this->_voidformTracker.IsActive();
             }, "60+ Insanity and not in Voidform (enter Voidform)");
 
             queue->RegisterSpell(SHADOW_DARK_ASCENSION, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
-            queue->AddCondition(SHADOW_DARK_ASCENSION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SHADOW_DARK_ASCENSION, [this](Player* bot, Unit*) {
                 return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
                        this->_insanityTracker.GetInsanity() >= 60 &&
                        (GameTime::GetGameTimeMS() - this->_lastDarkAscensionTime) >= 60000;
@@ -740,17 +740,17 @@ private:
             auto root = Selector("Shadow Priest DPS", {
                 // Tier 1: Voidform Entry (60+ Insanity)
                 Sequence("Voidform Entry", {
-                    Condition("Has 60+ Insanity", [this](Player* bot, Unit* target) {
+                    Condition("Has 60+ Insanity", [this](Player* bot, Unit*) {
                         return this->_insanityTracker.GetInsanity() >= 60 && !this->_voidformTracker.IsActive();
                     }),
                     Selector("Choose Voidform Ability", {
                         // Option 1: Dark Ascension (if talented and off CD)
                         Sequence("Cast Dark Ascension", {
-                            Condition("Has Dark Ascension talent", [this](Player* bot, Unit* target) {
+                            Condition("Has Dark Ascension talent", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(SHADOW_DARK_ASCENSION) &&
                                        (GameTime::GetGameTimeMS() - this->_lastDarkAscensionTime) >= 60000;
                             }),
-                            bot::ai::Action("Cast Dark Ascension", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Dark Ascension", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                                 {
                                     this->CastSpell(SHADOW_DARK_ASCENSION, bot);
@@ -768,7 +768,7 @@ private:
                             Condition("Void Eruption available", [this](Player* bot, Unit* target) {
                                 return target && this->CanCastSpell(SHADOW_VOID_ERUPTION, target);
                             }),
-                            bot::ai::Action("Cast Void Eruption", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Void Eruption", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
                                 {
                                     this->CastSpell(SHADOW_VOID_ERUPTION, target);
@@ -794,7 +794,7 @@ private:
                                 return !this->_dotTracker.HasVampiricTouch(target->GetGUID()) ||
                                        this->_dotTracker.NeedsVampiricTouchRefresh(target->GetGUID());
                             }),
-                            bot::ai::Action("Cast Vampiric Touch", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Vampiric Touch", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
                                 {
                                     this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
@@ -811,7 +811,7 @@ private:
                                 return !this->_dotTracker.HasShadowWordPain(target->GetGUID()) ||
                                        this->_dotTracker.NeedsShadowWordPainRefresh(target->GetGUID());
                             }),
-                            bot::ai::Action("Cast Shadow Word: Pain", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Shadow Word: Pain", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
                                 {
                                     this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);
@@ -833,10 +833,10 @@ private:
                     Selector("Spend or Generate Insanity", {
                         // Spend Insanity (50+)
                         Sequence("Spend Insanity", {
-                            Condition("Has 50+ Insanity", [this](Player* bot, Unit* target) {
+                            Condition("Has 50+ Insanity", [this](Player* bot, Unit*) {
                                 return this->_insanityTracker.GetInsanity() >= 50;
                             }),
-                            bot::ai::Action("Cast Devouring Plague", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Devouring Plague", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_DEVOURING_PLAGUE, target))
                                 {
                                     this->CastSpell(SHADOW_DEVOURING_PLAGUE, target);
@@ -850,10 +850,10 @@ private:
                         Selector("Generate Insanity", {
                             // In Voidform: Void Bolt
                             Sequence("Cast Void Bolt", {
-                                Condition("In Voidform", [this](Player* bot, Unit* target) {
+                                Condition("In Voidform", [this](Player* bot, Unit*) {
                                     return this->_voidformTracker.IsActive();
                                 }),
-                                bot::ai::Action("Cast Void Bolt", [this](Player* bot, Unit* target) -> NodeStatus {
+                                ::bot::ai::Action("Cast Void Bolt", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_VOID_BOLT, target))
                                     {
                                         this->CastSpell(SHADOW_VOID_BOLT, target);
@@ -868,10 +868,10 @@ private:
                             }),
                             // Outside Voidform: Mind Blast
                             Sequence("Cast Mind Blast", {
-                                Condition("Not in Voidform", [this](Player* bot, Unit* target) {
+                                Condition("Not in Voidform", [this](Player* bot, Unit*) {
                                     return !this->_voidformTracker.IsActive();
                                 }),
-                                bot::ai::Action("Cast Mind Blast", [this](Player* bot, Unit* target) -> NodeStatus {
+                                ::bot::ai::Action("Cast Mind Blast", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
                                     {
                                         this->CastSpell(SHADOW_MIND_BLAST, target);
@@ -886,7 +886,7 @@ private:
                                 Condition("Target HP < 20%", [this](Player* bot, Unit* target) {
                                     return target && target->GetHealthPct() < 20.0f;
                                 }),
-                                bot::ai::Action("Cast Shadow Word: Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                                ::bot::ai::Action("Cast Shadow Word: Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
                                     {
                                         this->CastSpell(SHADOW_SHADOW_WORD_DEATH, target);
@@ -908,10 +908,10 @@ private:
                     Selector("Choose Filler", {
                         // AoE filler (3+ enemies)
                         Sequence("AoE Filler", {
-                            Condition("3+ enemies", [this](Player* bot, Unit* target) {
+                            Condition("3+ enemies", [this](Player* bot, Unit*) {
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            bot::ai::Action("Cast Mind Sear", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Mind Sear", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_MIND_SEAR, target))
                                 {
                                     this->CastSpell(SHADOW_MIND_SEAR, target);
@@ -923,7 +923,7 @@ private:
                         }),
                         // Single target filler
                         Sequence("Single Target Filler", {
-                            bot::ai::Action("Cast Mind Flay", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Mind Flay", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
                                 {
                                     this->CastSpell(SHADOW_MIND_FLAY, target);
