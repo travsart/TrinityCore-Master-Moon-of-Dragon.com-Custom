@@ -36,8 +36,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 
 /**
  * Refactored Arms Warrior using template architecture
@@ -100,24 +102,13 @@ public:
     using Base::IsInMeleeRange;
     using Base::CanUseAbility;
 
-    // BehaviorTree helper functions (must be accessible in member functions)
-    using bot::ai::Sequence;
-    using bot::ai::Selector;
-    using bot::ai::Condition;
-    using bot::ai::Inverter;
-    using bot::ai::Repeater;
-    using bot::ai::NodeStatus;
+    // NOTE: BehaviorTree using declarations at namespace scope (lines 33-40) already accessible
 
 private:
     // Forward declarations for methods called in constructor
+    // NOTE: Function declarations removed - inline definitions provided below
     void InitializeDebuffTracking();
     void InitializeArmsRotation();
-    bool IsExecutePhase(::Unit* target) const;
-    bool ShouldUseColossusSmash(::Unit* target) const;
-    bool ShouldUseBladestorm() const;
-    bool ShouldUseAvatar(::Unit* target) const;
-    bool HasRendDebuff(::Unit* target) const;
-    void CleanupExpiredDeepWounds();
 
 public:
     explicit ArmsWarriorRefactored(Player* bot)
@@ -529,8 +520,9 @@ private:
     }
 
     void InitializeArmsRotation()
-    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
+    {
+        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed here)
 
         // Setup any Arms-specific initialization
         _tacticalMasteryRage = 0;
