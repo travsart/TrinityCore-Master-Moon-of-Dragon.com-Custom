@@ -758,7 +758,8 @@ bool ShamanAI::HandleTotemManagement(::Unit* target)
     return false;
 }
 
-bool ShamanAI::HandleTargetSwitching(::Unit* target){
+bool ShamanAI::HandleTargetSwitching(::Unit* target)
+{
     auto* behaviors = GetCombatBehaviors();
     if (!behaviors || !target)
         return false;
@@ -769,47 +770,21 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
     Unit* priorityTarget = behaviors->GetPriorityTarget();
 
     if (!priorityTarget || priorityTarget == target)
-    if (!priorityTarget)
-
-            {
-
-                return nullptr;
-
-            }
-        if (!priorityTarget)
-        {
-
-            return nullptr;
-
-        }
-        if (!priorityTarget)
-
-                {
-
-                    return nullptr;
-
-                }
         return false;
 
     // Hex the current target if it's not the priority
     if (CanUseAbility(SPELL_HEX))
     {
-        if (!target->HasAura(SPELL_HEX) && target->GetTypeId() == TYPEID_UNIT)        {
-
+        if (!target->HasAura(SPELL_HEX) && target->GetTypeId() == TYPEID_UNIT)
+        {
             if (CastSpell(SPELL_HEX, target))
-
             {
-
                 TC_LOG_DEBUG("module.playerbot.ai", "Shaman {} hexing {} to switch targets",
-
                              GetBot()->GetName(), target->GetName());
 
                 // Update target
-
                 SetTarget(priorityTarget->GetGUID());
-
                 return true;
-
             }
         }
     }
@@ -819,26 +794,15 @@ bool ShamanAI::HandleTargetSwitching(::Unit* target){
     {
         if (!HasFlameShockOnTarget(priorityTarget))
         {
-
             if (HandleFlameShock(priorityTarget))
-
             {
-
-                if (!priorityTarget)
-
-                {
-
-                    return nullptr;
-
-                }
-
                 SetTarget(priorityTarget->GetGUID());
-
                 return true;
-
             }
         }
-    }    return false;
+    }
+
+    return false;
 }
 
 bool ShamanAI::HandlePurgeDispel(::Unit* target){
