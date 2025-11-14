@@ -48,6 +48,12 @@ struct QuestTurnInData;
 struct TurnInBatch;
 struct QuestMetadata;
 struct QuestProgress;
+struct ValidationResult;
+struct ValidationMetrics;
+struct TurnInMetrics;
+struct QuestReward;
+struct QuestMetrics;
+struct EquipmentMetrics;
 
 /**
  * @brief Unified interface for all quest management operations
@@ -250,7 +256,6 @@ public:
     /**
      * @brief Validation caching and optimization
      */
-    struct ValidationResult;
     virtual ValidationResult GetCachedValidation(uint32 questId, uint32 botGuid) = 0;
     virtual void CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result) = 0;
     virtual void InvalidateValidationCache(uint32 botGuid) = 0;
@@ -436,7 +441,6 @@ public:
     /**
      * @brief Quest reward analysis
      */
-    struct QuestReward;
     virtual QuestReward AnalyzeQuestReward(uint32 questId, Player* bot) = 0;
     virtual float CalculateQuestValue(uint32 questId, Player* bot) = 0;
     virtual bool IsQuestWorthwhile(uint32 questId, Player* bot) = 0;
@@ -504,21 +508,18 @@ public:
     /**
      * @brief Performance monitoring
      */
-    struct QuestMetrics;
     virtual QuestMetrics GetBotQuestMetrics(uint32 botGuid) = 0;
     virtual QuestMetrics GetGlobalQuestMetrics() = 0;
 
     /**
      * @brief Turn-in performance monitoring
      */
-    struct TurnInMetrics;
     virtual TurnInMetrics GetBotTurnInMetrics(uint32 botGuid) = 0;
     virtual TurnInMetrics GetGlobalTurnInMetrics() = 0;
 
     /**
      * @brief Validation performance monitoring
      */
-    struct ValidationMetrics;
     virtual ValidationMetrics GetValidationMetrics() = 0;
 
     /**
