@@ -154,121 +154,47 @@ public:
     {
         for (Unit* member : group)
         {
-
             if (!member)
-
                 continue;
 
-
             ObjectGuid guid = member->GetGUID();
-            if (!member)
-
-            {
-
-                if (!rejuv)
-
-                {
-
-                    return nullptr;
-
-                }
-
-                return;
-
-            }
 
             // Sync with actual auras
-
             if (Aura* rejuv = member->GetAura(RESTO_REJUVENATION))
-
-                if (!lifebloom)
-
-                {
-
-                    return nullptr;
-
-                }
-
+            {
                 _rejuvenationTargets[guid] = GameTime::GetGameTimeMS() + rejuv->GetDuration();
-
-                if (!rejuv)
-
-                {
-
-                    return nullptr;
-
-                if (!wildGrowth)
-
-                {
-
-                    return;
-
-                }
-
-                }
-
+            }
             else
-
+            {
                 _rejuvenationTargets.erase(guid);
-
+            }
 
             if (Aura* lifebloom = member->GetAura(RESTO_LIFEBLOOM))
-
-                if (!cenarionWard)
-
-                {
-
-                    return nullptr;
-
-                }
-
+            {
                 _lifebloomTargets[guid] = GameTime::GetGameTimeMS() + lifebloom->GetDuration();
-
-                if (!lifebloom)
-
-                {
-
-                    return nullptr;
-
-                }
-
+            }
             else
-
+            {
                 _lifebloomTargets.erase(guid);
-
+            }
 
             if (Aura* wildGrowth = member->GetAura(RESTO_WILD_GROWTH))
-
+            {
                 _wildGrowthTargets[guid] = GameTime::GetGameTimeMS() + wildGrowth->GetDuration();
-
-                if (!wildGrowth)
-
-                {
-
-                    return nullptr;
-
-                }
-
+            }
             else
-
+            {
                 _wildGrowthTargets.erase(guid);
-
+            }
 
             if (Aura* cenarionWard = member->GetAura(RESTO_CENARION_WARD))
-
+            {
                 _cenarionWardTargets[guid] = GameTime::GetGameTimeMS() + cenarionWard->GetDuration();
-
-                if (!cenarionWard)
-
-                {
-
-                    return nullptr;
-
-                }
-
+            }
             else
-
+            {
                 _cenarionWardTargets.erase(guid);
+            }
         }
     }
 
