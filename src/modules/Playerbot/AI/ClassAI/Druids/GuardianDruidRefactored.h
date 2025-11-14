@@ -203,18 +203,18 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {GUARDIAN_INCARNATION, 180000, 1},
-
-            {GUARDIAN_BERSERK, 180000, 1},
-
-            {GUARDIAN_BARKSKIN, 60000, 1},
-
-            {GUARDIAN_SURVIVAL_INSTINCTS, 180000, 1},
-
-            {GUARDIAN_FRENZIED_REGEN, 36000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_INCARNATION, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_BERSERK, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_BARKSKIN, 60000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_SURVIVAL_INSTINCTS, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_FRENZIED_REGEN, 36000, 1}
+        // COMMENTED OUT:         });
         TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems

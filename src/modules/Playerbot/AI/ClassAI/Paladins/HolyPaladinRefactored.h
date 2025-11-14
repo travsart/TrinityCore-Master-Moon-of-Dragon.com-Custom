@@ -394,10 +394,6 @@ protected:
         // Critical: Flash of Light
         if (healthPct < 50.0f)
         {
-            if (!tank)
-            {
-                return nullptr;
-            }
             if (this->CanCastSpell(FLASH_OF_LIGHT, target))
             {
                 this->CastSpell(FLASH_OF_LIGHT, target);
@@ -411,10 +407,6 @@ protected:
             if (this->CanCastSpell(HOLY_LIGHT, target))
             {
                 this->CastSpell(HOLY_LIGHT, target);
-                if (!secondTank)
-                {
-                    return nullptr;
-                }
                 return;
             }
         }
@@ -427,12 +419,9 @@ protected:
 
         // Assign beacon to main tank
         Player* tank = GetMainTank(group);
-                if (!tank)
-                {
-                    return;
-                }
         if (tank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), tank))
-        {            if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
+        {
+            if (this->CanCastSpell(BEACON_OF_LIGHT, tank))
             {
                 this->CastSpell(BEACON_OF_LIGHT, tank);
                 _beaconTracker.SetPrimaryBeacon(tank->GetGUID());
@@ -443,10 +432,6 @@ protected:
         if (_beaconTracker.HasSecondaryBeacon())
         {
             Player* secondTank = GetOffTank(group);
-                    if (!secondTank)
-                    {
-                        return;
-                    }
             if (secondTank && _beaconTracker.NeedsBeaconRefresh(this->GetBot(), secondTank))
             {
                 if (this->CanCastSpell(BEACON_OF_FAITH, secondTank))

@@ -167,16 +167,16 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {ARCANE_SURGE, 120000, 1},  // 2 min major DPS cooldown
-            {EVOCATION, 90000, 1},  // 90 sec mana recovery
-            {PRESENCE_OF_MIND, 60000, 1},  // 1 min instant cast
-            {ARCANE_ORB, 60000, 1},  // 1 min AoE builder
-            {SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
-            {ICE_BLOCK, 240000, 1},  // 4 min immunity
-            {MIRROR_IMAGE, 120000, 1},  // 2 min defensive decoy
-            {TIME_WARP, 600000, 1}  // 10 min Heroism/Bloodlust
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {ARCANE_SURGE, 120000, 1},  // 2 min major DPS cooldown
+        // COMMENTED OUT:             {EVOCATION, 90000, 1},  // 90 sec mana recovery
+        // COMMENTED OUT:             {PRESENCE_OF_MIND, 60000, 1},  // 1 min instant cast
+        // COMMENTED OUT:             {ARCANE_ORB, 60000, 1},  // 1 min AoE builder
+        // COMMENTED OUT:             {SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
+        // COMMENTED OUT:             {ICE_BLOCK, 240000, 1},  // 4 min immunity
+        // COMMENTED OUT:             {MIRROR_IMAGE, 120000, 1},  // 2 min defensive decoy
+        // COMMENTED OUT:             {TIME_WARP, 600000, 1}  // 10 min Heroism/Bloodlust
+        // COMMENTED OUT:         });
 
         // Phase 5 Integration: Initialize decision systems
         InitializeArcaneMechanics();

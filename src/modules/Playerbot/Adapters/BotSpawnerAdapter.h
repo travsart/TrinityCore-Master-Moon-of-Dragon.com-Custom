@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "Interfaces/IBotSpawner.h"
+#include "Core/DI/Interfaces/IBotSpawner.h"
 #include "Define.h"
 #include <memory>
 

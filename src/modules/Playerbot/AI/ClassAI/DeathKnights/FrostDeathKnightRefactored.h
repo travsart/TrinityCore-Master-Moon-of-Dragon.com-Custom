@@ -462,20 +462,20 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {OBLITERATE, 0, 1},
-            {FROST_STRIKE, 0, 1},
-            {HOWLING_BLAST, 0, 1},
-            {REMORSELESS_WINTER, 20000, 1},
-            {PILLAR_OF_FROST, CooldownPresets::OFFENSIVE_60, 1},
-            {EMPOWER_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {BREATH_OF_SINDRAGOSA, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {FROSTWYRMS_FURY, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DEATH_GRIP_FROST, 25000, 1},
-            {ANTI_MAGIC_SHELL_FROST, CooldownPresets::OFFENSIVE_60, 1},
-            {ICEBOUND_FORTITUDE_FROST, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DEATHS_ADVANCE_FROST, 90000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {OBLITERATE, 0, 1},
+        // COMMENTED OUT:             {FROST_STRIKE, 0, 1},
+        // COMMENTED OUT:             {HOWLING_BLAST, 0, 1},
+        // COMMENTED OUT:             {REMORSELESS_WINTER, 20000, 1},
+        // COMMENTED OUT:             {PILLAR_OF_FROST, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {EMPOWER_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {BREATH_OF_SINDRAGOSA, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {FROSTWYRMS_FURY, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DEATH_GRIP_FROST, 25000, 1},
+        // COMMENTED OUT:             {ANTI_MAGIC_SHELL_FROST, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {ICEBOUND_FORTITUDE_FROST, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DEATHS_ADVANCE_FROST, 90000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Frost: Pillar of Frost activated");
         }

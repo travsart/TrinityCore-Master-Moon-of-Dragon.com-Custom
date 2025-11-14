@@ -239,18 +239,18 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {HOLY_DIVINE_HYMN, 180000, 1},
-
-            {HOLY_HOLY_WORD_SALVATION, 720000, 1},
-
-            {HOLY_APOTHEOSIS, 120000, 1},
-
-            {HOLY_GUARDIAN_SPIRIT, 180000, 1},
-
-            {HOLY_SYMBOL_OF_HOPE, 300000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_DIVINE_HYMN, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_HOLY_WORD_SALVATION, 720000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_APOTHEOSIS, 120000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_GUARDIAN_SPIRIT, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_SYMBOL_OF_HOPE, 300000, 1}
+        // COMMENTED OUT:         });
 
         // Initialize Phase 5 systems
         InitializeHolyMechanics();

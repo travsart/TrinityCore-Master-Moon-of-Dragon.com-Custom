@@ -378,26 +378,26 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-
-            {RENEWING_MIST, 8500, 1},
-
-            {ESSENCE_FONT, 12000, 1},
-
-            {LIFE_COCOON, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {REVIVAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {INVOKE_YULON, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {INVOKE_CHI_JI, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {THUNDER_FOCUS_TEA, CooldownPresets::OFFENSIVE_30, 1},
-
-            {FORTIFYING_BREW_MIST, 360000, 1},
-
-            {DIFFUSE_MAGIC_MIST, 90000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RENEWING_MIST, 8500, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ESSENCE_FONT, 12000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {LIFE_COCOON, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {REVIVAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {INVOKE_YULON, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {INVOKE_CHI_JI, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {THUNDER_FOCUS_TEA, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FORTIFYING_BREW_MIST, 360000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIFFUSE_MAGIC_MIST, 90000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Mistweaver: Revival raid heal");
 

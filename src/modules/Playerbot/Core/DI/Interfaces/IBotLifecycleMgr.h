@@ -29,6 +29,35 @@ enum class LifecycleEventType
 struct LifecycleEventInfo
 {
     using Type = LifecycleEventType;
+
+    // Event data members
+    LifecycleEventType eventType;
+    ObjectGuid botGuid;
+    uint32 accountId;
+    ::std::string data;
+    ::std::chrono::system_clock::time_point timestamp;
+
+    // Static enum accessors for compatibility
+    static constexpr LifecycleEventType SCHEDULER_LOGIN = LifecycleEventType::SCHEDULER_LOGIN;
+    static constexpr LifecycleEventType SCHEDULER_LOGOUT = LifecycleEventType::SCHEDULER_LOGOUT;
+    static constexpr LifecycleEventType SPAWNER_SUCCESS = LifecycleEventType::SPAWNER_SUCCESS;
+    static constexpr LifecycleEventType SPAWNER_FAILURE = LifecycleEventType::SPAWNER_FAILURE;
+    static constexpr LifecycleEventType POPULATION_UPDATE = LifecycleEventType::POPULATION_UPDATE;
+    static constexpr LifecycleEventType SYSTEM_SHUTDOWN = LifecycleEventType::SYSTEM_SHUTDOWN;
+    static constexpr LifecycleEventType MAINTENANCE_REQUIRED = LifecycleEventType::MAINTENANCE_REQUIRED;
+
+    // Constructor
+    LifecycleEventInfo()
+        : eventType(LifecycleEventType::SCHEDULER_LOGIN), accountId(0)
+    {
+        timestamp = ::std::chrono::system_clock::now();
+    }
+
+    LifecycleEventInfo(LifecycleEventType type, ObjectGuid guid, uint32 acc = 0, ::std::string const& d = "")
+        : eventType(type), botGuid(guid), accountId(acc), data(d)
+    {
+        timestamp = ::std::chrono::system_clock::now();
+    }
 };
 
 /**

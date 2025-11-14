@@ -31,27 +31,7 @@ namespace Playerbot
     class BotSpawner;
 }
 
-struct LifecycleEventInfo
-{
-    enum Type
-    {
-        SCHEDULER_LOGIN,
-        SCHEDULER_LOGOUT,
-        SPAWNER_SUCCESS,
-        SPAWNER_FAILURE,
-        POPULATION_UPDATE,
-        SYSTEM_SHUTDOWN,
-        MAINTENANCE_REQUIRED
-    };
-
-    Type eventType;
-    ObjectGuid botGuid;
-    uint32 accountId;
-    std::string data;
-    std::chrono::system_clock::time_point timestamp;
-    uint32 processingTimeMs = 0;
-    std::string correlationId;
-};
+// LifecycleEventInfo is defined in IBotLifecycleMgr.h
 
 // Performance monitoring metrics
 struct PerformanceMetrics

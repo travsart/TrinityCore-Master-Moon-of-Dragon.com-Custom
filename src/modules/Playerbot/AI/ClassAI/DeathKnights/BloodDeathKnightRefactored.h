@@ -441,22 +441,22 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {MARROWREND, 0, 1},
-            {HEART_STRIKE, 0, 1},
-            {BLOOD_BOIL, 0, 1},
-            {DEATH_STRIKE, 0, 1},
-            {DARK_COMMAND, CooldownPresets::DISPEL, 1},
-            {VAMPIRIC_BLOOD, 90000, 1},
-            {DANCING_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {ICEBOUND_FORTITUDE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {ANTI_MAGIC_SHELL, CooldownPresets::OFFENSIVE_60, 1},
-            {RUNE_TAP, 25000, 1},
-            {DEATH_GRIP, 25000, 1},
-            {DEATHS_ADVANCE, 90000, 1},
-            {GOREFIENDS_GRASP, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {ARMY_OF_THE_DEAD, 480000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {MARROWREND, 0, 1},
+        // COMMENTED OUT:             {HEART_STRIKE, 0, 1},
+        // COMMENTED OUT:             {BLOOD_BOIL, 0, 1},
+        // COMMENTED OUT:             {DEATH_STRIKE, 0, 1},
+        // COMMENTED OUT:             {DARK_COMMAND, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT:             {VAMPIRIC_BLOOD, 90000, 1},
+        // COMMENTED OUT:             {DANCING_RUNE_WEAPON, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {ICEBOUND_FORTITUDE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {ANTI_MAGIC_SHELL, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {RUNE_TAP, 25000, 1},
+        // COMMENTED OUT:             {DEATH_GRIP, 25000, 1},
+        // COMMENTED OUT:             {DEATHS_ADVANCE, 90000, 1},
+        // COMMENTED OUT:             {GOREFIENDS_GRASP, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {ARMY_OF_THE_DEAD, 480000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Blood: Anti-Magic Shell");
             return;

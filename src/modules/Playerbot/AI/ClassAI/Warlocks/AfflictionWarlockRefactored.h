@@ -328,16 +328,16 @@ protected:
                 
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {SUMMON_DARKGLARE, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {PHANTOM_SINGULARITY, CooldownPresets::OFFENSIVE_45, 1},
-            {VILE_TAINT, 20000, 1},
-            {SOUL_ROT, CooldownPresets::OFFENSIVE_60, 1},
-            {UNENDING_RESOLVE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DARK_PACT, CooldownPresets::OFFENSIVE_60, 1},
-            {MORTAL_COIL, CooldownPresets::OFFENSIVE_45, 1},
-            {HOWL_OF_TERROR, 40000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {SUMMON_DARKGLARE, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {PHANTOM_SINGULARITY, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {VILE_TAINT, 20000, 1},
+        // COMMENTED OUT:             {SOUL_ROT, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {UNENDING_RESOLVE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DARK_PACT, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {MORTAL_COIL, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {HOWL_OF_TERROR, 40000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Affliction: Summon Darkglare");
                 return;

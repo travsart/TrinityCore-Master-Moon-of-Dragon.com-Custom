@@ -194,16 +194,16 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {ENHANCEMENT_FERAL_SPIRIT, 120000, 1},
-
-            {ENHANCEMENT_DOOM_WINDS, 60000, 1},
-
-            {ENHANCEMENT_ASCENDANCE, 180000, 1},
-
-            {ENHANCEMENT_STORMSTRIKE, 9000, 2}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ENHANCEMENT_FERAL_SPIRIT, 120000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ENHANCEMENT_DOOM_WINDS, 60000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ENHANCEMENT_ASCENDANCE, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ENHANCEMENT_STORMSTRIKE, 9000, 2}
+        // COMMENTED OUT:         });
 
         // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "EnhancementShamanRefactored initialized for {}", bot->GetName());
         InitializeEnhancementMechanics();

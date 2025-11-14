@@ -259,7 +259,7 @@ public:
 // DISTANCE AND POSITIONING UTILITIES
 // ============================================================================
 
-class PositionUtils
+class RotationPositionUtils
 {
 public:
     /**

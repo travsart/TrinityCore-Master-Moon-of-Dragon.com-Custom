@@ -456,23 +456,23 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {RISING_SUN_KICK, 10000, 1},
-            {FISTS_OF_FURY, 24000, 1},
-            {WHIRLING_DRAGON_PUNCH, 24000, 1},
-            {STRIKE_OF_THE_WINDLORD, 40000, 1},
-            {STORM_EARTH_AND_FIRE, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {INVOKE_XUEN, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {SERENITY, 90000, 1},
-            {TOUCH_OF_DEATH, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {TOUCH_OF_KARMA, 90000, 1},
-            {FORTIFYING_BREW_WIND, 360000, 1},
-            {DIFFUSE_MAGIC_WIND, 90000, 1},
-            {LEG_SWEEP, CooldownPresets::OFFENSIVE_60, 1},
-            {RING_OF_PEACE, CooldownPresets::OFFENSIVE_45, 1},
-            {CHI_WAVE_WIND, CooldownPresets::INTERRUPT, 1},
-            {CHI_BURST_WIND, CooldownPresets::OFFENSIVE_30, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {RISING_SUN_KICK, 10000, 1},
+        // COMMENTED OUT:             {FISTS_OF_FURY, 24000, 1},
+        // COMMENTED OUT:             {WHIRLING_DRAGON_PUNCH, 24000, 1},
+        // COMMENTED OUT:             {STRIKE_OF_THE_WINDLORD, 40000, 1},
+        // COMMENTED OUT:             {STORM_EARTH_AND_FIRE, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {INVOKE_XUEN, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {SERENITY, 90000, 1},
+        // COMMENTED OUT:             {TOUCH_OF_DEATH, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {TOUCH_OF_KARMA, 90000, 1},
+        // COMMENTED OUT:             {FORTIFYING_BREW_WIND, 360000, 1},
+        // COMMENTED OUT:             {DIFFUSE_MAGIC_WIND, 90000, 1},
+        // COMMENTED OUT:             {LEG_SWEEP, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {RING_OF_PEACE, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {CHI_WAVE_WIND, CooldownPresets::INTERRUPT, 1},
+        // COMMENTED OUT:             {CHI_BURST_WIND, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Windwalker: Storm, Earth, and Fire activated");
         }
