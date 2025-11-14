@@ -39,7 +39,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 /**
  * Refactored Retribution Paladin using template architecture
  *
@@ -408,7 +408,7 @@ protected:
                     }),
                     Selector("Execute Priority", {
                         // Hammer of Wrath (execute ability)
-                        ::bot::ai::Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_HAMMER_OF_WRATH, target))
                             {
                                 this->CastSpell(SPELL_HAMMER_OF_WRATH, target);
@@ -418,7 +418,7 @@ protected:
                             return NodeStatus::FAILURE;
                         }),
                         // Templar's Verdict if we have HP
-                        ::bot::ai::Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
                             if (this->_holyPower.GetAvailable() >= 3 &&
                                 this->CanCastSpell(SPELL_TEMPLARS_VERDICT, target))
                             {
@@ -447,7 +447,7 @@ protected:
                                     Condition("3+ enemies", [](Player* bot, Unit*) {
                                         return bot->getAttackers().size() >= 3;
                                     }),
-                                    ::bot::ai::Action("Cast Divine Storm", [this](Player* bot, Unit*) {
+                                    bot::ai::Action("Cast Divine Storm", [this](Player* bot, Unit*) {
                                         if (this->CanCastSpell(SPELL_DIVINE_STORM, bot))
                                         {
                                             this->CastSpell(SPELL_DIVINE_STORM, bot);
@@ -458,7 +458,7 @@ protected:
                                     })
                                 }),
                                 // Templar's Verdict single target
-                                ::bot::ai::Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Templar's Verdict", [this](Player* bot, Unit* target) {
                                     if (this->CanCastSpell(SPELL_TEMPLARS_VERDICT, target))
                                     {
                                         this->CastSpell(SPELL_TEMPLARS_VERDICT, target);
@@ -476,7 +476,7 @@ protected:
                             }),
                             Selector("HP Generator Priority", {
                                 // Crusader Strike
-                                ::bot::ai::Action("Cast Crusader Strike", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Crusader Strike", [this](Player* bot, Unit* target) {
                                     if (this->CanCastSpell(SPELL_CRUSADER_STRIKE, target))
                                     {
                                         this->CastSpell(SPELL_CRUSADER_STRIKE, target);
@@ -490,7 +490,7 @@ protected:
                                     Condition("Has Art of War proc", [this](Player* bot, Unit*) {
                                         return this->_hasArtOfWar;
                                     }),
-                                    ::bot::ai::Action("Cast Exorcism", [this](Player* bot, Unit* target) {
+                                    bot::ai::Action("Cast Exorcism", [this](Player* bot, Unit* target) {
                                         if (this->CanCastSpell(SPELL_EXORCISM, target))
                                         {
                                             this->CastSpell(SPELL_EXORCISM, target);
@@ -514,7 +514,7 @@ protected:
                     }),
                     Selector("Cooldown Priority", {
                         // Avenging Wrath
-                        ::bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
                             if (this->CanCastSpell(SPELL_AVENGING_WRATH, bot))
                             {
                                 this->CastSpell(SPELL_AVENGING_WRATH, bot);
@@ -523,7 +523,7 @@ protected:
                             return NodeStatus::FAILURE;
                         }),
                         // Guardian of Ancient Kings
-                        ::bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
                             if (this->CanCastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot))
                             {
                                 this->CastSpell(SPELL_GUARDIAN_OF_ANCIENT_KINGS, bot);
@@ -540,7 +540,7 @@ protected:
                 Sequence("Standard Rotation", {
                     Selector("Rotation Priority", {
                         // Judgment
-                        ::bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_JUDGMENT, target))
                             {
                                 this->CastSpell(SPELL_JUDGMENT, target);
@@ -554,7 +554,7 @@ protected:
                             Condition("In melee range", [](Player* bot, Unit* target) {
                                 return target && bot->IsWithinMeleeRange(target);
                             }),
-                            ::bot::ai::Action("Cast Consecration", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Consecration", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(SPELL_CONSECRATION, bot))
                                 {
                                     this->CastSpell(SPELL_CONSECRATION, bot);
@@ -565,7 +565,7 @@ protected:
                         }),
 
                         // Holy Wrath filler
-                        ::bot::ai::Action("Cast Holy Wrath", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Holy Wrath", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_HOLY_WRATH, target))
                             {
                                 this->CastSpell(SPELL_HOLY_WRATH, target);

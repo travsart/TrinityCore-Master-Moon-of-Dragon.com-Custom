@@ -44,7 +44,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // ASSASSINATION ROGUE REFACTORED
 // ============================================================================
@@ -491,7 +491,7 @@ private:
                     }),
                     Selector("Choose Opener", {
                         Sequence("Cast Garrote", {
-                            ::bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
                                     this->CastSpell(RogueAI::GARROTE, target);
@@ -515,7 +515,7 @@ private:
                             Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_vendettaActive;
                             }),
-                            ::bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(VENDETTA, target))
                                 {
                                     this->CastSpell(VENDETTA, target);
@@ -530,7 +530,7 @@ private:
                             Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(RogueAI::DEATHMARK);
                             }),
-                            ::bot::ai::Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::DEATHMARK, target))
                                 {
                                     this->CastSpell(RogueAI::DEATHMARK, target);
@@ -554,7 +554,7 @@ private:
                                 return this->_resource.energy >= 45 &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE);
                             }),
-                            ::bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
                                     this->CastSpell(RogueAI::GARROTE, target);
@@ -571,7 +571,7 @@ private:
                                 return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE);
                             }),
-                            ::bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
                                     this->CastSpell(RogueAI::RUPTURE, target);
@@ -599,7 +599,7 @@ private:
                                 return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
                                        this->_resource.energy >= 35;
                             }),
-                            ::bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ENVENOM, target))
                                 {
                                     this->CastSpell(ENVENOM, target);
@@ -617,7 +617,7 @@ private:
                                 return bot && bot->HasSpell(KINGSBANE) &&
                                        this->_resource.energy >= 35;
                             }),
-                            ::bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(KINGSBANE, target))
                                 {
                                     this->CastSpell(KINGSBANE, target);
@@ -633,7 +633,7 @@ private:
                                 return this->_resource.energy >= 50 &&
                                        this->_resource.comboPoints < this->_resource.maxComboPoints;
                             }),
-                            ::bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(MUTILATE, target))
                                 {
                                     this->CastSpell(MUTILATE, target);

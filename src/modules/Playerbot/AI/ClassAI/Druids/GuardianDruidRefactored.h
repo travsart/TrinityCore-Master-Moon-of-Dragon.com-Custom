@@ -45,7 +45,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Guardian Druid Spell IDs
 constexpr uint32 GUARDIAN_MANGLE = 33917;
 constexpr uint32 GUARDIAN_THRASH = 77758;
@@ -867,7 +867,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Survival Instincts", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Survival Instincts", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
 
@@ -893,7 +893,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Frenzied Regeneration", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Frenzied Regeneration", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_FRENZIED_REGENERATION, bot))
 
@@ -923,7 +923,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Barkskin", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Barkskin", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_BARKSKIN, bot))
 
@@ -955,7 +955,7 @@ private:
 
                     }),
 
-                    ::bot::ai::Action("Cast Ironfur", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Cast Ironfur", [this](Player* bot, Unit*) {
 
                         if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
 
@@ -1005,7 +1005,7 @@ private:
 
                                     }),
 
-                                    ::bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
+                                    bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))
 
@@ -1029,7 +1029,7 @@ private:
 
                                 Sequence("Berserk", {
 
-                                    ::bot::ai::Action("Cast Berserk", [this](Player* bot, Unit*) {
+                                    bot::ai::Action("Cast Berserk", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
 
@@ -1057,7 +1057,7 @@ private:
 
                         Sequence("Mangle (priority builder)", {
 
-                            ::bot::ai::Action("Cast Mangle", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Mangle", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1091,7 +1091,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1125,7 +1125,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Maul", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Maul", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1157,7 +1157,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Pulverize", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Pulverize", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1203,7 +1203,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1233,7 +1233,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 

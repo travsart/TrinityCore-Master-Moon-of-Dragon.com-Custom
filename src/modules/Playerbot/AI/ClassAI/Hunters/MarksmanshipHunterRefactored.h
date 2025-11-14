@@ -48,7 +48,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 Marksmanship Hunter Spell IDs
 enum MarksmanshipSpells
 {
@@ -918,7 +918,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_TRUESHOT))
 
@@ -951,7 +951,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DOUBLE_TAP))
 
@@ -984,7 +984,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_RAPID_FIRE))
 
@@ -1034,7 +1034,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_AIMED_SHOT))
 
@@ -1085,7 +1085,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1118,7 +1118,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
 
@@ -1163,7 +1163,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 this->CastSpell(SPELL_STEADY_SHOT, target);
 
@@ -1186,7 +1186,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 

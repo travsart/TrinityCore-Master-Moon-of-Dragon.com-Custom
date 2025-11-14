@@ -39,7 +39,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
@@ -631,7 +631,7 @@ private:
                             Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_symbolsOfDeathActive;
                             }),
-                            ::bot::ai::Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, bot))
                                 {
                                     this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, bot);
@@ -647,7 +647,7 @@ private:
                                 return bot && bot->HasSpell(RogueAI::SHADOW_BLADES) &&
                                        !this->_shadowBladesActive;
                             }),
-                            ::bot::ai::Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SHADOW_BLADES, bot))
                                 {
                                     this->CastSpell(RogueAI::SHADOW_BLADES, bot);
@@ -667,7 +667,7 @@ private:
                         return target != nullptr &&
                                this->_shadowDanceTracker.ShouldUse(this->_resource.comboPoints);
                     }),
-                    ::bot::ai::Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(RogueAI::SHADOW_DANCE, bot))
                         {
                             this->CastSpell(RogueAI::SHADOW_DANCE, bot);
@@ -693,7 +693,7 @@ private:
                                        !this->HasRupture(target) &&
                                        this->_resource.energy >= 25;
                             }),
-                            ::bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
                                     this->CastSpell(RogueAI::RUPTURE, target);
@@ -711,7 +711,7 @@ private:
                                        this->_resource.comboPoints >= this->_resource.maxComboPoints &&
                                        this->_resource.energy >= 30;
                             }),
-                            ::bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SECRET_TECHNIQUE, target))
                                 {
                                     this->CastSpell(SECRET_TECHNIQUE, target);
@@ -727,7 +727,7 @@ private:
                             Condition("35+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 35;
                             }),
-                            ::bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
                                     this->CastSpell(EVISCERATE_SUB, target);
@@ -754,7 +754,7 @@ private:
                             Condition("In stealth and 40+ Energy", [this](Player* bot, Unit*) {
                                 return this->_inStealth && this->_resource.energy >= 40;
                             }),
-                            ::bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
                                     this->CastSpell(SHADOWSTRIKE_SUB, target);
@@ -773,7 +773,7 @@ private:
                             Condition("Behind target and 35+ Energy", [this](Player* bot, Unit* target) {
                                 return this->IsBehindTarget(target) && this->_resource.energy >= 35;
                             }),
-                            ::bot::ai::Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::BACKSTAB, target))
                                 {
                                     this->CastSpell(RogueAI::BACKSTAB, target);
@@ -792,7 +792,7 @@ private:
                             Condition("40+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 40;
                             }),
-                            ::bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
                                     this->CastSpell(SHADOWSTRIKE_SUB, target);

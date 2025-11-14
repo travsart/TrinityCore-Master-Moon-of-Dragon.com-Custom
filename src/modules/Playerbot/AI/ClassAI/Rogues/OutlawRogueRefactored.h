@@ -39,7 +39,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs (BLADE_FLURRY, ADRENALINE_RUSH, KILLING_SPREE, etc.) are in RogueSpecialization.h
 // Only Outlaw-UNIQUE spell IDs defined below to avoid duplicate definition errors
 // NOTE: ComboPointsOutlaw is defined in RogueResourceTypes.h (spec-specific resource type)
@@ -656,7 +656,7 @@ private:
                             Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_adrenalineRushActive;
                             }),
-                            ::bot::ai::Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, bot))
                                 {
                                     this->CastSpell(RogueAI::ADRENALINE_RUSH, bot);
@@ -677,7 +677,7 @@ private:
                                this->_resource.comboPoints >= 1 &&
                                this->_rollTheBonesTracker.NeedsReroll();
                     }),
-                    ::bot::ai::Action("Cast Roll the Bones", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Roll the Bones", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ROLL_THE_BONES, bot))
                         {
                             this->CastSpell(ROLL_THE_BONES, bot);
@@ -703,7 +703,7 @@ private:
                                 return this->_resource.comboPoints >= this->_resource.maxComboPoints &&
                                        this->_resource.energy >= 25;
                             }),
-                            ::bot::ai::Action("Cast Between the Eyes", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Between the Eyes", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(BETWEEN_THE_EYES, target))
                                 {
                                     this->CastSpell(BETWEEN_THE_EYES, target);
@@ -719,7 +719,7 @@ private:
                             Condition("35+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 35;
                             }),
-                            ::bot::ai::Action("Cast Dispatch", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Dispatch", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(DISPATCH_OUTLAW, target))
                                 {
                                     this->CastSpell(DISPATCH_OUTLAW, target);
@@ -746,7 +746,7 @@ private:
                             Condition("Has Opportunity proc", [this](Player* bot, Unit*) {
                                 return bot && bot->HasAura(OPPORTUNITY_PROC);
                             }),
-                            ::bot::ai::Action("Cast Pistol Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Pistol Shot", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(PISTOL_SHOT, target))
                                 {
                                     this->CastSpell(PISTOL_SHOT, target);
@@ -762,7 +762,7 @@ private:
                                 return bot && bot->HasSpell(BLADE_RUSH) &&
                                        this->_resource.energy >= 25;
                             }),
-                            ::bot::ai::Action("Cast Blade Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Blade Rush", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(BLADE_RUSH, target))
                                 {
                                     this->CastSpell(BLADE_RUSH, target);
@@ -778,7 +778,7 @@ private:
                             Condition("45+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 45;
                             }),
-                            ::bot::ai::Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
                                 {
                                     this->CastSpell(RogueAI::SINISTER_STRIKE, target);

@@ -40,7 +40,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // PROTECTION PALADIN SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -964,7 +964,7 @@ private:
                     Selector("Emergency Response", {
                         // Divine Shield at critical HP
 
-                        ::bot::ai::Action("Cast Divine Shield", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Divine Shield", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 15.0f &&
 
@@ -983,7 +983,7 @@ private:
                         }),
                         // Lay on Hands
 
-                        ::bot::ai::Action("Cast Lay on Hands", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Lay on Hands", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 20.0f &&
 
@@ -1002,7 +1002,7 @@ private:
                         }),
                         // Guardian of Ancient Kings
 
-                        ::bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 35.0f &&
 
@@ -1021,7 +1021,7 @@ private:
                         }),
                         // Ardent Defender
 
-                        ::bot::ai::Action("Cast Ardent Defender", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Ardent Defender", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 50.0f &&
 
@@ -1040,7 +1040,7 @@ private:
                         }),
                         // Word of Glory emergency heal
 
-                        ::bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
 
                             if (this->_resource.holyPower >= 3 &&
 
@@ -1084,7 +1084,7 @@ private:
 
                     }),
 
-                    ::bot::ai::Action("Cast Shield of the Righteous", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Cast Shield of the Righteous", [this](Player* bot, Unit*) {
 
                         if (this->CanCastSpell(SHIELD_OF_THE_RIGHTEOUS, bot))
 
@@ -1118,7 +1118,7 @@ private:
 
                     }),
 
-                    ::bot::ai::Action("Cast Hand of Reckoning", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Hand of Reckoning", [this](Player* bot, Unit* target) {
 
                         if (this->CanCastSpell(HAND_OF_RECKONING, target))
 
@@ -1159,7 +1159,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
 
                                 if (bot->GetHealthPct() < 90.0f &&
 
@@ -1193,7 +1193,7 @@ private:
                             Selector("HP Generator Priority", {
                                 // Avenger's Shield (high threat)
 
-                                ::bot::ai::Action("Cast Avenger's Shield", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Avenger's Shield", [this](Player* bot, Unit* target) {
 
                                     if (this->CanCastSpell(AVENGERS_SHIELD, target))
 
@@ -1212,7 +1212,7 @@ private:
                                 }),
                                 // Judgment
 
-                                ::bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
 
                                     if (this->CanCastSpell(JUDGMENT_PROT, target))
 
@@ -1241,7 +1241,7 @@ private:
 
                                     }),
 
-                                    ::bot::ai::Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
+                                    bot::ai::Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
 
                                         if (this->CanCastSpell(HAMMER_OF_WRATH_PROT, target))
 
@@ -1262,7 +1262,7 @@ private:
                                 }),
                                 // Blessed Hammer (talent)
 
-                                ::bot::ai::Action("Cast Blessed Hammer", [this](Player* bot, Unit*) {
+                                bot::ai::Action("Cast Blessed Hammer", [this](Player* bot, Unit*) {
 
                                     if (this->CanCastSpell(BLESSED_HAMMER, bot))
 
@@ -1305,7 +1305,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Consecration", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Consecration", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(CONSECRATION, bot))
 
@@ -1339,7 +1339,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(AVENGING_WRATH_PROT, bot))
 
@@ -1359,7 +1359,7 @@ private:
 
                         // Hammer of the Righteous filler
 
-                        ::bot::ai::Action("Cast Hammer of the Righteous", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Hammer of the Righteous", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
 

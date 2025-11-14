@@ -37,7 +37,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // FROST DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -673,7 +673,7 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_pillarOfFrostActive;
                             }),
-                            ::bot::ai::Action("Cast Pillar", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Pillar", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(FROST_PILLAR_OF_FROST, bot))
                                 {
                                     this->CastSpell(FROST_PILLAR_OF_FROST, bot);
@@ -688,7 +688,7 @@ private:
                             Condition("< 3 runes", [this](Player*) {
                                 return this->_resource.GetAvailableRunes() < 3;
                             }),
-                            ::bot::ai::Action("Cast ERW", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast ERW", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(FROST_EMPOWER_RUNE_WEAPON, bot))
                                 {
                                     this->CastSpell(FROST_EMPOWER_RUNE_WEAPON, bot);
@@ -710,7 +710,7 @@ private:
                             Condition("KM active and 2 runes", [this](Player*) {
                                 return this->_kmTracker.IsActive() && this->_resource.GetAvailableRunes() >= 2;
                             }),
-                            ::bot::ai::Action("Cast Obliterate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {
@@ -727,7 +727,7 @@ private:
                             Condition("Rime active", [this](Player*) {
                                 return this->_rimeTracker.IsActive();
                             }),
-                            ::bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
@@ -747,7 +747,7 @@ private:
                     Condition("25+ RP and target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && this->_resource.runicPower >= 25;
                     }),
-                    ::bot::ai::Action("Cast Frost Strike", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Frost Strike", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_FROST_STRIKE, target))
                         {
@@ -769,7 +769,7 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(10.0f) >= 3;
                             }),
-                            ::bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
@@ -780,7 +780,7 @@ private:
                             })
                         }),
                         Sequence("Obliterate (ST)", {
-                            ::bot::ai::Action("Cast Obliterate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {

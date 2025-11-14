@@ -46,7 +46,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Discipline Priest Spell IDs
 constexpr uint32 DISC_SMITE = 585;
 constexpr uint32 DISC_PENANCE = 47540;
@@ -1302,7 +1302,7 @@ private:
                     Selector("Emergency Response", {
                         // Pain Suppression for tank
 
-                        ::bot::ai::Action("Cast Pain Suppression", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Pain Suppression", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1342,7 +1342,7 @@ private:
                         }),
                         // Desperate Prayer for self
 
-                        ::bot::ai::Action("Cast Desperate Prayer", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Desperate Prayer", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 30.0f &&
 
@@ -1361,7 +1361,7 @@ private:
                         }),
                         // Shadow Mend emergency spam
 
-                        ::bot::ai::Action("Cast Shadow Mend", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Shadow Mend", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1427,7 +1427,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Evangelism", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Evangelism", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(DISC_EVANGELISM, bot))
 
@@ -1454,7 +1454,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Radiance", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Radiance", [this](Player* bot, Unit*) {
 
                                 Group* group = bot->GetGroup();
 
@@ -1496,7 +1496,7 @@ private:
                         }),
                         // Power Word: Shield - Single target Atonement
 
-                        ::bot::ai::Action("Cast Shield", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Shield", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1583,7 +1583,7 @@ private:
                     Selector("Healing Priority", {
                         // Penance for moderate damage
 
-                        ::bot::ai::Action("Cast Penance Heal", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Penance Heal", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1653,7 +1653,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Schism", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Schism", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(DISC_SCHISM, target))
 
@@ -1672,7 +1672,7 @@ private:
                         }),
                         // Mindgames - burst damage
 
-                        ::bot::ai::Action("Cast Mindgames", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mindgames", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_MINDGAMES, target))
 
@@ -1689,7 +1689,7 @@ private:
                         }),
                         // Penance (offensive)
 
-                        ::bot::ai::Action("Cast Penance Damage", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Penance Damage", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_PENANCE, target))
 
@@ -1714,7 +1714,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Purge the Wicked", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Purge the Wicked", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(DISC_PURGE_WICKED, target))
 
@@ -1733,7 +1733,7 @@ private:
                         }),
                         // Smite (filler)
 
-                        ::bot::ai::Action("Cast Smite", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Smite", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_SMITE, target))
 

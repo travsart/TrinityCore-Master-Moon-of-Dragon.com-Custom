@@ -38,7 +38,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // PRESERVATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -695,7 +695,7 @@ protected:
                         for (auto* m : group) if (m && m->GetHealthPct() < 40.0f) critical++;
                         return critical >= 3;
                     }),
-                    ::bot::ai::Action("Cast Emerald Communion", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Cast Emerald Communion", [this](Player* bot, Unit*) {
                         if (this->CanCastSpell(EMERALD_COMMUNION, bot)) {
                             this->CastSpell(EMERALD_COMMUNION, bot);
                             return NodeStatus::SUCCESS;
@@ -719,7 +719,7 @@ protected:
                                 for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) return true;
                                 return false;
                             }),
-                            ::bot::ai::Action("Cast Spirit Bloom", [this](Player*) {
+                            bot::ai::Action("Cast Spirit Bloom", [this](Player*) {
                                 auto group = this->GetGroupMembers();
                                 Unit* target = this->GetLowestHealthTarget(group);
                                 if (target && this->CanCastSpell(SPIRIT_BLOOM, target)) {
@@ -736,7 +736,7 @@ protected:
                                 for (auto* m : group) if (m && m->GetHealthPct() < 85.0f) injured++;
                                 return injured >= 3;
                             }),
-                            ::bot::ai::Action("Cast Dream Breath", [this](Player*) {
+                            bot::ai::Action("Cast Dream Breath", [this](Player*) {
                                 auto group = this->GetGroupMembers();
                                 Unit* target = this->GetMostInjuredTarget(group);
                                 if (target && this->CanCastSpell(DREAM_BREATH, target)) {
@@ -757,7 +757,7 @@ protected:
                     Condition("Has essence", [this](Player*) {
                         return this->_resource.essence >= 1;
                     }),
-                    ::bot::ai::Action("Cast Reversion", [this](Player*) {
+                    bot::ai::Action("Cast Reversion", [this](Player*) {
                         auto group = this->GetGroupMembers();
                         for (Unit* member : group) {
                             if (member && member->GetHealthPct() < 95.0f && !this->_echoTracker.HasEcho(member->GetGUID())) {
@@ -787,7 +787,7 @@ protected:
                                 for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
                                 return injured >= 3;
                             }),
-                            ::bot::ai::Action("Cast Emerald Blossom", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Emerald Blossom", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(EMERALD_BLOSSOM, bot)) {
                                     this->CastSpell(EMERALD_BLOSSOM, bot);
                                     this->_resource.Consume(3);
@@ -797,7 +797,7 @@ protected:
                             })
                         }),
                         Sequence("Verdant Embrace", {
-                            ::bot::ai::Action("Cast Verdant Embrace", [this](Player*) {
+                            bot::ai::Action("Cast Verdant Embrace", [this](Player*) {
                                 Unit* target = this->GetLowestHealthTarget(this->GetGroupMembers());
                                 if (target && target->GetHealthPct() < 70.0f && this->CanCastSpell(VERDANT_EMBRACE, target)) {
                                     this->CastSpell(VERDANT_EMBRACE, target);
@@ -815,7 +815,7 @@ protected:
                     Condition("< 3 essence", [this](Player*) {
                         return this->_resource.essence < 3;
                     }),
-                    ::bot::ai::Action("Cast Azure Strike", [this](Player*) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player*) {
                         Unit* target = this->FindNearbyEnemy();
                         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target)) {
                             this->CastSpell(AZURE_STRIKE_PRES, target);
