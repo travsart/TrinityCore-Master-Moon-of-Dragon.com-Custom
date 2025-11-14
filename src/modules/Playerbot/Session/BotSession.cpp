@@ -1136,7 +1136,7 @@ void BotSession::QueueDeferredPacket(::std::unique_ptr<WorldPacket> packet)
     // Log BEFORE moving (packet will be invalid after move)
     OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
 
-    ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
+    ::std::lock_guard lock(_deferredPacketMutex);
     _deferredPackets.emplace(::std::move(packet));
 
     TC_LOG_TRACE("playerbot.packets.deferred",
@@ -1158,7 +1158,7 @@ uint32 BotSession::ProcessDeferredPackets()
 
         // Quick lock to extract one packet
         {
-            ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
+            ::std::lock_guard lock(_deferredPacketMutex);
             if (_deferredPackets.empty())
                 break;
 
@@ -1261,7 +1261,7 @@ uint32 BotSession::ProcessDeferredPackets()
 
 bool BotSession::HasDeferredPackets() const
 {
-    ::std::lock_guard<::std::mutex> lock(_deferredPacketMutex);
+    ::std::lock_guard lock(_deferredPacketMutex);
     return !_deferredPackets.empty();
 }
 

@@ -88,7 +88,7 @@ void DoubleBufferedSpatialGrid::Update() const
     // Other threads will skip if update is already in progress
 
     // Try to acquire lock (non-blocking)
-    ::std::unique_lock<::std::mutex> lock(_updateMutex, ::std::try_to_lock);
+    ::std::unique_lock lock(_updateMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Another thread is already updating, skip

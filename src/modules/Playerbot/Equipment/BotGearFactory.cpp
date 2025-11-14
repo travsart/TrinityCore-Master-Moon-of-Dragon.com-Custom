@@ -35,7 +35,7 @@ BotGearFactory::BotGearFactory()
 
 void BotGearFactory::Initialize()
 {
-    ::std::lock_guard<::std::mutex> lock(_initMutex);
+    ::std::lock_guard lock(_initMutex);
 
     if (_cacheReady.load(::std::memory_order_acquire))
     {

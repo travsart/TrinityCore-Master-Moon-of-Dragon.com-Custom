@@ -285,7 +285,7 @@ bool GroupInvitationHandler::AcceptInvitation(ObjectGuid inviterGuid)
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
+    ::std::unique_lock lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -298,7 +298,7 @@ void GroupInvitationHandler::DeclineInvitation(ObjectGuid inviterGuid, ::std::st
 {
     // NOTE: This method can be called with _invitationMutex already locked by ProcessNextInvitation()
     // We use try_lock to avoid deadlock
-    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
+    ::std::unique_lock lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Already locked by caller (ProcessNextInvitation), proceed without locking
@@ -603,7 +603,7 @@ void GroupInvitationHandler::UpdateStatistics(bool accepted, ::std::chrono::mill
 bool GroupInvitationHandler::ProcessNextInvitation()
 {
     // CRITICAL: Use try_lock to avoid deadlock - if mutex is busy, skip this update and try next time
-    ::std::unique_lock<::std::recursive_mutex> lock(_invitationMutex, ::std::try_to_lock);
+    ::std::unique_lock lock(_invitationMutex, ::std::try_to_lock);
     if (!lock.owns_lock())
     {
         // Mutex is busy, skip this update cycle

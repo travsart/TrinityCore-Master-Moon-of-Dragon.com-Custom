@@ -327,7 +327,7 @@ struct WorkerDiagnostics
     void EnterWait(const char* func, const char* type, uint32 timeout,
                    const char* file, uint32 line)
     {
-        ::std::lock_guard<::std::mutex> lock(waitMutex);
+        ::std::lock_guard lock(waitMutex);
         currentWait = WaitLocationInfo{
             func, type, timeout, line, file,
             ::std::chrono::steady_clock::now()
@@ -339,7 +339,7 @@ struct WorkerDiagnostics
      */
     void ExitWait()
     {
-        ::std::lock_guard<::std::mutex> lock(waitMutex);
+        ::std::lock_guard lock(waitMutex);
         currentWait.reset();
     }
 
@@ -348,7 +348,7 @@ struct WorkerDiagnostics
      */
     ::std::optional<WaitLocationInfo> GetCurrentWait() const
     {
-        ::std::lock_guard<::std::mutex> lock(const_cast<::std::mutex&>(waitMutex));
+        ::std::lock_guard lock(const_cast<decltype(waitMutex)&>(waitMutex));
         return currentWait;
     }
 
