@@ -100,6 +100,14 @@ public:
     using Base::IsInMeleeRange;
     using Base::CanUseAbility;
 
+    // BehaviorTree helper functions (must be accessible in member functions)
+    using bot::ai::Sequence;
+    using bot::ai::Selector;
+    using bot::ai::Condition;
+    using bot::ai::Inverter;
+    using bot::ai::Repeater;
+    using bot::ai::NodeStatus;
+
 private:
     // Forward declarations for methods called in constructor
     void InitializeDebuffTracking();
