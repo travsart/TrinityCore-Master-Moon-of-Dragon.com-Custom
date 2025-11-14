@@ -279,7 +279,7 @@ public:
         if (!bot->HasAura(DEVOTION_AURA_PROT) && this->CanCastSpell(DEVOTION_AURA_PROT, bot))
         {
 
-            this->CastSpell(bot, DEVOTION_AURA_PROT);
+            this->CastSpell(DEVOTION_AURA_PROT, bot);
         }
 
         // Emergency defensives
@@ -334,7 +334,7 @@ protected:
 
             {
 
-                this->CastSpell(target, AVENGERS_SHIELD);
+                this->CastSpell(AVENGERS_SHIELD, target);
 
                 _lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -349,7 +349,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(JUDGMENT_PROT, target))
         {
 
-            this->CastSpell(target, JUDGMENT_PROT);
+            this->CastSpell(JUDGMENT_PROT, target);
 
             _lastJudgmentTime = GameTime::GetGameTimeMS();
 
@@ -366,7 +366,7 @@ protected:
 
             {
 
-                this->CastSpell(target, HAMMER_OF_WRATH_PROT);
+                this->CastSpell(HAMMER_OF_WRATH_PROT, target);
 
                 GenerateHolyPower(1);
 
@@ -379,7 +379,7 @@ protected:
         if (this->CanCastSpell(AVENGERS_SHIELD, target))
         {
 
-            this->CastSpell(target, AVENGERS_SHIELD);
+            this->CastSpell(AVENGERS_SHIELD, target);
 
             _lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -414,7 +414,7 @@ protected:
         if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
 
-            this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+            this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
             return;
         }
@@ -447,7 +447,7 @@ protected:
         if (this->CanCastSpell(AVENGERS_SHIELD, target))
         {
 
-            this->CastSpell(target, AVENGERS_SHIELD);
+            this->CastSpell(AVENGERS_SHIELD, target);
 
             return;
         }
@@ -469,7 +469,7 @@ protected:
         if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
 
-            this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+            this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
             return;
         }
@@ -478,7 +478,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(JUDGMENT_PROT, target))
         {
 
-            this->CastSpell(target, JUDGMENT_PROT);
+            this->CastSpell(JUDGMENT_PROT, target);
 
             GenerateHolyPower(1);
 
@@ -495,7 +495,7 @@ protected:
         if (healthPct < 15.0f && this->CanCastSpell(DIVINE_SHIELD_PROT, bot))
         {
 
-            this->CastSpell(bot, DIVINE_SHIELD_PROT);
+            this->CastSpell(DIVINE_SHIELD_PROT, bot);
             
 
         // Register cooldowns using CooldownManager
@@ -533,7 +533,7 @@ protected:
         if (healthPct < 20.0f && this->CanCastSpell(LAY_ON_HANDS_PROT, bot))
         {
 
-            this->CastSpell(bot, LAY_ON_HANDS_PROT);
+            this->CastSpell(LAY_ON_HANDS_PROT, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Lay on Hands emergency");
 
@@ -544,7 +544,7 @@ protected:
         if (healthPct < 35.0f && this->CanCastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_OF_ANCIENT_KINGS);
+            this->CastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Guardian of Ancient Kings");
 
@@ -555,7 +555,7 @@ protected:
         if (healthPct < 50.0f && this->CanCastSpell(ARDENT_DEFENDER, bot))
         {
 
-            this->CastSpell(bot, ARDENT_DEFENDER);
+            this->CastSpell(ARDENT_DEFENDER, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Ardent Defender");
 
@@ -570,7 +570,7 @@ protected:
 
             {
 
-                this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                 ConsumeHolyPower(3);
 
@@ -972,7 +972,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, DIVINE_SHIELD_PROT);
+                                this->CastSpell(DIVINE_SHIELD_PROT, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -991,7 +991,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, LAY_ON_HANDS_PROT);
+                                this->CastSpell(LAY_ON_HANDS_PROT, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1010,7 +1010,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, GUARDIAN_OF_ANCIENT_KINGS);
+                                this->CastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1029,7 +1029,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, ARDENT_DEFENDER);
+                                this->CastSpell(ARDENT_DEFENDER, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1050,7 +1050,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                                 this->ConsumeHolyPower(3);
 
@@ -1090,7 +1090,7 @@ private:
 
                         {
 
-                            this->CastSpell(bot, SHIELD_OF_THE_RIGHTEOUS);
+                            this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, bot);
 
                             this->_shieldTracker.ApplyShield();
 
@@ -1167,7 +1167,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                    this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                                     this->ConsumeHolyPower(3);
 
@@ -1199,7 +1199,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(target, AVENGERS_SHIELD);
+                                        this->CastSpell(AVENGERS_SHIELD, target);
 
                                         this->_lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -1218,7 +1218,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(target, JUDGMENT_PROT);
+                                        this->CastSpell(JUDGMENT_PROT, target);
 
                                         this->_lastJudgmentTime = GameTime::GetGameTimeMS();
 
@@ -1247,7 +1247,7 @@ private:
 
                                         {
 
-                                            this->CastSpell(target, HAMMER_OF_WRATH_PROT);
+                                            this->CastSpell(HAMMER_OF_WRATH_PROT, target);
 
                                             this->GenerateHolyPower(1);
 
@@ -1268,7 +1268,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(bot, BLESSED_HAMMER);
+                                        this->CastSpell(BLESSED_HAMMER, bot);
 
                                         this->GenerateHolyPower(1);
 
@@ -1311,7 +1311,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, CONSECRATION);
+                                    this->CastSpell(CONSECRATION, bot);
 
                                     this->_consecrationActive = true;
 
@@ -1345,7 +1345,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, AVENGING_WRATH_PROT);
+                                    this->CastSpell(AVENGING_WRATH_PROT, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1365,7 +1365,7 @@ private:
 
                             {
 
-                                this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+                                this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
                                 return NodeStatus::SUCCESS;
 
