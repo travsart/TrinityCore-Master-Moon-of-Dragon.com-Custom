@@ -326,7 +326,7 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
             if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
             {
                 _status = BTStatus::FAILURE;
@@ -582,7 +582,7 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
             if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
             {
                 _status = BTStatus::FAILURE;
