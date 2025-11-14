@@ -221,7 +221,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         if (ccTarget && ccTarget != target)        {
             if (CanUseAbility(SLEEP_WALK))
             {
-                if (CastSpell(ccTarget, SLEEP_WALK))
+                if (CastSpell(SLEEP_WALK, ccTarget))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} Sleep Walking secondary target",                                 _bot->GetName());
                     return;
@@ -238,7 +238,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             // Pyre for AoE with Essence Burst proc
             if (_essenceBurstStacks > 0 && CanUseAbility(PYRE))
             {
-                if (CastSpell(target, PYRE))
+                if (CastSpell(PYRE, target))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Pyre for AoE",                                 _bot->GetName());
                     return;

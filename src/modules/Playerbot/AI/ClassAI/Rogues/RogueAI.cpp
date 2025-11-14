@@ -347,7 +347,7 @@ void RogueAI::UpdateRotation(Unit* target)
         {
             // Cast Kick on the interrupt target
 
-            if (CastSpell(interruptTarget, KICK))
+            if (CastSpell(KICK, interruptTarget))
 
             {
 
@@ -462,7 +462,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 {
 
-                    if (CastSpell(target, VENDETTA))
+                    if (CastSpell(VENDETTA, target))
 
                     {
 
@@ -530,7 +530,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 {
 
-                    if (CastSpell(target, KILLING_SPREE))
+                    if (CastSpell(KILLING_SPREE, target))
 
                     {
 
@@ -579,7 +579,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 {
 
-                    if (CastSpell(target, SHADOWSTEP))
+                    if (CastSpell(SHADOWSTEP, target))
 
                     {
 
@@ -664,7 +664,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(SLICE_AND_DICE))
         {
 
-            if (CastSpell(target, SLICE_AND_DICE))
+            if (CastSpell(SLICE_AND_DICE, target))
 
             {
 
@@ -683,7 +683,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(RUPTURE))
         {
 
-            if (CastSpell(target, RUPTURE))
+            if (CastSpell(RUPTURE, target))
 
             {
 
@@ -702,7 +702,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(EXPOSE_ARMOR))
         {
 
-            if (CastSpell(target, EXPOSE_ARMOR))
+            if (CastSpell(EXPOSE_ARMOR, target))
 
             {
 
@@ -721,7 +721,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(KIDNEY_SHOT))
         {
 
-            if (CastSpell(target, KIDNEY_SHOT))
+            if (CastSpell(KIDNEY_SHOT, target))
 
             {
 
@@ -741,7 +741,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(EVISCERATE))
         {
 
-            if (CastSpell(target, EVISCERATE))
+            if (CastSpell(EVISCERATE, target))
 
             {
 
@@ -762,7 +762,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (_positioning->IsBehindTarget(target) && CanUseAbility(BACKSTAB))
         {
 
-            if (CastSpell(target, BACKSTAB))
+            if (CastSpell(BACKSTAB, target))
 
             {
 
@@ -783,7 +783,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         if (CanUseAbility(SINISTER_STRIKE))
         {
 
-            if (CastSpell(target, SINISTER_STRIKE))
+            if (CastSpell(SINISTER_STRIKE, target))
 
             {
 

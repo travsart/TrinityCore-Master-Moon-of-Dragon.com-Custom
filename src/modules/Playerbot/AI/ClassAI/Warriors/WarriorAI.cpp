@@ -81,7 +81,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         if (interruptTarget && CanUseAbility(PUMMEL))
         {
             // Cast Pummel on the interrupt target
-            if (CastSpell(interruptTarget, PUMMEL))
+            if (CastSpell(PUMMEL, interruptTarget))
             {
                 RecordInterruptAttempt(interruptTarget, PUMMEL, true);
                 TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} interrupted {} with Pummel",
@@ -425,7 +425,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     // Apply Sunder Armor for armor reduction
     if (CanUseAbility(SUNDER_ARMOR))
     {
-        if (CastSpell(target, SUNDER_ARMOR))
+        if (CastSpell(SUNDER_ARMOR, target))
         {
             RecordAbilityUsage(SUNDER_ARMOR);
             return;
@@ -436,7 +436,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     if (CanUseAbility(REND))    {
         if (!target->HasAura(REND, GetBot()->GetGUID()))
         {
-            if (CastSpell(target, REND))
+            if (CastSpell(REND, target))
             {
                 RecordAbilityUsage(REND);
                 return;
@@ -447,7 +447,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     // Use Execute if target is low health
     if (target->GetHealthPct() < 20.0f && CanUseAbility(EXECUTE))
     {
-        if (CastSpell(target, EXECUTE))
+        if (CastSpell(EXECUTE, target))
         {
             RecordAbilityUsage(EXECUTE);
             return;
@@ -457,7 +457,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     // Use Overpower if available
     if (CanUseAbility(OVERPOWER))
     {
-        if (CastSpell(target, OVERPOWER))
+        if (CastSpell(OVERPOWER, target))
         {
             RecordAbilityUsage(OVERPOWER);
             return;
@@ -467,7 +467,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     // Use Mortal Strike or Bloodthirst if available
     if (CanUseAbility(MORTAL_STRIKE))
     {
-        if (CastSpell(target, MORTAL_STRIKE))
+        if (CastSpell(MORTAL_STRIKE, target))
         {
             RecordAbilityUsage(MORTAL_STRIKE);
             return;
@@ -476,7 +476,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
 
     if (CanUseAbility(BLOODTHIRST))
     {
-        if (CastSpell(target, BLOODTHIRST))
+        if (CastSpell(BLOODTHIRST, target))
         {
             RecordAbilityUsage(BLOODTHIRST);
             return;
