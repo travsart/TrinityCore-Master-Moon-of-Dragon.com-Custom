@@ -29,40 +29,10 @@ class Group;
 namespace Playerbot
 {
 
-// Formation types for different scenarios
-enum class FormationType : uint8
-{
-    NONE = 0,               // No formation
-    LINE = 1,               // Single line formation
-    COLUMN = 2,             // Single column formation
-    WEDGE = 3,              // V-shaped wedge formation
-    DIAMOND = 4,            // Diamond formation
-    CIRCLE = 5,             // Circular formation
-    BOX = 6,                // Rectangular box formation
-    SPREAD = 7,             // Spread out formation
-    STACK = 8,              // Tight stacked formation
-    COMBAT_LINE = 9,        // Combat line with roles
-    DUNGEON = 10,           // Dungeon formation (tank front, etc.)
-    RAID = 11,              // Raid formation with groups
-    ESCORT = 12,            // Escort formation around VIP
-    FLANKING = 13,          // Flanking formation
-    DEFENSIVE = 14          // Defensive circle formation
-};
-
-// Formation roles within the group
-enum class FormationRole : uint8
-{
-    LEADER = 0,             // Formation leader (usually tank or group leader)
-    TANK = 1,               // Tanking role in formation
-    MELEE_DPS = 2,          // Melee damage dealers
-    RANGED_DPS = 3,         // Ranged damage dealers
-    HEALER = 4,             // Healers
-    SUPPORT = 5,            // Support/utility members
-    SCOUT = 6,              // Scouts/advance guard
-    REAR_GUARD = 7,         // Rear guard protection
-    FLANKER = 8,            // Flanking positions
-    RESERVE = 9             // Reserve/flexible position
-};
+// DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
+// enum class FormationType : uint8 { ... } - REMOVED
+// enum class FormationRole : uint8 { ... } - REMOVED
+// Include at line 22 provides these definitions
 
 // Formation movement states
 enum class FormationMovementState : uint8
