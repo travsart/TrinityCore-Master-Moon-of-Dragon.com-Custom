@@ -31,6 +31,9 @@
 namespace Playerbot
 {
 
+// Import BehaviorTree helper functions
+using namespace bot::ai;
+
 /**
  * Refactored Fury Warrior using template architecture
  *

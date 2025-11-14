@@ -450,5 +450,67 @@ private:
     Unit* _recommendedTarget;
 };
 
+// ============================================================================
+// HELPER FACTORY FUNCTIONS - Convenience builders for cleaner syntax
+// ============================================================================
+
+/**
+ * @brief Create a Sequence node with children
+ * @example auto seq = Sequence("MySequence", { childNode1, childNode2 });
+ */
+inline ::std::shared_ptr<SequenceNode> Sequence(const ::std::string& name, ::std::vector<::std::shared_ptr<BehaviorNode>> children = {})
+{
+    auto node = ::std::make_shared<SequenceNode>(name);
+    for (auto& child : children)
+        node->AddChild(child);
+    return node;
+}
+
+/**
+ * @brief Create a Selector node with children
+ * @example auto sel = Selector("MySelector", { childNode1, childNode2 });
+ */
+inline ::std::shared_ptr<SelectorNode> Selector(const ::std::string& name, ::std::vector<::std::shared_ptr<BehaviorNode>> children = {})
+{
+    auto node = ::std::make_shared<SelectorNode>(name);
+    for (auto& child : children)
+        node->AddChild(child);
+    return node;
+}
+
+/**
+ * @brief Create a Condition node
+ * @example auto cond = Condition("Check Health", [](Player* bot, Unit*) { return bot->GetHealthPct() < 50.0f; });
+ */
+inline ::std::shared_ptr<ConditionNode> Condition(const ::std::string& name, ::std::function<bool(Player*, Unit*)> condition)
+{
+    return ::std::make_shared<ConditionNode>(name, condition);
+}
+
+/**
+ * @brief Create an Action node
+ * @example auto act = Action("Cast Heal", [](Player* bot, Unit* target) { ... return NodeStatus::SUCCESS; });
+ */
+inline ::std::shared_ptr<ActionNode> Action(const ::std::string& name, ::std::function<NodeStatus(Player*, Unit*)> action)
+{
+    return ::std::make_shared<ActionNode>(name, action);
+}
+
+/**
+ * @brief Create an Inverter node
+ */
+inline ::std::shared_ptr<InverterNode> Inverter(const ::std::string& name, ::std::shared_ptr<BehaviorNode> child)
+{
+    return ::std::make_shared<InverterNode>(name, child);
+}
+
+/**
+ * @brief Create a Repeater node
+ */
+inline ::std::shared_ptr<RepeaterNode> Repeater(const ::std::string& name, ::std::shared_ptr<BehaviorNode> child, uint32 maxRepeats = 0)
+{
+    return ::std::make_shared<RepeaterNode>(name, child, maxRepeats);
+}
+
 }} // namespace bot::ai
 } // namespace Playerbot
