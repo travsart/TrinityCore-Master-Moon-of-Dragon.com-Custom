@@ -36,7 +36,19 @@ enum class TurnInStrategy : uint8;
 enum class RewardSelectionStrategy : uint8;
 enum class QuestPriority : uint8;
 enum class QuestType : uint8;
-enum class QuestStrategy : uint8;
+
+// Full definition needed for default parameter usage
+enum class QuestStrategy : uint8
+{
+    SOLO_FOCUSED        = 0,  // Complete quests independently
+    GROUP_PREFERRED     = 1,  // Try to group for efficiency
+    ZONE_OPTIMIZATION   = 2,  // Complete all quests in current zone
+    LEVEL_PROGRESSION   = 3,  // Focus on experience gain
+    GEAR_PROGRESSION    = 4,  // Focus on equipment upgrades
+    STORY_PROGRESSION   = 5,  // Follow main storylines
+    REPUTATION_FOCUSED  = 6,  // Build faction reputation
+    PROFESSION_FOCUSED  = 7   // Complete profession quests
+};
 
 struct QuestGiverInfo;
 struct QuestPickupRequest;
