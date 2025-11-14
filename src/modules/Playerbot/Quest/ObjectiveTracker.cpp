@@ -381,7 +381,7 @@ float ObjectiveTracker::CalculateObjectiveVelocity(Player* bot, uint32 questId, 
     return targets;
 }
 
-ObjectiveTracker::ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex)
+ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return ObjectiveState(0, 0);
@@ -423,7 +423,7 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
     }
 }
 
-::std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
+::std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
 {
     ::std::vector<ObjectiveState> activeObjectives;
 
@@ -439,7 +439,7 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
     return activeObjectives;
 }
 
-::std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
+::std::vector<ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
 {
     ::std::vector<ObjectivePriority> priorities;
 
@@ -477,7 +477,7 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
     return priorities;
 }
 
-ObjectiveTracker::ObjectivePriority ObjectiveTracker::GetHighestPriorityObjective(Player* bot)
+ObjectivePriority ObjectiveTracker::GetHighestPriorityObjective(Player* bot)
 {
     ::std::vector<ObjectivePriority> priorities = CalculateObjectivePriorities(bot);
 
@@ -742,7 +742,7 @@ void ObjectiveTracker::HandleObjectiveConflicts(Group* group, uint32 questId, ui
     ResolveObjectiveConflicts(group, questId, objectiveIndex);
 }
 
-const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
+const ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
 {
     ::std::lock_guard lock(_trackingMutex);
     auto it = _botAnalytics.find(botGuid);
@@ -754,7 +754,7 @@ const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAna
     return _botAnalytics[botGuid];
 }
 
-const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetGlobalObjectiveAnalytics()
+const ObjectiveAnalytics& ObjectiveTracker::GetGlobalObjectiveAnalytics()
 {
     return _globalAnalytics;
 }
