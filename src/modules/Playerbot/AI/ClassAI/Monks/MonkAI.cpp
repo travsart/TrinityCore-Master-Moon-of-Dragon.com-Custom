@@ -66,53 +66,39 @@ void MonkAI::UpdateRotation(::Unit* target)
         {
             // Spear Hand Strike is melee range interrupt
             if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
+        // ORPHANED CODE REMOVED: Standalone null check
+        // ORPHANED NULL CHECK REMOVED
+        // ORPHANED CODE REMOVED: Duplicate interruptTarget check
+        // if (!interruptTarget) { return; }
 
-if (!interruptTarget)
+        // ORPHANED CODE COMMENTED OUT:
+        // {
+        //     if (CastSpell(SPEAR_HAND_STRIKE, interruptTarget))
+        //     {
+        //         RecordInterruptAttempt(interruptTarget, SPEAR_HAND_STRIKE, true);
+        //         TC_LOG_DEBUG("module.playerbot.ai", "Monk {} interrupted {} with Spear Hand Strike",
+        //                      GetBot()->GetName(), interruptTarget->GetName());
+        //         return;
+        //     }
+        // }
 
-{
-    return 0;
-
-}
-
-if (!interruptTarget)
-
-{
-    return 0;
-
-}
-                                 if (!interruptTarget)
-                                 {
-                                     return;
-                                 }
-            {
-                if (CastSpell(SPEAR_HAND_STRIKE, interruptTarget))
-                {
-                    RecordInterruptAttempt(interruptTarget, SPEAR_HAND_STRIKE, true);
-                    TC_LOG_DEBUG("module.playerbot.ai", "Monk {} interrupted {} with Spear Hand Strike",
-                                 GetBot()->GetName(), interruptTarget->GetName());
-                    return;
-                }
-            }
-        }
-
+        // ORPHANED CODE REMOVED: Paralysis block
         // Paralysis as ranged interrupt for casters (if talented)
-        if (interruptTarget && CanUseAbility(PARALYSIS))
-        {
-            if (GetBot()->GetDistance(interruptTarget) <= 20.0f)
-                                 if (!interruptTarget)
-                                 {
-                                     return;
-                                 }
-            {
-                if (CastSpell(PARALYSIS, interruptTarget))
-                {
-                    RecordInterruptAttempt(interruptTarget, PARALYSIS, true);
-                    TC_LOG_DEBUG("module.playerbot.ai", "Monk {} paralyzed {} to interrupt",
-                                 GetBot()->GetName(), interruptTarget->GetName());
-                    return;
-                }
-            }
-        }
+        // if (interruptTarget && CanUseAbility(PARALYSIS))
+        // {
+        //     if (GetBot()->GetDistance(interruptTarget) <= 20.0f)
+        //     if (!interruptTarget) { return; }
+        //     {
+        //         if (CastSpell(PARALYSIS, interruptTarget))
+        //         {
+        //             RecordInterruptAttempt(interruptTarget, PARALYSIS, true);
+        //             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} paralyzed {} to interrupt",
+        //                          GetBot()->GetName(), interruptTarget->GetName());
+        //             return;
+        //         }
+        //     }
+        // }
+    }
     }
 
     // Priority 2: Handle defensive abilities based on spec
@@ -131,10 +117,7 @@ if (!interruptTarget)
         {
             OnTargetChanged(priorityTarget);
             target = priorityTarget;
-                         if (!priorityTarget)
-                         {
-                             return;
-                         }
+        // ORPHANED CODE REMOVED: Standalone null check
             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} switching target to {}",
                          GetBot()->GetName(), priorityTarget->GetName());
         }
@@ -1061,10 +1044,7 @@ void MonkAI::UseDefensiveCooldowns()
     if (_currentSpec == MonkSpec::MISTWEAVER && CanUseAbility(LIFE_COCOON))
     {
         Unit* healTarget = GetLowestHealthAlly(40.0f);
-                             if (!healTarget)
-                             {
-                                 return;
-                             }
+        // ORPHANED CODE REMOVED: Standalone null check
         if (healTarget && healTarget->GetHealthPct() < 30.0f)
         {
             if (CastSpell(LIFE_COCOON, healTarget))
