@@ -327,11 +327,18 @@ public:
 
             // Check mana
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
-            if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+            if (spellInfo)
             {
-                _status = BTStatus::FAILURE;
-                Reset();
-                return _status;
+                auto costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+                for (auto const& cost : costs)
+                {
+                    if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) < cost.Amount)
+                    {
+                        _status = BTStatus::FAILURE;
+                        Reset();
+                        return _status;
+                    }
+                }
             }
 
             // Attempt to cast
@@ -583,11 +590,18 @@ public:
 
             // Check mana
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
-            if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+            if (spellInfo)
             {
-                _status = BTStatus::FAILURE;
-                Reset();
-                return _status;
+                auto costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+                for (auto const& cost : costs)
+                {
+                    if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) < cost.Amount)
+                    {
+                        _status = BTStatus::FAILURE;
+                        Reset();
+                        return _status;
+                    }
+                }
             }
 
             // Cast on self (AoE heal will affect nearby allies)
