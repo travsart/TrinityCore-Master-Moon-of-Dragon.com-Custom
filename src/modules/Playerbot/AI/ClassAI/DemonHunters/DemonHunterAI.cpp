@@ -455,7 +455,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
             uint32 chaosStrike = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;
             if (CanUseAbility(chaosStrike))
             {
-                if (CastSpell(target, chaosStrike))
+                if (CastSpell(chaosStrike, target))
                 {
                     RecordAbilityUsage(chaosStrike);
                     TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} dumping fury with {}",
@@ -574,7 +574,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
             uint32 spender = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;
             if (CanUseAbility(spender))
             {
-                if (CastSpell(target, spender))
+                if (CastSpell(spender, target))
                 {
                     RecordAbilityUsage(spender);
                     return;
@@ -737,7 +737,8 @@ void DemonHunterAI::UpdateCooldowns(uint32 diff)
     UpdateMetrics(diff);
 
     // Cooldowns are tracked by TrinityCore's spell system
-    // No additional tracking needed}
+    // No additional tracking needed
+}
 
 bool DemonHunterAI::CanUseAbility(uint32 spellId)
 {
@@ -745,7 +746,9 @@ bool DemonHunterAI::CanUseAbility(uint32 spellId)
         return false;
 
     return true;
-}void DemonHunterAI::OnCombatStart(::Unit* target)
+}
+
+void DemonHunterAI::OnCombatStart(::Unit* target)
 {
     _dhMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 

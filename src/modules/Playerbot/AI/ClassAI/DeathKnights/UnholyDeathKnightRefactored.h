@@ -639,14 +639,14 @@ private:
         auto* tree = ai->GetBehaviorTree();
         if (tree) {
             auto root = Selector("Unholy DK", {
-                Sequence("Burst", { Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
-                    bot::ai::Action("Army/Apocalypse", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(UNHOLY_ARMY_OF_DEAD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
-                    bot::ai::Action("Festering Strike", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(UNHOLY_FESTERING_STRIKE, t); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
-                    bot::ai::Action("Scourge Strike", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(UNHOLY_SCOURGE_STRIKE, t); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Burst", { Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
+                    bot::ai::Action("Army/Apocalypse", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(UNHOLY_ARMY_OF_DEAD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
+                    bot::ai::Action("Festering Strike", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(UNHOLY_FESTERING_STRIKE, t); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
+                    bot::ai::Action("Scourge Strike", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(UNHOLY_SCOURGE_STRIKE, t); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("RP Dump", { Condition("40+ RP", [this](Player*) { return this->_resource.runicPower >= 40; }),
-                    bot::ai::Action("Death Coil", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(UNHOLY_DEATH_COIL, t); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Death Coil", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(UNHOLY_DEATH_COIL, t); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

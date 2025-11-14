@@ -714,7 +714,7 @@ private:
                             Condition("HP < 20%", [](Player* bot), Unit* target {
                                 return bot->GetHealthPct() < 20.0f;
                             }),
-                            bot::ai::Action("Cast Zen Meditation", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Zen Meditation", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(ZEN_MEDITATION, bot)) {
                                     this->CastSpell(ZEN_MEDITATION, bot);
                                     return NodeStatus::SUCCESS;
@@ -723,7 +723,7 @@ private:
                             })
                         }),
                         Sequence("Fortifying Brew", {
-                            bot::ai::Action("Cast Fortifying Brew", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Fortifying Brew", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(FORTIFYING_BREW_BREW, bot)) {
                                     this->CastSpell(FORTIFYING_BREW_BREW, bot);
                                     return NodeStatus::SUCCESS;
@@ -741,7 +741,7 @@ private:
                             Condition("Should purify", [this](Player*) {
                                 return this->_staggerTracker.ShouldPurify();
                             }),
-                            bot::ai::Action("Cast Purifying Brew", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Purifying Brew", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(PURIFYING_BREW, bot)) {
                                     this->CastSpell(PURIFYING_BREW, bot);
                                     return NodeStatus::SUCCESS;
@@ -753,7 +753,7 @@ private:
                             Condition("HP < 60%", [](Player* bot), Unit* target {
                                 return bot && bot->GetHealthPct() < 60.0f;
                             }),
-                            bot::ai::Action("Cast Celestial Brew", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Celestial Brew", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(CELESTIAL_BREW, bot)) {
                                     this->CastSpell(CELESTIAL_BREW, bot);
                                     return NodeStatus::SUCCESS;
@@ -765,7 +765,7 @@ private:
                             Condition("Needs refresh", [this](Player*) {
                                 return !this->_ironskinBrewActive || this->GetIronskinTimeRemaining() < 3000;
                             }),
-                            bot::ai::Action("Cast Ironskin Brew", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Ironskin Brew", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(IRONSKIN_BREW, bot)) {
                                     this->CastSpell(IRONSKIN_BREW, bot);
                                     this->_ironskinBrewActive = true;
@@ -780,7 +780,7 @@ private:
 
                 // Tier 3: Shuffle Maintenance
                 Sequence("Maintain Shuffle", {
-                    Condition("Has target", [this](Player* bot), Unit* target {
+                    Condition("Has target", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim();
                     }),
                     Condition("Shuffle needs refresh", [this](Player*) {
@@ -789,7 +789,7 @@ private:
                     Condition("Has chi", [this](Player*) {
                         return this->_resource.chi >= 1;
                     }),
-                    bot::ai::Action("Cast Blackout Kick", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Blackout Kick", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BLACKOUT_KICK_BREW, target)) {
                             this->CastSpell(BLACKOUT_KICK_BREW, target);
@@ -803,7 +803,7 @@ private:
 
                 // Tier 4: Chi Generation
                 Sequence("Generate Chi", {
-                    Condition("Has target", [this](Player* bot), Unit* target {
+                    Condition("Has target", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim();
                     }),
                     Condition("Chi < 5", [this](Player*) {
@@ -814,7 +814,7 @@ private:
                             Condition("40 energy", [this](Player*) {
                                 return this->_resource.energy >= 40;
                             }),
-                            bot::ai::Action("Cast Keg Smash", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Keg Smash", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(KEG_SMASH, target)) {
                                     this->CastSpell(KEG_SMASH, target);
@@ -829,7 +829,7 @@ private:
                             Condition("25 energy", [this](Player*) {
                                 return this->_resource.energy >= 25;
                             }),
-                            bot::ai::Action("Cast Tiger Palm", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Tiger Palm", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(TIGER_PALM_BREW, target)) {
                                     this->CastSpell(TIGER_PALM_BREW, target);
@@ -840,10 +840,10 @@ private:
                             })
                         }),
                         Sequence("Expel Harm", {
-                            Condition("15 energy + low HP", [this](Player* bot), Unit* target {
+                            Condition("15 energy + low HP", [this](Player* bot, Unit* target) {
                                 return bot && this->_resource.energy >= 15 && bot->GetHealthPct() < 90.0f;
                             }),
-                            bot::ai::Action("Cast Expel Harm", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Expel Harm", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(EXPEL_HARM_BREW, bot)) {
                                     this->CastSpell(EXPEL_HARM_BREW, bot);
                                     this->GenerateChi(1);
@@ -857,7 +857,7 @@ private:
 
                 // Tier 5: Chi Spenders (Threat + Damage)
                 Sequence("Spend Chi", {
-                    Condition("Has target", [this](Player* bot), Unit* target {
+                    Condition("Has target", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim();
                     }),
                     Condition("Has chi", [this](Player*) {
@@ -868,7 +868,7 @@ private:
                             Condition("After Keg Smash", [this](Player*) {
                                 return (GameTime::GetGameTimeMS() - this->_lastKegSmashTime) < 2000;
                             }),
-                            bot::ai::Action("Cast BoF", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast BoF", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(BREATH_OF_FIRE, target)) {
                                     this->CastSpell(BREATH_OF_FIRE, target);
@@ -882,7 +882,7 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(8.0f) >= 3;
                             }),
-                            bot::ai::Action("Cast SCK", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast SCK", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(SPINNING_CRANE_KICK_BREW, bot)) {
                                     this->CastSpell(SPINNING_CRANE_KICK_BREW, bot);
                                     this->ConsumeChi(2);
@@ -892,7 +892,7 @@ private:
                             })
                         }),
                         Sequence("Rising Sun Kick", {
-                            bot::ai::Action("Cast RSK", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast RSK", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(RISING_SUN_KICK_BREW, target)) {
                                     this->CastSpell(RISING_SUN_KICK_BREW, target);

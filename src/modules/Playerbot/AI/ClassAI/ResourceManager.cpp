@@ -495,20 +495,20 @@ bool ResourceManager::NeedsResourceEmergency()
     if (!_bot)
         return emergencySpells;
 
-    // Class-specific emergency resource spells    switch (_bot->GetClass())
-    {        case CLASS_WARRIOR:
+    // Class-specific emergency resource spells
+    switch (_bot->GetClass())
+    {
+        case CLASS_WARRIOR:
             // Berserker Rage, etc.
-
             break;
         case CLASS_ROGUE:
             // Adrenaline Rush, etc.
-
             break;
         case CLASS_MAGE:
             // Evocation, Mana Gem, etc.
-
             break;
-        // Add other classes as needed    }
+        // Add other classes as needed
+    }
 
     return emergencySpells;
 }

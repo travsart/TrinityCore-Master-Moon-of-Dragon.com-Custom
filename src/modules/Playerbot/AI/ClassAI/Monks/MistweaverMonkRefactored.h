@@ -964,7 +964,7 @@ private:
 
                         Sequence("Revival", {
 
-                            bot::ai::Action("Cast Revival", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Revival", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REVIVAL, bot)) {
 
@@ -1038,13 +1038,13 @@ private:
 
                         Sequence("Invoke Yu'lon", {
 
-                            Condition("Has spell", [this](Player* bot), Unit* target {
+                            Condition("Has spell", [this](Player* bot, Unit* target) {
 
                                 return bot->HasSpell(INVOKE_YULON);
 
                             }),
 
-                            bot::ai::Action("Cast Yu'lon", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Yu'lon", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(INVOKE_YULON, bot)) {
 
@@ -1074,13 +1074,13 @@ private:
 
                             }),
 
-                            Condition("Has mana", [this](Player* bot), Unit* target {
+                            Condition("Has mana", [this](Player* bot, Unit* target) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            bot::ai::Action("Cast Essence Font", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Essence Font", [this](Player* bot, Unit* target) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1144,7 +1144,7 @@ private:
 
                         Sequence("Enveloping Mist", {
 
-                            Condition("Has mana", [this](Player* bot), Unit* target {
+                            Condition("Has mana", [this](Player* bot, Unit* target) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
@@ -1184,7 +1184,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Condition("Has mana", [this](Player* bot), Unit* target {
+                    Condition("Has mana", [this](Player* bot, Unit* target) {
 
                         return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
