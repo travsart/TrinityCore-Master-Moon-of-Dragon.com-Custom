@@ -76,11 +76,11 @@ struct ThreatTarget
  * **Solution**: Single unified service with sophisticated threat assessment
  *
  * **Usage Example**:
- * @code
+ * @code{.cpp}
  * // BEFORE (each tank spec):
  * if (Unit* target = GetTarget())
  * {
- *     if (/* complex threat calculation logic */)
+ *     if (ShouldTaunt(target)) // complex threat calculation logic
  *     {
  *         if (this->CanCastSpell(SPELL_TAUNT, target))
  *             this->CastSpell(SPELL_TAUNT, target);
