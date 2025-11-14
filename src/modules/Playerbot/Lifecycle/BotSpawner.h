@@ -150,7 +150,6 @@ public:
 
     // Allow adapter access to constructor
     friend class ::std::unique_ptr<BotSpawner>;
-    friend ::std::unique_ptr<BotSpawner> ::std::make_unique<BotSpawner>();
     friend class ::std::default_delete<BotSpawner>;
 
 private:
