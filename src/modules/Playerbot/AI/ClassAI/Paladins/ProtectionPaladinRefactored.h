@@ -875,7 +875,7 @@ private:
 
                     return (target && target->GetMaxHealth() > 500000) ||
 
-                           bot->GetAttackersCount() >= 3;
+                           bot->getAttackers().size() >= 3;
 
                 },
 
@@ -1325,7 +1325,7 @@ private:
 
                                 return (target && target->GetMaxHealth() > 500000) ||
 
-                                       bot->GetAttackersCount() >= 3;
+                                       bot->getAttackers().size() >= 3;
 
                             }),
 

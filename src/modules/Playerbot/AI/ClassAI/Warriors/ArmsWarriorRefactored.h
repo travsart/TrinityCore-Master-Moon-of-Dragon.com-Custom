@@ -555,7 +555,7 @@ private:
             queue->AddCondition(SPELL_WHIRLWIND,
                 ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                     // Capture 'this' for member access if needed
-                    return bot->GetAttackersCount() >= 3;
+                    return bot->getAttackers().size() >= 3;
                 }},
                 "3+ targets (AoE)");
 
@@ -686,7 +686,7 @@ private:
                     // Filler spells
                     Selector("Filler", {
                         Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
-                            if (bot->GetAttackersCount() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
+                            if (bot->getAttackers().size() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
                             {
                                 this->CastSpell(SPELL_WHIRLWIND, target);
                                 return NodeStatus::SUCCESS;

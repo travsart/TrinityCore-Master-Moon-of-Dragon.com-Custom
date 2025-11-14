@@ -295,7 +295,7 @@ protected:
                 [this](Player* bot, Unit* target) {
                     // AoE spender when 3+ HP and 3+ enemies
                     return this->_holyPower.GetAvailable() >= 3 &&
-                           bot->GetAttackersCount() >= 3;
+                           bot->getAttackers().size() >= 3;
                 },
                 "3+ HP and 3+ enemies (AoE burst)");
 
@@ -356,7 +356,7 @@ protected:
                 [](Player* bot, Unit* target) {
                     // Use on bosses or packs
                     return (target && target->GetMaxHealth() > 500000) ||
-                           bot->GetAttackersCount() >= 3;
+                           bot->getAttackers().size() >= 3;
                 },
                 "Boss or 3+ enemies (burst)");
 
@@ -367,7 +367,7 @@ protected:
                 [](Player* bot, Unit* target) {
                     // Offensive cooldown for burst
                     return (target && target->GetMaxHealth() > 500000) ||
-                           bot->GetAttackersCount() >= 3;
+                           bot->getAttackers().size() >= 3;
                 },
                 "Boss or 3+ enemies");
 
@@ -435,7 +435,7 @@ protected:
                                 // Divine Storm for AoE
                                 Sequence("Divine Storm AoE", {
                                     Condition("3+ enemies", [](Player* bot, Unit*) {
-                                        return bot->GetAttackersCount() >= 3;
+                                        return bot->getAttackers().size() >= 3;
                                     }),
                                     Action("Cast Divine Storm", [this](Player* bot, Unit* target) {
                                         if (this->CanCastSpell(SPELL_DIVINE_STORM, bot))

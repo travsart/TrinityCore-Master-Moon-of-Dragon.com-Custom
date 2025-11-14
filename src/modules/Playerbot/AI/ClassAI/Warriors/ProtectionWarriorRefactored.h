@@ -727,7 +727,7 @@ private:
                 [](Player* bot, Unit* target) {
                     // Use Thunder Clap for AoE threat (2+ enemies)
 
-                    return bot->GetAttackersCount() >= 2;
+                    return bot->getAttackers().size() >= 2;
 
                 },
 
@@ -784,7 +784,7 @@ private:
                 [](Player* bot, Unit* target) {
                     // Use Avatar for threat burst or when tanking multiple enemies
 
-                    return bot->GetAttackersCount() >= 3 ||
+                    return bot->getAttackers().size() >= 3 ||
 
                            (target && target->GetMaxHealth() > 500000);
 
@@ -1156,7 +1156,7 @@ private:
 
                             Condition("2+ enemies", [](Player* bot, Unit*) {
 
-                                return bot->GetAttackersCount() >= 2;
+                                return bot->getAttackers().size() >= 2;
 
                             }),
 

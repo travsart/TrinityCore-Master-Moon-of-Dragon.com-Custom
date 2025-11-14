@@ -437,7 +437,7 @@ private:
             queue->AddCondition(SPELL_RAMPAGE,
                 [](Player* bot, Unit*) {
                     // Rampage to trigger/maintain Enrage
-                    return !bot->HasAura(SPELL_ENRAGE) || bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                    return !bot->HasAura(SPELL_ENRAGE) || (bot->GetAura(SPELL_ENRAGE) ? bot->GetAura(SPELL_ENRAGE)->GetDuration() : 0) < 2000;
                 },
                 "Trigger or refresh Enrage");
 
@@ -454,7 +454,7 @@ private:
             queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(SPELL_WHIRLWIND,
                 [](Player* bot, Unit*) {
-                    return bot->GetAttackersCount() >= 2; // Use for 2+ targets
+                    return bot->getAttackers().size() >= 2; // Use for 2+ targets
                 },
                 "2+ targets (AoE)");
 
@@ -592,7 +592,7 @@ private:
                         Sequence("Rampage for Enrage", {
                             Condition("No Enrage or expiring soon", [](Player* bot, Unit*) {
                                 return !bot->HasAura(SPELL_ENRAGE) ||
-                                       bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                                       (bot->GetAura(SPELL_ENRAGE) ? bot->GetAura(SPELL_ENRAGE)->GetDuration() : 0) < 2000;
                             }),
                             Condition("Has Rage", [this](Player* bot, Unit*) {
                                 return this->_resource >= 85;
@@ -647,7 +647,7 @@ private:
                         }),
                         Sequence("Whirlwind (AoE)", {
                             Condition("2+ targets", [](Player* bot, Unit*) {
-                                return bot->GetAttackersCount() >= 2;
+                                return bot->getAttackers().size() >= 2;
                             }),
                             Action("Cast Whirlwind", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(SPELL_WHIRLWIND, bot))
