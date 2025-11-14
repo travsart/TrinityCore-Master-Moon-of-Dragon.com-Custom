@@ -149,7 +149,7 @@ if (!interruptTarget)
             // Check Chi requirement
             if (HasEnoughChi(2))
             {
-                if (CastSpell(2, SPINNING_CRANE_KICK))
+                if (CastSpell(SPINNING_CRANE_KICK, GetBot()->GetVictim()))
                 {
                     ConsumeChiForAbility(SPINNING_CRANE_KICK);
                     RecordAbilityUsage(SPINNING_CRANE_KICK);
@@ -165,7 +165,7 @@ if (!interruptTarget)
         {
             if (HasEnoughChi(1))
             {
-                if (CastSpell(1, RUSHING_JADE_WIND))
+                if (CastSpell(RUSHING_JADE_WIND, GetBot()->GetVictim()))
                 {
                     ConsumeChiForAbility(RUSHING_JADE_WIND);
                     RecordAbilityUsage(RUSHING_JADE_WIND);
@@ -956,7 +956,7 @@ void MonkAI::ManageResourceGeneration(::Unit* target)
     {
         if (GetBot()->GetHealthPct() < 80.0f)
         {
-            if (CastSpell(15, EXPEL_HARM))
+            if (CastSpell(EXPEL_HARM, GetBot()))
             {
                 ConsumeEnergyForAbility(EXPEL_HARM);
                 GenerateChi(1);
@@ -1122,7 +1122,7 @@ void MonkAI::HandleMobilityAbilities(::Unit* target, const Position& optimalPos)
     {
         if (distanceToTarget > 15.0f || distanceToOptimal > 15.0f)
         {
-            if (CastSpell(GetBot(), TIGERS_LUST))
+            if (CastSpell(TIGERS_LUST, GetBot()))
             {
                 RecordAbilityUsage(TIGERS_LUST);
                 TC_LOG_DEBUG("module.playerbot.ai", "Monk {} activated Tiger's Lust",
@@ -1289,7 +1289,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     // Breath of Fire for DoT
     if (CanUseAbility(BREATH_OF_FIRE) && HasEnoughChi(1))
     {
-        if (CastSpell(1, BREATH_OF_FIRE))
+        if (CastSpell(BREATH_OF_FIRE, GetBot()->GetVictim()))
         {
             ConsumeChiForAbility(BREATH_OF_FIRE);
             RecordAbilityUsage(BREATH_OF_FIRE);
@@ -1325,7 +1325,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     {
         if (HasEnoughChi(1))
         {
-            if (CastSpell(1, RUSHING_JADE_WIND))
+            if (CastSpell(RUSHING_JADE_WIND, GetBot()->GetVictim()))
             {
                 ConsumeChiForAbility(RUSHING_JADE_WIND);
                 RecordAbilityUsage(RUSHING_JADE_WIND);
@@ -1412,7 +1412,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
     {
         if (HasEnoughChi(2))
         {
-            if (CastSpell(2, ESSENCE_FONT))
+            if (CastSpell(ESSENCE_FONT, GetBot()))
             {
                 ConsumeChiForAbility(ESSENCE_FONT);
                 RecordAbilityUsage(ESSENCE_FONT);

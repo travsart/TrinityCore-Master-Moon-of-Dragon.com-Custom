@@ -1044,7 +1044,7 @@ void DemonHunterAI::CastChaosStrike(::Unit* target)
 
     uint32 ability = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;    if (CanUseAbility(ability))
     {
-        CastSpell(target, ability);
+        CastSpell(ability, target);
         ConsumeResource(ability);
     }
 }

@@ -414,7 +414,7 @@ bool PriestAI::HandleDefensivePriority()
         if (this->IsSpellReady(DISPERSION))
         {
 
-            if (this->CastSpell(GetBot(), DISPERSION))
+            if (this->CastSpell(DISPERSION, GetBot()))
 
             {
 
@@ -432,7 +432,7 @@ bool PriestAI::HandleDefensivePriority()
         if (this->IsSpellReady(DESPERATE_PRAYER))
         {
 
-            if (this->CastSpell(GetBot(), DESPERATE_PRAYER))
+            if (this->CastSpell(DESPERATE_PRAYER, GetBot()))
 
             {
 
@@ -665,7 +665,7 @@ void PriestAI::CastInnerFire()
     if (!GetBot() || !this->IsSpellReady(INNER_FIRE))
         return;
 
-    if (this->CastSpell(GetBot(), INNER_FIRE))
+    if (this->CastSpell(INNER_FIRE, GetBot()))
     {
         _lastInnerFire = GameTime::GetGameTimeMS();
     }
@@ -756,7 +756,7 @@ void PriestAI::CastPsychicScream()
     if (GameTime::GetGameTimeMS() - _lastPsychicScream < PSYCHIC_SCREAM_COOLDOWN)
         return;
 
-    if (this->CastSpell(GetBot(), PSYCHIC_SCREAM))
+    if (this->CastSpell(PSYCHIC_SCREAM, GetBot()))
     {
         _lastPsychicScream = GameTime::GetGameTimeMS();
     }
@@ -767,7 +767,7 @@ void PriestAI::CastFade()
     if (!GetBot() || !this->IsSpellReady(FADE))
         return;
 
-    if (this->CastSpell(GetBot(), FADE))
+    if (this->CastSpell(FADE, GetBot()))
     {
         _lastFade = GameTime::GetGameTimeMS();
     }
@@ -822,7 +822,7 @@ void PriestAI::CastFearWard()
     if (!GetBot() || !this->IsSpellReady(DESPERATE_PRAYER))
         return;
 
-    if (this->CastSpell(GetBot(), DESPERATE_PRAYER))
+    if (this->CastSpell(DESPERATE_PRAYER, GetBot()))
     {
         _lastDesperatePrayer = GameTime::GetGameTimeMS();
     }
