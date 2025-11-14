@@ -489,7 +489,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
         // Use Cleave if multiple enemies
         if (GetNearbyEnemyCount(8.0f) > 1 && CanUseAbility(CLEAVE))
         {
-            if (CastSpell(uint32 spellId, bool success, CLEAVE))
+            if (CastSpell(CLEAVE))
             {
                 RecordAbilityUsage(CLEAVE);
                 return;
