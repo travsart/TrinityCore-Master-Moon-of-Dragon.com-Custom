@@ -284,9 +284,9 @@ protected:
                     })
                 }),
                 Sequence("Deal Damage", {
-                    Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
+                    Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
                     Condition("3+ essence", [this](Player*) { return this->_resource.essence >= 3; }),
-                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
                             this->CastSpell(BREATH_OF_EONS, target);
@@ -297,9 +297,9 @@ protected:
                     })
                 }),
                 Sequence("Generate Essence", {
-                    Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
+                    Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
                     Condition("< 4 essence", [this](Player*) { return this->_resource.essence < 4; }),
-                    bot::ai::Action("Cast Azure Strike", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
                             this->CastSpell(AZURE_STRIKE_AUG, target);

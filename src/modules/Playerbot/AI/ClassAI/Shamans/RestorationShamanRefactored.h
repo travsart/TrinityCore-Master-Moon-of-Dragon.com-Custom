@@ -1283,7 +1283,7 @@ private:
 
                         Sequence("Healing Tide Totem", {
 
-                            bot::ai::Action("Cast HTT", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast HTT", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
 
@@ -1315,13 +1315,13 @@ private:
 
                             }),
 
-                            Condition("Has spell", [this](Player* bot), Unit* target {
+                            Condition("Has spell", [this](Player* bot, Unit* target) {
 
                                 return bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast APT", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast APT", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
 
@@ -1369,7 +1369,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Ascendance", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
 
@@ -1393,7 +1393,7 @@ private:
 
                         Sequence("Spirit Link Totem", {
 
-                            bot::ai::Action("Cast SLT", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast SLT", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
 
@@ -1413,13 +1413,13 @@ private:
 
                         Sequence("Earthen Wall Totem", {
 
-                            Condition("Has spell", [this](Player* bot), Unit* target {
+                            Condition("Has spell", [this](Player* bot, Unit* target) {
 
                                 return bot->HasSpell(REST_EARTHEN_WALL_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast EWT", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast EWT", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
 

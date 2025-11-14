@@ -695,7 +695,7 @@ protected:
                         for (auto* m : group) if (m && m->GetHealthPct() < 40.0f) critical++;
                         return critical >= 3;
                     }),
-                    bot::ai::Action("Cast Emerald Communion", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Emerald Communion", [this](Player* bot, Unit* target) {
                         if (this->CanCastSpell(EMERALD_COMMUNION, bot)) {
                             this->CastSpell(EMERALD_COMMUNION, bot);
                             return NodeStatus::SUCCESS;
@@ -787,7 +787,7 @@ protected:
                                 for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
                                 return injured >= 3;
                             }),
-                            bot::ai::Action("Cast Emerald Blossom", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Emerald Blossom", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(EMERALD_BLOSSOM, bot)) {
                                     this->CastSpell(EMERALD_BLOSSOM, bot);
                                     this->_resource.Consume(3);

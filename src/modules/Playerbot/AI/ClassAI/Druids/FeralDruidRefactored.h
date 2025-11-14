@@ -1068,7 +1068,7 @@ private:
 
                 Sequence("Burst Cooldowns", {
 
-                    Condition("4+ CP and bleeds active", [this](Player* bot), Unit* target {
+                    Condition("4+ CP and bleeds active", [this](Player* bot, Unit* target) {
 
                         Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1084,13 +1084,13 @@ private:
 
                         Sequence("Incarnation (talent)", {
 
-                            Condition("Has Incarnation", [this](Player* bot), Unit* target {
+                            Condition("Has Incarnation", [this](Player* bot, Unit* target) {
 
                                 return bot && bot->HasSpell(FERAL_INCARNATION_KING);
 
                             }),
 
-                            bot::ai::Action("Cast Incarnation", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(FERAL_INCARNATION_KING, bot))
 
@@ -1114,7 +1114,7 @@ private:
 
                         Sequence("Berserk", {
 
-                            bot::ai::Action("Cast Berserk", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Berserk", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(FERAL_BERSERK, bot))
 
@@ -1154,7 +1154,7 @@ private:
 
                         Sequence("Primal Wrath (AoE)", {
 
-                            Condition("3+ enemies", [this](Player* bot), Unit* target {
+                            Condition("3+ enemies", [this](Player* bot, Unit* target) {
 
                                 return bot && bot->HasSpell(FERAL_PRIMAL_WRATH) &&
 
@@ -1162,7 +1162,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1186,7 +1186,7 @@ private:
 
                         Sequence("Rip (refresh)", {
 
-                            Condition("Needs Rip refresh", [this](Player* bot), Unit* target {
+                            Condition("Needs Rip refresh", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1194,7 +1194,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rip", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Rip", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1224,7 +1224,7 @@ private:
 
                         Sequence("Ferocious Bite (damage)", {
 
-                            Condition("Rip up >10s", [this](Player* bot), Unit* target {
+                            Condition("Rip up >10s", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1234,7 +1234,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1268,7 +1268,7 @@ private:
 
                 Sequence("Bleeds & Resources", {
 
-                    Condition("Has target", [this](Player* bot), Unit* target {
+                    Condition("Has target", [this](Player* bot, Unit* target) {
 
                         return bot && bot->GetVictim();
 
@@ -1286,7 +1286,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(FERAL_TIGERS_FURY, bot))
 
@@ -1310,7 +1310,7 @@ private:
 
                         Sequence("Rake (bleed)", {
 
-                            Condition("Needs Rake refresh and 35 energy", [this](Player* bot), Unit* target {
+                            Condition("Needs Rake refresh and 35 energy", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1320,7 +1320,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rake", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Rake", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1350,7 +1350,7 @@ private:
 
                         Sequence("Thrash (AoE bleed)", {
 
-                            Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot), Unit* target {
+                            Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1362,7 +1362,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Thrash", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1388,7 +1388,7 @@ private:
 
                         Sequence("Moonfire (Lunar Inspiration)", {
 
-                            Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot), Unit* target {
+                            Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1400,7 +1400,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Moonfire", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1432,7 +1432,7 @@ private:
 
                 Sequence("Builders", {
 
-                    Condition("Has target and energy", [this](Player* bot), Unit* target {
+                    Condition("Has target and energy", [this](Player* bot, Unit* target) {
 
                         return bot && bot->GetVictim() && this->_resource.GetAvailable() >= 25;
 
@@ -1442,7 +1442,7 @@ private:
 
                         Sequence("Brutal Slash (talent)", {
 
-                            Condition("Has Brutal Slash and 25 energy", [this](Player* bot), Unit* target {
+                            Condition("Has Brutal Slash and 25 energy", [this](Player* bot, Unit* target) {
 
                                 return bot && bot->HasSpell(FERAL_BRUTAL_SLASH) &&
 
@@ -1450,7 +1450,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1486,7 +1486,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Swipe", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1516,7 +1516,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Shred", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Shred", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 

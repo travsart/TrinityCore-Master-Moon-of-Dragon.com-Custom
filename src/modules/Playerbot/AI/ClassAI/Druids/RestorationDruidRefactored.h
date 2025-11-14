@@ -1228,7 +1228,7 @@ private:
 
                         Sequence("Tranquility", {
 
-                            bot::ai::Action("Cast Tranquility", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Tranquility", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
 
@@ -1248,7 +1248,7 @@ private:
 
                         Sequence("Nature's Swiftness", {
 
-                            bot::ai::Action("Instant Regrowth", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Instant Regrowth", [this](Player* bot, Unit* target) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1310,7 +1310,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Incarnation", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
 
@@ -1574,7 +1574,7 @@ private:
 
                     }),
 
-                    bot::ai::Action("Cast Moonfire", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
 
                         Unit* target = bot->GetVictim();
 

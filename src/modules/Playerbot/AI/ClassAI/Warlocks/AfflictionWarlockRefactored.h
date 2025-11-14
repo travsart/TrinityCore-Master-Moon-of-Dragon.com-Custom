@@ -723,11 +723,11 @@ private:
             auto root = Selector("Affliction Warlock DPS", {
                 // Tier 1: Burst Window (Darkglare extends all DoTs)
                 Sequence("Burst Cooldown", {
-                    Condition("3+ DoTs active", [this](Player* bot), Unit* target {
+                    Condition("3+ DoTs active", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         return bot && target && this->_dotTracker.GetDoTCount(target->GetGUID()) >= 3;
                     }),
-                    bot::ai::Action("Cast Darkglare", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Darkglare", [this](Player* bot, Unit* target) {
                         if (this->CanCastSpell(SUMMON_DARKGLARE, bot))
                         {
                             this->CastSpell(SUMMON_DARKGLARE, bot);
@@ -739,16 +739,16 @@ private:
 
                 // Tier 2: DoT Maintenance (Agony → Corruption → UA → Siphon Life)
                 Sequence("DoT Maintenance", {
-                    Condition("Has target", [this](Player* bot), Unit* target {
+                    Condition("Has target", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Apply/Refresh DoTs", {
                         Sequence("Agony", {
-                            Condition("Needs Agony", [this](Player* bot), Unit* target {
+                            Condition("Needs Agony", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), AGONY);
                             }),
-                            bot::ai::Action("Cast Agony", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Agony", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(AGONY, target))
                                 {
@@ -760,11 +760,11 @@ private:
                             })
                         }),
                         Sequence("Corruption", {
-                            Condition("Needs Corruption", [this](Player* bot), Unit* target {
+                            Condition("Needs Corruption", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), CORRUPTION);
                             }),
-                            bot::ai::Action("Cast Corruption", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Corruption", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CORRUPTION, target))
                                 {
@@ -776,11 +776,11 @@ private:
                             })
                         }),
                         Sequence("Unstable Affliction", {
-                            Condition("Needs UA", [this](Player* bot), Unit* target {
+                            Condition("Needs UA", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), UNSTABLE_AFFLICTION);
                             }),
-                            bot::ai::Action("Cast UA", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast UA", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(UNSTABLE_AFFLICTION, target))
                                 {
@@ -793,12 +793,12 @@ private:
                             })
                         }),
                         Sequence("Siphon Life", {
-                            Condition("Needs Siphon Life", [this](Player* bot), Unit* target {
+                            Condition("Needs Siphon Life", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 return bot && target && bot->HasSpell(SIPHON_LIFE) &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), SIPHON_LIFE);
                             }),
-                            bot::ai::Action("Cast Siphon Life", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Siphon Life", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SIPHON_LIFE, target))
                                 {
@@ -814,12 +814,12 @@ private:
 
                 // Tier 3: Shard Spender (Malefic Rapture when 2+ DoTs active)
                 Sequence("Shard Spender", {
-                    Condition("1+ shards and 2+ DoTs", [this](Player* bot), Unit* target {
+                    Condition("1+ shards and 2+ DoTs", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         return bot && target && this->_resource.soulShards >= 1 &&
                                this->_dotTracker.GetDoTCount(target->GetGUID()) >= 2;
                     }),
-                    bot::ai::Action("Cast Malefic Rapture", [this](Player* bot), Unit* target {
+                    bot::ai::Action("Cast Malefic Rapture", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(MALEFIC_RAPTURE, target))
                         {
@@ -833,16 +833,16 @@ private:
 
                 // Tier 4: Shard Generator (Drain Soul execute, Shadow Bolt filler)
                 Sequence("Shard Generator", {
-                    Condition("Has target and < 5 shards", [this](Player* bot), Unit* target {
+                    Condition("Has target and < 5 shards", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim() && this->_resource.soulShards < 5;
                     }),
                     Selector("Generate shards", {
                         Sequence("Drain Soul (execute)", {
-                            Condition("Target < 20% HP", [this](Player* bot), Unit* target {
+                            Condition("Target < 20% HP", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 return target && target->GetHealthPct() < 20.0f;
                             }),
-                            bot::ai::Action("Cast Drain Soul", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Drain Soul", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DRAIN_SOUL, target))
                                 {
@@ -854,7 +854,7 @@ private:
                             })
                         }),
                         Sequence("Shadow Bolt (filler)", {
-                            bot::ai::Action("Cast Shadow Bolt", [this](Player* bot), Unit* target {
+                            bot::ai::Action("Cast Shadow Bolt", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOW_BOLT_AFF, target))
                                 {
