@@ -89,7 +89,13 @@ public:
         return _hotStreakActive && GameTime::GetGameTimeMS() < _hotStreakEndTime;
     }
 
+    // Alias for compatibility
+    [[nodiscard]] bool IsActive() const { return IsHotStreakActive(); }
+
     [[nodiscard]] bool IsHeatingUpActive() const { return _heatingUpActive; }
+
+    // Alias for compatibility
+    void ConsumeProc() { ConsumeHotStreak(); }
 
     void Update(Player* bot)
     {
@@ -131,6 +137,9 @@ public:
             _lastChargeTime = GameTime::GetGameTimeMS();
         }
     }
+
+    // Alias for compatibility
+    void UseCharge() { ConsumeCharge(); }
 
     void RegenerateCharge()
     {
