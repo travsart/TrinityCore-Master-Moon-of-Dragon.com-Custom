@@ -51,7 +51,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Survival Hunter Spell IDs
 enum SurvivalSpells
 {
@@ -968,7 +968,7 @@ private:
 
             queue->RegisterSpell(SPELL_SURVIVAL_OF_FITTEST, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_SURVIVAL_OF_FITTEST, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_SURVIVAL_OF_FITTEST, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 50.0f;
 
@@ -977,7 +977,7 @@ private:
 
             queue->RegisterSpell(SPELL_EXHILARATION_SURV, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_EXHILARATION_SURV, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_EXHILARATION_SURV, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 40.0f;
 
@@ -1142,7 +1142,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_COORDINATED_ASSAULT))
 
@@ -1183,13 +1183,13 @@ private:
 
                         Sequence("Cast Wildfire Bomb", {
 
-                            Condition("Has bomb charge", [this](Player* bot, Unit* target) {
+                            Condition("Has bomb charge", [this](Player* bot, Unit*) {
 
                                 return this->_bombManager.HasCharge();
 
                             }),
 
-                            bot::ai::Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 uint32 bombSpell = this->_bombManager.GetBombSpell();
 
@@ -1210,13 +1210,13 @@ private:
 
                         Sequence("Cast Kill Command", {
 
-                            Condition("< 50 Focus and pet alive", [this](Player* bot, Unit* target) {
+                            Condition("< 50 Focus and pet alive", [this](Player* bot, Unit*) {
 
                                 return this->_resource < 50 && this->_petManager.HasActivePet();
 
                             }),
 
-                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
 
@@ -1247,7 +1247,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1288,7 +1288,7 @@ private:
 
                         Sequence("Cast Mongoose Bite", {
 
-                            Condition("Window active or has charges", [this](Player* bot, Unit* target) {
+                            Condition("Window active or has charges", [this](Player* bot, Unit*) {
 
                                 return this->_mongooseTracker.IsWindowActive() ||
 
@@ -1296,7 +1296,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 
@@ -1321,7 +1321,7 @@ private:
 
                         Sequence("Cast Flanking Strike", {
 
-                            Condition("Has talent and pet alive", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and pet alive", [this](Player* bot, Unit*) {
 
                                 return bot && bot->HasSpell(SPELL_FLANKING_STRIKE) &&
 
@@ -1329,7 +1329,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_FLANKING_STRIKE))
 
@@ -1370,7 +1370,7 @@ private:
 
                         Sequence("AoE Filler", {
 
-                            Condition("3+ enemies", [this](Player* bot, Unit* target) {
+                            Condition("3+ enemies", [this](Player* bot, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 3;
 
@@ -1381,13 +1381,13 @@ private:
 
                                 Sequence("Cast Butchery", {
 
-                                    Condition("Has Butchery", [this](Player* bot, Unit* target) {
+                                    Condition("Has Butchery", [this](Player* bot, Unit*) {
 
                                         return bot && bot->HasSpell(SPELL_BUTCHERY);
 
                                     }),
 
-                                    bot::ai::Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    ::bot::ai::Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 30)
 
@@ -1410,13 +1410,13 @@ private:
 
                                 Sequence("Cast Carve", {
 
-                                    Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                                    Condition("35+ Focus", [this](Player* bot, Unit*) {
 
                                         return this->_resource >= 35;
 
                                     }),
 
-                                    bot::ai::Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    ::bot::ai::Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 35)
 
@@ -1443,7 +1443,7 @@ private:
 
                         Sequence("Single Target Filler", {
 
-                            bot::ai::Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 

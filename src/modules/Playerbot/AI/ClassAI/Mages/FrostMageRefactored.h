@@ -523,7 +523,7 @@ private:
         {
             // EMERGENCY: Defensive immunity
             queue->RegisterSpell(FROST_ICE_BLOCK, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(FROST_ICE_BLOCK, [this](Player* bot, Unit* target) {
+            queue->AddCondition(FROST_ICE_BLOCK, [this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 20.0f;
             }, "Bot HP < 20% (immunity)");
 
@@ -582,15 +582,15 @@ private:
             auto root = Selector("Frost Mage DPS", {
                 // Tier 1: Burst Cooldowns (Icy Veins, Frozen Orb)
                 Sequence("Burst Cooldowns", {
-                    Condition("In combat with target", [this](Player* bot, Unit* target) {
+                    Condition("In combat with target", [this](Player* bot, Unit*) {
                         return bot && bot->IsInCombat() && bot->GetVictim();
                     }),
                     Selector("Use burst abilities", {
                         Sequence("Icy Veins", {
-                            Condition("Icy Veins ready", [this](Player* bot, Unit* target) {
+                            Condition("Icy Veins ready", [this](Player* bot, Unit*) {
                                 return bot && !this->_icyVeinsActive && bot->GetPowerPct(POWER_MANA) >= 70;
                             }),
-                            ::bot::ai::Action("Cast Icy Veins", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Icy Veins", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(FROST_ICY_VEINS, bot))
                                 {
                                     this->CastSpell(FROST_ICY_VEINS, bot);
@@ -600,7 +600,7 @@ private:
                             })
                         }),
                         Sequence("Frozen Orb", {
-                            Condition("Has target", [this](Player* bot, Unit* target) {
+                            Condition("Has target", [this](Player* bot, Unit*) {
                                 return bot && bot->GetVictim();
                             }),
                             ::bot::ai::Action("Cast Frozen Orb", [this](Player* bot, Unit* target) {
@@ -618,7 +618,7 @@ private:
 
                 // Tier 2: Proc Windows (Brain Freeze → Flurry → Ice Lance, Fingers of Frost → Ice Lance)
                 Sequence("Proc Windows", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Use procs", {
@@ -658,7 +658,7 @@ private:
 
                 // Tier 3: Icicle Spender (Glacial Spike at 5 icicles)
                 Sequence("Icicle Spender", {
-                    Condition("5 icicles ready", [this](Player* bot, Unit* target) {
+                    Condition("5 icicles ready", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && bot->HasSpell(FROST_GLACIAL_SPIKE) &&
                                this->_icicleTracker.IsMaxIcicles();
                     }),
@@ -675,7 +675,7 @@ private:
 
                 // Tier 4: Builder (Frostbolt generates icicles and Brain Freeze procs)
                 Sequence("Builder", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     ::bot::ai::Action("Cast Frostbolt", [this](Player* bot, Unit* target) {

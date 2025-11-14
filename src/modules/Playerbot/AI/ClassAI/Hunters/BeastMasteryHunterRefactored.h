@@ -47,7 +47,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Beast Mastery Hunter Spell IDs
 enum BeastMasterySpells
 {
@@ -746,7 +746,7 @@ private:
 
             queue->RegisterSpell(SPELL_EXHILARATION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_EXHILARATION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_EXHILARATION, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 40.0f;
 
@@ -876,7 +876,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_BESTIAL_WRATH))
 
@@ -901,13 +901,13 @@ private:
 
                         Sequence("Cast Aspect of the Wild", {
 
-                            Condition("During Bestial Wrath", [this](Player* bot, Unit* target) {
+                            Condition("During Bestial Wrath", [this](Player* bot, Unit*) {
 
                                 return this->_bestialWrathActive && !this->_aspectOfTheWildActive;
 
                             }),
 
-                            bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
 
@@ -948,13 +948,13 @@ private:
 
                         Sequence("Cast Kill Command", {
 
-                            Condition("30+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("30+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 30;
 
                             }),
 
-                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND))
 
@@ -979,7 +979,7 @@ private:
 
                         Sequence("Cast Dire Beast", {
 
-                            Condition("Has talent and 25+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and 25+ Focus", [this](Player* bot, Unit*) {
 
                                 return bot && bot->HasSpell(SPELL_DIRE_BEAST) &&
 
@@ -987,7 +987,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DIRE_BEAST))
 
@@ -1026,7 +1026,7 @@ private:
 
                         Sequence("Cast Barbed Shot", {
 
-                            Condition("Should use Barbed Shot", [this](Player* bot, Unit* target) {
+                            Condition("Should use Barbed Shot", [this](Player* bot, Unit*) {
 
                                 return this->HasBarbedShotCharge() &&
 
@@ -1038,7 +1038,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->HasBarbedShotCharge())
 
@@ -1081,13 +1081,13 @@ private:
 
                         Sequence("AoE Filler", {
 
-                            Condition("3+ enemies and 40+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("3+ enemies and 40+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->GetEnemiesInRange(40.0f) >= 3 && this->_resource >= 40;
 
                             }),
 
-                            bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 40)
 
@@ -1110,13 +1110,13 @@ private:
 
                         Sequence("Single Target Filler", {
 
-                            Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("35+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 35;
 
                             }),
 
-                            bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 35)
 

@@ -42,7 +42,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Restoration Shaman Spell IDs
 constexpr uint32 REST_HEALING_WAVE = 77472;
 constexpr uint32 REST_HEALING_SURGE = 8004;
@@ -1283,7 +1283,7 @@ private:
 
                         Sequence("Healing Tide Totem", {
 
-                            bot::ai::Action("Cast HTT", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast HTT", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
 
@@ -1315,13 +1315,13 @@ private:
 
                             }),
 
-                            Condition("Has spell", [this](Player* bot, Unit* target) {
+                            Condition("Has spell", [this](Player* bot, Unit*) {
 
                                 return bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast APT", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast APT", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
 
@@ -1369,7 +1369,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
 
@@ -1393,7 +1393,7 @@ private:
 
                         Sequence("Spirit Link Totem", {
 
-                            bot::ai::Action("Cast SLT", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast SLT", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
 
@@ -1413,13 +1413,13 @@ private:
 
                         Sequence("Earthen Wall Totem", {
 
-                            Condition("Has spell", [this](Player* bot, Unit* target) {
+                            Condition("Has spell", [this](Player* bot, Unit*) {
 
                                 return bot->HasSpell(REST_EARTHEN_WALL_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast EWT", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast EWT", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
 
@@ -1449,7 +1449,7 @@ private:
 
                         Sequence("Earth Shield Tank", {
 
-                            bot::ai::Action("Cast Earth Shield", [this](Player*) {
+                            ::bot::ai::Action("Cast Earth Shield", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1479,7 +1479,7 @@ private:
 
                         Sequence("Riptide Spread", {
 
-                            bot::ai::Action("Cast Riptide", [this](Player*) {
+                            ::bot::ai::Action("Cast Riptide", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1555,7 +1555,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Healing Rain", [this](Player*) {
+                            ::bot::ai::Action("Cast Healing Rain", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1589,7 +1589,7 @@ private:
 
                         Sequence("Chain Heal", {
 
-                            bot::ai::Action("Cast Chain Heal", [this](Player*) {
+                            ::bot::ai::Action("Cast Chain Heal", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1637,7 +1637,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Healing Surge", [this](Player*) {
+                            ::bot::ai::Action("Cast Healing Surge", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1665,7 +1665,7 @@ private:
 
                         Sequence("Healing Wave", {
 
-                            bot::ai::Action("Cast Healing Wave", [this](Player*) {
+                            ::bot::ai::Action("Cast Healing Wave", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 

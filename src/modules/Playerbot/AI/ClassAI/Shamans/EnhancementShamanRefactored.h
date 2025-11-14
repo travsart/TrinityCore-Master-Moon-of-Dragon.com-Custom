@@ -42,7 +42,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Enhancement Shaman Spell IDs
 constexpr uint32 ENH_ROCKBITER = 193786;
 constexpr uint32 ENH_STORMSTRIKE = 17364;
@@ -793,19 +793,19 @@ private:
 
                 Sequence("Burst", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
-                    bot::ai::Action("Feral Spirit/Ascendance", [this](Player* bot, Unit* target) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(ENH_FERAL_SPIRIT, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    ::bot::ai::Action("Feral Spirit/Ascendance", [this](Player* bot, Unit*) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(ENH_FERAL_SPIRIT, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
                 Sequence("MW Spender", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
-                    bot::ai::Action("Lightning Bolt", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(ENH_LIGHTNING_BOLT, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    ::bot::ai::Action("Lightning Bolt", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(ENH_LIGHTNING_BOLT, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
-                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
+                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
 
-                    bot::ai::Action("SS", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(ENH_STORMSTRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    ::bot::ai::Action("SS", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(ENH_STORMSTRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
-                Sequence("Builder", { Condition("Has target", [this](Player* bot, Unit* target) { return bot && bot->GetVictim(); }),
+                Sequence("Builder", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
 
-                    bot::ai::Action("Lava Lash", [this](Player* bot, Unit* target) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(ENH_LAVA_LASH, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    ::bot::ai::Action("Lava Lash", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(ENH_LAVA_LASH, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
 
             });
 

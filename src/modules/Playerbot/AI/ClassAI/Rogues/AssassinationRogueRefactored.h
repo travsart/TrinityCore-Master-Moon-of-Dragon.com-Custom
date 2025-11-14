@@ -19,6 +19,7 @@
 #include "../Common/CooldownManager.h"
 #include "../Common/RotationHelpers.h"
 #include "RogueResourceTypes.h"
+#include "RogueAI.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
@@ -41,7 +42,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // ASSASSINATION ROGUE REFACTORED
 // ============================================================================
@@ -376,7 +377,7 @@ private:
             // EMERGENCY: Defensive cooldowns
             queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
             queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS,
-                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 30.0f;
             }},
                 "Bot HP < 30% (spell immunity)");
@@ -490,7 +491,7 @@ private:
                     }),
                     Selector("Choose Opener", {
                         Sequence("Cast Garrote", {
-                            bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
                                     this->CastSpell(RogueAI::GARROTE, target);
@@ -511,10 +512,10 @@ private:
                     }),
                     Selector("Use Burst", {
                         Sequence("Cast Vendetta", {
-                            Condition("Not active", [this](Player* bot, Unit* target) {
+                            Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_vendettaActive;
                             }),
-                            bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(VENDETTA, target))
                                 {
                                     this->CastSpell(VENDETTA, target);
@@ -526,10 +527,10 @@ private:
                             })
                         }),
                         Sequence("Cast Deathmark", {
-                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(RogueAI::DEATHMARK);
                             }),
-                            bot::ai::Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::DEATHMARK, target))
                                 {
                                     this->CastSpell(RogueAI::DEATHMARK, target);
@@ -553,7 +554,7 @@ private:
                                 return this->_resource.energy >= 45 &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::GARROTE);
                             }),
-                            bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
                                     this->CastSpell(RogueAI::GARROTE, target);
@@ -570,7 +571,7 @@ private:
                                 return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), RogueAI::RUPTURE);
                             }),
-                            bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
                                     this->CastSpell(RogueAI::RUPTURE, target);
@@ -594,11 +595,11 @@ private:
                     Selector("Spend or Build CP", {
                         // Envenom (finisher)
                         Sequence("Cast Envenom", {
-                            Condition("4-5+ CP and 35+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("4-5+ CP and 35+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1) &&
                                        this->_resource.energy >= 35;
                             }),
-                            bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ENVENOM, target))
                                 {
                                     this->CastSpell(ENVENOM, target);
@@ -612,11 +613,11 @@ private:
                         }),
                         // Kingsbane (talent)
                         Sequence("Cast Kingsbane", {
-                            Condition("Has talent and 35+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and 35+ Energy", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(KINGSBANE) &&
                                        this->_resource.energy >= 35;
                             }),
-                            bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(KINGSBANE, target))
                                 {
                                     this->CastSpell(KINGSBANE, target);
@@ -628,11 +629,11 @@ private:
                         }),
                         // Mutilate (builder)
                         Sequence("Cast Mutilate", {
-                            Condition("50+ Energy, not max CP", [this](Player* bot, Unit* target) {
+                            Condition("50+ Energy, not max CP", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 50 &&
                                        this->_resource.comboPoints < this->_resource.maxComboPoints;
                             }),
-                            bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(MUTILATE, target))
                                 {
                                     this->CastSpell(MUTILATE, target);

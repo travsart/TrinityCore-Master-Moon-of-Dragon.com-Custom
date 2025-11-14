@@ -174,12 +174,10 @@ void ParseTypedQuestGiverQuestComplete(WorldSession* session, WorldPackets::Ques
 
     QuestEventBus::instance()->PublishEvent(event);
 
+    // ORPHANED CODE REMOVED: Duplicate null check fragment
+    // if (!bot) { TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID"); return; }
+
     TC_LOG_DEBUG("playerbot.packets", "Bot {} received QUEST_GIVER_QUEST_COMPLETE (typed): quest={}",
-if (!bot)
-{
-    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: bot in method GetGUID");
-    return;
-}
         bot->GetName(), packet.QuestID);
 }
 

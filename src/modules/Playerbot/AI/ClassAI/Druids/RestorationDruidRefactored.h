@@ -43,7 +43,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Restoration Druid Spell IDs
 constexpr uint32 RESTO_REJUVENATION = 774;
 constexpr uint32 RESTO_REGROWTH = 8936;
@@ -1154,7 +1154,7 @@ private:
 
                         Sequence("Tranquility", {
 
-                            bot::ai::Action("Cast Tranquility", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Tranquility", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
 
@@ -1174,7 +1174,7 @@ private:
 
                         Sequence("Nature's Swiftness", {
 
-                            bot::ai::Action("Instant Regrowth", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Instant Regrowth", [this](Player* bot, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1236,7 +1236,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
 
@@ -1258,7 +1258,7 @@ private:
 
                         Sequence("Ironbark Tank", {
 
-                            bot::ai::Action("Cast Ironbark", [this](Player*) {
+                            ::bot::ai::Action("Cast Ironbark", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1296,7 +1296,7 @@ private:
 
                         Sequence("Lifebloom Tank", {
 
-                            bot::ai::Action("Cast Lifebloom", [this](Player*) {
+                            ::bot::ai::Action("Cast Lifebloom", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1340,7 +1340,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Wild Growth", [this](Player*) {
+                            ::bot::ai::Action("Cast Wild Growth", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1374,7 +1374,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rejuvenation", [this](Player*) {
+                            ::bot::ai::Action("Cast Rejuvenation", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1420,7 +1420,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Swiftmend", [this](Player*) {
+                            ::bot::ai::Action("Cast Swiftmend", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1456,7 +1456,7 @@ private:
 
                         Sequence("Regrowth", {
 
-                            bot::ai::Action("Cast Regrowth", [this](Player*) {
+                            ::bot::ai::Action("Cast Regrowth", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1500,7 +1500,7 @@ private:
 
                     }),
 
-                    bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
+                    ::bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
 
                         Unit* target = bot->GetVictim();
 

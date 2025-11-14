@@ -43,7 +43,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
 constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
 constexpr uint32 ELEM_LAVA_BURST = 51505;
@@ -779,12 +779,12 @@ private:
             auto root = Selector("Elemental Shaman DPS", {
                 // Tier 1: Burst Cooldowns (Fire Elemental, Ascendance, Stormkeeper)
                 Sequence("Burst Cooldowns", {
-                    Condition("Has Maelstrom and target", [this](Player* bot, Unit* target) {
+                    Condition("Has Maelstrom and target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && this->_maelstromTracker.GetMaelstrom() >= 40;
                     }),
                     Selector("Use burst cooldowns", {
                         Sequence("Fire Elemental", {
-                            bot::ai::Action("Summon Fire Elemental", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Summon Fire Elemental", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
                                 {
                                     this->CastSpell(ELEM_FIRE_ELEMENTAL, bot);
@@ -794,10 +794,10 @@ private:
                             })
                         }),
                         Sequence("Ascendance (talent)", {
-                            Condition("Has Ascendance and not active", [this](Player* bot, Unit* target) {
+                            Condition("Has Ascendance and not active", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(ELEM_ASCENDANCE) && !this->_ascendanceActive;
                             }),
-                            bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                                 {
                                     this->CastSpell(ELEM_ASCENDANCE, bot);
@@ -812,7 +812,7 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_stormkeeperTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Stormkeeper", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Stormkeeper", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
                                 {
                                     this->CastSpell(ELEM_STORMKEEPER, bot);
@@ -827,7 +827,7 @@ private:
 
                 // Tier 2: DoT Maintenance & Priority Abilities
                 Sequence("DoT & Priority", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Maintain DoT and use priority", {
@@ -836,7 +836,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_flameShockTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            bot::ai::Action("Cast Flame Shock", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Flame Shock", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                                 {
@@ -853,7 +853,7 @@ private:
                                 return target && (this->_lavaSurgeTracker.IsActive() ||
                                        this->_flameShockTracker.HasFlameShock(target->GetGUID()));
                             }),
-                            bot::ai::Action("Cast Lava Burst", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Lava Burst", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LAVA_BURST, target))
                                 {
@@ -867,10 +867,10 @@ private:
                             })
                         }),
                         Sequence("Primordial Wave (talent)", {
-                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(ELEM_PRIMORDIAL_WAVE);
                             }),
-                            bot::ai::Action("Cast Primordial Wave", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Primordial Wave", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
                                 {
@@ -885,7 +885,7 @@ private:
 
                 // Tier 3: Maelstrom Spender (Earth Shock, Earthquake)
                 Sequence("Maelstrom Spender", {
-                    Condition("60+ Maelstrom and target", [this](Player* bot, Unit* target) {
+                    Condition("60+ Maelstrom and target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && this->_maelstromTracker.GetMaelstrom() >= 60;
                     }),
                     Selector("Spend Maelstrom", {
@@ -893,7 +893,7 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            bot::ai::Action("Cast Earthquake", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Earthquake", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTHQUAKE, target))
                                 {
@@ -905,7 +905,7 @@ private:
                             })
                         }),
                         Sequence("Earth Shock (ST)", {
-                            bot::ai::Action("Cast Earth Shock", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Earth Shock", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTH_SHOCK, target))
                                 {
@@ -921,7 +921,7 @@ private:
 
                 // Tier 4: Maelstrom Builder (Chain Lightning, Lightning Bolt)
                 Sequence("Maelstrom Builder", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Generate Maelstrom", {
@@ -929,7 +929,7 @@ private:
                             Condition("2+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(40.0f) >= 2;
                             }),
-                            bot::ai::Action("Cast Chain Lightning", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Chain Lightning", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
                                 {
@@ -942,7 +942,7 @@ private:
                             })
                         }),
                         Sequence("Lightning Bolt (ST)", {
-                            bot::ai::Action("Cast Lightning Bolt", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Lightning Bolt", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
                                 {

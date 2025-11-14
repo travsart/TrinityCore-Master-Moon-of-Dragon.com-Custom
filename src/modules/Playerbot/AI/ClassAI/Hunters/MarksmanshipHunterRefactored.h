@@ -46,7 +46,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Marksmanship Hunter Spell IDs
 enum MarksmanshipSpells
 {
@@ -758,7 +758,7 @@ private:
 
             queue->RegisterSpell(SPELL_ASPECT_TURTLE, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_ASPECT_TURTLE, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_ASPECT_TURTLE, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 30.0f;
 
@@ -767,7 +767,7 @@ private:
 
             queue->RegisterSpell(SPELL_EXHILARATION_MM, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_EXHILARATION_MM, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_EXHILARATION_MM, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 50.0f;
 
@@ -918,7 +918,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Trueshot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_TRUESHOT))
 
@@ -943,7 +943,7 @@ private:
 
                         Sequence("Cast Double Tap", {
 
-                            Condition("During Trueshot", [this](Player* bot, Unit* target) {
+                            Condition("During Trueshot", [this](Player* bot, Unit*) {
 
                                 return bot && bot->HasSpell(SPELL_DOUBLE_TAP) &&
 
@@ -951,7 +951,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Double Tap", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DOUBLE_TAP))
 
@@ -976,7 +976,7 @@ private:
 
                         Sequence("Cast Rapid Fire", {
 
-                            Condition("Should use Rapid Fire", [this](Player* bot, Unit* target) {
+                            Condition("Should use Rapid Fire", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 30 && this->ShouldUseRapidFire() &&
 
@@ -984,7 +984,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Rapid Fire", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_RAPID_FIRE))
 
@@ -1028,13 +1028,13 @@ private:
 
                         Sequence("Cast Aimed Shot", {
 
-                            Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("35+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 35;
 
                             }),
 
-                            bot::ai::Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Aimed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_AIMED_SHOT))
 
@@ -1079,13 +1079,13 @@ private:
 
                         Sequence("Cast Arcane Shot with Precise Shots", {
 
-                            Condition("Has Precise Shots", [this](Player* bot, Unit* target) {
+                            Condition("Has Precise Shots", [this](Player* bot, Unit*) {
 
                                 return this->_preciseShotsTracker.HasCharges() && this->_resource >= 20;
 
                             }),
 
-                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1110,7 +1110,7 @@ private:
 
                         Sequence("Cast Explosive Shot", {
 
-                            Condition("Has talent and 20+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and 20+ Focus", [this](Player* bot, Unit*) {
 
                                 return bot && bot->HasSpell(SPELL_EXPLOSIVE_SHOT) &&
 
@@ -1118,7 +1118,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Explosive Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_EXPLOSIVE_SHOT))
 
@@ -1157,13 +1157,13 @@ private:
 
                         Sequence("Generate Focus", {
 
-                            Condition("< 70 Focus", [this](Player* bot, Unit* target) {
+                            Condition("< 70 Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource < 70;
 
                             }),
 
-                            bot::ai::Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Steady Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 this->CastSpell(SPELL_STEADY_SHOT, target);
 
@@ -1180,13 +1180,13 @@ private:
 
                         Sequence("Dump Focus", {
 
-                            Condition("80+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("80+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 80;
 
                             }),
 
-                            bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            ::bot::ai::Action("Cast Arcane Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 

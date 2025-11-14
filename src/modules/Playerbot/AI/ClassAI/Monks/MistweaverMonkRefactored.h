@@ -37,7 +37,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // MISTWEAVER MONK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -964,7 +964,7 @@ private:
 
                         Sequence("Revival", {
 
-                            bot::ai::Action("Cast Revival", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Revival", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REVIVAL, bot)) {
 
@@ -992,7 +992,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Life Cocoon", [this](Player*) {
+                            ::bot::ai::Action("Cast Life Cocoon", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1038,13 +1038,13 @@ private:
 
                         Sequence("Invoke Yu'lon", {
 
-                            Condition("Has spell", [this](Player* bot, Unit* target) {
+                            Condition("Has spell", [this](Player* bot, Unit*) {
 
                                 return bot->HasSpell(INVOKE_YULON);
 
                             }),
 
-                            bot::ai::Action("Cast Yu'lon", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Yu'lon", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(INVOKE_YULON, bot)) {
 
@@ -1074,13 +1074,13 @@ private:
 
                             }),
 
-                            Condition("Has mana", [this](Player* bot, Unit* target) {
+                            Condition("Has mana", [this](Player* bot, Unit*) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            bot::ai::Action("Cast Essence Font", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Essence Font", [this](Player* bot, Unit* target) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1122,7 +1122,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Renewing Mist", [this](Player*) {
+                            ::bot::ai::Action("Cast Renewing Mist", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1144,13 +1144,13 @@ private:
 
                         Sequence("Enveloping Mist", {
 
-                            Condition("Has mana", [this](Player* bot, Unit* target) {
+                            Condition("Has mana", [this](Player* bot, Unit*) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            bot::ai::Action("Cast Enveloping Mist", [this](Player*) {
+                            ::bot::ai::Action("Cast Enveloping Mist", [this](Player*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1184,7 +1184,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Condition("Has mana", [this](Player* bot, Unit* target) {
+                    Condition("Has mana", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
@@ -1204,7 +1204,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Vivify", [this](Player*) {
+                            ::bot::ai::Action("Cast Vivify", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1230,7 +1230,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Soothing Mist", [this](Player*) {
+                            ::bot::ai::Action("Cast Soothing Mist", [this](Player*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 

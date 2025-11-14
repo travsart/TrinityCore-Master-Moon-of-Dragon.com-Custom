@@ -39,7 +39,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // VENGEANCE DEMON HUNTER SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -872,7 +872,7 @@ private:
             auto root = Selector("Vengeance Tank", {
                 // Tier 1: Emergency Defensives
                 Sequence("Emergency Defense", {
-                    Condition("Critical HP", [this](Player* bot, Unit* target) {
+                    Condition("Critical HP", [this](Player* bot, Unit*) {
                         return bot && bot->GetHealthPct() < 35.0f;
                     }),
                     Selector("Use emergency", {
@@ -880,7 +880,7 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_metamorphosisActive;
                             }),
-                            bot::ai::Action("Cast Meta", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Meta", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot)) {
                                     this->CastSpell(DemonHunterSpells::METAMORPHOSIS_VENGEANCE, bot);
                                     this->_metamorphosisActive = true;
@@ -894,10 +894,10 @@ private:
                             Condition("5 fragments", [this](Player*) {
                                 return this->_soulFragments.HasMinFragments(5);
                             }),
-                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(SOUL_BARRIER_TALENT);
                             }),
-                            bot::ai::Action("Cast Barrier", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Barrier", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(SOUL_BARRIER, bot)) {
                                     this->CastSpell(SOUL_BARRIER, bot);
                                     this->_soulFragments.ConsumeAllFragments();
@@ -911,7 +911,7 @@ private:
 
                 // Tier 2: Active Mitigation
                 Sequence("Active Mitigation", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Use mitigation", {
@@ -919,10 +919,10 @@ private:
                             Condition("Can use", [this](Player*) {
                                 return this->_demonSpikes.CanUse();
                             }),
-                            Condition("Should use", [this](Player* bot, Unit* target) {
+                            Condition("Should use", [this](Player* bot, Unit*) {
                                 return bot->GetHealthPct() < 80.0f || this->_demonSpikes.GetCharges() == 2;
                             }),
-                            bot::ai::Action("Cast Demon Spikes", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Demon Spikes", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(DemonHunterSpells::DEMON_SPIKES, bot)) {
                                     this->CastSpell(DemonHunterSpells::DEMON_SPIKES, bot);
                                     this->_demonSpikes.Use();
@@ -935,7 +935,7 @@ private:
                             Condition("Should use", [this](Player*) {
                                 return this->ShouldUseFieryBrand();
                             }),
-                            bot::ai::Action("Cast Fiery Brand", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Fiery Brand", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target)) {
                                     this->CastSpell(DemonHunterSpells::FIERY_BRAND, target);
@@ -951,12 +951,12 @@ private:
 
                 // Tier 3: Threat Generation
                 Sequence("Threat Generation", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Generate threat", {
                         Sequence("Sigil of Flame", {
-                            bot::ai::Action("Cast Sigil", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Sigil", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target)) {
                                     this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
@@ -972,7 +972,7 @@ private:
                                 float dist = bot->GetDistance(target);
                                 return dist > 10.0f && dist <= 30.0f;
                             }),
-                            bot::ai::Action("Cast Strike", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Strike", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(INFERNAL_STRIKE, target)) {
                                     this->CastSpell(INFERNAL_STRIKE, target);
@@ -987,7 +987,7 @@ private:
 
                 // Tier 4: Pain Spenders
                 Sequence("Pain Spenders", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Spend pain", {
@@ -998,7 +998,7 @@ private:
                             Condition("Should use", [this](Player*) {
                                 return this->ShouldUseSoulCleave(this->_resource);
                             }),
-                            bot::ai::Action("Cast Soul Cleave", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Soul Cleave", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target)) {
                                     this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
@@ -1010,7 +1010,7 @@ private:
                             })
                         }),
                         Sequence("Spirit Bomb AoE", {
-                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(SPIRIT_BOMB_TALENT);
                             }),
                             Condition("40 pain", [this](Player*) {
@@ -1019,7 +1019,7 @@ private:
                             Condition("3+ fragments", [this](Player*) {
                                 return this->_soulFragments.HasMinFragments(3);
                             }),
-                            bot::ai::Action("Cast Spirit Bomb", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Spirit Bomb", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(DemonHunterSpells::SPIRIT_BOMB, bot)) {
                                     this->CastSpell(DemonHunterSpells::SPIRIT_BOMB, bot);
                                     this->ConsumeResource(DemonHunterSpells::SPIRIT_BOMB);
@@ -1034,7 +1034,7 @@ private:
 
                 // Tier 5: Pain Generators
                 Sequence("Pain Generators", {
-                    Condition("Has target", [this](Player* bot, Unit* target) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Condition("Low pain", [this](Player*) {
@@ -1042,13 +1042,13 @@ private:
                     }),
                     Selector("Generate pain", {
                         Sequence("Fracture", {
-                            Condition("Has talent", [this](Player* bot, Unit* target) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(FRACTURE_TALENT);
                             }),
                             Condition("Pain < 80", [this](Player*) {
                                 return this->_resource < 80;
                             }),
-                            bot::ai::Action("Cast Fracture", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Fracture", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FRACTURE, target)) {
                                     this->CastSpell(FRACTURE, target);
@@ -1060,7 +1060,7 @@ private:
                             })
                         }),
                         Sequence("Shear", {
-                            bot::ai::Action("Cast Shear", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Shear", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DemonHunterSpells::SHEAR, target)) {
                                     this->CastSpell(DemonHunterSpells::SHEAR, target);

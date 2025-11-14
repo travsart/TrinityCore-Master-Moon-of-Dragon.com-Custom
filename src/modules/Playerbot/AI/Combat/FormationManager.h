@@ -19,6 +19,7 @@
 #include <atomic>
 #include <shared_mutex>
 #include <chrono>
+#include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
 
 // Forward declarations
 class Player;
