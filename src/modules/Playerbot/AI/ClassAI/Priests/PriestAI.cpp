@@ -375,7 +375,7 @@ bool PriestAI::HandleInterruptPriority(::Unit* target)
 
             {
 
-                if (this->CastSpell(interruptTarget, SILENCE))
+                if (this->CastSpell(SILENCE, interruptTarget))
 
                 {
 
@@ -784,7 +784,7 @@ void PriestAI::CastDispelMagic()
         if (GameTime::GetGameTimeMS() - _lastDispel > DISPEL_COOLDOWN)
         {
 
-            if (this->CastSpell(target, DISPEL_MAGIC))
+            if (this->CastSpell(DISPEL_MAGIC, target))
 
             {
 
@@ -813,7 +813,7 @@ void PriestAI::CastFearWard()
     if (!target)
         target = GetBot();
 
-    if (this->CastSpell(target, FEAR_WARD))
+    if (this->CastSpell(FEAR_WARD, target))
     {
         _lastFearWard = GameTime::GetGameTimeMS();
     }

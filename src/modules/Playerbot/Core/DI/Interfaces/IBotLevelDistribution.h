@@ -19,6 +19,7 @@
 
 #include "Define.h"
 #include "SharedDefines.h"
+#include <string>
 
 namespace Playerbot
 {

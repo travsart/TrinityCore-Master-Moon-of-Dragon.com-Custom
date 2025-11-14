@@ -727,7 +727,7 @@ void BotAccountMgr::StoreAccountMetadata(BotAccountInfo const& info)
         ss << "INSERT INTO bot_account_metadata "
            << "(account_id, bnet_account_id, email, character_count, expansion, locale, last_ip, join_date, total_time_played, notes) "
            << "VALUES ("
-           << info.accountId << ", "
+           << info.legacyAccountId << ", "
            << info.bnetAccountId << ", "
            << "'" << info.email << "', "
            << info.characterCount << ", "

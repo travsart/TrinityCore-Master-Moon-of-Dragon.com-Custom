@@ -147,7 +147,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     if ((IsInForm(DruidForm::CAT) || IsInForm(DruidForm::BEAR)) &&
         CanUseAbility(SKULL_BASH_CAT))
     {
-        if (CastSpell(interruptTarget, SKULL_BASH_CAT))
+        if (CastSpell(SKULL_BASH_CAT, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Skull Bash",
@@ -161,7 +161,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     // Solar Beam - Balance spec interrupt
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::DruidBalance && CanUseAbility(SOLAR_BEAM))
     {
-        if (CastSpell(interruptTarget, SOLAR_BEAM))
+        if (CastSpell(SOLAR_BEAM, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Solar Beam",
@@ -176,7 +176,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     float rangeSq_typhoon = 15.0f * 15.0f; // 225.0f
     if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_typhoon && CanUseAbility(TYPHOON))
     {
-        if (CastSpell(interruptTarget, TYPHOON))
+        if (CastSpell(TYPHOON, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Typhoon",
@@ -191,7 +191,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     float rangeSq_bash = 5.0f * 5.0f; // 25.0f
     if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_bash && CanUseAbility(MIGHTY_BASH))
     {
-        if (CastSpell(interruptTarget, MIGHTY_BASH))
+        if (CastSpell(MIGHTY_BASH, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Mighty Bash",
@@ -272,7 +272,7 @@ bool DruidAI::HandleDefensives()
             CanUseAbility(IRONBARK))
         {
 
-            if (CastSpell(lowestAlly, IRONBARK))
+            if (CastSpell(IRONBARK, lowestAlly))
 
             {
 
@@ -297,7 +297,7 @@ if (!priorityTarget)
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&        healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
-        if (CastSpell(bot, CENARION_WARD))
+        if (CastSpell(CENARION_WARD, bot))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Cenarion Ward",
@@ -364,7 +364,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, PRIMAL_WRATH))
+                if (CastSpell(PRIMAL_WRATH, target))
 
                 {
 
@@ -384,7 +384,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, THRASH_CAT))
+                if (CastSpell(THRASH_CAT, target))
 
                 {
 
@@ -406,7 +406,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, SWIPE_CAT))
+                if (CastSpell(SWIPE_CAT, target))
 
                 {
 
@@ -445,7 +445,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, THRASH_BEAR))
+                if (CastSpell(THRASH_BEAR, target))
 
                 {
 
@@ -467,7 +467,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, SWIPE_BEAR))
+                if (CastSpell(SWIPE_BEAR, target))
 
                 {
 
@@ -494,7 +494,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, STARFALL))
+                if (CastSpell(STARFALL, target))
 
                 {
 
@@ -514,7 +514,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, LUNAR_STRIKE))
+                if (CastSpell(LUNAR_STRIKE, target))
 
                 {
 
@@ -534,7 +534,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, SUNFIRE))
+                if (CastSpell(SUNFIRE, target))
 
                 {
 
@@ -565,7 +565,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
                 {
 
-                    if (CastSpell(healTarget, WILD_GROWTH))
+                    if (CastSpell(WILD_GROWTH, healTarget))
 
                     {
 
@@ -587,7 +587,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
             {
 
-                if (CastSpell(target, EFFLORESCENCE))
+                if (CastSpell(EFFLORESCENCE, target))
 
                 {
 
@@ -883,7 +883,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         if (!HasAura(RIP, target) && CanUseAbility(RIP))
         {
 
-            if (CastSpell(target, RIP))
+            if (CastSpell(RIP, target))
 
             {
 
@@ -917,7 +917,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         if (CanUseAbility(FEROCIOUS_BITE))
         {
 
-            if (CastSpell(target, FEROCIOUS_BITE))
+            if (CastSpell(FEROCIOUS_BITE, target))
 
             {
 
@@ -938,7 +938,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         if (!HasAura(RAKE, target) && CanUseAbility(RAKE))
         {
 
-            if (CastSpell(target, RAKE))
+            if (CastSpell(RAKE, target))
 
             {
 
@@ -955,7 +955,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         if (CanUseAbility(SHRED))
         {
 
-            if (CastSpell(target, SHRED))
+            if (CastSpell(SHRED, target))
 
             {
 

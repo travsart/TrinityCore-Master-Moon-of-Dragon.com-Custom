@@ -136,7 +136,6 @@ public:
 
     // Use interface types
     using ItemComparisonResult = IEquipmentManager::ItemComparisonResult;
-    using EquipmentMetrics = IEquipmentManager::EquipmentMetrics;
 
     // ============================================================================
     // IEquipmentManager interface implementation

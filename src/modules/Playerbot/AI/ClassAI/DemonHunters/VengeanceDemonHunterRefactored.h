@@ -354,10 +354,10 @@ public:
     // Phase 5C: Threat management using ThreatAssistant service
     void OnTauntRequired(::Unit* target)    {
         // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = target ? target : ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(TORMENT, tauntTarget))
         {
-            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, TORMENT);
+            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, TORMENT);
             TC_LOG_DEBUG("playerbot", "Vengeance: Torment taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }

@@ -318,10 +318,10 @@ public:
     // Phase 5C: Threat management using ThreatAssistant service
     void OnTauntRequired(::Unit* target) override    {
         // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = target ? target : ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(PROVOKE, tauntTarget))
         {
-            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, PROVOKE);
+            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, PROVOKE);
             TC_LOG_DEBUG("playerbot", "Brewmaster: Provoke taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }
     }

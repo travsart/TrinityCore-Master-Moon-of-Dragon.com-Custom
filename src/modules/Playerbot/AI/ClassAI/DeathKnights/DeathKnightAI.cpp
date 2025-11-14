@@ -958,7 +958,7 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     if (!GetBot())
         return false;
 
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId)->GetMap()->GetDifficultyID());
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
         return false;
 
@@ -1284,7 +1284,7 @@ bool DeathKnightAI::HandleInterrupts(Unit* target)
     // Priority: Mind Freeze for melee range, Strangulate for ranged
     if (distance <= OPTIMAL_MELEE_RANGE && CanUseAbility(MIND_FREEZE))
     {
-        if (CastSpell(interruptTarget, MIND_FREEZE))
+        if (CastSpell(MIND_FREEZE, interruptTarget))
         {
 
             RecordInterruptAttempt(interruptTarget, MIND_FREEZE, true);
@@ -1298,7 +1298,7 @@ bool DeathKnightAI::HandleInterrupts(Unit* target)
     }
     else if (distance <= DEATH_GRIP_MAX_RANGE && CanUseAbility(STRANGULATE))
     {
-        if (CastSpell(interruptTarget, STRANGULATE))
+        if (CastSpell(STRANGULATE, interruptTarget))
         {
 
             RecordInterruptAttempt(interruptTarget, STRANGULATE, true);
@@ -1460,7 +1460,7 @@ bool DeathKnightAI::HandleDefensives()
         if (target && IsInMeleeRange(target))
         {
 
-            if (CastSpell(target, DEATH_STRIKE))
+            if (CastSpell(DEATH_STRIKE, target))
 
             {
 
@@ -1511,7 +1511,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
         if (ShouldUseDeathGrip(priorityTarget) && CanUseAbility(DEATH_GRIP))
         {
 
-            if (CastSpell(priorityTarget, DEATH_GRIP))
+            if (CastSpell(DEATH_GRIP, priorityTarget))
 
             {
 
@@ -1533,7 +1533,7 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
         if (CanUseAbility(DARK_COMMAND))
         {
 
-            if (CastSpell(priorityTarget, DARK_COMMAND))
+            if (CastSpell(DARK_COMMAND, priorityTarget))
 
             {
 
@@ -1613,7 +1613,7 @@ bool DeathKnightAI::HandleAoERotation(Unit* target)
     // Howling Blast for Frost
     if (_detectedSpec == DeathKnightSpec::FROST && CanUseAbility(HOWLING_BLAST) && _runeManager->HasRunes(0u, 1u, 0u))
     {
-        if (CastSpell(target, HOWLING_BLAST))
+        if (CastSpell(HOWLING_BLAST, target))
         {
 
             _runeManager->ConsumeRunes(0, 1, 0);
@@ -1743,7 +1743,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
 
             {
 
-                if (CastSpell(target, UNHOLY_FRENZY))
+                if (CastSpell(UNHOLY_FRENZY, target))
 
                 {
 
@@ -1805,7 +1805,7 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
 
                 {
 
-                    if (CastSpell(target, FROST_STRIKE))
+                    if (CastSpell(FROST_STRIKE, target))
 
                     {
 
@@ -1830,7 +1830,7 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
 
                 {
 
-                    if (CastSpell(target, RUNE_STRIKE))
+                    if (CastSpell(RUNE_STRIKE, target))
 
                     {
 
@@ -1851,7 +1851,7 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
 
                 {
 
-                    if (CastSpell(target, DEATH_COIL))
+                    if (CastSpell(DEATH_COIL, target))
 
                     {
 

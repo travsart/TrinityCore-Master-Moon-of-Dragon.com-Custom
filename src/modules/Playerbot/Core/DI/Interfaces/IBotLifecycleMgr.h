@@ -13,8 +13,23 @@
 #include "ObjectGuid.h"
 #include <string>
 #include <functional>
+#include <chrono>
 
-struct LifecycleEventInfo;
+enum class LifecycleEventType
+{
+    SCHEDULER_LOGIN,
+    SCHEDULER_LOGOUT,
+    SPAWNER_SUCCESS,
+    SPAWNER_FAILURE,
+    POPULATION_UPDATE,
+    SYSTEM_SHUTDOWN,
+    MAINTENANCE_REQUIRED
+};
+
+struct LifecycleEventInfo
+{
+    using Type = LifecycleEventType;
+};
 
 /**
  * @brief Interface for bot lifecycle coordination
@@ -35,6 +50,9 @@ public:
         uint32 failedSpawnsLastHour;
         float systemCpuUsage;
         uint64 memoryUsageMB;
+        uint32 eventCountThisSecond;
+        uint32 totalProcessingTimeThisSecond;
+        std::chrono::system_clock::time_point lastUpdate;
     };
 
     struct LifecycleStatistics
@@ -47,6 +65,8 @@ public:
         uint32 populationUpdates;
         uint32 maintenanceRuns;
         float averageResponseTimeMs;
+        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point lastUpdate;
     };
 
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;

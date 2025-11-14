@@ -120,7 +120,7 @@ void HybridAIController::Initialize()
     }
 
     TC_LOG_INFO("playerbot.ai", "HybridAIController initialized: {} behaviors, {} mappings, {} custom builders",
-        _utilityAI->GetBehaviorCount(), _behaviorToTreeMap.size(), _customTreeBuilders.size());
+        _utilityAI->GetBehaviors().size(), _behaviorToTreeMap.size(), _customTreeBuilders.size());
 }
 
 void HybridAIController::CreateDefaultBehaviorMappings()
@@ -191,7 +191,7 @@ bool HybridAIController::Update(uint32 diff)
     {
         TC_LOG_DEBUG("playerbot.ai", "Bot {} behavior transition: {} -> {} (utility score: {:.2f})",
             _bot->GetBot()->GetName(), _currentBehaviorName, selectedBehaviorName,
-            selectedBehavior->GetLastUtility());
+            selectedBehavior->GetCachedScore());
 
         // Get tree for new behavior
         ::std::shared_ptr<BTNode> newTree = GetTreeForBehavior(selectedBehaviorName);
