@@ -43,8 +43,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Discipline Priest Spell IDs
 constexpr uint32 DISC_SMITE = 585;
 constexpr uint32 DISC_PENANCE = 47540;
@@ -928,8 +930,7 @@ private:
 
     void InitializeDisciplineMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Disc Healer + Atonement)
         // ========================================================================

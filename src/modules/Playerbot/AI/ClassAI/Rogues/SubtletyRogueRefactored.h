@@ -36,8 +36,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
@@ -511,8 +513,7 @@ private:
     // Phase 5 Integration: Decision Systems Initialization
     void InitializeSubtletyMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this;
 
         // ========================================================================

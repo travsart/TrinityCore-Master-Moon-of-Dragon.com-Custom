@@ -34,8 +34,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // ============================================================================
 // FROST DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -593,7 +595,7 @@ private:
 
     void InitializeFrostMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this->GetBot()->GetBotAI();
         if (!ai) return;
 
