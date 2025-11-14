@@ -142,19 +142,19 @@ public:
         Player* bot = this->GetBot();        // Maintain poisons
         if (!bot->HasAura(RogueAI::DEADLY_POISON) && this->CanCastSpell(RogueAI::DEADLY_POISON, bot))
         {
-            this->CastSpell(bot, RogueAI::DEADLY_POISON);
+            this->CastSpell(RogueAI::DEADLY_POISON, bot);
         }
 
         // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, RogueAI::STEALTH);
+            this->CastSpell(RogueAI::STEALTH, bot);
         }
 
         // Defensive cooldowns
         if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
+            this->CastSpell(RogueAI::CLOAK_OF_SHADOWS, bot);
         }
     }
 
@@ -171,7 +171,7 @@ protected:
         // Priority 1: Vendetta on cooldown
         if (this->CanCastSpell(VENDETTA, target))
         {
-            this->CastSpell(target, VENDETTA);
+            this->CastSpell(VENDETTA, target);
             _vendettaActive = true;
             _vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -180,7 +180,7 @@ protected:
         // Priority 2: Deathmark on cooldown
         if (this->CanCastSpell(RogueAI::DEATHMARK, target))
         {
-            this->CastSpell(target, RogueAI::DEATHMARK);
+            this->CastSpell(RogueAI::DEATHMARK, target);
             return;
         }
 
@@ -189,7 +189,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::GARROTE, target))
             {
-                this->CastSpell(target, RogueAI::GARROTE);
+                this->CastSpell(RogueAI::GARROTE, target);
                 _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
                 ConsumeEnergy(45);
                 return;
@@ -204,7 +204,7 @@ protected:
             {
                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                 {
-                    this->CastSpell(target, RogueAI::RUPTURE);
+                    this->CastSpell(RogueAI::RUPTURE, target);
                     uint32 ruptDuration = 4000 * cp; // 4s per CP
                     _dotTracker.ApplyDot(target->GetGUID(), RogueAI::RUPTURE, ruptDuration);
                     ConsumeEnergy(25);
@@ -216,7 +216,7 @@ protected:
             // Envenom for damage
             if (energy >= 35 && this->CanCastSpell(ENVENOM, target))
             {
-                this->CastSpell(target, ENVENOM);
+                this->CastSpell(ENVENOM, target);
                 _lastEnvenomTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -227,7 +227,7 @@ protected:
         // Priority 5: Kingsbane (talent)
         if (energy >= 35 && this->CanCastSpell(KINGSBANE, target))
         {
-            this->CastSpell(target, KINGSBANE);
+            this->CastSpell(KINGSBANE, target);
             ConsumeEnergy(35);
             return;
         }
@@ -237,7 +237,7 @@ protected:
         {
             if (this->CanCastSpell(MUTILATE, target))
             {
-                this->CastSpell(target, MUTILATE);
+                this->CastSpell(MUTILATE, target);
                 _lastMutilateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(50);
                 GenerateComboPoints(2);
@@ -246,11 +246,11 @@ protected:
         }
 
         // Priority 7: Poisoned Knife if can't melee
-        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
+        if (this->GetBot()->GetExactDist(target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(RogueAI::POISONED_KNIFE, target))
             {
-                this->CastSpell(target, RogueAI::POISONED_KNIFE);
+                this->CastSpell(RogueAI::POISONED_KNIFE, target);
                 ConsumeEnergy(40);
                 GenerateComboPoints(1);
                 return;
@@ -269,7 +269,7 @@ protected:
         {
             if (this->GetBot()->HasSpell(RogueAI::CRIMSON_TEMPEST) && this->CanCastSpell(RogueAI::CRIMSON_TEMPEST, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::CRIMSON_TEMPEST);
+                this->CastSpell(RogueAI::CRIMSON_TEMPEST, this->GetBot());
                 _dotTracker.ApplyDot(target->GetGUID(), RogueAI::CRIMSON_TEMPEST);
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -282,7 +282,7 @@ protected:
         {
             if (this->CanCastSpell(FAN_OF_KNIVES, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), FAN_OF_KNIVES);
+                this->CastSpell(FAN_OF_KNIVES, this->GetBot());
                 ConsumeEnergy(35);
                 GenerateComboPoints(::std::min(enemyCount, 5u)); // 1 CP per target hit
                 return;
@@ -298,7 +298,7 @@ protected:
         // Priority 1: Garrote from stealth (silence)
         if (this->CanCastSpell(RogueAI::GARROTE, target))
         {
-            this->CastSpell(target, RogueAI::GARROTE);
+            this->CastSpell(RogueAI::GARROTE, target);
             _dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
             _inStealth = false;
             return;
@@ -307,7 +307,7 @@ protected:
         // Priority 2: Cheap Shot for stun
         if (this->CanCastSpell(RogueAI::CHEAP_SHOT, target))
         {
-            this->CastSpell(target, RogueAI::CHEAP_SHOT);
+            this->CastSpell(RogueAI::CHEAP_SHOT, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -316,7 +316,7 @@ protected:
         // Priority 3: Ambush for damage
         if (this->CanCastSpell(RogueAI::AMBUSH, target))
         {
-            this->CastSpell(target, RogueAI::AMBUSH);
+            this->CastSpell(RogueAI::AMBUSH, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -469,7 +469,7 @@ private:
                 ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(RogueAI::POISONED_KNIFE) &&
                        target && this->_resource.energy >= 40 &&
-                       PositionUtils::GetDistance(bot, target) > 10.0f;
+                       bot->GetExactDist(target) > 10.0f;
             }},
                 "Has talent, 40+ Energy, > 10 yards (ranged builder)");
 
@@ -493,7 +493,7 @@ private:
                             bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::GARROTE);
+                                    this->CastSpell(RogueAI::GARROTE, target);
                                     this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
                                     this->_inStealth = false;
                                     return NodeStatus::SUCCESS;
@@ -517,7 +517,7 @@ private:
                             bot::ai::Action("Cast Vendetta", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(VENDETTA, target))
                                 {
-                                    this->CastSpell(target, VENDETTA);
+                                    this->CastSpell(VENDETTA, target);
                                     this->_vendettaActive = true;
                                     this->_vendettaEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -532,7 +532,7 @@ private:
                             bot::ai::Action("Cast Deathmark", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::DEATHMARK, target))
                                 {
-                                    this->CastSpell(target, RogueAI::DEATHMARK);
+                                    this->CastSpell(RogueAI::DEATHMARK, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -556,7 +556,7 @@ private:
                             bot::ai::Action("Cast Garrote", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::GARROTE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::GARROTE);
+                                    this->CastSpell(RogueAI::GARROTE, target);
                                     this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::GARROTE);
                                     this->ConsumeEnergy(45);
                                     return NodeStatus::SUCCESS;
@@ -573,7 +573,7 @@ private:
                             bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::RUPTURE);
+                                    this->CastSpell(RogueAI::RUPTURE, target);
                                     uint32 ruptDuration = 4000 * this->_resource.comboPoints;
                                     this->_dotTracker.ApplyDot(target->GetGUID(), RogueAI::RUPTURE, ruptDuration);
                                     this->ConsumeEnergy(25);
@@ -601,7 +601,7 @@ private:
                             bot::ai::Action("Cast Envenom", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ENVENOM, target))
                                 {
-                                    this->CastSpell(target, ENVENOM);
+                                    this->CastSpell(ENVENOM, target);
                                     this->_lastEnvenomTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -619,7 +619,7 @@ private:
                             bot::ai::Action("Cast Kingsbane", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(KINGSBANE, target))
                                 {
-                                    this->CastSpell(target, KINGSBANE);
+                                    this->CastSpell(KINGSBANE, target);
                                     this->ConsumeEnergy(35);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -635,7 +635,7 @@ private:
                             bot::ai::Action("Cast Mutilate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(MUTILATE, target))
                                 {
-                                    this->CastSpell(target, MUTILATE);
+                                    this->CastSpell(MUTILATE, target);
                                     this->_lastMutilateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(50);
                                     this->GenerateComboPoints(2);

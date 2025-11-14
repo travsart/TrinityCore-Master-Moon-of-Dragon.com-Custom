@@ -25,6 +25,7 @@
 #include "Map.h"
 #include "Log.h"
 #include "CellImpl.h"
+#include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include <chrono>
 #include "../../../Spatial/SpatialGridManager.h"
@@ -395,7 +396,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 {
 
-                    CastSpell(target, WING_CLIP);
+                    CastSpell(WING_CLIP, target);
 
                     return true;
 
@@ -475,21 +476,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} calling pet",
 
                      GetBot()->GetName());
-        return true;    }
-
-    if (!priorityTarget)
-    {
-        return nullptr;
+        return true;
     }
+
     Pet* pet = GetPet();
     if (!pet)
         return false;
 
     // Heal pet if needed
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     if (NeedsPetHeal())
     {
         uint32 now = GameTime::GetGameTimeMS();
@@ -508,18 +502,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     // Command pet to attack if not already
     if (target && !IsPetInCombat())
     {
-        if (!priorityTarget)
-        {
-
-            return nullptr;
-        }
         CommandPetAttack(target);
         _combatMetrics.petCommands++;
         return false; // Don't stop rotation for this
@@ -544,48 +529,17 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     // Master's Call for freedom effects
     if (_bot->HasUnitState(UNIT_STATE_ROOT) || _bot->HasUnitState(UNIT_STATE_STUNNED))
-    if (!ccTarget)
     {
-        return nullptr;
-    }
-    {
-        if (!bot)
-        {
-
-            if (!ccTarget)
-
-            {
-
-                return nullptr;
-
-            }
-
-            return nullptr;
-        }
         if (_bot->HasSpell(MASTER_S_CALL) && CanUseAbility(MASTER_S_CALL))
         {
-
             if (CastSpell(MASTER_S_CALL))
             {
-
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Master's Call for freedom",
-
                              GetBot()->GetName());
-
                 return true;
-
             }
-        if (!ccTarget)
-        {
-
-            return nullptr;
-        }
         }
     }
 
@@ -595,10 +549,6 @@ bool HunterAI::HandlePositioning(::Unit* target)
     if (!_combatBehaviors)
         return false;
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     if (_combatBehaviors->ShouldSwitchTarget())
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
@@ -1030,12 +980,12 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
 
     // Apply Hunter's Mark if not present    if (!target->HasAura(HUNTER_S_MARK) && _bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
     {
-        CastSpell(target, HUNTER_S_MARK);
+        CastSpell(HUNTER_S_MARK, target);
     }
 
     // Apply Serpent Sting if not present    if (!target->HasAura(SERPENT_STING) && _bot->HasSpell(SERPENT_STING) && CanUseAbility(SERPENT_STING))
     {
-        CastSpell(target, SERPENT_STING);
+        CastSpell(SERPENT_STING, target);
     }
 
     // Kill Shot if target is low health    if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
@@ -1051,11 +1001,11 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
 
     // Fallback basic rotation (specialization rotations handled by refactored system)    if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
     {
-        CastSpell(target, STEADY_SHOT);
+        CastSpell(STEADY_SHOT, target);
         RecordShotResult(true, false);
     }    else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
     {
-        CastSpell(target, ARCANE_SHOT);
+        CastSpell(ARCANE_SHOT, target);
         RecordShotResult(true, false);
     }
 }

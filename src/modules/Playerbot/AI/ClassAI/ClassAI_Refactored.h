@@ -159,8 +159,8 @@ protected:
     uint32 GetSpellCooldown(uint32 spellId);
 
     // Spell casting
-    bool CastSpell(uint32 spellId, ::Unit* target);
-    bool CastSpell(uint32 spellId); // Self-cast
+    bool CastSpell(::Unit* target, uint32 spellId);
+    bool CastSpell(::Unit* target = nullptr, uint32 spellId); // Self-cast
 
     // Target selection helpers
     ::Unit* GetBestAttackTarget();
@@ -169,7 +169,7 @@ protected:
     ::Unit* GetLowestHealthAlly(float maxRange = 40.0f);
 
     // Buff/debuff utilities
-    bool HasAura(uint32 spellId, ::Unit* target = nullptr);
+    bool HasAura(uint32 spellId);
     uint32 GetAuraStacks(uint32 spellId, ::Unit* target = nullptr);
     uint32 GetAuraRemainingTime(uint32 spellId, ::Unit* target = nullptr);
 

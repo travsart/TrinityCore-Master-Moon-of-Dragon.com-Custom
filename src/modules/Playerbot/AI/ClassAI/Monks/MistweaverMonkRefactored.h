@@ -374,7 +374,7 @@ protected:
         if (lowHealthCount >= 3 && this->CanCastSpell(REVIVAL, bot))
         {
 
-            this->CastSpell(bot, REVIVAL);
+            this->CastSpell(REVIVAL, bot);
             
 
         // Register cooldowns using CooldownManager
@@ -408,7 +408,7 @@ protected:
         if (lowHealthCount >= 2 && this->CanCastSpell(INVOKE_YULON, bot))
         {
 
-            this->CastSpell(bot, INVOKE_YULON);
+            this->CastSpell(INVOKE_YULON, bot);
 
             TC_LOG_DEBUG("playerbot", "Mistweaver: Invoke Yu'lon");
 
@@ -494,7 +494,7 @@ protected:
 
             {
 
-                this->CastSpell(target, RENEWING_MIST);
+                this->CastSpell(RENEWING_MIST, target);
 
                 _renewingMistTracker.AddTarget(target->GetGUID());
 
@@ -582,7 +582,7 @@ protected:
         if (healthPct < 70.0f && this->CanCastSpell(ENVELOPING_MIST, target))
         {
 
-            this->CastSpell(target, ENVELOPING_MIST);
+            this->CastSpell(ENVELOPING_MIST, target);
 
             return true;
         }
@@ -591,7 +591,7 @@ protected:
         if (healthPct < 80.0f && this->CanCastSpell(VIVIFY, target))
         {
 
-            this->CastSpell(target, VIVIFY);
+            this->CastSpell(VIVIFY, target);
 
             return true;
         }
@@ -613,7 +613,7 @@ protected:
 
                 {
 
-                    this->CastSpell(target, SOOTHING_MIST);
+                    this->CastSpell(SOOTHING_MIST, target);
 
                     _soothingMistTracker.StartChannel(target->GetGUID());
 
@@ -653,7 +653,7 @@ protected:
 
                 {
 
-                    this->CastSpell(target, VIVIFY);
+                    this->CastSpell(VIVIFY, target);
 
                     return true;
 
@@ -964,11 +964,11 @@ private:
 
                         Sequence("Revival", {
 
-                            bot::ai::Action("Cast Revival", [this](Player* bot) {
+                            bot::ai::Action("Cast Revival", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REVIVAL, bot)) {
 
-                                    this->CastSpell(bot, REVIVAL);
+                                    this->CastSpell(REVIVAL, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1000,7 +1000,7 @@ private:
 
                                     if (m && m->GetHealthPct() < 30.0f && this->CanCastSpell(LIFE_COCOON, m)) {
 
-                                        this->CastSpell(m, LIFE_COCOON);
+                                        this->CastSpell(LIFE_COCOON, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1038,17 +1038,17 @@ private:
 
                         Sequence("Invoke Yu'lon", {
 
-                            Condition("Has spell", [this](Player* bot) {
+                            Condition("Has spell", [this](Player* bot), Unit* target {
 
                                 return bot->HasSpell(INVOKE_YULON);
 
                             }),
 
-                            bot::ai::Action("Cast Yu'lon", [this](Player* bot) {
+                            bot::ai::Action("Cast Yu'lon", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(INVOKE_YULON, bot)) {
 
-                                    this->CastSpell(bot, INVOKE_YULON);
+                                    this->CastSpell(INVOKE_YULON, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1074,19 +1074,19 @@ private:
 
                             }),
 
-                            Condition("Has mana", [this](Player* bot) {
+                            Condition("Has mana", [this](Player* bot), Unit* target {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            bot::ai::Action("Cast Essence Font", [this](Player* bot) {
+                            bot::ai::Action("Cast Essence Font", [this](Player* bot), Unit* target {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
                                 if (target && this->CanCastSpell(ESSENCE_FONT, target)) {
 
-                                    this->CastSpell(target, ESSENCE_FONT);
+                                    this->CastSpell(ESSENCE_FONT, target);
 
                                     this->_lastEssenceFontTime = GameTime::GetGameTimeMS();
 
@@ -1128,7 +1128,7 @@ private:
 
                                 if (target && this->CanCastSpell(RENEWING_MIST, target)) {
 
-                                    this->CastSpell(target, RENEWING_MIST);
+                                    this->CastSpell(RENEWING_MIST, target);
 
                                     this->_renewingMistTracker.AddTarget(target->GetGUID());
 
@@ -1144,7 +1144,7 @@ private:
 
                         Sequence("Enveloping Mist", {
 
-                            Condition("Has mana", [this](Player* bot) {
+                            Condition("Has mana", [this](Player* bot), Unit* target {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
@@ -1160,7 +1160,7 @@ private:
 
                                         if (this->CanCastSpell(ENVELOPING_MIST, m)) {
 
-                                            this->CastSpell(m, ENVELOPING_MIST);
+                                            this->CastSpell(ENVELOPING_MIST, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1184,7 +1184,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Condition("Has mana", [this](Player* bot) {
+                    Condition("Has mana", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
@@ -1210,7 +1210,7 @@ private:
 
                                 if (target && this->CanCastSpell(VIVIFY, target)) {
 
-                                    this->CastSpell(target, VIVIFY);
+                                    this->CastSpell(VIVIFY, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1236,7 +1236,7 @@ private:
 
                                 if (target && this->CanCastSpell(SOOTHING_MIST, target)) {
 
-                                    this->CastSpell(target, SOOTHING_MIST);
+                                    this->CastSpell(SOOTHING_MIST, target);
 
                                     this->_soothingMistTracker.StartChannel(target->GetGUID());
 

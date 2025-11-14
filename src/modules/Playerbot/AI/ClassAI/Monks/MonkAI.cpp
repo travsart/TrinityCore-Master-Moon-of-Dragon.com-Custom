@@ -117,10 +117,6 @@ if (!interruptTarget)
 
     // Priority 2: Handle defensive abilities based on spec
     if (behaviors && behaviors->NeedsDefensive())
-    if (!priorityTarget)
-    {
-        return 0;
-    }
     {
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
@@ -469,7 +465,7 @@ void MonkAI::UpdateBuffs()
         if (bot->HasSpell(TOUCH_OF_KARMA) && !bot->HasAura(TOUCH_OF_KARMA))
         {
             Unit* attacker = bot->GetVictim();
-            if (attacker && CastSpell(attacker, TOUCH_OF_KARMA))
+            if (attacker && CastSpell(TOUCH_OF_KARMA, attacker))
             {
                 RecordAbilityUsage(TOUCH_OF_KARMA);
                 _defensiveCooldownsUsed.store(_defensiveCooldownsUsed.load() + 1);
@@ -1051,10 +1047,6 @@ void MonkAI::UseDefensiveCooldowns()
     {
         if (CanUseAbility(ZEN_MEDITATION))
         {
-            if (!healTarget)
-            {
-                return nullptr;
-            }
             if (CastSpell(ZEN_MEDITATION))
             {
                 RecordAbilityUsage(ZEN_MEDITATION);

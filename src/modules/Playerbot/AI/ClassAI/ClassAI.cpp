@@ -927,7 +927,7 @@ void ClassAI::CancelPendingSpell()
 bool ClassAI::CastSpell(uint32 spellId)
 {
     // Self-cast version
-    return CastSpell(spellId, GetBot());
+    return CastSpell(GetBot(, spellId));
 }
 
 // ============================================================================

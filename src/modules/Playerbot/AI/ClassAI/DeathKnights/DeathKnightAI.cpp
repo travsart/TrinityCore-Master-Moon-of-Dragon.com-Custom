@@ -511,7 +511,7 @@ void DeathKnightAI::UpdateRotation(Unit* target)
 
             {
 
-                CastSpell(target, DEATH_GRIP);
+                CastSpell(DEATH_GRIP, target);
 
                 return;
 
@@ -595,7 +595,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (CanUseAbility(ICY_TOUCH) && _runeManager->HasRunes(0u, 1u, 0u))
         {
 
-            CastSpell(target, ICY_TOUCH);
+            CastSpell(ICY_TOUCH, target);
 
             _runeManager->ConsumeRunes(0, 1, 0);
 
@@ -612,7 +612,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (CanUseAbility(PLAGUE_STRIKE) && _runeManager->HasRunes(0u, 0u, 1u))
         {
 
-            CastSpell(target, PLAGUE_STRIKE);
+            CastSpell(PLAGUE_STRIKE, target);
 
             _runeManager->ConsumeRunes(0, 0, 1);
 
@@ -630,7 +630,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (CanUseAbility(DEATH_STRIKE) && _runeManager->HasRunes(0u, 1u, 1u))
         {
 
-            CastSpell(target, DEATH_STRIKE);
+            CastSpell(DEATH_STRIKE, target);
 
             _runeManager->ConsumeRunes(0, 1, 1);
 
@@ -672,7 +672,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                     {
 
-                        CastSpell(target, HEART_STRIKE);
+                        CastSpell(HEART_STRIKE, target);
 
                         _runeManager->ConsumeRunes(1, 0, 0);
 
@@ -691,7 +691,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                     {
 
-                        CastSpell(target, OBLITERATE);
+                        CastSpell(OBLITERATE, target);
 
                         _runeManager->ConsumeRunes(0, 1, 1);
 
@@ -710,7 +710,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                     {
 
-                        CastSpell(target, SCOURGE_STRIKE);
+                        CastSpell(SCOURGE_STRIKE, target);
 
                         _runeManager->ConsumeRunes(0, 0, 1);
 
@@ -729,7 +729,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (CanUseAbility(BLOOD_STRIKE) && _runeManager->HasRunes(1u, 0u, 0u))
         {
 
-            CastSpell(target, BLOOD_STRIKE);
+            CastSpell(BLOOD_STRIKE, target);
 
             _runeManager->ConsumeRunes(1, 0, 0);
 
@@ -742,7 +742,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (distance > 10.0f && CanUseAbility(DEATH_GRIP))
         {
 
-            CastSpell(target, DEATH_GRIP);
+            CastSpell(DEATH_GRIP, target);
 
             _metrics->deathGripsUsed++;
 
@@ -753,7 +753,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         if (runicPower >= 40 && CanUseAbility(DEATH_COIL))
         {
 
-            CastSpell(target, DEATH_COIL);
+            CastSpell(DEATH_COIL, target);
 
             _metrics->totalRunicPowerSpent += 40;
 
@@ -775,7 +775,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                 {
 
-                    CastSpell(target, FROST_STRIKE);
+                    CastSpell(FROST_STRIKE, target);
 
                     _metrics->totalRunicPowerSpent += 40;
 
@@ -794,7 +794,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                 {
 
-                    CastSpell(target, RUNE_STRIKE);
+                    CastSpell(RUNE_STRIKE, target);
 
                     _metrics->totalRunicPowerSpent += 20;
 
@@ -813,7 +813,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
                 {
 
-                    CastSpell(target, DEATH_COIL);
+                    CastSpell(DEATH_COIL, target);
 
                     _metrics->totalRunicPowerSpent += 40;
 
@@ -837,7 +837,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
             {
 
-                CastSpell(target, MIND_FREEZE);
+                CastSpell(MIND_FREEZE, target);
 
                 _metrics->interruptsExecuted++;
 
@@ -849,7 +849,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
 
             {
 
-                CastSpell(target, STRANGULATE);
+                CastSpell(STRANGULATE, target);
 
                 _metrics->interruptsExecuted++;
 
@@ -896,7 +896,7 @@ void DeathKnightAI::UpdateBuffs()
         if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
         {
 
-            CastSpell(presenceSpell);
+            CastSpell(GetBot(, presenceSpell);
 
             _lastPresence = currentTime;
         }
@@ -958,7 +958,7 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     if (!GetBot())
         return false;
 
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId)->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return false;
 
@@ -1071,7 +1071,7 @@ void DeathKnightAI::OnCombatStart(Unit* target)
     // Apply diseases immediately
     if (CanUseAbility(ICY_TOUCH))
     {
-        CastSpell(target, ICY_TOUCH);
+        CastSpell(ICY_TOUCH, target);
         _diseaseManager->UpdateDiseases(target);
     }
 
@@ -1151,7 +1151,7 @@ void DeathKnightAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(VAMPIRIC_BLOOD);
+                CastSpell(UNHOLY_FRENZY, VAMPIRIC_BLOOD);
 
                 _metrics->cooldownsUsed++;
 
@@ -1219,7 +1219,7 @@ void DeathKnightAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(target, UNHOLY_FRENZY);
+                CastSpell(target);
 
                 _metrics->cooldownsUsed++;
 
@@ -1847,15 +1847,6 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
                 }
                 break;
                 case DeathKnightSpec::UNHOLY:
-
-                if (!creature)
-
-                {
-
-                    return nullptr;
-
-                }
-
                 if (CanUseAbility(DEATH_COIL))
 
                 {
@@ -1948,7 +1939,7 @@ void DeathKnightAI::UpdatePresenceIfNeeded()
 
     if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
     {
-        CastSpell(presenceSpell);
+        CastSpell(GetBot(, presenceSpell);
         _lastPresence = currentTime;
     }
 }
@@ -2056,7 +2047,7 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
 
     uint32 count = 0;
     ::std::list<Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot()), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();

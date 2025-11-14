@@ -314,7 +314,7 @@ protected:
             // During Breath, spam Obliterate and Frost Strike to maintain
             if (rp < 20 && totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
             {
-                this->CastSpell(target, OBLITERATE);
+                this->CastSpell(OBLITERATE, target);
                 ConsumeRunes(RuneType::FROST, 2);
                 GenerateRunicPower(15);
                 return;
@@ -322,7 +322,7 @@ protected:
 
             if (rp >= 25 && this->CanCastSpell(FROST_STRIKE, target))
             {
-                this->CastSpell(target, FROST_STRIKE);
+                this->CastSpell(FROST_STRIKE, target);
                 ConsumeRunicPower(25);
                 return;
             }
@@ -331,7 +331,7 @@ protected:
         // Priority 2: Use Rime proc (free Howling Blast)
         if (_rimeTracker.IsActive() && this->CanCastSpell(HOWLING_BLAST, target))
         {
-            this->CastSpell(target, HOWLING_BLAST);
+            this->CastSpell(HOWLING_BLAST, target);
             _rimeTracker.ConsumeProc();
             return;
         }
@@ -339,7 +339,7 @@ protected:
         // Priority 3: Obliterate with Killing Machine proc
         if (_kmTracker.IsActive() && totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
         {
-            this->CastSpell(target, OBLITERATE);
+            this->CastSpell(OBLITERATE, target);
             _kmTracker.ConsumeProc();
             ConsumeRunes(RuneType::FROST, 2);
             GenerateRunicPower(15);
@@ -349,7 +349,7 @@ protected:
         // Priority 4: Remorseless Winter (AoE slow)
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
+            this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;
@@ -358,7 +358,7 @@ protected:
         // Priority 5: Frost Strike (dump RP)
         if (rp >= 50 && this->CanCastSpell(FROST_STRIKE, target))
         {
-            this->CastSpell(target, FROST_STRIKE);
+            this->CastSpell(FROST_STRIKE, target);
             ConsumeRunicPower(25);
             return;
         }
@@ -366,7 +366,7 @@ protected:
         // Priority 6: Obliterate (main rune spender)
         if (totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
         {
-            this->CastSpell(target, OBLITERATE);
+            this->CastSpell(OBLITERATE, target);
             ConsumeRunes(RuneType::FROST, 2);
             GenerateRunicPower(15);
             return;
@@ -375,7 +375,7 @@ protected:
         // Priority 7: Frost Strike (prevent RP capping)
         if (rp >= 25 && this->CanCastSpell(FROST_STRIKE, target))
         {
-            this->CastSpell(target, FROST_STRIKE);
+            this->CastSpell(FROST_STRIKE, target);
             ConsumeRunicPower(25);
             return;
         }
@@ -383,7 +383,7 @@ protected:
         // Priority 8: Horn of Winter (talent, generate resources)
         if (totalRunes < 3 && rp < 70 && this->CanCastSpell(HORN_OF_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), HORN_OF_WINTER);
+            this->CastSpell(HORN_OF_WINTER, this->GetBot());
             GenerateRunicPower(25);
             return;
         }
@@ -397,7 +397,7 @@ protected:
         // Priority 1: Remorseless Winter
         if (totalRunes >= 1 && this->CanCastSpell(REMORSELESS_WINTER, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), REMORSELESS_WINTER);
+            this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
             ConsumeRunes(RuneType::FROST, 1);
             return;
@@ -406,7 +406,7 @@ protected:
         // Priority 2: Howling Blast (AoE)
         if (totalRunes >= 1 && this->CanCastSpell(HOWLING_BLAST, target))
         {
-            this->CastSpell(target, HOWLING_BLAST);
+            this->CastSpell(HOWLING_BLAST, target);
             ConsumeRunes(RuneType::FROST, 1);
             GenerateRunicPower(10);
             return;
@@ -415,7 +415,7 @@ protected:
         // Priority 3: Frostscythe (talent, AoE cleave)
         if (totalRunes >= 2 && this->CanCastSpell(FROSTSCYTHE, target))
         {
-            this->CastSpell(target, FROSTSCYTHE);
+            this->CastSpell(FROSTSCYTHE, target);
             ConsumeRunes(RuneType::FROST, 2);
             GenerateRunicPower(15);
             return;
@@ -424,7 +424,7 @@ protected:
         // Priority 4: Glacial Advance (talent, ranged AoE)
         if (totalRunes >= 2 && this->CanCastSpell(GLACIAL_ADVANCE, target))
         {
-            this->CastSpell(target, GLACIAL_ADVANCE);
+            this->CastSpell(GLACIAL_ADVANCE, target);
             ConsumeRunes(RuneType::FROST, 2);
             return;
         }
@@ -432,7 +432,7 @@ protected:
         // Priority 5: Frost Strike (dump RP)
         if (rp >= 25 && this->CanCastSpell(FROST_STRIKE, target))
         {
-            this->CastSpell(target, FROST_STRIKE);
+            this->CastSpell(FROST_STRIKE, target);
             ConsumeRunicPower(25);
             return;
         }
@@ -440,7 +440,7 @@ protected:
         // Priority 6: Obliterate (if no AoE available)
         if (totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
         {
-            this->CastSpell(target, OBLITERATE);
+            this->CastSpell(OBLITERATE, target);
             ConsumeRunes(RuneType::FROST, 2);
             GenerateRunicPower(15);
             return;
@@ -456,7 +456,7 @@ protected:
         // Pillar of Frost (major damage CD)
         if (totalRunes >= 3 && this->CanCastSpell(PILLAR_OF_FROST, bot))
         {
-            this->CastSpell(bot, PILLAR_OF_FROST);
+            this->CastSpell(PILLAR_OF_FROST, bot);
             _pillarOfFrostActive = true;
             _pillarEndTime = GameTime::GetGameTimeMS() + 12000; // 12 sec duration
             
@@ -483,7 +483,7 @@ protected:
         // Empower Rune Weapon (rune refresh)
         if (totalRunes == 0 && this->CanCastSpell(EMPOWER_RUNE_WEAPON, bot))
         {
-            this->CastSpell(bot, EMPOWER_RUNE_WEAPON);
+            this->CastSpell(EMPOWER_RUNE_WEAPON, bot);
             this->_resource.bloodRunes = 2;
             this->_resource.frostRunes = 2;
             this->_resource.unholyRunes = 2;
@@ -494,7 +494,7 @@ protected:
         // Breath of Sindragosa (talent, channel burst)
         if (rp >= 60 && this->CanCastSpell(BREATH_OF_SINDRAGOSA, bot))
         {
-            this->CastSpell(bot, BREATH_OF_SINDRAGOSA);
+            this->CastSpell(BREATH_OF_SINDRAGOSA, bot);
             _breathOfSindragosaActive = true;
             TC_LOG_DEBUG("playerbot", "Frost: Breath of Sindragosa");
         }
@@ -502,7 +502,7 @@ protected:
         // Frostwyrm's Fury (AoE burst)
         if (this->CanCastSpell(FROSTWYRMS_FURY, bot))
         {
-            this->CastSpell(bot, FROSTWYRMS_FURY);
+            this->CastSpell(FROSTWYRMS_FURY, bot);
             TC_LOG_DEBUG("playerbot", "Frost: Frostwyrm's Fury");
         }
     }
@@ -515,7 +515,7 @@ protected:
         // Icebound Fortitude
         if (healthPct < 40.0f && this->CanCastSpell(ICEBOUND_FORTITUDE_FROST, bot))
         {
-            this->CastSpell(bot, ICEBOUND_FORTITUDE_FROST);
+            this->CastSpell(ICEBOUND_FORTITUDE_FROST, bot);
             TC_LOG_DEBUG("playerbot", "Frost: Icebound Fortitude");
             return;
         }
@@ -523,7 +523,7 @@ protected:
         // Anti-Magic Shell
         if (healthPct < 60.0f && this->CanCastSpell(ANTI_MAGIC_SHELL_FROST, bot))
         {
-            this->CastSpell(bot, ANTI_MAGIC_SHELL_FROST);
+            this->CastSpell(ANTI_MAGIC_SHELL_FROST, bot);
             TC_LOG_DEBUG("playerbot", "Frost: Anti-Magic Shell");
             return;
         }
@@ -531,7 +531,7 @@ protected:
         // Death's Advance
         if (healthPct < 70.0f && this->CanCastSpell(DEATHS_ADVANCE_FROST, bot))
         {
-            this->CastSpell(bot, DEATHS_ADVANCE_FROST);
+            this->CastSpell(DEATHS_ADVANCE_FROST, bot);
             TC_LOG_DEBUG("playerbot", "Frost: Death's Advance");
             return;
         }
@@ -664,7 +664,7 @@ private:
             auto root = Selector("Frost Death Knight DPS", {
                 // Tier 1: Burst Cooldowns (Pillar of Frost)
                 Sequence("Burst Cooldowns", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Use burst", {
@@ -672,10 +672,10 @@ private:
                             Condition("Not active", [this](Player*) {
                                 return !this->_pillarOfFrostActive;
                             }),
-                            bot::ai::Action("Cast Pillar", [this](Player* bot) {
+                            bot::ai::Action("Cast Pillar", [this](Player* bot), Unit* target {
                                 if (this->CanCastSpell(FROST_PILLAR_OF_FROST, bot))
                                 {
-                                    this->CastSpell(bot, FROST_PILLAR_OF_FROST);
+                                    this->CastSpell(FROST_PILLAR_OF_FROST, bot);
                                     this->_pillarOfFrostActive = true;
                                     this->_pillarEndTime = GameTime::GetGameTimeMS() + 12000;
                                     return NodeStatus::SUCCESS;
@@ -687,10 +687,10 @@ private:
                             Condition("< 3 runes", [this](Player*) {
                                 return this->_resource.GetAvailableRunes() < 3;
                             }),
-                            bot::ai::Action("Cast ERW", [this](Player* bot) {
+                            bot::ai::Action("Cast ERW", [this](Player* bot), Unit* target {
                                 if (this->CanCastSpell(FROST_EMPOWER_RUNE_WEAPON, bot))
                                 {
-                                    this->CastSpell(bot, FROST_EMPOWER_RUNE_WEAPON);
+                                    this->CastSpell(FROST_EMPOWER_RUNE_WEAPON, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -701,7 +701,7 @@ private:
 
                 // Tier 2: Priority Abilities (KM Obliterate, Rime Howling Blast)
                 Sequence("Priority Procs", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Use procs", {
@@ -709,11 +709,11 @@ private:
                             Condition("KM active and 2 runes", [this](Player*) {
                                 return this->_kmTracker.IsActive() && this->_resource.GetAvailableRunes() >= 2;
                             }),
-                            bot::ai::Action("Cast Obliterate", [this](Player* bot) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {
-                                    this->CastSpell(target, FROST_OBLITERATE);
+                                    this->CastSpell(FROST_OBLITERATE, target);
                                     this->GenerateRunicPower(20);
                                     if (this->_kmTracker.IsActive())
                                         this->_kmTracker.Consume();
@@ -726,11 +726,11 @@ private:
                             Condition("Rime active", [this](Player*) {
                                 return this->_rimeTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Howling Blast", [this](Player* bot) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
-                                    this->CastSpell(target, FROST_HOWLING_BLAST);
+                                    this->CastSpell(FROST_HOWLING_BLAST, target);
                                     if (this->_rimeTracker.IsActive())
                                         this->_rimeTracker.Consume();
                                     return NodeStatus::SUCCESS;
@@ -743,14 +743,14 @@ private:
 
                 // Tier 3: Runic Power Spender (Frost Strike)
                 Sequence("RP Spender", {
-                    Condition("25+ RP and target", [this](Player* bot) {
+                    Condition("25+ RP and target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim() && this->_resource.runicPower >= 25;
                     }),
-                    bot::ai::Action("Cast Frost Strike", [this](Player* bot) {
+                    bot::ai::Action("Cast Frost Strike", [this](Player* bot), Unit* target {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_FROST_STRIKE, target))
                         {
-                            this->CastSpell(target, FROST_FROST_STRIKE);
+                            this->CastSpell(FROST_FROST_STRIKE, target);
                             this->ConsumeRunicPower(25);
                             return NodeStatus::SUCCESS;
                         }
@@ -760,7 +760,7 @@ private:
 
                 // Tier 4: Rune Spender (Obliterate builder)
                 Sequence("Rune Spender", {
-                    Condition("2+ runes and target", [this](Player* bot) {
+                    Condition("2+ runes and target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim() && this->_resource.GetAvailableRunes() >= 2;
                     }),
                     Selector("Spend runes", {
@@ -768,22 +768,22 @@ private:
                             Condition("3+ enemies", [this](Player*) {
                                 return this->GetEnemiesInRange(10.0f) >= 3;
                             }),
-                            bot::ai::Action("Cast Howling Blast", [this](Player* bot) {
+                            bot::ai::Action("Cast Howling Blast", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_HOWLING_BLAST, target))
                                 {
-                                    this->CastSpell(target, FROST_HOWLING_BLAST);
+                                    this->CastSpell(FROST_HOWLING_BLAST, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Obliterate (ST)", {
-                            bot::ai::Action("Cast Obliterate", [this](Player* bot) {
+                            bot::ai::Action("Cast Obliterate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_OBLITERATE, target))
                                 {
-                                    this->CastSpell(target, FROST_OBLITERATE);
+                                    this->CastSpell(FROST_OBLITERATE, target);
                                     this->GenerateRunicPower(20);
                                     return NodeStatus::SUCCESS;
                                 }

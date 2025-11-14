@@ -253,18 +253,18 @@ public:
         Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, RogueAI::STEALTH);
+            this->CastSpell(RogueAI::STEALTH, bot);
         }
 
         // Defensive cooldowns
         if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
+            this->CastSpell(RogueAI::CLOAK_OF_SHADOWS, bot);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(RogueAI::EVASION, bot))
         {
-            this->CastSpell(bot, RogueAI::EVASION);
+            this->CastSpell(RogueAI::EVASION, bot);
         }
     }
 
@@ -281,7 +281,7 @@ protected:
         // Priority 1: Symbols of Death on cooldown
         if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
+            this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot());
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
@@ -290,7 +290,7 @@ protected:
         // Priority 2: Shadow Blades on cooldown (talent)
         if (this->CanCastSpell(RogueAI::SHADOW_BLADES, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SHADOW_BLADES);
+            this->CastSpell(RogueAI::SHADOW_BLADES, this->GetBot());
             _shadowBladesActive = true;
             _shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -301,7 +301,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
+                this->CastSpell(RogueAI::SHADOW_DANCE, this->GetBot());
                 _shadowDanceTracker.Use();
                 _inStealth = true; // Enables stealth abilities
                 return;
@@ -313,7 +313,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 _lastShadowstrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
@@ -329,7 +329,7 @@ protected:
         {
             if (this->GetBot()->HasSpell(SECRET_TECHNIQUE) && this->CanCastSpell(SECRET_TECHNIQUE, target))
             {
-                this->CastSpell(target, SECRET_TECHNIQUE);
+                this->CastSpell(SECRET_TECHNIQUE, target);
                 ConsumeEnergy(30);
                 this->_resource.comboPoints = 0;
                 return;
@@ -341,7 +341,7 @@ protected:
         {
             if (this->CanCastSpell(EVISCERATE_SUB, target))
             {
-                this->CastSpell(target, EVISCERATE_SUB);
+                this->CastSpell(EVISCERATE_SUB, target);
                 _lastEviscerateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -354,7 +354,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::RUPTURE, target))
             {
-                this->CastSpell(target, RogueAI::RUPTURE);
+                this->CastSpell(RogueAI::RUPTURE, target);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -366,7 +366,7 @@ protected:
         {
             if (this->IsBehindTarget(target) && this->CanCastSpell(RogueAI::BACKSTAB, target))
             {
-                this->CastSpell(target, RogueAI::BACKSTAB);
+                this->CastSpell(RogueAI::BACKSTAB, target);
                 _lastBackstabTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 GenerateComboPoints(1);
@@ -381,7 +381,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
                 return;
@@ -398,14 +398,14 @@ protected:
         // Priority 1: Shuriken Tornado (talent, sustained AoE)
         if (this->CanCastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SHURIKEN_TORNADO_TALENT);
+            this->CastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot());
             return;
         }
 
         // Priority 2: Symbols of Death
         if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
+            this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot());
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
@@ -416,7 +416,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
+                this->CastSpell(RogueAI::SHADOW_DANCE, this->GetBot());
                 _shadowDanceTracker.Use();
                 _inStealth = true;
                 return;
@@ -428,7 +428,7 @@ protected:
         {
             if (this->CanCastSpell(BLACK_POWDER, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), BLACK_POWDER);
+                this->CastSpell(BLACK_POWDER, this->GetBot());
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -440,7 +440,7 @@ protected:
         {
             if (this->CanCastSpell(SHURIKEN_STORM, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), SHURIKEN_STORM);
+                this->CastSpell(SHURIKEN_STORM, this->GetBot());
                 ConsumeEnergy(35);
                 GenerateComboPoints(::std::min(enemyCount, 5u));
                 return;
@@ -634,7 +634,7 @@ private:
                             bot::ai::Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::SYMBOLS_OF_DEATH);
+                                    this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, bot);
                                     this->_symbolsOfDeathActive = true;
                                     this->_symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
@@ -650,7 +650,7 @@ private:
                             bot::ai::Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SHADOW_BLADES, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::SHADOW_BLADES);
+                                    this->CastSpell(RogueAI::SHADOW_BLADES, bot);
                                     this->_shadowBladesActive = true;
                                     this->_shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -670,7 +670,7 @@ private:
                     bot::ai::Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(RogueAI::SHADOW_DANCE, bot))
                         {
-                            this->CastSpell(bot, RogueAI::SHADOW_DANCE);
+                            this->CastSpell(RogueAI::SHADOW_DANCE, bot);
                             this->_shadowDanceTracker.Use();
                             this->_inStealth = true;
                             return NodeStatus::SUCCESS;
@@ -696,7 +696,7 @@ private:
                             bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::RUPTURE);
+                                    this->CastSpell(RogueAI::RUPTURE, target);
                                     this->ConsumeEnergy(25);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -714,7 +714,7 @@ private:
                             bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SECRET_TECHNIQUE, target))
                                 {
-                                    this->CastSpell(target, SECRET_TECHNIQUE);
+                                    this->CastSpell(SECRET_TECHNIQUE, target);
                                     this->ConsumeEnergy(30);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -730,7 +730,7 @@ private:
                             bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
-                                    this->CastSpell(target, EVISCERATE_SUB);
+                                    this->CastSpell(EVISCERATE_SUB, target);
                                     this->_lastEviscerateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -757,7 +757,7 @@ private:
                             bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->_lastShadowstrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
@@ -776,7 +776,7 @@ private:
                             bot::ai::Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::BACKSTAB, target))
                                 {
-                                    this->CastSpell(target, RogueAI::BACKSTAB);
+                                    this->CastSpell(RogueAI::BACKSTAB, target);
                                     this->_lastBackstabTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->GenerateComboPoints(1);
@@ -795,7 +795,7 @@ private:
                             bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
                                     return NodeStatus::SUCCESS;

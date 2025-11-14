@@ -656,7 +656,7 @@ void PriestAI::UpdatePriestBuffs()
     // Maintain Divine Spirit if available
     if (GetBot()->HasSpell(DIVINE_SPIRIT) && !GetBot()->HasAura(DIVINE_SPIRIT))
     {
-        this->CastSpell(GetBot(), DIVINE_SPIRIT);
+        this->CastSpell(DIVINE_SPIRIT, GetBot());
     }
 }
 
@@ -693,7 +693,7 @@ void PriestAI::CastPowerWordFortitude()
     if (!GetBot() || !this->IsSpellReady(POWER_WORD_FORTITUDE))
         return;
 
-    this->CastSpell(GetBot(), POWER_WORD_FORTITUDE);
+    this->CastSpell(POWER_WORD_FORTITUDE, GetBot());
 }
 
 bool PriestAI::HasEnoughMana(uint32 amount)
@@ -744,7 +744,7 @@ void PriestAI::UseManaRegeneration()
     // Use Hymn of Hope if available
     if (this->IsSpellReady(HYMN_OF_HOPE))
     {
-        this->CastSpell(GetBot(), HYMN_OF_HOPE);
+        this->CastSpell(HYMN_OF_HOPE, GetBot());
     }
 }
 

@@ -328,7 +328,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_POWER_WORD_FORTITUDE);
+                this->CastSpell(HOLY_POWER_WORD_FORTITUDE, bot);
 
             }
         }
@@ -347,7 +347,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(HOLY_DESPERATE_PRAYER, bot))
         {
 
-            this->CastSpell(bot, HOLY_DESPERATE_PRAYER);
+            this->CastSpell(HOLY_DESPERATE_PRAYER, bot);
 
             return;
         }
@@ -360,7 +360,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_GUARDIAN_SPIRIT);
+                this->CastSpell(HOLY_GUARDIAN_SPIRIT, bot);
 
                 _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
 
@@ -377,7 +377,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_FADE);
+                this->CastSpell(HOLY_FADE, bot);
 
                 return;
 
@@ -473,7 +473,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_HOLY_WORD_SALVATION);
+                    this->CastSpell(HOLY_HOLY_WORD_SALVATION, bot);
 
                     _lastSalvationTime = GameTime::GetGameTimeMS();
 
@@ -500,7 +500,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_DIVINE_HYMN);
+                this->CastSpell(HOLY_DIVINE_HYMN, bot);
 
                 _lastDivineHymnTime = GameTime::GetGameTimeMS();
 
@@ -521,7 +521,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_APOTHEOSIS);
+                    this->CastSpell(HOLY_APOTHEOSIS, bot);
                     _apotheosisActive = true;
 
                     _apotheosisEndTime = GameTime::GetGameTimeMS() + 20000; // 20 sec
@@ -550,7 +550,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_GUARDIAN_SPIRIT);
+                        this->CastSpell(HOLY_GUARDIAN_SPIRIT, member);
 
                         _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
 
@@ -579,7 +579,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_SYMBOL_OF_HOPE);
+                    this->CastSpell(HOLY_SYMBOL_OF_HOPE, bot);
 
                     _lastSymbolOfHopeTime = GameTime::GetGameTimeMS();
 
@@ -611,7 +611,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_PRAYER_OF_MENDING);
+                        this->CastSpell(HOLY_PRAYER_OF_MENDING, member);
 
                         _pomTracker.ApplyPoM(member->GetGUID(), 30000);
 
@@ -643,7 +643,7 @@ private:
 
                         {
 
-                            this->CastSpell(member, HOLY_RENEW);
+                            this->CastSpell(HOLY_RENEW, member);
 
                             _renewTracker.ApplyRenew(member->GetGUID(), 15000);
 
@@ -674,7 +674,7 @@ private:
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))
                 {
 
-                    this->CastSpell(member, HOLY_HOLY_WORD_SERENITY);
+                    this->CastSpell(HOLY_HOLY_WORD_SERENITY, member);
 
                     return true;
 
@@ -727,7 +727,7 @@ private:
             if (this->CanCastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget))
 
             {
-            this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
+            this->CastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget);
 
                 return true;
 
@@ -767,7 +767,7 @@ private:
 
                         {
 
-                            this->CastSpell(member, HOLY_CIRCLE_OF_HEALING);
+                            this->CastSpell(HOLY_CIRCLE_OF_HEALING, member);
 
                             return true;
 
@@ -796,7 +796,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_PRAYER_OF_HEALING);
+                        this->CastSpell(HOLY_PRAYER_OF_HEALING, member);
 
                         return true;
 
@@ -819,7 +819,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_DIVINE_STAR);
+                    this->CastSpell(HOLY_DIVINE_STAR, bot);
 
                     return true;
 
@@ -840,7 +840,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_HALO);
+                    this->CastSpell(HOLY_HALO, bot);
 
                     return true;
 
@@ -866,7 +866,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, HOLY_FLASH_HEAL);
+                    this->CastSpell(HOLY_FLASH_HEAL, member);
 
                     return true;
 
@@ -887,7 +887,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, HOLY_HEAL);
+                    this->CastSpell(HOLY_HEAL, member);
 
                     return true;
 
@@ -912,7 +912,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_RENEW);
+                this->CastSpell(HOLY_RENEW, bot);
 
                 _renewTracker.ApplyRenew(bot->GetGUID(), 15000);
 
@@ -929,7 +929,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_FLASH_HEAL);
+                this->CastSpell(HOLY_FLASH_HEAL, bot);
 
                 return true;
 
@@ -944,7 +944,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_HEAL);
+                this->CastSpell(HOLY_HEAL, bot);
 
                 return true;
 
@@ -960,7 +960,7 @@ private:
         if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
         {
 
-            this->CastSpell(target, HOLY_HOLY_FIRE);
+            this->CastSpell(HOLY_HOLY_FIRE, target);
 
             return;
         }
@@ -969,7 +969,7 @@ private:
         if (this->CanCastSpell(HOLY_SMITE, target))
         {
 
-            this->CastSpell(target, HOLY_SMITE);
+            this->CastSpell(HOLY_SMITE, target);
 
             return;
         }
@@ -1128,7 +1128,7 @@ private:
 
                                         this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m)) {
 
-                                        this->CastSpell(m, HOLY_GUARDIAN_SPIRIT);
+                                        this->CastSpell(HOLY_GUARDIAN_SPIRIT, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1152,7 +1152,7 @@ private:
 
                                         this->CanCastSpell(HOLY_FLASH_HEAL, m)) {
 
-                                        this->CastSpell(m, HOLY_FLASH_HEAL);
+                                        this->CastSpell(HOLY_FLASH_HEAL, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1189,7 +1189,7 @@ private:
 
                                             this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m)) {
 
-                                            this->CastSpell(m, HOLY_PRAYER_OF_MENDING);
+                                            this->CastSpell(HOLY_PRAYER_OF_MENDING, m);
 
                                             this->_pomTracker.ApplyPoM(m->GetGUID(), 30000);
 
@@ -1219,7 +1219,7 @@ private:
 
                                         this->CanCastSpell(HOLY_RENEW, m)) {
 
-                                        this->CastSpell(m, HOLY_RENEW);
+                                        this->CastSpell(HOLY_RENEW, m);
 
                                         this->_renewTracker.ApplyRenew(m->GetGUID(), 15000);
 
@@ -1252,7 +1252,7 @@ private:
 
                                     this->CanCastSpell(HOLY_HEAL, m)) {
 
-                                    this->CastSpell(m, HOLY_HEAL);
+                                    this->CastSpell(HOLY_HEAL, m);
 
                                     return NodeStatus::SUCCESS;
 

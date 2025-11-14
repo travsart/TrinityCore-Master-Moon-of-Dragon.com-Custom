@@ -1010,7 +1010,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
         if (CanUseAbility(STEALTH))
         {
 
-            CastSpell(STEALTH);
+            CastSpell(SLICE_AND_DICE, STEALTH);
 
             _metrics->stealthOpeners++;
 
@@ -1037,7 +1037,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
 
             {
 
-                CastSpell(target, SLICE_AND_DICE);
+                CastSpell(target);
 
                 _metrics->totalFinishersExecuted++;
 
@@ -1074,7 +1074,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
 
             {
 
-                CastSpell(target, KICK);
+                CastSpell(KICK, target);
 
                 _metrics->interruptsExecuted++;
 
@@ -1093,21 +1093,21 @@ bool RogueAI::ExecuteStealthOpener(Unit* target)
     // Priority: Cheap Shot > Ambush > Garrote
     if (CanUseAbility(CHEAP_SHOT))
     {
-        CastSpell(target, CHEAP_SHOT);
+        CastSpell(CHEAP_SHOT, target);
         _combatMetrics->RecordAbilityUsage(CHEAP_SHOT, true, 40);
         return true;
     }
 
     if (_positioning->IsBehindTarget(target) && CanUseAbility(AMBUSH))
     {
-        CastSpell(target, AMBUSH);
+        CastSpell(AMBUSH, target);
         _combatMetrics->RecordAbilityUsage(AMBUSH, true, 60);
         return true;
     }
 
     if (CanUseAbility(GARROTE))
     {
-        CastSpell(target, GARROTE);
+        CastSpell(GARROTE, target);
         _combatMetrics->RecordAbilityUsage(GARROTE, true, 50);
         return true;
     }
@@ -1130,7 +1130,7 @@ bool RogueAI::ExecuteFinisher(Unit* target)
         if (CanUseAbility(SLICE_AND_DICE))
         {
 
-            CastSpell(target, SLICE_AND_DICE);
+            CastSpell(SLICE_AND_DICE, target);
 
             _combatMetrics->RecordAbilityUsage(SLICE_AND_DICE, true, 25);
 
@@ -1146,7 +1146,7 @@ bool RogueAI::ExecuteFinisher(Unit* target)
         if (CanUseAbility(RUPTURE))
         {
 
-            CastSpell(target, RUPTURE);
+            CastSpell(RUPTURE, target);
 
             _combatMetrics->RecordAbilityUsage(RUPTURE, true, 25);
 
@@ -1158,7 +1158,7 @@ bool RogueAI::ExecuteFinisher(Unit* target)
 
     // Kidney Shot for control
     if (target->GetTypeId() == TYPEID_PLAYER && CanUseAbility(KIDNEY_SHOT))    {
-        CastSpell(target, KIDNEY_SHOT);
+        CastSpell(KIDNEY_SHOT, target);
         _combatMetrics->RecordAbilityUsage(KIDNEY_SHOT, true, 25);
         _metrics->totalFinishersExecuted++;
         return true;
@@ -1167,7 +1167,7 @@ bool RogueAI::ExecuteFinisher(Unit* target)
     // Eviscerate for burst damage
     if (CanUseAbility(EVISCERATE))
     {
-        CastSpell(target, EVISCERATE);
+        CastSpell(EVISCERATE, target);
         _combatMetrics->RecordAbilityUsage(EVISCERATE, true, 35);
         _metrics->totalFinishersExecuted++;
         return true;
@@ -1186,7 +1186,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
     // Backstab if behind
     if (behindTarget && CanUseAbility(BACKSTAB))
     {
-        CastSpell(target, BACKSTAB);
+        CastSpell(BACKSTAB, target);
         _combatMetrics->RecordAbilityUsage(BACKSTAB, true, 60);
         _combatMetrics->RecordComboPointGeneration(1);
         _metrics->backstabsLanded++;
@@ -1203,7 +1203,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
 
             {
 
-                CastSpell(target, MUTILATE);
+                CastSpell(MUTILATE, target);
 
                 _combatMetrics->RecordAbilityUsage(MUTILATE, true, 60);
 
@@ -1221,7 +1221,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
 
             {
 
-                CastSpell(target, HEMORRHAGE);
+                CastSpell(HEMORRHAGE, target);
 
                 _combatMetrics->RecordAbilityUsage(HEMORRHAGE, true, 35);
 
@@ -1242,7 +1242,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
     // Default to Sinister Strike
     if (CanUseAbility(SINISTER_STRIKE))
     {
-        CastSpell(target, SINISTER_STRIKE);
+        CastSpell(SINISTER_STRIKE, target);
         _combatMetrics->RecordAbilityUsage(SINISTER_STRIKE, true, 45);
         _combatMetrics->RecordComboPointGeneration(1);
         return true;
@@ -1279,7 +1279,7 @@ void RogueAI::UpdateBuffs()
         if (!HasAura(STEALTH) && CanUseAbility(STEALTH))
         {
 
-            CastSpell(STEALTH);
+            CastSpell(EQUIPMENT_SLOT_MAINHAND, STEALTH);
 
             _lastStealth = currentTime;
         }
@@ -1291,7 +1291,7 @@ void RogueAI::UpdateBuffs()
 
 void RogueAI::ApplyPoisons()
 {
-    Item* mainHand = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+    Item* mainHand = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0);
     Item* offHand = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
 
     // Main hand poison based on spec
@@ -1561,7 +1561,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(COLD_BLOOD);
+                CastSpell(VENDETTA, COLD_BLOOD);
 
                 _metrics->cooldownsUsed++;
 
@@ -1571,7 +1571,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(target, VENDETTA);
+                CastSpell(target);
 
                 _metrics->cooldownsUsed++;
 
@@ -1585,7 +1585,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(BLADE_FLURRY);
+                CastSpell(KILLING_SPREE, BLADE_FLURRY);
 
                 _metrics->cooldownsUsed++;
 
@@ -1605,7 +1605,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(target, KILLING_SPREE);
+                CastSpell(target);
 
                 _metrics->cooldownsUsed++;
 
@@ -1619,7 +1619,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(SHADOW_DANCE);
+                CastSpell(SHADOWSTEP, SHADOW_DANCE);
 
                 _metrics->cooldownsUsed++;
 
@@ -1629,7 +1629,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(target, SHADOWSTEP);
+                CastSpell(target);
 
                 _metrics->cooldownsUsed++;
 

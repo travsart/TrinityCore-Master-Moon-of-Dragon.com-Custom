@@ -46,6 +46,7 @@ using bot::ai::NodeStatus;
 constexpr uint32 FIRE_FIREBALL = 133;
 constexpr uint32 FIRE_PYROBLAST = 11366;
 constexpr uint32 FIRE_FIRE_BLAST = 108853;
+constexpr uint32 FIRE_FIREBLAST = FIRE_FIRE_BLAST;  // Alias for consistency
 constexpr uint32 FIRE_SCORCH = 2948;
 constexpr uint32 FIRE_FLAMESTRIKE = 2120;
 constexpr uint32 FIRE_PHOENIX_FLAMES = 257541;
@@ -216,7 +217,7 @@ public:
         {
             if (this->CanCastSpell(FIRE_BLAZING_BARRIER, bot))
             {
-                this->CastSpell(bot, FIRE_BLAZING_BARRIER);
+                this->CastSpell(FIRE_BLAZING_BARRIER, bot);
             }
         }
     }
@@ -232,21 +233,21 @@ public:
         // Ice Block (critical emergency)
         if (healthPct < 20.0f && this->CanCastSpell(FIRE_ICE_BLOCK, bot))
         {
-            this->CastSpell(bot, FIRE_ICE_BLOCK);
+            this->CastSpell(FIRE_ICE_BLOCK, bot);
             return;
         }
 
         // Mirror Image (defensive decoy)
         if (healthPct < 40.0f && this->CanCastSpell(FIRE_MIRROR_IMAGE, bot))
         {
-            this->CastSpell(bot, FIRE_MIRROR_IMAGE);
+            this->CastSpell(FIRE_MIRROR_IMAGE, bot);
             return;
         }
 
         // Shifting Power (reset cooldowns) - self-cast
         if (healthPct < 50.0f && this->CanCastSpell(FIRE_SHIFTING_POWER, bot))
         {
-            this->CastSpell(bot, FIRE_SHIFTING_POWER);
+            this->CastSpell(FIRE_SHIFTING_POWER, bot);
             return;
         }
     }
@@ -293,7 +294,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_COMBUSTION, bot))
             {
-                this->CastSpell(bot, FIRE_COMBUSTION);
+                this->CastSpell(FIRE_COMBUSTION, bot);
                 _combustionActive = true;
                 _combustionEndTime = GameTime::GetGameTimeMS() + 10000; // 10 sec
                 return;
@@ -305,7 +306,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_PYROBLAST, target))
             {
-                this->CastSpell(target, FIRE_PYROBLAST);
+                this->CastSpell(FIRE_PYROBLAST, target);
                 _hotStreakTracker.ConsumeHotStreak();
                 return;
             }        }
@@ -315,7 +316,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_FIRE_BLAST, target))
             {
-                this->CastSpell(target, FIRE_FIRE_BLAST);
+                this->CastSpell(FIRE_FIRE_BLAST, target);
                 _fireBlastTracker.ConsumeCharge();
                 _hotStreakTracker.ActivateHotStreak(); // Heating Up + crit = Hot Streak
                 return;
@@ -326,7 +327,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {
-                this->CastSpell(target, FIRE_PHOENIX_FLAMES);
+                this->CastSpell(FIRE_PHOENIX_FLAMES, target);
                 _hotStreakTracker.ActivateHeatingUp();
                 return;
             }
@@ -337,7 +338,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_METEOR, target))
             {
-                this->CastSpell(target, FIRE_METEOR);
+                this->CastSpell(FIRE_METEOR, target);
                 return;
             }
         }
@@ -347,7 +348,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_SCORCH, target))
             {
-                this->CastSpell(target, FIRE_SCORCH);
+                this->CastSpell(FIRE_SCORCH, target);
                 return;
             }
         }
@@ -355,7 +356,7 @@ private:
         // Fireball (builder - chance to proc Heating Up on crit)
         if (this->CanCastSpell(FIRE_FIREBALL, target))
         {
-            this->CastSpell(target, FIRE_FIREBALL);
+            this->CastSpell(FIRE_FIREBALL, target);
 
             // Simulate crit chance for proc
             if (rand() % 100 < 30) // 30% crit chance (simplified)
@@ -381,7 +382,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_COMBUSTION, bot))
             {
-                this->CastSpell(bot, FIRE_COMBUSTION);
+                this->CastSpell(FIRE_COMBUSTION, bot);
                 _combustionActive = true;
                 _combustionEndTime = GameTime::GetGameTimeMS() + 10000;
                 return;
@@ -393,7 +394,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_METEOR, target))
             {
-                this->CastSpell(target, FIRE_METEOR);
+                this->CastSpell(FIRE_METEOR, target);
                 return;
             }
         }
@@ -403,7 +404,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_DRAGON_BREATH, target))
             {
-                this->CastSpell(target, FIRE_DRAGON_BREATH);
+                this->CastSpell(FIRE_DRAGON_BREATH, target);
                 return;
             }
         }
@@ -413,7 +414,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_FLAMESTRIKE, target))
             {
-                this->CastSpell(target, FIRE_FLAMESTRIKE);
+                this->CastSpell(FIRE_FLAMESTRIKE, target);
                 _hotStreakTracker.ConsumeHotStreak();
                 return;
             }
@@ -424,7 +425,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_FIRE_BLAST, target))
             {
-                this->CastSpell(target, FIRE_FIRE_BLAST);
+                this->CastSpell(FIRE_FIRE_BLAST, target);
                 _fireBlastTracker.ConsumeCharge();
                 _hotStreakTracker.ActivateHotStreak();
                 return;
@@ -436,7 +437,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_PHOENIX_FLAMES, target))
             {
-                this->CastSpell(target, FIRE_PHOENIX_FLAMES);
+                this->CastSpell(FIRE_PHOENIX_FLAMES, target);
                 _hotStreakTracker.ActivateHeatingUp();
                 return;
             }
@@ -447,7 +448,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_LIVING_BOMB, target))
             {
-                this->CastSpell(target, FIRE_LIVING_BOMB);
+                this->CastSpell(FIRE_LIVING_BOMB, target);
                 return;
             }
         }
@@ -457,7 +458,7 @@ private:
         {
             if (this->CanCastSpell(FIRE_FLAMESTRIKE, target))
             {
-                this->CastSpell(target, FIRE_FLAMESTRIKE);
+                this->CastSpell(FIRE_FLAMESTRIKE, target);
                 return;
             }
         }
@@ -465,7 +466,7 @@ private:
         // Fireball as filler
         if (this->CanCastSpell(FIRE_FIREBALL, target))
         {
-            this->CastSpell(target, FIRE_FIREBALL);
+            this->CastSpell(FIRE_FIREBALL, target);
 
             // Simulate crit for proc
             if (rand() % 100 < 30)
@@ -524,7 +525,7 @@ private:
                             Condition("Not active", [this](Player*, Unit*) { return !this->_combustionActive; }),
                             bot::ai::Action("Combustion", [this](Player* bot, Unit*) -> NodeStatus {
                                 if (this->CanCastSpell(FIRE_COMBUSTION, bot)) {
-                                    this->CastSpell(bot, FIRE_COMBUSTION);
+                                    this->CastSpell(FIRE_COMBUSTION, bot);
                                     this->_combustionActive = true;
                                     this->_combustionEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
@@ -538,7 +539,7 @@ private:
                     Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }),
                     bot::ai::Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(FIRE_PYROBLAST, target)) {
-                            this->CastSpell(target, FIRE_PYROBLAST);
+                            this->CastSpell(FIRE_PYROBLAST, target);
                             this->_hotStreakTracker.ConsumeProc();
                             return NodeStatus::SUCCESS;
                         }
@@ -549,7 +550,7 @@ private:
                     Condition("Has charge", [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }),
                     bot::ai::Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->_fireBlastTracker.HasCharge()) {
-                            this->CastSpell(target, FIRE_FIREBLAST);
+                            this->CastSpell(FIRE_FIREBLAST, target);
                             this->_fireBlastTracker.UseCharge();
                             return NodeStatus::SUCCESS;
                         }
@@ -560,7 +561,7 @@ private:
                     Condition("Has target", [this](Player*, Unit* target) { return target; }),
                     bot::ai::Action("Fireball", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(FIRE_FIREBALL, target)) {
-                            this->CastSpell(target, FIRE_FIREBALL);
+                            this->CastSpell(FIRE_FIREBALL, target);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;

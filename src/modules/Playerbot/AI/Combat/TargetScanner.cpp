@@ -394,6 +394,8 @@ namespace Playerbot
     // This is the original validation method - still used for non-snapshot code paths
     // ===========================================================================
     bool TargetScanner::IsValidTarget(Unit* target) const
+    {
+        if (!target || !target->IsAlive())
             return false;
 
         float maxRange = GetMaxEngageRange();

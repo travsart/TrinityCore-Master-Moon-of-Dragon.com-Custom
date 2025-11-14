@@ -208,7 +208,7 @@ public:
         {
             if (this->CanCastSpell(ARCANE_INTELLECT, bot))
             {
-                this->CastSpell(bot, ARCANE_INTELLECT);
+                this->CastSpell(ARCANE_INTELLECT, bot);
             }
         }
 
@@ -217,7 +217,7 @@ public:
         {
             if (this->CanCastSpell(ARCANE_FAMILIAR, bot))
             {
-                this->CastSpell(bot, ARCANE_FAMILIAR);
+                this->CastSpell(ARCANE_FAMILIAR, bot);
             }
         }
     }
@@ -233,21 +233,21 @@ public:
         // Ice Block (critical emergency - immune)
         if (healthPct < 20.0f && this->CanCastSpell(ICE_BLOCK, bot))
         {
-            this->CastSpell(bot, ICE_BLOCK);
+            this->CastSpell(ICE_BLOCK, bot);
             return;
         }
 
         // Mirror Image (defensive decoy)
         if (healthPct < 40.0f && this->CanCastSpell(MIRROR_IMAGE, bot))
         {
-            this->CastSpell(bot, MIRROR_IMAGE);
+            this->CastSpell(MIRROR_IMAGE, bot);
             return;
         }
 
         // Shifting Power (reset cooldowns in emergency) - self-cast
         if (healthPct < 50.0f && this->CanCastSpell(SHIFTING_POWER, bot))
         {
-            this->CastSpell(bot, SHIFTING_POWER);
+            this->CastSpell(SHIFTING_POWER, bot);
             return;
         }
     }
@@ -296,7 +296,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_SURGE, bot))
             {
-                this->CastSpell(bot, ARCANE_SURGE);
+                this->CastSpell(ARCANE_SURGE, bot);
                 _arcaneSurgeActive = true;
                 _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000; // 15 sec
                 return;
@@ -307,7 +307,7 @@ private:
         if (charges >= 4 && bot->HasSpell(TOUCH_OF_MAGE))        {
             if (this->CanCastSpell(TOUCH_OF_MAGE, target))
             {
-                this->CastSpell(target, TOUCH_OF_MAGE);
+                this->CastSpell(TOUCH_OF_MAGE, target);
                 return;
             }
         }
@@ -317,7 +317,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_MISSILES, target))
             {
-                this->CastSpell(target, ARCANE_MISSILES);
+                this->CastSpell(ARCANE_MISSILES, target);
                 _clearcastingTracker.ConsumeProc();
                 return;
             }
@@ -328,7 +328,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_BARRAGE, target))
             {
-                this->CastSpell(target, ARCANE_BARRAGE);
+                this->CastSpell(ARCANE_BARRAGE, target);
                 _chargeTracker.ClearCharges();
                 return;
             }
@@ -337,11 +337,11 @@ private:
         // Presence of Mind (instant cast Arcane Blast)
         if (charges < 4 && this->CanCastSpell(PRESENCE_OF_MIND, bot))
         {
-            this->CastSpell(bot, PRESENCE_OF_MIND);
+            this->CastSpell(PRESENCE_OF_MIND, bot);
             // Follow up with instant Arcane Blast
             if (this->CanCastSpell(ARCANE_BLAST, target))
             {
-                this->CastSpell(target, ARCANE_BLAST);
+                this->CastSpell(ARCANE_BLAST, target);
                 _chargeTracker.AddCharge();
                 return;
             }
@@ -352,7 +352,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_BLAST, target))
             {
-                this->CastSpell(target, ARCANE_BLAST);
+                this->CastSpell(ARCANE_BLAST, target);
                 _chargeTracker.AddCharge();
 
                 // Chance to proc Clearcasting
@@ -368,7 +368,7 @@ private:
         {
             if (this->CanCastSpell(EVOCATION, bot))
             {
-                this->CastSpell(bot, EVOCATION);
+                this->CastSpell(EVOCATION, bot);
                 return;
             }
         }
@@ -388,7 +388,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_SURGE, bot))
             {
-                this->CastSpell(bot, ARCANE_SURGE);
+                this->CastSpell(ARCANE_SURGE, bot);
                 _arcaneSurgeActive = true;
                 _arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000;
                 return;
@@ -400,7 +400,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_ORB, target))
             {
-                this->CastSpell(target, ARCANE_ORB);
+                this->CastSpell(ARCANE_ORB, target);
                 _chargeTracker.AddCharge(1);
                 return;
             }
@@ -411,7 +411,7 @@ private:
         {
             if (this->CanCastSpell(SUPERNOVA, target))
             {
-                this->CastSpell(target, SUPERNOVA);
+                this->CastSpell(SUPERNOVA, target);
                 return;
             }
         }
@@ -421,7 +421,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_BARRAGE, target))
             {
-                this->CastSpell(target, ARCANE_BARRAGE);
+                this->CastSpell(ARCANE_BARRAGE, target);
                 _chargeTracker.ClearCharges();
                 return;
             }
@@ -432,7 +432,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_MISSILES, target))
             {
-                this->CastSpell(target, ARCANE_MISSILES);
+                this->CastSpell(ARCANE_MISSILES, target);
                 _clearcastingTracker.ConsumeProc();
                 return;
             }
@@ -443,7 +443,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_EXPLOSION, bot))
             {
-                this->CastSpell(bot, ARCANE_EXPLOSION);
+                this->CastSpell(ARCANE_EXPLOSION, bot);
                 return;
             }
         }
@@ -453,7 +453,7 @@ private:
         {
             if (this->CanCastSpell(ARCANE_BLAST, target))
             {
-                this->CastSpell(target, ARCANE_BLAST);
+                this->CastSpell(ARCANE_BLAST, target);
                 _chargeTracker.AddCharge();
 
                 // Chance to proc Clearcasting
@@ -469,7 +469,7 @@ private:
         {
             if (this->CanCastSpell(EVOCATION, bot))
             {
-                this->CastSpell(bot, EVOCATION);
+                this->CastSpell(EVOCATION, bot);
                 return;
             }
         }
@@ -567,7 +567,7 @@ private:
                             bot::ai::Action("Cast Arcane Surge", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ARCANE_SURGE, bot))
                                 {
-                                    this->CastSpell(bot, ARCANE_SURGE);
+                                    this->CastSpell(ARCANE_SURGE, bot);
                                     this->_arcaneSurgeActive = true;
                                     this->_arcaneSurgeEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
@@ -582,7 +582,7 @@ private:
                             bot::ai::Action("Cast Touch of the Magi", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(TOUCH_OF_MAGE, target))
                                 {
-                                    this->CastSpell(target, TOUCH_OF_MAGE);
+                                    this->CastSpell(TOUCH_OF_MAGE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -599,7 +599,7 @@ private:
                     bot::ai::Action("Cast Arcane Missiles", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ARCANE_MISSILES, target))
                         {
-                            this->CastSpell(target, ARCANE_MISSILES);
+                            this->CastSpell(ARCANE_MISSILES, target);
                             this->_clearcastingTracker.ConsumeProc();
                             return NodeStatus::SUCCESS;
                         }
@@ -623,7 +623,7 @@ private:
                             bot::ai::Action("Cast Arcane Barrage", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ARCANE_BARRAGE, target))
                                 {
-                                    this->CastSpell(target, ARCANE_BARRAGE);
+                                    this->CastSpell(ARCANE_BARRAGE, target);
                                     this->_chargeTracker.ClearCharges();
                                     return NodeStatus::SUCCESS;
                                 }
@@ -638,11 +638,11 @@ private:
                             bot::ai::Action("Cast Presence of Mind", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(PRESENCE_OF_MIND, bot))
                                 {
-                                    this->CastSpell(bot, PRESENCE_OF_MIND);
+                                    this->CastSpell(PRESENCE_OF_MIND, bot);
                                     // Follow with instant Arcane Blast
                                     if (this->CanCastSpell(ARCANE_BLAST, target))
                                     {
-                                        this->CastSpell(target, ARCANE_BLAST);
+                                        this->CastSpell(ARCANE_BLAST, target);
                                         this->_chargeTracker.AddCharge();
                                     }
                                     return NodeStatus::SUCCESS;
@@ -663,7 +663,7 @@ private:
                     bot::ai::Action("Cast Arcane Blast", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ARCANE_BLAST, target))
                         {
-                            this->CastSpell(target, ARCANE_BLAST);
+                            this->CastSpell(ARCANE_BLAST, target);
                             this->_chargeTracker.AddCharge();
                             // Chance to proc Clearcasting
                             if (rand() % 100 < 10)

@@ -1188,7 +1188,7 @@ private:
 
                 Sequence("Emergency Defense", {
 
-                    Condition("Low HP", [this](Player* bot) {
+                    Condition("Low HP", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetHealthPct() < 40.0f;
 
@@ -1204,13 +1204,13 @@ private:
 
                             }),
 
-                            Condition("Can cast", [this](Player* bot) {
+                            Condition("Can cast", [this](Player* bot), Unit* target {
 
                                 return this->CanCastSpell(SPELL_BLUR, bot);
 
                             }),
 
-                            bot::ai::Action("Cast Blur", [this](Player* bot) {
+                            bot::ai::Action("Cast Blur", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_BLUR, bot)) {
 
@@ -1234,7 +1234,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Darkness", [this](Player* bot) {
+                            bot::ai::Action("Cast Darkness", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
 
@@ -1258,7 +1258,7 @@ private:
 
                 Sequence("Burst Phase", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim();
 
@@ -1280,7 +1280,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Metamorphosis", [this](Player* bot) {
+                            bot::ai::Action("Cast Metamorphosis", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
 
@@ -1314,7 +1314,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Fel Barrage", [this](Player* bot) {
+                            bot::ai::Action("Cast Fel Barrage", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1342,7 +1342,7 @@ private:
 
                 Sequence("Priority Rotation", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim();
 
@@ -1364,7 +1364,7 @@ private:
 
                             }),
 
-                            Condition("In range", [this](Player* bot) {
+                            Condition("In range", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1372,7 +1372,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Eye Beam", [this](Player* bot) {
+                            bot::ai::Action("Cast Eye Beam", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1418,7 +1418,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Death Sweep", [this](Player* bot) {
+                            bot::ai::Action("Cast Death Sweep", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
 
@@ -1452,13 +1452,13 @@ private:
 
                             }),
 
-                            Condition("AoE or defensive", [this](Player* bot) {
+                            Condition("AoE or defensive", [this](Player* bot), Unit* target {
 
                                 return this->GetEnemiesInRange(8.0f) >= 2 || bot->GetHealthPct() < 70.0f;
 
                             }),
 
-                            bot::ai::Action("Cast Blade Dance", [this](Player* bot) {
+                            bot::ai::Action("Cast Blade Dance", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
 
@@ -1486,7 +1486,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Immolation Aura", [this](Player* bot) {
+                            bot::ai::Action("Cast Immolation Aura", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
 
@@ -1508,7 +1508,7 @@ private:
 
                         Sequence("Build Momentum", {
 
-                            Condition("Has Momentum talent", [this](Player* bot) {
+                            Condition("Has Momentum talent", [this](Player* bot), Unit* target {
 
                                 return bot->HasSpell(SPELL_MOMENTUM);
 
@@ -1530,7 +1530,7 @@ private:
 
                                     }),
 
-                                    Condition("5-20yd range", [this](Player* bot) {
+                                    Condition("5-20yd range", [this](Player* bot), Unit* target {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1538,7 +1538,7 @@ private:
 
                                     }),
 
-                                    bot::ai::Action("Cast Fel Rush", [this](Player* bot) {
+                                    bot::ai::Action("Cast Fel Rush", [this](Player* bot), Unit* target {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1568,7 +1568,7 @@ private:
 
                                     }),
 
-                                    Condition("Melee range", [this](Player* bot) {
+                                    Condition("Melee range", [this](Player* bot), Unit* target {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1576,7 +1576,7 @@ private:
 
                                     }),
 
-                                    bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot) {
+                                    bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot), Unit* target {
 
                                         if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
 
@@ -1606,7 +1606,7 @@ private:
 
                 Sequence("Fury Spenders", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim();
 
@@ -1628,7 +1628,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Annihilation", [this](Player* bot) {
+                            bot::ai::Action("Cast Annihilation", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1670,7 +1670,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Chaos Strike", [this](Player* bot) {
+                            bot::ai::Action("Cast Chaos Strike", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1704,7 +1704,7 @@ private:
 
                 Sequence("Fury Generators", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim();
 
@@ -1716,7 +1716,7 @@ private:
 
                     }),
 
-                    bot::ai::Action("Cast Demon's Bite", [this](Player* bot) {
+                    bot::ai::Action("Cast Demon's Bite", [this](Player* bot), Unit* target {
 
                         Unit* target = bot->GetVictim();
 

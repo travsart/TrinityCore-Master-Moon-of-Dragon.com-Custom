@@ -322,7 +322,7 @@ public:
 
             {
 
-                this->CastSpell(bot, REST_WATER_SHIELD);
+                this->CastSpell(REST_WATER_SHIELD, bot);
 
             }
         }
@@ -341,7 +341,7 @@ public:
         if (healthPct < 40.0f && this->CanCastSpell(REST_ASTRAL_SHIFT, bot))
         {
 
-            this->CastSpell(bot, REST_ASTRAL_SHIFT);
+            this->CastSpell(REST_ASTRAL_SHIFT, bot);
 
             return;
         }
@@ -354,7 +354,7 @@ public:
 
             {
 
-                this->CastSpell(bot, REST_SPIRITWALKERS_GRACE);
+                this->CastSpell(REST_SPIRITWALKERS_GRACE, bot);
 
                 return;
 
@@ -450,7 +450,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, REST_ANCESTRAL_PROTECTION_TOTEM);
+                    this->CastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot);
 
                     _lastAncestralProtectionTotemTime = GameTime::GetGameTimeMS();
 
@@ -478,7 +478,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_HEALING_TIDE_TOTEM);
+                this->CastSpell(REST_HEALING_TIDE_TOTEM, bot);
 
                 _lastHealingTideTotemTime = GameTime::GetGameTimeMS();
 
@@ -494,7 +494,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
+                this->CastSpell(REST_SPIRIT_LINK_TOTEM, bot);
 
                 _lastSpiritLinkTotemTime = GameTime::GetGameTimeMS();
 
@@ -511,7 +511,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_ASCENDANCE);
+                this->CastSpell(REST_ASCENDANCE, bot);
 
                 _ascendanceActive = true;
 
@@ -544,7 +544,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
+                    this->CastSpell(REST_EARTHEN_WALL_TOTEM, bot);
 
                     _lastEarthenWallTotemTime = GameTime::GetGameTimeMS();
 
@@ -612,7 +612,7 @@ private:
 
             {
 
-                this->CastSpell(tankTarget, REST_EARTH_SHIELD);
+                this->CastSpell(REST_EARTH_SHIELD, tankTarget);
 
                 _earthShieldTracker.ApplyEarthShield(tankTarget->GetGUID(), 600000);
 
@@ -640,7 +640,7 @@ private:
 
                         {
 
-                            this->CastSpell(member, REST_RIPTIDE);
+                            this->CastSpell(REST_RIPTIDE, member);
 
                             _riptideTracker.ApplyRiptide(member->GetGUID(), 18000);
 
@@ -709,7 +709,7 @@ private:
 
             {
 
-                this->CastSpell(stackedTarget, REST_HEALING_RAIN);
+                this->CastSpell(REST_HEALING_RAIN, stackedTarget);
 
                 return true;
 
@@ -728,7 +728,7 @@ private:
 
                 {
 
-                    this->CastSpell(stackedTarget, REST_WELLSPRING);
+                    this->CastSpell(REST_WELLSPRING, stackedTarget);
 
                     return true;
 
@@ -762,7 +762,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, REST_CHAIN_HEAL);
+                        this->CastSpell(REST_CHAIN_HEAL, member);
 
                         return true;
 
@@ -785,7 +785,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, REST_CLOUDBURST_TOTEM);
+                    this->CastSpell(REST_CLOUDBURST_TOTEM, bot);
 
                     _lastCloudburstTotemTime = GameTime::GetGameTimeMS();
 
@@ -813,7 +813,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, REST_HEALING_SURGE);
+                    this->CastSpell(REST_HEALING_SURGE, member);
 
                     return true;
 
@@ -834,7 +834,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, REST_HEALING_WAVE);
+                    this->CastSpell(REST_HEALING_WAVE, member);
 
                     return true;
 
@@ -861,7 +861,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_RIPTIDE);
+                this->CastSpell(REST_RIPTIDE, bot);
 
                 _riptideTracker.ApplyRiptide(bot->GetGUID(), 18000);
 
@@ -878,7 +878,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_HEALING_SURGE);
+                this->CastSpell(REST_HEALING_SURGE, bot);
 
                 return true;
 
@@ -893,7 +893,7 @@ private:
 
             {
 
-                this->CastSpell(bot, REST_HEALING_WAVE);
+                this->CastSpell(REST_HEALING_WAVE, bot);
 
                 return true;
 
@@ -1283,11 +1283,11 @@ private:
 
                         Sequence("Healing Tide Totem", {
 
-                            bot::ai::Action("Cast HTT", [this](Player* bot) {
+                            bot::ai::Action("Cast HTT", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
 
-                                    this->CastSpell(bot, REST_HEALING_TIDE_TOTEM);
+                                    this->CastSpell(REST_HEALING_TIDE_TOTEM, bot);
 
                                     this->_lastHealingTideTotemTime = GameTime::GetGameTimeMS();
 
@@ -1315,17 +1315,17 @@ private:
 
                             }),
 
-                            Condition("Has spell", [this](Player* bot) {
+                            Condition("Has spell", [this](Player* bot), Unit* target {
 
                                 return bot->HasSpell(REST_ANCESTRAL_PROTECTION_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast APT", [this](Player* bot) {
+                            bot::ai::Action("Cast APT", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
 
-                                    this->CastSpell(bot, REST_ANCESTRAL_PROTECTION_TOTEM);
+                                    this->CastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot);
 
                                     this->_lastAncestralProtectionTotemTime = GameTime::GetGameTimeMS();
 
@@ -1369,11 +1369,11 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Ascendance", [this](Player* bot) {
+                            bot::ai::Action("Cast Ascendance", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
 
-                                    this->CastSpell(bot, REST_ASCENDANCE);
+                                    this->CastSpell(REST_ASCENDANCE, bot);
 
                                     this->_ascendanceActive = true;
 
@@ -1393,11 +1393,11 @@ private:
 
                         Sequence("Spirit Link Totem", {
 
-                            bot::ai::Action("Cast SLT", [this](Player* bot) {
+                            bot::ai::Action("Cast SLT", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
 
-                                    this->CastSpell(bot, REST_SPIRIT_LINK_TOTEM);
+                                    this->CastSpell(REST_SPIRIT_LINK_TOTEM, bot);
 
                                     this->_lastSpiritLinkTotemTime = GameTime::GetGameTimeMS();
 
@@ -1413,17 +1413,17 @@ private:
 
                         Sequence("Earthen Wall Totem", {
 
-                            Condition("Has spell", [this](Player* bot) {
+                            Condition("Has spell", [this](Player* bot), Unit* target {
 
                                 return bot->HasSpell(REST_EARTHEN_WALL_TOTEM);
 
                             }),
 
-                            bot::ai::Action("Cast EWT", [this](Player* bot) {
+                            bot::ai::Action("Cast EWT", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
 
-                                    this->CastSpell(bot, REST_EARTHEN_WALL_TOTEM);
+                                    this->CastSpell(REST_EARTHEN_WALL_TOTEM, bot);
 
                                     this->_lastEarthenWallTotemTime = GameTime::GetGameTimeMS();
 
@@ -1459,7 +1459,7 @@ private:
 
                                         if (this->CanCastSpell(REST_EARTH_SHIELD, m)) {
 
-                                            this->CastSpell(m, REST_EARTH_SHIELD);
+                                            this->CastSpell(REST_EARTH_SHIELD, m);
 
                                             this->_earthShieldTracker.ApplyEarthShield(m->GetGUID(), 600000);
 
@@ -1489,7 +1489,7 @@ private:
 
                                         if (this->CanCastSpell(REST_RIPTIDE, m)) {
 
-                                            this->CastSpell(m, REST_RIPTIDE);
+                                            this->CastSpell(REST_RIPTIDE, m);
 
                                             this->_riptideTracker.ApplyRiptide(m->GetGUID(), 18000);
 
@@ -1573,7 +1573,7 @@ private:
 
                                     if (nearby >= 3 && this->CanCastSpell(REST_HEALING_RAIN, anchor)) {
 
-                                        this->CastSpell(anchor, REST_HEALING_RAIN);
+                                        this->CastSpell(REST_HEALING_RAIN, anchor);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1599,7 +1599,7 @@ private:
 
                                         if (this->CanCastSpell(REST_CHAIN_HEAL, m)) {
 
-                                            this->CastSpell(m, REST_CHAIN_HEAL);
+                                            this->CastSpell(REST_CHAIN_HEAL, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1647,7 +1647,7 @@ private:
 
                                         if (this->CanCastSpell(REST_HEALING_SURGE, m)) {
 
-                                            this->CastSpell(m, REST_HEALING_SURGE);
+                                            this->CastSpell(REST_HEALING_SURGE, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1675,7 +1675,7 @@ private:
 
                                         if (this->CanCastSpell(REST_HEALING_WAVE, m)) {
 
-                                            this->CastSpell(m, REST_HEALING_WAVE);
+                                            this->CastSpell(REST_HEALING_WAVE, m);
 
                                             return NodeStatus::SUCCESS;
 

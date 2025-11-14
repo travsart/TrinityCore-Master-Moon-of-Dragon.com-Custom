@@ -999,7 +999,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, RAKE);
+                CastSpell(RAKE, target);
 
                 return;
 
@@ -1014,7 +1014,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(target, RIP);
+                    CastSpell(RIP, target);
 
                     return;
 
@@ -1024,7 +1024,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(target, FEROCIOUS_BITE);
+                    CastSpell(FEROCIOUS_BITE, target);
 
                     return;
 
@@ -1037,7 +1037,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SHRED);
+                CastSpell(SHRED, target);
 
                 return;
 
@@ -1066,7 +1066,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, MANGLE_BEAR);
+                CastSpell(MANGLE_BEAR, target);
 
                 return;
 
@@ -1077,7 +1077,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, THRASH_BEAR);
+                CastSpell(THRASH_BEAR, target);
 
                 return;
 
@@ -1088,7 +1088,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, MAUL);
+                CastSpell(MAUL, target);
 
                 return;
 
@@ -1099,7 +1099,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SWIPE_BEAR);
+                CastSpell(SWIPE_BEAR, target);
 
                 return;
 
@@ -1128,7 +1128,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, MOONFIRE);
+                CastSpell(MOONFIRE, target);
 
                 return;
 
@@ -1139,7 +1139,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SUNFIRE);
+                CastSpell(SUNFIRE, target);
 
                 return;
 
@@ -1150,7 +1150,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, STARSURGE);
+                CastSpell(STARSURGE, target);
 
                 return;
 
@@ -1161,7 +1161,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SOLAR_WRATH);
+                CastSpell(SOLAR_WRATH, target);
 
                 return;
 
@@ -1172,7 +1172,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, LUNAR_STRIKE);
+                CastSpell(LUNAR_STRIKE, target);
 
                 return;
 
@@ -1183,7 +1183,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, WRATH);
+                CastSpell(WRATH, target);
 
                 return;
 
@@ -1206,7 +1206,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, SWIFTMEND);
+                    CastSpell(SWIFTMEND, healTarget);
 
                     return;
 
@@ -1217,7 +1217,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, REJUVENATION);
+                    CastSpell(REJUVENATION, healTarget);
 
                     return;
 
@@ -1228,7 +1228,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, LIFEBLOOM);
+                    CastSpell(LIFEBLOOM, healTarget);
 
                     return;
 
@@ -1239,7 +1239,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, REGROWTH);
+                    CastSpell(REGROWTH, healTarget);
 
                     return;
 
@@ -1250,7 +1250,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, HEALING_TOUCH);
+                    CastSpell(HEALING_TOUCH, healTarget);
 
                     return;
 
@@ -1264,7 +1264,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, MOONFIRE);
+                CastSpell(MOONFIRE, target);
 
                 return;
 
@@ -1275,7 +1275,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, WRATH);
+                CastSpell(WRATH, target);
 
                 return;
 
