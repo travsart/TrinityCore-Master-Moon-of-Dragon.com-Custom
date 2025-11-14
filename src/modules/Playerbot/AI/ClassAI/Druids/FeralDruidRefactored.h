@@ -378,18 +378,18 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {FERAL_BERSERK, 180000, 1},
-
-            {FERAL_INCARNATION_KING, 180000, 1},
-
-            {FERAL_CONVOKE, 120000, 1},
-
-            {FERAL_TIGERS_FURY, 30000, 1},
-
-            {FERAL_BRUTAL_SLASH, 8000, 3}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FERAL_BERSERK, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FERAL_INCARNATION_KING, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FERAL_CONVOKE, 120000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FERAL_TIGERS_FURY, 30000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FERAL_BRUTAL_SLASH, 8000, 3}
+        // COMMENTED OUT:         });
 
         this->_resource.Initialize(bot);        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
 

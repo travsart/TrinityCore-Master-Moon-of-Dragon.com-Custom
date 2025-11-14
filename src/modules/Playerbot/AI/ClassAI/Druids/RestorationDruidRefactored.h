@@ -244,18 +244,18 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {RESTO_DRUID_TRANQUILITY, 180000, 1},
-
-            {RESTO_DRUID_INCARNATION, 180000, 1},
-
-            {RESTO_DRUID_CONVOKE, 120000, 1},
-
-            {RESTO_DRUID_FLOURISH, 90000, 1},
-
-            {RESTO_DRUID_IRONBARK, 90000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_DRUID_TRANQUILITY, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_DRUID_INCARNATION, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_DRUID_CONVOKE, 120000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_DRUID_FLOURISH, 90000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_DRUID_IRONBARK, 90000, 1}
+        // COMMENTED OUT:         });
 
         // _resource is uint32, no Initialize method - managed by base class
 

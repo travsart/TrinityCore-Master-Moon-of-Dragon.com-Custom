@@ -499,30 +499,30 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-
-            {JUDGMENT_PROT, 6000, 1},
-
-            {HAMMER_OF_WRATH_PROT, 7500, 1},
-
-            {AVENGERS_SHIELD, CooldownPresets::INTERRUPT, 1},
-
-            {GUARDIAN_OF_ANCIENT_KINGS, 300000, 1},
-
-            {ARDENT_DEFENDER, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {DIVINE_PROTECTION_PROT, CooldownPresets::OFFENSIVE_60, 1},
-
-            {AVENGING_WRATH_PROT, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {LAY_ON_HANDS_PROT, CooldownPresets::BLOODLUST, 1},
-
-            {DIVINE_SHIELD_PROT, 300000, 1},
-
-            {HAND_OF_RECKONING, CooldownPresets::DISPEL, 1},
-
-            {SERAPHIM, CooldownPresets::OFFENSIVE_45, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {JUDGMENT_PROT, 6000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HAMMER_OF_WRATH_PROT, 7500, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {AVENGERS_SHIELD, CooldownPresets::INTERRUPT, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_OF_ANCIENT_KINGS, 300000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ARDENT_DEFENDER, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIVINE_PROTECTION_PROT, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {AVENGING_WRATH_PROT, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {LAY_ON_HANDS_PROT, CooldownPresets::BLOODLUST, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIVINE_SHIELD_PROT, 300000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HAND_OF_RECKONING, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {SERAPHIM, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Protection: Divine Shield emergency");
 

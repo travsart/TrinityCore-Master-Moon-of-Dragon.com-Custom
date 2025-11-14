@@ -299,13 +299,13 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {ELEMENTAL_FIRE_ELEMENTAL, 150000, 1},
-            {ELEMENTAL_STORM_ELEMENTAL, 150000, 1},
-            {ELEMENTAL_STORMKEEPER, 60000, 1},
-            {ELEMENTAL_LIQUID_MAGMA_TOTEM, 60000, 1},
-            {ELEMENTAL_ASCENDANCE, 180000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {ELEMENTAL_FIRE_ELEMENTAL, 150000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_STORM_ELEMENTAL, 150000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_STORMKEEPER, 60000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_LIQUID_MAGMA_TOTEM, 60000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_ASCENDANCE, 180000, 1}
+        // COMMENTED OUT:         });
 
         // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
 

@@ -398,19 +398,19 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
-            {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
-            {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
-            {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
-            {SIGIL_OF_MISERY, 90000, 1},
-            {SIGIL_OF_CHAINS, 90000, 1},
-            {INFERNAL_STRIKE, 20000, 1},
-            {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
-            {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
-            {TORMENT, CooldownPresets::DISPEL, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {SIGIL_OF_MISERY, 90000, 1},
+        // COMMENTED OUT:             {SIGIL_OF_CHAINS, 90000, 1},
+        // COMMENTED OUT:             {INFERNAL_STRIKE, 20000, 1},
+        // COMMENTED OUT:             {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {TORMENT, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Vengeance: Sigil of Flame cast");
             return;
@@ -736,19 +736,19 @@ private:
     void InitializeCooldowns()
     {
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
-            {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
-            {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
-            {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
-            {SIGIL_OF_MISERY, 90000, 1},
-            {SIGIL_OF_CHAINS, 90000, 1},
-            {INFERNAL_STRIKE, 20000, 1},
-            {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
-            {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
-            {TORMENT, CooldownPresets::DISPEL, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {DemonHunterSpells::METAMORPHOSIS_VENGEANCE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::DEMON_SPIKES, 20000, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::FIERY_BRAND, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {DemonHunterSpells::SIGIL_OF_FLAME, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {SIGIL_OF_SILENCE, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {SIGIL_OF_MISERY, 90000, 1},
+        // COMMENTED OUT:             {SIGIL_OF_CHAINS, 90000, 1},
+        // COMMENTED OUT:             {INFERNAL_STRIKE, 20000, 1},
+        // COMMENTED OUT:             {SOUL_BARRIER, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {FEL_DEVASTATION, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {TORMENT, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT:         });
     }
 
     // ========================================================================

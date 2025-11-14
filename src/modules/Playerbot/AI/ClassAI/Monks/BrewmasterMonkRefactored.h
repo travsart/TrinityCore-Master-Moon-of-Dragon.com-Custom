@@ -485,18 +485,18 @@ protected:
                 
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {KEG_SMASH, CooldownPresets::DISPEL, 1},
-            {PROVOKE, CooldownPresets::DISPEL, 1},
-            {PURIFYING_BREW, 20000, 1},
-            {CELESTIAL_BREW, CooldownPresets::OFFENSIVE_60, 1},
-            {FORTIFYING_BREW_BREW, 360000, 1},
-            {DAMPEN_HARM, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {ZEN_MEDITATION, 300000, 1},
-            {INVOKE_NIUZAO, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {WEAPONS_OF_ORDER, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {BONEDUST_BREW, CooldownPresets::OFFENSIVE_60, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {KEG_SMASH, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT:             {PROVOKE, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT:             {PURIFYING_BREW, 20000, 1},
+        // COMMENTED OUT:             {CELESTIAL_BREW, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {FORTIFYING_BREW_BREW, 360000, 1},
+        // COMMENTED OUT:             {DAMPEN_HARM, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {ZEN_MEDITATION, 300000, 1},
+        // COMMENTED OUT:             {INVOKE_NIUZAO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {WEAPONS_OF_ORDER, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {BONEDUST_BREW, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Brewmaster: Ironskin Brew applied");
                 return;

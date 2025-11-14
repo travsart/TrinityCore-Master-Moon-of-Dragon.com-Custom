@@ -224,18 +224,18 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {DISC_POWER_WORD_BARRIER, 180000, 1},
-
-            {DISC_RAPTURE, 90000, 1},
-
-            {DISC_PAIN_SUPPRESSION, 180000, 1},
-
-            {DISC_EVANGELISM, 90000, 1},
-
-            {DISC_SHADOW_FIEND, 180000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_POWER_WORD_BARRIER, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_RAPTURE, 90000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_PAIN_SUPPRESSION, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_EVANGELISM, 90000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_SHADOW_FIEND, 180000, 1}
+        // COMMENTED OUT:         });
 
         // Initialize Phase 5 systems
         InitializeDisciplineMechanics();

@@ -200,15 +200,15 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {FROST_ICY_VEINS, 180000, 1},
-            {FROST_FROZEN_ORB, 60000, 1},
-            {FROST_COMET_STORM, 30000, 1},
-            {FROST_RAY_OF_FROST, 75000, 1},
-            {FROST_SHIFTING_POWER, 60000, 1},
-            {FROST_ICE_BLOCK, 240000, 1},
-            {FROST_MIRROR_IMAGE, 120000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {FROST_ICY_VEINS, 180000, 1},
+        // COMMENTED OUT:             {FROST_FROZEN_ORB, 60000, 1},
+        // COMMENTED OUT:             {FROST_COMET_STORM, 30000, 1},
+        // COMMENTED OUT:             {FROST_RAY_OF_FROST, 75000, 1},
+        // COMMENTED OUT:             {FROST_SHIFTING_POWER, 60000, 1},
+        // COMMENTED OUT:             {FROST_ICE_BLOCK, 240000, 1},
+        // COMMENTED OUT:             {FROST_MIRROR_IMAGE, 120000, 1}
+        // COMMENTED OUT:         });
         TC_LOG_DEBUG("playerbot", "FrostMageRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems

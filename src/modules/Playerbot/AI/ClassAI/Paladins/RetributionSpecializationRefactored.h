@@ -67,12 +67,12 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {RET_AVENGING_WRATH, 120000, 1},
-            {RET_CRUSADE, 120000, 1},
-            {RET_EXECUTION_SENTENCE, 60000, 1},
-            {RET_FINAL_RECKONING, 60000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {RET_AVENGING_WRATH, 120000, 1},
+        // COMMENTED OUT:             {RET_CRUSADE, 120000, 1},
+        // COMMENTED OUT:             {RET_EXECUTION_SENTENCE, 60000, 1},
+        // COMMENTED OUT:             {RET_FINAL_RECKONING, 60000, 1}
+        // COMMENTED OUT:         });
 
         // Initialize Holy Power system
         _holyPower.Initialize(bot);

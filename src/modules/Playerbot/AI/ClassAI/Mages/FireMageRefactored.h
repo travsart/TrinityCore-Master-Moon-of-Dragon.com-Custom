@@ -177,15 +177,15 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {FIRE_COMBUSTION, 120000, 1},  // 2 min major DPS cooldown
-            {FIRE_PHOENIX_FLAMES, 25000, 3},  // 25 sec, 3 charges
-            {FIRE_DRAGON_BREATH, 20000, 1},  // 20 sec cone AoE
-            {FIRE_METEOR, 45000, 1},  // 45 sec AoE (if talented)
-            {FIRE_SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
-            {FIRE_ICE_BLOCK, 240000, 1},  // 4 min immunity
-            {FIRE_MIRROR_IMAGE, 120000, 1}  // 2 min defensive decoy
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {FIRE_COMBUSTION, 120000, 1},  // 2 min major DPS cooldown
+        // COMMENTED OUT:             {FIRE_PHOENIX_FLAMES, 25000, 3},  // 25 sec, 3 charges
+        // COMMENTED OUT:             {FIRE_DRAGON_BREATH, 20000, 1},  // 20 sec cone AoE
+        // COMMENTED OUT:             {FIRE_METEOR, 45000, 1},  // 45 sec AoE (if talented)
+        // COMMENTED OUT:             {FIRE_SHIFTING_POWER, 60000, 1},  // 1 min cooldown reset
+        // COMMENTED OUT:             {FIRE_ICE_BLOCK, 240000, 1},  // 4 min immunity
+        // COMMENTED OUT:             {FIRE_MIRROR_IMAGE, 120000, 1}  // 2 min defensive decoy
+        // COMMENTED OUT:         });
 
         InitializeFireMechanics();
         TC_LOG_DEBUG("playerbot", "FireMageRefactored initialized for {}", bot->GetName());

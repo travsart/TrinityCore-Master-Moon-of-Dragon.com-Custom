@@ -92,16 +92,16 @@ public:
         _dotTracker.RegisterDot(RogueAI::CRIMSON_TEMPEST, 14000);
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {VENDETTA, CooldownPresets::MINOR_OFFENSIVE, 1},      // 2 min CD
-            {RogueAI::DEATHMARK, CooldownPresets::MINOR_OFFENSIVE, 1}, // 2 min CD
-            {KINGSBANE, CooldownPresets::OFFENSIVE_60, 1},        // 1 min CD
-            {EXSANGUINATE, CooldownPresets::OFFENSIVE_45, 1},     // 45 sec CD
-            {RogueAI::VANISH, CooldownPresets::MINOR_OFFENSIVE, 1},    // 2 min CD
-            {RogueAI::CLOAK_OF_SHADOWS, CooldownPresets::MINOR_DEFENSIVE, 1}, // 2 min CD
-            {RogueAI::KICK, CooldownPresets::INTERRUPT, 1},       // 15 sec CD
-            {RogueAI::BLIND, CooldownPresets::MINOR_DEFENSIVE, 1} // 2 min CD
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {VENDETTA, CooldownPresets::MINOR_OFFENSIVE, 1},      // 2 min CD
+        // COMMENTED OUT:             {RogueAI::DEATHMARK, CooldownPresets::MINOR_OFFENSIVE, 1}, // 2 min CD
+        // COMMENTED OUT:             {KINGSBANE, CooldownPresets::OFFENSIVE_60, 1},        // 1 min CD
+        // COMMENTED OUT:             {EXSANGUINATE, CooldownPresets::OFFENSIVE_45, 1},     // 45 sec CD
+        // COMMENTED OUT:             {RogueAI::VANISH, CooldownPresets::MINOR_OFFENSIVE, 1},    // 2 min CD
+        // COMMENTED OUT:             {RogueAI::CLOAK_OF_SHADOWS, CooldownPresets::MINOR_DEFENSIVE, 1}, // 2 min CD
+        // COMMENTED OUT:             {RogueAI::KICK, CooldownPresets::INTERRUPT, 1},       // 15 sec CD
+        // COMMENTED OUT:             {RogueAI::BLIND, CooldownPresets::MINOR_DEFENSIVE, 1} // 2 min CD
+        // COMMENTED OUT:         });
 
         // Phase 5 Integration: Initialize decision systems
         InitializeAssassinationMechanics();

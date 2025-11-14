@@ -233,16 +233,16 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {RESTO_SHAMAN_HEALING_TIDE_TOTEM, 180000, 1},
-
-            {RESTO_SHAMAN_SPIRIT_LINK_TOTEM, 180000, 1},
-
-            {RESTO_SHAMAN_ASCENDANCE, 180000, 1},
-
-            {RESTO_SHAMAN_CLOUDBURST_TOTEM, 30000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_SHAMAN_HEALING_TIDE_TOTEM, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_SHAMAN_SPIRIT_LINK_TOTEM, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_SHAMAN_ASCENDANCE, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RESTO_SHAMAN_CLOUDBURST_TOTEM, 30000, 1}
+        // COMMENTED OUT:         });
 
         // Resource initialization handled by base class CombatSpecializationTemplate
 

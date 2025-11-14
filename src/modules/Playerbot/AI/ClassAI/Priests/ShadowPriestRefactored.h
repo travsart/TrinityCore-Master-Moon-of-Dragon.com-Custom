@@ -282,13 +282,13 @@ public:
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {SHADOW_VOID_ERUPTION, 90000, 1},
-            {SHADOW_POWER_INFUSION, 120000, 1},
-            {SHADOW_SHADOW_CRASH, 30000, 1},
-            {SHADOW_VOID_TORRENT, 45000, 1},
-            {SHADOW_SHADOWFIEND, 180000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {SHADOW_VOID_ERUPTION, 90000, 1},
+        // COMMENTED OUT:             {SHADOW_POWER_INFUSION, 120000, 1},
+        // COMMENTED OUT:             {SHADOW_SHADOW_CRASH, 30000, 1},
+        // COMMENTED OUT:             {SHADOW_VOID_TORRENT, 45000, 1},
+        // COMMENTED OUT:             {SHADOW_SHADOWFIEND, 180000, 1}
+        // COMMENTED OUT:         });
 
         // Phase 5 Integration: Initialize decision systems
         InitializeShadowMechanics();

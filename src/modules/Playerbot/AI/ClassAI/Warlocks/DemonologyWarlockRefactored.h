@@ -335,17 +335,17 @@ protected:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {CALL_DREADSTALKERS, 0, 1},
-            {SUMMON_DEMONIC_TYRANT, 90000, 1},
-            {GRIMOIRE_FELGUARD, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {NETHER_PORTAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {GUILLOTINE, CooldownPresets::OFFENSIVE_45, 1},
-            {UNENDING_RESOLVE_DEMO, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DARK_PACT_DEMO, CooldownPresets::OFFENSIVE_60, 1},
-            {MORTAL_COIL_DEMO, CooldownPresets::OFFENSIVE_45, 1},
-            {SHADOWFURY, CooldownPresets::OFFENSIVE_60, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {CALL_DREADSTALKERS, 0, 1},
+        // COMMENTED OUT:             {SUMMON_DEMONIC_TYRANT, 90000, 1},
+        // COMMENTED OUT:             {GRIMOIRE_FELGUARD, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {NETHER_PORTAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {GUILLOTINE, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {UNENDING_RESOLVE_DEMO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DARK_PACT_DEMO, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {MORTAL_COIL_DEMO, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {SHADOWFURY, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Demonology: Grimoire Felguard");
             return;

@@ -316,19 +316,19 @@ public:
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {CONFLAGRATE, 13000, 1},
-            {SUMMON_INFERNAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DARK_SOUL_INSTABILITY, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {SOUL_FIRE, 20000, 1},
-            {CATACLYSM, CooldownPresets::OFFENSIVE_30, 1},
-            {HAVOC, CooldownPresets::OFFENSIVE_30, 1},
-            {SHADOWBURN, 12000, 1},
-            {UNENDING_RESOLVE_DESTRO, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DARK_PACT_DESTRO, CooldownPresets::OFFENSIVE_60, 1},
-            {MORTAL_COIL_DESTRO, CooldownPresets::OFFENSIVE_45, 1},
-            {HOWL_OF_TERROR_DESTRO, 40000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {CONFLAGRATE, 13000, 1},
+        // COMMENTED OUT:             {SUMMON_INFERNAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DARK_SOUL_INSTABILITY, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {SOUL_FIRE, 20000, 1},
+        // COMMENTED OUT:             {CATACLYSM, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {HAVOC, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT:             {SHADOWBURN, 12000, 1},
+        // COMMENTED OUT:             {UNENDING_RESOLVE_DESTRO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DARK_PACT_DESTRO, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {MORTAL_COIL_DESTRO, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {HOWL_OF_TERROR_DESTRO, 40000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Destruction: Summon Infernal");
             // Continue rotation during Infernal
