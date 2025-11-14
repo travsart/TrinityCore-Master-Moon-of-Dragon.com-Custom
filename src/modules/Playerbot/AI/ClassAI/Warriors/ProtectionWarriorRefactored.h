@@ -34,8 +34,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 /**
  * Refactored Protection Warrior using template architecture
  *
@@ -876,7 +883,7 @@ private:
 
                     Selector("Emergency Response", {
 
-                        Action("Cast Shield Wall", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Shield Wall", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(SPELL_SHIELD_WALL, bot))
 
@@ -892,7 +899,7 @@ private:
 
                         }),
 
-                        Action("Cast Last Stand", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Last Stand", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(SPELL_LAST_STAND, bot))
 
@@ -908,7 +915,7 @@ private:
 
                         }),
 
-                        Action("Cast Rallying Cry", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Rallying Cry", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(SPELL_RALLYING_CRY, bot))
 
@@ -924,7 +931,7 @@ private:
 
                         }),
 
-                        Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(SPELL_IGNORE_PAIN, bot))
 
@@ -956,7 +963,7 @@ private:
 
                     }),
 
-                    Action("Cast Taunt", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Taunt", [this](Player* bot, Unit* target) {
 
                         if (this->CanCastSpell(SPELL_TAUNT, target))
 
@@ -997,7 +1004,7 @@ private:
 
                             }),
 
-                            Action("Cast Shield Block", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shield Block", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_SHIELD_BLOCK, bot))
 
@@ -1024,7 +1031,7 @@ private:
 
                             }),
 
-                            Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Ignore Pain", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_IGNORE_PAIN, bot))
 
@@ -1043,7 +1050,7 @@ private:
                         }),
                         // Spell Reflection against casters
 
-                        Action("Cast Spell Reflection", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Spell Reflection", [this](Player* bot, Unit* target) {
 
                             if (this->ShouldUseSpellReflection() &&
 
@@ -1082,7 +1089,7 @@ private:
 
                             }),
 
-                            Action("Cast Avatar", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Avatar", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_AVATAR, bot))
 
@@ -1107,7 +1114,7 @@ private:
                     Selector("Core Rotation", {
                         // Shield Slam (highest priority)
 
-                        Action("Cast Shield Slam", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Shield Slam", [this](Player* bot, Unit* target) {
 
                             if (this->_hasShieldEquipped &&
 
@@ -1135,7 +1142,7 @@ private:
 
                             }),
 
-                            Action("Cast Revenge", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Revenge", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_REVENGE, target))
 
@@ -1163,7 +1170,7 @@ private:
 
                             }),
 
-                            Action("Cast Thunder Clap", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Thunder Clap", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_THUNDER_CLAP, bot))
 
@@ -1183,7 +1190,7 @@ private:
 
                         // Devastate filler
 
-                        Action("Cast Devastate", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Devastate", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(SPELL_DEVASTATE, target))
 
@@ -1209,7 +1216,7 @@ private:
 
                             }),
 
-                            Action("Cast Demoralizing Shout", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Demoralizing Shout", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_DEMORALIZING_SHOUT, bot))
 
@@ -1237,7 +1244,7 @@ private:
 
                             }),
 
-                            Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
 

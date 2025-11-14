@@ -29,8 +29,15 @@
 namespace Playerbot
 {
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 
 /**
  * Refactored Arms Warrior using template architecture
@@ -592,7 +599,7 @@ private:
                         return target && target->GetHealthPct() < 20.0f;
                     }),
                     Selector("Execute Priority", {
-                        Action("Cast Execute", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Execute", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_EXECUTE, target))
                             {
                                 this->CastSpell(SPELL_EXECUTE, target);
@@ -600,7 +607,7 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_MORTAL_STRIKE, target);
@@ -621,7 +628,7 @@ private:
                                         target->GetMaxHealth() > 500000);
                     }),
                     Selector("Cooldown Priority", {
-                        Action("Cast Avatar", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Avatar", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_AVATAR, bot))
                             {
                                 this->CastSpell(SPELL_AVATAR, bot);
@@ -629,7 +636,7 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Bladestorm", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_BLADESTORM, bot))
                             {
                                 this->CastSpell(SPELL_BLADESTORM, bot);
@@ -649,7 +656,7 @@ private:
                         Condition("CS Active", [](Player* bot, Unit* target) {
                             return target && target->HasAura(SPELL_COLOSSUS_SMASH);
                         }),
-                        Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Colossus Smash", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_COLOSSUS_SMASH, target))
                             {
                                 this->CastSpell(SPELL_COLOSSUS_SMASH, target);
@@ -661,7 +668,7 @@ private:
 
                     // Cast Mortal Strike on cooldown
                     Selector("Mortal Strike", {
-                        Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mortal Strike", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_MORTAL_STRIKE, target);
@@ -676,7 +683,7 @@ private:
                         Condition("Has Overpower Proc", [](Player* bot, Unit*) {
                             return bot->HasAura(SPELL_OVERPOWER_PROC);
                         }),
-                        Action("Cast Overpower", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Overpower", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_OVERPOWER, target))
                             {
                                 this->CastSpell(SPELL_OVERPOWER, target);
@@ -688,7 +695,7 @@ private:
 
                     // Filler spells
                     Selector("Filler", {
-                        Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
                             if (bot->getAttackers().size() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
                             {
                                 this->CastSpell(SPELL_WHIRLWIND, target);
@@ -696,7 +703,7 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
                             if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_HEROIC_STRIKE, target);

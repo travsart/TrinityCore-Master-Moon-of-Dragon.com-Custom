@@ -40,8 +40,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 Survival Hunter Spell IDs
 enum SurvivalSpells
 {
@@ -1132,7 +1139,7 @@ private:
 
                             }),
 
-                            Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Coordinated Assault", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_COORDINATED_ASSAULT))
 
@@ -1179,7 +1186,7 @@ private:
 
                             }),
 
-                            Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Wildfire Bomb", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 uint32 bombSpell = this->_bombManager.GetBombSpell();
 
@@ -1206,7 +1213,7 @@ private:
 
                             }),
 
-                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND_SURV))
 
@@ -1237,7 +1244,7 @@ private:
 
                             }),
 
-                            Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Serpent Sting", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 20)
 
@@ -1286,7 +1293,7 @@ private:
 
                             }),
 
-                            Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Mongoose Bite", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 
@@ -1319,7 +1326,7 @@ private:
 
                             }),
 
-                            Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Flanking Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_FLANKING_STRIKE))
 
@@ -1377,7 +1384,7 @@ private:
 
                                     }),
 
-                                    Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    bot::ai::Action("Cast Butchery", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 30)
 
@@ -1406,7 +1413,7 @@ private:
 
                                     }),
 
-                                    Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
+                                    bot::ai::Action("Cast Carve", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                         if (this->_resource >= 35)
 
@@ -1433,7 +1440,7 @@ private:
 
                         Sequence("Single Target Filler", {
 
-                            Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Raptor Strike", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 30)
 

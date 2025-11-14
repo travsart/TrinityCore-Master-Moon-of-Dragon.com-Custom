@@ -36,8 +36,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Holy Priest Spell IDs
 constexpr uint32 HOLY_HEAL = 2050;
 constexpr uint32 HOLY_FLASH_HEAL = 2061;
@@ -1107,7 +1114,7 @@ private:
 
                     Selector("Response", {
 
-                        Action("Guardian Spirit", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Guardian Spirit", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1131,7 +1138,7 @@ private:
 
                         }),
 
-                        Action("Flash Heal", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Flash Heal", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1166,7 +1173,7 @@ private:
 
                     Selector("HoT Priority", {
 
-                        Action("Prayer of Mending", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Prayer of Mending", [this](Player* bot, Unit*) {
 
                             if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
 
@@ -1196,7 +1203,7 @@ private:
 
                         }),
 
-                        Action("Renew", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Renew", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1231,7 +1238,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Action("Heal", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Heal", [this](Player* bot, Unit*) {
 
                         Group* g = bot->GetGroup();
 

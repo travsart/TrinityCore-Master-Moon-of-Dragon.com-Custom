@@ -27,8 +27,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // WINDWALKER MONK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -569,11 +576,11 @@ private:
         if (tree) {
             auto root = Selector("Windwalker Monk", {
                 Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    Action("SEF", [this](Player* bot) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(bot, WW_STORM_EARTH_FIRE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("SEF", [this](Player* bot) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(bot, WW_STORM_EARTH_FIRE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Chi Spender", { Condition("2+ chi", [this](Player*) { return this->_resource.chi >= 2; }),
-                    Action("RSK/FoF", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(t, WW_RISING_SUN_KICK); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("RSK/FoF", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(t, WW_RISING_SUN_KICK); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Builder", { Condition("50+ energy", [this](Player*) { return this->_resource.energy >= 50; }),
-                    Action("Tiger Palm", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(t, WW_TIGER_PALM); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Tiger Palm", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(t, WW_TIGER_PALM); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

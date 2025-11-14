@@ -28,8 +28,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // UNHOLY DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -633,13 +640,13 @@ private:
         if (tree) {
             auto root = Selector("Unholy DK", {
                 Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    Action("Army/Apocalypse", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(bot, UNHOLY_ARMY_OF_DEAD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Army/Apocalypse", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(bot, UNHOLY_ARMY_OF_DEAD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
-                    Action("Festering Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(t, UNHOLY_FESTERING_STRIKE); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Festering Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(t, UNHOLY_FESTERING_STRIKE); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
-                    Action("Scourge Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(t, UNHOLY_SCOURGE_STRIKE); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Scourge Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(t, UNHOLY_SCOURGE_STRIKE); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("RP Dump", { Condition("40+ RP", [this](Player*) { return this->_resource.runicPower >= 40; }),
-                    Action("Death Coil", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(t, UNHOLY_DEATH_COIL); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Death Coil", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(t, UNHOLY_DEATH_COIL); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

@@ -26,8 +26,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // DEVASTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -610,7 +617,7 @@ protected:
                             Condition("< 40%", [](Player* bot) {
                                 return bot->GetHealthPct() < 40.0f;
                             }),
-                            Action("Cast Obsidian Scales", [this](Player* bot) {
+                            bot::ai::Action("Cast Obsidian Scales", [this](Player* bot) {
                                 if (this->CanCastSpell(OBSIDIAN_SCALES, bot)) {
                                     this->CastSpell(bot, OBSIDIAN_SCALES);
                                     return NodeStatus::SUCCESS;
@@ -619,7 +626,7 @@ protected:
                             })
                         }),
                         Sequence("Renewing Blaze", {
-                            Action("Cast Renewing Blaze", [this](Player* bot) {
+                            bot::ai::Action("Cast Renewing Blaze", [this](Player* bot) {
                                 if (this->CanCastSpell(RENEWING_BLAZE, bot)) {
                                     this->CastSpell(bot, RENEWING_BLAZE);
                                     return NodeStatus::SUCCESS;
@@ -643,7 +650,7 @@ protected:
                             Condition("Not active", [this](Player*) {
                                 return !this->_dragonrageTracker.IsActive();
                             }),
-                            Action("Cast Dragonrage", [this](Player* bot) {
+                            bot::ai::Action("Cast Dragonrage", [this](Player* bot) {
                                 if (this->CanCastSpell(DRAGONRAGE, bot)) {
                                     this->CastSpell(bot, DRAGONRAGE);
                                     this->_dragonrageTracker.Activate();
@@ -665,7 +672,7 @@ protected:
                     }),
                     Selector("Cast spells", {
                         Sequence("Shattering Star", {
-                            Action("Cast Shattering Star", [this](Player* bot) {
+                            bot::ai::Action("Cast Shattering Star", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHATTERING_STAR, target)) {
                                     this->CastSpell(target, SHATTERING_STAR);
@@ -678,7 +685,7 @@ protected:
                             Condition("3+ essence", [this](Player*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            Action("Cast Eternity's Surge", [this](Player* bot) {
+                            bot::ai::Action("Cast Eternity's Surge", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ETERNITY_SURGE, target)) {
                                     this->StartEmpoweredSpell(ETERNITY_SURGE, EmpowerLevel::RANK_3, target);
@@ -691,7 +698,7 @@ protected:
                             Condition("3+ essence", [this](Player*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            Action("Cast Disintegrate", [this](Player* bot) {
+                            bot::ai::Action("Cast Disintegrate", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DISINTEGRATE, target)) {
                                     this->CastSpell(target, DISINTEGRATE);
@@ -714,7 +721,7 @@ protected:
                     }),
                     Selector("Generate", {
                         Sequence("Azure Strike", {
-                            Action("Cast Azure Strike", [this](Player* bot) {
+                            bot::ai::Action("Cast Azure Strike", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(AZURE_STRIKE, target)) {
                                     this->CastSpell(target, AZURE_STRIKE);
@@ -725,7 +732,7 @@ protected:
                             })
                         }),
                         Sequence("Living Flame", {
-                            Action("Cast Living Flame", [this](Player* bot) {
+                            bot::ai::Action("Cast Living Flame", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(LIVING_FLAME, target)) {
                                     this->CastSpell(target, LIVING_FLAME);

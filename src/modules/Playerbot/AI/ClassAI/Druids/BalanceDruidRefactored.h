@@ -29,8 +29,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // BALANCE DRUID SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -697,7 +704,7 @@ private:
                             Condition("Has Incarnation", [this](Player* bot) {
                                 return bot->HasSpell(INCARNATION_CHOSEN);
                             }),
-                            Action("Cast Incarnation", [this](Player* bot) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot) {
                                 if (this->CanCastSpell(INCARNATION_CHOSEN, bot))
                                 {
                                     this->CastSpell(bot, INCARNATION_CHOSEN);
@@ -707,7 +714,7 @@ private:
                             })
                         }),
                         Sequence("Celestial Alignment", {
-                            Action("Cast Celestial Alignment", [this](Player* bot) {
+                            bot::ai::Action("Cast Celestial Alignment", [this](Player* bot) {
                                 if (this->CanCastSpell(CELESTIAL_ALIGNMENT, bot))
                                 {
                                     this->CastSpell(bot, CELESTIAL_ALIGNMENT);
@@ -720,7 +727,7 @@ private:
                             Condition("Has Convoke", [this](Player* bot) {
                                 return bot->HasSpell(CONVOKE_THE_SPIRITS);
                             }),
-                            Action("Cast Convoke", [this](Player* bot) {
+                            bot::ai::Action("Cast Convoke", [this](Player* bot) {
                                 if (this->CanCastSpell(CONVOKE_THE_SPIRITS, bot))
                                 {
                                     this->CastSpell(bot, CONVOKE_THE_SPIRITS);
@@ -743,7 +750,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), MOONFIRE);
                             }),
-                            Action("Cast Moonfire", [this](Player* bot) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(MOONFIRE, target))
                                 {
@@ -759,7 +766,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), SUNFIRE);
                             }),
-                            Action("Cast Sunfire", [this](Player* bot) {
+                            bot::ai::Action("Cast Sunfire", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SUNFIRE, target))
                                 {
@@ -776,7 +783,7 @@ private:
                                 return bot->HasSpell(STELLAR_FLARE) && target &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), STELLAR_FLARE);
                             }),
-                            Action("Cast Stellar Flare", [this](Player* bot) {
+                            bot::ai::Action("Cast Stellar Flare", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STELLAR_FLARE, target))
                                 {
@@ -802,7 +809,7 @@ private:
                                 return this->_resource.astralPower >= 50 && !this->_starfallActive &&
                                        this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            Action("Cast Starfall", [this](Player* bot) {
+                            bot::ai::Action("Cast Starfall", [this](Player* bot) {
                                 if (this->CanCastSpell(STARFALL, bot))
                                 {
                                     this->CastSpell(bot, STARFALL);
@@ -818,7 +825,7 @@ private:
                             Condition("30+ AP or Shooting Stars proc", [this](Player*) {
                                 return this->_resource.astralPower >= 30 || this->_shootingStarsProc;
                             }),
-                            Action("Cast Starsurge", [this](Player* bot) {
+                            bot::ai::Action("Cast Starsurge", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STARSURGE, target))
                                 {
@@ -845,7 +852,7 @@ private:
                             Condition("Lunar Eclipse or no Eclipse", [this](Player*) {
                                 return this->_eclipseTracker.IsInLunarEclipse() || !this->_eclipseTracker.IsInEclipse();
                             }),
-                            Action("Cast Starfire", [this](Player* bot) {
+                            bot::ai::Action("Cast Starfire", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STARFIRE, target))
                                 {
@@ -862,7 +869,7 @@ private:
                             Condition("Solar Eclipse", [this](Player*) {
                                 return this->_eclipseTracker.IsInSolarEclipse();
                             }),
-                            Action("Cast Wrath", [this](Player* bot) {
+                            bot::ai::Action("Cast Wrath", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(WRATH, target))
                                 {

@@ -21,8 +21,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 enum AugmentationEvokerSpells
 {
     // Core Buffs
@@ -265,12 +272,12 @@ protected:
                     Condition("Has essence", [this](Player*) { return this->_resource.essence >= 1; }),
                     Selector("Apply buffs", {
                         Sequence("Ebon Might", {
-                            Action("Cast Ebon Might", [this](Player*) {
+                            bot::ai::Action("Cast Ebon Might", [this](Player*) {
                                 return this->MaintainEbonMight() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Prescience", {
-                            Action("Cast Prescience", [this](Player*) {
+                            bot::ai::Action("Cast Prescience", [this](Player*) {
                                 return this->MaintainPrescience() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         })
@@ -279,7 +286,7 @@ protected:
                 Sequence("Deal Damage", {
                     Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
                     Condition("3+ essence", [this](Player*) { return this->_resource.essence >= 3; }),
-                    Action("Cast Breath of Eons", [this](Player* bot) {
+                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
                             this->CastSpell(target, BREATH_OF_EONS);
@@ -292,7 +299,7 @@ protected:
                 Sequence("Generate Essence", {
                     Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
                     Condition("< 4 essence", [this](Player*) { return this->_resource.essence < 4; }),
-                    Action("Cast Azure Strike", [this](Player* bot) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
                             this->CastSpell(target, AZURE_STRIKE_AUG);

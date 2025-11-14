@@ -29,8 +29,15 @@ namespace Playerbot
 {
 
 
-// Import BehaviorTree helper functions
-using namespace bot::ai;
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // ============================================================================
 // AFFLICTION WARLOCK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -715,7 +722,7 @@ private:
                         Unit* target = bot->GetVictim();
                         return bot && target && this->_dotTracker.GetDoTCount(target->GetGUID()) >= 3;
                     }),
-                    Action("Cast Darkglare", [this](Player* bot) {
+                    bot::ai::Action("Cast Darkglare", [this](Player* bot) {
                         if (this->CanCastSpell(SUMMON_DARKGLARE, bot))
                         {
                             this->CastSpell(bot, SUMMON_DARKGLARE);
@@ -736,7 +743,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), AGONY);
                             }),
-                            Action("Cast Agony", [this](Player* bot) {
+                            bot::ai::Action("Cast Agony", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(AGONY, target))
                                 {
@@ -752,7 +759,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), CORRUPTION);
                             }),
-                            Action("Cast Corruption", [this](Player* bot) {
+                            bot::ai::Action("Cast Corruption", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CORRUPTION, target))
                                 {
@@ -768,7 +775,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), UNSTABLE_AFFLICTION);
                             }),
-                            Action("Cast UA", [this](Player* bot) {
+                            bot::ai::Action("Cast UA", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(UNSTABLE_AFFLICTION, target))
                                 {
@@ -786,7 +793,7 @@ private:
                                 return bot && target && bot->HasSpell(SIPHON_LIFE) &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), SIPHON_LIFE);
                             }),
-                            Action("Cast Siphon Life", [this](Player* bot) {
+                            bot::ai::Action("Cast Siphon Life", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SIPHON_LIFE, target))
                                 {
@@ -807,7 +814,7 @@ private:
                         return bot && target && this->_resource.soulShards >= 1 &&
                                this->_dotTracker.GetDoTCount(target->GetGUID()) >= 2;
                     }),
-                    Action("Cast Malefic Rapture", [this](Player* bot) {
+                    bot::ai::Action("Cast Malefic Rapture", [this](Player* bot) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(MALEFIC_RAPTURE, target))
                         {
@@ -830,7 +837,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && target->GetHealthPct() < 20.0f;
                             }),
-                            Action("Cast Drain Soul", [this](Player* bot) {
+                            bot::ai::Action("Cast Drain Soul", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DRAIN_SOUL, target))
                                 {
@@ -842,7 +849,7 @@ private:
                             })
                         }),
                         Sequence("Shadow Bolt (filler)", {
-                            Action("Cast Shadow Bolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Shadow Bolt", [this](Player* bot) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOW_BOLT_AFF, target))
                                 {
