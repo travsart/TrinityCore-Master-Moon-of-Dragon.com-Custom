@@ -359,7 +359,9 @@ public:
     enum MageSpells
     {
         // Arcane spells
-        ARCANE_MISSILES = 5143);
+        ARCANE_MISSILES = 5143
+    };
+
     static uint32 CalculateFrostboltDamage(Player* caster, ::Unit* target);
     static uint32 CalculateArcaneMissilesDamage(Player* caster, ::Unit* target);
 
