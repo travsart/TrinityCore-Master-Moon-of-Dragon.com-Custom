@@ -285,7 +285,7 @@ void UnifiedQuestManager::CompletionModule::SkipProblematicObjective(Player* bot
 bool UnifiedQuestManager::ValidationModule::ValidateQuest(uint32 questId, Player* bot)
 {
     _validationsPerformed++;
-    bool result = QuestValidation::instance()->ValidateQuest(questId, bot);
+    bool result = QuestValidation::instance()->ValidateQuestAcceptance(questId, bot);
     if (result)
         _validationsPassed++;
     return result;
@@ -293,12 +293,13 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuest(uint32 questId, Player
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestRequirements(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->ValidateQuestRequirements(questId, bot);
+    return QuestValidation::instance()->ValidateQuestAcceptance(questId, bot);
 }
 
 ::std::vector<::std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->GetValidationErrors(questId, bot);
+    // TODO: GetValidationErrors not available in new API
+    return ::std::vector<::std::string>();
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateLevelRequirements(uint32 questId, Player* bot)
@@ -328,17 +329,18 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestPrerequisites(uint32 qu
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestChain(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->ValidateQuestChain(questId, bot);
+    return QuestValidation::instance()->ValidateQuestChainPosition(questId, bot);
 }
 
 bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->HasCompletedPrerequisites(questId, bot);
+    return QuestValidation::instance()->HasCompletedPrerequisiteQuests(questId, bot);
 }
 
 ::std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingPrerequisites(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->GetMissingPrerequisites(questId, bot);
+    // TODO: GetMissingPrerequisites not available in new API
+    return ::std::vector<uint32>();
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateReputationRequirements(uint32 questId, Player* bot)
@@ -353,27 +355,30 @@ bool UnifiedQuestManager::ValidationModule::ValidateFactionRequirements(uint32 q
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId)
 {
-    return QuestValidation::instance()->HasRequiredReputation(questId, bot, factionId);
+    // TODO: HasRequiredReputation(questId, bot, factionId) not available
+    // Using ValidateReputationRequirements as fallback
+    return QuestValidation::instance()->ValidateReputationRequirements(questId, bot);
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->ValidateItemRequirements(questId, bot);
+    return QuestValidation::instance()->ValidateRequiredItems(questId, bot);
 }
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->HasRequiredItems(questId, bot);
+    return QuestValidation::instance()->ValidateRequiredItems(questId, bot);
 }
 
 bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->HasInventorySpace(questId, bot);
+    return QuestValidation::instance()->ValidateInventorySpace(questId, bot);
 }
 
 ::std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
 {
-    return QuestValidation::instance()->GetMissingQuestItems(questId, bot);
+    // TODO: GetMissingQuestItems not available in new API
+    return ::std::vector<uint32>();
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestAvailability(uint32 questId, Player* bot)
