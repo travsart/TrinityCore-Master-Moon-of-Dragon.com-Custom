@@ -39,6 +39,9 @@
 namespace Playerbot
 {
 
+// Forward declaration for trap management
+struct TrapInfo;
+
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
 using bot::ai::Sequence;
