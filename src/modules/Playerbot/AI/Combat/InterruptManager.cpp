@@ -612,7 +612,7 @@ bool InterruptManager::ShouldInterruptCrowdControl(const SpellInfo* spellInfo, U
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-            effect.ApplyAuraName == SPELL_AURA_MOD_CHARM ||
+        if (effect.ApplyAuraName == SPELL_AURA_MOD_CHARM ||
             effect.ApplyAuraName == SPELL_AURA_MOD_CONFUSE)
         {
             return true;
@@ -629,7 +629,7 @@ bool InterruptManager::ShouldInterruptDamage(const SpellInfo* spellInfo, Unit* c
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-            effect.Effect == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)
+        if (effect.Effect == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)
         {
             return effect.CalcValue() > 1000;
         }
