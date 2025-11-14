@@ -495,7 +495,7 @@ public:
 
             // Check if member is healer
             uint8 classId = member->GetClass();
-            uint8 spec = member->GetPrimarySpecialization();
+            uint8 spec = uint8(member->GetPrimarySpecialization());
 
             bool isHealer = false;
             if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) isHealer = true;
