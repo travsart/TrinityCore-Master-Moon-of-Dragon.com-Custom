@@ -42,7 +42,7 @@ using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
 
-// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Frost Mage Spell IDs
 constexpr uint32 FROST_FROSTBOLT = 116;
 constexpr uint32 FROST_ICE_LANCE = 30455;
@@ -590,7 +590,7 @@ private:
                             Condition("Icy Veins ready", [this](Player* bot, Unit* target) {
                                 return bot && !this->_icyVeinsActive && bot->GetPowerPct(POWER_MANA) >= 70;
                             }),
-                            bot::ai::Action("Cast Icy Veins", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Icy Veins", [this](Player* bot, Unit* target) {
                                 if (this->CanCastSpell(FROST_ICY_VEINS, bot))
                                 {
                                     this->CastSpell(FROST_ICY_VEINS, bot);
@@ -603,7 +603,7 @@ private:
                             Condition("Has target", [this](Player* bot, Unit* target) {
                                 return bot && bot->GetVictim();
                             }),
-                            bot::ai::Action("Cast Frozen Orb", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Frozen Orb", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_FROZEN_ORB, target))
                                 {
@@ -626,7 +626,7 @@ private:
                             Condition("Brain Freeze active", [this](Player*) {
                                 return this->_brainFreezeTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Flurry then Ice Lance", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Flurry then Ice Lance", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_FLURRY, target))
                                 {
@@ -643,7 +643,7 @@ private:
                             Condition("FoF proc active", [this](Player*) {
                                 return this->_fofTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Ice Lance", [this](Player* bot, Unit* target) {
+                            ::bot::ai::Action("Cast Ice Lance", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_ICE_LANCE, target))
                                 {
@@ -662,7 +662,7 @@ private:
                         return bot && bot->GetVictim() && bot->HasSpell(FROST_GLACIAL_SPIKE) &&
                                this->_icicleTracker.IsMaxIcicles();
                     }),
-                    bot::ai::Action("Cast Glacial Spike", [this](Player* bot, Unit* target) {
+                    ::bot::ai::Action("Cast Glacial Spike", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
                         {
@@ -678,7 +678,7 @@ private:
                     Condition("Has target", [this](Player* bot, Unit* target) {
                         return bot && bot->GetVictim();
                     }),
-                    bot::ai::Action("Cast Frostbolt", [this](Player* bot, Unit* target) {
+                    ::bot::ai::Action("Cast Frostbolt", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_FROSTBOLT, target))
                         {
