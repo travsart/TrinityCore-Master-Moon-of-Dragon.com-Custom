@@ -2,16 +2,24 @@
   "hooks": {
     "SessionStart": [
       {
-        "description": "Display project status and current phase",
-        "command": "echo '=== TrinityCore Playerbot - German Windows Environment ===' && echo 'Branch: playerbot-dev' && echo 'Baseline: a933e3dae4 (Remote branch with orphaned null check fixes)' && echo 'Compiler: MSVC 14.44 (Visual Studio 2022 Enterprise)' && echo 'Target: worldserver (RelWithDebInfo)' && echo 'Language: German (error messages in German)' && echo '' && echo 'Mission: Fix compilation errors until worldserver.exe builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
-      },
-      {
-        "description": "Check git branch and status",
-        "command": "git branch --show-current && git log --oneline -1 && git status --short"
-      },
-      {
-        "description": "Read project configuration",
-        "command": "cat .claude/project.json"
+        "matcher": {},
+        "hooks": [
+          {
+            "type": "command",
+            "description": "Display project status and current phase",
+            "command": "echo '=== TrinityCore Playerbot - German Windows Environment ===' && echo 'Branch: playerbot-dev' && echo 'Current: Phase 7A complete (2,470 errors)' && echo 'Compiler: MSVC 14.44 (Visual Studio 2022 Enterprise)' && echo 'Target: worldserver (RelWithDebInfo)' && echo 'Language: German (error messages in German)' && echo '' && echo 'Mission: Fix compilation errors until worldserver.exe builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
+          },
+          {
+            "type": "command",
+            "description": "Check git branch and status",
+            "command": "git branch --show-current && git log --oneline -1 && git status --short"
+          },
+          {
+            "type": "command",
+            "description": "Read project configuration",
+            "command": "cat .claude/project.json"
+          }
+        ]
       }
     ]
   },

@@ -1,3 +1,8 @@
+---
+name: build-performance-analyzer
+description: Build Performance Analyzer Agent
+---
+
 # Build Performance Analyzer Agent
 
 ## Purpose

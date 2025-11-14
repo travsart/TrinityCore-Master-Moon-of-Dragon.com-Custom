@@ -1,3 +1,8 @@
+---
+name: performance-analyzer
+description: Performance Analyzer Agent
+---
+
 # Performance Analyzer Agent
 
 ## Role
