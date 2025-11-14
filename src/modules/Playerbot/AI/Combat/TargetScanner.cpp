@@ -431,23 +431,23 @@ namespace Playerbot
     uint8 TargetScanner::GetTargetPriority(Unit* target) const
     {
         if (!target || !target->IsAlive())
-            return false;
+            return PRIORITY_AVOID;
 
         // Check if unit is attackable
         if (!m_bot->IsValidAttackTarget(target))
-            return false;
+            return PRIORITY_AVOID;
 
         // Check if blacklisted
         if (IsBlacklisted(target->GetGUID()))
-            return false;
+            return PRIORITY_AVOID;
 
         // Don't attack friendly units
         if (m_bot->IsFriendlyTo(target))
-            return false;
+            return PRIORITY_AVOID;
 
         // Don't attack units we can't see
         if (!m_bot->IsWithinLOSInMap(target))
-            return false;
+            return PRIORITY_AVOID;
 
         // Don't attack critters unless they're hostile
         if (target->GetTypeId() == TYPEID_UNIT)
@@ -455,18 +455,39 @@ namespace Playerbot
             Creature* creature = target->ToCreature();
             if (creature->GetCreatureTemplate()->type == CREATURE_TYPE_CRITTER &&
                 !creature->IsHostileTo(m_bot))
-                return false;
+                return PRIORITY_AVOID;
         }
 
         // Don't attack units that are evading
         if (target->HasUnitState(UNIT_STATE_EVADE))
-            return false;
+            return PRIORITY_AVOID;
 
         // Don't attack units that are immune
         if (target->HasUnitState(UNIT_STATE_UNATTACKABLE))
-            return false;
+            return PRIORITY_AVOID;
 
-        return true;
+        // Attacking bot or allies = highest priority
+        if (IsAttackingGroup(target))
+            return PRIORITY_CRITICAL;
+
+        // Casters and healers
+        if (IsCaster(target) || IsHealer(target))
+            return PRIORITY_CASTER;
+
+        // Elite mobs
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            Creature* creature = target->ToCreature();
+            if (creature->IsElite() || creature->IsDungeonBoss())
+                return PRIORITY_ELITE;
+        }
+
+        // Level difference
+        int32 levelDiff = int32(target->GetLevel()) - int32(m_bot->GetLevel());
+        if (levelDiff < -7)
+            return PRIORITY_TRIVIAL;
+
+        return PRIORITY_NORMAL;
     }
 
     bool TargetScanner::ShouldEngage(Unit* target) const
