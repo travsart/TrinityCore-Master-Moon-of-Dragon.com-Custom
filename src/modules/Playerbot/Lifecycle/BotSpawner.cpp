@@ -1106,8 +1106,16 @@ void BotSpawner::ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnReque
     }
 
     {
-        _activeBots[characterGuid] = zoneId;
-        _botsByZone[zoneId].push_back(characterGuid);
+        {
+            tbb::concurrent_hash_map<ObjectGuid, uint32>::accessor acc;
+            _activeBots.insert(acc, characterGuid);
+            acc->second = zoneId;
+        }
+        {
+            tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::accessor acc;
+            _botsByZone.insert(acc, zoneId);
+            acc->second.push_back(characterGuid);
+        }
 
         // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
         _activeBotCount.fetch_add(1, ::std::memory_order_release);
@@ -1171,8 +1179,8 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
 
     // Get bot info and remove from tracking in a single critical section
     {
-        auto it = _activeBots.find(guid);
-        if (it == _activeBots.end())
+        tbb::concurrent_hash_map<ObjectGuid, uint32>::const_accessor it;
+        if (!_activeBots.find(it, guid))
         {
             TC_LOG_DEBUG("module.playerbot.spawner",
                 "Attempted to despawn non-active bot {}", guid.ToString());
@@ -1180,14 +1188,14 @@ void BotSpawner::DespawnBot(ObjectGuid guid, bool forced)
         }
 
         zoneId = it->second;
-        _activeBots.erase(it);
+        _activeBots.erase(guid);
 
         // LOCK-FREE OPTIMIZATION: Update atomic counter for hot path access
         _activeBotCount.fetch_sub(1, ::std::memory_order_release);
 
         // Remove from zone tracking
-        auto zoneIt = _botsByZone.find(zoneId);
-        if (zoneIt != _botsByZone.end())
+        tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::accessor zoneIt;
+        if (_botsByZone.find(zoneIt, zoneId))
         {
             auto& bots = zoneIt->second;
             bots.erase(::std::remove(bots.begin(), bots.end(), guid), bots.end());
@@ -1261,14 +1269,14 @@ void BotSpawner::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
 
     // Phase 1: Quick data collection with separate locks (no nesting)
     {
-        auto it = _botsByZone.find(zoneId);
-        botCount = it != _botsByZone.end() ? it->second.size() : 0;
+        tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::const_accessor it;
+        botCount = _botsByZone.find(it, zoneId) ? it->second.size() : 0;
     }
 
     // Phase 2: Update zone data with separate lock
     {
-        auto it = _zonePopulations.find(zoneId);
-        if (it != _zonePopulations.end())
+        tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor it;
+        if (_zonePopulations.find(it, zoneId))
         {
             it->second.playerCount = playerCount;
             it->second.botCount = botCount;
@@ -1299,8 +1307,8 @@ void BotSpawner::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
 
 ZonePopulation BotSpawner::GetZonePopulation(uint32 zoneId) const
 {
-    auto it = _zonePopulations.find(zoneId);
-    if (it != _zonePopulations.end())
+    tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor it;
+    if (_zonePopulations.find(it, zoneId))
     {
         return it->second;
     }
@@ -1316,8 +1324,8 @@ uint32 BotSpawner::GetActiveBotCount() const
 
 uint32 BotSpawner::GetActiveBotCount(uint32 zoneId) const
 {
-    auto it = _botsByZone.find(zoneId);
-    return it != _botsByZone.end() ? it->second.size() : 0;
+    tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::const_accessor it;
+    return _botsByZone.find(it, zoneId) ? it->second.size() : 0;
 }
 
 bool BotSpawner::CanSpawnMore() const
@@ -1371,8 +1379,8 @@ void BotSpawner::CalculateZoneTargets()
     {
         for (auto const& [zoneId, newTarget] : targetUpdates)
         {
-            auto it = _zonePopulations.find(zoneId);
-            if (it != _zonePopulations.end())
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor it;
+            if (_zonePopulations.find(it, zoneId))
             {
                 it->second.targetBotCount = newTarget;
             }
@@ -1431,7 +1439,11 @@ void BotSpawner::SpawnToPopulationTarget()
             testZone1.targetBotCount = 5; // Target 5 bots
             testZone1.minLevel = 1;
             testZone1.maxLevel = 10;
-            _zonePopulations[12] = testZone1;
+            {
+                tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
+                _zonePopulations.insert(acc, 12);
+                acc->second = testZone1;
+            }
 
             ZonePopulation testZone2;
             testZone2.zoneId = 1; // Dun Morogh
@@ -1440,7 +1452,11 @@ void BotSpawner::SpawnToPopulationTarget()
             testZone2.targetBotCount = 3; // Target 3 bots
             testZone2.minLevel = 1;
             testZone2.maxLevel = 10;
-            _zonePopulations[1] = testZone2;
+            {
+                tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
+                _zonePopulations.insert(acc, 1);
+                acc->second = testZone2;
+            }
         }
 
         // Copy zone data for lock-free processing
@@ -1490,8 +1506,16 @@ void BotSpawner::UpdatePopulationTargets()
     if (_zonePopulations.empty())
     {
         // These would be loaded from database or configuration
-        _zonePopulations[1] = {1, 0, 0, 0, 10, 1, 10, 0.5f, ::std::chrono::system_clock::now()};
-        _zonePopulations[2] = {2, 0, 0, 0, 15, 5, 15, 0.3f, ::std::chrono::system_clock::now()};
+        {
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
+            _zonePopulations.insert(acc, 1);
+            acc->second = {1, 0, 0, 0, 10, 1, 10, 0.5f, ::std::chrono::system_clock::now()};
+        }
+        {
+            tbb::concurrent_hash_map<uint32, ZonePopulation>::accessor acc;
+            _zonePopulations.insert(acc, 2);
+            acc->second = {2, 0, 0, 0, 15, 5, 15, 0.3f, ::std::chrono::system_clock::now()};
+        }
     }
 }
 
@@ -1514,8 +1538,8 @@ bool BotSpawner::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 
     // Check if bot exists before attempting despawn
     {
-        auto it = _activeBots.find(guid);
-        if (it == _activeBots.end())
+        tbb::concurrent_hash_map<ObjectGuid, uint32>::const_accessor it;
+        if (!_activeBots.find(it, guid))
         {
             TC_LOG_WARN("module.playerbot.spawner", "Attempted to despawn bot {} but it was not found in active bots", guid.ToString());
             return false;
