@@ -388,7 +388,7 @@ protected:
         }
 
         // Priority 8: Pistol Shot if can't melee
-        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
+        if (this->GetBot()->GetExactDist(target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(PISTOL_SHOT, target))
             {
@@ -632,7 +632,7 @@ private:
                 ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 40 &&
                        !bot->HasAura(OPPORTUNITY_PROC) &&
-                       PositionUtils::GetDistance(bot, target) > 10.0f;
+                       bot->GetExactDist(target) > 10.0f;
             }},
                 "40+ Energy, > 10 yards, no proc (ranged builder)");
 

@@ -246,7 +246,7 @@ protected:
         }
 
         // Priority 7: Poisoned Knife if can't melee
-        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
+        if (this->GetBot()->GetExactDist(target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(RogueAI::POISONED_KNIFE, target))
             {
@@ -469,7 +469,7 @@ private:
                 ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(RogueAI::POISONED_KNIFE) &&
                        target && this->_resource.energy >= 40 &&
-                       PositionUtils::GetDistance(bot, target) > 10.0f;
+                       bot->GetExactDist(target) > 10.0f;
             }},
                 "Has talent, 40+ Energy, > 10 yards (ranged builder)");
 
