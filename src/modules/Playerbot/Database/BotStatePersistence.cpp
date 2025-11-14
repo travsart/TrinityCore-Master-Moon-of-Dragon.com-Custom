@@ -73,16 +73,16 @@ namespace Playerbot
 
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_UPD_BOT_FULL_STATE);
-        stmt->SetData(0, snapshot.position.GetPositionX());
-        stmt->SetData(1, snapshot.position.GetPositionY());
-        stmt->SetData(2, snapshot.position.GetPositionZ());
-        stmt->SetData(3, snapshot.mapId);
-        stmt->SetData(4, snapshot.zoneId);
-        stmt->SetData(5, snapshot.orientation);
-        stmt->SetData(6, snapshot.goldCopper);
-        stmt->SetData(7, snapshot.health);
-        stmt->SetData(8, snapshot.mana);
-        stmt->SetData(9, snapshot.botGuid.GetCounter());
+        stmt->setUInt64(0, snapshot.position.GetPositionX());
+        stmt->setUInt64(1, snapshot.position.GetPositionY());
+        stmt->setUInt64(2, snapshot.position.GetPositionZ());
+        stmt->setUInt64(3, snapshot.mapId);
+        stmt->setUInt64(4, snapshot.zoneId);
+        stmt->setUInt64(5, snapshot.orientation);
+        stmt->setUInt64(6, snapshot.goldCopper);
+        stmt->setUInt64(7, snapshot.health);
+        stmt->setUInt64(8, snapshot.mana);
+        stmt->setUInt64(9, snapshot.botGuid.GetCounter());
 
         CharacterDatabase.AsyncQuery(stmt, [callback](QueryResult result) {
             if (callback)
@@ -118,7 +118,7 @@ namespace Playerbot
 
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_SEL_BOT_STATE);
-        stmt->SetData(0, botGuid.GetCounter());
+        stmt->setUInt64(0, botGuid.GetCounter());
 
         QueryResult result = CharacterDatabase.Query(stmt);
         if (!result)
@@ -190,14 +190,14 @@ namespace Playerbot
         for (auto const& item : items)
         {
             CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_INS_INVENTORY_ITEM);
-            stmt->SetData(0, item.botGuid.GetCounter());
-            stmt->SetData(1, item.bag);
-            stmt->SetData(2, item.slot);
-            stmt->SetData(3, item.itemId);
-            stmt->SetData(4, item.itemGuid.GetCounter());
-            stmt->SetData(5, item.stackCount);
-            stmt->SetData(6, item.enchantments);
-            stmt->SetData(7, item.durability);
+            stmt->setUInt64(0, item.botGuid.GetCounter());
+            stmt->setUInt64(1, item.bag);
+            stmt->setUInt64(2, item.slot);
+            stmt->setUInt64(3, item.itemId);
+            stmt->setUInt64(4, item.itemGuid.GetCounter());
+            stmt->setUInt64(5, item.stackCount);
+            stmt->setUInt64(6, item.enchantments);
+            stmt->setUInt64(7, item.durability);
 
             CharacterDatabase.AsyncExecute(stmt);
         }
@@ -230,7 +230,7 @@ namespace Playerbot
         // Execute synchronous database query
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_SEL_BOT_INVENTORY);
-        stmt->SetData(0, botGuid.GetCounter());
+        stmt->setUInt64(0, botGuid.GetCounter());
 
         QueryResult result = CharacterDatabase.Query(stmt);
         if (!result)
@@ -302,13 +302,13 @@ namespace Playerbot
         for (auto const& item : equipment)
         {
             CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_INS_EQUIPMENT_ITEM);
-            stmt->SetData(0, item.botGuid.GetCounter());
-            stmt->SetData(1, item.slot);
-            stmt->SetData(2, item.itemId);
-            stmt->SetData(3, item.itemGuid.GetCounter());
-            stmt->SetData(4, item.enchantments);
-            stmt->SetData(5, item.gems);
-            stmt->SetData(6, item.durability);
+            stmt->setUInt64(0, item.botGuid.GetCounter());
+            stmt->setUInt64(1, item.slot);
+            stmt->setUInt64(2, item.itemId);
+            stmt->setUInt64(3, item.itemGuid.GetCounter());
+            stmt->setUInt64(4, item.enchantments);
+            stmt->setUInt64(5, item.gems);
+            stmt->setUInt64(6, item.durability);
 
             CharacterDatabase.AsyncExecute(stmt);
         }
@@ -341,7 +341,7 @@ namespace Playerbot
         // Execute synchronous database query
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_SEL_BOT_EQUIPMENT);
-        stmt->SetData(0, botGuid.GetCounter());
+        stmt->setUInt64(0, botGuid.GetCounter());
 
         QueryResult result = CharacterDatabase.Query(stmt);
         if (!result)
@@ -459,13 +459,13 @@ namespace Playerbot
         // Lightweight async position update
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_UPD_BOT_POSITION);
-        stmt->SetData(0, player->GetPositionX());
-        stmt->SetData(1, player->GetPositionY());
-        stmt->SetData(2, player->GetPositionZ());
-        stmt->SetData(3, player->GetMapId());
-        stmt->SetData(4, player->GetZoneId());
-        stmt->SetData(5, player->GetOrientation());
-        stmt->SetData(6, player->GetGUID().GetCounter());
+        stmt->setUInt64(0, player->GetPositionX());
+        stmt->setUInt64(1, player->GetPositionY());
+        stmt->setUInt64(2, player->GetPositionZ());
+        stmt->setUInt64(3, player->GetMapId());
+        stmt->setUInt64(4, player->GetZoneId());
+        stmt->setUInt64(5, player->GetOrientation());
+        stmt->setUInt64(6, player->GetGUID().GetCounter());
 
         CharacterDatabase.AsyncExecute(stmt);
         */
@@ -490,8 +490,8 @@ namespace Playerbot
         // Lightweight async gold update
         /*
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(PBDB_UPD_BOT_GOLD);
-        stmt->SetData(0, player->GetMoney());
-        stmt->SetData(1, player->GetGUID().GetCounter());
+        stmt->setUInt64(0, player->GetMoney());
+        stmt->setUInt64(1, player->GetGUID().GetCounter());
 
         CharacterDatabase.AsyncExecute(stmt);
         */
@@ -518,15 +518,15 @@ namespace Playerbot
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
         CharacterDatabasePreparedStatement* stateStmt = CharacterDatabase.GetPreparedStatement(PBDB_DEL_BOT_STATE);
-        stateStmt->SetData(0, botGuid.GetCounter());
+        stateStmt->setUInt64(0, botGuid.GetCounter());
         trans->Append(stateStmt);
 
         CharacterDatabasePreparedStatement* invStmt = CharacterDatabase.GetPreparedStatement(PBDB_DEL_BOT_INVENTORY);
-        invStmt->SetData(0, botGuid.GetCounter());
+        invStmt->setUInt64(0, botGuid.GetCounter());
         trans->Append(invStmt);
 
         CharacterDatabasePreparedStatement* equipStmt = CharacterDatabase.GetPreparedStatement(PBDB_DEL_BOT_EQUIPMENT);
-        equipStmt->SetData(0, botGuid.GetCounter());
+        equipStmt->setUInt64(0, botGuid.GetCounter());
         trans->Append(equipStmt);
 
         CharacterDatabase.CommitTransaction(trans);

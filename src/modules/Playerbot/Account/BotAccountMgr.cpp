@@ -346,7 +346,7 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
             {
                 // VALIDATION: Verify account exists in database before adding to list (prepared statement)
                 LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EXISTS);
-                stmt->SetData(0, accountId);
+                stmt->setUInt32(0, accountId);
                 PreparedQueryResult result = LoginDatabase.Query(stmt);
 
                 if (result)

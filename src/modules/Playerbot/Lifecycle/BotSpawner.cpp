@@ -1549,12 +1549,12 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
     {
         // ACCOUNT EXISTENCE VALIDATION: Verify account exists in database before creating character (prepared statement)
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_BY_ID);
-        stmt->SetData(0, accountId);
+        stmt->setUInt32(0, accountId);
         PreparedQueryResult accountCheck = LoginDatabase.Query(stmt);
 
         // Check current character count for this account (enforce 10 character limit) (prepared statement)
         CharacterDatabasePreparedStatement* charStmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_SUM_CHARS);
-        charStmt->SetData(0, accountId);
+        charStmt->setUInt32(0, accountId);
         PreparedQueryResult charCountResult = CharacterDatabase.Query(charStmt);
 
         if (charCountResult)

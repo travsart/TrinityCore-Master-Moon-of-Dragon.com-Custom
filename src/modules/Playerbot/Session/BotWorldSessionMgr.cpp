@@ -841,7 +841,7 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     // CRITICAL FIX: Use synchronous prepared statement for character lookup
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_DATA_FOR_GUILD);
-    stmt->SetData(0, playerGuid.GetCounter());
+    stmt->setUInt64(0, playerGuid.GetCounter());
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
     if (!result)
