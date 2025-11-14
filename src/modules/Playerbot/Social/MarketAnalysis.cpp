@@ -256,7 +256,7 @@ void MarketAnalysis::TrackMarketMovement()
     // Update volatility metrics
 }
 
-MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
+MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
 {
     ::std::lock_guard lock(_marketMutex);
 
@@ -267,7 +267,7 @@ MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
     return MarketMetrics(); // Return default metrics
 }
 
-MarketAnalysis::MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment segment)
+MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment segment)
 {
     MarketMetrics segmentMetrics;
 
@@ -301,7 +301,7 @@ MarketAnalysis::MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment se
     return segmentMetrics;
 }
 
-MarketAnalysis::PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
+PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
 {
     PriceAnalysis analysis;
 
@@ -402,7 +402,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return deviation > ANOMALY_THRESHOLD * analysis.volatility;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
+::std::vector<MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -443,7 +443,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
+::std::vector<MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -453,7 +453,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
+::std::vector<MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1011,7 +1011,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     // This would use machine learning techniques in a full implementation
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1043,7 +1043,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1084,7 +1084,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
