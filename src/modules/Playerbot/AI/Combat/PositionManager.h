@@ -31,30 +31,10 @@ class Map;
 namespace Playerbot
 {
 
-// Position types for different combat roles
-enum class PositionType : uint8
-{
-    MELEE_COMBAT = 0,       // Close combat positioning (2-5 yards)
-    RANGED_DPS = 1,         // Ranged damage positioning (20-40 yards)
-    HEALING = 2,            // Healing positioning (15-35 yards)
-    KITING = 3,             // Kiting/mobility positioning (variable)
-    FLANKING = 4,           // Flanking/behind target
-    TANKING = 5,            // Tank positioning (front of enemy)
-    SUPPORT = 6,            // Support/utility positioning
-    RETREAT = 7,            // Retreat/escape positioning
-    FORMATION = 8           // Group formation positioning
-};
-
-// Movement priorities for positioning decisions
-enum class MovementPriority : uint8
-{
-    EMERGENCY = 0,          // Immediate movement required (fire, mechanics)
-    CRITICAL = 1,           // High priority movement (optimal positioning)
-    TACTICAL = 2,           // Tactical repositioning
-    OPTIMIZATION = 3,       // Position optimization
-    MAINTENANCE = 4,        // Position maintenance/minor adjustments
-    IDLE = 5               // No movement needed
-};
+// DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
+// enum class PositionType : uint8 { ... } - REMOVED
+// enum class MovementPriority : uint8 { ... } - REMOVED
+// Include at line 21 provides these definitions
 
 // Position validation flags
 enum class PositionValidation : uint32
