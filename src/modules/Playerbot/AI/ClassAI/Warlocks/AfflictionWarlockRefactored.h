@@ -43,6 +43,11 @@ using bot::ai::NodeStatus;
 // ============================================================================
 
 enum AfflictionWarlockSpells
+    CORRUPTION = 172,
+    UNSTABLE_AFFLICTION = 316099,
+    HAUNT = 48181,
+    SEED_OF_CORRUPTION = 27243,
+    DARK_SOUL_MISERY = 113860,
 {
     // DoT Spells
     AGONY                    = 980,     // Core DoT, stacks up to 10

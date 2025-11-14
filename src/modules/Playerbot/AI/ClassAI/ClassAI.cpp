@@ -708,7 +708,7 @@ bool ClassAI::CanExecutePendingSpell() const
     // Check if bot is currently casting a different spell    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
-                    GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
+        // GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
         return false;
     }
 

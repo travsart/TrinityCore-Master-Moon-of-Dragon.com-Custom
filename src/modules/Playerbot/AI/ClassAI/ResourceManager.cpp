@@ -106,7 +106,8 @@ bool ResourceManager::HasEnoughResource(ResourceType type, uint32 amount)
         return it->second.HasEnough(amount);
     }    // Fallback to player power if not tracked
     Powers powerType = GetPowerTypeForResource(type);
-    return _bot && _bot->GetPower(powerType) >= amount;}
+    return _bot && _bot->GetPower(powerType) >= amount;
+}
 
 uint32 ResourceManager::GetResource(ResourceType type)
 {
