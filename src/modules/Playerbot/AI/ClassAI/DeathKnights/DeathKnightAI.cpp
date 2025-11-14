@@ -1847,15 +1847,6 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
                 }
                 break;
                 case DeathKnightSpec::UNHOLY:
-
-                if (!creature)
-
-                {
-
-                    return nullptr;
-
-                }
-
                 if (CanUseAbility(DEATH_COIL))
 
                 {
