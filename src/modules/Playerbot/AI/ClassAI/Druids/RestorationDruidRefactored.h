@@ -371,7 +371,7 @@ public:
 
             {
 
-                this->CastSpell(bot, RESTO_INNERVATE);
+                this->CastSpell(RESTO_INNERVATE, bot);
 
                 _lastInnervateTime = GameTime::GetGameTimeMS();
 
@@ -392,7 +392,7 @@ public:
         if (healthPct < 50.0f && this->CanCastSpell(RESTO_BARKSKIN, bot))
         {
 
-            this->CastSpell(bot, RESTO_BARKSKIN);
+            this->CastSpell(RESTO_BARKSKIN, bot);
 
             return;
         }
@@ -401,7 +401,7 @@ public:
         if (healthPct < 60.0f && this->CanCastSpell(RESTO_RENEWAL, bot))
         {
 
-            this->CastSpell(bot, RESTO_RENEWAL);
+            this->CastSpell(RESTO_RENEWAL, bot);
 
             return;
         }
@@ -511,7 +511,7 @@ private:
 
             {
 
-                this->CastSpell(bot, RESTO_TRANQUILITY);
+                this->CastSpell(RESTO_TRANQUILITY, bot);
 
                 _lastTranquilityTime = GameTime::GetGameTimeMS();
 
@@ -528,7 +528,7 @@ private:
 
             {
 
-                this->CastSpell(bot, RESTO_INCARNATION_TREE);
+                this->CastSpell(RESTO_INCARNATION_TREE, bot);
 
                 _treeFormActive = true;
 
@@ -564,13 +564,13 @@ private:
 
                     }
 
-                    this->CastSpell(bot, RESTO_NATURES_SWIFTNESS);
+                    this->CastSpell(RESTO_NATURES_SWIFTNESS, bot);
 
                     if (this->CanCastSpell(RESTO_REGROWTH, member))
 
                     {
 
-                        this->CastSpell(member, RESTO_REGROWTH);
+                        this->CastSpell(RESTO_REGROWTH, member);
 
                         return true;
 
@@ -592,7 +592,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, RESTO_IRONBARK);
+                    this->CastSpell(RESTO_IRONBARK, member);
 
                     return true;
 
@@ -632,7 +632,7 @@ private:
 
             {
 
-                this->CastSpell(tank, RESTO_LIFEBLOOM);
+                this->CastSpell(RESTO_LIFEBLOOM, tank);
 
                 _hotTracker.ApplyLifebloom(tank->GetGUID(), 15000);
 
@@ -661,7 +661,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, RESTO_REJUVENATION);
+                        this->CastSpell(RESTO_REJUVENATION, member);
 
                         _hotTracker.ApplyRejuvenation(member->GetGUID(), 15000);
 
@@ -719,7 +719,7 @@ private:
 
             {
 
-                this->CastSpell(target, RESTO_WILD_GROWTH);
+                this->CastSpell(RESTO_WILD_GROWTH, target);
                 // Apply to all nearby allies (simplified)
 
                 for (Unit* member : group)
@@ -760,7 +760,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, RESTO_SWIFTMEND);
+                        this->CastSpell(RESTO_SWIFTMEND, member);
 
                         _swiftmendTracker.UseSwiftmend();
 
@@ -808,7 +808,7 @@ private:
 
             {
 
-                this->CastSpell(tank, RESTO_CENARION_WARD);
+                this->CastSpell(RESTO_CENARION_WARD, tank);
 
                 _hotTracker.ApplyCenarionWard(tank->GetGUID(), 30000);
 
@@ -834,7 +834,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, RESTO_REGROWTH);
+                    this->CastSpell(RESTO_REGROWTH, member);
 
                     return true;
 
@@ -867,7 +867,7 @@ private:
 
             {
 
-                this->CastSpell(target, RESTO_MOONFIRE);
+                this->CastSpell(RESTO_MOONFIRE, target);
 
             }
         }
@@ -1228,11 +1228,11 @@ private:
 
                         Sequence("Tranquility", {
 
-                            bot::ai::Action("Cast Tranquility", [this](Player* bot) {
+                            bot::ai::Action("Cast Tranquility", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
 
-                                    this->CastSpell(bot, RESTO_TRANQUILITY);
+                                    this->CastSpell(RESTO_TRANQUILITY, bot);
 
                                     this->_lastTranquilityTime = GameTime::GetGameTimeMS();
 
@@ -1248,7 +1248,7 @@ private:
 
                         Sequence("Nature's Swiftness", {
 
-                            bot::ai::Action("Instant Regrowth", [this](Player* bot) {
+                            bot::ai::Action("Instant Regrowth", [this](Player* bot), Unit* target {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1258,11 +1258,11 @@ private:
 
                                         if (this->CanCastSpell(RESTO_NATURES_SWIFTNESS, bot)) {
 
-                                            this->CastSpell(bot, RESTO_NATURES_SWIFTNESS);
+                                            this->CastSpell(RESTO_NATURES_SWIFTNESS, bot);
 
                                             if (this->CanCastSpell(RESTO_REGROWTH, m)) {
 
-                                                this->CastSpell(m, RESTO_REGROWTH);
+                                                this->CastSpell(RESTO_REGROWTH, m);
 
                                                 return NodeStatus::SUCCESS;
 
@@ -1310,11 +1310,11 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Incarnation", [this](Player* bot) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
 
-                                    this->CastSpell(bot, RESTO_INCARNATION_TREE);
+                                    this->CastSpell(RESTO_INCARNATION_TREE, bot);
 
                                     this->_treeFormActive = true;
 
@@ -1342,7 +1342,7 @@ private:
 
                                         if (this->CanCastSpell(RESTO_IRONBARK, m)) {
 
-                                            this->CastSpell(m, RESTO_IRONBARK);
+                                            this->CastSpell(RESTO_IRONBARK, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1380,7 +1380,7 @@ private:
 
                                     if (this->CanCastSpell(RESTO_LIFEBLOOM, tank)) {
 
-                                        this->CastSpell(tank, RESTO_LIFEBLOOM);
+                                        this->CastSpell(RESTO_LIFEBLOOM, tank);
 
                                         this->_hotTracker.ApplyLifebloom(tank->GetGUID(), 15000);
 
@@ -1422,7 +1422,7 @@ private:
 
                                 if (target && this->CanCastSpell(RESTO_WILD_GROWTH, target)) {
 
-                                    this->CastSpell(target, RESTO_WILD_GROWTH);
+                                    this->CastSpell(RESTO_WILD_GROWTH, target);
 
                                     for (auto* m : group) {
 
@@ -1458,7 +1458,7 @@ private:
 
                                         if (this->CanCastSpell(RESTO_REJUVENATION, m)) {
 
-                                            this->CastSpell(m, RESTO_REJUVENATION);
+                                            this->CastSpell(RESTO_REJUVENATION, m);
 
                                             this->_hotTracker.ApplyRejuvenation(m->GetGUID(), 15000);
 
@@ -1508,7 +1508,7 @@ private:
 
                                             if (this->CanCastSpell(RESTO_SWIFTMEND, m)) {
 
-                                                this->CastSpell(m, RESTO_SWIFTMEND);
+                                                this->CastSpell(RESTO_SWIFTMEND, m);
 
                                                 this->_swiftmendTracker.UseSwiftmend();
 
@@ -1540,7 +1540,7 @@ private:
 
                                         if (this->CanCastSpell(RESTO_REGROWTH, m)) {
 
-                                            this->CastSpell(m, RESTO_REGROWTH);
+                                            this->CastSpell(RESTO_REGROWTH, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1574,7 +1574,7 @@ private:
 
                     }),
 
-                    bot::ai::Action("Cast Moonfire", [this](Player* bot) {
+                    bot::ai::Action("Cast Moonfire", [this](Player* bot), Unit* target {
 
                         Unit* target = bot->GetVictim();
 
@@ -1584,7 +1584,7 @@ private:
 
                             if (this->CanCastSpell(RESTO_MOONFIRE, target)) {
 
-                                this->CastSpell(target, RESTO_MOONFIRE);
+                                this->CastSpell(RESTO_MOONFIRE, target);
 
                                 return NodeStatus::SUCCESS;
 

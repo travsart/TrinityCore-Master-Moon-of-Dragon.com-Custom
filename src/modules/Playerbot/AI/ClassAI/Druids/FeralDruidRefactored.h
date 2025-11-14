@@ -435,7 +435,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(FERAL_SURVIVAL_INSTINCTS, bot))
         {
 
-            this->CastSpell(bot, FERAL_SURVIVAL_INSTINCTS);
+            this->CastSpell(FERAL_SURVIVAL_INSTINCTS, bot);
 
             return;
         }
@@ -444,7 +444,7 @@ public:
         if (healthPct < 50.0f && this->CanCastSpell(FERAL_BARKSKIN, bot))
         {
 
-            this->CastSpell(bot, FERAL_BARKSKIN);
+            this->CastSpell(FERAL_BARKSKIN, bot);
 
             return;
         }
@@ -453,7 +453,7 @@ public:
         if (healthPct < 60.0f && this->CanCastSpell(FERAL_RENEWAL, bot))
         {
 
-            this->CastSpell(bot, FERAL_RENEWAL);
+            this->CastSpell(FERAL_RENEWAL, bot);
 
             return;
         }
@@ -462,7 +462,7 @@ public:
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(FERAL_REGROWTH, bot))
 
         {
-        this->CastSpell(bot, FERAL_REGROWTH);
+        this->CastSpell(FERAL_REGROWTH, bot);
         }
     }
 
@@ -525,7 +525,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_CAT_FORM);
+                this->CastSpell(FERAL_CAT_FORM, bot);
 
             }
         }
@@ -543,7 +543,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_TIGERS_FURY);
+                this->CastSpell(FERAL_TIGERS_FURY, bot);
 
                 _tigersFuryActive = true;
 
@@ -564,7 +564,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_INCARNATION_KING);
+                this->CastSpell(FERAL_INCARNATION_KING, bot);
 
                 _berserkActive = true;
 
@@ -580,7 +580,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_BERSERK);
+                this->CastSpell(FERAL_BERSERK, bot);
 
                 _berserkActive = true;
 
@@ -600,7 +600,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_RIP);
+                this->CastSpell(FERAL_RIP, target);
 
                 _bleedTracker.ApplyRip(targetGuid, 24000); // 24 sec base duration
 
@@ -623,7 +623,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_FEROCIOUS_BITE);
+                this->CastSpell(FERAL_FEROCIOUS_BITE, target);
 
                 ConsumeComboPoints(cp);
 
@@ -644,7 +644,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_RAKE);
+                this->CastSpell(FERAL_RAKE, target);
 
                 _bleedTracker.ApplyRake(targetGuid, 15000); // 15 sec base duration
 
@@ -667,7 +667,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_MOONFIRE_CAT);
+                this->CastSpell(FERAL_MOONFIRE_CAT, target);
 
                 _bleedTracker.ApplyMoonfire(targetGuid, 16000);
 
@@ -686,7 +686,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_BRUTAL_SLASH);
+                this->CastSpell(FERAL_BRUTAL_SLASH, target);
 
                 GenerateComboPoints(1);
 
@@ -707,7 +707,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_SHRED);
+                this->CastSpell(FERAL_SHRED, target);
 
                 GenerateComboPoints(1);
 
@@ -733,7 +733,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_TIGERS_FURY);
+                this->CastSpell(FERAL_TIGERS_FURY, bot);
 
                 _tigersFuryActive = true;
 
@@ -754,7 +754,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_INCARNATION_KING);
+                this->CastSpell(FERAL_INCARNATION_KING, bot);
 
                 _berserkActive = true;
 
@@ -770,7 +770,7 @@ private:
 
             {
 
-                this->CastSpell(bot, FERAL_BERSERK);
+                this->CastSpell(FERAL_BERSERK, bot);
 
                 _berserkActive = true;
 
@@ -791,7 +791,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_PRIMAL_WRATH);
+                this->CastSpell(FERAL_PRIMAL_WRATH, target);
 
                 ConsumeComboPoints(cp);
 
@@ -808,7 +808,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_THRASH_CAT);
+                this->CastSpell(FERAL_THRASH_CAT, target);
 
                 _bleedTracker.ApplyThrash(targetGuid, 15000);
 
@@ -827,7 +827,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_BRUTAL_SLASH);
+                this->CastSpell(FERAL_BRUTAL_SLASH, target);
 
                 GenerateComboPoints(1);
 
@@ -844,7 +844,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_SWIPE_CAT);
+                this->CastSpell(FERAL_SWIPE_CAT, target);
 
                 GenerateComboPoints(1);
 
@@ -861,7 +861,7 @@ private:
 
             {
 
-                this->CastSpell(target, FERAL_RAKE);
+                this->CastSpell(FERAL_RAKE, target);
 
                 _bleedTracker.ApplyRake(targetGuid, 15000);
 
@@ -1068,7 +1068,7 @@ private:
 
                 Sequence("Burst Cooldowns", {
 
-                    Condition("4+ CP and bleeds active", [this](Player* bot) {
+                    Condition("4+ CP and bleeds active", [this](Player* bot), Unit* target {
 
                         Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1084,19 +1084,19 @@ private:
 
                         Sequence("Incarnation (talent)", {
 
-                            Condition("Has Incarnation", [this](Player* bot) {
+                            Condition("Has Incarnation", [this](Player* bot), Unit* target {
 
                                 return bot && bot->HasSpell(FERAL_INCARNATION_KING);
 
                             }),
 
-                            bot::ai::Action("Cast Incarnation", [this](Player* bot) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(FERAL_INCARNATION_KING, bot))
 
                                 {
 
-                                    this->CastSpell(bot, FERAL_INCARNATION_KING);
+                                    this->CastSpell(FERAL_INCARNATION_KING, bot);
 
                                     this->_berserkActive = true;
 
@@ -1114,13 +1114,13 @@ private:
 
                         Sequence("Berserk", {
 
-                            bot::ai::Action("Cast Berserk", [this](Player* bot) {
+                            bot::ai::Action("Cast Berserk", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(FERAL_BERSERK, bot))
 
                                 {
 
-                                    this->CastSpell(bot, FERAL_BERSERK);
+                                    this->CastSpell(FERAL_BERSERK, bot);
 
                                     this->_berserkActive = true;
 
@@ -1154,7 +1154,7 @@ private:
 
                         Sequence("Primal Wrath (AoE)", {
 
-                            Condition("3+ enemies", [this](Player* bot) {
+                            Condition("3+ enemies", [this](Player* bot), Unit* target {
 
                                 return bot && bot->HasSpell(FERAL_PRIMAL_WRATH) &&
 
@@ -1162,7 +1162,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot) {
+                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1170,7 +1170,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_PRIMAL_WRATH);
+                                    this->CastSpell(FERAL_PRIMAL_WRATH, target);
 
                                     this->ConsumeComboPoints(this->_resource.comboPoints);
 
@@ -1186,7 +1186,7 @@ private:
 
                         Sequence("Rip (refresh)", {
 
-                            Condition("Needs Rip refresh", [this](Player* bot) {
+                            Condition("Needs Rip refresh", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1194,7 +1194,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rip", [this](Player* bot) {
+                            bot::ai::Action("Cast Rip", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1202,7 +1202,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_RIP);
+                                    this->CastSpell(FERAL_RIP, target);
 
                                     this->_bleedTracker.ApplyRip(target->GetGUID(), 24000);
 
@@ -1224,7 +1224,7 @@ private:
 
                         Sequence("Ferocious Bite (damage)", {
 
-                            Condition("Rip up >10s", [this](Player* bot) {
+                            Condition("Rip up >10s", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1234,7 +1234,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot) {
+                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1242,7 +1242,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_FEROCIOUS_BITE);
+                                    this->CastSpell(FERAL_FEROCIOUS_BITE, target);
 
                                     this->ConsumeComboPoints(this->_resource.comboPoints);
 
@@ -1268,7 +1268,7 @@ private:
 
                 Sequence("Bleeds & Resources", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim();
 
@@ -1286,13 +1286,13 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot) {
+                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot), Unit* target {
 
                                 if (this->CanCastSpell(FERAL_TIGERS_FURY, bot))
 
                                 {
 
-                                    this->CastSpell(bot, FERAL_TIGERS_FURY);
+                                    this->CastSpell(FERAL_TIGERS_FURY, bot);
 
                                     this->_tigersFuryActive = true;
 
@@ -1310,7 +1310,7 @@ private:
 
                         Sequence("Rake (bleed)", {
 
-                            Condition("Needs Rake refresh and 35 energy", [this](Player* bot) {
+                            Condition("Needs Rake refresh and 35 energy", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1320,7 +1320,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Rake", [this](Player* bot) {
+                            bot::ai::Action("Cast Rake", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1328,7 +1328,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_RAKE);
+                                    this->CastSpell(FERAL_RAKE, target);
 
                                     this->_bleedTracker.ApplyRake(target->GetGUID(), 15000);
 
@@ -1350,7 +1350,7 @@ private:
 
                         Sequence("Thrash (AoE bleed)", {
 
-                            Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot) {
+                            Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1362,7 +1362,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Thrash", [this](Player* bot) {
+                            bot::ai::Action("Cast Thrash", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1370,7 +1370,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_THRASH_CAT);
+                                    this->CastSpell(FERAL_THRASH_CAT, target);
 
                                     this->_bleedTracker.ApplyThrash(target->GetGUID(), 15000);
 
@@ -1388,7 +1388,7 @@ private:
 
                         Sequence("Moonfire (Lunar Inspiration)", {
 
-                            Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot) {
+                            Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1400,7 +1400,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Moonfire", [this](Player* bot) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1408,7 +1408,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_MOONFIRE_CAT);
+                                    this->CastSpell(FERAL_MOONFIRE_CAT, target);
 
                                     this->_bleedTracker.ApplyMoonfire(target->GetGUID(), 16000);
 
@@ -1432,7 +1432,7 @@ private:
 
                 Sequence("Builders", {
 
-                    Condition("Has target and energy", [this](Player* bot) {
+                    Condition("Has target and energy", [this](Player* bot), Unit* target {
 
                         return bot && bot->GetVictim() && this->_resource.GetAvailable() >= 25;
 
@@ -1442,7 +1442,7 @@ private:
 
                         Sequence("Brutal Slash (talent)", {
 
-                            Condition("Has Brutal Slash and 25 energy", [this](Player* bot) {
+                            Condition("Has Brutal Slash and 25 energy", [this](Player* bot), Unit* target {
 
                                 return bot && bot->HasSpell(FERAL_BRUTAL_SLASH) &&
 
@@ -1450,7 +1450,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot) {
+                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1458,7 +1458,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_BRUTAL_SLASH);
+                                    this->CastSpell(FERAL_BRUTAL_SLASH, target);
 
                                     this->GenerateComboPoints(1);
 
@@ -1486,7 +1486,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Swipe", [this](Player* bot) {
+                            bot::ai::Action("Cast Swipe", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1494,7 +1494,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_SWIPE_CAT);
+                                    this->CastSpell(FERAL_SWIPE_CAT, target);
 
                                     this->GenerateComboPoints(1);
 
@@ -1516,7 +1516,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Shred", [this](Player* bot) {
+                            bot::ai::Action("Cast Shred", [this](Player* bot), Unit* target {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1524,7 +1524,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, FERAL_SHRED);
+                                    this->CastSpell(FERAL_SHRED, target);
 
                                     this->GenerateComboPoints(1);
 
