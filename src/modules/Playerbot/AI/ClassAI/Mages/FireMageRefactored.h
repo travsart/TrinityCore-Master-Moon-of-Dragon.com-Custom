@@ -18,6 +18,9 @@
 #ifndef PLAYERBOT_FIREMAGEREFACTORED_H
 #define PLAYERBOT_FIREMAGEREFACTORED_H
 
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"

@@ -18,6 +18,9 @@
 #ifndef PLAYERBOT_ARCANEMAGEREFACTORED_H
 #define PLAYERBOT_ARCANEMAGEREFACTORED_H
 
+#include "../Common/StatusEffectTracker.h"
+#include "../Common/CooldownManager.h"
+#include "../Common/RotationHelpers.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
