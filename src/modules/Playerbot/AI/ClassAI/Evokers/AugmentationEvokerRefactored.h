@@ -28,8 +28,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 enum AugmentationEvokerSpells
 {
     // Core Buffs
@@ -218,8 +220,7 @@ protected:
 
     void InitializeAugmentationMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this;
         if (!ai) return;
 

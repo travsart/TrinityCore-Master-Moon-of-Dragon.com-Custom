@@ -42,8 +42,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Guardian Druid Spell IDs
 constexpr uint32 GUARDIAN_MANGLE = 33917;
 constexpr uint32 GUARDIAN_THRASH = 77758;
@@ -691,8 +693,7 @@ private:
 
     void InitializeGuardianMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this;
         if (!ai) return;
 

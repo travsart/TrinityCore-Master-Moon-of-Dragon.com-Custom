@@ -42,8 +42,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
 constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
 constexpr uint32 ELEM_LAVA_BURST = 51505;
@@ -680,8 +682,7 @@ private:
 
     void InitializeElementalMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this;
         if (!ai) return;
 

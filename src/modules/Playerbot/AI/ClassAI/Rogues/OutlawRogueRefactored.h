@@ -36,8 +36,10 @@ using bot::ai::Condition;
 using bot::ai::Inverter;
 using bot::ai::Repeater;
 using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::bot::ai::Action() explicitly
+// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs (BLADE_FLURRY, ADRENALINE_RUSH, KILLING_SPREE, etc.) are in RogueSpecialization.h
 // Only Outlaw-UNIQUE spell IDs defined below to avoid duplicate definition errors
 // NOTE: ComboPointsOutlaw is defined in RogueResourceTypes.h (spec-specific resource type)
@@ -526,8 +528,7 @@ private:
     // Phase 5 Integration: Decision Systems Initialization
     void InitializeOutlawMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        using namespace BehaviorTreeBuilder;
-
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         BotAI* ai = this;
 
         // ========================================================================
