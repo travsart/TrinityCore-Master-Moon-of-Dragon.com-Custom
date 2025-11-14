@@ -292,7 +292,7 @@ protected:
         // Priority 1: Touch of Death (execute)
         if (target->GetHealthPct() < 15.0f && this->CanCastSpell(TOUCH_OF_DEATH, target))
         {
-            this->CastSpell(target, TOUCH_OF_DEATH);
+            this->CastSpell(TOUCH_OF_DEATH, target);
             _hitComboTracker.RecordSpell(TOUCH_OF_DEATH);
             return;
         }
@@ -308,7 +308,7 @@ protected:
         // Priority 3: Strike of the Windlord
         if (chi >= 2 && this->CanCastSpell(STRIKE_OF_THE_WINDLORD, target))
         {
-            this->CastSpell(target, STRIKE_OF_THE_WINDLORD);
+            this->CastSpell(STRIKE_OF_THE_WINDLORD, target);
             _hitComboTracker.RecordSpell(STRIKE_OF_THE_WINDLORD);
             ConsumeChi(2);
             return;
@@ -317,7 +317,7 @@ protected:
         // Priority 4: Rising Sun Kick (maintains debuff)
         if (chi >= 2 && this->CanCastSpell(RISING_SUN_KICK, target))
         {
-            this->CastSpell(target, RISING_SUN_KICK);
+            this->CastSpell(RISING_SUN_KICK, target);
             _lastRisingSunKickTime = GameTime::GetGameTimeMS();
             _hitComboTracker.RecordSpell(RISING_SUN_KICK);
             ConsumeChi(2);
@@ -327,7 +327,7 @@ protected:
         // Priority 5: Fists of Fury (channel burst)
         if (chi >= 3 && this->CanCastSpell(FISTS_OF_FURY, target))
         {
-            this->CastSpell(target, FISTS_OF_FURY);
+            this->CastSpell(FISTS_OF_FURY, target);
             _hitComboTracker.RecordSpell(FISTS_OF_FURY);
             ConsumeChi(3);
             return;
@@ -336,7 +336,7 @@ protected:
         // Priority 6: Whirling Dragon Punch (talent)
         if (chi >= 2 && this->CanCastSpell(WHIRLING_DRAGON_PUNCH, target))
         {
-            this->CastSpell(target, WHIRLING_DRAGON_PUNCH);
+            this->CastSpell(WHIRLING_DRAGON_PUNCH, target);
             _hitComboTracker.RecordSpell(WHIRLING_DRAGON_PUNCH);
             ConsumeChi(2);
             return;
@@ -348,7 +348,7 @@ protected:
             // Use Combo Breaker proc if available
             if (_comboBreaker || this->CanCastSpell(BLACKOUT_KICK, target))
             {
-                this->CastSpell(target, BLACKOUT_KICK);
+                this->CastSpell(BLACKOUT_KICK, target);
                 _hitComboTracker.RecordSpell(BLACKOUT_KICK);
                 ConsumeChi(1);
                 _comboBreaker = false;
@@ -359,7 +359,7 @@ protected:
         // Priority 8: Tiger Palm (Chi generator)
         if (energy >= 25 && chi < 5 && this->CanCastSpell(TIGER_PALM_WIND, target))
         {
-            this->CastSpell(target, TIGER_PALM_WIND);
+            this->CastSpell(TIGER_PALM_WIND, target);
             _hitComboTracker.RecordSpell(TIGER_PALM_WIND);
             GenerateChi(2);
             return;
@@ -377,7 +377,7 @@ protected:
         // Priority 10: Chi Wave (talent)
         if (chi < 5 && this->CanCastSpell(CHI_WAVE_WIND, target))
         {
-            this->CastSpell(target, CHI_WAVE_WIND);
+            this->CastSpell(CHI_WAVE_WIND, target);
             _hitComboTracker.RecordSpell(CHI_WAVE_WIND);
             GenerateChi(1);
             return;
@@ -392,7 +392,7 @@ protected:
         // Priority 1: Fists of Fury (best AoE Chi spender)
         if (chi >= 3 && this->CanCastSpell(FISTS_OF_FURY, target))
         {
-            this->CastSpell(target, FISTS_OF_FURY);
+            this->CastSpell(FISTS_OF_FURY, target);
             _hitComboTracker.RecordSpell(FISTS_OF_FURY);
             ConsumeChi(3);
             return;
@@ -401,7 +401,7 @@ protected:
         // Priority 2: Whirling Dragon Punch
         if (chi >= 2 && this->CanCastSpell(WHIRLING_DRAGON_PUNCH, target))
         {
-            this->CastSpell(target, WHIRLING_DRAGON_PUNCH);
+            this->CastSpell(WHIRLING_DRAGON_PUNCH, target);
             _hitComboTracker.RecordSpell(WHIRLING_DRAGON_PUNCH);
             ConsumeChi(2);
             return;
@@ -419,7 +419,7 @@ protected:
         // Priority 4: Rising Sun Kick
         if (chi >= 2 && this->CanCastSpell(RISING_SUN_KICK, target))
         {
-            this->CastSpell(target, RISING_SUN_KICK);
+            this->CastSpell(RISING_SUN_KICK, target);
             _hitComboTracker.RecordSpell(RISING_SUN_KICK);
             ConsumeChi(2);
             return;
@@ -428,7 +428,7 @@ protected:
         // Priority 5: Tiger Palm (Chi generator)
         if (energy >= 25 && chi < 5 && this->CanCastSpell(TIGER_PALM_WIND, target))
         {
-            this->CastSpell(target, TIGER_PALM_WIND);
+            this->CastSpell(TIGER_PALM_WIND, target);
             _hitComboTracker.RecordSpell(TIGER_PALM_WIND);
             GenerateChi(2);
             return;
@@ -437,7 +437,7 @@ protected:
         // Priority 6: Chi Wave
         if (chi < 5 && this->CanCastSpell(CHI_WAVE_WIND, target))
         {
-            this->CastSpell(target, CHI_WAVE_WIND);
+            this->CastSpell(CHI_WAVE_WIND, target);
             _hitComboTracker.RecordSpell(CHI_WAVE_WIND);
             GenerateChi(1);
             return;
@@ -487,7 +487,7 @@ protected:
         // Touch of Karma (damage absorption + reflect)
         if (this->GetBot()->GetHealthPct() < 70.0f && this->CanCastSpell(TOUCH_OF_KARMA, target))
         {
-            this->CastSpell(target, TOUCH_OF_KARMA);
+            this->CastSpell(TOUCH_OF_KARMA, target);
             TC_LOG_DEBUG("playerbot", "Windwalker: Touch of Karma");
         }
     }
@@ -500,7 +500,7 @@ protected:
         // Fortifying Brew
         if (healthPct < 40.0f && this->CanCastSpell(FORTIFYING_BREW_WIND, bot))
         {
-            this->CastSpell(bot, FORTIFYING_BREW_WIND);
+            this->CastSpell(FORTIFYING_BREW_WIND, bot);
             TC_LOG_DEBUG("playerbot", "Windwalker: Fortifying Brew");
             return;
         }
@@ -508,7 +508,7 @@ protected:
         // Diffuse Magic
         if (healthPct < 50.0f && this->CanCastSpell(DIFFUSE_MAGIC_WIND, bot))
         {
-            this->CastSpell(bot, DIFFUSE_MAGIC_WIND);
+            this->CastSpell(DIFFUSE_MAGIC_WIND, bot);
             TC_LOG_DEBUG("playerbot", "Windwalker: Diffuse Magic");
             return;
         }
@@ -575,12 +575,12 @@ private:
         auto* tree = ai->GetBehaviorTree();
         if (tree) {
             auto root = Selector("Windwalker Monk", {
-                Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    bot::ai::Action("SEF", [this](Player* bot) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(bot, WW_STORM_EARTH_FIRE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Burst", { Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
+                    bot::ai::Action("SEF", [this](Player* bot), Unit* target { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(WW_STORM_EARTH_FIRE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Chi Spender", { Condition("2+ chi", [this](Player*) { return this->_resource.chi >= 2; }),
-                    bot::ai::Action("RSK/FoF", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(t, WW_RISING_SUN_KICK); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("RSK/FoF", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(WW_RISING_SUN_KICK, t); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Builder", { Condition("50+ energy", [this](Player*) { return this->_resource.energy >= 50; }),
-                    bot::ai::Action("Tiger Palm", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(t, WW_TIGER_PALM); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Tiger Palm", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(WW_TIGER_PALM, t); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

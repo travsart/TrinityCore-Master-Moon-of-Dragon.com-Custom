@@ -123,21 +123,21 @@ public:
 
         // Priority 3: Use Breath of Eons
         if (this->_resource.essence >= 3 && this->CanCastSpell(BREATH_OF_EONS, target)) {
-            this->CastSpell(target, BREATH_OF_EONS);
+            this->CastSpell(BREATH_OF_EONS, target);
             this->_resource.Consume(3);
             return;
         }
 
         // Priority 4: Eruption AoE
         if (this->_resource.essence >= 3 && this->GetEnemiesInRange(25.0f) >= 2 && this->CanCastSpell(ERUPTION, target)) {
-            this->CastSpell(target, ERUPTION);
+            this->CastSpell(ERUPTION, target);
             this->_resource.Consume(3);
             return;
         }
 
         // Priority 5: Generate essence
         if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
-            this->CastSpell(target, AZURE_STRIKE_AUG);
+            this->CastSpell(AZURE_STRIKE_AUG, target);
             this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
@@ -154,7 +154,7 @@ protected:
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasEbonMight(ally->GetGUID())) {
                 if (this->CanCastSpell(EBON_MIGHT, ally)) {
-                    this->CastSpell(ally, EBON_MIGHT);
+                    this->CastSpell(EBON_MIGHT, ally);
                     this->_resource.Consume(1);
                     _buffTracker.ApplyEbonMight(ally->GetGUID());
                     return true;
@@ -172,7 +172,7 @@ protected:
         for (Unit* ally : allies) {
             if (ally && !_buffTracker.HasPrescience(ally->GetGUID())) {
                 if (this->CanCastSpell(PRESCIENCE, ally)) {
-                    this->CastSpell(ally, PRESCIENCE);
+                    this->CastSpell(PRESCIENCE, ally);
                     this->_resource.Consume(1);
                     _buffTracker.ApplyPrescience(ally->GetGUID());
                     return true;
@@ -284,12 +284,12 @@ protected:
                     })
                 }),
                 Sequence("Deal Damage", {
-                    Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
                     Condition("3+ essence", [this](Player*) { return this->_resource.essence >= 3; }),
-                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot) {
+                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot), Unit* target {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
-                            this->CastSpell(target, BREATH_OF_EONS);
+                            this->CastSpell(BREATH_OF_EONS, target);
                             this->_resource.Consume(3);
                             return NodeStatus::SUCCESS;
                         }
@@ -297,12 +297,12 @@ protected:
                     })
                 }),
                 Sequence("Generate Essence", {
-                    Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                    Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
                     Condition("< 4 essence", [this](Player*) { return this->_resource.essence < 4; }),
-                    bot::ai::Action("Cast Azure Strike", [this](Player* bot) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player* bot), Unit* target {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
-                            this->CastSpell(target, AZURE_STRIKE_AUG);
+                            this->CastSpell(AZURE_STRIKE_AUG, target);
                             this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }

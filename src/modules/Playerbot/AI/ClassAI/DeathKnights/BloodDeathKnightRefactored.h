@@ -303,7 +303,7 @@ protected:
         {
             if (this->CanCastSpell(MARROWREND, target))
             {
-                this->CastSpell(target, MARROWREND);
+                this->CastSpell(MARROWREND, target);
                 _boneShieldTracker.ApplyMarrowrend(3);
                 ConsumeRunes(RuneType::BLOOD, 2);
                 GenerateRunicPower(15);
@@ -316,7 +316,7 @@ protected:
         {
             if (this->CanCastSpell(DEATH_STRIKE, target))
             {
-                this->CastSpell(target, DEATH_STRIKE);
+                this->CastSpell(DEATH_STRIKE, target);
                 _lastDeathStrikeTime = GameTime::GetGameTimeMS();
                 ConsumeRunicPower(35);
                 return;
@@ -353,7 +353,7 @@ protected:
         // Priority 5: Heart Strike (main threat generator)
         if (totalRunes >= 1 && this->CanCastSpell(HEART_STRIKE, target))
         {
-            this->CastSpell(target, HEART_STRIKE);
+            this->CastSpell(HEART_STRIKE, target);
             ConsumeRunes(RuneType::BLOOD, 1);
             GenerateRunicPower(10);
             return;
@@ -362,7 +362,7 @@ protected:
         // Priority 6: Death Strike (dump RP before capping)
         if (rp >= 80 && this->CanCastSpell(DEATH_STRIKE, target))
         {
-            this->CastSpell(target, DEATH_STRIKE);
+            this->CastSpell(DEATH_STRIKE, target);
             ConsumeRunicPower(35);
             return;
         }
@@ -378,7 +378,7 @@ protected:
         {
             if (this->CanCastSpell(MARROWREND, target))
             {
-                this->CastSpell(target, MARROWREND);
+                this->CastSpell(MARROWREND, target);
                 _boneShieldTracker.ApplyMarrowrend(3);
                 ConsumeRunes(RuneType::BLOOD, 2);
                 GenerateRunicPower(15);
@@ -411,7 +411,7 @@ protected:
         // Priority 4: Heart Strike
         if (totalRunes >= 1 && this->CanCastSpell(HEART_STRIKE, target))
         {
-            this->CastSpell(target, HEART_STRIKE);
+            this->CastSpell(HEART_STRIKE, target);
             ConsumeRunes(RuneType::BLOOD, 1);
             GenerateRunicPower(10);
             return;
@@ -422,7 +422,7 @@ protected:
         {
             if (this->CanCastSpell(DEATH_STRIKE, target))
             {
-                this->CastSpell(target, DEATH_STRIKE);
+                this->CastSpell(DEATH_STRIKE, target);
                 ConsumeRunicPower(35);
                 return;
             }
@@ -437,7 +437,7 @@ protected:
         // Anti-Magic Shell (magic damage)
         if (healthPct < 80.0f && this->CanCastSpell(ANTI_MAGIC_SHELL, bot))
         {
-            this->CastSpell(bot, ANTI_MAGIC_SHELL);
+            this->CastSpell(ANTI_MAGIC_SHELL, bot);
             
 
         // Register cooldowns using CooldownManager
@@ -465,7 +465,7 @@ protected:
         // Rune Tap (talent, quick mitigation)
         if (healthPct < 70.0f && this->CanCastSpell(RUNE_TAP, bot))
         {
-            this->CastSpell(bot, RUNE_TAP);
+            this->CastSpell(RUNE_TAP, bot);
             TC_LOG_DEBUG("playerbot", "Blood: Rune Tap");
             return;
         }
@@ -479,7 +479,7 @@ protected:
         // Critical: Icebound Fortitude
         if (healthPct < 30.0f && this->CanCastSpell(ICEBOUND_FORTITUDE, bot))
         {
-            this->CastSpell(bot, ICEBOUND_FORTITUDE);
+            this->CastSpell(ICEBOUND_FORTITUDE, bot);
             TC_LOG_DEBUG("playerbot", "Blood: Icebound Fortitude emergency");
             return;
         }
@@ -487,7 +487,7 @@ protected:
         // Very low: Vampiric Blood
         if (healthPct < 40.0f && this->CanCastSpell(VAMPIRIC_BLOOD, bot))
         {
-            this->CastSpell(bot, VAMPIRIC_BLOOD);
+            this->CastSpell(VAMPIRIC_BLOOD, bot);
             TC_LOG_DEBUG("playerbot", "Blood: Vampiric Blood");
             return;
         }
@@ -495,7 +495,7 @@ protected:
         // Low: Dancing Rune Weapon
         if (healthPct < 50.0f && this->CanCastSpell(DANCING_RUNE_WEAPON, bot))
         {
-            this->CastSpell(bot, DANCING_RUNE_WEAPON);
+            this->CastSpell(DANCING_RUNE_WEAPON, bot);
             TC_LOG_DEBUG("playerbot", "Blood: Dancing Rune Weapon");
             return;
         }
@@ -505,7 +505,7 @@ protected:
         {
             if (this->CanCastSpell(DEATH_STRIKE, bot))
             {
-                this->CastSpell(bot, DEATH_STRIKE);
+                this->CastSpell(DEATH_STRIKE, bot);
                 ConsumeRunicPower(35);
                 return;
             }
@@ -591,14 +591,14 @@ private:
         auto* tree = ai->GetBehaviorTree();
         if (tree) {
             auto root = Selector("Blood DK Tank", {
-                Sequence("Emergency", { Condition("HP < 40%", [](Player* bot) { return bot && bot->GetHealthPct() < 40.0f; }),
-                    bot::ai::Action("Vampiric Blood", [this](Player* bot) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(bot, BLOOD_VAMPIRIC_BLOOD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot) { return bot && bot->GetHealthPct() < 70.0f; }),
-                    bot::ai::Action("Death Strike", [this](Player* bot) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(bot, BLOOD_DEATH_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Emergency", { Condition("HP < 40%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 40.0f; }),
+                    bot::ai::Action("Vampiric Blood", [this](Player* bot), Unit* target { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(BLOOD_VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 70.0f; }),
+                    bot::ai::Action("Death Strike", [this](Player* bot), Unit* target { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(BLOOD_DEATH_STRIKE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Bone Shield", { Condition("< 5 stacks", [this](Player*) { return this->_boneShieldTracker.GetStacks() < 5; }),
-                    bot::ai::Action("Marrowrend", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(t, BLOOD_MARROWREND); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Threat", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    bot::ai::Action("Heart Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(t, BLOOD_HEART_STRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Marrowrend", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(BLOOD_MARROWREND, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Threat", { Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
+                    bot::ai::Action("Heart Strike", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(BLOOD_HEART_STRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

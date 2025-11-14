@@ -395,7 +395,7 @@ protected:
                 // Cast Reversion to create echo
                 if (this->_resource.essence >= 1 && this->CanCastSpell(REVERSION, member))
                 {
-                    this->CastSpell(member, REVERSION);
+                    this->CastSpell(REVERSION, member);
                     this->_resource.Consume(1);
                     _echoTracker.CreateEcho(member->GetGUID(), 5000, 4); // 4 heals
                     return true;
@@ -446,7 +446,7 @@ protected:
         Unit* target = GetLowestHealthTarget(group);
         if (target && target->GetHealthPct() < 70.0f && this->CanCastSpell(VERDANT_EMBRACE, target))
         {
-            this->CastSpell(target, VERDANT_EMBRACE);
+            this->CastSpell(VERDANT_EMBRACE, target);
             this->_resource.Consume(1);
             return true;
         }
@@ -466,7 +466,7 @@ protected:
 
         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target))
         {
-            this->CastSpell(target, AZURE_STRIKE_PRES);
+            this->CastSpell(AZURE_STRIKE_PRES, target);
             this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
@@ -695,9 +695,9 @@ protected:
                         for (auto* m : group) if (m && m->GetHealthPct() < 40.0f) critical++;
                         return critical >= 3;
                     }),
-                    bot::ai::Action("Cast Emerald Communion", [this](Player* bot) {
+                    bot::ai::Action("Cast Emerald Communion", [this](Player* bot), Unit* target {
                         if (this->CanCastSpell(EMERALD_COMMUNION, bot)) {
-                            this->CastSpell(bot, EMERALD_COMMUNION);
+                            this->CastSpell(EMERALD_COMMUNION, bot);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;
@@ -762,7 +762,7 @@ protected:
                         for (Unit* member : group) {
                             if (member && member->GetHealthPct() < 95.0f && !this->_echoTracker.HasEcho(member->GetGUID())) {
                                 if (this->CanCastSpell(REVERSION, member)) {
-                                    this->CastSpell(member, REVERSION);
+                                    this->CastSpell(REVERSION, member);
                                     this->_resource.Consume(1);
                                     this->_echoTracker.CreateEcho(member->GetGUID(), 5000, 4);
                                     return NodeStatus::SUCCESS;
@@ -787,9 +787,9 @@ protected:
                                 for (auto* m : group) if (m && m->GetHealthPct() < 80.0f) injured++;
                                 return injured >= 3;
                             }),
-                            bot::ai::Action("Cast Emerald Blossom", [this](Player* bot) {
+                            bot::ai::Action("Cast Emerald Blossom", [this](Player* bot), Unit* target {
                                 if (this->CanCastSpell(EMERALD_BLOSSOM, bot)) {
-                                    this->CastSpell(bot, EMERALD_BLOSSOM);
+                                    this->CastSpell(EMERALD_BLOSSOM, bot);
                                     this->_resource.Consume(3);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -800,7 +800,7 @@ protected:
                             bot::ai::Action("Cast Verdant Embrace", [this](Player*) {
                                 Unit* target = this->GetLowestHealthTarget(this->GetGroupMembers());
                                 if (target && target->GetHealthPct() < 70.0f && this->CanCastSpell(VERDANT_EMBRACE, target)) {
-                                    this->CastSpell(target, VERDANT_EMBRACE);
+                                    this->CastSpell(VERDANT_EMBRACE, target);
                                     this->_resource.Consume(1);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -818,7 +818,7 @@ protected:
                     bot::ai::Action("Cast Azure Strike", [this](Player*) {
                         Unit* target = this->FindNearbyEnemy();
                         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target)) {
-                            this->CastSpell(target, AZURE_STRIKE_PRES);
+                            this->CastSpell(AZURE_STRIKE_PRES, target);
                             this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }
