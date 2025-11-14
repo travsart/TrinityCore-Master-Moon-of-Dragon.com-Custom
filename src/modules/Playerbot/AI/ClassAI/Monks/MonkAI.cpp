@@ -117,10 +117,6 @@ if (!interruptTarget)
 
     // Priority 2: Handle defensive abilities based on spec
     if (behaviors && behaviors->NeedsDefensive())
-    if (!priorityTarget)
-    {
-        return 0;
-    }
     {
         UseDefensiveCooldowns();
         if (GetBot()->HasUnitState(UNIT_STATE_CASTING))
@@ -1051,10 +1047,6 @@ void MonkAI::UseDefensiveCooldowns()
     {
         if (CanUseAbility(ZEN_MEDITATION))
         {
-            if (!healTarget)
-            {
-                return nullptr;
-            }
             if (CastSpell(ZEN_MEDITATION))
             {
                 RecordAbilityUsage(ZEN_MEDITATION);

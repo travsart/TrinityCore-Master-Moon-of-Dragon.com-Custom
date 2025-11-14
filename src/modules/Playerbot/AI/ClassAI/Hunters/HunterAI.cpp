@@ -476,21 +476,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} calling pet",
 
                      GetBot()->GetName());
-        return true;    }
-
-    if (!priorityTarget)
-    {
-        return nullptr;
+        return true;
     }
+
     Pet* pet = GetPet();
     if (!pet)
         return false;
 
     // Heal pet if needed
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     if (NeedsPetHeal())
     {
         uint32 now = GameTime::GetGameTimeMS();
@@ -509,18 +502,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     // Command pet to attack if not already
     if (target && !IsPetInCombat())
     {
-        if (!priorityTarget)
-        {
-
-            return nullptr;
-        }
         CommandPetAttack(target);
         _combatMetrics.petCommands++;
         return false; // Don't stop rotation for this
@@ -545,48 +529,17 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     // Master's Call for freedom effects
     if (_bot->HasUnitState(UNIT_STATE_ROOT) || _bot->HasUnitState(UNIT_STATE_STUNNED))
-    if (!ccTarget)
     {
-        return nullptr;
-    }
-    {
-        if (!bot)
-        {
-
-            if (!ccTarget)
-
-            {
-
-                return nullptr;
-
-            }
-
-            return nullptr;
-        }
         if (_bot->HasSpell(MASTER_S_CALL) && CanUseAbility(MASTER_S_CALL))
         {
-
             if (CastSpell(MASTER_S_CALL))
             {
-
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Master's Call for freedom",
-
                              GetBot()->GetName());
-
                 return true;
-
             }
-        if (!ccTarget)
-        {
-
-            return nullptr;
-        }
         }
     }
 
@@ -596,10 +549,6 @@ bool HunterAI::HandlePositioning(::Unit* target)
     if (!_combatBehaviors)
         return false;
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     if (_combatBehaviors->ShouldSwitchTarget())
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
