@@ -36,7 +36,7 @@ namespace Playerbot
     void QuestManager::OnEventInternal(Events::BotEvent const& event)
     {
         // Early exit for non-quest events
-        if (!event.IsQuestEvent())
+    if (!event.IsQuestEvent())
             return;
 
         Player* bot = GetBot();
@@ -44,12 +44,12 @@ namespace Playerbot
             return;
 
         // Handle quest events with full implementation
-        switch (event.type)
+    switch (event.type)
         {
             case StateMachine::EventType::QUEST_ACCEPTED:
             {
                 // Extract quest data from event
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_ERROR("module.playerbot", "QuestManager::OnEventInternal: QUEST_ACCEPTED event {} missing data", event.eventId);
                     return;
@@ -79,7 +79,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_COMPLETED:
             {
                 // Extract quest data
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_ERROR("module.playerbot", "QuestManager::OnEventInternal: QUEST_COMPLETED event {} missing data", event.eventId);
                     return;
@@ -101,7 +101,7 @@ namespace Playerbot
                     questData.goldReward, questData.reputationGained);
 
                 // Attempt automatic turn-in if quest is complete
-                if (questData.isComplete && IsQuestComplete(questData.questId))
+    if (questData.isComplete && IsQuestComplete(questData.questId))
                 {
                     TC_LOG_DEBUG("module.playerbot", "QuestManager: Attempting auto turn-in for completed quest {}", questData.questId);
                     // Turn in will happen on next Update() cycle
@@ -114,7 +114,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_ABANDONED:
             {
                 // Extract quest data
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_WARN("module.playerbot", "QuestManager::OnEventInternal: QUEST_ABANDONED event {} missing data", event.eventId);
                     ForceUpdate();
@@ -162,7 +162,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_OBJECTIVE_COMPLETE:
             {
                 // Extract objective progress data
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_DEBUG("module.playerbot", "QuestManager::OnEventInternal: QUEST_OBJECTIVE_COMPLETE missing data");
                     ForceUpdate();
@@ -218,7 +218,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_SHARED:
             {
                 // Extract shared quest data
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_DEBUG("module.playerbot", "QuestManager::OnEventInternal: QUEST_SHARED missing data");
                     return;
@@ -239,7 +239,7 @@ namespace Playerbot
                     bot->GetName(), questData.questId);
 
                 // Accept shared quest if eligible
-                if (CanAcceptQuest(questData.questId))
+    if (CanAcceptQuest(questData.questId))
                 {
                     if (AcceptSharedQuest(questData.questId))
                     {
@@ -269,7 +269,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_TURNED_IN:
             {
                 // Extract turn-in data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
@@ -278,7 +278,7 @@ namespace Playerbot
                             bot->GetName(), questData.questId, questData.rewardItemId,
                             questData.experienceGained, questData.goldReward);
                         // Check for quest chain continuation
-                        if (questData.nextQuestId != 0)
+    if (questData.nextQuestId != 0)
                         {
                             TC_LOG_DEBUG("module.playerbot", "QuestManager: Quest {} has follow-up quest {}",
                                 questData.questId, questData.nextQuestId);
@@ -315,7 +315,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_ITEM_COLLECTED:
             {
                 // Extract item collection data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
@@ -335,7 +335,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_CREATURE_KILLED:
             {
                 // Extract kill credit data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
@@ -355,7 +355,7 @@ namespace Playerbot
             case StateMachine::EventType::QUEST_EXPLORATION:
             {
                 // Extract exploration data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {

@@ -73,7 +73,7 @@ TEST_F(GroupFunctionalityTests, RapidGroupOperationsStress)
             auto group = m_env->CreateTestGroup(leaderName);
 
             // Add 4 bots quickly
-            for (uint32 b = 0; b < 4; ++b)
+    for (uint32 b = 0; b < 4; ++b)
             {
                 ::std::string botName = leaderName + "_Bot" + ::std::to_string(b);
                 auto bot = m_env->CreateTestBot(botName);
@@ -90,14 +90,14 @@ TEST_F(GroupFunctionalityTests, RapidGroupOperationsStress)
                                                                  static_cast<uint64>(formationTime.count()));
 
         // Activity phase - simulate group operations
-        for (auto& group : tempGroups)
+    for (auto& group : tempGroups)
         {
             // Simulate movement
             Position newPos = m_env->GetRandomPosition(Position(0, 0, 0, 0), 100.0f);
             group->groupPosition = newPos;
 
             // Simulate combat
-            if (cycle % 3 == 0) // Every third cycle
+    if (cycle % 3 == 0) // Every third cycle
             {
                 group->isInCombat = true;
                 group->currentTarget = ObjectGuid::Create<HighGuid::Creature>(cycle * 1000 + 1);
@@ -111,7 +111,7 @@ TEST_F(GroupFunctionalityTests, RapidGroupOperationsStress)
         tempGroups.clear();
 
         // Brief pause to prevent system overload
-        if (cycle % 10 == 0)
+    if (cycle % 10 == 0)
         {
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
@@ -159,7 +159,7 @@ TEST_F(GroupFunctionalityTests, MemoryPressureStressTest)
         memoryTestBots.push_back(::std::move(groupBots));
 
         // Record memory usage every 10 groups
-        if (i % 10 == 0)
+    if (i % 10 == 0)
         {
             m_currentTestMetrics.memoryUsagePeak = ::std::max(m_currentTestMetrics.memoryUsagePeak,
                                                            initialMemory + (i * BOTS_PER_GROUP * 8 * 1024 * 1024));
@@ -182,7 +182,7 @@ TEST_F(GroupFunctionalityTests, MemoryPressureStressTest)
         }
 
         // Small delay to allow garbage collection
-        if (i % 5 == 0)
+    if (i % 5 == 0)
         {
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
@@ -236,7 +236,7 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
         auto testGroup = m_env->CreateTestGroup(leaderName);
 
         // Add bots with simulated network delay
-        for (uint32 i = 0; i < 4; ++i)
+    for (uint32 i = 0; i < 4; ++i)
         {
             ::std::string botName = leaderName + "_Bot" + ::std::to_string(i);
             auto bot = m_env->CreateTestBot(botName);
@@ -265,7 +265,7 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
         }
 
         // Test group operations under this network condition
-        for (uint32 op = 0; op < 10; ++op)
+    for (uint32 op = 0; op < 10; ++op)
         {
             // Simulate command with network delay
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(condition.latencyMs));
@@ -431,7 +431,7 @@ TEST_F(GroupFunctionalityTests, InvalidInvitationScenarios)
             "Invite to full group",
             [this]() {
                 // Group already has 4 members, try to add 5th
-                if (m_testGroup->members.size() >= 5)
+    if (m_testGroup->members.size() >= 5)
                 {
                     TC_LOG_DEBUG("playerbot.test", "Attempting to invite to full group");
                     return false; // Should fail - group is full
@@ -645,7 +645,7 @@ TEST_F(GroupFunctionalityTests, MapTransitionStressTest)
         m_testGroup->groupPosition = newMapPos;
 
         // Update all bot positions (they should follow/teleport)
-        for (size_t i = 0; i < m_testBots.size(); ++i)
+    for (size_t i = 0; i < m_testBots.size(); ++i)
         {
             Position botPos = m_env->GetFormationPosition(newMapPos, i, 5.0f);
             m_testBots[i]->position = botPos;
@@ -716,7 +716,7 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
                 for (int i = 0; i < 1000; ++i)
                 {
                     memoryConsumer.emplace_back(1024 * 1024, 0); // 1MB each
-                    if (i % 100 == 0)
+    if (i % 100 == 0)
                     {
                         ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
                     }
@@ -734,7 +734,7 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
             "Database connection exhaustion",
             [this]() {
                 // Simulate database connection pool exhaustion
-                for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i)
                 {
                     // Simulate database operations
                     ::std::this_thread::sleep_for(::std::chrono::microseconds(100));
@@ -749,7 +749,7 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
             "Network connection exhaustion",
             [this]() {
                 // Simulate network resource exhaustion
-                for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < 50; ++i)
                 {
                     ::std::this_thread::sleep_for(::std::chrono::microseconds(200));
                 }

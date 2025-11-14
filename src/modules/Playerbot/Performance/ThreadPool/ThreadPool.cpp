@@ -42,7 +42,7 @@ bool WorkStealingQueue<T>::Push(T item)
     if (bottom - top >= static_cast<int64_t>(_capacity.load(::std::memory_order_relaxed)))
     {
         // Try to expand
-        if (_capacity.load(::std::memory_order_relaxed) < MAX_CAPACITY)
+    if (_capacity.load(::std::memory_order_relaxed) < MAX_CAPACITY)
         {
             Expand();
         }
@@ -82,7 +82,7 @@ bool WorkStealingQueue<T>::Pop(T& item)
         if (top == bottom)
         {
             // Last item - compete with steal
-            if (!_top.compare_exchange_strong(top, top + 1,
+    if (!_top.compare_exchange_strong(top, top + 1,
                 ::std::memory_order_seq_cst,
                 ::std::memory_order_relaxed))
             {
@@ -117,7 +117,7 @@ bool WorkStealingQueue<T>::Steal(T& item)
         item = _array[index].data.load(::std::memory_order_relaxed);
 
         // Try to increment top
-        if (!_top.compare_exchange_strong(top, top + 1,
+    if (!_top.compare_exchange_strong(top, top + 1,
             ::std::memory_order_seq_cst,
             ::std::memory_order_relaxed))
         {
@@ -195,7 +195,6 @@ void WorkerThread::Start()
     // CRITICAL FIX: Deferred thread start with proper initialization
     // This method is called AFTER all workers are constructed in ThreadPool
     // Prevents race conditions and startup storms
-
     if (_initialized.exchange(true))
         return; // Already started
 
@@ -243,7 +242,7 @@ void WorkerThread::Run()
         try
         {
             // Try to execute task from local queues (priority order)
-            if (TryExecuteTask())
+    if (TryExecuteTask())
             {
                 didWork = true;
                 lastActiveTime = ::std::chrono::steady_clock::now();
@@ -267,8 +266,7 @@ void WorkerThread::Run()
             // NOTE: Cannot use TC_LOG here as it might not be initialized
             // Error will be recorded in metrics instead
             _metrics.tasksCompleted.fetch_add(1, ::std::memory_order_relaxed); // Count as completed but failed
-
-            if (_diagnostics)
+    if (_diagnostics)
             {
                 _diagnostics->tasksFailed.fetch_add(1, ::std::memory_order_relaxed);
             }
@@ -285,7 +283,7 @@ void WorkerThread::Run()
             Sleep();
 
             // After waking, go back to checking queues
-            if (_diagnostics)
+    if (_diagnostics)
                 WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
         }
     }
@@ -319,7 +317,7 @@ bool WorkerThread::TryExecuteTask()
             _metrics.totalWorkTime.fetch_add(workTime.count(), ::std::memory_order_relaxed);
 
             // Update diagnostics
-            if (_diagnostics)
+    if (_diagnostics)
             {
                 _diagnostics->tasksExecuted.fetch_add(1, ::std::memory_order_relaxed);
                 _diagnostics->executionTime.Record(workTime);
@@ -352,7 +350,6 @@ bool WorkerThread::TryStealTask()
     uint32 attempts = 0;
     uint32 maxAttempts = _pool->GetConfiguration().maxStealAttempts;
     uint32 yieldsPerAttempt = 1;  // Start with 1 yield
-
     while (attempts < maxAttempts)
     {
         _metrics.stealAttempts.fetch_add(1, ::std::memory_order_relaxed);
@@ -373,14 +370,14 @@ bool WorkerThread::TryStealTask()
         }
 
         // Check if victim is sleeping (likely has no work)
-        if (victim->_sleeping.load(::std::memory_order_relaxed))
+    if (victim->_sleeping.load(::std::memory_order_relaxed))
         {
             ++attempts;
             continue;  // Skip sleeping workers
         }
 
         // Try to steal from each priority level (highest priority first)
-        for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
+    for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
         {
             Task* task = nullptr;
             if (victim->_localQueues[i].Steal(task) && task)
@@ -409,13 +406,13 @@ bool WorkerThread::TryStealTask()
         // CRITICAL FIX D: Replace CV wait with yield-based backoff
         // This prevents deadlock when all threads enter backoff simultaneously
         // Using yield instead of condition variable eliminates the 1ms CV wait deadlock
-        if (attempts < maxAttempts)
+    if (attempts < maxAttempts)
         {
             // Progressive yield strategy - more yields on repeated failures
-            for (uint32 y = 0; y < yieldsPerAttempt; ++y)
+    for (uint32 y = 0; y < yieldsPerAttempt; ++y)
             {
                 // Check for shutdown or new work before each yield
-                if (!_running.load(::std::memory_order_relaxed) ||
+    if (!_running.load(::std::memory_order_relaxed) ||
                     _pool->IsShuttingDown() ||
                     !_localQueues[0].Empty())  // Check CRITICAL queue for urgent work
                 {
@@ -497,7 +494,7 @@ bool WorkerThread::HasWorkAvailable() const
                 continue;
 
             // Check if other worker has stealable work
-            for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
+    for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
             {
                 if (!other->_localQueues[j].Empty())
                     return true;  // Work available to steal
@@ -631,7 +628,7 @@ void ThreadPool::EnsureWorkersCreated()
 
         // Phase 2: Start all worker threads with staggered startup
         // This prevents thread startup storm and reduces initialization time
-        for (uint32 i = 0; i < _config.numThreads; ++i)
+    for (uint32 i = 0; i < _config.numThreads; ++i)
         {
             try
             {
@@ -639,7 +636,7 @@ void ThreadPool::EnsureWorkersCreated()
 
                 // Small delay between thread starts to prevent OS scheduler contention
                 // Total delay: ~40ms for 8 threads (5ms each)
-                if (i < _config.numThreads - 1)
+    if (i < _config.numThreads - 1)
                     ::std::this_thread::sleep_for(::std::chrono::milliseconds(5));
             }
             catch (::std::exception const& e)
@@ -746,7 +743,7 @@ void ThreadPool::Shutdown(bool waitForPending)
             if (worker->_thread.joinable())
             {
                 // Give thread time to finish gracefully
-                if (worker->_thread.joinable())
+    if (worker->_thread.joinable())
                 {
                     worker->_thread.join();
                 }
@@ -838,7 +835,6 @@ void ThreadPool::WakeAllWorkers()
     //
     // Solution: After batch submission, wake ALL workers before future.get()
     // This ensures maximum parallelism and prevents the race condition
-
     for (auto& worker : _workers)
     {
         if (worker)
@@ -916,7 +912,7 @@ ThreadPool& GetThreadPool()
 
                 // Handle special case: 0 = auto-detect (keep default formula)
                 // Non-zero values override the default
-                if (configThreads > 0)
+    if (configThreads > 0)
                 {
                     config.numThreads = configThreads;
                 }
@@ -947,7 +943,7 @@ ThreadPool& GetThreadPool()
         // Minimum is 16 to handle reasonable bot counts without starvation.
         //
         // REAL FIX NEEDED: Make botSession->Update() non-blocking or use a different threading model
-        if (config.numThreads < 16)
+    if (config.numThreads < 16)
         {
             config.numThreads = 16;  // Increased minimum from 4 to 16 to prevent task starvation
         }

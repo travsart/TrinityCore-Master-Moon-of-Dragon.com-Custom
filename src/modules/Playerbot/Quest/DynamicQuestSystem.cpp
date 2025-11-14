@@ -65,7 +65,7 @@ DynamicQuestSystem::DynamicQuestSystem()
         uint32 questId = quest->GetQuestId();
 
         // Check if quest is available to this bot
-        if (bot->CanTakeQuest(quest, false) &&
+    if (bot->CanTakeQuest(quest, false) &&
             (quest->GetMaxLevel() == 0 || quest->GetMaxLevel() >= botLevel))
         {
             availableQuests.push_back(questId);
@@ -227,7 +227,6 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
 
     // Boost priority for special quest types
     // Note: TrinityCore doesn't have QUEST_FLAGS_ELITE, using other criteria for special quests
-
     if (quest->IsDFQuest() || quest->IsRaidQuest(DIFFICULTY_NORMAL))
         return QuestPriority::LEGENDARY;
 
@@ -326,7 +325,7 @@ void DynamicQuestSystem::UpdateQuestProgress(Player* bot)
         UpdateQuestObjectiveProgress(progress, sObjectMgr->GetQuestTemplate(progress.questId), bot);
 
         // Check if quest is completed
-        if (progress.completionPercentage >= 100.0f)
+    if (progress.completionPercentage >= 100.0f)
         {
             HandleQuestCompletion(bot, progress.questId);
         }
@@ -880,13 +879,13 @@ void DynamicQuestSystem::AnalyzeQuestDependencies()
         uint32 questId = quest->GetQuestId();
 
         // Check for prerequisite quests
-        if (quest->GetPrevQuestId() != 0)
+    if (quest->GetPrevQuestId() != 0)
         {
             _questPrerequisites[questId].push_back(quest->GetPrevQuestId());
         }
 
         // Check for followup quests (simplified)
-        if (quest->GetNextQuestId() != 0)
+    if (quest->GetNextQuestId() != 0)
         {
             _questFollowups[questId].push_back(quest->GetNextQuestId());
         }
@@ -1102,7 +1101,6 @@ void DynamicQuestSystem::PopulateQuestMetadata(uint32 questId)
 
     metadata.estimatedDuration += killObjectives * 30; // 30 seconds per kill
     metadata.estimatedDuration += itemObjectives * 60; // 1 minute per item
-
     if (metadata.isElite)
         metadata.estimatedDuration *= 2;
     if (metadata.isDungeon)

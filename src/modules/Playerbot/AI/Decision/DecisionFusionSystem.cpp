@@ -230,7 +230,6 @@ void DecisionFusionSystem::NormalizeWeights()
     // ========================================================================
     // Phase 5 Integration: Use ActionPriorityQueue's registered spells as candidates
     // ActionScoringEngine scores them using multi-criteria utility evaluation
-
     if (auto priorityQueue = ai->GetActionPriorityQueue())
     {
         // Get all available spells from ActionPriorityQueue
@@ -415,8 +414,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const ::std::vector<DecisionV
             consensus.contributingVotes.push_back(*vote);
 
             // Track highest scoring vote for target selection
-
-            if (weightedScore > highestVoteScore)
+    if (weightedScore > highestVoteScore)
 
             {
 
@@ -594,8 +592,7 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         case CLASS_PALADIN:
 
             if (spec == 1) return BotRole::HEALER;  // Holy
-
-            if (spec == 2) return BotRole::TANK;
+    if (spec == 2) return BotRole::TANK;
             // Prot
 
             return BotRole::MELEE_DPS;
@@ -621,8 +618,7 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
 
             if (spec == 3) return BotRole::HEALER;
             // Resto
-
-            if (spec == 1) return BotRole::RANGED_DPS;  // Ele
+    if (spec == 1) return BotRole::RANGED_DPS;  // Ele
 
             return BotRole::MELEE_DPS;
             // Enh
@@ -635,10 +631,8 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         case CLASS_DRUID:
 
             if (spec == 0) return BotRole::RANGED_DPS;  // Balance
-
-            if (spec == 1) return BotRole::MELEE_DPS;   // Feral (DPS)
-
-            if (spec == 2) return BotRole::TANK;
+    if (spec == 1) return BotRole::MELEE_DPS;   // Feral (DPS)
+    if (spec == 2) return BotRole::TANK;
             // Feral (Tank) / Guardian
 
             return BotRole::HEALER;
@@ -672,16 +666,13 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             if (healthPct < 20.0f)
 
                 return 1.0f;  // Critical
-
-            if (healthPct < 40.0f)
+    if (healthPct < 40.0f)
 
                 return 0.8f;  // Urgent
-
-            if (healthPct < 60.0f)
+    if (healthPct < 60.0f)
 
                 return 0.5f;  // Moderate
-
-            if (healthPct < 80.0f)
+    if (healthPct < 80.0f)
 
                 return 0.2f;  // Low
 
@@ -692,8 +683,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::GROUP_PROTECTION:
         {
             // Score based on group members' health and threat
-
-            if (Group* group = bot->GetGroup())
+    if (Group* group = bot->GetGroup())
 
             {
 
@@ -745,8 +735,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::DAMAGE_OPTIMIZATION:
         {
             // Score based on target health and DPS opportunity
-
-            if (!target || !target->IsAlive())
+    if (!target || !target->IsAlive())
 
                 return 0.0f;
 
@@ -754,14 +743,12 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             float targetHealthPct = target->GetHealthPct();
 
             // Execute range (< 20% HP) = high priority
-
-            if (targetHealthPct < 20.0f)
+    if (targetHealthPct < 20.0f)
 
                 return 0.9f;
 
             // Normal DPS window
-
-            if (targetHealthPct > 80.0f)
+    if (targetHealthPct > 80.0f)
 
                 return 0.7f; // Fresh target, good DPS opportunity
 
@@ -785,12 +772,10 @@ float DecisionFusionSystem::EvaluateScoringCategory(
                 if (manaPct < 20.0f)
 
                     return 1.0f; // Very high priority to conserve
-
-                if (manaPct < 40.0f)
+    if (manaPct < 40.0f)
 
                     return 0.7f; // High priority
-
-                if (manaPct < 60.0f)
+    if (manaPct < 60.0f)
 
                     return 0.4f; // Moderate
 
@@ -813,8 +798,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         {
             // Score based on positioning needs
             // For now, basic implementation based on range
-
-            if (!target)
+    if (!target)
 
                 return 0.0f;
 
@@ -822,14 +806,12 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             float distance = bot->GetDistance(target);
 
             // Melee range
-
-            if (distance < 5.0f)
+    if (distance < 5.0f)
 
                 return 0.2f; // Good positioning for melee
 
             // Mid range
-
-            if (distance < 30.0f)
+    if (distance < 30.0f)
 
                 return 0.5f; // Good positioning for ranged
 
@@ -841,8 +823,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::STRATEGIC_VALUE:
         {
             // Score based on context and fight phase
-
-            switch (context)
+    switch (context)
 
             {
 

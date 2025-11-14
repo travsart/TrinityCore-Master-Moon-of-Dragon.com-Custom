@@ -502,7 +502,7 @@ void ProfessionEventBus::DeliverEvent(ProfessionEvent const& event)
     for (const CallbackSubscription& sub : _callbackSubscriptions)
     {
         // Check if this subscription includes this event type
-        if (::std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
+    if (::std::find(sub.types.begin(), sub.types.end(), event.type) != sub.types.end())
         {
             try
             {

@@ -215,7 +215,7 @@ void BotPacketRelay::RelayToGroupMembers(BotSession* botSession, WorldPacket con
         UpdateStatistics(packet->GetOpcode(), true);
 
         // Debug logging
-        if (_debugLogging.load())
+    if (_debugLogging.load())
             LogRelayEvent(bot, packet, successCount);
     }
 }
@@ -307,11 +307,11 @@ void BotPacketRelay::BroadcastToGroup(BotSession* botSession, WorldPacket const*
     for (Player* player : allPlayers)
     {
         // Skip originating bot if requested
-        if (ignoreBot && player == bot)
+    if (ignoreBot && player == bot)
             continue;
 
         // For human players, check whitelist
-        if (!IsBot(player) && !ShouldRelayPacket(packet))
+    if (!IsBot(player) && !ShouldRelayPacket(packet))
             continue;
 
         if (SendPacketToPlayer(player, packet))
@@ -402,11 +402,11 @@ void BotPacketRelay::RemoveRelayOpcode(uint32 opcode)
             continue;
 
         // Filter out bots
-        if (IsBot(member))
+    if (IsBot(member))
             continue;
 
         // Filter out the bot itself (redundant check, but safe)
-        if (member == bot)
+    if (member == bot)
             continue;
 
         humanPlayers.push_back(member);
@@ -746,7 +746,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         DeferredPacket& deferred = _deferredPackets.front();
 
         // Validate bot session is still valid
-        if (!deferred.botSession || !deferred.packet)
+    if (!deferred.botSession || !deferred.packet)
         {
             TC_LOG_ERROR("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Invalid deferred packet (botSession={}, packet={})",
                          deferred.botSession != nullptr, deferred.packet != nullptr);
@@ -756,7 +756,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         }
 
         // Log packet details for debugging
-        if (IsDebugLoggingEnabled())
+    if (IsDebugLoggingEnabled())
         {
             TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Replaying packet opcode {} from bot {}",
                          deferred.packet->GetOpcode(),
@@ -780,7 +780,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         if (humanMembers.empty())
         {
             // Bot may have left group during initialization - not an error
-            if (IsDebugLoggingEnabled())
+    if (IsDebugLoggingEnabled())
             {
                 TC_LOG_DEBUG("playerbot", "BotPacketRelay::ProcessDeferredPackets() - Bot {} no longer in group with humans",
                              bot->GetName());
@@ -791,7 +791,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         }
 
         // Send packet to each human group member
-        for (Player* human : humanMembers)
+    for (Player* human : humanMembers)
         {
             if (SendPacketToPlayer(human, deferred.packet.get()))
             {
@@ -813,7 +813,7 @@ void BotPacketRelay::ProcessDeferredPackets()
         _statistics.totalPacketsRelayed++;
 
         // Log relay event
-        if (IsDebugLoggingEnabled())
+    if (IsDebugLoggingEnabled())
         {
             LogRelayEvent(bot, deferred.packet.get(), humanMembers.size());
         }

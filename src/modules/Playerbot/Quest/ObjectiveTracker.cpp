@@ -1091,7 +1091,7 @@ uint32 ObjectiveTracker::GetCurrentObjectiveProgress(Player* bot, const Quest* q
         const QuestObjective& objective = quest->Objectives[objectiveIndex];
 
         // Get progress based on objective type
-        switch (objective.Type)
+    switch (objective.Type)
         {
             case QUEST_OBJECTIVE_MONSTER:
                 return bot->GetReqKillOrCastCurrentCount(quest->GetQuestId(), objective.ObjectID);
@@ -1167,7 +1167,6 @@ void ObjectiveTracker::AssignSpecificTargetToBot(Player* bot, uint32 questId, ui
 Position ObjectiveTracker::FindObjectiveTargetLocation(Player* bot, const QuestObjectiveData& objective)
 {
     Position invalidPosition; // Returns 0,0,0 by default
-
     if (!bot)
         return invalidPosition;
 

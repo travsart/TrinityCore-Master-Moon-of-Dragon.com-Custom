@@ -95,7 +95,7 @@ void MountManager::Update(::Player* player, uint32 diff)
     else
     {
         // Check if player should remount after combat
-        if (profile.remountAfterCombat && !IsInCombat(player))
+    if (profile.remountAfterCombat && !IsInCombat(player))
         {
             // Check if player was recently in combat
             // This would require tracking combat exit time
@@ -111,7 +111,6 @@ bool MountManager::MountPlayer(::Player* player)
 
     if (IsMounted(player))
         return true; // Already mounted
-
     if (!ValidateMountUsage(player))
         return false;
 

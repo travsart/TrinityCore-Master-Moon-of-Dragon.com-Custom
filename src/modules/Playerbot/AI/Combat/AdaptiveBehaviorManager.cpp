@@ -237,24 +237,24 @@ void AdaptiveBehaviorManager::UpdateProfiles(uint32 diff, const CombatMetrics& m
     for (BehaviorProfile& profile : _profiles)
     {
         // Update active time
-        if (profile.isActive)
+    if (profile.isActive)
         {
             profile.activeTime += diff;
 
             // Check if profile should deactivate (exceeded max duration)
-            if (profile.activeTime >= profile.maxDuration)
+    if (profile.activeTime >= profile.maxDuration)
             {
                 RemoveProfile(profile);
                 continue;
             }
 
             // Check if profile should remain active (minimum duration not met)
-            if (profile.activeTime < profile.minDuration)
+    if (profile.activeTime < profile.minDuration)
                 continue;
         }
 
         // Check cooldown
-        if (profile.lastActivated > 0 && profile.cooldown > 0)
+    if (profile.lastActivated > 0 && profile.cooldown > 0)
         {
             if (GameTime::GetGameTimeMS() - profile.lastActivated < profile.cooldown)
                 continue;
@@ -264,7 +264,7 @@ void AdaptiveBehaviorManager::UpdateProfiles(uint32 diff, const CombatMetrics& m
         EvaluateProfileActivation(profile, metrics, situation);
 
         // Track highest priority profile
-        if (profile.condition && profile.condition(metrics, situation))
+    if (profile.condition && profile.condition(metrics, situation))
         {
             if (profile.priority > highestPriority)
             {
@@ -297,7 +297,7 @@ void AdaptiveBehaviorManager::EvaluateProfileActivation(BehaviorProfile& profile
     if (shouldActivate && !profile.isActive)
     {
         // Check cooldown
-        if (profile.lastActivated > 0 && profile.cooldown > 0)
+    if (profile.lastActivated > 0 && profile.cooldown > 0)
         {
             if (GameTime::GetGameTimeMS() - profile.lastActivated < profile.cooldown)
                 return;
@@ -343,19 +343,19 @@ void AdaptiveBehaviorManager::AdaptToComposition()
     if (!IsOptimalComposition())
     {
         // Missing tank - someone may need to emergency tank
-        if (_groupComposition.tanks == 0 && CanPerformRole(BotRole::TANK))
+    if (_groupComposition.tanks == 0 && CanPerformRole(BotRole::TANK))
         {
             ActivateStrategy(STRATEGY_EMERGENCY_TANK);
         }
 
         // Missing healer - activate self-preservation
-        if (_groupComposition.healers == 0)
+    if (_groupComposition.healers == 0)
         {
             ActivateStrategy(STRATEGY_SURVIVAL | STRATEGY_USE_CONSUMABLES);
         }
 
         // Too many melee - some should stay ranged
-        if (_groupComposition.meleeDPS > _groupComposition.rangedDPS + 2)
+    if (_groupComposition.meleeDPS > _groupComposition.rangedDPS + 2)
         {
             if (GetPrimaryRole() == BotRole::MELEE_DPS && CanPerformRole(BotRole::RANGED_DPS))
             {
@@ -391,7 +391,7 @@ void AdaptiveBehaviorManager::ActivateStrategy(uint32 flags)
         _strategySwitchCount++;
 
         // Track activation time for each strategy
-        for (uint32 i = 0; i < 32; ++i)
+    for (uint32 i = 0; i < 32; ++i)
         {
             uint32 flag = 1 << i;
             if ((flags & flag) && !(oldStrategies & flag))
@@ -592,7 +592,7 @@ void AdaptiveBehaviorManager::UpdateGroupComposition()
         }
 
         // Check for special abilities
-        if (memberClass == CLASS_SHAMAN || memberClass == CLASS_MAGE)
+    if (memberClass == CLASS_SHAMAN || memberClass == CLASS_MAGE)
             _groupComposition.hasBloodlust = true;
 
         if (memberClass == CLASS_DRUID)
@@ -689,7 +689,7 @@ void AdaptiveBehaviorManager::AdjustBehaviorWeights()
         float successRate = GetDecisionSuccessRate(profile.name);
 
         // Adjust priority based on success rate
-        if (successRate > 80.0f && profile.priority < BehaviorPriority::CRITICAL)
+    if (successRate > 80.0f && profile.priority < BehaviorPriority::CRITICAL)
         {
             profile.priority = static_cast<BehaviorPriority>(static_cast<uint8>(profile.priority) + 1);
         }
@@ -704,7 +704,6 @@ void AdaptiveBehaviorManager::UpdateRoleAssignment()
 {
     if (GameTime::GetGameTimeMS() - _roleAssignment.assignedTime < 30000)
         return; // Don't switch roles too frequently
-
     if (NeedsRoleSwitch())
     {
         AssignRoles();
@@ -958,7 +957,7 @@ void AdaptiveBehaviorManager::ApplyPositioningStrategies(CombatSituation situati
 
         default:
             // Normal positioning based on role
-            if (IsDPSRole(GetPrimaryRole()))
+    if (IsDPSRole(GetPrimaryRole()))
             {
                 if (GetPrimaryRole() == BotRole::MELEE_DPS)
                     ActivateStrategy(STRATEGY_STAY_MELEE);
@@ -997,7 +996,7 @@ void AdaptiveBehaviorManager::ApplyResourceStrategies(const CombatMetrics& metri
     else
     {
         // Normal enemies, use cooldowns freely
-        if (metrics.enemyCount >= 3 || metrics.eliteCount > 0)
+    if (metrics.enemyCount >= 3 || metrics.eliteCount > 0)
         {
             ActivateStrategy(STRATEGY_USE_COOLDOWNS);
         }
@@ -1133,7 +1132,6 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // ========================================================================
     // 3. CONTEXT-BASED URGENCY ADJUSTMENTS
     // ========================================================================
-
     switch (context)
     {
         case CombatContext::RAID_MYTHIC:
@@ -1156,16 +1154,12 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // ========================================================================
     // 4. STRATEGY-BASED URGENCY ADJUSTMENTS
     // ========================================================================
-
     if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
         vote.urgency += 0.2f;  // Increase urgency during burst windows
-
     if (IsStrategyActive(STRATEGY_SURVIVAL))
         vote.urgency += 0.3f;  // High urgency in survival mode
-
     if (IsStrategyActive(STRATEGY_EMERGENCY_TANK) || IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
         vote.urgency += 0.4f;  // Very high urgency for emergency strategies
-
     if (IsStrategyActive(STRATEGY_SAVE_COOLDOWNS))
         vote.urgency -= 0.1f;  // Reduce urgency when saving cooldowns
 
@@ -1188,7 +1182,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
                 reasoning += "Threat maintenance";
 
             // Tanks have higher urgency if not tanking current target
-            if (target && target->GetVictim() != _bot)
+    if (target && target->GetVictim() != _bot)
                 vote.urgency += 0.2f;
             break;
 
@@ -1270,7 +1264,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
         case BotRole::HYBRID:
             reasoning += "Hybrid role - ";
             // Hybrid adapts based on needs
-            if (ShouldUseDefensiveCooldowns())
+    if (ShouldUseDefensiveCooldowns())
                 reasoning += "Defensive support";
             else if (_groupComposition.healers == 0)
                 reasoning += "Off-healing";

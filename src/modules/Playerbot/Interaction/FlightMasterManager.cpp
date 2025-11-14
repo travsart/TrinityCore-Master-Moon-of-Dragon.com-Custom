@@ -69,7 +69,7 @@ namespace Playerbot
             return false;
         }
         // Check if already known
-        if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
+    if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Bot %s already knows taxi node %u",
                 m_bot->GetName().c_str(), nodeId);
@@ -77,7 +77,7 @@ namespace Playerbot
         }
 
         // Learn the taxi node
-        if (m_bot->m_taxi.SetTaximaskNode(nodeId))
+    if (m_bot->m_taxi.SetTaximaskNode(nodeId))
         {
             RecordPathLearned(nodeId);
 
@@ -110,7 +110,7 @@ namespace Playerbot
         }
 
         // Can't fly to same node
-        if (currentNodeId == destinationNodeId)
+    if (currentNodeId == destinationNodeId)
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Already at destination node %u", destinationNodeId);
             m_stats.flightFailures++;
@@ -130,7 +130,7 @@ namespace Playerbot
         }
 
         // Check if both nodes are known
-        if (!m_bot->m_taxi.IsTaximaskNodeKnown(currentNodeId))
+    if (!m_bot->m_taxi.IsTaximaskNodeKnown(currentNodeId))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Current node %u not known", currentNodeId);
             m_stats.pathNotKnown++;
@@ -160,7 +160,7 @@ namespace Playerbot
         uint32 cost = CalculateFlightCost(fromNode, toNode);
 
         // Check if bot can afford it
-        if (!CanAffordFlight(cost))
+    if (!CanAffordFlight(cost))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Bot %s cannot afford flight cost %u copper",
                 m_bot->GetName().c_str(), cost);
@@ -270,7 +270,7 @@ namespace Playerbot
             return knownPaths;
 
         // Iterate through all taxi nodes
-        for (TaxiNodesEntry const* node : sTaxiNodesStore)
+    for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (node && m_bot->m_taxi.IsTaximaskNodeKnown(node->ID))
                 knownPaths.push_back(node->ID);
@@ -299,7 +299,7 @@ namespace Playerbot
         TaxiPathGraph::GetReachableNodesMask(currentNode, &reachableNodes);
 
         // Build destination list
-        for (TaxiNodesEntry const* node : sTaxiNodesStore)
+    for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node || node->ID == currentNodeId)
                 continue;
@@ -356,7 +356,7 @@ namespace Playerbot
         eval.priority = CalculateDestinationPriority(to->ID, to);
 
         // Generate reason
-        switch (eval.priority)
+    switch (eval.priority)
         {
             case DestinationPriority::QUEST_OBJECTIVE:
                 eval.reason = "Near quest objective location";
@@ -392,7 +392,7 @@ namespace Playerbot
         DestinationPriority priority = DestinationPriority::EXPLORATION;
 
         // Check if near quest objectives (highest priority)
-        if (IsNearQuestObjectives(nodeEntry))
+    if (IsNearQuestObjectives(nodeEntry))
         {
             priority = DestinationPriority::QUEST_OBJECTIVE;
         }
@@ -419,7 +419,7 @@ namespace Playerbot
         uint32 cost = FLIGHT_COST_BASE + static_cast<uint32>(distance * FLIGHT_COST_PER_YARD);
 
         // Apply level-based discount (higher level = slight discount)
-        if (m_bot)
+    if (m_bot)
         {
             uint32 level = m_bot->GetLevel();
             if (level >= 60)
@@ -500,10 +500,10 @@ namespace Playerbot
             return 0;
 
         // Return capital city based on faction
-        if (m_bot->GetTeam() == ALLIANCE)
+    if (m_bot->GetTeam() == ALLIANCE)
         {
             // Alliance - prefer Stormwind or Ironforge
-            if (IsFlightPathKnown(STORMWIND_NODE))
+    if (IsFlightPathKnown(STORMWIND_NODE))
                 return STORMWIND_NODE;
             if (IsFlightPathKnown(IRONFORGE_NODE))
                 return IRONFORGE_NODE;
@@ -511,7 +511,7 @@ namespace Playerbot
         else
         {
             // Horde - prefer Orgrimmar or Undercity
-            if (IsFlightPathKnown(ORGRIMMAR_NODE))
+    if (IsFlightPathKnown(ORGRIMMAR_NODE))
                 return ORGRIMMAR_NODE;
             if (IsFlightPathKnown(UNDERCITY_NODE))
                 return UNDERCITY_NODE;

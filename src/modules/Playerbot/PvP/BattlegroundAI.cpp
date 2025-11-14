@@ -273,7 +273,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
         case BGType::WARSONG_GULCH:
         case BGType::TWIN_PEAKS:
             // Assign flag carrier to mobile classes
-            if (playerClass == CLASS_DRUID || playerClass == CLASS_MONK ||
+    if (playerClass == CLASS_DRUID || playerClass == CLASS_MONK ||
                 playerClass == CLASS_DEMON_HUNTER)
                 role = BGRole::FLAG_CARRIER;
             else if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN ||
@@ -286,7 +286,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
         case BGType::ARATHI_BASIN:
         case BGType::BATTLE_FOR_GILNEAS:
             // Healers and tanks defend, DPS capture
-            if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN)
+    if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN)
                 role = BGRole::BASE_DEFENDER;
             else
                 role = BGRole::BASE_CAPTURER;
@@ -294,7 +294,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
 
         case BGType::ALTERAC_VALLEY:
             // Assign varied roles
-            if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT)
+    if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT)
                 role = BGRole::SIEGE_OPERATOR;
             else
                 role = BGRole::ATTACKER;
@@ -508,7 +508,7 @@ void BattlegroundAI::ExecuteWSGStrategy(::Player* player)
     {
         case BGRole::FLAG_CARRIER:
             // Try to pick up enemy flag
-            if (!player->HasAura(23333)) // Not carrying flag
+    if (!player->HasAura(23333)) // Not carrying flag
                 PickupFlag(player);
             break;
 
@@ -679,7 +679,7 @@ void BattlegroundAI::ExecuteABStrategy(::Player* player)
                 if (!capturedBases.empty())
                 {
                     // Find base under attack
-                    for (Position const& base : capturedBases)
+    for (Position const& base : capturedBases)
                     {
                         if (IsBaseUnderAttack(base))
                         {
@@ -764,7 +764,6 @@ Position BattlegroundAI::FindBestBaseToCapture(::Player* player) const
     // Find closest neutral/enemy base
     Position closestBase;
     float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
-
     for (Position const& base : strategy.baseLocations)
     {
         float distanceSq = player->GetExactDistSq(base);
@@ -896,7 +895,7 @@ void BattlegroundAI::ExecuteEOTSStrategy(::Player* player)
     else
     {
         // Balance between bases and flag
-        switch (role)
+    switch (role)
         {
             case BGRole::BASE_CAPTURER:
                 CaptureBaseEOTS(player);

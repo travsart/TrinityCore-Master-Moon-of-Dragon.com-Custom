@@ -136,7 +136,7 @@ namespace Playerbot
                 TC_LOG_INFO("playerbot.test", "Found {} hostile targets", allHostiles.size());
 
                 // Check priority for each target
-                for (Unit* hostile : allHostiles)
+    for (Unit* hostile : allHostiles)
                 {
                     uint8 priority = scanner.GetTargetPriority(hostile);
                     float threat = scanner.GetThreatValue(hostile);
@@ -172,7 +172,7 @@ namespace Playerbot
                     scanner.AddToBlacklist(guid, 5000); // 5 second blacklist
 
                     // Verify it's blacklisted
-                    if (scanner.IsBlacklisted(guid))
+    if (scanner.IsBlacklisted(guid))
                     {
                         TC_LOG_INFO("playerbot.test", " Target successfully blacklisted");
                     }

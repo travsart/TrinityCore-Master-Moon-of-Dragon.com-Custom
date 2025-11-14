@@ -147,7 +147,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
         if (_currentRequest.has_value())
         {
             // Only accept if new request has higher priority
-            if (static_cast<uint8>(request.GetPriority()) <
+    if (static_cast<uint8>(request.GetPriority()) <
                 static_cast<uint8>(_currentRequest->GetPriority()))
             {
                 _statistics.lowPriorityFiltered.fetch_add(1, ::std::memory_order_relaxed);
@@ -175,7 +175,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
             _statistics.maxQueueSize.store(queueSize, ::std::memory_order_relaxed);
 
         // Warning if queue is getting large
-        if (queueSize > _config.maxQueueSize)
+    if (queueSize > _config.maxQueueSize)
         {
             TC_LOG_WARN("playerbot.movement.arbiter",
                 "MovementArbiter: Large queue size ({}) for bot {} - possible performance issue",
@@ -250,7 +250,7 @@ void MovementArbiter::Update(uint32 diff)
             // Interrupt if:
             // 1. New request has higher priority
             // 2. Current request allows interruption
-            if (static_cast<uint8>(winningRequest.GetPriority()) >
+    if (static_cast<uint8>(winningRequest.GetPriority()) >
                 static_cast<uint8>(_currentRequest->GetPriority()))
             {
                 if (_currentRequest->CanBeInterrupted())
@@ -269,7 +269,7 @@ void MovementArbiter::Update(uint32 diff)
                 else
                 {
                     // Current request cannot be interrupted - skip this update
-                    if (_diagnosticLogging)
+    if (_diagnosticLogging)
                     {
                         TC_LOG_DEBUG("playerbot.movement.arbiter",
                             "MovementArbiter: Cannot interrupt current request (priority {}) - request marked as non-interruptible",
@@ -284,7 +284,7 @@ void MovementArbiter::Update(uint32 diff)
             else
             {
                 // New request has lower or equal priority - don't interrupt
-                if (_diagnosticLogging)
+    if (_diagnosticLogging)
                 {
                     TC_LOG_DEBUG("playerbot.movement.arbiter",
                         "MovementArbiter: Not interrupting current request (priority {}) with lower/equal priority request (priority {})",

@@ -118,7 +118,7 @@ void TankCoordinator::UpdateMainTank(GroupCoordinator* group)
         if (mainTank && mainTank->IsAlive())
         {
             // Update off-tank
-            for (ObjectGuid tankGuid : tanks)
+    for (ObjectGuid tankGuid : tanks)
             {
                 if (tankGuid != _mainTank)
                 {
@@ -317,7 +317,6 @@ void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, ::std::string 
     // 2. Tanks
     // 3. Ranged DPS
     // 4. Melee DPS
-
     for (auto const& assignment : _healingAssignments)
     {
         Player* target = ObjectAccessor::FindPlayer(assignment.targetGuid);
@@ -415,7 +414,6 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 {
     // Rotate major healing cooldowns among healers
     // Examples: Tranquility, Aura Mastery, Divine Hymn, Revival
-
     if (!group->IsInCombat())
         return;
 

@@ -494,7 +494,7 @@ void InstanceCoordination::ManageGroupMana(Group* group)
             continue;
 
         // Check if player uses mana
-        if (player->GetMaxPower(POWER_MANA) > 0)
+    if (player->GetMaxPower(POWER_MANA) > 0)
         {
             float manaPercent = player->GetMaxPower(POWER_MANA) > 0 ?
                 static_cast<float>(player->GetPower(POWER_MANA)) / player->GetMaxPower(POWER_MANA) : 1.0f;
@@ -597,7 +597,7 @@ void InstanceCoordination::BroadcastInstanceInformation(Group* group, const ::st
         state.recentCommunications.push_back(message);
 
         // Keep only last 20 communications
-        if (state.recentCommunications.size() > 20)
+    if (state.recentCommunications.size() > 20)
             state.recentCommunications.erase(state.recentCommunications.begin());
     }
 
@@ -1374,7 +1374,7 @@ void InstanceCoordination::DiagnoseCoordinationIssues(Group* group)
             groupId, successRate * 100.0f, syncRate * 100.0f, efficiency * 100.0f);
 
         // Identify issues
-        if (successRate < COORDINATION_SUCCESS_THRESHOLD)
+    if (successRate < COORDINATION_SUCCESS_THRESHOLD)
             TC_LOG_WARN("module.playerbot", "InstanceCoordination::DiagnoseCoordinationIssues - Group {} low success rate", groupId);
 
         if (syncRate < 0.7f)
@@ -1401,7 +1401,7 @@ void InstanceCoordination::ResetCoordinationState(Group* group)
         CoordinationState& state = stateItr->second;
 
         // Clear queues and reset timers
-        while (!state.pendingActions.empty())
+    while (!state.pendingActions.empty())
             state.pendingActions.pop();
 
         state.decisionVotes.clear();
@@ -1463,7 +1463,7 @@ void InstanceCoordination::CleanupInactiveCoordinations()
         uint32 timeSinceStart = GameTime::GetGameTimeMS() - progress.startTime;
 
         // Consider coordination inactive if no update for 1 hour
-        if (timeSinceStart > 3600000)
+    if (timeSinceStart > 3600000)
             inactiveGroups.push_back(groupId);
     }
     // Clean up inactive coordination data

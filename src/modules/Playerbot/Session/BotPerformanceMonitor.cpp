@@ -250,7 +250,7 @@ void BotPerformanceMonitor::CheckPerformanceThresholds()
     if (_metrics.isOverloaded && _consecutiveSlowTicks >= DEGRADATION_THRESHOLD)
     {
         // Cooldown check
-        if (currentTime - _lastLoadShedTime < LOAD_ADJUST_COOLDOWN_MS)
+    if (currentTime - _lastLoadShedTime < LOAD_ADJUST_COOLDOWN_MS)
             return;
 
         // Calculate how many bots to suspend (10% of low-priority bots)
@@ -270,7 +270,7 @@ void BotPerformanceMonitor::CheckPerformanceThresholds()
     else if (!_metrics.isOverloaded && _consecutiveFastTicks >= DEGRADATION_THRESHOLD && _metrics.suspendedBots > 0)
     {
         // Cooldown check
-        if (currentTime - _lastLoadRecoveryTime < LOAD_ADJUST_COOLDOWN_MS)
+    if (currentTime - _lastLoadRecoveryTime < LOAD_ADJUST_COOLDOWN_MS)
             return;
 
         // Resume 10% of suspended bots

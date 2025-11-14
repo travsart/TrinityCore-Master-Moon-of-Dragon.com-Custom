@@ -115,7 +115,7 @@ public:
             case 3850:
             {
                 // Ashbury channels Asphyxiate - MUST be interrupted
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_CHANNELED_SPELL);
                     if (!currentSpell)
@@ -126,7 +126,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Asphyxiate (93423 in Cataclysm) - critical interrupt
-                        if (spellId == 93423 || spellId == 7645) // Various versions
+    if (spellId == 93423 || spellId == 7645) // Various versions
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -137,7 +137,7 @@ public:
                         }
 
                         // Pain and Suffering also interruptible
-                        if (spellId == 93581)
+    if (spellId == 93581)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -153,7 +153,7 @@ public:
             case 4278: // Commander Springvale
             {
                 // Springvale casts Holy Light (self-heal) - interrupt priority
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -161,7 +161,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Holy Light (8362) - interrupt to prevent heal
-                        if (spellId == 8362 || spellId == 15493)
+    if (spellId == 8362 || spellId == 15493)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -178,7 +178,7 @@ public:
             case 4274: // Arugal (Classic)
             {
                 // Arugal casts Void Bolt - interruptible shadow damage
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -186,7 +186,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Void Bolt (7588) - high shadow damage
-                        if (spellId == 7588)
+    if (spellId == 7588)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -266,7 +266,7 @@ public:
                         continue;
 
                     // Check for potion ground effects
-                    if (IsDangerousGroundEffect(dynObj))
+    if (IsDangerousGroundEffect(dynObj))
                     {
                         TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Avoiding Walden's potion effect");
                         MoveAwayFromGroundEffect(player, dynObj);
@@ -352,7 +352,7 @@ public:
                     Position tankPos = CalculateTankPosition(player, boss);
 
                     // Ensure boss is facing away from raid
-                    if (player->GetExactDist(&tankPos) > 3.0f)
+    if (player->GetExactDist(&tankPos) > 3.0f)
                     {
                         MoveTo(player, tankPos);
                         return;
@@ -398,7 +398,7 @@ public:
                     float angleDiff = ::std::abs(angle - playerAngle);
 
                     // If player is in frontal arc (< 90 degrees), move
-                    if (angleDiff < M_PI / 2.0f)
+    if (angleDiff < M_PI / 2.0f)
                     {
                         Position safePos = CalculateMeleePosition(player, boss);
                         MoveTo(player, safePos);
@@ -416,7 +416,7 @@ public:
                 float distance = player->GetExactDist(boss);
                 DungeonRole role = GetPlayerRole(player);
                 // Reposition based on role after teleport
-                if (role == DungeonRole::TANK || role == DungeonRole::MELEE_DPS)
+    if (role == DungeonRole::TANK || role == DungeonRole::MELEE_DPS)
                 {
                     if (distance > 10.0f) // Too far after teleport
                     {
@@ -457,7 +457,7 @@ public:
                         continue;
 
                     // Check for Veil of Shadow (7068)
-                    if (groupMember->HasAura(7068))
+    if (groupMember->HasAura(7068))
                     {
                         TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Dispelling Veil of Shadow");
                         // Dispel shadow magic
@@ -481,7 +481,7 @@ public:
                         continue;
 
                     // Check for fear
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
                     {
                         TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Player feared by Word of Shame");
                         // Dispel fear if available
@@ -544,7 +544,7 @@ public:
                 if (role == DungeonRole::TANK)
                 {
                     // Tank must reach boss quickly and re-establish threat
-                    if (distance > 8.0f)
+    if (distance > 8.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "ShadowfangKeepScript: Tank chasing Arugal after teleport");
                         Position bossPos = boss->GetPosition();
@@ -555,7 +555,7 @@ public:
                 else if (role == DungeonRole::MELEE_DPS)
                 {
                     // Melee must reposition behind boss
-                    if (distance > 10.0f)
+    if (distance > 10.0f)
                     {
                         HandlePositioning(player, boss);
                         return;

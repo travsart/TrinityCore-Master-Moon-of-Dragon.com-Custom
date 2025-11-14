@@ -162,7 +162,7 @@ public:
             return;
 
         // Route to boss-specific handlers
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 644: // Rhahk'Zor
                 HandleRhahkZorEngage(player, boss);
@@ -252,12 +252,12 @@ public:
             return;
 
         // Boss-specific interrupt logic
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 647: // Captain Greenskin
             {
                 // Check if casting Cleave (SpellID 40504)
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -325,7 +325,7 @@ public:
             return;
 
         // Boss-specific add logic
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 642: // Sneed's Shredder
             {

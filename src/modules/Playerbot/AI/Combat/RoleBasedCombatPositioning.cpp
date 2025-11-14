@@ -89,7 +89,7 @@ Position TankPositioning::CalculateOffTankPosition(Unit* target, Player* mainTan
     if (!ValidateTankPosition(offTankPos, target, context))
     {
         // Try alternative positions
-        for (float adjustment = 0.1f; adjustment <= M_PI / 2; adjustment += 0.1f)
+    for (float adjustment = 0.1f; adjustment <= M_PI / 2; adjustment += 0.1f)
         {
             for (int direction : {1, -1})
             {
@@ -283,7 +283,7 @@ Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, f
         float score = 100.0f;
 
         // Prefer positions that face boss away from raid
-        if (angle > 90 && angle < 270)
+    if (angle > 90 && angle < 270)
             score += 50.0f;
 
         if (score > bestScore)
@@ -317,7 +317,7 @@ Position TankPositioning::FindOptimalTankSpot(Unit* target, float minDistance, f
             score.mobilityScore = 50.0f;    // Tanks have lower mobility needs
 
             // Check requirements
-            if (EnumFlag<PositionalRequirement>(context.requirements).HasFlag(PositionalRequirement::FRONT_OF_TARGET))
+    if (EnumFlag<PositionalRequirement>(context.requirements).HasFlag(PositionalRequirement::FRONT_OF_TARGET))
             {
                 float angle = context.primaryTarget->GetRelativeAngle(&pos);
                 if (angle < M_PI / 4 || angle > 7 * M_PI / 4)
@@ -594,7 +594,7 @@ Position HealerPositioning::FindSafeHealingSpot(Player* healer, Unit* threat,
     if (!IsPositionSafeForHealing(safePos, context))
     {
         // Search for alternative safe positions
-        for (int angleOffset = 15; angleOffset <= 180; angleOffset += 15)
+    for (int angleOffset = 15; angleOffset <= 180; angleOffset += 15)
         {
             for (int direction : {1, -1})
             {
@@ -995,7 +995,7 @@ Position DPSPositioning::CalculateRangedDPSPosition(Unit* target, float optimalR
     if (_config.maintainSpread && context.requiresSpread)
     {
         // Adjust position to maintain spread from other ranged
-        for (const Player* other : context.rangedDPS)
+    for (const Player* other : context.rangedDPS)
         {
             if (other != context.bot)
             {
@@ -1362,7 +1362,7 @@ float DPSPositioning::CalculateDPSScore(const Position& pos, Player* dps,
         float angleDiff = Position::NormalizeOrientation(angleToTarget - targetFacing);
 
         // Behind is best for most melee DPS
-        if (angleDiff > 2.356f && angleDiff < 3.926f)
+    if (angleDiff > 2.356f && angleDiff < 3.926f)
             score += 30.0f;
         // Flank is second best
         else if ((angleDiff > 0.785f && angleDiff < 2.356f) ||

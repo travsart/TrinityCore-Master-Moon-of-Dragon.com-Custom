@@ -58,11 +58,11 @@ void PaladinAI::UpdateRotation(::Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+    if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
             return;
 
         // Fallback to basic auto-attack
-        if (!GetBot()->IsNonMeleeSpellCast(false))
+    if (!GetBot()->IsNonMeleeSpellCast(false))
         {
             if (GetBot()->GetDistance(target) <= OPTIMAL_MELEE_RANGE)
             {
@@ -84,7 +84,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         if (interruptTarget)
         {
             // Try Rebuke first (instant interrupt)
-            if (CanUseAbility(REBUKE))
+    if (CanUseAbility(REBUKE))
             {
                 if (CastSpell(REBUKE, interruptTarget))
                 {
@@ -96,7 +96,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
             }
 
             // Try Hammer of Justice as secondary interrupt (stun)
-            if (CanUseAbility(HAMMER_OF_JUSTICE))
+    if (CanUseAbility(HAMMER_OF_JUSTICE))
             {
                 if (CastSpell(HAMMER_OF_JUSTICE, interruptTarget))
                 {
@@ -144,7 +144,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         uint32 nearbyEnemies = GetNearbyEnemyCount(DIVINE_STORM_RADIUS);
 
         // Divine Storm for heavy AoE damage (Retribution)
-        if (nearbyEnemies >= 3 && GetHolyPower() >= 3 && CanUseAbility(DIVINE_STORM))
+    if (nearbyEnemies >= 3 && GetHolyPower() >= 3 && CanUseAbility(DIVINE_STORM))
         {
             if (CastSpell(DIVINE_STORM))
             {
@@ -157,7 +157,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         }
 
         // Consecration for AoE damage/threat
-        if (nearbyEnemies >= 2 && CanUseAbility(CONSECRATION))
+    if (nearbyEnemies >= 2 && CanUseAbility(CONSECRATION))
         {
             uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastConsecration > 8000)  // 8 second duration
@@ -174,7 +174,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         }
 
         // Wake of Ashes for AoE + Holy Power generation (Retribution)
-        if (nearbyEnemies >= 2 && CanUseAbility(WAKE_OF_ASHES))
+    if (nearbyEnemies >= 2 && CanUseAbility(WAKE_OF_ASHES))
         {
             if (CastSpell(WAKE_OF_ASHES))
             {
@@ -307,7 +307,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     if (GetHolyPower() < 3)
     {
         // Try Blade of Justice first (better damage)
-        if (CanUseAbility(BLADE_OF_JUSTICE))
+    if (CanUseAbility(BLADE_OF_JUSTICE))
         {
             if (CastSpell(BLADE_OF_JUSTICE, target))
             {
@@ -318,7 +318,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Fallback to Crusader Strike
-        if (CanUseAbility(CRUSADER_STRIKE))
+    if (CanUseAbility(CRUSADER_STRIKE))
         {
             if (CastSpell(CRUSADER_STRIKE, target))
             {
@@ -329,7 +329,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Judgment for ranged Holy Power generation
-        if (CanUseAbility(JUDGMENT))
+    if (CanUseAbility(JUDGMENT))
         {
             if (CastSpell(JUDGMENT, target))
             {
@@ -344,7 +344,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     if (GetHolyPower() >= 3)
     {
         // Check if we need healing
-        if (GetBot()->GetHealthPct() < 50.0f && CanUseAbility(WORD_OF_GLORY))
+    if (GetBot()->GetHealthPct() < 50.0f && CanUseAbility(WORD_OF_GLORY))
         {
             if (CastSpell(GetBot(), WORD_OF_GLORY))
             {
@@ -355,7 +355,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Use Templar's Verdict for single target
-        if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) < 2 && CanUseAbility(TEMPLARS_VERDICT))
+    if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) < 2 && CanUseAbility(TEMPLARS_VERDICT))
         {
             if (CastSpell(TEMPLARS_VERDICT, target))
             {
@@ -366,7 +366,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Use Divine Storm for AoE
-        if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) >= 2 && CanUseAbility(DIVINE_STORM))
+    if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) >= 2 && CanUseAbility(DIVINE_STORM))
         {
             if (CastSpell(DIVINE_STORM))
             {
@@ -479,7 +479,7 @@ void PaladinAI::UseDefensiveCooldowns()
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)
     {
         // Ardent Defender
-        if (healthPct < 35.0f && CanUseAbility(ARDENT_DEFENDER))
+    if (healthPct < 35.0f && CanUseAbility(ARDENT_DEFENDER))
         {
             if (CastSpell(ARDENT_DEFENDER))
             {
@@ -491,7 +491,7 @@ void PaladinAI::UseDefensiveCooldowns()
         }
 
         // Guardian of Ancient Kings
-        if (healthPct < 50.0f && CanUseAbility(GUARDIAN_OF_ANCIENT_KINGS))
+    if (healthPct < 50.0f && CanUseAbility(GUARDIAN_OF_ANCIENT_KINGS))
         {
             if (CastSpell(GUARDIAN_OF_ANCIENT_KINGS))
             {
@@ -609,7 +609,7 @@ void PaladinAI::UpdateBlessingManagement()
     if (spec == ChrSpecialization::PaladinProtection || spec == ChrSpecialization::PaladinRetribution)
     {
         // Blessing of Might for physical damage dealers
-        if (CanUseAbility(BLESSING_OF_MIGHT))
+    if (CanUseAbility(BLESSING_OF_MIGHT))
         {
             if (CastSpell(GetBot(), BLESSING_OF_MIGHT))
             {
@@ -622,7 +622,7 @@ void PaladinAI::UpdateBlessingManagement()
     else if (spec == ChrSpecialization::PaladinHoly)
     {
         // Blessing of Wisdom for mana users
-        if (CanUseAbility(BLESSING_OF_WISDOM))
+    if (CanUseAbility(BLESSING_OF_WISDOM))
         {
             if (CastSpell(GetBot(), BLESSING_OF_WISDOM))
             {
@@ -656,7 +656,7 @@ void PaladinAI::UpdateAuraManagement()
     if (spec == ChrSpecialization::PaladinRetribution)
     {
         // Retribution Aura for damage reflection
-        if (CanUseAbility(RETRIBUTION_AURA) && _currentAura != RETRIBUTION_AURA)
+    if (CanUseAbility(RETRIBUTION_AURA) && _currentAura != RETRIBUTION_AURA)
         {
             if (CastSpell(RETRIBUTION_AURA))
             {
@@ -670,7 +670,7 @@ void PaladinAI::UpdateAuraManagement()
     else if (spec == ChrSpecialization::PaladinProtection)
     {
         // Devotion Aura for damage reduction
-        if (CanUseAbility(DEVOTION_AURA) && _currentAura != DEVOTION_AURA)
+    if (CanUseAbility(DEVOTION_AURA) && _currentAura != DEVOTION_AURA)
         {
             if (CastSpell(DEVOTION_AURA))
             {
@@ -951,7 +951,6 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto& target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))
@@ -1032,7 +1031,8 @@ bool PaladinAI::IsAllyInDanger() const
 }
 
 bool PaladinAI::ShouldUseLayOnHands() const{
-    if (!GetBot())        return false;    // Use on self if critical    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
+    if (!GetBot())        return false;    // Use on self if critical
+    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
 
     // Use on tank if critical
     Group* group = GetBot()->GetGroup();
@@ -1041,7 +1041,7 @@ bool PaladinAI::ShouldUseLayOnHands() const{
         for (GroupReference const& itr : group->GetMembers())        {
             Player* member = itr.GetSource();
             // TODO: Check if member is tank
-            if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
+    if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
                 return true;
         }
     }
@@ -1055,7 +1055,8 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
         return Position();
 
     // Get behind target for Retribution DPS
-    float angle = target->GetOrientation() + M_PI;  // Behind target    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
+    float angle = target->GetOrientation() + M_PI;  // Behind target
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
         angle = target->GetOrientation();  // Face target for tanking    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;    float z = target->GetPositionZ();    return Position(x, y, z, angle);
 }
 

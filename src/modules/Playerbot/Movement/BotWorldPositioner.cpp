@@ -220,7 +220,7 @@ void BotWorldPositioner::ValidateZones()
     for (auto& zone : _zones)
     {
         // Validate level range
-        if (zone.minLevel > zone.maxLevel)
+    if (zone.minLevel > zone.maxLevel)
         {
             TC_LOG_ERROR("playerbot", "BotWorldPositioner::ValidateZones() - Invalid level range for zone {}: {} > {}",
                 zone.zoneId, zone.minLevel, zone.maxLevel);
@@ -229,7 +229,7 @@ void BotWorldPositioner::ValidateZones()
         }
 
         // Validate coordinates (basic sanity check)
-        if (::std::abs(zone.x) > 20000.0f || ::std::abs(zone.y) > 20000.0f || ::std::abs(zone.z) > 10000.0f)
+    if (::std::abs(zone.x) > 20000.0f || ::std::abs(zone.y) > 20000.0f || ::std::abs(zone.z) > 10000.0f)
         {
             TC_LOG_WARN("playerbot", "BotWorldPositioner::ValidateZones() - Suspicious coordinates for zone {}: ({}, {}, {})",
                 zone.zoneId, zone.x, zone.y, zone.z);
@@ -289,14 +289,13 @@ void BotWorldPositioner::BuildRaceZoneMapping()
 {
     // Map races to their starter zones based on zone names
     // This is a simplified mapping - in production, use DBC data
-
     for (auto const& zone : _zones)
     {
         if (!zone.isStarterZone)
             continue;
 
         // Alliance races
-        if (zone.zoneName.find("Elwynn") != ::std::string::npos)
+    if (zone.zoneName.find("Elwynn") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_HUMAN].push_back(&zone);
         }

@@ -368,7 +368,7 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, ::std::vector<GroupEventType> c
         auto& subscriberList = _subscribers[type];
 
         // Check if already subscribed
-        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+    if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
         {
             TC_LOG_WARN("module.playerbot.group", "GroupEventBus: Subscriber already registered for event type {}",
                 GetEventTypeName(type));
@@ -376,7 +376,7 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, ::std::vector<GroupEventType> c
         }
 
         // Sanity check
-        if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
+    if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
         {
             TC_LOG_ERROR("module.playerbot.group", "GroupEventBus: Too many subscribers for event type {} (max {})",
                 GetEventTypeName(type), MAX_SUBSCRIBERS_PER_EVENT);
@@ -466,7 +466,7 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
             _eventQueue.pop();
 
             // Check if expired
-            if (event.IsExpired())
+    if (event.IsExpired())
             {
                 LogEvent(event, "Expired");
                 _stats.totalEventsDropped++;
@@ -498,14 +498,14 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         }
 
         // Deliver to specific subscribers
-        for (BotAI* subscriber : subscribers)
+    for (BotAI* subscriber : subscribers)
         {
             if (DeliverEvent(subscriber, event))
                 _stats.totalDeliveries++;
         }
 
         // Deliver to global subscribers
-        for (BotAI* subscriber : globalSubs)
+    for (BotAI* subscriber : globalSubs)
         {
             if (DeliverEvent(subscriber, event))
                 _stats.totalDeliveries++;
@@ -557,7 +557,7 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
         }
 
         // Re-add other events to queue
-        for (GroupEvent const& event : otherEvents)
+    for (GroupEvent const& event : otherEvents)
             _eventQueue.push(event);
     }
 

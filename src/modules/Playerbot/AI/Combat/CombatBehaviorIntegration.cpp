@@ -317,7 +317,7 @@ bool CombatBehaviorIntegration::HandleEmergencies()
     if (metrics.personalHealthPercent < 30.0f)
     {
         // Would trigger health potion/healthstone here
-        if (_detailedLogging)
+    if (_detailedLogging)
             TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing", _bot->GetName());
         return true;
     }
@@ -472,7 +472,7 @@ bool CombatBehaviorIntegration::CanAffordSpell(uint32 spellId)
             return false;
 
         // Check if we should conserve
-        if (ShouldConserveMana() && manaCost > static_cast<int32>(_bot->GetMaxPower(POWER_MANA) / 10))
+    if (ShouldConserveMana() && manaCost > static_cast<int32>(_bot->GetMaxPower(POWER_MANA) / 10))
             return false;
     }
 

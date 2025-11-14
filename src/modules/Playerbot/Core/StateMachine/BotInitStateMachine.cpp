@@ -453,7 +453,7 @@ bool BotInitStateMachine::HandleCheckingGroup()
             "Bot {} is already in group at login (leader: {})",
             bot->GetName(), m_groupLeaderGuid.ToString());
         // Additional validation
-        if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
+    if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
         {
             TC_LOG_DEBUG("module.playerbot.statemachine",
                 "Group leader {} is online",
@@ -506,7 +506,7 @@ bool BotInitStateMachine::HandleActivatingStrategies()
             ai->OnGroupJoined(group);
 
             // Verify follow strategy was activated if there's a leader
-            if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
+    if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
             {
                 if (leader != bot)
                 {

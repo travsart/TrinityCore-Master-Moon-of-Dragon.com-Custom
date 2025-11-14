@@ -124,7 +124,7 @@ namespace Playerbot
         auto elapsedSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdateTime).count();
 
         // Update every 60 seconds (1 minute)
-        if (elapsedSinceLastUpdate >= 60000)
+    if (elapsedSinceLastUpdate >= 60000)
         {
 
             UpdateActivityMetrics();
@@ -144,8 +144,7 @@ namespace Playerbot
             _snapshotHistory.push_back(snapshot);
 
             // Keep only MAX_SNAPSHOT_HISTORY snapshots
-
-            if (_snapshotHistory.size() > MAX_SNAPSHOT_HISTORY)
+    if (_snapshotHistory.size() > MAX_SNAPSHOT_HISTORY)
 
                 _snapshotHistory.pop_front();
 
@@ -169,7 +168,7 @@ namespace Playerbot
         snapshot.database = CollectDatabaseMetrics();
 
         // Calculate average update time
-        if (!_updateTimes.empty())
+    if (!_updateTimes.empty())
         {
 
             double sum = ::std::accumulate(_updateTimes.begin(), _updateTimes.end(), 0.0);
@@ -185,7 +184,7 @@ namespace Playerbot
         snapshot.maxUpdateTimeMs = _maxUpdateTime;
 
         // Calculate average AI decision time
-        if (!_aiDecisionTimes.empty())
+    if (!_aiDecisionTimes.empty())
         {
 
             double sum = ::std::accumulate(_aiDecisionTimes.begin(), _aiDecisionTimes.end(), 0.0);
@@ -297,7 +296,7 @@ namespace Playerbot
             _maxUpdateTime = updateTimeMs;
 
         // Keep only last 1000 update times
-        if (_updateTimes.size() > 1000)
+    if (_updateTimes.size() > 1000)
         {
 
             _totalUpdateTime -= _updateTimes.front();
@@ -313,7 +312,7 @@ namespace Playerbot
         _aiDecisionTimes.push_back(decisionTimeMs);
 
         // Keep only last 1000 decision times
-        if (_aiDecisionTimes.size() > 1000)
+    if (_aiDecisionTimes.size() > 1000)
 
             _aiDecisionTimes.pop_front();
     }
@@ -335,7 +334,7 @@ namespace Playerbot
             _maxQueryTime = queryTimeMs;
 
         // Keep only last 1000 query times
-        if (_queryTimes.size() > 1000)
+    if (_queryTimes.size() > 1000)
         {
 
             _totalQueryTime -= _queryTimes.front();
@@ -622,7 +621,7 @@ namespace Playerbot
         DatabaseMetrics database = CollectDatabaseMetrics();
 
         // Check CPU usage
-        if (resources.cpuUsagePercent >= _alertThresholds.cpuCritical)
+    if (resources.cpuUsagePercent >= _alertThresholds.cpuCritical)
         {
 
             PerformanceAlert alert{
@@ -711,7 +710,7 @@ namespace Playerbot
         }
 
         // Check query time
-        if (database.avgQueryTimeMs >= _alertThresholds.queryTimeCriticalMs)
+    if (database.avgQueryTimeMs >= _alertThresholds.queryTimeCriticalMs)
         {
 
             PerformanceAlert alert{
@@ -760,12 +759,12 @@ namespace Playerbot
         _alertHistory.push_back(alert);
 
         // Keep only MAX_ALERT_HISTORY alerts
-        if (_alertHistory.size() > MAX_ALERT_HISTORY)
+    if (_alertHistory.size() > MAX_ALERT_HISTORY)
 
             _alertHistory.pop_front();
 
         // Trigger callbacks
-        for (auto const& callback : _alertCallbacks)
+    for (auto const& callback : _alertCallbacks)
         {
 
             try
@@ -821,7 +820,7 @@ namespace Playerbot
         metrics.deadCount = _botsDead.size();
 
         // Count traveling and idle bots
-        for (auto const& [guid, state] : _botActivityState)
+    for (auto const& [guid, state] : _botActivityState)
         {
 
             if (state == "traveling")
@@ -874,7 +873,7 @@ namespace Playerbot
             metrics.queriesPerSecond = _totalQueries / uptime;
 
         // Calculate average query time
-        if (!_queryTimes.empty())
+    if (!_queryTimes.empty())
         {
 
             double sum = ::std::accumulate(_queryTimes.begin(), _queryTimes.end(), 0.0);

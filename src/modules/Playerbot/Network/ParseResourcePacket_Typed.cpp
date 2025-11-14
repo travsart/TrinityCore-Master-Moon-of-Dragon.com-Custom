@@ -98,7 +98,7 @@ void ParseTypedPowerUpdate(WorldSession* session, WorldPackets::Combat::PowerUpd
 
         // Map to Playerbot::Powers enum (WoW 11.2: limited subset)
         Powers botPowerType = Powers::POWER_MANA;  // Default
-        switch (powerInfo.Power)
+    switch (powerInfo.Power)
         {
             case 0: botPowerType = Powers::POWER_MANA; break;
             case 1: botPowerType = Powers::POWER_RAGE; break;

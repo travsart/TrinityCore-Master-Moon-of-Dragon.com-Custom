@@ -233,7 +233,6 @@ bool GatheringManager::CastGatheringSpell(GatheringNode const& node)
 
     // DEADLOCK FIX: This method runs on main thread, so direct GUID resolution is safe
     // The node.guid was obtained from spatial grid snapshots (thread-safe)
-
     if (node.nodeType == GatheringNodeType::CREATURE_CORPSE)
     {
         // Skinning - cast spell on creature corpse
@@ -431,7 +430,7 @@ bool GatheringManager::IsProfessionEnabled(GatheringNodeType nodeType) const
     for (auto const& snapshot : nearbyObjects)
     {
         // GAMEOBJECT_TYPE_CHEST (3) is used for mining/herb nodes
-        if (snapshot.goType != 3 || !snapshot.isSpawned)
+    if (snapshot.goType != 3 || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;
@@ -476,7 +475,7 @@ bool GatheringManager::IsProfessionEnabled(GatheringNodeType nodeType) const
     for (auto const& snapshot : nearbyObjects)
     {
         // GAMEOBJECT_TYPE_CHEST (3) is used for mining/herb nodes
-        if (snapshot.goType != 3 || !snapshot.isSpawned)
+    if (snapshot.goType != 3 || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;
@@ -521,7 +520,7 @@ bool GatheringManager::IsProfessionEnabled(GatheringNodeType nodeType) const
     for (auto const& snapshot : nearbyObjects)
     {
         // GAMEOBJECT_TYPE_FISHINGHOLE (25) or GAMEOBJECT_TYPE_FISHINGNODE (17)
-        if ((snapshot.goType != 25 && snapshot.goType != 17) || !snapshot.isSpawned)
+    if ((snapshot.goType != 25 && snapshot.goType != 17) || !snapshot.isSpawned)
             continue;
 
         GatheringNode node;
@@ -565,7 +564,7 @@ bool GatheringManager::IsProfessionEnabled(GatheringNodeType nodeType) const
     for (auto const& snapshot : nearbyCreatures)
     {
         // Use snapshot fields instead of pointer method calls
-        if (!snapshot.isDead || !snapshot.isSkinnable)
+    if (!snapshot.isDead || !snapshot.isSkinnable)
             continue;
 
         // Create node info from snapshot data
@@ -663,10 +662,8 @@ float GatheringManager::GetSkillUpChance(GatheringNode const& node) const
     uint16 currentSkill = GetProfessionSkill(node.nodeType);
     if (currentSkill >= node.requiredSkill + 100)
         return 0.0f;  // Grey - no skill-up
-
     if (currentSkill >= node.requiredSkill + 50)
         return 0.25f;  // Green - low chance
-
     if (currentSkill >= node.requiredSkill + 25)
         return 0.5f;  // Yellow - medium chance
 
@@ -733,8 +730,7 @@ GatheringNode const* GatheringManager::SelectBestNode() const
 
         // Calculate score based on distance and skill-up chance
         float score = 100.0f / (1.0f + node.distance);  // Distance factor
-
-        if (_prioritizeSkillUps)
+    if (_prioritizeSkillUps)
         {
             score *= (1.0f + GetSkillUpChance(node));  // Skill-up bonus
         }

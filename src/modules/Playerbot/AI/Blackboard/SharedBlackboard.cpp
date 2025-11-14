@@ -68,7 +68,7 @@ void SharedBlackboard::NotifyChange(::std::string const& key, ::std::any const& 
     for (auto const& listener : _listeners)
     {
         // Call listener if watching this key or watching all keys
-        if (listener.key.empty() || listener.key == key)
+    if (listener.key.empty() || listener.key == key)
         {
             try
             {

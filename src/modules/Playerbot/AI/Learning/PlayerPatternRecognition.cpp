@@ -104,7 +104,7 @@ void PlayerProfile::AddSample(const BehaviorSample& sample)
         _spellUsageCounts[sample.spellId]++;
 
         // Track spell sequences
-        if (!_samples.empty() && _samples.size() >= 2)
+    if (!_samples.empty() && _samples.size() >= 2)
         {
             auto prevSample = _samples[_samples.size() - 2];
             if (prevSample.spellId != 0)
@@ -125,7 +125,7 @@ void PlayerProfile::AddSample(const BehaviorSample& sample)
 
         // Calculate speed
         float timeDelta = (sample.timestamp - prev.timestamp) / 1000000.0f; // Convert to seconds
-        if (timeDelta > 0)
+    if (timeDelta > 0)
         {
             float distance = ::std::sqrt(dx*dx + dy*dy + dz*dz);
             float speed = distance / timeDelta;
@@ -674,7 +674,7 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
         _metrics.profilesTracked++;
 
         // Add to clustering system
-        if (_behaviorCluster)
+    if (_behaviorCluster)
         {
             ::std::lock_guard clusterLock(_clusterMutex);
             _behaviorCluster->AddProfile(profile);
@@ -916,7 +916,7 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
         archetypeCounts[profile->GetArchetype()]++;
 
         // Aggregate spell usage
-        for (const auto& pattern : profile->GetPatterns(PatternType::ABILITY_USAGE))
+    for (const auto& pattern : profile->GetPatterns(PatternType::ABILITY_USAGE))
         {
             for (size_t i = 0; i < pattern.features.size(); i += 2)
             {

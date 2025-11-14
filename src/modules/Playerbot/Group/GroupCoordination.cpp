@@ -517,7 +517,7 @@ void GroupCoordination::ExecuteCommandInternal(const CoordinationCommandData& co
 
         case CoordinationCommand::FOCUS_FIRE:
             // All DPS focus on primary target
-            if (!command.targets.empty())
+    if (!command.targets.empty())
             {
                 ObjectGuid targetGuid = ObjectGuid::Create<HighGuid::Unit>(command.targets[0]);
                 SetPrimaryTarget(targetGuid, 150);
@@ -579,7 +579,7 @@ void GroupCoordination::HandleTankThreatManagement()
             uint32 specId = static_cast<uint32>(spec);
 
             // Check if tank spec
-            if (specId == 66 ||   // Protection Paladin
+    if (specId == 66 ||   // Protection Paladin
                 specId == 73 ||   // Protection Warrior
                 specId == 104 ||  // Guardian Druid
                 specId == 250 ||  // Blood Death Knight
@@ -623,7 +623,7 @@ void GroupCoordination::HandleTankThreatManagement()
     if (tanks.size() >= 2)
     {
         // Check if current tank needs help (low health or high stacks of debuff)
-        if (currentTank && currentTank->GetHealthPct() < 40.0f)
+    if (currentTank && currentTank->GetHealthPct() < 40.0f)
         {
             // Find best backup tank
             Player* backupTank = nullptr;
@@ -637,7 +637,7 @@ void GroupCoordination::HandleTankThreatManagement()
             }
 
             // Coordinate taunt swap
-            if (backupTank)
+    if (backupTank)
             {
                 TC_LOG_DEBUG("playerbot", "GroupCoordination: Coordinating tank swap from {} to {}",
                              currentTank->GetName(), backupTank->GetName());
@@ -653,14 +653,14 @@ void GroupCoordination::HandleTankThreatManagement()
         }
 
         // Balance threat among tanks to prepare for tank swaps
-        for (Player* tank : tanks)
+    for (Player* tank : tanks)
         {
             if (tank == currentTank)
                 continue;
 
             // Maintain threat on backup tanks (should be second in threat)
             float backupThreatTarget = highestThreat * 0.7f; // 70% of main tank threat
-            if (tankThreat[tank] < backupThreatTarget * 0.5f) // If below 35% of main tank threat
+    if (tankThreat[tank] < backupThreatTarget * 0.5f) // If below 35% of main tank threat
             {
                 // Tell backup tank to build threat
                 ::std::vector<uint32> targets;
@@ -696,7 +696,7 @@ void GroupCoordination::HandleHealerPriorities()
             uint32 specId = static_cast<uint32>(spec);
 
             // Check if healer spec
-            if (specId == 65 ||    // Holy Paladin
+    if (specId == 65 ||    // Holy Paladin
                 specId == 256 ||   // Discipline Priest
                 specId == 257 ||   // Holy Priest
                 specId == 264 ||   // Restoration Shaman
@@ -724,7 +724,7 @@ void GroupCoordination::HandleHealerPriorities()
         bool operator<(const HealingTarget& other) const
         {
             // Lower health = higher priority (higher numeric value)
-            if (priority != other.priority)
+    if (priority != other.priority)
                 return priority > other.priority;
             return healthPct < other.healthPct;
         }
@@ -748,7 +748,7 @@ void GroupCoordination::HandleHealerPriorities()
         uint32 specId = static_cast<uint32>(spec);
 
         // Tanks get highest priority
-        if (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581)
+    if (specId == 66 || specId == 73 || specId == 104 || specId == 250 || specId == 268 || specId == 581)
         {
             target.isTank = true;
             target.priority += 300;
@@ -767,7 +767,7 @@ void GroupCoordination::HandleHealerPriorities()
         }
 
         // Health-based priority boost
-        if (target.healthPct < 20.0f)
+    if (target.healthPct < 20.0f)
             target.priority += 1000; // Critical
         else if (target.healthPct < 40.0f)
             target.priority += 500; // High
@@ -816,7 +816,7 @@ void GroupCoordination::HandleHealerPriorities()
                 healerIndex++;
 
                 // Distribute among all healers
-                if (healerIndex >= healers.size() * 2) // Each healer gets max 2 assignments
+    if (healerIndex >= healers.size() * 2) // Each healer gets max 2 assignments
                     break;
             }
         }
@@ -835,7 +835,7 @@ void GroupCoordination::HandleHealerPriorities()
         uint32 specId = static_cast<uint32>(spec);
 
         // Priest (Magic, Disease)
-        if (specId == 256 || specId == 257)
+    if (specId == 256 || specId == 257)
         {
             canDispelMagic = true;
             canDispelDisease = true;
@@ -877,7 +877,7 @@ void GroupCoordination::HandleHealerPriorities()
         }
 
         // Find group members with dispellable debuffs
-        if (canDispelMagic || canDispelDisease || canDispelPoison || canDispelCurse)
+    if (canDispelMagic || canDispelDisease || canDispelPoison || canDispelCurse)
         {
             for (Player* member : groupMembers)
             {
@@ -1013,7 +1013,7 @@ void GroupCoordination::HandleDPSTargeting()
     if (targetPriority.size() > 1)
     {
         // Check if secondary targets need attention
-        for (size_t i = 1; i < targetPriority.size() && i < 4; ++i)
+    for (size_t i = 1; i < targetPriority.size() && i < 4; ++i)
         {
             ObjectGuid secondaryGuid = targetPriority[i];
             Unit* secondaryTarget = ObjectAccessor::GetUnit(*dpsPlayers[0], secondaryGuid);
@@ -1098,7 +1098,7 @@ void GroupCoordination::HandleSupportActions()
         provider.classId = member->GetClass();
 
         // Identify what buffs this player can provide
-        switch (provider.classId)
+    switch (provider.classId)
         {
             case CLASS_WARRIOR:
                 provider.providedBuffs.push_back(6673); // Battle Shout
@@ -1208,7 +1208,7 @@ void GroupCoordination::HandleSupportActions()
     if (_currentPhase == EncounterPhase::TRANSITION)
     {
         // During transitions, coordinate movement abilities
-        for (Player* member : groupMembers)
+    for (Player* member : groupMembers)
         {
             TC_LOG_DEBUG("playerbot", "GroupCoordination: Preparing {} for encounter transition",
                          member->GetName());
@@ -1229,8 +1229,7 @@ void GroupCoordination::HandleSupportActions()
                                      classId == CLASS_MONK ||       // Revival
                                      classId == CLASS_DRUID ||      // Tranquility
                                      classId == CLASS_DEMON_HUNTER);// Darkness
-
-            if (hasRaidCooldown && member->GetHealthPct() > 50.0f) // Only if player is healthy enough
+    if (hasRaidCooldown && member->GetHealthPct() > 50.0f) // Only if player is healthy enough
             {
                 IssueCommand(member->GetGUID().GetCounter(), CoordinationCommand::USE_COOLDOWNS, {});
                 TC_LOG_DEBUG("playerbot", "GroupCoordination: Requesting {} to use raid defensive cooldown (threat: HIGH)",

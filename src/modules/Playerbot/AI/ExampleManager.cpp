@@ -45,7 +45,7 @@ namespace Playerbot
         OnShutdown();
 
         // Log final statistics
-        if (GetBot())
+    if (GetBot())
         {
             LogDebug("Shutting down for bot {} - Completed: {}, Failed: {}, Longest task: {}ms",
                     GetBot()->GetName(), m_completedTasks.load(), m_failedTasks.load(), m_longestTaskMs);
@@ -60,14 +60,14 @@ namespace Playerbot
             return false;
 
         // Check if bot is fully loaded in world
-        if (!bot->IsInWorld())
+    if (!bot->IsInWorld())
         {
             LogDebug("Bot {} not yet in world, deferring initialization", bot->GetName());
             return false; // Retry on next update
         }
 
         // Check if bot has required data loaded
-        if (bot->GetLevel() == 0)
+    if (bot->GetLevel() == 0)
         {
             LogDebug("Bot {} level not loaded, deferring initialization", bot->GetName());
             return false; // Retry on next update
@@ -111,7 +111,7 @@ namespace Playerbot
         }
 
         // Process current task if any
-        if (m_currentTask)
+    if (m_currentTask)
         {
             bool completed = ProcessTask(*m_currentTask);
 
@@ -159,7 +159,7 @@ namespace Playerbot
         }
 
         // Process queued tasks up to limit
-        while (!m_taskQueue.empty() &&
+    while (!m_taskQueue.empty() &&
                m_tasksProcessedThisUpdate < m_maxTasksPerUpdate &&
                !m_currentTask)
         {
@@ -191,7 +191,7 @@ namespace Playerbot
         UpdateStateFlags();
 
         // Log performance metrics periodically
-        if (m_updateCount % 20 == 0) // Every 20 updates
+    if (m_updateCount % 20 == 0) // Every 20 updates
         {
             uint32 avgTaskTime = m_completedTasks > 0 ?
                 static_cast<uint32>(m_totalProcessingTimeMs / m_completedTasks) : 0;
@@ -212,7 +212,7 @@ namespace Playerbot
     bool ExampleManager::AddTask(const Task& task)
     {
         // Check queue size limit
-        if (m_taskQueue.size() >= m_maxQueueSize)
+    if (m_taskQueue.size() >= m_maxQueueSize)
         {
             LogWarning("Task queue full ({} tasks), rejecting new task", m_maxQueueSize);
             return false;
@@ -227,7 +227,7 @@ namespace Playerbot
         m_hasTasks.store(true, ::std::memory_order_release);
 
         // Request immediate update if this is the only task and we're idle
-        if (newCount == 1 && !m_isProcessing.load(::std::memory_order_acquire))
+    if (newCount == 1 && !m_isProcessing.load(::std::memory_order_acquire))
         {
             m_needsUpdate.store(true, ::std::memory_order_release);
             LogDebug("Task added to empty queue, requesting immediate update");
@@ -322,7 +322,7 @@ namespace Playerbot
         m_hasWork.store(hasTasks, ::std::memory_order_release);
 
         // Request update if we have many pending tasks
-        if (count > 10)
+    if (count > 10)
         {
             m_needsUpdate.store(true, ::std::memory_order_release);
         }

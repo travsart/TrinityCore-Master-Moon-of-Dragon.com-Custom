@@ -51,7 +51,7 @@ bool AOEZone::IsPointInZone(const Position& point, uint32 currentTime) const
     else
     {
         // Cone AOE
-        if (distance > currentRadius)
+    if (distance > currentRadius)
             return false;
 
         // Check angle
@@ -283,7 +283,7 @@ bool MechanicAwareness::DetectAOECast(Unit* caster, float& radius, Position& cen
             center = caster->GetPosition();
 
             // Check if target location is specified
-            if (spell->m_targets.HasDst())
+    if (spell->m_targets.HasDst())
             {
                 WorldLocation const* loc = spell->m_targets.GetDstPos();
                 if (loc)
@@ -1124,7 +1124,7 @@ MechanicInfo MechanicAwareness::DetectDebuffMechanic(Player* bot)
         */
 
         // Check for dispel requirements
-        if (IsDispellableDebuff(spellId))
+    if (IsDispellableDebuff(spellId))
         {
             mechanic.type = MechanicType::DISPEL_REQUIRED;
             mechanic.spellId = spellId;
@@ -1200,7 +1200,7 @@ float MechanicAwareness::EvaluatePositionSafety(const Position& pos, const ::std
         }
 
         // Urgency modifier
-        switch (threat.urgency)
+    switch (threat.urgency)
         {
             case MechanicUrgency::IMMEDIATE:
                 safety *= 0.5f;
@@ -1341,7 +1341,7 @@ void MechanicAwareness::ExecuteGroupResponse(const ::std::vector<Player*>& group
     for (Player* member : group)
     {
         // Execute response for each group member
-        switch (response)
+    switch (response)
         {
             case MechanicResponse::USE_DEFENSIVE:
                 ExecuteDefensiveResponse(member, {});

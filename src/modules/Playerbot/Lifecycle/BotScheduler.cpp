@@ -315,7 +315,7 @@ void BotScheduler::UnscheduleBot(ObjectGuid guid)
             continue;
 
         // Check active hours for this day
-        for (auto const& hourRange : pattern->activeHours)
+    for (auto const& hourRange : pattern->activeHours)
         {
             uint32 startHour = hourRange.first;
             uint32 endHour = hourRange.second;
@@ -332,7 +332,7 @@ void BotScheduler::UnscheduleBot(ObjectGuid guid)
             auto loginTime = ::std::chrono::system_clock::from_time_t(::std::mktime(targetTm));
 
             // Apply probability check
-            if (frand(0.0f, 1.0f) > pattern->loginProbability)
+    if (frand(0.0f, 1.0f) > pattern->loginProbability)
                 continue;
 
             // Apply time multiplier and jitter
@@ -344,7 +344,7 @@ void BotScheduler::UnscheduleBot(ObjectGuid guid)
             loginTime = AddJitter(loginTime, pattern->jitterMinutes);
 
             // Must be in the future
-            if (loginTime > now)
+    if (loginTime > now)
                 return loginTime;
         }
     }
@@ -418,7 +418,7 @@ void BotScheduler::ProcessSchedule()
         } // End of lock scope
 
         // Process the entry
-        if (entry.executeTime <= now)
+    if (entry.executeTime <= now)
         {
             ExecuteScheduledAction(entry);
             ++actionsProcessed;
@@ -654,7 +654,7 @@ bool BotScheduler::IsBotActive(ObjectGuid guid) const
             continue;
 
         // Check if bot is ready for login
-        if (schedule.nextLogin <= now && !schedule.nextLogin.time_since_epoch().count() == 0)
+    if (schedule.nextLogin <= now && !schedule.nextLogin.time_since_epoch().count() == 0)
         {
             ScheduledAction action;
             action.action = ScheduleEntry::LOGIN;
@@ -693,7 +693,7 @@ bool BotScheduler::IsBotActive(ObjectGuid guid) const
             continue;
 
         // Check if bot is ready for logout
-        if (schedule.nextLogout <= now && !schedule.nextLogout.time_since_epoch().count() == 0)
+    if (schedule.nextLogout <= now && !schedule.nextLogout.time_since_epoch().count() == 0)
         {
             ScheduledAction action;
             action.action = ScheduleEntry::LOGOUT;

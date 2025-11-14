@@ -58,7 +58,7 @@ void BotPerformanceMonitor::Update(uint32 /*diff*/)
         _lastUpdate = now;
 
         // Log performance alerts if thresholds exceeded
-        if (!IsPerformanceHealthy())
+    if (!IsPerformanceHealthy())
         {
             auto snapshot = GetSnapshot();
             TC_LOG_WARN("module.playerbot.performance",

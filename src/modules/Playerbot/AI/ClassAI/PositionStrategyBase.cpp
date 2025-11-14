@@ -75,7 +75,8 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     ::std::vector<Position> candidates;
     candidates.reserve(16);
 
-    float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target    for (int ring = 0; ring < 2; ++ring)
+    float angleStep = 2.0f * M_PI / 8.0f;  // 8 positions around target
+    for (int ring = 0; ring < 2; ++ring)
     {
         float range = preferredRange + (ring * 3.0f);
         for (int i = 0; i < 8; ++i)
@@ -189,7 +190,7 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
     else
     {
         // Sequential processing for smaller batches
-        for (auto* req : sortedRequests)
+    for (auto* req : sortedRequests)
         {
 
             Position pos = CalculateOptimalPosition(req->bot, req->target, req->preferredRange);
@@ -509,7 +510,7 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
         nodesProcessed++;
 
         // Check if we reached the goal
-        if (current->pos.GetExactDist(&end) < POSITION_TOLERANCE)
+    if (current->pos.GetExactDist(&end) < POSITION_TOLERANCE)
         {
             // Reconstruct path
 
@@ -534,7 +535,7 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
         closedSet.insert(currentGrid);
 
         // Generate neighbors (8 directions)
-        for (int dx = -1; dx <= 1; ++dx)
+    for (int dx = -1; dx <= 1; ++dx)
         {
 
             for (int dy = -1; dy <= 1; ++dy)
@@ -572,14 +573,12 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
                 neighborPos.Relocate(neighborPos.GetPositionX(), neighborPos.GetPositionY(), z);
 
                 // Check if position is valid
-
-                if (!ValidatePosition(neighborPos, nullptr))
+    if (!ValidatePosition(neighborPos, nullptr))
 
                     continue;
 
                 // Calculate costs                float moveCost = current->pos.GetExactDist(&neighborPos);                // Add danger cost if avoiding danger
-
-                if (avoidDanger)
+    if (avoidDanger)
 
                 {
 
@@ -763,7 +762,6 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 
     if (avgDistance < 10.0f)
         return 15.0f * (avgDistance / 10.0f);  // Too close
-
     if (avgDistance > 15.0f)
         return 15.0f * ::std::exp(-(avgDistance - 15.0f) / 10.0f);  // Too far
 
@@ -1113,7 +1111,6 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
 
     // Use Fibonacci spiral for even distribution
     float goldenAngle = M_PI * (3.0f - ::std::sqrt(5.0f));  // Golden angle in radians
-
     for (size_t i = 0; i < bots.size(); ++i)
     {
         float angle = i * goldenAngle;

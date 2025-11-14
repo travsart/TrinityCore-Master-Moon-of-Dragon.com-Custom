@@ -340,7 +340,7 @@ void ArenaAI::AdaptStrategy(::Player* player)
         case ArenaStrategy::KILL_HEALER_FIRST:
         {
             // Find healer
-            for (::Unit* enemy : enemies)
+    for (::Unit* enemy : enemies)
             {
                 if (enemy->IsPlayer())
                 {
@@ -413,7 +413,7 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
     if (newTarget && newTarget != currentTarget)
     {
         // Switch if new target is healer and in LoS
-        if (newTarget->IsPlayer())
+    if (newTarget->IsPlayer())
         {
             ::Player* newPlayer = newTarget->ToPlayer();
             uint8 newClass = newPlayer->GetClass();
@@ -521,7 +521,6 @@ ArenaPillar const* ArenaAI::FindBestPillar(::Player* player) const
     // Find closest pillar
     ArenaPillar const* bestPillar = nullptr;
     float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
-
     for (ArenaPillar const& pillar : pillars)
     {
         if (!pillar.isAvailable)
@@ -581,7 +580,7 @@ bool ArenaAI::MaintainOptimalDistance(::Player* player)
     for (::Unit* enemy : enemies)
     {
         float distance = ::std::sqrt(player->GetExactDistSq(enemy)); // Calculate once from squared distance
-        if (distance < optimalRange)
+    if (distance < optimalRange)
         {
             // Too close - kite away
             TC_LOG_DEBUG("playerbot", "ArenaAI: Player {} kiting away from enemy",
@@ -728,7 +727,7 @@ bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
     for (::Player* teammate : teammates)
     {
         float distance = ::std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
-        if (distance > BURST_COORDINATION_RANGE)
+    if (distance > BURST_COORDINATION_RANGE)
             return false;
 
         // Full implementation: Check if teammate has offensive CDs available

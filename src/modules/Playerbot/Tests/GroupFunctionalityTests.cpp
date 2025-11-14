@@ -379,7 +379,7 @@ TEST_F(GroupFunctionalityTests, HighFrequencyOperationsStressTest)
         m_currentTestMetrics.successfulOperations++;
 
         // Throttle to maintain target frequency
-        if (i % OPERATIONS_PER_SECOND == 0)
+    if (i % OPERATIONS_PER_SECOND == 0)
         {
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
         }
@@ -464,7 +464,7 @@ TEST_F(GroupFunctionalityTests, InvalidInvitationHandling)
             "Full group invitation",
             [this]() {
                 // Simulate inviting to a full group (5 members)
-                if (m_testGroup->members.size() >= 5)
+    if (m_testGroup->members.size() >= 5)
                     return false; // Should reject
                 return true;
             }

@@ -119,7 +119,7 @@ void BotHealthCheck::CheckForStalledBots(uint32 currentTime)
         ::std::lock_guard lock(_stalledBotsMutex);
 
         // Find new stalls
-        for (ObjectGuid guid : stalledBots)
+    for (ObjectGuid guid : stalledBots)
         {
             if (_stalledBots.insert(guid).second) // Newly stalled
             {
@@ -129,7 +129,7 @@ void BotHealthCheck::CheckForStalledBots(uint32 currentTime)
                 TC_LOG_ERROR("module.playerbot.health", "Bot {} detected as STALLED", guid.ToString());
 
                 // Trigger auto-recovery if enabled
-                if (_autoRecoveryEnabled.load())
+    if (_autoRecoveryEnabled.load())
                 {
                     TriggerAutomaticRecovery(guid);
                 }
@@ -182,7 +182,7 @@ void BotHealthCheck::CheckForDeadlocks(uint32 currentTime)
                 timeSinceHeartbeat, _deadlockThresholdMs);
 
             // Trigger system-wide recovery
-            if (_autoRecoveryEnabled.load())
+    if (_autoRecoveryEnabled.load())
             {
                 TriggerSystemRecovery();
             }

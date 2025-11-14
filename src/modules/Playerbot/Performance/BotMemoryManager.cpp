@@ -328,7 +328,7 @@ void BotMemoryManager::RecordAllocation(void* address, uint64_t size, MemoryCate
         _activeAllocations.emplace(address, MemoryLeakEntry(address, size, category, botGuid, context));
 
         // Limit tracking entries to prevent excessive memory usage
-        if (_activeAllocations.size() > MAX_LEAK_ENTRIES)
+    if (_activeAllocations.size() > MAX_LEAK_ENTRIES)
         {
             auto oldest = ::std::min_element(_activeAllocations.begin(), _activeAllocations.end(),
                 [](const auto& a, const auto& b) { return a.second.allocationTime < b.second.allocationTime; });
@@ -519,7 +519,7 @@ void BotMemoryManager::DetectMemoryLeaks()
         for (const auto& [address, entry] : _activeAllocations)
         {
             // Consider allocations older than 10 minutes as potential leaks
-            if (now - entry.allocationTime > 600000000) // 10 minutes in microseconds
+    if (now - entry.allocationTime > 600000000) // 10 minutes in microseconds
             {
                 suspectedLeaks.push_back(entry);
             }
@@ -598,7 +598,7 @@ void BotMemoryManager::FlushCache(MemoryCategory category)
         {
             auto& stats = profile.categoryStats[categoryIndex];
             // Only flush temporary/cache data, not persistent allocations
-            if (category == MemoryCategory::CACHE_DATA ||
+    if (category == MemoryCategory::CACHE_DATA ||
                 category == MemoryCategory::TEMPORARY_DATA ||
                 category == MemoryCategory::DATABASE_CACHE)
             {
@@ -653,7 +653,7 @@ void BotMemoryManager::OptimizeCacheSize()
         double cacheHitRatio = profile.cacheHitRatio.load();
 
         // If cache hit ratio is low, reduce cache size
-        if (cacheHitRatio < 0.5)
+    if (cacheHitRatio < 0.5)
         {
             FlushBotCache(botGuid);
         }
@@ -834,20 +834,20 @@ void BotMemoryManager::PerformMemoryMaintenance()
             ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
         // Garbage collection
-        if (now - _lastOptimization.load() >= _garbageCollectionInterval.load())
+    if (now - _lastOptimization.load() >= _garbageCollectionInterval.load())
         {
             PerformGarbageCollection();
             _lastOptimization.store(now);
         }
 
         // Leak detection
-        if (now - _lastLeakDetection.load() >= _leakDetectionInterval.load())
+    if (now - _lastLeakDetection.load() >= _leakDetectionInterval.load())
         {
             DetectMemoryLeaks();
         }
 
         // Handle memory pressure
-        if (IsMemoryPressureHigh())
+    if (IsMemoryPressureHigh())
         {
             HandleMemoryPressure();
         }

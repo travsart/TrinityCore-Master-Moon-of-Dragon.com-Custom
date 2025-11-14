@@ -811,7 +811,6 @@ void BattlePetManager::TrackRarePetSpawns(::Player* player)
 bool BattlePetManager::IsRarePet(uint32 speciesId) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_petDatabase.count(speciesId))
         return false;
 
@@ -830,7 +829,6 @@ bool BattlePetManager::IsRarePet(uint32 speciesId) const
     // Get player's current zone
     // Query rare pet spawns in that zone
     // Return species IDs
-
     for (auto const& [speciesId, spawns] : _rarePetSpawns)
     {
         if (IsRarePet(speciesId))
@@ -846,7 +844,6 @@ bool BattlePetManager::NavigateToRarePet(::Player* player, uint32 speciesId)
         return false;
 
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_rarePetSpawns.count(speciesId) || _rarePetSpawns[speciesId].empty())
         return false;
 
@@ -875,7 +872,6 @@ void BattlePetManager::SetAutomationProfile(uint32 playerGuid,
 PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerGuid) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
 
@@ -889,7 +885,6 @@ PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerG
 BattlePetManager::PetMetrics const& BattlePetManager::GetPlayerMetrics(uint32 playerGuid) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_playerMetrics.count(playerGuid))
     {
         static PetMetrics emptyMetrics;

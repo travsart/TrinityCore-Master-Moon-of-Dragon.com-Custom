@@ -434,7 +434,7 @@ bool ProductionValidationDemo::ExecuteFollowingBehaviorDemo()
         group->groupPosition = destination;
 
         // Simulate bot following with formation maintenance
-        for (size_t i = 0; i < bots.size(); ++i)
+    for (size_t i = 0; i < bots.size(); ++i)
         {
             Position formationPos = m_testEnv->GetFormationPosition(destination, i, 5.0f);
             bots[i]->position = formationPos;

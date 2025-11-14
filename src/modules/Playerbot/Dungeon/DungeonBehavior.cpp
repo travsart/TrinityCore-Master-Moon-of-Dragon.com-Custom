@@ -151,7 +151,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     {
         case DungeonPhase::ENTERING:
             // Transition to clearing trash after entry
-            if (GameTime::GetGameTimeMS() - state.startTime > 30000) // 30 seconds after entering
+    if (GameTime::GetGameTimeMS() - state.startTime > 30000) // 30 seconds after entering
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
                 TC_LOG_DEBUG("module.playerbot", "Group {} transitioned to CLEARING_TRASH phase", group->GetGUID().GetCounter());
@@ -160,10 +160,10 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::CLEARING_TRASH:
             // Check if next boss encounter should begin
-            if (state.encountersCompleted < state.totalEncounters)
+    if (state.encountersCompleted < state.totalEncounters)
             {
                 // Transition to boss encounter if group is ready
-                if (!group->IsInCombat())
+    if (!group->IsInCombat())
                 {
                     uint32 nextEncounterId = state.encountersCompleted;
                     auto dungeonData = GetDungeonData(state.dungeonId);
@@ -172,7 +172,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
                         DungeonEncounter const& nextEncounter = dungeonData.encounters[nextEncounterId];
 
                         // Check if group is near encounter location
-                        if (currentPos.GetExactDist(&nextEncounter.encounterLocation) < 50.0f)
+    if (currentPos.GetExactDist(&nextEncounter.encounterLocation) < 50.0f)
                         {
                             StartEncounter(group, nextEncounter.encounterId);
                         }
@@ -192,7 +192,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::LOOTING:
             // Transition back to clearing trash after looting
-            if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 15000)
+    if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 15000)
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
             }
@@ -200,7 +200,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::RESTING:
             // Transition back to clearing after rest break
-            if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 30000)
+    if (!group->IsInCombat() && GameTime::GetGameTimeMS() - state.lastProgressTime > 30000)
             {
                 state.currentPhase = DungeonPhase::CLEARING_TRASH;
             }
@@ -212,7 +212,7 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
 
         case DungeonPhase::WIPED:
             // Handle wipe recovery
-            if (GameTime::GetGameTimeMS() - state.lastProgressTime > WIPE_RECOVERY_TIME)
+    if (GameTime::GetGameTimeMS() - state.lastProgressTime > WIPE_RECOVERY_TIME)
             {
                 RecoverFromWipe(group);
             }
@@ -601,14 +601,13 @@ void DungeonBehavior::CoordinateCrowdControlBehavior(Player* cc, const DungeonEn
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : nearbyCreatures)
+    for (Creature* creature : nearbyCreatures)
         {
             if (!creature || !creature->IsAlive() || creature->IsFriendlyTo(cc))
                 continue;
 
             // Check if this creature should be CC'd
-            if (encounter.mechanics.empty())
+    if (encounter.mechanics.empty())
                 continue;
 
             ccTargets.push_back(creature);
@@ -648,8 +647,7 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
 
         // Determine role
         DungeonRole role = DungeonRole::MELEE_DPS; // Default
-
-        switch (player->GetClass())
+    switch (player->GetClass())
         {
             case CLASS_WARRIOR:
             case CLASS_PALADIN:
@@ -677,7 +675,7 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
         Position optimalPos = GetOptimalPosition(player, role, encounter);
 
         // Move if too far from optimal position
-        if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
+    if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
         {
             // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
@@ -851,14 +849,13 @@ void DungeonBehavior::HandleTrashMobs(Group* group, const ::std::vector<uint32>&
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : nearbyCreatures)
+    for (Creature* creature : nearbyCreatures)
         {
             if (!creature || !creature->IsAlive())
                 continue;
 
             // Check if this is a trash mob we should handle
-            if (::std::find(trashMobIds.begin(), trashMobIds.end(), creature->GetEntry()) != trashMobIds.end())
+    if (::std::find(trashMobIds.begin(), trashMobIds.end(), creature->GetEntry()) != trashMobIds.end())
             {
                 trashMobs.push_back(creature);
             }
@@ -906,7 +903,7 @@ void DungeonBehavior::AssignTrashTargets(Group* group, const ::std::vector<Unit*
             continue;
 
         // Tank gets first target
-        if (player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
+    if (player->GetClass() == CLASS_WARRIOR || player->GetClass() == CLASS_PALADIN ||
             player->GetClass() == CLASS_DEATH_KNIGHT)
         {
             if (player->GetPrimarySpecialization() == 0) // Protection/Blood/Prot
@@ -933,7 +930,7 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const ::std::vector<Uni
     {
         case EncounterStrategy::CONSERVATIVE:
             // Pull one at a time, CC rest
-            if (trashMobs.size() > 1)
+    if (trashMobs.size() > 1)
             {
                 ::std::vector<Unit*> ccTargets(trashMobs.begin() + 1, trashMobs.end());
                 CoordinateCrowdControl(group, ccTargets);
@@ -947,7 +944,7 @@ void DungeonBehavior::ExecuteTrashStrategy(Group* group, const ::std::vector<Uni
 
         case EncounterStrategy::BALANCED:
             // Kill priority targets, CC extras
-            if (trashMobs.size() > 2)
+    if (trashMobs.size() > 2)
             {
                 ::std::vector<Unit*> ccTargets(trashMobs.begin() + 2, trashMobs.end());
                 CoordinateCrowdControl(group, ccTargets);
@@ -984,7 +981,7 @@ void DungeonBehavior::ExecuteBossStrategy(Group* group, const DungeonEncounter& 
             continue;
 
         // Coordinate role-specific behavior
-        switch (player->GetClass())
+    switch (player->GetClass())
         {
             case CLASS_WARRIOR:
             case CLASS_PALADIN:
@@ -1163,13 +1160,13 @@ void DungeonBehavior::ManageThreatMeters(Group* group)
             continue;
 
         // Check if player is about to pull aggro
-        if (Unit* victim = player->GetVictim())
+    if (Unit* victim = player->GetVictim())
         {
             float playerThreat = victim->GetThreatManager().GetThreat(player);
             float tankThreat = 0.0f;
 
             // Find tank's threat
-            for (auto const& tankMember : group->GetMemberSlots())
+    for (auto const& tankMember : group->GetMemberSlots())
             {
                 Player* tank = ObjectAccessor::FindPlayer(tankMember.guid);
                 if (!tank || !tank->IsInWorld() || !tank->IsAlive())
@@ -1226,7 +1223,7 @@ void DungeonBehavior::CoordinateGroupHealing(Group* group, const DungeonEncounte
         groupMembers.push_back(player);
 
         // Identify healers
-        if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
+    if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_SHAMAN ||
             player->GetClass() == CLASS_PALADIN || player->GetClass() == CLASS_DRUID)
         {
             if (player->GetPrimarySpecialization() == 2) // Holy/Resto/Holy
@@ -1332,8 +1329,7 @@ void DungeonBehavior::CoordinateGroupDamage(Group* group, const DungeonEncounter
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : nearbyCreatures)
+    for (Creature* creature : nearbyCreatures)
         {
             if (!creature || !creature->IsAlive() || creature->IsFriendlyTo(dps))
                 continue;

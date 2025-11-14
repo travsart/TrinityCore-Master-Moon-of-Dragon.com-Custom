@@ -86,7 +86,7 @@ void KitingManager::UpdateKiting(uint32 diff)
                         _bot->GetPosition(), searchRadius);
 
                     // Resolve GUIDs to Unit pointers and filter enemies
-                    for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : nearbyGuids)
                     {
                         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                         if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
@@ -256,7 +256,6 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
 void KitingManager::StopKiting()
 {
     // No lock needed - kiting state is per-bot instance data
-
     if (!_kitingActive)
         return;
 

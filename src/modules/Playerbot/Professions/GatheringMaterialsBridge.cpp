@@ -166,7 +166,7 @@ void GatheringMaterialsBridge::UpdateMaterialRequirements(::Player* player)
     for (const ProfessionSkillInfo& profInfo : professions)
     {
         // Skip if profession is maxed
-        if (profInfo.currentSkill >= profInfo.maxSkill)
+    if (profInfo.currentSkill >= profInfo.maxSkill)
             continue;
 
         // Get optimal leveling recipe for profession
@@ -196,8 +196,7 @@ void GatheringMaterialsBridge::UpdateMaterialRequirements(::Player* player)
                 req.priority = MaterialPriority::LOW;       // Green recipe
             else
                 req.priority = MaterialPriority::NONE;      // Gray recipe - skip
-
-            if (req.priority != MaterialPriority::NONE && !req.IsFulfilled())
+    if (req.priority != MaterialPriority::NONE && !req.IsFulfilled())
                 requirements.push_back(req);
         }
     }
@@ -332,7 +331,7 @@ void GatheringMaterialsBridge::OnMaterialGathered(::Player* player, uint32 itemI
             session.sessionId, quantity, itemId, session.gatheredSoFar, session.targetQuantity);
 
         // Check if session complete
-        if (session.gatheredSoFar >= session.targetQuantity)
+    if (session.gatheredSoFar >= session.targetQuantity)
         {
             CompleteGatheringSession(session.sessionId, true);
         }
@@ -537,19 +536,19 @@ GatheringNodeType GatheringMaterialsBridge::GetNodeTypeForMaterial(uint32 itemId
     if (itemClass == ITEM_CLASS_TRADE_GOODS)
     {
         // Metal & Stone = Mining
-        if (itemSubClass == 7 || itemSubClass == 12)
+    if (itemSubClass == 7 || itemSubClass == 12)
             return GatheringNodeType::MINING_VEIN;
 
         // Herb = Herbalism
-        if (itemSubClass == 9)
+    if (itemSubClass == 9)
             return GatheringNodeType::HERB_NODE;
 
         // Leather = Skinning
-        if (itemSubClass == 6)
+    if (itemSubClass == 6)
             return GatheringNodeType::CREATURE_CORPSE;
 
         // Fish = Fishing
-        if (itemSubClass == 8)
+    if (itemSubClass == 8)
             return GatheringNodeType::FISHING_POOL;
     }
 
@@ -574,7 +573,7 @@ GatheringNodeType GatheringMaterialsBridge::GetNodeTypeForMaterial(uint32 itemId
         for (const RecipeInfo& recipe : professionRecipes)
         {
             // Check if recipe uses this material
-            for (const RecipeInfo::Reagent& reagent : recipe.reagents)
+    for (const RecipeInfo::Reagent& reagent : recipe.reagents)
             {
                 if (reagent.itemId == itemId)
                 {

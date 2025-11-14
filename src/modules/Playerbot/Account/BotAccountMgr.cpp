@@ -55,7 +55,7 @@ bool BotAccountMgr::Initialize()
             required, current);
 
         // Start account pool refill if needed
-        if (current < required)
+    if (current < required)
         {
             TC_LOG_INFO("module.playerbot.account",
                 "Creating {} additional bot accounts...", required - current);
@@ -243,7 +243,7 @@ uint32 BotAccountMgr::CreateBotAccount(::std::string const& requestedEmail)
         if (result == AccountOpResult::AOR_OK)
         {
             // Success! Update the email counter to reflect this account creation
-            if (requestedEmail.empty())
+    if (requestedEmail.empty())
             {
                 _emailCounter.store(baseCounter + attempt + 1);
             }
@@ -252,7 +252,7 @@ uint32 BotAccountMgr::CreateBotAccount(::std::string const& requestedEmail)
         else if (result == AccountOpResult::AOR_NAME_ALREADY_EXIST)
         {
             // Account already exists, try next email (only if we're auto-generating)
-            if (!requestedEmail.empty())
+    if (!requestedEmail.empty())
             {
                 // User requested specific email that already exists
                 TC_LOG_ERROR("module.playerbot.account",
@@ -342,7 +342,7 @@ void BotAccountMgr::CreateBotAccountsBatch(uint32 count,
         for (uint32 i = 0; i < count; ++i)
         {
             // SEQUENTIAL CREATION WITH VALIDATION
-            if (uint32 accountId = CreateBotAccount())
+    if (uint32 accountId = CreateBotAccount())
             {
                 // VALIDATION: Verify account exists in database before adding to list (prepared statement)
                 LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EXISTS);
@@ -478,7 +478,7 @@ uint32 BotAccountMgr::AcquireAccount()
                 "Acquired account {} from pool", accountId);
 
             // Trigger pool refill if getting low
-            if (_accountPool.size() < _targetPoolSize.load() / 2)
+    if (_accountPool.size() < _targetPoolSize.load() / 2)
             {
                 RefillAccountPool();
             }
@@ -800,7 +800,7 @@ void BotAccountMgr::LoadAccountMetadata()
                 ::std::transform(emailLower.begin(), emailLower.end(), emailLower.begin(), ::tolower);
 
                 // Pattern 1: "bot######@playerbot.local"
-                if (emailLower.find("bot") == 0 && emailLower.find("@playerbot.local") != ::std::string::npos)
+    if (emailLower.find("bot") == 0 && emailLower.find("@playerbot.local") != ::std::string::npos)
                 {
                     size_t atPos = emailLower.find("@");
                     ::std::string numberStr = emailLower.substr(3, atPos - 3);

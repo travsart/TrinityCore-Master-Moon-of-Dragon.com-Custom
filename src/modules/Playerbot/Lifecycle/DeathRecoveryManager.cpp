@@ -168,7 +168,6 @@ void DeathRecoveryManager::OnDeath()
         IsGhost() ? "TRUE" : "FALSE");
     TC_LOG_ERROR("playerbot.death", "========================================");
     // No lock needed - death recovery state is per-bot instance data
-
     if (!ValidateBotState())
     {
         TC_LOG_ERROR("playerbot.death", " OnDeath: ValidateBotState FAILED!");
@@ -208,7 +207,6 @@ void DeathRecoveryManager::OnDeath()
 void DeathRecoveryManager::OnResurrection()
 {
     // No lock needed - death recovery state is per-bot instance data
-
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return;
 
@@ -581,7 +579,7 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
             m_bot->GetName());
 
         // Timeout after 30 seconds
-        if (m_stateTimer > 30000)
+    if (m_stateTimer > 30000)
         {
             TC_LOG_ERROR("playerbot.death", " Bot {} CRITICAL: No corpse after 30 seconds!",
                 m_bot->GetName());
@@ -597,7 +595,7 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
             m_bot->GetName());
 
         // Timeout after 30 seconds
-        if (m_stateTimer > 30000)
+    if (m_stateTimer > 30000)
         {
             TC_LOG_ERROR("playerbot.death", " Bot {} CRITICAL: No ghost flag after 30 seconds!",
                 m_bot->GetName());
@@ -633,7 +631,7 @@ void DeathRecoveryManager::HandleAtCorpse(uint32 diff)
         uint32 remainingSeconds = static_cast<uint32>(requiredTime - currentTime);
 
         // Log waiting status every 5 seconds
-        if (m_stateTimer % 5000 < diff)
+    if (m_stateTimer % 5000 < diff)
         {
             TC_LOG_INFO("playerbot.death", "⏳ Bot {} waiting for ghost time delay ({} seconds remaining)",
                 m_bot->GetName(), remainingSeconds);
@@ -695,7 +693,7 @@ void DeathRecoveryManager::HandleFindingSpiritHealer(uint32 diff)
             LogDebug("No spirit healer found, retrying search");
 
             // After multiple failures, try corpse run instead
-            if (++m_retryCount >= 3)
+    if (++m_retryCount >= 3)
             {
                 TC_LOG_WARN("playerbot.death", "Bot {} cannot find spirit healer, switching to corpse run",
                     m_bot->GetName());
@@ -858,7 +856,6 @@ bool DeathRecoveryManager::ShouldDoCorpseRun() const
     UpdateCorpseDistance();
     if (m_corpseDistance < 0.0f)
         return false; // No corpse
-
     if (m_corpseDistance > m_config.maxCorpseRunDistance)
         return false; // Too far
 
@@ -874,7 +871,6 @@ bool DeathRecoveryManager::ShouldUseSpiritHealer() const
 
     if (m_corpseDistance < 0.0f)
         return true; // No corpse
-
     if (m_corpseDistance > m_config.maxCorpseRunDistance)
         return true; // Too far
 
@@ -1535,7 +1531,6 @@ bool DeathRecoveryManager::CanInteractWithSpiritHealer() const
 bool DeathRecoveryManager::TriggerCorpseResurrection()
 {
     // No lock needed - death recovery state is per-bot instance data
-
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return false;
 
@@ -1547,7 +1542,6 @@ bool DeathRecoveryManager::TriggerCorpseResurrection()
 bool DeathRecoveryManager::TriggerSpiritHealerResurrection()
 {
     // No lock needed - death recovery state is per-bot instance data
-
     if (m_state == DeathRecoveryState::NOT_DEAD)
         return false;
 

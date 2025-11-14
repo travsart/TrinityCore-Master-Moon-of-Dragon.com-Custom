@@ -131,7 +131,7 @@ namespace Playerbot
         m_lastUpdateTime = ::std::chrono::steady_clock::now();
 
         // Clear any pending transfers
-        while (!m_pendingTransfers.empty())
+    while (!m_pendingTransfers.empty())
 
             m_pendingTransfers.pop();
 
@@ -156,12 +156,12 @@ namespace Playerbot
     void TradeManager::OnShutdown()
     {
         // Cancel any ongoing trade
-        if (IsTrading())
+    if (IsTrading())
 
             CancelTrade("Manager shutting down");
 
         // Clear pending transfers
-        while (!m_pendingTransfers.empty())
+    while (!m_pendingTransfers.empty())
 
             m_pendingTransfers.pop();
 
@@ -195,7 +195,7 @@ namespace Playerbot
             return false;
 
         // Check if already trading
-        if (IsTrading())
+    if (IsTrading())
         {
 
             LogTradeAction("INITIATE_FAILED", "Already in trade");
@@ -214,7 +214,7 @@ namespace Playerbot
         }
 
         // Validate target
-        if (!ValidateTradeTarget(target))
+    if (!ValidateTradeTarget(target))
         {
 
             LogTradeAction("INITIATE_FAILED", "Target validation failed");
@@ -223,7 +223,7 @@ namespace Playerbot
         }
 
         // Check distance
-        if (!ValidateTradeDistance(target))
+    if (!ValidateTradeDistance(target))
         {
 
             LogTradeAction("INITIATE_FAILED", "Target too far away");
@@ -232,7 +232,7 @@ namespace Playerbot
         }
 
         // Check if target is already trading
-        if (target->GetTradeData())
+    if (target->GetTradeData())
         {
 
             LogTradeAction("INITIATE_FAILED", "Target already trading");
@@ -259,7 +259,7 @@ namespace Playerbot
             return false;
 
         // Check if already trading
-        if (IsTrading())
+    if (IsTrading())
         {
 
             LogTradeAction("ACCEPT_REQUEST_FAILED", "Already in trade");
@@ -344,7 +344,7 @@ namespace Playerbot
             return false;
 
         // Validate trade before accepting
-        if (m_securityLevel >= TradeSecurity::BASIC)
+    if (m_securityLevel >= TradeSecurity::BASIC)
         {
 
             if (!ValidateTradeItems())
@@ -373,7 +373,7 @@ namespace Playerbot
             }
         }
         // Check for scam (skip for owner trades)
-        if (m_securityLevel >= TradeSecurity::STANDARD)
+    if (m_securityLevel >= TradeSecurity::STANDARD)
         {
             // Don't check scam for trades with owner
 
@@ -408,7 +408,7 @@ namespace Playerbot
         }
 
         // Check fairness
-        if (m_securityLevel >= TradeSecurity::STRICT)
+    if (m_securityLevel >= TradeSecurity::STRICT)
         {
 
             if (!EvaluateTradeFairness())
@@ -453,7 +453,7 @@ namespace Playerbot
             return false;
 
         // Validate item can be traded
-        if (!CanTradeItem(item))
+    if (!CanTradeItem(item))
         {
 
             LogTradeAction("ADD_ITEM_FAILED", "Item cannot be traded: " + ::std::to_string(item->GetEntry()));
@@ -462,7 +462,7 @@ namespace Playerbot
         }
 
         // Find free slot if not specified
-        if (slot == 255)
+    if (slot == 255)
         {
 
             slot = GetNextFreeTradeSlot();
@@ -514,8 +514,7 @@ namespace Playerbot
                 addedCount++;
 
             // Check if all slots are full
-
-            if (GetNextFreeTradeSlot() >= MAX_TRADE_ITEMS)
+    if (GetNextFreeTradeSlot() >= MAX_TRADE_ITEMS)
 
                 break;
         }
@@ -569,7 +568,7 @@ namespace Playerbot
             return false;
 
         // Validate gold amount
-        if (!ValidateTradeGold(gold))
+    if (!ValidateTradeGold(gold))
         {
 
             LogTradeAction("SET_GOLD_FAILED", "Invalid gold amount: " + ::std::to_string(gold));
@@ -578,7 +577,7 @@ namespace Playerbot
         }
 
         // Check bot has enough gold
-        if (gold > GetBot()->GetMoney())
+    if (gold > GetBot()->GetMoney())
         {
 
             LogTradeAction("SET_GOLD_FAILED", "Insufficient gold");
@@ -654,7 +653,7 @@ namespace Playerbot
         m_currentSession.traderAccepted = theirTrade->IsAccepted();
 
         // Update state
-        if (m_currentSession.state == TradeState::ADDING_ITEMS)
+    if (m_currentSession.state == TradeState::ADDING_ITEMS)
 
             SetTradeState(TradeState::REVIEWING);
 
@@ -705,8 +704,7 @@ namespace Playerbot
 
             {
                 // Auto-accept logic
-
-                if (it->second.isAutoAccept)
+    if (it->second.isAutoAccept)
 
                 {
 
@@ -724,7 +722,7 @@ namespace Playerbot
         }
 
         // Update current trade
-        if (IsTrading())
+    if (IsTrading())
         {
 
             if (m_updateTimer >= TRADE_UPDATE_INTERVAL)
@@ -756,7 +754,7 @@ namespace Playerbot
         }
 
         // Process pending item transfers
-        if (!m_pendingTransfers.empty() && !IsTrading())
+    if (!m_pendingTransfers.empty() && !IsTrading())
         {
 
             auto& transfer = m_pendingTransfers.front();
@@ -867,16 +865,16 @@ namespace Playerbot
             return false;
 
         // Check if we can trade with recipient
-        if (!ValidateTradeTarget(recipient))
+    if (!ValidateTradeTarget(recipient))
 
             return false;
 
         // Initiate trade
-        if (!InitiateTrade(recipient, "Sending item"))
+    if (!InitiateTrade(recipient, "Sending item"))
 
             return false;
         // Add item to trade
-        if (!AddItemToTrade(item))
+    if (!AddItemToTrade(item))
         {
 
             CancelTrade("Failed to add item");
@@ -936,7 +934,7 @@ namespace Playerbot
             return false;
 
         // Check blacklist
-        if (IsBlacklisted(target->GetGUID()))
+    if (IsBlacklisted(target->GetGUID()))
         {
 
             LogTradeAction("VALIDATE_TARGET_FAILED", "Target is blacklisted");
@@ -945,7 +943,7 @@ namespace Playerbot
         }
 
         // Check permissions based on security level
-        if (m_securityLevel >= TradeSecurity::BASIC)
+    if (m_securityLevel >= TradeSecurity::BASIC)
         {
             // Must be in same group or guild
 
@@ -977,7 +975,7 @@ namespace Playerbot
             return true;
 
         // Check whitelist requirement
-        if (m_securityLevel >= TradeSecurity::STRICT)
+    if (m_securityLevel >= TradeSecurity::STRICT)
         {
 
             if (!IsWhitelisted(target->GetGUID()))
@@ -1005,7 +1003,7 @@ namespace Playerbot
             return true;
 
         // Check each offered item
-        for (uint8 slot = 0; slot < MAX_TRADE_ITEMS; ++slot)
+    for (uint8 slot = 0; slot < MAX_TRADE_ITEMS; ++slot)
         {
 
             Item* item = myTrade->GetItem(TradeSlots(slot));
@@ -1015,8 +1013,7 @@ namespace Playerbot
                 continue;
 
             // Validate ownership
-
-            if (!ValidateItemOwnership(item))
+    if (!ValidateItemOwnership(item))
 
             {
 
@@ -1029,8 +1026,7 @@ namespace Playerbot
             }
 
             // Check if item is protected
-
-            if (m_protectedItems.count(item->GetEntry()) > 0)
+    if (m_protectedItems.count(item->GetEntry()) > 0)
 
             {
 
@@ -1069,12 +1065,12 @@ namespace Playerbot
             return false;
 
         // Check against bot's money
-        if (amount > GetBot()->GetMoney())
+    if (amount > GetBot()->GetMoney())
 
             return false;
 
         // Check against max trade value
-        if (amount > m_maxTradeValue)
+    if (amount > m_maxTradeValue)
 
             return false;
 
@@ -1094,7 +1090,7 @@ namespace Playerbot
             return true;
 
         // Allow one-sided trades from other group members
-        if (group)
+    if (group)
         {
 
             for (Group::MemberSlot const& member : group->GetMemberSlots())
@@ -1126,16 +1122,16 @@ namespace Playerbot
     bool TradeManager::IsTradeSafe() const
     {
         // Check for dangerous patterns
-        if (IsTradeScam())
+    if (IsTradeScam())
 
             return false;
 
         // Check item validity
-        if (!ValidateTradeItems())
+    if (!ValidateTradeItems())
 
             return false;
         // Check gold validity
-        if (!ValidateTradeGold(m_currentSession.offeredGold))
+    if (!ValidateTradeGold(m_currentSession.offeredGold))
 
             return false;
 
@@ -1176,27 +1172,27 @@ namespace Playerbot
             return false;
 
         // Check if item is bound (soulbound items cannot be traded)
-        if (item->IsSoulBound())
+    if (item->IsSoulBound())
 
             return false;
 
         // Check if item is conjured (using correct 3.3.5a flag)
-        if (proto->HasFlag(ITEM_FLAG_CONJURED))
+    if (proto->HasFlag(ITEM_FLAG_CONJURED))
 
             return false;
 
         // Check if it's a quest item (quest items usually have StartQuest)
-        if (proto->GetStartQuest() != 0)
+    if (proto->GetStartQuest() != 0)
 
             return false;
 
         // Additional quest item check via bonding
-        if (proto->GetBonding() == BIND_QUEST)
+    if (proto->GetBonding() == BIND_QUEST)
 
             return false;
 
         // Validate ownership
-        if (!ValidateItemOwnership(item))
+    if (!ValidateItemOwnership(item))
 
             return false;
 
@@ -1232,7 +1228,7 @@ namespace Playerbot
 
             return tradableItems;
         // Check main inventory
-        for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
 
             if (Item* item = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
@@ -1247,7 +1243,7 @@ namespace Playerbot
         }
 
         // Check bags
-        for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         {
 
             if (Bag* bag = GetBot()->GetBagByPos(i))
@@ -1317,7 +1313,7 @@ namespace Playerbot
         UpdateTradeWindow();
 
         // Auto-accept logic based on state
-        if (m_currentSession.state == TradeState::REVIEWING)
+    if (m_currentSession.state == TradeState::REVIEWING)
         {
             // Check if we should auto-accept
 
@@ -1332,8 +1328,7 @@ namespace Playerbot
                 shouldAutoAccept = true;
 
             // Auto-accept from group members
-
-            if (m_autoAcceptGroup && !shouldAutoAccept)
+    if (m_autoAcceptGroup && !shouldAutoAccept)
 
             {
 
@@ -1366,8 +1361,7 @@ namespace Playerbot
             }
 
             // Auto-accept from guild members
-
-            if (m_autoAcceptGuild && !shouldAutoAccept)
+    if (m_autoAcceptGuild && !shouldAutoAccept)
 
             {
 
@@ -1386,8 +1380,7 @@ namespace Playerbot
             }
 
             // Auto-accept from whitelist
-
-            if (m_autoAcceptWhitelist && !shouldAutoAccept)
+    if (m_autoAcceptWhitelist && !shouldAutoAccept)
 
             {
 
@@ -1432,14 +1425,13 @@ namespace Playerbot
         uint32 baseValue = itemTemplate->GetSellPrice();
 
         // If no sell price, estimate based on item level and quality
-        if (baseValue == 0)
+    if (baseValue == 0)
         {
 
             baseValue = itemTemplate->GetBaseItemLevel() * 100;
 
             // Adjust by item class
-
-            switch (itemTemplate->GetClass())
+    switch (itemTemplate->GetClass())
 
             {
 
@@ -1526,7 +1518,7 @@ namespace Playerbot
             return false;
 
         // Check if bot can use the item
-        if (!GetBot()->CanUseItem(itemTemplate))
+    if (!GetBot()->CanUseItem(itemTemplate))
 
             return false;
 
@@ -1587,7 +1579,7 @@ namespace Playerbot
         uint32 priority = 0;
 
         // Check if player can use item
-        if (player->CanUseItem(item) != EQUIP_ERR_OK)
+    if (player->CanUseItem(item) != EQUIP_ERR_OK)
 
             return 0;
 
@@ -1626,7 +1618,7 @@ namespace Playerbot
 
         // Check class match (3.3.5a doesn't have spec-specific items)
         // Could check talent trees but that's complex, so just use class
-        if ((itemTemplate->GetAllowableClass() & player->GetClassMask()) != 0)
+    if ((itemTemplate->GetAllowableClass() & player->GetClassMask()) != 0)
 
             priority += 200;
 
@@ -1654,7 +1646,7 @@ namespace Playerbot
             return;
 
         // Build player priorities
-        for (Group::MemberSlot const& member : group->GetMemberSlots())
+    for (Group::MemberSlot const& member : group->GetMemberSlots())
         {
 
             if (Player* player = ObjectAccessor::FindPlayer(member.guid))
@@ -1663,8 +1655,7 @@ namespace Playerbot
 
                 distribution.playerPriorities[player->GetGUID()] = 0;
                 // Build needs list
-
-                for (Item* item : distribution.items)
+    for (Item* item : distribution.items)
 
                 {
 
@@ -1710,7 +1701,7 @@ namespace Playerbot
         // Check for common scam patterns
 
         // Pattern 1: High value given for nothing
-        if (m_currentSession.GetTotalOfferedValue() > 1000 * GOLD &&
+    if (m_currentSession.GetTotalOfferedValue() > 1000 * GOLD &&
 
             m_currentSession.GetTotalReceivedValue() < 100 * GOLD)
         {
@@ -1735,7 +1726,7 @@ namespace Playerbot
         }
 
         // Offering epic+ items with junk is suspicious
-        if (hasExpensiveItem && hasJunkItem)
+    if (hasExpensiveItem && hasJunkItem)
 
             return true;
 
@@ -1759,7 +1750,7 @@ namespace Playerbot
             return false;
 
         // Final validation
-        if (!IsTradeSafe())
+    if (!IsTradeSafe())
         {
 
             CancelTrade("Trade failed safety check");
@@ -1806,7 +1797,7 @@ namespace Playerbot
         SetTradeState(TradeState::CANCELLED);
 
         // Send cancel to other party
-        if (GetBot())
+    if (GetBot())
         {
 
             GetBot()->TradeCancel(true);

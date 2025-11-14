@@ -354,7 +354,7 @@ CommandResult BotChatCommandHandler::ExecuteCommand(CommandContext const& contex
         CommandResult result = command.handler(context, response);
 
         // Send response if any
-        if (!response.GetText().empty())
+    if (!response.GetText().empty())
         {
             SendResponse(context, response);
         }
@@ -553,7 +553,7 @@ CommandPermission BotChatCommandHandler::GetPlayerPermission(Player* player, Pla
     if (player->GetGuildId() != 0 && player->GetGuildId() == bot->GetGuildId())
     {
         // Same guild
-        if (player->GetGuildRank() < bot->GetGuildRank()) // Lower rank = higher privilege
+    if (player->GetGuildRank() < bot->GetGuildRank()) // Lower rank = higher privilege
             return CommandPermission::GUILD_MEMBER;
     }
 

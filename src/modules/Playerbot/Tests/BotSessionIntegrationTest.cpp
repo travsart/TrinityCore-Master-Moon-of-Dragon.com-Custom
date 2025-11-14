@@ -45,7 +45,7 @@ protected:
         TC_LOG_INFO("test.playerbot", "Setting up BotSessionIntegrationTest");
 
         // Ensure sWorld is available for tests
-        if (!sWorld) {
+    if (!sWorld) {
             GTEST_SKIP() << "sWorld not initialized - integration test requires full server context";
             return;
         }
@@ -293,7 +293,7 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
         std::atomic<int> totalCount{0};
 
         // Launch multiple threads calling Update simultaneously
-        for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
             threads.emplace_back([&botSession, &successCount, &totalCount]() {
                 class ThreadTestFilter : public PacketFilter {
                 public:
@@ -316,7 +316,7 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
         }
 
         // Wait for all threads to complete
-        for (auto& thread : threads) {
+    for (auto& thread : threads) {
             thread.join();
         }
 
@@ -346,7 +346,7 @@ TEST_F(BotSessionIntegrationTest, MemoryCorruptionDetection)
         std::vector<std::shared_ptr<BotSession>> sessions;
 
         // Create multiple sessions rapidly
-        for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
             auto session = CreateTestBotSession(12345 + i);
             if (session) {
                 sessions.push_back(session);

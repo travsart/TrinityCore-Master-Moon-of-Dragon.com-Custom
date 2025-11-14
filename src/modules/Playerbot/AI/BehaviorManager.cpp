@@ -35,7 +35,7 @@ namespace Playerbot
         , m_timeSinceLastUpdate(0)
     {
         // Validate input parameters
-        if (!m_bot)
+    if (!m_bot)
         {
             TC_LOG_ERROR("module.playerbot", "[{}] BehaviorManager created with null bot pointer!", m_managerName);
             m_enabled.store(false, ::std::memory_order_release);
@@ -71,7 +71,7 @@ namespace Playerbot
             debugLogAccumulators[botName] += diff;
 
             // Log every 50 seconds per test bot
-            if (debugLogAccumulators[botName] >= 50000)
+    if (debugLogAccumulators[botName] >= 50000)
             {
                 shouldLog = true;
                 debugLogAccumulators[botName] = 0;
@@ -89,7 +89,7 @@ namespace Playerbot
         }
 
         // Fast path: Skip if disabled (atomic check, <0.001ms)
-        if (!m_enabled.load(::std::memory_order_acquire))
+    if (!m_enabled.load(::std::memory_order_acquire))
         {
             if (shouldLog)
                 TC_LOG_ERROR("module.playerbot", " [{}] DISABLED - returning early", m_managerName);
@@ -97,14 +97,14 @@ namespace Playerbot
         }
 
         // Fast path: Skip if currently busy (prevents re-entrance)
-        if (m_isBusy.load(::std::memory_order_acquire))
+    if (m_isBusy.load(::std::memory_order_acquire))
         {
             if (shouldLog)
                 TC_LOG_ERROR("module.playerbot", "⏳ [{}] BUSY - returning early", m_managerName);
             return;
         }
         // Validate pointers are still valid
-        if (!ValidatePointers())
+    if (!ValidatePointers())
         {
             m_enabled.store(false, ::std::memory_order_release);
             TC_LOG_ERROR("module.playerbot", " [{}] DISABLED due to ValidatePointers() returning false", m_managerName);
@@ -115,7 +115,7 @@ namespace Playerbot
             TC_LOG_ERROR("module.playerbot", " [{}] ValidatePointers() passed", m_managerName);
 
         // Handle initialization on first update
-        if (!m_initialized.load(::std::memory_order_acquire))
+    if (!m_initialized.load(::std::memory_order_acquire))
         {
             if (!OnInitialize())
             {
@@ -137,7 +137,7 @@ namespace Playerbot
         bool shouldUpdate = false;
 
         // Priority 1: Force update requested
-        if (m_forceUpdate.exchange(false, ::std::memory_order_acq_rel))
+    if (m_forceUpdate.exchange(false, ::std::memory_order_acq_rel))
         {
             shouldUpdate = true;
             TC_LOG_DEBUG("module.playerbot", "[{}] Forced update for bot {}",
@@ -156,7 +156,7 @@ namespace Playerbot
         }
 
         // Fast return if no update needed (<0.001ms when throttled)
-        if (!shouldUpdate)
+    if (!shouldUpdate)
             return;
 
         // Perform the actual update
@@ -200,13 +200,13 @@ namespace Playerbot
         uint32 updateDuration = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
 
         // Performance monitoring - check for slow updates
-        if (updateDuration > m_slowUpdateThreshold)
+    if (updateDuration > m_slowUpdateThreshold)
         {
             m_consecutiveSlowUpdates++;
             m_totalSlowUpdates++;
 
             // Log warning for slow updates
-            if (m_consecutiveSlowUpdates == 1)
+    if (m_consecutiveSlowUpdates == 1)
             {
                 TC_LOG_DEBUG("module.playerbot", "[{}] Slow update detected for bot {}: {}ms (threshold: {}ms)",
                             m_managerName, m_bot->GetName(), updateDuration, m_slowUpdateThreshold);
@@ -218,7 +218,7 @@ namespace Playerbot
             }
 
             // Auto-adjust update interval if consistently slow
-            if (m_consecutiveSlowUpdates >= 10 && m_updateInterval < 5000)
+    if (m_consecutiveSlowUpdates >= 10 && m_updateInterval < 5000)
             {
                 uint32 newInterval = ::std::min(m_updateInterval * 2, 5000u);
                 TC_LOG_INFO("module.playerbot", "[{}] Auto-adjusting update interval from {}ms to {}ms for bot {} due to performance",
@@ -230,7 +230,7 @@ namespace Playerbot
         else
         {
             // Reset consecutive slow update counter on fast update
-            if (m_consecutiveSlowUpdates > 0)
+    if (m_consecutiveSlowUpdates > 0)
             {
                 TC_LOG_DEBUG("module.playerbot", "[{}] Performance recovered for bot {} after {} slow updates",
                             m_managerName, m_bot->GetName(), m_consecutiveSlowUpdates);
@@ -285,7 +285,7 @@ namespace Playerbot
         // Check bot pointer validity
 
         // Check if bot is in world
-        if (!m_bot->IsInWorld())
+    if (!m_bot->IsInWorld())
         {
             if (shouldLog)
             {
@@ -296,7 +296,7 @@ namespace Playerbot
         }
 
         // Check AI pointer validity
-        if (!m_ai)
+    if (!m_ai)
         {
             TC_LOG_ERROR("module.playerbot", " [{}] ValidatePointers FAILED: AI pointer is null for bot {}", m_managerName, m_bot->GetName());
             return false;
@@ -344,7 +344,7 @@ namespace Playerbot
     bool BehaviorManager::Initialize()
     {
         // Validate pointers before initialization
-        if (!ValidatePointers())
+    if (!ValidatePointers())
         {
             TC_LOG_ERROR("module.playerbot", "[{}] Initialize() failed: Invalid bot or AI pointers", m_managerName);
             return false;

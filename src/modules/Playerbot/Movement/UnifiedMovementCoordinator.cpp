@@ -315,7 +315,7 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
     {
         Position adjustedPos = _formation->AdjustMovementForFormation(posResult.targetPosition);
         // Recalculate path if position was adjusted
-        if (adjustedPos.GetExactDist(&posResult.targetPosition) > 2.0f)
+    if (adjustedPos.GetExactDist(&posResult.targetPosition) > 2.0f)
         {
             _pathfinding->CalculatePath(bot, adjustedPos, path, false);
         }

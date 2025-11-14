@@ -41,7 +41,7 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
         if (!IsPlayerbotEnabled())
         {
             // Module not ready yet, retry every 100 updates
-            if (++initRetryCount % 100 == 0)
+    if (++initRetryCount % 100 == 0)
             {
                 TC_LOG_DEBUG("module.playerbot.script", "PlayerbotWorldScript: Waiting for Playerbot module initialization (attempt {})", initRetryCount);
             }
@@ -50,7 +50,7 @@ void PlayerbotWorldScript::OnUpdate(uint32 diff)
 
         // Module is now ready, but wait for database to be fully stable
         // Give it 100 update cycles (~10 seconds) before attempting database queries
-        if (++updatesSinceModuleReady < 100)
+    if (++updatesSinceModuleReady < 100)
         {
             if (updatesSinceModuleReady == 1)
             {
@@ -170,7 +170,7 @@ void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMas
     try
     {
         // Ensure clean shutdown of all bot systems
-        if (Playerbot::sBotSpawner)
+    if (Playerbot::sBotSpawner)
         {
             TC_LOG_INFO("module.playerbot.script", "Despawning all active bots for shutdown");
             Playerbot::sBotSpawner->DespawnAllBots();
@@ -181,7 +181,7 @@ void PlayerbotWorldScript::OnShutdownInitiate(ShutdownExitCode code, ShutdownMas
         Playerbot::PlayerBotHooks::Shutdown();
 
         // Log final performance metrics
-        if (_updateCount > 0)
+    if (_updateCount > 0)
         {
             float avgUpdateTime = static_cast<float>(_totalUpdateTime) / _updateCount;
             TC_LOG_INFO("module.playerbot.script",
@@ -236,7 +236,7 @@ void PlayerbotWorldScript::UpdateBotSystems(uint32 diff)
             // CRITICAL FIX: Process deferred packets on main thread (spell 49416 crash fix)
             // Bot worker threads classify packets - race-prone packets (spells, items, combat)
             // are deferred here for serialization with Map::Update() to prevent aura race conditions
-            if (Playerbot::sBotWorldSessionMgr->IsEnabled())
+    if (Playerbot::sBotWorldSessionMgr->IsEnabled())
             {
                 uint32 processed = Playerbot::sBotWorldSessionMgr->ProcessAllDeferredPackets();
                 if (processed > 0 && shouldLog)
@@ -309,7 +309,7 @@ void PlayerbotWorldScript::UpdateMetrics(uint32 updateTime)
                 _updateCount, avgUpdateTime);
 
             // Performance warning if average is too high
-            if (avgUpdateTime > 50.0f) // 50ms average threshold
+    if (avgUpdateTime > 50.0f) // 50ms average threshold
             {
                 TC_LOG_WARN("module.playerbot.script",
                     "PlayerbotWorldScript: High average update time: {:.2f}ms", avgUpdateTime);

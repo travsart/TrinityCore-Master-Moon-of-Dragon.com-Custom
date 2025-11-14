@@ -78,7 +78,7 @@ namespace Playerbot
 
             case QuestSelectionStrategy::Strategy::GROUP:
                 // Prioritize group quests (has suggested players > 1)
-                if (quest->GetSuggestedPlayers() > 1)
+    if (quest->GetSuggestedPlayers() > 1)
                     score = 100.0f;
                 else
                     score = 50.0f;
@@ -140,7 +140,7 @@ namespace Playerbot
         m_completableQuests.clear();
 
         // Cache all quest statuses
-        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
         {
             uint32 questId = bot->GetQuestSlotQuestId(slot);
             if (questId == 0)
@@ -156,7 +156,7 @@ namespace Playerbot
             m_questCache[questId] = cached;
 
             // Track active and completable quests
-            if (status == QUEST_STATUS_INCOMPLETE)
+    if (status == QUEST_STATUS_INCOMPLETE)
                 m_activeQuests.push_back(questId);
             else if (status == QUEST_STATUS_COMPLETE)
                 m_completableQuests.push_back(questId);
@@ -247,7 +247,7 @@ namespace Playerbot
         // elapsed is the time since last OnUpdate call
 
         // Update quest cache periodically
-        if (GameTime::GetGameTimeMS() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
+    if (GameTime::GetGameTimeMS() - m_cache->GetLastUpdateTime() > QUEST_CACHE_TTL)
             UpdateQuestCache();
 
         // Update quest phase state machine
@@ -257,7 +257,7 @@ namespace Playerbot
         UpdateQuestProgress();
 
         // Scan for quest givers periodically
-        if (GameTime::GetGameTimeMS() - m_lastQuestGiverScan > m_questGiverScanInterval)
+    if (GameTime::GetGameTimeMS() - m_lastQuestGiverScan > m_questGiverScanInterval)
         {
             ScanForQuests();
             m_lastQuestGiverScan = GameTime::GetGameTimeMS();
@@ -291,27 +291,27 @@ namespace Playerbot
             return false;
 
         // Check if already on quest
-        if (GetBot()->GetQuestStatus(questId) != QUEST_STATUS_NONE)
+    if (GetBot()->GetQuestStatus(questId) != QUEST_STATUS_NONE)
             return false;
 
         // Check if quest is ignored
-        if (m_ignoredQuests.find(questId) != m_ignoredQuests.end())
+    if (m_ignoredQuests.find(questId) != m_ignoredQuests.end())
             return false;
 
         // Check quest log space
-        if (GetQuestLogSpace() == 0)
+    if (GetQuestLogSpace() == 0)
             return false;
 
         // Check level requirements
-        if (IsQuestTooLowLevel(quest) || IsQuestTooHighLevel(quest))
+    if (IsQuestTooLowLevel(quest) || IsQuestTooHighLevel(quest))
             return false;
 
         // Check if it's a daily quest
-        if (quest->IsDaily() && !m_acceptDailies)
+    if (quest->IsDaily() && !m_acceptDailies)
             return false;
 
         // Check if it's a dungeon/raid quest
-        if (quest->IsRaidQuest(DIFFICULTY_NORMAL) && !m_acceptDungeonQuests)
+    if (quest->IsRaidQuest(DIFFICULTY_NORMAL) && !m_acceptDungeonQuests)
             return false;
 
         // CRITICAL: Use QuestAcceptanceManager for CORRECT prerequisite checking
@@ -327,7 +327,7 @@ namespace Playerbot
             return false;
 
         // Find quest giver if not provided
-        if (!questGiver)
+    if (!questGiver)
         {
             for (auto const& giver : m_questGivers)
             {
@@ -350,7 +350,7 @@ namespace Playerbot
         }
 
         // Move to quest giver if too far
-        if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
+    if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
         {
             if (!MoveToQuestGiver(questGiver))
                 return false;
@@ -382,7 +382,7 @@ namespace Playerbot
             return false;
 
         // Check if quest can be completed
-        if (!GetBot()->CanCompleteQuest(questId))
+    if (!GetBot()->CanCompleteQuest(questId))
             return false;
 
         // Complete the quest objectives
@@ -401,11 +401,11 @@ namespace Playerbot
             return false;
 
         // Check if quest can be rewarded
-        if (!GetBot()->CanRewardQuest(quest, true))
+    if (!GetBot()->CanRewardQuest(quest, true))
             return false;
 
         // Find quest giver if not provided
-        if (!questGiver)
+    if (!questGiver)
         {
             for (auto const& giver : m_questGivers)
             {
@@ -425,7 +425,7 @@ namespace Playerbot
                 if (Creature* creature = obj->ToCreature())
                 {
                     // Check if this creature is involved in the quest
-                    for (uint32 involvedQuestId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
+    for (uint32 involvedQuestId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
                     {
                         if (involvedQuestId == questId)
                         {
@@ -440,14 +440,14 @@ namespace Playerbot
         }
 
         // Move to quest giver if too far
-        if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
+    if (questGiver && GetBot()->GetDistance(questGiver) > QUEST_INTERACT_DISTANCE)
         {
             if (!MoveToQuestGiver(questGiver))
                 return false;
         }
 
         // Select reward if not specified
-        if (rewardChoice == 0)
+    if (rewardChoice == 0)
             rewardChoice = SelectBestReward(quest);
 
         // Turn in the quest - rewardChoice is 0-based index, need to get actual item
@@ -463,7 +463,7 @@ namespace Playerbot
         GetBot()->RewardQuest(quest, rewardType, actualRewardId, questGiver, true);
 
         // Update progress tracking
-        if (auto it = m_questProgress.find(questId); it != m_questProgress.end())
+    if (auto it = m_questProgress.find(questId); it != m_questProgress.end())
         {
             uint32 timeSpent = GameTime::GetGameTimeMS() - it->second.startTime;
             RecordQuestTime(questId, timeSpent);
@@ -491,7 +491,7 @@ namespace Playerbot
             return false;
 
         // Check if we have the quest
-        if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_NONE)
+    if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_NONE)
             return false;
 
         // Abandon the quest
@@ -572,8 +572,7 @@ namespace Playerbot
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : creatures)
+    for (Creature* creature : creatures)
         {
             if (!creature || !creature->IsQuestGiver())
                 continue;
@@ -585,7 +584,7 @@ namespace Playerbot
             info.lastCheckTime = GameTime::GetGameTimeMS();
 
             // Check available quests
-            for (uint32 questId : sObjectMgr->GetCreatureQuestRelations(creature->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetCreatureQuestRelations(creature->GetEntry()))
             {
                 if (CanAcceptQuest(questId))
                 {
@@ -595,7 +594,7 @@ namespace Playerbot
             }
 
             // Check completable quests
-            for (uint32 questId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetCreatureQuestInvolvedRelations(creature->GetEntry()))
             {
                 if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
@@ -641,8 +640,7 @@ namespace Playerbot
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
-        for (GameObject* object : objects)
+    for (GameObject* object : objects)
         {
             if (!object)
                 continue;
@@ -660,7 +658,7 @@ namespace Playerbot
             info.lastCheckTime = GameTime::GetGameTimeMS();
 
             // Check available quests
-            for (uint32 questId : sObjectMgr->GetGOQuestRelations(object->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetGOQuestRelations(object->GetEntry()))
             {
                 if (CanAcceptQuest(questId))
                 {
@@ -670,7 +668,7 @@ namespace Playerbot
             }
 
             // Check completable quests
-            for (uint32 questId : sObjectMgr->GetGOQuestInvolvedRelations(object->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetGOQuestInvolvedRelations(object->GetEntry()))
             {
                 if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
@@ -687,7 +685,7 @@ namespace Playerbot
     void QuestManager::ScanItemQuests()
     {
         // Check inventory for quest starting items
-        for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
         {
             Item* item = GetBot()->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
             if (!item)
@@ -705,7 +703,7 @@ namespace Playerbot
         }
 
         // Check bags
-        for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
         {
             Bag* pBag = GetBot()->GetBagByPos(bag);
             if (!pBag)
@@ -809,11 +807,11 @@ namespace Playerbot
         score += priority.groupBonus * 2.0f;      // Group quests when in group
 
         // Apply modifiers
-        if (priority.isDaily)
+    if (priority.isDaily)
             score *= 1.2f;  // Bonus for dailies
-        if (priority.isDungeon && !m_acceptDungeonQuests)
+    if (priority.isDungeon && !m_acceptDungeonQuests)
             score *= 0.1f;  // Penalty if not accepting dungeon quests
-        if (priority.isGroupQuest && m_prioritizeGroupQuests && GetBot()->GetGroup())
+    if (priority.isGroupQuest && m_prioritizeGroupQuests && GetBot()->GetGroup())
             score *= 1.5f;  // Bonus for group quests when grouped
 
         priority.score = score;
@@ -853,7 +851,7 @@ namespace Playerbot
         float totalValue = 0.0f;
 
         // Check reward items
-        for (uint8 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
+    for (uint8 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
         {
             if (uint32 itemId = quest->RewardItemId[i])
             {
@@ -866,7 +864,7 @@ namespace Playerbot
         }
 
         // Check choice items
-        for (uint8 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+    for (uint8 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
         {
             if (uint32 itemId = quest->RewardChoiceItemId[i])
             {
@@ -890,7 +888,7 @@ namespace Playerbot
         float totalRep = 0.0f;
 
         // Check reputation rewards
-        for (uint8 i = 0; i < QUEST_REWARD_REPUTATIONS_COUNT; ++i)
+    for (uint8 i = 0; i < QUEST_REWARD_REPUTATIONS_COUNT; ++i)
         {
             if (quest->RewardFactionId[i])
             {
@@ -937,17 +935,17 @@ namespace Playerbot
         int32 levelDiff = questLevel - botLevel;
 
         // Perfect level match = 100 score
-        if (levelDiff == 0)
+    if (levelDiff == 0)
             return 100.0f;
 
         // Within good range = high score
-        if (levelDiff >= -2 && levelDiff <= 2)
+    if (levelDiff >= -2 && levelDiff <= 2)
             return 80.0f - (::std::abs(levelDiff) * 10.0f);
 
         // Outside optimal range
-        if (levelDiff < -5)
+    if (levelDiff < -5)
             return ::std::max(0.0f, 30.0f + levelDiff);  // Too low level
-        if (levelDiff > 5)
+    if (levelDiff > 5)
             return ::std::max(0.0f, 30.0f - levelDiff);  // Too high level
 
         return 50.0f - (::std::abs(levelDiff) * 5.0f);
@@ -959,7 +957,7 @@ namespace Playerbot
             return 0.0f;
 
         // Check if group quest (has suggested players > 1)
-        if (quest->GetSuggestedPlayers() > 1)
+    if (quest->GetSuggestedPlayers() > 1)
             return 50.0f;
 
         // Check if other group members have this quest
@@ -1028,7 +1026,7 @@ namespace Playerbot
         float score = 0.0f;
 
         // Base score from quality
-        switch (itemTemplate->GetQuality())
+    switch (itemTemplate->GetQuality())
         {
             case ITEM_QUALITY_POOR:     score = 1.0f; break;
             case ITEM_QUALITY_NORMAL:   score = 5.0f; break;
@@ -1039,7 +1037,7 @@ namespace Playerbot
         }
 
         // Check if item is useful for class
-        if (IsRewardUseful(itemTemplate))
+    if (IsRewardUseful(itemTemplate))
             score *= 2.0f;
 
         // Add vendor price component
@@ -1056,7 +1054,7 @@ namespace Playerbot
             return false;
 
         // Check if it's equipment
-        if (itemTemplate->GetClass() != ITEM_CLASS_WEAPON && itemTemplate->GetClass() != ITEM_CLASS_ARMOR)
+    if (itemTemplate->GetClass() != ITEM_CLASS_WEAPON && itemTemplate->GetClass() != ITEM_CLASS_ARMOR)
             return true;  // Non-equipment is always potentially useful
 
         // Check class restrictions
@@ -1094,7 +1092,7 @@ namespace Playerbot
             UpdateObjectiveProgress(questId);
 
             // Check if quest is complete
-            if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+    if (GetBot()->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
             {
                 progress.isComplete = true;
                 progress.completionPercent = 100.0f;
@@ -1250,7 +1248,7 @@ namespace Playerbot
             return;
 
         // Share all shareable quests with group
-        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SLOT; ++slot)
         {
             uint32 questId = GetBot()->GetQuestSlotQuestId(slot);
             if (questId == 0)
@@ -1261,7 +1259,7 @@ namespace Playerbot
                 continue;
 
             // Share quest with group members
-            if (WorldSession* session = GetBot()->GetSession())
+    if (WorldSession* session = GetBot()->GetSession())
             {
                 // Quest sharing is handled internally by the server when appropriate
                 // For bots, we skip the packet-based approach
@@ -1323,7 +1321,7 @@ namespace Playerbot
     void QuestManager::ProcessIdlePhase()
     {
         // Check if we have completable quests
-        if (!m_completableQuests.empty())
+    if (!m_completableQuests.empty())
         {
             m_currentPhase = QuestPhase::COMPLETING;
             m_phaseTimer = 0;
@@ -1331,7 +1329,7 @@ namespace Playerbot
         }
 
         // Check if we need to accept new quests
-        if (GetQuestLogSpace() > 5 && !m_availableQuests.empty())
+    if (GetQuestLogSpace() > 5 && !m_availableQuests.empty())
         {
             m_currentPhase = QuestPhase::ACCEPTING;
             m_phaseTimer = 0;
@@ -1339,7 +1337,7 @@ namespace Playerbot
         }
 
         // Check if we need to manage quest log
-        if (GetQuestLogSpace() < 3)
+    if (GetQuestLogSpace() < 3)
         {
             m_currentPhase = QuestPhase::MANAGING;
             m_phaseTimer = 0;
@@ -1347,7 +1345,7 @@ namespace Playerbot
         }
 
         // Continue working on active quests
-        if (!m_cache->GetActiveQuests().empty())
+    if (!m_cache->GetActiveQuests().empty())
         {
             m_currentPhase = QuestPhase::PROGRESSING;
             m_phaseTimer = 0;
@@ -1455,7 +1453,7 @@ namespace Playerbot
                 continue;
 
             // Don't abandon nearly complete quests
-            if (GetQuestCompletionPercent(questId) > 80.0f)
+    if (GetQuestCompletionPercent(questId) > 80.0f)
                 continue;
 
             QuestPriority priority = EvaluateQuestPriority(quest);
@@ -1489,7 +1487,7 @@ namespace Playerbot
         AbandonLowPriorityQuests();
 
         // Accept new quests if space available
-        if (GetQuestLogSpace() > 3)
+    if (GetQuestLogSpace() > 3)
             AcceptBestQuests();
     }
 
@@ -1500,7 +1498,7 @@ namespace Playerbot
             return false;
 
         // Never abandon nearly complete quests
-        if (GetQuestCompletionPercent(questId) > 75.0f)
+    if (GetQuestCompletionPercent(questId) > 75.0f)
             return false;
 
         // Check if quest has been attempted too many times
@@ -1509,11 +1507,11 @@ namespace Playerbot
             return true;
 
         // Check if quest is too low level
-        if (IsQuestTooLowLevel(quest))
+    if (IsQuestTooLowLevel(quest))
             return true;
 
         // Check if quest has taken too long
-        if (it != m_questProgress.end())
+    if (it != m_questProgress.end())
         {
             uint32 timeSpent = GameTime::GetGameTimeMS() - it->second.startTime;
             if (timeSpent > 30 * MINUTE * IN_MILLISECONDS)  // 30 minutes
@@ -1548,14 +1546,14 @@ namespace Playerbot
             return false;
 
         // Check previous quest requirements
-        if (quest->GetPrevQuestId())
+    if (quest->GetPrevQuestId())
         {
             if (GetBot()->GetQuestRewardStatus(::std::abs(quest->GetPrevQuestId())) != (quest->GetPrevQuestId() > 0))
                 return false;
         }
 
         // Check next quest in chain
-        if (quest->GetNextQuestId())
+    if (quest->GetNextQuestId())
         {
             if (GetBot()->GetQuestStatus(::std::abs(static_cast<int32>(quest->GetNextQuestId()))) != QUEST_STATUS_NONE)
                 return false;
@@ -1570,14 +1568,14 @@ namespace Playerbot
             return false;
 
         // Check race/class requirements
-        if (!quest->GetAllowableRaces().IsEmpty() && !quest->GetAllowableRaces().HasRace(GetBot()->GetRace()))
+    if (!quest->GetAllowableRaces().IsEmpty() && !quest->GetAllowableRaces().HasRace(GetBot()->GetRace()))
             return false;
 
         if (quest->GetAllowableClasses() && !(quest->GetAllowableClasses() & GetBot()->GetClassMask()))
             return false;
 
         // Check skill requirements
-        if (quest->GetRequiredSkill())
+    if (quest->GetRequiredSkill())
         {
             if (!GetBot()->HasSkill(quest->GetRequiredSkill()))
                 return false;
@@ -1587,14 +1585,14 @@ namespace Playerbot
         }
 
         // Check minimum reputation requirements
-        if (quest->GetRequiredMinRepFaction())
+    if (quest->GetRequiredMinRepFaction())
         {
             if (GetBot()->GetReputationMgr().GetReputation(quest->GetRequiredMinRepFaction()) < quest->GetRequiredMinRepValue())
                 return false;
         }
 
         // Check maximum reputation requirements
-        if (quest->GetRequiredMaxRepFaction())
+    if (quest->GetRequiredMaxRepFaction())
         {
             if (GetBot()->GetReputationMgr().GetReputation(quest->GetRequiredMaxRepFaction()) > quest->GetRequiredMaxRepValue())
                 return false;
@@ -1617,7 +1615,7 @@ namespace Playerbot
     void QuestManager::RecordQuestTime(uint32 questId, uint32 timeSpent)
     {
         // Update average quest completion time
-        if (m_stats.questsCompleted > 0)
+    if (m_stats.questsCompleted > 0)
         {
             m_stats.avgTimePerQuest = (m_stats.avgTimePerQuest * m_stats.questsCompleted + timeSpent) /
                                       (m_stats.questsCompleted + 1);
@@ -1644,7 +1642,7 @@ namespace Playerbot
             m_stats.totalGoldEarned += GetBot()->GetQuestMoneyReward(quest);
 
             // Update quest type counters
-            if (quest->IsDaily())
+    if (quest->IsDaily())
                 m_stats.dailyQuestsCompleted++;
             if (quest->IsRaidQuest(DIFFICULTY_NORMAL))
                 m_stats.dungeonQuestsCompleted++;

@@ -87,7 +87,7 @@ Unit* CrowdControlManager::GetPriorityTarget()
     for (Unit* enemy : enemies)
     {
         // Skip already CC'd targets
-        if (IsTargetCCd(enemy))
+    if (IsTargetCCd(enemy))
             continue;
 
         float priority = CalculateCCPriority(enemy);
@@ -193,7 +193,7 @@ Player* CrowdControlManager::GetChainCCBot(Unit* target)
     if (group)
     {
         // Find another player with CC
-        for (GroupReference& ref : group->GetMembers())
+    for (GroupReference& ref : group->GetMembers())
         {
             Player* member = ref.GetSource();
             if (!member || member == cc->appliedBy)
@@ -404,7 +404,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
 
         // Check spell mechanic/effect to determine which creature types it works on
         // Polymorph-like spells: work on beasts, humanoids, critters
-        if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
+    if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
             spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_CONFUSE))
         {
             if (creatureType != CREATURE_TYPE_BEAST &&
@@ -416,7 +416,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Banish: works on demons and elementals
-        if (spellInfo->GetMechanic() == MECHANIC_BANISH)
+    if (spellInfo->GetMechanic() == MECHANIC_BANISH)
         {
             if (creatureType != CREATURE_TYPE_DEMON &&
                 creatureType != CREATURE_TYPE_ELEMENTAL)
@@ -426,7 +426,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Shackle: works on undead
-        if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
+    if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
             spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_SHAPESHIFT))
         {
             if (creatureType != CREATURE_TYPE_UNDEAD)
@@ -436,7 +436,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Fear: works on humanoids and beasts (generally)
-        if (spellInfo->GetMechanic() == MECHANIC_FEAR)
+    if (spellInfo->GetMechanic() == MECHANIC_FEAR)
         {
             if (creatureType == CREATURE_TYPE_MECHANICAL ||
                 creatureType == CREATURE_TYPE_UNDEAD ||

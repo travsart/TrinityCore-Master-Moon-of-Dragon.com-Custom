@@ -653,7 +653,7 @@ void ThreatCoordinator::UpdateBotAssignments()
             continue;
 
         // Update current threat levels
-        for (const auto& targetGuid : _groupStatus.activeTargets)
+    for (const auto& targetGuid : _groupStatus.activeTargets)
         {
             /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* target = ObjectAccessor::GetUnit(*ObjectAccessor::FindPlayer(botGuid), targetGuid);
             if (!target)
@@ -690,7 +690,7 @@ void ThreatCoordinator::GenerateThreatResponses()
             continue;
 
         // Tank: Generate taunt if needed
-        if (assignment.assignedRole == ThreatRole::TANK)
+    if (assignment.assignedRole == ThreatRole::TANK)
         {
             if (assignment.currentThreatPercent < 100.0f && _groupStatus.requiresTaunt)
             {
@@ -814,7 +814,7 @@ void ThreatCoordinator::InitiateEmergencyProtocol()
 
         ObjectGuid victimGuid = victim->ToPlayer()->GetGUID();
         // If not on tank, execute emergency taunt
-        if (victimGuid != _primaryTank && victimGuid != _offTank)
+    if (victimGuid != _primaryTank && victimGuid != _offTank)
         {
             ExecuteEmergencyTaunt(target);
         }

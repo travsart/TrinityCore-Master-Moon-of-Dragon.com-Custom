@@ -131,7 +131,7 @@ void InventoryManager::Update(uint32 diff)
         _lastBagOrganize = GameTime::GetGameTimeMS();
 
         // Destroy vendor trash if still full
-        if (GetBagSpace() < _minFreeSlots)
+    if (GetBagSpace() < _minFreeSlots)
         {
             uint32 destroyed = DestroyItemsForSpace(_minFreeSlots - GetBagSpace());
             _metrics.itemsDestroyed += destroyed;
@@ -165,7 +165,7 @@ uint32 InventoryManager::AutoLoot(float maxRange)
     for (ObjectGuid const& guid : lootables)
     {
         // Skip recently looted objects
-        if (_lootedObjects.find(guid) != _lootedObjects.end())
+    if (_lootedObjects.find(guid) != _lootedObjects.end())
             continue;
 
         if (guid.IsCreature())
@@ -206,7 +206,7 @@ uint32 InventoryManager::AutoLoot(float maxRange)
         }
 
         // Stop if bags are full
-        if (IsBagsFull())
+    if (IsBagsFull())
             break;
     }
 
@@ -274,7 +274,7 @@ uint32 InventoryManager::ProcessLoot(Loot* loot)
             continue;
 
         // Check if we should loot this item
-        if (!ShouldLootItem(lootItem.itemid))
+    if (!ShouldLootItem(lootItem.itemid))
             continue;
 
         // Check if we have space
@@ -284,7 +284,7 @@ uint32 InventoryManager::ProcessLoot(Loot* loot)
         if (msg != EQUIP_ERR_OK)
         {
             // Try to make space if bags are full
-            if (msg == EQUIP_ERR_INV_FULL || msg == EQUIP_ERR_BAG_FULL)
+    if (msg == EQUIP_ERR_INV_FULL || msg == EQUIP_ERR_BAG_FULL)
             {
                 uint32 freed = DestroyItemsForSpace(1);
                 if (freed > 0)
@@ -370,7 +370,7 @@ uint32 InventoryManager::OptimizeEquipment()
             continue;
 
         // Check if this item is an equipment upgrade
-        if (CanEquipUpgrade(item))
+    if (CanEquipUpgrade(item))
         {
             if (EquipItem(item))
             {
@@ -666,7 +666,7 @@ uint32 InventoryManager::ConsolidateStacks()
             [](Item* a, Item* b) { return a->GetCount() > b->GetCount(); });
 
         // Merge smaller stacks into larger ones
-        for (size_t i = 0; i < items.size() - 1; ++i)
+    for (size_t i = 0; i < items.size() - 1; ++i)
         {
             Item* targetStack = items[i];
             uint32 maxStack = targetStack->GetTemplate()->GetMaxStackSize();
@@ -740,7 +740,7 @@ void InventoryManager::SortBags()
     for (auto& [item, score] : itemsWithScore)
     {
         // Skip if already in correct position
-        if (item->GetBagSlot() == targetBag && item->GetSlot() == targetSlot)
+    if (item->GetBagSlot() == targetBag && item->GetSlot() == targetSlot)
         {
             targetSlot++;
             if (targetSlot >= INVENTORY_SLOT_ITEM_END && targetBag == INVENTORY_SLOT_BAG_0)
@@ -857,11 +857,11 @@ uint32 InventoryManager::DestroyItemsForSpace(uint32 slots)
             continue;
 
         // Never destroy quest items
-        if (proto->GetStartQuest() > 0 || proto->GetBonding() == BIND_QUEST)
+    if (proto->GetStartQuest() > 0 || proto->GetBonding() == BIND_QUEST)
             continue;
 
         // Never destroy items in ignore list
-        if (_ignoredItems.find(proto->GetId()) != _ignoredItems.end())
+    if (_ignoredItems.find(proto->GetId()) != _ignoredItems.end())
             continue;
 
         // Calculate destroy priority (lower = destroy first)
@@ -929,7 +929,7 @@ uint32 InventoryManager::SellVendorTrash(Creature* vendor)
     else
     {
         // Just calculate potential gold value
-        for (Item* item : itemsToSell)
+    for (Item* item : itemsToSell)
         {
             totalGold += item->GetTemplate()->GetSellPrice() * item->GetCount();
         }
@@ -1092,7 +1092,7 @@ bool InventoryManager::UseFood()
             continue;
 
         // Check if this is a food item by checking its spells
-        for (auto const* effect : proto->Effects)
+    for (auto const* effect : proto->Effects)
         {
             if (!effect || effect->SpellID <= 0)
                 continue;
@@ -1102,7 +1102,7 @@ bool InventoryManager::UseFood()
                 continue;
 
             // Check if spell has a health restoration effect
-            for (SpellEffectInfo const& spellEffect : spellInfo->GetEffects())
+    for (SpellEffectInfo const& spellEffect : spellInfo->GetEffects())
             {
                 if (spellEffect.ApplyAuraName == SPELL_AURA_PERIODIC_HEAL ||
                     spellEffect.ApplyAuraName == SPELL_AURA_OBS_MOD_HEALTH)
@@ -1132,7 +1132,7 @@ bool InventoryManager::UseDrink()
             continue;
 
         // Check if this is a drink item by checking its spells
-        for (auto const* effect : proto->Effects)
+    for (auto const* effect : proto->Effects)
         {
             if (!effect || effect->SpellID <= 0)
                 continue;
@@ -1142,7 +1142,7 @@ bool InventoryManager::UseDrink()
                 continue;
 
             // Check if spell has a mana restoration effect
-            for (SpellEffectInfo const& spellEffect : spellInfo->GetEffects())
+    for (SpellEffectInfo const& spellEffect : spellInfo->GetEffects())
             {
                 if (spellEffect.ApplyAuraName == SPELL_AURA_PERIODIC_MANA_LEECH ||
                     spellEffect.ApplyAuraName == SPELL_AURA_OBS_MOD_POWER)

@@ -280,7 +280,7 @@ void BotSpawner::Update(uint32 diff)
             canSpawn = _orchestrator.ShouldSpawnNext();
 
             // Check throttler allows spawning (checks circuit breaker internally)
-            if (canSpawn)
+    if (canSpawn)
                 canSpawn = _throttler.CanSpawnNow();
 
             if (!canSpawn)
@@ -329,7 +329,7 @@ void BotSpawner::Update(uint32 diff)
 
             // TBB concurrent_queue: Use try_pop() instead of front()/pop()
             // Lock-free operation - multiple threads can pop simultaneously
-            for (uint32 i = 0; i < batchSize; ++i)
+    for (uint32 i = 0; i < batchSize; ++i)
             {
                 SpawnRequest request;
                 if (_spawnQueue.try_pop(request))
@@ -346,14 +346,14 @@ void BotSpawner::Update(uint32 diff)
         }
 
         // Process requests outside the lock
-        for (SpawnRequest const& request : requestBatch)
+    for (SpawnRequest const& request : requestBatch)
         {
             bool spawnSuccess = SpawnBotInternal(request);
 
             // ================================================================
             // Phase 2: Record spawn result for circuit breaker and throttler
             // ================================================================
-            if (_phase2Initialized)
+    if (_phase2Initialized)
             {
                 if (spawnSuccess)
                 {
@@ -402,7 +402,7 @@ void BotSpawner::Update(uint32 diff)
         else
         {
             // Check if this is the first Update() call and we already did initial calculation in Initialize()
-            if (_initialCalculationDone)
+    if (_initialCalculationDone)
             {
                 TC_LOG_INFO("module.playerbot.spawner", "*** STATIC SPAWNING CYCLE: Spawning to population targets (initial calculation already done)");
                 SpawnToPopulationTarget();
@@ -537,7 +537,7 @@ uint32 BotSpawner::SpawnBots(::std::vector<SpawnRequest> const& requests)
         if (_phase2Initialized)
         {
             // Phase 2 ENABLED: Use priority queue with priority assignment
-            for (SpawnRequest const& request : validRequests)
+    for (SpawnRequest const& request : validRequests)
             {
                 // Convert SpawnRequest to PrioritySpawnRequest
                 PrioritySpawnRequest prioRequest{};
@@ -549,7 +549,7 @@ uint32 BotSpawner::SpawnBots(::std::vector<SpawnRequest> const& requests)
                 prioRequest.originalRequest = request;  // Preserve full request for SpawnBotInternal()
 
                 // Generate reason string for debugging/metrics
-                switch (request.type)
+    switch (request.type)
                 {
                     case SpawnRequest::SPECIFIC_CHARACTER:
                         prioRequest.reason = "SPECIFIC_CHARACTER";
@@ -747,7 +747,6 @@ SpawnPriority BotSpawner::DeterminePriority(SpawnRequest const& request) const
     // - Consider zone population pressure
     // - Implement dynamic priority adjustment based on server load
     // ========================================================================
-
     switch (request.type)
     {
         case SpawnRequest::SPECIFIC_CHARACTER:
@@ -894,7 +893,7 @@ void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, ::std
         query << "SELECT guid, level, race, class FROM characters WHERE account = " << accountId;
 
         // Add filters if specified in SpawnRequest
-        if (request.minLevel > 0 || request.maxLevel > 0)
+    if (request.minLevel > 0 || request.maxLevel > 0)
         {
             if (request.minLevel > 0 && request.maxLevel > 0)
                 query << " AND level BETWEEN " << static_cast<uint32>(request.minLevel)
@@ -1010,7 +1009,7 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
         }
 
         // Handle auto-character creation if enabled and no characters found
-        if (availableCharacters.empty() && ::PlayerbotConfig::instance()->GetBool("Playerbot.AutoCreateCharacters", true))
+    if (availableCharacters.empty() && ::PlayerbotConfig::instance()->GetBool("Playerbot.AutoCreateCharacters", true))
         {
             TC_LOG_DEBUG("module.playerbot.spawner",
                 "No characters found for account {}, attempting to create new character", accountId);
@@ -1429,7 +1428,7 @@ void BotSpawner::SpawnToPopulationTarget()
     {
 
         // CRITICAL FIX: If no zones are populated, add test zones
-        if (_zonePopulations.empty())
+    if (_zonePopulations.empty())
         {
             // Add some test zones with targets
             ZonePopulation testZone1;
@@ -1795,7 +1794,7 @@ void BotSpawner::CheckAndSpawnForPlayers()
                 realPlayerSessions, currentBotCount, targetBotCount);
 
             // Mark that we've triggered spawning for the first player
-            if (!_firstPlayerSpawned.load() && realPlayerSessions > 0)
+    if (!_firstPlayerSpawned.load() && realPlayerSessions > 0)
             {
                 _firstPlayerSpawned.store(true);
                 TC_LOG_INFO("module.playerbot.spawner", " First player detected - initiating initial bot spawn");

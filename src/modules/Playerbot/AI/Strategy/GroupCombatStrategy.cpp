@@ -68,7 +68,6 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     static uint32 lastDiagLog = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastDiagLog > 2000); // Every 2 seconds
-
     if (!ai || !ai->GetBot())
         return;
 
@@ -112,7 +111,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         // If group member has an alive target they're attacking, bot should assist
         // Don't use IsValidAttackTarget() - it fails for neutral mobs
         // The player is already fighting it, so it's valid for the bot to attack
-        if (target && target->IsAlive())
+    if (target && target->IsAlive())
         {
             // Set target
             bot->SetTarget(target->GetGUID());
@@ -123,7 +122,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
             // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
             // bot->Attack() makes the target hostile but needs to process
-            if (!bot->GetVictim() || bot->GetVictim() != target)
+    if (!bot->GetVictim() || bot->GetVictim() != target)
             {
                 // CRITICAL FIX: DO NOT call SetAIState() here!
                 // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
@@ -139,10 +138,10 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
                 // CRITICAL FIX: For neutral mobs, make THEM attack US first
                 // This is the same fix as in autonomous combat (BotAI.cpp lines 858-876)
-                if (Creature* targetCreature = target->ToCreature())
+    if (Creature* targetCreature = target->ToCreature())
                 {
                     // Add threat (makes creature turn hostile)
-                    if (targetCreature->CanHaveThreatList())
+    if (targetCreature->CanHaveThreatList())
                     {
                         targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
                         TC_LOG_ERROR("module.playerbot.strategy", " THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
@@ -150,7 +149,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                     }
 
                     // Make creature's AI attack us (makes it hostile)
-                    if (CreatureAI* ai = targetCreature->AI())
+    if (CreatureAI* ai = targetCreature->AI())
                     {
                         ai->AttackStart(bot);
                         TC_LOG_ERROR("module.playerbot.strategy", " CREATURE ENGAGED: {} AttackStart() called on bot {}",
@@ -174,11 +173,11 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
             // ALWAYS update movement while target is alive (even during combat)
             // This ensures bot follows moving targets
-            if (target->IsAlive())
+    if (target->IsAlive())
             {
                 // Get optimal range from ClassAI (if available)
                 float optimalRange = 5.0f; // Default to melee range
-                if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
+    if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
                 {
                     optimalRange = classAI->GetOptimalRange(target);
                 }
@@ -233,7 +232,7 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
 
                     // Combat initiation is handled in UpdateBehavior
                     // Just set target here and return high relevance
-                    if (!bot->IsInCombat() && !bot->GetVictim())
+    if (!bot->IsInCombat() && !bot->GetVictim())
                     {
                         float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
                         TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",

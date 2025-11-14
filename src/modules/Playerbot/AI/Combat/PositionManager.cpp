@@ -55,7 +55,7 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
     try
     {
         // FIX #3: SPELL CASTING COORDINATION - Don't move while casting
-        if (_bot->IsNonMeleeSpellCast(false))
+    if (_bot->IsNonMeleeSpellCast(false))
         {
             result.failureReason = "Bot is casting, movement would interrupt spell";
             TC_LOG_DEBUG("playerbot.position", "⏸ Bot {} - Movement blocked, currently casting",
@@ -323,7 +323,6 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     Position targetPos = context.target->GetPosition();
     // Variables for potential position calculations
     (void)context.maxRange; // Silence unused warning
-
     switch (context.desiredType)
     {
         case PositionType::MELEE_COMBAT:
@@ -628,7 +627,6 @@ float PositionManager::CalculateMovementCost(const Position& from, const Positio
     float cost = distance;
     if (heightDiff > 2.0f)
         cost += heightDiff * 2.0f;  // Penalty for elevation changes
-
     if (!PositionUtils::CanWalkStraightLine(from, to, _bot->GetMap()))
         cost *= 1.5f;  // Penalty for indirect paths
 
@@ -890,7 +888,7 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
             float minEnemyDistance = 1000.0f;
 
             // Use snapshots for position calculations (lock-free!)
-            for (auto const* snapshot : hostileSnapshots)
+    for (auto const* snapshot : hostileSnapshots)
             {
                 if (!snapshot)
                     continue;
@@ -904,12 +902,12 @@ float PositionManager::CalculateEscapeScore(const Position& pos, const MovementC
                 minEnemyDistance = ::std::min(minEnemyDistance, enemyDistance);
 
                 // Higher score for positions farther from enemies
-                if (enemyDistance > 0.0f)
+    if (enemyDistance > 0.0f)
                     score += ::std::min(enemyDistance * 5.0f, 30.0f); // Max 30 points per enemy
             }
 
             // Bonus for getting to safe range
-            if (minEnemyDistance > 15.0f)
+    if (minEnemyDistance > 15.0f)
                 score += 20.0f;
         }
     }
@@ -1073,7 +1071,7 @@ Position PositionManager::PredictTargetPosition(Unit* target, float timeAhead)
                                                  predictedPos.GetPositionZ());
 
         // If ground height is reasonable, use it
-        if (::std::abs(groundZ - predictedPos.GetPositionZ()) <= 10.0f)
+    if (::std::abs(groundZ - predictedPos.GetPositionZ()) <= 10.0f)
             predictedPos.m_positionZ = groundZ;
     }
 

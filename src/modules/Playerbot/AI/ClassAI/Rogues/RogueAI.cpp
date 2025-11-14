@@ -107,8 +107,7 @@ public:
             _totalEnergyUsed += energyCost;
 
             // Track finisher usage
-
-            if (IsFinisher(spellId))
+    if (IsFinisher(spellId))
 
                 _finisherCount++;
         }
@@ -306,7 +305,7 @@ void RogueAI::UpdateRotation(Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
-        if (!priorityTarget)
+    if (!priorityTarget)
         {
 
             return nullptr;
@@ -346,8 +345,7 @@ void RogueAI::UpdateRotation(Unit* target)
         if (interruptTarget && CanUseAbility(KICK))
         {
             // Cast Kick on the interrupt target
-
-            if (CastSpell(KICK, interruptTarget))
+    if (CastSpell(KICK, interruptTarget))
 
             {
 
@@ -424,7 +422,7 @@ void RogueAI::UpdateRotation(Unit* target)
         }
 
         // Fan of Knives for AoE combo point generation
-        if (CanUseAbility(FAN_OF_KNIVES))
+    if (CanUseAbility(FAN_OF_KNIVES))
         {
 
             if (CastSpell(FAN_OF_KNIVES))
@@ -457,8 +455,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
             case 0: // Assassination
                 // Vendetta for damage amplification
-
-                if (CanUseAbility(VENDETTA))
+    if (CanUseAbility(VENDETTA))
 
                 {
 
@@ -478,8 +475,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 }
                 // Cold Blood for guaranteed crit
-
-                if (CanUseAbility(COLD_BLOOD))
+    if (CanUseAbility(COLD_BLOOD))
 
                 {
 
@@ -504,8 +500,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
             case 1: // Combat/Outlaw
                 // Adrenaline Rush for energy regeneration
-
-                if (CanUseAbility(ADRENALINE_RUSH))
+    if (CanUseAbility(ADRENALINE_RUSH))
 
                 {
 
@@ -525,8 +520,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 }
                 // Killing Spree for burst damage
-
-                if (CanUseAbility(KILLING_SPREE))
+    if (CanUseAbility(KILLING_SPREE))
 
                 {
 
@@ -553,8 +547,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
             case 2: // Subtlety
                 // Shadow Dance for enhanced abilities
-
-                if (CanUseAbility(SHADOW_DANCE))
+    if (CanUseAbility(SHADOW_DANCE))
 
                 {
 
@@ -574,8 +567,7 @@ void RogueAI::UpdateRotation(Unit* target)
 
                 }
                 // Shadowstep for mobility and damage
-
-                if (CanUseAbility(SHADOWSTEP))
+    if (CanUseAbility(SHADOWSTEP))
 
                 {
 
@@ -603,7 +595,7 @@ void RogueAI::UpdateRotation(Unit* target)
     if (!GetBot()->IsInCombat() && !HasAura(STEALTH))
     {
         // Enter stealth for opener opportunity
-        if (CanUseAbility(STEALTH))
+    if (CanUseAbility(STEALTH))
         {
 
             float distance = GetBot()->GetDistance(target);
@@ -759,7 +751,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     if (energy >= 40)
     {
         // Try to get behind target for Backstab
-        if (_positioning->IsBehindTarget(target) && CanUseAbility(BACKSTAB))
+    if (_positioning->IsBehindTarget(target) && CanUseAbility(BACKSTAB))
         {
 
             if (CastSpell(BACKSTAB, target))
@@ -780,7 +772,7 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
         }
 
         // Use Sinister Strike as default builder
-        if (CanUseAbility(SINISTER_STRIKE))
+    if (CanUseAbility(SINISTER_STRIKE))
         {
 
             if (CastSpell(SINISTER_STRIKE, target))
@@ -894,7 +886,7 @@ void RogueAI::UseDefensiveCooldowns()
     if (static_cast<uint32>(spec) == 1 && healthPct < 40.0f) // Combat/Outlaw is spec 1
     {
         uint32 combatReadiness = 74001; // Combat Readiness spell ID
-        if (CanUseAbility(combatReadiness))
+    if (CanUseAbility(combatReadiness))
         {
 
             if (CastSpell(combatReadiness))
@@ -963,7 +955,6 @@ uint32 RogueAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto& target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))
@@ -1030,7 +1021,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     if (distance <= 5.0f)
     {
         // Maintain Slice and Dice
-        if (comboPoints >= 2 && !HasAura(SLICE_AND_DICE))
+    if (comboPoints >= 2 && !HasAura(SLICE_AND_DICE))
         {
 
             if (CanUseAbility(SLICE_AND_DICE))
@@ -1047,7 +1038,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Use finishers at 5 combo points
-        if (comboPoints >= 5)
+    if (comboPoints >= 5)
         {
 
             if (ExecuteFinisher(target))
@@ -1056,7 +1047,7 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Build combo points
-        if (energy >= 40)        {
+    if (energy >= 40)        {
 
             if (BuildComboPoints(target))
 
@@ -1198,8 +1189,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
     switch (spec)
     {
         case 0: // Assassination
-
-            if (CanUseAbility(MUTILATE))
+    if (CanUseAbility(MUTILATE))
 
             {
 
@@ -1216,8 +1206,7 @@ bool RogueAI::BuildComboPoints(Unit* target)
             break;
 
         case 2: // Subtlety
-
-            if (CanUseAbility(HEMORRHAGE))
+    if (CanUseAbility(HEMORRHAGE))
 
             {
 
@@ -1556,8 +1545,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
     switch (spec)
     {
         case 0: // Assassination
-
-            if (CanUseAbility(COLD_BLOOD))
+    if (CanUseAbility(COLD_BLOOD))
 
             {
 
@@ -1580,8 +1568,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
             break;
 
         case 1: // Combat/Outlaw
-
-            if (CanUseAbility(BLADE_FLURRY))
+    if (CanUseAbility(BLADE_FLURRY))
 
             {
 
@@ -1614,8 +1601,7 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
             break;
 
         case 2: // Subtlety
-
-            if (CanUseAbility(SHADOW_DANCE))
+    if (CanUseAbility(SHADOW_DANCE))
 
             {
 

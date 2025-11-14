@@ -178,7 +178,6 @@ void BotTalentManager::BuildDefaultLoadouts()
 
     // TODO: Implement automatic loadout generation
     // For now, create empty loadouts for all class/spec combinations
-
     for (uint8 cls = CLASS_WARRIOR; cls < MAX_CLASSES; ++cls)
     {
         if (cls == CLASS_NONE)
@@ -192,7 +191,7 @@ void BotTalentManager::BuildDefaultLoadouts()
             for (auto const& specData : classData.specializations)
             {
                 // Create loadouts for level brackets (1-10, 11-20, ... 71-80)
-                for (uint32 minLevel = 1; minLevel <= 80; minLevel += 10)
+    for (uint32 minLevel = 1; minLevel <= 80; minLevel += 10)
                 {
                     uint32 maxLevel = ::std::min(minLevel + 9, 80u);
 
@@ -229,7 +228,7 @@ void BotTalentManager::ValidateLoadouts()
     for (auto const& [key, loadout] : _loadoutCache)
     {
         // Check level range
-        if (loadout.minLevel > loadout.maxLevel || loadout.maxLevel > 80)
+    if (loadout.minLevel > loadout.maxLevel || loadout.maxLevel > 80)
         {
             TC_LOG_WARN("playerbot", "BotTalentManager: Invalid level range for class {} spec {} ({}-{})",
                 loadout.classId, loadout.specId, loadout.minLevel, loadout.maxLevel);
@@ -237,7 +236,7 @@ void BotTalentManager::ValidateLoadouts()
         }
 
         // Check hero talents only for 71+
-        if (loadout.HasHeroTalents() && loadout.minLevel < 71)
+    if (loadout.HasHeroTalents() && loadout.minLevel < 71)
         {
             TC_LOG_WARN("playerbot", "BotTalentManager: Hero talents found for level {} (class {} spec {})",
                 loadout.minLevel, loadout.classId, loadout.specId);

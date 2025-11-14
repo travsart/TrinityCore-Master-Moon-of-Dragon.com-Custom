@@ -217,7 +217,6 @@ DungeonRole DungeonScript::GetPlayerRole(::Player* player) const
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
     for (::Creature* creature : creatures)
     {
         if (creature != boss &&

@@ -34,10 +34,10 @@ void MageAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback: basic ranged attack
-        if (!_bot->IsNonMeleeSpellCast(false))
+    if (!_bot->IsNonMeleeSpellCast(false))
         {
             float rangeSq = 35.0f * 35.0f; // 1225.0f
-            if (_bot->GetExactDistSq(target) <= rangeSq)
+    if (_bot->GetExactDistSq(target) <= rangeSq)
             {
                 _bot->AttackerStateUpdate(target);
             }
@@ -70,7 +70,7 @@ void MageAI::UpdateRotation(::Unit* target)
         }
         default:
             // No spec or unknown spec, use basic rotation
-            if (CanUseAbility(FROSTBOLT))
+    if (CanUseAbility(FROSTBOLT))
                 CastSpell(FROSTBOLT, target);
             break;
     }

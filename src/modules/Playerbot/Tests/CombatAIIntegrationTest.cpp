@@ -391,21 +391,20 @@ TEST_F(CombatAIIntegrationTest, StressTestLongCombat)
 
     // Simulate 5 minutes of combat
     const int updates = 3000; // 300 seconds at 100ms intervals
-
     for (int i = 0; i < updates; ++i)
     {
         IntegrationResult result = integrator->Update(100);
         EXPECT_TRUE(result.success);
 
         // Simulate health changes
-        if (i % 100 == 0)
+    if (i % 100 == 0)
         {
             _bot->SetHealthPct(50 + (rand() % 50));
             _bot->SetManaPct(30 + (rand() % 70));
         }
 
         // Simulate target changes
-        if (i % 500 == 0)
+    if (i % 500 == 0)
         {
             auto newTarget = std::make_unique<MockUnit>();
             integrator->OnTargetChanged(newTarget.get());

@@ -79,7 +79,7 @@ void ScopedProfiler::RecordProfile()
         hotspot.maxTime = duration;
 
         // Add metadata to description
-        if (!_metadata.empty())
+    if (!_metadata.empty())
         {
             ::std::ostringstream oss;
             for (const auto& pair : _metadata)
@@ -256,7 +256,7 @@ void BotProfiler::RecordFunctionCall(const ::std::string& functionName, uint64_t
             continue;
 
         // Check if this function is being tracked
-        if (!session.targetFunctions.empty())
+    if (!session.targetFunctions.empty())
         {
             bool found = ::std::find(session.targetFunctions.begin(), session.targetFunctions.end(),
                                  functionName) != session.targetFunctions.end();
@@ -265,7 +265,7 @@ void BotProfiler::RecordFunctionCall(const ::std::string& functionName, uint64_t
         }
 
         // Check if this bot is being tracked
-        if (!session.targetBotGuids.empty())
+    if (!session.targetBotGuids.empty())
         {
             bool found = ::std::find(session.targetBotGuids.begin(), session.targetBotGuids.end(),
                                  botGuid) != session.targetBotGuids.end();
@@ -288,7 +288,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
     if (sessionId == 0)
     {
         // Record for all active sessions
-        for (auto& pair : _activeSessions)
+    for (auto& pair : _activeSessions)
         {
             ProfilingSession& session = pair.second;
             if (session.active)
@@ -323,7 +323,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
     if (sessionId == 0)
     {
         // Analyze all sessions
-        for (const auto& pair : _activeSessions)
+    for (const auto& pair : _activeSessions)
         {
             const ProfilingSession& session = pair.second;
             allHotspots.insert(allHotspots.end(), session.hotspots.begin(), session.hotspots.end());
@@ -361,7 +361,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
         }
 
         // Recalculate average
-        if (aggHotspot.hitCount > 0)
+    if (aggHotspot.hitCount > 0)
             aggHotspot.averageTime = aggHotspot.totalTime / aggHotspot.hitCount;
     }
 
@@ -436,7 +436,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
         }
 
         // Add specific suggestions from hotspot
-        for (const auto& suggestion : hotspot.optimizationSuggestions)
+    for (const auto& suggestion : hotspot.optimizationSuggestions)
         {
             recommendations.push_back(suggestion);
         }
@@ -576,7 +576,7 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, ::std::string& r
         else
         {
             // Check history
-            for (auto& histSession : _sessionHistory)
+    for (auto& histSession : _sessionHistory)
             {
                 if (histSession.sessionId == sessionId)
                 {

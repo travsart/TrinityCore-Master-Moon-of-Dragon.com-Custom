@@ -71,7 +71,7 @@ namespace Playerbot
         m_currentInteraction.timeout = INTERACTION_TIMEOUT;
 
         // Initialize vendor interaction manager
-        if (m_bot)
+    if (m_bot)
         {
             m_vendorManager = ::std::make_unique<VendorInteractionManager>(m_bot);
             m_flightMasterManager = ::std::make_unique<FlightMasterManager>(m_bot);
@@ -97,7 +97,7 @@ namespace Playerbot
         StartPerformanceTimer();
 
         // Update NPC cache periodically
-        if (GameTime::GetGameTimeMS() - m_lastNPCScan > m_npcScanInterval)
+    if (GameTime::GetGameTimeMS() - m_lastNPCScan > m_npcScanInterval)
         {
             UpdateNPCCache();
             m_lastNPCScan = GameTime::GetGameTimeMS();
@@ -136,11 +136,11 @@ namespace Playerbot
         bool success = false;
 
         // Accept available quests
-        if (AcceptAvailableQuests(questGiver))
+    if (AcceptAvailableQuests(questGiver))
             success = true;
 
         // Turn in completed quests
-        if (TurnInCompletedQuests(questGiver))
+    if (TurnInCompletedQuests(questGiver))
             success = true;
 
         EndInteraction();
@@ -154,7 +154,7 @@ namespace Playerbot
 
         bool acceptedAny = false;
         // Get available quests from this NPC
-        for (uint32 questId : sObjectMgr->GetCreatureQuestRelations(questGiver->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetCreatureQuestRelations(questGiver->GetEntry()))
         {
             if (m_bot->CanAddQuest(sObjectMgr->GetQuestTemplate(questId), true))
             {
@@ -178,7 +178,7 @@ namespace Playerbot
         bool completedAny = false;
 
         // Check all active quests
-        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
         {
             uint32 questId = m_bot->GetQuestSlotQuestId(slot);
             if (questId == 0)
@@ -202,7 +202,7 @@ namespace Playerbot
         bool turnedInAny = false;
 
         // Get quests this NPC can complete
-        for (uint32 questId : sObjectMgr->GetCreatureQuestInvolvedRelations(questGiver->GetEntry()))
+    for (uint32 questId : sObjectMgr->GetCreatureQuestInvolvedRelations(questGiver->GetEntry()))
         {
             Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
             if (!quest)
@@ -248,14 +248,14 @@ namespace Playerbot
         bool success = false;
 
         // Sell junk items if enabled
-        if (m_autoSellJunk && SellToVendor(vendor))
+    if (m_autoSellJunk && SellToVendor(vendor))
             success = true;
 
         // Repair if needed
-        if (m_autoRepair && RepairAtVendor(vendor))
+    if (m_autoRepair && RepairAtVendor(vendor))
             success = true;
         // Restock reagents if enabled
-        if (m_autoRestockReagents && RestockReagents(vendor))
+    if (m_autoRestockReagents && RestockReagents(vendor))
             success = true;
 
         EndInteraction();
@@ -465,7 +465,7 @@ namespace Playerbot
         bool success = false;
 
         // Learn flight path at this location
-        if (m_flightMasterManager->LearnFlightPath(flightMaster))
+    if (m_flightMasterManager->LearnFlightPath(flightMaster))
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Learned new flight path at flight master %u",
                 m_bot->GetName().c_str(), flightMaster->GetEntry());
@@ -473,7 +473,7 @@ namespace Playerbot
         }
 
         // Attempt smart flight to best destination
-        if (m_flightMasterManager->SmartFlight(flightMaster))
+    if (m_flightMasterManager->SmartFlight(flightMaster))
         {
             TC_LOG_DEBUG("bot.playerbot", "Bot %s: Successfully initiated smart flight from flight master %u",
                 m_bot->GetName().c_str(), flightMaster->GetEntry());
@@ -1070,7 +1070,7 @@ namespace Playerbot
     {
         ::std::vector<Item*> junkItems;
         // Check inventory
-        for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
         {
             Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
             if (item && IsJunkItem(item))
@@ -1078,7 +1078,7 @@ namespace Playerbot
         }
 
         // Check bags
-        for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
         {
             Bag* pBag = m_bot->GetBagByPos(bag);
             if (!pBag)
@@ -1113,7 +1113,7 @@ namespace Playerbot
         float priority = 0.0f;
 
         // Base priority from quality
-        switch (itemTemplate->GetQuality())
+    switch (itemTemplate->GetQuality())
         {
             case ITEM_QUALITY_POOR:     priority = 1.0f; break;
             case ITEM_QUALITY_NORMAL:   priority = 5.0f; break;
@@ -1132,11 +1132,11 @@ namespace Playerbot
             return false;
 
         // Don't buy poor quality items
-        if (itemTemplate->GetQuality() < ITEM_QUALITY_NORMAL)
+    if (itemTemplate->GetQuality() < ITEM_QUALITY_NORMAL)
             return false;
 
         // Check if we can afford it
-        if (m_bot->GetMoney() < itemTemplate->GetBuyPrice())
+    if (m_bot->GetMoney() < itemTemplate->GetBuyPrice())
             return false;
 
         return true;
@@ -1152,14 +1152,14 @@ namespace Playerbot
             return false;
 
         // Poor quality items are junk
-        if (proto->GetQuality() == ITEM_QUALITY_POOR)
+    if (proto->GetQuality() == ITEM_QUALITY_POOR)
             return true;
 
         // Check if it's soulbound and we can't use it
-        if (item->IsSoulBound())
+    if (item->IsSoulBound())
         {
             // If it's not usable by our class, it's junk
-            if (proto->GetAllowableClass() && !(proto->GetAllowableClass() & m_bot->GetClassMask()))
+    if (proto->GetAllowableClass() && !(proto->GetAllowableClass() & m_bot->GetClassMask()))
                 return true;
         }
 
@@ -1189,7 +1189,7 @@ namespace Playerbot
     bool NPCInteractionManager::ShouldLearnSpell(uint32 spellId) const
     {
         // Check if we already know the spell
-        if (m_bot->HasSpell(spellId))
+    if (m_bot->HasSpell(spellId))
             return false;
 
         return true;
@@ -1287,8 +1287,7 @@ namespace Playerbot
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : creatures)
+    for (Creature* creature : creatures)
         {
             if (!creature)
                 continue;
@@ -1410,7 +1409,7 @@ namespace Playerbot
             return 0;
 
         // Return first known reachable destination
-        for (auto const& dest : destinations)
+    for (auto const& dest : destinations)
         {
             if (dest.isKnown && dest.nodeId != currentNode)
                 return dest.nodeId;

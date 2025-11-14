@@ -79,7 +79,6 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 {
     // CRITICAL: This method is called BY BotAI::UpdateAI() when in combat
     // It does NOT replace UpdateAI(), it extends it for combat only
-
     if (!GetBot() || !GetBot()->IsAlive())
         return;
 
@@ -328,7 +327,7 @@ if (!newTarget)
                 }
 
         // Melee classes (optimal range <= 5 yards) need to face target
-        if (optimalRange <= 5.0f)
+    if (optimalRange <= 5.0f)
         {
             GetBot()->SetFacingToObject(newTarget);
             TC_LOG_TRACE("module.playerbot.classai",
@@ -362,13 +361,13 @@ void ClassAI::UpdateTargeting(){
     if (Group* group = GetBot()->GetGroup())
     {
         ObjectGuid leaderGuid = group->GetLeaderGUID();        // Find leader in group members (avoid ObjectAccessor for thread safety)
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
             if (Player* member = itr.GetSource())
             {
                 if (member->GetGUID() == leaderGuid)                {
                     // Found leader - get their target
-                    if (::Unit* leaderTarget = member->GetVictim())                    {
+    if (::Unit* leaderTarget = member->GetVictim())                    {
                         if (GetBot()->IsValidAttackTarget(leaderTarget))
                         {
                             TC_LOG_TRACE("module.playerbot.classai",
@@ -390,7 +389,7 @@ void ClassAI::UpdateTargeting(){
     if (!targetGuid.IsEmpty())
     {
         // Check if victim matches selected target (no ObjectAccessor needed)
-        if (::Unit* victim = GetBot()->GetVictim())
+    if (::Unit* victim = GetBot()->GetVictim())
         {
             if (victim->GetGUID() == targetGuid && GetBot()->IsValidAttackTarget(victim))                return victim;
         }
@@ -705,7 +704,8 @@ bool ClassAI::CanExecutePendingSpell() const
     //
     // If no current spell and GCD is ready, execute the pending spell.
 
-    // Check if bot is currently casting a different spell    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    // Check if bot is currently casting a different spell
+    if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
         TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
         // GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
@@ -1065,10 +1065,11 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         TC_LOG_TRACE("playerbot.classai", "Bot {} cannot cast spell {} - target out of range",
                      GetBot()->GetName(), action.spellId);
 
-        // For movement-related actions, we might want to move closer        if (action.type == CombatActionType::MOVEMENT)
+        // For movement-related actions, we might want to move closer
+    if (action.type == CombatActionType::MOVEMENT)
         {
             // Movement is handled by BotAI strategies, just log the need if position is valid
-            if (action.position.m_positionX != 0.0f || action.position.m_positionY != 0.0f)
+    if (action.position.m_positionX != 0.0f || action.position.m_positionY != 0.0f)
             {
                 TC_LOG_DEBUG("playerbot.classai", "Bot {} needs to move to position ({}, {}, {}) for action",
                              GetBot()->GetName(), action.position.m_positionX,
@@ -1109,8 +1110,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
                 success = CastSpell(action.spellId, defTarget);
             else
                 success = CastSpell(action.spellId);  // Self-cast
-
-            if (success)
+    if (success)
             {
                 TC_LOG_INFO("playerbot.classai", "Bot {} activated defensive ability {} on {}",
                             GetBot()->GetName(), action.spellId,
@@ -1122,7 +1122,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::CROWD_CONTROL:
         {
             // CC requires careful targeting
-            if (action.target != _currentCombatTarget)  // Don't CC our main target
+    if (action.target != _currentCombatTarget)  // Don't CC our main target
             {
                 success = CastSpell(action.spellId, action.target);                if (success)
                 {
@@ -1158,7 +1158,7 @@ bool ClassAI::ExecuteRecommendedAction(const RecommendedAction& action)
         case CombatActionType::TARGET_SWITCH:
         {
             // Target switch is handled by OnTargetChanged, just validate
-            if (action.target && action.target != _currentCombatTarget)            {
+    if (action.target && action.target != _currentCombatTarget)            {
                 OnTargetChanged(action.target);
                 success = true;
                 TC_LOG_INFO("playerbot.classai", "Bot {} switched target to {}",

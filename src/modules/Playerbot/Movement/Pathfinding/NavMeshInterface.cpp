@@ -409,7 +409,7 @@ namespace Playerbot
             size_t furthestVisible = currentIndex + 1;
 
             // Find furthest visible point
-            for (size_t i = currentIndex + 2; i < path.size(); ++i)
+    for (size_t i = currentIndex + 2; i < path.size(); ++i)
             {
                 if (HasLineOfSight(map, path[currentIndex], path[i]))
                 {
@@ -429,7 +429,7 @@ namespace Playerbot
         }
 
         // Ensure end point is included
-        if (smoothPath.back().GetExactDist(&path.back()) > 0.1f)
+    if (smoothPath.back().GetExactDist(&path.back()) > 0.1f)
             smoothPath.push_back(path.back());
 
         _successfulQueries.fetch_add(1);
@@ -502,7 +502,7 @@ namespace Playerbot
         }
 
         // Fallback: adjust height at calculated position
-        if (GetGroundHeight(map, result.m_positionX, result.m_positionY, result.m_positionZ))
+    if (GetGroundHeight(map, result.m_positionX, result.m_positionY, result.m_positionZ))
         {
             _successfulQueries.fetch_add(1);
             return true;
@@ -525,7 +525,7 @@ namespace Playerbot
                            position.GetPositionX() - avoidPos.GetPositionX());
 
         // Try multiple angles if direct opposite is blocked
-        for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 8; ++i)
         {
             float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
@@ -533,7 +533,7 @@ namespace Playerbot
             if (GetPositionInDirection(map, position, tryAngle, avoidRadius, result))
             {
                 // Check if we're far enough from avoidance position
-                if (result.GetExactDist(&avoidPos) >= avoidRadius)
+    if (result.GetExactDist(&avoidPos) >= avoidRadius)
                 {
                     _successfulQueries.fetch_add(1);
                     return true;

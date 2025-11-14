@@ -201,7 +201,7 @@ PreparedQueryResult BotDatabasePool::ExecuteSync(CharacterDatabasePreparedStatem
             connectionInfo->queryCount++;
 
             // Cache the result
-            if (result) {
+    if (result) {
                 CacheResult(cacheKey, result);
             }
         }
@@ -528,7 +528,7 @@ void BotDatabasePool::WorkerThreadFunction()
             ProcessQueryQueue();
 
             // Run I/O context
-            if (_ioContext) {
+    if (_ioContext) {
                 _ioContext->run_one();
             }
 
@@ -587,7 +587,7 @@ void BotDatabasePool::ExecuteQueryRequest(QueryRequest const& request)
             connectionInfo->queryCount++;
 
             // Cache the result if successful
-            if (result) {
+    if (result) {
                 ::std::string cacheKey = GenerateCacheKey(request.statement);
                 CacheResult(cacheKey, result);
             }

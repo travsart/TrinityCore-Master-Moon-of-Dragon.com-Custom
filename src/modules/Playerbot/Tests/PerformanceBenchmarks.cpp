@@ -412,7 +412,7 @@ void BenchmarkScalability()
         auto start = high_resolution_clock::now();
 
         // Simulate bot creation at scale
-        for (uint32 i = 0; i < botCount; ++i)
+    for (uint32 i = 0; i < botCount; ++i)
         {
             auto bracket = sBotLevelDistribution->SelectBracketWeighted(TEAM_ALLIANCE);
             auto specChoice = sBotTalentManager->SelectSpecialization(CLASS_WARRIOR, TEAM_ALLIANCE, bracket->maxLevel);

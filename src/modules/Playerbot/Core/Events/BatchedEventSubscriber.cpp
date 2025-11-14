@@ -156,7 +156,6 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
 
     // Subscribe all managers in a single batched operation
     // This is the ULTIMATE optimization - all 33 event subscriptions in ONE operation
-
     if (questManager)
     {
         size_t count = SubscribeQuestManager(dispatcher, questManager);
@@ -260,7 +259,6 @@ size_t BatchedEventSubscriber::BatchOperation(
     bool subscribe)
 {
     // Validate inputs
-
     if (eventTypes.empty())
     {
         TC_LOG_DEBUG("module.playerbot.batch", "BatchOperation called with empty event list");

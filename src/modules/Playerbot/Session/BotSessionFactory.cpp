@@ -91,7 +91,7 @@ void BotSessionFactory::Shutdown()
     try
     {
         // Validate inputs
-        if (!ValidateAccountAccess(accountId) || !ValidateCharacterData(characterGuid))
+    if (!ValidateAccountAccess(accountId) || !ValidateCharacterData(characterGuid))
         {
             HandleCreationError("Account or character validation failed", characterGuid);
             return nullptr;
@@ -106,7 +106,7 @@ void BotSessionFactory::Shutdown()
         }
 
         // Validate the created session
-        if (!ValidateSession(session))
+    if (!ValidateSession(session))
         {
             HandleCreationError("Session validation failed", characterGuid);
             return nullptr;
@@ -167,7 +167,7 @@ bool BotSessionFactory::ConfigureSession(::std::shared_ptr<BotSession> session, 
         ApplyBaseConfiguration(session, request);
 
         // Apply specific configurations based on character data
-        if (Player* player = session->GetPlayer())
+    if (Player* player = session->GetPlayer())
         {
             ApplyClassSpecificConfiguration(session, player->GetClass());
             ApplyLevelConfiguration(session, player->GetLevel());

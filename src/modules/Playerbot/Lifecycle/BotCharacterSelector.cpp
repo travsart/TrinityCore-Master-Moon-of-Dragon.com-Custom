@@ -230,7 +230,7 @@ void BotCharacterSelector::ProcessAccountCharacters(uint32 accountId, SpawnReque
     if (!characters.empty())
     {
         // Return first suitable character
-        for (auto const& characterGuid : characters)
+    for (auto const& characterGuid : characters)
         {
             if (ValidateCharacter(characterGuid, request))
             {

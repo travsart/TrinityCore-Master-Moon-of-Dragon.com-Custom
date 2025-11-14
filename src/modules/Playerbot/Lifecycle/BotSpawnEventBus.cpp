@@ -281,7 +281,7 @@ void BotSpawnEventBus::ProcessEventsOfType(BotSpawnEventType eventType)
         }
 
         // Put back non-matching events
-        for (auto const& event : eventsToKeep)
+    for (auto const& event : eventsToKeep)
             _eventQueue.push(event);
 
         _stats.queuedEvents.store(_eventQueue.size());

@@ -92,7 +92,7 @@ bool MemberJoinedHandler::HandleEvent(GroupEvent const& event)
         _botAI->GetFormationMgr()->AddMember(newMember);
 
         // Greet new member
-        if (_botAI->GetConfig()->SocialFeaturesEnabled())
+    if (_botAI->GetConfig()->SocialFeaturesEnabled())
             _botAI->Say(fmt::format("Welcome to the group, {}!", newMember->GetName()));
 
         // Update healing/buff priorities
@@ -187,11 +187,11 @@ bool LeaderChangedHandler::HandleEvent(GroupEvent const& event)
         _botAI->SetGroupLeader(newLeader);
 
         // If bot was following old leader, follow new leader
-        if (_botAI->IsFollowing())
+    if (_botAI->IsFollowing())
             _botAI->Follow(newLeader);
 
         // Update main assist if leader is MA
-        if (group->GetMemberFlags(newLeaderGuid) & MEMBER_FLAG_MAINASSIST)
+    if (group->GetMemberFlags(newLeaderGuid) & MEMBER_FLAG_MAINASSIST)
             _botAI->SetMainAssist(newLeader);
     }
     */
@@ -321,7 +321,7 @@ bool TargetIconChangedHandler::HandleEvent(GroupEvent const& event)
     if (Unit* target = ObjectAccessor::GetUnit(*bot, targetGuid))
     {
         // Update target priority based on icon
-        switch (iconIndex)
+    switch (iconIndex)
         {
             case 0: // Skull - kill first
                 _botAI->SetPrimaryTarget(target);

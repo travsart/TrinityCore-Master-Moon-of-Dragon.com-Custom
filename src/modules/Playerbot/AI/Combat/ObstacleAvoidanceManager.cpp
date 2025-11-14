@@ -99,7 +99,6 @@ void ObstacleAvoidanceManager::UpdateObstacleDetection(const DetectionContext& c
     predictions.reserve(_obstacles.size());
 
     // No lock needed - obstacle detection is per-bot instance data
-
     for (const auto& [guid, obstacle] : _obstacles)
     {
         if (ShouldIgnoreObstacle(obstacle, context))
@@ -642,7 +641,6 @@ void ObstacleAvoidanceManager::ExecuteEmergencyStop()
 bool ObstacleAvoidanceManager::CanSafelyProceed(const Position& nextPosition)
 {
     // No lock needed - obstacle detection is per-bot instance data
-
     for (const auto& [guid, obstacle] : _obstacles)
     {
         if (obstacle.priority == ObstaclePriority::CRITICAL)
@@ -1006,7 +1004,7 @@ void ObstacleAvoidanceManager::ScanEnvironmentalHazards(const DetectionContext& 
                 _bot->GetPosition(), context.scanRadius);
 
             // Resolve GUIDs to GameObject pointers
-            for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : nearbyGuids)
             {
                 GameObject* obj = _bot->GetMap()->GetGameObject(guid);
                 if (!obj || !obj->IsInWorld())

@@ -45,7 +45,7 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
                     targetFromContext->GetName(), bot->GetName());
 
         // Engage the target
-        if (EngageTarget(bot, targetFromContext))
+    if (EngageTarget(bot, targetFromContext))
         {
             TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Bot {} now attacking {}",
                         bot->GetName(), targetFromContext->GetName());
@@ -199,7 +199,6 @@ bool TargetAssistAction::ShouldSwitchTarget(Player* bot, Unit* newTarget) const
     Unit* currentTarget = bot->GetVictim();
     if (!currentTarget)
         return true; // No current target, switch
-
     if (currentTarget == newTarget)
         return false; // Already targeting
 

@@ -219,7 +219,7 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
                 if (player && player != bot && player->IsInWorld())
                 {
                     // Check if player is within range
-                    if (bot->GetExactDistSq(player) <= maxRangeSq)
+    if (bot->GetExactDistSq(player) <= maxRangeSq)
                     {
                         ++nearbyPlayerCount;
                     }

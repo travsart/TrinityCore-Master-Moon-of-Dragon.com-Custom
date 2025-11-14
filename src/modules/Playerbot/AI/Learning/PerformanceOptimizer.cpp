@@ -668,7 +668,7 @@ void PerformanceOptimizer::RecordPerformance(uint32_t botGuid, const Performance
         profile->AddSample(sample);
 
         // Auto-optimize if enabled
-        if (_autoOptimize)
+    if (_autoOptimize)
         {
             static ::std::unordered_map<uint32_t, ::std::chrono::steady_clock::time_point> lastOptimization;
             auto now = ::std::chrono::steady_clock::now();

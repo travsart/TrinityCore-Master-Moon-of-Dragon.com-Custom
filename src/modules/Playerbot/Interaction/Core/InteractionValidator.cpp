@@ -60,7 +60,7 @@ namespace Playerbot
         bool result = true;
 
         // Basic checks
-        if (!CheckRange(bot, target))
+    if (!CheckRange(bot, target))
         {
             result = false;
         }
@@ -78,7 +78,7 @@ namespace Playerbot
         }
 
         // Type-specific checks
-        if (result)
+    if (result)
         {
             switch (type)
             {
@@ -138,7 +138,7 @@ namespace Playerbot
             return false;
 
         // Check if creature is hostile
-        if (creature->IsHostileTo(bot))
+    if (creature->IsHostileTo(bot))
             return false;
 
         // Check if creature is friendly enough for interaction
@@ -184,7 +184,7 @@ namespace Playerbot
         uint32 freeSlots = 0;
 
         // Check all bags
-        for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    for (uint8 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         {
             if (Bag* bag = bot->GetBagByPos(i))
             {
@@ -197,7 +197,7 @@ namespace Playerbot
         }
 
         // Check backpack
-        for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         {
             if (!bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
                 ++freeSlots;
@@ -268,7 +268,7 @@ namespace Playerbot
             return false;
 
         // Check faction
-        if (!CheckFaction(bot, vendor))
+    if (!CheckFaction(bot, vendor))
             return false;
 
         // Check if vendor has items
@@ -277,7 +277,7 @@ namespace Playerbot
             return false;
 
         // In strict mode, check if vendor has useful items
-        if (m_strictMode)
+    if (m_strictMode)
         {
             bool hasUsefulItem = false;
             for (auto const& item : items->m_items)
@@ -320,7 +320,7 @@ namespace Playerbot
         {
             case ITEM_CLASS_CONSUMABLE:
                 // Food/water always useful - ITEM_SUBCLASS_FOOD_DRINK = 5
-                if (itemTemplate->GetSubClass() == 5 /* ITEM_SUBCLASS_FOOD_DRINK */)
+    if (itemTemplate->GetSubClass() == 5 /* ITEM_SUBCLASS_FOOD_DRINK */)
                 {
                     isUseful = true;
                 }
@@ -350,7 +350,7 @@ namespace Playerbot
 
             case ITEM_CLASS_RECIPE:
                 // Recipes if bot has profession
-                if (itemTemplate->GetSubClass() >= ITEM_SUBCLASS_LEATHERWORKING_PATTERN &&
+    if (itemTemplate->GetSubClass() >= ITEM_SUBCLASS_LEATHERWORKING_PATTERN &&
                     itemTemplate->GetSubClass() <= ITEM_SUBCLASS_ENCHANTING_FORMULA)
                 {
                     // Check if bot has corresponding profession
@@ -360,7 +360,7 @@ namespace Playerbot
 
             default:
                 // Check if it's an upgrade
-                if (itemTemplate->GetInventoryType() != INVTYPE_NON_EQUIP)
+    if (itemTemplate->GetInventoryType() != INVTYPE_NON_EQUIP)
                 {
                     // Simple item level check for equipment
                     ::Item* currentItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, itemTemplate->GetInventoryType());
@@ -391,27 +391,27 @@ namespace Playerbot
             return false;
 
         // Never sell bound items
-        if (item->IsSoulBound())
+    if (item->IsSoulBound())
             return false;
 
         // Always sell gray quality items (junk)
-        if (itemTemplate->GetQuality() == ITEM_QUALITY_POOR)
+    if (itemTemplate->GetQuality() == ITEM_QUALITY_POOR)
             return true;
 
         // Never sell quest items
-        if (itemTemplate->GetStartQuest())
+    if (itemTemplate->GetStartQuest())
             return false;
 
         // Check if equipped
-        if (bot->GetItemByGuid(item->GetGUID()) == item && item->IsEquipped())
+    if (bot->GetItemByGuid(item->GetGUID()) == item && item->IsEquipped())
             return false;
 
         // Never sell items with high vendor price (likely important)
-        if (itemTemplate->GetSellPrice() > 10000)  // 1 gold
+    if (itemTemplate->GetSellPrice() > 10000)  // 1 gold
             return false;
 
         // Sell excess consumables
-        if (itemTemplate->GetClass() == ITEM_CLASS_CONSUMABLE)
+    if (itemTemplate->GetClass() == ITEM_CLASS_CONSUMABLE)
         {
             uint32 totalCount = bot->GetItemCount(itemTemplate->GetId());
             if (totalCount > 40)  // Keep max 40 of any consumable
@@ -462,7 +462,7 @@ namespace Playerbot
             return false;
 
         // Check faction
-        if (!CheckFaction(bot, trainer))
+    if (!CheckFaction(bot, trainer))
             return false;
 
         // Get trainer data from ObjectMgr
@@ -484,7 +484,7 @@ namespace Playerbot
         // Learn mount/riding skills - check spell name or attributes
         // Note: SPELL_EFFECT_SUMMON_MOUNT may not exist in TrinityCore 11.2
         // Alternative: Check if spell creates a mount aura or has mount-related attributes
-        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (spellInfo->GetEffect(static_cast<SpellEffIndex>(i)).ApplyAuraName == SPELL_AURA_MOUNTED)
                 return true;
@@ -504,7 +504,7 @@ namespace Playerbot
             return false;
 
         // Check if already known
-        if (bot->HasSpell(spellId))
+    if (bot->HasSpell(spellId))
             return false;
 
         ::SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -512,7 +512,7 @@ namespace Playerbot
             return false;
 
         // Check level requirement
-        if (spellInfo->BaseLevel > bot->GetLevel())
+    if (spellInfo->BaseLevel > bot->GetLevel())
             return false;
 
         // Check if bot has required spell (prerequisite chain)
@@ -531,11 +531,11 @@ namespace Playerbot
             return false;
 
         // Check level requirement
-        if (bot->GetLevel() < 10)
+    if (bot->GetLevel() < 10)
             return false;
 
         // Check if node is discovered
-        if (!IsFlightNodeDiscovered(bot, nodeId))
+    if (!IsFlightNodeDiscovered(bot, nodeId))
             return false;
 
         // Check if bot has enough money for flight
@@ -574,11 +574,11 @@ namespace Playerbot
             return false;
 
         // Bank valuable items
-        if (itemTemplate->GetQuality() >= ITEM_QUALITY_RARE)
+    if (itemTemplate->GetQuality() >= ITEM_QUALITY_RARE)
             return true;
 
         // Bank profession materials
-        if (itemTemplate->GetClass() == ITEM_CLASS_TRADE_GOODS)
+    if (itemTemplate->GetClass() == ITEM_CLASS_TRADE_GOODS)
             return true;
 
         // Bank items for other specs/situations
@@ -638,7 +638,7 @@ namespace Playerbot
             missing.push_back("Interaction on cooldown");
 
         // Add type-specific requirements
-        switch (type)
+    switch (type)
         {
             case InteractionType::Vendor:
                 if (!CheckInventorySpace(bot, 1))
@@ -668,8 +668,7 @@ namespace Playerbot
             return 0;
 
         int32 priority = 50;  // Base priority
-
-        switch (type)
+    switch (type)
         {
             case InteractionType::SpiritHealer:
                 if (!bot->IsAlive())
@@ -681,19 +680,19 @@ namespace Playerbot
                     priority = 90;  // Critical repairs
                 else if (NeedsRepair(bot, 50.0f))
                     priority = 70;  // Normal repairs
-                if (!CheckInventorySpace(bot, 5))
+    if (!CheckInventorySpace(bot, 5))
                     priority += 20;  // Need to sell
                 break;
 
             case InteractionType::Trainer:
                 // Higher priority at level milestones
-                if (bot->GetLevel() % 10 == 0)
+    if (bot->GetLevel() % 10 == 0)
                     priority = 80;
                 break;
 
             case InteractionType::Innkeeper:
                 // Higher priority if no hearthstone bound
-                if (!bot->HasSpell(8690))  // Hearthstone spell
+    if (!bot->HasSpell(8690))  // Hearthstone spell
                     priority = 75;
                 break;
 
@@ -732,7 +731,7 @@ namespace Playerbot
             return false;
 
         // Check if bot has money to buy anything
-        if (bot->GetMoney() < 1)
+    if (bot->GetMoney() < 1)
             return false;
 
         return true;
@@ -744,7 +743,7 @@ namespace Playerbot
             return false;
 
         // Check if bot has money to train
-        if (bot->GetMoney() < 100)  // Min training cost
+    if (bot->GetMoney() < 100)  // Min training cost
             return false;
 
         return true;
@@ -790,7 +789,7 @@ namespace Playerbot
         }
 
         // Update cooldown if passed
-        if (passed)
+    if (passed)
         {
             auto now = ::std::chrono::steady_clock::now();
             // Note: We need the bot GUID here, but it's not passed to this function

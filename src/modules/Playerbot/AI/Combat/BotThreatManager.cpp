@@ -380,7 +380,6 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 void BotThreatManager::UpdateTargetPriorities()
 {
     // No lock needed - threat data is per-bot instance data
-
     for (auto& [guid, info] : _threatMap)
     {
         // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
@@ -406,12 +405,11 @@ void BotThreatManager::UpdateRoleBasedThreat()
 {
     // Role-based threat modifications are applied in CalculateRoleModifier()
     // This method can be used for role-specific threat behaviors
-
     switch (_botRole)
     {
         case ThreatRole::TANK:
             // Tanks should try to maintain aggro on all targets
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 if (info.threatPercent < 110.0f) // If not solidly ahead
                 {
@@ -423,7 +421,7 @@ void BotThreatManager::UpdateRoleBasedThreat()
 
         case ThreatRole::DPS:
             // DPS should avoid pulling aggro
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 if (info.threatPercent > 90.0f) // Close to pulling aggro
                 {
@@ -435,7 +433,7 @@ void BotThreatManager::UpdateRoleBasedThreat()
 
         case ThreatRole::HEALER:
             // Healers should focus on staying alive
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
                 auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
@@ -518,7 +516,6 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
     ::std::vector<Unit*> targets;
 
     // No lock needed - threat data is per-bot instance data
-
     for (const auto& [guid, info] : _threatMap)
     {
         if (!info.isActive)
@@ -543,7 +540,6 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
     ::std::vector<Unit*> targets;
 
     // No lock needed - threat data is per-bot instance data
-
     for (const auto& [guid, info] : _threatMap)
     {
         if (!info.isActive || info.priority != priority)

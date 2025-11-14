@@ -59,7 +59,7 @@ void LootDistribution::HandleGroupLoot(Group* group, Loot* loot)
         PopulateLootItemData(ourLootItem);
 
         // Determine if this item needs rolling
-        if (ShouldInitiateRoll(group, ourLootItem))
+    if (ShouldInitiateRoll(group, ourLootItem))
         {
             InitiateLootRoll(group, ourLootItem);
         }
@@ -523,7 +523,7 @@ void LootDistribution::ExecuteFairDistributionStrategy(Player* player, const Loo
     if (shouldConsiderFairness)
     {
         // Be more conservative with rolls
-        if (CanPlayerNeedItem(player, item))
+    if (CanPlayerNeedItem(player, item))
         {
             LootPriority priority = AnalyzeItemPriority(player, item);
             if (priority >= LootPriority::SIGNIFICANT_UPGRADE)

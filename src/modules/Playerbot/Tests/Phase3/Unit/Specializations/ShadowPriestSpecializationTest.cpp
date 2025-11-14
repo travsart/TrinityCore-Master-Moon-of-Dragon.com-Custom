@@ -128,11 +128,11 @@ protected:
             mockPriest->SetPower(POWER_MANA, currentMana - manaCost);
 
         // Generate insanity
-        if (insanityGenerated > 0)
+    if (insanityGenerated > 0)
             mockPriest->GenerateInsanity(insanityGenerated);
 
         // Set cooldown
-        if (cooldownMs > 0)
+    if (cooldownMs > 0)
             mockPriest->SetSpellCooldown(spellId, cooldownMs);
     }
 
@@ -696,7 +696,8 @@ TEST_F(ShadowPriestSpecializationTest, TargetSwitch_RefreshDoTsBeforeSwitch)
     mockPriest->ApplyDoT(SHADOW_WORD_PAIN, 4000);
     mockPriest->ApplyDoT(VAMPIRIC_TOUCH, 3500);
 
-    // Assert: Should refresh before switch (clipping threshold: 5.4s / 4.5s)
+    // Assert: Should refresh before
+    switch (clipping threshold: 5.4s / 4.5s)
     EXPECT_LE(mockPriest->GetDoTTimeRemaining(SHADOW_WORD_PAIN), 5400u);
     EXPECT_LE(mockPriest->GetDoTTimeRemaining(VAMPIRIC_TOUCH), 4500u);
 
@@ -880,7 +881,7 @@ TEST_F(ShadowPriestSpecializationTest, Integration_FullSingleTargetRotation_NoEr
     for (uint32 i = 0; i < 600; ++i) // 60s / 0.1s updates
     {
         // Apply DoTs if missing
-        if (!scenario.priest->HasDoT(SHADOW_WORD_PAIN))
+    if (!scenario.priest->HasDoT(SHADOW_WORD_PAIN))
         {
             scenario.priest->ApplyDoT(SHADOW_WORD_PAIN, 18000);
             ++castsExecuted;
@@ -893,7 +894,7 @@ TEST_F(ShadowPriestSpecializationTest, Integration_FullSingleTargetRotation_NoEr
         }
 
         // Mind Blast on cooldown
-        if (!scenario.priest->IsSpellOnCooldown(MIND_BLAST) &&
+    if (!scenario.priest->IsSpellOnCooldown(MIND_BLAST) &&
             scenario.priest->GetPower(POWER_MANA) > 250)
         {
             SimulateSpellCast(MIND_BLAST, 8, 9000);
@@ -901,7 +902,7 @@ TEST_F(ShadowPriestSpecializationTest, Integration_FullSingleTargetRotation_NoEr
         }
 
         // Enter Voidform at 90+ insanity
-        if (scenario.priest->GetInsanity() >= 90 && !scenario.priest->IsInVoidForm())
+    if (scenario.priest->GetInsanity() >= 90 && !scenario.priest->IsInVoidForm())
         {
             scenario.priest->EnterVoidForm();
             ++castsExecuted;

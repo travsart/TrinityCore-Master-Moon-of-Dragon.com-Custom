@@ -96,7 +96,7 @@ void PriestAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback: basic ranged attack
-        if (!GetBot()->IsNonMeleeSpellCast(false))
+    if (!GetBot()->IsNonMeleeSpellCast(false))
         {
 
             if (target && GetBot()->GetDistance(target) <= 35.0f)
@@ -370,8 +370,7 @@ bool PriestAI::HandleInterruptPriority(::Unit* target)
         if (interruptTarget && interruptTarget->IsNonMeleeSpellCast(false))
         {
             // Use Silence
-
-            if (this->IsSpellReady(SILENCE) && GameTime::GetGameTimeMS() - _lastSilence > 45000)
+    if (this->IsSpellReady(SILENCE) && GameTime::GetGameTimeMS() - _lastSilence > 45000)
 
             {
 
@@ -888,7 +887,7 @@ void PriestAI::CastFearWard()
     if (Group* group = GetBot()->GetGroup())
     {
         // First pass - tanks
-        for (GroupReference const& ref : group->GetMembers())
+    for (GroupReference const& ref : group->GetMembers())
         {
 
             Player* player = ref.GetSource();
@@ -899,7 +898,7 @@ void PriestAI::CastFearWard()
         }
 
         // Second pass - healers
-        for (GroupReference const& ref : group->GetMembers())
+    for (GroupReference const& ref : group->GetMembers())
         {
 
             Player* player = ref.GetSource();
@@ -910,7 +909,7 @@ void PriestAI::CastFearWard()
         }
 
         // Third pass - any member
-        for (GroupReference const& ref : group->GetMembers())
+    for (GroupReference const& ref : group->GetMembers())
         {
 
             Player* player = ref.GetSource();

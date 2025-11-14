@@ -72,7 +72,6 @@ bool GroupStateMachine::Transition(GroupStateTransition transition, Group* group
 
     // Determine target state based on transition
     GroupState newState = _currentState; // Default: stay in same state
-
     switch (transition)
     {
         case GroupStateTransition::RECEIVE_INVITE:
@@ -81,7 +80,7 @@ bool GroupStateMachine::Transition(GroupStateTransition transition, Group* group
 
         case GroupStateTransition::ACCEPT_INVITE:
             // Determine if joining a forming or active group
-            if (group && group->GetMembersCount() < 3)
+    if (group && group->GetMembersCount() < 3)
                 newState = GroupState::FORMING;
             else
                 newState = GroupState::ACTIVE;
@@ -346,7 +345,7 @@ void GroupStateMachine::DumpState() const
             dot << "  " << GetStateName(fromState) << " -> ";
 
             // Simplified target state determination for diagram
-            switch (transition)
+    switch (transition)
             {
                 case GroupStateTransition::RECEIVE_INVITE:
                     dot << "INVITED";

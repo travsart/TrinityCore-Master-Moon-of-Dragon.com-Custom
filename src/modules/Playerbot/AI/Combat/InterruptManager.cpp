@@ -391,8 +391,7 @@ void InterruptManager::InitializeInterruptCapabilities()
         capability.castTime = static_cast<float>(spellInfo->CalcCastTime());
         capability.requiresLoS = true; // Default to requiring LoS
         capability.requiresFacing = true; // Default to requiring facing
-
-        if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
+    if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
             capability.method = InterruptMethod::SPELL_INTERRUPT;
         else if (spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA))
         {

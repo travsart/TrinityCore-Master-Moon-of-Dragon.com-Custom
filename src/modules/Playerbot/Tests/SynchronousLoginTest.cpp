@@ -38,7 +38,7 @@ public:
         bool allTestsPassed = true;
 
         // Test 1: Database Query Execution
-        if (!TestDatabaseQueryExecution())
+    if (!TestDatabaseQueryExecution())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Database Query Execution Test");
             allTestsPassed = false;
@@ -49,7 +49,7 @@ public:
         }
 
         // Test 2: SynchronousLoginQueryHolder
-        if (!TestSynchronousQueryHolder())
+    if (!TestSynchronousQueryHolder())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: SynchronousLoginQueryHolder Test");
             allTestsPassed = false;
@@ -60,7 +60,7 @@ public:
         }
 
         // Test 3: Complete Bot Login Flow
-        if (!TestCompleteBotLoginFlow())
+    if (!TestCompleteBotLoginFlow())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Complete Bot Login Flow Test");
             allTestsPassed = false;
@@ -71,7 +71,7 @@ public:
         }
 
         // Test 4: Error Handling and Edge Cases
-        if (!TestErrorHandlingAndEdgeCases())
+    if (!TestErrorHandlingAndEdgeCases())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Error Handling and Edge Cases Test");
             allTestsPassed = false;
@@ -82,7 +82,7 @@ public:
         }
 
         // Test 5: Memory Safety
-        if (!TestMemorySafety())
+    if (!TestMemorySafety())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Memory Safety Test");
             allTestsPassed = false;
@@ -93,7 +93,7 @@ public:
         }
 
         // Test 6: Performance Validation
-        if (!TestPerformanceCharacteristics())
+    if (!TestPerformanceCharacteristics())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Performance Characteristics Test");
             allTestsPassed = false;
@@ -104,7 +104,7 @@ public:
         }
 
         // Test 7: Thread Safety
-        if (!TestThreadSafety())
+    if (!TestThreadSafety())
         {
             TC_LOG_ERROR("test.playerbot", " FAILED: Thread Safety Test");
             allTestsPassed = false;
@@ -144,7 +144,7 @@ private:
             PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
             // Should not crash and should return nullptr for non-existent character
-            if (result)
+    if (result)
             {
                 TC_LOG_WARN("test.playerbot", "Unexpected result for invalid GUID - this may indicate test data exists");
             }
@@ -248,7 +248,7 @@ private:
                 TC_LOG_INFO("test.playerbot", " Synchronous login completed successfully in {} ms", loginDuration.count());
 
                 // Verify login state
-                if (botSession->IsLoginComplete())
+    if (botSession->IsLoginComplete())
                 {
                     TC_LOG_INFO("test.playerbot", " Login state correctly shows LOGIN_COMPLETE");
                 }
@@ -259,7 +259,7 @@ private:
                 }
 
                 // Verify player object creation
-                if (botSession->GetPlayer())
+    if (botSession->GetPlayer())
                 {
                     TC_LOG_INFO("test.playerbot", " Player object successfully created");
                 }
@@ -276,7 +276,7 @@ private:
             }
 
             // Performance validation - synchronous login should be fast
-            if (loginDuration.count() > 5000) // 5 seconds threshold
+    if (loginDuration.count() > 5000) // 5 seconds threshold
             {
                 TC_LOG_WARN("test.playerbot", "  Synchronous login took {} ms - may be slower than expected", loginDuration.count());
             }
@@ -334,7 +334,7 @@ private:
             }
 
             // Test 3: Verify login state after failure
-            if (botSession->IsLoginFailed())
+    if (botSession->IsLoginFailed())
             {
                 TC_LOG_INFO("test.playerbot", " Login state correctly shows LOGIN_FAILED after invalid attempts");
             }
@@ -374,7 +374,7 @@ private:
                 auto botSession = ::std::make_shared<BotSession>(testAccountId);
 
                 // Test session creation/destruction
-                if (!botSession->IsActive())
+    if (!botSession->IsActive())
                 {
                     TC_LOG_ERROR("test.playerbot", " Bot session {} not active during memory test", i);
                     return false;
@@ -444,7 +444,7 @@ private:
             TC_LOG_INFO("test.playerbot", " Average synchronous login time: {} ms", avgTime.count());
 
             // Performance validation - should be reasonable
-            if (avgTime.count() > 10000) // 10 seconds is too slow
+    if (avgTime.count() > 10000) // 10 seconds is too slow
             {
                 TC_LOG_ERROR("test.playerbot", " Average login time {} ms is too slow", avgTime.count());
                 return false;
@@ -511,7 +511,7 @@ private:
             }
 
             // Wait for all threads to complete
-            for (auto& thread : threads)
+    for (auto& thread : threads)
             {
                 thread.join();
             }

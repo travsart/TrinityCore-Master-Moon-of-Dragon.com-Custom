@@ -144,13 +144,13 @@ protected:
         m_lastElapsed = elapsed;
 
         // Simulate slow update if requested
-        if (m_simulateSlowUpdate)
+    if (m_simulateSlowUpdate)
         {
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(m_slowUpdateDuration));
         }
 
         // Throw exception if requested (for error handling tests)
-        if (m_shouldThrow)
+    if (m_shouldThrow)
         {
             if (m_throwOnce)
             {
@@ -1012,7 +1012,6 @@ TEST_F(BehaviorManagerTest, EdgeCase_ManagerName_StoredCorrectly)
 TEST_F(BehaviorManagerTest, StressTest_TenThousandUpdates_Stable)
 {
     manager = CreateManager(50); // Short interval for stress
-
     for (int i = 0; i < 10000; ++i)
     {
         manager->Update(i % 100); // Varying diff values

@@ -926,7 +926,7 @@ float GuildIntegration::CalculateMessageRelevance(Player* player, const GuildCha
     for (const ::std::string& keyword : keywords)
     {
         // Check against player's interests and expertise
-        for (const ::std::string& interest : profile.interests)
+    for (const ::std::string& interest : profile.interests)
         {
             if (keyword.find(interest) != ::std::string::npos)
             {

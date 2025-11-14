@@ -151,7 +151,7 @@ void BotNpcLocationService::BuildProfessionTrainerCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each profession skill
-            for (uint32 skillId = 1; skillId < 800; ++skillId)
+    for (uint32 skillId = 1; skillId < 800; ++skillId)
             {
                 if (IsTrainerForSkill(entry, skillId))
                 {
@@ -180,7 +180,7 @@ void BotNpcLocationService::BuildClassTrainerCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each class
-            for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
+    for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
             {
                 if (IsClassTrainer(entry, classId))
                 {
@@ -209,7 +209,7 @@ void BotNpcLocationService::BuildServiceNpcCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each service type
-            for (uint8 serviceType = 0; serviceType <= static_cast<uint8>(NpcServiceType::BATTLEMASTER); ++serviceType)
+    for (uint8 serviceType = 0; serviceType <= static_cast<uint8>(NpcServiceType::BATTLEMASTER); ++serviceType)
             {
                 if (ProvidesService(entry, static_cast<NpcServiceType>(serviceType)))
                 {
@@ -242,7 +242,7 @@ void BotNpcLocationService::BuildQuestPOICache()
             continue;
 
         // Cache POI positions for each objective
-        for (auto const& blob : poiData->Blobs)
+    for (auto const& blob : poiData->Blobs)
         {
             if (blob.Points.empty())
                 continue;
@@ -479,7 +479,7 @@ NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     for (auto const& loc : locations)
     {
         // Filter by bot's map
-        if (loc.mapId != bot->GetMapId())
+    if (loc.mapId != bot->GetMapId())
             continue;
 
         float distance = bot->GetDistance(loc.position);

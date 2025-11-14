@@ -106,7 +106,7 @@ void SafeCorpseManager::RemoveCorpseReference(ObjectGuid corpseGuid)
             corpseGuid.ToString(), refs);
 
         // If no more references and marked safe, it can now be deleted
-        if (refs == 0 && it->second->safeToDelete.load())
+    if (refs == 0 && it->second->safeToDelete.load())
         {
             TC_LOG_DEBUG("playerbot.corpse", "Corpse {} now safe for deletion (no references)",
                 corpseGuid.ToString());
@@ -148,7 +148,7 @@ void SafeCorpseManager::CleanupExpiredCorpses()
         auto elapsed = ::std::chrono::duration_cast<::std::chrono::minutes>(now - it->second->creationTime);
 
         // Remove if expired and no references
-        if (elapsed > CORPSE_EXPIRY_TIME && it->second->referenceCount.load() == 0)
+    if (elapsed > CORPSE_EXPIRY_TIME && it->second->referenceCount.load() == 0)
         {
             ObjectGuid ownerGuid = it->second->ownerGuid;
             _ownerToCorpse.erase(ownerGuid);

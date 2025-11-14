@@ -65,7 +65,7 @@ namespace Playerbot
         }
 
         // Check if faction is allowed
-        if (!(factionMask & playerFactionBit))
+    if (!(factionMask & playerFactionBit))
             return false;
 
         return true;
@@ -320,7 +320,7 @@ namespace Playerbot
         ::std::shared_lock lock(_mutex);
 
         // If zone is specified, only check hubs in that zone
-        if (zoneId.has_value())
+    if (zoneId.has_value())
         {
             auto it = _zoneIndex.find(*zoneId);
             if (it == _zoneIndex.end())
@@ -335,7 +335,7 @@ namespace Playerbot
         else
         {
             // Check all hubs
-            for (auto const& hub : _questHubs)
+    for (auto const& hub : _questHubs)
             {
                 if (hub.ContainsPosition(pos))
                     return &hub;
@@ -448,7 +448,7 @@ namespace Playerbot
         }
 
         // Log sample positions
-        if (count > 0)
+    if (count > 0)
         {
             TC_LOG_DEBUG("playerbot", "QuestHubDatabase: Sample quest giver positions:");
             for (size_t i = 0; i < ::std::min(size_t(5), _tempQuestGivers.size()); ++i)
@@ -550,7 +550,7 @@ namespace Playerbot
                 currentClusterId, neighbors.size());
 
             // Expand cluster
-            for (size_t j = 0; j < neighbors.size(); ++j)
+    for (size_t j = 0; j < neighbors.size(); ++j)
             {
                 size_t neighborIdx = neighbors[j];
 
@@ -611,7 +611,7 @@ namespace Playerbot
         {
             // PROPER IMPLEMENTATION: Only create hubs from actual clusters (not singletons)
             // This maintains the purpose of QuestHubDatabase: directing bots to EFFICIENT LEVELING HUBS
-            if (indices.size() < MIN_POINTS)
+    if (indices.size() < MIN_POINTS)
             {
                 TC_LOG_WARN("playerbot", "QuestHubDatabase: Skipping cluster {} with only {} quest givers (minimum {})",
                     clusterId, indices.size(), MIN_POINTS);
@@ -706,7 +706,7 @@ namespace Playerbot
             ::std::string creatureList;
             size_t batchSize = batchEnd - batchStart;
             creatureList.reserve(batchSize * 8); // Pre-allocate approximate size
-            for (size_t i = batchStart; i < batchEnd; ++i)
+    for (size_t i = batchStart; i < batchEnd; ++i)
             {
                 if (i != batchStart)
                     creatureList += ",";
@@ -761,19 +761,19 @@ namespace Playerbot
             ::std::set<uint32> uniqueQuests;
 
             // Lookup quest data for each creature in this hub (fast in-memory operation)
-            for (uint32 creatureId : hub.creatureIds)
+    for (uint32 creatureId : hub.creatureIds)
             {
                 auto it = creatureQuests.find(creatureId);
                 if (it == creatureQuests.end())
                     continue;
 
                 // Tuple format: (questId, contentTuningId, unused, allowableRaces)
-                for (auto const& [questId, contentTuningId, unused, allowableRaces] : it->second)
+    for (auto const& [questId, contentTuningId, unused, allowableRaces] : it->second)
                 {
                     uniqueQuests.insert(questId);
 
                     // Update faction mask based on allowable races
-                    if (allowableRaces == 0 || allowableRaces == 0xFFFFFFFFFFFFFFFF)
+    if (allowableRaces == 0 || allowableRaces == 0xFFFFFFFFFFFFFFFF)
                     {
                         hub.factionMask |= 0x07; // All factions
                     }
@@ -782,8 +782,7 @@ namespace Playerbot
                         // Simplified faction detection
                         bool hasAlliance = (allowableRaces & 0x0000044D) != 0; // Alliance race bits
                         bool hasHorde = (allowableRaces & 0x000002B2) != 0;    // Horde race bits
-
-                        if (hasAlliance)
+    if (hasAlliance)
                             hub.factionMask |= 0x01;
                         if (hasHorde)
                             hub.factionMask |= 0x02;
@@ -801,7 +800,7 @@ namespace Playerbot
             hub.maxLevel = 70; // Max level in WoW 11.2
 
             // Refine hub name with zone info if available
-            if (hub.zoneId > 0)
+    if (hub.zoneId > 0)
             {
                 hub.name = "Quest Hub (Zone " + ::std::to_string(hub.zoneId) + ")";
             }
@@ -836,14 +835,14 @@ namespace Playerbot
         for (auto const& hub : _questHubs)
         {
             // Check for empty hubs
-            if (hub.questIds.empty())
+    if (hub.questIds.empty())
             {
                 TC_LOG_WARN("playerbot", "QuestHubDatabase: Hub {} has no quests", hub.hubId);
                 ++warnings;
             }
 
             // Check for invalid positions
-            if (hub.location.GetPositionX() == 0.0f &&
+    if (hub.location.GetPositionX() == 0.0f &&
                 hub.location.GetPositionY() == 0.0f &&
                 hub.location.GetPositionZ() == 0.0f)
             {
@@ -852,7 +851,7 @@ namespace Playerbot
             }
 
             // Check for invalid level ranges
-            if (hub.minLevel > hub.maxLevel && hub.maxLevel > 0)
+    if (hub.minLevel > hub.maxLevel && hub.maxLevel > 0)
             {
                 TC_LOG_WARN("playerbot", "QuestHubDatabase: Hub {} has invalid level range ({}-{})",
                            hub.hubId, hub.minLevel, hub.maxLevel);
@@ -860,7 +859,7 @@ namespace Playerbot
             }
 
             // Check for no faction access
-            if (hub.factionMask == 0)
+    if (hub.factionMask == 0)
             {
                 TC_LOG_WARN("playerbot", "QuestHubDatabase: Hub {} has no faction access", hub.hubId);
                 ++warnings;

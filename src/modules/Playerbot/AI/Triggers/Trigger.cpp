@@ -52,7 +52,7 @@ TriggerResult Trigger::Evaluate(BotAI* ai) const
         result.suggestedAction = _action;
 
         // Check additional conditions
-        if (!CheckConditions(ai))
+    if (!CheckConditions(ai))
         {
             result.triggered = false;
             result.urgency = 0.0f;

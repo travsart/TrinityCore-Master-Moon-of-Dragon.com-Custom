@@ -35,7 +35,7 @@ namespace Playerbot
         ::std::function<void(PersistenceResult)> callback)
     {
         // Validate player
-        if (!player)
+    if (!player)
         {
             TC_LOG_ERROR("playerbot.persistence", "BotStatePersistence: Invalid player (nullptr)");
             if (callback)
@@ -91,7 +91,7 @@ namespace Playerbot
         */
 
         // Placeholder: Mark as async pending
-        if (callback)
+    if (callback)
             callback(PersistenceResult::SUCCESS); // In production, would be called after async completion
 
         return PersistenceResult::ASYNC_PENDING;
@@ -594,7 +594,7 @@ namespace Playerbot
         items.clear();
 
         // Iterate all inventory bags
-        for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
         {
             Bag* pBag = player->GetBagByPos(bag);
             if (!pBag)
@@ -637,7 +637,7 @@ namespace Playerbot
         equipment.clear();
 
         // Iterate all equipment slots
-        for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
         {
             Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
             if (!item)
@@ -673,7 +673,7 @@ namespace Playerbot
         // In production, this would use Item::GetEnchantment() methods
 
         // Placeholder implementation
-        for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
+    for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
         {
             uint32 enchantId = item->GetEnchantmentId(EnchantmentSlot(slot));
             if (enchantId)
@@ -698,10 +698,10 @@ namespace Playerbot
         // In production, this would use Item::GetGem() methods
 
         // Placeholder implementation
-        for (uint8 socket = 0; socket < MAX_GEM_SOCKETS; ++socket)
+    for (uint8 socket = 0; socket < MAX_GEM_SOCKETS; ++socket)
         {
             uint32 gemId = 0; // item->GetGem(socket) in production
-            if (gemId)
+    if (gemId)
             {
                 if (!oss.str().empty())
                     oss << ",";

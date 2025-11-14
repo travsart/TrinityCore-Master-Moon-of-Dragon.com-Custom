@@ -258,7 +258,7 @@ void QuestTurnIn::HandleQuestCompletion(Player* bot, uint32 questId)
             ::std::lock_guard lock(_turnInMutex);
             auto& queue = _botTurnInQueues[bot->GetGUID().GetCounter()];
             // Check if we have enough for batch
-            if (queue.size() >= BATCH_TURNIN_THRESHOLD)
+    if (queue.size() >= BATCH_TURNIN_THRESHOLD)
             {
                 ::std::vector<uint32> batchQuests;
                 for (const auto& data : queue)
@@ -576,7 +576,7 @@ void QuestTurnIn::EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rew
             continue;
 
         // Check if item is equippable
-        if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON || itemTemplate->GetClass() == ITEM_CLASS_ARMOR)
+    if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON || itemTemplate->GetClass() == ITEM_CLASS_ARMOR)
         {
             // Get currently equipped item in same slot
             Item* currentItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, itemTemplate->GetInventoryType());
@@ -672,7 +672,7 @@ void QuestTurnIn::CoordinateGroupTurnIns(Group* group)
             SynchronizeGroupRewardSelection(group, questId);
 
             // Turn in together
-            for (Player* member : members)
+    for (Player* member : members)
             {
                 ScheduleQuestTurnIn(member, questId);
             }

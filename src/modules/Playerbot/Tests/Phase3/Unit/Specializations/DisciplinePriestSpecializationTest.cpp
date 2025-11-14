@@ -109,7 +109,7 @@ protected:
         auto spellInfo = MockFactory::CreateMockSpellInfo(spellId, 100, 0, 1500);
 
         // Configure spell-specific properties
-        switch (spellId)
+    switch (spellId)
         {
             case FLASH_HEAL:
                 spellInfo->SetManaCost(380);

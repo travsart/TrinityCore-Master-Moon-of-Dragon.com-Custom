@@ -52,7 +52,7 @@ QuestManager* LazyManagerFactory::GetQuestManager()
             TC_LOG_DEBUG("module.playerbot.lazy", "Creating QuestManager for bot {}", _bot->GetName());
             auto manager = ::std::make_unique<QuestManager>(_bot, _ai);
             // Initialize manager (calls OnInitialize())
-            if (!manager->Initialize())
+    if (!manager->Initialize())
             {
                 TC_LOG_ERROR("module.playerbot.lazy", "Failed to initialize QuestManager for bot {}", _bot->GetName());
                 return nullptr;
@@ -212,7 +212,7 @@ T* LazyManagerFactory::GetOrCreate(
         ::std::unique_lock lock(_mutex);
 
         // Double-check after acquiring lock (another thread may have created it)
-        if (flag.load(::std::memory_order_relaxed))
+    if (flag.load(::std::memory_order_relaxed))
         {
             return manager.get();
         }

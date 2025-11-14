@@ -158,7 +158,7 @@ void InterruptAwareness::SetObserver(Player* observer)
             if (cast.IsValid() && cast.isInterruptible)
             {
                 // Check range if specified
-                if (maxRange > 0.0f && cast.detectionRange > maxRange)
+    if (maxRange > 0.0f && cast.detectionRange > maxRange)
                     continue;
 
                 interruptibleCasts.push_back(cast);
@@ -368,7 +368,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
     if (unit->HasUnitState(UNIT_STATE_CASTING))
     {
         // Check generic spell
-        if (Spell* currentSpell = unit->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    if (Spell* currentSpell = unit->GetCurrentSpell(CURRENT_GENERIC_SPELL))
         {
             if (ShouldDetectSpell(unit, currentSpell))
             {
@@ -400,7 +400,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                         result.totalSpellsDetected++;
 
                         // Update metrics
-                        if (cast.isInterruptible)
+    if (cast.isInterruptible)
                             _metrics.interruptibleSpells.fetch_add(1);
                         if (cast.isHostile)
                             _metrics.hostileSpells.fetch_add(1);
@@ -413,7 +413,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
         }
 
         // Check channeled spell
-        if (Spell* channeledSpell = unit->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+    if (Spell* channeledSpell = unit->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
         {
             if (_config.detectChanneledSpells && ShouldDetectSpell(unit, channeledSpell))
             {
@@ -541,7 +541,7 @@ bool InterruptAwareness::ShouldDetectSpell(Unit* caster, Spell const* spell) con
             return false;
 
         // Check line of sight if required
-        if (_config.requireLineOfSight && !_observer->IsWithinLOSInMap(caster))
+    if (_config.requireLineOfSight && !_observer->IsWithinLOSInMap(caster))
             return false;
     }
 
@@ -566,7 +566,6 @@ bool InterruptAwareness::IsSpellInterruptible(Spell const* spell) const
 
     // Check for uninterruptible attributes
     // Note: SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY not available in this TrinityCore version
-
     if (spellInfo->HasAttribute(SPELL_ATTR4_CANNOT_BE_STOLEN))
         return false;
 
@@ -684,7 +683,7 @@ void InterruptAwareness::RemoveExpiredCasts()
         );
 
         // Remove empty entries
-        if (casts.empty())
+    if (casts.empty())
             it = _activeCasts.erase(it);
         else
             ++it;
@@ -730,7 +729,7 @@ void InterruptAwareness::ProcessCompletedCasts(SpellScanResult& result)
             continue;
 
         // Filter for casting or combat units to reduce processing load
-        if (unit->HasUnitState(UNIT_STATE_CASTING) || unit->IsInCombat())
+    if (unit->HasUnitState(UNIT_STATE_CASTING) || unit->IsInCombat())
         {
             units.push_back(unit);
         }

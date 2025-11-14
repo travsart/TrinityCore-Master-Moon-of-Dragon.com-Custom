@@ -113,7 +113,7 @@ public:
             case 11518: // Jergosh the Invoker
             {
                 // Jergosh channels Immolate (11962) - should be interrupted
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -121,7 +121,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Interrupt Immolate (high damage DoT)
-                        if (spellId == 11962 || spellId == 20294) // Immolate / Fireball
+    if (spellId == 11962 || spellId == 20294) // Immolate / Fireball
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -202,7 +202,7 @@ public:
                         continue;
 
                     // Fire Nova (11970) leaves fire on ground
-                    if (IsDangerousGroundEffect(dynObj))
+    if (IsDangerousGroundEffect(dynObj))
                     {
                         MoveAwayFromGroundEffect(player, dynObj);
                         return;
@@ -236,7 +236,7 @@ public:
                     Position rangedPos = CalculateRangedPosition(player, boss);
 
                     // Stay at 25-30 yards
-                    if (player->GetExactDist(boss) < 20.0f)
+    if (player->GetExactDist(boss) < 20.0f)
                     {
                         MoveTo(player, rangedPos);
                         return;
@@ -311,14 +311,14 @@ public:
                     break;
 
                 // Find players with Immolate
-                for (auto const& member : group->GetMemberSlots())
+    for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
                     // Check for Immolate debuff
-                    if (groupMember->HasAura(11962))
+    if (groupMember->HasAura(11962))
                     {
                         TC_LOG_DEBUG("module.playerbot", "RagefireChasmScript: Player has Immolate, needs dispel");
 

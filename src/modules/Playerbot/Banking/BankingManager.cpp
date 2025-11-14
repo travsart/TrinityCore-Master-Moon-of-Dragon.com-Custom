@@ -557,7 +557,7 @@ void BankingManager::WithdrawMaterialsForCrafting(::Player* player)
             break;
 
         // Check if item is in bank
-        if (!IsItemInBank(player, request.itemId))
+    if (!IsItemInBank(player, request.itemId))
             continue;
 
         uint32 bankCount = GetItemCountInBank(player, request.itemId);

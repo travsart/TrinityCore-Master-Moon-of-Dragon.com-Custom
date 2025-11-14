@@ -66,7 +66,7 @@ private:
             TC_LOG_INFO("test.playerbot", "Polymorphic WorldSession::IsBot() = {}", polymorphicResult);
 
             // CRITICAL VALIDATION
-            if (directResult && polymorphicResult) {
+    if (directResult && polymorphicResult) {
                 TC_LOG_INFO("test.playerbot", " VIRTUAL IsBot() FIX SUCCESSFUL");
                 TC_LOG_INFO("test.playerbot", " Both direct and polymorphic calls return true");
             } else if (directResult && !polymorphicResult) {
@@ -118,7 +118,7 @@ private:
                 TC_LOG_INFO("test.playerbot", "IsConnectionIdle() through pointer: {}", idle);
 
                 // Both should be safe now
-                if (!disconnected && !idle) {
+    if (!disconnected && !idle) {
                     TC_LOG_INFO("test.playerbot", " Socket guard methods working correctly");
                 } else {
                     TC_LOG_WARN("test.playerbot", " Unexpected results from socket guard methods");
@@ -226,7 +226,7 @@ private:
             std::vector<std::thread> threads;
 
             // Launch threads that access IsBot() concurrently
-            for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
                 threads.emplace_back([&botSession, &successCount, &totalCalls]() {
                     WorldSession* sessionPtr = botSession.get();
 
@@ -246,7 +246,7 @@ private:
             }
 
             // Wait for completion
-            for (auto& thread : threads) {
+    for (auto& thread : threads) {
                 thread.join();
             }
 
@@ -282,7 +282,7 @@ private:
             TC_LOG_INFO("test.playerbot", " Testing safe session destruction...");
 
             // Create and destroy sessions in a loop
-            for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
                 {
                     auto botSession = BotSession::Create(77770 + i);
                     if (botSession) {

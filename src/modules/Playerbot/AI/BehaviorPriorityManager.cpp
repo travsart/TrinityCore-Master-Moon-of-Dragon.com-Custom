@@ -230,7 +230,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
                 strategy->GetName(), static_cast<int>(meta->priority), ToString(meta->priority));
 
             // Check if this is a BehaviorManager and if it's enabled
-            if (auto* behaviorMgr = dynamic_cast<BehaviorManager*>(strategy))
+    if (auto* behaviorMgr = dynamic_cast<BehaviorManager*>(strategy))
             {
                 if (!behaviorMgr->IsEnabled())
                 {
@@ -268,7 +268,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
                      strategy->GetName(), static_cast<int>(priority), ToString(priority));
 
         // Check if strategy's IsActive method returns true
-        if (!strategy->IsActive(m_ai))
+    if (!strategy->IsActive(m_ai))
         {
             TC_LOG_ERROR("module.playerbot.priority",
                 " Strategy '{}' (priority {}) NOT active (IsActive returned false)",
@@ -300,7 +300,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
         viablePriorities.push_back(priority);
 
         // Check if blocked by OTHER VIABLE priorities
-        if (IsBlockedByExclusion(priority, viablePriorities))
+    if (IsBlockedByExclusion(priority, viablePriorities))
         {
             TC_LOG_ERROR("module.playerbot.priority",
                 " Strategy '{}' (priority {}) BLOCKED by viable higher-priority exclusion rules",
@@ -310,7 +310,7 @@ Strategy* BehaviorPriorityManager::SelectActiveBehavior(
         }
 
         // This is our winner - log if changed
-        if (m_lastSelectedStrategy != strategy)
+    if (m_lastSelectedStrategy != strategy)
         {
             TC_LOG_ERROR("module.playerbot.priority",
                 " WINNER: Selected strategy '{}' with priority {} and relevance {:.1f} (was: {})",
@@ -406,18 +406,17 @@ bool BehaviorPriorityManager::IsAllowedToRun(Strategy* strategy) const
     {
         if (priority <= meta->priority)
             continue; // Only check higher priorities
-
-        for (const BehaviorMetadata& otherMeta : strategies)
+    for (const BehaviorMetadata& otherMeta : strategies)
         {
             if (!otherMeta.strategy || !otherMeta.strategy->IsActive(const_cast<BotAI*>(m_ai)))
                 continue;
 
             // If higher priority is exclusive, block this one
-            if (otherMeta.exclusive)
+    if (otherMeta.exclusive)
                 return false;
 
             // Check exclusion rules
-            if (!CanCoexist(strategy, otherMeta.strategy))
+    if (!CanCoexist(strategy, otherMeta.strategy))
                 return false;
         }
     }
@@ -452,7 +451,7 @@ void BehaviorPriorityManager::UpdateContext()
     if (bot->IsInCombat())
     {
         // Check fleeing conditions first
-        if (bot->GetHealthPct() < 20.0f)
+    if (bot->GetHealthPct() < 20.0f)
         {
             if (m_activePriority != BehaviorPriority::FLEEING)
             {
@@ -613,7 +612,7 @@ bool BehaviorPriorityManager::IsBlockedByExclusion(
 
         // If this priority conflicts with an active one AND
         // the active one has higher priority, we're blocked
-        if (conflicts.count(activePriority) && activePriority > priority)
+    if (conflicts.count(activePriority) && activePriority > priority)
         {
             TC_LOG_TRACE("module.playerbot.priority",
                 "Priority {} blocked by higher priority {}",

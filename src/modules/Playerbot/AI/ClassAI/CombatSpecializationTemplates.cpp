@@ -350,7 +350,7 @@ public:
         // This allows gradual migration
 
         // For now, enable templates for specific specs that are complete
-        switch (botClass)
+    switch (botClass)
         {
             case CLASS_PALADIN:
                 return specId == SPEC_PALADIN_RETRIBUTION; // Migrated as example

@@ -494,7 +494,7 @@ bool StressTestRunner::RunConcurrentGroupTest(uint32 groupCount, uint32 botsPerG
         auto group = env->CreateTestGroup(leaderName);
 
         // Add bots to each group
-        for (uint32 j = 0; j < botsPerGroup; ++j)
+    for (uint32 j = 0; j < botsPerGroup; ++j)
         {
             ::std::string botName = "Bot" + ::std::to_string(i + 1) + "_" + ::std::to_string(j + 1);
             auto bot = env->CreateTestBot(botName);

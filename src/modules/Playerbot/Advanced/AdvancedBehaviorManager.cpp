@@ -479,7 +479,7 @@ void AdvancedBehaviorManager::PrioritizeCrowdControl(::std::vector<Creature*> co
             continue;
 
         // Prioritize casters and healers
-        if (template_->unit_class == CLASS_MAGE || template_->unit_class == CLASS_PRIEST)
+    if (template_->unit_class == CLASS_MAGE || template_->unit_class == CLASS_PRIEST)
         {
             // Apply CC based on class
             // Framework in place for class-specific CC
@@ -524,7 +524,7 @@ void AdvancedBehaviorManager::HandlePatrolAvoidance()
             continue;
 
         // If creature is on patrol route, wait for it to pass
-        if (creature->HasUnitMovementFlag(MOVEMENTFLAG_WALKING))
+    if (creature->HasUnitMovementFlag(MOVEMENTFLAG_WALKING))
         {
             if (m_bot->GetExactDist2d(snapshot.position) < 15.0f)
             {
@@ -923,7 +923,7 @@ void AdvancedBehaviorManager::PrioritizeHealers()
             continue;
 
         // Check if player is a healer class
-        if (player->GetClass() == CLASS_PRIEST ||
+    if (player->GetClass() == CLASS_PRIEST ||
             player->GetClass() == CLASS_DRUID ||
             player->GetClass() == CLASS_SHAMAN ||
             player->GetClass() == CLASS_PALADIN ||
@@ -986,7 +986,7 @@ void AdvancedBehaviorManager::PrioritizeFlagCarriers()
 
         // Check if player has flag aura (specific to WSG)
         // Framework in place for flag detection
-        if (player->HasAura(23333) || player->HasAura(23335)) // WSG flag auras
+    if (player->HasAura(23333) || player->HasAura(23335)) // WSG flag auras
         {
             FocusPvPTarget(player);
             break;
@@ -1126,7 +1126,7 @@ void AdvancedBehaviorManager::DiscoverFlightPaths()
             continue;
 
         // Check if creature is flight master (npc_flag UNIT_NPC_FLAG_FLIGHTMASTER)
-        if (creature->HasNpcFlag(UNIT_NPC_FLAG_FLIGHTMASTER))
+    if (creature->HasNpcFlag(UNIT_NPC_FLAG_FLIGHTMASTER))
         {
             // Discover this flight path
             m_discoveredFlightPaths.insert(creature->GetEntry());
@@ -1454,12 +1454,12 @@ Player* AdvancedBehaviorManager::SelectPvPTarget()
         uint32 priority = 0;
 
         // Prioritize healers
-        if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_DRUID ||
+    if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_DRUID ||
             player->GetClass() == CLASS_SHAMAN || player->GetClass() == CLASS_PALADIN)
             priority += 50;
 
         // Prioritize low health targets
-        if (player->GetHealthPct() < 50)
+    if (player->GetHealthPct() < 50)
             priority += 30;
 
         // Prioritize nearby targets
@@ -1577,13 +1577,13 @@ void AdvancedBehaviorManager::ScanForRares()
             continue;
 
         // Check if creature is rare (classification)
-        if (static_cast<CreatureClassifications>(creature->GetCreatureTemplate()->Classification) == CreatureClassifications::RareElite ||
+    if (static_cast<CreatureClassifications>(creature->GetCreatureTemplate()->Classification) == CreatureClassifications::RareElite ||
             static_cast<CreatureClassifications>(creature->GetCreatureTemplate()->Classification) == CreatureClassifications::Rare)
         {
             TrackRareSpawn(creature);
 
             // Engage if appropriate
-            if (ShouldEngageRare(creature))
+    if (ShouldEngageRare(creature))
                 m_bot->Attack(creature, true);
         }
     }
@@ -1629,7 +1629,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
             continue;
 
         // Check if object is lootable treasure
-        if (goInfo->type == GAMEOBJECT_TYPE_CHEST || goInfo->type == GAMEOBJECT_TYPE_GOOBER)
+    if (goInfo->type == GAMEOBJECT_TYPE_CHEST || goInfo->type == GAMEOBJECT_TYPE_GOOBER)
         {
             Treasure treasure;
             treasure.guid = go->GetGUID();
@@ -1641,7 +1641,7 @@ void AdvancedBehaviorManager::ScanForTreasures()
             m_discoveredTreasures.push_back(treasure);
 
             // Loot if in range
-            if (go->IsAtInteractDistance(m_bot))
+    if (go->IsAtInteractDistance(m_bot))
                 LootTreasure(go);
         }
     }

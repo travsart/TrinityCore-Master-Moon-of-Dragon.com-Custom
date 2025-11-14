@@ -303,13 +303,13 @@ public:
             return _bot->GetPosition();
 
         Position optimalPos = _bot->GetPosition();
-        float currentDistance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        switch (detectedSpec)
+        float currentDistance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    switch (detectedSpec)
         {
 
             case DeathKnightSpec::BLOOD:
                 // Tank positioning - in front of target
-
-                if (currentDistance > 5.0f)
+    if (currentDistance > 5.0f)
 
                 {
 
@@ -324,8 +324,7 @@ public:
 
             case DeathKnightSpec::FROST:
                 // Melee DPS positioning - behind or to the side
-
-                if (currentDistance > 5.0f)
+    if (currentDistance > 5.0f)
 
                 {
 
@@ -340,8 +339,7 @@ public:
 
             case DeathKnightSpec::UNHOLY:
                 // Flexible positioning with pet management
-
-                if (currentDistance > 5.0f && currentDistance < 30.0f)
+    if (currentDistance > 5.0f && currentDistance < 30.0f)
 
                 {
                     // Stay at mid-range for Death Coil
@@ -504,7 +502,7 @@ void DeathKnightAI::UpdateRotation(Unit* target)
 
         // Fallback: Use Death Grip if available for ranged pull
         float rangeCheckSq = OPTIMAL_MELEE_RANGE * OPTIMAL_MELEE_RANGE; // 25.0f
-        if (GetBot()->GetExactDistSq(target) > rangeCheckSq && ShouldUseDeathGrip(target))
+    if (GetBot()->GetExactDistSq(target) > rangeCheckSq && ShouldUseDeathGrip(target))
         {
 
             if (CanUseAbility(DEATH_GRIP))
@@ -644,11 +642,10 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     if (distance <= 5.0f)
     {
         // Melee range abilities
-        if (_diseaseManager->HasBothDiseases(target))
+    if (_diseaseManager->HasBothDiseases(target))
         {
             // Spread diseases with Blood Boil for AoE
-
-            if (CanUseAbility(BLOOD_BOIL) && _runeManager->HasRunes(1u, 0u, 0u))
+    if (CanUseAbility(BLOOD_BOIL) && _runeManager->HasRunes(1u, 0u, 0u))
 
             {
 
@@ -661,8 +658,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
             }
 
             // Use spec-specific strike
-
-            switch (_detectedSpec)
+    switch (_detectedSpec)
 
             {
 
@@ -726,7 +722,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Use Blood Strike as fallback
-        if (CanUseAbility(BLOOD_STRIKE) && _runeManager->HasRunes(1u, 0u, 0u))
+    if (CanUseAbility(BLOOD_STRIKE) && _runeManager->HasRunes(1u, 0u, 0u))
         {
 
             CastSpell(BLOOD_STRIKE, target);
@@ -739,7 +735,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
     else if (distance > 5.0f && distance <= 30.0f)
     {
         // Death Grip to pull target
-        if (distance > 10.0f && CanUseAbility(DEATH_GRIP))
+    if (distance > 10.0f && CanUseAbility(DEATH_GRIP))
         {
 
             CastSpell(DEATH_GRIP, target);
@@ -750,7 +746,7 @@ void DeathKnightAI::ExecuteFallbackRotation(Unit* target)
         }
 
         // Death Coil for ranged damage
-        if (runicPower >= 40 && CanUseAbility(DEATH_COIL))
+    if (runicPower >= 40 && CanUseAbility(DEATH_COIL))
         {
 
             CastSpell(DEATH_COIL, target);
@@ -1080,7 +1076,7 @@ void DeathKnightAI::OnCombatStart(Unit* target)
         ActivateBurstCooldowns(target);
 
         // Army of the Dead for major encounters
-        if (CanUseAbility(ARMY_OF_THE_DEAD))
+    if (CanUseAbility(ARMY_OF_THE_DEAD))
         {
 
             CastSpell(ARMY_OF_THE_DEAD);
@@ -1366,8 +1362,7 @@ bool DeathKnightAI::HandleDefensives()
     {
         case DeathKnightSpec::BLOOD:
             // Vampiric Blood for blood DKs
-
-            if (healthPct < DEFENSIVE_COOLDOWN_THRESHOLD && CanUseAbility(VAMPIRIC_BLOOD))
+    if (healthPct < DEFENSIVE_COOLDOWN_THRESHOLD && CanUseAbility(VAMPIRIC_BLOOD))
 
             {
 
@@ -1387,8 +1382,7 @@ bool DeathKnightAI::HandleDefensives()
 
             }
             // Rune Tap for quick heal
-
-            if (healthPct < 60.0f && CanUseAbility(RUNE_TAP))
+    if (healthPct < 60.0f && CanUseAbility(RUNE_TAP))
 
             {
 
@@ -1408,8 +1402,7 @@ bool DeathKnightAI::HandleDefensives()
 
         case DeathKnightSpec::FROST:
             // Unbreakable Armor for frost DKs
-
-            if (healthPct < 50.0f && CanUseAbility(UNBREAKABLE_ARMOR))
+    if (healthPct < 50.0f && CanUseAbility(UNBREAKABLE_ARMOR))
 
             {
 
@@ -1433,8 +1426,7 @@ bool DeathKnightAI::HandleDefensives()
 
         case DeathKnightSpec::UNHOLY:
             // Bone Shield maintenance
-
-            if (!HasAura(BONE_SHIELD) && CanUseAbility(BONE_SHIELD))
+    if (!HasAura(BONE_SHIELD) && CanUseAbility(BONE_SHIELD))
 
             {
 
@@ -1642,8 +1634,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
     {
         case DeathKnightSpec::BLOOD:
             // Dancing Rune Weapon for Blood
-
-            if (CanUseAbility(DANCING_RUNE_WEAPON))
+    if (CanUseAbility(DANCING_RUNE_WEAPON))
 
             {
 
@@ -1669,8 +1660,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
 
         case DeathKnightSpec::FROST:
             // Pillar of Frost for massive damage boost
-
-            if (CanUseAbility(PILLAR_OF_FROST))
+    if (CanUseAbility(PILLAR_OF_FROST))
 
             {
 
@@ -1692,8 +1682,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
 
             }
             // Empower Rune Weapon for rune regeneration
-
-            if (CanUseAbility(EMPOWER_RUNE_WEAPON))
+    if (CanUseAbility(EMPOWER_RUNE_WEAPON))
 
             {
 
@@ -1715,8 +1704,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
 
         case DeathKnightSpec::UNHOLY:
             // Summon Gargoyle for burst damage
-
-            if (CanUseAbility(SUMMON_GARGOYLE))
+    if (CanUseAbility(SUMMON_GARGOYLE))
 
             {
 
@@ -1738,8 +1726,7 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
 
             }
             // Unholy Frenzy for attack speed
-
-            if (CanUseAbility(UNHOLY_FRENZY))
+    if (CanUseAbility(UNHOLY_FRENZY))
 
             {
 
@@ -2089,7 +2076,6 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto& unit : targets)
     {
         if (GetBot()->IsValidAttackTarget(unit))

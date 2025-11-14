@@ -129,7 +129,7 @@ public:
             case 7357: // Mordresh Fire Eye
             {
                 // Mordresh casts Fireball and Flame Buffet
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -137,7 +137,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Fireball (15228) - high damage
-                        if (spellId == 15228 || spellId == 9053)
+    if (spellId == 15228 || spellId == 9053)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -148,7 +148,7 @@ public:
                         }
 
                         // Summon spells (lower priority but worth interrupting)
-                        if (spellId == 12746 || spellId == 12747)
+    if (spellId == 12746 || spellId == 12747)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -165,7 +165,7 @@ public:
             case 7358: // Amnennar the Coldbringer
             {
                 // Amnennar casts Frost Bolt and Chains of Ice
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -173,7 +173,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Frost Bolt (15530) - high frost damage
-                        if (spellId == 15530 || spellId == 9672)
+    if (spellId == 15530 || spellId == 9672)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -184,7 +184,7 @@ public:
                         }
 
                         // Chains of Ice (15531) - immobilize
-                        if (spellId == 15531 || spellId == 12551)
+    if (spellId == 15531 || spellId == 12551)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -304,7 +304,7 @@ public:
 
                 // If 4+ adds, prioritize AOE (group should AOE)
                 // If < 4 adds, focus boss and let cleave/incidental damage kill adds
-                if (adds.size() >= 4)
+    if (adds.size() >= 4)
                 {
                     TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Multiple skeleton adds - using AOE priority");
 
@@ -410,7 +410,7 @@ public:
                     float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind, move
-                    if (angleDiff > M_PI / 2)
+    if (angleDiff > M_PI / 2)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Positioning behind Ragglesnout to avoid cleave");
                         MoveTo(player, behindPos);
@@ -487,11 +487,11 @@ public:
                         continue;
 
                     // Check for disease debuffs
-                    if (groupMember->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT) ||
+    if (groupMember->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT) ||
                         groupMember->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE))
                     {
                         // Check if it's a disease type
-                        for (auto const& auraApp : groupMember->GetAppliedAuras())
+    for (auto const& auraApp : groupMember->GetAppliedAuras())
                         {
                             if (auraApp.second && auraApp.second->GetBase())
                             {
@@ -524,7 +524,7 @@ public:
                         continue;
 
                     // Check for ice block/frost tomb
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_STUN) ||
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_STUN) ||
                         groupMember->HasAura(15532))  // Frost Tomb
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenDownsScript: Player trapped in Frost Tomb - breaking free");
@@ -534,7 +534,7 @@ public:
                 }
 
                 // Chains of Ice - immobilize, can be dispelled
-                for (auto const& member : group->GetMemberSlots())
+    for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
@@ -606,14 +606,14 @@ public:
                 if (group)
                 {
                     // Check for trapped allies
-                    for (auto const& member : group->GetMemberSlots())
+    for (auto const& member : group->GetMemberSlots())
                     {
                         Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
                         if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                             continue;
 
                         // If ally is in Frost Tomb, move to them to help break ice
-                        if (groupMember->HasAura(15532))
+    if (groupMember->HasAura(15532))
                         {
                             float distance = player->GetExactDist(groupMember);
                             if (distance > 5.0f)

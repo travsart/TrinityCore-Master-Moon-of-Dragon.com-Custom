@@ -90,7 +90,6 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId, ObjectGuid charac
     }
 
     // Now login the character immediately
-
     if (!session->LoginCharacter(characterGuid))
     {
         // Clean up the session if login failed
@@ -168,7 +167,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         BotSession* session = *it;
 
         // Comprehensive null pointer checks
-        if (!session) {
+    if (!session) {
             TC_LOG_ERROR("module.playerbot.session", "Found null session in _activeSessions, removing");
             it = _activeSessions.erase(it);
             continue;
@@ -244,7 +243,7 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
         sessionsFound++;
 
         // Check if session has no player (needs character login)
-        if (!session->GetPlayer())
+    if (!session->GetPlayer())
         {
             TC_LOG_INFO("module.playerbot.session",
                 " Session for account {} has no player - looking up character for login",
@@ -271,7 +270,7 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
                 session->GetAccountId(), characterGuid.ToString());
 
             // Trigger synchronous character login
-            if (session->LoginCharacter(characterGuid))
+    if (session->LoginCharacter(characterGuid))
             {
                 loginsTriggered++;
             }

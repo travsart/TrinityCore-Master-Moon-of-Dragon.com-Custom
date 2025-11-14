@@ -214,7 +214,6 @@ bool BotLoginQueryHolder::Initialize()
     // - CUF profiles (bots don't need custom UI)
     // - Garrison data (bots don't manage garrisons)
     // - Trait configs (simplified for bots)
-
     if (!res)
     {
         TC_LOG_ERROR("module.playerbot.session",

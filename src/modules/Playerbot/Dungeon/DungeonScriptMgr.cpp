@@ -190,7 +190,7 @@ void DungeonScriptMgr::ExecuteBossMechanic(::Player* player, ::Creature* boss,
     {
         // Script exists - delegate to it
         // Script's virtual method may call generic or implement custom logic
-        switch (mechanic)
+    switch (mechanic)
         {
             case MechanicType::INTERRUPT:
                 script->HandleInterruptPriority(player, boss);

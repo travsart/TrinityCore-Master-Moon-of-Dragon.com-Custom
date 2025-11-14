@@ -89,7 +89,7 @@ public:
 
         // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
         // which would acquire BotAI::_mutex recursively
-        if (!_behavior->HasFollowTarget())
+    if (!_behavior->HasFollowTarget())
             return false;
 
         return _behavior->GetDistanceToLeader() > 30.0f;
@@ -113,7 +113,7 @@ public:
 
         // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
         // which would acquire BotAI::_mutex recursively
-        if (!_behavior->HasFollowTarget())
+    if (!_behavior->HasFollowTarget())
             return false;
 
         return !_behavior->IsLeaderInSight() &&
@@ -170,13 +170,13 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
     if (Group* group = bot->GetGroup())
     {
         // Don't follow if we're the leader
-        if (group->GetLeaderGUID() == bot->GetGUID())
+    if (group->GetLeaderGUID() == bot->GetGUID())
             return 0.0f;
 
         // CRITICAL FIX FOR ISSUES #2 & #3: ZERO relevance during combat
         // This prevents follow from interfering with combat positioning and facing
         // BehaviorPriorityManager will prioritize combat behaviors (priority 100) over follow (priority 0)
-        if (bot->IsInCombat())
+    if (bot->IsInCombat())
         {
             TC_LOG_TRACE("module.playerbot.follow",
                 "Bot {} in combat - follow behavior disabled (FIX FOR ISSUE #2 & #3)",
@@ -228,7 +228,7 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         if (Player* member = itr.GetSource())
         {
             // FIX: Only use members that are fully loaded in world
-            if (member->IsInWorld() && member->GetGUID() == leaderGuid)
+    if (member->IsInWorld() && member->GetGUID() == leaderGuid)
             {
                 leader = member;
                 TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Found leader {} in group members ===",
@@ -364,7 +364,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     if (!leader)
     {
         // Leader logged out or not found - clear follow target and stop
-        if (_followTarget.player != nullptr)
+    if (_followTarget.player != nullptr)
         {
             TC_LOG_INFO("module.playerbot", "LeaderFollowBehavior: Leader {} not found (logged out?), stopping follow for bot {}",
                        _followTarget.guid.ToString(), bot->GetName());
@@ -423,7 +423,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
             break;
         case FollowState::WAITING:
             // Check if leader started moving
-            if (_followTarget.isMoving)
+    if (_followTarget.isMoving)
                 SetFollowState(FollowState::FOLLOWING);
             break;
         case FollowState::TELEPORTING:
@@ -615,7 +615,7 @@ FormationRole LeaderFollowBehavior::DetermineFormationRole(Player* bot)
         case CLASS_WARRIOR:
         case CLASS_PALADIN:
             // Check for tank stance
-            if (bot->HasAura(71)) // Defensive Stance aura ID
+    if (bot->HasAura(71)) // Defensive Stance aura ID
                 return FormationRole::TANK;
             return FormationRole::MELEE_DPS;
 
@@ -769,7 +769,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
         TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} TOO FAR (dist={:.2f}), catching up", bot->GetName(), currentDistance);
         // Only set state to CATCHING_UP if not already in that state
         // This prevents spamming state changes every frame
-        if (_state != FollowState::CATCHING_UP)
+    if (_state != FollowState::CATCHING_UP)
             SetFollowState(FollowState::CATCHING_UP);
 
         AdjustMovementSpeed(bot, currentDistance);
@@ -780,7 +780,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
         // Normal following distance - transition back to FOLLOWING if we were catching up
         TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} NORMAL FOLLOW (dist={:.2f}), moving", bot->GetName(), currentDistance);
         // Transition from CATCHING_UP back to FOLLOWING when we're back in range
-        if (_state == FollowState::CATCHING_UP)
+    if (_state == FollowState::CATCHING_UP)
         {
             TC_LOG_INFO("module.playerbot", "Bot {} successfully caught up, transitioning to FOLLOWING", bot->GetName());
             SetFollowState(FollowState::FOLLOWING);
@@ -1032,7 +1032,7 @@ void LeaderFollowBehavior::HandleLostLeader(BotAI* ai)
     if (_followTarget.lostDuration > 10000 && _config.autoTeleport)
     {
         // FIX #21: Use _followTarget.player instead of ObjectAccessor lookup
-        if (_followTarget.player)
+    if (_followTarget.player)
         {
             TeleportToLeader(bot, _followTarget.player);
         }
@@ -1292,7 +1292,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
         if (currentType != FOLLOW_MOTION_TYPE)
         {
             // If there's leftover combat movement (CHASE/POINT), clear it first
-            if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
+    if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
             {
                 TC_LOG_ERROR("module.playerbot", " StartMovement: Clearing leftover {} motion for bot {}",
                             static_cast<uint32>(currentType), bot->GetName());
@@ -1465,7 +1465,7 @@ float FollowBehaviorUtils::CalculateOptimalFollowDistance(Player* bot, Player* l
             break;
         case FollowMode::FORMATION:
             // Calculate based on bot's class
-            switch (bot->GetClass())
+    switch (bot->GetClass())
             {
                 case CLASS_WARRIOR:
                 case CLASS_PALADIN:

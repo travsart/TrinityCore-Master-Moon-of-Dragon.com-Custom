@@ -33,7 +33,7 @@ bool PerformanceManager::Initialize()
     if (PlayerbotConfig::instance())
     {
         // Enable profiling if configured
-        if (PlayerbotConfig::instance()->GetBool("Playerbot.Performance.Profiler.Enable", false))
+    if (PlayerbotConfig::instance()->GetBool("Playerbot.Performance.Profiler.Enable", false))
         {
             StartProfiling();
         }

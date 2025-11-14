@@ -46,7 +46,7 @@ namespace {
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -379,11 +379,11 @@ void DispelCoordinator::UpdateDispelAssignments()
     for (const auto& debuff : debuffs)
     {
         // Skip if priority too low
-        if (debuff.adjustedPriority < m_config.priorityThreshold)
+    if (debuff.adjustedPriority < m_config.priorityThreshold)
             break;
 
         // Skip if already being handled
-        if (IsBeingDispelled(debuff.targetGuid, debuff.auraId))
+    if (IsBeingDispelled(debuff.targetGuid, debuff.auraId))
             continue;
 
         // Find best dispeller
@@ -405,7 +405,7 @@ void DispelCoordinator::UpdateDispelAssignments()
         ++m_statistics.assignmentsCreated;
 
         // If this is our assignment, save it
-        if (bestDispeller == m_bot->GetGUID())
+    if (bestDispeller == m_bot->GetGUID())
         {
             m_currentAssignment = assignment;
         }
@@ -430,20 +430,20 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
     if (player)
     {
         // Tank priority adjustments
-        if (GetPlayerRole(player) == BOT_ROLE_TANK)
+    if (GetPlayerRole(player) == BOT_ROLE_TANK)
         {
             if (slowPercent > 0 || preventsActions)
                 priority += 2.0f;  // Tank mobility is critical
-            if (damagePerTick > 0 && target->GetHealthPct() < 50.0f)
+    if (damagePerTick > 0 && target->GetHealthPct() < 50.0f)
                 priority += 1.0f;  // Tank taking DOT damage at low health
         }
 
         // Healer priority adjustments
-        if (GetPlayerRole(player) == BOT_ROLE_HEALER)
+    if (GetPlayerRole(player) == BOT_ROLE_HEALER)
         {
             if (preventsCasting)
                 priority += 2.5f;  // Healer silenced is emergency
-            if (preventsActions)
+    if (preventsActions)
                 priority += 2.0f;  // Healer CC'd is critical
         }
     }
@@ -453,7 +453,7 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
     if (healthPct < 30.0f && damagePerTick > 0)
     {
         priority += 1.5f;  // Low HP with DOT
-        if (damagePerTick > target->GetMaxHealth() * 0.05f)
+    if (damagePerTick > target->GetMaxHealth() * 0.05f)
             priority += 1.0f;  // Heavy DOT at low health
     }
 
@@ -543,7 +543,7 @@ float DispelCoordinator::CalculateDispellerScore(const DispellerCapability& disp
             score += 20.0f;
 
             // Extra bonus if target is low HP and dispeller is healer
-            if (target.targetHealthPct < 50.0f)
+    if (target.targetHealthPct < 50.0f)
             {
                 score += 20.0f;
             }
@@ -1018,7 +1018,7 @@ bool DispelCoordinator::ExecutePurge()
             continue;
 
         // Check if enemy (must be hostile)
-        if (!m_bot->IsHostileTo(enemy))
+    if (!m_bot->IsHostileTo(enemy))
             continue;
         // Check all auras
         Unit::AuraApplicationMap const& auras = enemy->GetAppliedAuras();
@@ -1034,7 +1034,7 @@ bool DispelCoordinator::ExecutePurge()
                 continue;
 
             // Skip if not worth purging
-            if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
+    if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
                 continue;
 
             PurgeTarget target;
@@ -1116,7 +1116,7 @@ bool DispelCoordinator::IsTankTakingDamage() const
             continue;
 
         // Simple check - tank below 70% health
-        if (member->GetHealthPct() < 70.0f)
+    if (member->GetHealthPct() < 70.0f)
             return true;
     }
 
@@ -1141,12 +1141,12 @@ bool DispelCoordinator::EvaluatePurgeBenefit(const PurgeableBuff& buff, Unit* en
     if (buff.priority == PURGE_MODERATE_BUFF)
     {
         // Purge damage increases if enemy is high threat
-        if (buff.increasesDamage &&
+    if (buff.increasesDamage &&
             m_bot->GetThreatManager().GetThreat(enemy) > 1000)
             return true;
 
         // Purge healing increases if enemy can heal
-        if (buff.increasesHealing)
+    if (buff.increasesHealing)
             return true;
     }
 

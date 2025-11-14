@@ -60,11 +60,11 @@ SpatialGridQueryHelpers::FindHostileCreaturesInRange(Player* bot, float range, b
     for (auto const& snapshot : creatureSnapshots)
     {
         // Check hostility
-        if (!snapshot.isHostile)
+    if (!snapshot.isHostile)
             continue;
 
         // Check alive requirement
-        if (requireAlive && !snapshot.IsAlive())
+    if (requireAlive && !snapshot.IsAlive())
             continue;
 
         // Check distance (spatial grid may return entities slightly outside range)
@@ -135,7 +135,7 @@ SpatialGridQueryHelpers::FindGroupMembersInRange(Player* bot, float range)
     for (auto const& snapshot : playerSnapshots)
     {
         // Check if player is in our group
-        if (snapshot.groupGuid != group->GetGUID())
+    if (snapshot.groupGuid != group->GetGUID())
             continue;
 
         // Check distance
@@ -185,7 +185,7 @@ SpatialGridQueryHelpers::FindQuestGameObjectsInRange(Player* bot, float range)
     for (auto const& snapshot : gameObjectSnapshots)
     {
         // Check if quest object
-        if (!snapshot.isQuestObject)
+    if (!snapshot.isQuestObject)
             continue;
 
         // Check distance
@@ -235,7 +235,7 @@ SpatialGridQueryHelpers::FindDangerousDynamicObjectsInRange(Player* bot, float r
     for (auto const& snapshot : dynamicObjectSnapshots)
     {
         // Check if active
-        if (!snapshot.IsActive())
+    if (!snapshot.IsActive())
             continue;
 
         // Check distance
@@ -286,7 +286,7 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
     for (auto const& snapshot : areaTriggerSnapshots)
     {
         // Check if active
-        if (!snapshot.IsActive())
+    if (!snapshot.IsActive())
             continue;
 
         // Get caster to check faction hostility
@@ -295,7 +295,7 @@ SpatialGridQueryHelpers::FindDangerousAreaTriggersInRange(Player* bot, float ran
             caster = ObjectAccessor::GetUnit(*bot, snapshot.casterGuid);
 
         // Dangerous if caster is hostile or missing (assume hostile)
-        if (caster && !bot->IsHostileTo(caster))
+    if (caster && !bot->IsHostileTo(caster))
             continue;
 
         // Check distance
