@@ -15,7 +15,21 @@
 #include <functional>
 #include <chrono>
 
-struct LifecycleEventInfo;
+enum class LifecycleEventType
+{
+    SCHEDULER_LOGIN,
+    SCHEDULER_LOGOUT,
+    SPAWNER_SUCCESS,
+    SPAWNER_FAILURE,
+    POPULATION_UPDATE,
+    SYSTEM_SHUTDOWN,
+    MAINTENANCE_REQUIRED
+};
+
+struct LifecycleEventInfo
+{
+    using Type = LifecycleEventType;
+};
 
 /**
  * @brief Interface for bot lifecycle coordination
