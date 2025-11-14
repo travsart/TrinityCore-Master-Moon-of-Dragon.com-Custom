@@ -1149,7 +1149,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     CastSpellExtraArgs args;
     args.SetCastItem(questItem);
     args.SetOriginalCaster(bot->GetGUID());
-    bot->CastSpell(spellId, args, targetObject);
+    bot->CastSpell(CastSpellTargetArg(targetObject), spellId, args);
     TC_LOG_ERROR("module.playerbot.quest", " UseQuestItemOnTarget: Bot {} cast spell {} from item {} on GameObject {} - objective should progress",
                  bot->GetName(), spellId, questItemId, targetObject->GetEntry());
 }
