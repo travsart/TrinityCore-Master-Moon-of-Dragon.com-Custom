@@ -617,8 +617,7 @@ private:
     }
 
     void InitializeBalanceMechanics()
-    {
-        using namespace bot::ai;
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         using namespace BehaviorTreeBuilder;
 
         BotAI* ai = this;

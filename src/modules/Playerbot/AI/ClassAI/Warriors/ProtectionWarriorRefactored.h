@@ -575,8 +575,7 @@ private:
     // ========================================================================
 
     void InitializeProtectionMechanics()
-    {
-        using namespace bot::ai;
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         using namespace BehaviorTreeBuilder;
 
         // Initialize Protection-specific systems
