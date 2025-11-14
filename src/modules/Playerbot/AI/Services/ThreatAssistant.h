@@ -76,7 +76,7 @@ struct ThreatTarget
  * **Solution**: Single unified service with sophisticated threat assessment
  *
  * **Usage Example**:
- * @code{.cpp}
+ * @code
  * // BEFORE (each tank spec):
  * if (Unit* target = GetTarget())
  * {
