@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "Log.h"
 #include "DB2Stores.h"
+#include "SpellAuraEffects.h"
 #include <algorithm>
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
 

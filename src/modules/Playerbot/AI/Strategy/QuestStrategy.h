@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Strategy.h"
-#include "Quest/ObjectiveTracker.h"
+#include "../../Quest/ObjectiveTracker.h"
 #include "Movement/BotMovementUtil.h"
 #include "Player.h"
 #include "QuestDef.h"

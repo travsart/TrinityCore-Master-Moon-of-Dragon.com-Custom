@@ -301,7 +301,7 @@ ZoneOrchestrator::ZoneStats ZoneOrchestrator::GetZoneStats() const
         if (!bot)
             continue;
 
-        if (bot->IsInCombat() || bot->IsInGroup())
+        if (bot->IsInCombat() || bot->GetGroup() != nullptr)
             activeBots++;
 
         totalLevel += static_cast<float>(bot->GetLevel());
