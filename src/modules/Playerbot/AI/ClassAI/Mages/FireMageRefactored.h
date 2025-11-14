@@ -499,10 +499,10 @@ private:
             queue->AddCondition(FIRE_COMBUSTION, [this](Player* bot, Unit* target) { return target && !this->_combustionActive; }, "Major burst");
 
             queue->RegisterSpell(FIRE_PYROBLAST, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(FIRE_PYROBLAST, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }, "Hot Streak proc");
+            queue->AddCondition(FIRE_PYROBLAST, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsHotStreakActive(); }, "Hot Streak proc");
 
             queue->RegisterSpell(FIRE_FLAMESTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
-            queue->AddCondition(FIRE_FLAMESTRIKE, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsActive() && this->GetEnemiesInRange(8.0f) >= 3; }, "Hot Streak + 3+ enemies");
+            queue->AddCondition(FIRE_FLAMESTRIKE, [this](Player* bot, Unit* target) { return target && this->_hotStreakTracker.IsHotStreakActive() && this->GetEnemiesInRange(8.0f) >= 3; }, "Hot Streak + 3+ enemies");
 
             queue->RegisterSpell(FIRE_FIREBLAST, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(FIRE_FIREBLAST, [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }, "Has charge");
@@ -536,11 +536,11 @@ private:
                     })
                 }),
                 Sequence("Hot Streak", {
-                    Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsActive(); }),
+                    Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsHotStreakActive(); }),
                     bot::ai::Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(FIRE_PYROBLAST, target)) {
                             this->CastSpell(FIRE_PYROBLAST, target);
-                            this->_hotStreakTracker.ConsumeProc();
+                            this->_hotStreakTracker.ConsumeHotStreak();
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;
@@ -551,7 +551,7 @@ private:
                     bot::ai::Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
                         if (this->_fireBlastTracker.HasCharge()) {
                             this->CastSpell(FIRE_FIREBLAST, target);
-                            this->_fireBlastTracker.UseCharge();
+                            this->_fireBlastTracker.ConsumeCharge();
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;
