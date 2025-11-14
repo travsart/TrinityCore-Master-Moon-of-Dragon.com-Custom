@@ -33,6 +33,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Enhancement Shaman Spell IDs
 constexpr uint32 ENH_ROCKBITER = 193786;
 constexpr uint32 ENH_STORMSTRIKE = 17364;

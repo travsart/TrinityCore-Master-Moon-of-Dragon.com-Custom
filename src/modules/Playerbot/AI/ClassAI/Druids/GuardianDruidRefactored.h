@@ -34,6 +34,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Guardian Druid Spell IDs
 constexpr uint32 GUARDIAN_MANGLE = 33917;
 constexpr uint32 GUARDIAN_THRASH = 77758;

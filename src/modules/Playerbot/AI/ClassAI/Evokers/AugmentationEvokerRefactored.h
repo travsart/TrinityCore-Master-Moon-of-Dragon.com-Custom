@@ -20,6 +20,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 enum AugmentationEvokerSpells
 {
     // Core Buffs

@@ -33,6 +33,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Frost Mage Spell IDs
 constexpr uint32 FROST_FROSTBOLT = 116;
 constexpr uint32 FROST_ICE_LANCE = 30455;

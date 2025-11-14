@@ -34,6 +34,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 Marksmanship Hunter Spell IDs
 enum MarksmanshipSpells
 {

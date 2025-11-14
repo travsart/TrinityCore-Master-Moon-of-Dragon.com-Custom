@@ -36,6 +36,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 Havoc Demon Hunter Spell IDs
 enum HavocSpells
 {

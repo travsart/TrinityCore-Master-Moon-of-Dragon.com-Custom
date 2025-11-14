@@ -33,6 +33,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 /**
  * Refactored Protection Warrior using template architecture
  *

@@ -27,6 +27,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // ============================================================================
 // PRESERVATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================

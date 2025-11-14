@@ -34,6 +34,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Arcane Mage Spell IDs
 constexpr uint32 ARCANE_BLAST = 30451;
 constexpr uint32 ARCANE_MISSILES = 5143;

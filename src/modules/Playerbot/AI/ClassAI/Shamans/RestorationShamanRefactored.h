@@ -33,6 +33,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Restoration Shaman Spell IDs
 constexpr uint32 REST_HEALING_WAVE = 77472;
 constexpr uint32 REST_HEALING_SURGE = 8004;

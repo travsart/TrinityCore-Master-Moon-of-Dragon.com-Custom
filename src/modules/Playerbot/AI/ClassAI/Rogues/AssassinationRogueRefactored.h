@@ -32,6 +32,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // ============================================================================
 // ASSASSINATION ROGUE REFACTORED
 // ============================================================================

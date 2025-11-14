@@ -32,6 +32,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Fire Mage Spell IDs
 constexpr uint32 FIRE_FIREBALL = 133;
 constexpr uint32 FIRE_PYROBLAST = 11366;

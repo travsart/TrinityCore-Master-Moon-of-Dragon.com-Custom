@@ -34,6 +34,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Restoration Druid Spell IDs
 constexpr uint32 RESTO_REJUVENATION = 774;
 constexpr uint32 RESTO_REGROWTH = 8936;

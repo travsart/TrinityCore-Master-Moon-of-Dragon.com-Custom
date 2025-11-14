@@ -35,6 +35,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Discipline Priest Spell IDs
 constexpr uint32 DISC_SMITE = 585;
 constexpr uint32 DISC_PENANCE = 47540;

@@ -35,6 +35,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 Beast Mastery Hunter Spell IDs
 enum BeastMasterySpells
 {

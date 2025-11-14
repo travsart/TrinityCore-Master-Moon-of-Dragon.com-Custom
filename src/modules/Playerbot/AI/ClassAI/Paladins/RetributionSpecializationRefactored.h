@@ -28,6 +28,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 /**
  * Refactored Retribution Paladin using template architecture
  *

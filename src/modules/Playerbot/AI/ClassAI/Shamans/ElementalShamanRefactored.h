@@ -34,6 +34,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
 constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
 constexpr uint32 ELEM_LAVA_BURST = 51505;

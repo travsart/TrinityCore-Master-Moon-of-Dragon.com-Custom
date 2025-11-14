@@ -33,6 +33,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Feral Druid Spell IDs
 constexpr uint32 FERAL_SHRED = 5221;
 constexpr uint32 FERAL_RAKE = 1822;

@@ -39,6 +39,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 Survival Hunter Spell IDs
 enum SurvivalSpells
 {

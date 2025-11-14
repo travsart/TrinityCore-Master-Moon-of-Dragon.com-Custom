@@ -35,6 +35,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Holy Priest Spell IDs
 constexpr uint32 HOLY_HEAL = 2050;
 constexpr uint32 HOLY_FLASH_HEAL = 2061;

@@ -28,6 +28,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors

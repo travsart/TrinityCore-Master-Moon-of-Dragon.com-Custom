@@ -35,6 +35,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // WoW 11.2 (The War Within) - Shadow Priest Spell IDs
 constexpr uint32 SHADOW_MIND_BLAST = 8092;
 constexpr uint32 SHADOW_MIND_FLAY = 15407;

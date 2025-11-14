@@ -26,6 +26,9 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions
+using namespace bot::ai;
 // ============================================================================
 // FROST DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
