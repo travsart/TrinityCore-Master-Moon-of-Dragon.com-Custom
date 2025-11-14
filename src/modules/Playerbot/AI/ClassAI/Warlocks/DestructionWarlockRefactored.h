@@ -346,7 +346,7 @@ public:
         {
             if (this->CanCastSpell(IMMOLATE, target))
             {
-                this->CastSpell(target, IMMOLATE);
+                this->CastSpell(IMMOLATE, target);
                 _immolateTracker.ApplyImmolate(targetGuid, 18000); // 18 sec duration
                 return;
             }
@@ -355,7 +355,7 @@ public:
         // Priority 4: Conflagrate (generate shards + Backdraft)
         if (this->CanCastSpell(CONFLAGRATE, target))
         {
-            this->CastSpell(target, CONFLAGRATE);
+            this->CastSpell(CONFLAGRATE, target);
             GenerateSoulShard(1);
             _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u); // Grants 2 stacks
             return;
@@ -364,13 +364,13 @@ public:
         // Priority 5: Soul Fire (talent, strong direct damage)
         if (this->CanCastSpell(SOUL_FIRE, target))
         {
-            this->CastSpell(target, SOUL_FIRE);
+            this->CastSpell(SOUL_FIRE, target);
             return;
         }
 
         // Priority 6: Chaos Bolt (shard spender)
         if (shards >= 2 && this->CanCastSpell(CHAOS_BOLT, target))        {
-            this->CastSpell(target, CHAOS_BOLT);
+            this->CastSpell(CHAOS_BOLT, target);
             ConsumeSoulShard(2);
             return;
         }
@@ -378,20 +378,20 @@ public:
         // Priority 7: Channel Demonfire (talent, requires Immolate)
         if (_immolateTracker.HasImmolate(targetGuid) && this->CanCastSpell(CHANNEL_DEMONFIRE, target))
         {
-            this->CastSpell(target, CHANNEL_DEMONFIRE);
+            this->CastSpell(CHANNEL_DEMONFIRE, target);
             return;
         }
 
         // Priority 8: Shadowburn (execute < 20%)
         if (targetHpPct < 20.0f && this->CanCastSpell(SHADOWBURN, target))
         {
-            this->CastSpell(target, SHADOWBURN);
+            this->CastSpell(SHADOWBURN, target);
             GenerateSoulShard(1);
             return;
         }        // Priority 9: Incinerate (filler + shard gen)
         if (shards < 5 && this->CanCastSpell(INCINERATE, target))
         {
-            this->CastSpell(target, INCINERATE);
+            this->CastSpell(INCINERATE, target);
             GenerateSoulShard(1);
             if (_backdraftStacks > 0)
                 _backdraftStacks--;
@@ -410,7 +410,7 @@ public:
             ::Unit* secondaryTarget = FindBestHavocTarget(target);
             if (secondaryTarget)
             {
-                if (this->CastSpell(secondaryTarget, HAVOC))
+                if (this->CastSpell(HAVOC, secondaryTarget))
                 {
                     _havocTracker.ApplyHavoc(secondaryTarget->GetGUID());
                     TC_LOG_DEBUG("playerbot", "Destruction: Havoc applied to {} (secondary target, primary: {})",
@@ -424,7 +424,7 @@ public:
         {
             if (this->CanCastSpell(IMMOLATE, target))
             {
-                this->CastSpell(target, IMMOLATE);
+                this->CastSpell(IMMOLATE, target);
                 _immolateTracker.ApplyImmolate(targetGuid, 18000);
                 return;
             }
@@ -433,7 +433,7 @@ public:
         // Priority 3: Conflagrate
         if (this->CanCastSpell(CONFLAGRATE, target))
         {
-            this->CastSpell(target, CONFLAGRATE);
+            this->CastSpell(CONFLAGRATE, target);
             GenerateSoulShard(1);
             _backdraftStacks = ::std::min(_backdraftStacks + 2, 4u);
             return;
@@ -442,7 +442,7 @@ public:
         // Priority 4: Chaos Bolt (cleaves with Havoc)
         if (shards >= 2 && this->CanCastSpell(CHAOS_BOLT, target))
         {
-            this->CastSpell(target, CHAOS_BOLT);
+            this->CastSpell(CHAOS_BOLT, target);
             ConsumeSoulShard(2);
             return;
         }
@@ -450,7 +450,7 @@ public:
         // Priority 5: Incinerate filler
         if (shards < 5 && this->CanCastSpell(INCINERATE, target))
         {
-            this->CastSpell(target, INCINERATE);
+            this->CastSpell(INCINERATE, target);
             GenerateSoulShard(1);
             if (_backdraftStacks > 0)
                 _backdraftStacks--;
@@ -472,7 +472,7 @@ public:
         // Priority 2: Cataclysm (AoE + applies Immolate)
         if (this->CanCastSpell(CATACLYSM, target))
         {
-            this->CastSpell(target, CATACLYSM);
+            this->CastSpell(CATACLYSM, target);
             TC_LOG_DEBUG("playerbot", "Destruction: Cataclysm");
             return;
         }
@@ -488,21 +488,21 @@ public:
         // Priority 4: Channel Demonfire (if targets have Immolate)
         if (this->CanCastSpell(CHANNEL_DEMONFIRE, target))
         {
-            this->CastSpell(target, CHANNEL_DEMONFIRE);
+            this->CastSpell(CHANNEL_DEMONFIRE, target);
             return;
         }
 
         // Priority 5: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
         {
-            this->CastSpell(target, HAVOC);            _havocTracker.ApplyHavoc(target->GetGUID());
+            this->CastSpell(HAVOC, target);            _havocTracker.ApplyHavoc(target->GetGUID());
             return;
         }
 
         // Priority 6: Conflagrate
         if (this->CanCastSpell(CONFLAGRATE, target))
         {
-            this->CastSpell(target, CONFLAGRATE);
+            this->CastSpell(CONFLAGRATE, target);
             GenerateSoulShard(1);
             return;
         }
@@ -510,7 +510,7 @@ public:
         // Priority 7: Incinerate filler
         if (shards < 5 && this->CanCastSpell(INCINERATE, target))
         {
-            this->CastSpell(target, INCINERATE);
+            this->CastSpell(INCINERATE, target);
             GenerateSoulShard(1);
             return;
         }
@@ -524,7 +524,7 @@ public:
         // Unending Resolve
         if (healthPct < 40.0f && this->CanCastSpell(UNENDING_RESOLVE_DESTRO, bot))
         {
-            this->CastSpell(bot, UNENDING_RESOLVE_DESTRO);
+            this->CastSpell(UNENDING_RESOLVE_DESTRO, bot);
             TC_LOG_DEBUG("playerbot", "Destruction: Unending Resolve");
             return;
         }
@@ -532,7 +532,7 @@ public:
         // Dark Pact
         if (healthPct < 50.0f && this->CanCastSpell(DARK_PACT_DESTRO, bot))
         {
-            this->CastSpell(bot, DARK_PACT_DESTRO);
+            this->CastSpell(DARK_PACT_DESTRO, bot);
             TC_LOG_DEBUG("playerbot", "Destruction: Dark Pact");
             return;
         }
@@ -540,7 +540,7 @@ public:
         // Mortal Coil
         if (healthPct < 60.0f && this->CanCastSpell(MORTAL_COIL_DESTRO, bot))
         {
-            this->CastSpell(bot, MORTAL_COIL_DESTRO);
+            this->CastSpell(MORTAL_COIL_DESTRO, bot);
             TC_LOG_DEBUG("playerbot", "Destruction: Mortal Coil");
             return;
         }
@@ -560,7 +560,7 @@ public:
         // Summon Imp (best for Destruction - ranged DPS)
         if (this->CanCastSpell(SUMMON_IMP_DESTRO, bot))
         {
-            this->CastSpell(bot, SUMMON_IMP_DESTRO);
+            this->CastSpell(SUMMON_IMP_DESTRO, bot);
             TC_LOG_DEBUG("playerbot", "Destruction: Summon Imp");
         }
     }
@@ -782,27 +782,27 @@ private:
             auto root = Selector("Destruction Warlock DPS", {
                 // Tier 1: Burst Cooldowns (Summon Infernal, Dark Soul)
                 Sequence("Burst Cooldowns", {
-                    Condition("Has shards and target", [this](Player* bot) {
+                    Condition("Has shards and target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim() && this->_resource.soulShards >= 2;
                     }),
                     Selector("Use burst cooldowns", {
                         Sequence("Summon Infernal", {
-                            Condition("Can summon Infernal", [this](Player* bot) {
+                            Condition("Can summon Infernal", [this](Player* bot), Unit* target {
                                 return this->CanCastSpell(SUMMON_INFERNAL, bot);
                             }),
-                            bot::ai::Action("Cast Summon Infernal", [this](Player* bot) {
-                                this->CastSpell(bot, SUMMON_INFERNAL);
+                            bot::ai::Action("Cast Summon Infernal", [this](Player* bot), Unit* target {
+                                this->CastSpell(SUMMON_INFERNAL, bot);
                                 return NodeStatus::SUCCESS;
                             })
                         }),
                         Sequence("Dark Soul: Instability", {
-                            Condition("Has Dark Soul talent", [this](Player* bot) {
+                            Condition("Has Dark Soul talent", [this](Player* bot), Unit* target {
                                 return bot->HasSpell(DARK_SOUL_INSTABILITY);
                             }),
-                            bot::ai::Action("Cast Dark Soul", [this](Player* bot) {
+                            bot::ai::Action("Cast Dark Soul", [this](Player* bot), Unit* target {
                                 if (this->CanCastSpell(DARK_SOUL_INSTABILITY, bot))
                                 {
-                                    this->CastSpell(bot, DARK_SOUL_INSTABILITY);
+                                    this->CastSpell(DARK_SOUL_INSTABILITY, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -813,20 +813,20 @@ private:
 
                 // Tier 2: DoT Maintenance & Shard Generation (Immolate, Conflagrate)
                 Sequence("DoT & Shard Gen", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Maintain DoT and generate shards", {
                         Sequence("Immolate", {
-                            Condition("Needs Immolate", [this](Player* bot) {
+                            Condition("Needs Immolate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            bot::ai::Action("Cast Immolate", [this](Player* bot) {
+                            bot::ai::Action("Cast Immolate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMMOLATE, target))
                                 {
-                                    this->CastSpell(target, IMMOLATE);
+                                    this->CastSpell(IMMOLATE, target);
                                     this->_immolateTracker.ApplyImmolate(target->GetGUID(), 18000);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -834,13 +834,13 @@ private:
                             })
                         }),
                         Sequence("Conflagrate", {
-                            Condition("Can cast Conflagrate", [this](Player* bot) {
+                            Condition("Can cast Conflagrate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 return target && this->CanCastSpell(CONFLAGRATE, target);
                             }),
-                            bot::ai::Action("Cast Conflagrate", [this](Player* bot) {
+                            bot::ai::Action("Cast Conflagrate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
-                                this->CastSpell(target, CONFLAGRATE);
+                                this->CastSpell(CONFLAGRATE, target);
                                 this->GenerateSoulShard(1);
                                 this->_backdraftStacks = ::std::min(this->_backdraftStacks + 2, 4u);
                                 return NodeStatus::SUCCESS;
@@ -851,7 +851,7 @@ private:
 
                 // Tier 3: Shard Spender (Chaos Bolt, Rain of Fire)
                 Sequence("Shard Spender", {
-                    Condition("Has 2+ shards and target", [this](Player* bot) {
+                    Condition("Has 2+ shards and target", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim() && this->_resource.soulShards >= 2;
                     }),
                     Selector("Spend shards", {
@@ -859,10 +859,10 @@ private:
                             Condition("3+ enemies and 3+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            bot::ai::Action("Cast Rain of Fire", [this](Player* bot) {
+                            bot::ai::Action("Cast Rain of Fire", [this](Player* bot), Unit* target {
                                 if (this->CanCastSpell(RAIN_OF_FIRE, bot))
                                 {
-                                    this->CastSpell(bot, RAIN_OF_FIRE);
+                                    this->CastSpell(RAIN_OF_FIRE, bot);
                                     this->ConsumeSoulShard(3);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -873,11 +873,11 @@ private:
                             Condition("2+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CHAOS_BOLT, target))
                                 {
-                                    this->CastSpell(target, CHAOS_BOLT);
+                                    this->CastSpell(CHAOS_BOLT, target);
                                     this->ConsumeSoulShard(2);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -889,20 +889,20 @@ private:
 
                 // Tier 4: Shard Generator (Incinerate filler)
                 Sequence("Shard Generator", {
-                    Condition("Has target and < 5 shards", [this](Player* bot) {
+                    Condition("Has target and < 5 shards", [this](Player* bot), Unit* target {
                         return bot && bot->GetVictim() && this->_resource.soulShards < 5;
                     }),
                     Selector("Generate shards", {
                         Sequence("Shadowburn (execute)", {
-                            Condition("Target < 20% HP and has spell", [this](Player* bot) {
+                            Condition("Target < 20% HP and has spell", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
                             }),
-                            bot::ai::Action("Cast Shadowburn", [this](Player* bot) {
+                            bot::ai::Action("Cast Shadowburn", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOWBURN, target))
                                 {
-                                    this->CastSpell(target, SHADOWBURN);
+                                    this->CastSpell(SHADOWBURN, target);
                                     this->GenerateSoulShard(1);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -910,11 +910,11 @@ private:
                             })
                         }),
                         Sequence("Incinerate (filler)", {
-                            bot::ai::Action("Cast Incinerate", [this](Player* bot) {
+                            bot::ai::Action("Cast Incinerate", [this](Player* bot), Unit* target {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(INCINERATE, target))
                                 {
-                                    this->CastSpell(target, INCINERATE);
+                                    this->CastSpell(INCINERATE, target);
                                     this->GenerateSoulShard(1);
                                     if (this->_backdraftStacks > 0)
                                         this->_backdraftStacks--;

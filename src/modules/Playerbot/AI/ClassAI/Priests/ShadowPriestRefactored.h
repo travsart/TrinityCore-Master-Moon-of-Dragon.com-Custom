@@ -323,7 +323,7 @@ public:
         {
             if (this->CanCastSpell(SHADOW_SHADOWFORM, bot))
             {
-                this->CastSpell(bot, SHADOW_SHADOWFORM);
+                this->CastSpell(SHADOW_SHADOWFORM, bot);
             }
         }
 
@@ -332,7 +332,7 @@ public:
         {
             if (this->CanCastSpell(SHADOW_POWER_WORD_FORTITUDE, bot))
             {
-                this->CastSpell(bot, SHADOW_POWER_WORD_FORTITUDE);
+                this->CastSpell(SHADOW_POWER_WORD_FORTITUDE, bot);
             }        }
 
         // Vampiric Embrace (healing for group)
@@ -341,7 +341,7 @@ public:
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_EMBRACE, bot))
                 {
-                    this->CastSpell(bot, SHADOW_VAMPIRIC_EMBRACE);
+                    this->CastSpell(SHADOW_VAMPIRIC_EMBRACE, bot);
                     _lastVampiricEmbraceTime = GameTime::GetGameTimeMS();
                 }
             }
@@ -359,14 +359,14 @@ public:
         // Dispersion (immune + heal)
         if (healthPct < 25.0f && this->CanCastSpell(SHADOW_DISPERSION, bot))
         {
-            this->CastSpell(bot, SHADOW_DISPERSION);
+            this->CastSpell(SHADOW_DISPERSION, bot);
             return;
         }
 
         // Desperate Prayer (self-heal)
         if (healthPct < 40.0f && this->CanCastSpell(SHADOW_DESPERATE_PRAYER, bot))
         {
-            this->CastSpell(bot, SHADOW_DESPERATE_PRAYER);
+            this->CastSpell(SHADOW_DESPERATE_PRAYER, bot);
             return;
         }
 
@@ -375,7 +375,7 @@ public:
         {
             if (this->CanCastSpell(SHADOW_FADE, bot))
             {
-                this->CastSpell(bot, SHADOW_FADE);
+                this->CastSpell(SHADOW_FADE, bot);
                 return;
             }
         }
@@ -424,7 +424,7 @@ private:
             // Dark Ascension (alternative to Void Eruption)
             if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (GameTime::GetGameTimeMS() - _lastDarkAscensionTime) >= 60000)            {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
-                {                    this->CastSpell(bot, SHADOW_DARK_ASCENSION);                    _darkAscensionActive = true;
+                {                    this->CastSpell(SHADOW_DARK_ASCENSION, bot);                    _darkAscensionActive = true;
                     _darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
                     _lastDarkAscensionTime = GameTime::GetGameTimeMS();
                     _insanityTracker.SpendInsanity(50);
@@ -433,13 +433,13 @@ private:
 
             // Void Eruption (enter Voidform)
             if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
-            {                this->CastSpell(target, SHADOW_VOID_ERUPTION);                _voidformTracker.ActivateVoidform();
+            {                this->CastSpell(SHADOW_VOID_ERUPTION, target);                _voidformTracker.ActivateVoidform();
                 _insanityTracker.Reset(); // Void Eruption consumes all Insanity
                 return;
             }
         }        // Maintain DoTs        if (!_dotTracker.HasVampiricTouch(target->GetGUID()) ||            _dotTracker.NeedsVampiricTouchRefresh(target->GetGUID()))
         {            if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))            {
-                this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                 _insanityTracker.GenerateInsanity(5);
                 return;
             }
@@ -450,7 +450,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
             {
-                this->CastSpell(target, SHADOW_SHADOW_WORD_PAIN);                _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
+                this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);                _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 _insanityTracker.GenerateInsanity(4);
                 return;
             }
@@ -462,7 +462,7 @@ private:
             // Void Bolt (Voidform exclusive)
             if (this->CanCastSpell(SHADOW_VOID_BOLT, target))
             {
-                this->CastSpell(target, SHADOW_VOID_BOLT);
+                this->CastSpell(SHADOW_VOID_BOLT, target);
                 _voidformTracker.IncrementStack();                // Void Bolt refreshes DoTs                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);                _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 return;
             }
@@ -473,7 +473,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_DEVOURING_PLAGUE, target))
             {
-                this->CastSpell(target, SHADOW_DEVOURING_PLAGUE);
+                this->CastSpell(SHADOW_DEVOURING_PLAGUE, target);
                 _insanityTracker.SpendInsanity(50);
                 return;
             }
@@ -483,7 +483,7 @@ private:
         if (bot->HasSpell(SHADOW_MINDGAMES) && (GameTime::GetGameTimeMS() - _lastMindgamesTime) >= 45000)        {
             if (this->CanCastSpell(SHADOW_MINDGAMES, target))
             {
-                this->CastSpell(target, SHADOW_MINDGAMES);
+                this->CastSpell(SHADOW_MINDGAMES, target);
                 _lastMindgamesTime = GameTime::GetGameTimeMS();
                 _insanityTracker.GenerateInsanity(10);
                 return;
@@ -495,7 +495,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
             {
-                this->CastSpell(target, SHADOW_SHADOW_WORD_DEATH);
+                this->CastSpell(SHADOW_SHADOW_WORD_DEATH, target);
                 _insanityTracker.GenerateInsanity(15);
                 return;
             }
@@ -504,7 +504,7 @@ private:
         // Mind Blast (Insanity generator)
         if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
         {
-            this->CastSpell(target, SHADOW_MIND_BLAST);
+            this->CastSpell(SHADOW_MIND_BLAST, target);
             _insanityTracker.GenerateInsanity(12);
             return;
         }
@@ -514,7 +514,7 @@ private:
         
         {
             if (this->CanCastSpell(SHADOW_VOID_TORRENT, target))            {
-                this->CastSpell(target, SHADOW_VOID_TORRENT);
+                this->CastSpell(SHADOW_VOID_TORRENT, target);
                 _lastVoidTorrentTime = GameTime::GetGameTimeMS();
                 _insanityTracker.GenerateInsanity(15);
                 return;
@@ -524,7 +524,7 @@ private:
         // Mind Flay (filler - channels, generates Insanity)
         if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
         {
-            this->CastSpell(target, SHADOW_MIND_FLAY);
+            this->CastSpell(SHADOW_MIND_FLAY, target);
             _insanityTracker.GenerateInsanity(3);
             return;
         }
@@ -545,7 +545,7 @@ private:
             {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                 {
-                    this->CastSpell(bot, SHADOW_DARK_ASCENSION);
+                    this->CastSpell(SHADOW_DARK_ASCENSION, bot);
                     _darkAscensionActive = true;
                     _darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
                     _lastDarkAscensionTime = GameTime::GetGameTimeMS();
@@ -556,7 +556,7 @@ private:
 
             if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
             {
-                this->CastSpell(target, SHADOW_VOID_ERUPTION);
+                this->CastSpell(SHADOW_VOID_ERUPTION, target);
                 _voidformTracker.ActivateVoidform();
                 _insanityTracker.Reset();
                 return;
@@ -568,7 +568,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_SHADOW_CRASH, target))
             {
-                this->CastSpell(target, SHADOW_SHADOW_CRASH);
+                this->CastSpell(SHADOW_SHADOW_CRASH, target);
                 _insanityTracker.GenerateInsanity(15);
                 return;
             }
@@ -581,7 +581,7 @@ private:
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
                 {
-                    this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);                    _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                    this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);                    _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                     _insanityTracker.GenerateInsanity(5);
                     return;
                 }
@@ -593,7 +593,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_DEVOURING_PLAGUE, target))
             {
-                this->CastSpell(target, SHADOW_DEVOURING_PLAGUE);
+                this->CastSpell(SHADOW_DEVOURING_PLAGUE, target);
                 _insanityTracker.SpendInsanity(50);
                 return;
             }
@@ -604,7 +604,7 @@ private:
         {
             if (this->CanCastSpell(SHADOW_MIND_SEAR, target))
             {
-                this->CastSpell(target, SHADOW_MIND_SEAR);
+                this->CastSpell(SHADOW_MIND_SEAR, target);
                 _insanityTracker.GenerateInsanity(5);
                 return;
             }
@@ -613,7 +613,7 @@ private:
         // Mind Blast
         if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
         {
-            this->CastSpell(target, SHADOW_MIND_BLAST);
+            this->CastSpell(SHADOW_MIND_BLAST, target);
             _insanityTracker.GenerateInsanity(12);
             return;
         }
@@ -621,7 +621,7 @@ private:
         // Mind Flay (filler)
         if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
         {
-            this->CastSpell(target, SHADOW_MIND_FLAY);
+            this->CastSpell(SHADOW_MIND_FLAY, target);
             _insanityTracker.GenerateInsanity(3);
             return;
         }
@@ -753,7 +753,7 @@ private:
                             bot::ai::Action("Cast Dark Ascension", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
                                 {
-                                    this->CastSpell(bot, SHADOW_DARK_ASCENSION);
+                                    this->CastSpell(SHADOW_DARK_ASCENSION, bot);
                                     this->_darkAscensionActive = true;
                                     this->_darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
                                     this->_lastDarkAscensionTime = GameTime::GetGameTimeMS();
@@ -771,7 +771,7 @@ private:
                             bot::ai::Action("Cast Void Eruption", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
                                 {
-                                    this->CastSpell(target, SHADOW_VOID_ERUPTION);
+                                    this->CastSpell(SHADOW_VOID_ERUPTION, target);
                                     this->_voidformTracker.ActivateVoidform();
                                     this->_insanityTracker.Reset();
                                     return NodeStatus::SUCCESS;
@@ -797,7 +797,7 @@ private:
                             bot::ai::Action("Cast Vampiric Touch", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
                                 {
-                                    this->CastSpell(target, SHADOW_VAMPIRIC_TOUCH);
+                                    this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
                                     this->_dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                                     this->_insanityTracker.GenerateInsanity(5);
                                     return NodeStatus::SUCCESS;
@@ -814,7 +814,7 @@ private:
                             bot::ai::Action("Cast Shadow Word: Pain", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
                                 {
-                                    this->CastSpell(target, SHADOW_SHADOW_WORD_PAIN);
+                                    this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);
                                     this->_dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                                     this->_insanityTracker.GenerateInsanity(4);
                                     return NodeStatus::SUCCESS;
@@ -839,7 +839,7 @@ private:
                             bot::ai::Action("Cast Devouring Plague", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_DEVOURING_PLAGUE, target))
                                 {
-                                    this->CastSpell(target, SHADOW_DEVOURING_PLAGUE);
+                                    this->CastSpell(SHADOW_DEVOURING_PLAGUE, target);
                                     this->_insanityTracker.SpendInsanity(50);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -856,7 +856,7 @@ private:
                                 bot::ai::Action("Cast Void Bolt", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_VOID_BOLT, target))
                                     {
-                                        this->CastSpell(target, SHADOW_VOID_BOLT);
+                                        this->CastSpell(SHADOW_VOID_BOLT, target);
                                         this->_voidformTracker.IncrementStack();
                                         // Void Bolt refreshes DoTs
                                         this->_dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
@@ -874,7 +874,7 @@ private:
                                 bot::ai::Action("Cast Mind Blast", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_MIND_BLAST, target))
                                     {
-                                        this->CastSpell(target, SHADOW_MIND_BLAST);
+                                        this->CastSpell(SHADOW_MIND_BLAST, target);
                                         this->_insanityTracker.GenerateInsanity(12);
                                         return NodeStatus::SUCCESS;
                                     }
@@ -889,7 +889,7 @@ private:
                                 bot::ai::Action("Cast Shadow Word: Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                     if (this->CanCastSpell(SHADOW_SHADOW_WORD_DEATH, target))
                                     {
-                                        this->CastSpell(target, SHADOW_SHADOW_WORD_DEATH);
+                                        this->CastSpell(SHADOW_SHADOW_WORD_DEATH, target);
                                         this->_insanityTracker.GenerateInsanity(15);
                                         return NodeStatus::SUCCESS;
                                     }
@@ -914,7 +914,7 @@ private:
                             bot::ai::Action("Cast Mind Sear", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_MIND_SEAR, target))
                                 {
-                                    this->CastSpell(target, SHADOW_MIND_SEAR);
+                                    this->CastSpell(SHADOW_MIND_SEAR, target);
                                     this->_insanityTracker.GenerateInsanity(5);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -926,7 +926,7 @@ private:
                             bot::ai::Action("Cast Mind Flay", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOW_MIND_FLAY, target))
                                 {
-                                    this->CastSpell(target, SHADOW_MIND_FLAY);
+                                    this->CastSpell(SHADOW_MIND_FLAY, target);
                                     this->_insanityTracker.GenerateInsanity(3);
                                     return NodeStatus::SUCCESS;
                                 }

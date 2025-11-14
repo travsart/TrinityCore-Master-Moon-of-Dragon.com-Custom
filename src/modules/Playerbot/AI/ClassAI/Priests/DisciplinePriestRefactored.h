@@ -313,7 +313,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_FORTITUDE);
+                this->CastSpell(DISC_POWER_WORD_FORTITUDE, bot);
 
             }
         }
@@ -330,7 +330,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(DISC_DESPERATE_PRAYER, bot))
         {
 
-            this->CastSpell(bot, DISC_DESPERATE_PRAYER);
+            this->CastSpell(DISC_DESPERATE_PRAYER, bot);
 
             return;
         }
@@ -343,7 +343,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_FADE);
+                this->CastSpell(DISC_FADE, bot);
 
                 return;
 
@@ -357,7 +357,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_SHIELD);
+                this->CastSpell(DISC_POWER_WORD_SHIELD, bot);
                 _shieldTracker.ApplyShield(bot->GetGUID(), 15000);
                 _atonementTracker.ApplyAtonement(bot->GetGUID(), 15000);
 
@@ -451,7 +451,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_PAIN_SUPPRESSION);
+                        this->CastSpell(DISC_PAIN_SUPPRESSION, member);
 
                         _lastPainSuppressionTime = GameTime::GetGameTimeMS();
 
@@ -481,7 +481,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_BARRIER); // Ground-targeted AoE
+                this->CastSpell(DISC_BARRIER, bot); // Ground-targeted AoE
 
                 _lastBarrierTime = GameTime::GetGameTimeMS();
 
@@ -497,7 +497,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_RAPTURE);
+                this->CastSpell(DISC_RAPTURE, bot);
 
                 _raptureActive = true;
                 _raptureEndTime = GameTime::GetGameTimeMS() + 8000; // 8 sec duration
@@ -529,7 +529,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, DISC_EVANGELISM);
+                    this->CastSpell(DISC_EVANGELISM, bot);
 
                     _lastEvangelismTime = GameTime::GetGameTimeMS();
 
@@ -572,7 +572,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_RADIANCE);
+                        this->CastSpell(DISC_POWER_WORD_RADIANCE, member);
                         // Radiance applies Atonement to 5 nearby allies
 
                         _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
@@ -603,7 +603,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -635,7 +635,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, DISC_SHADOW_MEND);
+                    this->CastSpell(DISC_SHADOW_MEND, member);
 
                     _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -658,7 +658,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_LIFE);
+                        this->CastSpell(DISC_POWER_WORD_LIFE, member);
 
                         return true;
 
@@ -681,7 +681,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, DISC_PENANCE);
+                    this->CastSpell(DISC_PENANCE, member);
 
                     return true;
 
@@ -709,7 +709,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
                         _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
@@ -737,7 +737,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -767,7 +767,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_SHIELD);
+                this->CastSpell(DISC_POWER_WORD_SHIELD, bot);
 
                 _shieldTracker.ApplyShield(bot->GetGUID(), 15000);
 
@@ -786,7 +786,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_SHADOW_MEND);
+                this->CastSpell(DISC_SHADOW_MEND, bot);
 
                 return true;
 
@@ -801,7 +801,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_PENANCE);
+                this->CastSpell(DISC_PENANCE, bot);
 
                 return true;
 
@@ -827,7 +827,7 @@ private:
 
             {
 
-                this->CastSpell(target, DISC_SCHISM);
+                this->CastSpell(DISC_SCHISM, target);
 
                 return;
 
@@ -842,7 +842,7 @@ private:
 
             {
 
-                this->CastSpell(target, DISC_MINDGAMES);
+                this->CastSpell(DISC_MINDGAMES, target);
 
                 return;
 
@@ -853,7 +853,7 @@ private:
         if (this->CanCastSpell(DISC_PENANCE, target))
         {
 
-            this->CastSpell(target, DISC_PENANCE);
+            this->CastSpell(DISC_PENANCE, target);
 
             return;
         }
@@ -869,7 +869,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, DISC_PURGE_WICKED);
+                    this->CastSpell(DISC_PURGE_WICKED, target);
 
                     return;
 
@@ -887,7 +887,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, DISC_SHADOW_WORD_PAIN);
+                    this->CastSpell(DISC_SHADOW_WORD_PAIN, target);
 
                     return;
 
@@ -900,7 +900,7 @@ private:
         if (this->CanCastSpell(DISC_SMITE, target))
         {
 
-            this->CastSpell(target, DISC_SMITE);
+            this->CastSpell(DISC_SMITE, target);
 
             return;
         }
@@ -1327,7 +1327,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_PAIN_SUPPRESSION);
+                                        this->CastSpell(DISC_PAIN_SUPPRESSION, member);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1350,7 +1350,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, DISC_DESPERATE_PRAYER);
+                                this->CastSpell(DISC_DESPERATE_PRAYER, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1384,7 +1384,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_SHADOW_MEND);
+                                        this->CastSpell(DISC_SHADOW_MEND, member);
 
                                         this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -1433,7 +1433,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, DISC_EVANGELISM);
+                                    this->CastSpell(DISC_EVANGELISM, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1477,7 +1477,7 @@ private:
 
                                         {
 
-                                            this->CastSpell(member, DISC_POWER_WORD_RADIANCE);
+                                            this->CastSpell(DISC_POWER_WORD_RADIANCE, member);
 
                                             this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -1523,7 +1523,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                                         this->_shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -1606,7 +1606,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_PENANCE);
+                                        this->CastSpell(DISC_PENANCE, member);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1659,7 +1659,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, DISC_SCHISM);
+                                    this->CastSpell(DISC_SCHISM, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1678,7 +1678,7 @@ private:
 
                             {
 
-                                this->CastSpell(target, DISC_MINDGAMES);
+                                this->CastSpell(DISC_MINDGAMES, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1695,7 +1695,7 @@ private:
 
                             {
 
-                                this->CastSpell(target, DISC_PENANCE);
+                                this->CastSpell(DISC_PENANCE, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1720,7 +1720,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(target, DISC_PURGE_WICKED);
+                                    this->CastSpell(DISC_PURGE_WICKED, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1739,7 +1739,7 @@ private:
 
                             {
 
-                                this->CastSpell(target, DISC_SMITE);
+                                this->CastSpell(DISC_SMITE, target);
 
                                 return NodeStatus::SUCCESS;
 

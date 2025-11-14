@@ -241,7 +241,7 @@ public:
 
             {
 
-                this->CastSpell(bot, ENH_WINDFURY_TOTEM);
+                this->CastSpell(ENH_WINDFURY_TOTEM, bot);
 
             }
         }
@@ -254,7 +254,7 @@ public:
 
             {
 
-                this->CastSpell(bot, ENH_EARTH_SHIELD);
+                this->CastSpell(ENH_EARTH_SHIELD, bot);
 
             }
         }
@@ -272,7 +272,7 @@ public:
         if (healthPct < 40.0f && this->CanCastSpell(ENH_ASTRAL_SHIFT, bot))
         {
 
-            this->CastSpell(bot, ENH_ASTRAL_SHIFT);
+            this->CastSpell(ENH_ASTRAL_SHIFT, bot);
 
             return;
         }
@@ -285,7 +285,7 @@ public:
 
             {
 
-                this->CastSpell(bot, ENH_CAPACITOR_TOTEM);
+                this->CastSpell(ENH_CAPACITOR_TOTEM, bot);
 
                 return;
 
@@ -333,7 +333,7 @@ private:
 
             {
 
-                this->CastSpell(bot, ENH_FERAL_SPIRIT);
+                this->CastSpell(ENH_FERAL_SPIRIT, bot);
 
                 _lastFeralSpiritTime = GameTime::GetGameTimeMS();
 
@@ -354,7 +354,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, ENH_ASCENDANCE);
+                    this->CastSpell(ENH_ASCENDANCE, bot);
 
                     _ascendanceActive = true;
 
@@ -376,7 +376,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_WINDSTRIKE);
+                this->CastSpell(ENH_WINDSTRIKE, target);
 
                 _maelstromWeaponTracker.AddStack(1);
 
@@ -393,7 +393,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_STORMSTRIKE);
+                this->CastSpell(ENH_STORMSTRIKE, target);
 
                 _stormbringerTracker.ConsumeProc();
 
@@ -416,7 +416,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, ENH_LAVA_BURST);
+                    this->CastSpell(ENH_LAVA_BURST, target);
 
                     _maelstromWeaponTracker.ConsumeStacks();
 
@@ -435,7 +435,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_LIGHTNING_BOLT);
+                this->CastSpell(ENH_LIGHTNING_BOLT, target);
 
                 _maelstromWeaponTracker.ConsumeStacks();
 
@@ -451,7 +451,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_ELEMENTAL_BLAST);
+                this->CastSpell(ENH_ELEMENTAL_BLAST, target);
 
                 _maelstromWeaponTracker.ConsumeStacks();
 
@@ -467,7 +467,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_FLAME_SHOCK);
+                this->CastSpell(ENH_FLAME_SHOCK, target);
 
                 return;
 
@@ -481,7 +481,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_ICE_STRIKE);
+                this->CastSpell(ENH_ICE_STRIKE, target);
 
                 _maelstromWeaponTracker.AddStack(1);
 
@@ -493,7 +493,7 @@ private:
         if (this->CanCastSpell(ENH_STORMSTRIKE, target))
         {
 
-            this->CastSpell(target, ENH_STORMSTRIKE);
+            this->CastSpell(ENH_STORMSTRIKE, target);
 
             _maelstromWeaponTracker.AddStack(1);
 
@@ -511,7 +511,7 @@ private:
         if (this->CanCastSpell(ENH_LAVA_LASH, target))
         {
 
-            this->CastSpell(target, ENH_LAVA_LASH);
+            this->CastSpell(ENH_LAVA_LASH, target);
 
             _maelstromWeaponTracker.AddStack(1);
 
@@ -522,7 +522,7 @@ private:
         if (this->CanCastSpell(ENH_ROCKBITER, target))
         {
 
-            this->CastSpell(target, ENH_ROCKBITER);
+            this->CastSpell(ENH_ROCKBITER, target);
             return;
         }    }
 
@@ -537,7 +537,7 @@ private:
 
             {
 
-                this->CastSpell(bot, ENH_FERAL_SPIRIT);
+                this->CastSpell(ENH_FERAL_SPIRIT, bot);
 
                 _lastFeralSpiritTime = GameTime::GetGameTimeMS();
 
@@ -558,7 +558,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, ENH_ASCENDANCE);
+                    this->CastSpell(ENH_ASCENDANCE, bot);
 
                     _ascendanceActive = true;
 
@@ -584,7 +584,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, ENH_SUNDERING);
+                    this->CastSpell(ENH_SUNDERING, target);
 
                     _lastSunderingTime = GameTime::GetGameTimeMS();
 
@@ -607,7 +607,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, ENH_FIRE_NOVA);
+                    this->CastSpell(ENH_FIRE_NOVA, bot);
 
                     return;
 
@@ -623,7 +623,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_FLAME_SHOCK);
+                this->CastSpell(ENH_FLAME_SHOCK, target);
 
                 return;
 
@@ -638,7 +638,7 @@ private:
 
             {
 
-                this->CastSpell(bot, ENH_CRASH_LIGHTNING);
+                this->CastSpell(ENH_CRASH_LIGHTNING, bot);
 
                 _maelstromWeaponTracker.AddStack(1);
 
@@ -656,7 +656,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_LIGHTNING_BOLT);
+                this->CastSpell(ENH_LIGHTNING_BOLT, target);
 
                 _maelstromWeaponTracker.ConsumeStacks();
 
@@ -673,7 +673,7 @@ private:
 
             {
 
-                this->CastSpell(target, ENH_WINDSTRIKE);
+                this->CastSpell(ENH_WINDSTRIKE, target);
 
                 _maelstromWeaponTracker.AddStack(1);
 
@@ -686,7 +686,7 @@ private:
         if (_stormbringerTracker.IsActive() || this->CanCastSpell(ENH_STORMSTRIKE, target))
         {
 
-            this->CastSpell(target, ENH_STORMSTRIKE);
+            this->CastSpell(ENH_STORMSTRIKE, target);
 
             _stormbringerTracker.ConsumeProc();
 
@@ -705,7 +705,7 @@ private:
         if (this->CanCastSpell(ENH_LAVA_LASH, target))
         {
 
-            this->CastSpell(target, ENH_LAVA_LASH);
+            this->CastSpell(ENH_LAVA_LASH, target);
 
             _maelstromWeaponTracker.AddStack(1);
 
@@ -716,7 +716,7 @@ private:
         if (this->CanCastSpell(ENH_ROCKBITER, target))
         {
 
-            this->CastSpell(target, ENH_ROCKBITER);
+            this->CastSpell(ENH_ROCKBITER, target);
 
             return;
         }
@@ -793,19 +793,19 @@ private:
 
                 Sequence("Burst", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
-                    bot::ai::Action("Feral Spirit/Ascendance", [this](Player* bot) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(bot, ENH_FERAL_SPIRIT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Feral Spirit/Ascendance", [this](Player* bot), Unit* target { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(ENH_FERAL_SPIRIT, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
                 Sequence("MW Spender", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
-                    bot::ai::Action("Lightning Bolt", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(t, ENH_LIGHTNING_BOLT); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Lightning Bolt", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(ENH_LIGHTNING_BOLT, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
-                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                Sequence("Stormstrike", { Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
 
-                    bot::ai::Action("SS", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(t, ENH_STORMSTRIKE); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("SS", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_STORMSTRIKE, t)) { this->CastSpell(ENH_STORMSTRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
-                Sequence("Builder", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
+                Sequence("Builder", { Condition("Has target", [this](Player* bot), Unit* target { return bot && bot->GetVictim(); }),
 
-                    bot::ai::Action("Lava Lash", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(t, ENH_LAVA_LASH); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Lava Lash", [this](Player* bot), Unit* target { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LAVA_LASH, t)) { this->CastSpell(ENH_LAVA_LASH, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
 
             });
 
