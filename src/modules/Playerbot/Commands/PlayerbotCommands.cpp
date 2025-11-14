@@ -969,12 +969,8 @@ namespace Playerbot
             oss << "  Current:  " << static_cast<uint32>(botCountTrend.values.back()) << "\n";
 
             oss << "  Average:  " << static_cast<uint32>(botCountTrend.GetAverage()) << "\n";
-
-            oss << "  Min:
-            " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
-
-            oss << "  Max:
-            " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
+            oss << "  Min:      " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
+            oss << "  Max:      " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
         }
         else
         {
@@ -990,12 +986,8 @@ namespace Playerbot
             oss << "  Current:  " << queryTimeTrend.values.back() << " ms\n";
 
             oss << "  Average:  " << queryTimeTrend.GetAverage() << " ms\n";
-
-            oss << "  Min:
-            " << queryTimeTrend.GetMin() << " ms\n";
-
-            oss << "  Max:
-            " << queryTimeTrend.GetMax() << " ms\n";
+            oss << "  Min:      " << queryTimeTrend.GetMin() << " ms\n";
+            oss << "  Max:      " << queryTimeTrend.GetMax() << " ms\n";
         }
         else
         {
