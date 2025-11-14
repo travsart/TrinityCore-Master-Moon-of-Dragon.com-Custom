@@ -958,7 +958,7 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     if (!GetBot())
         return false;
 
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId)->GetMap()->GetDifficultyID());
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
         return false;
 
