@@ -110,7 +110,7 @@ MovementArbiter::~MovementArbiter()
     }
 
     // Clear pending requests
-    ::std::lock_guard<::std::mutex> lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     _pendingRequests.clear();
 }
 
@@ -143,7 +143,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     // If we have a current request and new request has lower priority, filter it
     if (_config.enablePriorityFiltering)
     {
-        ::std::lock_guard<::std::mutex> currentLock(_currentRequestMutex);
+        ::std::lock_guard currentLock(_currentRequestMutex);
         if (_currentRequest.has_value())
         {
             // Only accept if new request has higher priority
@@ -162,7 +162,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
 
     // Slow Path: Queue insertion (mutex required)
     {
-        ::std::lock_guard<::std::mutex> queueLock(_queueMutex);
+        ::std::lock_guard queueLock(_queueMutex);
 
         // Add to pending queue
         _pendingRequests.push_back(request);
@@ -186,7 +186,7 @@ bool MovementArbiter::RequestMovement(MovementRequest const& request)
     // Update deduplication cache
     if (_config.enableDeduplication)
     {
-        ::std::lock_guard<::std::mutex> dedupLock(_deduplicationMutex);
+        ::std::lock_guard dedupLock(_deduplicationMutex);
         uint64 hash = request.GetSpatialTemporalHash();
         _recentRequests[hash] = GameTime::GetGameTimeMS();
     }
@@ -221,7 +221,7 @@ void MovementArbiter::Update(uint32 diff)
     }
 
     // Check if we have pending requests
-    ::std::unique_lock<::std::mutex> queueLock(_queueMutex);
+    ::std::unique_lock queueLock(_queueMutex);
     if (_pendingRequests.empty())
         return;
 
@@ -243,7 +243,7 @@ void MovementArbiter::Update(uint32 diff)
     // Check if we should interrupt current movement
     bool shouldInterrupt = false;
     {
-        ::std::lock_guard<::std::mutex> currentLock(_currentRequestMutex);
+        ::std::lock_guard currentLock(_currentRequestMutex);
 
         if (_currentRequest.has_value())
         {
@@ -505,7 +505,7 @@ void MovementArbiter::ExecuteMovementRequest(MovementRequest const& request)
 
 bool MovementArbiter::IsDuplicate(MovementRequest const& request) const
 {
-    ::std::lock_guard<::std::mutex> lock(_deduplicationMutex);
+    ::std::lock_guard lock(_deduplicationMutex);
 
     uint64 hash = request.GetSpatialTemporalHash();
     auto it = _recentRequests.find(hash);
@@ -524,7 +524,7 @@ bool MovementArbiter::IsDuplicate(MovementRequest const& request) const
 
 void MovementArbiter::UpdateDeduplicationCache(uint32 currentTime)
 {
-    ::std::lock_guard<::std::mutex> lock(_deduplicationMutex);
+    ::std::lock_guard lock(_deduplicationMutex);
 
     // Remove entries older than deduplication window
     auto it = _recentRequests.begin();
@@ -543,7 +543,7 @@ void MovementArbiter::UpdateDeduplicationCache(uint32 currentTime)
 
 void MovementArbiter::ClearPendingRequests()
 {
-    ::std::lock_guard<::std::mutex> lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     _pendingRequests.clear();
     _statistics.currentQueueSize.store(0, ::std::memory_order_relaxed);
 
@@ -560,7 +560,7 @@ void MovementArbiter::StopMovement()
     ClearPendingRequests();
 
     {
-        ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
+        ::std::lock_guard lock(_currentRequestMutex);
         _currentRequest.reset();
     }
 
@@ -598,7 +598,7 @@ void MovementArbiter::ResetStatistics()
     oss << "  Pending Requests: " << GetPendingRequestCount() << "\n";
 
     {
-        ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
+        ::std::lock_guard lock(_currentRequestMutex);
         if (_currentRequest.has_value())
         {
             oss << "  Current Request: " << _currentRequest->ToString() << "\n";
@@ -627,13 +627,13 @@ void MovementArbiter::LogStatistics() const
 
 MovementArbiterConfig MovementArbiter::GetConfig() const
 {
-    ::std::lock_guard<::std::mutex> lock(_configMutex);
+    ::std::lock_guard lock(_configMutex);
     return _config;
 }
 
 void MovementArbiter::SetConfig(MovementArbiterConfig const& config)
 {
-    ::std::lock_guard<::std::mutex> lock(_configMutex);
+    ::std::lock_guard lock(_configMutex);
     _config = config;
     _diagnosticLogging.store(config.enableDiagnosticLogging, ::std::memory_order_relaxed);
 
@@ -647,7 +647,7 @@ void MovementArbiter::SetDiagnosticLogging(bool enable)
     _diagnosticLogging.store(enable, ::std::memory_order_relaxed);
 
     {
-        ::std::lock_guard<::std::mutex> lock(_configMutex);
+        ::std::lock_guard lock(_configMutex);
         _config.enableDiagnosticLogging = enable;
     }
 }
@@ -658,7 +658,7 @@ void MovementArbiter::SetDiagnosticLogging(bool enable)
 
 Optional<MovementRequest> MovementArbiter::GetCurrentRequest() const
 {
-    ::std::lock_guard<::std::mutex> lock(_currentRequestMutex);
+    ::std::lock_guard lock(_currentRequestMutex);
     return _currentRequest;
 }
 
