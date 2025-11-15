@@ -320,7 +320,7 @@ private:
         ::std::vector<uint32> PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy);
         bool ShouldAcceptQuest(uint32 questId, Player* bot);
 
-    private:
+        // Statistics (public for UnifiedQuestManager access)
         ::std::atomic<uint64> _questsPickedUp{0};
         ::std::atomic<uint64> _questsDiscovered{0};
     };
@@ -365,7 +365,7 @@ private:
         void RecoverFromStuckState(Player* bot, uint32 questId);
         void SkipProblematicObjective(Player* bot, QuestObjectiveData& objective);
 
-    private:
+        // Statistics (public for UnifiedQuestManager access)
         ::std::atomic<uint64> _objectivesCompleted{0};
         ::std::atomic<uint64> _questsCompleted{0};
     };
@@ -424,7 +424,7 @@ private:
         ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot);
         ValidationMetrics GetValidationMetrics();
 
-    private:
+        // Statistics (public for UnifiedQuestManager access)
         ::std::atomic<uint64> _validationsPerformed{0};
         ::std::atomic<uint64> _validationsPassed{0};
     };
@@ -486,7 +486,7 @@ private:
         TurnInMetrics GetBotTurnInMetrics(uint32 botGuid);
         TurnInMetrics GetGlobalTurnInMetrics();
 
-    private:
+        // Statistics (public for UnifiedQuestManager access)
         ::std::atomic<uint64> _questsTurnedIn{0};
         ::std::atomic<uint64> _rewardsSelected{0};
     };
@@ -539,7 +539,7 @@ private:
         QuestMetrics GetBotQuestMetrics(uint32 botGuid);
         QuestMetrics GetGlobalQuestMetrics();
 
-    private:
+        // Statistics (public for UnifiedQuestManager access)
         ::std::atomic<uint64> _questsAssigned{0};
         ::std::atomic<uint64> _questsOptimized{0};
     };

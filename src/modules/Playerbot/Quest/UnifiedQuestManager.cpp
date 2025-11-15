@@ -443,7 +443,7 @@ bool UnifiedQuestManager::ValidationModule::CanGroupMemberShareQuest(uint32 ques
 
 bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContext& context)
 {
-    return QuestValidation::instance()->ValidateWithContext(context);
+    return QuestValidation::instance()->ValidateWithContext(reinterpret_cast<::Playerbot::ValidationContext&>(context));
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestObjectives(uint32 questId, Player* bot)
@@ -760,12 +760,14 @@ void UnifiedQuestManager::TurnInModule::ValidateTurnInState(Player* bot, uint32 
 
 TurnInMetrics UnifiedQuestManager::TurnInModule::GetBotTurnInMetrics(uint32 botGuid)
 {
-    return QuestTurnIn::instance()->GetBotTurnInMetrics(botGuid);
+    auto snapshot = QuestTurnIn::instance()->GetBotTurnInMetrics(botGuid);
+    return *reinterpret_cast<TurnInMetrics*>(&snapshot);
 }
 
 TurnInMetrics UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
 {
-    return QuestTurnIn::instance()->GetGlobalTurnInMetrics();
+    auto snapshot = QuestTurnIn::instance()->GetGlobalTurnInMetrics();
+    return *reinterpret_cast<TurnInMetrics*>(&snapshot);
 }
 
 // ============================================================================
@@ -1521,7 +1523,7 @@ void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
     auto validQuests = _validation->FilterValidQuests(availableQuests, bot);
 
     // 2. Assignment and prioritization
-    auto recommendedQuests = _dynamic->GetRecommendedQuests(bot, QuestStrategy::LEVEL_PROGRESSION);
+    auto recommendedQuests = _dynamic->GetRecommendedQuests(bot, ::Playerbot::QuestStrategy::LEVEL_PROGRESSION);
 
     // 3. Execution and tracking
     _completion->UpdateQuestProgress(bot);
