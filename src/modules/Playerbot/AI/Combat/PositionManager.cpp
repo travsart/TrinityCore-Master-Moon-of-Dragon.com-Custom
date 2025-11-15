@@ -8,7 +8,6 @@
  */
 
 #include "PositionManager.h"
-#include "../ClassAI/PositionStrategyBase.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Map.h"
@@ -79,11 +78,11 @@ PositionMovementResult PositionManager::UpdatePosition(const MovementContext& co
 
         PositionInfo currentPosInfo = EvaluatePosition(currentPos, context);
 
-        if (!context.emergencyMode && currentPosInfo.score >= 80.0f && currentPosInfo.priority >= MovementPriority::NORMAL)
+        if (!context.emergencyMode && currentPosInfo.score >= 80.0f && currentPosInfo.priority >= MovementPriority::PRIORITY_COMBAT)
         {
             result.success = true;
             result.targetPosition = currentPos;
-            result.priority = MovementPriority::LOW;
+            result.priority = MovementPriority::PRIORITY_NORMAL;
             return result;
         }
 
@@ -104,7 +103,7 @@ PositionMovementResult PositionManager::UpdatePosition(const MovementContext& co
 
         result.success = true;
         result.targetPosition = currentPos;
-        result.priority = MovementPriority::LOW;
+        result.priority = MovementPriority::PRIORITY_NORMAL;
     }
     catch (const ::std::exception& e)
     {
@@ -186,7 +185,7 @@ PositionMovementResult PositionManager::ExecuteMovement(const Position& targetPo
 
     result.estimatedTime = EstimateMovementTime(currentPos, targetPos);
 
-    if (priority <= MovementPriority::CRITICAL)
+    if (priority <= MovementPriority::PRIORITY_CRITICAL)
     {
         result.requiresSprint = true;
     }
@@ -252,7 +251,7 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     if (!ValidatePosition(pos, context.validationFlags))
     {
         info.score = 0.0f;
-        info.priority = MovementPriority::IDLE;
+        info.priority = MovementPriority::PRIORITY_NONE;
         return info;
     }
 
@@ -273,17 +272,17 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     info.safetyRating = CalculateSafetyScore(pos, context);
     info.movementCost = CalculateMovementCost(_bot->GetPosition(), pos);
     if (info.score >= 90.0f)
-        info.priority = MovementPriority::NORMAL;
+        info.priority = MovementPriority::PRIORITY_COMBAT;
     else if (info.score >= 70.0f)
-        info.priority = MovementPriority::HIGH;
+        info.priority = MovementPriority::PRIORITY_FLEE;
     else if (info.score >= 50.0f)
-        info.priority = MovementPriority::LOW;
+        info.priority = MovementPriority::PRIORITY_NORMAL;
     else
-        info.priority = MovementPriority::IDLE;
+        info.priority = MovementPriority::PRIORITY_NONE;
 
     if (IsInDangerZone(pos))
     {
-        info.priority = MovementPriority::CRITICAL;
+        info.priority = MovementPriority::PRIORITY_CRITICAL;
         info.score *= 0.1f;
     }
 
@@ -641,10 +640,10 @@ PositionMovementResult PositionManager::HandleEmergencyMovement(const MovementCo
     Position emergencyPos = FindEmergencyEscapePosition();
 
     PositionMovementResult result;
-    result.priority = MovementPriority::CRITICAL;
+    result.priority = MovementPriority::PRIORITY_CRITICAL;
     result.requiresSprint = true;
 
-    return ExecuteMovement(emergencyPos, MovementPriority::CRITICAL);
+    return ExecuteMovement(emergencyPos, MovementPriority::PRIORITY_CRITICAL);
 }
 
 Position PositionManager::FindEmergencyEscapePosition()
@@ -824,7 +823,9 @@ float PositionManager::EstimateMovementTime(const Position& from, const Position
 
 bool PositionManager::CanReachPosition(const Position& pos)
 {
-    return ValidatePosition(pos, PositionValidation::WALKABLE | PositionValidation::NO_OBSTACLES);
+    return ValidatePosition(pos, static_cast<PositionValidation>(
+        static_cast<uint32>(PositionValidation::WALKABLE) |
+        static_cast<uint32>(PositionValidation::NO_OBSTACLES)));
 }
 
 ::std::vector<Position> PositionManager::CalculateWaypoints(const Position& from, const Position& to)

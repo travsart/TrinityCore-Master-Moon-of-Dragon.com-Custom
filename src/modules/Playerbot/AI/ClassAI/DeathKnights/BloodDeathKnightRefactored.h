@@ -210,7 +210,8 @@ public:
 
         // Sync with actual aura
         if (Aura* aura = bot->GetAura(BONE_SHIELD))
-            _boneShieldStacks = aura->GetStackAmount();        else
+            _boneShieldStacks = aura->GetStackAmount();
+        else
             _boneShieldStacks = 0;
     }
 
@@ -307,7 +308,7 @@ protected:
             {
                 this->CastSpell(MARROWREND, target);
                 _boneShieldTracker.ApplyMarrowrend(3);
-                ConsumeRunes(RuneType::BLOOD, 2);
+                ConsumeRunes(2);
                 GenerateRunicPower(15);
                 return;
             }
@@ -346,7 +347,7 @@ protected:
                 _crimsonScourgeProc = false;
             else
             {
-                ConsumeRunes(RuneType::BLOOD, 2);
+                ConsumeRunes(2);
                 GenerateRunicPower(10);
             }
             return;
@@ -356,7 +357,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(HEART_STRIKE, target))
         {
             this->CastSpell(HEART_STRIKE, target);
-            ConsumeRunes(RuneType::BLOOD, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -382,7 +383,7 @@ protected:
             {
                 this->CastSpell(MARROWREND, target);
                 _boneShieldTracker.ApplyMarrowrend(3);
-                ConsumeRunes(RuneType::BLOOD, 2);
+                ConsumeRunes(2);
                 GenerateRunicPower(15);
                 return;
             }
@@ -405,7 +406,7 @@ protected:
         if (totalRunes >= 2 && this->CanCastSpell(BLOOD_BOIL, this->GetBot()))
         {
             this->CastSpell(BLOOD_BOIL, this->GetBot());
-            ConsumeRunes(RuneType::BLOOD, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(10);
             return;
         }
@@ -414,7 +415,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(HEART_STRIKE, target))
         {
             this->CastSpell(HEART_STRIKE, target);
-            ConsumeRunes(RuneType::BLOOD, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -560,46 +561,50 @@ private:
         this->_resource.runicPower = (this->_resource.runicPower > amount) ? this->_resource.runicPower - amount : 0;
     }
 
-    void ConsumeRunes(RuneType type, uint32 count = 1) override
+    void ConsumeRunes(uint32 count = 1)
     {
         this->_resource.Consume(count);
     }
 
     void InitializeBloodMechanics()
-    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+    {
+        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        BotAI* ai = this->GetBot()->GetBotAI();
+        Player* bot = this->GetBot();
+        if (!bot) return;
+
+        BotAI* ai = dynamic_cast<BotAI*>(bot->GetPlayerAI());
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
         if (queue) {
-            queue->RegisterSpell(BLOOD_VAMPIRIC_BLOOD, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(BLOOD_VAMPIRIC_BLOOD, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
+            queue->RegisterSpell(VAMPIRIC_BLOOD, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(VAMPIRIC_BLOOD, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
 
-            queue->RegisterSpell(BLOOD_DEATH_STRIKE, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
-            queue->AddCondition(BLOOD_DEATH_STRIKE, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 70.0f; }, "Heal HP < 70%");
+            queue->RegisterSpell(DEATH_STRIKE, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
+            queue->AddCondition(DEATH_STRIKE, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 70.0f; }, "Heal HP < 70%");
 
-            queue->RegisterSpell(BLOOD_MARROWREND, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(BLOOD_MARROWREND, [this](Player*, Unit* target) { return target && this->_boneShieldTracker.GetStacks() < 5; }, "< 5 Bone Shield");
+            queue->RegisterSpell(MARROWREND, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(MARROWREND, [this](Player*, Unit* target) { return target && this->_boneShieldTracker.GetStacks() < 5; }, "< 5 Bone Shield");
 
-            queue->RegisterSpell(BLOOD_HEART_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(BLOOD_HEART_STRIKE, [](Player*, Unit* target) { return target != nullptr; }, "Builder");
+            queue->RegisterSpell(HEART_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
+            queue->AddCondition(HEART_STRIKE, [](Player*, Unit* target) { return target != nullptr; }, "Builder");
 
-            queue->RegisterSpell(BLOOD_BLOOD_BOIL, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
-            queue->AddCondition(BLOOD_BLOOD_BOIL, [this](Player*, Unit*) { return this->GetEnemiesInRange(10.0f) >= 2; }, "AoE 2+");
+            queue->RegisterSpell(BLOOD_BOIL, SpellPriority::LOW, SpellCategory::DAMAGE_AOE);
+            queue->AddCondition(BLOOD_BOIL, [this](Player*, Unit*) { return this->GetEnemiesInRange(10.0f) >= 2; }, "AoE 2+");
         }
 
         auto* tree = ai->GetBehaviorTree();
         if (tree) {
             auto root = Selector("Blood DK Tank", {
-                Sequence("Emergency", { Condition("HP < 40%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 40.0f; }),
-                    bot::ai::Action("Vampiric Blood", [this](Player* bot, Unit*) { if (this->CanCastSpell(BLOOD_VAMPIRIC_BLOOD, bot)) { this->CastSpell(BLOOD_VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot), Unit* target { return bot && bot->GetHealthPct() < 70.0f; }),
-                    bot::ai::Action("Death Strike", [this](Player* bot, Unit*) { if (this->CanCastSpell(BLOOD_DEATH_STRIKE, bot)) { this->CastSpell(BLOOD_DEATH_STRIKE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Emergency", { Condition("HP < 40%", [](Player* bot, Unit* target) { return bot && bot->GetHealthPct() < 40.0f; }),
+                    bot::ai::Action("Vampiric Blood", [this](Player* bot, Unit*) { if (this->CanCastSpell(VAMPIRIC_BLOOD, bot)) { this->CastSpell(VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Active Mitigation", { Condition("HP < 70%", [](Player* bot, Unit* target) { return bot && bot->GetHealthPct() < 70.0f; }),
+                    bot::ai::Action("Death Strike", [this](Player* bot, Unit*) { if (this->CanCastSpell(DEATH_STRIKE, bot)) { this->CastSpell(DEATH_STRIKE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Bone Shield", { Condition("< 5 stacks", [this](Player*, Unit*) { return this->_boneShieldTracker.GetStacks() < 5; }),
-                    bot::ai::Action("Marrowrend", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_MARROWREND, t)) { this->CastSpell(BLOOD_MARROWREND, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                    bot::ai::Action("Marrowrend", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(MARROWREND, t)) { this->CastSpell(MARROWREND, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
                 Sequence("Threat", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
-                    bot::ai::Action("Heart Strike", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(BLOOD_HEART_STRIKE, t)) { this->CastSpell(BLOOD_HEART_STRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                    bot::ai::Action("Heart Strike", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(HEART_STRIKE, t)) { this->CastSpell(HEART_STRIKE, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }

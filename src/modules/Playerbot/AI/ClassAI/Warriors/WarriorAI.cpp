@@ -70,14 +70,10 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldInterrupt(target))
     {
         Unit* interruptTarget = behaviors->GetInterruptTarget();
-                                 if (!interruptTarget)
-                                 {
-                                     return 0;
-                                 }
-                             if (!interruptTarget)
-                             {
-                                 return;
-                             }
+        if (!interruptTarget)
+        {
+            return;
+        }
         if (interruptTarget && CanUseAbility(PUMMEL))
         {
             // Cast Pummel on the interrupt target
@@ -489,7 +485,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
         // Use Cleave if multiple enemies
     if (GetNearbyEnemyCount(8.0f) > 1 && CanUseAbility(CLEAVE))
         {
-            if (CastSpell(CLEAVE))
+            if (CastSpell(CLEAVE, target))
             {
                 RecordAbilityUsage(CLEAVE);
                 return;
@@ -499,7 +495,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
         // Otherwise use Heroic Strike
     if (CanUseAbility(HEROIC_STRIKE))
         {
-            if (CastSpell(HEROIC_STRIKE))
+            if (CastSpell(HEROIC_STRIKE, target))
             {
                 RecordAbilityUsage(HEROIC_STRIKE);
                 return;
@@ -508,7 +504,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     }
 }
 
-void WarriorAI::RecordInterruptAttempt(::Unit* target)
+void WarriorAI::RecordInterruptAttempt(::Unit* target, uint32 spellId, bool success)
 {
     if (success)
     {
@@ -562,14 +558,14 @@ void WarriorAI::UseDefensiveCooldowns()
     }
 
     // Spell Reflection against casters
-    Unit* target = GetBot()->GetSelectedUnit();
-    if (target && target->HasUnitState(UNIT_STATE_CASTING) && CanUseAbility(SPELL_REFLECTION))
+    Unit* reflectionTarget = GetBot()->GetSelectedUnit();
+    if (reflectionTarget && reflectionTarget->HasUnitState(UNIT_STATE_CASTING) && CanUseAbility(SPELL_REFLECTION))
     {
-        if (CastSpell("Warrior {} activated Spell Reflection",
-                         GetBot(, SPELL_REFLECTION))
+        if (CastSpell(SPELL_REFLECTION))
         {
             RecordAbilityUsage(SPELL_REFLECTION);
-            TC_LOG_DEBUG("module.playerbot.ai")->GetName());
+            TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} activated Spell Reflection",
+                         GetBot()->GetName());
             return;
         }
     }
@@ -587,7 +583,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return false;
+        return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -595,7 +591,7 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-            return false;
+            return 0;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -611,11 +607,8 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-
-        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid); entity = nullptr;
- if (snapshot_entity)
- {
- }
+            entity = snapshot_entity;
+        }
         if (!entity)
             continue;
         // Original filtering logic from searcher goes here

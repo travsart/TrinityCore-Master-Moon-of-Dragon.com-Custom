@@ -497,11 +497,9 @@ namespace Playerbot
         oss << "  Questing:        " << snapshot.activity.questingCount << "\n";
         oss << "  Traveling:       " << snapshot.activity.travelingCount << "\n";
 
-        oss << "  Idle:
-        " << snapshot.activity.idleCount << "\n";
+        oss << "  Idle:            " << snapshot.activity.idleCount << "\n";
 
-        oss << "  Dead:
-        " << snapshot.activity.deadCount << "\n\n";
+        oss << "  Dead:            " << snapshot.activity.deadCount << "\n\n";
 
         // System Resources
         oss << "[System Resources]\n";

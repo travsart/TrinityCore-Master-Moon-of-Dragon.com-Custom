@@ -454,7 +454,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
     return false;
-}bool HunterAI::HandlePetManagement(::Unit* target)
+}
+
+bool HunterAI::HandlePetManagement(::Unit* target)
 {
     UpdatePetStatus();
 
@@ -552,7 +554,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
     }
 
     return false;
-}bool HunterAI::HandleTargetSwitching(::Unit* target)
+}
+
+bool HunterAI::HandleTargetSwitching(::Unit* target)
 {
     if (!_combatBehaviors)
         return false;
@@ -561,23 +565,6 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
-
-                                     if (!priorityTarget)
-
-                                     {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method HasAura");
-
-                                         return nullptr;
-
-                                     }
-
-                                     if (!priorityTarget)
-
-                                     {
-
-                                         return;
-
-                                     }
         {
             // Apply Hunter's Mark to new target
     if (_bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
@@ -613,24 +600,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
             }
 
             // Update current target
-
             _currentTarget = priorityTarget->GetGUID();
 
-                         if (!priorityTarget)
-
-                         {
-
-                             return;
-
-                         }
-
-
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} switching to priority target {}",
-
                          GetBot()->GetName(), priorityTarget->GetName());
 
             return false; // Continue with new target
-        }    }
+        }
+    }
     return false;
 }
 
@@ -644,29 +621,6 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
         ::Unit* ccTarget = GetBestCrowdControlTarget();
 
         if (ccTarget && ccTarget != target)
-        if (!ccTarget)
-
-                                     {
-
-                                         return nullptr;
-
-                                     }
-
-            if (!ccTarget)
-
-            {
-
-                return nullptr;
-
-            }
-
-                                 if (!ccTarget)
-
-                                 {
-
-                                     return;
-
-                                 }
         {
 
             uint32 now = GameTime::GetGameTimeMS();
@@ -698,55 +652,27 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
             }
 
             // Scatter Shot for instant CC
-    if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
-
+            if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
             {
-
                 if (CastSpell(SCATTER_SHOT, ccTarget))
                 {
-
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Scatter Shot on {}",
-
-                                 if (!ccTarget)
-
-                                 {
-
-                                     return;
-
-                                 }
-
                                  GetBot()->GetName(), ccTarget->GetName());
 
                     return true;
-
                 }
-
             }
 
             // Concussive Shot for slowing
-    if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
-
+            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
             {
-
                 if (CastSpell(CONCUSSIVE_SHOT, ccTarget))
-
                 {
-
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} slowed {} with Concussive Shot",
-
-                                 if (!ccTarget)
-                                 {
-
-                                     return;
-
-                                 }
-
                                  GetBot()->GetName(), ccTarget->GetName());
 
                     return false; // Continue rotation
-
                 }
-
             }
         }
     }
@@ -1126,9 +1052,8 @@ void HunterAI::OnCombatEnd(){
     // Check focus cost
     for (SpellPowerEntry const* power : spellInfo->PowerCosts)
     {
-        if (power && power->Power == POWER_FOCUS)
+        if (power && power->PowerType == POWER_FOCUS)
         {
-
             uint32 focusCost = power->ManaCost;
 
             return HasFocus(focusCost);
@@ -1151,9 +1076,8 @@ void HunterAI::ConsumeResource(uint32 spellId)
     // Track focus consumption
     for (SpellPowerEntry const* power : spellInfo->PowerCosts)
     {
-        if (power && power->Power == POWER_FOCUS)
+        if (power && power->PowerType == POWER_FOCUS)
         {
-
             _combatMetrics.focusSpent += power->ManaCost;
 
             break;
@@ -1321,14 +1245,18 @@ float HunterAI::GetPetHealthPercent() const
 
 void HunterAI::RevivePet()
 {
-    
     if (!_bot->HasSpell(REVIVE_PET) || !CanUseAbility(REVIVE_PET))
-        return;    _bot->CastSpell(CastSpellTargetArg(REVIVE_PET), _bot);
+        return;
+
+    _bot->CastSpell(CastSpellTargetArg(_bot), REVIVE_PET);
 }
 
 void HunterAI::CallPet()
-{    if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
-        return;    _bot->CastSpell(CastSpellTargetArg(CALL_PET), _bot);
+{
+    if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
+        return;
+
+    _bot->CastSpell(CastSpellTargetArg(_bot), CALL_PET);
 }
 
 // Trap management implementation
@@ -1561,11 +1489,8 @@ void HunterAI::UpdateTracking()
             Creature* creature = target->ToCreature();
 
             if (creature)
-
             {
-
-                CreatureType creatureType = creature->GetCreatureTemplate()->type;
-
+                CreatureType creatureType = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
 
                 switch (creatureType)
 
@@ -1629,8 +1554,7 @@ void HunterAI::UpdateTracking()
 
                     default:
                         // For other types, default to humanoid tracking if in PvP zone
-    if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
-
+                        if (_bot->HasPvPFlag() && _bot->HasSpell(TRACK_HUMANOIDS))
                             optimalTracking = TRACK_HUMANOIDS;
 
                         break;
@@ -1654,22 +1578,40 @@ void HunterAI::UpdateTracking()
         ::std::unordered_map<CreatureType, uint32> creatureTypeCounts;
 
         // Count nearby creature types within 40 yards
-        ::std::list<Creature*> nearbyCreatures;
-        Trinity::AllCreaturesInRange check(_bot, 40.0f);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesInRange> searcher(_bot, nearbyCreatures, check);
-        Cell::VisitGridObjects(_bot, searcher, 40.0f);
+        // Use spatial grid to find nearby creatures (same pattern as elsewhere in this file)
+        Map* map = _bot->GetMap();
+        if (!map)
+            return;
 
-        for (Creature* creature : nearbyCreatures)
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
         {
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+        }
 
-            if (!creature || creature->IsFriendlyTo(_bot))
+        if (spatialGrid)
+        {
+            // Query nearby creature GUIDs (lock-free!)
+            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+                _bot->GetPosition(), 40.0f);
 
-                continue;
+            // Process results
+            for (ObjectGuid guid : nearbyGuids)
+            {
+                // Thread-safe spatial grid validation
+                auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+                Creature* creature = nullptr;
+                if (snapshot_entity)
+                {
+                    creature = snapshot_entity;
+                }
+                if (!creature || creature->IsFriendlyTo(_bot))
+                    continue;
 
-
-            CreatureType type = creature->GetCreatureTemplate()->type;
-
-            creatureTypeCounts[type]++;
+                CreatureType type = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
+                creatureTypeCounts[type]++;
+            }
         }
 
         // Select tracking for the most common nearby creature type
@@ -1766,15 +1708,13 @@ void HunterAI::UpdateTracking()
     if (optimalTracking == 0)
     {
         // In dungeons/raids, prioritize Track Hidden for stealth detection
-    if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
+        if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
         {
-
             optimalTracking = TRACK_HIDDEN;
         }
         // In PvP zones, track humanoids
-        else if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
+        else if (_bot->HasPvPFlag() && _bot->HasSpell(TRACK_HUMANOIDS))
         {
-
             optimalTracking = TRACK_HUMANOIDS;
         }
         // Default to beast tracking in open world

@@ -1092,7 +1092,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     vote.target = target;
 
     // No recommendation if bot is invalid
-    if (!_bot)
+    if (!this->_bot)
         return vote;
 
     // ========================================================================
@@ -1100,7 +1100,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // ========================================================================
 
     // Emergency healing/tanking takes absolute priority
-    if (ShouldEmergencyHeal())
+    if (this->ShouldEmergencyHeal())
     {
         vote.actionId = 0; // TODO: Get emergency heal spell from ClassAI
         vote.confidence = 1.0f; // Maximum confidence for emergency
@@ -1109,7 +1109,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
         return vote;
     }
 
-    if (ShouldEmergencyTank())
+    if (this->ShouldEmergencyTank())
     {
         vote.actionId = 0; // TODO: Get emergency defensive from ClassAI
         vote.confidence = 1.0f;
@@ -1122,8 +1122,8 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // 2. ROLE-BASED ACTION RECOMMENDATION
     // ========================================================================
 
-    BotRole primaryRole = GetPrimaryRole();
-    float roleEffectiveness = _roleAssignment.roleEffectiveness / 100.0f; // Normalize to 0-1
+    BotRole primaryRole = this->GetPrimaryRole();
+    float roleEffectiveness = this->_roleAssignment.roleEffectiveness / 100.0f; // Normalize to 0-1
 
     // Base confidence on role effectiveness
     vote.confidence = ::std::min(::std::max(roleEffectiveness, 0.3f), 0.8f); // Clamp 0.3-0.8
@@ -1156,13 +1156,13 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // ========================================================================
     // 4. STRATEGY-BASED URGENCY ADJUSTMENTS
     // ========================================================================
-    if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+    if (this->IsStrategyActive(STRATEGY_BURST_DAMAGE))
         vote.urgency += 0.2f;  // Increase urgency during burst windows
-    if (IsStrategyActive(STRATEGY_SURVIVAL))
+    if (this->IsStrategyActive(STRATEGY_SURVIVAL))
         vote.urgency += 0.3f;  // High urgency in survival mode
-    if (IsStrategyActive(STRATEGY_EMERGENCY_TANK) || IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
+    if (this->IsStrategyActive(STRATEGY_EMERGENCY_TANK) || this->IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
         vote.urgency += 0.4f;  // Very high urgency for emergency strategies
-    if (IsStrategyActive(STRATEGY_SAVE_COOLDOWNS))
+    if (this->IsStrategyActive(STRATEGY_SAVE_COOLDOWNS))
         vote.urgency -= 0.1f;  // Reduce urgency when saving cooldowns
 
     // ========================================================================
@@ -1176,27 +1176,27 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
         case BotRole::TANK:
         case BotRole::OFF_TANK:
             reasoning += "Tank role - ";
-            if (IsStrategyActive(STRATEGY_DEFENSIVE))
+            if (this->IsStrategyActive(STRATEGY_DEFENSIVE))
                 reasoning += "Defensive strategy";
-            else if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+            else if (this->IsStrategyActive(STRATEGY_AOE_FOCUS))
                 reasoning += "AoE threat generation";
             else
                 reasoning += "Threat maintenance";
 
             // Tanks have higher urgency if not tanking current target
-    if (target && target->GetVictim() != _bot)
+    if (target && target->GetVictim() != this->_bot)
                 vote.urgency += 0.2f;
             break;
 
         case BotRole::HEALER:
         case BotRole::OFF_HEALER:
             reasoning += "Healer role - ";
-            if (IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
+            if (this->IsStrategyActive(STRATEGY_EMERGENCY_HEAL))
                 reasoning += "Emergency healing";
-            else if (_groupComposition.averageItemLevel > 0)
+            else if (this->_groupComposition.averageItemLevel > 0)
             {
-                float healthPercentage = static_cast<float>(_groupComposition.alive) /
-                                        static_cast<float>(_groupComposition.totalMembers) * 100.0f;
+                float healthPercentage = static_cast<float>(this->_groupComposition.alive) /
+                                        static_cast<float>(this->_groupComposition.totalMembers) * 100.0f;
                 if (healthPercentage < 60.0f)
                 {
                     reasoning += "Group health critical";
@@ -1216,9 +1216,9 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
 
         case BotRole::MELEE_DPS:
             reasoning += "Melee DPS - ";
-            if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+            if (this->IsStrategyActive(STRATEGY_AOE_FOCUS))
                 reasoning += "AoE damage";
-            else if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+            else if (this->IsStrategyActive(STRATEGY_BURST_DAMAGE))
                 reasoning += "Burst window";
             else if (target && target->GetHealthPct() < 20.0f)
             {
@@ -1231,9 +1231,9 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
 
         case BotRole::RANGED_DPS:
             reasoning += "Ranged DPS - ";
-            if (IsStrategyActive(STRATEGY_AOE_FOCUS))
+            if (this->IsStrategyActive(STRATEGY_AOE_FOCUS))
                 reasoning += "AoE damage";
-            else if (IsStrategyActive(STRATEGY_BURST_DAMAGE))
+            else if (this->IsStrategyActive(STRATEGY_BURST_DAMAGE))
                 reasoning += "Burst window";
             else if (target && target->GetHealthPct() < 20.0f)
             {
@@ -1246,7 +1246,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
 
         case BotRole::CROWD_CONTROL:
             reasoning += "Crowd Control - ";
-            if (IsStrategyActive(STRATEGY_CROWD_CONTROL))
+            if (this->IsStrategyActive(STRATEGY_CROWD_CONTROL))
             {
                 reasoning += "CC priority";
                 vote.urgency += 0.25f;
@@ -1257,7 +1257,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
 
         case BotRole::SUPPORT:
             reasoning += "Support role - ";
-            if (IsStrategyActive(STRATEGY_INTERRUPT_FOCUS))
+            if (this->IsStrategyActive(STRATEGY_INTERRUPT_FOCUS))
                 reasoning += "Interrupt focus";
             else
                 reasoning += "Utility support";
@@ -1266,9 +1266,9 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
         case BotRole::HYBRID:
             reasoning += "Hybrid role - ";
             // Hybrid adapts based on needs
-    if (ShouldUseDefensiveCooldowns())
+    if (this->ShouldUseDefensiveCooldowns())
                 reasoning += "Defensive support";
-            else if (_groupComposition.healers == 0)
+            else if (this->_groupComposition.healers == 0)
                 reasoning += "Off-healing";
             else
                 reasoning += "DPS";
@@ -1281,8 +1281,8 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     }
 
     // Add active profile information if any
-    if (_activeProfile)
-        reasoning += " (" + _activeProfile->name + ")";
+    if (this->_activeProfile)
+        reasoning += " (" + this->_activeProfile->name + ")";
 
     // Clamp urgency to 0-1 range
     vote.urgency = ::std::min(::std::max(vote.urgency, 0.0f), 1.0f);

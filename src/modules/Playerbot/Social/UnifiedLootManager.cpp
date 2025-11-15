@@ -182,7 +182,8 @@ void UnifiedLootManager::CoordinationModule::MaximizeLootFairness(Group* group, 
 
 void UnifiedLootManager::DistributionModule::DistributeLoot(Group* group, LootItem const& item)
 {
-    LootDistribution::instance()->DistributeLoot(group, item);
+    // TODO: LootDistribution::DistributeLoot doesn't exist
+    // Consider using HandleGroupLoot or DistributeLootToWinner instead
     _itemsDistributed++;
 }
 
@@ -190,59 +191,76 @@ void UnifiedLootManager::DistributionModule::HandleLootRoll(Player* player, uint
 {
     ::std::lock_guard<decltype(_rollMutex)> lock(_rollMutex);
 
-    LootDistribution::instance()->HandleLootRoll(player, rollId, rollType);
+    // Use ProcessPlayerLootDecision instead of non-existent HandleLootRoll
+    LootDistribution::instance()->ProcessPlayerLootDecision(player, rollId, rollType);
     _rollsProcessed++;
 }
 
 LootRollType UnifiedLootManager::DistributionModule::DetermineLootDecision(
     Player* player, LootItem const& item, LootDecisionStrategy strategy)
 {
-    return LootDistribution::instance()->DetermineLootDecision(player, item, strategy);
+    // DetermineLootDecision only accepts 2 arguments (player, item), not 3
+    // The strategy parameter is stored in player's loot profile
+    return LootDistribution::instance()->DetermineLootDecision(player, item);
 }
 
 LootPriority UnifiedLootManager::DistributionModule::CalculateLootPriority(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->CalculateLootPriority(player, item);
+    // Use AnalyzeItemPriority instead of non-existent CalculateLootPriority
+    return LootDistribution::instance()->AnalyzeItemPriority(player, item);
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollNeed(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->ShouldRollNeed(player, item);
+    // Use CanPlayerNeedItem instead of non-existent ShouldRollNeed
+    return LootDistribution::instance()->CanPlayerNeedItem(player, item);
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollGreed(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->ShouldRollGreed(player, item);
+    // Use ShouldPlayerGreedItem instead of non-existent ShouldRollGreed
+    return LootDistribution::instance()->ShouldPlayerGreedItem(player, item);
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForClass(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForClass(player, item);
+    // Use IsClassAppropriate instead of non-existent IsItemForClass
+    return LootDistribution::instance()->IsClassAppropriate(player, item);
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForMainSpec(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForMainSpec(player, item);
+    // IsItemForMainSpec is private in LootDistribution
+    // Use IsClassAppropriate and IsItemUpgrade as approximation
+    return LootDistribution::instance()->IsClassAppropriate(player, item) &&
+           LootDistribution::instance()->IsItemUpgrade(player, item);
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForOffSpec(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForOffSpec(player, item);
+    // IsItemForOffSpec doesn't exist in LootDistribution public API
+    // Use IsClassAppropriate but not an upgrade as approximation
+    return LootDistribution::instance()->IsClassAppropriate(player, item) &&
+           !LootDistribution::instance()->IsItemUpgrade(player, item);
 }
 
 void UnifiedLootManager::DistributionModule::ExecuteLootDistribution(Group* group, uint32 rollId)
 {
-    LootDistribution::instance()->ExecuteLootDistribution(group, rollId);
+    // ExecuteLootDistribution doesn't exist - use CompleteLootRoll instead
+    LootDistribution::instance()->CompleteLootRoll(rollId);
 }
 
 void UnifiedLootManager::DistributionModule::ResolveRollTies(Group* group, uint32 rollId)
 {
-    LootDistribution::instance()->ResolveRollTies(group, rollId);
+    // ResolveRollTies doesn't exist - use ProcessLootRolls to handle ties
+    LootDistribution::instance()->ProcessLootRolls(rollId);
 }
 
 void UnifiedLootManager::DistributionModule::HandleLootNinja(Group* group, uint32 suspectedPlayer)
 {
-    LootDistribution::instance()->HandleLootNinja(group, suspectedPlayer);
+    // HandleLootNinja doesn't exist in LootDistribution public API
+    // TODO: Implement ninja detection logic or use HandleLootConflicts
+    TC_LOG_WARN("playerbot.loot", "Loot ninja detection not yet implemented for player {}", suspectedPlayer);
 }
 
 // ============================================================================

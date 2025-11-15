@@ -892,7 +892,7 @@ void DeathKnightAI::UpdateBuffs()
         if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
         {
 
-            CastSpell(GetBot(, presenceSpell);
+            CastSpell(GetBot(), presenceSpell);
 
             _lastPresence = currentTime;
         }
@@ -954,7 +954,7 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     if (!GetBot())
         return false;
 
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (!spellInfo)
         return false;
 
@@ -1000,8 +1000,11 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     }
 
     return true;
-}void DeathKnightAI::ConsumeResource(uint32 spellId)
-{    if (!GetBot())
+}
+
+void DeathKnightAI::ConsumeResource(uint32 spellId)
+{
+    if (!GetBot())
         return;
 
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
@@ -1012,8 +1015,8 @@ bool DeathKnightAI::HasEnoughResource(uint32 spellId)
     auto powerCosts = spellInfo->CalcPowerCost(GetBot(), spellInfo->GetSchoolMask());
     for (auto const& cost : powerCosts)
     {
-        if (cost.Power == POWER_RUNIC_POWER)        {
-
+        if (cost.Power == POWER_RUNIC_POWER)
+        {
             _metrics->totalRunicPowerSpent += cost.Amount;
 
             _runicPowerSpent += cost.Amount;
@@ -1072,13 +1075,13 @@ void DeathKnightAI::OnCombatStart(Unit* target)
     }
 
     // Use offensive cooldowns for boss fights
-    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())    {
+    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
+    {
         ActivateBurstCooldowns(target);
 
         // Army of the Dead for major encounters
-    if (CanUseAbility(ARMY_OF_THE_DEAD))
+        if (CanUseAbility(ARMY_OF_THE_DEAD))
         {
-
             CastSpell(ARMY_OF_THE_DEAD);
 
             TC_LOG_DEBUG("playerbot", "DeathKnightAI: Summoned Army of the Dead for boss");
@@ -1086,17 +1089,15 @@ void DeathKnightAI::OnCombatStart(Unit* target)
     }
 
     // Use defensive cooldowns if taking magic damage
-    if (target->GetTypeId() == TYPEID_UNIT)    {
-
+    if (target->GetTypeId() == TYPEID_UNIT)
+    {
         Creature* creature = target->ToCreature();
         if (!creature)
+        {
+            return;
+        }
 
-                 {
-
-                     return;
-
-                 }
-                 if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
         {
 
             if (CanUseAbility(ANTI_MAGIC_SHELL))
@@ -1484,13 +1485,10 @@ bool DeathKnightAI::HandleTargetSwitching(Unit*& target)
     OnTargetChanged(priorityTarget);
     target = priorityTarget;
 
-                 if (!priorityTarget)
-
-                 {
-
-                     return;
-
-                 }
+    if (!priorityTarget)
+    {
+        return false;
+    }
 
     TC_LOG_DEBUG("module.playerbot.ai", "Death Knight {} switching target to {}",
 
@@ -1748,7 +1746,8 @@ bool DeathKnightAI::HandleOffensiveCooldowns(Unit* target)
     }
 
     // Army of the Dead for major fights (all specs)
-    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())    {
+    if (target->GetTypeId() == TYPEID_UNIT && target->ToCreature()->isWorldBoss())
+    {
         if (CanUseAbility(ARMY_OF_THE_DEAD))
         {
 
@@ -1872,22 +1871,17 @@ bool DeathKnightAI::HandleRuneAndPowerManagement(Unit* target)
 
             return true;
         }
-    }    return false;
+    }
+
+    return false;
 }
 
 void DeathKnightAI::ExecuteSpecializationRotation(Unit* target)
-if (!currentVictim)
-{
-    return nullptr;
-}
 {
     if (!target || !GetBot())
-        if (!currentVictim)
-        {
+        return;
 
-            return nullptr;
-        }
-        return;    // Update presence if needed
+    // Update presence if needed
     UpdatePresenceIfNeeded();
 
     // Check if we're on global cooldown
@@ -1926,7 +1920,7 @@ void DeathKnightAI::UpdatePresenceIfNeeded()
 
     if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
     {
-        CastSpell(GetBot(, presenceSpell);
+        CastSpell(GetBot(), presenceSpell);
         _lastPresence = currentTime;
     }
 }
@@ -1971,14 +1965,15 @@ bool DeathKnightAI::ShouldUseDeathGrip(Unit* target) const
         return false;
 
     // Check if target is a caster that should be pulled
-    if (target->GetTypeId() == TYPEID_UNIT)    {
-        Creature* creature = target->ToCreature();        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+    if (target->GetTypeId() == TYPEID_UNIT)
+    {
+        Creature* creature = target->ToCreature();
         if (!creature)
         {
-
-            return;
+            return false;
         }
 
+        if (creature && creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
             return true;
     }
 
@@ -2003,25 +1998,21 @@ bool DeathKnightAI::ShouldUseDarkCommand(Unit* target) const
         return false;
 
     // Check if we need to taunt
-    Unit* currentVictim = target->GetVictim();    if (!currentVictim || currentVictim == GetBot())
+    Unit* currentVictim = target->GetVictim();
+    if (!currentVictim || currentVictim == GetBot())
         return false;
 
     // Taunt if attacking a healer or squishy
     if (currentVictim->GetTypeId() == TYPEID_PLAYER)
-    if (!currentVictim)
-    {
-        return nullptr;
-    }
     {
         Player* player = currentVictim->ToPlayer();
-        if (!currentVictim)
+        if (!player)
         {
-
-            return nullptr;
+            return false;
         }
 
-        if (player && (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_MAGE))
-        return true;
+        if (player->GetClass() == CLASS_PRIEST || player->GetClass() == CLASS_MAGE)
+            return true;
     }
 
     return false;
@@ -2034,12 +2025,12 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
 
     uint32 count = 0;
     ::std::list<Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot()), range);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
     if (!map)
-        return false;
+        return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
     if (!spatialGrid)
@@ -2047,8 +2038,7 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         sSpatialGridManager.CreateGrid(map);
         spatialGrid = sSpatialGridManager.GetGrid(map);
         if (!spatialGrid)
-
-            return false;
+            return 0;
     }
 
     // Query nearby GUIDs (lock-free!)
@@ -2064,15 +2054,12 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
+            entity = snapshot_entity;
+        }
 
-        } snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(GetBot(), guid);
- entity = nullptr;
- if (snapshot_entity)
- {
- }
         if (!entity)
-
             continue;
+
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
