@@ -1147,7 +1147,7 @@ void DeathKnightAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(UNHOLY_FRENZY, VAMPIRIC_BLOOD);
+                CastSpell(VAMPIRIC_BLOOD, GetBot());
 
                 _metrics->cooldownsUsed++;
 
@@ -1215,7 +1215,7 @@ void DeathKnightAI::ActivateBurstCooldowns(Unit* target)
 
             {
 
-                CastSpell(target);
+                CastSpell(UNHOLY_FRENZY, target);
 
                 _metrics->cooldownsUsed++;
 

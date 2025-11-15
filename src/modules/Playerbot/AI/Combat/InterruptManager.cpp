@@ -741,7 +741,7 @@ bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
     float maxRangeSq = maxRange * maxRange;
     if (_bot->GetExactDistSq(target) > maxRangeSq)
         return false;
-    _bot->CastSpell(spellId, false, target);
+    _bot->CastSpell(CastSpellTargetArg(target), spellId);
     return true;
 }
 

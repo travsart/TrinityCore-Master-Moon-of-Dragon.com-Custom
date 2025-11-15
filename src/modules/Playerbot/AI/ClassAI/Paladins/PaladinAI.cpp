@@ -346,7 +346,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         // Check if we need healing
     if (GetBot()->GetHealthPct() < 50.0f && CanUseAbility(WORD_OF_GLORY))
         {
-            if (CastSpell(GetBot(), WORD_OF_GLORY))
+            if (CastSpell(WORD_OF_GLORY, GetBot()))
             {
                 RecordAbilityUsage(WORD_OF_GLORY);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -423,7 +423,7 @@ void PaladinAI::UseDefensiveCooldowns()
         uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastLayOnHands > 600000)  // 10 minute cooldown
         {
-            if (CastSpell(GetBot(), LAY_ON_HANDS))
+            if (CastSpell(LAY_ON_HANDS, GetBot()))
             {
                 RecordAbilityUsage(LAY_ON_HANDS);
                 _lastLayOnHands = currentTime;
@@ -611,7 +611,7 @@ void PaladinAI::UpdateBlessingManagement()
         // Blessing of Might for physical damage dealers
     if (CanUseAbility(BLESSING_OF_MIGHT))
         {
-            if (CastSpell(GetBot(), BLESSING_OF_MIGHT))
+            if (CastSpell(BLESSING_OF_MIGHT, GetBot()))
             {
                 RecordAbilityUsage(BLESSING_OF_MIGHT);
                 _currentBlessing = BLESSING_OF_MIGHT;
@@ -624,7 +624,7 @@ void PaladinAI::UpdateBlessingManagement()
         // Blessing of Wisdom for mana users
     if (CanUseAbility(BLESSING_OF_WISDOM))
         {
-            if (CastSpell(GetBot(), BLESSING_OF_WISDOM))
+            if (CastSpell(BLESSING_OF_WISDOM, GetBot()))
             {
                 RecordAbilityUsage(BLESSING_OF_WISDOM);
                 _currentBlessing = BLESSING_OF_WISDOM;
@@ -636,7 +636,7 @@ void PaladinAI::UpdateBlessingManagement()
     // Default to Blessing of Kings
     if (CanUseAbility(BLESSING_OF_KINGS))
     {
-        if (CastSpell(GetBot(), BLESSING_OF_KINGS))
+        if (CastSpell(BLESSING_OF_KINGS, GetBot()))
         {
             RecordAbilityUsage(BLESSING_OF_KINGS);
             _currentBlessing = BLESSING_OF_KINGS;
