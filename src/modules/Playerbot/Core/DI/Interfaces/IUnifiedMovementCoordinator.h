@@ -90,7 +90,7 @@ enum class FormationMovementState : uint8;
 enum class FormationIntegrity : uint8;
 enum class MovementPriority : uint8;
 enum class PositionValidation : uint32;
-enum class PlayerBotMovementPriority;
+enum class PlayerBotMovementPriority : uint8;  // Must match MovementPriorityMapper.h
 
 /**
  * @brief Unified interface for all movement coordination operations
