@@ -31,5 +31,3 @@ public:
     virtual uint8 GetAllPerformableRoles(Player* player) = 0;
     virtual uint8 GetRoleFromSpecialization(Player* player, uint32 specId) = 0;
 };
-
-#endif // ILFGRoleDetector_h
