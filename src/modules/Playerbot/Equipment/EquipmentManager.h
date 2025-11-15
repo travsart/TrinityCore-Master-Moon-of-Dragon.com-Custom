@@ -320,26 +320,12 @@ public:
     // METRICS AND MONITORING
     // ============================================================================
 
-    struct EquipmentMetrics
-    {
-        ::std::atomic<uint32> itemsEquipped{0};
-        ::std::atomic<uint32> upgradesFound{0};
-        ::std::atomic<uint32> junkItemsSold{0};
-        ::std::atomic<uint32> totalGoldFromJunk{0};
-        ::std::atomic<float> averageItemScore{0.0f};
+    // Use base class's EquipmentMetrics definition (IEquipmentManager::EquipmentMetrics)
+    // Note: Removed duplicate atomic-based definition to fix C2555 covariant return type error
+    // Thread safety is provided by _mutex, not atomics
 
-        void Reset()
-        {
-            itemsEquipped = 0;
-            upgradesFound = 0;
-            junkItemsSold = 0;
-            totalGoldFromJunk = 0;
-            averageItemScore = 0.0f;
-        }
-    };
-
-    EquipmentMetrics const& GetPlayerMetrics(uint32 playerGuid) override;
-    EquipmentMetrics const& GetGlobalMetrics() override;
+    IEquipmentManager::EquipmentMetrics const& GetPlayerMetrics(uint32 playerGuid) override;
+    IEquipmentManager::EquipmentMetrics const& GetGlobalMetrics() override;
 
 private:
     EquipmentManager();
@@ -352,8 +338,8 @@ private:
     ::std::unordered_map<uint32, EquipmentAutomationProfile> _playerProfiles;
 
     // Metrics tracking
-    ::std::unordered_map<uint32, EquipmentMetrics> _playerMetrics;
-    EquipmentMetrics _globalMetrics;
+    ::std::unordered_map<uint32, IEquipmentManager::EquipmentMetrics> _playerMetrics;
+    IEquipmentManager::EquipmentMetrics _globalMetrics;
 
     // FIX #23: CRITICAL - Change to recursive_mutex to prevent deadlock
     // AutoEquipBestGear() calls GetAutomationProfile() while holding lock
