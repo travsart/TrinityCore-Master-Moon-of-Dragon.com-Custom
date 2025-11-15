@@ -24,8 +24,8 @@
 #include "Map.h"
 #include "InstanceScript.h"
 
-namespace bot::ai
-{
+namespace Playerbot {
+namespace bot { namespace ai {
 
 /**
  * @class CombatContextDetector
@@ -160,4 +160,5 @@ private:
     static bool IsGroupFightingBoss(Player const* player);
 };
 
-} // namespace bot::ai
+}} // namespace bot::ai
+} // namespace Playerbot

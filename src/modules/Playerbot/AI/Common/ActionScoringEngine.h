@@ -49,8 +49,8 @@
  * Performance: <5% CPU overhead, ~36 bytes per bot, ~1-2 microseconds per action scored
  */
 
-namespace bot::ai
-{
+namespace Playerbot {
+namespace bot { namespace ai {
 
 /**
  * @enum ScoringCategory
@@ -455,4 +455,5 @@ private:
     static const std::array<std::array<float, 6>, 8> CONTEXT_MULTIPLIERS;
 };
 
-} // namespace bot::ai
+}} // namespace bot::ai
+} // namespace Playerbot

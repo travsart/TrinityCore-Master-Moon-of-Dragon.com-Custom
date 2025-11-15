@@ -51,7 +51,7 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
-using namespace bot::ai;
+using namespace Playerbot::bot::ai;
 
 /**
  * @brief Test fixture for ActionScoringEngine tests
