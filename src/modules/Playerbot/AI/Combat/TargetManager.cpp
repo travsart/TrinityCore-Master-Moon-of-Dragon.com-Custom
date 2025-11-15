@@ -16,8 +16,8 @@
 namespace Playerbot
 {
 
-// TargetInfo implementation
-float TargetInfo::CalculateScore() const
+// TMTargetInfo implementation
+float TMTargetInfo::CalculateScore() const
 {
     if (!target || target->isDead())
         return 0.0f;
@@ -27,19 +27,19 @@ float TargetInfo::CalculateScore() const
 
     switch (priority)
     {
-        case TargetPriority::CRITICAL:
+        case TMTargetPriority::CRITICAL:
             score = 1000.0f;
             break;
-        case TargetPriority::HIGH:
+        case TMTargetPriority::HIGH:
             score = 500.0f;
             break;
-        case TargetPriority::MEDIUM:
+        case TMTargetPriority::MEDIUM:
             score = 250.0f;
             break;
-        case TargetPriority::LOW:
+        case TMTargetPriority::LOW:
             score = 100.0f;
             break;
-        case TargetPriority::IGNORE:
+        case TMTargetPriority::IGNORE:
             return 0.0f;
     }
 
@@ -115,7 +115,7 @@ Unit* TargetManager::GetPriorityTarget()
 
     for (Unit* target : targets)
     {
-        TargetInfo info = AssessTarget(target);
+        TMTargetInfo info = AssessTarget(target);
         float score = info.CalculateScore();
 
         if (score > 0.0f)
@@ -157,8 +157,8 @@ bool TargetManager::ShouldSwitchTarget(float switchThreshold)
         return false;
 
     // Calculate scores
-    TargetInfo currentInfo = AssessTarget(currentTarget);
-    TargetInfo bestInfo = AssessTarget(bestTarget);
+    TMTargetInfo currentInfo = AssessTarget(currentTarget);
+    TMTargetInfo bestInfo = AssessTarget(bestTarget);
 
     float currentScore = currentInfo.CalculateScore();
     float bestScore = bestInfo.CalculateScore();
@@ -167,55 +167,55 @@ bool TargetManager::ShouldSwitchTarget(float switchThreshold)
     return (bestScore - currentScore) >= (currentScore * switchThreshold);
 }
 
-TargetPriority TargetManager::ClassifyTarget(Unit* target)
+TMTargetPriority TargetManager::ClassifyTarget(Unit* target)
 {
     if (!target || target->isDead())
-        return TargetPriority::IGNORE;
+        return TMTargetPriority::IGNORE;
 
     // Friendly = ignore
     if (target->IsFriendlyTo(_bot))
-        return TargetPriority::IGNORE;
+        return TMTargetPriority::IGNORE;
 
     // Crowd controlled = ignore
     if (IsCrowdControlled(target))
-        return TargetPriority::IGNORE;
+        return TMTargetPriority::IGNORE;
 
     // Immune = ignore
     if (IsImmune(target))
-        return TargetPriority::IGNORE;
+        return TMTargetPriority::IGNORE;
 
     // Healer = critical
     if (IsHealer(target))
-        return TargetPriority::CRITICAL;
+        return TMTargetPriority::CRITICAL;
 
     // Execute range = critical
     if (target->GetHealthPct() < 20.0f)
-        return TargetPriority::CRITICAL;
+        return TMTargetPriority::CRITICAL;
 
     // Caster = high
     if (IsCaster(target))
-        return TargetPriority::HIGH;
+        return TMTargetPriority::HIGH;
 
     // High threat = high
     float threat = CalculateThreatLevel(target);
     if (threat > 0.7f)
-        return TargetPriority::HIGH;
+        return TMTargetPriority::HIGH;
 
     // Elite/boss = high
     if (target->IsElite())
-        return TargetPriority::HIGH;
+        return TMTargetPriority::HIGH;
 
     // Tank = low
     // TODO: Detect tank role properly
 
     // Default = medium
-    return TargetPriority::MEDIUM;
+    return TMTargetPriority::MEDIUM;
 }
 
 bool TargetManager::IsHighPriorityTarget(Unit* target)
 {
-    TargetPriority priority = ClassifyTarget(target);
-    return priority == TargetPriority::CRITICAL || priority == TargetPriority::HIGH;
+    TMTargetPriority priority = ClassifyTarget(target);
+    return priority == TMTargetPriority::CRITICAL || priority == TMTargetPriority::HIGH;
 }
 
 ::std::vector<Unit*> TargetManager::GetCombatTargets()
@@ -242,9 +242,9 @@ bool TargetManager::IsHighPriorityTarget(Unit* target)
     return targets;
 }
 
-TargetInfo TargetManager::AssessTarget(Unit* target)
+TMTargetInfo TargetManager::AssessTarget(Unit* target)
 {
-    TargetInfo info;
+    TMTargetInfo info;
 
     if (!target || !_bot)
         return info;
