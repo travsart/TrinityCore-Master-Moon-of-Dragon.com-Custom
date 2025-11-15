@@ -202,7 +202,6 @@ public:
         , _berserkEndTime(0)
         , _lastBerserkTime(0)
         , _lastFrenziedRegenerationTime(0)
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({
@@ -958,15 +957,10 @@ private:
                     bot::ai::Action("Cast Ironfur", [this](Player* bot, Unit*) {
 
                         if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
-
                         {
-
                             this->CastSpell(GUARDIAN_IRONFUR, bot);
-
-                            this->_ironfurTracker.AddStack();
-
+                            this->_ironfurTracker.ApplyIronfur();
                             return NodeStatus::SUCCESS;
-
                         }
 
                         return NodeStatus::FAILURE;
@@ -1058,9 +1052,6 @@ private:
                         Sequence("Mangle (priority builder)", {
 
                             bot::ai::Action("Cast Mangle", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_MANGLE, target))
 
                                 {
@@ -1082,19 +1073,11 @@ private:
                         Sequence("Thrash (AoE bleed)", {
 
                             Condition("< 3 Thrash stacks", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return target && (!this->_thrashTracker.HasThrash(target->GetGUID()) ||
-
                                                   this->_thrashTracker.GetStacks(target->GetGUID()) < 3);
-
                             }),
 
                             bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_THRASH, target))
 
                                 {
@@ -1126,21 +1109,12 @@ private:
                             }),
 
                             bot::ai::Action("Cast Maul", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_MAUL, target))
-
                                 {
-
                                     this->CastSpell(GUARDIAN_MAUL, target);
-
                                     return NodeStatus::SUCCESS;
-
                                 }
-
                                 return NodeStatus::FAILURE;
-
                             })
 
                         }),
@@ -1148,19 +1122,11 @@ private:
                         Sequence("Pulverize (talent)", {
 
                             Condition("Has talent and 2+ Thrash stacks", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return bot && target && bot->HasSpell(GUARDIAN_PULVERIZE) &&
-
                                        this->_thrashTracker.GetStacks(target->GetGUID()) >= 2;
-
                             }),
 
                             bot::ai::Action("Cast Pulverize", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_PULVERIZE, target))
 
                                 {
@@ -1204,21 +1170,12 @@ private:
                             }),
 
                             bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_SWIPE, target))
-
                                 {
-
                                     this->CastSpell(GUARDIAN_SWIPE, target);
-
                                     return NodeStatus::SUCCESS;
-
                                 }
-
                                 return NodeStatus::FAILURE;
-
                             })
 
                         }),
@@ -1226,17 +1183,10 @@ private:
                         Sequence("Moonfire (ranged)", {
 
                             Condition("Out of melee range", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return bot && target && bot->GetDistance(target) > 8.0f && bot->GetDistance(target) < 40.0f;
-
                             }),
 
                             bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(GUARDIAN_MOONFIRE, target))
 
                                 {
