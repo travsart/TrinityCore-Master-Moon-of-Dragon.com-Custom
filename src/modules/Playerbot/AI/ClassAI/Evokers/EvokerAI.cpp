@@ -143,7 +143,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
     {
         float healthPct = _bot->GetHealthPct();        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
         {
-            if (CastSpell(_bot, OBSIDIAN_SCALES))
+            if (CastSpell(OBSIDIAN_SCALES, _bot))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Obsidian Scales at {}% health",
                              _bot->GetName(), healthPct);
@@ -153,7 +153,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
 
         if (healthPct < 50.0f && CanUseAbility(RENEWING_BLAZE))
         {
-            if (CastSpell(_bot, RENEWING_BLAZE))            {
+            if (CastSpell(RENEWING_BLAZE, _bot))            {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Renewing Blaze at {}% health",
                              _bot->GetName(), healthPct);
                 return;
@@ -181,7 +181,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Too close - use Hover to gain distance
     if (distance < 15.0f && CanUseAbility(HOVER))
         {
-            if (CastSpell(_bot, HOVER))
+            if (CastSpell(HOVER, _bot))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Hover to reposition",
                              _bot->GetName());
@@ -192,7 +192,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         // Wing Buffet for knockback
     if (distance < 10.0f && CanUseAbility(WING_BUFFET))
         {
-            if (CastSpell(_bot, WING_BUFFET))
+            if (CastSpell(WING_BUFFET, _bot))
             {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Wing Buffet for space",                             _bot->GetName());
                 return;
@@ -263,7 +263,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             // Emerald Blossom for instant AoE heal
     if (CanUseAbility(EMERALD_BLOSSOM))
             {
-                if (CastSpell(_bot, EMERALD_BLOSSOM))
+                if (CastSpell(EMERALD_BLOSSOM, _bot))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} using Emerald Blossom for AoE healing",                                 _bot->GetName());
                     return;
@@ -294,7 +294,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             // Emerald Communion - major healing cooldown
     if (CanUseAbility(EMERALD_COMMUNION))
             {
-                if (CastSpell(_bot, EMERALD_COMMUNION))
+                if (CastSpell(EMERALD_COMMUNION, _bot))
                 {
                     TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} activating Emerald Communion",                                 _bot->GetName());
                     return;
