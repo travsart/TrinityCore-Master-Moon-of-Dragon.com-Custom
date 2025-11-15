@@ -19,6 +19,7 @@
 #define PLAYERBOT_DISCIPLINEPRIESTREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
+#include "../CooldownManager.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -205,7 +206,7 @@ private:
     ::std::unordered_map<ObjectGuid, uint32> _shieldTargets; // GUID -> expiration time
 };
 
-class DisciplinePriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
+class DisciplinePriestRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -215,16 +216,12 @@ public:
     using Base::_resource;
     explicit DisciplinePriestRefactored(Player* bot)
         : HealerSpecialization<ManaResource>(bot)
-        , PriestSpecialization(bot)
         , _atonementTracker()
         , _shieldTracker()
         , _raptureActive(false)
         , _raptureEndTime(0)
-
         , _lastEvangelismTime(0)
-
         , _lastPainSuppressionTime(0)
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({
@@ -647,7 +644,10 @@ private:
                 }
 
             }
-        }        // Power Word: Life (instant emergency heal)        for (Unit* member : group)
+        }
+
+        // Power Word: Life (instant emergency heal)
+        for (Unit* member : group)
         {
 
             if (member && member->GetHealthPct() < 35.0f)
@@ -861,10 +861,10 @@ private:
             return;
         }
 
-        // Purge the Wicked (DoT - continuous Atonement healing)        if (bot->HasSpell(DISC_PURGE_WICKED))
-
+        // Purge the Wicked (DoT - continuous Atonement healing)
+        if (bot->HasSpell(DISC_PURGE_WICKED))
         {
-        if (!target->HasAura(DISC_PURGE_WICKED))
+            if (!target->HasAura(DISC_PURGE_WICKED))
 
             {
 
@@ -882,7 +882,8 @@ private:
         }
         else
         {
-            // Shadow Word: Pain (alternative DoT)            if (!target->HasAura(DISC_SHADOW_WORD_PAIN))
+            // Shadow Word: Pain (alternative DoT)
+            if (!target->HasAura(DISC_SHADOW_WORD_PAIN))
 
             {
 
@@ -1768,7 +1769,11 @@ private:
     PowerWordShieldTracker _shieldTracker;
 
     bool _raptureActive;
-    uint32 _raptureEndTime;    uint32 _lastEvangelismTime;    uint32 _lastPainSuppressionTime;
+    uint32 _raptureEndTime;
+    uint32 _lastEvangelismTime;
+    uint32 _lastPainSuppressionTime;
+    uint32 _lastBarrierTime;
+    uint32 _lastRaptureTime;
 };
 
 } // namespace Playerbot
