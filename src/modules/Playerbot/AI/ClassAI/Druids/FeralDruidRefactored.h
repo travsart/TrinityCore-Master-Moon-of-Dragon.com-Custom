@@ -1144,7 +1144,7 @@ private:
 
                 Sequence("Finishers", {
 
-                    Condition("5 CP", [this](Player*) {
+                    Condition("5 CP", [this](Player*, Unit*) {
 
                         return this->_resource.comboPoints >= 5;
 
@@ -1278,7 +1278,7 @@ private:
 
                         Sequence("Tiger's Fury (energy)", {
 
-                            Condition("Low energy and not capped CP", [this](Player*) {
+                            Condition("Low energy and not capped CP", [this](Player*, Unit*) {
 
                                 return this->_resource.GetEnergyPercent() < 50 &&
 
@@ -1478,7 +1478,7 @@ private:
 
                         Sequence("Swipe (AoE)", {
 
-                            Condition("3+ enemies and 35 energy", [this](Player*) {
+                            Condition("3+ enemies and 35 energy", [this](Player*, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 3 &&
 
@@ -1510,7 +1510,7 @@ private:
 
                         Sequence("Shred (ST)", {
 
-                            Condition("40 energy", [this](Player*) {
+                            Condition("40 energy", [this](Player*, Unit*) {
 
                                 return this->_resource.HasEnergy(40);
 

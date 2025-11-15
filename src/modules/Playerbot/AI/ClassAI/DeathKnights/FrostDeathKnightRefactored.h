@@ -670,7 +670,7 @@ private:
                     }),
                     Selector("Use burst", {
                         Sequence("Pillar of Frost", {
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
                                 return !this->_pillarOfFrostActive;
                             }),
                             bot::ai::Action("Cast Pillar", [this](Player* bot, Unit*) {
@@ -685,7 +685,7 @@ private:
                             })
                         }),
                         Sequence("Empower Rune Weapon", {
-                            Condition("< 3 runes", [this](Player*) {
+                            Condition("< 3 runes", [this](Player*, Unit*) {
                                 return this->_resource.GetAvailableRunes() < 3;
                             }),
                             bot::ai::Action("Cast ERW", [this](Player* bot, Unit*) {
@@ -707,7 +707,7 @@ private:
                     }),
                     Selector("Use procs", {
                         Sequence("KM Obliterate", {
-                            Condition("KM active and 2 runes", [this](Player*) {
+                            Condition("KM active and 2 runes", [this](Player*, Unit*) {
                                 return this->_kmTracker.IsActive() && this->_resource.GetAvailableRunes() >= 2;
                             }),
                             bot::ai::Action("Cast Obliterate", [this](Player* bot, Unit* target) {
@@ -724,7 +724,7 @@ private:
                             })
                         }),
                         Sequence("Rime Howling Blast", {
-                            Condition("Rime active", [this](Player*) {
+                            Condition("Rime active", [this](Player*, Unit*) {
                                 return this->_rimeTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {
@@ -766,7 +766,7 @@ private:
                     }),
                     Selector("Spend runes", {
                         Sequence("Howling Blast (AoE)", {
-                            Condition("3+ enemies", [this](Player*) {
+                            Condition("3+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(10.0f) >= 3;
                             }),
                             bot::ai::Action("Cast Howling Blast", [this](Player* bot, Unit* target) {

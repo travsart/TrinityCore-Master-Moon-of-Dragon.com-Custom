@@ -333,7 +333,7 @@ void MonkAI::UpdateBuffs()
         uint32 now = GameTime::GetGameTimeMS();
         if (now - _lastLegacyBuff > 300000) // 5 minute buff duration, recast check
         {
-            if (CastSpell(bot, legacyBuff))
+            if (CastSpell(legacyBuff, bot))
             {
                 _lastLegacyBuff = now;
                 RecordAbilityUsage(legacyBuff);

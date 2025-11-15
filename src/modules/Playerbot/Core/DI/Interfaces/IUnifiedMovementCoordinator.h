@@ -33,7 +33,7 @@ struct FormationCommand;
 struct FormationConfig;
 struct FormationMetrics;
 struct MovementContext;
-struct MovementResult;
+enum class MovementResult : uint8;  // Changed from struct - matches MovementTypes.h
 struct PositionInfo;
 struct PositionWeights;
 struct AoEZone;

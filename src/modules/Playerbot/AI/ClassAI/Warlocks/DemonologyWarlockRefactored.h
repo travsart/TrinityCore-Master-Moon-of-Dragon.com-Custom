@@ -648,7 +648,7 @@ private:
             auto root = Selector("Demonology Warlock DPS", {
                 // Tier 1: Burst Window (Demonic Tyrant extends all demons)
                 Sequence("Burst Cooldown", {
-                    Condition("3+ demons active", [this](Player*) {
+                    Condition("3+ demons active", [this](Player*, Unit*) {
                         return this->_demonTracker.GetActiveDemonCount() >= 3;
                     }),
                     bot::ai::Action("Cast Demonic Tyrant", [this](Player* bot, Unit*) {
@@ -669,7 +669,7 @@ private:
                     }),
                     Selector("Summon demons", {
                         Sequence("Dreadstalkers", {
-                            Condition("2+ shards", [this](Player*) {
+                            Condition("2+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 2;
                             }),
                             bot::ai::Action("Cast Call Dreadstalkers", [this](Player* bot, Unit*) {
@@ -699,7 +699,7 @@ private:
                             })
                         }),
                         Sequence("Hand of Gul'dan", {
-                            Condition("3+ shards", [this](Player*) {
+                            Condition("3+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 3;
                             }),
                             bot::ai::Action("Cast Hand of Gul'dan", [this](Player* bot, Unit* target) {
@@ -724,7 +724,7 @@ private:
                     }),
                     Selector("Use demon abilities", {
                         Sequence("Demonbolt (proc or shard)", {
-                            Condition("Demonic Core proc or 2+ shards", [this](Player*) {
+                            Condition("Demonic Core proc or 2+ shards", [this](Player*, Unit*) {
                                 return this->_demonicCoreStacks > 0 || this->_resource.soulShards >= 2;
                             }),
                             bot::ai::Action("Cast Demonbolt", [this](Player* bot, Unit* target) {
@@ -743,7 +743,7 @@ private:
                             })
                         }),
                         Sequence("Implosion (AoE)", {
-                            Condition("4+ Wild Imps", [this](Player*) {
+                            Condition("4+ Wild Imps", [this](Player*, Unit*) {
                                 return this->_demonTracker.GetWildImpCount() >= 4;
                             }),
                             bot::ai::Action("Cast Implosion", [this](Player* bot, Unit* target) {

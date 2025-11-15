@@ -856,7 +856,7 @@ private:
                     }),
                     Selector("Spend shards", {
                         Sequence("Rain of Fire (AoE)", {
-                            Condition("3+ enemies and 3+ shards", [this](Player*) {
+                            Condition("3+ enemies and 3+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
                             }),
                             bot::ai::Action("Cast Rain of Fire", [this](Player* bot, Unit*) {
@@ -870,7 +870,7 @@ private:
                             })
                         }),
                         Sequence("Chaos Bolt (single target)", {
-                            Condition("2+ shards", [this](Player*) {
+                            Condition("2+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 2;
                             }),
                             bot::ai::Action("Cast Chaos Bolt", [this](Player* bot, Unit* target) {

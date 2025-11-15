@@ -792,11 +792,11 @@ private:
 
             auto root = Selector("Enhancement Shaman", {
 
-                Sequence("Burst", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                Sequence("Burst", { Condition("5 MW", [this](Player*, Unit*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
                     bot::ai::Action("Feral Spirit/Ascendance", [this](Player* bot, Unit*) { if (this->CanCastSpell(ENH_FERAL_SPIRIT, bot)) { this->CastSpell(ENH_FERAL_SPIRIT, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 
-                Sequence("MW Spender", { Condition("5 MW", [this](Player*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
+                Sequence("MW Spender", { Condition("5 MW", [this](Player*, Unit*) { return this->_maelstromWeaponTracker.GetStacks() >= 5; }),
 
                     bot::ai::Action("Lightning Bolt", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(ENH_LIGHTNING_BOLT, t)) { this->CastSpell(ENH_LIGHTNING_BOLT, t); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
 

@@ -689,7 +689,7 @@ protected:
             auto root = Selector("Preservation Evoker Healing", {
                 // Tier 1: Emergency Healing
                 Sequence("Emergency Healing", {
-                    Condition("3+ critical", [this](Player*) {
+                    Condition("3+ critical", [this](Player*, Unit*) {
                         auto group = this->GetGroupMembers();
                         uint32 critical = 0;
                         for (auto* m : group) if (m && m->GetHealthPct() < 40.0f) critical++;
@@ -706,20 +706,20 @@ protected:
 
                 // Tier 2: Empowered Heals
                 Sequence("Empowered Heals", {
-                    Condition("3+ essence", [this](Player*) {
+                    Condition("3+ essence", [this](Player*, Unit*) {
                         return this->_resource.essence >= 3;
                     }),
-                    Condition("Not channeling", [this](Player*) {
+                    Condition("Not channeling", [this](Player*, Unit*) {
                         return !this->_empowermentTracker.IsChanneling();
                     }),
                     Selector("Cast empowered", {
                         Sequence("Spirit Bloom Critical", {
-                            Condition("Ally < 50%", [this](Player*) {
+                            Condition("Ally < 50%", [this](Player*, Unit*) {
                                 auto group = this->GetGroupMembers();
                                 for (auto* m : group) if (m && m->GetHealthPct() < 50.0f) return true;
                                 return false;
                             }),
-                            bot::ai::Action("Cast Spirit Bloom", [this](Player*) {
+                            bot::ai::Action("Cast Spirit Bloom", [this](Player*, Unit*) {
                                 auto group = this->GetGroupMembers();
                                 Unit* target = this->GetLowestHealthTarget(group);
                                 if (target && this->CanCastSpell(SPIRIT_BLOOM, target)) {
@@ -730,13 +730,13 @@ protected:
                             })
                         }),
                         Sequence("Dream Breath AoE", {
-                            Condition("3+ injured", [this](Player*) {
+                            Condition("3+ injured", [this](Player*, Unit*) {
                                 auto group = this->GetGroupMembers();
                                 uint32 injured = 0;
                                 for (auto* m : group) if (m && m->GetHealthPct() < 85.0f) injured++;
                                 return injured >= 3;
                             }),
-                            bot::ai::Action("Cast Dream Breath", [this](Player*) {
+                            bot::ai::Action("Cast Dream Breath", [this](Player*, Unit*) {
                                 auto group = this->GetGroupMembers();
                                 Unit* target = this->GetMostInjuredTarget(group);
                                 if (target && this->CanCastSpell(DREAM_BREATH, target)) {
@@ -751,13 +751,13 @@ protected:
 
                 // Tier 3: Echo Maintenance
                 Sequence("Echo Maintenance", {
-                    Condition("< 4 echoes", [this](Player*) {
+                    Condition("< 4 echoes", [this](Player*, Unit*) {
                         return this->_echoTracker.GetActiveEchoCount() < 4;
                     }),
-                    Condition("Has essence", [this](Player*) {
+                    Condition("Has essence", [this](Player*, Unit*) {
                         return this->_resource.essence >= 1;
                     }),
-                    bot::ai::Action("Cast Reversion", [this](Player*) {
+                    bot::ai::Action("Cast Reversion", [this](Player*, Unit*) {
                         auto group = this->GetGroupMembers();
                         for (Unit* member : group) {
                             if (member && member->GetHealthPct() < 95.0f && !this->_echoTracker.HasEcho(member->GetGUID())) {
@@ -775,12 +775,12 @@ protected:
 
                 // Tier 4: Direct Healing
                 Sequence("Direct Healing", {
-                    Condition("Has essence", [this](Player*) {
+                    Condition("Has essence", [this](Player*, Unit*) {
                         return this->_resource.essence >= 1;
                     }),
                     Selector("Cast heals", {
                         Sequence("Emerald Blossom AoE", {
-                            Condition("3+ injured", [this](Player*) {
+                            Condition("3+ injured", [this](Player*, Unit*) {
                                 if (this->_resource.essence < 3) return false;
                                 auto group = this->GetGroupMembers();
                                 uint32 injured = 0;
@@ -797,7 +797,7 @@ protected:
                             })
                         }),
                         Sequence("Verdant Embrace", {
-                            bot::ai::Action("Cast Verdant Embrace", [this](Player*) {
+                            bot::ai::Action("Cast Verdant Embrace", [this](Player*, Unit*) {
                                 Unit* target = this->GetLowestHealthTarget(this->GetGroupMembers());
                                 if (target && target->GetHealthPct() < 70.0f && this->CanCastSpell(VERDANT_EMBRACE, target)) {
                                     this->CastSpell(VERDANT_EMBRACE, target);
@@ -812,10 +812,10 @@ protected:
 
                 // Tier 5: Generate Essence
                 Sequence("Generate Essence", {
-                    Condition("< 3 essence", [this](Player*) {
+                    Condition("< 3 essence", [this](Player*, Unit*) {
                         return this->_resource.essence < 3;
                     }),
-                    bot::ai::Action("Cast Azure Strike", [this](Player*) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player*, Unit*) {
                         Unit* target = this->FindNearbyEnemy();
                         if (target && this->CanCastSpell(AZURE_STRIKE_PRES, target)) {
                             this->CastSpell(AZURE_STRIKE_PRES, target);

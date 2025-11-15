@@ -738,7 +738,7 @@ private:
                 Sequence("Stagger Management", {
                     Selector("Manage stagger", {
                         Sequence("Purifying Brew", {
-                            Condition("Should purify", [this](Player*) {
+                            Condition("Should purify", [this](Player*, Unit*) {
                                 return this->_staggerTracker.ShouldPurify();
                             }),
                             bot::ai::Action("Cast Purifying Brew", [this](Player* bot, Unit*) {
@@ -762,7 +762,7 @@ private:
                             })
                         }),
                         Sequence("Ironskin Brew", {
-                            Condition("Needs refresh", [this](Player*) {
+                            Condition("Needs refresh", [this](Player*, Unit*) {
                                 return !this->_ironskinBrewActive || this->GetIronskinTimeRemaining() < 3000;
                             }),
                             bot::ai::Action("Cast Ironskin Brew", [this](Player* bot, Unit*) {
@@ -783,10 +783,10 @@ private:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Shuffle needs refresh", [this](Player*) {
+                    Condition("Shuffle needs refresh", [this](Player*, Unit*) {
                         return this->_shuffleTracker.NeedsRefresh();
                     }),
-                    Condition("Has chi", [this](Player*) {
+                    Condition("Has chi", [this](Player*, Unit*) {
                         return this->_resource.chi >= 1;
                     }),
                     bot::ai::Action("Cast Blackout Kick", [this](Player* bot, Unit* target) {
@@ -806,12 +806,12 @@ private:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Chi < 5", [this](Player*) {
+                    Condition("Chi < 5", [this](Player*, Unit*) {
                         return this->_resource.chi < 5;
                     }),
                     Selector("Generate", {
                         Sequence("Keg Smash", {
-                            Condition("40 energy", [this](Player*) {
+                            Condition("40 energy", [this](Player*, Unit*) {
                                 return this->_resource.energy >= 40;
                             }),
                             bot::ai::Action("Cast Keg Smash", [this](Player* bot, Unit* target) {
@@ -826,7 +826,7 @@ private:
                             })
                         }),
                         Sequence("Tiger Palm", {
-                            Condition("25 energy", [this](Player*) {
+                            Condition("25 energy", [this](Player*, Unit*) {
                                 return this->_resource.energy >= 25;
                             }),
                             bot::ai::Action("Cast Tiger Palm", [this](Player* bot, Unit* target) {
@@ -860,12 +860,12 @@ private:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Has chi", [this](Player*) {
+                    Condition("Has chi", [this](Player*, Unit*) {
                         return this->_resource.chi >= 2;
                     }),
                     Selector("Spend", {
                         Sequence("Breath of Fire", {
-                            Condition("After Keg Smash", [this](Player*) {
+                            Condition("After Keg Smash", [this](Player*, Unit*) {
                                 return (GameTime::GetGameTimeMS() - this->_lastKegSmashTime) < 2000;
                             }),
                             bot::ai::Action("Cast BoF", [this](Player* bot, Unit* target) {
@@ -879,7 +879,7 @@ private:
                             })
                         }),
                         Sequence("Spinning Crane Kick", {
-                            Condition("3+ enemies", [this](Player*) {
+                            Condition("3+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(8.0f) >= 3;
                             }),
                             bot::ai::Action("Cast SCK", [this](Player* bot, Unit*) {

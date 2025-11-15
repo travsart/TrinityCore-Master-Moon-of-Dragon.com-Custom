@@ -1788,7 +1788,7 @@ void HunterAI::UpdateTracking()
     // Apply the optimal tracking if it's different from current
     if (optimalTracking != 0 && optimalTracking != currentTracking)
     {
-        if (CastSpell(_bot, optimalTracking))
+        if (CastSpell(optimalTracking, _bot))
         {
 
             TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched tracking to spell {}",

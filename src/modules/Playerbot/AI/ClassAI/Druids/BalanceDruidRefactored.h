@@ -805,7 +805,7 @@ private:
                     }),
                     Selector("Spend AP", {
                         Sequence("Starfall (AoE)", {
-                            Condition("50+ AP, 3+ enemies, not active", [this](Player*) {
+                            Condition("50+ AP, 3+ enemies, not active", [this](Player*, Unit*) {
                                 return this->_resource.astralPower >= 50 && !this->_starfallActive &&
                                        this->GetEnemiesInRange(40.0f) >= 3;
                             }),
@@ -822,7 +822,7 @@ private:
                             })
                         }),
                         Sequence("Starsurge (single target)", {
-                            Condition("30+ AP or Shooting Stars proc", [this](Player*) {
+                            Condition("30+ AP or Shooting Stars proc", [this](Player*, Unit*) {
                                 return this->_resource.astralPower >= 30 || this->_shootingStarsProc;
                             }),
                             bot::ai::Action("Cast Starsurge", [this](Player* bot, Unit* target) {
@@ -849,7 +849,7 @@ private:
                     }),
                     Selector("Generate AP", {
                         Sequence("Starfire (Lunar Eclipse)", {
-                            Condition("Lunar Eclipse or no Eclipse", [this](Player*) {
+                            Condition("Lunar Eclipse or no Eclipse", [this](Player*, Unit*) {
                                 return this->_eclipseTracker.IsInLunarEclipse() || !this->_eclipseTracker.IsInEclipse();
                             }),
                             bot::ai::Action("Cast Starfire", [this](Player* bot, Unit* target) {
@@ -866,7 +866,7 @@ private:
                             })
                         }),
                         Sequence("Wrath (Solar Eclipse)", {
-                            Condition("Solar Eclipse", [this](Player*) {
+                            Condition("Solar Eclipse", [this](Player*, Unit*) {
                                 return this->_eclipseTracker.IsInSolarEclipse();
                             }),
                             bot::ai::Action("Cast Wrath", [this](Player* bot, Unit* target) {

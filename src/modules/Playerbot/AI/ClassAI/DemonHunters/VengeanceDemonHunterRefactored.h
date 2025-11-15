@@ -877,7 +877,7 @@ private:
                     }),
                     Selector("Use emergency", {
                         Sequence("Metamorphosis", {
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
                                 return !this->_metamorphosisActive;
                             }),
                             bot::ai::Action("Cast Meta", [this](Player* bot, Unit*) {
@@ -891,7 +891,7 @@ private:
                             })
                         }),
                         Sequence("Soul Barrier", {
-                            Condition("5 fragments", [this](Player*) {
+                            Condition("5 fragments", [this](Player*, Unit*) {
                                 return this->_soulFragments.HasMinFragments(5);
                             }),
                             Condition("Has talent", [this](Player* bot, Unit*) {
@@ -916,7 +916,7 @@ private:
                     }),
                     Selector("Use mitigation", {
                         Sequence("Demon Spikes", {
-                            Condition("Can use", [this](Player*) {
+                            Condition("Can use", [this](Player*, Unit*) {
                                 return this->_demonSpikes.CanUse();
                             }),
                             Condition("Should use", [this](Player* bot, Unit*) {
@@ -932,7 +932,7 @@ private:
                             })
                         }),
                         Sequence("Fiery Brand", {
-                            Condition("Should use", [this](Player*) {
+                            Condition("Should use", [this](Player*, Unit*) {
                                 return this->ShouldUseFieryBrand();
                             }),
                             bot::ai::Action("Cast Fiery Brand", [this](Player* bot, Unit* target) {
@@ -992,10 +992,10 @@ private:
                     }),
                     Selector("Spend pain", {
                         Sequence("Soul Cleave Heal", {
-                            Condition("30 pain", [this](Player*) {
+                            Condition("30 pain", [this](Player*, Unit*) {
                                 return this->_resource >= 30;
                             }),
-                            Condition("Should use", [this](Player*) {
+                            Condition("Should use", [this](Player*, Unit*) {
                                 return this->ShouldUseSoulCleave(this->_resource);
                             }),
                             bot::ai::Action("Cast Soul Cleave", [this](Player* bot, Unit* target) {
@@ -1013,10 +1013,10 @@ private:
                             Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(SPIRIT_BOMB_TALENT);
                             }),
-                            Condition("40 pain", [this](Player*) {
+                            Condition("40 pain", [this](Player*, Unit*) {
                                 return this->_resource >= 40;
                             }),
-                            Condition("3+ fragments", [this](Player*) {
+                            Condition("3+ fragments", [this](Player*, Unit*) {
                                 return this->_soulFragments.HasMinFragments(3);
                             }),
                             bot::ai::Action("Cast Spirit Bomb", [this](Player* bot, Unit*) {
@@ -1037,7 +1037,7 @@ private:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Low pain", [this](Player*) {
+                    Condition("Low pain", [this](Player*, Unit*) {
                         return this->_resource < 90;
                     }),
                     Selector("Generate pain", {
@@ -1045,7 +1045,7 @@ private:
                             Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(FRACTURE_TALENT);
                             }),
-                            Condition("Pain < 80", [this](Player*) {
+                            Condition("Pain < 80", [this](Player*, Unit*) {
                                 return this->_resource < 80;
                             }),
                             bot::ai::Action("Cast Fracture", [this](Player* bot, Unit* target) {

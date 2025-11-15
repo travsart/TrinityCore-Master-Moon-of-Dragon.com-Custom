@@ -578,9 +578,9 @@ private:
             auto root = Selector("Windwalker Monk", {
                 Sequence("Burst", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
                     bot::ai::Action("SEF", [this](Player* bot, Unit*) { if (this->CanCastSpell(WW_STORM_EARTH_FIRE, bot)) { this->CastSpell(WW_STORM_EARTH_FIRE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Chi Spender", { Condition("2+ chi", [this](Player*) { return this->_resource.chi >= 2; }),
+                Sequence("Chi Spender", { Condition("2+ chi", [this](Player*, Unit*) { return this->_resource.chi >= 2; }),
                     bot::ai::Action("RSK/FoF", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_RISING_SUN_KICK, t)) { this->CastSpell(WW_RISING_SUN_KICK, t); this->ConsumeChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Builder", { Condition("50+ energy", [this](Player*) { return this->_resource.energy >= 50; }),
+                Sequence("Builder", { Condition("50+ energy", [this](Player*, Unit*) { return this->_resource.energy >= 50; }),
                     bot::ai::Action("Tiger Palm", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(WW_TIGER_PALM, t)) { this->CastSpell(WW_TIGER_PALM, t); this->GenerateChi(2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);

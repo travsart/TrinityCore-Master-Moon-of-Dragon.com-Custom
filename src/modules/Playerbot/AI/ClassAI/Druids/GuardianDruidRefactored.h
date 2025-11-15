@@ -949,7 +949,7 @@ private:
 
                 Sequence("Active Mitigation", {
 
-                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*) {
+                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*, Unit*) {
 
                         return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() < 3;
 
@@ -989,7 +989,7 @@ private:
 
                         Sequence("Berserk/Incarnation (burst)", {
 
-                            Condition("Can use major cooldown", [this](Player*) {
+                            Condition("Can use major cooldown", [this](Player*, Unit*) {
 
                                 return this->CanUseMajorCooldown();
 
@@ -1119,7 +1119,7 @@ private:
 
                         Sequence("Maul (rage dump)", {
 
-                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*) {
+                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*, Unit*) {
 
                                 return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() >= 2;
 
@@ -1197,7 +1197,7 @@ private:
 
                         Sequence("Swipe (AoE)", {
 
-                            Condition("2+ enemies", [this](Player*) {
+                            Condition("2+ enemies", [this](Player*, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 2;
 
