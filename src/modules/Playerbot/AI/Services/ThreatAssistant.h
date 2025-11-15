@@ -14,6 +14,7 @@
 class Player;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 /**
@@ -285,5 +286,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif

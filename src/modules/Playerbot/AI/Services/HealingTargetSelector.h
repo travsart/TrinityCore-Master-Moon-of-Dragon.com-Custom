@@ -15,6 +15,7 @@ class Player;
 class Unit;
 enum DispelType : uint8;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 /**
@@ -305,5 +306,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif
