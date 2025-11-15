@@ -347,7 +347,7 @@ private:
         if (!_bot || HasActivePet())
 
             return;
-            _bot->CastSpell(SPELL_CALL_PET_SURV, false, _bot);
+            _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_SURV);
     }
 
     bool IsPetHealthLow() const
@@ -369,7 +369,7 @@ private:
         Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
 
-            _bot->CastSpell(SPELL_MEND_PET_SURV, false, pet);
+            _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET_SURV);
 
             _lastMendPet = currentTime;
         }
@@ -481,7 +481,7 @@ public:
         if (!_petManager.HasActivePet())
         {
 
-            bot->CastSpell(SPELL_CALL_PET_SURV, false, bot);
+            bot->CastSpell(CastSpellTargetArg(bot), SPELL_CALL_PET_SURV);
 
             return;
         }
@@ -904,7 +904,7 @@ private:
 
     // Pet management - implemented by SurvivalPetManager
     void UpdatePetManagement() { _petManager.EnsurePetActive(GetBot()->GetVictim()); }
-    void SummonPet() { GetBot()->CastSpell(SPELL_CALL_PET_SURV, false, GetBot()); }
+    void SummonPet() { GetBot()->CastSpell(CastSpellTargetArg(GetBot()), SPELL_CALL_PET_SURV); }
     void MendPetIfNeeded() { if (_petManager.HasActivePet()) _petManager.EnsurePetActive(GetBot()->GetVictim()); }
     void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }

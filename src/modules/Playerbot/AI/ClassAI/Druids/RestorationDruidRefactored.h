@@ -469,43 +469,18 @@ private:
 
         // Nature's Swiftness + Regrowth instant cast
         for (Unit* member : group)
-        if (!tank)
         {
-
-            return nullptr;
-        }
-        {
-
             if (member && member->GetHealthPct() < 30.0f)
-
             {
-
                 if (this->CanCastSpell(RESTO_NATURES_SWIFTNESS, bot))
-
                 {
-
-                    if (!tank)
-
-                    {
-
-                        return nullptr;
-
-                    }
-
                     this->CastSpell(RESTO_NATURES_SWIFTNESS, bot);
-
                     if (this->CanCastSpell(RESTO_REGROWTH, member))
-
                     {
-
                         this->CastSpell(RESTO_REGROWTH, member);
-
                         return true;
-
                     }
-
                 }
-
             }
         }
 

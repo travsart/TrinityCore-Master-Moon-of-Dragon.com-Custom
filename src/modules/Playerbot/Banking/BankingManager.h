@@ -36,7 +36,7 @@
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
-#include "../Core/BehaviorManager.h"
+#include "../AI/BehaviorManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>

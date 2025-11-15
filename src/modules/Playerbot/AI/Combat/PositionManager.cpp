@@ -8,6 +8,7 @@
  */
 
 #include "PositionManager.h"
+#include "../ClassAI/PositionStrategyBase.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Map.h"
@@ -78,11 +79,11 @@ PositionMovementResult PositionManager::UpdatePosition(const MovementContext& co
 
         PositionInfo currentPosInfo = EvaluatePosition(currentPos, context);
 
-        if (!context.emergencyMode && currentPosInfo.score >= 80.0f && currentPosInfo.priority >= MovementPriority::OPTIMIZATION)
+        if (!context.emergencyMode && currentPosInfo.score >= 80.0f && currentPosInfo.priority >= MovementPriority::NORMAL)
         {
             result.success = true;
             result.targetPosition = currentPos;
-            result.priority = MovementPriority::MAINTENANCE;
+            result.priority = MovementPriority::LOW;
             return result;
         }
 
@@ -103,7 +104,7 @@ PositionMovementResult PositionManager::UpdatePosition(const MovementContext& co
 
         result.success = true;
         result.targetPosition = currentPos;
-        result.priority = MovementPriority::MAINTENANCE;
+        result.priority = MovementPriority::LOW;
     }
     catch (const ::std::exception& e)
     {
@@ -272,17 +273,17 @@ PositionInfo PositionManager::EvaluatePosition(const Position& pos, const Moveme
     info.safetyRating = CalculateSafetyScore(pos, context);
     info.movementCost = CalculateMovementCost(_bot->GetPosition(), pos);
     if (info.score >= 90.0f)
-        info.priority = MovementPriority::OPTIMIZATION;
+        info.priority = MovementPriority::NORMAL;
     else if (info.score >= 70.0f)
-        info.priority = MovementPriority::TACTICAL;
+        info.priority = MovementPriority::HIGH;
     else if (info.score >= 50.0f)
-        info.priority = MovementPriority::MAINTENANCE;
+        info.priority = MovementPriority::LOW;
     else
         info.priority = MovementPriority::IDLE;
 
     if (IsInDangerZone(pos))
     {
-        info.priority = MovementPriority::EMERGENCY;
+        info.priority = MovementPriority::CRITICAL;
         info.score *= 0.1f;
     }
 
@@ -640,10 +641,10 @@ PositionMovementResult PositionManager::HandleEmergencyMovement(const MovementCo
     Position emergencyPos = FindEmergencyEscapePosition();
 
     PositionMovementResult result;
-    result.priority = MovementPriority::EMERGENCY;
+    result.priority = MovementPriority::CRITICAL;
     result.requiresSprint = true;
 
-    return ExecuteMovement(emergencyPos, MovementPriority::EMERGENCY);
+    return ExecuteMovement(emergencyPos, MovementPriority::CRITICAL);
 }
 
 Position PositionManager::FindEmergencyEscapePosition()

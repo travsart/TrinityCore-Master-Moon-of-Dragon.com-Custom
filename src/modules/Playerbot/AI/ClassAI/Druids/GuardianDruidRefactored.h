@@ -200,7 +200,7 @@ public:
         , _frenziedRegenerationEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        
+        , _lastBerserkTime(0)
         , _lastFrenziedRegenerationTime(0)
         , _cooldowns()
     {
@@ -1272,6 +1272,7 @@ private:
     uint32 _frenziedRegenerationEndTime;
     bool _berserkActive;
     uint32 _berserkEndTime;
+    uint32 _lastBerserkTime;
     uint32 _lastFrenziedRegenerationTime;
     uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
 };

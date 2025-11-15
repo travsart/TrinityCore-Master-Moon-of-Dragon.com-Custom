@@ -19,7 +19,7 @@ namespace Playerbot
 {
 
 // Forward declarations
-enum class ProfessionType : uint8;
+enum class ProfessionType : uint16;  // Must match ProfessionManager.h (supports SkillType values)
 enum class ProfessionAuctionStrategy : uint8;
 class AuctionHouse;
 struct MaterialStockpileConfig;

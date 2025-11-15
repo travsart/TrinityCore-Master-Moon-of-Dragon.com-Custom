@@ -9,6 +9,7 @@
 
 #include "BotThreatManager.h"
 #include "RoleBasedCombatPositioning.h"
+#include "../ClassAI/PositionStrategyBase.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"

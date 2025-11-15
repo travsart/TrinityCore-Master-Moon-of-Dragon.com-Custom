@@ -334,7 +334,7 @@ public:
         if (_loneWolfActive && !bot->GetPetGUID().IsEmpty())
         {
 
-            bot->CastSpell(SPELL_DISMISS_PET, false, bot);
+            bot->CastSpell(CastSpellTargetArg(bot), SPELL_DISMISS_PET);
         }
 
         // Use Aspect of the Turtle for survival
