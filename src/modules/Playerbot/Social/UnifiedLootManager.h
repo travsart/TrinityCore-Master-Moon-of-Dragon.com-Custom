@@ -142,16 +142,16 @@ private:
         float CalculateItemScore(Player* player, LootItem const& item);
         ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player);
 
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _itemsAnalyzed{0};
+        ::std::atomic<uint64> _upgradesDetected{0};
+
     private:
         float CalculateArmorValue(Player* player, LootItem const& item);
         float CalculateWeaponValue(Player* player, LootItem const& item);
         float CalculateAccessoryValue(Player* player, LootItem const& item);
         bool IsItemForMainSpec(Player* player, LootItem const& item);
         bool IsItemForOffSpec(Player* player, LootItem const& item);
-
-        // Statistics
-        ::std::atomic<uint64> _itemsAnalyzed{0};
-        ::std::atomic<uint64> _upgradesDetected{0};
     };
 
     /**
@@ -173,6 +173,10 @@ private:
         void OptimizeLootEfficiency(Group* group);
         void MinimizeLootTime(Group* group, uint32 sessionId);
         void MaximizeLootFairness(Group* group, uint32 sessionId);
+
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _sessionsCreated{0};
+        ::std::atomic<uint64> _sessionsCompleted{0};
 
     private:
         struct LootSession
@@ -196,10 +200,6 @@ private:
         ::std::unordered_map<uint32, LootSession> _activeSessions;
         uint32 _nextSessionId{1};
         Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _sessionMutex;
-
-        // Statistics
-        ::std::atomic<uint64> _sessionsCreated{0};
-        ::std::atomic<uint64> _sessionsCompleted{0};
     };
 
     /**
@@ -222,6 +222,10 @@ private:
         void ResolveRollTies(Group* group, uint32 rollId);
         void HandleLootNinja(Group* group, uint32 suspectedPlayer);
 
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _rollsProcessed{0};
+        ::std::atomic<uint64> _itemsDistributed{0};
+
     private:
         struct LootRoll
         {
@@ -239,10 +243,6 @@ private:
         ::std::unordered_map<uint32, LootRoll> _activeRolls;
         uint32 _nextRollId{1};
         Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _rollMutex;
-
-        // Statistics
-        ::std::atomic<uint64> _rollsProcessed{0};
-        ::std::atomic<uint64> _itemsDistributed{0};
     };
 
     // Module instances
