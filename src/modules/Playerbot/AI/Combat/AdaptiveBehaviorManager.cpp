@@ -1085,6 +1085,7 @@ void AdaptiveBehaviorManager::ResetStrategies()
 bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, bot::ai::CombatContext context) const
 {
     using namespace bot::ai;
+    using ::Playerbot::BotRole;  // Disambiguate from bot::ai::BotRole
 
     DecisionVote vote;
     vote.source = DecisionSource::ADAPTIVE_BEHAVIOR;
