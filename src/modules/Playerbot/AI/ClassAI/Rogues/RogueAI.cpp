@@ -277,10 +277,6 @@ RogueAI::RogueAI(Player* bot) :
 void RogueAI::InitializeCombatSystems()
 {
     // Initialize advanced combat system components
-    if (!interruptTarget)
-    {
-        return;
-    }
     _threatManager = ::std::make_unique<BotThreatManager>(GetBot());
     _targetSelector = ::std::make_unique<TargetSelector>(GetBot(), _threatManager.get());
     _positionManager = ::std::make_unique<PositionManager>(GetBot(), _threatManager.get());
@@ -305,13 +301,7 @@ void RogueAI::UpdateRotation(Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
-    if (!priorityTarget)
-        {
-
-            return nullptr;
-        }
         if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
-
             return;
 
         // Fallback to basic melee attack if nothing else worked
@@ -600,17 +590,11 @@ void RogueAI::UpdateRotation(Unit* target)
 
             float distance = GetBot()->GetDistance(target);
             if (distance > 5.0f && distance < 25.0f)
-
             {
-
-                if (CastSpell(STEALTH))
-
+                if (CastSpell(STEALTH, GetBot()))
                 {
-
                     _metrics->stealthOpeners++;
-
                     _stealthsUsed++;
-
                     TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} entering Stealth for opener",
 
                                  GetBot()->GetName());
@@ -811,15 +795,11 @@ void RogueAI::UseDefensiveCooldowns()
     // Evasion for physical damage mitigation
     if (healthPct < 30.0f && CanUseAbility(EVASION))
     {
-        if (CastSpell(EVASION))
+        if (CastSpell(EVASION, GetBot()))
         {
-
             RecordAbilityUsage(EVASION);
-
             TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} activated Evasion (defensive)",
-
                          GetBot()->GetName());
-
             return;
         }
     }
@@ -1000,11 +980,8 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     {
         if (CanUseAbility(STEALTH))
         {
-
-            CastSpell(SLICE_AND_DICE, STEALTH);
-
+            CastSpell(STEALTH, GetBot());
             _metrics->stealthOpeners++;
-
             return;
         }
     }
@@ -1021,19 +998,13 @@ void RogueAI::ExecuteFallbackRotation(Unit* target)
     if (distance <= 5.0f)
     {
         // Maintain Slice and Dice
-    if (comboPoints >= 2 && !HasAura(SLICE_AND_DICE))
+        if (comboPoints >= 2 && !HasAura(SLICE_AND_DICE))
         {
-
             if (CanUseAbility(SLICE_AND_DICE))
-
             {
-
-                CastSpell(target);
-
+                CastSpell(SLICE_AND_DICE, target);
                 _metrics->totalFinishersExecuted++;
-
                 return;
-
             }
         }
 
@@ -1267,9 +1238,7 @@ void RogueAI::UpdateBuffs()
     {
         if (!HasAura(STEALTH) && CanUseAbility(STEALTH))
         {
-
-            CastSpell(EQUIPMENT_SLOT_MAINHAND, STEALTH);
-
+            CastSpell(STEALTH, GetBot());
             _lastStealth = currentTime;
         }
     }
@@ -1528,7 +1497,7 @@ void RogueAI::OnCombatEnd()
     // Re-stealth after combat
     if (!HasAura(STEALTH) && CanUseAbility(STEALTH))
     {
-        CastSpell(STEALTH);
+        CastSpell(STEALTH, GetBot());
     }
 
     TC_LOG_DEBUG("playerbot", "RogueAI: Combat ended. Energy spent: {}, CP generated: {}, Finishers: {}",
@@ -1545,82 +1514,47 @@ void RogueAI::ActivateBurstCooldowns(Unit* target)
     switch (spec)
     {
         case 0: // Assassination
-    if (CanUseAbility(COLD_BLOOD))
-
+            if (CanUseAbility(COLD_BLOOD))
             {
-
-                CastSpell(VENDETTA, COLD_BLOOD);
-
+                CastSpell(COLD_BLOOD, GetBot());
                 _metrics->cooldownsUsed++;
-
             }
-
             if (CanUseAbility(VENDETTA))
-
             {
-
-                CastSpell(target);
-
+                CastSpell(VENDETTA, target);
                 _metrics->cooldownsUsed++;
-
             }
-
             break;
 
         case 1: // Combat/Outlaw
-    if (CanUseAbility(BLADE_FLURRY))
-
+            if (CanUseAbility(BLADE_FLURRY))
             {
-
-                CastSpell(KILLING_SPREE, BLADE_FLURRY);
-
+                CastSpell(BLADE_FLURRY, GetBot());
                 _metrics->cooldownsUsed++;
-
             }
-
             if (CanUseAbility(ADRENALINE_RUSH))
-
             {
-
-                CastSpell(ADRENALINE_RUSH);
-
+                CastSpell(ADRENALINE_RUSH, GetBot());
                 _metrics->cooldownsUsed++;
-
             }
-
             if (CanUseAbility(KILLING_SPREE))
-
             {
-
-                CastSpell(target);
-
+                CastSpell(KILLING_SPREE, target);
                 _metrics->cooldownsUsed++;
-
             }
-
             break;
 
         case 2: // Subtlety
-    if (CanUseAbility(SHADOW_DANCE))
-
+            if (CanUseAbility(SHADOW_DANCE))
             {
-
-                CastSpell(SHADOWSTEP, SHADOW_DANCE);
-
+                CastSpell(SHADOW_DANCE, GetBot());
                 _metrics->cooldownsUsed++;
-
             }
-
             if (CanUseAbility(SHADOWSTEP))
-
             {
-
-                CastSpell(target);
-
+                CastSpell(SHADOWSTEP, target);
                 _metrics->cooldownsUsed++;
-
             }
-
             break;
     }
 }
@@ -1675,7 +1609,7 @@ void RogueAI::ConsiderStealth()
 
     if (!HasAura(STEALTH) && CanUseAbility(STEALTH))
     {
-        CastSpell(STEALTH);
+        CastSpell(STEALTH, GetBot());
         _stealthsUsed++;
     }
 }
