@@ -208,13 +208,6 @@ public:
         return remaining < pandemicWindow; // Refresh in pandemic window
     }
 
-if (!thrash)
-
-{
-    return false;
-
-}
-
     void Update(Unit* target)
     {
         if (!target)
@@ -369,15 +362,13 @@ public:
     using Base::GetEnemiesInRange;
     using Base::_resource;
     explicit FeralDruidRefactored(Player* bot)        : MeleeDpsSpecialization<EnergyComboResource>(bot)
-        
+
         , _bleedTracker()
         , _bloodtalonsTracker()
         , _tigersFuryActive(false)
         , _tigersFuryEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({
@@ -1070,8 +1061,6 @@ private:
 
                     Condition("4+ CP and bleeds active", [this](Player* bot, Unit* target) {
 
-                        Unit* target = bot ? bot->GetVictim() : nullptr;
-
                         return bot && target && this->_resource.comboPoints >= 4 &&
 
                                this->_bleedTracker.HasRake(target->GetGUID()) &&
@@ -1164,8 +1153,6 @@ private:
 
                             bot::ai::Action("Cast Primal Wrath", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(FERAL_PRIMAL_WRATH, target))
 
                                 {
@@ -1188,15 +1175,11 @@ private:
 
                             Condition("Needs Rip refresh", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return target && this->_bleedTracker.NeedsRipRefresh(target->GetGUID());
 
                             }),
 
                             bot::ai::Action("Cast Rip", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_RIP, target))
 
@@ -1226,8 +1209,6 @@ private:
 
                             Condition("Rip up >10s", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return target && this->_bleedTracker.HasRip(target->GetGUID()) &&
 
                                        this->_bleedTracker.GetRipTimeRemaining(target->GetGUID()) > 10000;
@@ -1235,8 +1216,6 @@ private:
                             }),
 
                             bot::ai::Action("Cast Ferocious Bite", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_FEROCIOUS_BITE, target))
 
@@ -1312,8 +1291,6 @@ private:
 
                             Condition("Needs Rake refresh and 35 energy", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return target && this->_resource.HasEnergy(35) &&
 
                                        this->_bleedTracker.NeedsRakeRefresh(target->GetGUID());
@@ -1321,8 +1298,6 @@ private:
                             }),
 
                             bot::ai::Action("Cast Rake", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_RAKE, target))
 
@@ -1352,8 +1327,6 @@ private:
 
                             Condition("2+ enemies, no Thrash, 45 energy", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return target && this->_resource.HasEnergy(45) &&
 
                                        !this->_bleedTracker.HasThrash(target->GetGUID()) &&
@@ -1363,8 +1336,6 @@ private:
                             }),
 
                             bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_THRASH_CAT, target))
 
@@ -1390,8 +1361,6 @@ private:
 
                             Condition("Has talent, no Moonfire, 30 energy", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 return bot && target && bot->HasSpell(FERAL_MOONFIRE_CAT) &&
 
                                        this->_resource.HasEnergy(30) &&
@@ -1401,8 +1370,6 @@ private:
                             }),
 
                             bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_MOONFIRE_CAT, target))
 
@@ -1452,8 +1419,6 @@ private:
 
                             bot::ai::Action("Cast Brutal Slash", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(FERAL_BRUTAL_SLASH, target))
 
                                 {
@@ -1488,8 +1453,6 @@ private:
 
                             bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
                                 if (target && this->CanCastSpell(FERAL_SWIPE_CAT, target))
 
                                 {
@@ -1517,8 +1480,6 @@ private:
                             }),
 
                             bot::ai::Action("Cast Shred", [this](Player* bot, Unit* target) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
 
                                 if (target && this->CanCastSpell(FERAL_SHRED, target))
 
