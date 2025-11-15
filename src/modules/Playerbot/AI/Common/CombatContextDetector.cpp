@@ -20,8 +20,8 @@
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 
-namespace bot::ai
-{
+namespace Playerbot {
+namespace bot { namespace ai {
 
 CombatContext CombatContextDetector::DetectContext(Player const* player)
 {
@@ -274,4 +274,5 @@ bool CombatContextDetector::IsGroupFightingBoss(Player const* player)
     return false;
 }
 
-} // namespace bot::ai
+}} // namespace bot::ai
+} // namespace Playerbot

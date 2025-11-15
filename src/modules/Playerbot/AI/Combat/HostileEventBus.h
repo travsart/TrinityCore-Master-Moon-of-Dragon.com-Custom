@@ -16,6 +16,7 @@
 #include <memory>
 #include <boost/lockfree/queue.hpp>
 #include <folly/MPMCQueue.h>
+#include <vector>
 
 namespace Playerbot
 {

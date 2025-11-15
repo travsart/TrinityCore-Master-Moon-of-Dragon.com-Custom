@@ -20,8 +20,8 @@
 #include <cmath>
 #include <iomanip>
 
-namespace bot::ai
-{
+namespace Playerbot {
+namespace bot { namespace ai {
 
 // Role Multiplier Table [role][category]
 // Order: Survival, GroupProtection, Damage, Resource, Positioning, Strategic
@@ -357,4 +357,5 @@ float ActionScoringEngine::ApplyDiminishingReturns(float rawScore, ScoringCatego
     return diminished;
 }
 
-} // namespace bot::ai
+}} // namespace bot::ai
+} // namespace Playerbot

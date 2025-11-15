@@ -449,7 +449,7 @@ protected:
     {
         // Use unified HealingTargetSelector service (Phase 5B integration)
         // Eliminates 20+ lines of duplicated healing target logic
-        Unit* target = ::bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
+        Unit* target = bot::ai::HealingTargetSelector::SelectTarget(this->GetBot());
         return target ? target : this->GetBot();
     }
 

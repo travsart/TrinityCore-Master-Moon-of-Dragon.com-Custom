@@ -46,10 +46,10 @@ PositionManager::PositionManager(Player* bot, BotThreatManager* threatManager)
     TC_LOG_DEBUG("playerbot.position", "PositionManager initialized for bot {}", _bot->GetName());
 }
 
-MovementResult PositionManager::UpdatePosition(const MovementContext& context)
+PositionMovementResult PositionManager::UpdatePosition(const MovementContext& context)
 {
     auto startTime = ::std::chrono::steady_clock::now();
-    MovementResult result;
+    PositionMovementResult result;
     // No lock needed - position data is per-bot instance data
 
     try
@@ -91,7 +91,7 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
             return HandleEmergencyMovement(context);
         }
 
-        MovementResult optimalResult = FindOptimalPosition(context);
+        PositionMovementResult optimalResult = FindOptimalPosition(context);
         if (optimalResult.success)
         {
             float movementDistance = currentPos.GetExactDist(&optimalResult.targetPosition);
@@ -119,9 +119,9 @@ MovementResult PositionManager::UpdatePosition(const MovementContext& context)
     return result;
 }
 
-MovementResult PositionManager::FindOptimalPosition(const MovementContext& context)
+PositionMovementResult PositionManager::FindOptimalPosition(const MovementContext& context)
 {
-    MovementResult result;
+    PositionMovementResult result;
     ::std::vector<Position> candidates = GenerateCandidatePositions(context);
     if (candidates.empty())
     {
@@ -151,9 +151,9 @@ MovementResult PositionManager::FindOptimalPosition(const MovementContext& conte
     return result;
 }
 
-MovementResult PositionManager::ExecuteMovement(const Position& targetPos, MovementPriority priority)
+PositionMovementResult PositionManager::ExecuteMovement(const Position& targetPos, MovementPriority priority)
 {
-    MovementResult result;
+    PositionMovementResult result;
     result.targetPosition = targetPos;
     result.priority = priority;
 
@@ -633,13 +633,13 @@ float PositionManager::CalculateMovementCost(const Position& from, const Positio
     return cost;
 }
 
-MovementResult PositionManager::HandleEmergencyMovement(const MovementContext& /* context */)
+PositionMovementResult PositionManager::HandleEmergencyMovement(const MovementContext& /* context */)
 {
     _metrics.emergencyMoves++;
 
     Position emergencyPos = FindEmergencyEscapePosition();
 
-    MovementResult result;
+    PositionMovementResult result;
     result.priority = MovementPriority::EMERGENCY;
     result.requiresSprint = true;
 

@@ -284,10 +284,10 @@ public:
             return;
 
         // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(DARK_COMMAND, tauntTarget))
         {
-            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, DARK_COMMAND);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, DARK_COMMAND);
             _lastTaunt = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Blood DK: Dark Command taunt via ThreatAssistant on {}", tauntTarget->GetName());
         }

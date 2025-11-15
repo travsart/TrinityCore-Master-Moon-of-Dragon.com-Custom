@@ -326,11 +326,11 @@ public:
             return;
 
         // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(GUARDIAN_GROWL, tauntTarget))
         {
 
-            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, GUARDIAN_GROWL);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, GUARDIAN_GROWL);
 
             _lastTaunt = GameTime::GetGameTimeMS();
 

@@ -185,10 +185,11 @@ namespace Playerbot
     };
 
     /**
-     * @struct MovementRequest
-     * @brief Request parameters for movement generation
+     * @struct BasicMovementRequest
+     * @brief Simple request parameters for basic movement generation
+     * @note For full featured movement requests, use Movement/Arbiter/MovementRequest.h
      */
-    struct MovementRequest
+    struct BasicMovementRequest
     {
         ObjectGuid targetGuid;
         Position destination;
@@ -201,7 +202,7 @@ namespace Playerbot
         bool allowPartial;
         uint32 maxSearchNodes;
 
-        MovementRequest() : speed(0.0f), range(0.0f), angle(0.0f),
+        BasicMovementRequest() : speed(0.0f), range(0.0f), angle(0.0f),
             type(MovementGeneratorType::MOVEMENT_NONE),
             priority(MovementPriority::PRIORITY_NORMAL),
             forceDirect(false), allowPartial(false), maxSearchNodes(3000) {}

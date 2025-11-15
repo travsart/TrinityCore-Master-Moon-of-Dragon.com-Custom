@@ -9,6 +9,7 @@
 
 #include "AdaptiveBehaviorManager.h"
 #include "Decision/DecisionFusionSystem.h"
+#include "../Common/ActionScoringEngine.h"
 #include "Player.h"
 #include "Group.h"
 #include "SpellInfo.h"
@@ -1134,7 +1135,7 @@ bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target
     // ========================================================================
     switch (context)
     {
-        case CombatContext::RAID_MYTHIC:
+        case CombatContext::RAID_NORMAL:
         case CombatContext::RAID_HEROIC:
             vote.urgency += 0.2f; // Higher urgency in raid content
             break;

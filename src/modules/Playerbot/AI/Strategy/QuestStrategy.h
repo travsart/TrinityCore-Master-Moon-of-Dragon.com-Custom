@@ -15,6 +15,7 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "../../Game/QuestAcceptanceManager.h"
+#include <vector>
 
 namespace Playerbot
 {
