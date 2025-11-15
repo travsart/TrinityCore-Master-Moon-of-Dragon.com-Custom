@@ -134,8 +134,8 @@ struct MovementContext
                        emergencyMode(false), validationFlags(PositionValidation::BASIC) {}
 };
 
-// Movement execution result
-struct MovementResult
+// Position-specific movement execution result
+struct PositionMovementResult
 {
     bool success;
     Position targetPosition;
@@ -148,7 +148,7 @@ struct MovementResult
     bool requiresJump;
     bool requiresSprint;
 
-    MovementResult() : success(false), priority(MovementPriority::PRIORITY_NONE),
+    PositionMovementResult() : success(false), priority(MovementPriority::PRIORITY_NONE),
                       estimatedTime(0.0f), pathDistance(0.0f),
                       requiresJump(false), requiresSprint(false) {}
 };
@@ -205,9 +205,9 @@ public:
     ~PositionManager() = default;
 
     // Main positioning interface
-    MovementResult UpdatePosition(const MovementContext& context);
-    MovementResult FindOptimalPosition(const MovementContext& context);
-    MovementResult ExecuteMovement(const Position& targetPos, MovementPriority priority);
+    PositionMovementResult UpdatePosition(const MovementContext& context);
+    PositionMovementResult FindOptimalPosition(const MovementContext& context);
+    PositionMovementResult ExecuteMovement(const Position& targetPos, MovementPriority priority);
 
     // Position evaluation
     PositionInfo EvaluatePosition(const Position& pos, const MovementContext& context);
@@ -267,7 +267,7 @@ public:
     void ResetMetrics() { _metrics.Reset(); }
 
     // Emergency response
-    MovementResult HandleEmergencyMovement(const MovementContext& context);
+    PositionMovementResult HandleEmergencyMovement(const MovementContext& context);
     bool IsInEmergencyPosition();
     Position FindEmergencyEscapePosition();
 
