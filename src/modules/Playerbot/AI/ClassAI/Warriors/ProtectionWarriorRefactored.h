@@ -247,7 +247,7 @@ protected:
     bool ShouldUseTaunt(::Unit* target)    {
         // Use unified ThreatAssistant service (Phase 5C integration)
         // Eliminates duplicated taunt logic
-        return !::bot::ai::ThreatAssistant::IsTargetOnTank(this->GetBot(), target);
+        return !bot::ai::ThreatAssistant::IsTargetOnTank(this->GetBot(), target);
     }
 
     void ManageThreat(::Unit* target) override
@@ -257,11 +257,11 @@ protected:
             return;
 
         // Use unified ThreatAssistant service (Phase 5C integration)
-        Unit* tauntTarget = ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
 
-            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
 
             _lastTaunt = GameTime::GetGameTimeMS();
         }
@@ -444,11 +444,11 @@ protected:
         }
 
         // Handle highest priority threat target using ThreatAssistant (Phase 5C)
-        Unit* tauntTarget = ::bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
+        Unit* tauntTarget = bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanUseAbility(SPELL_TAUNT))
         {
 
-            ::bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
+            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, SPELL_TAUNT);
 
             _lastTaunt = GameTime::GetGameTimeMS();
         }
@@ -664,7 +664,7 @@ private:
                 [](Player* bot, Unit* target) {
                     // Taunt when target not on tank
 
-                    return target && !::bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                    return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
 
                 },
 
@@ -959,7 +959,7 @@ private:
 
                     Condition("Target not on tank", [](Player* bot, Unit* target) {
 
-                        return target && !::bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
+                        return target && !bot::ai::ThreatAssistant::IsTargetOnTank(bot, target);
 
                     }),
 
@@ -969,7 +969,7 @@ private:
 
                         {
 
-                            ::bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, SPELL_TAUNT);
+                            bot::ai::ThreatAssistant::ExecuteTaunt(bot, target, SPELL_TAUNT);
 
                             return NodeStatus::SUCCESS;
 
