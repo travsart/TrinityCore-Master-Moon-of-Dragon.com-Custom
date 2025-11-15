@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <array>
+#include <vector>
 
 namespace Playerbot
 {

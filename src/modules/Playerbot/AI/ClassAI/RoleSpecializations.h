@@ -23,6 +23,7 @@
 #include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
 #include <ranges>
 #include <span>
+#include <vector>
 
 namespace Playerbot
 {
