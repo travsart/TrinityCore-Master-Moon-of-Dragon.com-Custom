@@ -13,6 +13,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // TargetPriority implementation
@@ -511,3 +512,4 @@ float HealingTargetSelector::CalculateAoEHealingScore(Unit* position, Player* he
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

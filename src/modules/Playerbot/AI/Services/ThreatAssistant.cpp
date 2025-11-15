@@ -14,6 +14,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Static member initialization
@@ -417,3 +418,4 @@ uint32 ThreatAssistant::GetTimeOutOfControl(Unit* target)
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot
