@@ -2877,10 +2877,6 @@ bool ShamanAI::HasEnoughResource(uint32 spellId)
     if (!GetBot())
         return false;
 
-    if (!tank)
-    {
-        return;
-    }
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
