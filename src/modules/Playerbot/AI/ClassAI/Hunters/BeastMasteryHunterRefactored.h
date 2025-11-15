@@ -129,7 +129,7 @@ public:
         if (_bot->GetPetGUID().IsEmpty())
         {
 
-            _bot->CastSpell(SPELL_CALL_PET_1, false, _bot);
+            _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_1);
         }
     }
 
@@ -227,7 +227,7 @@ public:
         Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
 
-            _bot->CastSpell(SPELL_MEND_PET, false, pet);
+            _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET);
 
             _lastMendPet = currentTime;
         }
