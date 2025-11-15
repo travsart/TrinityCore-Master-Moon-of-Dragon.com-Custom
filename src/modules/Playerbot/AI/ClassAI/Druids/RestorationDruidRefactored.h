@@ -512,22 +512,16 @@ private:
         // Maintain Lifebloom on primary tank
         Unit* tank = GetMainTank(group);
 
-                if (!tank)
+        if (!tank)
+        {
+            return false;
+        }
 
-                {
-
-                    return;
-
-                }
-
-                if (!tank)
-
-                {
-
-                    TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
-                    return;
-
-                }
+        if (!tank)
+        {
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: tank in method GetGUID");
+            return false;
+        }
         if (tank && _hotTracker.NeedsLifebloomRefresh(tank->GetGUID()))
         {
 
@@ -582,34 +576,12 @@ private:
 
     bool HandleWildGrowth(const ::std::vector<Unit*>& group)
     {
-        // Count injured allies without Wild Growth        uint32 needsHealing = 0;
+        // Count injured allies without Wild Growth
+        uint32 needsHealing = 0;
         for (Unit* member : group)
-
-            if (!member)
-
-            {
-
-                if (!tank)
-
-                {
-
-                    return nullptr;
-
-                }
-
-                return nullptr;
-
-            }
         {
-
             if (member && member->GetHealthPct() < 85.0f && !_hotTracker.HasWildGrowth(member->GetGUID()))
-
                 ++needsHealing;
-        if (!tank)
-        {
-
-            return nullptr;
-        }
         }
 
         // Use Wild Growth if 3+ allies need healing
@@ -689,21 +661,15 @@ private:
         // Apply Cenarion Ward to tank
         Unit* tank = GetMainTank(group);
 
-                if (!tank)
+        if (!tank)
+        {
+            return false;
+        }
 
-                {
-
-                    return;
-
-                }
-
-                if (!tank)
-
-                {
-
-                    return;
-
-                }
+        if (!tank)
+        {
+            return false;
+        }
         if (tank && !_hotTracker.HasCenarionWard(tank->GetGUID()))
         {
 
@@ -1476,9 +1442,6 @@ private:
                     }),
 
                     bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
-
-                        Unit* target = bot->GetVictim();
-
                         if (!target) target = this->FindNearbyEnemy();
 
                         if (target && !target->HasAura(RESTO_MOONFIRE)) {
