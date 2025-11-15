@@ -1198,7 +1198,7 @@ private:
 
                         Sequence("Blur", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
@@ -1228,7 +1228,7 @@ private:
 
                         Sequence("Darkness", {
 
-                            Condition("Group heavy damage", [this](Player*) {
+                            Condition("Group heavy damage", [this](Player*, Unit*) {
 
                                 return this->IsGroupTakingHeavyDamage();
 
@@ -1268,13 +1268,13 @@ private:
 
                         Sequence("Metamorphosis", {
 
-                            Condition("Should use Meta", [this](Player*) {
+                            Condition("Should use Meta", [this](Player*, Unit*) {
 
                                 return this->ShouldUseMetamorphosis() && !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("High fury", [this](Player*) {
+                            Condition("High fury", [this](Player*, Unit*) {
 
                                 return this->_resource > 80;
 
@@ -1302,13 +1302,13 @@ private:
 
                         Sequence("Fel Barrage AoE", {
 
-                            Condition("5+ enemies", [this](Player*) {
+                            Condition("5+ enemies", [this](Player*, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 5;
 
                             }),
 
-                            Condition("60 fury", [this](Player*) {
+                            Condition("60 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 60;
 
@@ -1352,13 +1352,13 @@ private:
 
                         Sequence("Eye Beam", {
 
-                            Condition("30 fury", [this](Player*) {
+                            Condition("30 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 30;
 
                             }),
 
-                            Condition("Not channeling", [this](Player*) {
+                            Condition("Not channeling", [this](Player*, Unit*) {
 
                                 return !this->_eyeBeamChanneling;
 
@@ -1406,13 +1406,13 @@ private:
 
                         Sequence("Death Sweep (Meta)", {
 
-                            Condition("In Metamorphosis", [this](Player*) {
+                            Condition("In Metamorphosis", [this](Player*, Unit*) {
 
                                 return this->_metamorphosisActive;
 
                             }),
 
-                            Condition("15 fury", [this](Player*) {
+                            Condition("15 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 15;
 
@@ -1438,13 +1438,13 @@ private:
 
                         Sequence("Blade Dance", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("Enough fury", [this](Player*) {
+                            Condition("Enough fury", [this](Player*, Unit*) {
 
                                 uint32 cost = this->GetSpellResourceCost(SPELL_BLADE_DANCE);
 
@@ -1480,7 +1480,7 @@ private:
 
                         Sequence("Immolation Aura", {
 
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
 
                                 return !this->_immolationAuraActive;
 
@@ -1514,7 +1514,7 @@ private:
 
                             }),
 
-                            Condition("No Momentum buff", [this](Player*) {
+                            Condition("No Momentum buff", [this](Player*, Unit*) {
 
                                 return !this->_momentumTracker.HasMomentum();
 
@@ -1524,7 +1524,7 @@ private:
 
                                 Sequence("Fel Rush", {
 
-                                    Condition("Can use", [this](Player*) {
+                                    Condition("Can use", [this](Player*, Unit*) {
 
                                         return this->_momentumTracker.CanUseFelRush();
 
@@ -1562,7 +1562,7 @@ private:
 
                                 Sequence("Vengeful Retreat", {
 
-                                    Condition("Can use", [this](Player*) {
+                                    Condition("Can use", [this](Player*, Unit*) {
 
                                         return this->_momentumTracker.CanUseVengefulRetreat();
 
@@ -1616,13 +1616,13 @@ private:
 
                         Sequence("Annihilation (Meta)", {
 
-                            Condition("In Metamorphosis", [this](Player*) {
+                            Condition("In Metamorphosis", [this](Player*, Unit*) {
 
                                 return this->_metamorphosisActive;
 
                             }),
 
-                            Condition("25 fury", [this](Player*) {
+                            Condition("25 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 25;
 
@@ -1656,13 +1656,13 @@ private:
 
                         Sequence("Chaos Strike", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("Enough fury", [this](Player*) {
+                            Condition("Enough fury", [this](Player*, Unit*) {
 
                                 uint32 cost = this->GetSpellResourceCost(SPELL_CHAOS_STRIKE);
 
@@ -1710,7 +1710,7 @@ private:
 
                     }),
 
-                    Condition("Low fury", [this](Player*) {
+                    Condition("Low fury", [this](Player*, Unit*) {
 
                         return this->_resource < 80;
 

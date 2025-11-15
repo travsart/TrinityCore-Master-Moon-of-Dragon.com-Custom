@@ -626,7 +626,7 @@ private:
                     }),
                     Selector("Use procs", {
                         Sequence("Brain Freeze combo", {
-                            Condition("Brain Freeze active", [this](Player*) {
+                            Condition("Brain Freeze active", [this](Player*, Unit*) {
                                 return this->_brainFreezeTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Flurry then Ice Lance", [this](Player* bot, Unit* target) {
@@ -643,7 +643,7 @@ private:
                             })
                         }),
                         Sequence("Fingers of Frost", {
-                            Condition("FoF proc active", [this](Player*) {
+                            Condition("FoF proc active", [this](Player*, Unit*) {
                                 return this->_fofTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Ice Lance", [this](Player* bot, Unit* target) {

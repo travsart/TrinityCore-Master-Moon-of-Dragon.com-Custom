@@ -1267,7 +1267,7 @@ private:
 
                 Sequence("Emergency Totems", {
 
-                    Condition("4+ low HP", [this](Player*) {
+                    Condition("4+ low HP", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1303,7 +1303,7 @@ private:
 
                         Sequence("Ancestral Protection", {
 
-                            Condition("2+ critical", [this](Player*) {
+                            Condition("2+ critical", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1347,7 +1347,7 @@ private:
 
                 Sequence("Major Cooldowns", {
 
-                    Condition("3+ injured", [this](Player*) {
+                    Condition("3+ injured", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1363,7 +1363,7 @@ private:
 
                         Sequence("Ascendance", {
 
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
 
                                 return !this->_ascendanceActive;
 
@@ -1449,7 +1449,7 @@ private:
 
                         Sequence("Earth Shield Tank", {
 
-                            bot::ai::Action("Cast Earth Shield", [this](Player*) {
+                            bot::ai::Action("Cast Earth Shield", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1479,7 +1479,7 @@ private:
 
                         Sequence("Riptide Spread", {
 
-                            bot::ai::Action("Cast Riptide", [this](Player*) {
+                            bot::ai::Action("Cast Riptide", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1515,7 +1515,7 @@ private:
 
                 Sequence("AoE Healing", {
 
-                    Condition("2+ injured", [this](Player*) {
+                    Condition("2+ injured", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1531,7 +1531,7 @@ private:
 
                         Sequence("Healing Rain", {
 
-                            Condition("3+ stacked", [this](Player*) {
+                            Condition("3+ stacked", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1555,7 +1555,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Healing Rain", [this](Player*) {
+                            bot::ai::Action("Cast Healing Rain", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1589,7 +1589,7 @@ private:
 
                         Sequence("Chain Heal", {
 
-                            bot::ai::Action("Cast Chain Heal", [this](Player*) {
+                            bot::ai::Action("Cast Chain Heal", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1627,7 +1627,7 @@ private:
 
                         Sequence("Healing Surge", {
 
-                            Condition("Ally < 50%", [this](Player*) {
+                            Condition("Ally < 50%", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1637,7 +1637,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Healing Surge", [this](Player*) {
+                            bot::ai::Action("Cast Healing Surge", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1665,7 +1665,7 @@ private:
 
                         Sequence("Healing Wave", {
 
-                            bot::ai::Action("Cast Healing Wave", [this](Player*) {
+                            bot::ai::Action("Cast Healing Wave", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 

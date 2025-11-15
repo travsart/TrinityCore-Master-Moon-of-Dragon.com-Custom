@@ -269,15 +269,15 @@ protected:
         {
             auto root = Selector("Augmentation Evoker Support", {
                 Sequence("Maintain Buffs", {
-                    Condition("Has essence", [this](Player*) { return this->_resource.essence >= 1; }),
+                    Condition("Has essence", [this](Player*, Unit*) { return this->_resource.essence >= 1; }),
                     Selector("Apply buffs", {
                         Sequence("Ebon Might", {
-                            bot::ai::Action("Cast Ebon Might", [this](Player*) {
+                            bot::ai::Action("Cast Ebon Might", [this](Player*, Unit*) {
                                 return this->MaintainEbonMight() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Prescience", {
-                            bot::ai::Action("Cast Prescience", [this](Player*) {
+                            bot::ai::Action("Cast Prescience", [this](Player*, Unit*) {
                                 return this->MaintainPrescience() ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
                             })
                         })
@@ -285,7 +285,7 @@ protected:
                 }),
                 Sequence("Deal Damage", {
                     Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
-                    Condition("3+ essence", [this](Player*) { return this->_resource.essence >= 3; }),
+                    Condition("3+ essence", [this](Player*, Unit*) { return this->_resource.essence >= 3; }),
                     bot::ai::Action("Cast Breath of Eons", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
@@ -298,7 +298,7 @@ protected:
                 }),
                 Sequence("Generate Essence", {
                     Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
-                    Condition("< 4 essence", [this](Player*) { return this->_resource.essence < 4; }),
+                    Condition("< 4 essence", [this](Player*, Unit*) { return this->_resource.essence < 4; }),
                     bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit* target) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {

@@ -809,7 +809,7 @@ private:
                             })
                         }),
                         Sequence("Stormkeeper", {
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
                                 return !this->_stormkeeperTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Stormkeeper", [this](Player* bot, Unit*) {
@@ -890,7 +890,7 @@ private:
                     }),
                     Selector("Spend Maelstrom", {
                         Sequence("Earthquake (AoE)", {
-                            Condition("3+ enemies", [this](Player*) {
+                            Condition("3+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
                             bot::ai::Action("Cast Earthquake", [this](Player* bot, Unit* target) {
@@ -926,7 +926,7 @@ private:
                     }),
                     Selector("Generate Maelstrom", {
                         Sequence("Chain Lightning (AoE)", {
-                            Condition("2+ enemies", [this](Player*) {
+                            Condition("2+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(40.0f) >= 2;
                             }),
                             bot::ai::Action("Cast Chain Lightning", [this](Player* bot, Unit* target) {

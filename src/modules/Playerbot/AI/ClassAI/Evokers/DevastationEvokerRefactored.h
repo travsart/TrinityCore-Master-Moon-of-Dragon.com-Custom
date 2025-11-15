@@ -642,12 +642,12 @@ protected:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("3+ essence", [this](Player*) {
+                    Condition("3+ essence", [this](Player*, Unit*) {
                         return this->_resource.essence >= 3;
                     }),
                     Selector("Use cooldowns", {
                         Sequence("Dragonrage", {
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
                                 return !this->_dragonrageTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Dragonrage", [this](Player* bot, Unit*) {
@@ -667,7 +667,7 @@ protected:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Not channeling", [this](Player*) {
+                    Condition("Not channeling", [this](Player*, Unit*) {
                         return !this->_empowermentTracker.IsChanneling();
                     }),
                     Selector("Cast spells", {
@@ -682,7 +682,7 @@ protected:
                             })
                         }),
                         Sequence("Eternity's Surge", {
-                            Condition("3+ essence", [this](Player*) {
+                            Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
                             bot::ai::Action("Cast Eternity's Surge", [this](Player* bot, Unit* target) {
@@ -695,7 +695,7 @@ protected:
                             })
                         }),
                         Sequence("Disintegrate", {
-                            Condition("3+ essence", [this](Player*) {
+                            Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
                             bot::ai::Action("Cast Disintegrate", [this](Player* bot, Unit* target) {
@@ -716,7 +716,7 @@ protected:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("< 4 essence", [this](Player*) {
+                    Condition("< 4 essence", [this](Player*, Unit*) {
                         return this->_resource.essence < 4;
                     }),
                     Selector("Generate", {

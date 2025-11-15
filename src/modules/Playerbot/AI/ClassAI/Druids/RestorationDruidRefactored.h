@@ -1138,7 +1138,7 @@ private:
 
                 Sequence("Emergency Healing", {
 
-                    Condition("3+ critical", [this](Player*) {
+                    Condition("3+ critical", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1214,7 +1214,7 @@ private:
 
                 Sequence("Major Cooldowns", {
 
-                    Condition("2+ injured", [this](Player*) {
+                    Condition("2+ injured", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1230,7 +1230,7 @@ private:
 
                         Sequence("Tree Form", {
 
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
 
                                 return !this->_treeFormActive;
 
@@ -1258,7 +1258,7 @@ private:
 
                         Sequence("Ironbark Tank", {
 
-                            bot::ai::Action("Cast Ironbark", [this](Player*) {
+                            bot::ai::Action("Cast Ironbark", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1296,7 +1296,7 @@ private:
 
                         Sequence("Lifebloom Tank", {
 
-                            bot::ai::Action("Cast Lifebloom", [this](Player*) {
+                            bot::ai::Action("Cast Lifebloom", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1324,7 +1324,7 @@ private:
 
                         Sequence("Wild Growth AoE", {
 
-                            Condition("3+ need healing", [this](Player*) {
+                            Condition("3+ need healing", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1340,7 +1340,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Wild Growth", [this](Player*) {
+                            bot::ai::Action("Cast Wild Growth", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1368,13 +1368,13 @@ private:
 
                         Sequence("Rejuvenation Spread", {
 
-                            Condition("< 4 active", [this](Player*) {
+                            Condition("< 4 active", [this](Player*, Unit*) {
 
                                 return this->_hotTracker.GetActiveRejuvenationCount() < 4;
 
                             }),
 
-                            bot::ai::Action("Cast Rejuvenation", [this](Player*) {
+                            bot::ai::Action("Cast Rejuvenation", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1414,13 +1414,13 @@ private:
 
                         Sequence("Swiftmend", {
 
-                            Condition("Can use", [this](Player*) {
+                            Condition("Can use", [this](Player*, Unit*) {
 
                                 return this->_swiftmendTracker.CanUseSwiftmend();
 
                             }),
 
-                            bot::ai::Action("Cast Swiftmend", [this](Player*) {
+                            bot::ai::Action("Cast Swiftmend", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1456,7 +1456,7 @@ private:
 
                         Sequence("Regrowth", {
 
-                            bot::ai::Action("Cast Regrowth", [this](Player*) {
+                            bot::ai::Action("Cast Regrowth", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1490,7 +1490,7 @@ private:
 
                 Sequence("DPS Filler", {
 
-                    Condition("Group healthy", [this](Player*) {
+                    Condition("Group healthy", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 

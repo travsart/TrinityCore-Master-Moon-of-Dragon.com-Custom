@@ -948,7 +948,7 @@ private:
 
                 Sequence("Emergency Healing", {
 
-                    Condition("3+ critical", [this](Player*) {
+                    Condition("3+ critical", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -982,7 +982,7 @@ private:
 
                         Sequence("Life Cocoon", {
 
-                            Condition("Ally < 30%", [this](Player*) {
+                            Condition("Ally < 30%", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -992,7 +992,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Life Cocoon", [this](Player*) {
+                            bot::ai::Action("Cast Life Cocoon", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1022,7 +1022,7 @@ private:
 
                 Sequence("Major Cooldowns", {
 
-                    Condition("3+ injured", [this](Player*) {
+                    Condition("3+ injured", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1062,7 +1062,7 @@ private:
 
                         Sequence("Essence Font", {
 
-                            Condition("4+ injured", [this](Player*) {
+                            Condition("4+ injured", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1112,7 +1112,7 @@ private:
 
                         Sequence("Renewing Mist", {
 
-                            Condition("< 3 active", [this](Player*) {
+                            Condition("< 3 active", [this](Player*, Unit*) {
 
                                 uint32 active = this->_renewingMistTracker.GetActiveCount();
 
@@ -1122,7 +1122,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Renewing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Renewing Mist", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1150,7 +1150,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Enveloping Mist", [this](Player*) {
+                            bot::ai::Action("Cast Enveloping Mist", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1194,7 +1194,7 @@ private:
 
                         Sequence("Vivify", {
 
-                            Condition("Ally < 75%", [this](Player*) {
+                            Condition("Ally < 75%", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1204,7 +1204,7 @@ private:
 
                             }),
 
-                            bot::ai::Action("Cast Vivify", [this](Player*) {
+                            bot::ai::Action("Cast Vivify", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
@@ -1224,13 +1224,13 @@ private:
 
                         Sequence("Soothing Mist", {
 
-                            Condition("Not channeling", [this](Player*) {
+                            Condition("Not channeling", [this](Player*, Unit*) {
 
                                 return !this->_soothingMistTracker.IsChanneling();
 
                             }),
 
-                            bot::ai::Action("Cast Soothing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Soothing Mist", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
