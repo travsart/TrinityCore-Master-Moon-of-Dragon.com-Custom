@@ -100,7 +100,7 @@ void BotGearFactory::LoadItemsFromDatabase()
         ++totalItems;
 
         // Filter: Quality >= 2 (Uncommon+), ItemLevel >= 5, InventoryType > 0 (equippable only)
-        if (itemTemplate.GetQuality() < 2)
+    if (itemTemplate.GetQuality() < 2)
             continue;
         if (itemTemplate.GetBaseItemLevel() < 5)
             continue;
@@ -456,7 +456,6 @@ uint32 BotGearFactory::SelectQuality(uint32 level, uint8 slot)
     cumulative += dist->bluePercent;
     if (roll < cumulative && dist->bluePercent > 0.0f)
         return 3;  // ITEM_QUALITY_RARE (Blue)
-
     if (dist->purplePercent > 0.0f)
         return 4;  // ITEM_QUALITY_EPIC (Purple)
 
@@ -532,7 +531,6 @@ uint32 BotGearFactory::SelectBestItem(uint8 cls, uint32 specId, uint32 level, ui
 {
     ::std::vector<CachedItem> filtered;
     filtered.reserve(items.size() / 3);  // Estimate
-
     for (auto const& item : items)
     {
         if (item.quality == quality)

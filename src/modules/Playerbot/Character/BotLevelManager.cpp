@@ -96,7 +96,7 @@ void BotLevelManager::Shutdown()
     // Clear task queue
     {
         // No lock needed - level queue is per-bot instance data
-        while (!_mainThreadQueue.empty())
+    while (!_mainThreadQueue.empty())
             _mainThreadQueue.pop();
     }
 
@@ -575,7 +575,6 @@ void BotLevelManager::QueueMainThreadTask(::std::shared_ptr<BotCreationTask> tas
 ::std::shared_ptr<BotCreationTask> BotLevelManager::DequeueTask()
 {
     // No lock needed - level queue is per-bot instance data
-
     if (_mainThreadQueue.empty())
         return nullptr;
 

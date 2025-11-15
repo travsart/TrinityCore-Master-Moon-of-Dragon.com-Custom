@@ -66,19 +66,19 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
     for (auto const& snapshot : creatures)
     {
         // Check if creature matches quest requirements
-        if (!snapshot.isAlive)
+    if (!snapshot.isAlive)
             continue;
 
         // Check creature entry matches quest target
-        if (snapshot.entry != objective.targetId)
+    if (snapshot.entry != objective.targetId)
             continue;
 
         // Check if hostile to bot
-        if (!IsHostileSnapshot(snapshot, bot))
+    if (!IsHostileSnapshot(snapshot, bot))
             continue;
 
         // Check if already engaged with too many enemies
-        if (snapshot.threatListSize > 5)
+    if (snapshot.threatListSize > 5)
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -94,7 +94,7 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
     if (!targetGuid.IsEmpty())
     {
         // Check if in combat range
-        if (minDistance <= bot->GetAttackDistance())
+    if (minDistance <= bot->GetAttackDistance())
         {
             // Queue kill action for main thread
             BotAction action;
@@ -136,7 +136,7 @@ void QuestCompletion::HandleKillObjective_LockFree(Player* bot, QuestObjectiveDa
     else
     {
         // No valid target found, may need to explore
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             // We have a known spawn location, navigate there
             NavigateToObjective_LockFree(bot, objective);
@@ -176,14 +176,14 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
     for (auto const& snapshot : creatures)
     {
         // Check if creature is the quest NPC
-        if (snapshot.entry != objective.targetId)
+    if (snapshot.entry != objective.targetId)
             continue;
 
         if (!snapshot.isAlive)
             continue;
 
         // Check if NPC is accessible (not in combat, not hostile)
-        if (snapshot.isInCombat && snapshot.threatListSize > 0)
+    if (snapshot.isInCombat && snapshot.threatListSize > 0)
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -239,7 +239,7 @@ void QuestCompletion::HandleTalkToNpcObjective_LockFree(Player* bot, QuestObject
     else
     {
         // NPC not found, navigate to known location if available
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective_LockFree(bot, objective);
         }
@@ -277,11 +277,11 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
     for (auto const& snapshot : objects)
     {
         // Check if object matches quest requirements
-        if (snapshot.entry != objective.targetId)
+    if (snapshot.entry != objective.targetId)
             continue;
 
         // Check if object is usable
-        if (!snapshot.isSpawned || snapshot.isInUse)
+    if (!snapshot.isSpawned || snapshot.isInUse)
             continue;
 
         float distance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -337,7 +337,7 @@ void QuestCompletion::HandleInteractObjectObjective_LockFree(Player* bot, QuestO
     else
     {
         // Object not found, navigate to known location
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective_LockFree(bot, objective);
         }
@@ -418,10 +418,10 @@ void QuestCompletion::HandleEscortObjective_LockFree(Player* bot, QuestObjective
                     escortPosition = snapshot.position;
 
                     // Check if escort is under attack
-                    if (snapshot.isInCombat && snapshot.healthPct < 50)
+    if (snapshot.isInCombat && snapshot.healthPct < 50)
                     {
                         // Help defend the escort
-                        if (!snapshot.victim.IsEmpty())
+    if (!snapshot.victim.IsEmpty())
                         {
                             BotAction action;
                             action.type = BotActionType::ATTACK_TARGET;

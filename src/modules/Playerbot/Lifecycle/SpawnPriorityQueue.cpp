@@ -183,7 +183,7 @@ QueueMetrics SpawnPriorityQueue::GetMetrics() const
         const PrioritySpawnRequest& request = tempQueue.top();
 
         // Count by priority
-        switch (request.priority)
+    switch (request.priority)
         {
             case SpawnPriority::CRITICAL:
                 ++metrics.criticalRequests;
@@ -200,7 +200,7 @@ QueueMetrics SpawnPriorityQueue::GetMetrics() const
         }
 
         // Track oldest request
-        if (request.requestTime < oldestTime)
+    if (request.requestTime < oldestTime)
             oldestTime = request.requestTime;
 
         tempQueue.pop();

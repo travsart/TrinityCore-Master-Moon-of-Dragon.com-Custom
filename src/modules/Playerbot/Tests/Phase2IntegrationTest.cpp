@@ -1425,7 +1425,7 @@ TEST_F(Phase2IntegrationTest, Scenario_FullLifecycle_OneMinuteRuntime)
         mockAI->UpdateManagers(16);
 
         // Every second, query states from SoloStrategy
-        if (frame % 60 == 0)
+    if (frame % 60 == 0)
         {
             soloStrategy->UpdateBehavior(ai, 16);
         }

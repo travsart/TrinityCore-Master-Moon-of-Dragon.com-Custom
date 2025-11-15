@@ -187,19 +187,19 @@ void ContinuousDiagnosticLogger::LoggingLoop()
             _stats.snapshotsTaken.fetch_add(1, ::std::memory_order_relaxed);
 
             // Write CSV
-            if (_config.enableCsvLogging)
+    if (_config.enableCsvLogging)
             {
                 WriteCsv(snapshot);
             }
 
             // Update timeline
-            if (_config.enableTimelineHistory)
+    if (_config.enableTimelineHistory)
             {
                 UpdateTimeline(snapshot);
             }
 
             // Flush CSV periodically
-            if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - lastCsvFlush) >=
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - lastCsvFlush) >=
                 _config.csvFlushInterval)
             {
                 if (_csvFile.is_open())
@@ -208,7 +208,7 @@ void ContinuousDiagnosticLogger::LoggingLoop()
             }
 
             // Update dashboard
-            if (_config.enableDashboard &&
+    if (_config.enableDashboard &&
                 ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - lastDashboardUpdate) >=
                 _config.dashboardUpdateInterval)
             {
@@ -217,7 +217,7 @@ void ContinuousDiagnosticLogger::LoggingLoop()
             }
 
             // Write JSON (contains timeline)
-            if (_config.enableJsonLogging)
+    if (_config.enableJsonLogging)
             {
                 WriteJson(snapshot);
             }
@@ -457,7 +457,7 @@ void ContinuousDiagnosticLogger::InitializeFiles()
         ::std::filesystem::create_directories(_config.logDirectory);
 
         // Open CSV file (append mode)
-        if (_config.enableCsvLogging)
+    if (_config.enableCsvLogging)
         {
             ::std::string csvPath = _config.logDirectory + _config.csvFilename;
             bool fileExists = ::std::filesystem::exists(csvPath);
@@ -466,13 +466,13 @@ void ContinuousDiagnosticLogger::InitializeFiles()
             if (_csvFile.is_open())
             {
                 // Write header if new file
-                if (!fileExists)
+    if (!fileExists)
                 {
                     _csvFile << MetricsSnapshot::GetCsvHeader() << "\n";
                 }
 
                 // Get current file size
-                if (fileExists)
+    if (fileExists)
                 {
                     _csvSize.store(::std::filesystem::file_size(csvPath), ::std::memory_order_relaxed);
                 }
@@ -480,13 +480,13 @@ void ContinuousDiagnosticLogger::InitializeFiles()
         }
 
         // Create JSON file
-        if (_config.enableJsonLogging)
+    if (_config.enableJsonLogging)
         {
             _jsonFile.open(_config.logDirectory + _config.jsonFilename, ::std::ios::out | ::std::ios::trunc);
         }
 
         // Create dashboard file
-        if (_config.enableDashboard)
+    if (_config.enableDashboard)
         {
             _dashboardFile.open(_config.logDirectory + _config.dashboardFilename,
                                ::std::ios::out | ::std::ios::trunc);

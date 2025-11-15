@@ -43,7 +43,7 @@ void MonkAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback: basic auto-attack
-        if (!GetBot()->IsNonMeleeSpellCast(false))
+    if (!GetBot()->IsNonMeleeSpellCast(false))
         {
             if (GetBot()->GetDistance(target) <= 5.0f)
             {
@@ -65,7 +65,7 @@ void MonkAI::UpdateRotation(::Unit* target)
         if (interruptTarget && CanUseAbility(SPEAR_HAND_STRIKE))
         {
             // Spear Hand Strike is melee range interrupt
-            if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
+    if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
         // ORPHANED CODE REMOVED: Standalone null check
         // ORPHANED NULL CHECK REMOVED
         // ORPHANED CODE REMOVED: Duplicate interruptTarget check
@@ -127,10 +127,10 @@ void MonkAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldAOE())
     {
         // Spinning Crane Kick for AoE damage
-        if (CanUseAbility(SPINNING_CRANE_KICK))
+    if (CanUseAbility(SPINNING_CRANE_KICK))
         {
             // Check Chi requirement
-            if (HasEnoughChi(2))
+    if (HasEnoughChi(2))
             {
                 if (CastSpell(SPINNING_CRANE_KICK, GetBot()->GetVictim()))
                 {
@@ -144,7 +144,7 @@ void MonkAI::UpdateRotation(::Unit* target)
         }
 
         // Rushing Jade Wind for sustained AoE (if talented)
-        if (CanUseAbility(RUSHING_JADE_WIND))
+    if (CanUseAbility(RUSHING_JADE_WIND))
         {
             if (HasEnoughChi(1))
             {
@@ -160,7 +160,7 @@ void MonkAI::UpdateRotation(::Unit* target)
         }
 
         // Fists of Fury for Windwalker AoE burst
-        if (_currentSpec == MonkSpec::WINDWALKER && CanUseAbility(FISTS_OF_FURY))
+    if (_currentSpec == MonkSpec::WINDWALKER && CanUseAbility(FISTS_OF_FURY))
         {
             if (HasEnoughChi(3))
             {
@@ -176,7 +176,7 @@ void MonkAI::UpdateRotation(::Unit* target)
         }
 
         // Keg Smash for Brewmaster AoE threat
-        if (_currentSpec == MonkSpec::BREWMASTER && CanUseAbility(KEG_SMASH))
+    if (_currentSpec == MonkSpec::BREWMASTER && CanUseAbility(KEG_SMASH))
         {
             if (HasEnoughEnergy(40))
             {
@@ -197,10 +197,10 @@ void MonkAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
         // Windwalker cooldowns
-        if (_currentSpec == MonkSpec::WINDWALKER)
+    if (_currentSpec == MonkSpec::WINDWALKER)
         {
             // Storm, Earth, and Fire for cleave/burst
-            if (CanUseAbility(STORM_EARTH_AND_FIRE))
+    if (CanUseAbility(STORM_EARTH_AND_FIRE))
             {
                 if (CastSpell(STORM_EARTH_AND_FIRE))
                 {
@@ -211,7 +211,7 @@ void MonkAI::UpdateRotation(::Unit* target)
             }
 
             // Serenity for single target burst (if talented)
-            if (CanUseAbility(SERENITY))
+    if (CanUseAbility(SERENITY))
             {
                 if (CastSpell(SERENITY))
                 {
@@ -222,7 +222,7 @@ void MonkAI::UpdateRotation(::Unit* target)
             }
 
             // Touch of Death execute
-            if (target->GetHealthPct() <= TOUCH_OF_DEATH_THRESHOLD && CanUseAbility(TOUCH_OF_DEATH))
+    if (target->GetHealthPct() <= TOUCH_OF_DEATH_THRESHOLD && CanUseAbility(TOUCH_OF_DEATH))
             {
                 if (HasEnoughChi(3))
                 {
@@ -239,10 +239,10 @@ void MonkAI::UpdateRotation(::Unit* target)
         }
 
         // Brewmaster cooldowns
-        if (_currentSpec == MonkSpec::BREWMASTER)
+    if (_currentSpec == MonkSpec::BREWMASTER)
         {
             // Fortifying Brew for major mitigation
-            if (GetBot()->GetHealthPct() < 60.0f && CanUseAbility(FORTIFYING_BREW))
+    if (GetBot()->GetHealthPct() < 60.0f && CanUseAbility(FORTIFYING_BREW))
             {
                 if (CastSpell(FORTIFYING_BREW))
                 {
@@ -254,10 +254,10 @@ void MonkAI::UpdateRotation(::Unit* target)
         }
 
         // Mistweaver cooldowns
-        if (_currentSpec == MonkSpec::MISTWEAVER)
+    if (_currentSpec == MonkSpec::MISTWEAVER)
         {
             // Revival for raid healing
-            if (CanUseAbility(REVIVAL))
+    if (CanUseAbility(REVIVAL))
             {
                 // Check if multiple allies need healing
                 uint32 injuredAllies = GetNearbyInjuredAlliesCount(30.0f, 50.0f);
@@ -350,7 +350,7 @@ void MonkAI::UpdateBuffs()
         case 268: // Brewmaster
         {
             // Maintain Ironskin Brew uptime when tanking
-            if (!bot->HasAura(IRONSKIN_BREW) && bot->IsInCombat())
+    if (!bot->HasAura(IRONSKIN_BREW) && bot->IsInCombat())
             {
                 if (bot->HasSpell(IRONSKIN_BREW) && HasEnoughResource(IRONSKIN_BREW))
                 {
@@ -364,7 +364,7 @@ void MonkAI::UpdateBuffs()
             }
 
             // Use Fortifying Brew defensively
-            if (bot->GetHealthPct() < 40.0f && bot->HasSpell(FORTIFYING_BREW))
+    if (bot->GetHealthPct() < 40.0f && bot->HasSpell(FORTIFYING_BREW))
             {
                 if (CastSpell(FORTIFYING_BREW, bot))
                 {
@@ -378,7 +378,7 @@ void MonkAI::UpdateBuffs()
         case 270: // Mistweaver
         {
             // Maintain Thunder Focus Tea charges for optimal healing
-            if (bot->HasSpell(THUNDER_FOCUS_TEA) && !bot->HasAura(THUNDER_FOCUS_TEA))
+    if (bot->HasSpell(THUNDER_FOCUS_TEA) && !bot->HasAura(THUNDER_FOCUS_TEA))
             {
                 if (CastSpell(THUNDER_FOCUS_TEA, bot))
                 {
@@ -388,7 +388,7 @@ void MonkAI::UpdateBuffs()
             }
 
             // Use Mana Tea when low on mana
-            if (bot->GetPowerPct(POWER_MANA) < 50.0f && bot->HasSpell(MANA_TEA))
+    if (bot->GetPowerPct(POWER_MANA) < 50.0f && bot->HasSpell(MANA_TEA))
             {
                 if (CastSpell(MANA_TEA, bot))
                 {
@@ -402,7 +402,7 @@ void MonkAI::UpdateBuffs()
         case 269: // Windwalker
         {
             // Activate Storm, Earth, and Fire during burst windows
-            if (bot->IsInCombat() && bot->HasSpell(STORM_EARTH_AND_FIRE))
+    if (bot->IsInCombat() && bot->HasSpell(STORM_EARTH_AND_FIRE))
             {
                 Unit* target = bot->GetVictim();
                 if (target && target->GetHealthPct() > 70.0f) // Boss-level target
@@ -419,7 +419,7 @@ void MonkAI::UpdateBuffs()
             }
 
             // Use Energizing Elixir when low on resources
-            if (bot->HasSpell(ENERGIZING_ELIXIR))
+    if (bot->HasSpell(ENERGIZING_ELIXIR))
             {
                 uint32 currentChi = _chiManager.current.load();
                 uint32 currentEnergy = _energyManager.current.load();
@@ -445,7 +445,7 @@ void MonkAI::UpdateBuffs()
     if (bot->GetHealthPct() < 35.0f)
     {
         // Touch of Karma - reflect damage back to attacker
-        if (bot->HasSpell(TOUCH_OF_KARMA) && !bot->HasAura(TOUCH_OF_KARMA))
+    if (bot->HasSpell(TOUCH_OF_KARMA) && !bot->HasAura(TOUCH_OF_KARMA))
         {
             Unit* attacker = bot->GetVictim();
             if (attacker && CastSpell(TOUCH_OF_KARMA, attacker))
@@ -457,7 +457,7 @@ void MonkAI::UpdateBuffs()
         }
 
         // Diffuse Magic - reduce magic damage
-        if (bot->HasSpell(DIFFUSE_MAGIC) && !bot->HasAura(DIFFUSE_MAGIC))
+    if (bot->HasSpell(DIFFUSE_MAGIC) && !bot->HasAura(DIFFUSE_MAGIC))
         {
             if (CastSpell(DIFFUSE_MAGIC, bot))
             {
@@ -1045,7 +1045,7 @@ void MonkAI::UseDefensiveCooldowns()
     {
         Unit* healTarget = GetLowestHealthAlly(40.0f);
         // ORPHANED CODE REMOVED: Standalone null check
-        if (healTarget && healTarget->GetHealthPct() < 30.0f)
+    if (healTarget && healTarget->GetHealthPct() < 30.0f)
         {
             if (CastSpell(LIFE_COCOON, healTarget))
             {
@@ -1329,7 +1329,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         float targetHealthPct = healTarget->GetHealthPct();
 
         // Emergency healing with Life Cocoon
-        if (targetHealthPct < 30.0f && CanUseAbility(LIFE_COCOON))
+    if (targetHealthPct < 30.0f && CanUseAbility(LIFE_COCOON))
         {
             if (CastSpell(LIFE_COCOON, healTarget))
             {
@@ -1339,7 +1339,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Enveloping Mist for strong single target heal
-        if (targetHealthPct < 50.0f && CanUseAbility(ENVELOPING_MIST))
+    if (targetHealthPct < 50.0f && CanUseAbility(ENVELOPING_MIST))
         {
             if (HasEnoughChi(3))
             {
@@ -1353,7 +1353,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Vivify for quick heal
-        if (targetHealthPct < 70.0f && CanUseAbility(VIVIFY))
+    if (targetHealthPct < 70.0f && CanUseAbility(VIVIFY))
         {
             if (CastSpell(VIVIFY, healTarget))
             {
@@ -1363,7 +1363,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Renewing Mist for HoT
-        if (!healTarget->HasAura(RENEWING_MIST) && CanUseAbility(RENEWING_MIST))
+    if (!healTarget->HasAura(RENEWING_MIST) && CanUseAbility(RENEWING_MIST))
         {
             if (CastSpell(RENEWING_MIST, healTarget))
             {
@@ -1373,7 +1373,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Soothing Mist channel
-        if (targetHealthPct < 80.0f && CanUseAbility(SOOTHING_MIST))
+    if (targetHealthPct < 80.0f && CanUseAbility(SOOTHING_MIST))
         {
             if (!GetBot()->IsNonMeleeSpellCast(false))
             {
@@ -1415,7 +1415,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
     if (target && _healingSystem.fistweavingMode.load())
     {
         // Tiger Palm for Teachings of the Monastery
-        if (CanUseAbility(TIGER_PALM) && HasEnoughEnergy(50))
+    if (CanUseAbility(TIGER_PALM) && HasEnoughEnergy(50))
         {
             if (CastSpell(TIGER_PALM, target))
             {
@@ -1427,7 +1427,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Blackout Kick for damage
-        if (CanUseAbility(BLACKOUT_KICK) && HasEnoughChi(1))
+    if (CanUseAbility(BLACKOUT_KICK) && HasEnoughChi(1))
         {
             if (CastSpell(BLACKOUT_KICK, target))
             {
@@ -1438,7 +1438,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         }
 
         // Rising Sun Kick for damage
-        if (CanUseAbility(RISING_SUN_KICK) && HasEnoughChi(2))
+    if (CanUseAbility(RISING_SUN_KICK) && HasEnoughChi(2))
         {
             if (CastSpell(RISING_SUN_KICK, target))
             {
@@ -1510,7 +1510,6 @@ Unit* MonkAI::GetLowestHealthAlly(float range)
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto* ally : allies)
     {
         if (!ally || ally->isDead())
@@ -1575,7 +1574,6 @@ uint32 MonkAI::GetNearbyInjuredAlliesCount(float range, float healthThreshold)
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto* ally : allies)
     {
         if (!ally || ally->isDead())
@@ -1636,7 +1634,6 @@ uint32 MonkAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto* target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))

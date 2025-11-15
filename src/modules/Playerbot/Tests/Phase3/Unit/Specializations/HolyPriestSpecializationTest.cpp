@@ -860,7 +860,7 @@ TEST_F(HolyPriestSpecializationTest, Integration_Full5ManHealingScenario_NoError
         }
 
         // Cast heal if target found and mana available
-        if (healTarget && scenario.priest->GetPower(POWER_MANA) > 500)
+    if (healTarget && scenario.priest->GetPower(POWER_MANA) > 500)
         {
             SimulateSpellCast(FLASH_HEAL, 0);
             ++successfulHeals;

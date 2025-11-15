@@ -77,14 +77,14 @@ void QuestPickup::ScanCreatureQuestGivers()
             QuestGiverInfo info(entry, QuestGiverType::NPC_CREATURE, pos);
 
             // Collect all quest IDs from this giver
-            for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
+    for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
                 info.availableQuests.push_back(*it);
 
             ::std::lock_guard lock(_giverMutex);
             _questGivers[entry] = info;
 
             // Map quests to this giver
-            for (uint32 questId : info.availableQuests)
+    for (uint32 questId : info.availableQuests)
                 _questToGivers[questId].push_back(entry);
         }
     }
@@ -109,14 +109,14 @@ void QuestPickup::ScanGameObjectQuestGivers()
             QuestGiverInfo info(entry, QuestGiverType::GAME_OBJECT, pos);
 
             // Collect all quest IDs from this giver
-            for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
+    for (auto it = questRelations.begin(); it != questRelations.end(); ++it)
                 info.availableQuests.push_back(*it);
 
             ::std::lock_guard lock(_giverMutex);
             _questGivers[entry] = info;
 
             // Map quests to this giver
-            for (uint32 questId : info.availableQuests)
+    for (uint32 questId : info.availableQuests)
                 _questToGivers[questId].push_back(entry);
         }
     }
@@ -132,7 +132,7 @@ void QuestPickup::ScanItemQuestStarters()
     for (auto const& [entry, itemTemplate] : itemTemplates)
     {
         // Check if item starts a quest
-        if (itemTemplate.GetStartQuest() != 0)
+    if (itemTemplate.GetStartQuest() != 0)
         {
             uint32 questId = itemTemplate.GetStartQuest();
             Position pos(0.0f, 0.0f, 0.0f, 0.0f);
@@ -269,7 +269,7 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
             }
         }
         // If not found in creatures, check game objects
-        if (questGiverObjectGuid.IsEmpty())
+    if (questGiverObjectGuid.IsEmpty())
         {
             ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> nearbyObjects =
                 spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), 100.0f);
@@ -295,7 +295,7 @@ bool QuestPickup::PickupQuest(uint32 questId, Player* bot, uint32 questGiverGuid
     if (!questGiverObjectGuid.IsEmpty())
     {
         // Validate bot can accept quest (local check - no Map access)
-        if (!bot->CanTakeQuest(quest, false))
+    if (!bot->CanTakeQuest(quest, false))
         {
             TC_LOG_DEBUG("playerbot.quest",
                 "QuestPickup::PickupQuest: Bot {} cannot accept quest {} (requirements not met)",
@@ -719,7 +719,7 @@ bool QuestPickup::MeetsQuestRequirements(uint32 questId, Player* bot)
             continue;
 
         // Check blacklist
-        if (filter.blacklistedQuests.count(questId) > 0)
+    if (filter.blacklistedQuests.count(questId) > 0)
             continue;
 
         // Check level range
@@ -734,7 +734,7 @@ bool QuestPickup::MeetsQuestRequirements(uint32 questId, Player* bot)
         }
 
         // Check quest type filters
-        if (quest->IsDaily() && !filter.acceptDailyQuests)
+    if (quest->IsDaily() && !filter.acceptDailyQuests)
             continue;
 
         if (quest->IsWeekly() && !filter.acceptDailyQuests)  // Use daily flag for weekly too
@@ -1023,7 +1023,7 @@ void QuestPickup::ProcessQuestPickupQueue(Player* bot)
         QuestPickupRequest& request = queue.front();
 
         // Check if request has timed out
-        if (getMSTimeDiff(request.requestTime, GameTime::GetGameTimeMS()) > QUEST_PICKUP_TIMEOUT)
+    if (getMSTimeDiff(request.requestTime, GameTime::GetGameTimeMS()) > QUEST_PICKUP_TIMEOUT)
         {
             TC_LOG_DEBUG("playerbot.quest", "Quest pickup request timed out: quest {}, bot {}",
                          request.questId, request.botGuid);
@@ -1032,7 +1032,7 @@ void QuestPickup::ProcessQuestPickupQueue(Player* bot)
         }
 
         // Try to pick up the quest
-        if (PickupQuest(request.questId, bot, request.questGiverGuid))
+    if (PickupQuest(request.questId, bot, request.questGiverGuid))
         {
             queue.erase(queue.begin());
             processed++;
@@ -1740,7 +1740,7 @@ void QuestPickup::ShareQuestWithGroup(Group* group, uint32 questId, Player* send
     for (auto const& memberSlot : group->GetMemberSlots())
     {
         // Skip sender
-        if (memberSlot.guid == sender->GetGUID())
+    if (memberSlot.guid == sender->GetGUID())
             continue;
 
         // PHASE 2G: Hybrid validation pattern (snapshot + ObjectAccessor fallback)

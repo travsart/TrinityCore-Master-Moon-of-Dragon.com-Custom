@@ -37,20 +37,20 @@ float PrioritizedSpell::CalculateEffectivePriority(Player* bot, Unit* target, Co
         case CombatContext::DUNGEON_BOSS:
         case CombatContext::RAID_HEROIC:
             // Boost offensive cooldowns in boss fights
-            if (category == SpellCategory::OFFENSIVE)
+    if (category == SpellCategory::OFFENSIVE)
                 priority *= 1.2f;
             break;
 
         case CombatContext::DUNGEON_TRASH:
             // Boost AoE in trash packs
-            if (category == SpellCategory::DAMAGE_AOE)
+    if (category == SpellCategory::DAMAGE_AOE)
                 priority *= 1.5f;
             break;
 
         case CombatContext::PVP_ARENA:
         case CombatContext::PVP_BG:
             // Boost defensive and CC in PvP
-            if (category == SpellCategory::DEFENSIVE || category == SpellCategory::CROWD_CONTROL)
+    if (category == SpellCategory::DEFENSIVE || category == SpellCategory::CROWD_CONTROL)
                 priority *= 1.3f;
             break;
 
@@ -61,7 +61,6 @@ float PrioritizedSpell::CalculateEffectivePriority(Player* bot, Unit* target, Co
     // Health-based priority adjustments
     if (bot->GetHealthPct() < 30.0f && category == SpellCategory::DEFENSIVE)
         priority *= 2.0f; // Double defensive priority at low health
-
     if (target && target->GetHealthPct() < 20.0f && category == SpellCategory::DAMAGE_SINGLE)
         priority *= 1.3f; // Boost execute-range damage
 
@@ -143,19 +142,19 @@ uint32 ActionPriorityQueue::GetHighestPrioritySpell(Player* bot, Unit* target, C
     for (const auto& spell : _spells)
     {
         // Check if spell is on cooldown
-        if (IsOnCooldown(bot, spell.spellId))
+    if (IsOnCooldown(bot, spell.spellId))
             continue;
 
         // Check if bot has enough resources
-        if (!HasEnoughResources(bot, spell.spellId))
+    if (!HasEnoughResources(bot, spell.spellId))
             continue;
 
         // Check if target is valid
-        if (!IsValidTarget(bot, target, spell.spellId))
+    if (!IsValidTarget(bot, target, spell.spellId))
             continue;
 
         // Check custom conditions
-        if (!spell.AreConditionsMet(bot, target))
+    if (!spell.AreConditionsMet(bot, target))
             continue;
 
         // Calculate effective priority
@@ -234,7 +233,7 @@ DecisionVote ActionPriorityQueue::GetVote(Player* bot, Unit* target, CombatConte
     for (const auto& spell : _spells)
     {
         // Check availability
-        if (IsOnCooldown(bot, spell.spellId))
+    if (IsOnCooldown(bot, spell.spellId))
             continue;
         if (!HasEnoughResources(bot, spell.spellId))
             continue;

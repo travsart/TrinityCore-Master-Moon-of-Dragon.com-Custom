@@ -342,7 +342,7 @@ void RaidOrchestrator::UpdateEncounterPhase(uint32 diff)
 
         case EncounterPhase::BURN:
             // Execute/burn phase - use all cooldowns
-            if (!IsBloodlustActive())
+    if (!IsBloodlustActive())
             {
                 RequestBloodlust();
             }
@@ -567,7 +567,7 @@ void RaidOrchestrator::UpdateAddPriorities()
         if (!creature->IsDungeonBoss() && !creature->isWorldBoss())
         {
             // This is an add
-            if (::std::find(adds.begin(), adds.end(), creature->GetGUID()) == adds.end())
+    if (::std::find(adds.begin(), adds.end(), creature->GetGUID()) == adds.end())
             {
                 adds.push_back(creature->GetGUID());
             }
@@ -674,7 +674,6 @@ EncounterPhase OnyxiaStrategy::DetectPhase(float bossHealthPct) const
 {
     if (bossHealthPct < 40.0f)
         return EncounterPhase::BURN; // Phase 3
-
     if (bossHealthPct < 65.0f)
         return EncounterPhase::TRANSITION; // Phase 2 (air)
 

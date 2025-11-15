@@ -95,7 +95,7 @@ void BotLevelDistribution::LoadBrackets(TeamId faction, ::std::string const& pre
         float percentage = sPlayerbotConfig->GetFloat(rangeKey + ".Pct", 0.0f);
 
         // Skip invalid brackets
-        if (minLevel == 0 || maxLevel == 0 || percentage == 0.0f)
+    if (minLevel == 0 || maxLevel == 0 || percentage == 0.0f)
         {
             TC_LOG_DEBUG("playerbot", "BotLevelDistribution: Skipping invalid bracket {} (min={}, max={}, pct={})",
                 i, minLevel, maxLevel, percentage);
@@ -103,7 +103,7 @@ void BotLevelDistribution::LoadBrackets(TeamId faction, ::std::string const& pre
         }
 
         // Validate bracket
-        if (minLevel > maxLevel)
+    if (minLevel > maxLevel)
         {
             TC_LOG_ERROR("playerbot", "BotLevelDistribution: Invalid bracket {} - minLevel ({}) > maxLevel ({})",
                 i, minLevel, maxLevel);
@@ -127,7 +127,7 @@ void BotLevelDistribution::LoadBrackets(TeamId faction, ::std::string const& pre
         brackets.push_back(bracket);
 
         // Build level lookup map
-        for (uint32 level = minLevel; level <= maxLevel; ++level)
+    for (uint32 level = minLevel; level <= maxLevel; ++level)
         {
             levelMap[level] = brackets.size() - 1;
         }
@@ -275,7 +275,7 @@ LevelBracket const* BotLevelDistribution::SelectBracketWeighted(TeamId faction) 
     {
         float priority = bracket.GetSelectionPriority(totalBots);
         // Boost priority for underpopulated brackets
-        if (priority > 0.0f)
+    if (priority > 0.0f)
             priority *= 2.0f;  // Double weight for underpopulated
         else
             priority = 0.01f;  // Minimal chance for overpopulated
@@ -476,7 +476,6 @@ bool BotLevelDistribution::IsDistributionBalanced(TeamId faction) const
 
     if (totalBots == 0)
         return true;  // Empty is considered balanced
-
     for (auto const& bracket : brackets)
     {
         if (!bracket.IsWithinTolerance(totalBots))

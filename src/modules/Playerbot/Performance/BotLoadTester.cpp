@@ -192,13 +192,13 @@ bool BotLoadTester::RunScalabilityTest(uint32_t startBots, uint32_t maxBots, uin
         }
 
         // Wait for test to complete
-        while (_testRunning.load())
+    while (_testRunning.load())
             ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
         scalabilityResults.push_back(_currentResults);
 
         // Check if performance degraded significantly
-        if (!scalabilityResults.empty())
+    if (!scalabilityResults.empty())
         {
             const auto& lastResult = scalabilityResults.back();
             if (lastResult.averageCpuUsage > _thresholds.maxCpuUsagePercent ||
@@ -249,7 +249,7 @@ bool BotLoadTester::RunStressTest(uint32_t botCount, uint32_t durationSeconds)
         }
 
         // Wait for test to complete
-        while (_testRunning.load())
+    while (_testRunning.load())
             ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
         stressResults.push_back(_currentResults);
@@ -352,8 +352,7 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
             uint32_t rampUpTime = _rampUpTime.load();
             uint32_t botCount = static_cast<uint32_t>(_currentTestConfigs.size());
             uint32_t spawnInterval = rampUpTime * 1000 / botCount; // ms between spawns
-
-            for (size_t i = 0; i < _currentTestConfigs.size() && !_shutdownRequested.load(); ++i)
+    for (size_t i = 0; i < _currentTestConfigs.size() && !_shutdownRequested.load(); ++i)
             {
                 if (_testPaused.load())
                 {
@@ -388,7 +387,7 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
                 }
 
                 // Update bot behaviors
-                for (uint32_t botGuid : _testBotGuids)
+    for (uint32_t botGuid : _testBotGuids)
                 {
                     auto it = ::std::find_if(_currentTestConfigs.begin(), _currentTestConfigs.end(),
                         [botGuid](const BotLoadTestConfig& config) { return config.botGuid == botGuid; });
@@ -410,7 +409,7 @@ void BotLoadTester::ExecuteTestPhase(LoadTestPhase phase)
             TC_LOG_INFO("playerbot", "BotLoadTester: Phase PEAK_LOAD - Maximum stress testing");
 
             // Increase bot activity to maximum for 60 seconds
-            for (uint32_t botGuid : _testBotGuids)
+    for (uint32_t botGuid : _testBotGuids)
             {
                 ExecuteStressTest(botGuid);
             }
@@ -625,7 +624,6 @@ void BotLoadTester::ExecuteMixedBehavior(uint32_t botGuid)
 {
     // Randomly execute different behaviors
     uint32_t behaviorType = urand(0, 7); // 0-7 (thread-safe)
-
     switch (behaviorType)
     {
         case 0: ExecuteRandomMovement(botGuid); break;

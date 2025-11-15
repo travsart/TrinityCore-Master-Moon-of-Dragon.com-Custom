@@ -298,7 +298,7 @@ void BotResourcePool::ReturnSession(ObjectGuid botGuid)
             _stats.sessionsActive.fetch_sub(1);
 
             // Return to pool if reusable and we have space
-            if (_sessionPool.size() < _maxPoolSize && IsSessionReusable(session))
+    if (_sessionPool.size() < _maxPoolSize && IsSessionReusable(session))
             {
                 _sessionPool.push(session);
                 _stats.sessionsPooled.fetch_add(1);

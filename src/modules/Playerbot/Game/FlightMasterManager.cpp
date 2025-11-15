@@ -41,14 +41,14 @@ namespace Playerbot
         FlightPathStrategy strategy)
     {
         // Validate player
-        if (!player)
+    if (!player)
         {
             TC_LOG_ERROR("playerbot.flight", "FlightMasterManager: Invalid player (nullptr)");
             return FlightResult::PLAYER_INVALID;
         }
 
         // Check if already in flight
-        if (player->IsInFlight())
+    if (player->IsInFlight())
         {
             TC_LOG_WARN("playerbot.flight",
                 "FlightMasterManager: Player {} already in flight",
@@ -82,7 +82,7 @@ namespace Playerbot
         }
 
         // Check if already at destination
-        if (sourceNode == destinationNode)
+    if (sourceNode == destinationNode)
         {
             TC_LOG_DEBUG("playerbot.flight",
                 "FlightMasterManager: Player {} already at destination taxi node {}",
@@ -104,14 +104,14 @@ namespace Playerbot
         FlightPathStrategy strategy)
     {
         // Validate player
-        if (!player)
+    if (!player)
         {
             TC_LOG_ERROR("playerbot.flight", "FlightMasterManager: Invalid player (nullptr)");
             return FlightResult::PLAYER_INVALID;
         }
 
         // Check if already in flight
-        if (player->IsInFlight())
+    if (player->IsInFlight())
         {
             TC_LOG_WARN("playerbot.flight",
                 "FlightMasterManager: Player {} already in flight",
@@ -150,7 +150,7 @@ namespace Playerbot
         FlightPathInfo const& pathInfo = *pathInfoOpt;
 
         // Check if player can afford flight
-        if (pathInfo.goldCost > player->GetMoney())
+    if (pathInfo.goldCost > player->GetMoney())
         {
             TC_LOG_WARN("playerbot.flight",
                 "FlightMasterManager: Player {} cannot afford flight ({} copper cost, {} copper available)",
@@ -201,7 +201,7 @@ namespace Playerbot
                 continue;
 
             // Check if creature is a flight master
-            if (!creature->IsTaxi())
+    if (!creature->IsTaxi())
                 continue;
 
             // Calculate distance to player
@@ -219,7 +219,7 @@ namespace Playerbot
                         continue;
 
                     // Check if taxi node is on same continent
-                    if (node->ContinentID != creature->GetMapId())
+    if (node->ContinentID != creature->GetMapId())
                         continue;
 
                     // Calculate distance from creature to taxi node
@@ -259,17 +259,17 @@ namespace Playerbot
         float minDistance = ::std::numeric_limits<float>::max();
 
         // Iterate all taxi nodes
-        for (TaxiNodesEntry const* node : sTaxiNodesStore)
+    for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node)
                 continue;
 
             // Check if taxi node is on same map
-            if (node->ContinentID != mapId)
+    if (node->ContinentID != mapId)
                 continue;
 
             // Only consider nodes part of taxi network
-            if (!node->IsPartOfTaxiNetwork())
+    if (!node->IsPartOfTaxiNetwork())
                 continue;
 
             // Calculate distance to position
@@ -389,11 +389,11 @@ namespace Playerbot
         uint32 destinationNode)
     {
         // Validate player
-        if (!player)
+    if (!player)
             return FlightResult::PLAYER_INVALID;
 
         // Check if already in flight
-        if (player->IsInFlight())
+    if (player->IsInFlight())
             return FlightResult::ALREADY_IN_FLIGHT;
 
         // Check if source node is valid
@@ -407,7 +407,7 @@ namespace Playerbot
             return FlightResult::DESTINATION_INVALID;
 
         // Check if player has discovered destination node
-        if (!HasTaxiNode(player, destinationNode))
+    if (!HasTaxiNode(player, destinationNode))
         {
             TC_LOG_WARN("playerbot.flight",
                 "FlightMasterManager: Player {} has not discovered taxi node {}",
@@ -435,7 +435,7 @@ namespace Playerbot
         uint32 baseCost = static_cast<uint32>(totalDistance / 10.0f);
 
         // Minimum cost: 10 copper
-        if (baseCost < 10)
+    if (baseCost < 10)
             baseCost = 10;
 
         // Apply level scaling (higher level = higher cost)

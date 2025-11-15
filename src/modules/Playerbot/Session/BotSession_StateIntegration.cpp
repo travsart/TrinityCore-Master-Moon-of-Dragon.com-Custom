@@ -7,7 +7,7 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
     {
         ObjectGuid characterGuid = bot ? bot->GetGUID() : ObjectGuid::Empty;
         // Ensure we have a valid player
-        if (!bot)
+    if (!bot)
         {
             TC_LOG_ERROR("module.playerbot.session", "HandleBotPlayerLogin called with null bot");
             _loginState.store(LoginState::LOGIN_FAILED);
@@ -18,13 +18,13 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         Player* pCurrChar = bot;
 
         // Create instance if not already there
-        if (!pCurrChar)
+    if (!pCurrChar)
         {
             pCurrChar = new Player(this);
         }
 
         // Now load the character from database
-        if (!pCurrChar->LoadFromDB(characterGuid, nullptr, true))
+    if (!pCurrChar->LoadFromDB(characterGuid, nullptr, true))
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database", characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
@@ -61,7 +61,7 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
 
         // Create and assign BotAI to take control of the character
-        if (GetPlayer())
+    if (GetPlayer())
         {
             auto botAI = sBotAIFactory->CreateAI(GetPlayer());
             if (botAI)
@@ -111,7 +111,7 @@ void BotSession::HandleBotPlayerLogin(Player* bot)
         // These spells modify spell behavior (m_spellModTakingSpell) but bots don't send client ACK packets
         // When the SpellEvent destructor fires, it tries to destroy a spell that's still referenced → ASSERTION FAILURE
         // Solution: Clear all events immediately after AI initialization to ensure no stale spell events execute
-        if (Player* player = GetPlayer())
+    if (Player* player = GetPlayer())
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             player->m_Events.KillAllEvents(false);  // false = don't force, let graceful shutdown happen

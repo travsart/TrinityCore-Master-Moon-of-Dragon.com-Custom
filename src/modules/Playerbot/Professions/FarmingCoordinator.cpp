@@ -435,7 +435,7 @@ FarmingZoneInfo const* FarmingCoordinator::GetOptimalFarmingZone(::Player* playe
         if (skillLevel >= zone.minSkillLevel && skillLevel <= zone.maxSkillLevel)
         {
             // Prefer zones near character level
-            if (charLevel >= zone.recommendedCharLevel - 5 && charLevel <= zone.recommendedCharLevel + 10)
+    if (charLevel >= zone.recommendedCharLevel - 5 && charLevel <= zone.recommendedCharLevel + 10)
                 suitable.push_back(zone);
         }
     }

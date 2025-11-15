@@ -46,7 +46,7 @@ namespace
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -198,13 +198,13 @@ void AoEDecisionManager::Update(uint32 diff)
     if (IsTank(_bot))
     {
         // Tanks should use AoE more aggressively for threat
-        if (targetCount >= 2)
+    if (targetCount >= 2)
             _currentStrategy = ::std::max(_currentStrategy, static_cast<AoEStrategy>(CLEAVE));
     }
     else if (IsHealer(_bot))
     {
         // Healers should be conservative with AoE
-        if (_currentStrategy > CLEAVE)
+    if (_currentStrategy > CLEAVE)
             _currentStrategy = CLEAVE;
     }
 }
@@ -403,7 +403,7 @@ float AoEDecisionManager::GetCleavePriority() const
     {
         avgHealth /= validTargets;
         // Reduce priority if targets are low health (will die soon anyway)
-        if (avgHealth < 30.0f)
+    if (avgHealth < 30.0f)
             priority *= 0.5f;
     }
 
@@ -429,7 +429,7 @@ float AoEDecisionManager::GetBestCleaveAngle(float coneAngle) const
             float angleDiff = ::std::abs(angleToTarget - testAngle);
 
             // Normalize angle difference
-            if (angleDiff > M_PI)
+    if (angleDiff > M_PI)
                 angleDiff = 2 * M_PI - angleDiff;
 
             if (angleDiff <= coneAngle / 2)
@@ -563,14 +563,14 @@ float AoEDecisionManager::CalculateResourceEfficiency(uint32 aoeSpellId, uint32 
         float priority = 100.0f;
 
         // Prioritize targets without DoTs
-        if (!info.hasDot)
+    if (!info.hasDot)
             priority += 50.0f;
 
         // Prioritize high health targets
         priority += info.healthPercent * 0.5f;
 
         // Prioritize elites
-        if (info.isElite)
+    if (info.isElite)
             priority += 30.0f;
 
         // Deprioritize distant targets (use snapshot position for lock-free calculation)

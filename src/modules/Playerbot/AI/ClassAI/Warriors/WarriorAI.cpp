@@ -53,7 +53,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+    if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
             return;
 
         // Fallback to charge if nothing else worked
@@ -81,7 +81,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         if (interruptTarget && CanUseAbility(PUMMEL))
         {
             // Cast Pummel on the interrupt target
-            if (CastSpell(PUMMEL, interruptTarget))
+    if (CastSpell(PUMMEL, interruptTarget))
             {
                 RecordInterruptAttempt(interruptTarget, PUMMEL, true);
                 TC_LOG_DEBUG("module.playerbot.ai", "Warrior {} interrupted {} with Pummel",
@@ -117,7 +117,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldAOE())
     {
         // Whirlwind for AoE damage
-        if (CanUseAbility(WHIRLWIND))
+    if (CanUseAbility(WHIRLWIND))
         {
             if (CastSpell(WHIRLWIND))
             {
@@ -129,7 +129,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         }
 
         // Thunder Clap for threat and slow
-        if (CanUseAbility(THUNDER_CLAP))
+    if (CanUseAbility(THUNDER_CLAP))
         {
             if (CastSpell(THUNDER_CLAP))
             {
@@ -141,7 +141,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         }
 
         // Bladestorm for massive AoE
-        if (CanUseAbility(BLADESTORM))
+    if (CanUseAbility(BLADESTORM))
         {
             if (CastSpell(BLADESTORM))
             {
@@ -157,7 +157,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
         // Recklessness for damage boost
-        if (CanUseAbility(RECKLESSNESS))
+    if (CanUseAbility(RECKLESSNESS))
         {
             if (CastSpell(RECKLESSNESS))
             {
@@ -168,7 +168,7 @@ void WarriorAI::UpdateRotation(::Unit* target)
         }
 
         // Avatar for overall boost
-        if (CanUseAbility(AVATAR))
+    if (CanUseAbility(AVATAR))
         {
             if (CastSpell(AVATAR))
             {
@@ -487,7 +487,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     if (GetBot()->GetPower(POWER_RAGE) > RAGE_DUMP_THRESHOLD)
     {
         // Use Cleave if multiple enemies
-        if (GetNearbyEnemyCount(8.0f) > 1 && CanUseAbility(CLEAVE))
+    if (GetNearbyEnemyCount(8.0f) > 1 && CanUseAbility(CLEAVE))
         {
             if (CastSpell(CLEAVE))
             {
@@ -497,7 +497,7 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
         }
 
         // Otherwise use Heroic Strike
-        if (CanUseAbility(HEROIC_STRIKE))
+    if (CanUseAbility(HEROIC_STRIKE))
         {
             if (CastSpell(HEROIC_STRIKE))
             {
@@ -621,7 +621,6 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto& target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))

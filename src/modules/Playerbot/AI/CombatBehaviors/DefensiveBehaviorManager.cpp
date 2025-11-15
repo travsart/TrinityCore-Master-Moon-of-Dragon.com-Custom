@@ -44,7 +44,7 @@ namespace
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -276,7 +276,7 @@ void DefensiveBehaviorManager::UpdateState()
             _currentState.debuffCount++;
 
             // Check for major debuffs (stuns, fears, etc.)
-            if (aura->HasEffectType(SPELL_AURA_MOD_STUN) ||
+    if (aura->HasEffectType(SPELL_AURA_MOD_STUN) ||
                 aura->HasEffectType(SPELL_AURA_MOD_FEAR) ||
                 aura->HasEffectType(SPELL_AURA_MOD_CONFUSE) ||
                 aura->HasEffectType(SPELL_AURA_MOD_CHARM) ||
@@ -305,11 +305,11 @@ void DefensiveBehaviorManager::UpdateState()
                     continue;
 
                 // Check tank status
-                if (GetPlayerRole(member) == BOT_ROLE_TANK && !member->IsAlive())
+    if (GetPlayerRole(member) == BOT_ROLE_TANK && !member->IsAlive())
                     _currentState.tankDead = true;
 
                 // Check healer mana
-                if (GetPlayerRole(member) == BOT_ROLE_HEALER && member->IsAlive())
+    if (GetPlayerRole(member) == BOT_ROLE_HEALER && member->IsAlive())
                 {
                     if (member->GetPowerPct(POWER_MANA) < 20.0f)
                         _currentState.healerOOM = true;
@@ -439,7 +439,7 @@ void DefensiveBehaviorManager::PrepareForIncoming(uint32 spellId)
         {
             // Estimate potential damage (simplified)
             uint32 estimatedDamage = effect.CalcValue() * 2; // Rough estimate
-            if (estimatedDamage > _bot->GetMaxHealth() * 0.3f)
+    if (estimatedDamage > _bot->GetMaxHealth() * 0.3f)
                 isMajorThreat = true;
         }
     }
@@ -570,7 +570,7 @@ void DefensiveBehaviorManager::RequestExternalDefensive(ObjectGuid target, Defen
         if (req.targetGuid == target && !req.fulfilled)
         {
             // Update priority if higher
-            if (priority > req.priority)
+    if (priority > req.priority)
                 req.priority = priority;
             return;
         }
@@ -745,7 +745,7 @@ void DefensiveBehaviorManager::CoordinateExternalDefensives()
                 _metrics.externalDefensivesProvided++;
 
                 // Mark request as fulfilled
-                for (auto& req : _externalRequests)
+    for (auto& req : _externalRequests)
                 {
                     if (req.targetGuid == targetGuid)
                     {
@@ -973,7 +973,7 @@ void DefensiveBehaviorManager::InitializeClassDefensives()
     for (const auto& defensive : classDefensives)
     {
         // Only register if bot has the spell
-        if (_bot->HasSpell(defensive.spellId))
+    if (_bot->HasSpell(defensive.spellId))
         {
             RegisterDefensiveCooldown(defensive);
         }
@@ -1034,7 +1034,7 @@ uint32 DefensiveBehaviorManager::SelectBestDefensive(DefensivePriority priority)
                 const DefensiveCooldown& cdB = _defensiveCooldowns.at(b);
 
                 // Higher tier is better
-                if (cdA.tier != cdB.tier)
+    if (cdA.tier != cdB.tier)
                     return cdA.tier > cdB.tier;
 
                 // Higher score is better

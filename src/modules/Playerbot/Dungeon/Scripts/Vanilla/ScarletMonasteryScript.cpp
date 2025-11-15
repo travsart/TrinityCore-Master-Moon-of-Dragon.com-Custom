@@ -165,7 +165,7 @@ public:
             case 4543: // Bloodmage Thalnos
             {
                 // Thalnos casts Flame Spike and Frost Bolt
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -173,7 +173,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Flame Spike (9532) - high damage
-                        if (spellId == 9532 || spellId == 11829)
+    if (spellId == 9532 || spellId == 11829)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -190,7 +190,7 @@ public:
             case 6487: // Arcanist Doan
             {
                 // Doan casts Arcane Missiles and Polymorph
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -198,7 +198,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Polymorph (13323) - CRITICAL interrupt
-                        if (spellId == 13323 || spellId == 118)
+    if (spellId == 13323 || spellId == 118)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -209,7 +209,7 @@ public:
                         }
 
                         // Arcane Missiles (9435)
-                        if (spellId == 9435 || spellId == 15735)
+    if (spellId == 9435 || spellId == 15735)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -225,7 +225,7 @@ public:
             case 4542: // High Inquisitor Fairbanks
             {
                 // Fairbanks heals himself - MUST interrupt
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -233,7 +233,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Heal (8362) - CRITICAL interrupt
-                        if (spellId == 8362 || spellId == 2054 || spellId == 2055)
+    if (spellId == 8362 || spellId == 2054 || spellId == 2055)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -250,7 +250,7 @@ public:
             case 3976: // Scarlet Commander Mograine
             {
                 // Mograine uses Hammer of Justice (stun) and heals
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -258,7 +258,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Lay on Hands (9257) - EMERGENCY interrupt
-                        if (spellId == 9257 || spellId == 2800)
+    if (spellId == 9257 || spellId == 2800)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -275,7 +275,7 @@ public:
             case 3977: // High Inquisitor Whitemane
             {
                 // Whitemane heals and resurrects - CRITICAL interrupts
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -284,7 +284,7 @@ public:
 
                         // Resurrect (20770) - ABSOLUTELY MUST INTERRUPT
                         // This brings Mograine back to life at full health
-                        if (spellId == 20770 || spellId == 9232)
+    if (spellId == 20770 || spellId == 9232)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -295,7 +295,7 @@ public:
                         }
 
                         // Heal (9232) - Also critical
-                        if (spellId == 9232 || spellId == 2054)
+    if (spellId == 9232 || spellId == 2054)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -312,7 +312,7 @@ public:
             case 14682: // Ironspine
             {
                 // Shadow Bolt spam
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -320,7 +320,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Shadow Bolt
-                        if (spellId == 9613 || spellId == 20297)
+    if (spellId == 9613 || spellId == 20297)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -354,11 +354,11 @@ public:
                 // Visual: He glows bright blue
 
                 // Check if Doan is casting Detonation (9435 or similar)
-                if (boss->HasAura(13323) || boss->HasAura(9435))
+    if (boss->HasAura(13323) || boss->HasAura(9435))
                 {
                     float distance = player->GetExactDist(boss);
                     // If within 20 yards of Doan during detonation, RUN AWAY
-                    if (distance < 20.0f)
+    if (distance < 20.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: EMERGENCY - Running from Doan's Detonation");
 
@@ -464,12 +464,12 @@ public:
                 // Whirlwind lasts several seconds and deals massive damage
 
                 // Check if Herod is whirlwinding (8989)
-                if (boss->HasAura(8989))
+    if (boss->HasAura(8989))
                 {
                     float distance = player->GetExactDist(boss);
 
                     // Everyone get to 10+ yards
-                    if (distance < 10.0f)
+    if (distance < 10.0f)
                     {
                         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: Running from Herod's Whirlwind");
 
@@ -546,7 +546,7 @@ public:
                         continue;
 
                     // Check for Shadow Word: Pain (589)
-                    if (groupMember->HasAura(589) || groupMember->HasAura(2060))
+    if (groupMember->HasAura(589) || groupMember->HasAura(2060))
                     {
                         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: Dispelling Shadow Word: Pain");
                         // Dispel magic
@@ -570,7 +570,7 @@ public:
                         continue;
 
                     // Check for sleep
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_STUN) ||
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_STUN) ||
                         groupMember->HasAura(9256))
                     {
                         TC_LOG_DEBUG("module.playerbot", "ScarletMonasteryScript: Waking player from Whitemane's sleep");
@@ -627,7 +627,7 @@ public:
             {
                 // During whirlwind, maintain distance
                 // After whirlwind, return to position
-                if (boss->HasAura(8989))
+    if (boss->HasAura(8989))
                 {
                     // Stay away during whirlwind
                     HandlePositioning(player, boss);
@@ -640,7 +640,7 @@ public:
             {
                 // During Detonation, run away
                 // During normal phase, maintain position
-                if (boss->HasAura(13323))
+    if (boss->HasAura(13323))
                 {
                     HandleGroundAvoidance(player, boss);
                     return;

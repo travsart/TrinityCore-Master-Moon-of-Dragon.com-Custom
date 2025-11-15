@@ -83,8 +83,7 @@ namespace Playerbot
     bool InteractionManager::Initialize()
     {
         // No lock needed - interaction state is per-bot instance data
-
-        if (m_initialized)
+    if (m_initialized)
             return true;
 
         TC_LOG_INFO("playerbot", "Initializing InteractionManager");
@@ -92,7 +91,7 @@ namespace Playerbot
         InitializeHandlers();
 
         // Initialize metrics for each interaction type
-        for (uint8 i = 0; i < static_cast<uint8>(InteractionType::MAX_INTERACTION); ++i)
+    for (uint8 i = 0; i < static_cast<uint8>(InteractionType::MAX_INTERACTION); ++i)
         {
             m_metrics[static_cast<InteractionType>(i)] = InteractionMetrics();
         }
@@ -117,21 +116,20 @@ namespace Playerbot
     void InteractionManager::Shutdown()
     {
         // No lock needed - interaction state is per-bot instance data
-
-        if (!m_initialized)
+    if (!m_initialized)
             return;
 
         TC_LOG_INFO("playerbot", "Shutting down InteractionManager");
 
         // Cancel all active interactions
-        for (auto& [guid, context] : m_activeInteractions)
+    for (auto& [guid, context] : m_activeInteractions)
         {
             context->state = InteractionState::Failed;
         }
         m_activeInteractions.clear();
 
         // Clear queue
-        while (!m_interactionQueue.empty())
+    while (!m_interactionQueue.empty())
             m_interactionQueue.pop();
 
         CleanupHandlers();
@@ -155,8 +153,7 @@ namespace Playerbot
     void InteractionManager::Update(uint32 diff)
     {
         // No lock needed - interaction state is per-bot instance data
-
-        if (!m_initialized)
+    if (!m_initialized)
             return;
 
         // Clean NPC type cache every 5 minutes
@@ -168,7 +165,7 @@ namespace Playerbot
         }
 
         // Process queued interactions
-        while (!m_interactionQueue.empty() &&
+    while (!m_interactionQueue.empty() &&
                m_activeInteractions.size() < m_config.maxConcurrentInteractions)
         {
             auto& queued = m_interactionQueue.top();
@@ -183,7 +180,7 @@ namespace Playerbot
             }
 
             // Start the queued interaction
-            if (Player* bot = ObjectAccessor::FindPlayer(queued.botGuid))
+    if (Player* bot = ObjectAccessor::FindPlayer(queued.botGuid))
             {
                 // PHASE 5D: Thread-safe spatial grid validation
                 // FindPlayer is safe (global storage), but GetWorldObject needs snapshot validation
@@ -223,7 +220,7 @@ namespace Playerbot
         }
 
         // Remove completed interactions
-        for (const auto& guid : toRemove)
+    for (const auto& guid : toRemove)
         {
             m_activeInteractions.erase(guid);
         }
@@ -238,15 +235,15 @@ namespace Playerbot
         // No lock needed - interaction state is per-bot instance data
 
         // Check if bot already has active interaction
-        if (HasActiveInteraction(bot))
+    if (HasActiveInteraction(bot))
             return InteractionResult::TargetBusy;
 
         // Check combat state
-        if (bot->IsInCombat() && type != InteractionType::SpiritHealer)
+    if (bot->IsInCombat() && type != InteractionType::SpiritHealer)
             return InteractionResult::InCombat;
 
         // Auto-detect type if not specified
-        if (type == InteractionType::None)
+    if (type == InteractionType::None)
         {
             if (Creature* creature = target->ToCreature())
                 type = DetectNPCType(creature);
@@ -269,10 +266,10 @@ namespace Playerbot
             return InteractionResult::InvalidTarget;
 
         // Validate interaction requirements
-        if (!m_validator->CanInteract(bot, target, type))
+    if (!m_validator->CanInteract(bot, target, type))
             return InteractionResult::RequirementNotMet;
         // Check range
-        if (!IsInInteractionRange(bot, target))
+    if (!IsInInteractionRange(bot, target))
         {
             if (!MoveToInteractionRange(bot, target))
                 return InteractionResult::TooFarAway;
@@ -289,7 +286,7 @@ namespace Playerbot
         context->maxAttempts = 3;
 
         // Determine if gossip is needed
-        if (Creature* creature = target->ToCreature())
+    if (Creature* creature = target->ToCreature())
         {
             context->needsGossip = m_gossipHandler->NeedsGossipNavigation(creature, type);
             if (context->needsGossip)
@@ -324,7 +321,7 @@ namespace Playerbot
         if (it != m_activeInteractions.end())
         {
             // Verify this is the correct interaction to cancel
-            if (targetGuid.IsEmpty() || it->second->targetGuid == targetGuid)
+    if (targetGuid.IsEmpty() || it->second->targetGuid == targetGuid)
             {
                 CompleteInteraction(bot, InteractionResult::Interrupted);
                 m_activeInteractions.erase(it);
@@ -371,7 +368,7 @@ namespace Playerbot
         NPCFlags npcFlags = target->GetNpcFlags();
 
         // Priority order for multi-flag NPCs
-        if (npcFlags & UNIT_NPC_FLAG_TRAINER)
+    if (npcFlags & UNIT_NPC_FLAG_TRAINER)
             type = InteractionType::Trainer;
         else if (npcFlags & UNIT_NPC_FLAG_VENDOR || npcFlags & UNIT_NPC_FLAG_REPAIR)
             type = InteractionType::Vendor;
@@ -449,15 +446,14 @@ namespace Playerbot
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        for (Creature* creature : creatures)
+    for (Creature* creature : creatures)
         {
             // Convert InteractionType to NPCType for comparison
             InteractionType interactionType = DetectNPCType(creature);
             NPCType npcType = NPCType::GENERAL;
 
             // Map InteractionType to NPCType
-            switch (interactionType)
+    switch (interactionType)
             {
                 case InteractionType::Vendor:
                     npcType = NPCType::VENDOR;
@@ -517,7 +513,7 @@ namespace Playerbot
             return InteractionResult::InvalidTarget;
 
         // Start interaction if not already active
-        if (!HasActiveInteraction(bot))
+    if (!HasActiveInteraction(bot))
         {
             InteractionResult startResult = StartInteraction(bot, vendor, InteractionType::Vendor);
             if (startResult != InteractionResult::Pending)
@@ -632,8 +628,7 @@ namespace Playerbot
             isValidBanker = (creature->GetNpcFlags() & UNIT_NPC_FLAG_BANKER) != 0;
         else if (GameObject* go = banker->ToGameObject())
             isValidBanker = go->GetGoType() == GAMEOBJECT_TYPE_CHEST; // Bank chest
-
-        if (!isValidBanker)
+    if (!isValidBanker)
             return InteractionResult::InvalidTarget;
 
         if (!HasActiveInteraction(bot))
@@ -697,7 +692,7 @@ namespace Playerbot
             return;
 
         // For bots, select gossip option directly
-        if (Creature* creature = target->ToCreature())
+    if (Creature* creature = target->ToCreature())
         {
             bot->PlayerTalkClass->SendCloseGossip();
             // OnGossipSelect doesn't exist in TrinityCore 11.2 - use gossip handler instead
@@ -708,8 +703,7 @@ namespace Playerbot
     InteractionMetrics InteractionManager::GetMetrics(InteractionType type) const
     {
         // No lock needed - interaction state is per-bot instance data
-
-        if (type == InteractionType::None)
+    if (type == InteractionType::None)
         {
             // Return combined metrics
             InteractionMetrics combined;
@@ -827,7 +821,7 @@ namespace Playerbot
         ++context->attemptCount;
 
         // Check if we should retry
-        if (context->attemptCount < context->maxAttempts)
+    if (context->attemptCount < context->maxAttempts)
         {
             if (AttemptRecovery(bot))
                 return;
@@ -949,7 +943,7 @@ namespace Playerbot
     bool InteractionManager::UpdateInteraction(Player* bot, InteractionContext& context, uint32 diff)
     {
         // Check timeout
-        if (CheckTimeout(context))
+    if (CheckTimeout(context))
         {
             HandleInteractionError(bot, InteractionResult::Cooldown);
             return false;
@@ -998,7 +992,7 @@ namespace Playerbot
                 }
 
                 // Still moving - check MotionMaster instead of IsMoving()
-                if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != IDLE_MOTION_TYPE)
+    if (bot->GetMotionMaster()->GetCurrentMovementGeneratorType() != IDLE_MOTION_TYPE)
                     return InteractionResult::Pending;
 
                 // Not moving and not in range = problem
@@ -1013,10 +1007,10 @@ namespace Playerbot
                 // Set selection
                 bot->SetSelection(target->GetGUID());
                 // Initiate interaction
-                if (context.needsGossip)
+    if (context.needsGossip)
                 {
                     // For bots, we need to interact with gossip NPCs directly
-                    if (Creature* creature = target->ToCreature())
+    if (Creature* creature = target->ToCreature())
                     {
                         // SendPrepareGossip was removed - use PlayerTalkClass->SendGossipMenu instead
                         // GossipMenuIds is now a vector in TrinityCore 11.2, use first entry if available
@@ -1048,7 +1042,7 @@ namespace Playerbot
             case InteractionState::ProcessingMenu:
             {
                 // Process gossip menu options
-                if (context.gossipPath.empty())
+    if (context.gossipPath.empty())
                 {
                     context.state = InteractionState::ExecutingAction;
                 }
@@ -1145,19 +1139,19 @@ namespace Playerbot
             return false;
 
         // Quest requirements
-        if (requiredQuest > 0 && !bot->GetQuestStatus(requiredQuest))
+    if (requiredQuest > 0 && !bot->GetQuestStatus(requiredQuest))
             return false;
 
         // Item requirements
-        if (requiredItem > 0 && !bot->HasItemCount(requiredItem, 1))
+    if (requiredItem > 0 && !bot->HasItemCount(requiredItem, 1))
             return false;
 
         // Spell requirements
-        if (requiredSpell > 0 && !bot->HasSpell(requiredSpell))
+    if (requiredSpell > 0 && !bot->HasSpell(requiredSpell))
             return false;
 
         // Skill requirements
-        if (requiredSkill > 0)
+    if (requiredSkill > 0)
         {
             uint16 skillValue = bot->GetSkillValue(requiredSkill);
             if (skillValue < requiredSkillRank)
@@ -1165,7 +1159,7 @@ namespace Playerbot
         }
 
         // Faction requirements
-        if (requiredFaction > 0)
+    if (requiredFaction > 0)
         {
             ReputationRank rank = bot->GetReputationRank(requiredFaction);
             if (static_cast<uint32>(rank) < requiredFactionRank)
@@ -1173,7 +1167,7 @@ namespace Playerbot
         }
 
         // Money requirements
-        if (requiredMoney > 0 && bot->GetMoney() < requiredMoney)
+    if (requiredMoney > 0 && bot->GetMoney() < requiredMoney)
             return false;
 
         // Combat requirements

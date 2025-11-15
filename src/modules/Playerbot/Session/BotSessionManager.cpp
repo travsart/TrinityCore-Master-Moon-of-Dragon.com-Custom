@@ -152,7 +152,7 @@ void BotSessionManager::ProcessBotCallbacks(WorldSession* session)
     {
         // Only process callbacks if bot session specifically needs them
         // This avoids the recursive WorldSession::Update() calls
-        if (botSession->GetLoginState() == BotSession::LoginState::QUERY_PENDING ||
+    if (botSession->GetLoginState() == BotSession::LoginState::QUERY_PENDING ||
             botSession->GetLoginState() == BotSession::LoginState::QUERY_COMPLETE)
         {
             // CRITICAL FIX: Process ALL callback processors, not just _queryProcessor
@@ -162,7 +162,7 @@ void BotSessionManager::ProcessBotCallbacks(WorldSession* session)
         }
 
         // Process pending login state changes
-        if (botSession->GetLoginState() != BotSession::LoginState::NONE &&
+    if (botSession->GetLoginState() != BotSession::LoginState::NONE &&
             botSession->GetLoginState() != BotSession::LoginState::LOGIN_COMPLETE)
         {
             botSession->ProcessPendingLogin();

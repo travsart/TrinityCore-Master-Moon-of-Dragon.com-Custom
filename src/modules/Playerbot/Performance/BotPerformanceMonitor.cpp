@@ -517,7 +517,7 @@ void BotPerformanceMonitor::ProcessMetrics()
                 break;
 
             // Collect up to 1000 metrics at once
-            while (!_metricsQueue.empty() && metricsToProcess.size() < 1000)
+    while (!_metricsQueue.empty() && metricsToProcess.size() < 1000)
             {
                 metricsToProcess.push_back(_metricsQueue.front());
                 _metricsQueue.pop();
@@ -525,7 +525,7 @@ void BotPerformanceMonitor::ProcessMetrics()
         } // Release lock before processing
 
         // Process metrics without holding queue lock (UpdateStatistics needs _metricsMutex)
-        for (auto const& metric : metricsToProcess)
+    for (auto const& metric : metricsToProcess)
         {
             UpdateStatistics(metric);
         }
@@ -550,7 +550,7 @@ void BotPerformanceMonitor::ProcessAlertsQueue()
             _recentAlerts.push_back(alert);
 
             // Keep only recent alerts
-            if (_recentAlerts.size() > MAX_RECENT_ALERTS)
+    if (_recentAlerts.size() > MAX_RECENT_ALERTS)
                 _recentAlerts.erase(_recentAlerts.begin());
 
             // Log alert

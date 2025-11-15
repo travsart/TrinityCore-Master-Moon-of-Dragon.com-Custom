@@ -49,7 +49,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 Beast Mastery Hunter Spell IDs
 enum BeastMasterySpells
 {
@@ -876,7 +876,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_BESTIAL_WRATH))
 
@@ -907,7 +907,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
 
@@ -954,7 +954,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND))
 
@@ -987,7 +987,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DIRE_BEAST))
 
@@ -1038,7 +1038,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->HasBarbedShotCharge())
 
@@ -1087,7 +1087,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 40)
 
@@ -1116,7 +1116,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 35)
 

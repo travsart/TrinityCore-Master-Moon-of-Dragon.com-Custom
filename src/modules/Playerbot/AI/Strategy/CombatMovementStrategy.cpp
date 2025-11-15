@@ -108,7 +108,7 @@ namespace Playerbot
             return;
 
         // Stop any ongoing movement
-        if (_isMoving)
+    if (_isMoving)
         {
             player->GetMotionMaster()->Clear();
             _isMoving = false;
@@ -130,7 +130,7 @@ namespace Playerbot
             return false;
 
         // Strategy is active if bot is in combat with a valid target
-        if (!player->IsInCombat())
+    if (!player->IsInCombat())
             return false;
 
         Unit* target = player->GetSelectedUnit();
@@ -163,18 +163,18 @@ namespace Playerbot
         }
 
         // Update role if needed (spec change, level up, etc.)
-        if (_currentRole == ROLE_NONE)
+    if (_currentRole == ROLE_NONE)
             _currentRole = DetermineRole(player);
 
         // Check if we should update position
-        if (!ShouldUpdatePosition(diff))
+    if (!ShouldUpdatePosition(diff))
             return;
 
         // Reset position update timer
         _lastPositionUpdate = 0;
 
         // Handle danger avoidance first
-        if (IsStandingInDanger(player))
+    if (IsStandingInDanger(player))
         {
             Position safePos = FindSafePosition(player, player->GetPosition(), DANGER_CHECK_RADIUS);
             if (safePos != player->GetPosition())
@@ -208,7 +208,7 @@ namespace Playerbot
         }
 
         // Check if we're already in position
-        if (IsInCorrectPosition(player, targetPosition))
+    if (IsInCorrectPosition(player, targetPosition))
         {
             if (_isMoving)
             {
@@ -219,13 +219,13 @@ namespace Playerbot
         }
 
         // Verify the position is safe
-        if (!IsPositionSafe(targetPosition, player))
+    if (!IsPositionSafe(targetPosition, player))
         {
             targetPosition = FindSafePosition(player, targetPosition, 5.0f);
         }
 
         // Move to position if needed
-        if (IsPositionReachable(player, targetPosition))
+    if (IsPositionReachable(player, targetPosition))
         {
             LogPositionUpdate(player, targetPosition, "Combat positioning");
             MoveToPosition(player, targetPosition);
@@ -251,7 +251,7 @@ namespace Playerbot
         uint8 playerClass = player->GetClass();
         // For now, use class-based defaults
         // TODO: Implement talent/spec detection when API is available
-        switch (playerClass)
+    switch (playerClass)
         {
             case CLASS_WARRIOR:
                 // Warriors can be tanks or DPS, default to tank for safety
@@ -357,10 +357,10 @@ namespace Playerbot
         Position pos = GetPositionAtDistanceAngle(target, distance, angle);
 
         // Ensure line of sight
-        if (!player->IsWithinLOS(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()))
+    if (!player->IsWithinLOS(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()))
         {
             // Try different angles to find LOS
-            for (int i = 1; i <= 4; ++i)
+    for (int i = 1; i <= 4; ++i)
             {
                 float testAngle = baseAngle + (i % 2 ? i : -i) * 0.5f;
                 pos = GetPositionAtDistanceAngle(target, distance, testAngle);
@@ -405,7 +405,7 @@ namespace Playerbot
                 for (auto const& snapshot : nearbyPlayers)
                 {
                     // Only include friendly players (same faction or in group)
-                    if (snapshot.guid != player->GetGUID()) // Exclude self
+    if (snapshot.guid != player->GetGUID()) // Exclude self
                         allyGuids.push_back(snapshot.guid);
                 }
 
@@ -419,7 +419,7 @@ namespace Playerbot
                     int visibleAllies = 0;
 
                     // Count visible allies using snapshot positions
-                    for (auto const& snapshot : nearbyPlayers)
+    for (auto const& snapshot : nearbyPlayers)
                     {
                         if (snapshot.guid == player->GetGUID())
                             continue; // Skip self
@@ -432,7 +432,7 @@ namespace Playerbot
 
                         // Simple distance check (proper LOS would require Map access)
                         // For healer positioning, distance is a good proxy
-                        if (distSq < 40.0f * 40.0f)
+    if (distSq < 40.0f * 40.0f)
                             ++visibleAllies;
                     }
 
@@ -569,7 +569,7 @@ namespace Playerbot
         for (auto const& trigger : nearbyAreaTriggers)
         {
             // Only check spell-based area triggers
-            if (trigger.spellId == 0)
+    if (trigger.spellId == 0)
                 continue;
 
             // Check spell to determine if it's harmful
@@ -615,14 +615,13 @@ namespace Playerbot
             return preferredPosition;
 
         // First check if preferred position is safe
-        if (IsPositionSafe(preferredPosition, player))
+    if (IsPositionSafe(preferredPosition, player))
             return preferredPosition;
 
         // Search in a spiral pattern for a safe position
         float bestDistance = searchRadius * 2;
         Position bestPosition = player->GetPosition(); // Default to current position
-
-        for (float angle = 0; angle < 2 * M_PI; angle += static_cast<float>(M_PI / 8)) // Check 16 points
+    for (float angle = 0; angle < 2 * M_PI; angle += static_cast<float>(M_PI / 8)) // Check 16 points
         {
             for (float dist = 3.0f; dist <= searchRadius; dist += 3.0f)
             {
@@ -663,7 +662,7 @@ namespace Playerbot
         for (auto const& trigger : nearbyAreaTriggers)
         {
             // Only check spell-based area triggers
-            if (trigger.spellId == 0)
+    if (trigger.spellId == 0)
                 continue;
 
             // Check spell to determine if it's harmful
@@ -749,7 +748,7 @@ namespace Playerbot
         float z = target->GetPositionZ();
 
         // Adjust Z to ground level
-        if (Map* map = target->GetMap())
+    if (Map* map = target->GetMap())
         {
             z = map->GetHeight(target->GetPhaseShift(), x, y, z + 2.0f);
         }
@@ -763,7 +762,7 @@ namespace Playerbot
         _movementTimer += diff;
 
         // Check for movement timeout
-        if (_isMoving && _movementTimer > MOVEMENT_TIMEOUT)
+    if (_isMoving && _movementTimer > MOVEMENT_TIMEOUT)
         {
             TC_LOG_DEBUG("module.playerbot", "CombatMovementStrategy::ShouldUpdatePosition: Movement timeout reached");
             _isMoving = false;

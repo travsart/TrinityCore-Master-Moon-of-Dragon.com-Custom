@@ -146,7 +146,7 @@ std::vector<ThreatTarget> ThreatAssistant::GetDangerousTargets(Player* tank, flo
             tt.currentTarget = victim->GetGUID();
 
         // Only include targets above threat threshold
-        if (tt.threatPercent >= minThreatPercent || tt.isDangerous)
+    if (tt.threatPercent >= minThreatPercent || tt.isDangerous)
             targets.push_back(tt);
     }
 

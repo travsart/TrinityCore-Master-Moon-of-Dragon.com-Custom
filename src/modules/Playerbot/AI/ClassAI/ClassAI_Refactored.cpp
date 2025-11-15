@@ -57,7 +57,6 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 {
     // CRITICAL: This method is called BY BotAI::UpdateAI() when in combat
     // It does NOT replace UpdateAI(), it extends it for combat only
-
     if (!GetBot() || !GetBot()->IsAlive())
         return;
 
@@ -231,14 +230,13 @@ void ClassAI::UpdateTargeting()
             continue;
 
         // Apply original filtering logic: check if valid attack target
-        if (!GetBot()->IsValidAttackTarget(entity))
+    if (!GetBot()->IsValidAttackTarget(entity))
             continue;
 
         // Add to targets list for distance sorting
         targets.push_back(entity);
     }
     // End of spatial grid fix
-
     for (::Unit* target : targets)
     {
         if (!target || !GetBot()->IsValidAttackTarget(target))

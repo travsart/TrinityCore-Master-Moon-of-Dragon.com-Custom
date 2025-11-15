@@ -261,15 +261,15 @@ DefensiveCooldown* DefensiveManager::FindDefensive(uint32 spellId)
     for (auto& defensive : _availableDefensives)
     {
         // Check priority
-        if (defensive.priority > minPriority)
+    if (defensive.priority > minPriority)
             continue;
 
         // Check availability
-        if (!defensive.IsAvailable())
+    if (!defensive.IsAvailable())
             continue;
 
         // Check cooldown
-        if (IsOnCooldown(defensive.spellId))
+    if (IsOnCooldown(defensive.spellId))
             continue;
 
         available.push_back(&defensive);
@@ -303,7 +303,6 @@ void DefensiveManager::UpdateDamageTracking(const CombatMetrics& metrics)
     // TODO: Implement damage tracking from combat metrics
     // This requires integration with combat metrics system
     // For now, use simple heuristic
-
     if (!_bot)
         return;
 

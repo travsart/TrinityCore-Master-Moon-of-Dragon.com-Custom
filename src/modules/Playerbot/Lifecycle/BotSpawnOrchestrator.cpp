@@ -187,7 +187,7 @@ uint32 BotSpawnOrchestrator::SpawnBots(::std::vector<SpawnRequest> const& reques
     _characterSelector->ProcessBatchSelection(requests,
         [this, &successfulSpawns](::std::vector<ObjectGuid> selectedCharacters) {
             // Process each selected character
-            for (size_t i = 0; i < selectedCharacters.size(); ++i)
+    for (size_t i = 0; i < selectedCharacters.size(); ++i)
             {
                 if (!selectedCharacters[i].IsEmpty())
                 {
@@ -213,7 +213,7 @@ void BotSpawnOrchestrator::SpawnToPopulationTarget()
         uint32 botsNeeded = zonePopulation.targetBotCount - zonePopulation.botCount;
 
         // Create spawn requests for needed bots
-        for (uint32 i = 0; i < botsNeeded && i < 10; ++i) // Limit to 10 per update cycle
+    for (uint32 i = 0; i < botsNeeded && i < 10; ++i) // Limit to 10 per update cycle
         {
             SpawnRequest request;
             request.zoneId = zoneId;

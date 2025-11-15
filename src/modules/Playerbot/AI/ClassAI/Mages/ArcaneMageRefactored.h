@@ -48,7 +48,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Arcane Mage Spell IDs
 constexpr uint32 ARCANE_BLAST = 30451;
 constexpr uint32 ARCANE_MISSILES = 5143;
@@ -567,7 +567,7 @@ private:
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 70 &&
                                        !this->_arcaneSurgeActive;
                             }),
-                            ::bot::ai::Action("Cast Arcane Surge", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Surge", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ARCANE_SURGE, bot))
                                 {
                                     this->CastSpell(ARCANE_SURGE, bot);
@@ -582,7 +582,7 @@ private:
                             Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(TOUCH_OF_MAGE);
                             }),
-                            ::bot::ai::Action("Cast Touch of the Magi", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Touch of the Magi", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(TOUCH_OF_MAGE, target))
                                 {
                                     this->CastSpell(TOUCH_OF_MAGE, target);
@@ -599,7 +599,7 @@ private:
                     Condition("Target exists and has proc", [this](Player* bot, Unit* target) {
                         return target != nullptr && this->_clearcastingTracker.IsActive();
                     }),
-                    ::bot::ai::Action("Cast Arcane Missiles", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Arcane Missiles", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ARCANE_MISSILES, target))
                         {
                             this->CastSpell(ARCANE_MISSILES, target);
@@ -623,7 +623,7 @@ private:
                                        (this->_chargeTracker.GetCharges() >= 2 &&
                                         bot->GetPowerPct(POWER_MANA) < 30);
                             }),
-                            ::bot::ai::Action("Cast Arcane Barrage", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Arcane Barrage", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(ARCANE_BARRAGE, target))
                                 {
                                     this->CastSpell(ARCANE_BARRAGE, target);
@@ -638,7 +638,7 @@ private:
                             Condition("< 4 charges", [this](Player* bot, Unit*) {
                                 return this->_chargeTracker.GetCharges() < 4;
                             }),
-                            ::bot::ai::Action("Cast Presence of Mind", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Presence of Mind", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(PRESENCE_OF_MIND, bot))
                                 {
                                     this->CastSpell(PRESENCE_OF_MIND, bot);
@@ -663,7 +663,7 @@ private:
                                (bot->GetPowerPct(POWER_MANA) > 20 ||
                                 this->_chargeTracker.GetCharges() < 4);
                     }),
-                    ::bot::ai::Action("Cast Arcane Blast", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Arcane Blast", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ARCANE_BLAST, target))
                         {
                             this->CastSpell(ARCANE_BLAST, target);

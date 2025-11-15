@@ -645,7 +645,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
         float roleBonus = 0.0f;
 
         // Get item's primary stats
-        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
         {
             if (itemTemplate->ItemStat[i].ItemStatValue == 0)
                 continue;
@@ -657,7 +657,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
             {
                 case GroupRole::TANK:
                     // Tanks need Stamina, Armor, Avoidance
-                    if (statType == ITEM_MOD_STAMINA)
+    if (statType == ITEM_MOD_STAMINA)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
                         roleBonus += statValue * 0.3f;
@@ -669,7 +669,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::HEALER:
                     // Healers need Intellect, Spirit, Mana Regen
-                    if (statType == ITEM_MOD_INTELLECT)
+    if (statType == ITEM_MOD_INTELLECT)
                         roleBonus += statValue * 0.5f;
                     else if (statType == ITEM_MOD_SPIRIT || statType == ITEM_MOD_MANA_REGENERATION)
                         roleBonus += statValue * 0.3f;
@@ -679,7 +679,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::MELEE_DPS:
                     // Melee DPS need Strength/Agility, Crit, Haste
-                    if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
+    if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING)
                         roleBonus += statValue * 0.3f;
@@ -691,7 +691,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::RANGED_DPS:
                     // Ranged DPS need Intellect/Agility, Crit, Mastery
-                    if (statType == ITEM_MOD_INTELLECT || statType == ITEM_MOD_AGILITY)
+    if (statType == ITEM_MOD_INTELLECT || statType == ITEM_MOD_AGILITY)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_MASTERY_RATING)
                         roleBonus += statValue * 0.3f;
@@ -753,7 +753,6 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     // Get group composition
     ::std::unordered_map<uint8, uint32> classCounts; // class -> count
     ::std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
-
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
@@ -785,10 +784,10 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     {
         case CLASS_WARRIOR:
             // Warriors synergize with healers (more risk taking)
-            if (roleCounts[GroupRole::HEALER] > 0)
+    if (roleCounts[GroupRole::HEALER] > 0)
                 synergyScore += 0.1f;
             // Battle Shout benefits physical DPS
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.15f;
             break;
 
@@ -796,10 +795,10 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Paladins provide great utility and buffs
             synergyScore += 0.1f; // Always valuable
             // Blessings benefit all roles
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             // Auras benefit everyone
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
@@ -807,7 +806,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Priests provide Power Word: Fortitude (stamina buff)
             synergyScore += 0.15f;
             // Shadow priests benefit from having other casters
-            if (role == GroupRole::RANGED_DPS && roleCounts[GroupRole::RANGED_DPS] > 0)
+    if (role == GroupRole::RANGED_DPS && roleCounts[GroupRole::RANGED_DPS] > 0)
                 synergyScore += 0.2f;
             break;
 
@@ -815,7 +814,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Mages provide Arcane Intellect (intellect buff)
             synergyScore += 0.15f;
             // Benefits from having tank for aggro control
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             // Food/water utility always valuable
             synergyScore += 0.05f;
@@ -827,7 +826,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Summons provide utility
             synergyScore += 0.05f;
             // Benefits from having tank
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -835,7 +834,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Druids are extremely flexible and synergize with everything
             synergyScore += 0.15f;
             // Mark of the Wild benefits all
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             // Battle res is invaluable
             synergyScore += 0.1f;
@@ -847,16 +846,16 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Bloodlust/Heroism is extremely valuable
             synergyScore += 0.15f;
             // Benefits melee groups especially
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
         case CLASS_ROGUE:
             // Rogues benefit from having a tank
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.15f;
             // Tricks of the Trade benefits tanks
-            if (role == GroupRole::MELEE_DPS && roleCounts[GroupRole::TANK] > 0)
+    if (role == GroupRole::MELEE_DPS && roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -866,7 +865,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Aspect of the Pack helps with travel
             synergyScore += 0.05f;
             // Misdirection benefits tanks
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -876,7 +875,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Battle res
             synergyScore += 0.1f;
             // Horn of Winter benefits physical DPS
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
@@ -884,13 +883,13 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Monks are versatile
             synergyScore += 0.1f;
             // Legacy of the White Tiger benefits all
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             break;
 
         case CLASS_DEMON_HUNTER:
             // Chaos Brand debuff benefits all damage dealers
-            if (roleCounts[GroupRole::MELEE_DPS] + roleCounts[GroupRole::RANGED_DPS] > 2)
+    if (roleCounts[GroupRole::MELEE_DPS] + roleCounts[GroupRole::RANGED_DPS] > 2)
                 synergyScore += 0.2f;
             break;
 
@@ -898,7 +897,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Evokers provide unique buffs
             synergyScore += 0.15f;
             // Blessing of the Bronze is valuable
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             break;
 
@@ -911,28 +910,28 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     {
         case GroupRole::TANK:
             // Tanks synergize with healers
-            if (roleCounts[GroupRole::HEALER] > 0)
+    if (roleCounts[GroupRole::HEALER] > 0)
                 synergyScore += 0.2f;
             // Multiple tanks have anti-synergy unless needed
-            if (roleCounts[GroupRole::TANK] >= 2)
+    if (roleCounts[GroupRole::TANK] >= 2)
                 synergyScore -= 0.3f;
             break;
 
         case GroupRole::HEALER:
             // Healers synergize with tanks
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.2f;
             // Multiple healers can be redundant in 5-man
-            if (roleCounts[GroupRole::HEALER] >= 2 && group->GetMembersCount() < 10)
+    if (roleCounts[GroupRole::HEALER] >= 2 && group->GetMembersCount() < 10)
                 synergyScore -= 0.2f;
             break;
 
         case GroupRole::MELEE_DPS:
             // Melee DPS benefit from other melee (cleave synergy)
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             // Too many melee can be problematic
-            if (roleCounts[GroupRole::MELEE_DPS] >= 4)
+    if (roleCounts[GroupRole::MELEE_DPS] >= 4)
                 synergyScore -= 0.2f;
             break;
 
@@ -940,7 +939,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Ranged DPS are safe and flexible
             synergyScore += 0.1f;
             // Balance with melee is good
-            if (roleCounts[GroupRole::MELEE_DPS] > 0 && roleCounts[GroupRole::RANGED_DPS] > 0)
+    if (roleCounts[GroupRole::MELEE_DPS] > 0 && roleCounts[GroupRole::RANGED_DPS] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -972,7 +971,7 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
     {
         case RoleAssignmentStrategy::STRICT:
             // Only consider primary roles
-            for (const auto& score : scores)
+    for (const auto& score : scores)
             {
                 uint32 playerGuid = player->GetGUID().GetCounter();
                 auto profileIt = _playerProfiles.find(playerGuid);
@@ -1115,7 +1114,7 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
         totalItemLevel += itemTemplate->ItemLevel;
 
         // Detect gear type based on primary stats
-        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
         {
             if (itemTemplate->ItemStat[i].ItemStatValue == 0)
                 continue;
@@ -1123,15 +1122,15 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
             uint32 statType = itemTemplate->ItemStat[i].ItemStatType;
 
             // Tank stats
-            if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
+    if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
                 hasTankGear = true;
 
             // Healer stats
-            if (statType == ITEM_MOD_SPIRIT && player->GetPowerType() == POWER_MANA)
+    if (statType == ITEM_MOD_SPIRIT && player->GetPowerType() == POWER_MANA)
                 hasHealerGear = true;
 
             // DPS stats
-            if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING ||
+    if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING ||
                 statType == ITEM_MOD_MASTERY_RATING)
                 hasDPSGear = true;
         }
@@ -1230,22 +1229,22 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
                      encounterCount, avgEffectiveness, successRate);
 
         // Update role capability based on experience
-        if (experienceScore >= 0.8f && avgEffectiveness >= 0.7f)
+    if (experienceScore >= 0.8f && avgEffectiveness >= 0.7f)
         {
             // Very experienced and effective - upgrade to PRIMARY if currently SECONDARY
-            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+    if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
                 profile.roleCapabilities[role] = RoleCapability::PRIMARY;
         }
         else if (experienceScore >= 0.5f && avgEffectiveness >= 0.5f)
         {
             // Moderately experienced - upgrade to SECONDARY if currently EMERGENCY
-            if (profile.roleCapabilities[role] == RoleCapability::EMERGENCY)
+    if (profile.roleCapabilities[role] == RoleCapability::EMERGENCY)
                 profile.roleCapabilities[role] = RoleCapability::SECONDARY;
         }
         else if (experienceScore < 0.2f && avgEffectiveness < 0.3f && encounterCount >= 5)
         {
             // Poor experience after many encounters - downgrade
-            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+    if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
                 profile.roleCapabilities[role] = RoleCapability::EMERGENCY;
         }
     }
@@ -1258,7 +1257,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
         const RoleScore& score = roleScorePair.second;
 
         // Add to alternatives if capable and experienced enough
-        if (role != profile.preferredRole &&
+    if (role != profile.preferredRole &&
             profile.roleCapabilities[role] != RoleCapability::INCAPABLE &&
             score.experienceScore >= 0.4f)
         {
@@ -1320,7 +1319,7 @@ void RoleAssignment::CleanupInactiveProfiles()
         if (currentTime - it->second.lastRoleUpdate > CLEANUP_THRESHOLD)
         {
             // Check if player is still online
-            if (!ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(it->first)))
+    if (!ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(it->first)))
             {
                 it = _playerProfiles.erase(it);
                 continue;

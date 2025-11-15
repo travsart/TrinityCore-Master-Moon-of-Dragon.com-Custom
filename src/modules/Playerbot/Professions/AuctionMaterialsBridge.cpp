@@ -95,7 +95,7 @@ void AuctionMaterialsBridge::SetEnabled(::Player* player, bool enabled)
     if (enabled)
     {
         // Create default profile if doesn't exist
-        if (_economicProfiles.find(playerGuid) == _economicProfiles.end())
+    if (_economicProfiles.find(playerGuid) == _economicProfiles.end())
         {
             _economicProfiles[playerGuid] = BotEconomicProfile();
         }
@@ -309,7 +309,7 @@ MaterialSourcingDecision AuctionMaterialsBridge::GetBestMaterialSource(
         {
             // Balance between cost and time
             // Vendor is always preferred if available (instant + cheap)
-            if (decision.canBuyVendor)
+    if (decision.canBuyVendor)
             {
                 decision.recommendedMethod = MaterialAcquisitionMethod::VENDOR;
             }
@@ -431,7 +431,7 @@ MaterialAcquisitionPlan AuctionMaterialsBridge::GetMaterialAcquisitionPlan(
         plan.materialDecisions.push_back(decision);
 
         // Accumulate costs and time
-        switch (decision.recommendedMethod)
+    switch (decision.recommendedMethod)
         {
             case MaterialAcquisitionMethod::GATHER:
                 plan.totalCost += decision.gatheringTimeCost;

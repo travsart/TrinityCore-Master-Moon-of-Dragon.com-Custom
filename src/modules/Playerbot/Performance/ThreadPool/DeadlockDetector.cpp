@@ -69,7 +69,6 @@ void DeadlockDetector::Stop()
 {
     if (!_running.exchange(false))
         return; // Already stopped
-
     if (_detectorThread && _detectorThread->joinable())
     {
         _detectorThread->join();
@@ -286,7 +285,7 @@ bool DeadlockDetector::CheckStuckWorkers(DeadlockCheckResult& result)
             ::std::chrono::steady_clock::now() - diag->stateEnterTime);
 
         // Check for stuck workers (excluding expected long-running states)
-        if (timeInState >= _config.singleWorkerStuckThreshold &&
+    if (timeInState >= _config.singleWorkerStuckThreshold &&
             state != WorkerState::IDLE_SLEEPING &&
             state != WorkerState::TERMINATED)
         {
@@ -411,7 +410,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
              << result.throughput << " tasks/sec\n\n";
 
         // Write details
-        if (!result.details.empty())
+    if (!result.details.empty())
         {
             dump << "Details\n";
             dump << "-------\n";
@@ -423,7 +422,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         }
 
         // Write worker issues
-        if (!result.workerIssues.empty())
+    if (!result.workerIssues.empty())
         {
             dump << "Worker Issues\n";
             dump << "-------------\n";
@@ -449,7 +448,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         }
 
         // Write pool configuration
-        if (_pool)
+    if (_pool)
         {
             auto config = _pool->GetConfiguration();
             dump << "ThreadPool Configuration\n";
@@ -518,7 +517,7 @@ void DeadlockDetector::AttemptRecovery(const DeadlockCheckResult& result)
     else if (result.severity == DeadlockCheckResult::Severity::ERROR)
     {
         // Error condition - wake sleeping workers
-        for (const auto& issue : result.workerIssues)
+    for (const auto& issue : result.workerIssues)
         {
             if (issue.state == WorkerState::IDLE_SLEEPING)
             {

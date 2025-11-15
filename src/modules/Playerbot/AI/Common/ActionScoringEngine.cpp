@@ -348,7 +348,6 @@ float ActionScoringEngine::ApplyDiminishingReturns(float rawScore, ScoringCatego
     // Simple logarithmic diminishing returns to prevent extreme scores
     // Formula: score × (1 + log(1 + score/100))
     // This keeps scores in reasonable ranges while allowing high scores
-
     if (rawScore <= 0.0f)
         return 0.0f;
 

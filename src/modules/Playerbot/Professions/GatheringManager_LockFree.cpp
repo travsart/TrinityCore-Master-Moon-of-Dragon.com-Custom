@@ -70,11 +70,11 @@ static constexpr uint32 SPELL_HERBALISM = 2366;
                 continue;
 
             // Check if node is available
-            if (!snapshot.isSpawned || snapshot.isInUse)
+    if (!snapshot.isSpawned || snapshot.isInUse)
                 continue;
 
             // Check skill requirements
-            if (nodeType == GatheringNodeType::HERB &&
+    if (nodeType == GatheringNodeType::HERB &&
                 !HasGatheringSkill(GatheringSkillType::HERBALISM))
                 continue;
                 !HasGatheringSkill(GatheringSkillType::MINING))
@@ -108,14 +108,14 @@ static constexpr uint32 SPELL_HERBALISM = 2366;
         for (auto const& snapshot : creatures)
         {
             // Check if creature is dead and skinnable
-            if (snapshot.isAlive)
+    if (snapshot.isAlive)
                 continue;
 
             if (!snapshot.isSkinnable)
                 continue;
 
             // Check if it's lootable by the bot
-            if (!snapshot.lootRecipients.empty())
+    if (!snapshot.lootRecipients.empty())
             {
                 bool canLoot = false;
                 for (auto const& recipient : snapshot.lootRecipients)
@@ -220,7 +220,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
             if (snapshot.guid == node.guid)
             {
                 // Verify creature is still dead and skinnable
-                if (!snapshot.isAlive && snapshot.isSkinnable)
+    if (!snapshot.isAlive && snapshot.isSkinnable)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -241,7 +241,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
             if (snapshot.guid == node.guid)
             {
                 // Verify object is still spawned and not in use
-                if (snapshot.isSpawned && !snapshot.isInUse)
+    if (snapshot.isSpawned && !snapshot.isInUse)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -381,11 +381,11 @@ void GatheringManager::Update_LockFree(uint32 diff)
     for (auto const& node : nearbyNodes)
     {
         // Check if we can gather this node
-        if (GetGatheringSkillLevel(node.nodeType) < node.skillRequired)
+    if (GetGatheringSkillLevel(node.nodeType) < node.skillRequired)
             continue;
 
         // Try to queue gathering
-        if (QueueGatherNode_LockFree(node))
+    if (QueueGatherNode_LockFree(node))
         {
             break;  // Successfully queued gathering
         }

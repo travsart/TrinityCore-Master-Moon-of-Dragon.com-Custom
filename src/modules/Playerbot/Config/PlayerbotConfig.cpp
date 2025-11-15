@@ -232,7 +232,7 @@ bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
             lineCount++;
 
             // Skip empty lines and comments
-            if (line.empty() || line[0] == '#')
+    if (line.empty() || line[0] == '#')
                 continue;
 
             // Find the = separator
@@ -255,7 +255,7 @@ bool PlayerbotConfig::LoadConfigFile(const std::string& filePath)
             value.erase(0, value.find_first_not_of(" \t"));
 
             // Validate key is not empty
-            if (key.empty())
+    if (key.empty())
             {
                 TC_LOG_WARN("server.loading", "PlayerbotConfig: Empty key on line {} in {}", lineCount, filePath);
                 continue;

@@ -230,7 +230,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         if (!unit || !unit->IsAlive())
             continue;
         // Check if hostile
-        if (!bot->IsHostileTo(unit))
+    if (!bot->IsHostileTo(unit))
             continue;
 
         float distanceSq = bot->GetExactDistSq(unit);

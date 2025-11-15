@@ -191,7 +191,7 @@ void InterruptRotationManager::RegisterCast(Unit* caster, uint32 spellId, uint32
             return;
 
         // Skip instant casts and non-interruptible spells
-        if (!spellInfo->CastTimeEntry || spellInfo->HasAttribute(SPELL_ATTR7_NO_UI_NOT_INTERRUPTIBLE))
+    if (!spellInfo->CastTimeEntry || spellInfo->HasAttribute(SPELL_ATTR7_NO_UI_NOT_INTERRUPTIBLE))
             return;
     }
 
@@ -276,7 +276,7 @@ ObjectGuid InterruptRotationManager::SelectInterrupter(Unit* caster, uint32 spel
         activeCast->assignedInterrupter = bestInterrupter;
 
         // Mark interrupter as assigned
-        for (auto& interrupter : _interrupters)
+    for (auto& interrupter : _interrupters)
         {
             if (interrupter.botGuid == bestInterrupter)
             {
@@ -300,7 +300,7 @@ ObjectGuid InterruptRotationManager::FindBestInterrupter(const ActiveCast& cast)
     for (const auto& interrupter : _interrupters)
     {
         // Skip if already assigned or on cooldown
-        if (interrupter.isAssigned || interrupter.cooldownRemaining > 0)
+    if (interrupter.isAssigned || interrupter.cooldownRemaining > 0)
             continue;
 
         // Calculate score
@@ -319,7 +319,7 @@ ObjectGuid InterruptRotationManager::FindBestInterrupter(const ActiveCast& cast)
         ObjectGuid nextInRotation = GetNextInRotation();
 
         // Check if next in rotation has acceptable score
-        for (const auto& interrupter : _interrupters)
+    for (const auto& interrupter : _interrupters)
         {
             if (interrupter.botGuid == nextInRotation)
             {
@@ -431,7 +431,7 @@ void InterruptRotationManager::MarkInterruptUsed(ObjectGuid bot, uint32 timeMs)
             interrupter.isAssigned = false;
 
             // Set cooldown based on spell (typical interrupt CDs)
-            if (interrupter.interruptSpellId == SPELL_KICK)
+    if (interrupter.interruptSpellId == SPELL_KICK)
                 interrupter.cooldownRemaining = 15000; // 15 seconds
             else if (interrupter.interruptSpellId == SPELL_COUNTERSPELL)
                 interrupter.cooldownRemaining = 24000; // 24 seconds
@@ -555,7 +555,7 @@ InterruptRotationManager::FallbackMethod InterruptRotationManager::SelectFallbac
         const InterruptableSpell& spell = it->second;
 
         // High priority spells need immediate action
-        if (spell.priority >= InterruptPriority::PRIORITY_HIGH)
+    if (spell.priority >= InterruptPriority::PRIORITY_HIGH)
         {
             if (spell.isHeal)
                 return FallbackMethod::FALLBACK_STUN; // Stun stops heals
@@ -568,7 +568,7 @@ InterruptRotationManager::FallbackMethod InterruptRotationManager::SelectFallbac
         }
 
         // Medium priority - try LOS
-        if (spell.priority == InterruptPriority::PRIORITY_MEDIUM)
+    if (spell.priority == InterruptPriority::PRIORITY_MEDIUM)
         {
             return FallbackMethod::FALLBACK_LOS;
         }
@@ -589,7 +589,7 @@ bool InterruptRotationManager::ExecuteFallback(FallbackMethod method, Unit* cast
 
         case FallbackMethod::FALLBACK_SILENCE:
             // Try silence abilities based on class
-            if (_bot->GetClass() == CLASS_PRIEST)
+    if (_bot->GetClass() == CLASS_PRIEST)
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(SPELL_SILENCE))
                 {
@@ -670,7 +670,7 @@ bool InterruptRotationManager::TryAlternativeInterrupt(Unit* target)
         if (interrupter.botGuid == _bot->GetGUID())
         {
             // Try alternative interrupts
-            for (uint32 spellId : interrupter.alternativeInterrupts)
+    for (uint32 spellId : interrupter.alternativeInterrupts)
             {
                 if (!_bot->GetSpellHistory()->HasCooldown(spellId))
                 {

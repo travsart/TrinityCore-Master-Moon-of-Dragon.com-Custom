@@ -147,7 +147,7 @@ void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
         MaterialStockpileConfig const& config = configIt->second;
 
         // Check if should sell
-        if (ShouldSellMaterial(player, itemInfo.itemId, itemInfo.stackCount))
+    if (ShouldSellMaterial(player, itemInfo.itemId, itemInfo.stackCount))
         {
             ListMaterialOnAuction(player, itemInfo.itemGuid, config);
         }
@@ -223,7 +223,6 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
 
     // Get crafted items in inventory
     auto items = GetProfessionItemsInInventory(player, false); // All profession items
-
     for (auto const& itemInfo : items)
     {
         ProfessionType profession;
@@ -241,7 +240,7 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
         uint32 materialCost = CalculateMaterialCost(player, itemInfo.itemId);
 
         // Check if should sell
-        if (ShouldSellCraftedItem(player, itemInfo.itemId, materialCost))
+    if (ShouldSellCraftedItem(player, itemInfo.itemId, materialCost))
         {
             ListCraftedItemOnAuction(player, itemInfo.itemGuid, config);
         }
@@ -293,7 +292,6 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
 
     // Delegate to existing AuctionHouse
     bool success = _auctionHouse->CreateAuction(player, itemGuid, 1, // Single itembidPrice, listingPrice, config.maxListingDuration);
-
     if (success)
     {
         ::std::lock_guard lock(_mutex);
@@ -347,7 +345,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
         uint32 maxPricePerUnit = static_cast<uint32>(marketPrice * 1.1f);
 
         // Check if available at good price
-        if (IsMaterialAvailableForPurchase(player, itemId, quantity, maxPricePerUnit)){
+    if (IsMaterialAvailableForPurchase(player, itemId, quantity, maxPricePerUnit)){
             uint32 totalCost = maxPricePerUnit * quantity;
             if (totalCost <= budgetRemaining)
             {
@@ -423,7 +421,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
             break;
 
         // Skip if price too high
-        if (auction.buyoutPrice > 0)
+    if (auction.buyoutPrice > 0)
         {
             uint32 pricePerUnit = auction.buyoutPrice / auction.stackCount;
             if (pricePerUnit > maxPricePerUnit)
@@ -440,7 +438,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
         uint32 cost = (auction.buyoutPrice / auction.stackCount) * buyAmount;
 
         // Check if player has enough gold
-        if (player->GetMoney() < totalGoldSpent + cost)
+    if (player->GetMoney() < totalGoldSpent + cost)
         {
             TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} insufficient gold for material purchase",
                 player->GetName());
@@ -448,7 +446,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
         }
 
         // Buyout the auction
-        if (_auctionHouse->BuyoutAuction(player, auction.auctionId))
+    if (_auctionHouse->BuyoutAuction(player, auction.auctionId))
         {
             totalBought += buyAmount;
             totalGoldSpent += cost;

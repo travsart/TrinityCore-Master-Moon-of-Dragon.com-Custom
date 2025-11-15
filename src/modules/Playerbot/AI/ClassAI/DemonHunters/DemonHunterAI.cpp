@@ -64,9 +64,10 @@ void DemonHunterAI::UpdateRotation(::Unit* target)
 
         // Try auto-specialization if level 10+
         baselineManager.HandleAutoSpecialization(_bot);        // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(_bot, target))            return;
+    if (baselineManager.ExecuteBaselineRotation(_bot, target))            return;
 
-        // Fallback to basic melee attack if nothing else worked        if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
+        // Fallback to basic melee attack if nothing else worked
+    if (_bot->HasSpell(DEMONS_BITE) && CanUseAbility(DEMONS_BITE))
         {            _bot->CastSpell(CastSpellTargetArg(target), DEMONS_BITE);
         }
         return;
@@ -249,7 +250,7 @@ void DemonHunterAI::HandleDefensives()
     // Vengeance-specific defensives
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterVengeance)    {
         // Demon Spikes - Active mitigation
-        if (healthPct < 70.0f && CanUseAbility(DEMON_SPIKES))
+    if (healthPct < 70.0f && CanUseAbility(DEMON_SPIKES))
         {
             if (CastSpell(DEMON_SPIKES))
             {
@@ -275,7 +276,7 @@ void DemonHunterAI::HandleDefensives()
         }
 
         // Soul Barrier - Absorb shield
-        if (healthPct < 40.0f && CanUseAbility(SOUL_BARRIER))
+    if (healthPct < 40.0f && CanUseAbility(SOUL_BARRIER))
         {
             if (CastSpell(SOUL_BARRIER))
             {
@@ -383,7 +384,7 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
     // Vengeance-specific AoE
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterVengeance)    {
         // Spirit Bomb - Requires soul fragments
-        if (enemyCount >= 3 && CanUseAbility(SPIRIT_BOMB))
+    if (enemyCount >= 3 && CanUseAbility(SPIRIT_BOMB))
         {
             if (CastSpell(SPIRIT_BOMB, target))
             {
@@ -449,7 +450,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         uint32 maxFury = GetMaxFury();
 
         // Prevent fury capping
-        if (currentFury > FURY_DUMP_THRESHOLD)
+    if (currentFury > FURY_DUMP_THRESHOLD)
         {
             // Use metamorphosed ability if available
             uint32 chaosStrike = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;
@@ -465,7 +466,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         }
 
         // Generate fury with Demon's Bite
-        if (currentFury < 40 && CanUseAbility(DEMONS_BITE))
+    if (currentFury < 40 && CanUseAbility(DEMONS_BITE))
         {
             if (CastSpell(DEMONS_BITE, target))
             {
@@ -479,10 +480,10 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         uint32 currentPain = GetPain();
 
         // Prevent pain capping
-        if (currentPain > PAIN_DUMP_THRESHOLD)
+    if (currentPain > PAIN_DUMP_THRESHOLD)
         {
             // Soul Cleave to spend pain and heal
-            if (CanUseAbility(SOUL_CLEAVE))
+    if (CanUseAbility(SOUL_CLEAVE))
             {
                 if (CastSpell(SOUL_CLEAVE, target))
                 {
@@ -494,7 +495,7 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
         }
 
         // Generate pain with Shear
-        if (currentPain < 30 && CanUseAbility(SHEAR))
+    if (currentPain < 30 && CanUseAbility(SHEAR))
         {
             if (CastSpell(SHEAR, target))
             {
@@ -519,7 +520,7 @@ void DemonHunterAI::HandleMobility(::Unit* target)
     {
         Position optimalPos = behaviors->GetOptimalPosition();
         float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Fel Rush to close gap or reposition
-        if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
+    if (distance > CHARGE_MIN_RANGE && distance < CHARGE_MAX_RANGE && CanUseAbility(FEL_RUSH))
         {
             if (CastSpell(FEL_RUSH, target))
             {
@@ -533,7 +534,7 @@ void DemonHunterAI::HandleMobility(::Unit* target)
         }
 
         // Vengeful Retreat for backward movement (defensive or offensive with Momentum)
-        if (distance < 3.0f && CanUseAbility(VENGEFUL_RETREAT))
+    if (distance < 3.0f && CanUseAbility(VENGEFUL_RETREAT))
         {
             if (CastSpell(VENGEFUL_RETREAT))
             {
@@ -569,7 +570,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         uint32 fury = GetFury();
 
         // Chaos Strike/Annihilation at high fury
-        if (fury >= 40)
+    if (fury >= 40)
         {
             uint32 spender = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;
             if (CanUseAbility(spender))
@@ -583,7 +584,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         }
 
         // Demon's Bite to generate fury
-        if (CanUseAbility(DEMONS_BITE))
+    if (CanUseAbility(DEMONS_BITE))
         {
             if (CastSpell(DEMONS_BITE, target))
             {
@@ -598,7 +599,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         uint32 pain = GetPain();
 
         // Soul Cleave at high pain
-        if (pain >= 30 && CanUseAbility(SOUL_CLEAVE))
+    if (pain >= 30 && CanUseAbility(SOUL_CLEAVE))
         {
             if (CastSpell(SOUL_CLEAVE, target))
             {
@@ -606,7 +607,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
                 return;
             }
         }        // Shear to generate pain
-        if (CanUseAbility(SHEAR))
+    if (CanUseAbility(SHEAR))
         {
             if (CastSpell(SHEAR, target))
             {
@@ -616,7 +617,7 @@ void DemonHunterAI::ExecuteBasicDemonHunterRotation(::Unit* target)
         }
 
         // Maintain Demon Spikes
-        if (!_bot->HasAura(DEMON_SPIKES) && CanUseAbility(DEMON_SPIKES))
+    if (!_bot->HasAura(DEMON_SPIKES) && CanUseAbility(DEMON_SPIKES))
         {
             if (CastSpell(DEMON_SPIKES))
             {
@@ -668,10 +669,10 @@ void DemonHunterAI::UpdateBuffs()
     if (spec == ChrSpecialization::DemonHunterHavoc)
     {
         // Maintain Momentum buff through movement abilities if talented
-        if (_bot->HasSpell(MOMENTUM_TALENT) && !_bot->HasAura(BUFF_MOMENTUM))
+    if (_bot->HasSpell(MOMENTUM_TALENT) && !_bot->HasAura(BUFF_MOMENTUM))
         {
             // Fel Rush for momentum
-            if (CanUseAbility(FEL_RUSH))
+    if (CanUseAbility(FEL_RUSH))
             {
                 Unit* target = _bot->GetSelectedUnit();
                 if (target && _bot->GetDistance(target) > 5.0f && _bot->GetDistance(target) < 20.0f)
@@ -687,7 +688,7 @@ void DemonHunterAI::UpdateBuffs()
         }
 
         // Refresh Prepared buff from Vengeful Retreat if talented
-        if (_bot->HasSpell(203650) && !_bot->HasAura(BUFF_PREPARED) && CanUseAbility(VENGEFUL_RETREAT))
+    if (_bot->HasSpell(203650) && !_bot->HasAura(BUFF_PREPARED) && CanUseAbility(VENGEFUL_RETREAT))
         {
             Unit* target = _bot->GetSelectedUnit();
             if (target && _bot->GetDistance(target) < 3.0f)
@@ -705,7 +706,7 @@ void DemonHunterAI::UpdateBuffs()
     else if (spec == ChrSpecialization::DemonHunterVengeance)
     {
         // Maintain Demon Spikes uptime when tanking
-        if (!_bot->HasAura(DEMON_SPIKES) && CanUseAbility(DEMON_SPIKES))
+    if (!_bot->HasAura(DEMON_SPIKES) && CanUseAbility(DEMON_SPIKES))
         {
             if (_bot->GetHealthPct() < 90.0f || _bot->IsInCombat())
             {
@@ -768,7 +769,7 @@ bool DemonHunterAI::HasEnoughResource(uint32 spellId)
     // Check resource requirements based on spec
     if (_bot->GetPrimarySpecialization() == ChrSpecialization::DemonHunterHavoc)    {
         // Check fury costs for common abilities
-        switch (spellId)
+    switch (spellId)
         {
             case CHAOS_STRIKE:
             case ANNIHILATION:
@@ -786,7 +787,7 @@ bool DemonHunterAI::HasEnoughResource(uint32 spellId)
     }
     else
     {        // Check pain costs for Vengeance
-        switch (spellId)
+    switch (spellId)
         {
             case SOUL_CLEAVE:
                 return GetPain() >= 30;
@@ -1014,14 +1015,14 @@ void DemonHunterAI::HandleMetamorphosisAbilities(::Unit* target)
     if (_bot->HasAura(METAMORPHOSIS_HAVOC))
     {
         // Use Annihilation instead of Chaos Strike
-        if (CanUseAbility(ANNIHILATION) && HasFury(40))
+    if (CanUseAbility(ANNIHILATION) && HasFury(40))
         {
             CastSpell(ANNIHILATION, target);
             return;
         }
 
         // Use Death Sweep instead of Blade Dance
-        if (CanUseAbility(DEATH_SWEEP) && HasFury(35))
+    if (CanUseAbility(DEATH_SWEEP) && HasFury(35))
         {
             CastSpell(DEATH_SWEEP);
             return;
@@ -1126,7 +1127,6 @@ void DemonHunterAI::CastShear(::Unit* target)
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
     for (auto& unit : targetList)
     {
         if (_bot->IsValidAttackTarget(unit))
@@ -1177,7 +1177,6 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
     for (auto& target : targets)
     {
         if (_bot->IsValidAttackTarget(target))

@@ -738,7 +738,6 @@ bool SocialManager::ShouldAcceptGuildInvite(Player* inviter) const
 
     if (m_bot->GetGuildId())
         return false; // Already in guild
-
     if (IsIgnored(inviter->GetGUID()))
         return false;
 
@@ -1172,7 +1171,7 @@ void SocialManager::DecayReputations(uint32 diff)
         uint32 timeSinceLastInteraction = now - pair.second.lastInteraction;
 
         // Decay 1 point per day of no interaction
-        if (timeSinceLastInteraction > 86400) // 1 day in seconds
+    if (timeSinceLastInteraction > 86400) // 1 day in seconds
         {
             uint32 daysElapsed = timeSinceLastInteraction / 86400;
             int32 decay = ::std::min<int32>(daysElapsed, ::std::abs(pair.second.reputation));
@@ -1293,7 +1292,7 @@ void SocialManager::UpdatePerformanceMetrics()
         m_cpuUsage = (avgDuration.count() / 1000.0f) / 100.0f; // Convert to percentage
 
         // Reset counters periodically
-        if (m_updateCount >= 1000)
+    if (m_updateCount >= 1000)
         {
             m_totalUpdateTime = ::std::chrono::microseconds(0);
             m_updateCount = 0;

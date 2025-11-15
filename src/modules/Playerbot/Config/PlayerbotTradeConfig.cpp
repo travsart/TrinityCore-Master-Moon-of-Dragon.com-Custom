@@ -115,7 +115,7 @@ namespace Playerbot
         m_statisticsTrackingEnabled = sPlayerbotConfig->GetBool("Playerbot.Trade.Logging.Statistics", true);
 
         // Validate configuration
-        if (m_tradeUpdateInterval < 100)
+    if (m_tradeUpdateInterval < 100)
         {
             TC_LOG_WARN("bot.trade", "Trade update interval too low ({}ms), setting to 100ms", m_tradeUpdateInterval);
             m_tradeUpdateInterval = 100;
@@ -192,7 +192,7 @@ namespace Playerbot
             return 1.0f;
 
         // Progressive multiplier based on item level brackets
-        if (level <= 60)
+    if (level <= 60)
             return 1.0f;
         else if (level <= 70)
             return 1.5f;

@@ -158,7 +158,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
         // Full migration to ManagerRegistry will happen after testing
 
         // Initialize managers through IManagerBase interface
-        if (_questManager)
+    if (_questManager)
         {
             _questManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", " QuestManager initialized via IManagerBase");
@@ -228,7 +228,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             _groupCoordinator->Initialize();
             TC_LOG_INFO("module.playerbot.managers", " GroupCoordinator initialized - Dungeon/Raid coordination active");
         }// CRITICAL: Initialize combat state manager for automatic combat state synchronization
-        if (_combatStateManager)
+    if (_combatStateManager)
         {
             _combatStateManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", " CombatStateManager initialized - DAMAGE_TAKEN event subscription active");
@@ -261,19 +261,19 @@ BotAI::BotAI(Player* bot) : _bot(bot)
         ObjectGuid playerGuidToCheck = ObjectGuid::Empty;
 
 // Check all group members for a real player character
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
             if (!member)
                 continue;
 
             // Skip if this is a bot
-            if (Playerbot::PlayerBotHooks::IsPlayerBot(member))
+    if (Playerbot::PlayerBotHooks::IsPlayerBot(member))
                 continue;
 
             // Found a real player character
             // Check if they're online OR offline for less than 1 hour
-            if (member->IsInWorld())
+    if (member->IsInWorld())
             {
                 // Player is currently online
                 hasValidPlayer = true;
@@ -288,7 +288,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 break;
             }
         }// If we found an offline player, check their logout time via database query
-        if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
+    if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
         {
             // Query the characters database for logout_time
             QueryResult result = CharacterDatabase.PQuery(
@@ -300,7 +300,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 uint64 timeSinceLogout = currentTime - logoutTime;
 
                 // 1 hour = 3600 seconds
-                if (timeSinceLogout < 3600)
+    if (timeSinceLogout < 3600)
                 {
                     hasValidPlayer = true;
                     TC_LOG_INFO("playerbot", "Bot {} group validation: Player offline for {}s (< 1 hour), group persists",_bot->GetName(), timeSinceLogout);
@@ -562,13 +562,13 @@ void BotAI::UpdateAI(uint32 diff)
             try
             {
                 // Check if member is being destroyed or logging out
-                if (!member->IsInWorld())
+    if (!member->IsInWorld())
                     continue;WorldSession* session = member->GetSession();
                 if (!session)
                     continue;
 
                 // Check if session is valid and not logging out
-                if (session->PlayerLogout())
+    if (session->PlayerLogout())
                     continue;// Member is safe to cache
                 members.push_back(member);
                 if (member->GetGUID() == group->GetLeaderGUID())
@@ -580,7 +580,7 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
                 continue;}
         }_objectCache.SetGroupLeader(leader);
         _objectCache.SetGroupMembers(members);// Follow target is usually the leader (only if leader is online)
-        if (leader)
+    if (leader)
             _objectCache.SetFollowTarget(leader);
     }
     else{
@@ -637,7 +637,8 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         _groupInvitationHandler->Update(diff);
     }
 
-    }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
+    }  // End of
+    if (!isInDeathRecovery) block - normal AI skipped when dead
 
     // ========================================================================
     // CRITICAL: Movement Arbiter MUST update even during death recovery
@@ -710,7 +711,7 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
                     _bot->GetName());
 
         // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event
-        if (_eventDispatcher)
+    if (_eventDispatcher)
         {
             Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, _bot->GetGUID());
             _eventDispatcher->Dispatch(std::move(evt));
@@ -724,7 +725,7 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         TC_LOG_INFO("playerbot", "Bot {} left group, calling OnGroupLeft()",_bot->GetName());
 
         // PHASE 0 - Quick Win #3: Dispatch GROUP_LEFT event for instant cleanup
-        if (_eventDispatcher)
+    if (_eventDispatcher)
         {Events::BotEvent evt(StateMachine::EventType::GROUP_LEFT, _bot->GetGUID());
             _eventDispatcher->Dispatch(std::move(evt));TC_LOG_INFO("playerbot", " GROUP_LEFT event dispatched for bot {}", _bot->GetName());}
 
@@ -782,7 +783,7 @@ void BotAI::UpdateStrategies(uint32 diff)
         std::lock_guard lock(_mutex);
 
         // DEBUG LOGGING THROTTLE: Use shouldLogStrategy from above (already throttled)
-        if (shouldLogStrategy)
+    if (shouldLogStrategy)
         {
             TC_LOG_ERROR("module.playerbot", " ACTIVE STRATEGIES: Bot {} has {} active strategies in _activeStrategies set",
                         _bot->GetName(), _activeStrategies.size());
@@ -807,7 +808,6 @@ void BotAI::UpdateStrategies(uint32 diff)
     // OLD DEBUG CODE REMOVED - now using test bot whitelist throttling above (lines 433-454)
     // static uint32 debugStrategyCounter = 0;
     // bool shouldLogStrategy = (++debugStrategyCounter % 10 == 0);
-
     for (Strategy* strategy : strategiesToCheck)
     {
         if (strategy && strategy->IsActive(this))
@@ -842,7 +842,6 @@ void BotAI::UpdateStrategies(uint32 diff)
     // ========================================================================
     // PHASE 4: Execute the selected strategy
     // ========================================================================
-
     if (selectedStrategy)
     {
         if (shouldLogStrategy)
@@ -851,14 +850,14 @@ void BotAI::UpdateStrategies(uint32 diff)
         }
 
         // Special handling for follow strategy - needs every frame update
-        if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(selectedStrategy))
+    if (auto* followBehavior = dynamic_cast<LeaderFollowBehavior*>(selectedStrategy))
         {
             if (shouldLogStrategy)TC_LOG_ERROR("module.playerbot", " CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
         }else
         {
             // Other strategies can use their normal update
-            if (shouldLogStrategy){
+    if (shouldLogStrategy){
                 TC_LOG_ERROR("module.playerbot", " CALLING UpdateBehavior for bot {} strategy '{}'",_bot->GetName(), selectedStrategy->GetName());
             }
             selectedStrategy->UpdateBehavior(this, diff);
@@ -957,7 +956,7 @@ void BotAI::UpdateCombatState(uint32 diff){
         TC_LOG_ERROR("module.playerbot", " LEAVING COMBAT: Bot {}", _bot->GetName());OnCombatEnd();
 
         // Determine new state
-if (_bot->GetGroup() && GetStrategy("follow"))
+    if (_bot->GetGroup() && GetStrategy("follow"))
             SetAIState(BotAIState::FOLLOWING);
         else
             SetAIState(BotAIState::SOLO);
@@ -998,7 +997,7 @@ void BotAI::UpdateActions(uint32 diff)
     // Execute current action if in progressif (_currentAction)
     {
         // Check if action is still valid
-        if (!_currentAction->IsUseful(this))
+    if (!_currentAction->IsUseful(this))
         {
             CancelCurrentAction();
         }
@@ -1060,7 +1059,7 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
     // For solo bots (not in a group), actively scan for nearby enemiesif (!_bot->GetGroup() && _targetScanner)
     {
         // Check if it's time to scan (throttled for performance)
-        if (_targetScanner->ShouldScan(currentTime))
+    if (_targetScanner->ShouldScan(currentTime))
         {
             _targetScanner->UpdateScanTime(currentTime);
 
@@ -1071,15 +1070,14 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
 
             // DEADLOCK FIX: Validate and set target using spatial grid snapshots (lock-free, thread-safe)
             // DO NOT use ObjectAccessor::GetUnit() from worker thread!
-
-            if (!bestTargetGuid.IsEmpty())
+    if (!bestTargetGuid.IsEmpty())
             {
                 // Get spatial grid for lock-free snapshot queries
                 auto spatialGrid = sSpatialGridManager.GetGrid(_bot->GetMapId());if (spatialGrid)
                 {
                     // Query nearby creature snapshots (lock-free read from atomic buffer)
                     auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(_bot->GetPosition(), 60.0f);// Find the snapshot matching our target GUID
-                    for (auto const& snapshot : creatureSnapshots)
+    for (auto const& snapshot : creatureSnapshots)
                     {
                         if (snapshot.guid == bestTargetGuid)
                         {
@@ -1254,7 +1252,7 @@ void BotAI::OnGroupJoined(Group* group)
         }
 
         // Check if group combat strategy exists
-        if (_strategies.find("group_combat") == _strategies.end())
+    if (_strategies.find("group_combat") == _strategies.end())
         {
             TC_LOG_ERROR("playerbot", "CRITICAL: GroupCombat strategy not found for bot {} - creating emergency fallback",_bot->GetName());
 
@@ -1297,7 +1295,7 @@ void BotAI::OnGroupJoined(Group* group)
                     _activeStrategies.push_back("group_combat");
 
                 it->second->SetActive(true);// CRITICAL FIX: Call OnActivate if newly added OR not properly initialized
-                if (!alreadyInList || !wasActive)
+    if (!alreadyInList || !wasActive)
                     strategiesToActivate.push_back(it->second.get());
             }
         }
@@ -1433,7 +1431,7 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         bool exclusive = false;
 
         // Determine priority from strategy name
-        if (name.find("combat") != std::string::npos || name.find("group_combat") != std::string::npos)
+    if (name.find("combat") != std::string::npos || name.find("group_combat") != std::string::npos)
         {
             priority = BehaviorPriority::COMBAT;
             exclusive = true; // Combat gets exclusive control
@@ -1518,7 +1516,7 @@ std::vector<Strategy*> BotAI::GetActiveStrategies() const
         std::lock_guard lock(_mutex);
 
         // Access _strategies directly to avoid recursive mutex acquisition
-        for (auto const& name : _activeStrategies)
+    for (auto const& name : _activeStrategies)
         {
             auto it = _strategies.find(name);
             if (it != _strategies.end())
@@ -1548,8 +1546,7 @@ void BotAI::ActivateStrategy(std::string const& name)
         // Check if already active
         bool alreadyInList = std::find(_activeStrategies.begin(), _activeStrategies.end(), name) != _activeStrategies.end();
         bool wasActive = it->second->IsActive(this);  // Check BEFORE setting active
-
-        if (!alreadyInList)
+    if (!alreadyInList)
         {
             _activeStrategies.push_back(name);
         }

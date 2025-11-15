@@ -242,7 +242,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.respawnDelay = creature->GetRespawnDelay();
         snapshot.sparringHealthPct = 0.0f;  // Not exposed via API
         // ===== STATIC FLAGS (MEDIUM) =====
-        if (creatureTemplate)
+    if (creatureTemplate)
         {
             snapshot.isUnkillable = (creatureTemplate->flags_extra & 0x00000008) != 0;
             snapshot.isSessile = (creatureTemplate->flags_extra & 0x00000100) != 0;
@@ -275,7 +275,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.interactionRange = creature->GetCombatReach() + 5.0f;  // Combat reach + interaction buffer
 
         // Validate and store snapshot
-        if (snapshot.IsValid())
+    if (snapshot.IsValid())
         {
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
@@ -372,7 +372,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.activeSpec = 0;  // Spec tracking removed
 
         // ===== EQUIPMENT (HIGH) =====
-        if (Item* mainhand = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+    if (Item* mainhand = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
             snapshot.mainhandItem = mainhand->GetEntry();
         if (Item* offhand = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             snapshot.offhandItem = offhand->GetEntry();
@@ -393,7 +393,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.deathState = static_cast<uint8>(player->isDead());
 
         // ===== GROUP & SOCIAL (HIGH) =====
-        if (Group* group = player->GetGroup())
+    if (Group* group = player->GetGroup())
         {
             snapshot.groupGuid = group->GetGUID();
             snapshot.isGroupLeader = group->IsLeader(player->GetGUID());
@@ -410,7 +410,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.isGravityDisabled = player->HasUnitMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY);
 
         // Validate and store snapshot
-        if (snapshot.IsValid())
+    if (snapshot.IsValid())
         {
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
@@ -477,7 +477,7 @@ void DoubleBufferedSpatialGrid::PopulateBufferFromMap()
         snapshot.isQuestObject = go->hasQuest(0);  // Check if involved in any quest (0 = check for any)
         snapshot.isUsable = go->GetGoState() == GO_STATE_READY && go->isSpawned();  // Can be used/interacted with
         // Validate and store snapshot
-        if (snapshot.IsValid())
+    if (snapshot.IsValid())
         {
             auto [x, y] = GetCellCoords(snapshot.position);
             if (x < TOTAL_CELLS && y < TOTAL_CELLS)
@@ -675,7 +675,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
 
         // Add creatures from this cell with accurate distance filtering
         // Note: Cells are coarse (66 yards), so we need exact distance checks
-        for (CreatureSnapshot const& snapshot : cell.creatures)
+    for (CreatureSnapshot const& snapshot : cell.creatures)
         {
             // Accurate distance check using snapshot position
             float distSq = pos.GetExactDistSq(snapshot.position);
@@ -711,7 +711,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         auto const& cell = readBuffer.cells[x][y];
 
         // Add players from this cell with accurate distance filtering
-        for (PlayerSnapshot const& snapshot : cell.players)
+    for (PlayerSnapshot const& snapshot : cell.players)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -746,7 +746,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         auto const& cell = readBuffer.cells[x][y];
 
         // Add game objects from this cell with accurate distance filtering
-        for (GameObjectSnapshot const& snapshot : cell.gameObjects)
+    for (GameObjectSnapshot const& snapshot : cell.gameObjects)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -781,7 +781,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         auto const& cell = readBuffer.cells[x][y];
 
         // Add area triggers from this cell with accurate distance filtering
-        for (AreaTriggerSnapshot const& snapshot : cell.areaTriggers)
+    for (AreaTriggerSnapshot const& snapshot : cell.areaTriggers)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)
@@ -816,7 +816,7 @@ void DoubleBufferedSpatialGrid::SwapBuffers()
         auto const& cell = readBuffer.cells[x][y];
 
         // Add dynamic objects from this cell with accurate distance filtering
-        for (DynamicObjectSnapshot const& snapshot : cell.dynamicObjects)
+    for (DynamicObjectSnapshot const& snapshot : cell.dynamicObjects)
         {
             float distSq = pos.GetExactDistSq(snapshot.position);
             if (distSq <= radiusSq)

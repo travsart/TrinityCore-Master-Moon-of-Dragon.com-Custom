@@ -500,7 +500,7 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
         Position optimalPos = CalculateOptimalPosition(player, encounterId, role);
 
         // Move if too far from optimal position
-        if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
+    if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
         {
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
@@ -1363,15 +1363,15 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
         uint32 priority = 50; // Base priority
 
         // Healers get highest priority
-        if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
+    if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
             priority += 100;
 
         // Casters get medium-high priority
-        if (creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+    if (creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
             priority += 50;
 
         // Low health gets bonus priority
-        if (creature->GetHealthPct() < 30)
+    if (creature->GetHealthPct() < 30)
             priority += 30;
 
         // Closest gets slight bonus
@@ -1534,7 +1534,7 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
                 continue;
 
             // Check if harmful and dispellable
-            if (!spellInfo->IsPositive())
+    if (!spellInfo->IsPositive())
             {
                 TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericDispel - Player {} attempting dispel on {}",
                     player->GetGUID().GetCounter(), groupMember->GetGUID().GetCounter());

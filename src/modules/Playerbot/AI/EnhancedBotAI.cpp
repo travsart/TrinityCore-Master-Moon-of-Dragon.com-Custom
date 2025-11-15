@@ -95,7 +95,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
     try
     {
         // State-based update routing
-        switch (_currentState)
+    switch (_currentState)
         {
             case BotAIState::COMBAT:
                 UpdateCombat(diff);
@@ -133,7 +133,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
 
             case BotAIState::RESTING:
                 // Rest logic
-                if (GetBot()->GetHealthPct() >= 95.0f && GetBot()->GetPowerPct(POWER_MANA) >= 95.0f)
+    if (GetBot()->GetHealthPct() >= 95.0f && GetBot()->GetPowerPct(POWER_MANA) >= 95.0f)
                 {
                     TransitionToState(BotAIState::SOLO);
                 }
@@ -141,7 +141,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
         }
 
         // Always update group coordination if in a group
-        if (_currentGroup)
+    if (_currentGroup)
         {
             UpdateGroupCoordination(diff);
         }

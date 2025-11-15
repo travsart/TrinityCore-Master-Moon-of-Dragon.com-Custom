@@ -1094,8 +1094,7 @@ bool EquipmentManager::IsValuableBoE(::Item* item)
     {
         uint32 currentCount = GetConsumableCount(player, itemId);
         uint32 recommendedCount = 20; // Stack size recommendation
-
-        if (currentCount < recommendedCount)
+    if (currentCount < recommendedCount)
         {
             needs[itemId] = recommendedCount - currentCount;
         }

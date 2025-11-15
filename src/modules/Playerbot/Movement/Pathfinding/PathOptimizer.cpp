@@ -116,7 +116,7 @@ namespace Playerbot
         while (i < path.nodes.size() - 1)
         {
             // Check if we can skip this waypoint
-            if (CanRemoveWaypoint(path, i, map))
+    if (CanRemoveWaypoint(path, i, map))
             {
                 removed++;
                 i++;
@@ -151,7 +151,7 @@ namespace Playerbot
             smoothed.push_back(path.nodes[0]);
 
             // Smooth intermediate nodes
-            for (size_t i = 1; i < path.nodes.size() - 1; ++i)
+    for (size_t i = 1; i < path.nodes.size() - 1; ++i)
             {
                 Position const& prev = path.nodes[i - 1].position;
                 Position const& curr = path.nodes[i].position;
@@ -167,7 +167,7 @@ namespace Playerbot
                     (prev.GetPositionZ() + next.GetPositionZ()) * 0.5f * smoothingFactor;
 
                 // Validate the smoothed position
-                if (!map || IsDirectPathValid(map, prev, smoothPos) &&
+    if (!map || IsDirectPathValid(map, prev, smoothPos) &&
                     IsDirectPathValid(map, smoothPos, next))
                 {
                     PathNode smoothedNode = path.nodes[i];
@@ -217,7 +217,7 @@ namespace Playerbot
             float angleDiff = ::std::abs(Position::NormalizeOrientation(angle2 - angle1));
 
             // Check if this is a sharp corner worth cutting
-            if (angleDiff > _cornerCutThreshold && angleDiff < M_PI - _cornerCutThreshold)
+    if (angleDiff > _cornerCutThreshold && angleDiff < M_PI - _cornerCutThreshold)
             {
                 // Calculate cut position
                 float cutFactor = 0.3f; // Cut 30% into the corner
@@ -340,7 +340,7 @@ namespace Playerbot
             float medianLength = lengths[lengths.size() / 2];
 
             // Adjust all paths to similar length for formation maintenance
-            for (auto& path : paths)
+    for (auto& path : paths)
             {
                 if (::std::abs(path.totalLength - medianLength) > 5.0f)
                 {
@@ -356,7 +356,7 @@ namespace Playerbot
         else
         {
             // Optimize each path independently
-            for (auto& path : paths)
+    for (auto& path : paths)
             {
                 OptimizePath(path, nullptr);
             }
@@ -574,7 +574,7 @@ namespace Playerbot
         Position const& next = path.nodes[index + 1].position;
 
         // Check if direct path is valid
-        if (!IsDirectPathValid(map, prev, next))
+    if (!IsDirectPathValid(map, prev, next))
             return false;
 
         // Check if removing this waypoint doesn't create too long segment
@@ -583,7 +583,7 @@ namespace Playerbot
             return false;
 
         // Check curvature change
-        if (index > 1 && index < path.nodes.size() - 2)
+    if (index > 1 && index < path.nodes.size() - 2)
         {
             float curvatureBefore = CalculateCurvature(path.nodes[index - 2].position,
                 path.nodes[index - 1].position, path.nodes[index].position);
@@ -591,7 +591,7 @@ namespace Playerbot
                 path.nodes[index + 1].position, path.nodes[index + 2].position);
 
             // Don't remove if it would create sudden curvature change
-            if (::std::abs(curvatureAfter - curvatureBefore) > 0.5f)
+    if (::std::abs(curvatureAfter - curvatureBefore) > 0.5f)
                 return false;
         }
 
@@ -613,14 +613,14 @@ namespace Playerbot
             return false;
 
         // Check that start and end points match
-        if (original.nodes.front().position.GetExactDist(&optimized.nodes.front().position) > 0.1f ||
+    if (original.nodes.front().position.GetExactDist(&optimized.nodes.front().position) > 0.1f ||
             original.nodes.back().position.GetExactDist(&optimized.nodes.back().position) > 0.1f)
         {
             return false;
         }
 
         // Verify all segments are valid
-        for (size_t i = 1; i < optimized.nodes.size(); ++i)
+    for (size_t i = 1; i < optimized.nodes.size(); ++i)
         {
             if (!IsDirectPathValid(map, optimized.nodes[i - 1].position,
                 optimized.nodes[i].position))
@@ -630,7 +630,7 @@ namespace Playerbot
         }
 
         // Check that total length didn't increase significantly
-        if (optimized.totalLength > original.totalLength * 1.1f)
+    if (optimized.totalLength > original.totalLength * 1.1f)
         {
             return false;
         }

@@ -111,7 +111,7 @@ bool LFGGroupCoordinator::OnGroupFormed(ObjectGuid groupGuid, uint32 dungeonId)
         info.pendingTeleports.clear();
 
         // Add all group members to pending teleports
-        for (GroupReference const* ref : *group)
+    for (GroupReference const* ref : *group)
         {
             if (Player* member = ref->GetSource())
                 info.pendingTeleports.push_back(member->GetGUID());

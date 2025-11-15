@@ -73,7 +73,7 @@ public:
     void SleepEnhanced()
     {
         // Safety check - don't sleep during shutdown
-        if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
+    if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
             return;
 
         // Stagger sleep entry by worker ID to prevent thundering herd
@@ -120,19 +120,19 @@ public:
             [this, sleepEpoch]() {
                 // Wake conditions (in priority order):
                 // 1. Epoch changed (guaranteed wake signal)
-                if (_wakeEpoch.load(::std::memory_order_acquire) != sleepEpoch)
+    if (_wakeEpoch.load(::std::memory_order_acquire) != sleepEpoch)
                     return true;
 
                 // 2. Explicitly woken (sleeping flag cleared)
-                if (!_sleeping.load(::std::memory_order_relaxed))
+    if (!_sleeping.load(::std::memory_order_relaxed))
                     return true;
 
                 // 3. Shutdown requested
-                if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
+    if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
                     return true;
 
                 // 4. Work became available (double-check)
-                if (HasWorkAvailableEnhanced())
+    if (HasWorkAvailableEnhanced())
                     return true;
 
                 return false;
@@ -150,7 +150,7 @@ public:
             _consecutiveSleepTimeouts.fetch_add(1, ::std::memory_order_relaxed);
 
             // Safety: If we've timed out too many times, force a work check
-            if (_consecutiveSleepTimeouts.load(::std::memory_order_relaxed) > 5)
+    if (_consecutiveSleepTimeouts.load(::std::memory_order_relaxed) > 5)
             {
                 ForceWorkCheck();
             }
@@ -193,7 +193,7 @@ public:
         _wakeCv.notify_one();
 
         // For high-priority wakes, notify multiple times to ensure delivery
-        if (newEpoch % 10 == 0)  // Every 10th wake
+    if (newEpoch % 10 == 0)  // Every 10th wake
         {
             _wakeCv.notify_all();  // Broadcast to ensure wake delivery
         }
@@ -205,7 +205,7 @@ public:
     bool HasWorkAvailableEnhanced() const
     {
         // Check own queues first (fast path)
-        for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
+    for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
         {
             if (!_localQueues[i].Empty())
                 return true;
@@ -215,14 +215,14 @@ public:
         ::std::atomic_thread_fence(::std::memory_order_acquire);
 
         // Enhanced stealing check with work visibility
-        if (_pool->GetConfiguration().enableWorkStealing)
+    if (_pool->GetConfiguration().enableWorkStealing)
         {
             // Check pool-wide task count (more reliable than individual checks)
-            if (_pool->GetQueuedTasks() > 0)
+    if (_pool->GetQueuedTasks() > 0)
                 return true;  // Work exists somewhere
 
             // Double-check specific workers
-            for (uint32 i = 0; i < _pool->GetWorkerCount(); ++i)
+    for (uint32 i = 0; i < _pool->GetWorkerCount(); ++i)
             {
                 if (i == _workerId)
                     continue;
@@ -232,11 +232,11 @@ public:
                     continue;
 
                 // Don't check sleeping workers (they likely have no work)
-                if (other->_sleeping.load(::std::memory_order_acquire))
+    if (other->_sleeping.load(::std::memory_order_acquire))
                     continue;
 
                 // Check their queues
-                for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
+    for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
                 {
                     if (!other->_localQueues[j].Empty())
                         return true;
@@ -406,7 +406,7 @@ public:
         }
 
         // If ALL workers are sleeping with queued tasks, we have a problem
-        if (sleepingCount == totalWorkers && GetQueuedTasks() > 0)
+    if (sleepingCount == totalWorkers && GetQueuedTasks() > 0)
         {
             _allSleepingDetections.fetch_add(1, ::std::memory_order_relaxed);
             _lastAllSleepingTime.store(::std::chrono::steady_clock::now());
@@ -434,7 +434,7 @@ public:
             uint64_t lastBroadcast = _lastBroadcastEpoch.load(::std::memory_order_acquire);
 
             // If new submissions since last broadcast, wake workers
-            if (currentSubmissions != lastBroadcast)
+    if (currentSubmissions != lastBroadcast)
             {
                 _lastBroadcastEpoch.store(currentSubmissions, ::std::memory_order_release);
 
@@ -460,7 +460,7 @@ public:
         uint64_t currentCompleted = _metrics.totalCompleted.load(::std::memory_order_relaxed);
 
         // If no progress in 1 second with queued tasks, force wake
-        if (currentCompleted == lastCompleted && GetQueuedTasks() > 0)
+    if (currentCompleted == lastCompleted && GetQueuedTasks() > 0)
         {
             TC_LOG_WARN("playerbot.performance",
                 "ThreadPool: No progress for 1s with {} queued tasks - forcing wake",
@@ -547,7 +547,7 @@ public:
     void EnhancedWakeStrategy(TaskPriority priority)
     {
         // For critical tasks, wake more workers
-        if (priority == TaskPriority::CRITICAL)
+    if (priority == TaskPriority::CRITICAL)
         {
             WakeSleepingWorkers(0.5f);  // Wake 50% for critical tasks
         }
@@ -561,7 +561,7 @@ public:
         }
 
         // If queues are getting full, wake everyone
-        if (GetQueuedTasks() > _workers.size() * 10)
+    if (GetQueuedTasks() > _workers.size() * 10)
         {
             EmergencyWakeAll("Queue overflow prevention");
         }

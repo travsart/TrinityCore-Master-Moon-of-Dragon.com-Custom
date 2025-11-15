@@ -640,7 +640,7 @@ bool BotWorldEntry::FinalizeBotActivation()
                    _player->GetName());
 
         // Get AI and call OnGroupJoined to activate follow
-        if (BotAI* botAI = dynamic_cast<BotAI*>(_player->GetAI()))
+    if (BotAI* botAI = dynamic_cast<BotAI*>(_player->GetAI()))
         {
             botAI->OnGroupJoined(group);
         }
@@ -826,7 +826,6 @@ void BotWorldEntry::Cleanup()
     // Flow: Cleanup() → KickPlayer() (sets forceExit) → _session.reset() (releases our reference)
     //       → Update() returns false → _botSessions.erase() (last reference gone)
     //       → ~WorldSession() → LogoutPlayer() on main thread during next UpdateSessions() = SAFE!
-
     if (_session && _player)
     {
         // Signal session termination - BotSession::Update() will return false next cycle

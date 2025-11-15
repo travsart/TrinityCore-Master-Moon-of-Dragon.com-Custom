@@ -615,7 +615,7 @@ PerformanceBenchmark PerformanceProfiler::GenerateBenchmark() const
         benchmark.p99ResponseTime = allTimes[::std::min(p99Index, allTimes.size() - 1)];
 
         // Calculate throughput
-        if (m_currentSession->endTime > m_currentSession->startTime)
+    if (m_currentSession->endTime > m_currentSession->startTime)
         {
             auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(
                 m_currentSession->endTime - m_currentSession->startTime);
@@ -705,7 +705,7 @@ bool LoadTestRunner::ExecuteRampUp(uint32 targetBots, uint32 rampTimeSeconds)
         uint32 nextBotCount = ::std::min(currentBots + botIncrement, targetBots);
 
         // Simulate spawning additional bots
-        for (uint32 i = currentBots; i < nextBotCount; ++i)
+    for (uint32 i = currentBots; i < nextBotCount; ++i)
         {
             m_profiler->RecordOperation("BotSpawn", 50000); // 50ms simulated spawn time
         }
@@ -716,7 +716,7 @@ bool LoadTestRunner::ExecuteRampUp(uint32 targetBots, uint32 rampTimeSeconds)
         RecordLoadMetrics(currentBots);
 
         // Check if system is still stable
-        if (!IsSystemStable())
+    if (!IsSystemStable())
         {
             TC_LOG_ERROR("playerbot.test", "System became unstable during ramp-up at {} bots", currentBots);
             return false;
@@ -753,7 +753,7 @@ bool LoadTestRunner::ExecuteSustainedLoad(uint32 botCount, uint32 durationSecond
         RecordLoadMetrics(botCount);
 
         // Check system stability
-        if (!IsSystemStable())
+    if (!IsSystemStable())
         {
             TC_LOG_ERROR("playerbot.test", "System became unstable during sustained load");
             return false;

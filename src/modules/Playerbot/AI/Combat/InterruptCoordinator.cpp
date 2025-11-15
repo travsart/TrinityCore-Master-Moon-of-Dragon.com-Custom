@@ -50,7 +50,7 @@ void InterruptCoordinatorFixed::RegisterBot(Player* bot, BotAI* ai)
             continue;
 
         // Check if this is an interrupt spell
-        for (auto const& effect : spellInfo->GetEffects())
+    for (auto const& effect : spellInfo->GetEffects())
         {
             if (effect.Effect == SPELL_EFFECT_INTERRUPT_CAST)
             {
@@ -222,7 +222,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
     for (auto& [casterGuid, castInfo] : localState.activeCasts)
     {
         // Skip if already assigned enough bots
-        if (castInfo.assignedBots >= (castInfo.priority >= InterruptPriority::HIGH ? 2 : 1))
+    if (castInfo.assignedBots >= (castInfo.priority >= InterruptPriority::HIGH ? 2 : 1))
             continue;
 
         // Skip if too early to interrupt
@@ -236,7 +236,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
             continue;
 
         // Sort by distance (if position manager available)
-        if (_positionManager)
+    if (_positionManager)
         {
             ::std::sort(availableBots.begin(), availableBots.end(),
                 [this, casterGuid](ObjectGuid a, ObjectGuid b) {
@@ -261,7 +261,7 @@ void InterruptCoordinatorFixed::AssignInterrupters()
         castInfo.assignedBots++;
 
         // Assign backup for critical spells
-        if (_enableBackupAssignment &&
+    if (_enableBackupAssignment &&
             castInfo.priority >= InterruptPriority::HIGH &&
             availableBots.size() > 1)
         {
@@ -321,7 +321,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     for (auto* assignment : readyAssignments)
     {
         // Mark as in progress (protected by mutex access pattern)
-        if (assignment->inProgress)
+    if (assignment->inProgress)
             continue;
         assignment->inProgress = true;
 
@@ -361,7 +361,7 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
         );
 
         // Update assigned bots
-        for (auto const& assignment : _state.pendingAssignments)
+    for (auto const& assignment : _state.pendingAssignments)
         {
             if (!assignment.executed)
                 continue;
@@ -379,19 +379,19 @@ void InterruptCoordinatorFixed::ExecuteAssignments(uint32 currentTime)
     for (auto const& [guid, info] : _state.botInfo)
     {
         // Check if bot is available
-        if (!info.available)
+    if (!info.available)
             continue;
 
         // Check if bot has interrupt spell
-        if (info.spellId == 0)
+    if (info.spellId == 0)
             continue;
 
         // Check if bot is not already assigned
-        if (_state.assignedBots.find(guid) != _state.assignedBots.end())
+    if (_state.assignedBots.find(guid) != _state.assignedBots.end())
             continue;
 
         // Check cooldown
-        if (info.cooldownRemaining > 0)
+    if (info.cooldownRemaining > 0)
             continue;
 
         available.push_back(guid);
@@ -568,7 +568,7 @@ void InterruptCoordinatorFixed::OnInterruptExecuted(ObjectGuid botGuid, ObjectGu
             _state.assignedBots.erase(botGuid);
 
             // Update metrics
-            if (success)
+    if (success)
                 _metrics.interruptsSuccessful.fetch_add(1, ::std::memory_order_relaxed);
             else
                 _metrics.interruptsFailed.fetch_add(1, ::std::memory_order_relaxed);

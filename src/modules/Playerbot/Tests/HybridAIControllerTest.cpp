@@ -210,7 +210,7 @@ TEST_CASE("HybridAIController: Decision throttling", "[hybrid-ai][throttling]")
     SECTION("Multiple rapid updates don't crash")
     {
         // Call Update multiple times rapidly
-        for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; ++i)
         {
             controller.Update(10); // 10ms per update
         }

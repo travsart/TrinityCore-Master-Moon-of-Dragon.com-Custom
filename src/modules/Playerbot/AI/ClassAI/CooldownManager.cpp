@@ -41,7 +41,7 @@ void CooldownManager::Update(uint32 diff)
     // Update category cooldowns
     {
         // No lock needed - _spellCategories and _categoryCooldowns are per-bot instance data
-        for (auto& pair : _categoryCooldowns)
+    for (auto& pair : _categoryCooldowns)
         {
             if (pair.second > diff)
                 pair.second -= diff;
@@ -275,7 +275,7 @@ void CooldownManager::ConsumeCharge(uint32 spellId)
         it->second.charges--;
 
         // Start recharge timer if not at max charges
-        if (it->second.charges < it->second.maxCharges && it->second.chargeRechargeMs > 0)
+    if (it->second.charges < it->second.maxCharges && it->second.chargeRechargeMs > 0)
         {
             it->second.nextChargeTime = it->second.chargeRechargeMs;
         }
@@ -603,7 +603,7 @@ void CooldownManager::UpdateCharges(CooldownInfo& cooldown, uint32 diff)
             cooldown.charges++;
 
             // Reset timer for next charge if still not at max
-            if (cooldown.charges < cooldown.maxCharges)
+    if (cooldown.charges < cooldown.maxCharges)
                 cooldown.nextChargeTime = cooldown.chargeRechargeMs;
             else
                 cooldown.nextChargeTime = 0;
@@ -722,7 +722,7 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
         float hastePct = 0.0f;
 
         // Use spell haste for magic spells, melee haste for physical abilities
-        if (spellInfo->IsRangedWeaponSpell())
+    if (spellInfo->IsRangedWeaponSpell())
         {
             hastePct = player->GetRatingBonusValue(CR_HASTE_RANGED);
             hastePct += player->GetTotalAuraModifier(SPELL_AURA_MOD_RANGED_HASTE);
@@ -748,7 +748,7 @@ uint32 CooldownCalculator::CalculateGCD(uint32 spellId, Player* caster)
 
         // Enforce minimum GCD (750ms for most classes, some specs have 500ms)
         // Death Knights, Shamans, and some other specs have different minimums
-        if (player->GetClass() == CLASS_DEATH_KNIGHT || player->GetClass() == CLASS_SHAMAN)
+    if (player->GetClass() == CLASS_DEATH_KNIGHT || player->GetClass() == CLASS_SHAMAN)
             minGCD = 500; // These classes can reach 0.5s GCD
 
         return ::std::max(minGCD, modifiedGCD);

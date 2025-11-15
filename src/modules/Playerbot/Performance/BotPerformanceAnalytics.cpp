@@ -299,7 +299,7 @@ void BotPerformanceAnalytics::UpdateSystemAnalytics()
                 ::std::chrono::steady_clock::now().time_since_epoch()).count());
 
         // Keep only recent trend data
-        while (_systemAnalytics.performanceTrend.size() > 100)
+    while (_systemAnalytics.performanceTrend.size() > 100)
         {
             _systemAnalytics.performanceTrend.erase(_systemAnalytics.performanceTrend.begin());
             _systemAnalytics.trendTimestamps.erase(_systemAnalytics.trendTimestamps.begin());
@@ -617,7 +617,7 @@ void BotPerformanceAnalytics::RecordError(uint32_t botGuid, const ::std::string&
         }
 
         // Errors negatively impact performance scores
-        for (auto& score : it->second.behaviorScores)
+    for (auto& score : it->second.behaviorScores)
         {
             score = ::std::max(0.0, score - 1.0); // Small penalty for any error
         }

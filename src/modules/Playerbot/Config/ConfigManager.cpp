@@ -239,14 +239,14 @@ namespace Playerbot
         }
 
         // Check if read-only
-        if (it->second.readOnly)
+    if (it->second.readOnly)
         {
             _lastError = "Configuration key '" + key + "' is read-only";
             return false;
         }
 
         // Validate new value
-        if (!ValidateValue(key, value))
+    if (!ValidateValue(key, value))
         {
             // _lastError set by ValidateValue
             return false;
@@ -446,7 +446,7 @@ namespace Playerbot
             lineNumber++;
 
             // Skip empty lines and comments
-            if (line.empty() || line[0] == '#')
+    if (line.empty() || line[0] == '#')
                 continue;
 
             // Parse key = value
@@ -464,7 +464,7 @@ namespace Playerbot
             value.erase(value.find_last_not_of(" \t") + 1);
 
             // Remove quotes from string values
-            if (!value.empty() && value.front() == '"' && value.back() == '"')
+    if (!value.empty() && value.front() == '"' && value.back() == '"')
                 value = value.substr(1, value.length() - 2);
 
             // Find entry and convert value
@@ -534,7 +534,7 @@ namespace Playerbot
             return true;  // No validation rule, accept value
 
         // Run validation
-        if (!it->second.validator(value))
+    if (!it->second.validator(value))
         {
             _lastError = it->second.errorMessage;
             return false;

@@ -47,7 +47,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 Havoc Demon Hunter Spell IDs
 enum HavocSpells
 {
@@ -1210,7 +1210,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Blur", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Blur", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_BLUR, bot)) {
 
@@ -1234,7 +1234,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Darkness", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Darkness", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
 
@@ -1280,7 +1280,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Metamorphosis", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Metamorphosis", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
 
@@ -1314,7 +1314,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Fel Barrage", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Fel Barrage", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1372,7 +1372,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Eye Beam", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Eye Beam", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1418,7 +1418,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Death Sweep", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Death Sweep", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
 
@@ -1458,7 +1458,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Blade Dance", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Blade Dance", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
 
@@ -1486,7 +1486,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Immolation Aura", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Immolation Aura", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
 
@@ -1538,7 +1538,7 @@ private:
 
                                     }),
 
-                                    ::bot::ai::Action("Cast Fel Rush", [this](Player* bot, Unit* target) {
+                                    bot::ai::Action("Cast Fel Rush", [this](Player* bot, Unit* target) {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1576,7 +1576,7 @@ private:
 
                                     }),
 
-                                    ::bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot, Unit*) {
+                                    bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
 
@@ -1628,7 +1628,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Annihilation", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Annihilation", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1670,7 +1670,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Chaos Strike", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Chaos Strike", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1716,7 +1716,7 @@ private:
 
                     }),
 
-                    ::bot::ai::Action("Cast Demon's Bite", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Demon's Bite", [this](Player* bot, Unit* target) {
 
                         Unit* target = bot->GetVictim();
 

@@ -93,7 +93,7 @@ public:
         auto start = ::std::chrono::high_resolution_clock::now();
 
         // Spawn worker threads
-        for (uint32 i = 0; i < NUM_THREADS; ++i)
+    for (uint32 i = 0; i < NUM_THREADS; ++i)
         {
             threads.emplace_back([&]()
             {
@@ -180,7 +180,7 @@ public:
         }
 
         // Verify memory target (<10MB per bot)
-        for (const auto& snapshot : snapshots)
+    for (const auto& snapshot : snapshots)
         {
             if (snapshot.botCount > 0)
             {
@@ -205,7 +205,7 @@ private:
         }
 
         // Warm up cache
-        for (uint32 i = 0; i < 100; ++i)
+    for (uint32 i = 0; i < 100; ++i)
         {
             auto& cache = SpatialHostileCache::Instance();
             cache.FindHostilesForBot(nullptr, 30.0f);
@@ -332,7 +332,7 @@ private:
     static void SimulateActiveBots(uint32 count)
     {
         // Simulate bot activity to populate caches
-        for (uint32 i = 0; i < count; ++i)
+    for (uint32 i = 0; i < count; ++i)
         {
             auto& cache = SpatialHostileCache::Instance();
             cache.FindHostilesForBot(nullptr, 30.0f);

@@ -509,7 +509,6 @@ void GroupFormation::UpdateMemberPositions()
 
     float radius = spacing * memberCount / (2.0f * M_PI);
     radius = ::std::max(radius, 3.0f); // Minimum radius
-
     for (uint32 i = 0; i < memberCount; ++i)
     {
         float angle = (2.0f * M_PI * i) / memberCount;
@@ -594,13 +593,10 @@ void GroupFormation::UpdateMemberPositions()
 
     if (memberCount > 1)
         positions.emplace_back(-spacing * 1.5f, 0, 0);  // Left point
-
     if (memberCount > 2)
         positions.emplace_back(spacing * 1.5f, 0, 0);   // Right point
-
     if (memberCount > 3)
         positions.emplace_back(0, -spacing * 1.5f, 0);  // Back point
-
     if (memberCount > 4)
         positions.emplace_back(0, 0, 0);                // Center
 
@@ -716,7 +712,6 @@ void GroupFormation::UpdateMemberPositions()
     uint32 placedMembers = 1;  // Leader already placed
     uint32 currentRow = 1;
     float currentYOffset = -spacing * 1.2f;  // Start behind leader
-
     while (placedMembers < memberCount)
     {
         // Calculate how many members in this row (increases with each row)
@@ -727,7 +722,7 @@ void GroupFormation::UpdateMemberPositions()
         float rowWidth = membersInRow * spacing * 0.7f;
 
         // Place members in this row, centered horizontally
-        for (uint32 i = 0; i < membersInRow && placedMembers < memberCount; ++i, ++placedMembers)
+    for (uint32 i = 0; i < membersInRow && placedMembers < memberCount; ++i, ++placedMembers)
         {
             float xOffset;
             if (membersInRow == 1)
@@ -787,7 +782,7 @@ void GroupFormation::HandleCollisionResolution()
         // This would integrate with TrinityCore's map/terrain system in production
 
         // If collision detected, find nearest valid position
-        if (hasTerrainCollision)
+    if (hasTerrainCollision)
         {
             Position adjustedPos = FindNearestValidPosition(assignedPos, member.maxDeviationDistance);
 
@@ -804,22 +799,21 @@ void GroupFormation::HandleCollisionResolution()
         }
 
         // Check for inter-member collisions (members too close)
-        for (auto& otherMember : _members)
+    for (auto& otherMember : _members)
         {
             if (otherMember.memberGuid == member.memberGuid)
                 continue;
 
             float distance = assignedPos.GetExactDist2d(otherMember.assignedPosition);
             const float MIN_SPACING = _formationSpacing * 0.5f; // Minimum 50% of formation spacing
-
-            if (distance < MIN_SPACING)
+    if (distance < MIN_SPACING)
             {
                 // Members are too close, push them apart
                 float angle = assignedPos.GetAngle(&otherMember.assignedPosition);
                 float pushDistance = (MIN_SPACING - distance) * 0.5f; // Split the difference
 
                 // Only adjust if member is flexible
-                if (member.isFlexible)
+    if (member.isFlexible)
                 {
                     // Push away from other member
                     float newX = assignedPos.m_positionX + ::std::cos(angle) * pushDistance;
@@ -858,11 +852,10 @@ void GroupFormation::ApplyFlexibilityAdjustments()
     // 2. Combat situation
     // 3. Movement efficiency
     // 4. Neighboring member positions
-
     for (auto& member : _members)
     {
         // Skip if member is not flexible or is the leader
-        if (!member.isFlexible || member.isLeader)
+    if (!member.isFlexible || member.isLeader)
             continue;
 
         Position currentAssigned = member.assignedPosition;
@@ -906,12 +899,12 @@ void GroupFormation::ApplyFlexibilityAdjustments()
 
         // Adjustment 2: Smooth transitions to new positions
         // If member has a current position different from assigned, interpolate
-        if (member.currentPosition.IsValid() && currentAssigned.IsValid())
+    if (member.currentPosition.IsValid() && currentAssigned.IsValid())
         {
             float distance = member.currentPosition.GetExactDist2d(currentAssigned);
 
             // If far from assigned position, allow gradual adjustment
-            if (distance > member.maxDeviationDistance * 0.5f)
+    if (distance > member.maxDeviationDistance * 0.5f)
             {
                 // Calculate interpolated position (move 20% towards target each update)
                 float interpFactor = 0.2f * adjustmentFactor;
@@ -939,7 +932,7 @@ void GroupFormation::ApplyFlexibilityAdjustments()
 
         // Adjustment 3: Priority-based spacing
         // Higher priority members get more space
-        if (member.priority > 1.5f)
+    if (member.priority > 1.5f)
         {
             member.maxDeviationDistance = _formationSpacing * 0.8f; // Extra space for high priority
         }

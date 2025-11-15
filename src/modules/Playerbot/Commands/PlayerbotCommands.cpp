@@ -159,12 +159,12 @@ namespace Playerbot
         uint8 botRace = race ? *race : player->GetRace();
         uint8 botClass = classId ? *classId : player->GetClass();
         // Validate race/class combination
-        if (!ValidateRaceClass(botRace, botClass, handler))
+    if (!ValidateRaceClass(botRace, botClass, handler))
 
             return false;
 
         // Check if bot name already exists
-        if (sCharacterCache->GetCharacterGuidByName(name).IsPlayer())
+    if (sCharacterCache->GetCharacterGuidByName(name).IsPlayer())
         {
 
             handler->PSendSysMessage("Bot name '%s' is already taken.", name.c_str());
@@ -330,7 +330,7 @@ namespace Playerbot
         uint32 summonedCount = 0;
 
         // Summon all bots in group
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
 
             Player* member = itr.GetSource();
@@ -438,7 +438,7 @@ namespace Playerbot
             GroupFormationManager::AssignBotsToFormation(player, bots, formation);
 
         // Move bots to formation positions
-        for (auto const& assignment : assignments)
+    for (auto const& assignment : assignments)
         {
 
             assignment.bot->GetMotionMaster()->MovePoint(0, assignment.position.position);
@@ -527,7 +527,7 @@ namespace Playerbot
         ConfigManager* config = ConfigManager::instance();
 
         // Check if key exists
-        if (!config->HasKey(key))
+    if (!config->HasKey(key))
         {
 
             handler->PSendSysMessage("Unknown configuration key: '%s'", key.c_str());
@@ -693,7 +693,7 @@ namespace Playerbot
         }
 
         // Display categorized configuration
-        for (auto const& [category, items] : categorized)
+    for (auto const& [category, items] : categorized)
         {
 
             handler->PSendSysMessage("\n[%s]", category.c_str());
@@ -732,8 +732,7 @@ namespace Playerbot
                 handler->SendSysMessage(oss.str().c_str());
 
                 // Show description if available
-
-                if (!entry.description.empty())
+    if (!entry.description.empty())
                 {
                     handler->PSendSysMessage("# %s", entry.description.c_str());
                 }
@@ -759,7 +758,7 @@ namespace Playerbot
     bool PlayerbotCommandScript::ValidateRaceClass(uint8 race, uint8 classId, ChatHandler* handler)
     {
         // Validate race
-        if (race == 0 || race > MAX_RACES)
+    if (race == 0 || race > MAX_RACES)
         {
 
             handler->PSendSysMessage("Invalid race: %u (must be 1-%u)", race, MAX_RACES);
@@ -768,7 +767,7 @@ namespace Playerbot
         }
 
         // Validate class
-        if (classId == 0 || classId > MAX_CLASSES)
+    if (classId == 0 || classId > MAX_CLASSES)
         {
 
             handler->PSendSysMessage("Invalid class: %u (must be 1-%u)", classId, MAX_CLASSES);
@@ -1078,8 +1077,7 @@ namespace Playerbot
         }
 
         ::std::vector<PerformanceAlert> history = monitor->GetAlertHistory(20);  // Last 20 alerts
-
-        if (history.empty())
+    if (history.empty())
         {
 
             handler->SendSysMessage("No alert history");

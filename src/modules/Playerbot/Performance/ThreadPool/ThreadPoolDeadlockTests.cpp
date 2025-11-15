@@ -123,7 +123,7 @@ TEST_F(ThreadPoolDeadlockTest, ReproduceProductionDeadlock)
         }
 
         // Deadlock detected if all workers sleeping with pending work
-        if (stuckSleeping == pool.GetWorkerCount() && pool.GetQueuedTasks() > 0)
+    if (stuckSleeping == pool.GetWorkerCount() && pool.GetQueuedTasks() > 0)
         {
             deadlockDetected.store(true);
             break;
@@ -239,7 +239,7 @@ TEST_F(ThreadPoolDeadlockTest, StressTestRapidSubmitSleepCycles)
         ::std::vector<::std::future<void>> futures;
 
         // Submit batch
-        for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < 50; ++i)
         {
             futures.push_back(pool.SubmitEnhanced(TaskPriority::NORMAL, [&totalCompleted]() {
                 // Variable sleep to create different completion patterns
@@ -249,7 +249,7 @@ TEST_F(ThreadPoolDeadlockTest, StressTestRapidSubmitSleepCycles)
         }
 
         // Wait for completion
-        for (auto& f : futures)
+    for (auto& f : futures)
         {
             auto status = f.wait_for(::std::chrono::seconds(1));
             ASSERT_EQ(status, ::std::future_status::ready)

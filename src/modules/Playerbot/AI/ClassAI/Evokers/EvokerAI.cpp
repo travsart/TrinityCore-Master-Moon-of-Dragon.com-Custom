@@ -106,10 +106,10 @@ void EvokerAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback: basic ranged attack
-        if (!_bot->IsNonMeleeSpellCast(false))
+    if (!_bot->IsNonMeleeSpellCast(false))
         {
             float rangeSq = 35.0f * 35.0f; // 1225.0f
-            if (_bot->GetExactDistSq(target) <= rangeSq)
+    if (_bot->GetExactDistSq(target) <= rangeSq)
             {
                 _bot->AttackerStateUpdate(target);
             }
@@ -179,7 +179,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
     if (behaviors && behaviors->NeedsRepositioning())
     {        Position optimalPos = behaviors->GetOptimalPosition();
         float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance        // Too close - use Hover to gain distance
-        if (distance < 15.0f && CanUseAbility(HOVER))
+    if (distance < 15.0f && CanUseAbility(HOVER))
         {
             if (CastSpell(_bot, HOVER))
             {
@@ -190,7 +190,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         }
 
         // Wing Buffet for knockback
-        if (distance < 10.0f && CanUseAbility(WING_BUFFET))
+    if (distance < 10.0f && CanUseAbility(WING_BUFFET))
         {
             if (CastSpell(_bot, WING_BUFFET))
             {
@@ -236,7 +236,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         if (currentSpec == EvokerSpec::DEVASTATION)
         {
             // Pyre for AoE with Essence Burst proc
-            if (_essenceBurstStacks > 0 && CanUseAbility(PYRE))
+    if (_essenceBurstStacks > 0 && CanUseAbility(PYRE))
             {
                 if (CastSpell(PYRE, target))
                 {
@@ -244,7 +244,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
                     return;
                 }
             }            // Eternity's Surge (empowered) for AoE burst
-            if (_essence.current >= 3 && CanUseAbility(ETERNITYS_SURGE))
+    if (_essence.current >= 3 && CanUseAbility(ETERNITYS_SURGE))
             {
                 StartEmpoweredSpell(ETERNITYS_SURGE, EmpowermentLevel::RANK_3, target);
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Eternity's Surge (Rank 3) for AoE",                             _bot->GetName());
@@ -253,7 +253,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         }        else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             // Dream Breath (empowered) for AoE healing
-            if (_essence.current >= 3 && CanUseAbility(DREAM_BREATH))
+    if (_essence.current >= 3 && CanUseAbility(DREAM_BREATH))
             {
                 StartEmpoweredSpell(DREAM_BREATH, EmpowermentLevel::RANK_3, target);
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} channeling Dream Breath (Rank 3) for AoE healing",                             _bot->GetName());
@@ -261,7 +261,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
             }
 
             // Emerald Blossom for instant AoE heal
-            if (CanUseAbility(EMERALD_BLOSSOM))
+    if (CanUseAbility(EMERALD_BLOSSOM))
             {
                 if (CastSpell(_bot, EMERALD_BLOSSOM))
                 {
@@ -279,7 +279,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         if (currentSpec == EvokerSpec::DEVASTATION)
         {
             // Dragonrage - major DPS cooldown
-            if (CanUseAbility(SPELL_DRAGONRAGE))
+    if (CanUseAbility(SPELL_DRAGONRAGE))
             {
                 if (CastSpell(SPELL_DRAGONRAGE, _bot))
                 {
@@ -292,7 +292,7 @@ void EvokerAI::UpdateRotation(::Unit* target)
         else if (currentSpec == EvokerSpec::PRESERVATION)
         {
             // Emerald Communion - major healing cooldown
-            if (CanUseAbility(EMERALD_COMMUNION))
+    if (CanUseAbility(EMERALD_COMMUNION))
             {
                 if (CastSpell(_bot, EMERALD_COMMUNION))
                 {
@@ -555,7 +555,7 @@ void EvokerAI::UpdateDevastationRotation(::Unit* target)
     if (!_isChannelingEmpowered)
     {
         // Eternity's Surge with empowerment
-        if (_eternitysSurgeReady && CanUseAbility(ETERNITYS_SURGE))
+    if (_eternitysSurgeReady && CanUseAbility(ETERNITYS_SURGE))
         {
             EmpowermentLevel level = CalculateOptimalEmpowermentLevel(ETERNITYS_SURGE, target);
             CastEmpoweredEternitysSurge(target, level);
@@ -650,7 +650,7 @@ void EvokerAI::UpdateEssenceManagement(::Unit* target)
     {
         EvokerSpec currentSpec = DetectSpecialization();
         // Spend excess essence
-        if (currentSpec == EvokerSpec::DEVASTATION && this->CanUseAbility(DISINTEGRATE))
+    if (currentSpec == EvokerSpec::DEVASTATION && this->CanUseAbility(DISINTEGRATE))
             this->CastDisintegrate(target);
         else if (currentSpec == EvokerSpec::PRESERVATION)
         {
@@ -940,7 +940,6 @@ bool EvokerAI::CanShiftAspect()
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
     for (Unit* enemy : nearbyEnemies)
     {
         targets.push_back(enemy);

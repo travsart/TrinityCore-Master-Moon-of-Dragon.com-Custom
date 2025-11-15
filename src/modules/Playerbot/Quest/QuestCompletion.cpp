@@ -120,7 +120,7 @@ void QuestCompletion::UpdateQuestProgress(Player* bot)
     for (auto& progress : it->second)
     {
         // Skip completed quests
-        if (progress.completionPercentage >= 100.0f)
+    if (progress.completionPercentage >= 100.0f)
             continue;
 
         // Update each objective
@@ -157,7 +157,7 @@ void QuestCompletion::UpdateQuestProgress(Player* bot)
             progress.completionPercentage = (totalProgress / progress.objectives.size()) * 100.0f;
         }
         // Check for stuck state
-        if (!anyProgress)
+    if (!anyProgress)
         {
             uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - progress.lastUpdateTime > STUCK_DETECTION_TIME)
@@ -175,7 +175,7 @@ void QuestCompletion::UpdateQuestProgress(Player* bot)
         }
 
         // Check if quest is ready for turn-in
-        if (progress.completionPercentage >= 100.0f && progress.requiresTurnIn)
+    if (progress.completionPercentage >= 100.0f && progress.requiresTurnIn)
         {
             CompleteQuest(progress.questId, bot);
         }
@@ -266,11 +266,11 @@ void QuestCompletion::TrackQuestObjectives(Player* bot)
     for (auto& progress : it->second)
     {
         // Skip completed quests
-        if (progress.completionPercentage >= 100.0f)
+    if (progress.completionPercentage >= 100.0f)
             continue;
 
         // Execute objectives based on strategy
-        switch (progress.strategy)
+    switch (progress.strategy)
         {
             case QuestCompletionStrategy::EFFICIENT_COMPLETION:
                 ExecuteEfficientStrategy(bot, progress);
@@ -425,7 +425,7 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
     if (!FindKillTarget(bot, objective))
     {
         // No targets found, move to spawn location if known
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -454,11 +454,10 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
                 spatialGrid->QueryNearbyCreatures(bot->GetPosition(), objective.searchRadius);
 
             ObjectGuid targetGuid;  // Store GUID instead of pointer
-
-            for (auto const& snapshot : nearbyCreatures)
+    for (auto const& snapshot : nearbyCreatures)
             {
                 // Use snapshot fields instead of calling methods on pointers
-                if (snapshot.isDead || !snapshot.isVisible)
+    if (snapshot.isDead || !snapshot.isVisible)
                     continue;
                 if (snapshot.entry != objective.targetId)
                     continue;
@@ -472,7 +471,7 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
             }
 
             // Store the GUID for later use (main thread will resolve)
-            if (!targetGuid.IsEmpty())
+    if (!targetGuid.IsEmpty())
                 target = ObjectAccessor::GetCreature(*bot, targetGuid);  // Safe: this method may run on main thread context
         }
     }
@@ -480,7 +479,7 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
     if (target)
     {
         // Engage target through combat system
-        if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
+    if (BotAI* ai = dynamic_cast<BotAI*>(bot->GetAI()))
         {
             // Set the bot's target to the creature
             bot->SetSelection(target->GetGUID());
@@ -527,7 +526,7 @@ void QuestCompletion::HandleCollectObjective(Player* bot, QuestObjectiveData& ob
     if (!FindCollectibleItem(bot, objective))
     {
         // Move to collection area
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -573,7 +572,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
                 for (auto const& snapshot : nearbyCreatures)
                 {
                     // Use snapshot fields instead of pointer method calls
-                    if (!snapshot.isVisible)
+    if (!snapshot.isVisible)
                         continue;
                     if (snapshot.entry != objective.targetId)
                         continue;
@@ -586,7 +585,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
                 }
 
                 // Resolve GUID to pointer after loop (safe if method runs on main thread context)
-                if (!npcGuid.IsEmpty())
+    if (!npcGuid.IsEmpty())
                     npc = ObjectAccessor::GetCreature(*bot, npcGuid);
             }
         }
@@ -595,7 +594,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
     if (npc)
     {
         // Move to NPC if not in range
-        if (bot->GetDistance(npc) > QUEST_GIVER_INTERACTION_RANGE)
+    if (bot->GetDistance(npc) > QUEST_GIVER_INTERACTION_RANGE)
         {
             BotMovementUtil::MoveToUnit(bot, npc, QUEST_GIVER_INTERACTION_RANGE - 1.0f);
             return;
@@ -614,7 +613,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
     else
     {
         // Move to NPC location if known
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -692,14 +691,14 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
         }
 
         // Resolve GUID after loop
-        if (!targetGuid.IsEmpty())
+    if (!targetGuid.IsEmpty())
             gameObject = ObjectAccessor::GetGameObject(*bot, targetGuid);
     }
 
     if (gameObject)
     {
         // Move to object if not in range
-        if (bot->GetDistance(gameObject) > QUEST_GIVER_INTERACTION_RANGE)
+    if (bot->GetDistance(gameObject) > QUEST_GIVER_INTERACTION_RANGE)
         {
             BotMovementUtil::MoveToPosition(bot, gameObject->GetPosition());
             return;
@@ -721,7 +720,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
     else
     {
         // Move to object location if known
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -816,7 +815,7 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
         }
 
         // Resolve GUID to pointer after loop
-        if (!targetGuid.IsEmpty())
+    if (!targetGuid.IsEmpty())
             target = ObjectAccessor::GetCreature(*bot, targetGuid);
     }
 
@@ -838,7 +837,7 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
     else
     {
         // Move to target location
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -887,20 +886,20 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
         }
 
         // Resolve GUID to pointer after loop
-        if (!escortGuid.IsEmpty())
+    if (!escortGuid.IsEmpty())
             escortTarget = ObjectAccessor::GetCreature(*bot, escortGuid);
     }
 
     if (escortTarget)
     {
         // Follow the escort target
-        if (bot->GetDistance(escortTarget) > 10.0f)
+    if (bot->GetDistance(escortTarget) > 10.0f)
         {
             BotMovementUtil::MoveToUnit(bot, escortTarget, 5.0f);
         }
 
         // Check if escort is complete (handled by quest system)
-        if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
+    if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
         {
             objective.status = ObjectiveStatus::COMPLETED;
             objective.currentCount = objective.requiredCount;
@@ -912,7 +911,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
     else
     {
         // Move to escort start location
-        if (objective.targetLocation.GetPositionX() != 0)
+    if (objective.targetLocation.GetPositionX() != 0)
         {
             NavigateToObjective(bot, objective);
         }
@@ -974,7 +973,7 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
     for (auto const& snapshot : nearbyCreatures)
     {
         // Filter: must match entry, be alive, visible, and hostile
-        if (snapshot.entry != objective.targetId)
+    if (snapshot.entry != objective.targetId)
             continue;
         if (snapshot.isDead || !snapshot.isVisible)
             continue;
@@ -1030,7 +1029,7 @@ bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objec
     for (auto const& snapshot : nearbyCreatures)
     {
         // Filter: must be alive and not friendly (assume non-friendly if we can't check faction)
-        if (snapshot.isDead)
+    if (snapshot.isDead)
             continue;
 
         // Check if creature can drop the item (would need loot template access)
@@ -1050,7 +1049,7 @@ bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objec
     for (auto const& snapshot : nearbyObjects)
     {
         // Check if game object is lootable using snapshot data
-        if (snapshot.goType == GAMEOBJECT_TYPE_CHEST ||
+    if (snapshot.goType == GAMEOBJECT_TYPE_CHEST ||
             snapshot.goType == GAMEOBJECT_TYPE_GOOBER)
         {
             objective.targetLocation = snapshot.position;
@@ -1205,7 +1204,7 @@ void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objec
 
         default:
             // Check if objective is complete through quest system
-            if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
+    if (bot->IsQuestObjectiveComplete(objective.questId, objective.objectiveIndex))
             {
                 objective.currentCount = objective.requiredCount;
             }
@@ -1448,7 +1447,7 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
     if (questIt != it->second.end())
     {
         // Reset stuck objectives
-        for (auto& objective : questIt->objectives)
+    for (auto& objective : questIt->objectives)
         {
             if (objective.status == ObjectiveStatus::IN_PROGRESS)
             {
@@ -1458,7 +1457,7 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
         }
 
         // Change strategy
-        if (questIt->strategy == QuestCompletionStrategy::EFFICIENT_COMPLETION)
+    if (questIt->strategy == QuestCompletionStrategy::EFFICIENT_COMPLETION)
             questIt->strategy = QuestCompletionStrategy::SAFE_COMPLETION;
 
         // Reset stuck flag

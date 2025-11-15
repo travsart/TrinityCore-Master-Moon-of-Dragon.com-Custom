@@ -110,7 +110,7 @@ bool TestResult::IsWithinPerformanceThresholds(const PerformanceThresholds& thre
         report << "  " << suite.GenerateSummary() << "\n";
 
         // Show failed tests
-        for (const auto& test : suite.testResults)
+    for (const auto& test : suite.testResults)
         {
             if (!test.passed)
             {
@@ -290,7 +290,7 @@ TestRunResult AutomatedTestRunner::RunAllTests()
             m_progressCallback(completedTests, testsToRun.size());
 
         // Check for early termination
-        if (m_config.stopOnFirstFailure && !suiteResult.AllTestsPassed())
+    if (m_config.stopOnFirstFailure && !suiteResult.AllTestsPassed())
         {
             TC_LOG_WARN("playerbot.test", "Stopping test execution due to failures in suite: {}", suiteName);
             break;
@@ -347,7 +347,7 @@ TestResult AutomatedTestRunner::ExecuteTest(const TestRegistry::TestInfo& testIn
     try
     {
         // Check dependencies first
-        if (!CheckDependencies(testInfo))
+    if (!CheckDependencies(testInfo))
         {
             result.passed = false;
             result.failureReason = "Dependencies not satisfied";
@@ -446,7 +446,7 @@ TestSuiteResult AutomatedTestRunner::ExecuteTestSuite(const ::std::string& suite
         suiteResult.totalExecutionTime += testResult.executionTime;
 
         // Early termination for suite if configured
-        if (m_config.stopOnFirstFailure && !testResult.passed)
+    if (m_config.stopOnFirstFailure && !testResult.passed)
             break;
     }
 

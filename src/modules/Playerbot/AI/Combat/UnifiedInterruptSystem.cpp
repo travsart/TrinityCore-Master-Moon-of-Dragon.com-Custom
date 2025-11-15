@@ -163,7 +163,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
             continue;
 
         // Check if spell has interrupt effect
-        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_INTERRUPT_CAST)
             {
@@ -180,7 +180,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
         }
 
         // Check for stun/silence effects (alternative interrupts)
-        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_APPLY_AURA)
             {
@@ -275,9 +275,11 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 // TODO Phase 4D:     std::vector<CastingSpellInfo> casts;
 // TODO Phase 4D:     casts.reserve(_activeCasts.size());
 // TODO Phase 4D: 
-// TODO Phase 4D:     for (auto const& [guid, castInfo] : _activeCasts)
+// TODO Phase 4D:
+    for (auto const& [guid, castInfo] : _activeCasts)
 // TODO Phase 4D:     {
-// TODO Phase 4D:         if (!castInfo.interrupted)
+// TODO Phase 4D:
+    if (!castInfo.interrupted)
 // TODO Phase 4D:             casts.push_back(castInfo);
 // TODO Phase 4D:     }
 // TODO Phase 4D: 
@@ -292,7 +294,8 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 // TODO Phase 4D: {
 // TODO Phase 4D:     // Query InterruptDatabase for WoW 11.2 spell priority
 // TODO Phase 4D:     InterruptSpellInfo const* spellInfo = InterruptDatabase::GetSpellInfo(spellId, DIFFICULTY_NONE);
-// TODO Phase 4D:     if (spellInfo)
+// TODO Phase 4D:
+    if (spellInfo)
 // TODO Phase 4D:         return spellInfo->priority;
 // TODO Phase 4D: 
 // TODO Phase 4D:     // Default to MODERATE for unknown spells
@@ -340,7 +343,7 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
             continue;
 
         // Check if cast is still active
-        if (currentTime >= castInfo.castEndTime)
+    if (currentTime >= castInfo.castEndTime)
             continue;
 
         // Build interrupt target
@@ -420,7 +423,7 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
         float distance = ::std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
 
         // Check if movement required
-        if (distance > botInfo.interruptRange)
+    if (distance > botInfo.interruptRange)
         {
             plan.requiresMovement = true;
 

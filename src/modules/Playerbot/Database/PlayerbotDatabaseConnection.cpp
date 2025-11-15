@@ -117,7 +117,7 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
         TC_LOG_ERROR("server.loading", "PlayerbotDatabaseConnection::Query: {}", error);
 
         // Log specific schema-related errors
-        if (errorCode == 1054) // ER_BAD_FIELD_ERROR - Unknown column
+    if (errorCode == 1054) // ER_BAD_FIELD_ERROR - Unknown column
         {
             TC_LOG_ERROR("server.loading", "SCHEMA MISMATCH: Column does not exist in table. SQL: {}", sql);
         }
@@ -143,7 +143,7 @@ QueryResult PlayerbotDatabaseConnection::Query(std::string const& sql)
         TC_LOG_INFO("module.playerbot.database", "PlayerbotDatabaseConnection::Query: mysql_field_count: {}", fieldCount);
 
         // Check if it was a query that should return results
-        if (fieldCount > 0)
+    if (fieldCount > 0)
         {
             std::string error = Trinity::StringFormat("Failed to store result: {}", mysql_error(mysql));
             SetError(error);

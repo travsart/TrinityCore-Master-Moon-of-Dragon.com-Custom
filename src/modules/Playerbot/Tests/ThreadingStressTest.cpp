@@ -182,7 +182,7 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 }
 
                 // Random operation
-                switch (opDist(gen))
+    switch (opDist(gen))
                 {
                 case 0: // Spawn operation
                 {
@@ -237,13 +237,13 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 }
 
                 // Chaos mode - random delays
-                if (config.enableChaosMode)
+    if (config.enableChaosMode)
                 {
                     ::std::this_thread::sleep_for(::std::chrono::milliseconds(delayDist(gen)));
                 }
 
                 // Periodic synchronization to stress concurrent access
-                if ((results.totalUpdates % 100) == 0)
+    if ((results.totalUpdates % 100) == 0)
                 {
                     syncBarrier.arrive_and_wait();
                 }
@@ -415,7 +415,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         TC_LOG_INFO("test.playerbot.threading", "Testing with {} bots", numBots);
 
         // Spawn bots
-        for (uint32 i = 0; i < numBots; ++i)
+    for (uint32 i = 0; i < numBots; ++i)
         {
             SpawnRequest req;
             req.type = SpawnRequest::SPAWN_ZONE;
@@ -423,7 +423,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         }
 
         // Wait for spawns to complete
-        while (BotSpawnerOptimized::Instance().GetActiveBotCount() < numBots * 0.9)
+    while (BotSpawnerOptimized::Instance().GetActiveBotCount() < numBots * 0.9)
         {
             ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
@@ -433,7 +433,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         uint64 operations = 0;
 
         // Run for 10 seconds
-        while (::std::chrono::high_resolution_clock::now() - startTime < ::std::chrono::seconds(10))
+    while (::std::chrono::high_resolution_clock::now() - startTime < ::std::chrono::seconds(10))
         {
             BotWorldSessionMgrOptimized::Instance().UpdateAllSessions(50);
             operations++;

@@ -514,7 +514,7 @@ TEST_CASE("RoleCoordinator: Performance characteristics", "[coordination][perfor
     SECTION("Can handle many assignments")
     {
         // Create 100 assignments across all coordinators
-        for (uint32 i = 0; i < 100; ++i)
+    for (uint32 i = 0; i < 100; ++i)
         {
             ObjectGuid healer = ObjectGuid::Create<HighGuid::Player>(0, i);
             ObjectGuid tank = ObjectGuid::Create<HighGuid::Player>(0, i + 1000);
@@ -569,7 +569,7 @@ TEST_CASE("RoleCoordinator: Memory management", "[coordination][memory]")
         ObjectGuid tank = ObjectGuid::Create<HighGuid::Player>(0, 2);
 
         // Create many assignments
-        for (uint32 i = 0; i < 1000; ++i)
+    for (uint32 i = 0; i < 1000; ++i)
         {
             manager.GetHealerCoordinator()->AssignHealerToTank(healer, tank);
         }

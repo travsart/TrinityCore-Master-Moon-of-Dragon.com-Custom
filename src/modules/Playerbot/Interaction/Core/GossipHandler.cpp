@@ -151,17 +151,17 @@ namespace Playerbot
         uint64 npcFlags = creature->GetNpcFlags();
 
         // Some NPCs provide direct service without gossip
-        switch (type)
+    switch (type)
         {
             case InteractionType::Vendor:
                 // Pure vendors often don't need gossip
-                if ((npcFlags & UNIT_NPC_FLAG_VENDOR) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
+    if ((npcFlags & UNIT_NPC_FLAG_VENDOR) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
                     return false;
                 break;
 
             case InteractionType::Trainer:
                 // Pure trainers often don't need gossip
-                if ((npcFlags & UNIT_NPC_FLAG_TRAINER) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
+    if ((npcFlags & UNIT_NPC_FLAG_TRAINER) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
                     return false;
                 break;
 
@@ -194,7 +194,7 @@ namespace Playerbot
             return cachedPath;
 
         // Check known hardcoded paths
-        for (const auto& known : m_knownPaths)
+    for (const auto& known : m_knownPaths)
         {
             if (known.creatureEntry == entry && known.serviceType == type)
                 return known.optionSequence;
@@ -225,7 +225,7 @@ namespace Playerbot
             return -1;
 
         // Check depth to prevent infinite loops
-        if (++session.currentDepth > session.MAX_DEPTH)
+    if (++session.currentDepth > session.MAX_DEPTH)
         {
             TC_LOG_WARN("playerbot", "Bot {} reached max gossip depth with NPC {}",
                      bot->GetName(), target->GetName());
@@ -239,7 +239,7 @@ namespace Playerbot
         if (bestOption >= 0)
         {
             // Cache successful navigation
-            if (Creature* creature = target->ToCreature())
+    if (Creature* creature = target->ToCreature())
             {
                 uint32 entry = creature->GetEntry();
                 ::std::vector<uint32> currentPath;
@@ -320,7 +320,7 @@ namespace Playerbot
             if (iconType != GossipSelectType::Option)
             {
                 // Direct service icon match
-                if ((desiredType == InteractionType::Vendor && iconType == GossipSelectType::Vendor) ||
+    if ((desiredType == InteractionType::Vendor && iconType == GossipSelectType::Vendor) ||
                     (desiredType == InteractionType::Trainer && iconType == GossipSelectType::Trainer) ||
                     (desiredType == InteractionType::FlightMaster && iconType == GossipSelectType::Taxi) ||
                     (desiredType == InteractionType::Bank && iconType == GossipSelectType::Bank) ||
@@ -371,7 +371,7 @@ namespace Playerbot
         int bestMatchCount = 0;
 
         // Check each service type's keywords
-        for (const auto& [type, keywords] : m_serviceKeywords)
+    for (const auto& [type, keywords] : m_serviceKeywords)
         {
             int matchCount = 0;
             for (const auto& keyword : keywords)
@@ -396,13 +396,13 @@ namespace Playerbot
             return false;
 
         // Handle coded options (require text input)
-        if (option.coded)
+    if (option.coded)
         {
             ::std::string response = GenerateResponse(bot, option.boxText);
             if (!response.empty())
             {
                 // Send coded response
-                if (WorldSession* session = bot->GetSession())
+    if (WorldSession* session = bot->GetSession())
                 {
                     // This would send the code through gossip
                     // session->HandleGossipSelectOptionOpcode with code
@@ -413,7 +413,7 @@ namespace Playerbot
         }
 
         // Handle money requirements
-        if (option.boxMoney > 0)
+    if (option.boxMoney > 0)
         {
             if (!CanAffordOption(bot, option))
                 return false;
@@ -437,7 +437,7 @@ namespace Playerbot
         if (now - m_lastCacheCleanup > ::std::chrono::milliseconds(CACHE_CLEANUP_INTERVAL))
         {
             // Remove old unused entries
-            for (auto it = m_pathStatistics.begin(); it != m_pathStatistics.end();)
+    for (auto it = m_pathStatistics.begin(); it != m_pathStatistics.end();)
             {
                 if (now - it->second.lastUsed > ::std::chrono::hours(24))
                 {
@@ -500,14 +500,14 @@ namespace Playerbot
         ::std::string lowerText = ToLowerCase(boxText);
 
         // Check for known codes
-        for (const auto& [prompt, response] : m_gossipCodes)
+    for (const auto& [prompt, response] : m_gossipCodes)
         {
             if (lowerText.find(prompt) != ::std::string::npos)
                 return response;
         }
 
         // Default responses for common prompts
-        if (lowerText.find("name") != ::std::string::npos)
+    if (lowerText.find("name") != ::std::string::npos)
             return bot->GetName();
 
         if (lowerText.find("guild") != ::std::string::npos)
@@ -566,7 +566,7 @@ namespace Playerbot
         }
 
         // Penalize coded options unless we know the code
-        if (option.coded)
+    if (option.coded)
         {
             bool knowCode = false;
             ::std::string lowerBoxText = ToLowerCase(option.boxText);
@@ -583,7 +583,7 @@ namespace Playerbot
         }
 
         // Penalize expensive options
-        if (option.boxMoney > 10000)  // More than 1 gold
+    if (option.boxMoney > 10000)  // More than 1 gold
             score -= 20;
 
         return score;

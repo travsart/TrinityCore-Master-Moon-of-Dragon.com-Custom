@@ -39,7 +39,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // DESTRUCTION WARLOCK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -790,7 +790,7 @@ private:
                             Condition("Can summon Infernal", [this](Player* bot, Unit*) {
                                 return this->CanCastSpell(SUMMON_INFERNAL, bot);
                             }),
-                            ::bot::ai::Action("Cast Summon Infernal", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Summon Infernal", [this](Player* bot, Unit*) {
                                 this->CastSpell(SUMMON_INFERNAL, bot);
                                 return NodeStatus::SUCCESS;
                             })
@@ -799,7 +799,7 @@ private:
                             Condition("Has Dark Soul talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(DARK_SOUL_INSTABILITY);
                             }),
-                            ::bot::ai::Action("Cast Dark Soul", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Dark Soul", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(DARK_SOUL_INSTABILITY, bot))
                                 {
                                     this->CastSpell(DARK_SOUL_INSTABILITY, bot);
@@ -822,7 +822,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            ::bot::ai::Action("Cast Immolate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Immolate", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMMOLATE, target))
                                 {
@@ -838,7 +838,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && this->CanCastSpell(CONFLAGRATE, target);
                             }),
-                            ::bot::ai::Action("Cast Conflagrate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Conflagrate", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 this->CastSpell(CONFLAGRATE, target);
                                 this->GenerateSoulShard(1);
@@ -859,7 +859,7 @@ private:
                             Condition("3+ enemies and 3+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 3 && this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            ::bot::ai::Action("Cast Rain of Fire", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Rain of Fire", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(RAIN_OF_FIRE, bot))
                                 {
                                     this->CastSpell(RAIN_OF_FIRE, bot);
@@ -873,7 +873,7 @@ private:
                             Condition("2+ shards", [this](Player*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            ::bot::ai::Action("Cast Chaos Bolt", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CHAOS_BOLT, target))
                                 {
@@ -898,7 +898,7 @@ private:
                                 Unit* target = bot->GetVictim();
                                 return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
                             }),
-                            ::bot::ai::Action("Cast Shadowburn", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shadowburn", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOWBURN, target))
                                 {
@@ -910,7 +910,7 @@ private:
                             })
                         }),
                         Sequence("Incinerate (filler)", {
-                            ::bot::ai::Action("Cast Incinerate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Incinerate", [this](Player* bot, Unit* target) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(INCINERATE, target))
                                 {

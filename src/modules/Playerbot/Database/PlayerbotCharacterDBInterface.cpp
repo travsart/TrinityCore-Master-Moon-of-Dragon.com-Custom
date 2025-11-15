@@ -421,7 +421,7 @@ void PlayerbotCharacterDBInterface::ProcessSyncQueue()
             PreparedQueryResult result = CharacterDatabase.Query(request->statement);
 
             // Call callback if provided (also outside of locks)
-            if (request->callback)
+    if (request->callback)
             {
                 request->callback(result);
             }
@@ -430,7 +430,7 @@ void PlayerbotCharacterDBInterface::ProcessSyncQueue()
             request->completed = true;
 
             // Signal completion if waiting
-            if (request->completionSignal)
+    if (request->completionSignal)
             {
                 request->completionSignal->notify_one();
             }

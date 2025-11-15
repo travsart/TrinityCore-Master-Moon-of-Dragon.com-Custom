@@ -48,7 +48,7 @@ bool ActionPriorityQueue::GetNextAction(PrioritizedAction& action)
         _size.fetch_sub(1);
 
         // Validate the action is still relevant
-        if (action.IsValid())
+    if (action.IsValid())
         {
             TC_LOG_DEBUG("playerbot.actionqueue", "Retrieved action: spell={}, priority={}, score={:.2f}",
                          action.spellId, static_cast<uint8>(action.priority), action.score);
@@ -314,7 +314,7 @@ float ActionPriorityHelper::CalculateDamageScore(::Unit* target, uint32 spellId)
     if (spellInfo)
     {
         // Higher score for higher damage spells (approximation)
-        if (spellInfo->GetMaxRange() > 5.0f) // Ranged spell
+    if (spellInfo->GetMaxRange() > 5.0f) // Ranged spell
             score += 10.0f;
 
         if (spellInfo->RecoveryTime > 10000) // Long cooldown = powerful
@@ -353,14 +353,14 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
         if (spellInfo)
         {
             // HIGH PRIORITY: Healing spells (prevent enemy healing)
-            if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
+    if (spellInfo->HasEffect(SPELL_EFFECT_HEAL) ||
                 spellInfo->HasEffect(SPELL_EFFECT_HEAL_PCT))
             {
                 score += 40.0f; // Total: 120
             }
 
             // HIGH PRIORITY: Crowd control spells (prevent CC on our team)
-            if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+    if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
                 spellInfo->HasAura(SPELL_AURA_MOD_FEAR) ||
                 spellInfo->HasAura(SPELL_AURA_MOD_CHARM) ||
                 spellInfo->HasAura(SPELL_AURA_MOD_CONFUSE) ||
@@ -377,24 +377,24 @@ float ActionPriorityHelper::CalculateInterruptScore(::Unit* target, uint32 enemy
                 score += 15.0f; // Total: 95
 
             // MEDIUM PRIORITY: AoE damage spells
-            if (spellInfo->IsTargetingArea())
+    if (spellInfo->IsTargetingArea())
                 score += 20.0f; // Total: 100+
 
             // MEDIUM PRIORITY: DoT spells (less urgent than direct damage)
-            if (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
+    if (spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE) ||
                 spellInfo->HasAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT))
                 score += 10.0f; // Total: 90
 
             // LOWER PRIORITY: Buffs (less critical to interrupt)
-            if (spellInfo->IsPositive())
+    if (spellInfo->IsPositive())
                 score -= 20.0f; // Total: 60
 
             // LOWER PRIORITY: Instant cast (harder to interrupt, less impact)
-            if (castTime == 0)
+    if (castTime == 0)
                 score -= 30.0f; // Total: 50
 
             // BONUS: Elite/Boss mobs have more dangerous spells
-            if (Creature const* creature = target->ToCreature())
+    if (Creature const* creature = target->ToCreature())
             {
                 if (creature->isWorldBoss() || creature->IsDungeonBoss())
                     score += 30.0f; // Boss spells are high priority
@@ -439,7 +439,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
         bool isHealer = false;
 
         // Determine role from specialization
-        switch (player->GetClass())
+    switch (player->GetClass())
         {
             case CLASS_WARRIOR:
                 isTank = (spec == ChrSpecialization::WarriorProtection);
@@ -474,7 +474,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
 
         // TANK PRIORITY: Tanks should have higher priority for threat generation
         // Multiply by threat level to determine urgency
-        if (isTank)
+    if (isTank)
         {
             // Check if tank is currently tanking (has aggro)
             ThreatManager& threatMgr = unit->GetThreatManager();
@@ -531,7 +531,7 @@ float ActionPriorityHelper::GetThreatPriorityMultiplier(::Unit* unit)
     else if (Creature const* creature = unit->ToCreature())
     {
         // Pets and guardians should follow similar rules to their owners
-        if (creature->IsPet() || creature->IsGuardian())
+    if (creature->IsPet() || creature->IsGuardian())
         {
             Unit* owner = creature->GetOwner();
             if (owner)

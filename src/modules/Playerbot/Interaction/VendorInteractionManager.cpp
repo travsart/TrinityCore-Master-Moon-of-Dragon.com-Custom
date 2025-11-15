@@ -225,8 +225,7 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, ::std::vector<u
             purchasedCount++;
 
             // Deduct from appropriate budget category
-
-            switch (eval.priority)
+    switch (eval.priority)
 
             {
 
@@ -299,12 +298,12 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
             continue;
 
         // Skip items already in our purchase list
-        if (::std::find(itemsToPurchase.begin(), itemsToPurchase.end(), vendorItem->item) != itemsToPurchase.end())
+    if (::std::find(itemsToPurchase.begin(), itemsToPurchase.end(), vendorItem->item) != itemsToPurchase.end())
 
             continue;
 
         // Check if it's a useful equipment upgrade
-        if (IsEquipmentUpgrade(itemTemplate))
+    if (IsEquipmentUpgrade(itemTemplate))
 
             itemsToPurchase.push_back(vendorItem->item);
     }

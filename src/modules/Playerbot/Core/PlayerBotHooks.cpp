@@ -447,13 +447,13 @@ void PlayerBotHooks::RegisterHooks()
             return;
 
         // Only handle bot deaths
-        if (!IsPlayerBot(player))
+    if (!IsPlayerBot(player))
             return;
 
         IncrementHookCall("OnPlayerDeath");
 
         // Get bot's AI and call OnDeath
-        if (WorldSession* session = player->GetSession())
+    if (WorldSession* session = player->GetSession())
         {
             if (BotSession* botSession = dynamic_cast<BotSession*>(session))
             {
@@ -473,13 +473,13 @@ void PlayerBotHooks::RegisterHooks()
             return;
 
         // Only handle bot resurrections
-        if (!IsPlayerBot(player))
+    if (!IsPlayerBot(player))
             return;
 
         IncrementHookCall("OnPlayerResurrected");
 
         // Get bot's AI and call OnRespawn
-        if (WorldSession* session = player->GetSession())
+    if (WorldSession* session = player->GetSession())
         {
             if (BotSession* botSession = dynamic_cast<BotSession*>(session))
             {

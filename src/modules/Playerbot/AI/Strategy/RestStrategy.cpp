@@ -133,7 +133,6 @@ void RestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     }
 
     // Check if rest is complete (healthPct and manaPct already declared above)
-
     if (_isEating && healthPct >= _restCompleteHealth)
     {
         TC_LOG_DEBUG("module.playerbot.strategy", "RestStrategy: Bot {} finished eating ({:.1f}% health)",
@@ -276,10 +275,10 @@ Item* RestStrategy::FindFood(BotAI* ai) const
             continue;
 
         // Check if item is food
-        if (proto->GetClass() == ITEM_CLASS_CONSUMABLE && proto->GetSubClass() == ITEM_SUBCLASS_FOOD_DRINK)
+    if (proto->GetClass() == ITEM_CLASS_CONSUMABLE && proto->GetSubClass() == ITEM_SUBCLASS_FOOD_DRINK)
         {
             // Verify it's actually food by checking spell specific type
-            for (ItemEffectEntry const* effect : proto->Effects)
+    for (ItemEffectEntry const* effect : proto->Effects)
             {
                 if (effect && effect->SpellID > 0)
                 {
@@ -313,7 +312,7 @@ Item* RestStrategy::FindFood(BotAI* ai) const
                 if (proto->GetClass() == ITEM_CLASS_CONSUMABLE && proto->GetSubClass() == ITEM_SUBCLASS_FOOD_DRINK)
                 {
                     // Verify it's actually food by checking spell specific type
-                    for (ItemEffectEntry const* effect : proto->Effects)
+    for (ItemEffectEntry const* effect : proto->Effects)
                     {
                         if (effect && effect->SpellID > 0)
                         {
@@ -353,10 +352,10 @@ Item* RestStrategy::FindDrink(BotAI* ai) const
             continue;
 
         // Check if item is drink (restores mana)
-        if (proto->GetClass() == ITEM_CLASS_CONSUMABLE)
+    if (proto->GetClass() == ITEM_CLASS_CONSUMABLE)
         {
             // Check if spell is drink-specific
-            for (ItemEffectEntry const* effect : proto->Effects)
+    for (ItemEffectEntry const* effect : proto->Effects)
             {
                 if (effect && effect->SpellID > 0)
                 {

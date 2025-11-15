@@ -44,7 +44,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Feral Druid Spell IDs
 constexpr uint32 FERAL_SHRED = 5221;
 constexpr uint32 FERAL_RAKE = 1822;
@@ -1090,7 +1090,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(FERAL_INCARNATION_KING, bot))
 
@@ -1114,7 +1114,7 @@ private:
 
                         Sequence("Berserk", {
 
-                            ::bot::ai::Action("Cast Berserk", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Berserk", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(FERAL_BERSERK, bot))
 
@@ -1162,7 +1162,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Primal Wrath", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Primal Wrath", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1194,7 +1194,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Rip", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Rip", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1234,7 +1234,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Ferocious Bite", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Ferocious Bite", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1286,7 +1286,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Tiger's Fury", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Tiger's Fury", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(FERAL_TIGERS_FURY, bot))
 
@@ -1320,7 +1320,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Rake", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Rake", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1362,7 +1362,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1400,7 +1400,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1450,7 +1450,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Brutal Slash", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Brutal Slash", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1486,7 +1486,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 
@@ -1516,7 +1516,7 @@ private:
 
                             }),
 
-                            ::bot::ai::Action("Cast Shred", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shred", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot ? bot->GetVictim() : nullptr;
 

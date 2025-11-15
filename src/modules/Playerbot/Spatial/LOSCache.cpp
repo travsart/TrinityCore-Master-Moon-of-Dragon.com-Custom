@@ -163,7 +163,6 @@ void LOSCache::EvictOldest()
     // Simple LRU: Find oldest entry and remove it
     // This is O(n) but only happens when cache is full (10,000 entries)
     // In practice, this happens rarely enough that O(n) scan is acceptable
-
     if (_cache.empty())
         return;
 

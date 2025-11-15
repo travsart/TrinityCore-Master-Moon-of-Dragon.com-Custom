@@ -129,7 +129,7 @@ bool CombatTestFramework::LoadScenario(const ::std::string& scenarioFile)
     while (::std::getline(file, line))
     {
         // Parse basic scenario properties
-        if (line.find("\"name\":") != ::std::string::npos)
+    if (line.find("\"name\":") != ::std::string::npos)
         {
             size_t start = line.find("\"", line.find(":") + 1) + 1;
             size_t end = line.find("\"", start);
@@ -273,7 +273,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
             _currentContext->currentTimeMs += updateInterval;
 
             // Check success criteria
-            if (CheckSuccessCriteria(scenario, *_currentContext))
+    if (CheckSuccessCriteria(scenario, *_currentContext))
             {
                 LogTestEvent("Success criteria met early");
                 break;
@@ -588,7 +588,7 @@ float CombatTestFramework::CalculateOverallPerformanceScore() const
         float systemScore = metrics.GetSuccessRate() * 100.0f;
 
         // Penalize for high execution times
-        if (metrics.averageExecutionTime.count() > 1000) // > 1ms
+    if (metrics.averageExecutionTime.count() > 1000) // > 1ms
             systemScore *= 0.8f;
 
         totalScore += systemScore;
@@ -974,7 +974,7 @@ float CombatTestFramework::GetScenarioSuccessRate(const ::std::string& scenarioN
         float score = metrics.GetSuccessRate() * 100.0f;
 
         // Adjust score based on performance characteristics
-        if (metrics.averageExecutionTime.count() > 1000) // > 1ms
+    if (metrics.averageExecutionTime.count() > 1000) // > 1ms
             score *= 0.9f;
         if (metrics.memoryUsage.load() > 1048576) // > 1MB
             score *= 0.95f;

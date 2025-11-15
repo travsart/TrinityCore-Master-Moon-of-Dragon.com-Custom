@@ -64,7 +64,7 @@ namespace Playerbot
         _marketScanTimer += elapsed;
 
         // Periodic market scan
-        if (_marketScanTimer >= _marketScanInterval)
+    if (_marketScanTimer >= _marketScanInterval)
         {
             _marketScanTimer = 0;
             // Market scanning is done per-bot in their update cycle
@@ -161,7 +161,7 @@ namespace Playerbot
         for (auto& [itemId, priceData] : _priceCache)
         {
             // Assess market condition based on price trends and listings
-            if (priceData.PriceTrend > 10.0f)
+    if (priceData.PriceTrend > 10.0f)
                 priceData.Condition = MarketCondition::UNDERSUPPLIED;
             else if (priceData.PriceTrend < -10.0f)
                 priceData.Condition = MarketCondition::OVERSUPPLIED;
@@ -261,7 +261,7 @@ namespace Playerbot
             return false;
 
         // Check throttle
-        if (!CheckThrottle(bot, false))
+    if (!CheckThrottle(bot, false))
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::CreateAuction - Bot {} is throttled",
                 bot->GetName());
@@ -273,7 +273,7 @@ namespace Playerbot
             return false;
 
         // Calculate optimal pricing if using smart pricing
-        if (strategy == AuctionStrategy::SMART_PRICING)
+    if (strategy == AuctionStrategy::SMART_PRICING)
         {
             uint64 optimalPrice = CalculateOptimalPrice(item->GetEntry(), strategy);
             if (optimalPrice > 0)
@@ -333,7 +333,7 @@ namespace Playerbot
             return false;
 
         // Commodities use different throttle
-        if (!CheckThrottle(bot, true))
+    if (!CheckThrottle(bot, true))
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::CreateCommodityAuction - Bot {} is throttled",
                 bot->GetName());
@@ -403,7 +403,7 @@ namespace Playerbot
         }
 
         // Verify bot owns this auction
-        if (auction->Owner != bot->GetGUID()){
+    if (auction->Owner != bot->GetGUID()){
             TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} does not own auction {}",
                 bot->GetName(), auctionId);
             return false;
@@ -454,7 +454,7 @@ namespace Playerbot
             return false;
 
         // Ensure bid is higher than current
-        if (bidAmount <= auction->BidAmount)
+    if (bidAmount <= auction->BidAmount)
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::PlaceBid - Bid amount {} too low for auction {}",
                 bidAmount, auctionId);
@@ -462,7 +462,7 @@ namespace Playerbot
         }
 
         // Check bot has enough gold
-        if (bot->GetMoney() < bidAmount)
+    if (bot->GetMoney() < bidAmount)
             return false;// NOTE: PlaceBid is not a public API in AuctionHouseObject
         // This would require packet-based implementation through WorldSession
         // For now, return false as this needs proper packet handling
@@ -553,7 +553,7 @@ namespace Playerbot
             return false;
 
         // Buy the underpriced auction
-        if (!BuyAuction(bot, opportunity.AuctionId))
+    if (!BuyAuction(bot, opportunity.AuctionId))
             return false;
 
         TC_LOG_INFO("playerbot", "AuctionManager::ExecuteFlipOpportunity - Bot {} executed flip on item {} with estimated profit {}",
@@ -603,7 +603,7 @@ namespace Playerbot
             default:
             {
                 // Adaptive pricing based on market condition
-                switch (priceData.Condition)
+    switch (priceData.Condition)
                 {
                     case MarketCondition::OVERSUPPLIED:
                         // Market saturated, be aggressive
@@ -637,7 +637,7 @@ namespace Playerbot
         auto priceData = GetItemPriceData(itemId);
 
         // Don't bid if buyout is close to market price (just buy it)
-        if (buyoutPrice > 0 && priceData.MedianPrice7d > 0)
+    if (buyoutPrice > 0 && priceData.MedianPrice7d > 0)
         {
             if (buyoutPrice <= priceData.MedianPrice7d * 0.9f)
                 return 0; // Signal to use buyout instead
@@ -743,7 +743,7 @@ namespace Playerbot
             }
 
             // Check if auction expired
-            if (now >= botAuction.ExpiryTime){
+    if (now >= botAuction.ExpiryTime){
                 UnregisterBotAuction(bot, botAuction.AuctionId);
                 RecordAuctionCancelled(bot->GetGUID()); // Treat expiry as cancellation
             }
@@ -770,7 +770,7 @@ namespace Playerbot
         stats.TotalGoldEarned += salePrice;
 
         // Account for cost basis
-        if (salePrice > costBasis)
+    if (salePrice > costBasis)
             stats.NetProfit += (salePrice - costBasis);
 
         stats.UpdateSuccessRate();
@@ -832,7 +832,7 @@ namespace Playerbot
 
         // Determine faction-appropriate auction house
         // Alliance = 2, Horde = 6, Neutral = 7
-        switch (bot->GetTeam())
+    switch (bot->GetTeam())
         {
             case ALLIANCE:
                 return 2;
@@ -921,7 +921,7 @@ namespace Playerbot
         priceData.MaxPrice7d = prices.back();
 
         // Price trend (percentage change from oldest to newest)
-        if (history.size() >= 2)
+    if (history.size() >= 2)
         {
             uint64 oldestPrice = history.front().second;
             uint64 newestPrice = history.back().second;
@@ -939,13 +939,13 @@ namespace Playerbot
         uint32 risk = 0;
 
         // Higher risk if profit margin is too good to be true
-        if (opportunity.ProfitMargin > 100.0f)
+    if (opportunity.ProfitMargin > 100.0f)
             risk += 30;
         else if (opportunity.ProfitMargin > 50.0f)
             risk += 15;
 
         // Market condition risk
-        switch (opportunity.Condition)
+    switch (opportunity.Condition)
         {
             case MarketCondition::VOLATILE:
                 risk += 25;
@@ -964,8 +964,7 @@ namespace Playerbot
         auto priceData = GetItemPriceData(opportunity.ItemId);
         if (priceData.ActiveListings < 3)
             risk += 20; // Low liquidity
-
-        if (IsPriceHistoryStale(opportunity.ItemId))
+    if (IsPriceHistoryStale(opportunity.ItemId))
             risk += 15; // Old data
 
         return ::std::min(risk, 100u);
@@ -995,7 +994,7 @@ namespace Playerbot
         }
 
         // Validate prices
-        if (buyoutPrice > 0 && bidPrice > buyoutPrice)
+    if (buyoutPrice > 0 && bidPrice > buyoutPrice)
         {
             TC_LOG_DEBUG("playerbot", "AuctionManager::ValidateAuctionCreation - Bid price {} exceeds buyout {}",
                 bidPrice, buyoutPrice);

@@ -457,7 +457,7 @@ uint32 PvPCombatAI::GetBestDefensiveCooldown(::Player* player) const
     if (healthPct < 20 && ShouldUseImmunity(player))
     {
         // Class-specific immunity spells
-        switch (player->GetClass())
+    switch (player->GetClass())
         {
             case CLASS_PALADIN: return 642;  // Divine Shield
             case CLASS_MAGE: return 45438;   // Ice Block
@@ -968,12 +968,11 @@ uint32 PvPCombatAI::GetCCSpellId(::Player* player, CCType ccType) const
 
     // Return class-specific CC spell IDs
     // Simplified - full implementation has complete spell mapping
-
     switch (player->GetClass())
     {
         case CLASS_WARRIOR:
             if (ccType == CCType::STUN) return 46968; // Shockwave
-            if (ccType == CCType::FEAR) return 5246;  // Intimidating Shout
+    if (ccType == CCType::FEAR) return 5246;  // Intimidating Shout
             break;
         case CLASS_PALADIN:
             if (ccType == CCType::STUN) return 853;   // Hammer of Justice
@@ -986,7 +985,7 @@ uint32 PvPCombatAI::GetCCSpellId(::Player* player, CCType ccType) const
             break;
         case CLASS_MAGE:
             if (ccType == CCType::POLYMORPH) return 118; // Polymorph
-            if (ccType == CCType::ROOT) return 122;   // Frost Nova
+    if (ccType == CCType::ROOT) return 122;   // Frost Nova
             break;
         default:
             break;

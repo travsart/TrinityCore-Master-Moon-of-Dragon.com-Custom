@@ -71,7 +71,7 @@ void CombatStateAnalyzer::Update(uint32 diff)
         _updateTimer = 0;
 
         // Record snapshot every 500ms for trend analysis
-        if (GameTime::GetGameTimeMS() - _lastSnapshotTime >= 500)
+    if (GameTime::GetGameTimeMS() - _lastSnapshotTime >= 500)
         {
             RecordSnapshot();
             _lastSnapshotTime = GameTime::GetGameTimeMS();
@@ -255,7 +255,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                     _bot->GetPosition(), 50.0f);
 
                 // Resolve GUIDs to Unit pointers and apply filtering logic
-                for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : nearbyGuids)
                 {
                     /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                                                             if (!enemy || !enemy->IsAlive() || !enemy->IsInCombatWith(_bot))
@@ -281,7 +281,7 @@ void CombatStateAnalyzer::UpdateEnemyMetrics()
                     }
 
                     // Check if enemy is ranged (simplified check)
-                    if (distance > 10.0f && enemy->IsInCombatWith(_bot))
+    if (distance > 10.0f && enemy->IsInCombatWith(_bot))
                         _currentMetrics.hasRangedEnemies = true;
                 }
             }
@@ -360,7 +360,7 @@ void CombatStateAnalyzer::UpdateBossTimers(uint32 diff)
     {
                 // Assume 10 minute enrage timer for bosses
         uint32 typicalEnrageTime = 10 * 60 * 1000; // 10 minutes in ms
-        if (_currentMetrics.combatDuration < typicalEnrageTime)
+    if (_currentMetrics.combatDuration < typicalEnrageTime)
             _currentMetrics.enrageTimer = typicalEnrageTime - _currentMetrics.combatDuration;
         else
             _currentMetrics.enrageTimer = 0;
@@ -432,7 +432,7 @@ CombatSituation CombatStateAnalyzer::DetermineSituation() const
 bool CombatStateAnalyzer::CheckForAOESituation() const
 {
     // AOE situation if 4+ enemies or 3+ in melee range
-        if (_currentMetrics.enemyCount >= 4)
+    if (_currentMetrics.enemyCount >= 4)
         return true;
 
     uint32 meleeCount = 0;
@@ -623,10 +623,8 @@ float CombatStateAnalyzer::GetSafeDistance() const
 {
     if (NeedsToSpread())
         return 10.0f; // Spread distance
-
-        if (NeedsToStack())
+    if (NeedsToStack())
         return 3.0f; // Stack distance
-
     if (NeedsToKite())
         return 20.0f; // Kite distance
 
@@ -642,7 +640,7 @@ Position CombatStateAnalyzer::GetSafePosition() const
     if (NeedsToSpread())
     {
         // Move away from group center
-        if (Group* group = _bot->GetGroup())
+    if (Group* group = _bot->GetGroup())
                 {
             float centerX = 0, centerY = 0, centerZ = 0;
             uint32 count = 0;
@@ -679,7 +677,7 @@ Position CombatStateAnalyzer::GetSafePosition() const
     else if (NeedsToStack())
     {
         // Move to tank position
-        if (Player* tank = GetMainTank())
+    if (Player* tank = GetMainTank())
                             {
             pos.Relocate(tank->GetPositionX(), tank->GetPositionY(), tank->GetPositionZ());
         }
@@ -720,7 +718,7 @@ uint32 CombatStateAnalyzer::GetPriorityTargetCount() const
             continue;
 
         // Priority targets are elites, bosses, or low health enemies
-        if (enemy->GetTypeId() == TYPEID_UNIT)
+    if (enemy->GetTypeId() == TYPEID_UNIT)
         {
             Creature* creature = enemy->ToCreature();
             if (creature->IsElite() || creature->IsDungeonBoss() || creature->GetHealthPct() < 30.0f)
@@ -755,7 +753,7 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
         float danger = 1.0f;
 
         // Bosses are most dangerous
-        if (enemy->GetTypeId() == TYPEID_UNIT)
+    if (enemy->GetTypeId() == TYPEID_UNIT)
                 {
             Creature* creature = enemy->ToCreature();
                                                                                     if (creature->IsDungeonBoss())
@@ -765,17 +763,16 @@ Unit* CombatStateAnalyzer::GetMostDangerousEnemy() const
         }
 
         // Enemies targeting us are dangerous
-        if (enemy->GetTarget() == _bot->GetGUID())
+    if (enemy->GetTarget() == _bot->GetGUID())
                             danger *= 3.0f;
 
         // Close enemies are dangerous
         float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
-
-        if (distance < 5.0f)
+    if (distance < 5.0f)
             danger *= 2.0f;
 
         // Low health enemies are priority targets
-        if (enemy->GetHealthPct() < 30.0f)
+    if (enemy->GetHealthPct() < 30.0f)
             danger *= 1.5f;
 
         if (danger > highestDanger)
@@ -945,7 +942,7 @@ float CombatStateAnalyzer::GetGroupSurvivabilityScore() const
         score *= 0.7f;
 
     // Positioning factor
-        if (!_currentMetrics.isPositioningSafe)
+    if (!_currentMetrics.isPositioningSafe)
         score *= 0.9f;
 
         return ::std::max(0.0f, score);
@@ -1039,11 +1036,11 @@ bool CombatStateAnalyzer::ShouldInterruptCast(Unit* caster, uint32 spellId) cons
     if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE))
     {
         // Interrupt heals on enemies
-        if (spellInfo->HasEffect(SPELL_EFFECT_HEAL))
+    if (spellInfo->HasEffect(SPELL_EFFECT_HEAL))
             return true;
 
         // Interrupt crowd control
-        if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
+    if (spellInfo->HasAura(SPELL_AURA_MOD_STUN) ||
             spellInfo->HasAura(SPELL_AURA_MOD_FEAR))
             return true;
     }
@@ -1136,7 +1133,7 @@ bool CombatStateAnalyzer::IsBeingKited() const
         if (enemy->GetTarget() == _bot->GetGUID())
                 {
             float distance = ::std::sqrt(_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
-            if (distance > 15.0f && distance < 40.0f)
+    if (distance > 15.0f && distance < 40.0f)
                 return true;
         }
     }
@@ -1179,7 +1176,7 @@ bool CombatStateAnalyzer::HasDebuffRequiringDispel() const
             continue;
 
         // Check if it's a debuff that can be dispelled
-        if (!spellInfo->IsPositive() && spellInfo->Dispel != DISPEL_NONE)
+    if (!spellInfo->IsPositive() && spellInfo->Dispel != DISPEL_NONE)
             return true;
     }
 

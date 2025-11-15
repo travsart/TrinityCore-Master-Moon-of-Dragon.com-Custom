@@ -704,12 +704,12 @@ bool TargetSelector::IsCaster(Unit* target) const
 
         // Caster unit classes: Paladin (2) and Mage (8)
         // Non-caster unit classes: Warrior (1) and Rogue (4)
-        if (unitClass == UNIT_CLASS_PALADIN || unitClass == UNIT_CLASS_MAGE)
+    if (unitClass == UNIT_CLASS_PALADIN || unitClass == UNIT_CLASS_MAGE)
             return true;
 
         // Additional heuristic: Check if creature has ranged attack vs melee only
         // Casters typically have ranged attack range > melee range
-        if (creature->GetAttackDistance(nullptr) > ATTACK_DISTANCE)
+    if (creature->GetAttackDistance(nullptr) > ATTACK_DISTANCE)
             return true;
 
         return false;

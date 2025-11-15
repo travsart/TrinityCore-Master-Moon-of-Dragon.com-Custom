@@ -633,8 +633,7 @@ void ResourceManager::SyncWithPlayer()
         case CLASS_ROGUE:
         case CLASS_DRUID: // In cat form
             // Combo points
-
-            if (_bot->GetPower(POWER_COMBO_POINTS) != GetComboPoints())
+    if (_bot->GetPower(POWER_COMBO_POINTS) != GetComboPoints())
             {
 
                 SetResource(ResourceType::COMBO_POINTS, _bot->GetPower(POWER_COMBO_POINTS));
@@ -645,8 +644,7 @@ void ResourceManager::SyncWithPlayer()
 
         case CLASS_PALADIN:
             // Holy Power
-
-            if (_bot->GetPower(POWER_HOLY_POWER) != GetHolyPower())
+    if (_bot->GetPower(POWER_HOLY_POWER) != GetHolyPower())
             {
 
                 SetResource(ResourceType::HOLY_POWER, _bot->GetPower(POWER_HOLY_POWER));
@@ -657,8 +655,7 @@ void ResourceManager::SyncWithPlayer()
 
         case CLASS_MONK:
             // Chi
-
-            if (_bot->GetPower(POWER_CHI) != GetChi())
+    if (_bot->GetPower(POWER_CHI) != GetChi())
             {
 
                 SetResource(ResourceType::CHI, _bot->GetPower(POWER_CHI));
@@ -844,8 +841,7 @@ uint32 ResourceManager::CalculateSpellResourceCost(uint32 spellId, ResourceType 
             uint32 percentCost = 0;
 
             // Calculate percentage-based cost
-
-            if (powerEntry->PowerCostPct > 0.0f)
+    if (powerEntry->PowerCostPct > 0.0f)
 
             {
 

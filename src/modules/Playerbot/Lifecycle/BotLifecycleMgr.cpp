@@ -521,7 +521,7 @@ void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
            << "'INFO', ";
 
         // bot_guid
-        if (eventInfo.botGuid.IsEmpty())
+    if (eventInfo.botGuid.IsEmpty())
             ss << "NULL, ";
         else
             ss << eventInfo.botGuid.GetCounter() << ", ";
@@ -588,7 +588,7 @@ void BotLifecycleMgr::UpdatePerformanceMetrics()
         _metrics.eventsProcessedPerSecond = _metrics.eventCountThisSecond;
 
         // Calculate average processing time
-        if (_metrics.eventCountThisSecond > 0)
+    if (_metrics.eventCountThisSecond > 0)
         {
             _metrics.averageEventProcessingTimeMs = _metrics.totalProcessingTimeThisSecond / _metrics.eventCountThisSecond;
         }
@@ -602,7 +602,7 @@ void BotLifecycleMgr::UpdatePerformanceMetrics()
         _metrics.memoryUsageMB = 10; // Placeholder
 
         // Update bot counts from scheduler
-        if (_scheduler)
+    if (_scheduler)
         {
             _metrics.scheduledBots = _scheduler->GetScheduledBotCount();
         }

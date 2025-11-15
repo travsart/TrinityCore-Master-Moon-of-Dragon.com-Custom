@@ -130,7 +130,7 @@ void MLPerformanceTracker::RecordSample(const MLPerformanceSample& sample)
         _recentSamples.push_back(sample);
 
         // Maintain sample buffer size
-        if (_recentSamples.size() > MAX_SAMPLES)
+    if (_recentSamples.size() > MAX_SAMPLES)
         {
             _recentSamples.pop_front();
         }

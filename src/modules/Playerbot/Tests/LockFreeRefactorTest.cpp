@@ -148,7 +148,7 @@ private:
             objective.currentCount = 0;
 
             // Call lock-free quest handler (should NOT use ObjectAccessor)
-            for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 5; ++i)
             {
                 QuestCompletion::HandleKillObjective_LockFree(bot, objective);
                 _metrics.actionsQueued++;
@@ -223,7 +223,7 @@ private:
                         manager.ScanForNodes_LockFree(100.0f);
 
                     // Queue gathering for first node
-                    if (!nearbyNodes.empty())
+    if (!nearbyNodes.empty())
                     {
                         if (manager.QueueGatherNode_LockFree(nearbyNodes[0]))
                         {
@@ -251,7 +251,7 @@ private:
         });
 
         // Wait for all threads
-        for (auto& worker : workers)
+    for (auto& worker : workers)
             worker.join();
         mainThread.join();
 
@@ -259,7 +259,7 @@ private:
         ASSERT_EQ(_metrics.objectAccessorCalls, 0);
 
         // Cleanup
-        for (Player* bot : bots)
+    for (Player* bot : bots)
             DeleteTestBot(bot);
         for (GameObject* node : nodes)
             DeleteGameObject(node);
@@ -365,7 +365,7 @@ private:
         });
 
         // Wait for all threads
-        for (auto& producer : producers)
+    for (auto& producer : producers)
             producer.join();
         consumer.join();
 
@@ -402,12 +402,12 @@ private:
                 while (_testRunning)
                 {
                     // Simulate various bot activities
-                    for (int j = 0; j < 5; ++j)
+    for (int j = 0; j < 5; ++j)
                     {
                         BotActionExtended action;
 
                         // Random action type
-                        switch (rand() % 10)
+    switch (rand() % 10)
                         {
                             case 0:
                             case 1:
@@ -489,7 +489,7 @@ private:
                 uint32 frameTime = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
 
                 // Log if frame took too long
-                if (frameTime > 50)
+    if (frameTime > 50)
                 {
                     TC_LOG_WARN("test.lockfree",
                         "Slow frame detected: %u ms for %u actions",
@@ -497,7 +497,7 @@ private:
                 }
 
                 // Target 20 FPS (50ms per frame)
-                if (frameTime < 50)
+    if (frameTime < 50)
                 {
                     ::std::this_thread::sleep_for(
                         ::std::chrono::milliseconds(50 - frameTime));
@@ -590,7 +590,7 @@ private:
                     auto elapsed = ::std::chrono::steady_clock::now() - startTime;
 
                     // If push took >1 second, possible deadlock
-                    if (elapsed > ::std::chrono::seconds(1))
+    if (elapsed > ::std::chrono::seconds(1))
                     {
                         deadlockDetected = true;
                         _metrics.deadlocksDetected++;
@@ -622,7 +622,7 @@ private:
         _testRunning = false;
 
         // Wait for threads
-        for (auto& thread : threads)
+    for (auto& thread : threads)
             thread.join();
         processor.join();
 

@@ -118,7 +118,7 @@ void BotAI::OnGroupEvent(GroupEvent const& event)
 
         case GroupEventType::LEADER_CHANGED:
             // Update following target if we were following old leader
-            if (_aiState == BotAIState::FOLLOWING)
+    if (_aiState == BotAIState::FOLLOWING)
                 HandleGroupChange();
             break;
 
@@ -181,7 +181,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
             ProcessCombatInterrupt(event);
 
             // NEUTRAL MOB DETECTION: Bot is being targeted by hostile spell
-            if (event.targetGuid == botGuid && !_bot->IsInCombat())
+    if (event.targetGuid == botGuid && !_bot->IsInCombat())
             {
                 // PHASE 2: Thread-safe spatial grid verification (no Map access from worker thread)
                 auto casterSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, event.casterGuid);
@@ -204,14 +204,14 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
 
         case CombatEventType::ATTACK_START:
             // Track when bot initiates combat
-            if (event.casterGuid == botGuid)
+    if (event.casterGuid == botGuid)
             {
                 if (_aiState != BotAIState::COMBAT)
                     SetAIState(BotAIState::COMBAT);
             }
 
             // NEUTRAL MOB DETECTION: Bot is being attacked
-            if (event.victimGuid == botGuid && !_bot->IsInCombat())
+    if (event.victimGuid == botGuid && !_bot->IsInCombat())
             {
                 // PHASE 2: Thread-safe spatial grid verification (no Map access from worker thread)
                 auto attackerSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, event.casterGuid);
@@ -230,7 +230,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
 
         case CombatEventType::ATTACK_STOP:
             // Track when combat ends
-            if (event.casterGuid == botGuid)
+    if (event.casterGuid == botGuid)
             {
                 if (_aiState == BotAIState::COMBAT && !_bot->IsInCombat())
                     SetAIState(BotAIState::SOLO);
@@ -239,7 +239,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
 
         case CombatEventType::AI_REACTION:
             // NEUTRAL MOB DETECTION: NPC became hostile and is targeting bot
-            if (event.amount > 0)  // Positive reaction = hostile
+    if (event.amount > 0)  // Positive reaction = hostile
             {
                 // PHASE 2: Thread-safe spatial grid verification (no Map access from worker thread)
                 auto mobSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, event.casterGuid);
@@ -259,7 +259,7 @@ void BotAI::OnCombatEvent(CombatEvent const& event)
 
         case CombatEventType::SPELL_DAMAGE_TAKEN:
             // NEUTRAL MOB DETECTION: Catch-all for damage received
-            if (event.victimGuid == botGuid && !_bot->IsInCombat())
+    if (event.victimGuid == botGuid && !_bot->IsInCombat())
             {
                 // PHASE 2: Thread-safe spatial grid verification (no Map access from worker thread)
                 auto attackerSnapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, event.casterGuid);
@@ -366,7 +366,7 @@ void BotAI::OnAuraEvent(AuraEvent const& event)
     {
         case AuraEventType::AURA_APPLIED:
             // Check if we need to dispel harmful debuffs
-            if (event.isHarmful && event.targetGuid == _bot->GetGUID())
+    if (event.isHarmful && event.targetGuid == _bot->GetGUID())
             {
                 ProcessAuraDispel(event);
             }
@@ -523,7 +523,7 @@ void BotAI::OnResourceEvent(ResourceEvent const& event)
 
         case ResourceEventType::BREAK_TARGET:
             // Target selection broken, need new target
-            if (event.playerGuid == _bot->GetGUID())
+    if (event.playerGuid == _bot->GetGUID())
             {
                 TC_LOG_DEBUG("playerbot.events.resource", "Bot {}: Target broken",
                     _bot->GetName());
@@ -579,7 +579,7 @@ void BotAI::OnSocialEvent(SocialEvent const& event)
     {
         case SocialEventType::MESSAGE_CHAT:
             // Process chat messages for commands
-            if (event.chatType == ChatMsg::CHAT_MSG_WHISPER && event.targetGuid == _bot->GetGUID())
+    if (event.chatType == ChatMsg::CHAT_MSG_WHISPER && event.targetGuid == _bot->GetGUID())
             {
                 TC_LOG_DEBUG("playerbot.events.social", "Bot {}: Whisper from {}: {}",
                     _bot->GetName(), event.playerGuid.ToString(), event.message);

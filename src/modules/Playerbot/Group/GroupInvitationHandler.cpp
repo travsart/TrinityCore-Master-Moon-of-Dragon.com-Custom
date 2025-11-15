@@ -169,7 +169,7 @@ bool GroupInvitationHandler::ShouldAcceptInvitation(ObjectGuid inviterGuid) cons
     if (_bot->GetGroupInvite())
     {
         // If it's from the same inviter, accept it
-        if (_bot->GetGroupInvite()->GetLeaderGUID() == inviterGuid)
+    if (_bot->GetGroupInvite()->GetLeaderGUID() == inviterGuid)
             return true;
 
         TC_LOG_DEBUG("playerbot", "GroupInvitationHandler: Bot {} has different pending invite", _bot->GetName());
@@ -197,7 +197,7 @@ bool GroupInvitationHandler::IsValidInviter(Player* inviter) const
     {
         // Check if inviter is a bot (implementation depends on your bot detection method)
         // For now, we'll check if they have a bot session or are flagged as bots
-        if (inviter->GetSession() && inviter->GetSession()->GetPlayer())
+    if (inviter->GetSession() && inviter->GetSession()->GetPlayer())
         {
             // You may need to add a method to detect if a player is a bot
             // For safety, we'll accept all players for now but log it
@@ -467,7 +467,7 @@ bool GroupInvitationHandler::SendAcceptPacket()
         TC_LOG_ERROR("playerbot", "GroupInvitationHandler: FAILURE! Bot {} group join failed - no group found after invitation acceptance", _bot->GetName());
 
         // Check if the bot still has a pending invite (which would indicate a problem)
-        if (_bot->GetGroupInvite())
+    if (_bot->GetGroupInvite())
         {
             TC_LOG_ERROR("playerbot", "GroupInvitationHandler: Bot {} still has pending invite - group acceptance may have failed", _bot->GetName());
         }
@@ -534,7 +534,7 @@ bool GroupInvitationHandler::ValidateNoInvitationLoop(ObjectGuid inviterGuid) co
     if (inviter && inviter->GetGroup())
     {
         // If we're the leader of a group and the inviter is in our group, this would be a loop
-        if (_bot->GetGroup() && _bot->GetGroup()->IsLeader(_bot->GetGUID()))
+    if (_bot->GetGroup() && _bot->GetGroup()->IsLeader(_bot->GetGUID()))
         {
             if (inviter->GetGroup() == _bot->GetGroup())
             {

@@ -267,7 +267,6 @@ uint32 ManagerRegistry::UpdateAll(uint32 diff)
     // Each bot has its own ManagerRegistry instance, so _managers is per-bot data
     // No cross-bot access means no lock needed for UpdateAll()
     // See: CORRECTED_RUNTIME_BOTTLENECK_ANALYSIS.md for details
-
     if (!_initialized)
         return 0;
 
@@ -281,7 +280,7 @@ uint32 ManagerRegistry::UpdateAll(uint32 diff)
             continue;
 
         // Skip inactive managers
-        if (!entry.manager->IsActive())
+    if (!entry.manager->IsActive())
             continue;
 
         // Check if manager is due for update
@@ -305,7 +304,7 @@ uint32 ManagerRegistry::UpdateAll(uint32 diff)
             ++updateCount;
 
             // Warn if update took too long
-            if (updateTime > 1) // >1ms is concerning
+    if (updateTime > 1) // >1ms is concerning
             {
                 TC_LOG_WARN("module.playerbot.managers",
                     "Manager '{}' update took {}ms (expected <1ms)",

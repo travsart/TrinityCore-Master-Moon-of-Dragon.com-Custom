@@ -214,7 +214,7 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             continue;
 
         // Check if creature has loot
-        if (!creature->CanHaveLoot() || !creature->hasLootRecipient())
+    if (!creature->CanHaveLoot() || !creature->hasLootRecipient())
             continue;
 
         // Add to lootable list
@@ -258,7 +258,7 @@ void LootStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             continue;
 
         // Check if object is lootable container (chest)
-        if (snapshot.goType != GAMEOBJECT_TYPE_CHEST)
+    if (snapshot.goType != GAMEOBJECT_TYPE_CHEST)
             continue;
 
         // Add to lootable list
@@ -533,7 +533,7 @@ bool LootStrategy::HasInventorySpace(BotAI* ai) const
             auto itB = distanceMap.find(b);
 
             // If either GUID not found in distance map, deprioritize it
-            if (itA == distanceMap.end())
+    if (itA == distanceMap.end())
                 return false;
             if (itB == distanceMap.end())
                 return true;

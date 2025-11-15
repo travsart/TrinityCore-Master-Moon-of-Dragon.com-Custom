@@ -404,7 +404,7 @@ ObjectGuid GroupCoordinator::FindBestFocusTarget() const
         float priority = 50.0f; // Base priority
 
         // Prioritize targets attacking healers
-        if (target->GetVictim() && target->GetVictim()->IsPlayer())
+    if (target->GetVictim() && target->GetVictim()->IsPlayer())
         {
             Player* victim = target->GetVictim()->ToPlayer();
             GroupRole victimRole = GetBotRole(victim->GetGUID());

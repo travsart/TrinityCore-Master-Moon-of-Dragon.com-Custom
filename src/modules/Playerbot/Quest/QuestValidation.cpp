@@ -412,7 +412,7 @@ bool QuestValidation::ValidateQuestPrerequisites(uint32 questId, Player* bot)
     if (prevQuestId != 0)
     {
         // If prevQuestId is negative, it's an alternative prerequisite
-        if (prevQuestId > 0)
+    if (prevQuestId > 0)
         {
             if (!bot->GetQuestRewardStatus(prevQuestId))
                 return false;
@@ -424,7 +424,7 @@ bool QuestValidation::ValidateQuestPrerequisites(uint32 questId, Player* bot)
     if (nextQuestId != 0)
     {
         // Quest is part of a chain, check if bot should be at this step
-        if (nextQuestId < 0) // Exclusive group
+    if (nextQuestId < 0) // Exclusive group
         {
             // Check if any quest in exclusive group is completed
             // (Implementation depends on TrinityCore version)
@@ -731,7 +731,7 @@ bool QuestValidation::ValidateDailyQuestLimits(uint32 questId, Player* bot)
     if (quest->IsDaily())
     {
         // Check if bot has already completed this daily quest today
-        if (bot->IsDailyQuestDone(questId))
+    if (bot->IsDailyQuestDone(questId))
             return false;
     }
 

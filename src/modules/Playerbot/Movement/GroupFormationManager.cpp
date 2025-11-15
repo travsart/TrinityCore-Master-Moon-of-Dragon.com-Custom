@@ -46,7 +46,7 @@ namespace Playerbot
         }
 
         // Dispatch to specific formation creator
-        switch (type)
+    switch (type)
         {
             case FormationType::WEDGE:
                 return CreateWedgeFormation(botCount, spacing);
@@ -161,7 +161,7 @@ namespace Playerbot
         };
 
         // Assign tanks first (highest priority)
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::TANK)
             {
@@ -174,7 +174,7 @@ namespace Playerbot
         }
 
         // Assign healers second
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::HEALER)
             {
@@ -186,7 +186,7 @@ namespace Playerbot
         }
 
         // Assign melee DPS third
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::MELEE_DPS)
             {
@@ -198,7 +198,7 @@ namespace Playerbot
         }
 
         // Assign ranged DPS fourth
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::RANGED_DPS)
             {
@@ -210,7 +210,7 @@ namespace Playerbot
         }
 
         // Assign utility last
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::UTILITY)
             {
@@ -238,7 +238,7 @@ namespace Playerbot
         float leaderOrientation = leader->GetOrientation();
 
         // Rotate all formation positions based on leader's facing direction
-        for (FormationPosition& pos : formation.positions)
+    for (FormationPosition& pos : formation.positions)
         {
             float rotatedX, rotatedY;
             RotatePosition(pos.offsetX, pos.offsetY, leaderOrientation, rotatedX, rotatedY);
@@ -260,7 +260,7 @@ namespace Playerbot
         uint32 specId = static_cast<uint32>(bot->GetPrimarySpecialization());
 
         // Determine role based on class and specialization
-        switch (classId)
+    switch (classId)
         {
             case CLASS_WARRIOR:
                 if (specId == 73) return BotRole::TANK;          // Protection
@@ -268,7 +268,7 @@ namespace Playerbot
 
             case CLASS_PALADIN:
                 if (specId == 66) return BotRole::TANK;          // Protection
-                if (specId == 65) return BotRole::HEALER;        // Holy
+    if (specId == 65) return BotRole::HEALER;        // Holy
                 return BotRole::MELEE_DPS;                       // Retribution
 
             case CLASS_HUNTER:
@@ -279,7 +279,7 @@ namespace Playerbot
 
             case CLASS_PRIEST:
                 if (specId == 256) return BotRole::HEALER;       // Discipline
-                if (specId == 257) return BotRole::HEALER;       // Holy
+    if (specId == 257) return BotRole::HEALER;       // Holy
                 return BotRole::RANGED_DPS;                      // Shadow
 
             case CLASS_DEATH_KNIGHT:
@@ -288,7 +288,7 @@ namespace Playerbot
 
             case CLASS_SHAMAN:
                 if (specId == 264) return BotRole::HEALER;       // Restoration
-                if (specId == 262) return BotRole::RANGED_DPS;   // Elemental
+    if (specId == 262) return BotRole::RANGED_DPS;   // Elemental
                 return BotRole::MELEE_DPS;                       // Enhancement
 
             case CLASS_MAGE:
@@ -299,13 +299,13 @@ namespace Playerbot
 
             case CLASS_MONK:
                 if (specId == 268) return BotRole::TANK;         // Brewmaster
-                if (specId == 270) return BotRole::HEALER;       // Mistweaver
+    if (specId == 270) return BotRole::HEALER;       // Mistweaver
                 return BotRole::MELEE_DPS;                       // Windwalker
 
             case CLASS_DRUID:
                 if (specId == 104) return BotRole::TANK;         // Guardian
-                if (specId == 105) return BotRole::HEALER;       // Restoration
-                if (specId == 102) return BotRole::RANGED_DPS;   // Balance
+    if (specId == 105) return BotRole::HEALER;       // Restoration
+    if (specId == 102) return BotRole::RANGED_DPS;   // Balance
                 return BotRole::MELEE_DPS;                       // Feral
 
             case CLASS_DEMON_HUNTER:
@@ -353,7 +353,7 @@ namespace Playerbot
         bool isPvP)
     {
         // PvP formations prioritize scatter and mobility
-        if (isPvP)
+    if (isPvP)
         {
             if (botCount >= 10)
                 return FormationType::SCATTER;  // Anti-AoE for large groups
@@ -362,10 +362,10 @@ namespace Playerbot
         }
 
         // PvE formations prioritize optimization and protection
-        if (botCount <= 5)
+    if (botCount <= 5)
         {
             // Small group (dungeon size)
-            if (tankCount >= 1 && healerCount >= 1)
+    if (tankCount >= 1 && healerCount >= 1)
                 return FormationType::WEDGE;    // Standard dungeon formation
             else
                 return FormationType::LINE;     // No dedicated roles
@@ -373,7 +373,7 @@ namespace Playerbot
         else if (botCount <= 10)
         {
             // Medium group
-            if (tankCount >= 2 && healerCount >= 2)
+    if (tankCount >= 2 && healerCount >= 2)
                 return FormationType::DIAMOND;  // Balanced offense/defense
             else
                 return FormationType::ARROW;    // Offensive formation
@@ -381,7 +381,7 @@ namespace Playerbot
         else if (botCount <= 25)
         {
             // Large group (raid size)
-            if (tankCount >= 2 && healerCount >= 5)
+    if (tankCount >= 2 && healerCount >= 5)
                 return FormationType::DEFENSIVE_SQUARE; // Maximum healer protection
             else
                 return FormationType::WEDGE;    // Penetration formation
@@ -429,7 +429,7 @@ namespace Playerbot
         uint32 rightSide = remainingBots - leftSide;
 
         // Left flank (melee DPS)
-        for (uint32 i = 0; i < leftSide; ++i)
+    for (uint32 i = 0; i < leftSide; ++i)
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
@@ -441,7 +441,7 @@ namespace Playerbot
         }
 
         // Right flank (melee DPS)
-        for (uint32 i = 0; i < rightSide; ++i)
+    for (uint32 i = 0; i < rightSide; ++i)
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
@@ -454,7 +454,7 @@ namespace Playerbot
 
         // Healers at rear center (protected position)
         uint32 healerCount = ::std::max(1u, botCount / 5); // ~20% healers
-        for (uint32 i = 0; i < healerCount && layout.positions.size() < botCount; ++i)
+    for (uint32 i = 0; i < healerCount && layout.positions.size() < botCount; ++i)
         {
             FormationPosition pos;
             pos.offsetX = 0.0f;
@@ -601,7 +601,7 @@ namespace Playerbot
         uint32 botsPerEdge = remainingBots / 4;
 
         // North edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -613,7 +613,7 @@ namespace Playerbot
         }
 
         // South edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -625,7 +625,7 @@ namespace Playerbot
         }
 
         // West edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -637,7 +637,7 @@ namespace Playerbot
         }
 
         // East edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -726,7 +726,7 @@ namespace Playerbot
             pos.offsetY = 0.0f;
 
             // Tanks on ends, DPS in middle, healers scattered
-            if (i == 0 || i == botCount - 1)
+    if (i == 0 || i == botCount - 1)
                 pos.preferredRole = BotRole::TANK;
             else if (i % 3 == 0)
                 pos.preferredRole = BotRole::HEALER;
@@ -759,7 +759,7 @@ namespace Playerbot
             pos.offsetY = spacing * i - (spacing * botCount / 2.0f);
 
             // Tank front, healer rear, DPS middle
-            if (i == 0)
+    if (i == 0)
                 pos.preferredRole = BotRole::TANK;
             else if (i == botCount - 1)
                 pos.preferredRole = BotRole::HEALER;
@@ -840,7 +840,7 @@ namespace Playerbot
             pos.offsetY = radius * ::std::sin(angle);
 
             // Tanks evenly distributed, healers between tanks, DPS fill gaps
-            if (i % (botCount / 4) == 0)
+    if (i % (botCount / 4) == 0)
                 pos.preferredRole = BotRole::TANK;
             else if (i % (botCount / 8) == 0)
                 pos.preferredRole = BotRole::HEALER;

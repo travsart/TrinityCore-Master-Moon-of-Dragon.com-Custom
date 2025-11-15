@@ -84,7 +84,7 @@ namespace Playerbot::Testing
             uint32 testItemId = 54321;
 
             // Simulate price history
-            for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
             {
                 uint64 price = 10000 + (i * 1000); // Rising prices
                 sBotAuctionMgr->SavePriceHistory(testItemId, price);
@@ -237,7 +237,7 @@ namespace Playerbot::Testing
             uint32 testItemId = 77777;
 
             // Simulate concurrent access (simplified test)
-            for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i)
             {
                 sBotAuctionMgr->SavePriceHistory(testItemId, 10000 + i);
                 ItemPriceData data = sBotAuctionMgr->GetItemPriceData(testItemId);

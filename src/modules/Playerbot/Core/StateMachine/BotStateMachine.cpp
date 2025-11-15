@@ -275,7 +275,7 @@ void BotStateMachine::ToggleFlags(StateFlags flags)
         const TransitionEvent& event = m_transitionHistory[index];
 
         // Skip uninitialized entries
-        if (event.timestamp != ::std::chrono::steady_clock::time_point{})
+    if (event.timestamp != ::std::chrono::steady_clock::time_point{})
         {
             history.push_back(event);
         }
@@ -296,7 +296,7 @@ void BotStateMachine::ToggleFlags(StateFlags flags)
     if (m_historyIndex == 0)
     {
         // Check if we have any transitions
-        if (m_transitionHistory[9].timestamp == ::std::chrono::steady_clock::time_point{})
+    if (m_transitionHistory[9].timestamp == ::std::chrono::steady_clock::time_point{})
             return ::std::nullopt;
         return m_transitionHistory[9];
     }

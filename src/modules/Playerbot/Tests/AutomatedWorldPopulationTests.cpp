@@ -159,7 +159,6 @@ TEST_F(AutomatedWorldPopulationTest, GearFactory_AppliesQualityDistribution)
 {
     // Generate 100 gear sets and verify quality distribution
     std::map<uint32, uint32> qualityCounts;  // quality -> count
-
     for (uint32 i = 0; i < 100; ++i)
     {
         auto gearSet = sBotGearFactory->BuildGearSet(CLASS_PALADIN, 0, 80, TEAM_HORDE);

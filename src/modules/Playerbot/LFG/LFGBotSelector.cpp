@@ -246,7 +246,7 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
     for (Player* bot : allBots)
     {
         // Check basic availability
-        if (!IsBotAvailable(bot))
+    if (!IsBotAvailable(bot))
             continue;
 
         // Check level range
@@ -255,7 +255,7 @@ std::vector<Player*> LFGBotSelector::FindBotsForRole(uint8 minLevel, uint8 maxLe
             continue;
 
         // Check if bot can perform the desired role
-        if (!sLFGRoleDetector->CanPerformRole(bot, desiredRole))
+    if (!sLFGRoleDetector->CanPerformRole(bot, desiredRole))
             continue;
 
         // Calculate priority
@@ -302,11 +302,11 @@ std::vector<Player*> LFGBotSelector::GetAllOnlineBots()
             continue;
 
         // Check if this is a bot
-        if (!Playerbot::PlayerBotHooks::IsPlayerBot(player))
+    if (!Playerbot::PlayerBotHooks::IsPlayerBot(player))
             continue;
 
         // Check if bot is in world
-        if (!player->IsInWorld())
+    if (!player->IsInWorld())
             continue;
 
         bots.push_back(player);

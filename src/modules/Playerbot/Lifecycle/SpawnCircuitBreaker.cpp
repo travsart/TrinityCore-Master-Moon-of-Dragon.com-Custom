@@ -96,7 +96,7 @@ void SpawnCircuitBreaker::Update(uint32 diff)
         case CircuitState::OPEN:
         {
             // Check if cooldown elapsed → HALF_OPEN
-            if (CanTransitionToHalfOpen())
+    if (CanTransitionToHalfOpen())
             {
                 TransitionTo(CircuitState::HALF_OPEN, "Cooldown period elapsed, testing recovery");
                 _consecutiveFailures = 0;
@@ -107,7 +107,7 @@ void SpawnCircuitBreaker::Update(uint32 diff)
         case CircuitState::HALF_OPEN:
         {
             // Check if recovery successful → CLOSED
-            if (CanTransitionToClosed())
+    if (CanTransitionToClosed())
             {
                 TransitionTo(CircuitState::CLOSED, "Recovery successful, failure rate below threshold");
             }
@@ -187,7 +187,6 @@ bool SpawnCircuitBreaker::AllowSpawn()
 {
     if (!_initialized)
         return true;  // Default allow if not initialized
-
     switch (_state)
     {
         case CircuitState::CLOSED:

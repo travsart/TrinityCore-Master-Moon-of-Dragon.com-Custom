@@ -136,7 +136,6 @@ ActionResult FollowAction::Execute(BotAI* ai, ActionContext const& context)
     // Find nearest group member (using squared distance for comparison)
     ::Unit* nearestMember = nullptr;
     float nearestDistanceSq = 100.0f * 100.0f; // 10000.0f
-
     for (GroupReference const& ref : group->GetMembers())
     {
         if (Player* member = ref.GetSource())

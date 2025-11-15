@@ -153,7 +153,7 @@ void ZoneOrchestrator::SetThreatLevel(ThreatLevel level)
             _zoneId, static_cast<uint8>(oldLevel), static_cast<uint8>(level));
 
         // React to threat changes
-        if (_threatLevel == ThreatLevel::CRITICAL)
+    if (_threatLevel == ThreatLevel::CRITICAL)
         {
             // Request assembly for world boss
             // Position would be determined by threat source
@@ -270,7 +270,6 @@ void ZoneOrchestrator::BalanceBotDistribution()
 
     // Create new raid if needed (every 40 bots)
     uint32 expectedRaids = (_bots.size() + 39) / 40; // Ceiling division
-
     while (_raids.size() < expectedRaids)
     {
         // Create new raid group

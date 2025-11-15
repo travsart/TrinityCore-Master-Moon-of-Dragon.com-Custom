@@ -556,7 +556,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // Failed to acquire lock within 100ms
 
         // Check if shutting down - bail immediately
-        if (_destroyed.load() || !_active.load()) {
+    if (_destroyed.load() || !_active.load()) {
             return false;  // Shutdown detected - exit gracefully
         }
 
@@ -631,7 +631,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         ProcessQueryCallbacks();
 
         // PHASE 1 REFACTORING: Update packet simulator for periodic time synchronization
-        if (_packetSimulator)
+    if (_packetSimulator)
         {
             _packetSimulator->Update(diff);
         }
@@ -659,7 +659,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
 
         // Process all queued packets (resurrection, future features, etc.)
         // Note: No socket check needed for bots (sockets are nullptr by design)
-        while (processedPackets < MAX_PROCESSED_PACKETS_IN_SAME_WORLDSESSION_UPDATE &&
+    while (processedPackets < MAX_PROCESSED_PACKETS_IN_SAME_WORLDSESSION_UPDATE &&
                _recvQueue.next(packet))
         {
             OpcodeClient opcode = static_cast<OpcodeClient>(packet->GetOpcode());
@@ -668,7 +668,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             // ======================================================================
             // CRITICAL: SELECTIVE DEFERRAL - Only defer packets that need main thread
             // ======================================================================
-            if (PacketDeferralClassifier::RequiresMainThread(opcode))
+    if (PacketDeferralClassifier::RequiresMainThread(opcode))
             {
                 TC_LOG_TRACE("playerbot.packets",
                     "Bot {} DEFERRING packet opcode {} ({}) to main thread - Reason: {}",
@@ -695,7 +695,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             try
             {
                 // Process based on opcode status (mirrors WorldSession::Update logic)
-                switch (opHandle->Status)
+    switch (opHandle->Status)
                 {
                     case STATUS_LOGGEDIN:
                     {
@@ -865,7 +865,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         }
 
         // Log packet processing statistics (TRACE level to avoid spam)
-        if (processedPackets > 0)
+    if (processedPackets > 0)
         {
             TC_LOG_TRACE("playerbot.packets",
                 "Bot {} processed {} packets this update cycle (elapsed: {}ms)",
@@ -876,9 +876,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
         // CRITICAL FIX: Add comprehensive memory safety validation to prevent ACCESS_VIOLATION
         Player* player = GetPlayer();
         // Removed excessive per-tick logging
-
-
-        if (_ai && player && _active.load() && !_destroyed.load()) {
+    if (_ai && player && _active.load() && !_destroyed.load()) {
 
             // MEMORY CORRUPTION DETECTION: Validate player object pointer before access
             // Check for common corruption patterns (null and debug heap patterns only)
@@ -892,7 +890,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
             }
 
             // Additional check: pointer should be within reasonable address space (not too low)
-            if (playerPtr < 0x10000) {
+    if (playerPtr < 0x10000) {
                 TC_LOG_ERROR("module.playerbot.session", "MEMORY CORRUPTION: Player pointer 0x{:X} in low address space for account {}", playerPtr, accountId);
                 _active.store(false);
                 _ai = nullptr;
@@ -922,7 +920,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 }
 
                 // Layer 2: World state validation (only if basic validation passed)
-                if (playerIsValid) {
+    if (playerIsValid) {
                     try {
                         playerIsInWorld = player->IsInWorld();
                     }
@@ -968,7 +966,7 @@ bool BotSession::Update(uint32 diff, PacketFilter& updater)
                 }
 
                 // Use SNAPSHOT values (not original variables) to prevent race conditions
-                if (validSnapshot && inWorldSnapshot && aiSnapshot && activeSnapshot) {
+    if (validSnapshot && inWorldSnapshot && aiSnapshot && activeSnapshot) {
                     if (shouldLog)
                     {
                         TC_LOG_INFO("module.playerbot.session", " ALL CONDITIONS MET - Calling UpdateAI for account {}", accountId);
@@ -1087,13 +1085,13 @@ void BotSession::ProcessBotPackets()
         }
 
         // Extract incoming packets atomically
-        for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
+    for (size_t i = 0; i < BATCH_SIZE && !_incomingPackets.empty(); ++i) {
             incomingBatch.emplace_back(::std::move(_incomingPackets.front()));
             _incomingPackets.pop();
         }
 
         // Extract outgoing packets (for logging/debugging)
-        for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
+    for (size_t i = 0; i < BATCH_SIZE && !_outgoingPackets.empty(); ++i) {
             outgoingBatch.emplace_back(::std::move(_outgoingPackets.front()));
             _outgoingPackets.pop();
         }
@@ -1151,7 +1149,6 @@ uint32 BotSession::ProcessDeferredPackets()
 
     uint32 processed = 0;
     constexpr uint32 MAX_DEFERRED_PACKETS_PER_UPDATE = 50; // Prevent main thread starvation
-
     while (processed < MAX_DEFERRED_PACKETS_PER_UPDATE)
     {
         ::std::unique_ptr<WorldPacket> packet;
@@ -1179,7 +1176,7 @@ uint32 BotSession::ProcessDeferredPackets()
                 opHandle->Name);
 
             // Process based on opcode status (same logic as ProcessBotPackets)
-            switch (opHandle->Status)
+    switch (opHandle->Status)
             {
                 case STATUS_LOGGEDIN:
                 {
@@ -1379,7 +1376,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
 
         // Use the async query holder to load character data
         // This uses the proper async connection pool, preventing the assertion failure
-        if (!pCurrChar->LoadFromDB(characterGuid, holder))
+    if (!pCurrChar->LoadFromDB(characterGuid, holder))
         {
             delete pCurrChar;
             TC_LOG_ERROR("module.playerbot.session", "Failed to load bot character {} from database", characterGuid.ToString());
@@ -1429,7 +1426,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
             pCurrChar->GetName(), mapId, instanceId, reinterpret_cast<uintptr_t>(map));
 
         // Now safely add bot to the map
-        if (!map->AddPlayerToMap(pCurrChar))
+    if (!map->AddPlayerToMap(pCurrChar))
         {
             TC_LOG_ERROR("module.playerbot.session", "Failed to add bot player {} to map", characterGuid.ToString());
             _loginState.store(LoginState::LOGIN_FAILED);
@@ -1470,7 +1467,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         ::std::string botPhases;
         auto const& phases = phaseShift.GetPhases();
         botPhases.reserve(phases.size() * 8); // Pre-allocate approximate size
-        for (auto const& phaseRef : phases)
+    for (auto const& phaseRef : phases)
         {
             if (!botPhases.empty()) botPhases += ",";
             botPhases += ::std::to_string(phaseRef.Id);
@@ -1482,7 +1479,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         TC_LOG_INFO("module.playerbot.session", "Bot player {} successfully added to world", pCurrChar->GetName());
 
         // Create and assign BotAI to take control of the character
-        if (GetPlayer())
+    if (GetPlayer())
         {
             auto botAI = sBotAIFactory->CreateAI(GetPlayer());
             if (botAI)
@@ -1491,7 +1488,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                 TC_LOG_INFO("module.playerbot.session", "Successfully created BotAI for character {}", characterGuid.ToString());
                 // CRITICAL FIX: Check if bot is already in a group at login and activate strategies
                 // This fixes the "reboot breaks groups" issue where strategies aren't activated
-                if (Player* player = GetPlayer())
+    if (Player* player = GetPlayer())
                 {
                     Group* group = player->GetGroup();
                     TC_LOG_ERROR("module.playerbot.session", " Bot {} login group check: player={}, group={}",
@@ -1511,7 +1508,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
                     // BUG FIX: isDead() only checks DEAD/CORPSE states, but ghosts are ALIVE with PLAYER_FLAGS_GHOST
                     //          After server restart, dead bots load as ghosts (1 HP, Ghost aura) but m_deathState == ALIVE
                     //          Must check HasPlayerFlag(PLAYER_FLAGS_GHOST) to detect ghost state
-                    if (player->isDead() || player->HasPlayerFlag(PLAYER_FLAGS_GHOST))
+    if (player->isDead() || player->HasPlayerFlag(PLAYER_FLAGS_GHOST))
                     {
                         TC_LOG_INFO("module.playerbot.session", " Bot {} is dead/ghost at login (isDead={}, isGhost={}, deathState={}, health={}/{}) - triggering death recovery",
                             player->GetName(),
@@ -1548,7 +1545,7 @@ void BotSession::HandleBotPlayerLogin(BotLoginQueryHolder const& holder)
         // When the SpellEvent destructor fires, it tries to destroy a spell that's still referenced → ASSERTION FAILURE
         // Root Cause: When KillAllEvents() destroys a delayed spell, handle_delayed() never runs to clear m_spellModTakingSpell
         // Solution: Clear m_spellModTakingSpell FIRST, then kill events to prevent Spell::~Spell assertion failure
-        if (Player* player = GetPlayer())
+    if (Player* player = GetPlayer())
         {
             // Core Fix Applied: SpellEvent::~SpellEvent() now automatically clears m_spellModTakingSpell (Spell.cpp:8455)
             // No longer need to manually clear - KillAllEvents() will properly clean up spell mods
@@ -1689,7 +1686,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         }
 
         // Validate the invitation can be accepted
-        if (!canAccept)
+    if (!canAccept)
         {
             TC_LOG_DEBUG("module.playerbot.group", "HandleGroupInvitation: Bot {} cannot accept invitation from {} (canAccept=false)",
                 bot->GetName(), inviterName);
@@ -1728,7 +1725,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         TC_LOG_INFO("module.playerbot.group", "  - Inviter group size: {}", inviterGroup->GetMembersCount());
 
         // Handle existing group invitation state
-        if (bot->GetGroupInvite())
+    if (bot->GetGroupInvite())
         {
             TC_LOG_INFO("module.playerbot.group", "Bot {} already has group invitation from group {}, removing old invitation",
                 bot->GetName(), bot->GetGroupInvite()->GetGUID().ToString());
@@ -1736,7 +1733,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
         }
 
         // Handle existing group membership
-        if (bot->GetGroup())
+    if (bot->GetGroup())
         {
             TC_LOG_INFO("module.playerbot.group", "Bot {} is already in group {}, cannot invite",
                 bot->GetName(), bot->GetGroup()->GetGUID().ToString());
@@ -1749,7 +1746,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                 bot->GetName(), inviterGroup->GetGUID().ToString(), inviterName);
 
             // Verify that the bot now has a group invitation
-            if (bot->GetGroupInvite() == inviterGroup)
+    if (bot->GetGroupInvite() == inviterGroup)
             {
                 TC_LOG_INFO("module.playerbot.group", " Confirmed: Bot {} has group invitation state set", bot->GetName());
 
@@ -1757,14 +1754,14 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                 // This removes the legacy GroupInvitationHandler fallback path
 
                 // Accept the invitation by adding bot to the group
-                if (inviterGroup->AddMember(bot))
+    if (inviterGroup->AddMember(bot))
                 {
                     TC_LOG_INFO("module.playerbot.group", " Bot {} successfully joined group {} (inviter: {})",
                         bot->GetName(), inviterGroup->GetGUID().ToString(), inviterName);
 
                     // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event for instant reaction
                     // This eliminates the 1-second polling lag
-                    if (_ai && _ai->GetEventDispatcher())
+    if (_ai && _ai->GetEventDispatcher())
                     {
                         Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, bot->GetGUID(), inviterGroup->GetLeaderGUID());
                         _ai->GetEventDispatcher()->Dispatch(::std::move(evt));
@@ -1772,7 +1769,7 @@ void BotSession::HandleGroupInvitation(WorldPacket const& packet)
                     }
 
                     // Activate follow behavior through BotAI lifecycle hook
-                    if (_ai)
+    if (_ai)
                     {
                         TC_LOG_ERROR("module.playerbot.group", " CALLING OnGroupJoined for bot {} with group {}",
                                     bot->GetName(), (void*)inviterGroup);

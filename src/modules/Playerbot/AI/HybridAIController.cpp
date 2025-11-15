@@ -160,7 +160,7 @@ bool HybridAIController::Update(uint32 diff)
     if (_lastDecisionTime < _decisionUpdateInterval)
     {
         // Execute current tree if we have one
-        if (_currentTree)
+    if (_currentTree)
         {
             ExecuteCurrentTree();
             return true;

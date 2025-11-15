@@ -531,7 +531,6 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
 
     // Integration Hook 1: Bot spawning via BotWorldSessionMgr
     // Using BotWorldSessionMgr instead of BotLifecycleMgr for direct character creation
-
     if (!sBotWorldSessionMgr->IsEnabled())
     {
         TC_LOG_ERROR("test.week4", "BotWorldSessionMgr is disabled - cannot spawn bots");
@@ -561,11 +560,10 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
     //
     // For now, we'll attempt to add existing bot accounts
     // Actual bot character creation requires database access and account setup
-
     for (uint32 i = 0; i < count; ++i)
     {
         // Calculate delay for gradual spawn
-        if (spawnInterval > 0 && i > 0)
+    if (spawnInterval > 0 && i > 0)
         {
             ::std::this_thread::sleep_for(::std::chrono::seconds(spawnInterval));
         }
@@ -582,7 +580,7 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
         ++botsSpawned;
 
         // Progress logging every 100 bots
-        if (botsSpawned % 100 == 0)
+    if (botsSpawned % 100 == 0)
         {
             TC_LOG_INFO("test.week4", "Spawn progress: {} / {} bots", botsSpawned, count);
         }
@@ -999,7 +997,8 @@ void Week4PerformanceTest::UpdateBotStates()
     // {
     //     if (bot->IsDead())
     //         ++dead;
-    //     else if (bot->IsInCombat())
+    //     else
+    if (bot->IsInCombat())
     //         ++inCombat;
     //     else
     //         ++idle;

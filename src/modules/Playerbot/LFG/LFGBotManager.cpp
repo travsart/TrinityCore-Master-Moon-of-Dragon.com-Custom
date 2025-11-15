@@ -194,7 +194,7 @@ void LFGBotManager::OnPlayerLeaveQueue(ObjectGuid playerGuid)
                      humanItr->second.assignedBots.size());
 
         // Remove all assigned bots from queue
-        for (ObjectGuid botGuid : humanItr->second.assignedBots)
+    for (ObjectGuid botGuid : humanItr->second.assignedBots)
         {
             if (Player* bot = ObjectAccessor::FindPlayer(botGuid))
             {
@@ -243,7 +243,7 @@ void LFGBotManager::OnProposalReceived(uint32 proposalId, lfg::LfgProposal const
     for (auto const& [playerGuid, proposalPlayer] : proposal.players)
     {
         // Check if this is a queued bot
-        if (_queuedBots.find(playerGuid) != _queuedBots.end())
+    if (_queuedBots.find(playerGuid) != _queuedBots.end())
         {
             botsInProposal.insert(playerGuid);
 
@@ -294,7 +294,7 @@ void LFGBotManager::OnRoleCheckReceived(ObjectGuid groupGuid, ObjectGuid botGuid
     {
         // Check if bot is part of this group's proposal
         // We need to verify the bot is actually in this group
-        if (Player* bot = ObjectAccessor::FindPlayer(queuedBotGuid))
+    if (Player* bot = ObjectAccessor::FindPlayer(queuedBotGuid))
         {
             uint8 role = queueInfo.assignedRole;
             TC_LOG_DEBUG("module.playerbot", "LFGBotManager::OnRoleCheckReceived - Bot {} confirming role {} for group {}",
@@ -339,7 +339,7 @@ void LFGBotManager::OnGroupFormed(ObjectGuid groupGuid)
                 groupGuid.ToString());
 
             // Teleport the group to the dungeon
-            if (sLFGGroupCoordinator->TeleportGroupToDungeon(group, dungeonId))
+    if (sLFGGroupCoordinator->TeleportGroupToDungeon(group, dungeonId))
             {
                 TC_LOG_INFO("module.playerbot", "LFGBotManager::OnGroupFormed - Group {} teleported to dungeon {}",
                     groupGuid.ToString(), dungeonId);
@@ -521,7 +521,7 @@ void LFGBotManager::CleanupStaleAssignments()
     for (auto const& [botGuid, queueInfo] : _queuedBots)
     {
         // Check if bot has been queued too long
-        if ((currentTime - queueInfo.queueTime) > MAX_QUEUE_TIME)
+    if ((currentTime - queueInfo.queueTime) > MAX_QUEUE_TIME)
         {
             TC_LOG_DEBUG("module.playerbot", "LFGBotManager::CleanupStaleAssignments - Bot {} queue time exceeded, removing",
                          botGuid.ToString());

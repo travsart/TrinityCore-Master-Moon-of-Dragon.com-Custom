@@ -87,12 +87,12 @@ protected:
         env.enemy->SetPosition(Position(0, 10, 0, 0));
 
         // Create group if healer spec
-        if (spec == SPEC_DISCIPLINE || spec == SPEC_HOLY)
+    if (spec == SPEC_DISCIPLINE || spec == SPEC_HOLY)
         {
             env.group = MockFactory::CreateMockGroup(env.bot.get());
 
             // Add 4 group members
-            for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
             {
                 auto member = MockFactory::CreateMockPlayer(CLASS_WARRIOR, 80);
                 member->SetMaxHealth(30000);

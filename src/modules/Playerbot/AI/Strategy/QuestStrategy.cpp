@@ -236,7 +236,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                      bot->GetName());
 
         // Scan quest log and register all active quests with ObjectiveTracker
-        for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
         {
             uint32 questId = bot->GetQuestSlotQuestId(slot);
             if (questId == 0)
@@ -250,7 +250,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                          bot->GetName(), questId, quest->Objectives.size());
 
             // Skip quests with no objectives (autocomplete/scripted quests)
-            if (quest->Objectives.empty())
+    if (quest->Objectives.empty())
             {
                 TC_LOG_ERROR("module.playerbot.quest", " Quest {} has NO objectives - skipping registration (likely autocomplete/scripted quest)",
                             questId);
@@ -258,7 +258,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
 
             // Register each objective of this quest
-            for (uint32 i = 0; i < quest->Objectives.size(); ++i)
+    for (uint32 i = 0; i < quest->Objectives.size(); ++i)
             {
                 QuestObjective const& objective = quest->Objectives[i];
 
@@ -284,14 +284,14 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
 
             // CRITICAL FIX: Check if any of these quests are COMPLETE and ready to turn in
             // Don't fall back to searching for new quests if we have completed quests!
-            for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
+    for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
             {
                 uint32 questId = bot->GetQuestSlotQuestId(slot);
                 if (questId == 0)
                     continue;
 
                 // Check if quest is complete
-                if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+    if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
                     TC_LOG_ERROR("module.playerbot.quest", " ProcessQuestObjectives: Bot {} has COMPLETE autocomplete quest {} - turning it in!",
                                  bot->GetName(), questId);
@@ -347,7 +347,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             //
             // Detect "use item on target" quests by checking if quest has StartItem
             // (item given when quest is accepted and required for objective)
-            if (quest->GetSrcItemId() != 0)
+    if (quest->GetSrcItemId() != 0)
             {
                 TC_LOG_ERROR("module.playerbot.quest", " ProcessQuestObjectives: Bot {} - Quest {} is USE ITEM quest (StartItem={}), calling UseQuestItemOnTarget",
                              bot->GetName(), objective.questId, quest->GetSrcItemId());
@@ -505,11 +505,11 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
                     continue;
 
                 // Check if this is a FRIENDLY NPC (not hostile to bot)
-                if (!bot->IsHostileTo(creature))
+    if (!bot->IsHostileTo(creature))
                 {
                     // CRITICAL: Only interact with NPCs that have spell click data
                     // Neutral mobs WITHOUT spell click should be attacked, not interacted with!
-                    if (!RequiresSpellClickInteraction(questObjective.ObjectID))
+    if (!RequiresSpellClickInteraction(questObjective.ObjectID))
                     {
                         TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Mob {} (Entry: {}) is neutral but has NO spell click - should be ATTACKED, not interacted with!",
                                      creature->GetName(), questObjective.ObjectID);
@@ -536,7 +536,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
                                  bot->GetName(), currentProgress, requiredAmount);
 
                     // Check if in interaction range
-                    if (distance <= INTERACTION_DISTANCE)
+    if (distance <= INTERACTION_DISTANCE)
                     {
                         // INTERACT with the friendly NPC using spell click (right-click interaction)
                         TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Bot {} INTERACTING with friendly NPC {} for quest {} (using HandleSpellClick)",
@@ -571,10 +571,10 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
         // CRITICAL FIX: Check if quest has an area to wander in
         // If quest has multiple POI points defining an area, wander through it to search for spawns
         // Otherwise, just move to the single POI point with randomness
-        if (ShouldWanderInQuestArea(ai, objective))
+    if (ShouldWanderInQuestArea(ai, objective))
         {
             // Initialize wandering if not already done
-            if (_questAreaWanderPoints.empty())
+    if (_questAreaWanderPoints.empty())
             {
                 TC_LOG_ERROR("module.playerbot.quest", " EngageQuestTargets: Bot {} - Initializing quest area wandering",
                              bot->GetName());
@@ -630,7 +630,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
         bot->SetInCombatWith(target);
 
         // 2. Set BotAI state to COMBAT (triggers BotAI to call ClassAI::OnCombatUpdate())
-        if (ai && ai->GetBot() == bot)
+    if (ai && ai->GetBot() == bot)
         {
             ai->SetAIState(BotAIState::COMBAT);
         }
@@ -641,7 +641,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objectiv
         // 4. CRITICAL: Position ranged classes at optimal range
         // This mirrors BotAI::UpdateSoloBehaviors (lines 645-659) for autonomous combat
         // Without this, casters will stand 40+ yards away and never cast spells!
-        if (bot->GetClass() == CLASS_HUNTER ||
+    if (bot->GetClass() == CLASS_HUNTER ||
             bot->GetClass() == CLASS_MAGE ||
             bot->GetClass() == CLASS_WARLOCK ||
             bot->GetClass() == CLASS_PRIEST)
@@ -898,11 +898,11 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     for (auto const& snapshot : nearbyObjects)
     {
         // Filter by entry ID
-        if (snapshot.entry != targetObjectId)
+    if (snapshot.entry != targetObjectId)
             continue;
 
         // Check if GameObject is spawned and ready using snapshot fields
-        if (!snapshot.isSpawned || snapshot.goState != GO_STATE_READY)
+    if (!snapshot.isSpawned || snapshot.goState != GO_STATE_READY)
         {
             TC_LOG_ERROR("module.playerbot.quest", " UseQuestItemOnTarget: GameObject entry={} is NOT ready (spawned={}, state={}), skipping",
                          snapshot.entry, snapshot.isSpawned, snapshot.goState);
@@ -972,7 +972,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
                 damageRadius = static_cast<float>(goInfo->spellFocus.radius);
 
                 // Check if linked to a trap GameObject (indicates it causes damage)
-                if (goInfo->spellFocus.linkedTrap != 0)
+    if (goInfo->spellFocus.linkedTrap != 0)
                 {
                     causesDamage = true;
                     TC_LOG_ERROR("module.playerbot.quest", " UseQuestItemOnTarget: GameObject is SPELL_FOCUS with LINKED TRAP {} - radius={:.1f}yd",
@@ -1288,7 +1288,6 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
     // failed to find spawn data and fell back to bot position. In this case, we need to re-query.
     bool isValidSpawnPosition = cachedPos.GetExactDist2d(0.0f, 0.0f) > 0.1f &&  // Not at origin
                                 cachedPos.GetExactDist2d(bot->GetPositionX(), bot->GetPositionY()) > 1.0f;  // Not at bot position
-
     if (!isValidSpawnPosition)
     {
         TC_LOG_ERROR("module.playerbot.quest", " GetObjectivePosition: Bot {} - Cached position ({:.1f}, {:.1f}, {:.1f}) is INVALID (at origin or bot position)",
@@ -1309,7 +1308,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
 
             Position newPos = ObjectiveTracker::instance()->FindObjectiveTargetLocation(bot, objData);
             // Check if we got a valid position
-            if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
+    if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
             {
                 TC_LOG_ERROR("module.playerbot.quest", " GetObjectivePosition: Found NEW position ({:.1f}, {:.1f}, {:.1f}) via re-query",
                              newPos.GetPositionX(), newPos.GetPositionY(), newPos.GetPositionZ());
@@ -1413,10 +1412,10 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
         uint32 entry = questObjective.ObjectID;
 
         // If creature is not hostile, check if it requires spell click interaction
-        if (!bot->IsHostileTo(creature))
+    if (!bot->IsHostileTo(creature))
         {
             // Check if this NPC has spell click data
-            if (RequiresSpellClickInteraction(entry))
+    if (RequiresSpellClickInteraction(entry))
             {
                 TC_LOG_ERROR("module.playerbot.quest", " FindQuestTarget: NPC {} (Entry: {}) requires SPELL CLICK interaction, not attack! Returning nullptr for TALKTO logic.",
                              creature->GetName(), entry);
@@ -1596,7 +1595,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
             continue;
 
         // CRITICAL: Check if bot can actually see this creature (phase check)
-        if (!bot->CanSeeOrDetect(creature))
+    if (!bot->CanSeeOrDetect(creature))
         {
             TC_LOG_ERROR("module.playerbot.quest", " Creature {} (Entry: {}) is in different phase, skipping",
                          creature->GetName(), creature->GetEntry());
@@ -1607,7 +1606,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
                      creature->GetName(), creature->GetEntry(), creature->IsQuestGiver());
 
         // Check if creature is a quest giver
-        if (!creature->IsQuestGiver())
+    if (!creature->IsQuestGiver())
         {
             TC_LOG_ERROR("module.playerbot.quest", " Creature {} (Entry: {}) is NOT a quest giver, skipping",
                          creature->GetName(), creature->GetEntry());
@@ -1627,7 +1626,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
                 continue;
 
             // Check if quest is eligible using QuestAcceptanceManager
-            if (_acceptanceManager->IsQuestEligible(questTemplate))
+    if (_acceptanceManager->IsQuestEligible(questTemplate))
             {
                 hasEligibleQuests = true;
                 TC_LOG_ERROR("module.playerbot.quest", " Quest giver {} (Entry: {}) has eligible quest {} ({})",
@@ -1687,7 +1686,7 @@ void QuestStrategy::SearchForQuestGivers(BotAI* ai)
         }
 
         auto questHubs = hubDb.GetQuestHubsForPlayer(bot, 3); // Get top 3 suitable hubs
-        if (questHubs.empty())
+    if (questHubs.empty())
         {
             TC_LOG_ERROR("module.playerbot.quest",
                 " SearchForQuestGivers: Bot {} - No appropriate quest hubs found for level {} (zone {}, faction {})",
@@ -1826,11 +1825,11 @@ bool QuestStrategy::FindQuestEnderLocation(BotAI* ai, uint32 questId, QuestEnder
         CreatureData const& data = pair.second;
 
         // Check if this spawn is the quest ender we're looking for
-        if (data.id != questEnderEntry)
+    if (data.id != questEnderEntry)
             continue;
 
         // Check if spawn is on the same map as bot
-        if (data.mapId != bot->GetMapId())
+    if (data.mapId != bot->GetMapId())
             continue;
 
         // Calculate distance from bot to this spawn
@@ -2004,7 +2003,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
             continue;
 
         // CRITICAL: Phase validation to prevent Ilario-type issues
-        if (!bot->CanSeeOrDetect(creature))
+    if (!bot->CanSeeOrDetect(creature))
         {
             TC_LOG_ERROR("module.playerbot.quest", " CheckForQuestEnderInRange: NPC {} (Entry: {}) is in different phase, skipping",
                          creature->GetName(), creature->GetEntry());
@@ -2012,7 +2011,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
         }
 
         // Verify it's a quest giver (quest enders are also quest givers)
-        if (!creature->IsQuestGiver())
+    if (!creature->IsQuestGiver())
         {
             TC_LOG_ERROR("module.playerbot.quest", " CheckForQuestEnderInRange: NPC {} (Entry: {}) is NOT a quest giver, skipping",
                          creature->GetName(), creature->GetEntry());
@@ -2067,7 +2066,7 @@ bool QuestStrategy::CheckForQuestEnderInRange(BotAI* ai, uint32 npcEntry)
             continue;
 
         // Check if quest is complete
-        if (bot->GetQuestStatus(questId) != QUEST_STATUS_COMPLETE)
+    if (bot->GetQuestStatus(questId) != QUEST_STATUS_COMPLETE)
             continue;
 
         // Verify this NPC can end this quest
@@ -2140,7 +2139,6 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
     // ========================================================================
 
     uint32 selectedRewardIndex = 0; // Default to first choice
-
     if (hasChoiceRewards)
     {
         Playerbot::EquipmentManager* equipMgr = Playerbot::EquipmentManager::instance();
@@ -2167,7 +2165,7 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
             }
 
             // Check if bot can equip this item (class/level restrictions)
-            if (!equipMgr->CanPlayerEquipItem(bot, itemTemplate))
+    if (!equipMgr->CanPlayerEquipItem(bot, itemTemplate))
             {
                 TC_LOG_TRACE("module.playerbot.quest", " Bot {} cannot equip reward choice {}: {} (class/level restriction)",
                              bot->GetName(), i, itemTemplate->GetName(LOCALE_enUS));
@@ -2205,7 +2203,7 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
         else
         {
             // No usable rewards found, select first available for vendor value
-            for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+    for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
             {
                 if (quest->RewardChoiceItemId[i] > 0)
                 {
@@ -2281,7 +2279,7 @@ bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveState const& obj
             blob.ObjectiveIndex == static_cast<int32>(objective.objectiveIndex))
         {
             // Area wandering is only useful if there are multiple points defining a region
-            if (blob.Points.size() >= 2)
+    if (blob.Points.size() >= 2)
             {
                 TC_LOG_ERROR("module.playerbot.quest", " ShouldWanderInQuestArea: Quest {} objective {} has {} POI points - wandering enabled",
                              objective.questId, objective.objectiveIndex, blob.Points.size());
@@ -2320,7 +2318,7 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
                          bot->GetName(), blob.Points.size());
 
             // Convert POI points to wander positions
-            for (auto const& point : blob.Points)
+    for (auto const& point : blob.Points)
             {
                 Position pos;
                 pos.Relocate(static_cast<float>(point.X), static_cast<float>(point.Y), static_cast<float>(point.Z));
@@ -2331,7 +2329,7 @@ void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const
             }
 
             // Start at a random point based on bot GUID (deterministic but unique per bot)
-            if (!_questAreaWanderPoints.empty())
+    if (!_questAreaWanderPoints.empty())
             {
                 _currentWanderPointIndex = bot->GetGUID().GetCounter() % _questAreaWanderPoints.size();
                 TC_LOG_ERROR("module.playerbot.quest", " Bot {} starting wander at point {} of {}",
@@ -2360,7 +2358,6 @@ void QuestStrategy::WanderInQuestArea(BotAI* ai)
     // Throttle wandering - only move to next point every 10 seconds
     uint32 currentTime = GameTime::GetGameTimeMS();
     constexpr uint32 WANDER_INTERVAL_MS = 10000; // 10 seconds
-
     if (currentTime - _lastWanderTime < WANDER_INTERVAL_MS)
     {
         // Still waiting - don't wander yet

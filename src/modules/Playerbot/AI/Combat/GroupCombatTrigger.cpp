@@ -123,7 +123,7 @@ float GroupCombatTrigger::CalculateUrgency(BotAI* ai) const
         urgency += 0.2f;
 
         // Even higher if leader is low health
-        if (leader->GetHealthPct() < 50.0f)
+    if (leader->GetHealthPct() < 50.0f)
             urgency = 0.95f;
     }
 
@@ -253,7 +253,7 @@ Unit* GroupCombatTrigger::GetGroupTarget(Group* group) const
                 targetCounts[victim->GetGUID()]++;
 
                 // Track leader's target specifically
-                if (member->GetGUID() == group->GetLeaderGUID())
+    if (member->GetGUID() == group->GetLeaderGUID())
                     leaderTarget = victim;
             }
         }

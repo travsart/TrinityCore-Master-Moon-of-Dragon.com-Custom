@@ -35,7 +35,7 @@ void NeuralLayer::Forward(const ::std::vector<float>& input)
         }
 
         // Apply activation function
-        switch (activation)
+    switch (activation)
         {
             case ActivationFunction::LINEAR:
                 outputs[i] = sum;
@@ -708,7 +708,7 @@ float BehaviorAdaptation::CalculateReward(BotAI* ai, const ActionContext& contex
             reward -= 0.3f;
 
         // Combat effectiveness
-        if (bot->IsInCombat())
+    if (bot->IsInCombat())
         {
             if (context.damageDealt > 0)
                 reward += ::std::min(context.damageDealt / 10000.0f, 1.0f);
@@ -717,7 +717,7 @@ float BehaviorAdaptation::CalculateReward(BotAI* ai, const ActionContext& contex
         }
 
         // Group cooperation
-        if (bot->GetGroup() && context.helpedAlly)
+    if (bot->GetGroup() && context.helpedAlly)
             reward += 0.5f;
     }
 

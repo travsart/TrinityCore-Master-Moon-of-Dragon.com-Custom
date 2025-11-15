@@ -95,7 +95,7 @@ bool DependencyValidator::ValidateTBB()
         }
 
         // Test TBB concurrency functionality
-        if (!TestTBBConcurrency()) {
+    if (!TestTBBConcurrency()) {
             TC_LOG_ERROR("module.playerbot.dependencies", "Intel TBB concurrency test failed");
             return false;
         }
@@ -147,7 +147,7 @@ bool DependencyValidator::TestTBBConcurrency()
         });
 
         // Verify all items were processed
-        if (consumed.load() != TEST_SIZE) {
+    if (consumed.load() != TEST_SIZE) {
             TC_LOG_ERROR("module.playerbot.dependencies",
                 "TBB concurrent queue test failed: expected {}, got {}", TEST_SIZE, consumed.load());
             return false;
@@ -168,7 +168,7 @@ bool DependencyValidator::TestTBBConcurrency()
             "TBB parallel_for processed 10k items in {}μs", duration.count());
 
         // Verify results
-        for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i) {
             if (test_data[i] != i * 2 + 1) {
                 TC_LOG_ERROR("module.playerbot.dependencies", "TBB parallel_for data corruption detected");
                 return false;
@@ -271,7 +271,7 @@ bool DependencyValidator::ValidateBoost()
         }
 
         // Test Boost components
-        if (!TestBoostComponents()) {
+    if (!TestBoostComponents()) {
             TC_LOG_ERROR("module.playerbot.dependencies", "Boost components test failed");
             return false;
         }
@@ -318,7 +318,7 @@ bool DependencyValidator::TestBoostComponents()
         }
 
         // Clean up
-        for (auto* obj : objects) {
+    for (auto* obj : objects) {
             obj->~vector();
             pool.free(obj);
         }
@@ -415,7 +415,7 @@ bool DependencyValidator::ValidateMySQL()
         }
 
         // Test basic MySQL functionality (connection test would require credentials)
-        if (!TestMySQLConnectivity()) {
+    if (!TestMySQLConnectivity()) {
             TC_LOG_WARN("module.playerbot.dependencies",
                 "MySQL connectivity test skipped (no test database configured)");
         }
@@ -435,7 +435,7 @@ bool DependencyValidator::TestMySQLConnectivity()
 {
     try {
         // Initialize MySQL library
-        if (mysql_library_init(0, nullptr, nullptr) != 0) {
+    if (mysql_library_init(0, nullptr, nullptr) != 0) {
             TC_LOG_ERROR("module.playerbot.dependencies", "MySQL library initialization failed");
             return false;
         }
@@ -500,7 +500,7 @@ bool DependencyValidator::CheckMemoryRequirements()
         }
 
         // Write to buffer to ensure it's actually allocated
-        for (size_t i = 0; i < TEST_SIZE; i += 4096) {
+    for (size_t i = 0; i < TEST_SIZE; i += 4096) {
             buffer[i] = static_cast<char>(i % 256);
         }
 

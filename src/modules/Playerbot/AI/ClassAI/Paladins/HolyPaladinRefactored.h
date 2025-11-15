@@ -41,7 +41,7 @@ using bot::ai::NodeStatus;
 using bot::ai::SpellPriority;
 using bot::ai::SpellCategory;
 
-// Note: ::bot::ai::Action() conflicts with Playerbot::Action, use ::bot::ai::Action() explicitly
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // HOLY PALADIN SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -762,7 +762,7 @@ private:
                     }),
                     Selector("Emergency Response", {
                         // Lay on Hands for critical allies
-                        ::bot::ai::Action("Cast Lay on Hands", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Lay on Hands", [this](Player* bot, Unit*) {
                             Unit* criticalTarget = this->SelectHealingTarget(bot->GetGroup());
                             if (criticalTarget && criticalTarget->GetHealthPct() < 20.0f &&
                                 this->CanCastSpell(LAY_ON_HANDS, criticalTarget))
@@ -773,7 +773,7 @@ private:
                             return NodeStatus::FAILURE;
                         }),
                         // Divine Shield for self
-                        ::bot::ai::Action("Cast Divine Shield", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Divine Shield", [this](Player* bot, Unit*) {
                             if (bot->GetHealthPct() < 15.0f &&
                                 this->CanCastSpell(DIVINE_SHIELD, bot))
                             {
@@ -783,7 +783,7 @@ private:
                             return NodeStatus::FAILURE;
                         }),
                         // Word of Glory emergency spend
-                        ::bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
                             if (this->_resource.holyPower >= 3)
                             {
                                 Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
@@ -798,7 +798,7 @@ private:
                             return NodeStatus::FAILURE;
                         }),
                         // Flash of Light spam
-                        ::bot::ai::Action("Cast Flash of Light", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Flash of Light", [this](Player* bot, Unit*) {
                             Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                             if (healTarget && healTarget->GetHealthPct() < 25.0f &&
                                 this->CanCastSpell(FLASH_OF_LIGHT, healTarget))
@@ -828,7 +828,7 @@ private:
                                         Group* group = bot->GetGroup();
                                         return this->CountInjuredAllies(group, 0.7f) >= 3;
                                     }),
-                                    ::bot::ai::Action("Cast Light of Dawn", [this](Player* bot, Unit*) {
+                                    bot::ai::Action("Cast Light of Dawn", [this](Player* bot, Unit*) {
                                         if (this->CanCastSpell(LIGHT_OF_DAWN, bot))
                                         {
                                             this->CastSpell(LIGHT_OF_DAWN, bot);
@@ -839,7 +839,7 @@ private:
                                     })
                                 }),
                                 // Word of Glory single target
-                                ::bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
+                                bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
                                     Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                                     if (healTarget && healTarget->GetHealthPct() < 80.0f &&
                                         this->CanCastSpell(WORD_OF_GLORY, healTarget))
@@ -859,7 +859,7 @@ private:
                             }),
                             Selector("HP Generator Priority", {
                                 // Holy Shock
-                                ::bot::ai::Action("Cast Holy Shock", [this](Player* bot, Unit*) {
+                                bot::ai::Action("Cast Holy Shock", [this](Player* bot, Unit*) {
                                     Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                                     if (healTarget && healTarget->GetHealthPct() < 90.0f &&
                                         this->CanCastSpell(HOLY_SHOCK, healTarget))
@@ -871,7 +871,7 @@ private:
                                     return NodeStatus::FAILURE;
                                 }),
                                 // Divine Toll burst
-                                ::bot::ai::Action("Cast Divine Toll", [this](Player* bot, Unit*) {
+                                bot::ai::Action("Cast Divine Toll", [this](Player* bot, Unit*) {
                                     if (this->_resource.holyPower < 3 &&
                                         this->CanCastSpell(DIVINE_TOLL, bot))
                                     {
@@ -894,7 +894,7 @@ private:
                     }),
                     Selector("Beacon Priority", {
                         // Primary beacon on tank
-                        ::bot::ai::Action("Cast Beacon of Light", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Beacon of Light", [this](Player* bot, Unit*) {
                             Player* tank = this->GetMainTank(bot->GetGroup());
                             if (tank && this->_beaconTracker.NeedsBeaconRefresh(bot, tank) &&
                                 this->CanCastSpell(BEACON_OF_LIGHT, tank))
@@ -906,7 +906,7 @@ private:
                             return NodeStatus::FAILURE;
                         }),
                         // Secondary beacon if talented
-                        ::bot::ai::Action("Cast Beacon of Faith", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Beacon of Faith", [this](Player* bot, Unit*) {
                             if (this->_beaconTracker.HasSecondaryBeacon())
                             {
                                 Player* secondTank = this->GetOffTank(bot->GetGroup());
@@ -934,7 +934,7 @@ private:
                                 Group* group = bot->GetGroup();
                                 return this->CountInjuredAllies(group, 0.6f) >= 3;
                             }),
-                            ::bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(AVENGING_WRATH_HOLY, bot))
                                 {
                                     this->CastSpell(AVENGING_WRATH_HOLY, bot);
@@ -952,7 +952,7 @@ private:
                                 Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                                 return healTarget && healTarget->GetHealthPct() < 50.0f;
                             }),
-                            ::bot::ai::Action("Cast Flash of Light", [this](Player* bot, Unit*) {
+                            bot::ai::Action("Cast Flash of Light", [this](Player* bot, Unit*) {
                                 Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                                 if (healTarget && this->CanCastSpell(FLASH_OF_LIGHT, healTarget))
                                 {
@@ -964,7 +964,7 @@ private:
                         }),
 
                         // Holy Light for efficient healing
-                        ::bot::ai::Action("Cast Holy Light", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Cast Holy Light", [this](Player* bot, Unit*) {
                             Unit* healTarget = this->SelectHealingTarget(bot->GetGroup());
                             if (healTarget && healTarget->GetHealthPct() < 85.0f &&
                                 this->CanCastSpell(HOLY_LIGHT, healTarget))

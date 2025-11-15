@@ -644,7 +644,7 @@ void AdaptiveDifficulty::RecordCombatOutcome(Player* player, BotAI* bot, bool pl
         float currentDifficulty = GetBotDifficulty(bot);
 
         // Optimal difficulty is where player had good engagement
-        if (profile->GetEngagementLevel() > 0.7f)
+    if (profile->GetEngagementLevel() > 0.7f)
         {
             TrainDifficultyCurve(player->GetGUID(), playerSkill, currentDifficulty);
         }

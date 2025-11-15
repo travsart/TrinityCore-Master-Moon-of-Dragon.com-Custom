@@ -64,12 +64,12 @@ MarketSnapshot MarketAnalysis::GetMarketSnapshot(uint32 itemId)
             continue;
 
         // Iterate through all auctions using proper TrinityCore API
-        for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+    for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             const AuctionPosting& auction = itr->second;
 
             // Check if this auction contains items with the target itemId
-            for (Item* item : auction.Items)
+    for (Item* item : auction.Items)
             {
                 if (item && item->GetTemplate()->GetId() == itemId)
                 {
@@ -212,7 +212,6 @@ void MarketAnalysis::UpdateMarketData(uint32 itemId, uint32 price, uint32 quanti
     // Create new snapshot if enough time has passed or it's the first entry
     bool createNewSnapshot = history.empty() ||
                             (timestamp - history.back().timestamp > 300000); // 5 minutes
-
     if (createNewSnapshot)
     {
         MarketSnapshot snapshot;
@@ -225,7 +224,7 @@ void MarketAnalysis::UpdateMarketData(uint32 itemId, uint32 price, uint32 quanti
         history.push_back(snapshot);
 
         // Limit history size
-        if (history.size() > 1000)
+    if (history.size() > 1000)
         {
             history.erase(history.begin(), history.begin() + 100);
         }
@@ -257,7 +256,7 @@ void MarketAnalysis::TrackMarketMovement()
     // Update volatility metrics
 }
 
-MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
+MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
 {
     ::std::lock_guard lock(_marketMutex);
 
@@ -268,7 +267,7 @@ MarketAnalysis::MarketMetrics MarketAnalysis::GetMarketMetrics(uint32 itemId)
     return MarketMetrics(); // Return default metrics
 }
 
-MarketAnalysis::MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment segment)
+MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment segment)
 {
     MarketMetrics segmentMetrics;
 
@@ -302,7 +301,7 @@ MarketAnalysis::MarketMetrics MarketAnalysis::GetSegmentMetrics(MarketSegment se
     return segmentMetrics;
 }
 
-MarketAnalysis::PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
+PriceAnalysis MarketAnalysis::AnalyzePrice(uint32 itemId)
 {
     PriceAnalysis analysis;
 
@@ -403,7 +402,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return deviation > ANOMALY_THRESHOLD * analysis.volatility;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
+::std::vector<MarketOpportunity> MarketAnalysis::IdentifyOpportunities(Player* player, uint32 budgetLimit)
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -444,7 +443,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
+::std::vector<MarketOpportunity> MarketAnalysis::FindArbitrageOpportunities()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -454,7 +453,7 @@ bool MarketAnalysis::IsPriceAnomaly(uint32 itemId, uint32 price)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
+::std::vector<MarketOpportunity> MarketAnalysis::FindFlipOpportunities(uint32 maxInvestment)
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -546,12 +545,12 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
             continue;
 
         // Iterate through all auctions using proper TrinityCore API
-        for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
+    for (auto itr = auctionHouse->GetAuctionsBegin(); itr != auctionHouse->GetAuctionsEnd(); ++itr)
         {
             const AuctionPosting& auction = itr->second;
 
             // Check if this auction contains items with the target itemId
-            for (Item* item : auction.Items)
+    for (Item* item : auction.Items)
             {
                 if (item && item->GetTemplate()->GetId() == itemId)
                 {
@@ -583,7 +582,7 @@ MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 ite
             });
 
         // Calculate market share for top sellers
-        for (size_t i = 0; i < ::std::min(size_t(5), analysis.majorSellers.size()); ++i)
+    for (size_t i = 0; i < ::std::min(size_t(5), analysis.majorSellers.size()); ++i)
         {
             uint32 sellerId = analysis.majorSellers[i];
             float marketShare = float(sellerCounts[sellerId]) / float(totalListings);
@@ -697,7 +696,6 @@ void MarketAnalysis::UpdatePredictionAccuracy(uint32 itemId, float predictedPric
 
     float error = ::std::abs(predictedPrice - actualPrice) / actualPrice;
     bool accurate = error < 0.1f; // 10% tolerance
-
     if (accurate)
         _metrics.accuratePredictions++;
 
@@ -1013,7 +1011,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     // This would use machine learning techniques in a full implementation
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForPriceDiscrepancies()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1045,7 +1043,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForTrendBreakouts()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1066,8 +1064,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
         {
             MarketSnapshot current = GetMarketSnapshot(itemId);
             float prediction = GetPricePrediction(itemId, 48); // 48 hours
-
-            if (prediction > current.averagePrice * 1.1f) // 10% upside
+    if (prediction > current.averagePrice * 1.1f) // 10% upside
             {
                 MarketOpportunity opp;
                 opp.itemId = itemId;
@@ -1087,7 +1084,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
     return opportunities;
 }
 
-::std::vector<MarketAnalysis::MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
+::std::vector<MarketOpportunity> MarketAnalysis::ScanForMeanReversion()
 {
     ::std::vector<MarketOpportunity> opportunities;
 
@@ -1109,7 +1106,7 @@ void MarketAnalysis::TrainPredictionModel(uint32 itemId)
         float currentPrice = prices.back();
 
         // Check if current price is more than 2 standard deviations from mean
-        if (::std::abs(currentPrice - mean) > 2.0f * stdDev)
+    if (::std::abs(currentPrice - mean) > 2.0f * stdDev)
         {
             MarketOpportunity opp;
             opp.itemId = itemId;
@@ -1177,7 +1174,7 @@ void MarketAnalysis::UpdateTrendAnalysis()
         auto& metrics = _itemMetrics[itemId];
 
         // Update trend information
-        if (!historyPair.second.empty())
+    if (!historyPair.second.empty())
         {
             ::std::vector<float> prices;
             for (const auto& snapshot : historyPair.second)

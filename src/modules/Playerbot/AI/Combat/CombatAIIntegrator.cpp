@@ -111,7 +111,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
         UpdateCombatPhase(diff);
 
         // Execute phase-specific behavior
-        switch (_currentPhase)
+    switch (_currentPhase)
         {
             case CombatPhase::ENGAGING:
                 HandleEngagingPhase();
@@ -145,7 +145,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
         }
 
         // Update core combat systems
-        if (_config.enableTargeting)
+    if (_config.enableTargeting)
             UpdateTargeting(diff);
 
         if (_config.enablePositioning)
@@ -164,7 +164,7 @@ IntegrationResult CombatAIIntegrator::Update(uint32 diff)
             UpdatePathfinding(diff);
 
         // Update group coordination if enabled
-        if (_config.enableGroupCoordination && _group)
+    if (_config.enableGroupCoordination && _group)
             UpdateGroupCoordination();
 
         result.success = true;
@@ -357,7 +357,7 @@ void CombatAIIntegrator::UpdateCombatPhase(uint32 diff)
 
         case CombatPhase::SUSTAINED:
             // Check for phase transitions
-            if (_currentTarget && _currentTarget->GetHealthPct() < 20.0f)
+    if (_currentTarget && _currentTarget->GetHealthPct() < 20.0f)
             {
                 _currentPhase = CombatPhase::EXECUTE;
                 _phaseStartTime = currentTime;
@@ -390,7 +390,7 @@ void CombatAIIntegrator::UpdateCombatPhase(uint32 diff)
         case CombatPhase::REPOSITIONING:
         case CombatPhase::INTERRUPTING:
             // Return to sustained after specific phase actions
-            if (phaseTime > 2000) // 2 seconds for special phases
+    if (phaseTime > 2000) // 2 seconds for special phases
             {
                 _currentPhase = CombatPhase::SUSTAINED;
                 _phaseStartTime = currentTime;
@@ -421,10 +421,10 @@ void CombatAIIntegrator::UpdatePositioning(uint32 diff)
         Position optimalPos = _positioning->GetOptimalPosition(_currentTarget);
 
         // Check if we need to move
-        if (_bot->GetExactDist2d(&optimalPos) > _config.positionUpdateThreshold)
+    if (_bot->GetExactDist2d(&optimalPos) > _config.positionUpdateThreshold)
         {
             // Use pathfinding to get there
-            if (_pathfinding)
+    if (_pathfinding)
             {
                 auto path = _pathfinding->CalculatePath(
                     _bot->GetPosition(),
@@ -480,7 +480,7 @@ void CombatAIIntegrator::UpdateInterrupts(uint32 diff)
     if (_currentTarget && _interruptCoordinator)
     {
         // Check if target is casting interruptible spell
-        if (_currentTarget->HasUnitState(UNIT_STATE_CASTING))
+    if (_currentTarget->HasUnitState(UNIT_STATE_CASTING))
         {
             if (Spell const* spell = _currentTarget->GetCurrentSpell(CURRENT_GENERIC_SPELL))
             {
@@ -491,7 +491,7 @@ void CombatAIIntegrator::UpdateInterrupts(uint32 diff)
                     if (priority != InterruptPriority::IGNORE)
                     {
                         // Attempt interrupt through coordinator
-                        if (_interruptCoordinator->TryInterrupt(_currentTarget, spellInfo->Id))
+    if (_interruptCoordinator->TryInterrupt(_currentTarget, spellInfo->Id))
                         {
                             _metrics.interruptsAttempted++;
                             _metrics.interruptsSuccessful++;
@@ -566,7 +566,7 @@ void CombatAIIntegrator::UpdateTargeting(uint32 diff)
         _targetSelector->UpdateTargetPriorities();
 
         // Check if we should switch targets
-        if (ShouldSwitchTarget())
+    if (ShouldSwitchTarget())
         {
             Unit* newTarget = _targetSelector->GetBestTarget();
             if (newTarget && newTarget != _currentTarget)
@@ -619,7 +619,7 @@ void CombatAIIntegrator::UpdatePathfinding(uint32 diff)
         _obstacleAvoidance->Update(diff);
 
         // Check for obstacles in path
-        if (_obstacleAvoidance->HasObstaclesAhead())
+    if (_obstacleAvoidance->HasObstaclesAhead())
         {
             Position avoidancePos = _obstacleAvoidance->GetAvoidancePosition();
 

@@ -465,7 +465,7 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     float distSq = bot->GetExactDistSq(target);    if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
     {
         // FIX: Use HasSpell check correctly
-        if (bot->HasSpell(CHARGE))
+    if (bot->HasSpell(CHARGE))
         {
 
             bot->CastSpell(CastSpellTargetArg(target), CHARGE);

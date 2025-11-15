@@ -794,7 +794,7 @@ bool SpellInterruptAction::ShouldSkipLowPriorityInterrupt(BotAI* ai, InterruptCo
     if (context.priority >= 4) // Low priority
     {
         // Check if bot is busy with more important tasks
-        if (ai && ai->IsInCombat())
+    if (ai && ai->IsInCombat())
         {
             // Could check for other high priority actions here
             return false; // For now, don't skip any interrupts in combat

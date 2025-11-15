@@ -54,7 +54,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
             continue;
 
         // Check if quest is eligible
-        if (!IsQuestEligible(questTemplate))
+    if (!IsQuestEligible(questTemplate))
             continue;
         // Calculate priority score
         float priority = CalculateQuestPriority(questTemplate);
@@ -82,7 +82,7 @@ void QuestAcceptanceManager::ProcessQuestGiver(Creature* questGiver)
     for (auto const& [quest, priority] : eligibleQuests)
     {
         // Check if we need to make space
-        if (!HasQuestLogSpace())
+    if (!HasQuestLogSpace())
         {
             if (priority > 50.0f) // Only drop quests for high-priority new quests
             {
@@ -312,7 +312,7 @@ bool QuestAcceptanceManager::HasPrerequisites(Quest const* quest) const
     if (quest->GetNextQuestInChain() != 0)
     {
         // If bot already has the next quest, don't accept breadcrumb
-        if (_bot->GetQuestStatus(quest->GetNextQuestInChain()) != QUEST_STATUS_NONE)
+    if (_bot->GetQuestStatus(quest->GetNextQuestInChain()) != QUEST_STATUS_NONE)
             return false;
     }
 
@@ -465,7 +465,7 @@ float QuestAcceptanceManager::GetItemRewardPriority(Quest const* quest) const
             if (itemTemplate)
             {
                 // Higher quality = higher priority
-                if (itemTemplate->GetQuality() >= ITEM_QUALITY_RARE)
+    if (itemTemplate->GetQuality() >= ITEM_QUALITY_RARE)
                     itemPriority += 10.0f;
                 else if (itemTemplate->GetQuality() >= ITEM_QUALITY_UNCOMMON)
                     itemPriority += 5.0f;

@@ -171,7 +171,6 @@ void SoloCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     // Diagnostic logging (throttled)
     static uint32 updateCounter = 0;
     bool shouldLog = ((++updateCounter % 50) == 0);  // Every 50 calls (~2.5 seconds)
-
     if (shouldLog)
     {
         TC_LOG_DEBUG("module.playerbot.strategy",

@@ -22,6 +22,7 @@
 #include <shared_mutex>
 #include <chrono>
 #include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
+#include "../../Movement/Core/MovementTypes.h"
 
 // Forward declarations
 class Player;
@@ -97,7 +98,7 @@ struct PositionInfo
     ::std::string reason;
     uint32 evaluationTime;
 
-    PositionInfo() : score(0.0f), type(PositionType::MELEE_COMBAT), priority(MovementPriority::IDLE),
+    PositionInfo() : score(0.0f), type(PositionType::MELEE_COMBAT), priority(MovementPriority::PRIORITY_NONE),
                     distanceToTarget(0.0f), safetyRating(0.0f), hasLineOfSight(false),
                     isOptimalRange(false), movementCost(0.0f), evaluationTime(0) {}
 
@@ -147,7 +148,7 @@ struct MovementResult
     bool requiresJump;
     bool requiresSprint;
 
-    MovementResult() : success(false), priority(MovementPriority::IDLE),
+    MovementResult() : success(false), priority(MovementPriority::PRIORITY_NONE),
                       estimatedTime(0.0f), pathDistance(0.0f),
                       requiresJump(false), requiresSprint(false) {}
 };

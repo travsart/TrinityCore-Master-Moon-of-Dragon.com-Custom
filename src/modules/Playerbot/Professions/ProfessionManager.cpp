@@ -108,7 +108,7 @@ void ProfessionManager::LoadRecipeDatabase()
         }
 
         // Extract reagents from SpellReagents DB2
-        for (SpellReagentsEntry const* reagents : sSpellReagentsStore)
+    for (SpellReagentsEntry const* reagents : sSpellReagentsStore)
         {
             if (reagents->SpellID == static_cast<int32>(ability->Spell))
             {
@@ -127,7 +127,7 @@ void ProfessionManager::LoadRecipeDatabase()
         }
 
         // Extract product item from spell effects
-        for (SpellEffectInfo const& effect : spellInfo->GetEffects())
+    for (SpellEffectInfo const& effect : spellInfo->GetEffects())
         {
             if (effect.Effect == SPELL_EFFECT_CREATE_ITEM)
             {
@@ -139,7 +139,7 @@ void ProfessionManager::LoadRecipeDatabase()
         }
 
         // Only add if recipe has a product (is actually a crafting spell)
-        if (recipe.productItemId > 0)
+    if (recipe.productItemId > 0)
         {
             _recipeDatabase[recipe.recipeId] = recipe;
             _professionRecipes[profession].push_back(recipe.recipeId);
@@ -421,7 +421,7 @@ bool ProfessionManager::LearnProfession(::Player* player, ProfessionType profess
         }
 
         // Enforce 2-major profession limit
-        if (majorProfessionCount >= 2)
+    if (majorProfessionCount >= 2)
         {
             TC_LOG_WARN("playerbots", "Player {} already has 2 major professions, cannot learn {}",
                 player->GetName(), skillId);
@@ -573,7 +573,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
         for (ProfessionType pair : beneficialPairs)
         {
             // Check if this pair is in our recommended list
-            if (::std::find(recommended.begin(), recommended.end(), pair) != recommended.end())
+    if (::std::find(recommended.begin(), recommended.end(), pair) != recommended.end())
             {
                 secondProf = pair;
                 TC_LOG_INFO("playerbots", "Player {} selected {} as beneficial pair with {}",
@@ -592,7 +592,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
     if (secondProf == ProfessionType::NONE && recommended.size() > 1)
     {
         // Try to find a beneficial pair in remaining recommendations
-        for (size_t i = 1; i < recommended.size(); ++i)
+    for (size_t i = 1; i < recommended.size(); ++i)
         {
             if (IsBeneficialPair(firstProf, recommended[i]))
             {
@@ -602,7 +602,7 @@ void ProfessionManager::AutoLearnProfessionsForClass(::Player* player)
         }
 
         // If no beneficial pair, just take the second recommendation
-        if (secondProf == ProfessionType::NONE)
+    if (secondProf == ProfessionType::NONE)
             secondProf = recommended[1];
     }
 
@@ -1055,7 +1055,7 @@ void ProfessionManager::ProcessCraftingQueue(::Player* player, uint32 diff)
             task.recipeId, task.quantity);
 
         // Remove if finished
-        if (task.quantity == 0)
+    if (task.quantity == 0)
             it->second.erase(it->second.begin());
     }
 }

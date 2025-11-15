@@ -53,7 +53,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
     if (!options.skipValidation)
     {
         // Step 1: Validate player object
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidatePlayer(caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -66,7 +66,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 2: Validate spell ID
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateSpellId(spellId, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -90,7 +90,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 3: Validate spell is learned
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateSpellLearned(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -103,7 +103,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 4: Validate cooldown
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateCooldown(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -116,7 +116,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 5: Validate resources (mana, rage, energy, runes, etc.)
-        if (!options.skipResourceCheck)
+    if (!options.skipResourceCheck)
         {
             result.result = ValidateResources(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -129,7 +129,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 6: Validate caster state (alive, not stunned, not silenced, etc.)
-        if (!options.skipStateCheck)
+    if (!options.skipStateCheck)
         {
             result.result = ValidateCasterState(spellInfo, caster, options);
             if (result.result != ValidationResult::SUCCESS)
@@ -142,7 +142,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 7: Validate GCD/casting state
-        if (!options.skipGcdCheck)
+    if (!options.skipGcdCheck)
         {
             result.result = ValidateGlobalCooldown(caster, spellInfo, options);
             if (result.result != ValidationResult::SUCCESS)
@@ -155,7 +155,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 8: Validate target (if target provided)
-        if (!options.skipTargetCheck && target)
+    if (!options.skipTargetCheck && target)
         {
             result.result = ValidateTarget(spellInfo, caster, target, options);
             if (result.result != ValidationResult::SUCCESS)
@@ -205,7 +205,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
     if (!options.skipValidation)
     {
         // Step 1: Validate player object
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidatePlayer(caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -218,7 +218,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 2: Validate spell ID
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateSpellId(spellId, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -242,7 +242,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 3: Validate spell is learned
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateSpellLearned(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -255,7 +255,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 4: Validate cooldown
-        if (!options.skipSpellCheck)
+    if (!options.skipSpellCheck)
         {
             result.result = ValidateCooldown(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -268,7 +268,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 5: Validate resources (mana, rage, energy, runes, etc.)
-        if (!options.skipResourceCheck)
+    if (!options.skipResourceCheck)
         {
             result.result = ValidateResources(spellInfo, caster);
             if (result.result != ValidationResult::SUCCESS)
@@ -281,7 +281,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 6: Validate caster state (alive, not stunned, not silenced, etc.)
-        if (!options.skipStateCheck)
+    if (!options.skipStateCheck)
         {
             result.result = ValidateCasterState(spellInfo, caster, options);
             if (result.result != ValidationResult::SUCCESS)
@@ -294,7 +294,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 7: Validate GCD/casting state
-        if (!options.skipGcdCheck)
+    if (!options.skipGcdCheck)
         {
             result.result = ValidateGlobalCooldown(caster, spellInfo, options);
             if (result.result != ValidationResult::SUCCESS)
@@ -307,10 +307,10 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
         }
 
         // Step 8: Validate GameObject target (if provided)
-        if (!options.skipTargetCheck && goTarget)
+    if (!options.skipTargetCheck && goTarget)
         {
             // Basic GameObject validation
-            if (!goTarget->IsInWorld())
+    if (!goTarget->IsInWorld())
             {
                 result.result = ValidationResult::INVALID_TARGET;
                 result.failureReason = fmt::format("GameObject {} (entry {}) not in world",
@@ -321,7 +321,7 @@ SpellPacketBuilder::BuildResult SpellPacketBuilder::BuildCastSpellPacket(
             }
 
             // Validate range (if range check enabled)
-            if (!options.skipRangeCheck)
+    if (!options.skipRangeCheck)
             {
                 float distance = caster->GetDistance(goTarget);
                 float maxRange = spellInfo->GetMaxRange();
@@ -791,7 +791,7 @@ SpellPacketBuilder::ValidationResult SpellPacketBuilder::ValidateTarget(
     if (!target)
     {
         // Check if spell requires a target
-        if (spellInfo->NeedsExplicitUnitTarget())
+    if (spellInfo->NeedsExplicitUnitTarget())
             return ValidationResult::INVALID_TARGET;
         return ValidationResult::SUCCESS;
     }
