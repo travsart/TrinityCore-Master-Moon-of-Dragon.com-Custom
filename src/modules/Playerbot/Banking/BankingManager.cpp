@@ -34,7 +34,7 @@ BankingManager* BankingManager::instance()
 }
 
 BankingManager::BankingManager()
-    : BehaviorManager("BankingManager")
+    : BehaviorManager(nullptr, nullptr, 300000, "BankingManager")  // 5 min interval, no per-bot instance
 {
 }
 
@@ -42,7 +42,7 @@ BankingManager::BankingManager()
 // LIFECYCLE (BehaviorManager override)
 // ============================================================================
 
-void BankingManager::OnInitialize()
+bool BankingManager::OnInitialize()
 {
     ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
@@ -52,103 +52,17 @@ void BankingManager::OnInitialize()
     LoadBankingRules();
 
     TC_LOG_INFO("playerbot", "BankingManager::OnInitialize - Personal banking system initialized");
+    return true;
 }
 
-void BankingManager::OnUpdate(::Player* player, uint32 diff)
+void BankingManager::OnUpdate(uint32 elapsed)
 {
-    if (!player)
-        return;
+    // Note: BankingManager is a singleton managing all bots
+    // This method is called via BehaviorManager's throttled update system
+    // Individual bot updates happen via the instance's internal tracking
 
-    uint32 playerGuid = player->GetGUID().GetCounter();
-
-    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
-
-    // Check if enabled
-    auto profileItr = _bankingProfiles.find(playerGuid);
-    if (profileItr == _bankingProfiles.end())
-        return;
-
-    BotBankingProfile const& profile = profileItr->second;
-
-    // Throttle updates
-    uint32 now = GameTime::GetGameTimeMS();
-    auto lastAccessItr = _lastBankAccessTimes.find(playerGuid);
-    if (lastAccessItr != _lastBankAccessTimes.end())
-    {
-        if (now - lastAccessItr->second < profile.bankCheckInterval)
-            return;
-    }
-
-    // Check if already banking
-    if (_currentlyBanking.find(playerGuid) != _currentlyBanking.end())
-        return;
-
-    // Check if near banker
-    if (!IsNearBanker(player))
-    {
-        // Check if we should travel to banker
-        bool needsBank = false;
-
-        if (profile.autoDepositGold && ShouldDepositGold(player))
-            needsBank = true;
-
-        if (profile.autoDepositMaterials)
-        {
-            // Check if inventory is getting full
-            uint32 freeSlots = player->GetBagsFreeSlots();
-            if (freeSlots < 10)
-                needsBank = true;
-        }
-
-        if (needsBank && profile.travelToBankerWhenNeeded)
-        {
-            TravelToNearestBanker(player);
-        }
-
-        return;
-    }
-
-    // Perform banking operations
-    _currentlyBanking.insert(playerGuid);
-    _lastBankAccessTimes[playerGuid] = now;
-
-    uint32 startTime = GameTime::GetGameTimeMS();
-
-    // Gold management
-    if (profile.autoDepositGold && ShouldDepositGold(player))
-    {
-        uint32 depositAmount = GetRecommendedGoldDeposit(player);
-        if (depositAmount > 0)
-            DepositGold(player, depositAmount);
-    }
-
-    if (profile.autoDepositGold && ShouldWithdrawGold(player))
-    {
-        uint32 withdrawAmount = profile.minGoldInInventory - player->GetMoney();
-        if (withdrawAmount > 0)
-            WithdrawGold(player, withdrawAmount);
-    }
-
-    // Item management
-    if (profile.autoDepositMaterials)
-    {
-        DepositExcessItems(player);
-    }
-
-    if (profile.autoWithdrawForCrafting)
-    {
-        WithdrawMaterialsForCrafting(player);
-    }
-
-    uint32 endTime = GameTime::GetGameTimeMS();
-    uint32 duration = endTime - startTime;
-
-    _playerStatistics[playerGuid].timeSpentBanking += duration;
-    _globalStatistics.timeSpentBanking += duration;
-    _playerStatistics[playerGuid].bankTrips++;
-    _globalStatistics.bankTrips++;
-
-    _currentlyBanking.erase(playerGuid);
+    // For now, this is a no-op as per-bot updates are triggered externally
+    // TODO: Implement background maintenance tasks if needed
 }
 
 void BankingManager::OnShutdown()
