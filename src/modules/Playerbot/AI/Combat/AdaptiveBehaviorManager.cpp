@@ -1082,9 +1082,9 @@ void AdaptiveBehaviorManager::ResetStrategies()
 // DECISION FUSION INTEGRATION
 // ============================================================================
 
-bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, bot::ai::CombatContext context) const
+::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, ::bot::ai::CombatContext context) const
 {
-    using namespace bot::ai;
+    using namespace ::bot::ai;
     using ::Playerbot::BotRole;  // Disambiguate from bot::ai::BotRole
 
     DecisionVote vote;
