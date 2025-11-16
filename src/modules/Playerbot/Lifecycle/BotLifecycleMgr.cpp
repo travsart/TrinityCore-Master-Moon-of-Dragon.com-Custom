@@ -807,11 +807,11 @@ void BotLifecycleMgr::LogPerformanceReport()
     LIFECYCLE_LOG_INFO("Failed Spawns:          {}", _statistics.failedSpawns);
     LIFECYCLE_LOG_INFO("Scheduled Logins:       {}", _statistics.scheduledLogins);
     LIFECYCLE_LOG_INFO("Scheduled Logouts:      {}", _statistics.scheduledLogouts);
-    LIFECYCLE_LOG_INFO("Active Bots:            {}", _metrics.activeBots.load());
-    LIFECYCLE_LOG_INFO("Scheduled Bots:         {}", _metrics.scheduledBots.load());
-    LIFECYCLE_LOG_INFO("Events/Second:          {}", _metrics.eventsProcessedPerSecond.load());
-    LIFECYCLE_LOG_INFO("Avg Processing Time:    {}ms", _metrics.averageEventProcessingTimeMs.load());
-    LIFECYCLE_LOG_INFO("Memory Usage:           {}MB", _metrics.memoryUsageMB.load());
+    LIFECYCLE_LOG_INFO("Active Bots: {}", _metrics.activeBots.load());
+    LIFECYCLE_LOG_INFO("Scheduled Bots: {}", _metrics.scheduledBots.load());
+    LIFECYCLE_LOG_INFO("Events/Second: {}", _metrics.eventsProcessedPerSecond.load());
+    LIFECYCLE_LOG_INFO("Avg Processing Time: {}ms", _metrics.averageEventProcessingTimeMs.load());
+    LIFECYCLE_LOG_INFO("Memory Usage: {}MB", _metrics.memoryUsageMB.load());
     LIFECYCLE_LOG_INFO("Consecutive Errors:     {}", _consecutiveErrors.load());
     LIFECYCLE_LOG_INFO("Health Check Failures:  {}", _healthCheckFailures.load());
     LIFECYCLE_LOG_INFO("System Status:          {}", IsHealthy() ? "Healthy" : "Unhealthy");

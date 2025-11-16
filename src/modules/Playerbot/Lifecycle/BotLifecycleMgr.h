@@ -209,3 +209,6 @@ private:
 
 #define LIFECYCLE_LOG_DEBUG(message, ...) \
     TC_LOG_DEBUG("playerbots.lifecycle", "[BotLifecycleMgr] " message, ##__VA_ARGS__)
+
+#define LIFECYCLE_LOG_TRACE(message, ...) \
+    TC_LOG_TRACE("playerbots.lifecycle", "[BotLifecycleMgr] " message, ##__VA_ARGS__)
