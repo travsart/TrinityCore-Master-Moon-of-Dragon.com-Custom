@@ -58,10 +58,11 @@ void BotSpawnEventBus::Shutdown()
 
     // Log final stats
     auto const& stats = GetStats();
+    float avgProcessingTime = stats.GetAverageProcessingTimeUs();
     TC_LOG_INFO("module.playerbot.events",
-        "Final Event Statistics - Published: {}, Processed: {}, Dropped: {}, Avg Processing: {:.2f}μs",
+        "Final Event Statistics - Published: {}, Processed: {}, Dropped: {}, Avg Processing: {}μs",
         stats.eventsPublished.load(), stats.eventsProcessed.load(),
-        stats.eventsDropped.load(), stats.GetAverageProcessingTimeUs());
+        stats.eventsDropped.load(), avgProcessingTime);
 
     // Clear subscriptions
     {
