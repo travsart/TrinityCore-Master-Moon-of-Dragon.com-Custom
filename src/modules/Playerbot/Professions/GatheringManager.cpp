@@ -240,7 +240,7 @@ bool GatheringManager::CastGatheringSpell(GatheringNode const& node)
         if (!creature)
             return false;
 
-        GetBot()->CastSpell(spellId, false, creature);
+        GetBot()->CastSpell(creature, spellId);
     }
     else
     {
@@ -277,7 +277,7 @@ bool GatheringManager::SkinCreature(Creature* creature)
         return false;
 
     // Cast skinning spell on the creature
-    GetBot()->CastSpell(SPELL_SKINNING, false, creature);
+    GetBot()->CastSpell(creature, SPELL_SKINNING);
 
     // Record statistics
     _statistics.nodesGathered++;

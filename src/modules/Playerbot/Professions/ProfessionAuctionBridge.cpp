@@ -798,8 +798,8 @@ bool ProfessionAuctionBridge::CanAccessAuctionHouse(::Player* player) const
     // 1. Player must be in a city (safe zone)
     // 2. Or have recently interacted with auction house
 
-    // Check if player is in a rest area (cities have rest areas)
-    if (player->GetRestMgr().HasRestFlag(REST_FLAG_IN_CITY))
+    // Check if player is in a rest area (cities have rest areas with XP bonus)
+    if (player->GetRestBonus() > 0)
     {
         TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} has access (in city)",
             player->GetName());

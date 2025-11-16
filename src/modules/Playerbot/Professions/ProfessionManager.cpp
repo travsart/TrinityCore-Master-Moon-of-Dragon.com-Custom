@@ -1201,7 +1201,7 @@ ProfessionAutomationProfile ProfessionManager::GetAutomationProfile(uint32 playe
 // METRICS
 // ============================================================================
 
-ProfessionManager::ProfessionMetrics const& ProfessionManager::GetPlayerMetrics(uint32 playerGuid) const
+ProfessionMetrics const& ProfessionManager::GetPlayerMetrics(uint32 playerGuid) const
 {
     // No lock needed - profession data is per-bot instance data
     auto it = _playerMetrics.find(playerGuid);
@@ -1213,7 +1213,7 @@ ProfessionManager::ProfessionMetrics const& ProfessionManager::GetPlayerMetrics(
     return defaultMetrics;
 }
 
-ProfessionManager::ProfessionMetrics const& ProfessionManager::GetGlobalMetrics() const
+ProfessionMetrics const& ProfessionManager::GetGlobalMetrics() const
 {
     return _globalMetrics;
 }
