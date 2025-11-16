@@ -924,7 +924,7 @@ bool QuestValidation::ValidateQuestDifficulty(uint32 questId, Player* bot)
 
 // ========== Validation Caching and Optimization ==========
 
-QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
+ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
 {
     ::std::lock_guard lock(_cacheMutex);
 
@@ -982,7 +982,7 @@ void QuestValidation::CleanupExpiredCache()
 
 // ========== Batch Validation ==========
 
-::std::unordered_map<uint32, QuestValidation::ValidationResult> QuestValidation::ValidateMultipleQuests(
+::std::unordered_map<uint32, ValidationResult> QuestValidation::ValidateMultipleQuests(
     const ::std::vector<uint32>& questIds, Player* bot)
 {
     ::std::unordered_map<uint32, ValidationResult> results;

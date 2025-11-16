@@ -263,7 +263,7 @@ private:
     ::std::unordered_map<ObjectGuid, uint32> _shadowWordPainTargets; // GUID -> expiration time
 };
 
-class ShadowPriestRefactored : public RangedDpsSpecialization<ManaResource>, public PriestSpecialization
+class ShadowPriestRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     using Base = RangedDpsSpecialization<ManaResource>;
@@ -271,8 +271,8 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit ShadowPriestRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
-        , PriestSpecialization(bot)
+    explicit ShadowPriestRefactored(Player* bot)
+        : RangedDpsSpecialization<ManaResource>(bot)
         , _insanityTracker()
         , _voidformTracker()
         , _dotTracker()

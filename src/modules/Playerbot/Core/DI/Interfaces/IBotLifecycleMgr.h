@@ -36,6 +36,8 @@ struct LifecycleEventInfo
     uint32 accountId;
     ::std::string data;
     ::std::chrono::system_clock::time_point timestamp;
+    uint32 processingTimeMs;
+    uint32 correlationId;
 
     // Static enum accessors for compatibility
     static constexpr LifecycleEventType SCHEDULER_LOGIN = LifecycleEventType::SCHEDULER_LOGIN;
@@ -48,13 +50,13 @@ struct LifecycleEventInfo
 
     // Constructor
     LifecycleEventInfo()
-        : eventType(LifecycleEventType::SCHEDULER_LOGIN), accountId(0)
+        : eventType(LifecycleEventType::SCHEDULER_LOGIN), accountId(0), processingTimeMs(0), correlationId(0)
     {
         timestamp = ::std::chrono::system_clock::now();
     }
 
     LifecycleEventInfo(LifecycleEventType type, ObjectGuid guid, uint32 acc = 0, ::std::string const& d = "")
-        : eventType(type), botGuid(guid), accountId(acc), data(d)
+        : eventType(type), botGuid(guid), accountId(acc), data(d), processingTimeMs(0), correlationId(0)
     {
         timestamp = ::std::chrono::system_clock::now();
     }

@@ -12,6 +12,8 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Position.h"
+#include "../../Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
+#include "../../Movement/Core/MovementTypes.h"
 #include <vector>
 #include <array>
 #include <atomic>
@@ -25,28 +27,8 @@ class Map;
 
 namespace Playerbot
 {
-
-// Formation types for group positioning
-enum class FormationType : uint8
-{
-    NONE        = 0,
-    LINE        = 1,  // Single line formation
-    WEDGE       = 2,  // V-shaped formation
-    CIRCLE      = 3,  // Circular formation around target
-    SPREAD      = 4,  // Maximum spread formation
-    STACK       = 5,  // Tight stacking formation
-    CUSTOM      = 6   // Custom positioning per bot
-};
-
-// Movement priority for path optimization
-enum class MovementPriority : uint8
-{
-    IDLE        = 0,  // No movement needed
-    LOW         = 1,  // Position adjustment
-    NORMAL      = 2,  // Standard combat movement
-    HIGH        = 3,  // Important positioning (avoid AoE)
-    CRITICAL    = 4   // Emergency movement (life-threatening)
-};
+    // FormationType defined in IUnifiedMovementCoordinator.h
+    // MovementPriority defined in Movement/Core/MovementTypes.h
 
 // Spatial grid cell for efficient position tracking
 struct GridCell
