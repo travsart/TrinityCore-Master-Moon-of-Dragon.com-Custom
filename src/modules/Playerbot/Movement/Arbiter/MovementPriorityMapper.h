@@ -85,6 +85,7 @@ enum class PlayerBotMovementPriority : uint8
     // ========================================================================
     COMBAT_MOVEMENT_STRATEGY = 130,     // Generic combat movement
     PVP_TACTICAL = 120,                 // PvP tactical positioning
+    TACTICAL_POSITIONING = 115,         // General tactical combat positioning
     DUNGEON_POSITIONING = 110,          // Dungeon pull positioning
     GROUP_COORDINATION = 100,           // Coordinated group movement
 

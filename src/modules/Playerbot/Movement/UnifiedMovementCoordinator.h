@@ -259,6 +259,9 @@ private:
         uint32 GetPendingRequestCount() const;
         bool HasPendingRequests() const;
 
+        // Metrics accessors
+        uint64 GetRequestsProcessed() const { return _requestsProcessed.load(); }
+
     private:
         ::std::unique_ptr<MovementArbiter> _arbiter;
         ::std::atomic<uint64> _requestsProcessed{0};
@@ -292,6 +295,9 @@ private:
         void ResetStatistics();
         bool IsWalkablePosition(Map* map, Position const& position) const;
         bool GetNearestWalkablePosition(Map* map, Position const& position, Position& walkable, float searchRange) const;
+
+        // Metrics accessors
+        uint64 GetPathsCalculated() const { return _pathsCalculated.load(); }
 
     private:
         ::std::unique_ptr<PathfindingAdapter> _adapter;
@@ -366,6 +372,9 @@ private:
         bool IsEmergencyScatterActive() const;
         void HandleEmergencyRegroup(Position const& rallyPoint);
 
+        // Metrics accessors
+        uint64 GetFormationsExecuted() const { return _formationsExecuted.load(); }
+
     private:
         ::std::unique_ptr<FormationManager> _manager;
         ::std::atomic<uint64> _formationsExecuted{0};
@@ -381,7 +390,7 @@ private:
 
         // Delegates to PositionManager instance
         MovementResult UpdatePosition(MovementContext const& context);
-        MovementResult FindOptimalPosition(MovementContext const& context);
+        PositionMovementResult FindOptimalPosition(MovementContext const& context);
         MovementResult ExecuteMovement(Position const& targetPos, MovementPriority priority);
         PositionInfo EvaluatePosition(Position const& pos, MovementContext const& context);
         ::std::vector<PositionInfo> EvaluatePositions(::std::vector<Position> const& positions, MovementContext const& context);
@@ -426,6 +435,9 @@ private:
         void RecordPositionSuccess(Position const& pos, PositionType type);
         void RecordPositionFailure(Position const& pos, ::std::string const& reason);
         float GetPositionSuccessRate(Position const& pos, float radius);
+
+        // Metrics accessors
+        uint64 GetPositionsEvaluated() const { return _positionsEvaluated.load(); }
 
     private:
         ::std::unique_ptr<PositionManager> _manager;
