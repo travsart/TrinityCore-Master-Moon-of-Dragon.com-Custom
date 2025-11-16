@@ -344,7 +344,7 @@ public:
                     return BTStatus::INVALID;
 
                 bot->StopMoving();
-                bot->GetMotionMaster()->Clear(false);
+                bot->GetMotionMaster()->Clear();
                 bot->GetMotionMaster()->MoveIdle();
 
                 return BTStatus::SUCCESS;
