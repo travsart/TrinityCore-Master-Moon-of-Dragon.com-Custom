@@ -305,7 +305,7 @@ bool BankingManager::DepositItem(::Player* player, uint32 itemGuid, uint32 quant
     if (!player)
         return false;
 
-    Item* item = player->GetItemByGuid(ObjectGuid(HighGuid::Item, 0, itemGuid));
+    Item* item = player->GetItemByGuid(ObjectGuid::Create<HighGuid::Item>(itemGuid));
     if (!item)
         return false;
 
@@ -466,7 +466,11 @@ void BankingManager::WithdrawMaterialsForCrafting(::Player* player)
     for (const WithdrawRequest& request : requests)
     {
         // Check if player has inventory space
-        uint32 freeSlots = player->GetBagsFreeSlots();
+        // Count free inventory slots manually
+        uint32 freeSlots = 0;
+        for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                ++freeSlots;
         if (freeSlots == 0)
             break;
 
@@ -550,8 +554,8 @@ bool BankingManager::IsNearBanker(::Player* player)
         return false;
 
     // Check if player is in a city with banker access
-    // Simplified: Check if in rest area
-    if (player->HasRestFlag(REST_FLAG_IN_CITY))
+    // Simplified: Check if in rest area (resting gives XP bonus in cities)
+    if (player->GetRestBonus() > 0)
         return true;
 
     // Check proximity to banker NPCs
