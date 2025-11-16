@@ -23,6 +23,7 @@
 #include "ObjectAccessor.h"
 #include "Map.h"
 #include "Spatial/SpatialGridManager.h"
+#include "GameTime.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -579,6 +580,9 @@ namespace Playerbot
     if (!m_bot->IsWithinLOSInMap(target))
             return false;
 
+        // Calculate actual distance for range checks
+        float dist = m_bot->GetExactDist(target);
+
         // For ranged classes, check if we're in range
     if (m_preferRanged)
         {
@@ -594,40 +598,6 @@ namespace Playerbot
 
         // Can we get there?
         return dist <= 40.0f;  // Reasonable chase distance
-    }
-    uint8 TargetScanner::GetTargetPriority(Unit* target) const
-    {
-        if (!target)
-            return PRIORITY_AVOID;
-
-        // Highest priority: attacking us or group
-    if (IsAttackingGroup(target))
-            return PRIORITY_CRITICAL;
-
-        // High priority: casters and healers
-    if (IsCaster(target) || IsHealer(target))
-            return PRIORITY_CASTER;
-
-        // Check creature rank
-    if (target->GetTypeId() == TYPEID_UNIT)
-        {
-            Creature* creature = target->ToCreature();
-            // Elite mobs
-    if (creature->IsElite() || creature->IsDungeonBoss())
-                return PRIORITY_ELITE;
-
-            // Check level difference
-            int32 levelDiff = int32(target->GetLevel()) - int32(m_bot->GetLevel());
-            // Grey mobs (trivial)
-    if (levelDiff < -7)
-                return PRIORITY_TRIVIAL;
-
-            // Red mobs (dangerous)
-    if (levelDiff > 3)
-                return PRIORITY_AVOID;
-        }
-
-        return PRIORITY_NORMAL;
     }
 
     float TargetScanner::GetThreatValue(Unit* target) const
