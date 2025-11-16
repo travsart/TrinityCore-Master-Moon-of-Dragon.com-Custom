@@ -394,11 +394,6 @@ public:
 
                 // Not a command - dispatch as GROUP_CHAT event
                 BotEvent event(EventType::GROUP_CHAT,
-                              if (!player)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                                  return nullptr;
-                              }
                               player->GetGUID(),
                               member->GetGUID());
                 event.data = msg;
