@@ -65,39 +65,18 @@ void MonkAI::UpdateRotation(::Unit* target)
         if (interruptTarget && CanUseAbility(SPEAR_HAND_STRIKE))
         {
             // Spear Hand Strike is melee range interrupt
-    if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
-        // ORPHANED CODE REMOVED: Standalone null check
-        // ORPHANED NULL CHECK REMOVED
-        // ORPHANED CODE REMOVED: Duplicate interruptTarget check
-        // if (!interruptTarget) { return; }
-
-        // ORPHANED CODE COMMENTED OUT:
-        // {
-        //     if (CastSpell(SPEAR_HAND_STRIKE, interruptTarget))
-        //     {
-        //         RecordInterruptAttempt(interruptTarget, SPEAR_HAND_STRIKE, true);
-        //         TC_LOG_DEBUG("module.playerbot.ai", "Monk {} interrupted {} with Spear Hand Strike",
-        //                      GetBot()->GetName(), interruptTarget->GetName());
-        //         return;
-        //     }
-        // }
-
-        // ORPHANED CODE REMOVED: Paralysis block
-        // Paralysis as ranged interrupt for casters (if talented)
-        // if (interruptTarget && CanUseAbility(PARALYSIS))
-        // {
-        //     if (GetBot()->GetDistance(interruptTarget) <= 20.0f)
-        //     if (!interruptTarget) { return; }
-        //     {
-        //         if (CastSpell(PARALYSIS, interruptTarget))
-        //         {
-        //             RecordInterruptAttempt(interruptTarget, PARALYSIS, true);
-        //             TC_LOG_DEBUG("module.playerbot.ai", "Monk {} paralyzed {} to interrupt",
-        //                          GetBot()->GetName(), interruptTarget->GetName());
-        //             return;
-        //         }
-        //     }
-        // }
+            if (GetBot()->GetDistance(interruptTarget) <= OPTIMAL_KICK_RANGE)
+            {
+                if (CastSpell(SPEAR_HAND_STRIKE, interruptTarget))
+                {
+                    RecordInterruptAttempt(interruptTarget, SPEAR_HAND_STRIKE, true);
+                    TC_LOG_DEBUG("module.playerbot.ai", "Monk {} interrupted {} with Spear Hand Strike",
+                                 GetBot()->GetName(), interruptTarget->GetName());
+                    return;
+                }
+            }
+        }
+        // ORPHANED CODE REMOVED: Paralysis interrupt (incomplete implementation)
     }
 
     // Priority 2: Handle defensive abilities based on spec
