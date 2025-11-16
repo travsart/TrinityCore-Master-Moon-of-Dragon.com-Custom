@@ -106,8 +106,8 @@ struct PopulationChangedEvent : public BotSpawnEvent
         : BotSpawnEvent(BotSpawnEventType::POPULATION_CHANGED), zoneId(zone), oldBotCount(oldCount), newBotCount(newCount) {}
 };
 
-// Event statistics for performance monitoring
-struct EventStats
+// Internal statistics with atomic members for thread-safe tracking
+struct InternalEventStats
 {
     ::std::atomic<uint64> eventsPublished{0};
     ::std::atomic<uint64> eventsProcessed{0};
@@ -116,9 +116,9 @@ struct EventStats
     ::std::atomic<uint32> queuedEvents{0};
 
     // Delete copy constructor and assignment operator for atomic members
-    EventStats() = default;
-    EventStats(EventStats const&) = delete;
-    EventStats& operator=(EventStats const&) = delete;
+    InternalEventStats() = default;
+    InternalEventStats(InternalEventStats const&) = delete;
+    InternalEventStats& operator=(InternalEventStats const&) = delete;
 
     float GetAverageProcessingTimeUs() const {
         uint64 processed = eventsProcessed.load();
@@ -185,7 +185,7 @@ public:
     void ProcessEventsOfType(BotSpawnEventType eventType) override;
 
     // === PERFORMANCE AND MONITORING ===
-    EventStats const& GetStats() const override { return _stats; }
+    IBotSpawnEventBus::EventStats const& GetStats() const override;
     void ResetStats() override;
 
     // === CONFIGURATION ===
@@ -229,7 +229,8 @@ private:
     bool ShouldDropEvent(::std::shared_ptr<BotSpawnEvent> event) const;
 
     // Performance tracking
-    mutable EventStats _stats;
+    mutable InternalEventStats _stats;
+    mutable IBotSpawnEventBus::EventStats _statsSnapshot;
     void RecordEventProcessing(uint64 processingTimeUs);
 
     // Configuration

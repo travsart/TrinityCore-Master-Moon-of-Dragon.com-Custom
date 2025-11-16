@@ -61,8 +61,8 @@ void BotSpawnEventBus::Shutdown()
     float avgProcessingTime = stats.GetAverageProcessingTimeUs();
     TC_LOG_INFO("module.playerbot.events",
         "Final Event Statistics - Published: {}, Processed: {}, Dropped: {}, Avg Processing: {}μs",
-        stats.eventsPublished.load(), stats.eventsProcessed.load(),
-        stats.eventsDropped.load(), avgProcessingTime);
+        stats.eventsPublished, stats.eventsProcessed,
+        stats.eventsDropped, avgProcessingTime);
 
     // Clear subscriptions
     {
@@ -388,6 +388,18 @@ bool BotSpawnEventBus::ShouldDropEvent(::std::shared_ptr<BotSpawnEvent> event) c
 void BotSpawnEventBus::RecordEventProcessing(uint64 processingTimeUs)
 {
     _stats.totalProcessingTimeUs.fetch_add(processingTimeUs);
+}
+
+IBotSpawnEventBus::EventStats const& BotSpawnEventBus::GetStats() const
+{
+    // Update snapshot from atomic internal stats
+    _statsSnapshot.eventsPublished = _stats.eventsPublished.load();
+    _statsSnapshot.eventsProcessed = _stats.eventsProcessed.load();
+    _statsSnapshot.eventsDropped = _stats.eventsDropped.load();
+    _statsSnapshot.totalProcessingTimeUs = _stats.totalProcessingTimeUs.load();
+    _statsSnapshot.queuedEvents = _stats.queuedEvents.load();
+
+    return _statsSnapshot;
 }
 
 void BotSpawnEventBus::ResetStats()
