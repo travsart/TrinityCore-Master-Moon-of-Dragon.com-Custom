@@ -99,7 +99,6 @@ void MonkAI::UpdateRotation(::Unit* target)
         //     }
         // }
     }
-    }
 
     // Priority 2: Handle defensive abilities based on spec
     if (behaviors && behaviors->NeedsDefensive())
@@ -134,7 +133,7 @@ void MonkAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(SPINNING_CRANE_KICK, GetBot()->GetVictim()))
                 {
-                    ConsumeChiForAbility(SPINNING_CRANE_KICK);
+                    ConsumeChiForAbility(SPINNING_CRANE_KICK, 2);
                     RecordAbilityUsage(SPINNING_CRANE_KICK);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} using Spinning Crane Kick for AoE",
                                  GetBot()->GetName());
@@ -150,7 +149,7 @@ void MonkAI::UpdateRotation(::Unit* target)
             {
                 if (CastSpell(RUSHING_JADE_WIND, GetBot()->GetVictim()))
                 {
-                    ConsumeChiForAbility(RUSHING_JADE_WIND);
+                    ConsumeChiForAbility(RUSHING_JADE_WIND, 1);
                     RecordAbilityUsage(RUSHING_JADE_WIND);
                     TC_LOG_DEBUG("module.playerbot.ai", "Monk {} activated Rushing Jade Wind",
                                  GetBot()->GetName());
@@ -941,7 +940,7 @@ void MonkAI::ManageResourceGeneration(::Unit* target)
         {
             if (CastSpell(EXPEL_HARM, GetBot()))
             {
-                ConsumeEnergyForAbility(EXPEL_HARM);
+                ConsumeEnergyForAbility(EXPEL_HARM, 15);
                 GenerateChi(1);
                 RecordAbilityUsage(EXPEL_HARM);
                 return;
@@ -1271,7 +1270,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
     {
         if (CastSpell(BREATH_OF_FIRE, GetBot()->GetVictim()))
         {
-            ConsumeChiForAbility(BREATH_OF_FIRE);
+            ConsumeChiForAbility(BREATH_OF_FIRE, 1);
             RecordAbilityUsage(BREATH_OF_FIRE);
             return;
         }
@@ -1307,7 +1306,7 @@ void MonkAI::ExecuteBrewmasterRotation(::Unit* target)
         {
             if (CastSpell(RUSHING_JADE_WIND, GetBot()->GetVictim()))
             {
-                ConsumeChiForAbility(RUSHING_JADE_WIND);
+                ConsumeChiForAbility(RUSHING_JADE_WIND, 1);
                 RecordAbilityUsage(RUSHING_JADE_WIND);
                 return;
             }
