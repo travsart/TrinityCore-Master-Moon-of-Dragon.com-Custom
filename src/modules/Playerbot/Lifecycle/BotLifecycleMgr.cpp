@@ -807,11 +807,19 @@ void BotLifecycleMgr::LogPerformanceReport()
     LIFECYCLE_LOG_INFO("Failed Spawns:          {}", _statistics.failedSpawns);
     LIFECYCLE_LOG_INFO("Scheduled Logins:       {}", _statistics.scheduledLogins);
     LIFECYCLE_LOG_INFO("Scheduled Logouts:      {}", _statistics.scheduledLogouts);
-    LIFECYCLE_LOG_INFO("Active Bots: {}", _metrics.activeBots.load());
-    LIFECYCLE_LOG_INFO("Scheduled Bots: {}", _metrics.scheduledBots.load());
-    LIFECYCLE_LOG_INFO("Events/Second: {}", _metrics.eventsProcessedPerSecond.load());
-    LIFECYCLE_LOG_INFO("Avg Processing Time: {}ms", _metrics.averageEventProcessingTimeMs.load());
-    LIFECYCLE_LOG_INFO("Memory Usage: {}MB", _metrics.memoryUsageMB.load());
+
+    // Load atomics before passing to logging to avoid immediate function issues
+    uint32 activeBots = _metrics.activeBots.load();
+    uint32 scheduledBots = _metrics.scheduledBots.load();
+    uint32 eventsPerSec = _metrics.eventsProcessedPerSecond.load();
+    uint32 avgProcessingTime = _metrics.averageEventProcessingTimeMs.load();
+    uint32 memoryUsage = _metrics.memoryUsageMB.load();
+
+    LIFECYCLE_LOG_INFO("Active Bots: {}", activeBots);
+    LIFECYCLE_LOG_INFO("Scheduled Bots: {}", scheduledBots);
+    LIFECYCLE_LOG_INFO("Events/Second: {}", eventsPerSec);
+    LIFECYCLE_LOG_INFO("Avg Processing Time: {}ms", avgProcessingTime);
+    LIFECYCLE_LOG_INFO("Memory Usage: {}MB", memoryUsage);
     LIFECYCLE_LOG_INFO("Consecutive Errors:     {}", _consecutiveErrors.load());
     LIFECYCLE_LOG_INFO("Health Check Failures:  {}", _healthCheckFailures.load());
     LIFECYCLE_LOG_INFO("System Status:          {}", IsHealthy() ? "Healthy" : "Unhealthy");
