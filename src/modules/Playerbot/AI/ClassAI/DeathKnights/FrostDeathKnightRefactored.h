@@ -317,7 +317,7 @@ protected:
             if (rp < 20 && totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
             {
                 this->CastSpell(OBLITERATE, target);
-                ConsumeRunes(RuneType::FROST, 2);
+                ConsumeRunes(2);
                 GenerateRunicPower(15);
                 return;
             }
@@ -343,7 +343,7 @@ protected:
         {
             this->CastSpell(OBLITERATE, target);
             _kmTracker.ConsumeProc();
-            ConsumeRunes(RuneType::FROST, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -353,7 +353,7 @@ protected:
         {
             this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
-            ConsumeRunes(RuneType::FROST, 1);
+            ConsumeRunes(1);
             return;
         }
 
@@ -369,7 +369,7 @@ protected:
         if (totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
         {
             this->CastSpell(OBLITERATE, target);
-            ConsumeRunes(RuneType::FROST, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -401,7 +401,7 @@ protected:
         {
             this->CastSpell(REMORSELESS_WINTER, this->GetBot());
             _lastRemorselessWinterTime = GameTime::GetGameTimeMS();
-            ConsumeRunes(RuneType::FROST, 1);
+            ConsumeRunes(1);
             return;
         }
 
@@ -409,7 +409,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(HOWLING_BLAST, target))
         {
             this->CastSpell(HOWLING_BLAST, target);
-            ConsumeRunes(RuneType::FROST, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -418,7 +418,7 @@ protected:
         if (totalRunes >= 2 && this->CanCastSpell(FROSTSCYTHE, target))
         {
             this->CastSpell(FROSTSCYTHE, target);
-            ConsumeRunes(RuneType::FROST, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -427,7 +427,7 @@ protected:
         if (totalRunes >= 2 && this->CanCastSpell(GLACIAL_ADVANCE, target))
         {
             this->CastSpell(GLACIAL_ADVANCE, target);
-            ConsumeRunes(RuneType::FROST, 2);
+            ConsumeRunes(2);
             return;
         }
 
@@ -443,7 +443,7 @@ protected:
         if (totalRunes >= 2 && this->CanCastSpell(OBLITERATE, target))
         {
             this->CastSpell(OBLITERATE, target);
-            ConsumeRunes(RuneType::FROST, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -588,7 +588,7 @@ private:
         this->_resource.runicPower = (this->_resource.runicPower > amount) ? this->_resource.runicPower - amount : 0;
     }
 
-    void ConsumeRunes(RuneType type, uint32 count = 1) override
+    void ConsumeRunes(uint32 count = 1) override
     {
         this->_resource.Consume(count);
     }
