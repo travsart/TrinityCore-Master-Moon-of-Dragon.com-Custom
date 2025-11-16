@@ -1710,8 +1710,8 @@ bool BotAI::ExecuteAction(std::string const& name, ActionContext const& context)
         case ActionResult::FAILED:
             TC_LOG_DEBUG("bot.ai.action", "Action {} failed for bot {}", name, _bot->GetName());
             return false;
-        case ActionResult::INTERRUPTED:
-            TC_LOG_DEBUG("bot.ai.action", "Action {} interrupted for bot {}", name, _bot->GetName());
+        case ActionResult::CANCELLED:
+            TC_LOG_DEBUG("bot.ai.action", "Action {} cancelled for bot {}", name, _bot->GetName());
             return false;
         case ActionResult::IN_PROGRESS:
             // Queue action for continued execution
@@ -1752,10 +1752,10 @@ uint32 BotAI::GetActionPriority(std::string const& actionName) const
     // Get priority from action
     // Actions have internal priority based on their type and context
     // Combat actions are high priority, movement actions are lower
-    uint32 basePriority = action->GetBasePriority();
+    uint32 basePriority = action->GetPriority();
 
     // Adjust priority based on current bot state
-    if (_inCombat && dynamic_cast<CombatAction*>(action.get()))
+    if (IsInCombat() && dynamic_cast<CombatAction*>(action.get()))
     {
         basePriority += 50; // Boost combat action priority during combat
     }
@@ -2062,7 +2062,8 @@ void BotAI::UpdateManagers(uint32 diff)
         _bankingCheckTimer = 0;
 
         // Update banking automation (auto-deposit gold/items, auto-withdraw materials)
-        BankingManager::instance()->Update(_bot, diff);
+        // Note: BankingManager is now a singleton managing all bots, not per-bot
+        BankingManager::instance()->Update(diff);
     }// TC_LOG_ERROR("module.playerbot", " UpdateManagers COMPLETE for bot {}", _bot->GetName());
 }
 
