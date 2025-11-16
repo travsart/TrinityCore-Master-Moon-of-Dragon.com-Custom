@@ -200,9 +200,6 @@ public:
         , _icicleTracker()
         , _icyVeinsActive(false)
         , _icyVeinsEndTime(0)
-        
-        
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({
@@ -606,7 +603,7 @@ private:
                             Condition("Has target", [this](Player* bot, Unit*) {
                                 return bot && bot->GetVictim();
                             }),
-                            bot::ai::Action("Cast Frozen Orb", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Frozen Orb", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_FROZEN_ORB, target))
                                 {
@@ -629,7 +626,7 @@ private:
                             Condition("Brain Freeze active", [this](Player*, Unit*) {
                                 return this->_brainFreezeTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Flurry then Ice Lance", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Flurry then Ice Lance", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_FLURRY, target))
                                 {
@@ -646,7 +643,7 @@ private:
                             Condition("FoF proc active", [this](Player*, Unit*) {
                                 return this->_fofTracker.IsActive();
                             }),
-                            bot::ai::Action("Cast Ice Lance", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Ice Lance", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(FROST_ICE_LANCE, target))
                                 {
@@ -665,7 +662,7 @@ private:
                         return bot && bot->GetVictim() && bot->HasSpell(FROST_GLACIAL_SPIKE) &&
                                this->_icicleTracker.IsMaxIcicles();
                     }),
-                    bot::ai::Action("Cast Glacial Spike", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Glacial Spike", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_GLACIAL_SPIKE, target))
                         {
@@ -681,7 +678,7 @@ private:
                     Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    bot::ai::Action("Cast Frostbolt", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Frostbolt", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(FROST_FROSTBOLT, target))
                         {
