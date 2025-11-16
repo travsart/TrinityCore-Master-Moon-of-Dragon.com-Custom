@@ -658,8 +658,7 @@ void BotAI::UpdateAI(uint32 diff)
         _groupInvitationHandler->Update(diff);
     }
 
-    }  // End of
-    if (!isInDeathRecovery) block - normal AI skipped when dead
+    }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
 
     // ========================================================================
     // CRITICAL: Movement Arbiter MUST update even during death recovery
@@ -957,23 +956,12 @@ void BotAI::UpdateCombatState(uint32 diff){
         ::Unit* target = _objectCache.GetTarget();
         if (!target)
         {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-            return nullptr;
-        }
-        if (target)
-        {
-            TC_LOG_ERROR("module.playerbot", " Target from cache: {}", target->GetName());
+            target = _bot->GetVictim();
         }
 
-        if (!target)
+        if (target)
         {
-            target = _bot->GetVictim();
-            if (!target)
-            {
-                TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return;
-            }
-            TC_LOG_ERROR("module.playerbot", " Target from GetVictim(): {}", target ? target->GetName() : "null");
+            TC_LOG_DEBUG("playerbot", "Bot {} has combat target: {}", _bot->GetName(), target->GetName());
         }
 
         if (target)
@@ -1127,7 +1115,8 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
                             // 2. Check if creature is attackable (isHostile flag)
                             // 3. Check distance is within engage range (60.0f)
 
-                            float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distanceif (!snapshot.isDead &&
+                            float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distance
+                            if (!snapshot.isDead &&
                                 snapshot.isHostile &&
                                 distance <= 60.0f)
                             {
@@ -1171,7 +1160,7 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
 void BotAI::OnCombatStart(::Unit* target)
 {
     _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
-    TC_LOG_DEBUG("playerbot", "Bot {} entering combat with {}",_bot->GetName(), target ? target->GetName() : "unknown");
+    TC_LOG_DEBUG("playerbot", "Bot {} entering combat with {}", _bot->GetName(), target ? target->GetName() : "unknown");
 
     // Strategies don't have OnCombatStart - combat is handled by ClassAI
     // through the OnCombatUpdate() method
