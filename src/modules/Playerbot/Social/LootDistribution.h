@@ -198,7 +198,7 @@ public:
 
     // Roll processing and winner determination
     void ProcessLootRolls(uint32 rollId) override;
-    uint32 DetermineRollWinner(const LootRoll& roll);
+    uint32 DetermineRollWinner(const LootRoll& roll) override;
     void DistributeLootToWinner(uint32 rollId, uint32 winnerGuid) override;
     void HandleLootRollTimeout(uint32 rollId) override;
 
@@ -229,7 +229,7 @@ public:
         LootFairnessTracker() : totalItemsDistributed(0), totalValueDistributed(0), fairnessScore(1.0f) {}
     };
 
-    LootFairnessTracker GetGroupLootFairness(uint32 groupId);
+    LootFairnessTracker GetGroupLootFairness(uint32 groupId) override;
     void UpdateLootFairness(uint32 groupId, uint32 winnerGuid, const LootItem& item);
     float CalculateFairnessScore(const LootFairnessTracker& tracker);
 
@@ -285,9 +285,9 @@ public:
         }
     };
 
-    LootMetrics GetPlayerLootMetrics(uint32 playerGuid);
-    LootMetrics GetGroupLootMetrics(uint32 groupId);
-    LootMetrics GetGlobalLootMetrics();
+    LootMetrics GetPlayerLootMetrics(uint32 playerGuid) override;
+    LootMetrics GetGroupLootMetrics(uint32 groupId) override;
+    LootMetrics GetGlobalLootMetrics() override;
 
     // Advanced loot features
     void HandleReservedItems(Group* group, const ::std::vector<uint32>& reservedItems, Player* reserver);
