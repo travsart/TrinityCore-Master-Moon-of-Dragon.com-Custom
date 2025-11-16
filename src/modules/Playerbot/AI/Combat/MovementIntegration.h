@@ -12,6 +12,7 @@
 #include <vector>
 #include <unordered_set>
 #include "GameTime.h"
+#include "Combat/CombatStateAnalyzer.h"
 
 class Player;
 class Unit;
@@ -19,7 +20,6 @@ class GameObject;
 
 namespace Playerbot
 {
-    enum class CombatSituation : uint8;
 
     /**
      * @enum MovementUrgency
