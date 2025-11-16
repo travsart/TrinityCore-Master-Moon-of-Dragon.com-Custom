@@ -68,10 +68,37 @@ public:
     bool CanSpawnInZone(uint32 zoneId) const override;
 
     // === CONFIGURATION (IBotSpawner) ===
+    void LoadConfig() override;
+    SpawnConfig const& GetConfig() const override;
+    void SetConfig(SpawnConfig const& config) override;
     void SetMaxBots(uint32 maxBots) override;
     void SetBotToPlayerRatio(float ratio) override;
     bool IsEnabled() const override;
     void SetEnabled(bool enabled) override;
+
+    // === ZONE/MAP MANAGEMENT (IBotSpawner) ===
+    void DespawnAllBots() override;
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
+    ZonePopulation GetZonePopulation(uint32 zoneId) const override;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
+
+    // === BOT QUERIES (IBotSpawner) ===
+    bool IsBotActive(ObjectGuid guid) const override;
+    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const override;
+    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
+    bool CanSpawnOnMap(uint32 mapId) const override;
+
+    // === ADVANCED SPAWNING (IBotSpawner) ===
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) override;
+
+    // === STATISTICS (IBotSpawner) ===
+    SpawnStats const& GetStats() const override;
+    void ResetStats() override;
+
+    // === PLAYER INTERACTION (IBotSpawner) ===
+    void OnPlayerLogin() override;
+    void CheckAndSpawnForPlayers() override;
 
     // === ADAPTER-SPECIFIC METHODS ===
     BotSpawnOrchestrator* GetOrchestrator() const { return _orchestrator.get(); }
@@ -97,6 +124,8 @@ private:
     bool _enabled = true;
     uint32 _maxBots = 1000;
     float _botToPlayerRatio = 2.0f;
+    mutable SpawnConfig _config;
+    mutable SpawnStats _spawnStats;
 
     // === PERFORMANCE TRACKING ===
     mutable AdapterStats _stats;
@@ -147,9 +176,30 @@ public:
     bool IsEnabled() const override;
     void SetEnabled(bool enabled) override;
 
+    // Additional IBotSpawner methods
+    void LoadConfig() override;
+    SpawnConfig const& GetConfig() const override;
+    void SetConfig(SpawnConfig const& config) override;
+    void DespawnAllBots() override;
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
+    ZonePopulation GetZonePopulation(uint32 zoneId) const override;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
+    bool IsBotActive(ObjectGuid guid) const override;
+    uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const override;
+    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
+    bool CanSpawnOnMap(uint32 mapId) const override;
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) override;
+    SpawnStats const& GetStats() const override;
+    void ResetStats() override;
+    void OnPlayerLogin() override;
+    void CheckAndSpawnForPlayers() override;
+
 private:
     ::std::unique_ptr<class BotSpawner> _legacySpawner;
     bool _migrationMode = true;  // Flag to indicate we're in migration mode
+    mutable SpawnConfig _config;
+    mutable SpawnStats _stats;
 };
 
 /**
