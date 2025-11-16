@@ -1,3 +1,8 @@
+---
+name: automated-fix-agent
+description: Automated Fix Agent
+---
+
 # Automated Fix Agent
 
 ## Role

@@ -1,3 +1,8 @@
+---
+name: code-documentation
+description: Code Documentation Agent
+---
+
 # Code Documentation Agent
 
 ## Role

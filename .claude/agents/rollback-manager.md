@@ -1,3 +1,8 @@
+---
+name: rollback-manager
+description: Rollback Manager Agent
+---
+
 # Rollback Manager Agent
 
 ## Role

@@ -1,3 +1,8 @@
+---
+name: enterprise-compliance-checker
+description: Enterprise Compliance Checker Agent
+---
+
 # Enterprise Compliance Checker Agent
 
 ## Role

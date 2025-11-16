@@ -1,3 +1,8 @@
+---
+name: security-auditor
+description: Security Auditor Agent
+---
+
 # Security Auditor Agent
 
 ## Role

@@ -1,3 +1,8 @@
+---
+name: trinity-api-migration
+description: TrinityCore API Migration Agent
+---
+
 # TrinityCore API Migration Agent
 
 ## Purpose
