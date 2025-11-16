@@ -24,6 +24,22 @@
 #include <chrono>
 #include "GameTime.h"
 
+// Forward declared in IGuildIntegration.h - defined here at global scope for interface compatibility
+struct GuildChatMessage
+{
+    uint32 senderId;
+    ::std::string senderName;
+    ::std::string content;
+    ChatMsg chatType;
+    uint32 timestamp;
+    bool requiresResponse;
+    ::std::vector<::std::string> keywords;
+    float relevanceScore;
+
+    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
+        , requiresResponse(false), relevanceScore(0.0f) {}
+};
+
 namespace Playerbot
 {
 
@@ -58,21 +74,6 @@ enum class GuildRole : uint8
     BANKER          = 4,
     RECRUITER       = 5,
     EVENT_ORGANIZER = 6
-};
-
-struct GuildChatMessage
-{
-    uint32 senderId;
-    ::std::string senderName;
-    ::std::string content;
-    ChatMsg chatType;
-    uint32 timestamp;
-    bool requiresResponse;
-    ::std::vector<::std::string> keywords;
-    float relevanceScore;
-
-    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
-        , requiresResponse(false), relevanceScore(0.0f) {}
 };
 
 // Guild profile configuration
