@@ -358,7 +358,7 @@ protected:
         {
             this->CastSpell(SCOURGE_STRIKE, target);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -368,7 +368,7 @@ protected:
         {
             this->CastSpell(FESTERING_STRIKE, target);
             _woundTracker.ApplyWounds(targetGuid, 4);
-            ConsumeRunes(RuneType::UNHOLY, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -394,7 +394,7 @@ protected:
         {
             this->CastSpell(SCOURGE_STRIKE, target);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -422,7 +422,7 @@ protected:
         // Priority 2: Epidemic (spread disease)
         if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))        {
             this->CastSpell(EPIDEMIC, target);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -431,7 +431,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(DEFILE, this->GetBot()))
         {
             this->CastSpell(DEFILE, this->GetBot());
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             return;
         }
 
@@ -447,7 +447,7 @@ protected:
         if (totalRunes >= 1 && this->CanCastSpell(SCOURGE_STRIKE, target))
         {
             this->CastSpell(SCOURGE_STRIKE, target);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -605,7 +605,7 @@ private:
         this->_resource.runicPower = (this->_resource.runicPower > amount) ? this->_resource.runicPower - amount : 0;
     }
 
-    void ConsumeRunes(RuneType type, uint32 count = 1) override
+    void ConsumeRunes(uint32 count = 1) override
     {
         this->_resource.Consume(count);
     }
