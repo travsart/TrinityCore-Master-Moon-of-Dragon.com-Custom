@@ -1059,11 +1059,11 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
     ::std::lock_guard lock(_turnInMutex);
 
-    TurnInMetricsSnapshot snapshot{};
+    IQuestTurnIn::TurnInMetricsSnapshot snapshot{};
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
     {
@@ -1085,9 +1085,9 @@ TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
+IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
-    TurnInMetricsSnapshot snapshot{};
+    IQuestTurnIn::TurnInMetricsSnapshot snapshot{};
     snapshot.questsTurnedIn = _globalMetrics.questsTurnedIn.load();
     snapshot.turnInAttempts = _globalMetrics.turnInAttempts.load();
     snapshot.successfulTurnIns = _globalMetrics.successfulTurnIns.load();
