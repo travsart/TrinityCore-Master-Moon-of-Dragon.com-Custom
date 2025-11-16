@@ -285,13 +285,6 @@ bool DruidAI::HandleDefensives()
         }
     }
 
-if (!priorityTarget)
-
-{
-    return nullptr;
-
-}
-
     // Cenarion Ward - preemptive defense
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&        healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
@@ -317,14 +310,6 @@ bool DruidAI::HandleTargetSwitching(::Unit*& target)
     {
         OnTargetChanged(priorityTarget);
         target = priorityTarget;
-
-                     if (!priorityTarget)
-
-                     {
-
-                         return;
-
-                     }
         TC_LOG_DEBUG("module.playerbot.ai", "Druid {} switching target to {}",
 
                      GetBot()->GetName(), priorityTarget->GetName());
@@ -1289,7 +1274,8 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Check form requirements    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    // Check form requirements
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (spellInfo)
     {        // Check if spell requires specific form
     if (spellInfo->Stances)
