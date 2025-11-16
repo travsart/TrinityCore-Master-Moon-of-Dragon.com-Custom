@@ -9,6 +9,7 @@
 
 #include "Common.h"
 #include "ObjectGuid.h"
+#include "../Common/ActionScoringEngine.h"
 #include <vector>
 #include <string>
 #include <functional>
