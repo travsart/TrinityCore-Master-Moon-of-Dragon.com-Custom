@@ -220,7 +220,7 @@ private:
     ::std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
 };
 
-class HolyPriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
+class HolyPriestRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -228,15 +228,15 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit HolyPriestRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        , PriestSpecialization(bot)
+    explicit HolyPriestRefactored(Player* bot)
+        : HealerSpecialization<ManaResource>(bot)
         , _renewTracker()
         , _pomTracker()
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
-
-
+        , _lastGuardianSpiritTime(0)
+        , _lastDivineHymnTime(0)
         , _lastSalvationTime(0)
         , _lastSymbolOfHopeTime(0)
         , _cooldowns()
@@ -1282,8 +1282,12 @@ private:
     uint32 _apotheosisEndTime;
 
     uint32 _lastApotheosisTime;
+    uint32 _lastGuardianSpiritTime;
+    uint32 _lastDivineHymnTime;
     uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
+
+    CooldownManager _cooldowns;
 };
 
 } // namespace Playerbot
