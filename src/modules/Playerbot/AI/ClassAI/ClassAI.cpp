@@ -301,16 +301,13 @@ void ClassAI::OnCombatEnd()
 }
 
 void ClassAI::OnTargetChanged(::Unit* newTarget)
-if (!newTarget)
 {
-    return;
-}
-{
+    if (!newTarget)
+    {
+        return;
+    }
+
     _currentCombatTarget = newTarget;
-                 if (!newTarget)
-                 {
-                     return;
-                 }
     _lastTargetSwitch = _combatTime;
 
     TC_LOG_DEBUG("playerbot.classai", "Bot {} switching target to {}",
@@ -522,8 +519,8 @@ bool ClassAI::IsSpellReady(uint32 spellId)
     if (!spellId || !GetBot())
         return false;
 
-    // Check if spell is on cooldown
-    return _cooldownManager->IsReady(spellId) && _cooldownManager->IsGCDReady();
+    // Check if spell is on cooldown (note: Common/CooldownManager.h doesn't have IsGCDReady method)
+    return _cooldownManager->IsReady(spellId);
 }
 
 // ============================================================================
@@ -707,8 +704,8 @@ bool ClassAI::CanExecutePendingSpell() const
     // Check if bot is currently casting a different spell
     if (Spell const* currentSpell = GetBot()->GetCurrentSpell(CURRENT_GENERIC_SPELL))
     {
-        TC_LOG_ERROR("module.playerbot.classai", " CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
-        // GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
+        TC_LOG_ERROR("module.playerbot.classai", "CanExecutePendingSpell: Bot {} CURRENTLY CASTING spell {}, waiting",
+                     GetBot()->GetName(), currentSpell->GetSpellInfo()->Id);
         return false;
     }
 
