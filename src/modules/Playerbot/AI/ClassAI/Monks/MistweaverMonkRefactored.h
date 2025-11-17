@@ -255,7 +255,7 @@ private:
 // MISTWEAVER MONK REFACTORED
 // ============================================================================
 
-class MistweaverMonkRefactored : public HealerSpecialization<ManaResource>, public MonkSpecialization
+class MistweaverMonkRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -263,8 +263,8 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit MistweaverMonkRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        , MonkSpecialization(bot)
+    explicit MistweaverMonkRefactored(Player* bot)
+        : HealerSpecialization<ManaResource>(bot)
         , _renewingMistTracker()
         , _soothingMistTracker()
         , _thunderFocusTeaActive(false)
@@ -303,11 +303,6 @@ public:
 
         // Handle healing rotation
         ExecuteHealingRotation(group);
-    }
-
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 40.0f; // Ranged healer
     }
 
 protected:
@@ -629,9 +624,9 @@ protected:
         {
             // Check if channel target still needs healing
 
-            ObjectGuid targetGuid = _soothingMistTracker.this->GetTarget();
+            ObjectGuid targetGuid = _soothingMistTracker.GetTarget();
 
-            Unit* target = this->GetBot()->GetMap()->GetUnit(targetGuid);
+            Unit* target = ObjectAccessor::GetUnit(*this->GetBot(), targetGuid);
 
 
             if (!target || target->GetHealthPct() > 95.0f)
@@ -1259,6 +1254,27 @@ private:
 
             behaviorTree->SetRoot(root);
         }
+    }
+
+    [[nodiscard]] ::std::vector<Unit*> GetGroupMembers() const
+    {
+        ::std::vector<Unit*> members;
+        Player* bot = this->GetBot();
+        if (!bot) return members;
+
+        Group* group = bot->GetGroup();
+        if (!group) return members;
+
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            if (Player* member = ref.GetSource())
+            {
+                if (member->IsAlive() && bot->IsInMap(member))
+                    members.push_back(member);
+            }
+        }
+
+        return members;
     }
 
 private:

@@ -321,23 +321,6 @@ public:
         HandleEmergencyDefensives();
     }
 
-    // Phase 5C: Threat management using ThreatAssistant service
-    void OnTauntRequired(::Unit* target) override
-    {
-        // Use ThreatAssistant to determine best taunt target and execute
-        Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
-        if (tauntTarget && this->CanCastSpell(PROVOKE, tauntTarget))
-        {
-            bot::ai::ThreatAssistant::ExecuteTaunt(this->GetBot(), tauntTarget, PROVOKE);
-            TC_LOG_DEBUG("playerbot", "Brewmaster: Provoke taunt via ThreatAssistant on {}", tauntTarget->GetName());
-        }
-    }
-
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 5.0f; // Melee range for tanking
-    }
-
 protected:
     void ExecuteSingleTargetThreatRotation(::Unit* target)
     {
@@ -794,7 +777,7 @@ private:
                     Condition("Has chi", [this](Player*, Unit*) {
                         return this->_resource.chi >= 1;
                     }),
-                    bot::ai::Action("Cast Blackout Kick", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Blackout Kick", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BLACKOUT_KICK_BREW, target)) {
                             this->CastSpell(BLACKOUT_KICK_BREW, target);
@@ -819,7 +802,7 @@ private:
                             Condition("40 energy", [this](Player*, Unit*) {
                                 return this->_resource.energy >= 40;
                             }),
-                            bot::ai::Action("Cast Keg Smash", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Keg Smash", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(KEG_SMASH, target)) {
                                     this->CastSpell(KEG_SMASH, target);
@@ -834,7 +817,7 @@ private:
                             Condition("25 energy", [this](Player*, Unit*) {
                                 return this->_resource.energy >= 25;
                             }),
-                            bot::ai::Action("Cast Tiger Palm", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Tiger Palm", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(TIGER_PALM_BREW, target)) {
                                     this->CastSpell(TIGER_PALM_BREW, target);
@@ -873,7 +856,7 @@ private:
                             Condition("After Keg Smash", [this](Player*, Unit*) {
                                 return (GameTime::GetGameTimeMS() - this->_lastKegSmashTime) < 2000;
                             }),
-                            bot::ai::Action("Cast BoF", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast BoF", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(BREATH_OF_FIRE, target)) {
                                     this->CastSpell(BREATH_OF_FIRE, target);
@@ -897,7 +880,7 @@ private:
                             })
                         }),
                         Sequence("Rising Sun Kick", {
-                            bot::ai::Action("Cast RSK", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast RSK", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(RISING_SUN_KICK_BREW, target)) {
                                     this->CastSpell(RISING_SUN_KICK_BREW, target);

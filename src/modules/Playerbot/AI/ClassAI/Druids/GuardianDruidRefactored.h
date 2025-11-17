@@ -724,7 +724,7 @@ private:
 
             queue->AddCondition(GUARDIAN_IRONFUR, [this](Player* bot, Unit*) {
 
-                return bot && this->_resource.GetAvailable() >= 40 &&
+                return bot && this->_resource.rage >= 40 &&
 
                        this->_ironfurTracker.GetStacks() < 3;
 
@@ -755,7 +755,7 @@ private:
 
             queue->AddCondition(GUARDIAN_MAUL, [this](Player*, Unit* target) {
 
-                return target && this->_resource.GetAvailable() >= 40 &&
+                return target && this->_resource.rage >= 40 &&
 
                        this->_ironfurTracker.GetStacks() >= 2;
 
@@ -950,7 +950,7 @@ private:
 
                     Condition("40+ rage and < 3 Ironfur stacks", [this](Player*, Unit*) {
 
-                        return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() < 3;
+                        return this->_resource.rage >= 40 && this->_ironfurTracker.GetStacks() < 3;
 
                     }),
 
@@ -1104,7 +1104,7 @@ private:
 
                             Condition("40+ rage and 2+ Ironfur stacks", [this](Player*, Unit*) {
 
-                                return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() >= 2;
+                                return this->_resource.rage >= 40 && this->_ironfurTracker.GetStacks() >= 2;
 
                             }),
 
