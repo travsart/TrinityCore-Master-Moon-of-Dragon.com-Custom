@@ -1084,6 +1084,12 @@ void AdaptiveBehaviorManager::ResetStrategies()
 
 ::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, ::bot::ai::CombatContext context) const
 {
+    // TODO: DecisionVote and DecisionSource not fully defined (only forward-declared)
+    // TODO: Implement when DecisionFusionSystem.h provides full definitions
+    (void)target; (void)context; // Suppress unused warnings
+    return ::bot::ai::DecisionVote{}; // Return default-constructed vote
+
+    /* COMMENTED OUT until DecisionVote is fully defined:
     using namespace ::bot::ai;
     using ::Playerbot::BotRole;  // Disambiguate from bot::ai::BotRole
 
@@ -1289,7 +1295,7 @@ void AdaptiveBehaviorManager::ResetStrategies()
         reasoning += " (" + this->_activeProfile->name + ")";
 
     // Clamp urgency to 0-1 range
-    vote.urgency = ::std::min(::std::max(vote.urgency, 0.0f), 1.0f);
+    vote.urgency = std::min(std::max(vote.urgency, 0.0f), 1.0f);
 
     vote.reasoning = reasoning;
 
@@ -1302,6 +1308,7 @@ void AdaptiveBehaviorManager::ResetStrategies()
     // For now, DecisionFusion will use this vote for weighting other systems
 
     return vote;
+    */ // END COMMENTED OUT SECTION
 }
 
 } // namespace Playerbot
