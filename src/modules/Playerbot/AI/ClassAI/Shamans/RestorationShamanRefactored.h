@@ -255,15 +255,14 @@ public:
 
     void UpdateRotation(::Unit* target) override
     {
-        Player* bot = this->GetBot();        if (!target || !bot)
-
+        Player* bot = this->GetBot();
+        if (!target || !bot)
             return;
 
         UpdateRestorationState();
 
         // Restoration is a healer - check group health first
         if (Group* group = bot->GetGroup())
-        
         {
 
             ::std::vector<Unit*> groupMembers;
@@ -439,8 +438,8 @@ private:
 
     bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
-        Player* bot = this->GetBot();        if (!bot)
-
+        Player* bot = this->GetBot();
+        if (!bot)
             return false;
 
         // Ancestral Protection Totem (resurrect on death)
@@ -502,7 +501,8 @@ private:
         }
 
         // Spirit Link Totem (equalize health)
-        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD        {
+        if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastSpiritLinkTotemTime) >= 180000) // 3 min CD
+        {
 
             if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot))
 
