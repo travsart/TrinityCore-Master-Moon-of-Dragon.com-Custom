@@ -573,7 +573,12 @@ private:
         Player* bot = this->GetBot();
         if (!bot) return;
 
-        BotAI* ai = dynamic_cast<BotAI*>(bot->GetPlayerAI());
+        // TODO: Player::GetPlayerAI() doesn't exist in TrinityCore
+        // Need proper way to get BotAI from Player
+        // BotAI* ai = dynamic_cast<BotAI*>(bot->GetPlayerAI());
+        // if (!ai) return;
+
+        BotAI* ai = nullptr; // Stubbed out
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
