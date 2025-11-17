@@ -239,8 +239,8 @@ public:
         };
 
         // Create a snapshot of current metrics
-        Snapshot CreateSnapshot() const {
-            Snapshot snapshot;
+        IQuestCompletion::QuestCompletionMetricsSnapshot CreateSnapshot() const {
+            IQuestCompletion::QuestCompletionMetricsSnapshot snapshot;
             snapshot.questsStarted = questsStarted.load();
             snapshot.questsCompleted = questsCompleted.load();
             snapshot.questsFailed = questsFailed.load();
@@ -250,13 +250,18 @@ public:
             snapshot.completionSuccessRate = completionSuccessRate.load();
             snapshot.objectiveEfficiency = objectiveEfficiency.load();
             snapshot.totalDistanceTraveled = totalDistanceTraveled.load();
-            snapshot.lastUpdate = lastUpdate;
+            // Note: lastUpdate field dropped to match interface definition
             return snapshot;
         }
     };
 
+<<<<<<< HEAD
+    IQuestCompletion::QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
+    IQuestCompletion::QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
+=======
     QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
     QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
+>>>>>>> playerbot-dev
 
     // Quest data analysis
     ::std::vector<uint32> GetActiveQuests(::Player* bot) override;

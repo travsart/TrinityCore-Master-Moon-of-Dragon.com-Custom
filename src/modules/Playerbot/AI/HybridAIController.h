@@ -30,7 +30,7 @@ namespace Playerbot
 {
 
 class BotAI;
-class Blackboard;
+class SharedBlackboard;
 
 /**
  * @brief Hybrid AI Controller - Integrates Utility AI with Behavior Trees
@@ -57,7 +57,7 @@ public:
      * @param ai Bot AI instance
      * @param blackboard Shared blackboard (optional)
      */
-    HybridAIController(BotAI* ai, Blackboard* blackboard = nullptr);
+    HybridAIController(BotAI* ai, SharedBlackboard* blackboard = nullptr);
 
     /**
      * @brief Update AI decision and execution
@@ -176,7 +176,7 @@ private:
 
 private:
     BotAI* _bot;
-    Blackboard* _blackboard;
+    SharedBlackboard* _blackboard;
 
     // Utility AI system (decision making)
     ::std::unique_ptr<UtilityAI> _utilityAI;

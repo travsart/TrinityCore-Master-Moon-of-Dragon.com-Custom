@@ -313,7 +313,7 @@ bool BotGearFactory::ApplyGearSet(Player* player, GearSet const& gearSet)
         if (storeResult == EQUIP_ERR_OK)
         {
             // Create and store consumable items
-            Item* newConsumable = player->StoreNewItem(dest, consumableEntry, true, ItemRandomBonusListId(), GuidSet(), ItemContext::NONE, false);
+            Item* newConsumable = player->StoreNewItem(dest, consumableEntry, true, ItemRandomBonusListId(), GuidSet(), ItemContext::NONE, nullptr, false);
 
             if (newConsumable)
             {

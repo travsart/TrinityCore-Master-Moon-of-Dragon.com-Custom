@@ -197,7 +197,7 @@ public:
     void CheckAndSpawnForPlayers() override;
 
 private:
-    ::std::unique_ptr<class BotSpawner> _legacySpawner;
+    class BotSpawner* _legacySpawner = nullptr; // Non-owning pointer to singleton
     bool _migrationMode = true;  // Flag to indicate we're in migration mode
     mutable SpawnConfig _config;
     mutable SpawnStats _stats;

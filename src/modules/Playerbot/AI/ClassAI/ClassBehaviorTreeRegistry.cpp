@@ -157,9 +157,9 @@ void ClassBehaviorTreeRegistry::InitializePaladin()
     RegisterTree(WowClass::PALADIN, 0, []() -> ::std::shared_ptr<BTNode> {
         auto root = ::std::make_shared<BTSelector>("PaladinHolyRoot");
 
-        auto healSeq = ::std::make_shared<BTSequence>("HolyHeal");
-        healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(::std::make_shared<BTCastHeal>()); // Flash of Light
+        auto healSeq = std::make_shared<BTSequence>("HolyHeal");
+        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(std::make_shared<BTCastHeal>(19750)); // Flash of Light
 
         root->AddChild(healSeq);
         return root;
@@ -301,10 +301,17 @@ void ClassBehaviorTreeRegistry::InitializePriest()
     RegisterTree(WowClass::PRIEST, 0, []() -> ::std::shared_ptr<BTNode> {
         auto root = ::std::make_shared<BTSelector>("PriestDisciplineRoot");
 
+<<<<<<< HEAD
+        auto healSeq = std::make_shared<BTSequence>("DisciplineHeal");
+        healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
+        healSeq->AddChild(std::make_shared<BTPriestPowerWordShield>()); // Shield first
+        healSeq->AddChild(std::make_shared<BTCastHeal>(2061)); // Flash Heal
+=======
         auto healSeq = ::std::make_shared<BTSequence>("DisciplineHeal");
         healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
         healSeq->AddChild(::std::make_shared<BTPriestPowerWordShield>()); // Shield first
         healSeq->AddChild(::std::make_shared<BTCastHeal>());
+>>>>>>> playerbot-dev
 
         root->AddChild(healSeq);
         return root;

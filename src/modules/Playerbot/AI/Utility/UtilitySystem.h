@@ -31,7 +31,7 @@ namespace Playerbot
 {
 
 class BotAI;
-class Blackboard;
+class SharedBlackboard;
 
 /**
  * @brief Context for utility evaluation
@@ -40,7 +40,7 @@ class Blackboard;
 struct UtilityContext
 {
     BotAI* bot;
-    Blackboard* blackboard;
+    SharedBlackboard* blackboard;
 
     // Bot state
     float healthPercent;

@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "CombatStateAnalyzer.h"
 #include "SharedDefines.h"
+#include "AI/Decision/DecisionFusionSystem.h" // Full definition for DecisionVote and CombatContext
 #include <string>
 #include <vector>
 #include <map>
@@ -23,12 +24,6 @@ class Player;
 class Unit;
 class Group;
 class SpellInfo;
-
-// Forward declarations for DecisionFusion integration
-namespace bot { namespace ai {
-    struct DecisionVote;
-    enum class CombatContext : uint8;
-}} // namespace bot::ai
 
 namespace Playerbot
 {

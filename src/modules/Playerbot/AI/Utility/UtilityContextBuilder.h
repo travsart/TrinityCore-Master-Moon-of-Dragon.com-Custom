@@ -28,7 +28,7 @@
 namespace Playerbot
 {
 
-class Blackboard;
+class SharedBlackboard;
 
 /**
  * @brief Builds utility context from game world state
@@ -43,7 +43,7 @@ public:
      * @param blackboard Shared blackboard (can be nullptr)
      * @return Populated utility context
      */
-    static UtilityContext Build(BotAI* ai, Blackboard* blackboard = nullptr)
+    static UtilityContext Build(BotAI* ai, SharedBlackboard* blackboard = nullptr)
     {
         UtilityContext context;
         context.bot = ai;

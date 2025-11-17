@@ -375,7 +375,7 @@ public:
 
     // Main positioning interface
     Position CalculateCombatPosition(Player* bot, const CombatPositionContext& context);
-    MovementResult UpdateCombatPosition(Player* bot, const CombatPositionContext& context);
+    PositionMovementResult UpdateCombatPosition(Player* bot, const CombatPositionContext& context);
 
     // Role-specific position calculation
     Position CalculateRolePosition(Player* bot, ThreatRole role, const CombatPositionContext& context);
