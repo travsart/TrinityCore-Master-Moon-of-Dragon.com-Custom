@@ -318,7 +318,7 @@ void ClassBehaviorTreeRegistry::InitializePriest()
         auto healSeq = ::std::make_shared<BTSequence>("HolyHeal");
         healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
         healSeq->AddChild(::std::make_shared<BTPriestPrayerOfMending>()); // HoT
-        healSeq->AddChild(::std::make_shared<BTCastHeal>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>(2061)); // Flash Heal
 
         root->AddChild(healSeq);
         return root;
@@ -428,7 +428,7 @@ void ClassBehaviorTreeRegistry::InitializeShaman()
 
         auto healSeq = ::std::make_shared<BTSequence>("RestorationHeal");
         healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(::std::make_shared<BTCastHeal>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>(8004)); // Healing Surge
 
         root->AddChild(healSeq);
         return root;
@@ -555,7 +555,7 @@ void ClassBehaviorTreeRegistry::InitializeMonk()
 
         auto healSeq = ::std::make_shared<BTSequence>("MistweaverHeal");
         healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(::std::make_shared<BTCastHeal>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>(116670)); // Vivify
 
         root->AddChild(healSeq);
         return root;
@@ -690,7 +690,7 @@ void ClassBehaviorTreeRegistry::InitializeEvoker()
 
         auto healSeq = ::std::make_shared<BTSequence>("PreservationHeal");
         healSeq->AddChild(::std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(::std::make_shared<BTCastHeal>());
+        healSeq->AddChild(::std::make_shared<BTCastHeal>(361469)); // Living Flame
 
         root->AddChild(healSeq);
         return root;

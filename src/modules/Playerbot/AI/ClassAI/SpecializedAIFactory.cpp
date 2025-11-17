@@ -19,7 +19,7 @@
 
 #include "Paladins/HolyPaladinRefactored.h"
 #include "Paladins/ProtectionPaladinRefactored.h"
-#include "Paladins/RetributionSpecializationRefactored.h"
+#include "Paladins/RetributionPaladinRefactored.h"
 
 #include "Hunters/BeastMasteryHunterRefactored.h"
 #include "Hunters/MarksmanshipHunterRefactored.h"
@@ -72,7 +72,7 @@ namespace Playerbot
 {
 
     uint8 classId = bot->GetClass();
-    uint8 specId = static_cast<uint8>(bot->GetPrimarySpecialization()));
+    uint8 specId = static_cast<uint8>(bot->GetPrimarySpecialization());
 
     TC_LOG_DEBUG("module.playerbot.ai.factory",
                  "Creating specialized AI for bot {} (class: {}, spec: {})",
@@ -203,12 +203,12 @@ namespace Playerbot
             return ::std::make_unique<ProtectionPaladinRefactored>(bot);
 
         case 2: // Retribution
-            TC_LOG_INFO("module.playerbot.ai.factory", "Creating RetributionSpecializationRefactored for {}", bot->GetName());
-            return ::std::make_unique<RetributionSpecializationRefactored>(bot);
+            TC_LOG_INFO("module.playerbot.ai.factory", "Creating RetributionPaladinRefactored for {}", bot->GetName());
+            return ::std::make_unique<RetributionPaladinRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Paladin spec {}, defaulting to Retribution", specId);
-            return ::std::make_unique<RetributionSpecializationRefactored>(bot);
+            return ::std::make_unique<RetributionPaladinRefactored>(bot);
     }
 }
 

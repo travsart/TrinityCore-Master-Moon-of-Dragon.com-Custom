@@ -936,9 +936,9 @@ private:
                                 return this->ShouldUseFieryBrand();
                             }),
                             bot::ai::Action("Cast Fiery Brand", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, target)) {
-                                    this->CastSpell(DemonHunterSpells::FIERY_BRAND, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(DemonHunterSpells::FIERY_BRAND, victim)) {
+                                    this->CastSpell(DemonHunterSpells::FIERY_BRAND, victim);
                                     this->_fieryBrandActive = true;
                                     this->_fieryBrandEndTime = GameTime::GetGameTimeMS() + 8000;
                                     return NodeStatus::SUCCESS;
@@ -957,9 +957,9 @@ private:
                     Selector("Generate threat", {
                         Sequence("Sigil of Flame", {
                             bot::ai::Action("Cast Sigil", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target)) {
-                                    this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(DemonHunterSpells::SIGIL_OF_FLAME, victim)) {
+                                    this->CastSpell(DemonHunterSpells::SIGIL_OF_FLAME, victim);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -967,15 +967,15 @@ private:
                         }),
                         Sequence("Infernal Strike", {
                             Condition("Gap 10-30yd", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (!target) return false;
-                                float dist = bot->GetDistance(target);
+                                Unit* victim = bot->GetVictim();
+                                if (!victim) return false;
+                                float dist = bot->GetDistance(victim);
                                 return dist > 10.0f && dist <= 30.0f;
                             }),
                             bot::ai::Action("Cast Strike", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(INFERNAL_STRIKE, target)) {
-                                    this->CastSpell(INFERNAL_STRIKE, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(INFERNAL_STRIKE, victim)) {
+                                    this->CastSpell(INFERNAL_STRIKE, victim);
                                     this->GeneratePain(20);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -999,9 +999,9 @@ private:
                                 return this->ShouldUseSoulCleave(this->_resource);
                             }),
                             bot::ai::Action("Cast Soul Cleave", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, target)) {
-                                    this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(DemonHunterSpells::SOUL_CLEAVE, victim)) {
+                                    this->CastSpell(DemonHunterSpells::SOUL_CLEAVE, victim);
                                     this->ConsumeResource(DemonHunterSpells::SOUL_CLEAVE);
                                     this->_soulFragments.ConsumeFragments(2);
                                     return NodeStatus::SUCCESS;
@@ -1049,9 +1049,9 @@ private:
                                 return this->_resource < 80;
                             }),
                             bot::ai::Action("Cast Fracture", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(FRACTURE, target)) {
-                                    this->CastSpell(FRACTURE, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(FRACTURE, victim)) {
+                                    this->CastSpell(FRACTURE, victim);
                                     this->GeneratePain(25);
                                     this->_soulFragments.GenerateFragments(2);
                                     return NodeStatus::SUCCESS;
@@ -1061,9 +1061,9 @@ private:
                         }),
                         Sequence("Shear", {
                             bot::ai::Action("Cast Shear", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(DemonHunterSpells::SHEAR, target)) {
-                                    this->CastSpell(DemonHunterSpells::SHEAR, target);
+                                Unit* victim = bot->GetVictim();
+                                if (victim && this->CanCastSpell(DemonHunterSpells::SHEAR, victim)) {
+                                    this->CastSpell(DemonHunterSpells::SHEAR, victim);
                                     this->GeneratePain(10);
                                     return NodeStatus::SUCCESS;
                                 }
