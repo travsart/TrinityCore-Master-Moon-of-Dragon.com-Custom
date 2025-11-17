@@ -21,6 +21,12 @@ class GameObject;
 namespace Playerbot
 {
 
+    // Movement Integration Constants
+    #define MOVEMENT_UPDATE_INTERVAL 200    // 200ms (5 FPS)
+    #define MOVEMENT_MELEE_RANGE 5.0f
+    #define MOVEMENT_RANGED_OPTIMAL 35.0f
+    #define MOVEMENT_KITING_DISTANCE 15.0f
+
     /**
      * @enum MovementUrgency
      * @brief Priority level for movement actions
@@ -336,11 +342,6 @@ namespace Playerbot
         MovementCommand _currentCommand;
         uint32 _lastUpdate;
         CombatSituation _currentSituation;
-
-        static constexpr uint32 UPDATE_INTERVAL = 200;  // 200ms (5 FPS)
-        static constexpr float MELEE_RANGE = 5.0f;
-        static constexpr float RANGED_OPTIMAL = 35.0f;
-        static constexpr float KITING_DISTANCE = 15.0f;
 
         /**
          * @brief Update danger zones (remove expired)

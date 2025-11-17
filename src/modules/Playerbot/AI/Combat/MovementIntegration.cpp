@@ -15,10 +15,8 @@
 namespace Playerbot
 {
 
-// REMOVED: Static constant definitions (now constexpr in header)
-// const float MovementIntegration::MELEE_RANGE = 5.0f;
-// const float MovementIntegration::RANGED_OPTIMAL = 35.0f;
-// const float MovementIntegration::KITING_DISTANCE = 15.0f;
+// REMOVED: Static constant definitions (now #define in header)
+// See MovementIntegration.h for MOVEMENT_MELEE_RANGE, MOVEMENT_RANGED_OPTIMAL, MOVEMENT_MOVEMENT_KITING_DISTANCE
 
 MovementIntegration::MovementIntegration(::Player* bot)
     : _bot(bot)
@@ -35,7 +33,7 @@ void MovementIntegration::Update(uint32 diff, CombatSituation situation)
     _lastUpdate += diff;
     _currentSituation = situation;
 
-    if (_lastUpdate < UPDATE_INTERVAL)
+    if (_lastUpdate < MOVEMENT_UPDATE_INTERVAL)
         return;
 
     _lastUpdate = 0;
@@ -146,7 +144,7 @@ Position MovementIntegration::GetTargetPosition()
 float MovementIntegration::GetOptimalRange(::Unit* target)
 {
     if (!_bot || !target)
-        return MELEE_RANGE;
+        return MOVEMENT_MELEE_RANGE;
 
     CombatRole role = GetCombatRole();
 
@@ -154,16 +152,16 @@ float MovementIntegration::GetOptimalRange(::Unit* target)
     {
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
-            return MELEE_RANGE;
+            return MOVEMENT_MELEE_RANGE;
 
         case CombatRole::HEALER:
             return 30.0f;  // Healing range
 
         case CombatRole::RANGED_DPS:
-            return RANGED_OPTIMAL;
+            return MOVEMENT_RANGED_OPTIMAL;
 
         default:
-            return MELEE_RANGE;
+            return MOVEMENT_MELEE_RANGE;
     }
 }
 
@@ -281,7 +279,7 @@ bool MovementIntegration::ShouldKite(::Unit* target)
     float distance = _bot->GetDistance(target);
 
     // Kite if target is too close
-    return distance < KITING_DISTANCE;
+    return distance < MOVEMENT_KITING_DISTANCE;
 }
 
 Position MovementIntegration::GetKitingPosition(::Unit* target)
@@ -291,7 +289,7 @@ Position MovementIntegration::GetKitingPosition(::Unit* target)
 
     // Move away from target
     float angle = target->GetAngle(_bot);
-    float distance = KITING_DISTANCE + 5.0f;  // Kite to safe distance
+    float distance = MOVEMENT_KITING_DISTANCE + 5.0f;  // Kite to safe distance
 
     float x = target->GetPositionX() + distance * ::std::cos(angle);
     float y = target->GetPositionY() + distance * ::std::sin(angle);
