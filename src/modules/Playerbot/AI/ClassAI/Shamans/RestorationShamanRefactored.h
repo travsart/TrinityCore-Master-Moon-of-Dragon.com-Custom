@@ -364,7 +364,20 @@ public:
     }
 
 private:
-    
+    // Member variables
+    RiptideTracker _riptideTracker;
+    EarthShieldTracker _earthShieldTracker;
+
+    bool _ascendanceActive;
+    uint32 _ascendanceEndTime;
+
+    uint32 _lastAscendanceTime;
+    uint32 _lastHealingTideTotemTime;
+    uint32 _lastSpiritLinkTotemTime;
+    uint32 _lastCloudburstTotemTime;
+    uint32 _lastEarthenWallTotemTime;
+    uint32 _lastAncestralProtectionTotemTime;
+    CooldownManager _cooldowns;
 
     void UpdateRestorationState()
     {
@@ -867,21 +880,6 @@ private:
 
         return false;
     }
-
-    // Member variables
-    RiptideTracker _riptideTracker;
-    EarthShieldTracker _earthShieldTracker;
-
-    bool _ascendanceActive;
-    uint32 _ascendanceEndTime;
-
-    uint32 _lastAscendanceTime;
-    uint32 _lastHealingTideTotemTime;
-    uint32 _lastSpiritLinkTotemTime;
-    uint32 _lastCloudburstTotemTime;
-    uint32 _lastEarthenWallTotemTime;
-    uint32 _lastAncestralProtectionTotemTime;
-    CooldownManager _cooldowns;
 
     // ========================================================================
     // PHASE 5: DECISION SYSTEM INTEGRATION
