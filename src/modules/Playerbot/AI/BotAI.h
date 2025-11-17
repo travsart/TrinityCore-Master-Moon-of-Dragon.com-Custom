@@ -22,7 +22,6 @@
 #include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
 #include "Blackboard/SharedBlackboard.h"
-#include "HybridAIController.h"
 #include <memory>
 #include <vector>
 #include <string>
