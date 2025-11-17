@@ -19,7 +19,20 @@ namespace Playerbot
 // Forward declarations
 struct MarketSnapshot;
 enum class MarketTrend : uint8;
-enum class MarketSegment : uint8;
+
+// Full enum definition needed for default argument
+enum class MarketSegment : uint8
+{
+    CONSUMABLES     = 0,
+    EQUIPMENT       = 1,
+    CRAFTING        = 2,
+    GEMS            = 3,
+    ENCHANTING      = 4,
+    COLLECTIBLES    = 5,
+    TRADE_GOODS     = 6,
+    QUEST_ITEMS     = 7
+};
+
 struct MarketMetrics;
 struct PriceAnalysis;
 struct MarketOpportunity;

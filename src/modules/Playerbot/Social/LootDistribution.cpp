@@ -564,7 +564,7 @@ void LootDistribution::ExecuteMainSpecPriorityStrategy(Player* player, const Loo
     }
 }
 
-LootDistribution::LootFairnessTracker LootDistribution::GetGroupLootFairness(uint32 groupId)
+LootFairnessTracker LootDistribution::GetGroupLootFairness(uint32 groupId)
 {
     ::std::lock_guard lock(_lootMutex);
     auto it = _groupFairnessTracking.find(groupId);
@@ -611,7 +611,7 @@ float LootDistribution::CalculateFairnessScore(const LootFairnessTracker& tracke
     return ::std::clamp(fairness, 0.0f, 1.0f);
 }
 
-LootDistribution::LootMetrics LootDistribution::GetPlayerLootMetrics(uint32 playerGuid)
+LootMetrics LootDistribution::GetPlayerLootMetrics(uint32 playerGuid)
 {
     ::std::lock_guard lock(_lootMutex);
     auto it = _playerMetrics.find(playerGuid);
@@ -623,7 +623,7 @@ LootDistribution::LootMetrics LootDistribution::GetPlayerLootMetrics(uint32 play
     return metrics;
 }
 
-LootDistribution::LootMetrics LootDistribution::GetGroupLootMetrics(uint32 groupId)
+LootMetrics LootDistribution::GetGroupLootMetrics(uint32 groupId)
 {
     // Aggregate metrics from all group members
     LootMetrics groupMetrics;
@@ -635,7 +635,7 @@ LootDistribution::LootMetrics LootDistribution::GetGroupLootMetrics(uint32 group
     return groupMetrics;
 }
 
-LootDistribution::LootMetrics LootDistribution::GetGlobalLootMetrics()
+LootMetrics LootDistribution::GetGlobalLootMetrics()
 {
     return _globalMetrics;
 }
