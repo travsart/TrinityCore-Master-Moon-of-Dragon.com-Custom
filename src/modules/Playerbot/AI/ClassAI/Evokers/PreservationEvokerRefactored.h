@@ -70,9 +70,9 @@ enum PreservationEvokerSpells
     STASIS               = 370537,  // Suspend friendly target
     RESCUE               = 370665,  // Pull ally to you
 
-    // Defensive
-    OBSIDIAN_SCALES      = 363916,  // 90 sec CD, damage reduction
-    RENEWING_BLAZE       = 374348,  // 90 sec CD, self-heal
+    // Defensive (shared with other Evoker specs)
+    PRES_OBSIDIAN_SCALES = 363916,  // 90 sec CD, damage reduction
+    PRES_RENEWING_BLAZE  = 374348,  // 90 sec CD, self-heal
     TWIN_GUARDIAN        = 370888,  // Shield another player
 
     // Essence Generation
@@ -323,11 +323,6 @@ public:
         ExecuteHealingRotation(group);
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 30.0f; // Ranged healer at 30 yards
-    }
-
 protected:
     void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
@@ -520,23 +515,9 @@ protected:
         Player* bot = this->GetBot();
         if (!bot) return nullptr;
 
-        // Find nearest enemy within 30 yards
-        Unit* nearestEnemy = nullptr;
-        float nearestDist = 30.0f;
-
-        bot->GetMap()->DoForAllPlayers([&](Player* player) {
-            if (player && player->IsHostileTo(bot) && player->IsAlive())
-            {
-                float dist = bot->GetDistance(player);
-                if (dist < nearestDist)
-                {
-                    nearestDist = dist;
-                    nearestEnemy = player;
-                }
-            }
-        });
-
-        return nearestEnemy;
+        // For healer, just return current victim if any
+        // This is mainly used for essence generation with damage spells
+        return bot->GetVictim();
     }
 
     void UpdatePreservationState()
