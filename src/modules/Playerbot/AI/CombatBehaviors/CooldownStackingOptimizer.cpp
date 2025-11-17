@@ -41,7 +41,7 @@ namespace
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -199,7 +199,7 @@ void CooldownStackingOptimizer::Update(uint32 diff)
         }
 
         // Check actual cooldown from spell history
-        if (_bot->GetSpellHistory()->HasCooldown(spellId))
+    if (_bot->GetSpellHistory()->HasCooldown(spellId))
         {
             SpellHistory::Duration remainingCooldown = _bot->GetSpellHistory()->GetRemainingCooldown(sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE));
             data.nextAvailable = now + remainingCooldown.count();
@@ -212,7 +212,7 @@ void CooldownStackingOptimizer::Update(uint32 diff)
         if (it->timeUntil > 0 && it->timeUntil <= diff)
         {
             // Phase has arrived, clear reservation
-            for (uint32 spellId : it->cooldowns)
+    for (uint32 spellId : it->cooldowns)
                 _reservedCooldowns.erase(spellId);
             it = _phaseReservations.erase(it);
         }
@@ -265,11 +265,11 @@ CooldownStackingOptimizer::BossPhase CooldownStackingOptimizer::DetectBossPhase(
 
     // Check for adds
     uint32 addCount = 0;
-    std::list<Creature*> creatures;
+    ::std::list<Creature*> creatures;
     if (boss->GetTypeId() == TYPEID_UNIT)
     {
         boss->ToCreature()->GetCreatureListWithEntryInGrid(creatures, 0, 30.0f);  // 0 = any entry
-        for (Creature* creature : creatures)
+    for (Creature* creature : creatures)
         {
             if (creature && creature->IsAlive() && creature != boss &&
                 creature->IsHostileTo(_bot))
@@ -312,7 +312,7 @@ void CooldownStackingOptimizer::UpdateCooldownUsed(uint32 spellId)
         it->second.nextAvailable = now + it->second.cooldownMs;
 
         // Apply haste if applicable
-        if (it->second.affectedByHaste && _bot)
+    if (it->second.affectedByHaste && _bot)
         {
             // Get haste rating from combat rating system
             float hastePercent = _bot->GetRatingBonusValue(CR_HASTE_MELEE);
@@ -339,7 +339,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
     uint32 windowEnd = now + lookAheadMs;
 
     // Find all available cooldowns in the window
-    std::vector<uint32> availableCooldowns;
+    ::std::vector<uint32> availableCooldowns;
     for (auto const& [spellId, data] : _cooldowns)
     {
         if (data.category == MAJOR_DPS || data.category == BURST)
@@ -361,7 +361,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
         window.duration = 10000;  // 10 second window
 
         // Add cooldowns that would be available
-        for (uint32 spellId : availableCooldowns)
+    for (uint32 spellId : availableCooldowns)
         {
             auto it = _cooldowns.find(spellId);
             if (it != _cooldowns.end())
@@ -380,7 +380,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
         window.score = window.totalMultiplier;
 
         // Bonus for aligning with Bloodlust
-        if (IsBloodlustActive() || (window.startTime >= _predictedBloodlustTime &&
+    if (IsBloodlustActive() || (window.startTime >= _predictedBloodlustTime &&
             window.startTime <= _predictedBloodlustTime + 40000))
         {
             window.score *= 1.5f;
@@ -390,8 +390,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
         float delay = float(window.startTime - now) / 1000.0f;
         if (delay > 10.0f)
             window.score *= (1.0f - delay / 60.0f);  // Lose value over time
-
-        if (window.score > bestWindow.score)
+    if (window.score > bestWindow.score)
             bestWindow = window;
     }
 
@@ -401,7 +400,7 @@ CooldownStackingOptimizer::StackWindow CooldownStackingOptimizer::FindOptimalSta
     return bestWindow;
 }
 
-float CooldownStackingOptimizer::CalculateStackedMultiplier(std::vector<uint32> const& cooldowns) const
+float CooldownStackingOptimizer::CalculateStackedMultiplier(::std::vector<uint32> const& cooldowns) const
 {
     if (cooldowns.empty())
         return 1.0f;
@@ -429,7 +428,7 @@ float CooldownStackingOptimizer::CalculateStackedMultiplier(std::vector<uint32> 
         else
         {
             // Non-stacking cooldown, take the best one
-            totalDamage = std::max(totalDamage, 1.0f + data.damageIncrease);
+            totalDamage = ::std::max(totalDamage, 1.0f + data.damageIncrease);
         }
     }
 
@@ -485,7 +484,7 @@ bool CooldownStackingOptimizer::ShouldUseMajorCooldown(Unit* target) const
             return true;
 
         // Use on elites if aggressive
-        if (_aggressiveUsage && creature && creature->IsElite())
+    if (_aggressiveUsage && creature && creature->IsElite())
             return true;
     }
 
@@ -578,11 +577,11 @@ float CooldownStackingOptimizer::GetCooldownPriority(uint32 spellId) const
             priority *= 0.2f;  // Heavily reduce priority
 
         // Increase priority for low health targets in execute phase
-        if (_currentPhase == EXECUTE && target->GetHealthPct() < 20.0f)
+    if (_currentPhase == EXECUTE && target->GetHealthPct() < 20.0f)
             priority *= 1.5f;
     }
 
-    return std::min(1.0f, priority);
+    return ::std::min(1.0f, priority);
 }
 
 // ============================================================================
@@ -664,13 +663,11 @@ uint32 CooldownStackingOptimizer::PredictBloodlustTiming() const
         float healthPct = target->GetHealthPct();
 
         // Common Bloodlust timings
-        if (healthPct > 95.0f)
+    if (healthPct > 95.0f)
             return GameTime::GetGameTimeMS() + 5000;  // Start of fight
-
-        if (healthPct <= 30.0f && healthPct > 20.0f)
+    if (healthPct <= 30.0f && healthPct > 20.0f)
             return GameTime::GetGameTimeMS() + 2000;  // Sub-30%
-
-        if (healthPct <= 20.0f)
+    if (healthPct <= 20.0f)
             return GameTime::GetGameTimeMS();  // Execute phase - immediate
     }
 
@@ -727,7 +724,7 @@ uint32 CooldownStackingOptimizer::GetTimeUntilBurnPhase() const
         float healthPct = target->GetHealthPct();
 
         // Estimate time based on health thresholds
-        if (healthPct > 30.0f)
+    if (healthPct > 30.0f)
         {
             uint32 timeToDie = EstimateTimeToDie(target);
             return uint32((healthPct - 30.0f) / 100.0f * timeToDie);
@@ -780,7 +777,7 @@ void CooldownStackingOptimizer::InitializeClassCooldowns()
     for (auto const& [spellId, data] : s_defaultCooldowns)
     {
         // Check if bot knows this spell
-        if (_bot->HasSpell(spellId))
+    if (_bot->HasSpell(spellId))
         {
             _cooldowns[spellId] = data;
         }
@@ -824,7 +821,7 @@ void CooldownStackingOptimizer::UpdatePhaseDetection()
             _phaseStartTime = GameTime::GetGameTimeMS();
 
             // Track Bloodlust usage
-            if (newPhase == BURN && IsBloodlustActive())
+    if (newPhase == BURN && IsBloodlustActive())
                 _bloodlustUsed = true;
         }
     }
@@ -869,7 +866,6 @@ uint32 CooldownStackingOptimizer::EstimateTimeToDie(Unit* target) const
 
     // Estimate DPS from damage history
     float dps = 1000.0f;  // Default 1000 DPS
-
     if (!_damageHistory.empty())
     {
         // Calculate average DPS from history
@@ -901,7 +897,7 @@ float CooldownStackingOptimizer::ApplyDiminishingReturns(float baseMultiplier, u
 
     // Apply 10% reduction per additional stack
     float reduction = 1.0f - (0.1f * (stackCount - 1));
-    reduction = std::max(0.5f, reduction);  // Minimum 50% effectiveness
+    reduction = ::std::max(0.5f, reduction);  // Minimum 50% effectiveness
 
     return baseMultiplier * reduction;
 }

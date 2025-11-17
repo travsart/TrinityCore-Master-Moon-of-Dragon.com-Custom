@@ -70,7 +70,7 @@ namespace Playerbot
         // Main thread converts GUID → Unit* and queues actions
         ObjectGuid FindNearestHostile(float range = 0.0f);
         ObjectGuid FindBestTarget(float range = 0.0f);
-        std::vector<ObjectGuid> FindAllHostiles(float range = 0.0f);
+        ::std::vector<ObjectGuid> FindAllHostiles(float range = 0.0f);
 
         // Target validation
         bool IsValidTarget(Unit* target) const;
@@ -127,10 +127,10 @@ namespace Playerbot
             ObjectGuid guid;
             uint32 expireTime;
         };
-        std::vector<BlacklistEntry> m_blacklist;
+        ::std::vector<BlacklistEntry> m_blacklist;
 
         // Performance optimization
-        mutable std::vector<ScanResult> m_lastScanResults;
+        mutable ::std::vector<ScanResult> m_lastScanResults;
         uint32 m_lastResultsTime;
 
         // Configuration based on class/spec

@@ -57,7 +57,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
     // Set login state
     _loginState = LoginState::QUERY_PENDING;
     _pendingLoginGuid = characterGuid;
-    _loginStartTime = std::chrono::steady_clock::now();
+    _loginStartTime = ::std::chrono::steady_clock::now();
 
     try
     {
@@ -174,10 +174,10 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         // === PHASE 5: Use BotWorldEntry for World Integration ===
         TC_LOG_DEBUG("module.playerbot.session", "Phase 5: Beginning world entry");
 
-        auto worldEntry = std::make_shared<BotWorldEntry>(shared_from_this(), characterGuid);
+        auto worldEntry = ::std::make_shared<BotWorldEntry>(shared_from_this(), characterGuid);
 
         // Perform synchronous world entry with 30 second timeout
-        if (!worldEntry->EnterWorldSync(30000))
+    if (!worldEntry->EnterWorldSync(30000))
         {
             TC_LOG_ERROR("module.playerbot.session",
                         "Failed to complete world entry for bot {}",
@@ -204,12 +204,12 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         m_playerRecentlyLogout = false;
 
         // Log success metrics
-        auto loginDuration = std::chrono::steady_clock::now() - _loginStartTime;
+        auto loginDuration = ::std::chrono::steady_clock::now() - _loginStartTime;
         uint32 loginMs = static_cast<uint32>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(loginDuration).count());
+            ::std::chrono::duration_cast<::std::chrono::milliseconds>(loginDuration).count());
 
         TC_LOG_INFO("module.playerbot.session",
-                   "✅ Bot {} successfully logged in and entered world in {} ms",
+                   " Bot {} successfully logged in and entered world in {} ms",
                    newPlayer->GetName(),
                    loginMs);
 
@@ -225,7 +225,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
 
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session",
                     "Exception during bot login: {}",
@@ -238,7 +238,7 @@ bool BotSession::LoginCharacterSync(ObjectGuid characterGuid)
         // Solution: Call LogoutPlayer() which sets m_playerLogout flag, then RemovePlayerFromMap()
         // is called during next Update() cycle on main thread (WorldSession.cpp:716)
         // This matches how real players logout and prevents race conditions
-        if (GetPlayer())
+    if (GetPlayer())
         {
             LogoutPlayer(false);  // false = don't save (login failed)
         }
@@ -255,7 +255,7 @@ bool BotSession::UpdateEnhanced(uint32 diff, PacketFilter& updater)
     // Check for timeout on pending logins
     if (_loginState == LoginState::QUERY_PENDING || _loginState == LoginState::LOGIN_IN_PROGRESS)
     {
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         if (now - _loginStartTime > LOGIN_TIMEOUT)
         {
             TC_LOG_ERROR("module.playerbot.session",
@@ -272,7 +272,7 @@ bool BotSession::UpdateEnhanced(uint32 diff, PacketFilter& updater)
     if (GetPlayer() && GetPlayer()->IsInWorld())
     {
         // Update AI if available
-        if (BotAI* ai = GetAI())
+    if (BotAI* ai = GetAI())
         {
             ai->UpdateAI(diff);
         }
@@ -299,7 +299,7 @@ bool BotSession::UpdateEnhanced(uint32 diff, PacketFilter& updater)
  */
 void BotSession::QueueWorldEntry(ObjectGuid characterGuid)
 {
-    auto worldEntry = std::make_shared<BotWorldEntry>(shared_from_this(), characterGuid);
+    auto worldEntry = ::std::make_shared<BotWorldEntry>(shared_from_this(), characterGuid);
 
     // Queue with the world entry manager
     uint32 queuePosition = BotWorldEntryQueue::instance()->QueueEntry(worldEntry);

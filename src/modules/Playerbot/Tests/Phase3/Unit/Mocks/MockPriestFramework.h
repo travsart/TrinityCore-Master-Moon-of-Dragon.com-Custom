@@ -163,8 +163,8 @@ public:
 
     // Insanity management (Shadow Priest)
     uint32 GetInsanity() const { return m_insanity; }
-    void SetInsanity(uint32 insanity) { m_insanity = std::min(insanity, 100u); }
-    void GenerateInsanity(uint32 amount) { m_insanity = std::min(m_insanity + amount, 100u); }
+    void SetInsanity(uint32 insanity) { m_insanity = ::std::min(insanity, 100u); }
+    void GenerateInsanity(uint32 amount) { m_insanity = ::std::min(m_insanity + amount, 100u); }
     void ConsumeInsanity(uint32 amount) { m_insanity = (amount > m_insanity) ? 0 : m_insanity - amount; }
     float GetInsanityPercent() const { return (m_insanity / 100.0f) * 100.0f; }
 
@@ -177,8 +177,8 @@ public:
 
     // Serendipity management (Holy Priest)
     uint32 GetSerendipityStacks() const { return m_serendipityStacks; }
-    void SetSerendipityStacks(uint32 stacks) { m_serendipityStacks = std::min(stacks, 2u); }
-    void AddSerendipityStack() { m_serendipityStacks = std::min(m_serendipityStacks + 1, 2u); }
+    void SetSerendipityStacks(uint32 stacks) { m_serendipityStacks = ::std::min(stacks, 2u); }
+    void AddSerendipityStack() { m_serendipityStacks = ::std::min(m_serendipityStacks + 1, 2u); }
     void ConsumeSerendipity() { m_serendipityStacks = 0; }
 
     // Shadow Form
@@ -196,7 +196,7 @@ public:
     // DoT tracking
     void ApplyDoT(uint32 spellId, uint32 durationMs)
     {
-        auto expirationTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(durationMs);
+        auto expirationTime = ::std::chrono::steady_clock::now() + ::std::chrono::milliseconds(durationMs);
         m_dotTimers[spellId] = expirationTime;
     }
 
@@ -205,7 +205,7 @@ public:
         auto it = m_dotTimers.find(spellId);
         if (it == m_dotTimers.end())
             return false;
-        return std::chrono::steady_clock::now() < it->second;
+        return ::std::chrono::steady_clock::now() < it->second;
     }
 
     uint32 GetDoTTimeRemaining(uint32 spellId) const
@@ -214,11 +214,11 @@ public:
         if (it == m_dotTimers.end())
             return 0;
 
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         if (now >= it->second)
             return 0;
 
-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(it->second - now);
+        auto remaining = ::std::chrono::duration_cast<::std::chrono::milliseconds>(it->second - now);
         return static_cast<uint32>(remaining.count());
     }
 
@@ -227,7 +227,7 @@ public:
     // HoT tracking (similar to DoTs)
     void ApplyHoT(uint32 spellId, uint32 durationMs)
     {
-        auto expirationTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(durationMs);
+        auto expirationTime = ::std::chrono::steady_clock::now() + ::std::chrono::milliseconds(durationMs);
         m_hotTimers[spellId] = expirationTime;
     }
 
@@ -236,7 +236,7 @@ public:
         auto it = m_hotTimers.find(spellId);
         if (it == m_hotTimers.end())
             return false;
-        return std::chrono::steady_clock::now() < it->second;
+        return ::std::chrono::steady_clock::now() < it->second;
     }
 
     uint32 GetHoTTimeRemaining(uint32 spellId) const
@@ -245,11 +245,11 @@ public:
         if (it == m_hotTimers.end())
             return 0;
 
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         if (now >= it->second)
             return 0;
 
-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(it->second - now);
+        auto remaining = ::std::chrono::duration_cast<::std::chrono::milliseconds>(it->second - now);
         return static_cast<uint32>(remaining.count());
     }
 
@@ -258,7 +258,7 @@ public:
     // Cooldown management with real timestamps
     void SetSpellCooldown(uint32 spellId, uint32 durationMs)
     {
-        auto expirationTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(durationMs);
+        auto expirationTime = ::std::chrono::steady_clock::now() + ::std::chrono::milliseconds(durationMs);
         m_cooldowns[spellId] = expirationTime;
     }
 
@@ -267,7 +267,7 @@ public:
         auto it = m_cooldowns.find(spellId);
         if (it == m_cooldowns.end())
             return false;
-        return std::chrono::steady_clock::now() < it->second;
+        return ::std::chrono::steady_clock::now() < it->second;
     }
 
     uint32 GetSpellCooldownRemaining(uint32 spellId) const
@@ -276,11 +276,11 @@ public:
         if (it == m_cooldowns.end())
             return 0;
 
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         if (now >= it->second)
             return 0;
 
-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(it->second - now);
+        auto remaining = ::std::chrono::duration_cast<::std::chrono::milliseconds>(it->second - now);
         return static_cast<uint32>(remaining.count());
     }
 
@@ -301,9 +301,9 @@ private:
     bool m_inShadowForm;
 
     // DoT/HoT tracking with expiration times
-    std::map<uint32, std::chrono::steady_clock::time_point> m_dotTimers;
-    std::map<uint32, std::chrono::steady_clock::time_point> m_hotTimers;
-    std::map<uint32, std::chrono::steady_clock::time_point> m_cooldowns;
+    ::std::map<uint32, ::std::chrono::steady_clock::time_point> m_dotTimers;
+    ::std::map<uint32, ::std::chrono::steady_clock::time_point> m_hotTimers;
+    ::std::map<uint32, ::std::chrono::steady_clock::time_point> m_cooldowns;
 };
 
 // ============================================================================
@@ -312,39 +312,39 @@ private:
 
 struct HolyPriestHealingScenario
 {
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockGroup> group;
-    std::vector<std::shared_ptr<MockPriestPlayer>> groupMembers;
+    ::std::shared_ptr<MockPriestPlayer> priest;
+    ::std::shared_ptr<MockGroup> group;
+    ::std::vector<::std::shared_ptr<MockPriestPlayer>> groupMembers;
     MockGuid tankGuid;
     bool criticalEmergency = false;
 };
 
 struct ShadowPriestDPSScenario
 {
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockUnit> boss;
+    ::std::shared_ptr<MockPriestPlayer> priest;
+    ::std::shared_ptr<MockUnit> boss;
     bool hasDoTs = false;
 };
 
 struct ShadowPriestAoEScenario
 {
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::vector<std::shared_ptr<MockUnit>> enemies;
+    ::std::shared_ptr<MockPriestPlayer> priest;
+    ::std::vector<::std::shared_ptr<MockUnit>> enemies;
     uint32 enemyCount = 0;
 };
 
 struct ShadowPriestBurstScenario
 {
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockUnit> boss;
+    ::std::shared_ptr<MockPriestPlayer> priest;
+    ::std::shared_ptr<MockUnit> boss;
     bool inVoidform = false;
 };
 
 struct HolyPriestRaidHealingScenario
 {
-    std::shared_ptr<MockPriestPlayer> priest;
-    std::shared_ptr<MockGroup> group;
-    std::vector<std::shared_ptr<MockPriestPlayer>> raidMembers;
+    ::std::shared_ptr<MockPriestPlayer> priest;
+    ::std::shared_ptr<MockGroup> group;
+    ::std::vector<::std::shared_ptr<MockPriestPlayer>> raidMembers;
     uint32 raidSize = 0;
     uint32 injuredCount = 0;
 };
@@ -367,7 +367,7 @@ public:
         HolyPriestHealingScenario scenario;
 
         // Create Holy Priest healer
-        scenario.priest = std::make_shared<MockPriestPlayer>();
+        scenario.priest = ::std::make_shared<MockPriestPlayer>();
         scenario.priest->SetLevel(80);
         scenario.priest->SetSpec(1); // Holy
 
@@ -385,12 +385,12 @@ public:
         scenario.priest->AddSpell(HOLY_FIRE);
 
         // Create group members
-        scenario.group = std::make_shared<MockGroup>();
+        scenario.group = ::std::make_shared<MockGroup>();
         scenario.group->AddMemberHelper(scenario.priest.get());
 
         for (uint32 i = 0; i < groupSize - 1; ++i)
         {
-            auto member = std::make_shared<MockPriestPlayer>();
+            auto member = ::std::make_shared<MockPriestPlayer>();
             member->SetLevel(80);
             member->SetMaxHealth(25000);
 
@@ -416,7 +416,7 @@ public:
                 else
                 {
                     float variance = ((i % 3) - 1) * 10.0f; // ±10% variance
-                    float memberHealthPct = std::max(10.0f, std::min(100.0f, avgHealthPct + variance));
+                    float memberHealthPct = ::std::max(10.0f, ::std::min(100.0f, avgHealthPct + variance));
                     member->SetHealth(static_cast<uint32>(25000 * (memberHealthPct / 100.0f)));
                 }
             }
@@ -439,7 +439,7 @@ public:
         ShadowPriestDPSScenario scenario;
 
         // Create Shadow Priest
-        scenario.priest = std::make_shared<MockPriestPlayer>();
+        scenario.priest = ::std::make_shared<MockPriestPlayer>();
         scenario.priest->SetLevel(80);
         scenario.priest->SetSpec(2); // Shadow
         scenario.priest->EnterShadowForm();
@@ -460,7 +460,7 @@ public:
         scenario.priest->AddSpell(DEVOURING_PLAGUE);
 
         // Create boss target
-        scenario.boss = std::make_shared<MockUnit>();
+        scenario.boss = ::std::make_shared<MockUnit>();
         scenario.boss->SetMaxHealth(bossHealth);
         scenario.boss->SetHealth(bossHealth);
         scenario.boss->SetCombatState(true);
@@ -484,7 +484,7 @@ public:
         ShadowPriestAoEScenario scenario;
 
         // Create Shadow Priest
-        scenario.priest = std::make_shared<MockPriestPlayer>();
+        scenario.priest = ::std::make_shared<MockPriestPlayer>();
         scenario.priest->SetLevel(80);
         scenario.priest->SetSpec(2); // Shadow
         scenario.priest->EnterShadowForm();
@@ -502,7 +502,7 @@ public:
         // Create enemy pack
         for (uint32 i = 0; i < enemyCount; ++i)
         {
-            auto enemy = std::make_shared<MockUnit>();
+            auto enemy = ::std::make_shared<MockUnit>();
             enemy->SetMaxHealth(enemyHealth);
             enemy->SetHealth(enemyHealth);
             enemy->SetCombatState(true);
@@ -521,7 +521,7 @@ public:
         ShadowPriestBurstScenario scenario;
 
         // Create Shadow Priest at max insanity
-        scenario.priest = std::make_shared<MockPriestPlayer>();
+        scenario.priest = ::std::make_shared<MockPriestPlayer>();
         scenario.priest->SetLevel(80);
         scenario.priest->SetSpec(2); // Shadow
         scenario.priest->EnterShadowForm();
@@ -544,7 +544,7 @@ public:
         scenario.priest->AddSpell(DARK_ASCENSION);
 
         // Create raid boss
-        scenario.boss = std::make_shared<MockUnit>();
+        scenario.boss = ::std::make_shared<MockUnit>();
         scenario.boss->SetMaxHealth(10000000); // 10M health raid boss
         scenario.boss->SetHealth(10000000);
         scenario.boss->SetCombatState(true);
@@ -562,7 +562,7 @@ public:
         HolyPriestRaidHealingScenario scenario;
 
         // Create Holy Priest
-        scenario.priest = std::make_shared<MockPriestPlayer>();
+        scenario.priest = ::std::make_shared<MockPriestPlayer>();
         scenario.priest->SetLevel(80);
         scenario.priest->SetSpec(1); // Holy
         scenario.priest->EnterChakraSanctuary(); // AoE healing mode
@@ -576,13 +576,13 @@ public:
         scenario.priest->AddSpell(PRAYER_OF_MENDING);
 
         // Create raid group
-        scenario.group = std::make_shared<MockGroup>();
+        scenario.group = ::std::make_shared<MockGroup>();
         scenario.raidSize = raidSize;
         scenario.injuredCount = injuredCount;
 
         for (uint32 i = 0; i < raidSize; ++i)
         {
-            auto member = std::make_shared<MockPriestPlayer>();
+            auto member = ::std::make_shared<MockPriestPlayer>();
             member->SetLevel(80);
             member->SetMaxHealth(25000);
 
@@ -671,20 +671,20 @@ class PriestPerformanceBenchmark
 {
 public:
     static void BenchmarkRotationExecution(
-        std::function<void()> rotationFunc,
+        ::std::function<void()> rotationFunc,
         uint32 iterations = 1000,
         uint32 expectedMaxMicroseconds = 50
     )
     {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = ::std::chrono::high_resolution_clock::now();
 
         for (uint32 i = 0; i < iterations; ++i)
         {
             rotationFunc();
         }
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
         float avgMicroseconds = static_cast<float>(duration) / static_cast<float>(iterations);
 
         EXPECT_LE(avgMicroseconds, expectedMaxMicroseconds)
@@ -692,12 +692,12 @@ public:
     }
 
     static void BenchmarkTargetSelection(
-        std::function<void*()> selectionFunc,
+        ::std::function<void*()> selectionFunc,
         uint32 iterations = 10000,
         uint32 expectedMaxMicroseconds = 10
     )
     {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = ::std::chrono::high_resolution_clock::now();
 
         for (uint32 i = 0; i < iterations; ++i)
         {
@@ -705,8 +705,8 @@ public:
             (void)result; // Prevent optimization
         }
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
         float avgMicroseconds = static_cast<float>(duration) / static_cast<float>(iterations);
 
         EXPECT_LE(avgMicroseconds, expectedMaxMicroseconds)

@@ -119,7 +119,7 @@ public:
             case 3671: // Lady Anacondra
             {
                 // Anacondra casts Sleep (8040) - HIGHEST PRIORITY INTERRUPT
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -127,7 +127,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Sleep is critical to interrupt
-                        if (spellId == 8040 || spellId == 700) // Sleep / Sleep visual
+    if (spellId == 8040 || spellId == 700) // Sleep / Sleep visual
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -138,7 +138,7 @@ public:
                         }
 
                         // Lightning Bolt also interruptible
-                        if (spellId == 9532) // Lightning Bolt
+    if (spellId == 9532) // Lightning Bolt
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -154,7 +154,7 @@ public:
             case 3669: // Lord Cobrahn
             {
                 // Cobrahn casts Lightning Bolt (9532) and Poison (744)
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -162,7 +162,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Lightning Bolt deals significant damage
-                        if (spellId == 9532)
+    if (spellId == 9532)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -178,7 +178,7 @@ public:
             case 3670: // Lord Pythas
             {
                 // Pythas casts Sleep (8040) and Healing Touch
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -186,7 +186,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Sleep is critical
-                        if (spellId == 8040)
+    if (spellId == 8040)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -203,7 +203,7 @@ public:
             case 3654: // Mutanus the Devourer
             {
                 // Mutanus casts Thundercrack (8147) - area stun
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -211,7 +211,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Thundercrack stuns entire group
-                        if (spellId == 8147)
+    if (spellId == 8147)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -249,14 +249,14 @@ public:
                     break;
 
                 // Find sleeping players
-                for (auto const& member : group->GetMemberSlots())
+    for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
                     // Check for Sleep debuff (8040)
-                    if (groupMember->HasAura(8040) || groupMember->HasAura(700))
+    if (groupMember->HasAura(8040) || groupMember->HasAura(700))
                     {
                         TC_LOG_DEBUG("module.playerbot", "WailingCavernsScript: Player is sleeping, needs wakeup");
 
@@ -282,7 +282,7 @@ public:
                         continue;
 
                     // Check for poison debuff
-                    if (groupMember->HasAura(744))
+    if (groupMember->HasAura(744))
                     {
                         TC_LOG_DEBUG("module.playerbot", "WailingCavernsScript: Player poisoned by Cobrahn");
                         // Dispel poison
@@ -311,13 +311,13 @@ public:
                 // Skum summons adds (Deviate Ravagers)
                 // Adds should be killed quickly as they overwhelm group
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 ::Creature* highestPriorityAdd = nullptr;
                 for (::Creature* add : adds)
                 {
                     // Target lowest health add for quick kill
-                    if (!highestPriorityAdd || add->GetHealthPct() < highestPriorityAdd->GetHealthPct())
+    if (!highestPriorityAdd || add->GetHealthPct() < highestPriorityAdd->GetHealthPct())
                     {
                         highestPriorityAdd = add;
                     }
@@ -360,7 +360,7 @@ public:
 
                     // Add some spread
                     float angle = player->GetAngle(boss) + (frand(-0.5f, 0.5f));
-                    meleePos.RelocateOffset({std::cos(angle) * 2.0f, std::sin(angle) * 2.0f, 0.0f});
+                    meleePos.RelocateOffset({::std::cos(angle) * 2.0f, ::std::sin(angle) * 2.0f, 0.0f});
 
                     if (player->GetExactDist(&meleePos) > 3.0f)
                     {
@@ -433,7 +433,7 @@ public:
                 if (role == DungeonRole::TANK || role == DungeonRole::MELEE_DPS)
                 {
                     // Maintain 5-8 yards (melee + growth buffer)
-                    if (currentDist > 10.0f || currentDist < 3.0f)
+    if (currentDist > 10.0f || currentDist < 3.0f)
                     {
                         HandlePositioning(player, boss);
                         return;

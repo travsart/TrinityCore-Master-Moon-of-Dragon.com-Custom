@@ -44,7 +44,7 @@ BotWorldPositioner* BotWorldPositioner::instance()
 
 bool BotWorldPositioner::LoadZones()
 {
-    if (_initialized.load(std::memory_order_acquire))
+    if (_initialized.load(::std::memory_order_acquire))
     {
         TC_LOG_WARN("playerbot", "BotWorldPositioner::LoadZones() - Already initialized, skipping");
         return true;
@@ -90,7 +90,7 @@ bool BotWorldPositioner::LoadZones()
     }
     _stats.capitalCities = static_cast<uint32>(_allianceCapitals.size() + _hordeCapitals.size());
 
-    _initialized.store(true, std::memory_order_release);
+    _initialized.store(true, ::std::memory_order_release);
 
     TC_LOG_INFO("playerbot", "BotWorldPositioner::LoadZones() - Loaded {} zones ({} starter, {} leveling, {} endgame, {} capitals)",
         _stats.totalZones, _stats.starterZones, _stats.levelingZones, _stats.endgameZones, _stats.capitalCities);
@@ -100,7 +100,7 @@ bool BotWorldPositioner::LoadZones()
 
 void BotWorldPositioner::ReloadZones()
 {
-    _initialized.store(false, std::memory_order_release);
+    _initialized.store(false, ::std::memory_order_release);
     LoadZones();
 }
 
@@ -220,16 +220,16 @@ void BotWorldPositioner::ValidateZones()
     for (auto& zone : _zones)
     {
         // Validate level range
-        if (zone.minLevel > zone.maxLevel)
+    if (zone.minLevel > zone.maxLevel)
         {
             TC_LOG_ERROR("playerbot", "BotWorldPositioner::ValidateZones() - Invalid level range for zone {}: {} > {}",
                 zone.zoneId, zone.minLevel, zone.maxLevel);
-            std::swap(zone.minLevel, zone.maxLevel);
+            ::std::swap(zone.minLevel, zone.maxLevel);
             ++invalidCount;
         }
 
         // Validate coordinates (basic sanity check)
-        if (std::abs(zone.x) > 20000.0f || std::abs(zone.y) > 20000.0f || std::abs(zone.z) > 10000.0f)
+    if (::std::abs(zone.x) > 20000.0f || ::std::abs(zone.y) > 20000.0f || ::std::abs(zone.z) > 10000.0f)
         {
             TC_LOG_WARN("playerbot", "BotWorldPositioner::ValidateZones() - Suspicious coordinates for zone {}: ({}, {}, {})",
                 zone.zoneId, zone.x, zone.y, zone.z);
@@ -267,11 +267,11 @@ void BotWorldPositioner::BuildZoneCache()
     // Build capital city lists
     for (auto const& zone : _zones)
     {
-        if ((zone.zoneName.find("City") != std::string::npos ||
-             zone.zoneName.find("Ironforge") != std::string::npos ||
-             zone.zoneName.find("Darnassus") != std::string::npos ||
-             zone.zoneName.find("Thunder Bluff") != std::string::npos ||
-             zone.zoneName.find("Undercity") != std::string::npos) &&
+        if ((zone.zoneName.find("City") != ::std::string::npos ||
+             zone.zoneName.find("Ironforge") != ::std::string::npos ||
+             zone.zoneName.find("Darnassus") != ::std::string::npos ||
+             zone.zoneName.find("Thunder Bluff") != ::std::string::npos ||
+             zone.zoneName.find("Undercity") != ::std::string::npos) &&
             zone.minLevel == 1 && zone.maxLevel >= 70)
         {
             if (zone.faction == TEAM_ALLIANCE)
@@ -289,60 +289,59 @@ void BotWorldPositioner::BuildRaceZoneMapping()
 {
     // Map races to their starter zones based on zone names
     // This is a simplified mapping - in production, use DBC data
-
     for (auto const& zone : _zones)
     {
         if (!zone.isStarterZone)
             continue;
 
         // Alliance races
-        if (zone.zoneName.find("Elwynn") != std::string::npos)
+    if (zone.zoneName.find("Elwynn") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_HUMAN].push_back(&zone);
         }
-        else if (zone.zoneName.find("Dun Morogh") != std::string::npos)
+        else if (zone.zoneName.find("Dun Morogh") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_DWARF].push_back(&zone);
             _starterZonesByRace[RACE_GNOME].push_back(&zone);
         }
-        else if (zone.zoneName.find("Teldrassil") != std::string::npos)
+        else if (zone.zoneName.find("Teldrassil") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_NIGHTELF].push_back(&zone);
         }
-        else if (zone.zoneName.find("Azuremyst") != std::string::npos)
+        else if (zone.zoneName.find("Azuremyst") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_DRAENEI].push_back(&zone);
         }
-        else if (zone.zoneName.find("Gilneas") != std::string::npos)
+        else if (zone.zoneName.find("Gilneas") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_WORGEN].push_back(&zone);
         }
 
         // Horde races
-        else if (zone.zoneName.find("Durotar") != std::string::npos)
+        else if (zone.zoneName.find("Durotar") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_ORC].push_back(&zone);
             _starterZonesByRace[RACE_TROLL].push_back(&zone);
         }
-        else if (zone.zoneName.find("Tirisfal") != std::string::npos)
+        else if (zone.zoneName.find("Tirisfal") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_UNDEAD_PLAYER].push_back(&zone);
         }
-        else if (zone.zoneName.find("Mulgore") != std::string::npos)
+        else if (zone.zoneName.find("Mulgore") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_TAUREN].push_back(&zone);
         }
-        else if (zone.zoneName.find("Eversong") != std::string::npos)
+        else if (zone.zoneName.find("Eversong") != ::std::string::npos)
         {
             _starterZonesByRace[RACE_BLOODELF].push_back(&zone);
         }
 
         // Neutral/Allied races (use capital cities)
-        else if (zone.zoneName.find("Stormwind") != std::string::npos && zone.isStarterZone)
+        else if (zone.zoneName.find("Stormwind") != ::std::string::npos && zone.isStarterZone)
         {
             _starterZonesByRace[RACE_PANDAREN_ALLIANCE].push_back(&zone);
         }
-        else if (zone.zoneName.find("Orgrimmar") != std::string::npos && zone.isStarterZone)
+        else if (zone.zoneName.find("Orgrimmar") != ::std::string::npos && zone.isStarterZone)
         {
             _starterZonesByRace[RACE_PANDAREN_HORDE].push_back(&zone);
             _starterZonesByRace[RACE_GOBLIN].push_back(&zone);
@@ -387,7 +386,7 @@ ZoneChoice BotWorldPositioner::GetStarterZone(uint8 race, TeamId faction)
     }
 
     // Fallback: Use any starter zone for faction
-    std::vector<ZonePlacement const*> candidates;
+    ::std::vector<ZonePlacement const*> candidates;
     for (auto const& zone : _zones)
     {
         if (zone.isStarterZone && zone.IsValidForFaction(faction))
@@ -410,7 +409,7 @@ ZoneChoice BotWorldPositioner::GetStarterZone(uint8 race, TeamId faction)
 ZoneChoice BotWorldPositioner::SelectByLevelRange(uint32 level, TeamId faction) const
 {
     // Get all zones valid for this level
-    std::vector<ZonePlacement const*> candidates;
+    ::std::vector<ZonePlacement const*> candidates;
 
     for (auto const& zone : _zones)
     {
@@ -431,7 +430,7 @@ ZoneChoice BotWorldPositioner::SelectByLevelRange(uint32 level, TeamId faction) 
     return SelectWeighted(candidates);
 }
 
-ZoneChoice BotWorldPositioner::SelectWeighted(std::vector<ZonePlacement const*> const& candidates) const
+ZoneChoice BotWorldPositioner::SelectWeighted(::std::vector<ZonePlacement const*> const& candidates) const
 {
     if (candidates.empty())
         return ZoneChoice();
@@ -455,7 +454,7 @@ float BotWorldPositioner::CalculateSuitability(ZonePlacement const* zone, uint32
     uint32 offset = (level > zone->minLevel) ? (level - zone->minLevel) : 0;
     float fit = 1.0f - (static_cast<float>(offset) / static_cast<float>(range));
 
-    return std::max(0.0f, std::min(1.0f, fit));
+    return ::std::max(0.0f, ::std::min(1.0f, fit));
 }
 
 ZoneChoice BotWorldPositioner::GetCapitalCity(TeamId faction)
@@ -472,9 +471,9 @@ ZoneChoice BotWorldPositioner::GetCapitalCity(TeamId faction)
     return ZoneChoice(capitals[idx], 0.5f);
 }
 
-std::vector<ZonePlacement const*> BotWorldPositioner::GetValidZones(uint32 level, TeamId faction) const
+::std::vector<ZonePlacement const*> BotWorldPositioner::GetValidZones(uint32 level, TeamId faction) const
 {
-    std::vector<ZonePlacement const*> result;
+    ::std::vector<ZonePlacement const*> result;
 
     for (auto const& zone : _zones)
     {
@@ -553,10 +552,10 @@ bool BotWorldPositioner::ValidateTeleportCoordinates(ZonePlacement const* placem
         return false;
 
     // Basic coordinate sanity checks
-    if (std::abs(placement->x) > 20000.0f || std::abs(placement->y) > 20000.0f)
+    if (::std::abs(placement->x) > 20000.0f || ::std::abs(placement->y) > 20000.0f)
         return false;
 
-    if (std::abs(placement->z) > 10000.0f)
+    if (::std::abs(placement->z) > 10000.0f)
         return false;
 
     // Could add map existence checks here
@@ -582,7 +581,7 @@ ZonePlacement const* BotWorldPositioner::GetZonePlacement(uint32 zoneId) const
     return (itr != _zoneById.end()) ? itr->second : nullptr;
 }
 
-std::string BotWorldPositioner::GetZoneName(uint32 zoneId) const
+::std::string BotWorldPositioner::GetZoneName(uint32 zoneId) const
 {
     auto const* placement = GetZonePlacement(zoneId);
     return placement ? placement->zoneName : "Unknown Zone";
@@ -619,8 +618,8 @@ void BotWorldPositioner::PrintZoneReport() const
     if (!_stats.placementsPerZone.empty())
     {
         TC_LOG_INFO("playerbot", "Top 10 Most Popular Zones:");
-        std::vector<std::pair<uint32, uint32>> sorted(_stats.placementsPerZone.begin(), _stats.placementsPerZone.end());
-        std::sort(sorted.begin(), sorted.end(),
+        ::std::vector<::std::pair<uint32, uint32>> sorted(_stats.placementsPerZone.begin(), _stats.placementsPerZone.end());
+        ::std::sort(sorted.begin(), sorted.end(),
             [](auto const& a, auto const& b) { return a.second > b.second; });
 
         size_t count = 0;
@@ -629,7 +628,7 @@ void BotWorldPositioner::PrintZoneReport() const
             if (count++ >= 10)
                 break;
 
-            std::string zoneName = GetZoneName(zoneId);
+            ::std::string zoneName = GetZoneName(zoneId);
             TC_LOG_INFO("playerbot", "  {} ({}): {} bots", zoneName, zoneId, placements);
         }
     }
@@ -637,9 +636,9 @@ void BotWorldPositioner::PrintZoneReport() const
     TC_LOG_INFO("playerbot", "====================================================================");
 }
 
-std::string BotWorldPositioner::GetZoneSummary() const
+::std::string BotWorldPositioner::GetZoneSummary() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "BotWorldPositioner: " << _stats.totalZones << " zones ("
         << _stats.starterZones << " starter, "
         << _stats.levelingZones << " leveling, "

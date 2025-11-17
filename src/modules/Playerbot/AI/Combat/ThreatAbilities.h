@@ -43,13 +43,13 @@ struct ThreatAbilityData
     bool requiresTarget;
     bool isPassive;
     uint32 minLevel;
-    std::string name;
+    ::std::string name;
 
     ThreatAbilityData() = default;
     ThreatAbilityData(uint32 id, ThreatAbilityType t, float mod, uint32 cd,
                      uint32 dur = 0, uint32 cost = 0, float r = 5.0f,
                      bool target = true, bool passive = false, uint32 level = 1,
-                     std::string const& n = "")
+                     ::std::string const& n = "")
         : spellId(id), type(t), threatModifier(mod), cooldownMs(cd),
           durationMs(dur), resourceCost(cost), range(r), requiresTarget(target),
           isPassive(passive), minLevel(level), name(n) {}
@@ -66,20 +66,20 @@ public:
     }
 
     // Get abilities by class and specialization
-    std::vector<ThreatAbilityData> GetClassAbilities(Classes playerClass, uint32 spec = 0) const;
+    ::std::vector<ThreatAbilityData> GetClassAbilities(Classes playerClass, uint32 spec = 0) const;
 
     // Get specific ability data
     ThreatAbilityData const* GetAbility(uint32 spellId) const;
 
     // Get abilities by type
-    std::vector<ThreatAbilityData> GetAbilitiesByType(ThreatAbilityType type) const;
+    ::std::vector<ThreatAbilityData> GetAbilitiesByType(ThreatAbilityType type) const;
 
 private:
     ThreatAbilitiesDB() { Initialize(); }
     void Initialize();
 
-    std::unordered_map<uint32, ThreatAbilityData> _abilities;
-    std::unordered_map<Classes, std::vector<uint32>> _classAbilities;
+    ::std::unordered_map<uint32, ThreatAbilityData> _abilities;
+    ::std::unordered_map<Classes, ::std::vector<uint32>> _classAbilities;
 };
 
 // WoW 11.2 Spell IDs for threat abilities

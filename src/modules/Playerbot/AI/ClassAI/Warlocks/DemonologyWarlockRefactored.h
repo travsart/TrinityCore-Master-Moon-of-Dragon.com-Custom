@@ -21,13 +21,25 @@
 #include "SpellAuraEffects.h"
 #include "Log.h"
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // DEMONOLOGY WARLOCK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -113,7 +125,7 @@ struct ManaSoulShardResourceDemo
         // Mana regenerates naturally
         if (mana < maxMana) {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
-            mana = std::min(mana + regenAmount, maxMana);
+            mana = ::std::min(mana + regenAmount, maxMana);
         }
         available = mana > 0;
     }
@@ -221,7 +233,7 @@ public:
         // Wild Imps naturally despawn after 20 sec, but we track via spells
         // Decay imps over time
         if (_wildImpCount > 0 && rand() % 100 < 5) // 5% chance per update
-            _wildImpCount = std::max(0u, _wildImpCount - 1);
+            _wildImpCount = ::std::max(0u, _wildImpCount - 1);
     }
 
 private:
@@ -239,7 +251,7 @@ private:
 // DEMONOLOGY WARLOCK REFACTORED
 // ============================================================================
 
-class DemonologyWarlockRefactored : public RangedDpsSpecialization<ManaSoulShardResourceDemo>, public WarlockSpecialization
+class DemonologyWarlockRefactored : public RangedDpsSpecialization<ManaSoulShardResourceDemo>
 {
 public:
     using Base = RangedDpsSpecialization<ManaSoulShardResourceDemo>;
@@ -247,12 +259,13 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit DemonologyWarlockRefactored(Player* bot)        : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
-        , WarlockSpecialization(bot)
+    explicit DemonologyWarlockRefactored(Player* bot)
+        : RangedDpsSpecialization<ManaSoulShardResourceDemo>(bot)
         , _demonTracker()
         , _demonicCoreStacks(0)
         , _lastTyrantTime(0)
-    {        // Initialize mana/soul shard resources
+    {
+        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
         TC_LOG_DEBUG("playerbot", "DemonologyWarlockRefactored initialized for {}", bot->GetName());
 
@@ -260,7 +273,8 @@ public:
         InitializeDemonologyMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -302,7 +316,7 @@ protected:
         // Priority 1: Summon Demonic Tyrant (when we have multiple demons out)
         if (demonCount >= 3 && this->CanCastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_DEMONIC_TYRANT);
+            this->CastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot());
             _demonTracker.SummonTyrant();
             _lastTyrantTime = GameTime::GetGameTimeMS();
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Demonic Tyrant ({} demons)", demonCount);
@@ -312,7 +326,7 @@ protected:
         // Priority 2: Call Dreadstalkers (core demon summon)
         if (shards >= 2 && this->CanCastSpell(CALL_DREADSTALKERS, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), CALL_DREADSTALKERS);
+            this->CastSpell(CALL_DREADSTALKERS, this->GetBot());
             _demonTracker.SummonDreadstalkers();
             ConsumeSoulShard(2);
             return;
@@ -321,21 +335,21 @@ protected:
         // Priority 3: Grimoire: Felguard (talent, major CD)
         if (this->CanCastSpell(GRIMOIRE_FELGUARD, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), GRIMOIRE_FELGUARD);
+            this->CastSpell(GRIMOIRE_FELGUARD, this->GetBot());
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {CALL_DREADSTALKERS, 0, 1},
-            {SUMMON_DEMONIC_TYRANT, 90000, 1},
-            {GRIMOIRE_FELGUARD, CooldownPresets::MINOR_OFFENSIVE, 1},
-            {NETHER_PORTAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {GUILLOTINE, CooldownPresets::OFFENSIVE_45, 1},
-            {UNENDING_RESOLVE_DEMO, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DARK_PACT_DEMO, CooldownPresets::OFFENSIVE_60, 1},
-            {MORTAL_COIL_DEMO, CooldownPresets::OFFENSIVE_45, 1},
-            {SHADOWFURY, CooldownPresets::OFFENSIVE_60, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {CALL_DREADSTALKERS, 0, 1},
+        // COMMENTED OUT:             {SUMMON_DEMONIC_TYRANT, 90000, 1},
+        // COMMENTED OUT:             {GRIMOIRE_FELGUARD, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {NETHER_PORTAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {GUILLOTINE, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {UNENDING_RESOLVE_DEMO, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DARK_PACT_DEMO, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {MORTAL_COIL_DEMO, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {SHADOWFURY, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Demonology: Grimoire Felguard");
             return;
@@ -344,7 +358,7 @@ protected:
         // Priority 4: Summon Vilefiend (talent)
         if (shards >= 1 && this->CanCastSpell(SUMMON_VILEFIEND, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_VILEFIEND);
+            this->CastSpell(SUMMON_VILEFIEND, this->GetBot());
             _demonTracker.SummonVilefiend();
             ConsumeSoulShard(1);
             return;
@@ -353,7 +367,7 @@ protected:
         // Priority 5: Nether Portal (talent, major CD)
         if (shards >= 1 && this->CanCastSpell(NETHER_PORTAL, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), NETHER_PORTAL);
+            this->CastSpell(NETHER_PORTAL, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Demonology: Nether Portal");
             return;
         }
@@ -361,7 +375,7 @@ protected:
         // Priority 6: Hand of Gul'dan (summon Wild Imps)
         if (shards >= 3 && this->CanCastSpell(HAND_OF_GULDAN, target))
         {
-            this->CastSpell(target, HAND_OF_GULDAN);
+            this->CastSpell(HAND_OF_GULDAN, target);
             _demonTracker.SummonWildImps(3); // Summons 3 Wild Imps per cast
             ConsumeSoulShard(3);
             return;
@@ -370,7 +384,7 @@ protected:
         // Priority 7: Demonbolt (use Demonic Core procs)
         if (_demonicCoreStacks > 0 || (shards >= 2 && this->CanCastSpell(DEMONBOLT, target)))
         {
-            this->CastSpell(target, DEMONBOLT);
+            this->CastSpell(DEMONBOLT, target);
             if (_demonicCoreStacks > 0)
                 _demonicCoreStacks--;
             else
@@ -382,14 +396,14 @@ protected:
         // Priority 8: Guillotine (Felguard burst)
         if (this->CanCastSpell(GUILLOTINE, target))
         {
-            this->CastSpell(target, GUILLOTINE);
+            this->CastSpell(GUILLOTINE, target);
             return;
         }
 
         // Priority 9: Shadow Bolt (filler + shard gen)
         if (shards < 5 && this->CanCastSpell(SHADOW_BOLT_DEMO, target))
         {
-            this->CastSpell(target, SHADOW_BOLT_DEMO);
+            this->CastSpell(SHADOW_BOLT_DEMO, target);
             GenerateSoulShard(1);
             return;
         }
@@ -403,7 +417,7 @@ protected:
         // Priority 1: Summon Demonic Tyrant
         if (_demonTracker.GetActiveDemonCount() >= 3 && this->CanCastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_DEMONIC_TYRANT);
+            this->CastSpell(SUMMON_DEMONIC_TYRANT, this->GetBot());
             _demonTracker.SummonTyrant();
             return;
         }
@@ -411,7 +425,7 @@ protected:
         // Priority 2: Implosion (explode Wild Imps for AoE)
         if (wildImps >= 4 && this->CanCastSpell(IMPLOSION, target))
         {
-            this->CastSpell(target, IMPLOSION);
+            this->CastSpell(IMPLOSION, target);
             _demonTracker.ExplodeWildImps();
             TC_LOG_DEBUG("playerbot", "Demonology: Implosion ({} imps)", wildImps);
             return;
@@ -420,7 +434,7 @@ protected:
         // Priority 3: Call Dreadstalkers
         if (shards >= 2 && this->CanCastSpell(CALL_DREADSTALKERS, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), CALL_DREADSTALKERS);
+            this->CastSpell(CALL_DREADSTALKERS, this->GetBot());
             _demonTracker.SummonDreadstalkers();
             ConsumeSoulShard(2);
             return;
@@ -429,7 +443,7 @@ protected:
         // Priority 4: Hand of Gul'dan (AoE + summon imps)
         if (shards >= 3 && this->CanCastSpell(HAND_OF_GULDAN, target))
         {
-            this->CastSpell(target, HAND_OF_GULDAN);
+            this->CastSpell(HAND_OF_GULDAN, target);
             _demonTracker.SummonWildImps(3);
             ConsumeSoulShard(3);
             return;
@@ -438,7 +452,7 @@ protected:
         // Priority 5: Summon Vilefiend
         if (shards >= 1 && this->CanCastSpell(SUMMON_VILEFIEND, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_VILEFIEND);
+            this->CastSpell(SUMMON_VILEFIEND, this->GetBot());
             _demonTracker.SummonVilefiend();
             ConsumeSoulShard(1);
             return;
@@ -447,7 +461,7 @@ protected:
         // Priority 6: Demonbolt (proc or shard)
         if (_demonicCoreStacks > 0 || (shards >= 2 && this->CanCastSpell(DEMONBOLT, target)))
         {
-            this->CastSpell(target, DEMONBOLT);
+            this->CastSpell(DEMONBOLT, target);
             if (_demonicCoreStacks > 0)
                 _demonicCoreStacks--;
             else
@@ -459,7 +473,7 @@ protected:
         // Priority 7: Shadow Bolt filler
         if (shards < 5 && this->CanCastSpell(SHADOW_BOLT_DEMO, target))
         {
-            this->CastSpell(target, SHADOW_BOLT_DEMO);
+            this->CastSpell(SHADOW_BOLT_DEMO, target);
             GenerateSoulShard(1);
             return;
         }
@@ -473,7 +487,7 @@ protected:
         // Unending Resolve
         if (healthPct < 40.0f && this->CanCastSpell(UNENDING_RESOLVE_DEMO, bot))
         {
-            this->CastSpell(bot, UNENDING_RESOLVE_DEMO);
+            this->CastSpell(UNENDING_RESOLVE_DEMO, bot);
             TC_LOG_DEBUG("playerbot", "Demonology: Unending Resolve");
             return;
         }
@@ -481,7 +495,7 @@ protected:
         // Dark Pact
         if (healthPct < 50.0f && this->CanCastSpell(DARK_PACT_DEMO, bot))
         {
-            this->CastSpell(bot, DARK_PACT_DEMO);
+            this->CastSpell(DARK_PACT_DEMO, bot);
             TC_LOG_DEBUG("playerbot", "Demonology: Dark Pact");
             return;
         }
@@ -489,7 +503,7 @@ protected:
         // Mortal Coil
         if (healthPct < 60.0f && this->CanCastSpell(MORTAL_COIL_DEMO, bot))
         {
-            this->CastSpell(bot, MORTAL_COIL_DEMO);
+            this->CastSpell(MORTAL_COIL_DEMO, bot);
             TC_LOG_DEBUG("playerbot", "Demonology: Mortal Coil");
             return;
         }
@@ -499,7 +513,7 @@ protected:
         {
             if (pet->GetHealthPct() < 40.0f && this->CanCastSpell(HEALTH_FUNNEL_DEMO, pet))
             {
-                this->CastSpell(pet, HEALTH_FUNNEL_DEMO);
+                this->CastSpell(HEALTH_FUNNEL_DEMO, pet);
                 TC_LOG_DEBUG("playerbot", "Demonology: Health Funnel");
                 return;
             }
@@ -521,7 +535,7 @@ protected:
 
         // Summon Felguard (Demonology's main pet)
         if (this->CanCastSpell(SUMMON_FELGUARD, bot))
-        {            this->CastSpell(bot, SUMMON_FELGUARD);
+        {            this->CastSpell(SUMMON_FELGUARD, bot);
             TC_LOG_DEBUG("playerbot", "Demonology: Summon Felguard");
         }
     }
@@ -550,7 +564,7 @@ private:
 
     void GenerateSoulShard(uint32 amount)
     {
-        this->_resource.soulShards = std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
+        this->_resource.soulShards = ::std::min(this->_resource.soulShards + amount, this->_resource.maxSoulShards);
     }
 
     void ConsumeSoulShard(uint32 amount)
@@ -559,11 +573,9 @@ private:
     }
 
     void InitializeDemonologyMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -638,13 +650,13 @@ private:
             auto root = Selector("Demonology Warlock DPS", {
                 // Tier 1: Burst Window (Demonic Tyrant extends all demons)
                 Sequence("Burst Cooldown", {
-                    Condition("3+ demons active", [this](Player*) {
+                    Condition("3+ demons active", [this](Player*, Unit*) {
                         return this->_demonTracker.GetActiveDemonCount() >= 3;
                     }),
-                    Action("Cast Demonic Tyrant", [this](Player* bot) {
+                    bot::ai::Action("Cast Demonic Tyrant", [this](Player* bot, Unit*) {
                         if (this->CanCastSpell(SUMMON_DEMONIC_TYRANT, bot))
                         {
-                            this->CastSpell(bot, SUMMON_DEMONIC_TYRANT);
+                            this->CastSpell(SUMMON_DEMONIC_TYRANT, bot);
                             this->_demonTracker.SummonTyrant();
                             return NodeStatus::SUCCESS;
                         }
@@ -654,18 +666,18 @@ private:
 
                 // Tier 2: Demon Summoning (Dreadstalkers → Vilefiend → Hand of Gul'dan)
                 Sequence("Demon Summoning", {
-                    Condition("Has target and shards", [this](Player* bot) {
+                    Condition("Has target and shards", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && this->_resource.soulShards >= 1;
                     }),
                     Selector("Summon demons", {
                         Sequence("Dreadstalkers", {
-                            Condition("2+ shards", [this](Player*) {
+                            Condition("2+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            Action("Cast Call Dreadstalkers", [this](Player* bot) {
+                            bot::ai::Action("Cast Call Dreadstalkers", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(CALL_DREADSTALKERS, bot))
                                 {
-                                    this->CastSpell(bot, CALL_DREADSTALKERS);
+                                    this->CastSpell(CALL_DREADSTALKERS, bot);
                                     this->_demonTracker.SummonDreadstalkers();
                                     this->ConsumeSoulShard(2);
                                     return NodeStatus::SUCCESS;
@@ -674,13 +686,13 @@ private:
                             })
                         }),
                         Sequence("Vilefiend (talent)", {
-                            Condition("1+ shard and has spell", [this](Player* bot) {
+                            Condition("1+ shard and has spell", [this](Player* bot, Unit*) {
                                 return this->_resource.soulShards >= 1 && bot->HasSpell(SUMMON_VILEFIEND);
                             }),
-                            Action("Cast Summon Vilefiend", [this](Player* bot) {
+                            bot::ai::Action("Cast Summon Vilefiend", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(SUMMON_VILEFIEND, bot))
                                 {
-                                    this->CastSpell(bot, SUMMON_VILEFIEND);
+                                    this->CastSpell(SUMMON_VILEFIEND, bot);
                                     this->_demonTracker.SummonVilefiend();
                                     this->ConsumeSoulShard(1);
                                     return NodeStatus::SUCCESS;
@@ -689,14 +701,14 @@ private:
                             })
                         }),
                         Sequence("Hand of Gul'dan", {
-                            Condition("3+ shards", [this](Player*) {
+                            Condition("3+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 3;
                             }),
-                            Action("Cast Hand of Gul'dan", [this](Player* bot) {
+                            bot::ai::Action("Cast Hand of Gul'dan", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(HAND_OF_GULDAN, target))
                                 {
-                                    this->CastSpell(target, HAND_OF_GULDAN);
+                                    this->CastSpell(HAND_OF_GULDAN, target);
                                     this->_demonTracker.SummonWildImps(3);
                                     this->ConsumeSoulShard(3);
                                     return NodeStatus::SUCCESS;
@@ -709,19 +721,19 @@ private:
 
                 // Tier 3: Demon Abilities (Demonbolt, Implosion, Cooldowns)
                 Sequence("Demon Abilities", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Use demon abilities", {
                         Sequence("Demonbolt (proc or shard)", {
-                            Condition("Demonic Core proc or 2+ shards", [this](Player*) {
+                            Condition("Demonic Core proc or 2+ shards", [this](Player*, Unit*) {
                                 return this->_demonicCoreStacks > 0 || this->_resource.soulShards >= 2;
                             }),
-                            Action("Cast Demonbolt", [this](Player* bot) {
+                            bot::ai::Action("Cast Demonbolt", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DEMONBOLT, target))
                                 {
-                                    this->CastSpell(target, DEMONBOLT);
+                                    this->CastSpell(DEMONBOLT, target);
                                     if (this->_demonicCoreStacks > 0)
                                         this->_demonicCoreStacks--;
                                     else
@@ -733,14 +745,14 @@ private:
                             })
                         }),
                         Sequence("Implosion (AoE)", {
-                            Condition("4+ Wild Imps", [this](Player*) {
+                            Condition("4+ Wild Imps", [this](Player*, Unit*) {
                                 return this->_demonTracker.GetWildImpCount() >= 4;
                             }),
-                            Action("Cast Implosion", [this](Player* bot) {
+                            bot::ai::Action("Cast Implosion", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMPLOSION, target))
                                 {
-                                    this->CastSpell(target, IMPLOSION);
+                                    this->CastSpell(IMPLOSION, target);
                                     this->_demonTracker.ExplodeWildImps();
                                     return NodeStatus::SUCCESS;
                                 }
@@ -748,14 +760,14 @@ private:
                             })
                         }),
                         Sequence("Guillotine (Felguard burst)", {
-                            Condition("Has Guillotine talent", [this](Player* bot) {
+                            Condition("Has Guillotine talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(GUILLOTINE);
                             }),
-                            Action("Cast Guillotine", [this](Player* bot) {
+                            bot::ai::Action("Cast Guillotine", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(GUILLOTINE, target))
                                 {
-                                    this->CastSpell(target, GUILLOTINE);
+                                    this->CastSpell(GUILLOTINE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -766,14 +778,14 @@ private:
 
                 // Tier 4: Shard Generator (Shadow Bolt filler)
                 Sequence("Shard Generator", {
-                    Condition("Has target and < 5 shards", [this](Player* bot) {
+                    Condition("Has target and < 5 shards", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim() && this->_resource.soulShards < 5;
                     }),
-                    Action("Cast Shadow Bolt", [this](Player* bot) {
+                    bot::ai::Action("Cast Shadow Bolt", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(SHADOW_BOLT_DEMO, target))
                         {
-                            this->CastSpell(target, SHADOW_BOLT_DEMO);
+                            this->CastSpell(SHADOW_BOLT_DEMO, target);
                             this->GenerateSoulShard(1);
                             return NodeStatus::SUCCESS;
                         }

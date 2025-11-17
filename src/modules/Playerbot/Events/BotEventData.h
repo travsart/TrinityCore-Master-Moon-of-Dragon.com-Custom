@@ -63,7 +63,7 @@ namespace Events
     {
         uint32 currencyId = 0;
         uint32 amount = 0;
-        std::string currencyName;
+        ::std::string currencyName;
     };
 
     // ========================================================================
@@ -143,7 +143,7 @@ namespace Events
     {
         ObjectGuid bossGuid;
         uint32 creatureEntry = 0;
-        std::string bossName;
+        ::std::string bossName;
         uint8 healthPercent = 100;
         uint32 encounterTime = 0;  // Milliseconds since engage
     };
@@ -155,7 +155,7 @@ namespace Events
         uint32 timeElapsed = 0;
         uint32 deathCount = 0;
         uint32 timeAdded = 0;       // Seconds added from deaths
-        std::vector<uint32> activeAffixes;
+        ::std::vector<uint32> activeAffixes;
         bool isUpgrade = false;     // +1, +2, or +3
     };
 
@@ -213,7 +213,7 @@ namespace Events
     {
         uint32 talentId = 0;
         uint32 heroTreeId = 0;
-        std::string heroTreeName;   // e.g., "Deathbringer" for DK
+        ::std::string heroTreeName;   // e.g., "Deathbringer" for DK
         uint8 pointsSpent = 0;
     };
 
@@ -222,7 +222,7 @@ namespace Events
         uint32 achievementId = 0;
         uint32 reputationId = 0;
         uint32 reputationGain = 0;
-        std::string factionName;
+        ::std::string factionName;
     };
 
     // ========================================================================
@@ -232,8 +232,8 @@ namespace Events
     struct ChatEventData
     {
         ObjectGuid senderGuid;
-        std::string senderName;
-        std::string message;
+        ::std::string senderName;
+        ::std::string message;
         uint8 chatType = 0;         // 0=say, 1=whisper, 2=party, 3=raid
         uint8 language = 0;
     };
@@ -241,8 +241,8 @@ namespace Events
     struct CommandEventData
     {
         ObjectGuid commanderGuid;   // Who issued the command
-        std::string command;
-        std::vector<std::string> args;
+        ::std::string command;
+        ::std::vector<::std::string> args;
         uint32 commandId = 0;       // For command tracking
     };
 
@@ -258,7 +258,7 @@ namespace Events
     struct GuildEventData
     {
         ObjectGuid guildGuid;
-        std::string guildName;
+        ::std::string guildName;
         uint32 guildId = 0;
         uint8 guildRank = 0;
         uint32 guildMemberCount = 0;
@@ -267,7 +267,7 @@ namespace Events
     struct FriendEventData
     {
         ObjectGuid friendGuid;
-        std::string friendName;
+        ::std::string friendName;
         bool isOnline = false;
         uint8 level = 0;
         uint32 zoneId = 0;
@@ -277,7 +277,7 @@ namespace Events
     {
         uint32 emoteId = 0;
         ObjectGuid targetGuid;
-        std::string emoteName;
+        ::std::string emoteName;
         bool isTextEmote = false;
     };
 
@@ -425,7 +425,7 @@ namespace Events
     {
         uint32 mailId = 0;
         ObjectGuid senderGuid;
-        std::string subject;
+        ::std::string subject;
         uint32 goldAttached = 0;             // Copper
         uint32 codAmount = 0;                // Copper for COD
         uint32 itemCount = 0;
@@ -504,8 +504,8 @@ namespace Events
      * Holds any of the specialized event data structures.
      * Use std::get<T> or std::holds_alternative<T> to access.
      */
-    using EventDataVariant = std::variant<
-        std::monostate,             // No data
+    using EventDataVariant = ::std::variant<
+        ::std::monostate,             // No data
         LootRollData,
         LootReceivedData,
         CurrencyGainedData,

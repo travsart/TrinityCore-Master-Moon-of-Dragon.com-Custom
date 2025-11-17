@@ -13,8 +13,54 @@
 #include "ObjectGuid.h"
 #include <string>
 #include <functional>
+#include <chrono>
 
-struct LifecycleEventInfo;
+enum class LifecycleEventType
+{
+    SCHEDULER_LOGIN,
+    SCHEDULER_LOGOUT,
+    SPAWNER_SUCCESS,
+    SPAWNER_FAILURE,
+    POPULATION_UPDATE,
+    SYSTEM_SHUTDOWN,
+    MAINTENANCE_REQUIRED
+};
+
+struct LifecycleEventInfo
+{
+    using Type = LifecycleEventType;
+
+    // Event data members
+    LifecycleEventType eventType;
+    ObjectGuid botGuid;
+    uint32 accountId;
+    ::std::string data;
+    ::std::chrono::system_clock::time_point timestamp;
+    uint32 processingTimeMs;
+    ::std::string correlationId;
+
+    // Static enum accessors for compatibility
+    static constexpr LifecycleEventType SCHEDULER_LOGIN = LifecycleEventType::SCHEDULER_LOGIN;
+    static constexpr LifecycleEventType SCHEDULER_LOGOUT = LifecycleEventType::SCHEDULER_LOGOUT;
+    static constexpr LifecycleEventType SPAWNER_SUCCESS = LifecycleEventType::SPAWNER_SUCCESS;
+    static constexpr LifecycleEventType SPAWNER_FAILURE = LifecycleEventType::SPAWNER_FAILURE;
+    static constexpr LifecycleEventType POPULATION_UPDATE = LifecycleEventType::POPULATION_UPDATE;
+    static constexpr LifecycleEventType SYSTEM_SHUTDOWN = LifecycleEventType::SYSTEM_SHUTDOWN;
+    static constexpr LifecycleEventType MAINTENANCE_REQUIRED = LifecycleEventType::MAINTENANCE_REQUIRED;
+
+    // Constructor
+    LifecycleEventInfo()
+        : eventType(LifecycleEventType::SCHEDULER_LOGIN), accountId(0), processingTimeMs(0), correlationId("")
+    {
+        timestamp = ::std::chrono::system_clock::now();
+    }
+
+    LifecycleEventInfo(LifecycleEventType type, ObjectGuid guid, uint32 acc = 0, ::std::string const& d = "")
+        : eventType(type), botGuid(guid), accountId(acc), data(d), processingTimeMs(0), correlationId("")
+    {
+        timestamp = ::std::chrono::system_clock::now();
+    }
+};
 
 /**
  * @brief Interface for bot lifecycle coordination
@@ -35,6 +81,9 @@ public:
         uint32 failedSpawnsLastHour;
         float systemCpuUsage;
         uint64 memoryUsageMB;
+        uint32 eventCountThisSecond;
+        uint32 totalProcessingTimeThisSecond;
+        std::chrono::system_clock::time_point lastUpdate;
     };
 
     struct LifecycleStatistics
@@ -47,6 +96,8 @@ public:
         uint32 populationUpdates;
         uint32 maintenanceRuns;
         float averageResponseTimeMs;
+        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point lastUpdate;
     };
 
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;

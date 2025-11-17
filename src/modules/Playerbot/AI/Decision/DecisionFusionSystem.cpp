@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <sstream>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Constructor with default weights
@@ -78,9 +79,9 @@ void DecisionFusionSystem::NormalizeWeights()
     }
 }
 
-std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatContext context)
+::std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatContext context)
 {
-    std::vector<DecisionVote> votes;
+    ::std::vector<DecisionVote> votes;
     votes.reserve(static_cast<size_t>(DecisionSource::MAX));
 
     if (!ai)
@@ -229,11 +230,10 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     // ========================================================================
     // Phase 5 Integration: Use ActionPriorityQueue's registered spells as candidates
     // ActionScoringEngine scores them using multi-criteria utility evaluation
-
     if (auto priorityQueue = ai->GetActionPriorityQueue())
     {
         // Get all available spells from ActionPriorityQueue
-        std::vector<uint32> candidateSpells = priorityQueue->GetPrioritizedSpells(bot, ai->GetCurrentTarget(), context);
+        ::std::vector<uint32> candidateSpells = priorityQueue->GetPrioritizedSpells(bot, ai->GetCurrentTarget(), context);
 
         if (!candidateSpells.empty() && candidateSpells.size() <= 50) // Limit to top 50 for performance
         {
@@ -268,7 +268,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
             {
                 // Find the score details for the best action
 
-                auto it = std::find_if(scores.begin(), scores.end(),
+                auto it = ::std::find_if(scores.begin(), scores.end(),
 
                     [bestAction](const ActionScore& s) { return s.actionId == bestAction; });
 
@@ -279,7 +279,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
                     // Create vote with utility-based confidence
                     // Normalize total score to 0-1 confidence (typical scores: 0-500)
 
-                    float confidence = std::min(it->totalScore / 500.0f, 1.0f);
+                    float confidence = ::std::min(it->totalScore / 500.0f, 1.0f);
 
                     // Urgency based on survival and group protection scores
 
@@ -287,7 +287,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
 
                     float protectionScore = it->GetCategoryScore(ScoringCategory::GROUP_PROTECTION);
 
-                    float urgency = std::min((survivalScore + protectionScore) / 2.0f, 1.0f);
+                    float urgency = ::std::min((survivalScore + protectionScore) / 2.0f, 1.0f);
 
 
                     DecisionVote vote(
@@ -302,7 +302,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
 
                         urgency,
 
-                        "ActionScoring: Utility-based selection (score: " + std::to_string(static_cast<int>(it->totalScore)) + ")"
+                        "ActionScoring: Utility-based selection (score: " + ::std::to_string(static_cast<int>(it->totalScore)) + ")"
 
                     );
 
@@ -336,7 +336,7 @@ std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatCo
     return votes;
 }
 
-DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVote>& votes)
+DecisionResult DecisionFusionSystem::FuseDecisions(const ::std::vector<DecisionVote>& votes)
 {
     DecisionResult result;
 
@@ -374,7 +374,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
     }
 
     // Step 2: Group votes by action ID and calculate consensus scores
-    std::unordered_map<uint32, std::vector<const DecisionVote*>> votesByAction;
+    ::std::unordered_map<uint32, ::std::vector<const DecisionVote*>> votesByAction;
     for (const auto& vote : votes)
     {
         if (vote.actionId != 0)
@@ -388,11 +388,11 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
         uint32 actionId;
         Unit* target;
         float consensusScore;
-        std::vector<DecisionVote> contributingVotes;
+        ::std::vector<DecisionVote> contributingVotes;
         DecisionSource primarySource;
     };
 
-    std::vector<ActionConsensus> consensuses;
+    ::std::vector<ActionConsensus> consensuses;
     consensuses.reserve(votesByAction.size());
 
     for (const auto& [actionId, actionVotes] : votesByAction)
@@ -414,8 +414,7 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
             consensus.contributingVotes.push_back(*vote);
 
             // Track highest scoring vote for target selection
-
-            if (weightedScore > highestVoteScore)
+    if (weightedScore > highestVoteScore)
 
             {
 
@@ -433,14 +432,14 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
                 LogVote(*vote, weightedScore);
         }
 
-        consensuses.push_back(std::move(consensus));
+        consensuses.push_back(::std::move(consensus));
     }
 
     // Step 4: Select action with highest consensus score
     if (consensuses.empty())
         return result;
 
-    auto bestConsensus = std::max_element(consensuses.begin(), consensuses.end(),
+    auto bestConsensus = ::std::max_element(consensuses.begin(), consensuses.end(),
         [](const ActionConsensus& a, const ActionConsensus& b) {
 
             return a.consensusScore < b.consensusScore;
@@ -450,10 +449,10 @@ DecisionResult DecisionFusionSystem::FuseDecisions(const std::vector<DecisionVot
     result.actionId = bestConsensus->actionId;
     result.target = bestConsensus->target;
     result.consensusScore = bestConsensus->consensusScore;
-    result.contributingVotes = std::move(bestConsensus->contributingVotes);
+    result.contributingVotes = ::std::move(bestConsensus->contributingVotes);
 
     // Build reasoning string
-    std::ostringstream reasoning;
+    ::std::ostringstream reasoning;
     reasoning << "Consensus from " << result.contributingVotes.size() << " system(s): ";
     for (size_t i = 0; i < result.contributingVotes.size(); ++i)
     {
@@ -484,7 +483,7 @@ void DecisionFusionSystem::LogVote(const DecisionVote& vote, float weightedScore
         vote.reasoning);
 }
 
-void DecisionFusionSystem::LogDecision(const DecisionResult& result, const std::vector<DecisionVote>& allVotes) const
+void DecisionFusionSystem::LogDecision(const DecisionResult& result, const ::std::vector<DecisionVote>& allVotes) const
 {
     if (!result.IsValid())
     {
@@ -499,7 +498,7 @@ void DecisionFusionSystem::LogDecision(const DecisionResult& result, const std::
         result.fusionReasoning);
 
     // Log contributing systems
-    std::ostringstream systems;
+    ::std::ostringstream systems;
     for (size_t i = 0; i < result.contributingVotes.size(); ++i)
     {
         if (i > 0)
@@ -513,7 +512,7 @@ void DecisionFusionSystem::LogDecision(const DecisionResult& result, const std::
     TC_LOG_DEBUG("playerbot", "DecisionFusion Contributing Systems: {}", systems.str());
 }
 
-bool DecisionFusionSystem::AreVotesUnanimous(const std::vector<DecisionVote>& votes) const
+bool DecisionFusionSystem::AreVotesUnanimous(const ::std::vector<DecisionVote>& votes) const
 {
     if (votes.size() <= 1)
         return true;
@@ -536,7 +535,7 @@ bool DecisionFusionSystem::AreVotesUnanimous(const std::vector<DecisionVote>& vo
     return true;
 }
 
-const DecisionVote* DecisionFusionSystem::FindHighestUrgencyVote(const std::vector<DecisionVote>& votes) const
+const DecisionVote* DecisionFusionSystem::FindHighestUrgencyVote(const ::std::vector<DecisionVote>& votes) const
 {
     const DecisionVote* highestUrgency = nullptr;
     float maxUrgency = 0.0f;
@@ -580,8 +579,8 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         return BotRole::RANGED_DPS; // Default
 
     // Get player's class and spec
-    Classes playerClass = static_cast<Classes>(bot->getClass());
-    uint32 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+    Classes playerClass = static_cast<Classes>(bot->GetClass());
+    uint32 spec = bot->GetPrimarySpecialization());
 
     // Determine role based on class and spec
     switch (playerClass)
@@ -593,8 +592,7 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         case CLASS_PALADIN:
 
             if (spec == 1) return BotRole::HEALER;  // Holy
-
-            if (spec == 2) return BotRole::TANK;
+    if (spec == 2) return BotRole::TANK;
             // Prot
 
             return BotRole::MELEE_DPS;
@@ -620,8 +618,7 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
 
             if (spec == 3) return BotRole::HEALER;
             // Resto
-
-            if (spec == 1) return BotRole::RANGED_DPS;  // Ele
+    if (spec == 1) return BotRole::RANGED_DPS;  // Ele
 
             return BotRole::MELEE_DPS;
             // Enh
@@ -634,10 +631,8 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
         case CLASS_DRUID:
 
             if (spec == 0) return BotRole::RANGED_DPS;  // Balance
-
-            if (spec == 1) return BotRole::MELEE_DPS;   // Feral (DPS)
-
-            if (spec == 2) return BotRole::TANK;
+    if (spec == 1) return BotRole::MELEE_DPS;   // Feral (DPS)
+    if (spec == 2) return BotRole::TANK;
             // Feral (Tank) / Guardian
 
             return BotRole::HEALER;
@@ -671,16 +666,13 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             if (healthPct < 20.0f)
 
                 return 1.0f;  // Critical
-
-            if (healthPct < 40.0f)
+    if (healthPct < 40.0f)
 
                 return 0.8f;  // Urgent
-
-            if (healthPct < 60.0f)
+    if (healthPct < 60.0f)
 
                 return 0.5f;  // Moderate
-
-            if (healthPct < 80.0f)
+    if (healthPct < 80.0f)
 
                 return 0.2f;  // Low
 
@@ -691,8 +683,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::GROUP_PROTECTION:
         {
             // Score based on group members' health and threat
-
-            if (Group* group = bot->GetGroup())
+    if (Group* group = bot->GetGroup())
 
             {
 
@@ -732,7 +723,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
 
                     float helpRatio = static_cast<float>(membersNeedingHelp) / static_cast<float>(totalMembers);
 
-                    return std::min(helpRatio, 1.0f);
+                    return ::std::min(helpRatio, 1.0f);
 
                 }
 
@@ -744,8 +735,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::DAMAGE_OPTIMIZATION:
         {
             // Score based on target health and DPS opportunity
-
-            if (!target || !target->IsAlive())
+    if (!target || !target->IsAlive())
 
                 return 0.0f;
 
@@ -753,14 +743,12 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             float targetHealthPct = target->GetHealthPct();
 
             // Execute range (< 20% HP) = high priority
-
-            if (targetHealthPct < 20.0f)
+    if (targetHealthPct < 20.0f)
 
                 return 0.9f;
 
             // Normal DPS window
-
-            if (targetHealthPct > 80.0f)
+    if (targetHealthPct > 80.0f)
 
                 return 0.7f; // Fresh target, good DPS opportunity
 
@@ -784,12 +772,10 @@ float DecisionFusionSystem::EvaluateScoringCategory(
                 if (manaPct < 20.0f)
 
                     return 1.0f; // Very high priority to conserve
-
-                if (manaPct < 40.0f)
+    if (manaPct < 40.0f)
 
                     return 0.7f; // High priority
-
-                if (manaPct < 60.0f)
+    if (manaPct < 60.0f)
 
                     return 0.4f; // Moderate
 
@@ -812,8 +798,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         {
             // Score based on positioning needs
             // For now, basic implementation based on range
-
-            if (!target)
+    if (!target)
 
                 return 0.0f;
 
@@ -821,14 +806,12 @@ float DecisionFusionSystem::EvaluateScoringCategory(
             float distance = bot->GetDistance(target);
 
             // Melee range
-
-            if (distance < 5.0f)
+    if (distance < 5.0f)
 
                 return 0.2f; // Good positioning for melee
 
             // Mid range
-
-            if (distance < 30.0f)
+    if (distance < 30.0f)
 
                 return 0.5f; // Good positioning for ranged
 
@@ -840,8 +823,7 @@ float DecisionFusionSystem::EvaluateScoringCategory(
         case ScoringCategory::STRATEGIC_VALUE:
         {
             // Score based on context and fight phase
-
-            switch (context)
+    switch (context)
 
             {
 
@@ -878,3 +860,4 @@ float DecisionFusionSystem::EvaluateScoringCategory(
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

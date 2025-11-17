@@ -24,6 +24,8 @@
 #include "Unit.h"
 #include "MotionMaster.h"
 #include "PathGenerator.h"
+#include "Duration.h"
+#include "ObjectAccessor.h"
 
 namespace Playerbot
 {
@@ -79,7 +81,7 @@ public:
         }
 
         // Check if movement is complete
-        if (!bot->IsMoving())
+        if (!bot->isMoving())
         {
             // Reached destination or movement failed
             _status = (distance <= _acceptableDistance * 2.0f) ? BTStatus::SUCCESS : BTStatus::FAILURE;
@@ -266,16 +268,13 @@ public:
             return _status;
         }
 
-        // Get leader (master or group leader)
-        Player* leader = ai->GetMaster();
-        if (!leader)
+        // Get leader (group leader)
+        Player* leader = nullptr;
+        Group* group = bot->GetGroup();
+        if (group)
         {
-            Group* group = bot->GetGroup();
-            if (group)
-            {
-                ObjectGuid leaderGuid = group->GetLeaderGUID();
-                leader = ObjectAccessor::FindPlayer(leaderGuid);
-            }
+            ObjectGuid leaderGuid = group->GetLeaderGUID();
+            leader = ObjectAccessor::FindPlayer(leaderGuid);
         }
 
         if (!leader)
@@ -345,7 +344,7 @@ public:
                     return BTStatus::INVALID;
 
                 bot->StopMoving();
-                bot->GetMotionMaster()->Clear(false);
+                bot->GetMotionMaster()->Clear();
                 bot->GetMotionMaster()->MoveIdle();
 
                 return BTStatus::SUCCESS;
@@ -370,7 +369,7 @@ public:
                 if (!bot)
                     return false;
 
-                return bot->IsMoving();
+                return bot->isMoving();
             })
     {}
 };
@@ -421,7 +420,7 @@ public:
         // Start fleeing if not already
         if (!_movementStarted)
         {
-            bot->GetMotionMaster()->MoveFleeing(target, 5000); // Flee for 5 seconds
+            bot->GetMotionMaster()->MoveFleeing(target, Milliseconds(5000)); // Flee for 5 seconds
             _movementStarted = true;
         }
 
@@ -495,8 +494,8 @@ public:
                 continue;
 
             // Check if member is healer
-            uint8 classId = member->getClass();
-            uint8 spec = member->GetPrimaryTalentTree(member->GetActiveSpec());
+            uint8 classId = member->GetClass();
+            uint8 spec = uint8(member->GetPrimarySpecialization());
 
             bool isHealer = false;
             if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) isHealer = true;
@@ -607,8 +606,8 @@ public:
         if (!_movementStarted)
         {
             float angle = target->GetOrientation() + M_PI; // 180 degrees behind
-            float x = target->GetPositionX() + _distance * std::cos(angle);
-            float y = target->GetPositionY() + _distance * std::sin(angle);
+            float x = target->GetPositionX() + _distance * ::std::cos(angle);
+            float y = target->GetPositionY() + _distance * ::std::sin(angle);
             float z = target->GetPositionZ();
 
             bot->GetMotionMaster()->MovePoint(0, x, y, z);
@@ -670,8 +669,8 @@ public:
         float angle = frand(0.0f, 2.0f * M_PI);
         float distance = frand(_searchRadius * 0.5f, _searchRadius);
 
-        float x = bot->GetPositionX() + distance * std::cos(angle);
-        float y = bot->GetPositionY() + distance * std::sin(angle);
+        float x = bot->GetPositionX() + distance * ::std::cos(angle);
+        float y = bot->GetPositionY() + distance * ::std::sin(angle);
         float z = bot->GetPositionZ();
 
         bot->UpdateGroundPositionZ(x, y, z);

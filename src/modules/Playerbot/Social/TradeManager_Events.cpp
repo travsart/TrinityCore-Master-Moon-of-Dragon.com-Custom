@@ -35,7 +35,7 @@ namespace Playerbot
     void TradeManager::OnEventInternal(Events::BotEvent const& event)
     {
         // Early exit for non-trade events
-        if (!event.IsTradeEvent())
+    if (!event.IsTradeEvent())
             return;
 
         Player* bot = GetBot();
@@ -43,12 +43,12 @@ namespace Playerbot
             return;
 
         // Handle trade events with full implementation
-        switch (event.type)
+    switch (event.type)
         {
             case StateMachine::EventType::TRADE_INITIATED:
             {
                 // Extract trade initiation data
-                if (!event.eventData.has_value())
+    if (!event.eventData.has_value())
                 {
                     TC_LOG_WARN("module.playerbot", "TradeManager::OnEventInternal: TRADE_INITIATED event {} missing data", event.eventId);
                     ForceUpdate();
@@ -58,9 +58,9 @@ namespace Playerbot
                 TradeEventData tradeData;
                 try
                 {
-                    tradeData = std::any_cast<TradeEventData>(event.eventData);
+                    tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                 }
-                catch (std::bad_any_cast const& e)
+                catch (::std::bad_any_cast const& e)
                 {
                     TC_LOG_ERROR("module.playerbot", "TradeManager::OnEventInternal: Failed to cast TRADE_INITIATED data: {}", e.what());
                     ForceUpdate();
@@ -78,23 +78,23 @@ namespace Playerbot
             case StateMachine::EventType::TRADE_ACCEPTED:
             {
                 // Extract trade acceptance data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} accepted trade with {} (Gold offered: {}, Gold received: {}, Items: {})",
                             bot->GetName(), tradeData.partnerGuid.ToString(),
                             tradeData.goldOffered, tradeData.goldReceived, tradeData.itemCount);
 
                         // Validate trade fairness before final acceptance
-                        if (!EvaluateTradeFairness())
+    if (!EvaluateTradeFairness())
                         {
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} trade may be unfair, considering cancellation",
                                 bot->GetName());
 
                             // Trade validation failed - consider cancelling
-                            if (IsTradeScam())
+    if (IsTradeScam())
                             {
                                 CancelTrade("Potential scam detected");
                                 return;
@@ -103,7 +103,7 @@ namespace Playerbot
 
                         // Trade accepted successfully - OnTradeAccepted() called by core
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} accepted trade (no details)", bot->GetName());
                     }
@@ -115,15 +115,15 @@ namespace Playerbot
             case StateMachine::EventType::TRADE_CANCELLED:
             {
                 // Extract cancellation data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} trade cancelled with partner {}",
                             bot->GetName(), tradeData.partnerGuid.ToString());
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} trade cancelled", bot->GetName());
                     }
@@ -137,21 +137,21 @@ namespace Playerbot
             case StateMachine::EventType::TRADE_ITEM_ADDED:
             {
                 // Extract item addition data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Item added to trade for bot {} (total items: {})",
                             bot->GetName(), tradeData.itemCount);
 
                         // Validate items in trade
-                        if (!ValidateTradeItems())
+    if (!ValidateTradeItems())
                         {
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} trade items validation failed", bot->GetName());
                         }
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
 
                 ForceUpdate();
@@ -161,16 +161,16 @@ namespace Playerbot
             case StateMachine::EventType::TRADE_GOLD_ADDED:
             {
                 // Extract gold addition data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        TradeEventData tradeData = std::any_cast<TradeEventData>(event.eventData);
+                        TradeEventData tradeData = ::std::any_cast<TradeEventData>(event.eventData);
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Gold added to trade for bot {} (offered: {}, received: {})",
                             bot->GetName(), tradeData.goldOffered, tradeData.goldReceived);
 
                         // Validate gold amounts
-                        if (tradeData.goldOffered > 0 && !ValidateTradeGold(tradeData.goldOffered))
+    if (tradeData.goldOffered > 0 && !ValidateTradeGold(tradeData.goldOffered))
                         {
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} cannot afford gold amount {}",
                                 bot->GetName(), tradeData.goldOffered);
@@ -178,7 +178,7 @@ namespace Playerbot
                             return;
                         }
                     }
-                    catch (std::bad_any_cast const&) { }
+                    catch (::std::bad_any_cast const&) { }
                 }
                 ForceUpdate();
                 break;
@@ -187,11 +187,11 @@ namespace Playerbot
             case StateMachine::EventType::GOLD_RECEIVED:
             {
                 // Extract gold received data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        GoldTransactionData goldData = std::any_cast<GoldTransactionData>(event.eventData);
+                        GoldTransactionData goldData = ::std::any_cast<GoldTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} received {} copper (source: {})",
                             bot->GetName(), goldData.amount,
                             goldData.source == 0 ? "quest" :
@@ -202,7 +202,7 @@ namespace Playerbot
                         // Update statistics
                         // Statistics tracking is handled in TradeManager Update() cycle
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} received gold (no details)", bot->GetName());
                     }
@@ -215,11 +215,11 @@ namespace Playerbot
             case StateMachine::EventType::GOLD_SPENT:
             {
                 // Extract gold spent data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        GoldTransactionData goldData = std::any_cast<GoldTransactionData>(event.eventData);
+                        GoldTransactionData goldData = ::std::any_cast<GoldTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} spent {} copper (source: {})",
                             bot->GetName(), goldData.amount,
                             goldData.source == 2 ? "auction" :
@@ -233,7 +233,7 @@ namespace Playerbot
                                 bot->GetName(), currentGold);
                         }
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} spent gold (no details)", bot->GetName());
                     }
@@ -259,11 +259,11 @@ namespace Playerbot
             case StateMachine::EventType::VENDOR_PURCHASE:
             {
                 // Extract vendor purchase data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} purchased item {} from vendor {} (Price: {} copper, Qty: {})",
                             bot->GetName(), vendorData.itemEntry, vendorData.vendorGuid.ToString(),
                             vendorData.price, vendorData.quantity);
@@ -271,7 +271,7 @@ namespace Playerbot
                         // Update purchase statistics
                         // Statistics handled in TradeManager Update() cycle
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} purchased from vendor (no details)", bot->GetName());
                     }
@@ -284,18 +284,18 @@ namespace Playerbot
             case StateMachine::EventType::VENDOR_SALE:
             {
                 // Extract vendor sale data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} sold item {} to vendor {} (Price: {} copper, Qty: {})",
                             bot->GetName(), vendorData.itemEntry, vendorData.vendorGuid.ToString(),
                             vendorData.price, vendorData.quantity);
 
                         // Update sale statistics
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} sold to vendor (no details)", bot->GetName());
                     }
@@ -308,16 +308,16 @@ namespace Playerbot
             case StateMachine::EventType::REPAIR_COST:
             {
                 // Extract repair cost data
-                if (event.eventData.has_value())
+    if (event.eventData.has_value())
                 {
                     try
                     {
-                        VendorTransactionData vendorData = std::any_cast<VendorTransactionData>(event.eventData);
+                        VendorTransactionData vendorData = ::std::any_cast<VendorTransactionData>(event.eventData);
                         TC_LOG_INFO("module.playerbot", "TradeManager: Bot {} paid repair cost {} copper to vendor {}",
                             bot->GetName(), vendorData.price, vendorData.vendorGuid.ToString());
 
                         // Check if repair cost was significant
-                        if (vendorData.price > 100000) // More than 10g
+    if (vendorData.price > 100000) // More than 10g
                         {
                             TC_LOG_WARN("module.playerbot", "TradeManager: Bot {} high repair cost: {} copper",
                                 bot->GetName(), vendorData.price);
@@ -325,7 +325,7 @@ namespace Playerbot
 
                         // Update repair statistics
                     }
-                    catch (std::bad_any_cast const&)
+                    catch (::std::bad_any_cast const&)
                     {
                         TC_LOG_DEBUG("module.playerbot", "TradeManager: Bot {} paid repair cost (no details)", bot->GetName());
                     }

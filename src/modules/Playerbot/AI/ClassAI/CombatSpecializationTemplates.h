@@ -55,15 +55,15 @@ struct CombatMetrics;
 // ============================================================================
 
 template<typename T>
-concept SimpleResource = std::integral<T> && sizeof(T) <= 4;
+concept SimpleResource = ::std::integral<T> && sizeof(T) <= 4;
 
 template<typename T>
 concept ComplexResource = requires(T t) {
-    { t.available } -> std::convertible_to<bool>;
-    { t.Consume(1u) } -> std::same_as<bool>;
-    { t.Regenerate(1u) } -> std::same_as<void>;
-    { t.GetAvailable() } -> std::convertible_to<uint32>;
-    { t.GetMax() } -> std::convertible_to<uint32>;
+    { t.available } -> ::std::convertible_to<bool>;
+    { t.Consume(1u) } -> ::std::same_as<bool>;
+    { t.Regenerate(1u) } -> ::std::same_as<void>;
+    { t.GetAvailable() } -> ::std::convertible_to<uint32>;
+    { t.GetMax() } -> ::std::convertible_to<uint32>;
 };
 
 template<typename T>
@@ -173,7 +173,7 @@ protected:
     void UpdateCooldowns(uint32 diff) final override
     {
         // Thread-safe cooldown update
-        std::lock_guard lock(_cooldownMutex);
+        ::std::lock_guard lock(_cooldownMutex);
 
         // Update global cooldown
         if (_globalCooldownEnd > diff)
@@ -197,7 +197,7 @@ protected:
         }
 
         // Update buff timers
-        std::erase_if(_activeBuffs, [diff](auto& pair) {
+        ::std::erase_if(_activeBuffs, [diff](auto& pair) {
 
             pair.second = (pair.second > diff) ? pair.second - diff : 0;
 
@@ -208,7 +208,7 @@ protected:
         for (auto& [targetGuid, dots] : _activeDots)
         {
 
-            std::erase_if(dots, [diff](auto& pair) {
+            ::std::erase_if(dots, [diff](auto& pair) {
 
                 pair.second = (pair.second > diff) ? pair.second - diff : 0;
 
@@ -218,7 +218,7 @@ protected:
         }
 
         // Clean up empty DoT entries
-        std::erase_if(_activeDots, [](const auto& pair) {
+        ::std::erase_if(_activeDots, [](const auto& pair) {
 
             return pair.second.empty();
         });
@@ -233,7 +233,7 @@ protected:
     bool CanUseAbility(uint32 spellId) final override
     {
         // Thread-safe ability check
-        std::lock_guard lock(_cooldownMutex);
+        ::std::lock_guard lock(_cooldownMutex);
 
         // Check global cooldown
         if (_globalCooldownEnd > 0)
@@ -270,7 +270,7 @@ protected:
      */
     void RegisterCooldown(uint32 spellId, uint32 cooldownMs)
     {
-        std::lock_guard lock(_cooldownMutex);
+        ::std::lock_guard lock(_cooldownMutex);
         _cooldowns[spellId] = 0; // Initialize to 0, will be set when spell is cast
         // Store the cooldown duration for reference
         _cooldownDurations[spellId] = cooldownMs;
@@ -288,7 +288,7 @@ protected:
         _currentTarget = target;        _consecutiveFailedCasts = 0;
 
         // Reset performance metrics for this combat
-        _performanceMetrics.combatStartTime = std::chrono::steady_clock::now();
+        _performanceMetrics.combatStartTime = ::std::chrono::steady_clock::now();
         _performanceMetrics.totalCasts = 0;
         _performanceMetrics.failedCasts = 0;
 
@@ -307,7 +307,7 @@ protected:
         ClassAI::OnCombatEnd();
 
         uint32 combatDuration = GameTime::GetGameTimeMS() - _combatStartTime;
-        _performanceMetrics.totalCombatTime += std::chrono::milliseconds(combatDuration);
+        _performanceMetrics.totalCombatTime += ::std::chrono::milliseconds(combatDuration);
 
         // Clean up combat state
         _currentTarget = nullptr;
@@ -484,7 +484,7 @@ private:
      */
     void ConsumeResourceInternal(uint32 amount)
     {
-        std::lock_guard lock(_resourceMutex);
+        ::std::lock_guard lock(_resourceMutex);
 
         if constexpr (SimpleResource<ResourceType>)
         {
@@ -525,7 +525,7 @@ private:
         if constexpr (ResourceTraits<ResourceType>::regenerates)
         {
 
-            std::lock_guard lock(_resourceMutex);
+            ::std::lock_guard lock(_resourceMutex);
 
 
             if constexpr (SimpleResource<ResourceType>)
@@ -535,7 +535,7 @@ private:
 
                 uint32 regenAmount = diff * 5 / 1000; // 5 per second
 
-                _resource = std::min<ResourceType>(_resource + regenAmount, _maxResource);
+                _resource = ::std::min<ResourceType>(_resource + regenAmount, _maxResource);
 
             }
 
@@ -554,9 +554,9 @@ private:
      */
     void CleanupExpiredDots()
     {
-        std::lock_guard lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
+        ::std::lock_guard lock(_cooldownMutex);        // Remove DoTs for dead or invalid targets
         Player* bot = GetBot();
-        std::erase_if(_activeDots, [bot](const auto& pair) {
+        ::std::erase_if(_activeDots, [bot](const auto& pair) {
 
             Unit* target = ObjectAccessor::GetUnit(*bot, pair.first);
             return !target || !target->IsAlive();
@@ -616,7 +616,7 @@ protected:
 
             return 0;
 
-        std::list<Unit*> targets;
+        ::std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -671,13 +671,13 @@ protected:
 
     // Cooldown tracking (thread-safe)
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cooldownMutex;
-    std::unordered_map<uint32, uint32> _cooldowns;
-    std::unordered_map<uint32, uint32> _cooldownDurations; // Registered cooldown durations
-    std::atomic<uint32> _globalCooldownEnd;
+    ::std::unordered_map<uint32, uint32> _cooldowns;
+    ::std::unordered_map<uint32, uint32> _cooldownDurations; // Registered cooldown durations
+    ::std::atomic<uint32> _globalCooldownEnd;
 
     // Buff and DoT tracking
-    std::unordered_map<uint32, uint32> _activeBuffs; // spellId -> remaining duration
-    std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint32>> _activeDots; // targetGuid -> (spellId -> duration)
+    ::std::unordered_map<uint32, uint32> _activeBuffs; // spellId -> remaining duration
+    ::std::unordered_map<ObjectGuid, ::std::unordered_map<uint32, uint32>> _activeDots; // targetGuid -> (spellId -> duration)
 
     // Resource management (thread-safe)
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _resourceMutex;
@@ -685,19 +685,19 @@ protected:
     // Combat state
     ::Unit* _currentTarget = nullptr;
     uint32 _combatStartTime = 0;
-    std::atomic<uint32> _consecutiveFailedCasts{0};
+    ::std::atomic<uint32> _consecutiveFailedCasts{0};
 
     // Performance metrics
     struct PerformanceMetrics
     {
-        std::atomic<uint32> totalCasts{0};
-        std::atomic<uint32> failedCasts{0};
-        std::atomic<uint32> resourceConsumed{0};
-        std::atomic<uint32> resourceWasted{0};
-        std::atomic<uint32> cooldownUpdates{0};
-        std::atomic<uint32> abilityChecks{0};
-        std::chrono::steady_clock::time_point combatStartTime;
-        std::chrono::milliseconds totalCombatTime{0};
+        ::std::atomic<uint32> totalCasts{0};
+        ::std::atomic<uint32> failedCasts{0};
+        ::std::atomic<uint32> resourceConsumed{0};
+        ::std::atomic<uint32> resourceWasted{0};
+        ::std::atomic<uint32> cooldownUpdates{0};
+        ::std::atomic<uint32> abilityChecks{0};
+        ::std::chrono::steady_clock::time_point combatStartTime;
+        ::std::chrono::milliseconds totalCombatTime{0};
     } _performanceMetrics;
 
     // Phase 5D: Combat managers (available to all combat specs)
@@ -1086,7 +1086,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), emergencySpell);
+                this->CastSpell(emergencySpell, this->GetBot());
 
                 TC_LOG_DEBUG("playerbot", "Tank: Emergency defensive {} used", emergencySpell);
 
@@ -1101,7 +1101,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), recommendedSpell);
+                this->CastSpell(recommendedSpell, this->GetBot());
 
                 _defensiveManager.UseDefensiveCooldown(recommendedSpell);
 
@@ -1331,7 +1331,7 @@ protected:
             return center;
 
         // Find all hostile units in range
-        std::list<Unit*> hostileUnits;
+        ::std::list<Unit*> hostileUnits;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(bot, bot, 40.0f);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, hostileUnits, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects

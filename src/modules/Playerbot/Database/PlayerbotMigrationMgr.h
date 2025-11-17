@@ -64,17 +64,6 @@ public:
     bool CanRollback(std::string const& version) override;
 
     // Migration status and reporting
-    struct MigrationStatus
-    {
-        std::string currentVersion;
-        std::string targetVersion;
-        uint32 pendingCount;
-        uint32 appliedCount;
-        std::vector<std::string> pendingMigrations;
-        std::vector<std::string> failedMigrations;
-        bool isValid;
-    };
-
     MigrationStatus GetMigrationStatus() override;
     void PrintMigrationStatus() override;
 

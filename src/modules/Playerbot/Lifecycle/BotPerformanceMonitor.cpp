@@ -12,15 +12,15 @@ namespace Playerbot
 // Static member definitions removed - now inline static in header to fix DLL export issues
 
 BotPerformanceMonitor::BotPerformanceMonitor()
-    : _lastUpdate(std::chrono::steady_clock::now())
+    : _lastUpdate(::std::chrono::steady_clock::now())
 {
 }
 
 BotPerformanceMonitor* BotPerformanceMonitor::instance()
 {
-    std::lock_guard lock(_instanceMutex);
+    ::std::lock_guard lock(_instanceMutex);
     if (!_instance)
-        _instance = std::unique_ptr<BotPerformanceMonitor>(new BotPerformanceMonitor());
+        _instance = ::std::unique_ptr<BotPerformanceMonitor>(new BotPerformanceMonitor());
     return _instance.get();
 }
 
@@ -30,7 +30,7 @@ bool BotPerformanceMonitor::Initialize()
         "Initializing BotPerformanceMonitor for 5000 bot scalability tracking");
 
     ResetCounters();
-    _lastUpdate = std::chrono::steady_clock::now();
+    _lastUpdate = ::std::chrono::steady_clock::now();
 
     return true;
 }
@@ -49,8 +49,8 @@ void BotPerformanceMonitor::Shutdown()
 
 void BotPerformanceMonitor::Update(uint32 /*diff*/)
 {
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUpdate);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdate);
 
     if (elapsed.count() >= _updateInterval)
     {
@@ -58,7 +58,7 @@ void BotPerformanceMonitor::Update(uint32 /*diff*/)
         _lastUpdate = now;
 
         // Log performance alerts if thresholds exceeded
-        if (!IsPerformanceHealthy())
+    if (!IsPerformanceHealthy())
         {
             auto snapshot = GetSnapshot();
             TC_LOG_WARN("module.playerbot.performance",
@@ -137,7 +137,7 @@ bool BotPerformanceMonitor::IsPerformanceHealthy() const
            successRate >= MIN_SUCCESS_RATE;
 }
 
-std::string BotPerformanceMonitor::GetPerformanceStatus() const
+::std::string BotPerformanceMonitor::GetPerformanceStatus() const
 {
     if (IsPerformanceHealthy())
         return "HEALTHY";
@@ -209,14 +209,14 @@ void BotPerformanceMonitor::LatencyTracker::Reset()
 
 // ScopedTimer implementation
 BotPerformanceMonitor::ScopedTimer::ScopedTimer(LatencyTracker& tracker)
-    : _tracker(tracker), _start(std::chrono::high_resolution_clock::now())
+    : _tracker(tracker), _start(::std::chrono::high_resolution_clock::now())
 {
 }
 
 BotPerformanceMonitor::ScopedTimer::~ScopedTimer()
 {
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - _start);
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - _start);
     _tracker.RecordOperation(duration.count());
 }
 

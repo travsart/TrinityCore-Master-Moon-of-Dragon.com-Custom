@@ -87,7 +87,7 @@ namespace Playerbot
         StartPerformanceTimer();
 
         // Update group state
-        if (GameTime::GetGameTimeMS() - m_lastGroupUpdate > GROUP_UPDATE_INTERVAL)
+    if (GameTime::GetGameTimeMS() - m_lastGroupUpdate > GROUP_UPDATE_INTERVAL)
         {
             UpdateGroupState(diff);
             m_lastGroupUpdate = GameTime::GetGameTimeMS();
@@ -97,18 +97,18 @@ namespace Playerbot
         ProcessPendingInvites(diff);
 
         // Process ready checks
-        if (m_readyCheckActive)
+    if (m_readyCheckActive)
             ProcessReadyCheck(diff);
 
         // Update group target
-        if (IsInGroup() && GameTime::GetGameTimeMS() - m_targetUpdateTime > TARGET_UPDATE_INTERVAL)
+    if (IsInGroup() && GameTime::GetGameTimeMS() - m_targetUpdateTime > TARGET_UPDATE_INTERVAL)
         {
             UpdateGroupTarget();
             m_targetUpdateTime = GameTime::GetGameTimeMS();
         }
 
         // Update queue status
-        if (m_queueInfo.isQueued)
+    if (m_queueInfo.isQueued)
             UpdateQueueStatus();
 
         EndPerformanceTimer();
@@ -168,7 +168,7 @@ namespace Playerbot
         if (IsInGroup())
         {
             // Invite to existing group (must be leader or have invite rights)
-            if (Group* group = m_bot->GetGroup())
+    if (Group* group = m_bot->GetGroup())
             {
                 if (group->IsLeader(m_bot->GetGUID()) || group->IsAssistant(m_bot->GetGUID()))
                 {
@@ -254,7 +254,7 @@ namespace Playerbot
 
         Classes botClass = static_cast<Classes>(m_bot->GetClass());
         // Tank classes
-        if (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
+    if (botClass == CLASS_WARRIOR || botClass == CLASS_PALADIN ||
             botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_DEMON_HUNTER)
         {
             if (HasTankingAbilities())
@@ -262,7 +262,7 @@ namespace Playerbot
         }
 
         // Healer classes
-        if (botClass == CLASS_PRIEST || botClass == CLASS_PALADIN ||
+    if (botClass == CLASS_PRIEST || botClass == CLASS_PALADIN ||
             botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
             botClass == CLASS_MONK || botClass == CLASS_EVOKER)
         {
@@ -271,7 +271,7 @@ namespace Playerbot
         }
 
         // Melee DPS
-        if (botClass == CLASS_WARRIOR || botClass == CLASS_ROGUE ||
+    if (botClass == CLASS_WARRIOR || botClass == CLASS_ROGUE ||
             botClass == CLASS_DEATH_KNIGHT || botClass == CLASS_MONK ||
             botClass == CLASS_DEMON_HUNTER)
         {
@@ -279,7 +279,7 @@ namespace Playerbot
         }
 
         // Ranged DPS
-        if (botClass == CLASS_HUNTER || botClass == CLASS_MAGE ||
+    if (botClass == CLASS_HUNTER || botClass == CLASS_MAGE ||
             botClass == CLASS_WARLOCK || botClass == CLASS_PRIEST ||
             botClass == CLASS_SHAMAN || botClass == CLASS_DRUID ||
             botClass == CLASS_EVOKER)
@@ -292,7 +292,7 @@ namespace Playerbot
 
     bool GroupCoordinator::CanFillRole(GroupRole role) const
     {
-        std::vector<RoleCapability> capabilities = AnalyzeRoleCapabilities();
+        ::std::vector<RoleCapability> capabilities = AnalyzeRoleCapabilities();
 
         for (auto const& cap : capabilities)
         {
@@ -403,7 +403,7 @@ namespace Playerbot
             return false;
 
         // Check if item is usable by class
-        if (proto->GetAllowableClass() && !(proto->GetAllowableClass() & m_bot->GetClassMask()))
+    if (proto->GetAllowableClass() && !(proto->GetAllowableClass() & m_bot->GetClassMask()))
             return false;
 
         // Check if it's an upgrade
@@ -459,13 +459,13 @@ namespace Playerbot
         if (!IsInGroup() || !m_autoShareQuests)
             return;
 
-        std::vector<uint32> shareable = GetShareableQuests();
+        ::std::vector<uint32> shareable = GetShareableQuests();
         for (uint32 questId : shareable)
             ShareQuest(questId);
     }
-    std::vector<uint32> GroupCoordinator::GetShareableQuests() const
+    ::std::vector<uint32> GroupCoordinator::GetShareableQuests() const
     {
-        std::vector<uint32> shareable;
+        ::std::vector<uint32> shareable;
 
         if (!m_bot)
             return shareable;
@@ -532,9 +532,9 @@ namespace Playerbot
         return GroupRole::DPS_MELEE;
     }
 
-    std::vector<Player*> GroupCoordinator::GetGroupMembers() const
+    ::std::vector<Player*> GroupCoordinator::GetGroupMembers() const
     {
-        std::vector<Player*> members;
+        ::std::vector<Player*> members;
 
         Group* group = GetGroup();
         if (!group)
@@ -586,7 +586,7 @@ namespace Playerbot
     void GroupCoordinator::WaitForGroupReady()
     {
         // Wait for all members to be ready
-        while (m_readyCheckActive && !IsGroupReady())
+    while (m_readyCheckActive && !IsGroupReady())
         {
             // Process updates
             Update(100);
@@ -748,9 +748,9 @@ namespace Playerbot
             m_bot->GetName().c_str(), static_cast<uint32>(oldState), static_cast<uint32>(newState));
     }
 
-    std::vector<GroupCoordinator::RoleCapability> GroupCoordinator::AnalyzeRoleCapabilities() const
+    ::std::vector<GroupCoordinator::RoleCapability> GroupCoordinator::AnalyzeRoleCapabilities() const
     {
-        std::vector<RoleCapability> capabilities;
+        ::std::vector<RoleCapability> capabilities;
 
         RoleCapability tank;
         tank.role = GroupRole::TANK;
@@ -847,7 +847,7 @@ namespace Playerbot
         float value = 0.0f;
 
         // Base value from quality
-        switch (proto->GetQuality())
+    switch (proto->GetQuality())
         {
             case ITEM_QUALITY_POOR:     value = 1.0f; break;
             case ITEM_QUALITY_NORMAL:   value = 5.0f; break;
@@ -867,7 +867,7 @@ namespace Playerbot
             return false;
 
         // Check if item is equipment
-        if (proto->GetClass() != ITEM_CLASS_WEAPON && proto->GetClass() != ITEM_CLASS_ARMOR)
+    if (proto->GetClass() != ITEM_CLASS_WEAPON && proto->GetClass() != ITEM_CLASS_ARMOR)
             return false;
 
         // Get current item in that slot
@@ -883,11 +883,11 @@ namespace Playerbot
         return proto->GetBaseItemLevel() > currentItem->GetTemplate()->GetBaseItemLevel();
     }
 
-    std::vector<GroupCoordinator::ShareableQuest> GroupCoordinator::EvaluateQuestsToShare() const
+    ::std::vector<GroupCoordinator::ShareableQuest> GroupCoordinator::EvaluateQuestsToShare() const
     {
-        std::vector<ShareableQuest> quests;
+        ::std::vector<ShareableQuest> quests;
 
-        std::vector<uint32> shareable = GetShareableQuests();
+        ::std::vector<uint32> shareable = GetShareableQuests();
         Group* group = GetGroup();
         if (!group)
             return quests;
@@ -928,7 +928,7 @@ namespace Playerbot
             return false;
 
         // Check if at least one member can accept
-        for (GroupReference const& ref : group->GetMembers())
+    for (GroupReference const& ref : group->GetMembers())
         {
             Player* member = ref.GetSource();
             if (member && member != m_bot && CanMemberAcceptQuest(member, questId))
@@ -1101,13 +1101,13 @@ namespace Playerbot
 
     void GroupCoordinator::StartPerformanceTimer()
     {
-        m_performanceStart = std::chrono::high_resolution_clock::now();
+        m_performanceStart = ::std::chrono::high_resolution_clock::now();
     }
 
     void GroupCoordinator::EndPerformanceTimer()
     {
-        auto end = std::chrono::high_resolution_clock::now();
-        m_lastUpdateDuration = std::chrono::duration_cast<std::chrono::microseconds>(end - m_performanceStart);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        m_lastUpdateDuration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - m_performanceStart);
         m_totalUpdateTime += m_lastUpdateDuration;
         m_updateCount++;
     }
@@ -1144,10 +1144,10 @@ namespace Playerbot
             m_bot->GetName().c_str(), targetIconId);
 
         // If this is our current target and icon was changed, update our targeting priority
-        if (event.targetGuid == m_groupTarget)
+    if (event.targetGuid == m_groupTarget)
         {
             // High priority icons (Skull, Cross) should be focused
-            if (targetIconId == 0 || targetIconId == 1) // Skull or Cross
+    if (targetIconId == 0 || targetIconId == 1) // Skull or Cross
             {
                 // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
                 auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(m_bot, event.targetGuid);
@@ -1187,7 +1187,7 @@ namespace Playerbot
             comp.isBalanced ? "Yes" : "No");
 
         // If group became unbalanced, consider suggesting role changes
-        if (!comp.isBalanced)
+    if (!comp.isBalanced)
         {
             GroupRole neededRole = GetNeededRole();
             if (CanFillRole(neededRole) && neededRole != m_assignedRole)
@@ -1199,7 +1199,7 @@ namespace Playerbot
         }
 
         // If new member joined, check if we should share quests
-        if (event.type == GroupEventType::MEMBER_JOINED && m_autoShareQuests)
+    if (event.type == GroupEventType::MEMBER_JOINED && m_autoShareQuests)
         {
             SyncGroupQuests();
         }

@@ -171,11 +171,11 @@ namespace Playerbot
         InteractionState state = InteractionState::Idle;
         uint32 attemptCount = 0;
         uint32 maxAttempts = 3;
-        std::chrono::steady_clock::time_point startTime;
-        std::chrono::milliseconds timeout{10000};
+        ::std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::milliseconds timeout{10000};
         bool needsGossip = false;
         uint32 gossipMenuId = 0;
-        std::vector<uint32> gossipPath; // Sequence of menu options to reach service
+        ::std::vector<uint32> gossipPath; // Sequence of menu options to reach service
 
         void Reset()
         {
@@ -196,7 +196,7 @@ namespace Playerbot
         bool IsExpired() const
         {
 
-            return (std::chrono::steady_clock::now() - startTime) > timeout;
+            return (::std::chrono::steady_clock::now() - startTime) > timeout;
         }
     };
 
@@ -226,8 +226,8 @@ namespace Playerbot
             uint32 count = 0;
         };
 
-        std::vector<ItemToBuy> itemsToBuy;
-        std::vector<ItemToSell> itemsToSell;
+        ::std::vector<ItemToBuy> itemsToBuy;
+        ::std::vector<ItemToSell> itemsToSell;
         bool needsRepair = false;
         uint32 repairCost = 0;
         bool sellJunk = true;
@@ -257,8 +257,8 @@ namespace Playerbot
             uint8 priority = 0; // 0 = highest
         };
 
-        std::vector<SpellToLearn> availableSpells;
-        std::vector<uint32> spellsToLearn;
+        ::std::vector<SpellToLearn> availableSpells;
+        ::std::vector<uint32> spellsToLearn;
         bool learnAll = false;
         bool optimalOnly = true;
         uint32 maxSpendGold = 1000000; // 100 gold default
@@ -273,7 +273,7 @@ namespace Playerbot
     {
         uint32 nodeId = 0;
         uint32 destinationNode = 0;
-        std::vector<uint32> discoveredPaths;
+        ::std::vector<uint32> discoveredPaths;
         bool discoverNew = true;
         bool useOptimalRoute = true;
         uint32 cost = 0;
@@ -300,8 +300,8 @@ namespace Playerbot
         };
 
         BankAction action = None;
-        std::vector<ObjectGuid> itemsToDeposit;
-        std::vector<uint32> itemsToWithdraw;
+        ::std::vector<ObjectGuid> itemsToDeposit;
+        ::std::vector<uint32> itemsToWithdraw;
         uint8 slotsNeeded = 0;
         bool autoBuySlots = false;
     };
@@ -337,20 +337,20 @@ namespace Playerbot
 
             ObjectGuid recipient;
 
-            std::string subject;
+            ::std::string subject;
 
-            std::string body;
+            ::std::string body;
 
             uint32 money = 0;
 
-            std::vector<ObjectGuid> items;
+            ::std::vector<ObjectGuid> items;
 
             uint32 cod = 0;
         };
 
         MailAction action = None;
-        std::vector<uint32> mailIds;
-        std::vector<MailToSend> mailsToSend;
+        ::std::vector<uint32> mailIds;
+        ::std::vector<MailToSend> mailsToSend;
         bool takeAllItems = true;
         bool takeAllMoney = true;
         bool deleteEmpty = true;
@@ -366,11 +366,11 @@ namespace Playerbot
         uint32 successCount = 0;
         uint32 failureCount = 0;
         uint32 timeoutCount = 0;
-        std::chrono::milliseconds totalDuration{0};
-        std::chrono::milliseconds avgDuration{0};
+        ::std::chrono::milliseconds totalDuration{0};
+        ::std::chrono::milliseconds avgDuration{0};
         float successRate = 0.0f;
 
-        void RecordAttempt(bool success, std::chrono::milliseconds duration)
+        void RecordAttempt(bool success, ::std::chrono::milliseconds duration)
         {
 
             ++totalAttempts;
@@ -427,10 +427,10 @@ namespace Playerbot
     {
         uint32 index = 0;
         uint8 icon = 0;
-        std::string text;
+        ::std::string text;
         uint32 sender = 0;
         uint32 action = 0;
-        std::string boxText;
+        ::std::string boxText;
         uint32 boxMoney = 0;
         bool coded = false;
     };

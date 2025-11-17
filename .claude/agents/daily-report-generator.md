@@ -1,3 +1,8 @@
+---
+name: daily-report-generator
+description: Daily Report Generator Agent
+---
+
 # Daily Report Generator Agent
 
 ## Role

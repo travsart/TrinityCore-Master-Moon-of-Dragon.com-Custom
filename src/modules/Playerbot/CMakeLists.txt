@@ -210,7 +210,7 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ClassAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ActionPriority.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.cpp  # PHASE 47: Removed - using Common/CooldownManager.h (header-only)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/CooldownManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/ResourceManager.h

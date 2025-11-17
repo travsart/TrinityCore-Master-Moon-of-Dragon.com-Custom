@@ -80,12 +80,12 @@ struct BehaviorSample
 struct PatternSignature
 {
     PatternType type;
-    std::vector<float> features;      // Feature vector
+    ::std::vector<float> features;      // Feature vector
     float confidence;                  // Recognition confidence
     uint32_t occurrences;             // How often seen
-    std::chrono::steady_clock::time_point lastSeen;
+    ::std::chrono::steady_clock::time_point lastSeen;
 
-    float CalculateSimilarity(const std::vector<float>& other) const;
+    float CalculateSimilarity(const ::std::vector<float>& other) const;
 };
 
 // Player behavior profile
@@ -103,12 +103,12 @@ public:
     // Pattern analysis
     PlayerArchetype GetArchetype() const { return _archetype; }
     float GetArchetypeConfidence() const { return _archetypeConfidence; }
-    std::vector<PatternSignature> GetPatterns(PatternType type) const;
+    ::std::vector<PatternSignature> GetPatterns(PatternType type) const;
 
     // Behavior prediction
     uint32_t PredictNextSpell() const;
     Position PredictNextPosition(float deltaTime) const;
-    ObjectGuid PredictNextTarget(const std::vector<Unit*>& candidates) const;
+    ObjectGuid PredictNextTarget(const ::std::vector<Unit*>& candidates) const;
     float PredictReactionTime() const;
 
     // Statistics
@@ -125,26 +125,26 @@ private:
     ObjectGuid _playerGuid;
     PlayerArchetype _archetype;
     float _archetypeConfidence;
-    std::deque<BehaviorSample> _samples;
+    ::std::deque<BehaviorSample> _samples;
     static constexpr size_t MAX_SAMPLES = 1000;
 
     // Pattern storage
-    std::unordered_map<PatternType, std::vector<PatternSignature>> _patterns;
+    ::std::unordered_map<PatternType, ::std::vector<PatternSignature>> _patterns;
 
     // Behavioral statistics
-    std::atomic<float> _averageAPM;
-    std::atomic<float> _movementVariance;
-    std::atomic<float> _targetSwitchRate;
-    std::atomic<float> _defensiveReactivity;
-    std::atomic<float> _aggressionLevel;
-    std::atomic<float> _survivalPriority;
+    ::std::atomic<float> _averageAPM;
+    ::std::atomic<float> _movementVariance;
+    ::std::atomic<float> _targetSwitchRate;
+    ::std::atomic<float> _defensiveReactivity;
+    ::std::atomic<float> _aggressionLevel;
+    ::std::atomic<float> _survivalPriority;
 
     // Spell usage tracking
-    std::unordered_map<uint32_t, uint32_t> _spellUsageCounts;
-    std::vector<std::pair<uint32_t, uint32_t>> _spellSequences;  // Spell ID pairs
+    ::std::unordered_map<uint32_t, uint32_t> _spellUsageCounts;
+    ::std::vector<::std::pair<uint32_t, uint32_t>> _spellSequences;  // Spell ID pairs
 
     // Movement analysis
-    std::vector<std::array<float, 3>> _movementVectors;
+    ::std::vector<::std::array<float, 3>> _movementVectors;
     float _averageSpeed;
     float _positionEntropy;  // Randomness of movement
 
@@ -170,31 +170,31 @@ public:
     ~BehaviorCluster();
 
     // Cluster management
-    void AddProfile(std::shared_ptr<PlayerProfile> profile);
+    void AddProfile(::std::shared_ptr<PlayerProfile> profile);
     void RemoveProfile(ObjectGuid guid);
     void UpdateClusters();
 
     // Cluster analysis
     uint32_t GetClusterCount() const { return _clusters.size(); }
-    std::vector<std::shared_ptr<PlayerProfile>> GetCluster(uint32_t clusterId) const;
+    ::std::vector<::std::shared_ptr<PlayerProfile>> GetCluster(uint32_t clusterId) const;
     uint32_t GetPlayerCluster(ObjectGuid guid) const;
-    std::shared_ptr<PlayerProfile> GetClusterCentroid(uint32_t clusterId) const;
+    ::std::shared_ptr<PlayerProfile> GetClusterCentroid(uint32_t clusterId) const;
 
     // Similarity search
-    std::vector<std::shared_ptr<PlayerProfile>> FindSimilarProfiles(
+    ::std::vector<::std::shared_ptr<PlayerProfile>> FindSimilarProfiles(
         const PlayerProfile& profile, uint32_t maxCount = 5) const;
 
 private:
     struct Cluster
     {
-        std::vector<std::shared_ptr<PlayerProfile>> members;
-        std::shared_ptr<PlayerProfile> centroid;
+        ::std::vector<::std::shared_ptr<PlayerProfile>> members;
+        ::std::shared_ptr<PlayerProfile> centroid;
         float inertia;  // Sum of squared distances to centroid
     };
 
-    std::vector<Cluster> _clusters;
-    std::unordered_map<ObjectGuid, uint32_t> _profileToCluster;
-    std::unordered_map<ObjectGuid, std::shared_ptr<PlayerProfile>> _profiles;
+    ::std::vector<Cluster> _clusters;
+    ::std::unordered_map<ObjectGuid, uint32_t> _profileToCluster;
+    ::std::unordered_map<ObjectGuid, ::std::shared_ptr<PlayerProfile>> _profiles;
 
     // K-means parameters
     uint32_t _k = 7;  // Number of clusters (matching archetypes)
@@ -225,7 +225,7 @@ public:
     // Profile management
     void CreateProfile(Player* player);
     void DeleteProfile(ObjectGuid guid);
-    std::shared_ptr<PlayerProfile> GetProfile(ObjectGuid guid) const;
+    ::std::shared_ptr<PlayerProfile> GetProfile(ObjectGuid guid) const;
 
     // Real-time tracking
     void RecordPlayerBehavior(Player* player);
@@ -240,7 +240,7 @@ public:
     // Bot behavior mimicry
     void ApplyPlayerStyle(Player* bot, ObjectGuid templatePlayerGuid);
     void ApplyArchetypeStyle(Player* bot, PlayerArchetype archetype);
-    std::string SelectActionBasedOnPattern(Player* bot, const PlayerProfile& pattern);
+    ::std::string SelectActionBasedOnPattern(Player* bot, const PlayerProfile& pattern);
 
     // Prediction
     struct PredictionResult
@@ -255,17 +255,17 @@ public:
     PredictionResult PredictPlayerAction(Player* player, float timeHorizon = 1.0f);
 
     // Learning from players
-    void LearnFromSuccessfulAction(Player* player, const std::string& action, float effectiveness);
+    void LearnFromSuccessfulAction(Player* player, const ::std::string& action, float effectiveness);
     void LearnFromCombatOutcome(Player* player, bool victory, float performance);
 
     // Statistics and metrics
     struct RecognitionMetrics
     {
-        std::atomic<uint32_t> profilesTracked{0};
-        std::atomic<uint32_t> patternsRecognized{0};
-        std::atomic<float> averageConfidence{0.0f};
-        std::atomic<float> predictionAccuracy{0.0f};
-        std::atomic<uint64_t> samplesProcessed{0};
+        ::std::atomic<uint32_t> profilesTracked{0};
+        ::std::atomic<uint32_t> patternsRecognized{0};
+        ::std::atomic<float> averageConfidence{0.0f};
+        ::std::atomic<float> predictionAccuracy{0.0f};
+        ::std::atomic<uint64_t> samplesProcessed{0};
     };
 
     RecognitionMetrics GetMetrics() const { return _metrics; }
@@ -273,11 +273,11 @@ public:
     // Anomaly detection
     bool IsAnomalousBehavior(Player* player) const;
     float GetAnomalyScore(Player* player) const;
-    std::vector<std::string> DetectExploits(Player* player) const;
+    ::std::vector<::std::string> DetectExploits(Player* player) const;
 
     // Meta-game analysis
     void UpdateMetaPatterns();
-    std::vector<PatternSignature> GetCurrentMetaPatterns() const;
+    ::std::vector<PatternSignature> GetCurrentMetaPatterns() const;
     void AdaptBotsToMeta();
 
     // Performance optimization
@@ -294,16 +294,16 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _clusterMutex;
 
     // Profile storage
-    std::unordered_map<ObjectGuid, std::shared_ptr<PlayerProfile>> _profiles;
-    std::unique_ptr<BehaviorCluster> _behaviorCluster;
+    ::std::unordered_map<ObjectGuid, ::std::shared_ptr<PlayerProfile>> _profiles;
+    ::std::unique_ptr<BehaviorCluster> _behaviorCluster;
 
     // Pattern database
-    std::vector<PatternSignature> _globalPatterns;
-    std::unordered_map<PlayerArchetype, std::vector<PatternSignature>> _archetypePatterns;
+    ::std::vector<PatternSignature> _globalPatterns;
+    ::std::unordered_map<PlayerArchetype, ::std::vector<PatternSignature>> _archetypePatterns;
 
     // Meta patterns
-    std::vector<PatternSignature> _metaPatterns;
-    std::chrono::steady_clock::time_point _lastMetaUpdate;
+    ::std::vector<PatternSignature> _metaPatterns;
+    ::std::chrono::steady_clock::time_point _lastMetaUpdate;
 
     // Metrics
     mutable RecognitionMetrics _metrics;
@@ -313,28 +313,28 @@ private:
     {
         ObjectGuid playerGuid;
         PredictionResult prediction;
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
         bool validated;
         float accuracy;
     };
-    std::deque<PredictionValidation> _predictionHistory;
+    ::std::deque<PredictionValidation> _predictionHistory;
     static constexpr size_t MAX_PREDICTION_HISTORY = 1000;
 
     // Helper methods
     BehaviorSample CreateBehaviorSample(Player* player) const;
-    std::vector<float> ExtractFeatureVector(const BehaviorSample& sample) const;
+    ::std::vector<float> ExtractFeatureVector(const BehaviorSample& sample) const;
     void UpdatePredictionAccuracy();
     void PropagateSuccessfulPatterns();
     void ClusterProfiles();
     float CalculatePatternStrength(const PatternSignature& pattern) const;
 
     // Pattern detection algorithms
-    std::vector<PatternSignature> DetectRepeatingSequences(
-        const std::deque<BehaviorSample>& samples) const;
-    std::vector<PatternSignature> DetectMovementPatterns(
-        const std::deque<BehaviorSample>& samples) const;
-    std::vector<PatternSignature> DetectCombatRotations(
-        const std::deque<BehaviorSample>& samples) const;
+    ::std::vector<PatternSignature> DetectRepeatingSequences(
+        const ::std::deque<BehaviorSample>& samples) const;
+    ::std::vector<PatternSignature> DetectMovementPatterns(
+        const ::std::deque<BehaviorSample>& samples) const;
+    ::std::vector<PatternSignature> DetectCombatRotations(
+        const ::std::deque<BehaviorSample>& samples) const;
 
     // Constants
     static constexpr uint32_t MIN_SAMPLES_FOR_PATTERN = 10;
@@ -357,8 +357,8 @@ public:
 
 private:
     Player* _player;
-    std::vector<BehaviorSample> _samples;
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::vector<BehaviorSample> _samples;
+    ::std::chrono::steady_clock::time_point _startTime;
 };
 
 #define sPlayerPatternRecognition PlayerPatternRecognition::Instance()

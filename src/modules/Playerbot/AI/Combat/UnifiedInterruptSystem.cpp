@@ -44,17 +44,17 @@ UnifiedInterruptSystem* UnifiedInterruptSystem::instance()
 
 UnifiedInterruptSystem::UnifiedInterruptSystem()
     : _initialized(false)
-    , _initTime(std::chrono::system_clock::now())
+    , _initTime(::std::chrono::system_clock::now())
 {
     // Initialize atomic metrics
-    _metrics.spellsDetected.store(0, std::memory_order_relaxed);
-    _metrics.interruptAttempts.store(0, std::memory_order_relaxed);
-    _metrics.interruptSuccesses.store(0, std::memory_order_relaxed);
-    _metrics.interruptFailures.store(0, std::memory_order_relaxed);
-    _metrics.fallbacksUsed.store(0, std::memory_order_relaxed);
-    _metrics.movementRequired.store(0, std::memory_order_relaxed);
-    _metrics.groupCoordinations.store(0, std::memory_order_relaxed);
-    _metrics.rotationViolations.store(0, std::memory_order_relaxed);
+    _metrics.spellsDetected.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptAttempts.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptSuccesses.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptFailures.store(0, ::std::memory_order_relaxed);
+    _metrics.fallbacksUsed.store(0, ::std::memory_order_relaxed);
+    _metrics.movementRequired.store(0, ::std::memory_order_relaxed);
+    _metrics.groupCoordinations.store(0, ::std::memory_order_relaxed);
+    _metrics.rotationViolations.store(0, ::std::memory_order_relaxed);
 }
 
 UnifiedInterruptSystem::~UnifiedInterruptSystem()
@@ -64,7 +64,7 @@ UnifiedInterruptSystem::~UnifiedInterruptSystem()
 
 bool UnifiedInterruptSystem::Initialize()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_initialized)
         return true;
@@ -72,7 +72,7 @@ bool UnifiedInterruptSystem::Initialize()
     // Initialize InterruptDatabase (WoW 11.2 spell data)
     InterruptDatabase::Initialize();
 
-    _initTime = std::chrono::system_clock::now();
+    _initTime = ::std::chrono::system_clock::now();
     _initialized = true;
 
     TC_LOG_INFO("playerbot.interrupt", "UnifiedInterruptSystem initialized with WoW 11.2 spell database");
@@ -81,7 +81,7 @@ bool UnifiedInterruptSystem::Initialize()
 
 void UnifiedInterruptSystem::Shutdown()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (!_initialized)
         return;
@@ -107,7 +107,7 @@ void UnifiedInterruptSystem::Update(Player* bot, uint32 diff)
     if (!bot || !_initialized)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     // Update cooldowns
@@ -146,7 +146,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
     if (!bot || !ai)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     BotInterruptInfo info;
@@ -163,7 +163,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
             continue;
 
         // Check if spell has interrupt effect
-        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_INTERRUPT_CAST)
             {
@@ -180,7 +180,7 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
         }
 
         // Check for stun/silence effects (alternative interrupts)
-        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
             if (spellInfo->GetEffect(SpellEffIndex(i)).Effect == SPELL_EFFECT_APPLY_AURA)
             {
@@ -201,13 +201,13 @@ void UnifiedInterruptSystem::RegisterBot(Player* bot, BotAI* ai)
 
 void UnifiedInterruptSystem::UnregisterBot(ObjectGuid botGuid)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     _registeredBots.erase(botGuid);
     _botAI.erase(botGuid);
 
     // Remove from rotation orders
-    _rotationOrder.erase(std::remove(_rotationOrder.begin(), _rotationOrder.end(), botGuid), _rotationOrder.end());
+    _rotationOrder.erase(::std::remove(_rotationOrder.begin(), _rotationOrder.end(), botGuid), _rotationOrder.end());
     // Remove group assignments
     _groupAssignments.erase(botGuid);
 }
@@ -221,7 +221,7 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
     if (!caster || !_initialized)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid casterGuid = caster->GetGUID();
     CastingSpellInfo castInfo;
@@ -235,7 +235,7 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
     castInfo.priority = GetSpellPriority(spellId);
 
     _activeCasts[casterGuid] = castInfo;
-    _metrics.spellsDetected.fetch_add(1, std::memory_order_relaxed);
+    _metrics.spellsDetected.fetch_add(1, ::std::memory_order_relaxed);
 
     TC_LOG_DEBUG("playerbot.interrupt", "Enemy cast started - Caster: {}, Spell: {}, CastTime: {}ms, Priority: {}",
         casterGuid.ToString(), spellId, castTime, static_cast<uint8>(castInfo.priority));
@@ -243,13 +243,13 @@ void UnifiedInterruptSystem::OnEnemyCastStart(Unit* caster, uint32 spellId, uint
 
 void UnifiedInterruptSystem::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint32 spellId)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
         it->second.interrupted = true;
-        _metrics.interruptSuccesses.fetch_add(1, std::memory_order_relaxed);
+        _metrics.interruptSuccesses.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_DEBUG("playerbot.interrupt", "Cast interrupted - Caster: {}, Spell: {}",
             casterGuid.ToString(), spellId);
@@ -258,7 +258,7 @@ void UnifiedInterruptSystem::OnEnemyCastInterrupted(ObjectGuid casterGuid, uint3
 
 void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end() && !it->second.interrupted)
@@ -275,9 +275,11 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 // TODO Phase 4D:     std::vector<CastingSpellInfo> casts;
 // TODO Phase 4D:     casts.reserve(_activeCasts.size());
 // TODO Phase 4D: 
-// TODO Phase 4D:     for (auto const& [guid, castInfo] : _activeCasts)
+// TODO Phase 4D:
+    for (auto const& [guid, castInfo] : _activeCasts)
 // TODO Phase 4D:     {
-// TODO Phase 4D:         if (!castInfo.interrupted)
+// TODO Phase 4D:
+    if (!castInfo.interrupted)
 // TODO Phase 4D:             casts.push_back(castInfo);
 // TODO Phase 4D:     }
 // TODO Phase 4D: 
@@ -292,7 +294,8 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 // TODO Phase 4D: {
 // TODO Phase 4D:     // Query InterruptDatabase for WoW 11.2 spell priority
 // TODO Phase 4D:     InterruptSpellInfo const* spellInfo = InterruptDatabase::GetSpellInfo(spellId, DIFFICULTY_NONE);
-// TODO Phase 4D:     if (spellInfo)
+// TODO Phase 4D:
+    if (spellInfo)
 // TODO Phase 4D:         return spellInfo->priority;
 // TODO Phase 4D: 
 // TODO Phase 4D:     // Default to MODERATE for unknown spells
@@ -318,14 +321,14 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
 // DECISION MAKING AND PLANNING
 // =====================================================================
 
-std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Player* bot)
+::std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTargets(Player* bot)
 {
     if (!bot)
         return {};
 
-    std::vector<UnifiedInterruptTarget> targets;
+    ::std::vector<UnifiedInterruptTarget> targets;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 
@@ -340,7 +343,7 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
             continue;
 
         // Check if cast is still active
-        if (currentTime >= castInfo.castEndTime)
+    if (currentTime >= castInfo.castEndTime)
             continue;
 
         // Build interrupt target
@@ -351,7 +354,7 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
         target.castStartTime = castInfo.castStartTime;
         target.castEndTime = castInfo.castEndTime;
         target.remainingCastTime = castInfo.castEndTime - currentTime;
-        target.distance = std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
+        target.distance = ::std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
         target.inLineOfSight = bot->IsWithinLOSInMap(caster);
         target.threatLevel = CalculateThreatLevel(castInfo);
 
@@ -359,7 +362,7 @@ std::vector<UnifiedInterruptTarget> UnifiedInterruptSystem::ScanForInterruptTarg
     }
 
     // Sort by priority and remaining time
-    std::sort(targets.begin(), targets.end(), [](UnifiedInterruptTarget const& a, UnifiedInterruptTarget const& b) {
+    ::std::sort(targets.begin(), targets.end(), [](UnifiedInterruptTarget const& a, UnifiedInterruptTarget const& b) {
         if (a.priority != b.priority)
             return a.priority > b.priority;
         return a.remainingCastTime < b.remainingCastTime;
@@ -373,7 +376,7 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
     if (!bot)
         return {};
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     UnifiedInterruptPlan plan;
@@ -417,10 +420,10 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
     Unit* caster = ObjectAccessor::GetUnit(*bot, target.casterGuid);
     if (caster)
     {
-        float distance = std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
+        float distance = ::std::sqrt(bot->GetExactDistSq(caster)); // Calculate once from squared distance
 
         // Check if movement required
-        if (distance > botInfo.interruptRange)
+    if (distance > botInfo.interruptRange)
         {
             plan.requiresMovement = true;
 
@@ -437,8 +440,8 @@ UnifiedInterruptPlan UnifiedInterruptSystem::CreateInterruptPlan(Player* bot, Un
             float angle = botPos.GetAngle(&casterPos);
 
             plan.executionPosition.Relocate(
-                casterPos.GetPositionX() + std::cos(angle) * (botInfo.interruptRange - 2.0f),
-                casterPos.GetPositionY() + std::sin(angle) * (botInfo.interruptRange - 2.0f),
+                casterPos.GetPositionX() + ::std::cos(angle) * (botInfo.interruptRange - 2.0f),
+                casterPos.GetPositionY() + ::std::sin(angle) * (botInfo.interruptRange - 2.0f),
                 casterPos.GetPositionZ()
             );
         }
@@ -467,15 +470,15 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
     if (!bot || !plan.target || !plan.capability)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
-    _metrics.interruptAttempts.fetch_add(1, std::memory_order_relaxed);
+    _metrics.interruptAttempts.fetch_add(1, ::std::memory_order_relaxed);
 
     // Get caster
     Unit* caster = ObjectAccessor::GetUnit(*bot, plan.target->casterGuid);
     if (!caster || !caster->IsAlive())
     {
-        _metrics.interruptFailures.fetch_add(1, std::memory_order_relaxed);
+        _metrics.interruptFailures.fetch_add(1, ::std::memory_order_relaxed);
         return false;
     }
 
@@ -484,11 +487,11 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
     {
         if (!RequestInterruptPositioning(bot, caster))
         {
-            _metrics.interruptFailures.fetch_add(1, std::memory_order_relaxed);
+            _metrics.interruptFailures.fetch_add(1, ::std::memory_order_relaxed);
             return false;
         }
 
-        _metrics.movementRequired.fetch_add(1, std::memory_order_relaxed);
+        _metrics.movementRequired.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     // Execute based on method
@@ -546,7 +549,7 @@ bool UnifiedInterruptSystem::ExecuteInterruptPlan(Player* bot, UnifiedInterruptP
     }
     else
     {
-        _metrics.interruptFailures.fetch_add(1, std::memory_order_relaxed);
+        _metrics.interruptFailures.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     return success;
@@ -561,12 +564,12 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
     if (!group)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
-    _metrics.groupCoordinations.fetch_add(1, std::memory_order_relaxed);
+    _metrics.groupCoordinations.fetch_add(1, ::std::memory_order_relaxed);
 
     // Get all active casts
-    std::vector<CastingSpellInfo> activeCasts;
+    ::std::vector<CastingSpellInfo> activeCasts;
     for (auto const& [guid, castInfo] : _activeCasts)
     {
         if (!castInfo.interrupted)
@@ -574,14 +577,14 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
     }
 
     // Sort by priority
-    std::sort(activeCasts.begin(), activeCasts.end(), [](CastingSpellInfo const& a, CastingSpellInfo const& b) {
+    ::std::sort(activeCasts.begin(), activeCasts.end(), [](CastingSpellInfo const& a, CastingSpellInfo const& b) {
         if (a.priority != b.priority)
             return a.priority > b.priority;
         return a.castStartTime < b.castStartTime;
     });
 
     // Get available bots in group
-    std::vector<ObjectGuid> availableBots;
+    ::std::vector<ObjectGuid> availableBots;
     for (auto const& [botGuid, botInfo] : _registeredBots)
     {
         if (botInfo.available)
@@ -618,7 +621,7 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
 
 bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& targetGuid, uint32& spellId)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _groupAssignments.find(botGuid);
     if (it == _groupAssignments.end())
@@ -638,7 +641,7 @@ bool UnifiedInterruptSystem::ShouldBotInterrupt(ObjectGuid botGuid, ObjectGuid& 
 
 BotInterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _groupAssignments.find(botGuid);
     if (it != _groupAssignments.end())
@@ -649,7 +652,7 @@ BotInterruptAssignment UnifiedInterruptSystem::GetBotAssignment(ObjectGuid botGu
 
 void UnifiedInterruptSystem::ClearAssignments(ObjectGuid groupGuid)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Clear all assignments for bots in this group
     for (auto it = _groupAssignments.begin(); it != _groupAssignments.end();)
@@ -669,14 +672,14 @@ ObjectGuid UnifiedInterruptSystem::GetNextInRotation(Group* group)
     if (!group)
         return ObjectGuid::Empty;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid groupGuid = group->GetGUID();
 
     // Initialize rotation if needed
     if (_rotationOrder.find(groupGuid) == _rotationOrder.end())
     {
-        std::vector<ObjectGuid> rotation;
+        ::std::vector<ObjectGuid> rotation;
 
         for (auto const& [botGuid, botInfo] : _registeredBots)
         {
@@ -714,7 +717,7 @@ ObjectGuid UnifiedInterruptSystem::GetNextInRotation(Group* group)
 
 void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellId)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _registeredBots.find(botGuid);
     if (it == _registeredBots.end())
@@ -744,7 +747,7 @@ void UnifiedInterruptSystem::MarkInterruptUsed(ObjectGuid botGuid, uint32 spellI
 
 void UnifiedInterruptSystem::ResetRotation(ObjectGuid groupGuid)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     _rotationIndex[groupGuid] = 0;
 }
@@ -758,7 +761,7 @@ bool UnifiedInterruptSystem::HandleFailedInterrupt(Player* bot, Unit* target, ui
     if (!bot || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     FallbackMethod method = SelectFallbackMethod(bot, target, failedSpellId);
 
@@ -768,7 +771,7 @@ bool UnifiedInterruptSystem::HandleFailedInterrupt(Player* bot, Unit* target, ui
     bool success = ExecuteFallback(bot, target, method);
 
     if (success)
-        _metrics.fallbacksUsed.fetch_add(1, std::memory_order_relaxed);
+        _metrics.fallbacksUsed.fetch_add(1, ::std::memory_order_relaxed);
 
     return success;
 }
@@ -778,7 +781,7 @@ FallbackMethod UnifiedInterruptSystem::SelectFallbackMethod(Player* bot, Unit* t
     if (!bot || !target)
         return FallbackMethod::NONE;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto it = _registeredBots.find(botGuid);
@@ -874,7 +877,7 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
     if (!bot || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto aiIt = _botAI.find(botGuid);
@@ -899,8 +902,8 @@ bool UnifiedInterruptSystem::RequestInterruptPositioning(Player* bot, Unit* targ
 
     Position idealPos;
     idealPos.Relocate(
-        targetPos.GetPositionX() + std::cos(angle) * (interruptRange - 2.0f),
-        targetPos.GetPositionY() + std::sin(angle) * (interruptRange - 2.0f),
+        targetPos.GetPositionX() + ::std::cos(angle) * (interruptRange - 2.0f),
+        targetPos.GetPositionY() + ::std::sin(angle) * (interruptRange - 2.0f),
         targetPos.GetPositionZ()
     );
 
@@ -921,20 +924,20 @@ UnifiedInterruptMetrics UnifiedInterruptSystem::GetMetrics() const
 {
     // Atomic loads are thread-safe without lock
     UnifiedInterruptMetrics metrics;
-    metrics.spellsDetected.store(_metrics.spellsDetected.load(std::memory_order_relaxed));
-    metrics.interruptAttempts.store(_metrics.interruptAttempts.load(std::memory_order_relaxed));
-    metrics.interruptSuccesses.store(_metrics.interruptSuccesses.load(std::memory_order_relaxed));
-    metrics.interruptFailures.store(_metrics.interruptFailures.load(std::memory_order_relaxed));
-    metrics.fallbacksUsed.store(_metrics.fallbacksUsed.load(std::memory_order_relaxed));
-    metrics.movementRequired.store(_metrics.movementRequired.load(std::memory_order_relaxed));
-    metrics.groupCoordinations.store(_metrics.groupCoordinations.load(std::memory_order_relaxed));
-    metrics.rotationViolations.store(_metrics.rotationViolations.load(std::memory_order_relaxed));
+    metrics.spellsDetected.store(_metrics.spellsDetected.load(::std::memory_order_relaxed));
+    metrics.interruptAttempts.store(_metrics.interruptAttempts.load(::std::memory_order_relaxed));
+    metrics.interruptSuccesses.store(_metrics.interruptSuccesses.load(::std::memory_order_relaxed));
+    metrics.interruptFailures.store(_metrics.interruptFailures.load(::std::memory_order_relaxed));
+    metrics.fallbacksUsed.store(_metrics.fallbacksUsed.load(::std::memory_order_relaxed));
+    metrics.movementRequired.store(_metrics.movementRequired.load(::std::memory_order_relaxed));
+    metrics.groupCoordinations.store(_metrics.groupCoordinations.load(::std::memory_order_relaxed));
+    metrics.rotationViolations.store(_metrics.rotationViolations.load(::std::memory_order_relaxed));
     return metrics;
 }
 
 BotInterruptStats UnifiedInterruptSystem::GetBotStats(ObjectGuid botGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     BotInterruptStats stats;
     stats.botGuid = botGuid;
@@ -959,11 +962,11 @@ BotInterruptStats UnifiedInterruptSystem::GetBotStats(ObjectGuid botGuid) const
     return stats;
 }
 
-std::vector<InterruptHistoryEntry> UnifiedInterruptSystem::GetInterruptHistory(uint32 count) const
+::std::vector<InterruptHistoryEntry> UnifiedInterruptSystem::GetInterruptHistory(uint32 count) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
-    std::vector<InterruptHistoryEntry> history;
+    ::std::vector<InterruptHistoryEntry> history;
 
     if (count == 0)
     {
@@ -980,16 +983,16 @@ std::vector<InterruptHistoryEntry> UnifiedInterruptSystem::GetInterruptHistory(u
 
 void UnifiedInterruptSystem::ResetMetrics()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
-    _metrics.spellsDetected.store(0, std::memory_order_relaxed);
-    _metrics.interruptAttempts.store(0, std::memory_order_relaxed);
-    _metrics.interruptSuccesses.store(0, std::memory_order_relaxed);
-    _metrics.interruptFailures.store(0, std::memory_order_relaxed);
-    _metrics.fallbacksUsed.store(0, std::memory_order_relaxed);
-    _metrics.movementRequired.store(0, std::memory_order_relaxed);
-    _metrics.groupCoordinations.store(0, std::memory_order_relaxed);
-    _metrics.rotationViolations.store(0, std::memory_order_relaxed);
+    _metrics.spellsDetected.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptAttempts.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptSuccesses.store(0, ::std::memory_order_relaxed);
+    _metrics.interruptFailures.store(0, ::std::memory_order_relaxed);
+    _metrics.fallbacksUsed.store(0, ::std::memory_order_relaxed);
+    _metrics.movementRequired.store(0, ::std::memory_order_relaxed);
+    _metrics.groupCoordinations.store(0, ::std::memory_order_relaxed);
+    _metrics.rotationViolations.store(0, ::std::memory_order_relaxed);
 
     _interruptHistory.clear();
 }
@@ -1041,22 +1044,22 @@ uint32 UnifiedInterruptSystem::CalculateInterruptPriority(UnifiedInterruptTarget
     return priority;
 }
 
-std::string UnifiedInterruptSystem::GeneratePlanReasoning(
+::std::string UnifiedInterruptSystem::GeneratePlanReasoning(
     UnifiedInterruptTarget const& target,
     UnifiedInterruptCapability const& capability,
     UnifiedInterruptPlan const& plan) const
 {
-    std::ostringstream reasoning;
+    ::std::ostringstream reasoning;
 
     reasoning << "Priority: " << static_cast<uint32>(target.priority);
     reasoning << ", Method: " << static_cast<uint32>(plan.method);
-    reasoning << ", Distance: " << std::fixed << std::setprecision(1) << target.distance;
+    reasoning << ", Distance: " << ::std::fixed << ::std::setprecision(1) << target.distance;
     reasoning << ", RemainingCast: " << target.remainingCastTime << "ms";
 
     if (plan.requiresMovement)
         reasoning << ", RequiresMovement";
 
-    reasoning << ", Success: " << std::fixed << std::setprecision(0) << (plan.successProbability * 100.0f) << "%";
+    reasoning << ", Success: " << ::std::fixed << ::std::setprecision(0) << (plan.successProbability * 100.0f) << "%";
 
     return reasoning.str();
 }
@@ -1082,7 +1085,7 @@ bool UnifiedInterruptSystem::ExecuteStun(Player* bot, Unit* target)
     if (!bot || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto it = _registeredBots.find(botGuid);
@@ -1114,7 +1117,7 @@ bool UnifiedInterruptSystem::ExecuteSilence(Player* bot, Unit* target)
     if (!bot || !target)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto it = _registeredBots.find(botGuid);
@@ -1197,7 +1200,7 @@ bool UnifiedInterruptSystem::ExecuteLOSBreak(Player* bot, Unit* target)
         return false;
 
     // Request movement to break LOS
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto aiIt = _botAI.find(botGuid);
@@ -1215,8 +1218,8 @@ bool UnifiedInterruptSystem::ExecuteLOSBreak(Player* bot, Unit* target)
 
     Position losPos;
     losPos.Relocate(
-        botPos.GetPositionX() + std::cos(angle) * 10.0f,
-        botPos.GetPositionY() + std::sin(angle) * 10.0f,
+        botPos.GetPositionX() + ::std::cos(angle) * 10.0f,
+        botPos.GetPositionY() + ::std::sin(angle) * 10.0f,
         botPos.GetPositionZ()
     );
 
@@ -1234,7 +1237,7 @@ bool UnifiedInterruptSystem::ExecuteRangeEscape(Player* bot, Unit* target)
         return false;
 
     // Move away from target
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ObjectGuid botGuid = bot->GetGUID();
     auto aiIt = _botAI.find(botGuid);
@@ -1251,8 +1254,8 @@ bool UnifiedInterruptSystem::ExecuteRangeEscape(Player* bot, Unit* target)
 
     Position escapePos;
     escapePos.Relocate(
-        botPos.GetPositionX() + std::cos(angle) * 20.0f,
-        botPos.GetPositionY() + std::sin(angle) * 20.0f,
+        botPos.GetPositionX() + ::std::cos(angle) * 20.0f,
+        botPos.GetPositionY() + ::std::sin(angle) * 20.0f,
         botPos.GetPositionZ()
     );
 

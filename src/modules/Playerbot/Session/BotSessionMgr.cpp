@@ -37,7 +37,7 @@ void BotSessionMgr::Shutdown()
     _enabled.store(false);
 
     // Clean up all sessions
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
     _sessions.clear();
     _activeSessions.clear();
 
@@ -51,7 +51,7 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
         return nullptr;
     }
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
 
     // Check if session already exists
@@ -62,17 +62,17 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
 
     // Create new session
     try {
-        auto session = std::make_unique<BotSession>(bnetAccountId);
+        auto session = ::std::make_unique<BotSession>(bnetAccountId);
         BotSession* sessionPtr = session.get();
 
 
         // Store session
-        _sessions[bnetAccountId] = std::move(session);
+        _sessions[bnetAccountId] = ::std::move(session);
         _activeSessions.push_back(sessionPtr);
 
 
         return sessionPtr;
-    } catch (std::exception const& e) {
+    } catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception during session creation for account {}: {}", bnetAccountId, e.what());
         return nullptr;
@@ -90,7 +90,6 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId, ObjectGuid charac
     }
 
     // Now login the character immediately
-
     if (!session->LoginCharacter(characterGuid))
     {
         // Clean up the session if login failed
@@ -127,7 +126,7 @@ BotSession* BotSessionMgr::CreateAsyncSession(uint32 bnetAccountId, ObjectGuid c
 
 void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     auto it = _sessions.find(bnetAccountId);
     if (it == _sessions.end()) {
@@ -138,7 +137,7 @@ void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 
     // Remove from active sessions
     _activeSessions.erase(
-        std::remove(_activeSessions.begin(), _activeSessions.end(), session),
+        ::std::remove(_activeSessions.begin(), _activeSessions.end(), session),
         _activeSessions.end());
 
     // Remove from sessions map
@@ -147,7 +146,7 @@ void BotSessionMgr::ReleaseSession(uint32 bnetAccountId)
 
 BotSession* BotSessionMgr::GetSession(uint32 bnetAccountId) const
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     auto it = _sessions.find(bnetAccountId);
     return (it != _sessions.end()) ? it->second.get() : nullptr;
@@ -160,7 +159,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
     }
 
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
 
     // Simple sequential update with async login state awareness
@@ -168,7 +167,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         BotSession* session = *it;
 
         // Comprehensive null pointer checks
-        if (!session) {
+    if (!session) {
             TC_LOG_ERROR("module.playerbot.session", "Found null session in _activeSessions, removing");
             it = _activeSessions.erase(it);
             continue;
@@ -185,7 +184,7 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
             // The previous code had duplicate IsActive() checks causing dead code path
             Player* player = session->GetPlayer();
 
-            TC_LOG_INFO("module.playerbot.session", "🔄 Updating session for account {}, player={}, inWorld={}",
+            TC_LOG_INFO("module.playerbot.session", " Updating session for account {}, player={}, inWorld={}",
                         session->GetAccountId(),
                         player ? player->GetName() : "NULL",
                         player && player->IsInWorld() ? "YES" : "NO");
@@ -195,16 +194,16 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
                 WorldSessionFilter updater(session);
                 session->Update(diff, updater);
 
-                TC_LOG_INFO("module.playerbot.session", "✅ Session update completed for account {}",
+                TC_LOG_INFO("module.playerbot.session", " Session update completed for account {}",
                             session->GetAccountId());
-            } catch (std::exception const& e) {
+            } catch (::std::exception const& e) {
                 TC_LOG_ERROR("module.playerbot.session", "Exception in session update for account {}: {}",
                             session->GetAccountId(), e.what());
             }
 
             ++it;
         }
-        catch (std::exception const& e) {
+        catch (::std::exception const& e) {
             TC_LOG_ERROR("module.playerbot.session",
                 "Exception during BotSession update for session {}: {}",
                 session ? "valid" : "null", e.what());
@@ -221,15 +220,15 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
 
 uint32 BotSessionMgr::GetActiveSessionCount() const
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
     return static_cast<uint32>(_activeSessions.size());
 }
 
 void BotSessionMgr::TriggerCharacterLoginForAllSessions()
 {
-    TC_LOG_INFO("module.playerbot.session", "🚀 TriggerCharacterLoginForAllSessions: Starting character login for sessions without players");
+    TC_LOG_INFO("module.playerbot.session", " TriggerCharacterLoginForAllSessions: Starting character login for sessions without players");
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     uint32 sessionsFound = 0;
     uint32 loginsTriggered = 0;
@@ -244,10 +243,10 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
         sessionsFound++;
 
         // Check if session has no player (needs character login)
-        if (!session->GetPlayer())
+    if (!session->GetPlayer())
         {
             TC_LOG_INFO("module.playerbot.session",
-                "🔑 Session for account {} has no player - looking up character for login",
+                " Session for account {} has no player - looking up character for login",
                 session->GetAccountId());
 
             // Query database to find a character for this account
@@ -258,7 +257,7 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
             if (!result || result->GetRowCount() == 0)
             {
                 TC_LOG_WARN("module.playerbot.session",
-                    "🔑 No characters found for account {}", session->GetAccountId());
+                    " No characters found for account {}", session->GetAccountId());
                 continue;
             }
 
@@ -267,11 +266,11 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
             ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(fields[0].GetUInt64()); // guid
 
             TC_LOG_INFO("module.playerbot.session",
-                "🔑 Triggering synchronous LoginCharacter for account {} with character {}",
+                " Triggering synchronous LoginCharacter for account {} with character {}",
                 session->GetAccountId(), characterGuid.ToString());
 
             // Trigger synchronous character login
-            if (session->LoginCharacter(characterGuid))
+    if (session->LoginCharacter(characterGuid))
             {
                 loginsTriggered++;
             }
@@ -288,25 +287,25 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
             if (player) {
                 try {
                     TC_LOG_INFO("module.playerbot.session",
-                        "✅ Session for account {} already has player {}",
+                        " Session for account {} already has player {}",
                         session->GetAccountId(), player->GetName().c_str());
                 }
                 catch (...) {
                     TC_LOG_WARN("module.playerbot.session",
-                        "✅ Session for account {} already has player (name unavailable - use-after-free protection)",
+                        " Session for account {} already has player (name unavailable - use-after-free protection)",
                         session->GetAccountId());
                 }
             }
             else {
                 TC_LOG_WARN("module.playerbot.session",
-                    "✅ Session for account {} has null player pointer",
+                    " Session for account {} has null player pointer",
                     session->GetAccountId());
             }
         }
     }
 
     TC_LOG_INFO("module.playerbot.session",
-        "🚀 TriggerCharacterLoginForAllSessions: Complete - {} sessions found, {} logins triggered",
+        " TriggerCharacterLoginForAllSessions: Complete - {} sessions found, {} logins triggered",
         sessionsFound, loginsTriggered);
 }
 

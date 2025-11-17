@@ -25,6 +25,7 @@
 #include "Map.h"
 #include "Log.h"
 #include "CellImpl.h"
+#include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include <chrono>
 #include "../../../Spatial/SpatialGridManager.h"
@@ -57,7 +58,7 @@ HunterAI::HunterAI(Player* bot) :
     _peakUpdateTime(0)
 {
     // Initialize combat behavior integration
-    _combatBehaviors = std::make_unique<CombatBehaviorIntegration>(bot);    // Reset combat metrics
+    _combatBehaviors = ::std::make_unique<CombatBehaviorIntegration>(bot);    // Reset combat metrics
     _combatMetrics.Reset();
 
     TC_LOG_DEBUG("playerbot", "HunterAI initialized for {} with CombatBehaviorIntegration", bot->GetName());
@@ -78,7 +79,7 @@ void HunterAI::UpdateRotation(::Unit* target)
         return;
 
     // Performance tracking
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Update combat behavior integration
     if (_combatBehaviors)
@@ -94,14 +95,14 @@ void HunterAI::UpdateRotation(::Unit* target)
 
         // Try auto-specialization if level 10+
         baselineManager.HandleAutoSpecialization(_bot);        // Execute baseline rotation
-
-        if (baselineManager.ExecuteBaselineRotation(_bot, target))
+    if (baselineManager.ExecuteBaselineRotation(_bot, target))
         return;
 
-        // Fallback to basic ranged attack        if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
+        // Fallback to basic ranged attack
+    if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
 
         {
-        _bot->CastSpell(target, ARCANE_SHOT, false);
+        _bot->CastSpell(CastSpellTargetArg(target), ARCANE_SHOT);
         }
         return;
     }
@@ -147,8 +148,8 @@ void HunterAI::UpdateRotation(::Unit* target)
     ExecuteNormalRotation(target);
 
     // Update combat metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    uint32 updateTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    uint32 updateTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
     _totalUpdateTime += updateTime;
     _updateCounter++;
     if (updateTime > _peakUpdateTime)
@@ -167,18 +168,18 @@ bool HunterAI::HandleInterrupts(::Unit* target)
             interruptTarget = target;
 
         // Counter Shot (primary interrupt)
-        if (CanInterruptTarget(interruptTarget))
+    if (CanInterruptTarget(interruptTarget))
         {
 
             uint32 now = GameTime::GetGameTimeMS();
             // Try Counter Shot first
-            if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
+    if (_bot->HasSpell(COUNTER_SHOT) && CanUseAbility(COUNTER_SHOT) &&
 
                 now - _lastCounterShot > 24000) // 24 second cooldown
 
             {
 
-                if (CastSpell(interruptTarget, COUNTER_SHOT))
+                if (CastSpell(COUNTER_SHOT, interruptTarget))
 
                 {
 
@@ -196,11 +197,12 @@ bool HunterAI::HandleInterrupts(::Unit* target)
 
             }
 
-            // Try Silencing Shot if available (MM spec)            if (_bot->HasSpell(SILENCING_SHOT) && CanUseAbility(SILENCING_SHOT))
+            // Try Silencing Shot if available (MM spec)
+    if (_bot->HasSpell(SILENCING_SHOT) && CanUseAbility(SILENCING_SHOT))
 
             {
 
-                if (CastSpell(interruptTarget, SILENCING_SHOT))
+                if (CastSpell(SILENCING_SHOT, interruptTarget))
                 {
 
                     _combatMetrics.interrupts++;
@@ -228,7 +230,7 @@ bool HunterAI::HandleDefensives(::Unit* target)
         uint32 now = GameTime::GetGameTimeMS();
 
         // Feign Death - emergency escape
-        if (healthPct < FEIGN_DEATH_THRESHOLD && ShouldFeignDeath())
+    if (healthPct < FEIGN_DEATH_THRESHOLD && ShouldFeignDeath())
 
         {
         if (_bot->HasSpell(FEIGN_DEATH) && CanUseAbility(FEIGN_DEATH) &&
@@ -253,7 +255,8 @@ bool HunterAI::HandleDefensives(::Unit* target)
             }
         }
 
-        // Deterrence - damage reduction        if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
+        // Deterrence - damage reduction
+    if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
 
         {
         if (_bot->HasSpell(DETERRENCE) && CanUseAbility(DETERRENCE) &&
@@ -279,7 +282,7 @@ bool HunterAI::HandleDefensives(::Unit* target)
         }
 
         // Aspect of the Turtle - modern defensive
-        if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
+    if (healthPct < DEFENSIVE_HEALTH_THRESHOLD)
 
         {
         if (_bot->HasSpell(ASPECT_OF_THE_TURTLE) && CanUseAbility(ASPECT_OF_THE_TURTLE))
@@ -301,7 +304,8 @@ bool HunterAI::HandleDefensives(::Unit* target)
             }
         }
 
-        // Exhilaration - self heal        if (healthPct < 50.0f && _bot->HasSpell(EXHILARATION) && CanUseAbility(EXHILARATION))
+        // Exhilaration - self heal
+    if (healthPct < 50.0f && _bot->HasSpell(EXHILARATION) && CanUseAbility(EXHILARATION))
 
         {
         if (CastSpell(EXHILARATION))
@@ -318,7 +322,7 @@ bool HunterAI::HandleDefensives(::Unit* target)
         }
 
         // Disengage for creating distance
-        if (target && GetDistanceToTarget(target) < DEAD_ZONE_MAX)
+    if (target && GetDistanceToTarget(target) < DEAD_ZONE_MAX)
 
         {
         if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE) &&
@@ -355,15 +359,17 @@ bool HunterAI::HandlePositioning(::Unit* target)
         float distance = GetDistanceToTarget(target);
 
         // Check if in dead zone
-        if (IsInDeadZone(target))
+    if (IsInDeadZone(target))
         {
 
             _combatMetrics.timeInDeadZone += 0.1f;
 
-            // Try to get out of dead zone            if (distance < DEAD_ZONE_MAX)
+            // Try to get out of dead zone
+    if (distance < DEAD_ZONE_MAX)
 
             {
-                // Too close - use disengage or move back                if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE))
+                // Too close - use disengage or move back
+    if (_bot->HasSpell(HUNTER_DISENGAGE) && CanUseAbility(HUNTER_DISENGAGE))
 
                 {
 
@@ -391,11 +397,12 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 }
 
-                // Use melee abilities while in dead zone                if (_bot->HasSpell(WING_CLIP) && CanUseAbility(WING_CLIP))
+                // Use melee abilities while in dead zone
+    if (_bot->HasSpell(WING_CLIP) && CanUseAbility(WING_CLIP))
 
                 {
 
-                    CastSpell(target, WING_CLIP);
+                    CastSpell(WING_CLIP, target);
 
                     return true;
 
@@ -415,13 +422,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
 
         // Maintain optimal range for kiting
-        if (NeedsToKite(target))
+    if (NeedsToKite(target))
         {
-            // Apply slowing effects            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
+            // Apply slowing effects
+    if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
 
             {
 
-                if (CastSpell(target, CONCUSSIVE_SHOT))
+                if (CastSpell(CONCUSSIVE_SHOT, target))
 
                 {
 
@@ -435,7 +443,8 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
             }
 
-            // Switch to Aspect of the Cheetah if needed            if (!_bot->IsInCombat() && distance > 40.0f)
+            // Switch to Aspect of the Cheetah if needed
+    if (!_bot->IsInCombat() && distance > 40.0f)
 
             {
 
@@ -445,7 +454,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
     return false;
-}bool HunterAI::HandlePetManagement(::Unit* target)
+}
+
+bool HunterAI::HandlePetManagement(::Unit* target)
 {
     UpdatePetStatus();
 
@@ -475,21 +486,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
         TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} calling pet",
 
                      GetBot()->GetName());
-        return true;    }
-
-    if (!priorityTarget)
-    {
-        return nullptr;
+        return true;
     }
+
     Pet* pet = GetPet();
     if (!pet)
         return false;
 
     // Heal pet if needed
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     if (NeedsPetHeal())
     {
         uint32 now = GameTime::GetGameTimeMS();
@@ -508,18 +512,9 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!priorityTarget)
-    {
-        return nullptr;
-    }
     // Command pet to attack if not already
     if (target && !IsPetInCombat())
     {
-        if (!priorityTarget)
-        {
-
-            return nullptr;
-        }
         CommandPetAttack(target);
         _combatMetrics.petCommands++;
         return false; // Don't stop rotation for this
@@ -530,7 +525,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
     {        if (_bot->HasSpell(KILL_COMMAND) && CanUseAbility(KILL_COMMAND))
         {
 
-            if (CastSpell(target, KILL_COMMAND))
+            if (CastSpell(KILL_COMMAND, target))
 
             {
 
@@ -544,84 +539,35 @@ bool HunterAI::HandlePositioning(::Unit* target)
         }
     }
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     // Master's Call for freedom effects
     if (_bot->HasUnitState(UNIT_STATE_ROOT) || _bot->HasUnitState(UNIT_STATE_STUNNED))
-    if (!ccTarget)
     {
-        return nullptr;
-    }
-    {
-        if (!bot)
-        {
-
-            if (!ccTarget)
-
-            {
-
-                return nullptr;
-
-            }
-
-            return nullptr;
-        }
         if (_bot->HasSpell(MASTER_S_CALL) && CanUseAbility(MASTER_S_CALL))
         {
-
             if (CastSpell(MASTER_S_CALL))
             {
-
                 TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Master's Call for freedom",
-
                              GetBot()->GetName());
-
                 return true;
-
             }
-        if (!ccTarget)
-        {
-
-            return nullptr;
-        }
         }
     }
 
     return false;
-}bool HunterAI::HandleTargetSwitching(::Unit* target)
+}
+
+bool HunterAI::HandleTargetSwitching(::Unit* target)
 {
     if (!_combatBehaviors)
         return false;
 
-    if (!ccTarget)
-    {
-        return nullptr;
-    }
     if (_combatBehaviors->ShouldSwitchTarget())
     {
         Unit* priorityTarget = _combatBehaviors->GetPriorityTarget();
         if (priorityTarget && priorityTarget != target)
-
-                                     if (!priorityTarget)
-
-                                     {
-                                     TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: priorityTarget in method HasAura");
-
-                                         return nullptr;
-
-                                     }
-
-                                     if (!priorityTarget)
-
-                                     {
-
-                                         return;
-
-                                     }
         {
-            // Apply Hunter's Mark to new target            if (_bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
+            // Apply Hunter's Mark to new target
+    if (_bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
 
             {
 
@@ -629,7 +575,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
                 {
 
-                    if (CastSpell(priorityTarget, HUNTER_S_MARK))
+                    if (CastSpell(HUNTER_S_MARK, priorityTarget))
 
                     {
 
@@ -643,8 +589,7 @@ bool HunterAI::HandlePositioning(::Unit* target)
 
             }
             // Command pet to switch targets
-
-            if (HasActivePet())
+    if (HasActivePet())
 
             {
 
@@ -655,24 +600,14 @@ bool HunterAI::HandlePositioning(::Unit* target)
             }
 
             // Update current target
-
             _currentTarget = priorityTarget->GetGUID();
 
-                         if (!priorityTarget)
-
-                         {
-
-                             return;
-
-                         }
-
-
             TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} switching to priority target {}",
-
                          GetBot()->GetName(), priorityTarget->GetName());
 
             return false; // Continue with new target
-        }    }
+        }
+    }
     return false;
 }
 
@@ -686,36 +621,12 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
         ::Unit* ccTarget = GetBestCrowdControlTarget();
 
         if (ccTarget && ccTarget != target)
-        if (!ccTarget)
-
-                                     {
-
-                                         return nullptr;
-
-                                     }
-
-            if (!ccTarget)
-
-            {
-
-                return nullptr;
-
-            }
-
-                                 if (!ccTarget)
-
-                                 {
-
-                                     return;
-
-                                 }
         {
 
             uint32 now = GameTime::GetGameTimeMS();
 
             // Freezing Trap for long CC
-
-            if (ShouldPlaceFreezingTrap(ccTarget))
+    if (ShouldPlaceFreezingTrap(ccTarget))
 
             {
 
@@ -740,54 +651,28 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
 
             }
 
-            // Scatter Shot for instant CC            if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
-
+            // Scatter Shot for instant CC
+            if (_bot->HasSpell(SCATTER_SHOT) && CanUseAbility(SCATTER_SHOT))
             {
-
-                if (CastSpell(ccTarget, SCATTER_SHOT))
+                if (CastSpell(SCATTER_SHOT, ccTarget))
                 {
-
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} used Scatter Shot on {}",
-
-                                 if (!ccTarget)
-
-                                 {
-
-                                     return;
-
-                                 }
-
                                  GetBot()->GetName(), ccTarget->GetName());
 
                     return true;
-
                 }
-
             }
 
-            // Concussive Shot for slowing            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
-
+            // Concussive Shot for slowing
+            if (_bot->HasSpell(CONCUSSIVE_SHOT) && CanUseAbility(CONCUSSIVE_SHOT))
             {
-
-                if (CastSpell(ccTarget, CONCUSSIVE_SHOT))
-
+                if (CastSpell(CONCUSSIVE_SHOT, ccTarget))
                 {
-
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} slowed {} with Concussive Shot",
-
-                                 if (!ccTarget)
-                                 {
-
-                                     return;
-
-                                 }
-
                                  GetBot()->GetName(), ccTarget->GetName());
 
                     return false; // Continue rotation
-
                 }
-
             }
         }
     }
@@ -803,14 +688,14 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
         uint32 nearbyEnemies = GetNearbyEnemyCount(10.0f);
 
         // Multi-Shot for 3+ targets
-        if (nearbyEnemies >= 3)
+    if (nearbyEnemies >= 3)
 
         {
         if (_bot->HasSpell(MULTI_SHOT) && CanUseAbility(MULTI_SHOT))
 
             {
 
-                if (CastSpell(target, MULTI_SHOT))
+                if (CastSpell(MULTI_SHOT, target))
 
                 {
 
@@ -824,7 +709,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
 
             }
         }        // Volley for ground-targeted AoE
-        if (nearbyEnemies >= 4 && _bot->HasSpell(VOLLEY) && CanUseAbility(VOLLEY))        {
+    if (nearbyEnemies >= 4 && _bot->HasSpell(VOLLEY) && CanUseAbility(VOLLEY))        {
             // Volley needs special handling for ground targeting
 
             Position aoeCenter = _combatBehaviors->GetOptimalPosition();
@@ -835,14 +720,15 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
             // Ground-targeted spell handling would go here
         }
 
-        // Explosive Shot for Survival spec        if (GetCurrentSpecialization() == HunterSpec::SURVIVAL && nearbyEnemies >= 2)
+        // Explosive Shot for Survival spec
+    if (GetCurrentSpecialization() == HunterSpec::SURVIVAL && nearbyEnemies >= 2)
         {
 
             if (_bot->HasSpell(EXPLOSIVE_SHOT) && CanUseAbility(EXPLOSIVE_SHOT))
 
             {
 
-                if (CastSpell(target, EXPLOSIVE_SHOT))
+                if (CastSpell(EXPLOSIVE_SHOT, target))
                 {
 
                     TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} using Explosive Shot for AoE",
@@ -857,9 +743,9 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
         }
 
         // Barrage for modern AoE
-        if (nearbyEnemies >= 3 && _bot->HasSpell(BARRAGE) && CanUseAbility(BARRAGE))        {
+    if (nearbyEnemies >= 3 && _bot->HasSpell(BARRAGE) && CanUseAbility(BARRAGE))        {
 
-            if (CastSpell(target, BARRAGE))
+            if (CastSpell(BARRAGE, target))
 
             {
 
@@ -873,7 +759,7 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
         }
 
         // Place explosive trap for AoE damage
-        if (ShouldPlaceExplosiveTrap())
+    if (ShouldPlaceExplosiveTrap())
         {
 
             uint32 now = GameTime::GetGameTimeMS();
@@ -911,7 +797,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
         {
 
             case HunterSpec::BEAST_MASTERY:
-                // Bestial Wrath - pet damage boost                if (_bot->HasSpell(BESTIAL_WRATH) && CanUseAbility(BESTIAL_WRATH))
+                // Bestial Wrath - pet damage boost
+    if (_bot->HasSpell(BESTIAL_WRATH) && CanUseAbility(BESTIAL_WRATH))
 
                 {
 
@@ -934,7 +821,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
 
                 }
 
-                // Aspect of the Wild - BM cooldown                if (_bot->HasSpell(ASPECT_OF_THE_WILD) && CanUseAbility(ASPECT_OF_THE_WILD))
+                // Aspect of the Wild - BM cooldown
+    if (_bot->HasSpell(ASPECT_OF_THE_WILD) && CanUseAbility(ASPECT_OF_THE_WILD))
 
                 {
 
@@ -956,7 +844,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
 
 
             case HunterSpec::MARKSMANSHIP:
-                // Trueshot - MM burst                if (_bot->HasSpell(TRUESHOT) && CanUseAbility(TRUESHOT))
+                // Trueshot - MM burst
+    if (_bot->HasSpell(TRUESHOT) && CanUseAbility(TRUESHOT))
 
                 {
 
@@ -973,7 +862,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
 
                 }
 
-                // Rapid Fire for attack speed                if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
+                // Rapid Fire for attack speed
+    if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
 
                 {
 
@@ -996,7 +886,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
 
             case HunterSpec::SURVIVAL:
             // Coordinated Assault or similar survival cooldowns
-                // Survival uses different cooldowns depending on version                if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
+                // Survival uses different cooldowns depending on version
+    if (_bot->HasSpell(RAPID_FIRE) && CanUseAbility(RAPID_FIRE))
 
                 {
 
@@ -1028,19 +919,22 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
     // Ensure we have proper aspect
     ManageAspects();
 
-    // Apply Hunter's Mark if not present    if (!target->HasAura(HUNTER_S_MARK) && _bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
+    // Apply Hunter's Mark if not present
+    if (!target->HasAura(HUNTER_S_MARK) && _bot->HasSpell(HUNTER_S_MARK) && CanUseAbility(HUNTER_S_MARK))
     {
-        CastSpell(target, HUNTER_S_MARK);
+        CastSpell(HUNTER_S_MARK, target);
     }
 
-    // Apply Serpent Sting if not present    if (!target->HasAura(SERPENT_STING) && _bot->HasSpell(SERPENT_STING) && CanUseAbility(SERPENT_STING))
+    // Apply Serpent Sting if not present
+    if (!target->HasAura(SERPENT_STING) && _bot->HasSpell(SERPENT_STING) && CanUseAbility(SERPENT_STING))
     {
-        CastSpell(target, SERPENT_STING);
+        CastSpell(SERPENT_STING, target);
     }
 
-    // Kill Shot if target is low health    if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
+    // Kill Shot if target is low health
+    if (target->GetHealthPct() < 20.0f && _bot->HasSpell(KILL_SHOT) && CanUseAbility(KILL_SHOT))
     {
-        if (CastSpell(target, KILL_SHOT))
+        if (CastSpell(KILL_SHOT, target))
         {
 
             RecordShotResult(true, false);
@@ -1049,13 +943,14 @@ void HunterAI::ExecuteNormalRotation(::Unit* target){
         }
     }
 
-    // Fallback basic rotation (specialization rotations handled by refactored system)    if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
+    // Fallback basic rotation (specialization rotations handled by refactored system)
+    if (_bot->HasSpell(STEADY_SHOT) && CanUseAbility(STEADY_SHOT))
     {
-        CastSpell(target, STEADY_SHOT);
+        CastSpell(STEADY_SHOT, target);
         RecordShotResult(true, false);
     }    else if (_bot->HasSpell(ARCANE_SHOT) && CanUseAbility(ARCANE_SHOT))
     {
-        CastSpell(target, ARCANE_SHOT);
+        CastSpell(ARCANE_SHOT, target);
         RecordShotResult(true, false);
     }
 }
@@ -1159,7 +1054,6 @@ void HunterAI::OnCombatEnd(){
     {
         if (power && power->PowerType == POWER_FOCUS)
         {
-
             uint32 focusCost = power->ManaCost;
 
             return HasFocus(focusCost);
@@ -1184,7 +1078,6 @@ void HunterAI::ConsumeResource(uint32 spellId)
     {
         if (power && power->PowerType == POWER_FOCUS)
         {
-
             _combatMetrics.focusSpent += power->ManaCost;
 
             break;
@@ -1346,20 +1239,24 @@ float HunterAI::GetPetHealthPercent() const
 }void HunterAI::HealPet()
 {    if (!_bot->HasSpell(MEND_PET) || !CanUseAbility(MEND_PET))        return;    Pet* pet = GetPet();
     if (pet && pet->IsAlive())
-    {        _bot->CastSpell(pet, MEND_PET, false);
+    {        _bot->CastSpell(CastSpellTargetArg(pet), MEND_PET);
     }
 }
 
 void HunterAI::RevivePet()
 {
-    
     if (!_bot->HasSpell(REVIVE_PET) || !CanUseAbility(REVIVE_PET))
-        return;    _bot->CastSpell(_bot, REVIVE_PET, false);
+        return;
+
+    _bot->CastSpell(CastSpellTargetArg(_bot), REVIVE_PET);
 }
 
 void HunterAI::CallPet()
-{    if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
-        return;    _bot->CastSpell(_bot, CALL_PET, false);
+{
+    if (!_bot->HasSpell(CALL_PET) || !CanUseAbility(CALL_PET))
+        return;
+
+    _bot->CastSpell(CastSpellTargetArg(_bot), CALL_PET);
 }
 
 // Trap management implementation
@@ -1397,7 +1294,7 @@ void HunterAI::PlaceTrap(uint32 trapSpell, const Position& pos)
 {    if (!_bot->HasSpell(trapSpell) || !CanUseAbility(trapSpell))
         return;
 
-    // Note: Ground-targeted spells need special handling    _bot->CastSpell(_bot, trapSpell, false);
+    // Note: Ground-targeted spells need special handling    _bot->CastSpell(trapSpell, false, _bot);
     _lastTrapPosition = pos;
     _activeTrapType = trapSpell;
     RecordTrapPlacement(trapSpell);
@@ -1442,7 +1339,7 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
 
             return false;
     }    // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), DEAD_ZONE_MAX);
 
     // Process results (replace old loop)
@@ -1461,11 +1358,10 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         // Original filtering logic goes here
     }
     // End of spatial grid fix
-
-        if (target)
+    if (target)
         {
 
-            minDistance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+            minDistance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
             }
         return minDistance > DEAD_ZONE_MIN && minDistance <= DEAD_ZONE_MAX;
     }
@@ -1534,7 +1430,7 @@ float HunterAI::GetDistanceToTarget(::Unit* target) const
 {
     if (!target || !_bot)
         return 0.0f;
-    return std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    return ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
 }
 
 // Hunter-specific mechanics implementation
@@ -1593,11 +1489,8 @@ void HunterAI::UpdateTracking()
             Creature* creature = target->ToCreature();
 
             if (creature)
-
             {
-
-                CreatureType creatureType = creature->GetCreatureTemplate()->type;
-
+                CreatureType creatureType = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
 
                 switch (creatureType)
 
@@ -1661,9 +1554,7 @@ void HunterAI::UpdateTracking()
 
                     default:
                         // For other types, default to humanoid tracking if in PvP zone
-
-                        if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
-
+                        if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
                             optimalTracking = TRACK_HUMANOIDS;
 
                         break;
@@ -1675,8 +1566,7 @@ void HunterAI::UpdateTracking()
         else if (target->GetTypeId() == TYPEID_PLAYER)
         {
             // Tracking players with Track Humanoids
-
-            if (_bot->HasSpell(TRACK_HUMANOIDS))
+    if (_bot->HasSpell(TRACK_HUMANOIDS))
 
                 optimalTracking = TRACK_HUMANOIDS;
         }
@@ -1685,25 +1575,44 @@ void HunterAI::UpdateTracking()
     // Priority 2: If no specific target, analyze nearby creatures
     if (optimalTracking == 0)
     {
-        std::unordered_map<CreatureType, uint32> creatureTypeCounts;
+        ::std::unordered_map<CreatureType, uint32> creatureTypeCounts;
 
         // Count nearby creature types within 40 yards
-        std::list<Creature*> nearbyCreatures;
-        Trinity::AllCreaturesInRange check(_bot, 40.0f);
-        Trinity::CreatureListSearcher<Trinity::AllCreaturesInRange> searcher(_bot, nearbyCreatures, check);
-        Cell::VisitGridObjects(_bot, searcher, 40.0f);
+        // Use spatial grid to find nearby creatures (same pattern as elsewhere in this file)
+        Map* map = _bot->GetMap();
+        if (!map)
+            return;
 
-        for (Creature* creature : nearbyCreatures)
+        DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+        if (!spatialGrid)
         {
+            sSpatialGridManager.CreateGrid(map);
+            spatialGrid = sSpatialGridManager.GetGrid(map);
+        }
 
-            if (!creature || creature->IsFriendlyTo(_bot))
+        if (spatialGrid)
+        {
+            // Query nearby creature GUIDs (lock-free!)
+            ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+                _bot->GetPosition(), 40.0f);
 
-                continue;
+            // Process results
+            for (ObjectGuid guid : nearbyGuids)
+            {
+                // Thread-safe spatial grid validation
+                auto snapshot_entity = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
+                Creature* creature = nullptr;
+                if (snapshot_entity)
+                {
+                    // FIXED: CreatureSnapshot to Creature conversion via ObjectAccessor
+                    creature = ObjectAccessor::GetCreature(*_bot, snapshot_entity->guid);
+                }
+                if (!creature || creature->IsFriendlyTo(_bot))
+                    continue;
 
-
-            CreatureType type = creature->GetCreatureTemplate()->type;
-
-            creatureTypeCounts[type]++;
+                CreatureType type = static_cast<CreatureType>(creature->GetCreatureTemplate()->type);
+                creatureTypeCounts[type]++;
+            }
         }
 
         // Select tracking for the most common nearby creature type
@@ -1725,7 +1634,7 @@ void HunterAI::UpdateTracking()
         }
 
         // Apply tracking for most common type
-        if (maxCount > 0)
+    if (maxCount > 0)
         {
 
             switch (mostCommonType)
@@ -1802,13 +1711,11 @@ void HunterAI::UpdateTracking()
         // In dungeons/raids, prioritize Track Hidden for stealth detection
         if (_bot->GetMap()->IsDungeon() && _bot->HasSpell(TRACK_HIDDEN))
         {
-
             optimalTracking = TRACK_HIDDEN;
         }
         // In PvP zones, track humanoids
-        else if (_bot->IsInPvPArea() && _bot->HasSpell(TRACK_HUMANOIDS))
+        else if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
         {
-
             optimalTracking = TRACK_HUMANOIDS;
         }
         // Default to beast tracking in open world
@@ -1822,7 +1729,7 @@ void HunterAI::UpdateTracking()
     // Apply the optimal tracking if it's different from current
     if (optimalTracking != 0 && optimalTracking != currentTracking)
     {
-        if (CastSpell(_bot, optimalTracking))
+        if (CastSpell(optimalTracking, _bot))
         {
 
             TC_LOG_DEBUG("module.playerbot.hunter", "Hunter {} switched tracking to spell {}",
@@ -1881,7 +1788,8 @@ uint32 HunterAI::GetOptimalAspect() const
 {
     if (_bot->IsInCombat())
     {
-        // Low on focus? Use Viper        if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
+        // Low on focus? Use Viper
+    if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
 
             return ASPECT_OF_THE_VIPER;
 
@@ -1915,7 +1823,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     float lowestHealth = 100.0f;
 
     // Find best CC target (lowest health add that's not the main target)
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, 30.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1933,7 +1841,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), 30.0f);
 
     // Process results (replace old loop)
@@ -1979,7 +1887,7 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
 
 uint32 HunterAI::GetNearbyEnemyCount(float range) const
 {
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -1997,7 +1905,7 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -2095,8 +2003,7 @@ Player* HunterAI::GetMainTank()
 
             uint8 playerClass = member->GetClass();
             // Typical tank classes: Warrior, Paladin, Death Knight, Druid (in bear form)
-
-            if (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
+    if (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN ||
 
                 playerClass == CLASS_DEATH_KNIGHT || playerClass == CLASS_DRUID)
 

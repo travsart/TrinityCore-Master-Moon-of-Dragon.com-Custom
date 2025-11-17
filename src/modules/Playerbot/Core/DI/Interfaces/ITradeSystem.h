@@ -42,7 +42,7 @@ public:
 
     // Vendor interactions using TrinityCore data
     virtual void LoadVendorDatabase() = 0;
-    virtual std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f) = 0;
+    virtual ::std::vector<VendorInfo> FindNearbyVendors(Player* player, float radius = 100.0f) = 0;
     virtual bool InteractWithVendor(Player* player, uint32 vendorGuid) = 0;
 
     // Vendor purchasing and selling
@@ -52,12 +52,12 @@ public:
 
     // Equipment repair using TrinityCore repair vendors
     virtual void AutoRepairEquipment(Player* player) = 0;
-    virtual std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f) = 0;
+    virtual ::std::vector<uint32> FindRepairVendors(Player* player, float radius = 200.0f) = 0;
     virtual void ProcessEquipmentRepair(Player* player, uint32 vendorGuid) = 0;
 
     // Innkeeper services using TrinityCore innkeeper data
     virtual void InteractWithInnkeeper(Player* player, uint32 innkeeperGuid) = 0;
-    virtual std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f) = 0;
+    virtual ::std::vector<uint32> FindNearbyInnkeepers(Player* player, float radius = 150.0f) = 0;
 
     // Intelligent trade decision making
     virtual float AnalyzeTradeValue(Player* player, const TradeSession& session) = 0;

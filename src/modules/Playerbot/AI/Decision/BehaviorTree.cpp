@@ -10,13 +10,14 @@
 #include "Unit.h"
 #include "Log.h"
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // ============================================================================
 // BehaviorTree Implementation
 // ============================================================================
 
-BehaviorTree::BehaviorTree(const std::string& name)
+BehaviorTree::BehaviorTree(const ::std::string& name)
     : _name(name)
     , _root(nullptr)
     , _lastStatus(NodeStatus::FAILURE)
@@ -26,7 +27,7 @@ BehaviorTree::BehaviorTree(const std::string& name)
 {
 }
 
-void BehaviorTree::SetRoot(std::shared_ptr<BehaviorNode> root)
+void BehaviorTree::SetRoot(::std::shared_ptr<BehaviorNode> root)
 {
     _root = root;
 }
@@ -122,10 +123,10 @@ namespace BehaviorTreeBuilder
     /**
      * @brief Create a sequence node with children
      */
-    std::shared_ptr<SequenceNode> Sequence(const std::string& name,
-        std::initializer_list<std::shared_ptr<BehaviorNode>> children)
+    ::std::shared_ptr<SequenceNode> Sequence(const ::std::string& name,
+        ::std::initializer_list<::std::shared_ptr<BehaviorNode>> children)
     {
-        auto seq = std::make_shared<SequenceNode>(name);
+        auto seq = ::std::make_shared<SequenceNode>(name);
         for (auto& child : children)
             seq->AddChild(child);
         return seq;
@@ -134,10 +135,10 @@ namespace BehaviorTreeBuilder
     /**
      * @brief Create a selector node with children
      */
-    std::shared_ptr<SelectorNode> Selector(const std::string& name,
-        std::initializer_list<std::shared_ptr<BehaviorNode>> children)
+    ::std::shared_ptr<SelectorNode> Selector(const ::std::string& name,
+        ::std::initializer_list<::std::shared_ptr<BehaviorNode>> children)
     {
-        auto sel = std::make_shared<SelectorNode>(name);
+        auto sel = ::std::make_shared<SelectorNode>(name);
         for (auto& child : children)
             sel->AddChild(child);
         return sel;
@@ -146,37 +147,37 @@ namespace BehaviorTreeBuilder
     /**
      * @brief Create a condition node
      */
-    std::shared_ptr<ConditionNode> Condition(const std::string& name,
-        std::function<bool(Player*, Unit*)> condition)
+    ::std::shared_ptr<ConditionNode> Condition(const ::std::string& name,
+        ::std::function<bool(Player*, Unit*)> condition)
     {
-        return std::make_shared<ConditionNode>(name, condition);
+        return ::std::make_shared<ConditionNode>(name, condition);
     }
 
     /**
      * @brief Create an action node
      */
-    std::shared_ptr<ActionNode> Action(const std::string& name,
-        std::function<NodeStatus(Player*, Unit*)> action)
+    ::std::shared_ptr<ActionNode> Action(const ::std::string& name,
+        ::std::function<NodeStatus(Player*, Unit*)> action)
     {
-        return std::make_shared<ActionNode>(name, action);
+        return ::std::make_shared<ActionNode>(name, action);
     }
 
     /**
      * @brief Create an inverter node
      */
-    std::shared_ptr<InverterNode> Inverter(const std::string& name,
-        std::shared_ptr<BehaviorNode> child)
+    ::std::shared_ptr<InverterNode> Inverter(const ::std::string& name,
+        ::std::shared_ptr<BehaviorNode> child)
     {
-        return std::make_shared<InverterNode>(name, child);
+        return ::std::make_shared<InverterNode>(name, child);
     }
 
     /**
      * @brief Create a repeater node
      */
-    std::shared_ptr<RepeaterNode> Repeater(const std::string& name,
-        std::shared_ptr<BehaviorNode> child, uint32 maxRepeats = 0)
+    ::std::shared_ptr<RepeaterNode> Repeater(const ::std::string& name,
+        ::std::shared_ptr<BehaviorNode> child, uint32 maxRepeats = 0)
     {
-        return std::make_shared<RepeaterNode>(name, child, maxRepeats);
+        return ::std::make_shared<RepeaterNode>(name, child, maxRepeats);
     }
 }
 
@@ -184,11 +185,11 @@ namespace BehaviorTreeBuilder
 // Example: Healer Behavior Tree
 // ============================================================================
 
-std::shared_ptr<BehaviorTree> CreateHealerBehaviorTree()
+::std::shared_ptr<BehaviorTree> CreateHealerBehaviorTree()
 {
     using namespace BehaviorTreeBuilder;
 
-    auto tree = std::make_shared<BehaviorTree>("Healer");
+    auto tree = ::std::make_shared<BehaviorTree>("Healer");
 
     // Root selector: Try emergency → tank → DPS → maintain HoTs
     auto root = Selector("Root", {
@@ -248,11 +249,11 @@ std::shared_ptr<BehaviorTree> CreateHealerBehaviorTree()
 // Example: Tank Behavior Tree
 // ============================================================================
 
-std::shared_ptr<BehaviorTree> CreateTankBehaviorTree()
+::std::shared_ptr<BehaviorTree> CreateTankBehaviorTree()
 {
     using namespace BehaviorTreeBuilder;
 
-    auto tree = std::make_shared<BehaviorTree>("Tank");
+    auto tree = ::std::make_shared<BehaviorTree>("Tank");
 
     // Root selector: Try defensive → taunt → threat → damage
     auto root = Selector("Root", {
@@ -302,11 +303,11 @@ std::shared_ptr<BehaviorTree> CreateTankBehaviorTree()
 // Example: DPS Behavior Tree
 // ============================================================================
 
-std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
+::std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
 {
     using namespace BehaviorTreeBuilder;
 
-    auto tree = std::make_shared<BehaviorTree>("DPS");
+    auto tree = ::std::make_shared<BehaviorTree>("DPS");
 
     // Root selector: Try cooldowns → AoE → single target → filler
     auto root = Selector("Root", {
@@ -339,7 +340,7 @@ std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
 
                 // Count nearby enemies within 10 yards
                 uint32 enemyCount = 0;
-                std::list<Creature*> creatures;
+                ::std::list<Creature*> creatures;
                 Trinity::AnyUnfriendlyUnitInObjectRangeCheck check(bot, bot, 10.0f);
                 Trinity::CreatureListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, creatures, check);
                 Cell::VisitGridObjects(bot, searcher, 10.0f);
@@ -376,3 +377,4 @@ std::shared_ptr<BehaviorTree> CreateDPSBehaviorTree()
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

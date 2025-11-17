@@ -27,13 +27,25 @@
 #include <unordered_map>
 #include "Log.h"
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Guardian Druid Spell IDs
 constexpr uint32 GUARDIAN_MANGLE = 33917;
 constexpr uint32 GUARDIAN_THRASH = 77758;
@@ -62,7 +74,7 @@ public:
 
     void ApplyIronfur(uint32 duration = 7000)
     {
-        _ironfurStacks = std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
+        _ironfurStacks = ::std::min(_ironfurStacks + 1, 5u); // Max 5 stacks
         _ironfurEndTime = GameTime::GetGameTimeMS() + duration;
     }
 
@@ -120,7 +132,7 @@ public:
     {
         auto& thrash = _thrashTargets[guid];
         thrash.endTime = GameTime::GetGameTimeMS() + duration;
-        thrash.stacks = std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
+        thrash.stacks = ::std::min(thrash.stacks + stacks, 3u); // Max 3 stacks
     }
 
     void RemoveThrash(ObjectGuid guid)
@@ -168,7 +180,7 @@ private:
         uint32 endTime = 0;
     };
 
-    std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
+    ::std::unordered_map<ObjectGuid, ThrashInfo> _thrashTargets;
 };
 
 class GuardianDruidRefactored : public TankSpecialization<RageResource>
@@ -188,23 +200,22 @@ public:
         , _frenziedRegenerationEndTime(0)
         , _berserkActive(false)
         , _berserkEndTime(0)
-        
+        , _lastBerserkTime(0)
         , _lastFrenziedRegenerationTime(0)
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {GUARDIAN_INCARNATION, 180000, 1},
-
-            {GUARDIAN_BERSERK, 180000, 1},
-
-            {GUARDIAN_BARKSKIN, 60000, 1},
-
-            {GUARDIAN_SURVIVAL_INSTINCTS, 180000, 1},
-
-            {GUARDIAN_FRENZIED_REGEN, 36000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_INCARNATION, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_BERSERK, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_BARKSKIN, 60000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_SURVIVAL_INSTINCTS, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_FRENZIED_REGEN, 36000, 1}
+        // COMMENTED OUT:         });
         TC_LOG_DEBUG("playerbot", "GuardianDruidRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems
@@ -253,7 +264,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_SURVIVAL_INSTINCTS);
+            this->CastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot);
 
             return;
         }
@@ -266,7 +277,7 @@ public:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_FRENZIED_REGENERATION);
+                this->CastSpell(GUARDIAN_FRENZIED_REGENERATION, bot);
 
                 _frenziedRegenerationActive = true;
 
@@ -283,7 +294,7 @@ public:
         if (healthPct < 60.0f && this->CanCastSpell(GUARDIAN_BARKSKIN, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_BARKSKIN);
+            this->CastSpell(GUARDIAN_BARKSKIN, bot);
 
             return;
         }
@@ -292,7 +303,7 @@ public:
         if (healthPct < 50.0f && this->CanCastSpell(GUARDIAN_RENEWAL, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_RENEWAL);
+            this->CastSpell(GUARDIAN_RENEWAL, bot);
 
             return;
         }
@@ -302,7 +313,7 @@ public:
         if (healthPct < 70.0f && !bot->IsInCombat() && this->CanCastSpell(GUARDIAN_REGROWTH, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_REGROWTH);
+            this->CastSpell(GUARDIAN_REGROWTH, bot);
         }
     }
 
@@ -386,7 +397,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_BEAR_FORM);
+                this->CastSpell(GUARDIAN_BEAR_FORM, bot);
 
             }
         }
@@ -405,7 +416,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_IRONFUR);
+                this->CastSpell(GUARDIAN_IRONFUR, bot);
 
                 _ironfurTracker.ApplyIronfur(7000); // 7 sec duration
 
@@ -422,7 +433,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_IRONFUR);
+                this->CastSpell(GUARDIAN_IRONFUR, bot);
 
                 _ironfurTracker.ApplyIronfur(7000);
 
@@ -442,7 +453,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
+                this->CastSpell(GUARDIAN_INCARNATION_BEAR, bot);
 
                 _berserkActive = true;
 
@@ -458,7 +469,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_BERSERK);
+                this->CastSpell(GUARDIAN_BERSERK, bot);
 
                 _berserkActive = true;
 
@@ -475,7 +486,7 @@ private:
         if (this->CanCastSpell(GUARDIAN_MANGLE, target))
         {
 
-            this->CastSpell(target, GUARDIAN_MANGLE);
+            this->CastSpell(GUARDIAN_MANGLE, target);
 
             GenerateRage(8);
 
@@ -490,7 +501,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_THRASH);
+                this->CastSpell(GUARDIAN_THRASH, target);
 
                 uint32 currentStacks = _thrashTracker.GetStacks(targetGuid);
                 _thrashTracker.ApplyThrash(targetGuid, 15000, 1); // 15 sec, add 1 stack
@@ -509,7 +520,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_PULVERIZE);
+                this->CastSpell(GUARDIAN_PULVERIZE, target);
 
                 _thrashTracker.RemoveThrash(targetGuid); // Consumes Thrash
 
@@ -526,7 +537,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_MOONFIRE);
+                this->CastSpell(GUARDIAN_MOONFIRE, target);
 
                 GenerateRage(3);
 
@@ -543,7 +554,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_MAUL);
+                this->CastSpell(GUARDIAN_MAUL, target);
 
                 return;
 
@@ -554,7 +565,7 @@ private:
         if (this->CanCastSpell(GUARDIAN_SWIPE, target))
         {
 
-            this->CastSpell(target, GUARDIAN_SWIPE);
+            this->CastSpell(GUARDIAN_SWIPE, target);
 
             GenerateRage(4);
 
@@ -573,7 +584,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
+                this->CastSpell(GUARDIAN_INCARNATION_BEAR, bot);
 
                 _berserkActive = true;
 
@@ -589,7 +600,7 @@ private:
 
             {
 
-                this->CastSpell(bot, GUARDIAN_BERSERK);
+                this->CastSpell(GUARDIAN_BERSERK, bot);
 
                 _berserkActive = true;
 
@@ -610,7 +621,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_THRASH);
+                this->CastSpell(GUARDIAN_THRASH, target);
 
                 _thrashTracker.ApplyThrash(targetGuid, 15000, 1);
 
@@ -625,7 +636,7 @@ private:
         if (this->CanCastSpell(GUARDIAN_MANGLE, target))
         {
 
-            this->CastSpell(target, GUARDIAN_MANGLE);
+            this->CastSpell(GUARDIAN_MANGLE, target);
 
             GenerateRage(8);
 
@@ -636,7 +647,7 @@ private:
         if (this->CanCastSpell(GUARDIAN_SWIPE, target))
         {
 
-            this->CastSpell(target, GUARDIAN_SWIPE);
+            this->CastSpell(GUARDIAN_SWIPE, target);
 
             GenerateRage(4);
 
@@ -651,7 +662,7 @@ private:
 
             {
 
-                this->CastSpell(target, GUARDIAN_MAUL);
+                this->CastSpell(GUARDIAN_MAUL, target);
 
                 return;
 
@@ -680,11 +691,9 @@ private:
     }
 
     void InitializeGuardianMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -715,7 +724,7 @@ private:
 
             queue->AddCondition(GUARDIAN_IRONFUR, [this](Player* bot, Unit*) {
 
-                return bot && this->_resource.GetAvailable() >= 40 &&
+                return bot && this->_resource >= 40 &&
 
                        this->_ironfurTracker.GetStacks() < 3;
 
@@ -725,7 +734,7 @@ private:
 
             queue->RegisterSpell(GUARDIAN_INCARNATION_BEAR, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
 
-            queue->AddCondition(GUARDIAN_INCARNATION_BEAR, [this](Player* bot, Unit*) {
+            queue->AddCondition(GUARDIAN_INCARNATION_BEAR, [this](::Player* bot, ::Unit*) {
 
                 return bot && bot->HasSpell(GUARDIAN_INCARNATION_BEAR) && this->CanUseMajorCooldown();
 
@@ -746,7 +755,7 @@ private:
 
             queue->AddCondition(GUARDIAN_MAUL, [this](Player*, Unit* target) {
 
-                return target && this->_resource.GetAvailable() >= 40 &&
+                return target && this->_resource >= 40 &&
 
                        this->_ironfurTracker.GetStacks() >= 2;
 
@@ -841,7 +850,7 @@ private:
 
                 Sequence("Emergency Survival", {
 
-                    Condition("Critical health", [this](Player* bot) {
+                    Condition("Critical health", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetHealthPct() < 50.0f;
 
@@ -851,19 +860,19 @@ private:
 
                         Sequence("Survival Instincts", {
 
-                            Condition("HP < 25%", [this](Player* bot) {
+                            Condition("HP < 25%", [this](Player* bot, Unit*) {
 
                                 return bot->GetHealthPct() < 25.0f;
 
                             }),
 
-                            Action("Cast Survival Instincts", [this](Player* bot) {
+                            bot::ai::Action("Cast Survival Instincts", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot))
 
                                 {
 
-                                    this->CastSpell(bot, GUARDIAN_SURVIVAL_INSTINCTS);
+                                    this->CastSpell(GUARDIAN_SURVIVAL_INSTINCTS, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -877,19 +886,19 @@ private:
 
                         Sequence("Frenzied Regeneration", {
 
-                            Condition("HP < 50% and not active", [this](Player* bot) {
+                            Condition("HP < 50% and not active", [this](Player* bot, Unit*) {
 
                                 return bot->GetHealthPct() < 50.0f && !this->_frenziedRegenerationActive;
 
                             }),
 
-                            Action("Cast Frenzied Regeneration", [this](Player* bot) {
+                            bot::ai::Action("Cast Frenzied Regeneration", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_FRENZIED_REGENERATION, bot))
 
                                 {
 
-                                    this->CastSpell(bot, GUARDIAN_FRENZIED_REGENERATION);
+                                    this->CastSpell(GUARDIAN_FRENZIED_REGENERATION, bot);
 
                                     this->_frenziedRegenerationActive = true;
 
@@ -907,19 +916,19 @@ private:
 
                         Sequence("Barkskin", {
 
-                            Condition("HP < 60%", [this](Player* bot) {
+                            Condition("HP < 60%", [this](Player* bot, Unit*) {
 
                                 return bot->GetHealthPct() < 60.0f;
 
                             }),
 
-                            Action("Cast Barkskin", [this](Player* bot) {
+                            bot::ai::Action("Cast Barkskin", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(GUARDIAN_BARKSKIN, bot))
 
                                 {
 
-                                    this->CastSpell(bot, GUARDIAN_BARKSKIN);
+                                    this->CastSpell(GUARDIAN_BARKSKIN, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -939,24 +948,19 @@ private:
 
                 Sequence("Active Mitigation", {
 
-                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*) {
+                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*, Unit*) {
 
-                        return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() < 3;
+                        return this->_resource >= 40 && this->_ironfurTracker.GetStacks() < 3;
 
                     }),
 
-                    Action("Cast Ironfur", [this](Player* bot) {
+                    bot::ai::Action("Cast Ironfur", [this](::Player* bot, ::Unit*) {
 
                         if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
-
                         {
-
-                            this->CastSpell(bot, GUARDIAN_IRONFUR);
-
-                            this->_ironfurTracker.AddStack();
-
+                            this->CastSpell(GUARDIAN_IRONFUR, bot);
+                            this->_ironfurTracker.ApplyIronfur();
                             return NodeStatus::SUCCESS;
-
                         }
 
                         return NodeStatus::FAILURE;
@@ -969,7 +973,7 @@ private:
 
                 Sequence("Threat Generation", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
@@ -979,7 +983,7 @@ private:
 
                         Sequence("Berserk/Incarnation (burst)", {
 
-                            Condition("Can use major cooldown", [this](Player*) {
+                            Condition("Can use major cooldown", [this](Player*, Unit*) {
 
                                 return this->CanUseMajorCooldown();
 
@@ -989,19 +993,19 @@ private:
 
                                 Sequence("Incarnation (talent)", {
 
-                                    Condition("Has Incarnation", [this](Player* bot) {
+                                    Condition("Has Incarnation", [this](Player* bot, Unit*) {
 
                                         return bot->HasSpell(GUARDIAN_INCARNATION_BEAR);
 
                                     }),
 
-                                    Action("Cast Incarnation", [this](Player* bot) {
+                                    bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(GUARDIAN_INCARNATION_BEAR, bot))
 
                                         {
 
-                                            this->CastSpell(bot, GUARDIAN_INCARNATION_BEAR);
+                                            this->CastSpell(GUARDIAN_INCARNATION_BEAR, bot);
 
                                             this->_berserkActive = true;
 
@@ -1019,13 +1023,13 @@ private:
 
                                 Sequence("Berserk", {
 
-                                    Action("Cast Berserk", [this](Player* bot) {
+                                    bot::ai::Action("Cast Berserk", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(GUARDIAN_BERSERK, bot))
 
                                         {
 
-                                            this->CastSpell(bot, GUARDIAN_BERSERK);
+                                            this->CastSpell(GUARDIAN_BERSERK, bot);
 
                                             this->_berserkActive = true;
 
@@ -1047,15 +1051,12 @@ private:
 
                         Sequence("Mangle (priority builder)", {
 
-                            Action("Cast Mangle", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Mangle", [this](Player* bot, Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_MANGLE, target))
 
                                 {
 
-                                    this->CastSpell(target, GUARDIAN_MANGLE);
+                                    this->CastSpell(GUARDIAN_MANGLE, target);
 
                                     this->GenerateRage(8);
 
@@ -1071,25 +1072,17 @@ private:
 
                         Sequence("Thrash (AoE bleed)", {
 
-                            Condition("< 3 Thrash stacks", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            Condition("< 3 Thrash stacks", [this](Player* bot, Unit* target) {
                                 return target && (!this->_thrashTracker.HasThrash(target->GetGUID()) ||
-
                                                   this->_thrashTracker.GetStacks(target->GetGUID()) < 3);
-
                             }),
 
-                            Action("Cast Thrash", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Thrash", [this](Player* bot, Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_THRASH, target))
 
                                 {
 
-                                    this->CastSpell(target, GUARDIAN_THRASH);
+                                    this->CastSpell(GUARDIAN_THRASH, target);
 
                                     uint32 currentStacks = this->_thrashTracker.GetStacks(target->GetGUID());
 
@@ -1109,53 +1102,36 @@ private:
 
                         Sequence("Maul (rage dump)", {
 
-                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*) {
+                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*, Unit*) {
 
-                                return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() >= 2;
+                                return this->_resource >= 40 && this->_ironfurTracker.GetStacks() >= 2;
 
                             }),
 
-                            Action("Cast Maul", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Maul", [this](::Player* bot, ::Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_MAUL, target))
-
                                 {
-
-                                    this->CastSpell(target, GUARDIAN_MAUL);
-
+                                    this->CastSpell(GUARDIAN_MAUL, target);
                                     return NodeStatus::SUCCESS;
-
                                 }
-
                                 return NodeStatus::FAILURE;
-
                             })
 
                         }),
 
                         Sequence("Pulverize (talent)", {
 
-                            Condition("Has talent and 2+ Thrash stacks", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            Condition("Has talent and 2+ Thrash stacks", [this](Player* bot, Unit* target) {
                                 return bot && target && bot->HasSpell(GUARDIAN_PULVERIZE) &&
-
                                        this->_thrashTracker.GetStacks(target->GetGUID()) >= 2;
-
                             }),
 
-                            Action("Cast Pulverize", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Pulverize", [this](Player* bot, Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_PULVERIZE, target))
 
                                 {
 
-                                    this->CastSpell(target, GUARDIAN_PULVERIZE);
+                                    this->CastSpell(GUARDIAN_PULVERIZE, target);
 
                                     this->_thrashTracker.RemoveThrash(target->GetGUID());
 
@@ -1177,7 +1153,7 @@ private:
 
                 Sequence("Filler", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
@@ -1187,51 +1163,35 @@ private:
 
                         Sequence("Swipe (AoE)", {
 
-                            Condition("2+ enemies", [this](Player*) {
+                            Condition("2+ enemies", [this](Player*, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 2;
 
                             }),
 
-                            Action("Cast Swipe", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Swipe", [this](Player* bot, Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_SWIPE, target))
-
                                 {
-
-                                    this->CastSpell(target, GUARDIAN_SWIPE);
-
+                                    this->CastSpell(GUARDIAN_SWIPE, target);
                                     return NodeStatus::SUCCESS;
-
                                 }
-
                                 return NodeStatus::FAILURE;
-
                             })
 
                         }),
 
                         Sequence("Moonfire (ranged)", {
 
-                            Condition("Out of melee range", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            Condition("Out of melee range", [this](Player* bot, Unit* target) {
                                 return bot && target && bot->GetDistance(target) > 8.0f && bot->GetDistance(target) < 40.0f;
-
                             }),
 
-                            Action("Cast Moonfire", [this](Player* bot) {
-
-                                Unit* target = bot ? bot->GetVictim() : nullptr;
-
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_MOONFIRE, target))
 
                                 {
 
-                                    this->CastSpell(target, GUARDIAN_MOONFIRE);
+                                    this->CastSpell(GUARDIAN_MOONFIRE, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1262,6 +1222,7 @@ private:
     uint32 _frenziedRegenerationEndTime;
     bool _berserkActive;
     uint32 _berserkEndTime;
+    uint32 _lastBerserkTime;
     uint32 _lastFrenziedRegenerationTime;
     uint32 _lastTaunt{0}; // Phase 5C: ThreatAssistant integration
 };

@@ -102,7 +102,7 @@ bool TankCoordinator::NeedsTankSwap(ObjectGuid mainTankGuid) const
 
 void TankCoordinator::UpdateMainTank(GroupCoordinator* group)
 {
-    std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
+    ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
 
     if (tanks.empty())
     {
@@ -118,7 +118,7 @@ void TankCoordinator::UpdateMainTank(GroupCoordinator* group)
         if (mainTank && mainTank->IsAlive())
         {
             // Update off-tank
-            for (ObjectGuid tankGuid : tanks)
+    for (ObjectGuid tankGuid : tanks)
             {
                 if (tankGuid != _mainTank)
                 {
@@ -259,7 +259,7 @@ void HealerCoordinator::AssignHealerToTank(ObjectGuid healerGuid, ObjectGuid tan
 {
     // Remove existing assignments for this healer
     _healingAssignments.erase(
-        std::remove_if(_healingAssignments.begin(), _healingAssignments.end(),
+        ::std::remove_if(_healingAssignments.begin(), _healingAssignments.end(),
             [healerGuid](HealingAssignment const& assignment) {
                 return assignment.healerGuid == healerGuid;
             }),
@@ -279,7 +279,7 @@ void HealerCoordinator::AssignHealerToTank(ObjectGuid healerGuid, ObjectGuid tan
         healerGuid.ToString(), tankGuid.ToString());
 }
 
-ObjectGuid HealerCoordinator::GetNextCooldownHealer(std::string const& cooldownType) const
+ObjectGuid HealerCoordinator::GetNextCooldownHealer(::std::string const& cooldownType) const
 {
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -299,7 +299,7 @@ ObjectGuid HealerCoordinator::GetNextCooldownHealer(std::string const& cooldownT
     return ObjectGuid::Empty;
 }
 
-void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, std::string const& cooldownType, uint32 durationMs)
+void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, ::std::string const& cooldownType, uint32 durationMs)
 {
     uint32 expireTime = GameTime::GetGameTimeMS() + durationMs;
     _healerCooldowns[healerGuid][cooldownType] = expireTime;
@@ -308,16 +308,15 @@ void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, std::string co
         healerGuid.ToString(), cooldownType, durationMs);
 }
 
-std::vector<ObjectGuid> HealerCoordinator::GetResurrectionPriority() const
+::std::vector<ObjectGuid> HealerCoordinator::GetResurrectionPriority() const
 {
-    std::vector<ObjectGuid> priorities;
+    ::std::vector<ObjectGuid> priorities;
 
     // Priority order:
     // 1. Healers
     // 2. Tanks
     // 3. Ranged DPS
     // 4. Melee DPS
-
     for (auto const& assignment : _healingAssignments)
     {
         Player* target = ObjectAccessor::FindPlayer(assignment.targetGuid);
@@ -332,8 +331,8 @@ std::vector<ObjectGuid> HealerCoordinator::GetResurrectionPriority() const
 
 void HealerCoordinator::UpdateHealingAssignments(GroupCoordinator* group)
 {
-    std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
-    std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
+    ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
+    ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
 
     if (healers.empty())
         return;
@@ -372,7 +371,7 @@ void HealerCoordinator::UpdateHealingAssignments(GroupCoordinator* group)
 
         // Remove old assignments
         _healingAssignments.erase(
-            std::remove_if(_healingAssignments.begin(), _healingAssignments.end(),
+            ::std::remove_if(_healingAssignments.begin(), _healingAssignments.end(),
                 [healerGuid](HealingAssignment const& assignment) {
                     return assignment.healerGuid == healerGuid;
                 }),
@@ -415,7 +414,6 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 {
     // Rotate major healing cooldowns among healers
     // Examples: Tranquility, Aura Mastery, Divine Hymn, Revival
-
     if (!group->IsInCombat())
         return;
 
@@ -445,7 +443,7 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 
 void HealerCoordinator::UpdateManaManagement(GroupCoordinator* group)
 {
-    std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
+    ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
 
     float totalMana = 0.0f;
     float currentMana = 0.0f;
@@ -532,7 +530,7 @@ void DPSCoordinator::AssignInterrupt(ObjectGuid dpsGuid, ObjectGuid targetGuid)
 
     // Remove old assignment for this DPS
     _interruptRotation.erase(
-        std::remove_if(_interruptRotation.begin(), _interruptRotation.end(),
+        ::std::remove_if(_interruptRotation.begin(), _interruptRotation.end(),
             [dpsGuid](InterruptAssignment const& assign) {
                 return assign.dpsGuid == dpsGuid;
             }),
@@ -556,13 +554,13 @@ ObjectGuid DPSCoordinator::GetCCAssignment(ObjectGuid dpsGuid) const
     return ObjectGuid::Empty;
 }
 
-void DPSCoordinator::AssignCC(ObjectGuid dpsGuid, ObjectGuid targetGuid, std::string const& ccType)
+void DPSCoordinator::AssignCC(ObjectGuid dpsGuid, ObjectGuid targetGuid, ::std::string const& ccType)
 {
     uint32 now = GameTime::GetGameTimeMS();
 
     // Remove old assignment
     _ccAssignments.erase(
-        std::remove_if(_ccAssignments.begin(), _ccAssignments.end(),
+        ::std::remove_if(_ccAssignments.begin(), _ccAssignments.end(),
             [dpsGuid](CCAssignment const& assign) {
                 return assign.dpsGuid == dpsGuid;
             }),
@@ -623,7 +621,7 @@ void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
 
     // Clean up expired interrupt cooldowns
     _interruptRotation.erase(
-        std::remove_if(_interruptRotation.begin(), _interruptRotation.end(),
+        ::std::remove_if(_interruptRotation.begin(), _interruptRotation.end(),
             [now](InterruptAssignment const& assign) {
                 return now > assign.cooldownExpire + 30000; // Remove after 30s past expiration
             }),
@@ -631,10 +629,10 @@ void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
     );
 
     // Rebuild rotation from current DPS
-    std::vector<ObjectGuid> meleeDPS = group->GetBotsByRole(GroupRole::MELEE_DPS);
-    std::vector<ObjectGuid> rangedDPS = group->GetBotsByRole(GroupRole::RANGED_DPS);
+    ::std::vector<ObjectGuid> meleeDPS = group->GetBotsByRole(GroupRole::MELEE_DPS);
+    ::std::vector<ObjectGuid> rangedDPS = group->GetBotsByRole(GroupRole::RANGED_DPS);
 
-    std::vector<ObjectGuid> allDPS;
+    ::std::vector<ObjectGuid> allDPS;
     allDPS.insert(allDPS.end(), meleeDPS.begin(), meleeDPS.end());
     allDPS.insert(allDPS.end(), rangedDPS.begin(), rangedDPS.end());
 
@@ -670,7 +668,7 @@ void DPSCoordinator::UpdateCCAssignments(GroupCoordinator* group)
 
     // Clean up old CC assignments (>60s old)
     _ccAssignments.erase(
-        std::remove_if(_ccAssignments.begin(), _ccAssignments.end(),
+        ::std::remove_if(_ccAssignments.begin(), _ccAssignments.end(),
             [now](CCAssignment const& assign) {
                 return now > assign.assignedTime + 60000;
             }),
@@ -712,9 +710,9 @@ void DPSCoordinator::UpdateBurstWindows(GroupCoordinator* group)
 
 RoleCoordinatorManager::RoleCoordinatorManager()
 {
-    _tankCoordinator = std::make_unique<TankCoordinator>();
-    _healerCoordinator = std::make_unique<HealerCoordinator>();
-    _dpsCoordinator = std::make_unique<DPSCoordinator>();
+    _tankCoordinator = ::std::make_unique<TankCoordinator>();
+    _healerCoordinator = ::std::make_unique<HealerCoordinator>();
+    _dpsCoordinator = ::std::make_unique<DPSCoordinator>();
 }
 
 void RoleCoordinatorManager::Update(GroupCoordinator* group, uint32 diff)

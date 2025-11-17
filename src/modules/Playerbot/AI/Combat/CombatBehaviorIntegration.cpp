@@ -47,13 +47,13 @@ CombatBehaviorIntegration::CombatBehaviorIntegration(Player* bot) :
     _failedActions(0)
 {
     // Initialize all manager components
-    _stateAnalyzer = std::make_unique<CombatStateAnalyzer>(bot);
-    _behaviorManager = std::make_unique<AdaptiveBehaviorManager>(bot);
-    _targetManager = std::make_unique<TargetManager>(bot);
-    _interruptManager = std::make_unique<InterruptManager>(bot);
-    _crowdControlManager = std::make_unique<CrowdControlManager>(bot);
-    _defensiveManager = std::make_unique<DefensiveManager>(bot);
-    _movementIntegration = std::make_unique<MovementIntegration>(bot);
+    _stateAnalyzer = ::std::make_unique<CombatStateAnalyzer>(bot);
+    _behaviorManager = ::std::make_unique<AdaptiveBehaviorManager>(bot);
+    _targetManager = ::std::make_unique<TargetManager>(bot);
+    _interruptManager = ::std::make_unique<InterruptManager>(bot);
+    _crowdControlManager = ::std::make_unique<CrowdControlManager>(bot);
+    _defensiveManager = ::std::make_unique<DefensiveManager>(bot);
+    _movementIntegration = ::std::make_unique<MovementIntegration>(bot);
     TC_LOG_DEBUG("bot.playerbot", "CombatBehaviorIntegration initialized for bot {}", bot->GetName());
 }
 
@@ -151,7 +151,7 @@ void CombatBehaviorIntegration::UpdateManagers(uint32 diff)
 
 void CombatBehaviorIntegration::UpdatePriorities()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     // Clear old actions
@@ -278,9 +278,9 @@ void CombatBehaviorIntegration::GenerateRecommendations()
 
 void CombatBehaviorIntegration::PrioritizeActions()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         // Sort actions by priority and score
-    std::sort(_actionQueue.begin(), _actionQueue.end(),
+    ::std::sort(_actionQueue.begin(), _actionQueue.end(),
         [this](const RecommendedAction& a, const RecommendedAction& b)
         {
             if (a.urgency != b.urgency)
@@ -317,7 +317,7 @@ bool CombatBehaviorIntegration::HandleEmergencies()
     if (metrics.personalHealthPercent < 30.0f)
     {
         // Would trigger health potion/healthstone here
-        if (_detailedLogging)
+    if (_detailedLogging)
             TC_LOG_DEBUG("bot.playerbot", "Bot {} needs emergency healing", _bot->GetName());
         return true;
     }
@@ -472,7 +472,7 @@ bool CombatBehaviorIntegration::CanAffordSpell(uint32 spellId)
             return false;
 
         // Check if we should conserve
-        if (ShouldConserveMana() && manaCost > static_cast<int32>(_bot->GetMaxPower(POWER_MANA) / 10))
+    if (ShouldConserveMana() && manaCost > static_cast<int32>(_bot->GetMaxPower(POWER_MANA) / 10))
             return false;
     }
 
@@ -538,7 +538,7 @@ void CombatBehaviorIntegration::DeactivateStrategy(uint32 flags)
 
 RecommendedAction CombatBehaviorIntegration::GetNextAction()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         if (_actionQueue.empty())
         return RecommendedAction();
 
@@ -552,13 +552,13 @@ RecommendedAction CombatBehaviorIntegration::GetNextAction()
 
 bool CombatBehaviorIntegration::HasPendingAction() const
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         return !_actionQueue.empty();
 }
 
 void CombatBehaviorIntegration::ClearPendingActions()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         _actionQueue.clear();
 }
 
@@ -577,7 +577,7 @@ void CombatBehaviorIntegration::RecordActionResult(const RecommendedAction& acti
     _actionCounts[action.type]++;
 
     // Record in behavior manager for learning
-    std::string decisionName = std::string(GetActionName(action.type)) + "_" + action.reason;
+    ::std::string decisionName = ::std::string(GetActionName(action.type)) + "_" + action.reason;
     _behaviorManager->RecordDecisionOutcome(decisionName, success);
 
     if (_detailedLogging)
@@ -601,7 +601,7 @@ void CombatBehaviorIntegration::DumpState() const
     TC_LOG_INFO("bot.playerbot", "Emergency Mode: {}", _emergencyMode);
     TC_LOG_INFO("bot.playerbot", "Survival Mode: {}", _survivalMode);
     TC_LOG_INFO("bot.playerbot", "Active Strategies: 0x{:08X}", GetActiveStrategies());
-{ std::lock_guard<std::mutex> lock(_actionQueueMutex);     TC_LOG_INFO("bot.playerbot", "Pending Actions: {}", _actionQueue.size()); }
+{ ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);     TC_LOG_INFO("bot.playerbot", "Pending Actions: {}", _actionQueue.size()); }
     TC_LOG_INFO("bot.playerbot", "Success Rate: {}/{}",
         _successfulActions, _successfulActions + _failedActions);
 
@@ -614,7 +614,7 @@ void CombatBehaviorIntegration::DumpState() const
 
 void CombatBehaviorIntegration::Reset()
 {
-    { std::lock_guard<std::mutex> lock(_actionQueueMutex); _actionQueue.clear(); }
+    { ::std::lock_guard<Playerbot::OrderedMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex); _actionQueue.clear(); }
     _currentAction = RecommendedAction();
     _lastActionTime = 0;
     _inCombat = false;

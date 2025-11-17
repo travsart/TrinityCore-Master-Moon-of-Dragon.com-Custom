@@ -10,6 +10,7 @@
 #include "InterruptManager.h"
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 namespace Playerbot
 {
@@ -53,7 +54,7 @@ enum class SpellCategory : uint8
 struct SpellInterruptConfig
 {
     uint32 spellId;
-    std::string spellName;
+    ::std::string spellName;
     InterruptPriority basePriority;
     SpellCategory category;
     bool alwaysInterrupt;      // Must always be interrupted
@@ -62,7 +63,7 @@ struct SpellInterruptConfig
     float castTimeThreshold;    // Only interrupt if cast time > threshold
     bool requiresQuickResponse; // Needs sub-200ms reaction
     uint32 schoolMask;          // Spell school for lockout
-    std::string notes;          // Developer notes
+    ::std::string notes;          // Developer notes
 
     SpellInterruptConfig() : spellId(0), basePriority(InterruptPriority::MODERATE),
                             category(SpellCategory::DAMAGE_NUKE), alwaysInterrupt(false),
@@ -81,8 +82,8 @@ public:
     static InterruptPriority GetSpellPriority(uint32 spellId, uint8 mythicLevel = 0);
     static bool ShouldAlwaysInterrupt(uint32 spellId);
     static bool IsQuickResponseRequired(uint32 spellId);
-    static std::vector<uint32> GetCriticalSpells();
-    static std::vector<uint32> GetSpellsByCategory(SpellCategory category);
+    static ::std::vector<uint32> GetCriticalSpells();
+    static ::std::vector<uint32> GetSpellsByCategory(SpellCategory category);
 
     // Dungeon/Raid specific configurations
     static void LoadDungeonOverrides(uint32 mapId);
@@ -96,8 +97,8 @@ private:
     static void LoadPvPSpells();
     static void LoadClassSpells();
 
-    static std::unordered_map<uint32, SpellInterruptConfig> _spellDatabase;
-    static std::unordered_map<uint32, std::unordered_map<uint32, InterruptPriority>> _dungeonOverrides;
+    static ::std::unordered_map<uint32, SpellInterruptConfig> _spellDatabase;
+    static ::std::unordered_map<uint32, ::std::unordered_map<uint32, InterruptPriority>> _dungeonOverrides;
     static bool _initialized;
 };
 
@@ -105,7 +106,7 @@ private:
 struct ClassInterruptAbility
 {
     uint32 spellId;
-    std::string name;
+    ::std::string name;
     uint8 playerClass;
     uint32 specialization;      // 0 = all specs
     InterruptMethod method;
@@ -204,9 +205,9 @@ namespace InterruptAbilities
     static constexpr uint32 DISRUPTING_SHOUT = 386071; // Mountain Thane
 
     // Get all interrupt abilities for a class/spec
-    std::vector<ClassInterruptAbility> GetClassInterrupts(uint8 playerClass, uint32 spec = 0);
+    ::std::vector<ClassInterruptAbility> GetClassInterrupts(uint8 playerClass, uint32 spec = 0);
     ClassInterruptAbility const* GetAbilityInfo(uint32 spellId);
-    std::vector<uint32> GetAvailableInterrupts(Player* player);
+    ::std::vector<uint32> GetAvailableInterrupts(Player* player);
     float GetOptimalRange(uint8 playerClass);
     uint32 GetSchoolLockoutDuration(uint32 spellId);
 }
@@ -309,15 +310,15 @@ public:
     static uint32 GetRequiredInterrupters(uint8 level);
 
 private:
-    static std::unordered_map<uint8, MythicPlusConfig> _configs;
+    static ::std::unordered_map<uint8, MythicPlusConfig> _configs;
 };
 
 // Interrupt rotation templates for different group compositions
 struct RotationTemplate
 {
-    std::string name;
-    std::vector<uint8> requiredClasses;
-    std::vector<std::pair<uint32, uint32>> rotationPairs;  // SpellID -> AssignedClass
+    ::std::string name;
+    ::std::vector<uint8> requiredClasses;
+    ::std::vector<::std::pair<uint32, uint32>> rotationPairs;  // SpellID -> AssignedClass
     uint32 rotationInterval;
     bool useBackupSystem;
 };
@@ -332,7 +333,7 @@ namespace RotationTemplates
     extern RotationTemplate const CASTER_GROUP;     // All casters
 
     // Get optimal template for group
-    RotationTemplate const* GetOptimalTemplate(std::vector<Player*> const& group);
+    RotationTemplate const* GetOptimalTemplate(::std::vector<Player*> const& group);
     void CustomizeForEncounter(RotationTemplate& templ, uint32 encounterId);
 }
 
@@ -361,12 +362,12 @@ public:
     static float GetPredictedCastTime(uint32 spellId, Unit* caster);
 
     // Optimization algorithms
-    static void OptimizeRotationForGroup(std::vector<Player*> const& group);
+    static void OptimizeRotationForGroup(::std::vector<Player*> const& group);
     static void AdjustPrioritiesForPerformance();
     static void GenerateInterruptReport(Player* requester);
 
 private:
-    static std::unordered_map<uint32, InterruptPerformanceData> _performanceData;
+    static ::std::unordered_map<uint32, InterruptPerformanceData> _performanceData;
     static constexpr uint32 MIN_SAMPLES = 10;  // Minimum attempts before optimization
 };
 

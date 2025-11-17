@@ -46,7 +46,7 @@ struct ZonePlacement
     uint32 minLevel;        // Minimum level for this zone
     uint32 maxLevel;        // Maximum level for this zone
     TeamId faction;         // TEAM_ALLIANCE, TEAM_HORDE, or TEAM_NEUTRAL
-    std::string zoneName;   // Human-readable name
+    ::std::string zoneName;   // Human-readable name
     bool isStarterZone;     // True for level 1-4 zones
 
     bool IsValidForLevel(uint32 level) const
@@ -148,7 +148,7 @@ public:
      */
     bool IsReady() const override
     {
-        return _initialized.load(std::memory_order_acquire);
+        return _initialized.load(::std::memory_order_acquire);
     }
 
     // ====================================================================
@@ -186,7 +186,7 @@ public:
      * Get all zones valid for level and faction
      * Useful for debugging and validation
      */
-    std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const override;
+    ::std::vector<ZonePlacement const*> GetValidZones(uint32 level, TeamId faction) const override;
 
     /**
      * Get random capital city for faction
@@ -240,7 +240,7 @@ public:
     /**
      * Get zone name by zone ID
      */
-    std::string GetZoneName(uint32 zoneId) const override;
+    ::std::string GetZoneName(uint32 zoneId) const override;
 
     /**
      * Check if zone is valid for level/faction
@@ -253,7 +253,7 @@ public:
 
     PositionerStats GetStats() const override { return _stats; }
     void PrintZoneReport() const override;
-    std::string GetZoneSummary() const override;
+    ::std::string GetZoneSummary() const override;
 
 private:
     BotWorldPositioner() = default;
@@ -276,7 +276,7 @@ private:
     // ====================================================================
 
     ZoneChoice SelectByLevelRange(uint32 level, TeamId faction) const;
-    ZoneChoice SelectWeighted(std::vector<ZonePlacement const*> const& candidates) const;
+    ZoneChoice SelectWeighted(::std::vector<ZonePlacement const*> const& candidates) const;
     float CalculateSuitability(ZonePlacement const* zone, uint32 level) const;
 
     // ====================================================================
@@ -298,22 +298,22 @@ private:
     // ====================================================================
 
     // Master zone list (immutable after LoadZones)
-    std::vector<ZonePlacement> _zones;
+    ::std::vector<ZonePlacement> _zones;
 
     // Quick lookups (immutable after BuildZoneCache)
-    std::unordered_map<uint32, ZonePlacement const*> _zoneById;           // zoneId -> placement
-    std::unordered_map<uint32, std::vector<ZonePlacement const*>> _zonesByLevel;  // level -> placements
-    std::unordered_map<uint8, std::vector<ZonePlacement const*>> _starterZonesByRace;  // race -> placements
+    ::std::unordered_map<uint32, ZonePlacement const*> _zoneById;           // zoneId -> placement
+    ::std::unordered_map<uint32, ::std::vector<ZonePlacement const*>> _zonesByLevel;  // level -> placements
+    ::std::unordered_map<uint8, ::std::vector<ZonePlacement const*>> _starterZonesByRace;  // race -> placements
 
     // Faction-specific lookups
-    std::vector<ZonePlacement const*> _allianceCapitals;
-    std::vector<ZonePlacement const*> _hordeCapitals;
+    ::std::vector<ZonePlacement const*> _allianceCapitals;
+    ::std::vector<ZonePlacement const*> _hordeCapitals;
 
     // Statistics
     PositionerStats _stats;
 
     // Initialization flag
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 } // namespace Playerbot

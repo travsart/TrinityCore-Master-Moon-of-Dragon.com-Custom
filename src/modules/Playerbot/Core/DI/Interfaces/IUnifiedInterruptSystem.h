@@ -75,7 +75,7 @@ public:
 
     // Statistics and reporting
     virtual void ResetStatistics() = 0;
-    virtual std::string GetStatusString() const = 0;
+    virtual ::std::string GetStatusString() const = 0;
 };
 
 } // namespace Playerbot

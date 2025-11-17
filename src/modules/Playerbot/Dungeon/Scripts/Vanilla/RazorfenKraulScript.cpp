@@ -129,7 +129,7 @@ public:
             case 4428: // Death Speaker Jargba
             {
                 // Death Speaker spams Shadow Bolt Volley (11975) - high priority interrupt
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -137,7 +137,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Shadow Bolt (9613, 20297)
-                        if (spellId == 9613 || spellId == 20297 || spellId == 15232)
+    if (spellId == 9613 || spellId == 20297 || spellId == 15232)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -154,7 +154,7 @@ public:
             case 4421: // Charlga Razorflank
             {
                 // Charlga casts Chain Lightning and heals
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -162,7 +162,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Healing Wave (11986) - CRITICAL interrupt
-                        if (spellId == 11986 || spellId == 939 || spellId == 959)
+    if (spellId == 11986 || spellId == 939 || spellId == 959)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -173,7 +173,7 @@ public:
                         }
 
                         // Chain Lightning (12058)
-                        if (spellId == 12058 || spellId == 421)
+    if (spellId == 12058 || spellId == 421)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -189,7 +189,7 @@ public:
             case 6168: // Roogug
             {
                 // Roogug casts Lightning Bolt
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -197,7 +197,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Lightning Bolt
-                        if (spellId == 9532 || spellId == 915 || spellId == 943)
+    if (spellId == 9532 || spellId == 915 || spellId == 943)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -239,10 +239,10 @@ public:
                 // Healing Stream Totem (high priority)
                 // Searing Totem (damage)
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Prioritize healing totems first
-                for (::Creature* add : adds)
+    for (::Creature* add : adds)
                 {
                     if (!add || add->IsDead())
                         continue;
@@ -253,7 +253,7 @@ public:
                     uint32 addEntry = add->GetEntry();
 
                     // Healing totems ALWAYS priority #1
-                    if (addEntry == 3527 || addEntry == 3906 || addEntry == 3907 || addEntry == 5923)
+    if (addEntry == 3527 || addEntry == 3906 || addEntry == 3907 || addEntry == 5923)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: CRITICAL - Targeting healing totem");
                         player->SetSelection(add->GetGUID());
@@ -262,7 +262,7 @@ public:
                 }
 
                 // Then damage totems
-                for (::Creature* add : adds)
+    for (::Creature* add : adds)
                 {
                     if (!add || add->IsDead())
                         continue;
@@ -270,7 +270,7 @@ public:
                     uint32 addEntry = add->GetEntry();
 
                     // Searing/damage totems
-                    if (addEntry == 2523 || addEntry == 3902 || addEntry == 3903 ||
+    if (addEntry == 2523 || addEntry == 3902 || addEntry == 3903 ||
                         addEntry == 3904 || addEntry == 7400 || addEntry == 7402)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: Targeting damage totem");
@@ -288,10 +288,10 @@ public:
                 // Healing Stream Totem MUST die first
                 // Then Searing Totems
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 // Healing totems absolute priority
-                for (::Creature* add : adds)
+    for (::Creature* add : adds)
                 {
                     if (!add || add->IsDead())
                         continue;
@@ -299,7 +299,7 @@ public:
                     uint32 addEntry = add->GetEntry();
 
                     // Healing Stream Totem
-                    if (addEntry == 3527 || addEntry == 3906 || addEntry == 3907 || addEntry == 5923)
+    if (addEntry == 3527 || addEntry == 3906 || addEntry == 3907 || addEntry == 5923)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: EMERGENCY - Killing Charlga's healing totem");
                         player->SetSelection(add->GetGUID());
@@ -308,13 +308,13 @@ public:
                 }
 
                 // Then other totems
-                for (::Creature* add : adds)
+    for (::Creature* add : adds)
                 {
                     if (!add || add->IsDead())
                         continue;
 
                     // Any totem
-                    if (IsTotemCreature(add))
+    if (IsTotemCreature(add))
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: Killing Charlga's totem");
                         player->SetSelection(add->GetGUID());
@@ -328,7 +328,7 @@ public:
             case 4422: // Agathelos the Raging
             {
                 // Earth elemental - may spawn smaller elementals
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {
@@ -383,10 +383,10 @@ public:
                     Position behindPos = CalculateBehindPosition(player, boss);
                     float angle = player->GetAngle(boss);
                     float bossAngle = boss->GetOrientation();
-                    float angleDiff = std::abs(angle - bossAngle);
+                    float angleDiff = ::std::abs(angle - bossAngle);
 
                     // If not behind (within 90 degrees of back), move
-                    if (angleDiff > M_PI / 2)
+    if (angleDiff > M_PI / 2)
                     {
                         TC_LOG_DEBUG("module.playerbot", "RazorfenKraulScript: Positioning behind Overlord Ramtusk to avoid cleave");
                         MoveTo(player, behindPos);
@@ -438,7 +438,7 @@ public:
                         continue;
 
                     // Check for curse debuffs
-                    if (groupMember->HasAuraType(SPELL_AURA_DUMMY) ||
+    if (groupMember->HasAuraType(SPELL_AURA_DUMMY) ||
                         groupMember->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE))
                     {
                         // Check if it's actually a curse (would need specific spell check)
@@ -494,7 +494,7 @@ private:
             return false;
 
         // Totems are typically CREATURE_TYPE_TOTEM (11)
-        if (creature->GetCreatureTemplate()->type == CREATURE_TYPE_TOTEM)
+    if (creature->GetCreatureTemplate()->type == CREATURE_TYPE_TOTEM)
             return true;
 
         // Common totem entries
@@ -506,14 +506,14 @@ private:
         // Stoneclaw Totem: 3579, 3911, 3912, 3913
         // Fire Nova Totem: 3556, 3557, 5879, 5926
 
-        std::vector<uint32> totemEntries = {
+        ::std::vector<uint32> totemEntries = {
             3527, 3906, 3907, 5923,  // Healing Stream
             2523, 3902, 3903, 3904, 7400, 7402,  // Searing
             3579, 3911, 3912, 3913,  // Stoneclaw
             3556, 3557, 5879, 5926   // Fire Nova
         };
 
-        return std::find(totemEntries.begin(), totemEntries.end(), entry) != totemEntries.end();
+        return ::std::find(totemEntries.begin(), totemEntries.end(), entry) != totemEntries.end();
     }
 };
 

@@ -16,6 +16,7 @@
 #include <memory>
 #include <boost/lockfree/queue.hpp>
 #include <folly/MPMCQueue.h>
+#include <vector>
 
 namespace Playerbot
 {
@@ -67,10 +68,10 @@ public:
 
     // Consumer interface (called by cache updater)
     bool TryConsumeEvent(HostileEvent& event);
-    size_t ConsumeEvents(std::vector<HostileEvent>& events, size_t maxCount = 100);
+    size_t ConsumeEvents(::std::vector<HostileEvent>& events, size_t maxCount = 100);
 
     // Subscription for specific zones
-    using EventHandler = std::function<void(const HostileEvent&)>;
+    using EventHandler = ::std::function<void(const HostileEvent&)>;
     void Subscribe(uint32 zoneId, EventHandler handler);
     void Unsubscribe(uint32 zoneId);
 
@@ -95,12 +96,12 @@ private:
 
     // Zone subscriptions (read-heavy, write-rare)
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BOT_AI_STATE> _subscriberMutex;
-    std::unordered_map<uint32, std::vector<EventHandler>> _subscribers;
+    ::std::unordered_map<uint32, ::std::vector<EventHandler>> _subscribers;
 
     // Statistics
-    std::atomic<uint64> _totalEvents{0};
-    std::atomic<uint64> _eventsProcessed{0};
-    std::atomic<uint64> _eventsDropped{0};
+    ::std::atomic<uint64> _totalEvents{0};
+    ::std::atomic<uint64> _eventsProcessed{0};
+    ::std::atomic<uint64> _eventsDropped{0};
 
     // Deleted operations
     HostileEventBus(const HostileEventBus&) = delete;

@@ -20,7 +20,7 @@ namespace Playerbot
     void BotAI::InitializeStrategies()
     {
         // Initialize combat movement strategy
-        _combatMovementStrategy = std::make_unique<CombatMovementStrategy>();
+        _combatMovementStrategy = ::std::make_unique<CombatMovementStrategy>();
 
         // The strategy self-manages its priority (80)
         // It will automatically activate during combat
@@ -37,13 +37,13 @@ namespace Playerbot
     void BotAI::UpdateStrategies(uint32 diff)
     {
         // Check if combat movement should be active
-        if (_combatMovementStrategy)
+    if (_combatMovementStrategy)
         {
             bool wasActive = _combatMovementStrategy->IsActive(this);
             bool isActive = GetPlayer()->IsInCombat() && GetPlayer()->GetSelectedUnit();
 
             // Handle activation state changes
-            if (isActive && !wasActive)
+    if (isActive && !wasActive)
             {
                 _combatMovementStrategy->OnActivate(this);
             }
@@ -53,7 +53,7 @@ namespace Playerbot
             }
 
             // Update the strategy if active
-            if (isActive)
+    if (isActive)
             {
                 _combatMovementStrategy->UpdateBehavior(this, diff);
             }
@@ -66,7 +66,7 @@ namespace Playerbot
     void BotAI::UpdateWithStrategyManager(uint32 diff)
     {
         // Sort strategies by priority
-        std::vector<Strategy*> activeStrategies;
+        ::std::vector<Strategy*> activeStrategies;
 
         if (_combatMovementStrategy && _combatMovementStrategy->IsActive(this))
             activeStrategies.push_back(_combatMovementStrategy.get());
@@ -76,11 +76,11 @@ namespace Playerbot
         //     activeStrategies.push_back(_idleStrategy.get());
 
         // Sort by priority (highest first)
-        std::sort(activeStrategies.begin(), activeStrategies.end(),
+        ::std::sort(activeStrategies.begin(), activeStrategies.end(),
             [](Strategy* a, Strategy* b) { return a->GetPriority() > b->GetPriority(); });
 
         // Execute strategies in priority order
-        for (Strategy* strategy : activeStrategies)
+    for (Strategy* strategy : activeStrategies)
         {
             strategy->UpdateBehavior(this, diff);
         }
@@ -151,7 +151,7 @@ namespace Playerbot
    void BotAI::UpdateAI(uint32 diff)
    {
        // Combat movement has priority 80 - higher than follow, lower than critical
-       if (_combatMovementStrategy && _combatMovementStrategy->IsActive(this))
+    if (_combatMovementStrategy && _combatMovementStrategy->IsActive(this))
        {
            _combatMovementStrategy->UpdateBehavior(this, diff);
        }

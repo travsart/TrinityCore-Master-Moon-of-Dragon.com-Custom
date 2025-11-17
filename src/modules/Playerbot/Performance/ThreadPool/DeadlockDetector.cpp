@@ -26,20 +26,20 @@ namespace Performance {
 
 DeadlockDetector::DeadlockDetector(ThreadPool* pool, DeadlockDetectorConfig config)
     : _pool(pool)
-    , _config(std::move(config))
+    , _config(::std::move(config))
 {
-    _stats.startTime = std::chrono::steady_clock::now();
-    _state.lastCheckTime = std::chrono::steady_clock::now();
-    _state.lastDumpTime = std::chrono::steady_clock::now() - std::chrono::hours(1); // Allow immediate dump
+    _stats.startTime = ::std::chrono::steady_clock::now();
+    _state.lastCheckTime = ::std::chrono::steady_clock::now();
+    _state.lastDumpTime = ::std::chrono::steady_clock::now() - ::std::chrono::hours(1); // Allow immediate dump
 
     // Create dump directory if needed
     if (_config.enableAutoDump)
     {
         try
         {
-            std::filesystem::create_directories(_config.dumpDirectory);
+            ::std::filesystem::create_directories(_config.dumpDirectory);
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot.threadpool.deadlock",
                 "Failed to create dump directory {}: {}",
@@ -58,7 +58,7 @@ void DeadlockDetector::Start()
     if (_running.exchange(true))
         return; // Already running
 
-    _detectorThread = std::make_unique<std::thread>(&DeadlockDetector::DetectionLoop, this);
+    _detectorThread = ::std::make_unique<::std::thread>(&DeadlockDetector::DetectionLoop, this);
 
     TC_LOG_INFO("playerbot.threadpool.deadlock",
         "Deadlock detector started with {}ms check interval",
@@ -69,7 +69,6 @@ void DeadlockDetector::Stop()
 {
     if (!_running.exchange(false))
         return; // Already stopped
-
     if (_detectorThread && _detectorThread->joinable())
     {
         _detectorThread->join();
@@ -83,12 +82,12 @@ void DeadlockDetector::Stop()
 
 void DeadlockDetector::DetectionLoop()
 {
-    while (_running.load(std::memory_order_relaxed))
+    while (_running.load(::std::memory_order_relaxed))
     {
         // Sleep for check interval
-        std::this_thread::sleep_for(_config.checkInterval);
+        ::std::this_thread::sleep_for(_config.checkInterval);
 
-        if (_paused.load(std::memory_order_relaxed))
+        if (_paused.load(::std::memory_order_relaxed))
             continue;
 
         try
@@ -111,7 +110,7 @@ void DeadlockDetector::DetectionLoop()
                 }
             }
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot.threadpool.deadlock",
                 "Exception in deadlock detection loop: {}", e.what());
@@ -122,10 +121,10 @@ void DeadlockDetector::DetectionLoop()
 DeadlockCheckResult DeadlockDetector::PerformCheck()
 {
     DeadlockCheckResult result;
-    _stats.checksPerformed.fetch_add(1, std::memory_order_relaxed);
+    _stats.checksPerformed.fetch_add(1, ::std::memory_order_relaxed);
 
     // Get current time
-    auto now = std::chrono::steady_clock::now();
+    auto now = ::std::chrono::steady_clock::now();
 
     // Check various deadlock conditions
     bool allSleeping = CheckAllWorkersSleeping(result);
@@ -140,26 +139,26 @@ DeadlockCheckResult DeadlockDetector::PerformCheck()
         result.description = "CRITICAL: All workers sleeping with pending tasks";
         result.requiresDump = true;
         result.requiresRecovery = true;
-        _stats.deadlocksDetected.fetch_add(1, std::memory_order_relaxed);
+        _stats.deadlocksDetected.fetch_add(1, ::std::memory_order_relaxed);
     }
     else if (hasStuckWorkers && queueGrowing)
     {
         result.severity = DeadlockCheckResult::Severity::ERROR;
         result.description = "ERROR: Workers stuck and queue growing";
         result.requiresDump = true;
-        _stats.deadlocksDetected.fetch_add(1, std::memory_order_relaxed);
+        _stats.deadlocksDetected.fetch_add(1, ::std::memory_order_relaxed);
     }
     else if (majoritySleeping && result.totalQueuedTasks > _config.maxQueueSizeBeforeAlert)
     {
         result.severity = DeadlockCheckResult::Severity::WARNING;
         result.description = "WARNING: Majority of workers sleeping with large queue";
-        _stats.warningsIssued.fetch_add(1, std::memory_order_relaxed);
+        _stats.warningsIssued.fetch_add(1, ::std::memory_order_relaxed);
     }
     else if (hasStuckWorkers)
     {
         result.severity = DeadlockCheckResult::Severity::WARNING;
         result.description = "WARNING: Workers stuck in same state";
-        _stats.warningsIssued.fetch_add(1, std::memory_order_relaxed);
+        _stats.warningsIssued.fetch_add(1, ::std::memory_order_relaxed);
     }
     else if (queueGrowing)
     {
@@ -191,20 +190,20 @@ bool DeadlockDetector::CheckAllWorkersSleeping(DeadlockCheckResult& result)
             continue;
 
         totalWorkers++;
-        WorkerState state = diag->currentState.load(std::memory_order_relaxed);
+        WorkerState state = diag->currentState.load(::std::memory_order_relaxed);
 
         if (state == WorkerState::IDLE_SLEEPING)
         {
             sleepingCount++;
 
-            auto sleepDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - diag->stateEnterTime);
+            auto sleepDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - diag->stateEnterTime);
 
             if (sleepDuration >= _config.allWorkersSleepThreshold)
             {
                 result.workerIssues.push_back({
                     workerId, state, sleepDuration,
-                    "Sleeping for " + std::to_string(sleepDuration.count()) + "ms"
+                    "Sleeping for " + ::std::to_string(sleepDuration.count()) + "ms"
                 });
             }
         }
@@ -235,19 +234,19 @@ bool DeadlockDetector::CheckMajorityWorkersSleeping(DeadlockCheckResult& result)
             continue;
 
         totalWorkers++;
-        WorkerState state = diag->currentState.load(std::memory_order_relaxed);
+        WorkerState state = diag->currentState.load(::std::memory_order_relaxed);
 
         if (state == WorkerState::IDLE_SLEEPING)
         {
-            auto sleepDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - diag->stateEnterTime);
+            auto sleepDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                ::std::chrono::steady_clock::now() - diag->stateEnterTime);
 
             if (sleepDuration >= _config.majorityWorkersSleepThreshold)
             {
                 sleepingLongCount++;
                 result.workerIssues.push_back({
                     workerId, state, sleepDuration,
-                    "Extended sleep: " + std::to_string(sleepDuration.count()) + "ms"
+                    "Extended sleep: " + ::std::to_string(sleepDuration.count()) + "ms"
                 });
             }
         }
@@ -259,9 +258,9 @@ bool DeadlockDetector::CheckMajorityWorkersSleeping(DeadlockCheckResult& result)
     if (sleepRatio > _config.majorityThreshold)
     {
         result.details.push_back(
-            std::to_string(sleepingLongCount) + "/" + std::to_string(totalWorkers) +
+            ::std::to_string(sleepingLongCount) + "/" + ::std::to_string(totalWorkers) +
             " workers sleeping for >" +
-            std::to_string(_config.majorityWorkersSleepThreshold.count()) + "ms");
+            ::std::to_string(_config.majorityWorkersSleepThreshold.count()) + "ms");
         return true;
     }
 
@@ -281,22 +280,22 @@ bool DeadlockDetector::CheckStuckWorkers(DeadlockCheckResult& result)
         if (!diag)
             continue;
 
-        WorkerState state = diag->currentState.load(std::memory_order_relaxed);
-        auto timeInState = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - diag->stateEnterTime);
+        WorkerState state = diag->currentState.load(::std::memory_order_relaxed);
+        auto timeInState = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+            ::std::chrono::steady_clock::now() - diag->stateEnterTime);
 
         // Check for stuck workers (excluding expected long-running states)
-        if (timeInState >= _config.singleWorkerStuckThreshold &&
+    if (timeInState >= _config.singleWorkerStuckThreshold &&
             state != WorkerState::IDLE_SLEEPING &&
             state != WorkerState::TERMINATED)
         {
             hasStuckWorkers = true;
 
-            std::string stateStr = WorkerStateToString(state);
+            ::std::string stateStr = WorkerStateToString(state);
             result.workerIssues.push_back({
                 workerId, state, timeInState,
                 "Stuck in " + stateStr + " for " +
-                std::to_string(timeInState.count()) + "ms"
+                ::std::to_string(timeInState.count()) + "ms"
             });
 
             // Add wait location if available
@@ -304,7 +303,7 @@ bool DeadlockDetector::CheckStuckWorkers(DeadlockCheckResult& result)
             if (wait.has_value())
             {
                 result.details.push_back(
-                    "Worker " + std::to_string(workerId) +
+                    "Worker " + ::std::to_string(workerId) +
                     " waiting at: " + wait->ToString());
             }
         }
@@ -339,14 +338,14 @@ bool DeadlockDetector::CheckQueueGrowth(DeadlockCheckResult& result)
     for (const auto& [workerId, diag] : workers)
     {
         if (diag)
-            completedTasks += diag->tasksExecuted.load(std::memory_order_relaxed);
+            completedTasks += diag->tasksExecuted.load(::std::memory_order_relaxed);
     }
 
     result.completedTasks = completedTasks;
 
     // Calculate throughput
-    auto timeDelta = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::steady_clock::now() - _state.lastCheckTime).count();
+    auto timeDelta = ::std::chrono::duration_cast<::std::chrono::seconds>(
+        ::std::chrono::steady_clock::now() - _state.lastCheckTime).count();
     if (timeDelta > 0 && _state.lastCompletedTasks > 0)
     {
         result.throughput = static_cast<double>(completedTasks - _state.lastCompletedTasks) / timeDelta;
@@ -359,8 +358,8 @@ bool DeadlockDetector::CheckQueueGrowth(DeadlockCheckResult& result)
     {
         result.details.push_back(
             "Queue growing for " +
-            std::to_string(_state.consecutiveQueueGrowths) +
-            " consecutive checks. Size: " + std::to_string(currentQueueSize));
+            ::std::to_string(_state.consecutiveQueueGrowths) +
+            " consecutive checks. Size: " + ::std::to_string(currentQueueSize));
         return true;
     }
 
@@ -370,23 +369,23 @@ bool DeadlockDetector::CheckQueueGrowth(DeadlockCheckResult& result)
 void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
 {
     // Rate limit dumps (max 1 per minute)
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastDump = std::chrono::duration_cast<std::chrono::seconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastDump = ::std::chrono::duration_cast<::std::chrono::seconds>(
         now - _state.lastDumpTime).count();
 
     if (timeSinceLastDump < 60)
         return;
 
     _state.lastDumpTime = now;
-    _stats.dumpsGenerated.fetch_add(1, std::memory_order_relaxed);
+    _stats.dumpsGenerated.fetch_add(1, ::std::memory_order_relaxed);
 
     // Generate filename with timestamp
-    std::string filename = _config.dumpDirectory + "threadpool_deadlock_" +
+    ::std::string filename = _config.dumpDirectory + "threadpool_deadlock_" +
                           GetTimestampString() + ".txt";
 
     try
     {
-        std::ofstream dump(filename);
+        ::std::ofstream dump(filename);
         if (!dump.is_open())
         {
             TC_LOG_ERROR("playerbot.threadpool.deadlock",
@@ -407,11 +406,11 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         dump << "-------\n";
         dump << "Total Queued Tasks: " << result.totalQueuedTasks << "\n";
         dump << "Completed Tasks: " << result.completedTasks << "\n";
-        dump << "Throughput: " << std::fixed << std::setprecision(2)
+        dump << "Throughput: " << ::std::fixed << ::std::setprecision(2)
              << result.throughput << " tasks/sec\n\n";
 
         // Write details
-        if (!result.details.empty())
+    if (!result.details.empty())
         {
             dump << "Details\n";
             dump << "-------\n";
@@ -423,7 +422,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         }
 
         // Write worker issues
-        if (!result.workerIssues.empty())
+    if (!result.workerIssues.empty())
         {
             dump << "Worker Issues\n";
             dump << "-------------\n";
@@ -449,7 +448,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         }
 
         // Write pool configuration
-        if (_pool)
+    if (_pool)
         {
             auto config = _pool->GetConfiguration();
             dump << "ThreadPool Configuration\n";
@@ -472,7 +471,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         dump << "Dumps Generated: " << _stats.dumpsGenerated.load() << "\n";
         dump << "Recoveries Attempted: " << _stats.recoveriesAttempted.load() << "\n";
 
-        auto uptime = std::chrono::duration_cast<std::chrono::seconds>(
+        auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(
             now - _stats.startTime).count();
         dump << "Detector Uptime: " << uptime << " seconds\n";
 
@@ -481,7 +480,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
         TC_LOG_WARN("playerbot.threadpool.deadlock",
             "Diagnostic dump generated: {}", filename);
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.threadpool.deadlock",
             "Failed to write diagnostic dump: {}", e.what());
@@ -490,7 +489,7 @@ void DeadlockDetector::GenerateDiagnosticDump(const DeadlockCheckResult& result)
 
 void DeadlockDetector::AttemptRecovery(const DeadlockCheckResult& result)
 {
-    _stats.recoveriesAttempted.fetch_add(1, std::memory_order_relaxed);
+    _stats.recoveriesAttempted.fetch_add(1, ::std::memory_order_relaxed);
 
     TC_LOG_WARN("playerbot.threadpool.deadlock",
         "Attempting automatic recovery for: {}", result.description);
@@ -518,7 +517,7 @@ void DeadlockDetector::AttemptRecovery(const DeadlockCheckResult& result)
     else if (result.severity == DeadlockCheckResult::Severity::ERROR)
     {
         // Error condition - wake sleeping workers
-        for (const auto& issue : result.workerIssues)
+    for (const auto& issue : result.workerIssues)
         {
             if (issue.state == WorkerState::IDLE_SLEEPING)
             {
@@ -538,14 +537,14 @@ void DeadlockDetector::NotifyCallbacks(const DeadlockCheckResult& result)
 {
     // Notify registered callbacks
     {
-        std::lock_guard<std::mutex> lock(_callbackMutex);
+        ::std::lock_guard<::std::mutex> lock(_callbackMutex);
         for (const auto& callback : _callbacks)
         {
             try
             {
                 callback(result);
             }
-            catch (const std::exception& e)
+            catch (const ::std::exception& e)
             {
                 TC_LOG_ERROR("playerbot.threadpool.deadlock",
                     "Exception in deadlock callback: {}", e.what());
@@ -560,7 +559,7 @@ void DeadlockDetector::NotifyCallbacks(const DeadlockCheckResult& result)
         {
             _debuggerIntegration->OnDeadlockDetected(result);
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot.threadpool.deadlock",
                 "Exception in debugger integration: {}", e.what());
@@ -573,7 +572,7 @@ void DeadlockDetector::NotifyCallbacks(const DeadlockCheckResult& result)
         {
             _etwProvider->LogDeadlockDetected(result);
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot.threadpool.deadlock",
                 "Exception in ETW provider: {}", e.what());
@@ -622,9 +621,9 @@ void DeadlockDetector::LogResult(const DeadlockCheckResult& result)
     }
 }
 
-std::vector<std::pair<uint32, WorkerDiagnostics*>> DeadlockDetector::GetWorkerDiagnostics()
+::std::vector<::std::pair<uint32, WorkerDiagnostics*>> DeadlockDetector::GetWorkerDiagnostics()
 {
-    std::vector<std::pair<uint32, WorkerDiagnostics*>> diagnostics;
+    ::std::vector<::std::pair<uint32, WorkerDiagnostics*>> diagnostics;
 
     if (!_pool)
         return diagnostics;
@@ -642,12 +641,12 @@ std::vector<std::pair<uint32, WorkerDiagnostics*>> DeadlockDetector::GetWorkerDi
     return diagnostics;
 }
 
-std::string DeadlockDetector::GetTimestampString() const
+::std::string DeadlockDetector::GetTimestampString() const
 {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time_t), "%Y%m%d_%H%M%S");
+    auto now = ::std::chrono::system_clock::now();
+    auto time_t = ::std::chrono::system_clock::to_time_t(now);
+    ::std::stringstream ss;
+    ss << ::std::put_time(::std::localtime(&time_t), "%Y%m%d_%H%M%S");
     return ss.str();
 }
 
@@ -658,8 +657,8 @@ DeadlockCheckResult DeadlockDetector::CheckNow()
 
 void DeadlockDetector::RegisterCallback(DeadlockCallback callback)
 {
-    std::lock_guard<std::mutex> lock(_callbackMutex);
-    _callbacks.push_back(std::move(callback));
+    ::std::lock_guard<::std::mutex> lock(_callbackMutex);
+    _callbacks.push_back(::std::move(callback));
 }
 
 DeadlockDetector::Stats DeadlockDetector::GetStatistics() const
@@ -670,8 +669,8 @@ DeadlockDetector::Stats DeadlockDetector::GetStatistics() const
     stats.warningsIssued = _stats.warningsIssued.load();
     stats.dumpsGenerated = _stats.dumpsGenerated.load();
     stats.recoveriesAttempted = _stats.recoveriesAttempted.load();
-    stats.uptime = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::steady_clock::now() - _stats.startTime);
+    stats.uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(
+        ::std::chrono::steady_clock::now() - _stats.startTime);
     return stats;
 }
 

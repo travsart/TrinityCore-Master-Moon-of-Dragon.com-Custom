@@ -48,35 +48,35 @@ public:
     struct SpecializationData
     {
         uint8 specId;
-        std::string name;
+        ::std::string name;
         GroupRole primaryRole;
-        std::vector<std::pair<GroupRole, RoleCapability>> roleCapabilities;
+        ::std::vector<::std::pair<GroupRole, RoleCapability>> roleCapabilities;
         float baseEffectiveness;
-        std::vector<std::string> keyAbilities;
+        ::std::vector<::std::string> keyAbilities;
 
         SpecializationData() : specId(0), primaryRole(GroupRole::NONE), baseEffectiveness(0.0f) {}
-        SpecializationData(uint8 id, const std::string& n, GroupRole primary, float effectiveness)
+        SpecializationData(uint8 id, const ::std::string& n, GroupRole primary, float effectiveness)
             : specId(id), name(n), primaryRole(primary), baseEffectiveness(effectiveness) {}
     };
 
     struct ClassData
     {
         uint8 classId;
-        std::string className;
-        std::vector<SpecializationData> specializations;
-        std::vector<GroupRole> hybridCapabilities;
+        ::std::string className;
+        ::std::vector<SpecializationData> specializations;
+        ::std::vector<GroupRole> hybridCapabilities;
         bool isHybridClass;
         float overallVersatility;
 
         ClassData() : classId(0), isHybridClass(false), overallVersatility(0.0f) {}
-        ClassData(uint8 id, const std::string& name, bool hybrid = false, float versatility = 0.5f)
+        ClassData(uint8 id, const ::std::string& name, bool hybrid = false, float versatility = 0.5f)
             : classId(id), className(name), isHybridClass(hybrid), overallVersatility(versatility) {}
     };
 
     // Get role definitions
     static const ClassData& GetClassData(uint8 classId);
     static const SpecializationData& GetSpecializationData(uint8 classId, uint8 specId);
-    static std::vector<std::pair<GroupRole, RoleCapability>> GetRoleCapabilities(uint8 classId, uint8 specId);
+    static ::std::vector<::std::pair<GroupRole, RoleCapability>> GetRoleCapabilities(uint8 classId, uint8 specId);
 
     // Role effectiveness calculations
     static float GetRoleEffectiveness(uint8 classId, uint8 specId, GroupRole role);
@@ -87,10 +87,10 @@ public:
     static bool IsHybridClass(uint8 classId);
     static bool IsPureClass(uint8 classId);
     static float GetClassVersatility(uint8 classId);
-    static std::vector<GroupRole> GetAvailableRoles(uint8 classId, uint8 specId);
+    static ::std::vector<GroupRole> GetAvailableRoles(uint8 classId, uint8 specId);
 
     // Role priority for group formation
-    static std::vector<std::pair<uint8, uint8>> GetPreferredClassSpecsForRole(GroupRole role);
+    static ::std::vector<::std::pair<uint8, uint8>> GetPreferredClassSpecsForRole(GroupRole role);
     static float GetRolePriorityScore(uint8 classId, uint8 specId, GroupRole role);
 
     // Initialize role definitions
@@ -98,7 +98,7 @@ public:
 
 private:
     // Meyer's singleton accessors for DLL-safe static data
-    static std::unordered_map<uint8, ClassData>& GetClassDefinitions();
+    static ::std::unordered_map<uint8, ClassData>& GetClassDefinitions();
     static bool& GetInitialized();
 
     // Role mapping initialization

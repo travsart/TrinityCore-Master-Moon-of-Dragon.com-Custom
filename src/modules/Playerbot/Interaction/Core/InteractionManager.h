@@ -93,7 +93,7 @@ namespace Playerbot
         uint32 param3 = 0;          // additional parameter
         uint32 priority = 0;        // Higher = processed first
         uint32 timeoutMs = 10000;   // Timeout in milliseconds
-        std::function<void(InteractionResult)> callback;
+        ::std::function<void(InteractionResult)> callback;
 
         // Priority queue comparison (higher priority first)
         bool operator<(const InteractionRequest& other) const
@@ -143,11 +143,11 @@ namespace Playerbot
     struct NPCInteractionData
     {
         ObjectGuid guid;
-        std::string name;
+        ::std::string name;
         NPCType type;
         ::Position position;
         float interactionRange;
-        std::vector<uint32> services;  // Available services/flags
+        ::std::vector<uint32> services;  // Available services/flags
         uint32 lastInteraction = 0;
         bool isAvailable = true;
     };
@@ -331,7 +331,7 @@ namespace Playerbot
         bool SellItem(Player* bot, Creature* vendor, Item* item, uint32 count = 1);
         bool SellAllJunk(Player* bot, Creature* vendor);
         bool RepairItem(Player* bot, Creature* vendor, Item* item);
-        std::vector<VendorItem> GetVendorItems(Creature* vendor) const;
+        ::std::vector<VendorItem> GetVendorItems(Creature* vendor) const;
         bool CanAffordItem(Player* bot, uint32 itemId, uint32 count = 1) const;
 
         // =====================================================================
@@ -351,7 +351,7 @@ namespace Playerbot
         bool LearnAllAvailableSpells(Player* bot, Creature* trainer);
         bool LearnProfession(Player* bot, Creature* trainer, uint32 skillId);
         bool UnlearnProfession(Player* bot, Creature* trainer, uint32 skillId);
-        std::vector<TrainerSpellInfo> GetAvailableSpells(Player* bot, Creature* trainer) const;
+        ::std::vector<TrainerSpellInfo> GetAvailableSpells(Player* bot, Creature* trainer) const;
         bool CanLearnSpell(Player* bot, uint32 spellId) const;
         uint32 GetTrainingCost(Player* bot, Creature* trainer) const;
 
@@ -410,8 +410,8 @@ namespace Playerbot
         bool CompleteQuest(Player* bot, Object* questGiver, uint32 questId);
         bool TurnInQuest(Player* bot, Object* questGiver, uint32 questId, uint32 rewardChoice = 0);
         bool AbandonQuest(Player* bot, uint32 questId);
-        std::vector<uint32> GetAvailableQuests(Player* bot, Object* questGiver) const;
-        std::vector<uint32> GetCompletableQuests(Player* bot, Object* questGiver) const;
+        ::std::vector<uint32> GetAvailableQuests(Player* bot, Object* questGiver) const;
+        ::std::vector<uint32> GetCompletableQuests(Player* bot, Object* questGiver) const;
         uint32 SelectQuestReward(Player* bot, Quest const* quest) const;
 
         // =====================================================================
@@ -419,9 +419,9 @@ namespace Playerbot
         // =====================================================================
 
         bool CloseGossip(Player* bot, Creature* npc);
-        std::vector<GossipMenuItem> GetGossipOptions(Player* bot, Creature* npc) const;
+        ::std::vector<GossipMenuItem> GetGossipOptions(Player* bot, Creature* npc) const;
         bool HasGossipOption(Creature* npc, uint32 option) const;
-        std::string GetGossipText(Player* bot, Creature* npc) const;
+        ::std::string GetGossipText(Player* bot, Creature* npc) const;
 
         // =====================================================================
         // AUCTION HOUSE (Legacy API)
@@ -436,8 +436,8 @@ namespace Playerbot
         // MAIL OPERATIONS (Legacy API)
         // =====================================================================
 
-        bool SendMail(Player* bot, std::string const& recipient, std::string const& subject,
-                      std::string const& body, uint32 money = 0, Item* item = nullptr);
+        bool SendMail(Player* bot, ::std::string const& recipient, ::std::string const& subject,
+                      ::std::string const& body, uint32 money = 0, Item* item = nullptr);
         bool TakeMail(Player* bot, uint32 mailId);
         bool DeleteMail(Player* bot, uint32 mailId);
         bool ReturnMail(Player* bot, uint32 mailId);
@@ -469,7 +469,7 @@ namespace Playerbot
         float GetInteractionRange(GameObject* go) const;
         bool IsInInteractionRange(Player* bot, Object* target) const;
         NPCType GetNPCType(Creature* npc) const;
-        std::vector<Creature*> FindNearbyNPCs(Player* bot, NPCType type, float range = 50.0f) const;
+        ::std::vector<Creature*> FindNearbyNPCs(Player* bot, NPCType type, float range = 50.0f) const;
         GameObject* FindNearestGameObject(Player* bot, uint32 entry, float maxRange = 50.0f) const;
 
         // =====================================================================
@@ -605,29 +605,29 @@ namespace Playerbot
          * @param bot Bot performing interaction
          * @param message Log message
          */
-        void LogInteraction(Player* bot, std::string const& message) const;
+        void LogInteraction(Player* bot, ::std::string const& message) const;
 
         // =====================================================================
         // MEMBER VARIABLES
         // =====================================================================
 
         // Active interactions - maps bot GUID to interaction context
-        std::unordered_map<ObjectGuid, std::unique_ptr<InteractionContext>> m_activeInteractions;
+        ::std::unordered_map<ObjectGuid, ::std::unique_ptr<InteractionContext>> m_activeInteractions;
 
         // Interaction queue for prioritized processing
-        std::priority_queue<InteractionRequest> m_interactionQueue;
+        ::std::priority_queue<InteractionRequest> m_interactionQueue;
 
         // Timing trackers
-        std::unordered_map<ObjectGuid, std::chrono::steady_clock::time_point> m_lastInteractionTime;
-        std::chrono::steady_clock::time_point m_lastCacheClean;
+        ::std::unordered_map<ObjectGuid, ::std::chrono::steady_clock::time_point> m_lastInteractionTime;
+        ::std::chrono::steady_clock::time_point m_lastCacheClean;
 
         // NPC type cache for fast detection
-        mutable std::unordered_map<ObjectGuid, InteractionType> m_npcTypeCache;
+        mutable ::std::unordered_map<ObjectGuid, InteractionType> m_npcTypeCache;
 
         // Subsystems - specialized handlers
-        std::unique_ptr<GossipHandler> m_gossipHandler;
-        std::unique_ptr<InteractionValidator> m_validator;
-        std::unique_ptr<VendorInteraction> m_vendorHandler;
+        ::std::unique_ptr<GossipHandler> m_gossipHandler;
+        ::std::unique_ptr<InteractionValidator> m_validator;
+        ::std::unique_ptr<VendorInteraction> m_vendorHandler;
         // std::unique_ptr<TrainerInteraction> m_trainerHandler;  // TODO: Not implemented yet
         // std::unique_ptr<InnkeeperInteraction> m_innkeeperHandler;  // TODO: Not implemented yet
         // std::unique_ptr<FlightMasterInteraction> m_flightHandler;  // TODO: Not implemented yet
@@ -640,22 +640,22 @@ namespace Playerbot
         // std::unique_ptr<QuestDialogHandler> m_questHandler;
 
         // NPC database cache (legacy)
-        std::unordered_map<ObjectGuid, NPCInteractionData> m_npcDatabase;
+        ::std::unordered_map<ObjectGuid, NPCInteractionData> m_npcDatabase;
 
         // Thread safety - shared_mutex allows concurrent reads
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_mutex;
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::ACTION_PRIORITY> m_npcMutex;
 
         // Performance tracking - atomic for thread safety
-        std::atomic<uint64> m_totalInteractionsStarted{0};
-        std::atomic<uint64> m_totalInteractionsCompleted{0};
-        std::atomic<uint64> m_totalInteractionsFailed{0};
-        std::atomic<uint32> m_totalSuccess{0};
-        std::atomic<uint32> m_totalFailed{0};
-        std::atomic<uint32> m_totalTime{0};
+        ::std::atomic<uint64> m_totalInteractionsStarted{0};
+        ::std::atomic<uint64> m_totalInteractionsCompleted{0};
+        ::std::atomic<uint64> m_totalInteractionsFailed{0};
+        ::std::atomic<uint32> m_totalSuccess{0};
+        ::std::atomic<uint32> m_totalFailed{0};
+        ::std::atomic<uint32> m_totalTime{0};
 
         // Metrics per interaction type
-        std::unordered_map<InteractionType, InteractionMetrics> m_metrics;
+        ::std::unordered_map<InteractionType, InteractionMetrics> m_metrics;
 
         // Configuration
         NPCInteractionConfig m_config;
@@ -667,8 +667,8 @@ namespace Playerbot
         bool m_initialized = false;
 
         // Singleton instance (modern C++20 pattern)
-        static std::unique_ptr<InteractionManager> s_instance;
-        static std::once_flag s_initFlag;
+        static ::std::unique_ptr<InteractionManager> s_instance;
+        static ::std::once_flag s_initFlag;
     };
 
     // Helper macro for interaction manager access

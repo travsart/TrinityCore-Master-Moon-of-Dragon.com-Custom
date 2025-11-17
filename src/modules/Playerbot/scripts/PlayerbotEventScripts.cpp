@@ -332,7 +332,7 @@ public:
             Playerbot::CommandResult result = Playerbot::BotChatCommandHandler::ProcessChatMessage(context);
             // If message had command prefix, don't dispatch as event (command handler sent response)
             // Only fall through to event system if it's NOT a command at all
-            if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
+    if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
             {
                 return;  // Command was processed (success/failure/error), skip event dispatch
             }
@@ -355,7 +355,7 @@ public:
             return;
 
         // Check if any bots in group
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
             if (member && IsBot(member) && member != player)
@@ -386,7 +386,7 @@ public:
 
                     // If message had command prefix, don't dispatch as event (command handler sent response)
                     // Only fall through to event system if it's NOT a command at all
-                    if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
+    if (result != Playerbot::CommandResult::COMMAND_NOT_FOUND)
                     {
                         continue; // Command was processed, skip event dispatch for this bot
                     }
@@ -394,11 +394,6 @@ public:
 
                 // Not a command - dispatch as GROUP_CHAT event
                 BotEvent event(EventType::GROUP_CHAT,
-                              if (!player)
-                              {
-                                  TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: player in method GetGUID");
-                                  return nullptr;
-                              }
                               player->GetGUID(),
                               member->GetGUID());
                 event.data = msg;
@@ -412,7 +407,7 @@ public:
     void OnTextEmote(Player* player, uint32 textEmote, uint32 emoteNum, ObjectGuid guid) override
     {
         // Check if emote target is a bot
-        if (!guid)
+    if (!guid)
             return;
 
         Unit* target = ObjectAccessor::GetUnit(*player, guid);
@@ -647,7 +642,7 @@ public:
 
         DispatchToBotEventDispatcher(player, event);
         // Check if objective completed
-        if (newAmount >= objective.Amount && oldAmount < objective.Amount)
+    if (newAmount >= objective.Amount && oldAmount < objective.Amount)
         {
             BotEvent completeEvent(EventType::QUEST_OBJECTIVE_COMPLETE,
                                   player->GetGUID(),
@@ -683,7 +678,7 @@ public:
             return;
 
         // Phase 7.3: Direct event dispatch for damage events
-        if (attackerIsBot)
+    if (attackerIsBot)
         {
             Player* attackerPlayer = attacker->ToPlayer();
             if (attackerPlayer)
@@ -710,7 +705,7 @@ public:
                 DispatchToBotEventDispatcher(victimPlayer, event);
 
                 // Check for critical health thresholds
-                if (victim->GetHealthPct() < 30.0f)
+    if (victim->GetHealthPct() < 30.0f)
                 {
                     BotEvent criticalEvent(EventType::HEALTH_CRITICAL,
                                           attacker ? attacker->GetGUID() : ObjectGuid::Empty,
@@ -840,7 +835,7 @@ public:
             return;
 
         // Notify all bot members about leader change
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
             if (member && IsBot(member))
@@ -861,7 +856,7 @@ public:
             return;
 
         // Notify all bot members about disbandment
-        for (GroupReference const& itr : group->GetMembers())
+    for (GroupReference const& itr : group->GetMembers())
         {
             Player* member = itr.GetSource();
             if (member && IsBot(member))
@@ -1081,13 +1076,13 @@ void AddSC_playerbot_event_scripts()
     // Root Cause: OnPlayerRepop fires BEFORE RepopAtGraveyard() teleport occurs.
     // Solution: Let DeathRecoveryManager handle resurrection after corpse run completes.
     // TODO: DELETE BotResurrectionScript.h/cpp files - no longer needed
-    // TC_LOG_INFO("module.playerbot.scripts", "🔧 DEBUG: About to instantiate BotResurrectionScript...");
+    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: About to instantiate BotResurrectionScript...");
     // new Playerbot::BotResurrectionScript();
-    // TC_LOG_INFO("module.playerbot.scripts", "✅ DEBUG: BotResurrectionScript instantiated successfully");
-    TC_LOG_INFO("module.playerbot.scripts", "⚠️  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
+    // TC_LOG_INFO("module.playerbot.scripts", " DEBUG: BotResurrectionScript instantiated successfully");
+    TC_LOG_INFO("module.playerbot.scripts", "  BotResurrectionScript DISABLED - DeathRecoveryManager handles resurrection");
 
     TC_LOG_INFO("module.playerbot.scripts",
-        "✅ Playerbot Event Scripts registered:");
+        " Playerbot Event Scripts registered:");
     TC_LOG_INFO("module.playerbot.scripts",
         "   - WorldScript: Event system updates");
     TC_LOG_INFO("module.playerbot.scripts",

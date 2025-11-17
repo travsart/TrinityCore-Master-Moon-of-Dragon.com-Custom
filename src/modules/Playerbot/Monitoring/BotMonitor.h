@@ -90,7 +90,7 @@ namespace Playerbot
          * @param count Number of snapshots to retrieve (default: all)
          * @return Vector of historical snapshots (newest first)
          */
-        std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const override;
+        ::std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const override;
 
         // =====================================================================
         // ACTIVITY TRACKING
@@ -171,14 +171,14 @@ namespace Playerbot
          * @param category Error category (e.g., "Combat", "Movement", "Database")
          * @param message Error message
          */
-        void RecordError(std::string const& category, std::string const& message) override;
+        void RecordError(::std::string const& category, ::std::string const& message) override;
 
         /**
          * @brief Record warning occurrence
          * @param category Warning category
          * @param message Warning message
          */
-        void RecordWarning(std::string const& category, std::string const& message) override;
+        void RecordWarning(::std::string const& category, ::std::string const& message) override;
 
         // =====================================================================
         // TREND ANALYSIS
@@ -229,14 +229,14 @@ namespace Playerbot
          * @param minLevel Minimum alert level to retrieve (default: WARNING)
          * @return Vector of active alerts
          */
-        std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const override;
+        ::std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const override;
 
         /**
          * @brief Get alert history
          * @param count Number of alerts to retrieve (default: 100)
          * @return Vector of historical alerts (newest first)
          */
-        std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const override;
+        ::std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const override;
 
         /**
          * @brief Clear alert history
@@ -247,7 +247,7 @@ namespace Playerbot
          * @brief Register alert callback
          * @param callback Function to call when alert is triggered
          */
-        void RegisterAlertCallback(std::function<void(PerformanceAlert const&)> callback) override;
+        void RegisterAlertCallback(::std::function<void(PerformanceAlert const&)> callback) override;
 
         // =====================================================================
         // STATISTICS
@@ -257,7 +257,7 @@ namespace Playerbot
          * @brief Get formatted statistics summary
          * @return Human-readable statistics string
          */
-        std::string GetStatisticsSummary() const override;
+        ::std::string GetStatisticsSummary() const override;
 
         /**
          * @brief Get uptime in seconds
@@ -299,27 +299,27 @@ namespace Playerbot
 
         // Initialization state
         bool _initialized;
-        std::chrono::system_clock::time_point _initTime;
-        std::chrono::system_clock::time_point _lastUpdateTime;
+        ::std::chrono::system_clock::time_point _initTime;
+        ::std::chrono::system_clock::time_point _lastUpdateTime;
 
         // Activity tracking
-        std::map<ObjectGuid, std::string> _botActivityState;  // botGuid -> state (combat/questing/traveling/idle/dead)
-        std::map<ObjectGuid, std::chrono::system_clock::time_point> _botActivityStartTime;
+        ::std::map<ObjectGuid, ::std::string> _botActivityState;  // botGuid -> state (combat/questing/traveling/idle/dead)
+        ::std::map<ObjectGuid, ::std::chrono::system_clock::time_point> _botActivityStartTime;
 
         // Bot sets for quick categorization
-        std::set<ObjectGuid> _botsInCombat;
-        std::set<ObjectGuid> _botsQuesting;
-        std::set<ObjectGuid> _botsDead;
+        ::std::set<ObjectGuid> _botsInCombat;
+        ::std::set<ObjectGuid> _botsQuesting;
+        ::std::set<ObjectGuid> _botsDead;
 
         // Performance tracking
-        std::deque<double> _updateTimes;           // Recent bot update times
-        std::deque<double> _aiDecisionTimes;       // Recent AI decision times
+        ::std::deque<double> _updateTimes;           // Recent bot update times
+        ::std::deque<double> _aiDecisionTimes;       // Recent AI decision times
         double _totalUpdateTime;
         double _maxUpdateTime;
         uint64 _updateCount;
 
         // Database tracking
-        std::deque<double> _queryTimes;            // Recent query execution times
+        ::std::deque<double> _queryTimes;            // Recent query execution times
         uint64 _totalQueries;
         uint64 _totalCacheHits;
         uint64 _totalCacheMisses;
@@ -327,11 +327,11 @@ namespace Playerbot
         double _maxQueryTime;
 
         // Resource tracking
-        std::chrono::system_clock::time_point _lastCpuCheck;
+        ::std::chrono::system_clock::time_point _lastCpuCheck;
         double _lastCpuUsage;
 
         // Snapshot history
-        std::deque<PerformanceSnapshot> _snapshotHistory;
+        ::std::deque<PerformanceSnapshot> _snapshotHistory;
         static constexpr uint32 MAX_SNAPSHOT_HISTORY = 1440;  // 24 hours at 1-minute intervals
 
         // Trend data
@@ -342,15 +342,15 @@ namespace Playerbot
 
         // Alert system
         AlertThresholds _alertThresholds;
-        std::deque<PerformanceAlert> _alertHistory;
-        std::vector<std::function<void(PerformanceAlert const&)>> _alertCallbacks;
+        ::std::deque<PerformanceAlert> _alertHistory;
+        ::std::vector<::std::function<void(PerformanceAlert const&)>> _alertCallbacks;
         static constexpr uint32 MAX_ALERT_HISTORY = 1000;
 
         // Error/warning tracking
         uint32 _errorCount;
         uint32 _warningCount;
-        std::map<std::string, uint32> _errorsByCategory;
-        std::map<std::string, uint32> _warningsByCategory;
+        ::std::map<::std::string, uint32> _errorsByCategory;
+        ::std::map<::std::string, uint32> _warningsByCategory;
     };
 
     #define sBotMonitor BotMonitor::instance()

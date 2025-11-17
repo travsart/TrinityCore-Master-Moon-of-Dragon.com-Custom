@@ -88,7 +88,7 @@ namespace Playerbot
          * - Filtering: O(entities in cells)
          * - Typical: <10ms for 100-yard radius with 1000 entities
          */
-        static std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot const*>
         FindHostileCreaturesInRange(Player* bot, float range, bool requireAlive = true);
 
         /**
@@ -139,7 +139,7 @@ namespace Playerbot
          *
          * @return Vector of const pointers to PlayerSnapshots for group members
          */
-        static std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::PlayerSnapshot const*>
         FindGroupMembersInRange(Player* bot, float range);
 
         // ===== GAMEOBJECT QUERIES =====
@@ -167,7 +167,7 @@ namespace Playerbot
          *
          * @return Vector of const pointers to GameObjectSnapshots that are quest objects
          */
-        static std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot const*>
         FindQuestGameObjectsInRange(Player* bot, float range);
 
         // ===== DYNAMICOBJECT QUERIES =====
@@ -198,7 +198,7 @@ namespace Playerbot
          * USAGE:
          * For danger avoidance in combat positioning, obstacle avoidance
          */
-        static std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::DynamicObjectSnapshot const*>
         FindDangerousDynamicObjectsInRange(Player* bot, float range);
 
         // ===== AREATRIGGER QUERIES =====
@@ -223,7 +223,7 @@ namespace Playerbot
          *
          * @return Vector of const pointers to dangerous AreaTriggerSnapshots
          */
-        static std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
+        static ::std::vector<DoubleBufferedSpatialGrid::AreaTriggerSnapshot const*>
         FindDangerousAreaTriggersInRange(Player* bot, float range);
 
         // ===== DISTANCE & POSITION UTILITIES =====

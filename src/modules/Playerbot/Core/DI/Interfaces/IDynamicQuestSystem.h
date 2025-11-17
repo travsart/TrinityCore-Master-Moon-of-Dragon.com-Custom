@@ -24,7 +24,8 @@ namespace Playerbot
 // Forward declarations
 enum class QuestPriority : uint8;
 enum class QuestType : uint8;
-enum class QuestStrategy : uint8;
+enum class QuestStrategy : uint8; // Full definition in IUnifiedQuestManager.h
+
 struct QuestMetadata;
 struct QuestProgress;
 struct QuestReward;
@@ -36,14 +37,14 @@ public:
     virtual ~IDynamicQuestSystem() = default;
 
     // Quest discovery and assignment
-    virtual std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
-    virtual std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy) = 0;
+    virtual ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
+    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy) = 0;
     virtual bool AssignQuestToBot(uint32 questId, Player* bot) = 0;
     virtual void AutoAssignQuests(Player* bot, uint32 maxQuests) = 0;
 
     // Quest prioritization
     virtual QuestPriority CalculateQuestPriority(uint32 questId, Player* bot) = 0;
-    virtual std::vector<uint32> SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> SortQuestsByPriority(const ::std::vector<uint32>& questIds, Player* bot) = 0;
     virtual bool ShouldAbandonQuest(uint32 questId, Player* bot) = 0;
 
     // Quest execution and coordination
@@ -60,7 +61,7 @@ public:
 
     // Quest pathfinding and navigation
     virtual Position GetNextQuestLocation(Player* bot, uint32 questId) = 0;
-    virtual std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) = 0;
+    virtual ::std::vector<Position> GenerateQuestPath(Player* bot, uint32 questId) = 0;
     virtual void HandleQuestNavigation(Player* bot, uint32 questId) = 0;
     virtual bool IsQuestLocationReachable(Player* bot, const Position& location) = 0;
 
@@ -72,13 +73,13 @@ public:
 
     // Quest chain management
     virtual void TrackQuestChains(Player* bot) = 0;
-    virtual std::vector<uint32> GetQuestChain(uint32 questId) = 0;
+    virtual ::std::vector<uint32> GetQuestChain(uint32 questId) = 0;
     virtual uint32 GetNextQuestInChain(uint32 completedQuestId) = 0;
     virtual void AdvanceQuestChain(Player* bot, uint32 completedQuestId) = 0;
 
     // Zone-based quest optimization
     virtual void OptimizeZoneQuests(Player* bot) = 0;
-    virtual std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetZoneQuests(uint32 zoneId, Player* bot) = 0;
     virtual void PlanZoneCompletion(Player* bot, uint32 zoneId) = 0;
     virtual bool ShouldMoveToNewZone(Player* bot) = 0;
 

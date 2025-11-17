@@ -83,13 +83,13 @@ public:
     uint32 GetPercentile(uint8 percentile) const; // 0-100
 
     // Get distribution
-    std::vector<uint32> GetBuckets() const;
+    ::std::vector<uint32> GetBuckets() const;
 
 private:
     static constexpr uint32 BUCKET_COUNT = 100;
     static constexpr uint32 BUCKET_SIZE_MICROS = 100; // 0.1ms per bucket
 
-    std::array<uint32, BUCKET_COUNT> _buckets;
+    ::std::array<uint32, BUCKET_COUNT> _buckets;
     uint32 _totalCount{0};
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _mutex;
 };
@@ -169,7 +169,7 @@ private:
     uint32 _loadShedThresholdMicros{250000};    // 250ms triggers load shedding
 
     // Auto-scaling state
-    std::atomic<bool> _autoScalingEnabled{true};
+    ::std::atomic<bool> _autoScalingEnabled{true};
     uint32 _lastLoadShedTime{0};
     uint32 _lastLoadRecoveryTime{0};
     static constexpr uint32 LOAD_ADJUST_COOLDOWN_MS = 5000; // 5 seconds between adjustments
@@ -186,11 +186,11 @@ private:
     uint32 _tickNumber{0};
 
     // IMPROVEMENT #9: High-resolution timer for sub-millisecond precision
-    std::chrono::steady_clock::time_point _tickStartTimeHighRes;
+    ::std::chrono::steady_clock::time_point _tickStartTimeHighRes;
 
     // Moving average for smoothing
     static constexpr uint32 MOVING_AVG_WINDOW = 10;
-    std::array<uint32, MOVING_AVG_WINDOW> _recentTickTimes{};
+    ::std::array<uint32, MOVING_AVG_WINDOW> _recentTickTimes{};
     uint32 _movingAvgIndex{0};
 
     // Performance degradation tracking
@@ -199,7 +199,7 @@ private:
     static constexpr uint32 DEGRADATION_THRESHOLD = 5; // 5 consecutive slow ticks
 
     // Initialization state
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 // Global instance accessor

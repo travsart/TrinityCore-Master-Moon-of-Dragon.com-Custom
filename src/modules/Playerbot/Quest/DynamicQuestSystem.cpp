@@ -46,9 +46,9 @@ DynamicQuestSystem::DynamicQuestSystem()
     OptimizeQuestRoutes();
 }
 
-std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
+::std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(::Player* bot)
 {
-    std::vector<uint32> availableQuests;
+    ::std::vector<uint32> availableQuests;
 
     if (!bot)
         return availableQuests;
@@ -65,7 +65,7 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
         uint32 questId = quest->GetQuestId();
 
         // Check if quest is available to this bot
-        if (bot->CanTakeQuest(quest, false) &&
+    if (bot->CanTakeQuest(quest, false) &&
             (quest->GetMaxLevel() == 0 || quest->GetMaxLevel() >= botLevel))
         {
             availableQuests.push_back(questId);
@@ -75,14 +75,14 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
     return availableQuests;
 }
 
-std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+::std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(::Player* bot, QuestStrategy strategy)
 {
-    std::vector<uint32> recommendedQuests;
+    ::std::vector<uint32> recommendedQuests;
 
     if (!bot)
         return recommendedQuests;
 
-    std::vector<uint32> availableQuests = DiscoverAvailableQuests(bot);
+    ::std::vector<uint32> availableQuests = DiscoverAvailableQuests(bot);
 
     // Apply strategy-specific filtering and sorting
     switch (strategy)
@@ -105,9 +105,9 @@ std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestS
         case QuestStrategy::STORY_PROGRESSION:
             ExecuteStoryStrategy(bot);
             break;
-        case QuestStrategy::REPUTATION_FOCUSED:
-            ExecuteReputationStrategy(bot);
-            break;
+        // case QuestStrategy::REPUTATION_FOCUSED: // TODO: Add to QuestStrategy enum in IDynamicQuestSystem.h
+        //     ExecuteReputationStrategy(bot);
+        //     break;
         default:
             ExecuteLevelStrategy(bot);
             break;
@@ -133,7 +133,7 @@ std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestS
     return recommendedQuests;
 }
 
-bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
+bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, ::Player* bot)
 {
     if (!bot)
         return false;
@@ -160,7 +160,7 @@ bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
 
     // Add to bot's quest progress
     {
-        std::lock_guard lock(_questMutex);
+        ::std::lock_guard lock(_questMutex);
         _botQuestProgress[botGuid].push_back(progress);
     }
 
@@ -172,7 +172,7 @@ bool DynamicQuestSystem::AssignQuestToBot(uint32 questId, Player* bot)
     return true;
 }
 
-void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
+void DynamicQuestSystem::AutoAssignQuests(::Player* bot, uint32 maxQuests)
 {
     if (!bot)
         return;
@@ -183,7 +183,7 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
     // Get current quest count
     uint32 currentQuests = 0;
     {
-        std::lock_guard lock(_questMutex);
+        ::std::lock_guard lock(_questMutex);
         auto it = _botQuestProgress.find(botGuid);
         if (it != _botQuestProgress.end())
             currentQuests = static_cast<uint32>(it->second.size());
@@ -193,10 +193,10 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
         return;
 
     // Get recommended quests
-    std::vector<uint32> recommended = GetRecommendedQuests(bot, strategy);
+    ::std::vector<uint32> recommended = GetRecommendedQuests(bot, strategy);
 
     // Assign quests up to the limit
-    uint32 questsToAssign = std::min(maxQuests - currentQuests, static_cast<uint32>(recommended.size()));
+    uint32 questsToAssign = ::std::min(maxQuests - currentQuests, static_cast<uint32>(recommended.size()));
 
     for (uint32 i = 0; i < questsToAssign; ++i)
     {
@@ -204,7 +204,7 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
     }
 }
 
-QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player* bot)
+QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, ::Player* bot)
 {
     if (!bot)
         return QuestPriority::TRIVIAL;
@@ -227,7 +227,6 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
 
     // Boost priority for special quest types
     // Note: TrinityCore doesn't have QUEST_FLAGS_ELITE, using other criteria for special quests
-
     if (quest->IsDFQuest() || quest->IsRaidQuest(DIFFICULTY_NORMAL))
         return QuestPriority::LEGENDARY;
 
@@ -243,11 +242,11 @@ QuestPriority DynamicQuestSystem::CalculateQuestPriority(uint32 questId, Player*
     return QuestPriority::NORMAL;
 }
 
-std::vector<uint32> DynamicQuestSystem::SortQuestsByPriority(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> DynamicQuestSystem::SortQuestsByPriority(const ::std::vector<uint32>& questIds, ::Player* bot)
 {
-    std::vector<uint32> sortedQuests = questIds;
+    ::std::vector<uint32> sortedQuests = questIds;
 
-    std::sort(sortedQuests.begin(), sortedQuests.end(),
+    ::std::sort(sortedQuests.begin(), sortedQuests.end(),
         [this, bot](uint32 a, uint32 b) {
             QuestPriority priorityA = CalculateQuestPriority(a, bot);
             QuestPriority priorityB = CalculateQuestPriority(b, bot);
@@ -268,7 +267,7 @@ std::vector<uint32> DynamicQuestSystem::SortQuestsByPriority(const std::vector<u
     return sortedQuests;
 }
 
-bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
+bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, ::Player* bot)
 {
     if (!bot)
         return false;
@@ -279,12 +278,12 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
 
     uint32 botGuid = bot->GetGUID().GetCounter();
     // Find quest progress
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return false;
 
-    auto questProgress = std::find_if(progressIt->second.begin(), progressIt->second.end(),
+    auto questProgress = ::std::find_if(progressIt->second.begin(), progressIt->second.end(),
         [questId](const QuestProgress& progress) {
             return progress.questId == questId;
         });
@@ -310,13 +309,13 @@ bool DynamicQuestSystem::ShouldAbandonQuest(uint32 questId, Player* bot)
     return false;
 }
 
-void DynamicQuestSystem::UpdateQuestProgress(Player* bot)
+void DynamicQuestSystem::UpdateQuestProgress(::Player* bot)
 {
     if (!bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
@@ -326,14 +325,14 @@ void DynamicQuestSystem::UpdateQuestProgress(Player* bot)
         UpdateQuestObjectiveProgress(progress, sObjectMgr->GetQuestTemplate(progress.questId), bot);
 
         // Check if quest is completed
-        if (progress.completionPercentage >= 100.0f)
+    if (progress.completionPercentage >= 100.0f)
         {
             HandleQuestCompletion(bot, progress.questId);
         }
     }
 }
 
-void DynamicQuestSystem::ExecuteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
+void DynamicQuestSystem::ExecuteQuestObjective(::Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return;
@@ -349,7 +348,7 @@ void DynamicQuestSystem::ExecuteQuestObjective(Player* bot, uint32 questId, uint
                 bot->GetName(), objectiveIndex, questId);
 }
 
-bool DynamicQuestSystem::CanCompleteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
+bool DynamicQuestSystem::CanCompleteQuestObjective(::Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return false;
@@ -364,7 +363,7 @@ bool DynamicQuestSystem::CanCompleteQuestObjective(Player* bot, uint32 questId, 
     return true; // Simplified for now
 }
 
-void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
+void DynamicQuestSystem::HandleQuestCompletion(::Player* bot, uint32 questId)
 {
     if (!bot)
         return;
@@ -374,12 +373,12 @@ void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
 
     // Remove from active quests
     {
-        std::lock_guard lock(_questMutex);
+        ::std::lock_guard lock(_questMutex);
         auto progressIt = _botQuestProgress.find(botGuid);
         if (progressIt != _botQuestProgress.end())
         {
             progressIt->second.erase(
-                std::remove_if(progressIt->second.begin(), progressIt->second.end(),
+                ::std::remove_if(progressIt->second.begin(), progressIt->second.end(),
                     [questId](const QuestProgress& progress) {
                         return progress.questId == questId;
                     }),
@@ -399,7 +398,7 @@ void DynamicQuestSystem::HandleQuestCompletion(Player* bot, uint32 questId)
         AssignQuestToBot(nextQuest, bot);
     }
 }
-bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
+bool DynamicQuestSystem::FormQuestGroup(uint32 questId, ::Player* initiator)
 {
     if (!initiator)
         return false;
@@ -413,7 +412,7 @@ bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
         return false;
 
     // Find other players who need this quest
-    std::vector<Player*> eligiblePlayers;
+    ::std::vector<Player*> eligiblePlayers;
 
     // This would require a more sophisticated player lookup system
     // For now, just check group members if already in a group
@@ -423,7 +422,7 @@ bool DynamicQuestSystem::FormQuestGroup(uint32 questId, Player* initiator)
     {
         for (GroupReference const& itr : group->GetMembers())
         {
-            Player* member = itr.GetSource();
+            ::Player* member = itr.GetSource();
             if (member && member != initiator && CanShareQuest(questId, initiator, member))
             {
                 eligiblePlayers.push_back(member);
@@ -457,7 +456,7 @@ void DynamicQuestSystem::CoordinateGroupQuest(Group* group, uint32 questId)
             continue;
 
         // Fallback to ObjectAccessor for full validation
-        Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
+        ::Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
             // Assign specific objectives to this member
@@ -475,7 +474,7 @@ void DynamicQuestSystem::ShareQuestProgress(Group* group, uint32 questId)
     // Synchronize objective completion status
 }
 
-bool DynamicQuestSystem::CanShareQuest(uint32 questId, Player* from, Player* to)
+bool DynamicQuestSystem::CanShareQuest(uint32 questId, ::Player* from, ::Player* to)
 {
     if (!from || !to)
         return false;
@@ -492,7 +491,7 @@ bool DynamicQuestSystem::CanShareQuest(uint32 questId, Player* from, Player* to)
     return to->CanTakeQuest(quest, false);
 }
 
-Position DynamicQuestSystem::GetNextQuestLocation(Player* bot, uint32 questId)
+Position DynamicQuestSystem::GetNextQuestLocation(::Player* bot, uint32 questId)
 {
     Position location;
 
@@ -509,9 +508,9 @@ Position DynamicQuestSystem::GetNextQuestLocation(Player* bot, uint32 questId)
     return startLocation;
 }
 
-std::vector<Position> DynamicQuestSystem::GenerateQuestPath(Player* bot, uint32 questId)
+::std::vector<Position> DynamicQuestSystem::GenerateQuestPath(::Player* bot, uint32 questId)
 {
-    std::vector<Position> path;
+    ::std::vector<Position> path;
 
     if (!bot)
         return path;
@@ -526,13 +525,13 @@ std::vector<Position> DynamicQuestSystem::GenerateQuestPath(Player* bot, uint32 
     return path;
 }
 
-void DynamicQuestSystem::HandleQuestNavigation(Player* bot, uint32 questId)
+void DynamicQuestSystem::HandleQuestNavigation(::Player* bot, uint32 questId)
 {
     if (!bot)
         return;
 
     // Handle navigation to quest objectives
-    std::vector<Position> questPath = GenerateQuestPath(bot, questId);
+    ::std::vector<Position> questPath = GenerateQuestPath(bot, questId);
     if (!questPath.empty())
     {
         // Move bot to the next waypoint
@@ -540,7 +539,7 @@ void DynamicQuestSystem::HandleQuestNavigation(Player* bot, uint32 questId)
     }
 }
 
-bool DynamicQuestSystem::IsQuestLocationReachable(Player* bot, const Position& location)
+bool DynamicQuestSystem::IsQuestLocationReachable(::Player* bot, const Position& location)
 {
     if (!bot)
         return false;
@@ -552,7 +551,7 @@ bool DynamicQuestSystem::IsQuestLocationReachable(Player* bot, const Position& l
     return distance < 1000.0f; // Simplified distance check
 }
 
-void DynamicQuestSystem::AdaptQuestDifficulty(uint32 questId, Player* bot)
+void DynamicQuestSystem::AdaptQuestDifficulty(uint32 questId, ::Player* bot)
 {
     if (!bot)
         return;
@@ -567,18 +566,18 @@ void DynamicQuestSystem::AdaptQuestDifficulty(uint32 questId, Player* bot)
     ScaleQuestForBot(metadata, bot);
 }
 
-void DynamicQuestSystem::HandleQuestStuckState(Player* bot, uint32 questId)
+void DynamicQuestSystem::HandleQuestStuckState(::Player* bot, uint32 questId)
 {
     if (!bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
 
-    auto questProgress = std::find_if(progressIt->second.begin(), progressIt->second.end(),
+    auto questProgress = ::std::find_if(progressIt->second.begin(), progressIt->second.end(),
         [questId](QuestProgress& progress) {
             return progress.questId == questId;
         });
@@ -594,7 +593,7 @@ void DynamicQuestSystem::HandleQuestStuckState(Player* bot, uint32 questId)
     }
 }
 
-void DynamicQuestSystem::RetryFailedObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
+void DynamicQuestSystem::RetryFailedObjective(::Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return;
@@ -603,19 +602,19 @@ void DynamicQuestSystem::RetryFailedObjective(Player* bot, uint32 questId, uint3
     ExecuteQuestObjective(bot, questId, objectiveIndex);
 }
 
-void DynamicQuestSystem::OptimizeQuestOrder(Player* bot)
+void DynamicQuestSystem::OptimizeQuestOrder(::Player* bot)
 {
     if (!bot)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto progressIt = _botQuestProgress.find(botGuid);
     if (progressIt == _botQuestProgress.end())
         return;
 
     // Sort active quests by efficiency and location
-    std::sort(progressIt->second.begin(), progressIt->second.end(),
+    ::std::sort(progressIt->second.begin(), progressIt->second.end(),
         [this, bot](const QuestProgress& a, const QuestProgress& b) {
             float scoreA = CalculateQuestValue(a.questId, bot);
             float scoreB = CalculateQuestValue(b.questId, bot);
@@ -623,7 +622,7 @@ void DynamicQuestSystem::OptimizeQuestOrder(Player* bot)
         });
 }
 
-void DynamicQuestSystem::TrackQuestChains(Player* bot)
+void DynamicQuestSystem::TrackQuestChains(::Player* bot)
 {
     if (!bot)
         return;
@@ -632,9 +631,9 @@ void DynamicQuestSystem::TrackQuestChains(Player* bot)
     // Ensure appropriate chain advancement
 }
 
-std::vector<uint32> DynamicQuestSystem::GetQuestChain(uint32 questId)
+::std::vector<uint32> DynamicQuestSystem::GetQuestChain(uint32 questId)
 {
-    std::vector<uint32> chain;
+    ::std::vector<uint32> chain;
 
     auto chainIt = _questChains.find(questId);
     if (chainIt != _questChains.end())
@@ -652,7 +651,7 @@ uint32 DynamicQuestSystem::GetNextQuestInChain(uint32 completedQuestId)
     return 0;
 }
 
-void DynamicQuestSystem::AdvanceQuestChain(Player* bot, uint32 completedQuestId)
+void DynamicQuestSystem::AdvanceQuestChain(::Player* bot, uint32 completedQuestId)
 {
     if (!bot)
         return;
@@ -664,13 +663,13 @@ void DynamicQuestSystem::AdvanceQuestChain(Player* bot, uint32 completedQuestId)
     }
 }
 
-void DynamicQuestSystem::OptimizeZoneQuests(Player* bot)
+void DynamicQuestSystem::OptimizeZoneQuests(::Player* bot)
 {
     if (!bot)
         return;
 
     uint32 currentZone = bot->GetZoneId();
-    std::vector<uint32> zoneQuests = GetZoneQuests(currentZone, bot);
+    ::std::vector<uint32> zoneQuests = GetZoneQuests(currentZone, bot);
 
     // Prioritize quests in current zone
     for (uint32 questId : zoneQuests)
@@ -682,9 +681,9 @@ void DynamicQuestSystem::OptimizeZoneQuests(Player* bot)
     }
 }
 
-std::vector<uint32> DynamicQuestSystem::GetZoneQuests(uint32 zoneId, Player* bot)
+::std::vector<uint32> DynamicQuestSystem::GetZoneQuests(uint32 zoneId, ::Player* bot)
 {
-    std::vector<uint32> zoneQuests;
+    ::std::vector<uint32> zoneQuests;
 
     auto zoneIt = _zoneQuests.find(zoneId);
     if (zoneIt != _zoneQuests.end())
@@ -693,12 +692,12 @@ std::vector<uint32> DynamicQuestSystem::GetZoneQuests(uint32 zoneId, Player* bot
     return zoneQuests;
 }
 
-void DynamicQuestSystem::PlanZoneCompletion(Player* bot, uint32 zoneId)
+void DynamicQuestSystem::PlanZoneCompletion(::Player* bot, uint32 zoneId)
 {
     if (!bot)
         return;
 
-    std::vector<uint32> zoneQuests = GetZoneQuests(zoneId, bot);
+    ::std::vector<uint32> zoneQuests = GetZoneQuests(zoneId, bot);
 
     // Create completion plan for the zone
     for (uint32 questId : zoneQuests)
@@ -710,13 +709,13 @@ void DynamicQuestSystem::PlanZoneCompletion(Player* bot, uint32 zoneId)
     }
 }
 
-bool DynamicQuestSystem::ShouldMoveToNewZone(Player* bot)
+bool DynamicQuestSystem::ShouldMoveToNewZone(::Player* bot)
 {
     if (!bot)
         return false;
 
     uint32 currentZone = bot->GetZoneId();
-    std::vector<uint32> zoneQuests = GetZoneQuests(currentZone, bot);
+    ::std::vector<uint32> zoneQuests = GetZoneQuests(currentZone, bot);
 
     // Check if there are enough valuable quests in current zone
     uint32 valuableQuests = 0;
@@ -729,7 +728,7 @@ bool DynamicQuestSystem::ShouldMoveToNewZone(Player* bot)
     return valuableQuests < ZONE_OPTIMIZATION_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
+QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, ::Player* bot)
 {
     QuestReward reward;
 
@@ -761,7 +760,7 @@ DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 qu
     return reward;
 }
 
-float DynamicQuestSystem::CalculateQuestValue(uint32 questId, Player* bot)
+float DynamicQuestSystem::CalculateQuestValue(uint32 questId, ::Player* bot)
 {
     if (!bot)
         return 0.0f;
@@ -783,15 +782,15 @@ float DynamicQuestSystem::CalculateQuestValue(uint32 questId, Player* bot)
     return efficiency;
 }
 
-bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, Player* bot)
+bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, ::Player* bot)
 {
     float value = CalculateQuestValue(questId, bot);
     return value >= MIN_QUEST_VALUE_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
+QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
 {
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
         return it->second;
@@ -801,12 +800,12 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 b
     return metrics;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
+QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 {
     QuestMetrics globalMetrics;
     globalMetrics.Reset();
 
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
 
     // Aggregate all bot metrics
     for (const auto& metricsPair : _botMetrics)
@@ -825,13 +824,13 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 
 void DynamicQuestSystem::SetQuestStrategy(uint32 botGuid, QuestStrategy strategy)
 {
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     _botStrategies[botGuid] = strategy;
 }
 
 QuestStrategy DynamicQuestSystem::GetQuestStrategy(uint32 botGuid)
 {
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
     auto it = _botStrategies.find(botGuid);
     if (it != _botStrategies.end())
         return it->second;
@@ -880,13 +879,13 @@ void DynamicQuestSystem::AnalyzeQuestDependencies()
         uint32 questId = quest->GetQuestId();
 
         // Check for prerequisite quests
-        if (quest->GetPrevQuestId() != 0)
+    if (quest->GetPrevQuestId() != 0)
         {
             _questPrerequisites[questId].push_back(quest->GetPrevQuestId());
         }
 
         // Check for followup quests (simplified)
-        if (quest->GetNextQuestId() != 0)
+    if (quest->GetNextQuestId() != 0)
         {
             _questFollowups[questId].push_back(quest->GetNextQuestId());
         }
@@ -899,7 +898,7 @@ void DynamicQuestSystem::BuildQuestChains()
     for (const auto& followupPair : _questFollowups)
     {
         uint32 questId = followupPair.first;
-        std::vector<uint32> chain;
+        ::std::vector<uint32> chain;
 
         // Build chain forward
         uint32 currentQuest = questId;
@@ -962,7 +961,7 @@ QuestType DynamicQuestSystem::DetermineQuestType(const Quest* quest)
     return QuestType::INTERACTION;
 }
 
-float DynamicQuestSystem::CalculateQuestDifficulty(const Quest* quest, Player* bot)
+float DynamicQuestSystem::CalculateQuestDifficulty(const Quest* quest, ::Player* bot)
 {
     if (!quest || !bot)
         return 5.0f;
@@ -983,10 +982,10 @@ float DynamicQuestSystem::CalculateQuestDifficulty(const Quest* quest, Player* b
     if (quest->IsRaidQuest(DIFFICULTY_NORMAL))
         difficulty *= 3.0f;
 
-    return std::clamp(difficulty, 1.0f, 10.0f);
+    return ::std::clamp(difficulty, 1.0f, 10.0f);
 }
 
-bool DynamicQuestSystem::MeetsQuestRequirements(const Quest* quest, Player* bot)
+bool DynamicQuestSystem::MeetsQuestRequirements(const Quest* quest, ::Player* bot)
 {
     if (!quest || !bot)
         return false;
@@ -994,7 +993,7 @@ bool DynamicQuestSystem::MeetsQuestRequirements(const Quest* quest, Player* bot)
     return bot->CanTakeQuest(quest, false);
 }
 
-Position DynamicQuestSystem::FindOptimalQuestStartLocation(uint32 questId, Player* bot)
+Position DynamicQuestSystem::FindOptimalQuestStartLocation(uint32 questId, ::Player* bot)
 {
     Position location;
 
@@ -1007,7 +1006,7 @@ Position DynamicQuestSystem::FindOptimalQuestStartLocation(uint32 questId, Playe
     return bot->GetPosition(); // Default to current position
 }
 
-void DynamicQuestSystem::UpdateQuestObjectiveProgress(QuestProgress& progress, const Quest* quest, Player* bot)
+void DynamicQuestSystem::UpdateQuestObjectiveProgress(QuestProgress& progress, const Quest* quest, ::Player* bot)
 {
     if (!quest || !bot)
         return;
@@ -1102,7 +1101,6 @@ void DynamicQuestSystem::PopulateQuestMetadata(uint32 questId)
 
     metadata.estimatedDuration += killObjectives * 30; // 30 seconds per kill
     metadata.estimatedDuration += itemObjectives * 60; // 1 minute per item
-
     if (metadata.isElite)
         metadata.estimatedDuration *= 2;
     if (metadata.isDungeon)
@@ -1114,7 +1112,7 @@ bool DynamicQuestSystem::IsPartOfQuestChain(uint32 questId)
     return _questChains.find(questId) != _questChains.end();
 }
 
-float DynamicQuestSystem::CalculateGearScoreImprovement(Player* bot, const std::vector<uint32>& items)
+float DynamicQuestSystem::CalculateGearScoreImprovement(::Player* bot, const ::std::vector<uint32>& items)
 {
     if (!bot || items.empty())
         return 0.0f;
@@ -1134,43 +1132,43 @@ float DynamicQuestSystem::CalculateGearScoreImprovement(Player* bot, const std::
     return improvement;
 }
 
-void DynamicQuestSystem::ExecuteSoloStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteSoloStrategy(::Player* bot)
 {
     // Focus on quests that can be completed solo
 }
 
-void DynamicQuestSystem::ExecuteGroupStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteGroupStrategy(::Player* bot)
 {
     // Prefer group quests and elite content
 }
 
-void DynamicQuestSystem::ExecuteZoneStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteZoneStrategy(::Player* bot)
 {
     // Focus on completing all quests in current zone
     OptimizeZoneQuests(bot);
 }
 
-void DynamicQuestSystem::ExecuteLevelStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteLevelStrategy(::Player* bot)
 {
     // Focus on quests that provide optimal experience
 }
 
-void DynamicQuestSystem::ExecuteGearStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteGearStrategy(::Player* bot)
 {
     // Focus on quests that provide equipment upgrades
 }
 
-void DynamicQuestSystem::ExecuteStoryStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteStoryStrategy(::Player* bot)
 {
     // Focus on main storyline and quest chains
 }
 
-void DynamicQuestSystem::ExecuteReputationStrategy(Player* bot)
+void DynamicQuestSystem::ExecuteReputationStrategy(::Player* bot)
 {
     // Focus on reputation-granting quests
 }
 
-void DynamicQuestSystem::ScaleQuestForBot(QuestMetadata& metadata, Player* bot)
+void DynamicQuestSystem::ScaleQuestForBot(QuestMetadata& metadata, ::Player* bot)
 {
     if (!bot)
         return;
@@ -1208,7 +1206,7 @@ void DynamicQuestSystem::Update(uint32 diff)
 
 void DynamicQuestSystem::CleanupCompletedQuests()
 {
-    std::lock_guard lock(_questMutex);
+    ::std::lock_guard lock(_questMutex);
 
     uint32 currentTime = GameTime::GetGameTimeMS();
 
@@ -1217,7 +1215,7 @@ void DynamicQuestSystem::CleanupCompletedQuests()
     {
         auto& progressList = it->second;
         progressList.erase(
-            std::remove_if(progressList.begin(), progressList.end(),
+            ::std::remove_if(progressList.begin(), progressList.end(),
                 [currentTime](const QuestProgress& progress) {
                     return currentTime - progress.lastUpdateTime > 3600000; // 1 hour old
                 }),

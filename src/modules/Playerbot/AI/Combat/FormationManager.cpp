@@ -40,7 +40,7 @@ FormationManager::FormationManager(Player* bot)
     TC_LOG_DEBUG("playerbot.formation", "FormationManager initialized for bot {}", _bot->GetName());
 }
 
-bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation)
+bool FormationManager::JoinFormation(const ::std::vector<Player*>& groupMembers, FormationType formation)
 {
     // No lock needed - _members is per-bot instance data
     try
@@ -106,7 +106,7 @@ bool FormationManager::JoinFormation(const std::vector<Player*>& groupMembers, F
 
         return true;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.formation", "Exception in JoinFormation for bot {}: {}", _bot->GetName(), e.what());
         return false;
@@ -141,7 +141,7 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
         return false;
     }
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     _currentFormation = newFormation;
     _movementState = MovementState::REFORMING;
@@ -149,8 +149,8 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
     AssignFormationPositions();
     _metrics.formationChanges++;
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "ChangeFormation");
 
     TC_LOG_DEBUG("playerbot.formation", "Bot {} changed formation to {}",
@@ -196,7 +196,7 @@ void FormationManager::UpdateFormation(uint32 diff)
             AdjustForGroupSize();
         }
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.formation", "Exception in UpdateFormation for bot {}: {}", _bot->GetName(), e.what());
     }
@@ -210,7 +210,7 @@ bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
 
     try
     {
-        auto startTime = std::chrono::steady_clock::now();
+        auto startTime = ::std::chrono::steady_clock::now();
 
         if (command.newFormation != FormationType::NONE && command.newFormation != _currentFormation)
         {
@@ -230,13 +230,13 @@ bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
         CalculateMovementTargets();
         IssueMovementCommands();
 
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
         TrackPerformance(duration, "ExecuteFormationCommand");
         TC_LOG_DEBUG("playerbot.formation", "Bot {} executed formation command", _bot->GetName());
         return true;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.formation", "Exception executing formation command for bot {}: {}", _bot->GetName(), e.what());
         return false;
@@ -291,9 +291,9 @@ Position FormationManager::CalculateFormationPosition(FormationRole role, uint32
     }
 }
 
-std::vector<Position> FormationManager::CalculateAllFormationPositions()
+::std::vector<Position> FormationManager::CalculateAllFormationPositions()
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
     for (size_t i = 0; i < _members.size(); ++i)
@@ -430,7 +430,7 @@ Position FormationManager::AdjustMovementForFormation(const Position& intendedPo
 
     if (distanceToAssigned > _formationSpacing * 1.5f)
     {
-        float blendFactor = std::min(1.0f, distanceToAssigned / _cohesionRadius);
+        float blendFactor = ::std::min(1.0f, distanceToAssigned / _cohesionRadius);
 
         Position adjusted;
         adjusted.m_positionX = intendedPos.GetPositionX() * (1.0f - blendFactor) + assignedPos.GetPositionX() * blendFactor;
@@ -443,14 +443,14 @@ Position FormationManager::AdjustMovementForFormation(const Position& intendedPo
     return intendedPos;
 }
 
-void FormationManager::TransitionToCombatFormation(const std::vector<Unit*>& enemies)
+void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& enemies)
 {
     if (!_inFormation || !_isLeader)
         return;
 
     FormationType combatFormation = FormationUtils::GetOptimalFormationForCombat(
         [this]() {
-            std::vector<Player*> players;
+            ::std::vector<Player*> players;
             for (const auto& member : _members)
                 if (member.player)
                     players.push_back(member.player);
@@ -466,9 +466,9 @@ void FormationManager::TransitionToCombatFormation(const std::vector<Unit*>& ene
     }
 }
 
-std::vector<Position> FormationManager::CalculateLineFormation(const Position& leaderPos, float orientation)
+::std::vector<Position> FormationManager::CalculateLineFormation(const Position& leaderPos, float orientation)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
     for (size_t i = 0; i < _members.size(); ++i)
@@ -476,8 +476,8 @@ std::vector<Position> FormationManager::CalculateLineFormation(const Position& l
         float offset = (static_cast<float>(i) - static_cast<float>(_members.size() - 1) * 0.5f) * _formationSpacing;
 
         Position pos;
-        pos.m_positionX = leaderPos.GetPositionX() + offset * std::cos(orientation + M_PI/2);
-        pos.m_positionY = leaderPos.GetPositionY() + offset * std::sin(orientation + M_PI/2);
+        pos.m_positionX = leaderPos.GetPositionX() + offset * ::std::cos(orientation + M_PI/2);
+        pos.m_positionY = leaderPos.GetPositionY() + offset * ::std::sin(orientation + M_PI/2);
         pos.m_positionZ = leaderPos.GetPositionZ();
 
         positions.push_back(pos);
@@ -486,9 +486,9 @@ std::vector<Position> FormationManager::CalculateLineFormation(const Position& l
     return positions;
 }
 
-std::vector<Position> FormationManager::CalculateColumnFormation(const Position& leaderPos, float orientation)
+::std::vector<Position> FormationManager::CalculateColumnFormation(const Position& leaderPos, float orientation)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
     for (size_t i = 0; i < _members.size(); ++i)
@@ -496,8 +496,8 @@ std::vector<Position> FormationManager::CalculateColumnFormation(const Position&
         float distance = static_cast<float>(i) * _formationSpacing;
 
         Position pos;
-        pos.m_positionX = leaderPos.GetPositionX() - distance * std::cos(orientation);
-        pos.m_positionY = leaderPos.GetPositionY() - distance * std::sin(orientation);
+        pos.m_positionX = leaderPos.GetPositionX() - distance * ::std::cos(orientation);
+        pos.m_positionY = leaderPos.GetPositionY() - distance * ::std::sin(orientation);
         pos.m_positionZ = leaderPos.GetPositionZ();
 
         positions.push_back(pos);
@@ -506,16 +506,16 @@ std::vector<Position> FormationManager::CalculateColumnFormation(const Position&
     return positions;
 }
 
-std::vector<Position> FormationManager::CalculateWedgeFormation(const Position& leaderPos, float orientation)
+::std::vector<Position> FormationManager::CalculateWedgeFormation(const Position& leaderPos, float orientation)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
     positions.push_back(leaderPos);
 
     for (size_t i = 1; i < _members.size(); ++i)
     {
-        float row = std::floor((std::sqrt(8.0f * i + 1.0f) - 1.0f) / 2.0f);
+        float row = ::std::floor((::std::sqrt(8.0f * i + 1.0f) - 1.0f) / 2.0f);
         float posInRow = i - (row * (row + 1.0f) / 2.0f);
         bool isLeft = (static_cast<int>(posInRow) % 2) == 1;
 
@@ -523,8 +523,8 @@ std::vector<Position> FormationManager::CalculateWedgeFormation(const Position& 
         float distance = (row + 1.0f) * _formationSpacing;
 
         Position pos;
-        pos.m_positionX = leaderPos.GetPositionX() + distance * std::cos(angle);
-        pos.m_positionY = leaderPos.GetPositionY() + distance * std::sin(angle);
+        pos.m_positionX = leaderPos.GetPositionX() + distance * ::std::cos(angle);
+        pos.m_positionY = leaderPos.GetPositionY() + distance * ::std::sin(angle);
         pos.m_positionZ = leaderPos.GetPositionZ();
 
         positions.push_back(pos);
@@ -533,9 +533,9 @@ std::vector<Position> FormationManager::CalculateWedgeFormation(const Position& 
     return positions;
 }
 
-std::vector<Position> FormationManager::CalculateCircleFormation(const Position& leaderPos)
+::std::vector<Position> FormationManager::CalculateCircleFormation(const Position& leaderPos)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
     positions.push_back(leaderPos);
@@ -550,8 +550,8 @@ std::vector<Position> FormationManager::CalculateCircleFormation(const Position&
             float angle = (i - 1) * angleIncrement;
 
             Position pos;
-            pos.m_positionX = leaderPos.GetPositionX() + radius * std::cos(angle);
-            pos.m_positionY = leaderPos.GetPositionY() + radius * std::sin(angle);
+            pos.m_positionX = leaderPos.GetPositionX() + radius * ::std::cos(angle);
+            pos.m_positionY = leaderPos.GetPositionY() + radius * ::std::sin(angle);
             pos.m_positionZ = leaderPos.GetPositionZ();
 
             positions.push_back(pos);
@@ -561,12 +561,12 @@ std::vector<Position> FormationManager::CalculateCircleFormation(const Position&
     return positions;
 }
 
-std::vector<Position> FormationManager::CalculateDungeonFormation(const Position& leaderPos, float orientation)
+::std::vector<Position> FormationManager::CalculateDungeonFormation(const Position& leaderPos, float orientation)
 {
-    std::vector<Position> positions;
+    ::std::vector<Position> positions;
     positions.reserve(_members.size());
 
-    std::vector<FormationRole> orderedRoles = {
+    ::std::vector<FormationRole> orderedRoles = {
         FormationRole::TANK,
         FormationRole::MELEE_DPS,
         FormationRole::RANGED_DPS,
@@ -619,14 +619,14 @@ Position FormationManager::CalculateRoleBasedPosition(FormationRole role, const 
             break;
     }
 
-    pos.m_positionX += distance * std::cos(angle);
-    pos.m_positionY += distance * std::sin(angle);
+    pos.m_positionX += distance * ::std::cos(angle);
+    pos.m_positionY += distance * ::std::sin(angle);
 
     return pos;
 }
 void FormationManager::AssignFormationPositions()
 {
-    std::vector<Position> positions = CalculateAllFormationPositions();
+    ::std::vector<Position> positions = CalculateAllFormationPositions();
 
     for (size_t i = 0; i < _members.size() && i < positions.size(); ++i)
     {
@@ -648,7 +648,7 @@ void FormationManager::UpdateMemberPositions()
         member.distanceFromAssigned = member.currentPosition.GetExactDist(&member.assignedPosition);
         member.distanceFromLeader = _leader ? member.currentPosition.GetExactDist(_leader) : 0.0f;
         member.isInPosition = member.distanceFromAssigned <= _formationSpacing * 0.8f;
-        member.isMoving = member.player->IsMoving();
+        member.isMoving = member.player->isMoving();
         member.lastPositionUpdate = currentTime;
     }
 }
@@ -719,7 +719,7 @@ float FormationManager::CalculateCohesionLevel()
     float averageDistance = totalDistance / validMembers;
     float cohesionLevel = 1.0f - (averageDistance / _cohesionRadius);
 
-    return std::max(0.0f, std::min(1.0f, cohesionLevel));
+    return ::std::max(0.0f, ::std::min(1.0f, cohesionLevel));
 }
 
 FormationRole FormationManager::DeterminePlayerRole(Player* player)
@@ -727,7 +727,7 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
     if (!player)
         return FormationRole::SUPPORT;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     uint32 spec = player->GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID);
 
     switch (playerClass)
@@ -815,17 +815,17 @@ void FormationManager::InitializeFormationConfigs()
     _formationConfigs[FormationType::CIRCLE] = circleConfig;
 }
 
-void FormationManager::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void FormationManager::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
 {
     if (duration > _metrics.maxFormationTime)
         _metrics.maxFormationTime = duration;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(currentTime - _metrics.lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - _metrics.lastUpdate);
 
     if (timeSinceLastUpdate.count() >= 1)
     {
-        _metrics.averageFormationTime = std::chrono::microseconds(
+        _metrics.averageFormationTime = ::std::chrono::microseconds(
             static_cast<uint64_t>(_metrics.averageFormationTime.count() * 0.9 + duration.count() * 0.1)
         );
         _metrics.lastUpdate = currentTime;
@@ -833,7 +833,7 @@ void FormationManager::TrackPerformance(std::chrono::microseconds duration, cons
 }
 
 // FormationUtils implementation
-FormationType FormationUtils::GetOptimalFormationForGroup(const std::vector<Player*>& members)
+FormationType FormationUtils::GetOptimalFormationForGroup(const ::std::vector<Player*>& members)
 {
     if (members.size() <= 2)
         return FormationType::COLUMN;
@@ -845,7 +845,7 @@ FormationType FormationUtils::GetOptimalFormationForGroup(const std::vector<Play
         return FormationType::RAID;
 }
 
-FormationType FormationUtils::GetOptimalFormationForCombat(const std::vector<Player*>& members, const std::vector<Unit*>& enemies)
+FormationType FormationUtils::GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies)
 {
     if (enemies.size() == 1)
         return FormationType::CIRCLE;
@@ -860,7 +860,7 @@ FormationRole FormationUtils::DetermineOptimalRole(Player* player)
     if (!player)
         return FormationRole::SUPPORT;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (playerClass)
     {
         case CLASS_WARRIOR:
@@ -889,7 +889,7 @@ FormationRole FormationUtils::DetermineOptimalRole(Player* player)
     }
 }
 
-bool FormationUtils::IsFormationValid(const std::vector<Position>& positions, FormationType formation)
+bool FormationUtils::IsFormationValid(const ::std::vector<Position>& positions, FormationType formation)
 {
     if (positions.empty())
         return false;
@@ -904,7 +904,7 @@ bool FormationUtils::IsFormationValid(const std::vector<Position>& positions, Fo
     return true;
 }
 
-Position FormationUtils::CalculateFormationCenterFromMembers(const std::vector<Player*>& members)
+Position FormationUtils::CalculateFormationCenterFromMembers(const ::std::vector<Player*>& members)
 {
     if (members.empty())
         return Position();

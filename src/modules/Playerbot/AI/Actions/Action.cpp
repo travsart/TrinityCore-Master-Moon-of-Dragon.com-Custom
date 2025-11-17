@@ -31,9 +31,9 @@ namespace Playerbot
 {
 
 // Action implementation
-Action::Action(std::string const& name) : _name(name)
+Action::Action(::std::string const& name) : _name(name)
 {
-    _lastExecution = std::chrono::steady_clock::now();
+    _lastExecution = ::std::chrono::steady_clock::now();
 }
 
 bool Action::IsOnCooldown() const
@@ -41,12 +41,12 @@ bool Action::IsOnCooldown() const
     if (GetCooldown() <= 0.0f)
         return false;
 
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastExecution);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastExecution);
     return elapsed.count() < GetCooldown();
 }
 
-void Action::AddPrerequisite(std::shared_ptr<Action> action)
+void Action::AddPrerequisite(::std::shared_ptr<Action> action)
 {
     if (action)
         _prerequisites.push_back(action);
@@ -81,7 +81,7 @@ bool Action::CanCast(BotAI* ai, uint32 spellId, ::Unit* target) const
         return false;
 
     // Check mana/energy requirements
-    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+    ::std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
     for (SpellPowerCost const& cost : costs)
     {
         if (bot->GetPower(cost.Power) < cost.Amount)
@@ -123,9 +123,9 @@ bool Action::DoCast(BotAI* ai, uint32 spellId, ::Unit* target)
 
     // Cast the spell
     if (target)
-        bot->CastSpell(target, spellId, false);
+        bot->CastSpell(CastSpellTargetArg(target), spellId);
     else
-        bot->CastSpell(bot, spellId, false);
+        bot->CastSpell(CastSpellTargetArg(bot), spellId);
 
     return true;
 }
@@ -143,7 +143,7 @@ bool Action::DoMove(BotAI* ai, float x, float y, float z)
     return true;
 }
 
-bool Action::DoSay(BotAI* ai, std::string const& text)
+bool Action::DoSay(BotAI* ai, ::std::string const& text)
 {
     if (!ai || text.empty())
         return false;
@@ -220,7 +220,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         bot->GetPosition(), range);
 
     // Resolve GUIDs to Unit pointers and find nearest enemy
@@ -230,7 +230,7 @@ bool Action::UseItem(BotAI* ai, uint32 itemId, ::Unit* target)
         if (!unit || !unit->IsAlive())
             continue;
         // Check if hostile
-        if (!bot->IsHostileTo(unit))
+    if (!bot->IsHostileTo(unit))
             continue;
 
         float distanceSq = bot->GetExactDistSq(unit);
@@ -404,7 +404,7 @@ ActionResult SpellAction::Execute(BotAI* ai, ActionContext const& context)
     {
         _executionCount++;
         _successCount++;
-        _lastExecution = std::chrono::steady_clock::now();
+        _lastExecution = ::std::chrono::steady_clock::now();
         return ActionResult::SUCCESS;
     }
 
@@ -419,13 +419,13 @@ ActionFactory* ActionFactory::instance()
     return &instance;
 }
 
-void ActionFactory::RegisterAction(std::string const& name,
-                                 std::function<std::shared_ptr<Action>()> creator)
+void ActionFactory::RegisterAction(::std::string const& name,
+                                 ::std::function<::std::shared_ptr<Action>()> creator)
 {
     _creators[name] = creator;
 }
 
-std::shared_ptr<Action> ActionFactory::CreateAction(std::string const& name)
+::std::shared_ptr<Action> ActionFactory::CreateAction(::std::string const& name)
 {
     auto it = _creators.find(name);
     if (it != _creators.end())
@@ -434,9 +434,9 @@ std::shared_ptr<Action> ActionFactory::CreateAction(std::string const& name)
     return nullptr;
 }
 
-std::vector<std::shared_ptr<Action>> ActionFactory::CreateClassActions(uint8 classId, uint8 spec)
+::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateClassActions(uint8 classId, uint8 spec)
 {
-    std::vector<std::shared_ptr<Action>> actions;
+    ::std::vector<::std::shared_ptr<Action>> actions;
 
     // This will be expanded with class-specific action creation
     // For now, return empty vector
@@ -444,9 +444,9 @@ std::vector<std::shared_ptr<Action>> ActionFactory::CreateClassActions(uint8 cla
     return actions;
 }
 
-std::vector<std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 classId)
+::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 classId)
 {
-    std::vector<std::shared_ptr<Action>> actions;
+    ::std::vector<::std::shared_ptr<Action>> actions;
 
     // This will be expanded with combat action creation
     // For now, return empty vector
@@ -454,9 +454,9 @@ std::vector<std::shared_ptr<Action>> ActionFactory::CreateCombatActions(uint8 cl
     return actions;
 }
 
-std::vector<std::shared_ptr<Action>> ActionFactory::CreateMovementActions()
+::std::vector<::std::shared_ptr<Action>> ActionFactory::CreateMovementActions()
 {
-    std::vector<std::shared_ptr<Action>> actions;
+    ::std::vector<::std::shared_ptr<Action>> actions;
 
     // This will be expanded with movement action creation
     // For now, return empty vector
@@ -464,9 +464,9 @@ std::vector<std::shared_ptr<Action>> ActionFactory::CreateMovementActions()
     return actions;
 }
 
-std::vector<std::string> ActionFactory::GetAvailableActions() const
+::std::vector<::std::string> ActionFactory::GetAvailableActions() const
 {
-    std::vector<std::string> actions;
+    ::std::vector<::std::string> actions;
     actions.reserve(_creators.size());
 
     for (auto const& pair : _creators)
@@ -475,7 +475,7 @@ std::vector<std::string> ActionFactory::GetAvailableActions() const
     return actions;
 }
 
-bool ActionFactory::HasAction(std::string const& name) const
+bool ActionFactory::HasAction(::std::string const& name) const
 {
     return _creators.find(name) != _creators.end();
 }

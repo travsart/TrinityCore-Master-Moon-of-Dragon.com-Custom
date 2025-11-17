@@ -12,7 +12,7 @@ namespace Playerbot
 void SpatialGridManager::CreateGrid(Map* map)
 {
 
-    std::unique_lock<std::shared_mutex> lock(_mutex);  // Exclusive write lock
+    ::std::unique_lock lock(_mutex);  // Exclusive write lock
 
     uint32 mapId = map->GetId();
 
@@ -24,10 +24,10 @@ void SpatialGridManager::CreateGrid(Map* map)
         return;
     }
 
-    auto grid = std::make_unique<DoubleBufferedSpatialGrid>(map);
+    auto grid = ::std::make_unique<DoubleBufferedSpatialGrid>(map);
     grid->Start(); // Initialize (no background thread, synchronous mode)
 
-    _grids[mapId] = std::move(grid);
+    _grids[mapId] = ::std::move(grid);
     TC_LOG_INFO("playerbot.spatial",
         "Created spatial grid for map {} ({}) in synchronous mode",
         mapId, map->GetMapName());
@@ -35,7 +35,7 @@ void SpatialGridManager::CreateGrid(Map* map)
 
 void SpatialGridManager::DestroyGrid(uint32 mapId)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);  // Exclusive write lock
+    ::std::unique_lock lock(_mutex);  // Exclusive write lock
 
     auto it = _grids.find(mapId);
     if (it == _grids.end())
@@ -54,7 +54,7 @@ void SpatialGridManager::DestroyGrid(uint32 mapId)
 
 DoubleBufferedSpatialGrid* SpatialGridManager::GetGrid(uint32 mapId)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);  // Shared read lock - multiple threads can read simultaneously!
+    ::std::shared_lock lock(_mutex);  // Shared read lock - multiple threads can read simultaneously!
 
     auto it = _grids.find(mapId);
     if (it == _grids.end())
@@ -73,7 +73,7 @@ DoubleBufferedSpatialGrid* SpatialGridManager::GetGrid(Map* map)
 
 void SpatialGridManager::DestroyAllGrids()
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);  // Exclusive write lock
+    ::std::unique_lock lock(_mutex);  // Exclusive write lock
 
     TC_LOG_INFO("playerbot.spatial",
         "Destroying all spatial grids ({} total)", _grids.size());
@@ -88,7 +88,7 @@ void SpatialGridManager::DestroyAllGrids()
 
 void SpatialGridManager::UpdateGrid(uint32 mapId)
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);  // Shared read lock
+    ::std::shared_lock lock(_mutex);  // Shared read lock
 
     auto it = _grids.find(mapId);
     if (it == _grids.end())
@@ -107,7 +107,7 @@ void SpatialGridManager::UpdateGrid(Map* map)
 
 size_t SpatialGridManager::GetGridCount() const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);  // Shared read lock
+    ::std::shared_lock lock(_mutex);  // Shared read lock
     return _grids.size();
 }
 

@@ -28,9 +28,9 @@ struct CorpseTracker
     ObjectGuid ownerGuid;
     uint32 mapId;
     float x, y, z;
-    std::chrono::steady_clock::time_point creationTime;
-    std::atomic<bool> safeToDelete{false};
-    std::atomic<uint32> referenceCount{1};
+    ::std::chrono::steady_clock::time_point creationTime;
+    ::std::atomic<bool> safeToDelete{false};
+    ::std::atomic<uint32> referenceCount{1};
 };
 
 class TC_GAME_API SafeCorpseManager
@@ -73,11 +73,11 @@ private:
     SafeCorpseManager& operator=(SafeCorpseManager const&) = delete;
 
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::BOT_SPAWNER> _mutex;
-    std::unordered_map<ObjectGuid, std::unique_ptr<CorpseTracker>> _trackedCorpses;
-    std::unordered_map<ObjectGuid, ObjectGuid> _ownerToCorpse; // owner -> corpse mapping
+    ::std::unordered_map<ObjectGuid, ::std::unique_ptr<CorpseTracker>> _trackedCorpses;
+    ::std::unordered_map<ObjectGuid, ObjectGuid> _ownerToCorpse; // owner -> corpse mapping
 
-    std::atomic<uint32> _safetyDelayedDeletions{0};
-    static constexpr auto CORPSE_EXPIRY_TIME = std::chrono::minutes(30);
+    ::std::atomic<uint32> _safetyDelayedDeletions{0};
+    static constexpr auto CORPSE_EXPIRY_TIME = ::std::chrono::minutes(30);
 };
 
 // RAII guard for corpse references during Map updates

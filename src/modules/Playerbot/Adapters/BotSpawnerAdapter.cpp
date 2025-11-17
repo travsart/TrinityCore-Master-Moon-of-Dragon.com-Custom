@@ -74,11 +74,11 @@ void BotSpawnerAdapter::Update(uint32 diff)
     if (!_enabled || !_orchestrator)
         return;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     _orchestrator->Update(diff);
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = ::std::chrono::high_resolution_clock::now();
 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 }
 
@@ -87,30 +87,30 @@ bool BotSpawnerAdapter::SpawnBot(SpawnRequest const& request)
     if (!_enabled || !_orchestrator)
         return false;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     ++_stats.callsToSpawnBot;
 
     bool result = _orchestrator->SpawnBot(request);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 
     return result;
 }
 
-uint32 BotSpawnerAdapter::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 BotSpawnerAdapter::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     if (!_enabled || !_orchestrator)
         return 0;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
     ++_stats.callsToSpawnBots;
 
     uint32 result = _orchestrator->SpawnBots(requests);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     RecordApiCall(duration);
 
     return result;
@@ -132,7 +132,7 @@ void BotSpawnerAdapter::UpdatePopulationTargets()
     _orchestrator->UpdatePopulationTargets();
 }
 
-bool BotSpawnerAdapter::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool BotSpawnerAdapter::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     if (!_enabled || !_orchestrator)
         return false;
@@ -223,10 +223,10 @@ bool BotSpawnerAdapter::InitializeOrchestrator()
 {
     try
     {
-        _orchestrator = std::make_unique<BotSpawnOrchestrator>();
+        _orchestrator = ::std::make_unique<BotSpawnOrchestrator>();
         return _orchestrator->Initialize();
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.adapter",
             "BotSpawnerAdapter: Exception during orchestrator initialization: {}", ex.what());
@@ -256,6 +256,126 @@ void BotSpawnerAdapter::RecordApiCall(uint64 durationMicroseconds)
         _stats.avgCallDurationUs = (_stats.avgCallDurationUs + durationMicroseconds) / 2;
 }
 
+// === CONFIGURATION METHODS ===
+
+void BotSpawnerAdapter::LoadConfig()
+{
+    // Load configuration from database or config file
+    // For now, use defaults from member variables
+    TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter: Configuration loaded");
+}
+
+SpawnConfig const& BotSpawnerAdapter::GetConfig() const
+{
+    return _config;
+}
+
+void BotSpawnerAdapter::SetConfig(SpawnConfig const& config)
+{
+    _config = config;
+    TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter: Configuration updated");
+}
+
+// === ZONE/MAP MANAGEMENT METHODS ===
+
+void BotSpawnerAdapter::DespawnAllBots()
+{
+    // TODO: BotSpawnOrchestrator::DespawnAllBots() not implemented
+    TC_LOG_WARN("module.playerbot.adapter", "BotSpawnerAdapter::DespawnAllBots() - Not implemented");
+}
+
+void BotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
+{
+    // TODO: BotSpawnOrchestrator::UpdateZonePopulation() not implemented
+    (void)zoneId; (void)mapId; // Suppress unused parameter warnings
+}
+
+void BotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
+{
+    // TODO: BotSpawnOrchestrator::UpdateZonePopulationSafe() not implemented
+    (void)zoneId; (void)mapId;
+}
+
+ZonePopulation BotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
+{
+    // TODO: BotSpawnOrchestrator::GetZonePopulation() not implemented
+    (void)zoneId;
+    return ZonePopulation{};
+}
+
+::std::vector<ZonePopulation> BotSpawnerAdapter::GetAllZonePopulations() const
+{
+    // TODO: BotSpawnOrchestrator::GetAllZonePopulations() not implemented
+    return {};
+}
+
+// === BOT QUERY METHODS ===
+
+bool BotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
+{
+    // TODO: BotSpawnOrchestrator::IsBotActive() not implemented
+    (void)guid;
+    return false;
+}
+
+uint32 BotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
+{
+    // TODO: BotSpawnOrchestrator::GetActiveBotCount() signature mismatch or not implemented
+    (void)mapId; (void)useMapId;
+    return 0;
+}
+
+::std::vector<ObjectGuid> BotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
+{
+    // TODO: BotSpawnOrchestrator::GetActiveBotsInZone() not implemented
+    (void)zoneId;
+    return {};
+}
+
+bool BotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
+{
+    // TODO: BotSpawnOrchestrator::CanSpawnOnMap() not implemented
+    (void)mapId;
+    return false;
+}
+
+// === ADVANCED SPAWNING METHODS ===
+
+bool BotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
+{
+    // TODO: BotSpawnOrchestrator::CreateAndSpawnBot() not implemented
+    (void)masterAccountId; (void)classId; (void)race; (void)gender; (void)name; (void)outCharacterGuid;
+    return false;
+}
+
+// === STATISTICS METHODS ===
+
+SpawnStats const& BotSpawnerAdapter::GetStats() const
+{
+    // TODO: BotSpawnOrchestrator::GetStats() not implemented
+    // Return cached stats without syncing from orchestrator
+    return _spawnStats;
+}
+
+void BotSpawnerAdapter::ResetStats()
+{
+    // TODO: BotSpawnOrchestrator::ResetStats() not implemented
+    // Reset local stats only
+    _spawnStats = SpawnStats{};
+}
+
+// === PLAYER INTERACTION METHODS ===
+
+void BotSpawnerAdapter::OnPlayerLogin()
+{
+    // TODO: BotSpawnOrchestrator::OnPlayerLogin() not implemented
+}
+
+void BotSpawnerAdapter::CheckAndSpawnForPlayers()
+{
+    // TODO: BotSpawnOrchestrator::CheckAndSpawnForPlayers() not implemented
+}
+
 // =====================================================
 // LegacyBotSpawnerAdapter Implementation
 // =====================================================
@@ -278,10 +398,17 @@ bool LegacyBotSpawnerAdapter::Initialize()
 
     try
     {
-        _legacySpawner = std::make_unique<BotSpawner>();
+        // Use singleton instance instead of creating new instance
+        _legacySpawner = BotSpawner::instance();
+        if (!_legacySpawner)
+        {
+            TC_LOG_ERROR("module.playerbot.adapter",
+                "LegacyBotSpawnerAdapter: Failed to get BotSpawner singleton instance");
+            return false;
+        }
         return _legacySpawner->Initialize();
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.adapter",
             "LegacyBotSpawnerAdapter: Exception during initialization: {}", ex.what());
@@ -294,7 +421,7 @@ void LegacyBotSpawnerAdapter::Shutdown()
     if (_legacySpawner)
     {
         _legacySpawner->Shutdown();
-        _legacySpawner.reset();
+        _legacySpawner = nullptr; // Clear reference to singleton
     }
 }
 
@@ -312,7 +439,7 @@ bool LegacyBotSpawnerAdapter::SpawnBot(SpawnRequest const& request)
     return _legacySpawner->SpawnBot(request);
 }
 
-uint32 LegacyBotSpawnerAdapter::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 LegacyBotSpawnerAdapter::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     if (!_legacySpawner)
         return 0;
@@ -332,7 +459,7 @@ void LegacyBotSpawnerAdapter::UpdatePopulationTargets()
         _legacySpawner->UpdatePopulationTargets();
 }
 
-bool LegacyBotSpawnerAdapter::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool LegacyBotSpawnerAdapter::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     if (!_legacySpawner)
         return false;
@@ -389,11 +516,122 @@ void LegacyBotSpawnerAdapter::SetEnabled(bool enabled)
         _legacySpawner->SetEnabled(enabled);
 }
 
+// === CONFIGURATION METHODS ===
+
+void LegacyBotSpawnerAdapter::LoadConfig()
+{
+    if (_legacySpawner)
+        _legacySpawner->LoadConfig();
+}
+
+SpawnConfig const& LegacyBotSpawnerAdapter::GetConfig() const
+{
+    if (_legacySpawner)
+        _config = _legacySpawner->GetConfig();
+    return _config;
+}
+
+void LegacyBotSpawnerAdapter::SetConfig(SpawnConfig const& config)
+{
+    _config = config;
+    if (_legacySpawner)
+        _legacySpawner->SetConfig(config);
+}
+
+// === ZONE/MAP MANAGEMENT METHODS ===
+
+void LegacyBotSpawnerAdapter::DespawnAllBots()
+{
+    if (_legacySpawner)
+        _legacySpawner->DespawnAllBots();
+}
+
+void LegacyBotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
+{
+    if (_legacySpawner)
+        _legacySpawner->UpdateZonePopulation(zoneId, mapId);
+}
+
+void LegacyBotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
+{
+    if (_legacySpawner)
+        _legacySpawner->UpdateZonePopulationSafe(zoneId, mapId);
+}
+
+ZonePopulation LegacyBotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
+{
+    return _legacySpawner ? _legacySpawner->GetZonePopulation(zoneId) : ZonePopulation{};
+}
+
+::std::vector<ZonePopulation> LegacyBotSpawnerAdapter::GetAllZonePopulations() const
+{
+    return _legacySpawner ? _legacySpawner->GetAllZonePopulations() : ::std::vector<ZonePopulation>{};
+}
+
+// === BOT QUERY METHODS ===
+
+bool LegacyBotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
+{
+    return _legacySpawner ? _legacySpawner->IsBotActive(guid) : false;
+}
+
+uint32 LegacyBotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
+{
+    return _legacySpawner ? _legacySpawner->GetActiveBotCount(mapId, useMapId) : 0;
+}
+
+::std::vector<ObjectGuid> LegacyBotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
+{
+    return _legacySpawner ? _legacySpawner->GetActiveBotsInZone(zoneId) : ::std::vector<ObjectGuid>{};
+}
+
+bool LegacyBotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
+{
+    return _legacySpawner ? _legacySpawner->CanSpawnOnMap(mapId) : false;
+}
+
+// === ADVANCED SPAWNING METHODS ===
+
+bool LegacyBotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
+{
+    return _legacySpawner ? _legacySpawner->CreateAndSpawnBot(masterAccountId, classId, race, gender, name, outCharacterGuid) : false;
+}
+
+// === STATISTICS METHODS ===
+
+SpawnStats const& LegacyBotSpawnerAdapter::GetStats() const
+{
+    if (_legacySpawner)
+        _stats = _legacySpawner->GetStats();
+    return _stats;
+}
+
+void LegacyBotSpawnerAdapter::ResetStats()
+{
+    if (_legacySpawner)
+        _legacySpawner->ResetStats();
+    _stats = SpawnStats{};
+}
+
+// === PLAYER INTERACTION METHODS ===
+
+void LegacyBotSpawnerAdapter::OnPlayerLogin()
+{
+    if (_legacySpawner)
+        _legacySpawner->OnPlayerLogin();
+}
+
+void LegacyBotSpawnerAdapter::CheckAndSpawnForPlayers()
+{
+    if (_legacySpawner)
+        _legacySpawner->CheckAndSpawnForPlayers();
+}
+
 // =====================================================
 // BotSpawnerFactory Implementation
 // =====================================================
 
-std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
+::std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
 {
     if (type == SpawnerType::AUTO)
         type = DetectBestSpawnerType();
@@ -404,15 +642,15 @@ std::unique_ptr<IBotSpawner> BotSpawnerFactory::CreateSpawner(SpawnerType type)
     switch (type)
     {
         case SpawnerType::ORCHESTRATED:
-            return std::make_unique<BotSpawnerAdapter>();
+            return ::std::make_unique<BotSpawnerAdapter>();
 
         case SpawnerType::LEGACY:
-            return std::make_unique<LegacyBotSpawnerAdapter>();
+            return ::std::make_unique<LegacyBotSpawnerAdapter>();
 
         default:
             TC_LOG_ERROR("module.playerbot.factory",
                 "BotSpawnerFactory: Unknown spawner type, falling back to legacy");
-            return std::make_unique<LegacyBotSpawnerAdapter>();
+            return ::std::make_unique<LegacyBotSpawnerAdapter>();
     }
 }
 
@@ -431,7 +669,7 @@ BotSpawnerFactory::SpawnerType BotSpawnerFactory::DetectBestSpawnerType()
     return SpawnerType::LEGACY;
 }
 
-std::string BotSpawnerFactory::GetSpawnerTypeName(SpawnerType type)
+::std::string BotSpawnerFactory::GetSpawnerTypeName(SpawnerType type)
 {
     switch (type)
     {

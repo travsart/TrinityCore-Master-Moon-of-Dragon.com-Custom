@@ -28,7 +28,7 @@ void GroupFunctionalityTests::SetUp()
     m_env = TestEnvironment::Instance();
     ASSERT_TRUE(m_env->Initialize());
 
-    m_stressRunner = std::make_unique<StressTestRunner>();
+    m_stressRunner = ::std::make_unique<StressTestRunner>();
 
     // Initialize test data
     CreateTestGroup(4);
@@ -53,7 +53,7 @@ void GroupFunctionalityTests::TearDown()
 void GroupFunctionalityTests::CreateTestGroup(uint32 botCount)
 {
     // Create group leader
-    std::string leaderName = "TestLeader";
+    ::std::string leaderName = "TestLeader";
     m_testGroup = m_env->CreateTestGroup(leaderName);
     m_mockLeader = m_env->CreateMockPlayer(BotTestData(leaderName));
 
@@ -63,17 +63,17 @@ void GroupFunctionalityTests::CreateTestGroup(uint32 botCount)
 
     for (uint32 i = 0; i < botCount; ++i)
     {
-        std::string botName = "TestBot" + std::to_string(i + 1);
+        ::std::string botName = "TestBot" + ::std::to_string(i + 1);
         auto bot = m_env->CreateTestBot(botName);
         auto mockBot = m_env->CreateMockPlayer(*bot);
 
         m_env->AddBotToGroup(*m_testGroup, *bot);
-        m_testBots.push_back(std::move(bot));
-        m_mockBots.push_back(std::move(mockBot));
+        m_testBots.push_back(::std::move(bot));
+        m_mockBots.push_back(::std::move(mockBot));
     }
 }
 
-void GroupFunctionalityTests::StartPerformanceTest(const std::string& testName)
+void GroupFunctionalityTests::StartPerformanceTest(const ::std::string& testName)
 {
     m_env->StartPerformanceMonitoring(testName);
 }
@@ -367,7 +367,7 @@ TEST_F(GroupFunctionalityTests, HighFrequencyOperationsStressTest)
     constexpr uint32 TEST_DURATION = 10; // seconds
     constexpr uint32 TOTAL_OPERATIONS = OPERATIONS_PER_SECOND * TEST_DURATION;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     for (uint32 i = 0; i < TOTAL_OPERATIONS; ++i)
     {
@@ -379,14 +379,14 @@ TEST_F(GroupFunctionalityTests, HighFrequencyOperationsStressTest)
         m_currentTestMetrics.successfulOperations++;
 
         // Throttle to maintain target frequency
-        if (i % OPERATIONS_PER_SECOND == 0)
+    if (i % OPERATIONS_PER_SECOND == 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
         }
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto actualDuration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto actualDuration = ::std::chrono::duration_cast<::std::chrono::seconds>(endTime - startTime);
 
     EndPerformanceTest();
 
@@ -455,16 +455,16 @@ TEST_F(GroupFunctionalityTests, InvalidInvitationHandling)
     // Test various invalid invitation scenarios
     struct InvalidScenario
     {
-        std::string description;
-        std::function<bool()> test;
+        ::std::string description;
+        ::std::function<bool()> test;
     };
 
-    std::vector<InvalidScenario> scenarios = {
+    ::std::vector<InvalidScenario> scenarios = {
         {
             "Full group invitation",
             [this]() {
                 // Simulate inviting to a full group (5 members)
-                if (m_testGroup->members.size() >= 5)
+    if (m_testGroup->members.size() >= 5)
                     return false; // Should reject
                 return true;
             }

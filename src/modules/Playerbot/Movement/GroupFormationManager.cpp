@@ -46,7 +46,7 @@ namespace Playerbot
         }
 
         // Dispatch to specific formation creator
-        switch (type)
+    switch (type)
         {
             case FormationType::WEDGE:
                 return CreateWedgeFormation(botCount, spacing);
@@ -70,19 +70,19 @@ namespace Playerbot
         }
     }
 
-    std::vector<BotFormationAssignment> GroupFormationManager::AssignBotsToFormation(
+    ::std::vector<BotFormationAssignment> GroupFormationManager::AssignBotsToFormation(
         Player const* leader,
-        std::vector<Player*> const& bots,
+        ::std::vector<Player*> const& bots,
         FormationLayout const& formation)
     {
-        std::vector<BotFormationAssignment> assignments;
+        ::std::vector<BotFormationAssignment> assignments;
         assignments.reserve(bots.size());
 
         if (!leader || bots.empty() || formation.positions.empty())
             return assignments;
 
         // Step 1: Classify all bots by role
-        std::vector<std::pair<Player*, BotRole>> botsWithRoles;
+        ::std::vector<::std::pair<Player*, BotRole>> botsWithRoles;
         botsWithRoles.reserve(bots.size());
 
         for (Player* bot : bots)
@@ -95,16 +95,16 @@ namespace Playerbot
         }
 
         // Step 2: Create position priority lists by role
-        std::vector<std::pair<FormationPosition const*, uint32>> tankPositions;
-        std::vector<std::pair<FormationPosition const*, uint32>> healerPositions;
-        std::vector<std::pair<FormationPosition const*, uint32>> meleeDpsPositions;
-        std::vector<std::pair<FormationPosition const*, uint32>> rangedDpsPositions;
-        std::vector<std::pair<FormationPosition const*, uint32>> utilityPositions;
+        ::std::vector<::std::pair<FormationPosition const*, uint32>> tankPositions;
+        ::std::vector<::std::pair<FormationPosition const*, uint32>> healerPositions;
+        ::std::vector<::std::pair<FormationPosition const*, uint32>> meleeDpsPositions;
+        ::std::vector<::std::pair<FormationPosition const*, uint32>> rangedDpsPositions;
+        ::std::vector<::std::pair<FormationPosition const*, uint32>> utilityPositions;
 
         for (size_t i = 0; i < formation.positions.size(); ++i)
         {
             FormationPosition const& pos = formation.positions[i];
-            auto posPair = std::make_pair(&pos, static_cast<uint32>(i));
+            auto posPair = ::std::make_pair(&pos, static_cast<uint32>(i));
 
             switch (pos.preferredRole)
             {
@@ -131,16 +131,16 @@ namespace Playerbot
             return a.first->priority < b.first->priority;
         };
 
-        std::sort(tankPositions.begin(), tankPositions.end(), sortByPriority);
-        std::sort(healerPositions.begin(), healerPositions.end(), sortByPriority);
-        std::sort(meleeDpsPositions.begin(), meleeDpsPositions.end(), sortByPriority);
-        std::sort(rangedDpsPositions.begin(), rangedDpsPositions.end(), sortByPriority);
-        std::sort(utilityPositions.begin(), utilityPositions.end(), sortByPriority);
+        ::std::sort(tankPositions.begin(), tankPositions.end(), sortByPriority);
+        ::std::sort(healerPositions.begin(), healerPositions.end(), sortByPriority);
+        ::std::sort(meleeDpsPositions.begin(), meleeDpsPositions.end(), sortByPriority);
+        ::std::sort(rangedDpsPositions.begin(), rangedDpsPositions.end(), sortByPriority);
+        ::std::sort(utilityPositions.begin(), utilityPositions.end(), sortByPriority);
 
         // Step 3: Assign bots to positions by role matching
-        std::vector<bool> positionTaken(formation.positions.size(), false);
+        ::std::vector<bool> positionTaken(formation.positions.size(), false);
 
-        auto assignBotToPosition = [&](Player* bot, BotRole role, std::vector<std::pair<FormationPosition const*, uint32>> const& positions) -> bool
+        auto assignBotToPosition = [&](Player* bot, BotRole role, ::std::vector<::std::pair<FormationPosition const*, uint32>> const& positions) -> bool
         {
             for (auto const& [pos, index] : positions)
             {
@@ -161,7 +161,7 @@ namespace Playerbot
         };
 
         // Assign tanks first (highest priority)
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::TANK)
             {
@@ -174,7 +174,7 @@ namespace Playerbot
         }
 
         // Assign healers second
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::HEALER)
             {
@@ -186,7 +186,7 @@ namespace Playerbot
         }
 
         // Assign melee DPS third
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::MELEE_DPS)
             {
@@ -198,7 +198,7 @@ namespace Playerbot
         }
 
         // Assign ranged DPS fourth
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::RANGED_DPS)
             {
@@ -210,7 +210,7 @@ namespace Playerbot
         }
 
         // Assign utility last
-        for (auto const& [bot, role] : botsWithRoles)
+    for (auto const& [bot, role] : botsWithRoles)
         {
             if (role == BotRole::UTILITY)
             {
@@ -238,7 +238,7 @@ namespace Playerbot
         float leaderOrientation = leader->GetOrientation();
 
         // Rotate all formation positions based on leader's facing direction
-        for (FormationPosition& pos : formation.positions)
+    for (FormationPosition& pos : formation.positions)
         {
             float rotatedX, rotatedY;
             RotatePosition(pos.offsetX, pos.offsetY, leaderOrientation, rotatedX, rotatedY);
@@ -260,7 +260,7 @@ namespace Playerbot
         uint32 specId = static_cast<uint32>(bot->GetPrimarySpecialization());
 
         // Determine role based on class and specialization
-        switch (classId)
+    switch (classId)
         {
             case CLASS_WARRIOR:
                 if (specId == 73) return BotRole::TANK;          // Protection
@@ -268,7 +268,7 @@ namespace Playerbot
 
             case CLASS_PALADIN:
                 if (specId == 66) return BotRole::TANK;          // Protection
-                if (specId == 65) return BotRole::HEALER;        // Holy
+    if (specId == 65) return BotRole::HEALER;        // Holy
                 return BotRole::MELEE_DPS;                       // Retribution
 
             case CLASS_HUNTER:
@@ -279,7 +279,7 @@ namespace Playerbot
 
             case CLASS_PRIEST:
                 if (specId == 256) return BotRole::HEALER;       // Discipline
-                if (specId == 257) return BotRole::HEALER;       // Holy
+    if (specId == 257) return BotRole::HEALER;       // Holy
                 return BotRole::RANGED_DPS;                      // Shadow
 
             case CLASS_DEATH_KNIGHT:
@@ -288,7 +288,7 @@ namespace Playerbot
 
             case CLASS_SHAMAN:
                 if (specId == 264) return BotRole::HEALER;       // Restoration
-                if (specId == 262) return BotRole::RANGED_DPS;   // Elemental
+    if (specId == 262) return BotRole::RANGED_DPS;   // Elemental
                 return BotRole::MELEE_DPS;                       // Enhancement
 
             case CLASS_MAGE:
@@ -299,13 +299,13 @@ namespace Playerbot
 
             case CLASS_MONK:
                 if (specId == 268) return BotRole::TANK;         // Brewmaster
-                if (specId == 270) return BotRole::HEALER;       // Mistweaver
+    if (specId == 270) return BotRole::HEALER;       // Mistweaver
                 return BotRole::MELEE_DPS;                       // Windwalker
 
             case CLASS_DRUID:
                 if (specId == 104) return BotRole::TANK;         // Guardian
-                if (specId == 105) return BotRole::HEALER;       // Restoration
-                if (specId == 102) return BotRole::RANGED_DPS;   // Balance
+    if (specId == 105) return BotRole::HEALER;       // Restoration
+    if (specId == 102) return BotRole::RANGED_DPS;   // Balance
                 return BotRole::MELEE_DPS;                       // Feral
 
             case CLASS_DEMON_HUNTER:
@@ -353,7 +353,7 @@ namespace Playerbot
         bool isPvP)
     {
         // PvP formations prioritize scatter and mobility
-        if (isPvP)
+    if (isPvP)
         {
             if (botCount >= 10)
                 return FormationType::SCATTER;  // Anti-AoE for large groups
@@ -362,10 +362,10 @@ namespace Playerbot
         }
 
         // PvE formations prioritize optimization and protection
-        if (botCount <= 5)
+    if (botCount <= 5)
         {
             // Small group (dungeon size)
-            if (tankCount >= 1 && healerCount >= 1)
+    if (tankCount >= 1 && healerCount >= 1)
                 return FormationType::WEDGE;    // Standard dungeon formation
             else
                 return FormationType::LINE;     // No dedicated roles
@@ -373,7 +373,7 @@ namespace Playerbot
         else if (botCount <= 10)
         {
             // Medium group
-            if (tankCount >= 2 && healerCount >= 2)
+    if (tankCount >= 2 && healerCount >= 2)
                 return FormationType::DIAMOND;  // Balanced offense/defense
             else
                 return FormationType::ARROW;    // Offensive formation
@@ -381,7 +381,7 @@ namespace Playerbot
         else if (botCount <= 25)
         {
             // Large group (raid size)
-            if (tankCount >= 2 && healerCount >= 5)
+    if (tankCount >= 2 && healerCount >= 5)
                 return FormationType::DEFENSIVE_SQUARE; // Maximum healer protection
             else
                 return FormationType::WEDGE;    // Penetration formation
@@ -429,32 +429,32 @@ namespace Playerbot
         uint32 rightSide = remainingBots - leftSide;
 
         // Left flank (melee DPS)
-        for (uint32 i = 0; i < leftSide; ++i)
+    for (uint32 i = 0; i < leftSide; ++i)
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
-            pos.offsetX = -distance * std::sin(WEDGE_ANGLE);
-            pos.offsetY = -distance * std::cos(WEDGE_ANGLE);
+            pos.offsetX = -distance * ::std::sin(WEDGE_ANGLE);
+            pos.offsetY = -distance * ::std::cos(WEDGE_ANGLE);
             pos.preferredRole = (i < leftSide / 2) ? BotRole::MELEE_DPS : BotRole::RANGED_DPS;
             pos.priority = priority++;
             layout.positions.push_back(pos);
         }
 
         // Right flank (melee DPS)
-        for (uint32 i = 0; i < rightSide; ++i)
+    for (uint32 i = 0; i < rightSide; ++i)
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
-            pos.offsetX = distance * std::sin(WEDGE_ANGLE);
-            pos.offsetY = -distance * std::cos(WEDGE_ANGLE);
+            pos.offsetX = distance * ::std::sin(WEDGE_ANGLE);
+            pos.offsetY = -distance * ::std::cos(WEDGE_ANGLE);
             pos.preferredRole = (i < rightSide / 2) ? BotRole::MELEE_DPS : BotRole::RANGED_DPS;
             pos.priority = priority++;
             layout.positions.push_back(pos);
         }
 
         // Healers at rear center (protected position)
-        uint32 healerCount = std::max(1u, botCount / 5); // ~20% healers
-        for (uint32 i = 0; i < healerCount && layout.positions.size() < botCount; ++i)
+        uint32 healerCount = ::std::max(1u, botCount / 5); // ~20% healers
+    for (uint32 i = 0; i < healerCount && layout.positions.size() < botCount; ++i)
         {
             FormationPosition pos;
             pos.offsetX = 0.0f;
@@ -527,8 +527,8 @@ namespace Playerbot
             float angle = (i / static_cast<float>(remainingBots)) * 2.0f * M_PI;
             float radius = spacing * 1.5f;
 
-            pos.offsetX = radius * std::cos(angle);
-            pos.offsetY = radius * std::sin(angle);
+            pos.offsetX = radius * ::std::cos(angle);
+            pos.offsetY = radius * ::std::sin(angle);
             pos.preferredRole = (i % 2 == 0) ? BotRole::RANGED_DPS : BotRole::UTILITY;
             pos.priority = priority++;
             layout.positions.push_back(pos);
@@ -585,7 +585,7 @@ namespace Playerbot
         layout.positions.push_back(se);
 
         // Center: Healers (protected)
-        uint32 healerCount = std::max(1u, botCount / 5);
+        uint32 healerCount = ::std::max(1u, botCount / 5);
         for (uint32 i = 0; i < healerCount && layout.positions.size() < botCount; ++i)
         {
             FormationPosition healer;
@@ -601,7 +601,7 @@ namespace Playerbot
         uint32 botsPerEdge = remainingBots / 4;
 
         // North edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -613,7 +613,7 @@ namespace Playerbot
         }
 
         // South edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -625,7 +625,7 @@ namespace Playerbot
         }
 
         // West edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -637,7 +637,7 @@ namespace Playerbot
         }
 
         // East edge
-        for (uint32 i = 0; i < botsPerEdge; ++i)
+    for (uint32 i = 0; i < botsPerEdge; ++i)
         {
             FormationPosition pos;
             float t = (i + 1) / static_cast<float>(botsPerEdge + 1);
@@ -683,8 +683,8 @@ namespace Playerbot
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
-            pos.offsetX = -distance * std::sin(ARROW_ANGLE);
-            pos.offsetY = spacing - distance * std::cos(ARROW_ANGLE);
+            pos.offsetX = -distance * ::std::sin(ARROW_ANGLE);
+            pos.offsetY = spacing - distance * ::std::cos(ARROW_ANGLE);
             pos.preferredRole = (i < 2) ? BotRole::MELEE_DPS : BotRole::RANGED_DPS;
             pos.priority = priority++;
             layout.positions.push_back(pos);
@@ -694,8 +694,8 @@ namespace Playerbot
         {
             float distance = spacing * (i + 1);
             FormationPosition pos;
-            pos.offsetX = distance * std::sin(ARROW_ANGLE);
-            pos.offsetY = spacing - distance * std::cos(ARROW_ANGLE);
+            pos.offsetX = distance * ::std::sin(ARROW_ANGLE);
+            pos.offsetY = spacing - distance * ::std::cos(ARROW_ANGLE);
             pos.preferredRole = (i < 2) ? BotRole::MELEE_DPS : BotRole::RANGED_DPS;
             pos.priority = priority++;
             layout.positions.push_back(pos);
@@ -726,7 +726,7 @@ namespace Playerbot
             pos.offsetY = 0.0f;
 
             // Tanks on ends, DPS in middle, healers scattered
-            if (i == 0 || i == botCount - 1)
+    if (i == 0 || i == botCount - 1)
                 pos.preferredRole = BotRole::TANK;
             else if (i % 3 == 0)
                 pos.preferredRole = BotRole::HEALER;
@@ -759,7 +759,7 @@ namespace Playerbot
             pos.offsetY = spacing * i - (spacing * botCount / 2.0f);
 
             // Tank front, healer rear, DPS middle
-            if (i == 0)
+    if (i == 0)
                 pos.preferredRole = BotRole::TANK;
             else if (i == botCount - 1)
                 pos.preferredRole = BotRole::HEALER;
@@ -784,9 +784,9 @@ namespace Playerbot
         layout.description = "Scatter formation (random dispersed positions, anti-AoE)";
 
         // Use deterministic random for reproducibility
-        std::mt19937 rng(42); // Fixed seed for consistency
-        std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
-        std::uniform_real_distribution<float> radiusDist(spacing * 2.0f, spacing * 5.0f);
+        ::std::mt19937 rng(42); // Fixed seed for consistency
+        ::std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
+        ::std::uniform_real_distribution<float> radiusDist(spacing * 2.0f, spacing * 5.0f);
 
         uint32 priority = 0;
 
@@ -797,8 +797,8 @@ namespace Playerbot
             float angle = angleDist(rng);
             float radius = radiusDist(rng);
 
-            pos.offsetX = radius * std::cos(angle);
-            pos.offsetY = radius * std::sin(angle);
+            pos.offsetX = radius * ::std::cos(angle);
+            pos.offsetY = radius * ::std::sin(angle);
 
             // Random role assignment (favors DPS)
             uint32 roleRoll = i % 5;
@@ -836,11 +836,11 @@ namespace Playerbot
             FormationPosition pos;
 
             float angle = angleIncrement * i;
-            pos.offsetX = radius * std::cos(angle);
-            pos.offsetY = radius * std::sin(angle);
+            pos.offsetX = radius * ::std::cos(angle);
+            pos.offsetY = radius * ::std::sin(angle);
 
             // Tanks evenly distributed, healers between tanks, DPS fill gaps
-            if (i % (botCount / 4) == 0)
+    if (i % (botCount / 4) == 0)
                 pos.preferredRole = BotRole::TANK;
             else if (i % (botCount / 8) == 0)
                 pos.preferredRole = BotRole::HEALER;
@@ -870,8 +870,8 @@ namespace Playerbot
         // [cos θ  -sin θ] [x]
         // [sin θ   cos θ] [y]
 
-        float cosAngle = std::cos(angle);
-        float sinAngle = std::sin(angle);
+        float cosAngle = ::std::cos(angle);
+        float sinAngle = ::std::sin(angle);
 
         rotatedX = offsetX * cosAngle - offsetY * sinAngle;
         rotatedY = offsetX * sinAngle + offsetY * cosAngle;
@@ -886,17 +886,17 @@ namespace Playerbot
             return;
         }
 
-        float minX = std::numeric_limits<float>::max();
-        float maxX = std::numeric_limits<float>::lowest();
-        float minY = std::numeric_limits<float>::max();
-        float maxY = std::numeric_limits<float>::lowest();
+        float minX = ::std::numeric_limits<float>::max();
+        float maxX = ::std::numeric_limits<float>::lowest();
+        float minY = ::std::numeric_limits<float>::max();
+        float maxY = ::std::numeric_limits<float>::lowest();
 
         for (FormationPosition const& pos : formation.positions)
         {
-            minX = std::min(minX, pos.offsetX);
-            maxX = std::max(maxX, pos.offsetX);
-            minY = std::min(minY, pos.offsetY);
-            maxY = std::max(maxY, pos.offsetY);
+            minX = ::std::min(minX, pos.offsetX);
+            maxX = ::std::max(maxX, pos.offsetX);
+            minY = ::std::min(minY, pos.offsetY);
+            maxY = ::std::max(maxY, pos.offsetY);
         }
 
         formation.width = maxX - minX;

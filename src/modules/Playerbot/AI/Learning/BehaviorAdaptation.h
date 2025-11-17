@@ -61,10 +61,10 @@ enum class LearningAlgorithm : uint8
 // Experience replay sample
 struct Experience
 {
-    std::vector<float> state;           // Current state features
+    ::std::vector<float> state;           // Current state features
     uint32_t action;                     // Action taken
     float reward;                        // Immediate reward
-    std::vector<float> nextState;       // Resulting state
+    ::std::vector<float> nextState;       // Resulting state
     bool terminal;                       // Episode ended?
     uint64_t timestamp;                  // When this experience occurred
     float importance;                    // Importance sampling weight
@@ -75,14 +75,14 @@ struct Experience
 // Neural network layer
 struct NeuralLayer
 {
-    std::vector<std::vector<float>> weights;  // Weight matrix
-    std::vector<float> biases;                // Bias vector
-    std::vector<float> outputs;               // Layer outputs
-    std::vector<float> gradients;             // Backpropagation gradients
+    ::std::vector<::std::vector<float>> weights;  // Weight matrix
+    ::std::vector<float> biases;                // Bias vector
+    ::std::vector<float> outputs;               // Layer outputs
+    ::std::vector<float> gradients;             // Backpropagation gradients
     ActivationFunction activation;            // Activation function
 
-    void Forward(const std::vector<float>& input);
-    void Backward(const std::vector<float>& error, float learningRate);
+    void Forward(const ::std::vector<float>& input);
+    void Backward(const ::std::vector<float>& error, float learningRate);
     void Initialize(size_t inputSize, size_t outputSize, ActivationFunction actFunc);
     void UpdateWeights(float learningRate, float momentum = 0.9f);
 };
@@ -99,15 +99,15 @@ public:
     void Build(size_t inputSize);
 
     // Forward propagation
-    std::vector<float> Predict(const std::vector<float>& input);
+    ::std::vector<float> Predict(const ::std::vector<float>& input);
 
     // Training
-    void Train(const std::vector<float>& input, const std::vector<float>& target, float learningRate);
-    void BatchTrain(const std::vector<Experience>& batch, float learningRate);
+    void Train(const ::std::vector<float>& input, const ::std::vector<float>& target, float learningRate);
+    void BatchTrain(const ::std::vector<Experience>& batch, float learningRate);
 
     // Network management
-    void SaveWeights(const std::string& filename) const;
-    void LoadWeights(const std::string& filename);
+    void SaveWeights(const ::std::string& filename) const;
+    void LoadWeights(const ::std::string& filename);
     void CopyFrom(const NeuralNetwork& other);
     void Reset();
 
@@ -116,16 +116,16 @@ public:
     uint32_t GetEpoch() const { return _epoch; }
 
 private:
-    std::vector<NeuralLayer> _layers;
+    ::std::vector<NeuralLayer> _layers;
     size_t _inputSize;
     float _lastLoss;
     uint32_t _epoch;
-    std::mt19937 _rng;
+    ::std::mt19937 _rng;
 
     // Activation functions
     float Activate(float x, ActivationFunction func) const;
     float ActivateDerivative(float x, ActivationFunction func) const;
-    std::vector<float> Softmax(const std::vector<float>& input) const;
+    ::std::vector<float> Softmax(const ::std::vector<float>& input) const;
 };
 
 // Q-Learning value function approximator
@@ -136,24 +136,24 @@ public:
     ~QFunction();
 
     // Q-value operations
-    float GetQValue(const std::vector<float>& state, uint32_t action) const;
-    std::vector<float> GetAllQValues(const std::vector<float>& state) const;
-    uint32_t GetBestAction(const std::vector<float>& state) const;
+    float GetQValue(const ::std::vector<float>& state, uint32_t action) const;
+    ::std::vector<float> GetAllQValues(const ::std::vector<float>& state) const;
+    uint32_t GetBestAction(const ::std::vector<float>& state) const;
 
     // Learning
     void Update(const Experience& exp, float learningRate, float discountFactor);
-    void BatchUpdate(const std::vector<Experience>& batch, float learningRate, float discountFactor);
+    void BatchUpdate(const ::std::vector<Experience>& batch, float learningRate, float discountFactor);
 
     // Exploration
-    uint32_t SelectAction(const std::vector<float>& state, float epsilon);
+    uint32_t SelectAction(const ::std::vector<float>& state, float epsilon);
 
 private:
-    std::unique_ptr<NeuralNetwork> _network;
-    std::unique_ptr<NeuralNetwork> _targetNetwork;  // For stable learning
+    ::std::unique_ptr<NeuralNetwork> _network;
+    ::std::unique_ptr<NeuralNetwork> _targetNetwork;  // For stable learning
     size_t _stateSize;
     size_t _actionSize;
     uint32_t _updateCounter;
-    std::mt19937 _rng;
+    ::std::mt19937 _rng;
 
     static constexpr uint32_t TARGET_UPDATE_FREQUENCY = 100;
 };
@@ -166,19 +166,19 @@ public:
     ~PolicyNetwork();
 
     // Policy operations
-    std::vector<float> GetActionProbabilities(const std::vector<float>& state);
-    uint32_t SampleAction(const std::vector<float>& state);
+    ::std::vector<float> GetActionProbabilities(const ::std::vector<float>& state);
+    uint32_t SampleAction(const ::std::vector<float>& state);
 
     // Training
-    void UpdatePolicy(const std::vector<Experience>& trajectory, float learningRate);
-    void ComputeAdvantage(std::vector<Experience>& trajectory, float gamma);
+    void UpdatePolicy(const ::std::vector<Experience>& trajectory, float learningRate);
+    void ComputeAdvantage(::std::vector<Experience>& trajectory, float gamma);
 
 private:
-    std::unique_ptr<NeuralNetwork> _policyNet;
-    std::unique_ptr<NeuralNetwork> _valueNet;  // For advantage estimation
+    ::std::unique_ptr<NeuralNetwork> _policyNet;
+    ::std::unique_ptr<NeuralNetwork> _valueNet;  // For advantage estimation
     size_t _stateSize;
     size_t _actionSize;
-    std::mt19937 _rng;
+    ::std::mt19937 _rng;
 };
 
 // Main behavior adaptation engine
@@ -197,21 +197,21 @@ public:
 
     // Learning configuration
     void SetLearningAlgorithm(LearningAlgorithm algo) { _algorithm = algo; }
-    void SetLearningRate(float rate) { _learningRate = std::clamp(rate, 0.0001f, 0.1f); }
-    void SetDiscountFactor(float factor) { _discountFactor = std::clamp(factor, 0.0f, 0.99f); }
-    void SetExplorationRate(float rate) { _epsilon = std::clamp(rate, 0.0f, 1.0f); }
+    void SetLearningRate(float rate) { _learningRate = ::std::clamp(rate, 0.0001f, 0.1f); }
+    void SetDiscountFactor(float factor) { _discountFactor = ::std::clamp(factor, 0.0f, 0.99f); }
+    void SetExplorationRate(float rate) { _epsilon = ::std::clamp(rate, 0.0f, 1.0f); }
     void EnableLearning(bool enable) { _learningEnabled = enable; }
 
     // State feature extraction
-    std::vector<float> ExtractStateFeatures(BotAI* ai, Player* bot) const;
-    std::vector<float> ExtractCombatFeatures(Player* bot, Unit* target) const;
-    std::vector<float> ExtractSocialFeatures(Player* bot) const;
-    std::vector<float> ExtractEnvironmentFeatures(Player* bot) const;
+    ::std::vector<float> ExtractStateFeatures(BotAI* ai, Player* bot) const;
+    ::std::vector<float> ExtractCombatFeatures(Player* bot, Unit* target) const;
+    ::std::vector<float> ExtractSocialFeatures(Player* bot) const;
+    ::std::vector<float> ExtractEnvironmentFeatures(Player* bot) const;
 
     // Action mapping
-    uint32_t MapActionToIndex(const std::string& actionName) const;
-    std::string MapIndexToAction(uint32_t index) const;
-    void RegisterAction(const std::string& actionName);
+    uint32_t MapActionToIndex(const ::std::string& actionName) const;
+    ::std::string MapIndexToAction(uint32_t index) const;
+    void RegisterAction(const ::std::string& actionName);
 
     // Reward calculation
     float CalculateReward(BotAI* ai, const ActionContext& context, bool success) const;
@@ -225,23 +225,23 @@ public:
     void BatchLearn(uint32_t botGuid, size_t batchSize = 32);
 
     // Decision making
-    uint32_t SelectAction(uint32_t botGuid, const std::vector<float>& state);
-    float EvaluateAction(uint32_t botGuid, const std::vector<float>& state, uint32_t action);
+    uint32_t SelectAction(uint32_t botGuid, const ::std::vector<float>& state);
+    float EvaluateAction(uint32_t botGuid, const ::std::vector<float>& state, uint32_t action);
 
     // Model management
-    void SaveModel(uint32_t botGuid, const std::string& filename);
-    void LoadModel(uint32_t botGuid, const std::string& filename);
+    void SaveModel(uint32_t botGuid, const ::std::string& filename);
+    void LoadModel(uint32_t botGuid, const ::std::string& filename);
     void ShareKnowledge(uint32_t sourceBotGuid, uint32_t targetBotGuid);
 
     // Performance tracking
     struct LearningMetrics
     {
-        std::atomic<uint64_t> totalExperiences{0};
-        std::atomic<uint64_t> learningSteps{0};
-        std::atomic<float> averageReward{0.0f};
-        std::atomic<float> averageLoss{0.0f};
-        std::atomic<float> winRate{0.0f};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64_t> totalExperiences{0};
+        ::std::atomic<uint64_t> learningSteps{0};
+        ::std::atomic<float> averageReward{0.0f};
+        ::std::atomic<float> averageLoss{0.0f};
+        ::std::atomic<float> winRate{0.0f};
+        ::std::chrono::steady_clock::time_point startTime;
 
         void Reset()
         {
@@ -250,7 +250,7 @@ public:
             averageReward = 0.0f;
             averageLoss = 0.0f;
             winRate = 0.0f;
-            startTime = std::chrono::steady_clock::now();
+            startTime = ::std::chrono::steady_clock::now();
         }
     };
 
@@ -260,7 +260,7 @@ public:
     // Collective intelligence
     void UpdateCollectiveKnowledge();
     void PropagateSuccessfulStrategies();
-    std::vector<float> GetCollectivePolicy(const std::vector<float>& state);
+    ::std::vector<float> GetCollectivePolicy(const ::std::vector<float>& state);
 
     // Meta-learning
     void AdaptToGameMeta();
@@ -268,7 +268,7 @@ public:
     void UpdateMetaStrategies();
 
     // Exploration strategies
-    void SetExplorationStrategy(const std::string& strategy);
+    void SetExplorationStrategy(const ::std::string& strategy);
     float GetAdaptiveEpsilon(uint32_t botGuid) const;
     void UpdateExplorationRate(uint32_t botGuid);
 
@@ -279,9 +279,9 @@ private:
     // Bot-specific learning models
     struct BotLearningModel
     {
-        std::unique_ptr<QFunction> qFunction;
-        std::unique_ptr<PolicyNetwork> policyNetwork;
-        std::deque<Experience> experienceBuffer;
+        ::std::unique_ptr<QFunction> qFunction;
+        ::std::unique_ptr<PolicyNetwork> policyNetwork;
+        ::std::deque<Experience> experienceBuffer;
         LearningMetrics metrics;
         float epsilon;  // Exploration rate
         uint32_t episodeCount;
@@ -302,35 +302,35 @@ private:
 
     // Model storage
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _modelsMutex;
-    std::unordered_map<uint32_t, std::unique_ptr<BotLearningModel>> _botModels;
+    ::std::unordered_map<uint32_t, ::std::unique_ptr<BotLearningModel>> _botModels;
 
     // Action registry
-    std::vector<std::string> _actionRegistry;
-    std::unordered_map<std::string, uint32_t> _actionToIndex;
+    ::std::vector<::std::string> _actionRegistry;
+    ::std::unordered_map<::std::string, uint32_t> _actionToIndex;
 
     // Collective intelligence
-    std::unique_ptr<NeuralNetwork> _collectiveModel;
-    std::deque<Experience> _sharedExperiences;
+    ::std::unique_ptr<NeuralNetwork> _collectiveModel;
+    ::std::deque<Experience> _sharedExperiences;
     static constexpr size_t MAX_SHARED_EXPERIENCES = 50000;
 
     // Meta-learning
     struct MetaStrategy
     {
-        std::string name;
-        std::vector<float> features;
+        ::std::string name;
+        ::std::vector<float> features;
         float successRate;
         uint32_t usageCount;
-        std::chrono::steady_clock::time_point lastUsed;
+        ::std::chrono::steady_clock::time_point lastUsed;
     };
-    std::vector<MetaStrategy> _metaStrategies;
+    ::std::vector<MetaStrategy> _metaStrategies;
 
     // Helper methods
     BotLearningModel* GetOrCreateModel(uint32_t botGuid);
     void InitializeModel(BotLearningModel* model);
     void CleanupOldExperiences(BotLearningModel* model);
-    std::vector<Experience> SampleBatch(const std::deque<Experience>& buffer, size_t batchSize);
+    ::std::vector<Experience> SampleBatch(const ::std::deque<Experience>& buffer, size_t batchSize);
     float CalculatePriority(const Experience& exp) const;
-    void NormalizeFeatures(std::vector<float>& features) const;
+    void NormalizeFeatures(::std::vector<float>& features) const;
 
     // State feature dimensions
     static constexpr size_t STATE_SIZE = 128;
@@ -358,15 +358,15 @@ public:
     ScopedLearningSession(uint32_t botGuid, BotAI* ai);
     ~ScopedLearningSession();
 
-    void RecordAction(const std::string& action, bool success);
+    void RecordAction(const ::std::string& action, bool success);
     void RecordReward(float reward);
     void Commit();
 
 private:
     uint32_t _botGuid;
     BotAI* _ai;
-    std::vector<float> _initialState;
-    std::string _action;
+    ::std::vector<float> _initialState;
+    ::std::string _action;
     float _cumulativeReward;
     bool _committed;
 };

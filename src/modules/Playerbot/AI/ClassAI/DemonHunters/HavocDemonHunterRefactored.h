@@ -29,13 +29,25 @@
 #include <unordered_map>
 #include <deque>
 #include <chrono>
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 Havoc Demon Hunter Spell IDs
 enum HavocSpells
 {
@@ -128,7 +140,7 @@ public:
 
     void GenerateFragments(uint32 count)
     {
-        _fragmentCount = std::min<uint32>(_fragmentCount + count, _maxFragments);
+        _fragmentCount = ::std::min<uint32>(_fragmentCount + count, _maxFragments);
         _lastFragmentTime = GameTime::GetGameTimeMS();
     }
 
@@ -374,14 +386,14 @@ public:
         if (bot->GetHealthPct() < 50.0f && this->CanUseAbility(SPELL_BLUR))
         {
 
-            this->CastSpell(bot, SPELL_BLUR);
+            this->CastSpell(SPELL_BLUR, bot);
         }
 
         // Maintain Immolation Aura
         if (!_immolationAuraActive && this->CanUseAbility(SPELL_IMMOLATION_AURA))
         {
 
-            this->CastSpell(bot, SPELL_IMMOLATION_AURA);
+            this->CastSpell(SPELL_IMMOLATION_AURA, bot);
 
             _immolationAuraActive = true;
 
@@ -392,7 +404,7 @@ public:
         if (IsGroupTakingHeavyDamage() && this->CanUseAbility(SPELL_DARKNESS))
         {
 
-            this->CastSpell(bot, SPELL_DARKNESS);
+            this->CastSpell(SPELL_DARKNESS, bot);
         }
     }
 
@@ -401,7 +413,7 @@ public:
         if (this->CanUseAbility(SPELL_DISRUPT))
         {
 
-            this->CastSpell(target, SPELL_DISRUPT);
+            this->CastSpell(SPELL_DISRUPT, target);
         }
     }
 
@@ -410,7 +422,7 @@ public:
         if (this->CanUseAbility(SPELL_CONSUME_MAGIC))
         {
 
-            this->CastSpell(target, SPELL_CONSUME_MAGIC);
+            this->CastSpell(SPELL_CONSUME_MAGIC, target);
         }
     }
 
@@ -499,7 +511,7 @@ protected:
         if (ShouldUseMetamorphosis() && this->CanUseAbility(SPELL_METAMORPHOSIS))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_METAMORPHOSIS);
+            this->CastSpell(SPELL_METAMORPHOSIS, this->GetBot());
 
             _metamorphosisActive = true;
 
@@ -516,7 +528,7 @@ protected:
 
             {
 
-                this->CastSpell(target, SPELL_EYE_BEAM);
+                this->CastSpell(SPELL_EYE_BEAM, target);
 
                 _eyeBeamChanneling = true;
 
@@ -551,7 +563,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_DEATH_SWEEP : SPELL_BLADE_DANCE;
 
-            this->CastSpell(this->GetBot(), spellId);
+            this->CastSpell(spellId, this->GetBot());
 
             _lastBladeDance = currentTime;
 
@@ -575,7 +587,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_ANNIHILATION : SPELL_CHAOS_STRIKE;
 
-            this->CastSpell(target, spellId);
+            this->CastSpell(spellId, target);
 
             _lastChaosStrike = currentTime;
 
@@ -601,7 +613,7 @@ protected:
         if (currentFury < 80)
         {
 
-            this->CastSpell(target, SPELL_DEMONS_BITE);
+            this->CastSpell(SPELL_DEMONS_BITE, target);
 
             _lastDemonsBite = currentTime;
 
@@ -619,7 +631,7 @@ protected:
         if (currentFury >= 30 && this->CanUseAbility(SPELL_EYE_BEAM))
         {
 
-            this->CastSpell(target, SPELL_EYE_BEAM);
+            this->CastSpell(SPELL_EYE_BEAM, target);
 
             _eyeBeamChanneling = true;
 
@@ -636,7 +648,7 @@ protected:
         if (currentFury >= 60 && enemyCount >= 5 && this->CanUseAbility(SPELL_FEL_BARRAGE))
         {
 
-            this->CastSpell(target, SPELL_FEL_BARRAGE);
+            this->CastSpell(SPELL_FEL_BARRAGE, target);
 
             this->ConsumeResource(SPELL_FEL_BARRAGE);
 
@@ -649,7 +661,7 @@ protected:
 
             uint32 spellId = _metamorphosisActive ? SPELL_DEATH_SWEEP : SPELL_BLADE_DANCE;
 
-            this->CastSpell(this->GetBot(), spellId);
+            this->CastSpell(spellId, this->GetBot());
 
             this->ConsumeResource(SPELL_BLADE_DANCE);
 
@@ -660,7 +672,7 @@ protected:
         if (currentFury >= 30 && enemyCount >= 4 && this->CanUseAbility(SPELL_CHAOS_NOVA))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_CHAOS_NOVA);
+            this->CastSpell(SPELL_CHAOS_NOVA, this->GetBot());
 
             this->ConsumeResource(SPELL_CHAOS_NOVA);
 
@@ -673,7 +685,7 @@ protected:
         if (currentFury < 60)
         {
 
-            this->CastSpell(target, SPELL_DEMONS_BITE);
+            this->CastSpell(SPELL_DEMONS_BITE, target);
 
             GenerateFury(rand() % 11 + 20);
 
@@ -779,7 +791,7 @@ private:
     Position GetEyeBeamPosition(Unit* target)
     {
         // Position to hit maximum enemies in a line
-        std::vector<Unit*> enemies = GetEnemiesInRangeVector(20.0f);
+        ::std::vector<Unit*> enemies = GetEnemiesInRangeVector(20.0f);
 
         if (enemies.size() <= 1)
 
@@ -820,7 +832,7 @@ private:
             this->GetBot()->GetDistance(target) < 20.0f)
         {
 
-            this->CastSpell(target, SPELL_FEL_RUSH);
+            this->CastSpell(SPELL_FEL_RUSH, target);
 
             _momentumTracker.UseFelRush();
 
@@ -835,7 +847,7 @@ private:
             this->GetBot()->GetDistance(target) < 5.0f)
         {
 
-            this->CastSpell(this->GetBot(), SPELL_VENGEFUL_RETREAT);
+            this->CastSpell(SPELL_VENGEFUL_RETREAT, this->GetBot());
 
             _momentumTracker.UseVengefulRetreat();
 
@@ -882,7 +894,7 @@ private:
     {
         uint32 count = 0;
 
-        std::list<Unit*> enemies;
+        ::std::list<Unit*> enemies;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), enemies, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -922,7 +934,7 @@ private:
 
             float targetAngle = this->GetBot()->GetRelativeAngle(enemy);
 
-            float angleDiff = std::abs(targetAngle - angle);
+            float angleDiff = ::std::abs(targetAngle - angle);
 
             // Normalize angle difference
 
@@ -939,11 +951,11 @@ private:
         return count;
     }
 
-    std::vector<Unit*> GetEnemiesInRangeVector(float range) const
+    ::std::vector<Unit*> GetEnemiesInRangeVector(float range) const
     {
-        std::vector<Unit*> enemies;
+        ::std::vector<Unit*> enemies;
 
-        std::list<Unit*> unitList;
+        ::std::list<Unit*> unitList;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck checker(this->GetBot(), this->GetBot(), range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this->GetBot(), unitList, checker);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
@@ -984,7 +996,7 @@ private:
 
     void GenerateFury(uint32 amount)
     {
-        _resource = std::min<uint32>(_resource + amount, _maxResource);
+        _resource = ::std::min<uint32>(_resource + amount, _maxResource);
     }
 
     // ========================================================================
@@ -992,11 +1004,9 @@ private:
     // ========================================================================
 
     void InitializeHavocMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -1178,7 +1188,7 @@ private:
 
                 Sequence("Emergency Defense", {
 
-                    Condition("Low HP", [this](Player* bot) {
+                    Condition("Low HP", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetHealthPct() < 40.0f;
 
@@ -1188,23 +1198,23 @@ private:
 
                         Sequence("Blur", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("Can cast", [this](Player* bot) {
+                            Condition("Can cast", [this](Player* bot, Unit*) {
 
                                 return this->CanCastSpell(SPELL_BLUR, bot);
 
                             }),
 
-                            Action("Cast Blur", [this](Player* bot) {
+                            bot::ai::Action("Cast Blur", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_BLUR, bot)) {
 
-                                    this->CastSpell(bot, SPELL_BLUR);
+                                    this->CastSpell(SPELL_BLUR, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1218,17 +1228,17 @@ private:
 
                         Sequence("Darkness", {
 
-                            Condition("Group heavy damage", [this](Player*) {
+                            Condition("Group heavy damage", [this](Player*, Unit*) {
 
                                 return this->IsGroupTakingHeavyDamage();
 
                             }),
 
-                            Action("Cast Darkness", [this](Player* bot) {
+                            bot::ai::Action("Cast Darkness", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
 
-                                    this->CastSpell(bot, SPELL_DARKNESS);
+                                    this->CastSpell(SPELL_DARKNESS, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1248,7 +1258,7 @@ private:
 
                 Sequence("Burst Phase", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
@@ -1258,23 +1268,23 @@ private:
 
                         Sequence("Metamorphosis", {
 
-                            Condition("Should use Meta", [this](Player*) {
+                            Condition("Should use Meta", [this](Player*, Unit*) {
 
                                 return this->ShouldUseMetamorphosis() && !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("High fury", [this](Player*) {
+                            Condition("High fury", [this](Player*, Unit*) {
 
                                 return this->_resource > 80;
 
                             }),
 
-                            Action("Cast Metamorphosis", [this](Player* bot) {
+                            bot::ai::Action("Cast Metamorphosis", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
 
-                                    this->CastSpell(bot, SPELL_METAMORPHOSIS);
+                                    this->CastSpell(SPELL_METAMORPHOSIS, bot);
 
                                     this->_metamorphosisActive = true;
 
@@ -1292,25 +1302,25 @@ private:
 
                         Sequence("Fel Barrage AoE", {
 
-                            Condition("5+ enemies", [this](Player*) {
+                            Condition("5+ enemies", [this](Player*, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 5;
 
                             }),
 
-                            Condition("60 fury", [this](Player*) {
+                            Condition("60 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 60;
 
                             }),
 
-                            Action("Cast Fel Barrage", [this](Player* bot) {
+                            bot::ai::Action("Cast Fel Barrage", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
                                 if (target && this->CanCastSpell(SPELL_FEL_BARRAGE, target)) {
 
-                                    this->CastSpell(target, SPELL_FEL_BARRAGE);
+                                    this->CastSpell(SPELL_FEL_BARRAGE, target);
 
                                     this->ConsumeResource(SPELL_FEL_BARRAGE);
 
@@ -1332,7 +1342,7 @@ private:
 
                 Sequence("Priority Rotation", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
@@ -1342,19 +1352,19 @@ private:
 
                         Sequence("Eye Beam", {
 
-                            Condition("30 fury", [this](Player*) {
+                            Condition("30 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 30;
 
                             }),
 
-                            Condition("Not channeling", [this](Player*) {
+                            Condition("Not channeling", [this](Player*, Unit*) {
 
                                 return !this->_eyeBeamChanneling;
 
                             }),
 
-                            Condition("In range", [this](Player* bot) {
+                            Condition("In range", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
@@ -1362,13 +1372,13 @@ private:
 
                             }),
 
-                            Action("Cast Eye Beam", [this](Player* bot) {
+                            bot::ai::Action("Cast Eye Beam", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
                                 if (target && this->CanCastSpell(SPELL_EYE_BEAM, target)) {
 
-                                    this->CastSpell(target, SPELL_EYE_BEAM);
+                                    this->CastSpell(SPELL_EYE_BEAM, target);
 
                                     this->_eyeBeamChanneling = true;
 
@@ -1396,23 +1406,23 @@ private:
 
                         Sequence("Death Sweep (Meta)", {
 
-                            Condition("In Metamorphosis", [this](Player*) {
+                            Condition("In Metamorphosis", [this](Player*, Unit*) {
 
                                 return this->_metamorphosisActive;
 
                             }),
 
-                            Condition("15 fury", [this](Player*) {
+                            Condition("15 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 15;
 
                             }),
 
-                            Action("Cast Death Sweep", [this](Player* bot) {
+                            bot::ai::Action("Cast Death Sweep", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
 
-                                    this->CastSpell(bot, SPELL_DEATH_SWEEP);
+                                    this->CastSpell(SPELL_DEATH_SWEEP, bot);
 
                                     this->ConsumeResource(SPELL_BLADE_DANCE);
 
@@ -1428,13 +1438,13 @@ private:
 
                         Sequence("Blade Dance", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("Enough fury", [this](Player*) {
+                            Condition("Enough fury", [this](Player*, Unit*) {
 
                                 uint32 cost = this->GetSpellResourceCost(SPELL_BLADE_DANCE);
 
@@ -1442,17 +1452,17 @@ private:
 
                             }),
 
-                            Condition("AoE or defensive", [this](Player* bot) {
+                            Condition("AoE or defensive", [this](Player* bot, Unit*) {
 
                                 return this->GetEnemiesInRange(8.0f) >= 2 || bot->GetHealthPct() < 70.0f;
 
                             }),
 
-                            Action("Cast Blade Dance", [this](Player* bot) {
+                            bot::ai::Action("Cast Blade Dance", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
 
-                                    this->CastSpell(bot, SPELL_BLADE_DANCE);
+                                    this->CastSpell(SPELL_BLADE_DANCE, bot);
 
                                     this->_lastBladeDance = GameTime::GetGameTimeMS();
 
@@ -1470,17 +1480,17 @@ private:
 
                         Sequence("Immolation Aura", {
 
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
 
                                 return !this->_immolationAuraActive;
 
                             }),
 
-                            Action("Cast Immolation Aura", [this](Player* bot) {
+                            bot::ai::Action("Cast Immolation Aura", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
 
-                                    this->CastSpell(bot, SPELL_IMMOLATION_AURA);
+                                    this->CastSpell(SPELL_IMMOLATION_AURA, bot);
 
                                     this->_immolationAuraActive = true;
 
@@ -1498,13 +1508,13 @@ private:
 
                         Sequence("Build Momentum", {
 
-                            Condition("Has Momentum talent", [this](Player* bot) {
+                            Condition("Has Momentum talent", [this](Player* bot, Unit*) {
 
                                 return bot->HasSpell(SPELL_MOMENTUM);
 
                             }),
 
-                            Condition("No Momentum buff", [this](Player*) {
+                            Condition("No Momentum buff", [this](Player*, Unit*) {
 
                                 return !this->_momentumTracker.HasMomentum();
 
@@ -1514,13 +1524,13 @@ private:
 
                                 Sequence("Fel Rush", {
 
-                                    Condition("Can use", [this](Player*) {
+                                    Condition("Can use", [this](Player*, Unit*) {
 
                                         return this->_momentumTracker.CanUseFelRush();
 
                                     }),
 
-                                    Condition("5-20yd range", [this](Player* bot) {
+                                    Condition("5-20yd range", [this](Player* bot, Unit* target) {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1528,13 +1538,13 @@ private:
 
                                     }),
 
-                                    Action("Cast Fel Rush", [this](Player* bot) {
+                                    bot::ai::Action("Cast Fel Rush", [this](Player* bot, Unit* target) {
 
                                         Unit* target = bot->GetVictim();
 
                                         if (target && this->CanCastSpell(SPELL_FEL_RUSH, target)) {
 
-                                            this->CastSpell(target, SPELL_FEL_RUSH);
+                                            this->CastSpell(SPELL_FEL_RUSH, target);
 
                                             this->_momentumTracker.UseFelRush();
 
@@ -1552,13 +1562,13 @@ private:
 
                                 Sequence("Vengeful Retreat", {
 
-                                    Condition("Can use", [this](Player*) {
+                                    Condition("Can use", [this](Player*, Unit*) {
 
                                         return this->_momentumTracker.CanUseVengefulRetreat();
 
                                     }),
 
-                                    Condition("Melee range", [this](Player* bot) {
+                                    Condition("Melee range", [this](Player* bot, Unit* target) {
 
                                         Unit* target = bot->GetVictim();
 
@@ -1566,11 +1576,11 @@ private:
 
                                     }),
 
-                                    Action("Cast Vengeful Retreat", [this](Player* bot) {
+                                    bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot, Unit*) {
 
                                         if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
 
-                                            this->CastSpell(bot, SPELL_VENGEFUL_RETREAT);
+                                            this->CastSpell(SPELL_VENGEFUL_RETREAT, bot);
 
                                             this->_momentumTracker.UseVengefulRetreat();
 
@@ -1596,7 +1606,7 @@ private:
 
                 Sequence("Fury Spenders", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
@@ -1606,25 +1616,25 @@ private:
 
                         Sequence("Annihilation (Meta)", {
 
-                            Condition("In Metamorphosis", [this](Player*) {
+                            Condition("In Metamorphosis", [this](Player*, Unit*) {
 
                                 return this->_metamorphosisActive;
 
                             }),
 
-                            Condition("25 fury", [this](Player*) {
+                            Condition("25 fury", [this](Player*, Unit*) {
 
                                 return this->_resource >= 25;
 
                             }),
 
-                            Action("Cast Annihilation", [this](Player* bot) {
+                            bot::ai::Action("Cast Annihilation", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
                                 if (target && this->CanCastSpell(SPELL_ANNIHILATION, target)) {
 
-                                    this->CastSpell(target, SPELL_ANNIHILATION);
+                                    this->CastSpell(SPELL_ANNIHILATION, target);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1646,13 +1656,13 @@ private:
 
                         Sequence("Chaos Strike", {
 
-                            Condition("Not in Meta", [this](Player*) {
+                            Condition("Not in Meta", [this](Player*, Unit*) {
 
                                 return !this->_metamorphosisActive;
 
                             }),
 
-                            Condition("Enough fury", [this](Player*) {
+                            Condition("Enough fury", [this](Player*, Unit*) {
 
                                 uint32 cost = this->GetSpellResourceCost(SPELL_CHAOS_STRIKE);
 
@@ -1660,13 +1670,13 @@ private:
 
                             }),
 
-                            Action("Cast Chaos Strike", [this](Player* bot) {
+                            bot::ai::Action("Cast Chaos Strike", [this](Player* bot, Unit* target) {
 
                                 Unit* target = bot->GetVictim();
 
                                 if (target && this->CanCastSpell(SPELL_CHAOS_STRIKE, target)) {
 
-                                    this->CastSpell(target, SPELL_CHAOS_STRIKE);
+                                    this->CastSpell(SPELL_CHAOS_STRIKE, target);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1694,25 +1704,25 @@ private:
 
                 Sequence("Fury Generators", {
 
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetVictim();
 
                     }),
 
-                    Condition("Low fury", [this](Player*) {
+                    Condition("Low fury", [this](Player*, Unit*) {
 
                         return this->_resource < 80;
 
                     }),
 
-                    Action("Cast Demon's Bite", [this](Player* bot) {
+                    bot::ai::Action("Cast Demon's Bite", [this](Player* bot, Unit* target) {
 
                         Unit* target = bot->GetVictim();
 
                         if (target && this->CanCastSpell(SPELL_DEMONS_BITE, target)) {
 
-                            this->CastSpell(target, SPELL_DEMONS_BITE);
+                            this->CastSpell(SPELL_DEMONS_BITE, target);
 
                             this->_lastDemonsBite = GameTime::GetGameTimeMS();
 

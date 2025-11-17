@@ -77,19 +77,19 @@ struct AIDecisionRecord
     uint64_t decisionTime;           // Microseconds taken to make decision
     uint64_t executionTime;          // Microseconds taken to execute decision
     DecisionOutcome outcome;
-    std::string context;             // Additional context information
-    std::string stackTrace;          // Call stack for debugging
+    ::std::string context;             // Additional context information
+    ::std::string stackTrace;          // Call stack for debugging
     uint32_t sequenceNumber;         // Decision sequence in bot's timeline
 
     AIDecisionRecord() : timestamp(0), botGuid(0), category(AIDecisionCategory::UNKNOWN),
         complexity(DecisionComplexity::SIMPLE), decisionTime(0), executionTime(0),
         outcome(DecisionOutcome::SUCCESS), sequenceNumber(0) {}
 
-    AIDecisionRecord(uint32_t guid, AIDecisionCategory cat, DecisionComplexity comp, const std::string& ctx)
+    AIDecisionRecord(uint32_t guid, AIDecisionCategory cat, DecisionComplexity comp, const ::std::string& ctx)
         : botGuid(guid), category(cat), complexity(comp), context(ctx), outcome(DecisionOutcome::SUCCESS)
     {
-        timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+        timestamp = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count();
         decisionTime = 0;
         executionTime = 0;
         sequenceNumber = 0;
@@ -99,21 +99,21 @@ struct AIDecisionRecord
 // Category-specific performance statistics
 struct CategoryPerformanceStats
 {
-    std::atomic<uint64_t> totalDecisions{0};
-    std::atomic<uint64_t> successfulDecisions{0};
-    std::atomic<uint64_t> totalDecisionTime{0};      // Microseconds
-    std::atomic<uint64_t> totalExecutionTime{0};     // Microseconds
-    std::atomic<uint64_t> minDecisionTime{UINT64_MAX};
-    std::atomic<uint64_t> maxDecisionTime{0};
-    std::atomic<uint64_t> lastDecisionTime{0};
-    std::atomic<double> averageDecisionTime{0.0};
-    std::atomic<double> successRate{0.0};
-    std::atomic<uint32_t> timeoutCount{0};
-    std::atomic<uint32_t> errorCount{0};
+    ::std::atomic<uint64_t> totalDecisions{0};
+    ::std::atomic<uint64_t> successfulDecisions{0};
+    ::std::atomic<uint64_t> totalDecisionTime{0};      // Microseconds
+    ::std::atomic<uint64_t> totalExecutionTime{0};     // Microseconds
+    ::std::atomic<uint64_t> minDecisionTime{UINT64_MAX};
+    ::std::atomic<uint64_t> maxDecisionTime{0};
+    ::std::atomic<uint64_t> lastDecisionTime{0};
+    ::std::atomic<double> averageDecisionTime{0.0};
+    ::std::atomic<double> successRate{0.0};
+    ::std::atomic<uint32_t> timeoutCount{0};
+    ::std::atomic<uint32_t> errorCount{0};
 
     // Performance trend tracking
-    std::array<std::atomic<double>, 60> minutelyTrend;    // Last 60 minutes
-    std::array<std::atomic<double>, 24> hourlyTrend;      // Last 24 hours
+    ::std::array<::std::atomic<double>, 60> minutelyTrend;    // Last 60 minutes
+    ::std::array<::std::atomic<double>, 24> hourlyTrend;      // Last 24 hours
 
     CategoryPerformanceStats()
     {
@@ -138,30 +138,30 @@ struct BotAIDecisionProfile
     uint8_t botSpecialization;
 
     // Category-specific statistics
-    std::array<CategoryPerformanceStats, 15> categoryStats;
+    ::std::array<CategoryPerformanceStats, 15> categoryStats;
 
     // Overall performance metrics
-    std::atomic<uint64_t> totalDecisionsMade{0};
-    std::atomic<uint64_t> totalDecisionTime{0};
-    std::atomic<uint64_t> totalExecutionTime{0};
-    std::atomic<double> overallSuccessRate{0.0};
-    std::atomic<double> averageDecisionSpeed{0.0};      // Decisions per second
-    std::atomic<double> decisionEfficiencyScore{0.0};   // 0.0 to 100.0
-    std::atomic<double> adaptabilityScore{0.0};         // How well bot adapts to situations
+    ::std::atomic<uint64_t> totalDecisionsMade{0};
+    ::std::atomic<uint64_t> totalDecisionTime{0};
+    ::std::atomic<uint64_t> totalExecutionTime{0};
+    ::std::atomic<double> overallSuccessRate{0.0};
+    ::std::atomic<double> averageDecisionSpeed{0.0};      // Decisions per second
+    ::std::atomic<double> decisionEfficiencyScore{0.0};   // 0.0 to 100.0
+    ::std::atomic<double> adaptabilityScore{0.0};         // How well bot adapts to situations
 
     // Decision pattern analysis
-    std::atomic<uint32_t> repetitiveDecisionCount{0};
-    std::atomic<uint32_t> innovativeDecisionCount{0};
-    std::atomic<uint32_t> contextualDecisionCount{0};
+    ::std::atomic<uint32_t> repetitiveDecisionCount{0};
+    ::std::atomic<uint32_t> innovativeDecisionCount{0};
+    ::std::atomic<uint32_t> contextualDecisionCount{0};
 
     // Learning and improvement tracking
-    std::atomic<double> learningRate{0.0};              // Rate of improvement
-    std::atomic<uint32_t> strategicDecisions{0};        // High-level strategic decisions
-    std::atomic<uint32_t> reactiveDecisions{0};         // Reactive/emergency decisions
+    ::std::atomic<double> learningRate{0.0};              // Rate of improvement
+    ::std::atomic<uint32_t> strategicDecisions{0};        // High-level strategic decisions
+    ::std::atomic<uint32_t> reactiveDecisions{0};         // Reactive/emergency decisions
 
     // Performance degradation tracking
-    std::atomic<uint32_t> performanceFlags{0};          // Bit flags for various issues
-    std::atomic<uint64_t> lastPerformanceUpdate{0};
+    ::std::atomic<uint32_t> performanceFlags{0};          // Bit flags for various issues
+    ::std::atomic<uint64_t> lastPerformanceUpdate{0};
 
     BotAIDecisionProfile() : botGuid(0), botClass(0), botLevel(0), botSpecialization(0) {}
     explicit BotAIDecisionProfile(uint32_t guid, uint8_t cls, uint8_t lvl, uint8_t spec)
@@ -178,7 +178,7 @@ class TC_GAME_API AIDecisionTimer
 {
 public:
     AIDecisionTimer(uint32_t botGuid, AIDecisionCategory category, DecisionComplexity complexity,
-                   const std::string& context);
+                   const ::std::string& context);
     ~AIDecisionTimer();
 
     // Disable copy/move
@@ -190,8 +190,8 @@ public:
     // Decision lifecycle methods
     void StartExecution();
     void SetOutcome(DecisionOutcome outcome);
-    void AddContext(const std::string& additionalContext);
-    void RecordError(const std::string& errorMessage);
+    void AddContext(const ::std::string& additionalContext);
+    void RecordError(const ::std::string& errorMessage);
 
     // Timing information
     uint64_t GetDecisionTime() const;
@@ -236,29 +236,29 @@ public:
 
     // Performance analysis
     BotAIDecisionProfile GetBotProfile(uint32_t botGuid) const;
-    std::vector<uint32_t> GetSlowDecisionBots(uint32_t count = 10) const;
-    std::vector<uint32_t> GetEfficientDecisionBots(uint32_t count = 10) const;
-    std::vector<uint32_t> GetBotsWithErrors(uint32_t count = 10) const;
+    ::std::vector<uint32_t> GetSlowDecisionBots(uint32_t count = 10) const;
+    ::std::vector<uint32_t> GetEfficientDecisionBots(uint32_t count = 10) const;
+    ::std::vector<uint32_t> GetBotsWithErrors(uint32_t count = 10) const;
 
     // Category analysis
     CategoryPerformanceStats GetCategoryStats(AIDecisionCategory category) const;
     CategoryPerformanceStats GetBotCategoryStats(uint32_t botGuid, AIDecisionCategory category) const;
-    std::vector<AIDecisionCategory> GetProblematicCategories(uint32_t botGuid) const;
+    ::std::vector<AIDecisionCategory> GetProblematicCategories(uint32_t botGuid) const;
 
     // Comparative analysis
     double CompareBotPerformance(uint32_t botGuid1, uint32_t botGuid2) const;
-    std::vector<std::pair<uint32_t, double>> GetDecisionEfficiencyRankings() const;
+    ::std::vector<::std::pair<uint32_t, double>> GetDecisionEfficiencyRankings() const;
     void AnalyzeClassDecisionPatterns(uint8_t classId);
 
     // Optimization suggestions
-    std::vector<std::string> GetOptimizationSuggestions(uint32_t botGuid) const;
-    std::vector<std::string> GetCategoryOptimizationSuggestions(AIDecisionCategory category) const;
-    void GeneratePerformanceInsights(uint32_t botGuid, std::string& insights) const;
+    ::std::vector<::std::string> GetOptimizationSuggestions(uint32_t botGuid) const;
+    ::std::vector<::std::string> GetCategoryOptimizationSuggestions(AIDecisionCategory category) const;
+    void GeneratePerformanceInsights(uint32_t botGuid, ::std::string& insights) const;
 
     // Real-time monitoring
     void StartRealTimeMonitoring();
     void StopRealTimeMonitoring();
-    std::vector<std::pair<uint32_t, double>> GetRealTimeDecisionRates() const;
+    ::std::vector<::std::pair<uint32_t, double>> GetRealTimeDecisionRates() const;
     void SetAlertThresholds(double maxDecisionTime, double minSuccessRate);
 
     // Decision pattern analysis
@@ -267,9 +267,9 @@ public:
     void IdentifyOptimizationOpportunities();
 
     // Reporting and visualization
-    void GenerateDecisionReport(std::string& report, uint32_t botGuid = 0) const;
-    void GenerateCategoryReport(std::string& report, AIDecisionCategory category) const;
-    void GenerateComparativeReport(std::string& report, const std::vector<uint32_t>& botGuids) const;
+    void GenerateDecisionReport(::std::string& report, uint32_t botGuid = 0) const;
+    void GenerateCategoryReport(::std::string& report, AIDecisionCategory category) const;
+    void GenerateComparativeReport(::std::string& report, const ::std::vector<uint32_t>& botGuids) const;
 
     // Learning and adaptation analysis
     void AnalyzeLearningProgression(uint32_t botGuid);
@@ -283,8 +283,8 @@ public:
 
     // Data management
     void FlushOldRecords(uint64_t olderThanMicroseconds);
-    void ExportDecisionData(const std::string& filename) const;
-    void ImportDecisionData(const std::string& filename);
+    void ExportDecisionData(const ::std::string& filename) const;
+    void ImportDecisionData(const ::std::string& filename);
 
 private:
     AIDecisionProfiler() = default;
@@ -313,43 +313,43 @@ private:
 
     // Alert system
     void CheckPerformanceAlerts();
-    void GenerateAlert(uint32_t botGuid, const std::string& alertType, const std::string& message);
+    void GenerateAlert(uint32_t botGuid, const ::std::string& alertType, const ::std::string& message);
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _shutdownRequested{false};
-    std::atomic<bool> _realTimeMonitoring{false};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _realTimeMonitoring{false};
 
     // Data storage
-    mutable std::recursive_mutex _profilesMutex;
-    std::unordered_map<uint32_t, BotAIDecisionProfile> _botProfiles;
+    mutable ::std::recursive_mutex _profilesMutex;
+    ::std::unordered_map<uint32_t, BotAIDecisionProfile> _botProfiles;
 
-    mutable std::recursive_mutex _recordsMutex;
-    std::queue<AIDecisionRecord> _pendingRecords;
-    std::vector<AIDecisionRecord> _recentRecords;
+    mutable ::std::recursive_mutex _recordsMutex;
+    ::std::queue<AIDecisionRecord> _pendingRecords;
+    ::std::vector<AIDecisionRecord> _recentRecords;
 
-    mutable std::recursive_mutex _globalStatsMutex;
-    std::array<CategoryPerformanceStats, 15> _globalCategoryStats;
+    mutable ::std::recursive_mutex _globalStatsMutex;
+    ::std::array<CategoryPerformanceStats, 15> _globalCategoryStats;
 
     // Background processing
-    std::thread _analysisThread;
-    std::condition_variable _analysisCondition;
-    std::recursive_mutex _analysisMutex;
+    ::std::thread _analysisThread;
+    ::std::condition_variable _analysisCondition;
+    ::std::recursive_mutex _analysisMutex;
 
-    std::thread _realTimeThread;
-    mutable std::recursive_mutex _realTimeDataMutex;
-    std::vector<std::pair<uint32_t, double>> _realTimeData;
+    ::std::thread _realTimeThread;
+    mutable ::std::recursive_mutex _realTimeDataMutex;
+    ::std::vector<::std::pair<uint32_t, double>> _realTimeData;
 
     // Configuration
-    std::atomic<uint32_t> _maxRecordHistory{100000};
-    std::atomic<uint64_t> _analysisInterval{60000000}; // 60 seconds
-    std::atomic<double> _alertMaxDecisionTime{50000.0}; // 50ms
-    std::atomic<double> _alertMinSuccessRate{0.8}; // 80%
+    ::std::atomic<uint32_t> _maxRecordHistory{100000};
+    ::std::atomic<uint64_t> _analysisInterval{60000000}; // 60 seconds
+    ::std::atomic<double> _alertMaxDecisionTime{50000.0}; // 50ms
+    ::std::atomic<double> _alertMinSuccessRate{0.8}; // 80%
 
     // Performance tracking
-    std::atomic<uint64_t> _totalDecisionsProcessed{0};
-    std::atomic<uint64_t> _lastAnalysisTime{0};
-    std::atomic<uint64_t> _lastArchiveTime{0};
+    ::std::atomic<uint64_t> _totalDecisionsProcessed{0};
+    ::std::atomic<uint64_t> _lastAnalysisTime{0};
+    ::std::atomic<uint64_t> _lastArchiveTime{0};
 
     // Constants
     static constexpr uint64_t DEFAULT_ANALYSIS_INTERVAL_US = 60000000;  // 60 seconds

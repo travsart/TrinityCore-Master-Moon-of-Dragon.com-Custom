@@ -28,35 +28,35 @@ bool BotSpawnOrchestrator::Initialize()
         "Initializing BotSpawnOrchestrator with component-based architecture");
 
     // Initialize all components
-    _resourcePool = std::make_unique<BotResourcePool>();
+    _resourcePool = ::std::make_unique<BotResourcePool>();
     if (!_resourcePool->Initialize())
     {
         TC_LOG_ERROR("module.playerbot.orchestrator", "Failed to initialize BotResourcePool");
         return false;
     }
 
-    _performanceMonitor = std::unique_ptr<BotPerformanceMonitor>(BotPerformanceMonitor::instance());
+    _performanceMonitor = ::std::unique_ptr<BotPerformanceMonitor>(BotPerformanceMonitor::instance());
     if (!_performanceMonitor->Initialize())
     {
         TC_LOG_ERROR("module.playerbot.orchestrator", "Failed to initialize BotPerformanceMonitor");
         return false;
     }
 
-    _populationManager = std::make_unique<BotPopulationManager>();
+    _populationManager = ::std::make_unique<BotPopulationManager>();
     if (!_populationManager->Initialize())
     {
         TC_LOG_ERROR("module.playerbot.orchestrator", "Failed to initialize BotPopulationManager");
         return false;
     }
 
-    _characterSelector = std::make_unique<BotCharacterSelector>();
+    _characterSelector = ::std::make_unique<BotCharacterSelector>();
     if (!_characterSelector->Initialize())
     {
         TC_LOG_ERROR("module.playerbot.orchestrator", "Failed to initialize BotCharacterSelector");
         return false;
     }
 
-    _sessionFactory = std::make_unique<BotSessionFactory>();
+    _sessionFactory = ::std::make_unique<BotSessionFactory>();
     if (!_sessionFactory->Initialize())
     {
         TC_LOG_ERROR("module.playerbot.orchestrator", "Failed to initialize BotSessionFactory");
@@ -65,20 +65,20 @@ bool BotSpawnOrchestrator::Initialize()
 
     // Subscribe to spawn events for coordination
     sBotSpawnEventBus->Subscribe(BotSpawnEventType::CHARACTER_SELECTED,
-        [this](std::shared_ptr<BotSpawnEvent> event) {
-            auto charEvent = std::static_pointer_cast<CharacterSelectedEvent>(event);
+        [this](::std::shared_ptr<BotSpawnEvent> event) {
+            auto charEvent = ::std::static_pointer_cast<CharacterSelectedEvent>(event);
             OnCharacterSelected(charEvent->characterGuid, charEvent->originalRequest);
         });
 
     sBotSpawnEventBus->Subscribe(BotSpawnEventType::SESSION_CREATED,
-        [this](std::shared_ptr<BotSpawnEvent> event) {
-            auto sessionEvent = std::static_pointer_cast<SessionCreatedEvent>(event);
+        [this](::std::shared_ptr<BotSpawnEvent> event) {
+            auto sessionEvent = ::std::static_pointer_cast<SessionCreatedEvent>(event);
             OnSessionCreated(sessionEvent->session, sessionEvent->originalRequest);
         });
 
     sBotSpawnEventBus->Subscribe(BotSpawnEventType::SPAWN_COMPLETED,
-        [this](std::shared_ptr<BotSpawnEvent> event) {
-            auto completedEvent = std::static_pointer_cast<SpawnCompletedEvent>(event);
+        [this](::std::shared_ptr<BotSpawnEvent> event) {
+            auto completedEvent = ::std::static_pointer_cast<SpawnCompletedEvent>(event);
             // Handle spawn completion statistics and cleanup
         });
 
@@ -176,7 +176,7 @@ bool BotSpawnOrchestrator::SpawnBot(SpawnRequest const& request)
     return true;
 }
 
-uint32 BotSpawnOrchestrator::SpawnBots(std::vector<SpawnRequest> const& requests)
+uint32 BotSpawnOrchestrator::SpawnBots(::std::vector<SpawnRequest> const& requests)
 {
     if (!_enabled.load())
         return 0;
@@ -185,9 +185,9 @@ uint32 BotSpawnOrchestrator::SpawnBots(std::vector<SpawnRequest> const& requests
 
     // BATCH OPTIMIZATION: Use batch character selection for multiple requests
     _characterSelector->ProcessBatchSelection(requests,
-        [this, &successfulSpawns](std::vector<ObjectGuid> selectedCharacters) {
+        [this, &successfulSpawns](::std::vector<ObjectGuid> selectedCharacters) {
             // Process each selected character
-            for (size_t i = 0; i < selectedCharacters.size(); ++i)
+    for (size_t i = 0; i < selectedCharacters.size(); ++i)
             {
                 if (!selectedCharacters[i].IsEmpty())
                 {
@@ -213,7 +213,7 @@ void BotSpawnOrchestrator::SpawnToPopulationTarget()
         uint32 botsNeeded = zonePopulation.targetBotCount - zonePopulation.botCount;
 
         // Create spawn requests for needed bots
-        for (uint32 i = 0; i < botsNeeded && i < 10; ++i) // Limit to 10 per update cycle
+    for (uint32 i = 0; i < botsNeeded && i < 10; ++i) // Limit to 10 per update cycle
         {
             SpawnRequest request;
             request.zoneId = zoneId;
@@ -232,7 +232,7 @@ void BotSpawnOrchestrator::UpdatePopulationTargets()
         _populationManager->CalculateZoneTargets();
 }
 
-bool BotSpawnOrchestrator::DespawnBot(ObjectGuid guid, std::string const& reason)
+bool BotSpawnOrchestrator::DespawnBot(ObjectGuid guid, ::std::string const& reason)
 {
     if (!_enabled.load())
         return false;
@@ -256,7 +256,7 @@ bool BotSpawnOrchestrator::DespawnBot(ObjectGuid guid, std::string const& reason
 
 void BotSpawnOrchestrator::DespawnBot(ObjectGuid guid, bool forced)
 {
-    std::string reason = forced ? "forced_shutdown" : "normal_despawn";
+    ::std::string reason = forced ? "forced_shutdown" : "normal_despawn";
     DespawnBot(guid, reason);
 }
 
@@ -328,7 +328,7 @@ void BotSpawnOrchestrator::OnCharacterSelected(ObjectGuid characterGuid, SpawnRe
     }
 }
 
-void BotSpawnOrchestrator::OnSessionCreated(std::shared_ptr<BotSession> session, SpawnRequest const& request)
+void BotSpawnOrchestrator::OnSessionCreated(::std::shared_ptr<BotSession> session, SpawnRequest const& request)
 {
     // Final spawn completion
     ObjectGuid botGuid = session->GetPlayer() ? session->GetPlayer()->GetGUID() : ObjectGuid::Empty;
@@ -367,7 +367,7 @@ void BotSpawnOrchestrator::OnSpawnCompleted(bool success, ObjectGuid guid, Spawn
 
 // === ERROR HANDLING ===
 
-void BotSpawnOrchestrator::HandleSpawnFailure(SpawnRequest const& request, std::string const& reason)
+void BotSpawnOrchestrator::HandleSpawnFailure(SpawnRequest const& request, ::std::string const& reason)
 {
     TC_LOG_WARN("module.playerbot.orchestrator",
         "Spawn failure for zone {} - Reason: {}", request.zoneId, reason);

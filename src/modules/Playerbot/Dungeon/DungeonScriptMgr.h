@@ -164,7 +164,7 @@ public:
     /**
      * Get script info by name
      */
-    DungeonScript* GetScriptByName(std::string const& name) const override;
+    DungeonScript* GetScriptByName(::std::string const& name) const override;
 
 private:
     DungeonScriptMgr();
@@ -179,20 +179,20 @@ private:
     // ============================================================================
 
     // Map scripts (mapId -> script) - OWNS the scripts via unique_ptr (primary storage)
-    std::unordered_map<uint32, std::unique_ptr<DungeonScript>> _mapScripts;
+    ::std::unordered_map<uint32, ::std::unique_ptr<DungeonScript>> _mapScripts;
 
     // Boss scripts (bossEntry -> script) - NON-OWNING raw pointers (lookup only)
-    std::unordered_map<uint32, DungeonScript*> _bossScripts;
+    ::std::unordered_map<uint32, DungeonScript*> _bossScripts;
 
     // Script name lookup (name -> script) - NON-OWNING raw pointers (lookup only)
-    std::unordered_map<std::string, DungeonScript*> _namedScripts;
+    ::std::unordered_map<::std::string, DungeonScript*> _namedScripts;
 
     // Statistics
-    std::atomic<uint32> _scriptCount{0};
-    std::atomic<uint32> _bossMappingCount{0};
-    std::atomic<uint32> _scriptHits{0};
-    std::atomic<uint32> _scriptMisses{0};
-    std::atomic<uint32> _mechanicExecutions{0};
+    ::std::atomic<uint32> _scriptCount{0};
+    ::std::atomic<uint32> _bossMappingCount{0};
+    ::std::atomic<uint32> _scriptHits{0};
+    ::std::atomic<uint32> _scriptMisses{0};
+    ::std::atomic<uint32> _mechanicExecutions{0};
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
     bool _initialized;

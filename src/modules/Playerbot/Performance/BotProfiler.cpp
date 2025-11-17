@@ -22,12 +22,12 @@ namespace Playerbot
 {
 
 // ScopedProfiler Implementation
-ScopedProfiler::ScopedProfiler(const std::string& functionName, const std::string& fileName, uint32_t lineNumber)
+ScopedProfiler::ScopedProfiler(const ::std::string& functionName, const ::std::string& fileName, uint32_t lineNumber)
     : _functionName(functionName), _fileName(fileName), _lineNumber(lineNumber),
       _category(HotspotCategory::UNKNOWN_HOTSPOT), _impactScore(0.0), _isHotspot(false)
 {
-    _startTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    _startTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     // Only record if profiler is enabled and we're not exceeding overhead limits
     if (sProfiler.IsEnabled() && sProfiler.GetProfilingOverhead() < 10.0)
@@ -44,7 +44,7 @@ ScopedProfiler::~ScopedProfiler()
     }
 }
 
-void ScopedProfiler::AddMetadata(const std::string& key, const std::string& value)
+void ScopedProfiler::AddMetadata(const ::std::string& key, const ::std::string& value)
 {
     _metadata[key] = value;
 }
@@ -62,8 +62,8 @@ void ScopedProfiler::MarkAsHotspot(double impact)
 
 void ScopedProfiler::RecordProfile()
 {
-    uint64_t endTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t endTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
     uint64_t duration = endTime - _startTime;
 
     // Record the function call
@@ -79,9 +79,9 @@ void ScopedProfiler::RecordProfile()
         hotspot.maxTime = duration;
 
         // Add metadata to description
-        if (!_metadata.empty())
+    if (!_metadata.empty())
         {
-            std::ostringstream oss;
+            ::std::ostringstream oss;
             for (const auto& pair : _metadata)
             {
                 oss << pair.first << ": " << pair.second << "; ";
@@ -96,7 +96,7 @@ void ScopedProfiler::RecordProfile()
 // BotProfiler Implementation
 bool BotProfiler::Initialize()
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     if (_enabled.load())
         return true;
@@ -124,7 +124,7 @@ bool BotProfiler::Initialize()
 
 void BotProfiler::Shutdown()
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     if (!_enabled.load())
         return;
@@ -149,7 +149,7 @@ void BotProfiler::Shutdown()
     TC_LOG_INFO("playerbot", "BotProfiler: Performance profiling system shut down");
 }
 
-uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, ProfilingSessionType type)
+uint64_t BotProfiler::StartProfilingSession(const ::std::string& sessionName, ProfilingSessionType type)
 {
     if (!_enabled.load())
     {
@@ -157,7 +157,7 @@ uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, Prof
         return 0;
     }
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     if (_activeSessions.size() >= _maxSessions.load())
     {
@@ -168,8 +168,8 @@ uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, Prof
     uint64_t sessionId = GenerateSessionId();
     ProfilingSession session(sessionId, sessionName, type);
     session.active = true;
-    session.startTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    session.startTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     _activeSessions[sessionId] = session;
     _realTimeStats.activeProfilers.fetch_add(1);
@@ -182,7 +182,7 @@ uint64_t BotProfiler::StartProfilingSession(const std::string& sessionName, Prof
 
 bool BotProfiler::StopProfilingSession(uint64_t sessionId)
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     auto it = _activeSessions.find(sessionId);
     if (it == _activeSessions.end())
@@ -193,8 +193,8 @@ bool BotProfiler::StopProfilingSession(uint64_t sessionId)
 
     ProfilingSession& session = it->second;
     session.active = false;
-    session.endTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    session.endTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
     session.duration = session.endTime - session.startTime;
 
     // Analyze session data before archiving
@@ -213,9 +213,9 @@ bool BotProfiler::StopProfilingSession(uint64_t sessionId)
 
 void BotProfiler::StopAllSessions()
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
-    std::vector<uint64_t> sessionIds;
+    ::std::vector<uint64_t> sessionIds;
     for (const auto& pair : _activeSessions)
         sessionIds.push_back(pair.first);
 
@@ -225,8 +225,8 @@ void BotProfiler::StopAllSessions()
         if (it != _activeSessions.end())
         {
             it->second.active = false;
-            it->second.endTime = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
+            it->second.endTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+                ::std::chrono::steady_clock::now().time_since_epoch()).count();
             it->second.duration = it->second.endTime - it->second.startTime;
 
             _sessionHistory.push_back(it->second);
@@ -239,7 +239,7 @@ void BotProfiler::StopAllSessions()
     TC_LOG_INFO("playerbot", "BotProfiler: Stopped all active profiling sessions");
 }
 
-void BotProfiler::RecordFunctionCall(const std::string& functionName, uint64_t duration, uint32_t botGuid)
+void BotProfiler::RecordFunctionCall(const ::std::string& functionName, uint64_t duration, uint32_t botGuid)
 {
     if (!_enabled.load())
         return;
@@ -248,7 +248,7 @@ void BotProfiler::RecordFunctionCall(const std::string& functionName, uint64_t d
     _realTimeStats.totalSamples.fetch_add(1);
 
     // Record with all active sessions
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
     for (auto& pair : _activeSessions)
     {
         ProfilingSession& session = pair.second;
@@ -256,18 +256,18 @@ void BotProfiler::RecordFunctionCall(const std::string& functionName, uint64_t d
             continue;
 
         // Check if this function is being tracked
-        if (!session.targetFunctions.empty())
+    if (!session.targetFunctions.empty())
         {
-            bool found = std::find(session.targetFunctions.begin(), session.targetFunctions.end(),
+            bool found = ::std::find(session.targetFunctions.begin(), session.targetFunctions.end(),
                                  functionName) != session.targetFunctions.end();
             if (!found)
                 continue;
         }
 
         // Check if this bot is being tracked
-        if (!session.targetBotGuids.empty())
+    if (!session.targetBotGuids.empty())
         {
-            bool found = std::find(session.targetBotGuids.begin(), session.targetBotGuids.end(),
+            bool found = ::std::find(session.targetBotGuids.begin(), session.targetBotGuids.end(),
                                  botGuid) != session.targetBotGuids.end();
             if (!found)
                 continue;
@@ -283,12 +283,12 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
     if (!_enabled.load())
         return;
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     if (sessionId == 0)
     {
         // Record for all active sessions
-        for (auto& pair : _activeSessions)
+    for (auto& pair : _activeSessions)
         {
             ProfilingSession& session = pair.second;
             if (session.active)
@@ -298,7 +298,7 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
         }
 
         // Also record globally
-        std::lock_guard dataLock(_dataMutex);
+        ::std::lock_guard dataLock(_dataMutex);
         _globalHotspots.push_back(hotspot);
     }
     else
@@ -314,23 +314,23 @@ void BotProfiler::RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sess
     _realTimeStats.hotspotsDetected.fetch_add(1);
 }
 
-std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId, uint32_t topN)
+::std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId, uint32_t topN)
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
-    std::vector<PerformanceHotspot> allHotspots;
+    ::std::vector<PerformanceHotspot> allHotspots;
 
     if (sessionId == 0)
     {
         // Analyze all sessions
-        for (const auto& pair : _activeSessions)
+    for (const auto& pair : _activeSessions)
         {
             const ProfilingSession& session = pair.second;
             allHotspots.insert(allHotspots.end(), session.hotspots.begin(), session.hotspots.end());
         }
 
         // Include global hotspots
-        std::lock_guard dataLock(_dataMutex);
+        ::std::lock_guard dataLock(_dataMutex);
         allHotspots.insert(allHotspots.end(), _globalHotspots.begin(), _globalHotspots.end());
     }
     else
@@ -344,7 +344,7 @@ std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId,
     }
 
     // Aggregate hotspots by location
-    std::unordered_map<std::string, PerformanceHotspot> aggregatedHotspots;
+    ::std::unordered_map<::std::string, PerformanceHotspot> aggregatedHotspots;
     for (const auto& hotspot : allHotspots)
     {
         auto& aggHotspot = aggregatedHotspots[hotspot.location];
@@ -356,23 +356,23 @@ std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId,
         {
             aggHotspot.hitCount += hotspot.hitCount;
             aggHotspot.totalTime += hotspot.totalTime;
-            aggHotspot.maxTime = std::max(aggHotspot.maxTime, hotspot.maxTime);
-            aggHotspot.impact = std::max(aggHotspot.impact, hotspot.impact);
+            aggHotspot.maxTime = ::std::max(aggHotspot.maxTime, hotspot.maxTime);
+            aggHotspot.impact = ::std::max(aggHotspot.impact, hotspot.impact);
         }
 
         // Recalculate average
-        if (aggHotspot.hitCount > 0)
+    if (aggHotspot.hitCount > 0)
             aggHotspot.averageTime = aggHotspot.totalTime / aggHotspot.hitCount;
     }
 
     // Convert back to vector and sort by impact
-    std::vector<PerformanceHotspot> result;
+    ::std::vector<PerformanceHotspot> result;
     for (const auto& pair : aggregatedHotspots)
     {
         result.push_back(pair.second);
     }
 
-    std::sort(result.begin(), result.end(),
+    ::std::sort(result.begin(), result.end(),
         [](const PerformanceHotspot& a, const PerformanceHotspot& b) {
             return a.impact > b.impact;
         });
@@ -384,11 +384,11 @@ std::vector<PerformanceHotspot> BotProfiler::AnalyzeHotspots(uint64_t sessionId,
     return result;
 }
 
-std::vector<PerformanceHotspot> BotProfiler::FindBottlenecks(HotspotCategory category, uint64_t sessionId)
+::std::vector<PerformanceHotspot> BotProfiler::FindBottlenecks(HotspotCategory category, uint64_t sessionId)
 {
     auto allHotspots = AnalyzeHotspots(sessionId, 100); // Get more for filtering
 
-    std::vector<PerformanceHotspot> bottlenecks;
+    ::std::vector<PerformanceHotspot> bottlenecks;
     for (const auto& hotspot : allHotspots)
     {
         if (hotspot.category == category && hotspot.impact >= DEFAULT_HOTSPOT_THRESHOLD)
@@ -400,9 +400,9 @@ std::vector<PerformanceHotspot> BotProfiler::FindBottlenecks(HotspotCategory cat
     return bottlenecks;
 }
 
-std::vector<std::string> BotProfiler::GetOptimizationRecommendations(uint64_t sessionId)
+::std::vector<::std::string> BotProfiler::GetOptimizationRecommendations(uint64_t sessionId)
 {
-    std::vector<std::string> recommendations;
+    ::std::vector<::std::string> recommendations;
     auto hotspots = AnalyzeHotspots(sessionId, 10);
 
     for (const auto& hotspot : hotspots)
@@ -436,7 +436,7 @@ std::vector<std::string> BotProfiler::GetOptimizationRecommendations(uint64_t se
         }
 
         // Add specific suggestions from hotspot
-        for (const auto& suggestion : hotspot.optimizationSuggestions)
+    for (const auto& suggestion : hotspot.optimizationSuggestions)
         {
             recommendations.push_back(suggestion);
         }
@@ -450,7 +450,7 @@ RealTimeProfilingStats BotProfiler::GetRealTimeStats() const
     return _realTimeStats;
 }
 
-std::vector<PerformanceHotspot> BotProfiler::GetCurrentHotspots(uint32_t topN)
+::std::vector<PerformanceHotspot> BotProfiler::GetCurrentHotspots(uint32_t topN)
 {
     return AnalyzeHotspots(0, topN);
 }
@@ -520,15 +520,15 @@ void BotProfiler::IntegrateLoadTester()
     _loadTesterIntegrated.store(true);
 }
 
-bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& report)
+bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, ::std::string& report)
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     ProfilingSession* session = nullptr;
     if (sessionId == 0)
     {
         // Generate report for all sessions
-        std::ostringstream oss;
+        ::std::ostringstream oss;
         oss << "=== Comprehensive Performance Report ===\n\n";
 
         oss << "Active Sessions: " << _activeSessions.size() << "\n";
@@ -537,7 +537,7 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& rep
         oss << "  Total Samples: " << _realTimeStats.totalSamples.load() << "\n";
         oss << "  Active Profilers: " << _realTimeStats.activeProfilers.load() << "\n";
         oss << "  Hotspots Detected: " << _realTimeStats.hotspotsDetected.load() << "\n";
-        oss << "  Profiling Overhead: " << std::fixed << std::setprecision(2)
+        oss << "  Profiling Overhead: " << ::std::fixed << ::std::setprecision(2)
             << _realTimeStats.overheadPercentage.load() << "%\n\n";
 
         // Top hotspots across all sessions
@@ -548,7 +548,7 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& rep
             const auto& hotspot = hotspots[i];
             oss << (i + 1) << ". " << hotspot.location << "\n";
             oss << "   Category: " << GetHotspotCategoryName(hotspot.category) << "\n";
-            oss << "   Impact: " << std::fixed << std::setprecision(1) << hotspot.impact << "%\n";
+            oss << "   Impact: " << ::std::fixed << ::std::setprecision(1) << hotspot.impact << "%\n";
             oss << "   Hit Count: " << hotspot.hitCount << "\n";
             oss << "   Average Time: " << hotspot.averageTime / 1000 << " ms\n";
             oss << "   Total Time: " << hotspot.totalTime / 1000 << " ms\n\n";
@@ -576,7 +576,7 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& rep
         else
         {
             // Check history
-            for (auto& histSession : _sessionHistory)
+    for (auto& histSession : _sessionHistory)
             {
                 if (histSession.sessionId == sessionId)
                 {
@@ -597,9 +597,9 @@ bool BotProfiler::GeneratePerformanceReport(uint64_t sessionId, std::string& rep
     }
 }
 
-bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& filename, const std::string& format)
+bool BotProfiler::ExportProfilingData(uint64_t sessionId, const ::std::string& filename, const ::std::string& format)
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     ProfilingSession* session = nullptr;
     auto it = _activeSessions.find(sessionId);
@@ -621,7 +621,7 @@ bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& fil
 
     try
     {
-        std::ofstream file(filename);
+        ::std::ofstream file(filename);
         if (!file.is_open())
         {
             TC_LOG_ERROR("playerbot", "BotProfiler: Failed to open file {} for export", filename);
@@ -650,7 +650,7 @@ bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& fil
         TC_LOG_INFO("playerbot", "BotProfiler: Exported session {} to {} in {} format", sessionId, filename, format);
         return true;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot", "BotProfiler: Export failed - {}", e.what());
         return false;
@@ -659,11 +659,11 @@ bool BotProfiler::ExportProfilingData(uint64_t sessionId, const std::string& fil
 
 void BotProfiler::StartBackgroundProcessing()
 {
-    _processingThread = std::thread([this]() {
+    _processingThread = ::std::thread([this]() {
         while (!_shutdownRequested.load())
         {
-            std::unique_lock<std::recursive_mutex> lock(_processingMutex);
-            _processingCondition.wait_for(lock, std::chrono::seconds(1));
+            ::std::unique_lock<::std::recursive_mutex> lock(_processingMutex);
+            _processingCondition.wait_for(lock, ::std::chrono::seconds(1));
 
             if (_shutdownRequested.load())
                 break;
@@ -689,7 +689,7 @@ void BotProfiler::StopBackgroundProcessing()
 
 void BotProfiler::ProcessProfilingData()
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     // Process pending operations
     while (!_pendingOperations.empty())
@@ -701,7 +701,7 @@ void BotProfiler::ProcessProfilingData()
         {
             operation();
         }
-        catch (const std::exception& e)
+        catch (const ::std::exception& e)
         {
             TC_LOG_ERROR("playerbot", "BotProfiler: Error processing operation - {}", e.what());
         }
@@ -710,11 +710,11 @@ void BotProfiler::ProcessProfilingData()
 
 void BotProfiler::UpdateRealTimeStatistics()
 {
-    std::lock_guard lock(_statsMutex);
+    ::std::lock_guard lock(_statsMutex);
 
     // Calculate profiling overhead
-    auto now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    auto now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     static uint64_t lastUpdate = now;
     uint64_t timeDelta = now - lastUpdate;
@@ -732,7 +732,7 @@ void BotProfiler::UpdateRealTimeStatistics()
             overhead += _realTimeStats.totalSamples.load() * 0.001; // Per-sample overhead
         }
 
-        _realTimeStats.overheadPercentage.store(std::min(overhead, 100.0));
+        _realTimeStats.overheadPercentage.store(::std::min(overhead, 100.0));
         _realTimeStats.lastUpdateTime.store(now);
         lastUpdate = now;
     }
@@ -756,7 +756,7 @@ void BotProfiler::AnalyzeSessionData(ProfilingSession* session)
     }
 
     // Sort hotspots by impact
-    std::sort(session->hotspots.begin(), session->hotspots.end(),
+    ::std::sort(session->hotspots.begin(), session->hotspots.end(),
         [](const PerformanceHotspot& a, const PerformanceHotspot& b) {
             return a.impact > b.impact;
         });
@@ -775,9 +775,9 @@ void BotProfiler::CalculateHotspotImpact(PerformanceHotspot& hotspot, const Prof
 
         // Impact is a combination of time percentage and frequency
         double timeImpact = hotspot.percentOfTotal;
-        double frequencyImpact = std::log10(static_cast<double>(hotspot.hitCount + 1)) * 10.0;
+        double frequencyImpact = ::std::log10(static_cast<double>(hotspot.hitCount + 1)) * 10.0;
 
-        hotspot.impact = std::min(100.0, (timeImpact * 0.7 + frequencyImpact * 0.3));
+        hotspot.impact = ::std::min(100.0, (timeImpact * 0.7 + frequencyImpact * 0.3));
     }
 }
 
@@ -788,23 +788,23 @@ uint64_t BotProfiler::GenerateSessionId()
 
 void BotProfiler::CleanupExpiredSessions()
 {
-    auto now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    auto now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     uint64_t retentionTime = static_cast<uint64_t>(_dataRetentionDays.load()) * 24 * 3600 * 1000000; // Convert to microseconds
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     // Remove old sessions from history
     _sessionHistory.erase(
-        std::remove_if(_sessionHistory.begin(), _sessionHistory.end(),
+        ::std::remove_if(_sessionHistory.begin(), _sessionHistory.end(),
             [now, retentionTime](const ProfilingSession& session) {
                 return (now - session.endTime) > retentionTime;
             }),
         _sessionHistory.end());
 }
 
-std::string BotProfiler::GetHotspotCategoryName(HotspotCategory category) const
+::std::string BotProfiler::GetHotspotCategoryName(HotspotCategory category) const
 {
     switch (category)
     {
@@ -821,7 +821,7 @@ std::string BotProfiler::GetHotspotCategoryName(HotspotCategory category) const
     }
 }
 
-std::string BotProfiler::GetSessionTypeName(ProfilingSessionType type) const
+::std::string BotProfiler::GetSessionTypeName(ProfilingSessionType type) const
 {
     switch (type)
     {
@@ -836,7 +836,7 @@ std::string BotProfiler::GetSessionTypeName(ProfilingSessionType type) const
     }
 }
 
-std::string BotProfiler::GetScopeName(ProfilingScope scope) const
+::std::string BotProfiler::GetScopeName(ProfilingScope scope) const
 {
     switch (scope)
     {
@@ -851,9 +851,9 @@ std::string BotProfiler::GetScopeName(ProfilingScope scope) const
     }
 }
 
-void BotProfiler::GenerateSessionSummary(const ProfilingSession* session, std::string& summary)
+void BotProfiler::GenerateSessionSummary(const ProfilingSession* session, ::std::string& summary)
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     oss << "=== Profiling Session Report ===\n";
     oss << "Session ID: " << session->sessionId << "\n";
@@ -893,11 +893,11 @@ void BotProfiler::GenerateSessionSummary(const ProfilingSession* session, std::s
     }
 
     oss << "\n=== Performance Hotspots ===\n";
-    for (size_t i = 0; i < std::min(session->hotspots.size(), size_t(10)); ++i)
+    for (size_t i = 0; i < ::std::min(session->hotspots.size(), size_t(10)); ++i)
     {
         const auto& hotspot = session->hotspots[i];
         oss << (i + 1) << ". " << hotspot.location << "\n";
-        oss << "   Impact: " << std::fixed << std::setprecision(1) << hotspot.impact << "%\n";
+        oss << "   Impact: " << ::std::fixed << ::std::setprecision(1) << hotspot.impact << "%\n";
         oss << "   Category: " << GetHotspotCategoryName(hotspot.category) << "\n";
         oss << "   Hit Count: " << hotspot.hitCount << "\n";
         oss << "   Average Time: " << hotspot.averageTime / 1000 << " ms\n\n";
@@ -906,14 +906,14 @@ void BotProfiler::GenerateSessionSummary(const ProfilingSession* session, std::s
     oss << "=== Aggregated Metrics ===\n";
     for (const auto& pair : session->aggregatedMetrics)
     {
-        oss << pair.first << ": " << std::fixed << std::setprecision(2)
+        oss << pair.first << ": " << ::std::fixed << ::std::setprecision(2)
             << pair.second / 1000.0 << " ms total\n";
     }
 
     summary = oss.str();
 }
 
-void BotProfiler::ExportToJSON(const ProfilingSession* session, std::ofstream& file)
+void BotProfiler::ExportToJSON(const ProfilingSession* session, ::std::ofstream& file)
 {
     file << "{\n";
     file << "  \"sessionId\": " << session->sessionId << ",\n";
@@ -954,7 +954,7 @@ void BotProfiler::ExportToJSON(const ProfilingSession* session, std::ofstream& f
     file << "}\n";
 }
 
-void BotProfiler::ExportToCSV(const ProfilingSession* session, std::ofstream& file)
+void BotProfiler::ExportToCSV(const ProfilingSession* session, ::std::ofstream& file)
 {
     // CSV header
     file << "Location,Category,Impact,HitCount,TotalTime,AverageTime,MaxTime\n";
@@ -972,7 +972,7 @@ void BotProfiler::ExportToCSV(const ProfilingSession* session, std::ofstream& fi
     }
 }
 
-void BotProfiler::ExportToXML(const ProfilingSession* session, std::ofstream& file)
+void BotProfiler::ExportToXML(const ProfilingSession* session, ::std::ofstream& file)
 {
     file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     file << "<ProfilingSession>\n";

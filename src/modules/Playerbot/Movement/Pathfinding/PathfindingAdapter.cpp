@@ -26,7 +26,7 @@ namespace Playerbot
           _totalPathsGenerated(0), _totalGenerationTime(0),
           _maxGenerationTime(0)
     {
-        _lastCacheClean = std::chrono::steady_clock::now();
+        _lastCacheClean = ::std::chrono::steady_clock::now();
     }
 
     PathfindingAdapter::~PathfindingAdapter()
@@ -47,7 +47,7 @@ namespace Playerbot
 
     void PathfindingAdapter::Shutdown()
     {
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -59,10 +59,10 @@ namespace Playerbot
         if (!bot || !bot->GetMap())
             return false;
 
-        auto startTime = std::chrono::high_resolution_clock::now();
+        auto startTime = ::std::chrono::high_resolution_clock::now();
 
         // Check cache first if enabled
-        if (_enableCaching && !forceDirect)
+    if (_enableCaching && !forceDirect)
         {
             if (GetCachedPath(bot, destination, path))
             {
@@ -79,7 +79,7 @@ namespace Playerbot
         float distance = start.GetExactDist(&destination);
 
         // Use direct path for short distances or if forced
-        if (forceDirect || distance <= _straightPathDistance)
+    if (forceDirect || distance <= _straightPathDistance)
         {
             PathNode node(destination, bot->GetSpeed(MOVE_RUN));
             path.nodes.push_back(node);
@@ -93,7 +93,7 @@ namespace Playerbot
             PathGenerator generator(bot);
 
             // Set generation options
-            if (bot->CanFly())
+    if (bot->CanFly())
                 generator.SetUseStraightPath(true);
 
             bool result = InternalCalculatePath(generator, start, destination, bot);
@@ -109,7 +109,7 @@ namespace Playerbot
             ConvertPath(generator, path);
 
             // Optimize path if enabled
-            if (_enableSmoothing && path.nodes.size() > 2)
+    if (_enableSmoothing && path.nodes.size() > 2)
             {
                 OptimizePath(path);
                 path.isOptimized = true;
@@ -117,12 +117,12 @@ namespace Playerbot
         }
 
         // Calculate generation time
-        auto endTime = std::chrono::high_resolution_clock::now();
+        auto endTime = ::std::chrono::high_resolution_clock::now();
         uint32 generationTime = static_cast<uint32>(
-            std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count());
+            ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count());
 
         path.generationCost = generationTime;
-        path.generatedTime = std::chrono::steady_clock::now();
+        path.generatedTime = ::std::chrono::steady_clock::now();
 
         // Update statistics
         _totalPathsGenerated.fetch_add(1);
@@ -133,7 +133,7 @@ namespace Playerbot
                !_maxGenerationTime.compare_exchange_weak(currentMax, generationTime));
 
         // Cache the path if caching is enabled
-        if (_enableCaching && path.IsValid())
+    if (_enableCaching && path.IsValid())
         {
             CachePath(bot, destination, path);
         }
@@ -203,14 +203,14 @@ namespace Playerbot
         bool found = false;
 
         // Try multiple angles if direct opposite is blocked
-        for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 8; ++i)
         {
             float tryAngle = angle + (i % 2 == 0 ? i/2 * M_PI/4 : -i/2 * M_PI/4);
             tryAngle = Position::NormalizeOrientation(tryAngle);
 
             fleePos = bot->GetNearPosition(distance, tryAngle);
             // Check if position is valid
-            if (IsWalkablePosition(map, fleePos))
+    if (IsWalkablePosition(map, fleePos))
             {
                 found = true;
                 break;
@@ -233,13 +233,13 @@ namespace Playerbot
             return false;
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end() && it->second.isValid)
         {
             // Check if cache is expired
-            if (!it->second.IsExpired(_cacheDuration))
+    if (!it->second.IsExpired(_cacheDuration))
             {
                 // Check if destination is close enough to cached destination
                 return ArePositionsClose(it->second.destination, destination);
@@ -256,7 +256,7 @@ namespace Playerbot
             return false;
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
         auto it = _pathCache.find(key);
 
         if (it != _pathCache.end())
@@ -274,7 +274,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
 
         // Remove all cache entries for this bot
         auto it = _pathCache.begin();
@@ -295,7 +295,7 @@ namespace Playerbot
 
     void PathfindingAdapter::ClearAllCache()
     {
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
         _pathCache.clear();
         while (!_cacheOrder.empty())
             _cacheOrder.pop();
@@ -304,7 +304,7 @@ namespace Playerbot
     void PathfindingAdapter::SetPathParameters(uint32 maxNodes, float straightDistance,
                                               float maxSearchDistance)
     {
-        _maxPathNodes = std::min(maxNodes, static_cast<uint32>(MAX_PATH_LENGTH));
+        _maxPathNodes = ::std::min(maxNodes, static_cast<uint32>(MAX_PATH_LENGTH));
         _straightPathDistance = straightDistance;
         _maxSearchDistance = maxSearchDistance;
     }
@@ -315,7 +315,7 @@ namespace Playerbot
         _cacheDuration = duration;
 
         // Clean cache if it's now too large
-        if (_pathCache.size() > _maxCacheSize)
+    if (_pathCache.size() > _maxCacheSize)
         {
             CleanExpiredCache();
         }
@@ -362,7 +362,7 @@ namespace Playerbot
         if (z > INVALID_HEIGHT)
         {
             // Check if position is not too high above ground
-            float heightDiff = std::abs(position.GetPositionZ() - z);
+            float heightDiff = ::std::abs(position.GetPositionZ() - z);
             return heightDiff < 10.0f;
         }
 
@@ -376,7 +376,7 @@ namespace Playerbot
             return false;
 
         // First check if current position is walkable
-        if (IsWalkablePosition(map, position))
+    if (IsWalkablePosition(map, position))
         {
             walkable = position;
             return true;
@@ -448,7 +448,7 @@ namespace Playerbot
         }
 
         // Set path type based on PathGenerator result
-        switch (generator.GetPathType())
+    switch (generator.GetPathType())
         {
         case PATHFIND_NORMAL:
             path.pathType = PathType::PATHFIND_NORMAL;
@@ -481,7 +481,7 @@ namespace Playerbot
         if (path.nodes.size() < 3)
             return;
 
-        std::vector<PathNode> optimized;
+        ::std::vector<PathNode> optimized;
         optimized.reserve(path.nodes.size());
 
         // Always keep start point
@@ -495,7 +495,7 @@ namespace Playerbot
             bool canSkip = true;
 
             // Look ahead to find furthest reachable point
-            for (size_t j = i + 2; j < path.nodes.size() && j <= i + 5; ++j)
+    for (size_t j = i + 2; j < path.nodes.size() && j <= i + 5; ++j)
             {
                 // Check if we can skip intermediate points
                 Position const& start = path.nodes[i].position;
@@ -514,7 +514,7 @@ namespace Playerbot
             }
 
             // Add the furthest reachable point
-            if (furthest < path.nodes.size())
+    if (furthest < path.nodes.size())
             {
                 path.nodes[furthest].isSmoothed = true;
                 optimized.push_back(path.nodes[furthest]);
@@ -524,13 +524,13 @@ namespace Playerbot
         }
 
         // Always keep end point
-        if (optimized.back().position.GetExactDist(&path.nodes.back().position) > 0.1f)
+    if (optimized.back().position.GetExactDist(&path.nodes.back().position) > 0.1f)
         {
             optimized.push_back(path.nodes.back());
         }
 
         // Replace original path with optimized version
-        path.nodes = std::move(optimized);
+        path.nodes = ::std::move(optimized);
 
         // Recalculate total length
         path.totalLength = 0.0f;
@@ -552,15 +552,15 @@ namespace Playerbot
 
         uint64 key = CalculateCacheKey(bot->GetGUID(), destination);
 
-        std::lock_guard lock(_cacheLock);
+        ::std::lock_guard lock(_cacheLock);
 
         // Check cache size limit
-        if (_pathCache.size() >= _maxCacheSize)
+    if (_pathCache.size() >= _maxCacheSize)
         {
             CleanExpiredCache();
 
             // If still too large, remove oldest entry
-            if (_pathCache.size() >= _maxCacheSize && !_cacheOrder.empty())
+    if (_pathCache.size() >= _maxCacheSize && !_cacheOrder.empty())
             {
                 uint64 oldestKey = _cacheOrder.front();
                 _cacheOrder.pop();
@@ -573,7 +573,7 @@ namespace Playerbot
         CachedPath& cached = _pathCache[key];
         cached.path = path;
         cached.destination = destination;
-        cached.timestamp = std::chrono::steady_clock::now();
+        cached.timestamp = ::std::chrono::steady_clock::now();
         cached.hitCount = 0;
         cached.isValid = true;
 
@@ -582,10 +582,10 @@ namespace Playerbot
 
     void PathfindingAdapter::CleanExpiredCache()
     {
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
 
         // Only clean periodically
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - _lastCacheClean).count();
         if (elapsed < _cacheCleanInterval)
             return;

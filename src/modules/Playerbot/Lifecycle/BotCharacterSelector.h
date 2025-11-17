@@ -54,15 +54,15 @@ public:
     void Shutdown();
 
     // === ASYNC CHARACTER SELECTION ===
-    using CharacterCallback = std::function<void(ObjectGuid)>;
-    using CharacterListCallback = std::function<void(std::vector<ObjectGuid>)>;
+    using CharacterCallback = ::std::function<void(ObjectGuid)>;
+    using CharacterListCallback = ::std::function<void(::std::vector<ObjectGuid>)>;
 
     void SelectCharacterAsync(SpawnRequest const& request, CharacterCallback callback);
     void GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, CharacterListCallback callback);
 
     // === BATCH OPERATIONS ===
-    void ProcessBatchSelection(std::vector<SpawnRequest> const& requests,
-                              std::function<void(std::vector<ObjectGuid>)> callback);
+    void ProcessBatchSelection(::std::vector<SpawnRequest> const& requests,
+                              ::std::function<void(::std::vector<ObjectGuid>)> callback);
 
     // === CHARACTER CREATION ===
     ObjectGuid CreateCharacterForAccount(uint32 accountId, SpawnRequest const& request);
@@ -75,11 +75,11 @@ public:
     // === PERFORMANCE METRICS ===
     struct SelectionStats
     {
-        std::atomic<uint32> totalSelections{0};
-        std::atomic<uint32> cacheHits{0};
-        std::atomic<uint32> cacheMisses{0};
-        std::atomic<uint32> charactersCreated{0};
-        std::atomic<uint64> avgSelectionTimeUs{0};
+        ::std::atomic<uint32> totalSelections{0};
+        ::std::atomic<uint32> cacheHits{0};
+        ::std::atomic<uint32> cacheMisses{0};
+        ::std::atomic<uint32> charactersCreated{0};
+        ::std::atomic<uint64> avgSelectionTimeUs{0};
 
         float GetCacheHitRate() const {
             uint32 total = cacheHits.load() + cacheMisses.load();
@@ -92,37 +92,37 @@ public:
 
 private:
     // === ASYNC WORKFLOW IMPLEMENTATION ===
-    void SelectCharacterFromAccounts(std::vector<uint32> accounts, size_t index,
+    void SelectCharacterFromAccounts(::std::vector<uint32> accounts, size_t index,
                                     SpawnRequest const& request, CharacterCallback callback);
 
     void ProcessAccountCharacters(uint32 accountId, SpawnRequest const& request,
-                                std::vector<ObjectGuid> characters, CharacterCallback callback);
+                                ::std::vector<ObjectGuid> characters, CharacterCallback callback);
 
     void HandleCharacterCreation(uint32 accountId, SpawnRequest const& request, CharacterCallback callback);
 
     // === CHARACTER FILTERING ===
-    std::vector<ObjectGuid> FilterCharactersByRequest(std::vector<ObjectGuid> const& characters,
+    ::std::vector<ObjectGuid> FilterCharactersByRequest(::std::vector<ObjectGuid> const& characters,
                                                      SpawnRequest const& request) const;
 
     bool MatchesRequestCriteria(ObjectGuid characterGuid, SpawnRequest const& request) const;
 
     // === ACCOUNT MANAGEMENT ===
-    std::vector<uint32> GetAvailableAccounts(SpawnRequest const& request) const;
+    ::std::vector<uint32> GetAvailableAccounts(SpawnRequest const& request) const;
     uint32 AcquireSuitableAccount(SpawnRequest const& request) const;
 
     // === CHARACTER CACHING ===
     struct CharacterCacheEntry
     {
-        std::vector<ObjectGuid> characters;
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::vector<ObjectGuid> characters;
+        ::std::chrono::steady_clock::time_point lastUpdate;
         bool isValid = false;
     };
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _cacheMutex;
-    std::unordered_map<uint32, CharacterCacheEntry> _characterCache; // accountId -> characters
+    ::std::unordered_map<uint32, CharacterCacheEntry> _characterCache; // accountId -> characters
 
-    void UpdateCharacterCache(uint32 accountId, std::vector<ObjectGuid> const& characters);
-    std::vector<ObjectGuid> GetCachedCharacters(uint32 accountId) const;
+    void UpdateCharacterCache(uint32 accountId, ::std::vector<ObjectGuid> const& characters);
+    ::std::vector<ObjectGuid> GetCachedCharacters(uint32 accountId) const;
     void InvalidateCache(uint32 accountId);
 
     // === REQUEST QUEUE MANAGEMENT ===
@@ -130,12 +130,12 @@ private:
     {
         SpawnRequest request;
         CharacterCallback callback;
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
     };
 
-    std::queue<PendingRequest> _pendingRequests;
+    ::std::queue<PendingRequest> _pendingRequests;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _requestMutex;
-    std::atomic<bool> _processingRequests{false};
+    ::std::atomic<bool> _processingRequests{false};
 
     void QueueRequest(SpawnRequest const& request, CharacterCallback callback);
     void ProcessPendingRequests();

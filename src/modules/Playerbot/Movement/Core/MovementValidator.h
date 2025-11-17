@@ -223,8 +223,8 @@ namespace Playerbot
         {
             Position lastPosition;
             Position lastValidPosition;
-            std::chrono::steady_clock::time_point lastCheck;
-            std::chrono::steady_clock::time_point stuckStartTime;
+            ::std::chrono::steady_clock::time_point lastCheck;
+            ::std::chrono::steady_clock::time_point stuckStartTime;
             uint32 stuckCounter;
             uint32 unstuckAttempts;
             float totalDistanceMoved;
@@ -233,7 +233,7 @@ namespace Playerbot
             StuckData() : stuckCounter(0), unstuckAttempts(0),
                          totalDistanceMoved(0.0f), isStuck(false)
             {
-                lastCheck = std::chrono::steady_clock::now();
+                lastCheck = ::std::chrono::steady_clock::now();
                 stuckStartTime = lastCheck;
             }
 
@@ -243,14 +243,14 @@ namespace Playerbot
                 unstuckAttempts = 0;
                 totalDistanceMoved = 0.0f;
                 isStuck = false;
-                lastCheck = std::chrono::steady_clock::now();
+                lastCheck = ::std::chrono::steady_clock::now();
                 stuckStartTime = lastCheck;
             }
         };
 
         // Member variables
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::MOVEMENT_ARBITER> _dataLock;
-        std::unordered_map<ObjectGuid, StuckData> _stuckData;
+        ::std::unordered_map<ObjectGuid, StuckData> _stuckData;
 
         // Configuration
         bool _stuckDetectionEnabled;
@@ -262,10 +262,10 @@ namespace Playerbot
         float _maxFallDistance;
 
         // Statistics
-        mutable std::atomic<uint32> _totalValidations;
-        mutable std::atomic<uint32> _totalFailures;
-        mutable std::atomic<uint32> _totalStuckDetections;
-        mutable std::atomic<uint32> _totalUnstuckAttempts;
+        mutable ::std::atomic<uint32> _totalValidations;
+        mutable ::std::atomic<uint32> _totalFailures;
+        mutable ::std::atomic<uint32> _totalStuckDetections;
+        mutable ::std::atomic<uint32> _totalUnstuckAttempts;
 
         // Terrain danger zones (could be loaded from DB)
         struct DangerZone
@@ -275,7 +275,7 @@ namespace Playerbot
             float radius;
             TerrainType type;
         };
-        std::vector<DangerZone> _dangerZones;
+        ::std::vector<DangerZone> _dangerZones;
     };
 }
 

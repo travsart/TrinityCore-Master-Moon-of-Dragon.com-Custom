@@ -22,7 +22,7 @@ namespace Playerbot
 {
 
 // Neural Layer Implementation
-void NeuralLayer::Forward(const std::vector<float>& input)
+void NeuralLayer::Forward(const ::std::vector<float>& input)
 {
     outputs.resize(weights.size());
 
@@ -35,19 +35,19 @@ void NeuralLayer::Forward(const std::vector<float>& input)
         }
 
         // Apply activation function
-        switch (activation)
+    switch (activation)
         {
             case ActivationFunction::LINEAR:
                 outputs[i] = sum;
                 break;
             case ActivationFunction::SIGMOID:
-                outputs[i] = 1.0f / (1.0f + std::exp(-sum));
+                outputs[i] = 1.0f / (1.0f + ::std::exp(-sum));
                 break;
             case ActivationFunction::TANH:
-                outputs[i] = std::tanh(sum);
+                outputs[i] = ::std::tanh(sum);
                 break;
             case ActivationFunction::RELU:
-                outputs[i] = std::max(0.0f, sum);
+                outputs[i] = ::std::max(0.0f, sum);
                 break;
             case ActivationFunction::LEAKY_RELU:
                 outputs[i] = sum > 0 ? sum : 0.01f * sum;
@@ -68,10 +68,10 @@ void NeuralLayer::Initialize(size_t inputSize, size_t outputSize, ActivationFunc
     gradients.resize(outputSize);
 
     // Xavier initialization
-    float limit = std::sqrt(6.0f / (inputSize + outputSize));
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(-limit, limit);
+    float limit = ::std::sqrt(6.0f / (inputSize + outputSize));
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_real_distribution<float> dist(-limit, limit);
 
     for (size_t i = 0; i < outputSize; ++i)
     {
@@ -87,7 +87,7 @@ void NeuralLayer::Initialize(size_t inputSize, size_t outputSize, ActivationFunc
 // Neural Network Implementation
 NeuralNetwork::NeuralNetwork() : _inputSize(0), _lastLoss(0.0f), _epoch(0)
 {
-    std::random_device rd;
+    ::std::random_device rd;
     _rng.seed(rd());
 }
 
@@ -99,7 +99,7 @@ void NeuralNetwork::AddLayer(size_t neurons, ActivationFunction activation)
     layer.activation = activation;
     layer.outputs.resize(neurons);
     layer.gradients.resize(neurons);
-    _layers.push_back(std::move(layer));
+    _layers.push_back(::std::move(layer));
 }
 
 void NeuralNetwork::Build(size_t inputSize)
@@ -120,12 +120,12 @@ void NeuralNetwork::Build(size_t inputSize)
     }
 }
 
-std::vector<float> NeuralNetwork::Predict(const std::vector<float>& input)
+::std::vector<float> NeuralNetwork::Predict(const ::std::vector<float>& input)
 {
     if (_layers.empty() || input.size() != _inputSize)
-        return std::vector<float>();
+        return ::std::vector<float>();
 
-    std::vector<float> currentInput = input;
+    ::std::vector<float> currentInput = input;
 
     for (auto& layer : _layers)
     {
@@ -136,17 +136,17 @@ std::vector<float> NeuralNetwork::Predict(const std::vector<float>& input)
     return _layers.back().outputs;
 }
 
-void NeuralNetwork::Train(const std::vector<float>& input, const std::vector<float>& target, float learningRate)
+void NeuralNetwork::Train(const ::std::vector<float>& input, const ::std::vector<float>& target, float learningRate)
 {
     // Forward pass
-    std::vector<float> prediction = Predict(input);
+    ::std::vector<float> prediction = Predict(input);
 
     if (prediction.size() != target.size())
         return;
 
     // Calculate loss (MSE)
     _lastLoss = 0.0f;
-    std::vector<float> error(target.size());
+    ::std::vector<float> error(target.size());
     for (size_t i = 0; i < target.size(); ++i)
     {
         error[i] = target[i] - prediction[i];
@@ -167,7 +167,7 @@ void NeuralNetwork::Train(const std::vector<float>& input, const std::vector<flo
         else
         {
             // Hidden layers
-            std::vector<float> nextError(layer.outputs.size(), 0.0f);
+            ::std::vector<float> nextError(layer.outputs.size(), 0.0f);
             auto& nextLayer = _layers[i + 1];
 
             for (size_t j = 0; j < layer.outputs.size(); ++j)
@@ -184,7 +184,7 @@ void NeuralNetwork::Train(const std::vector<float>& input, const std::vector<flo
         }
 
         // Update weights and biases
-        const std::vector<float>& layerInput = (i == 0) ? input : _layers[i-1].outputs;
+        const ::std::vector<float>& layerInput = (i == 0) ? input : _layers[i-1].outputs;
 
         for (size_t j = 0; j < layer.weights.size(); ++j)
         {
@@ -222,18 +222,18 @@ float NeuralNetwork::ActivateDerivative(float x, ActivationFunction func) const
 QFunction::QFunction(size_t stateSize, size_t actionSize)
     : _stateSize(stateSize), _actionSize(actionSize), _updateCounter(0)
 {
-    std::random_device rd;
+    ::std::random_device rd;
     _rng.seed(rd());
 
     // Build Q-network
-    _network = std::make_unique<NeuralNetwork>();
+    _network = ::std::make_unique<NeuralNetwork>();
     _network->AddLayer(128, ActivationFunction::RELU);
     _network->AddLayer(128, ActivationFunction::RELU);
     _network->AddLayer(actionSize, ActivationFunction::LINEAR);
     _network->Build(stateSize);
 
     // Build target network (for stability)
-    _targetNetwork = std::make_unique<NeuralNetwork>();
+    _targetNetwork = ::std::make_unique<NeuralNetwork>();
     _targetNetwork->AddLayer(128, ActivationFunction::RELU);
     _targetNetwork->AddLayer(128, ActivationFunction::RELU);
     _targetNetwork->AddLayer(actionSize, ActivationFunction::LINEAR);
@@ -242,28 +242,28 @@ QFunction::QFunction(size_t stateSize, size_t actionSize)
 
 QFunction::~QFunction() = default;
 
-float QFunction::GetQValue(const std::vector<float>& state, uint32_t action) const
+float QFunction::GetQValue(const ::std::vector<float>& state, uint32_t action) const
 {
     if (action >= _actionSize)
         return 0.0f;
 
-    std::vector<float> qValues = _network->Predict(state);
+    ::std::vector<float> qValues = _network->Predict(state);
     return qValues.empty() ? 0.0f : qValues[action];
 }
 
-std::vector<float> QFunction::GetAllQValues(const std::vector<float>& state) const
+::std::vector<float> QFunction::GetAllQValues(const ::std::vector<float>& state) const
 {
     return _network->Predict(state);
 }
 
-uint32_t QFunction::GetBestAction(const std::vector<float>& state) const
+uint32_t QFunction::GetBestAction(const ::std::vector<float>& state) const
 {
-    std::vector<float> qValues = GetAllQValues(state);
+    ::std::vector<float> qValues = GetAllQValues(state);
     if (qValues.empty())
         return 0;
 
-    auto maxIt = std::max_element(qValues.begin(), qValues.end());
-    return std::distance(qValues.begin(), maxIt);
+    auto maxIt = ::std::max_element(qValues.begin(), qValues.end());
+    return ::std::distance(qValues.begin(), maxIt);
 }
 
 void QFunction::Update(const Experience& exp, float learningRate, float discountFactor)
@@ -272,16 +272,16 @@ void QFunction::Update(const Experience& exp, float learningRate, float discount
     float targetQ = exp.reward;
     if (!exp.terminal)
     {
-        std::vector<float> nextQValues = _targetNetwork->Predict(exp.nextState);
+        ::std::vector<float> nextQValues = _targetNetwork->Predict(exp.nextState);
         if (!nextQValues.empty())
         {
-            float maxNextQ = *std::max_element(nextQValues.begin(), nextQValues.end());
+            float maxNextQ = *::std::max_element(nextQValues.begin(), nextQValues.end());
             targetQ += discountFactor * maxNextQ;
         }
     }
 
     // Get current Q-values and update target for selected action
-    std::vector<float> currentQValues = _network->Predict(exp.state);
+    ::std::vector<float> currentQValues = _network->Predict(exp.state);
     if (!currentQValues.empty() && exp.action < currentQValues.size())
     {
         currentQValues[exp.action] = targetQ;
@@ -296,14 +296,14 @@ void QFunction::Update(const Experience& exp, float learningRate, float discount
     }
 }
 
-uint32_t QFunction::SelectAction(const std::vector<float>& state, float epsilon)
+uint32_t QFunction::SelectAction(const ::std::vector<float>& state, float epsilon)
 {
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    ::std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     if (dist(_rng) < epsilon)
     {
         // Exploration: random action
-        std::uniform_int_distribution<uint32_t> actionDist(0, _actionSize - 1);
+        ::std::uniform_int_distribution<uint32_t> actionDist(0, _actionSize - 1);
         return actionDist(_rng);
     }
     else
@@ -317,18 +317,18 @@ uint32_t QFunction::SelectAction(const std::vector<float>& state, float epsilon)
 PolicyNetwork::PolicyNetwork(size_t stateSize, size_t actionSize)
     : _stateSize(stateSize), _actionSize(actionSize)
 {
-    std::random_device rd;
+    ::std::random_device rd;
     _rng.seed(rd());
 
     // Build policy network
-    _policyNet = std::make_unique<NeuralNetwork>();
+    _policyNet = ::std::make_unique<NeuralNetwork>();
     _policyNet->AddLayer(128, ActivationFunction::RELU);
     _policyNet->AddLayer(64, ActivationFunction::RELU);
     _policyNet->AddLayer(actionSize, ActivationFunction::SOFTMAX);
     _policyNet->Build(stateSize);
 
     // Build value network for advantage estimation
-    _valueNet = std::make_unique<NeuralNetwork>();
+    _valueNet = ::std::make_unique<NeuralNetwork>();
     _valueNet->AddLayer(128, ActivationFunction::RELU);
     _valueNet->AddLayer(64, ActivationFunction::RELU);
     _valueNet->AddLayer(1, ActivationFunction::LINEAR);
@@ -337,19 +337,19 @@ PolicyNetwork::PolicyNetwork(size_t stateSize, size_t actionSize)
 
 PolicyNetwork::~PolicyNetwork() = default;
 
-std::vector<float> PolicyNetwork::GetActionProbabilities(const std::vector<float>& state)
+::std::vector<float> PolicyNetwork::GetActionProbabilities(const ::std::vector<float>& state)
 {
     return _policyNet->Predict(state);
 }
 
-uint32_t PolicyNetwork::SampleAction(const std::vector<float>& state)
+uint32_t PolicyNetwork::SampleAction(const ::std::vector<float>& state)
 {
-    std::vector<float> probs = GetActionProbabilities(state);
+    ::std::vector<float> probs = GetActionProbabilities(state);
     if (probs.empty())
         return 0;
 
     // Sample from probability distribution
-    std::discrete_distribution<uint32_t> dist(probs.begin(), probs.end());
+    ::std::discrete_distribution<uint32_t> dist(probs.begin(), probs.end());
     return dist(_rng);
 }
 
@@ -391,7 +391,7 @@ bool BehaviorAdaptation::Initialize()
     RegisterAction("offensive_stance");
 
     // Initialize collective model
-    _collectiveModel = std::make_unique<NeuralNetwork>();
+    _collectiveModel = ::std::make_unique<NeuralNetwork>();
     _collectiveModel->AddLayer(256, ActivationFunction::RELU);
     _collectiveModel->AddLayer(128, ActivationFunction::RELU);
     _collectiveModel->AddLayer(ACTION_SIZE, ActivationFunction::SOFTMAX);
@@ -409,7 +409,7 @@ void BehaviorAdaptation::Shutdown()
 
     TC_LOG_INFO("playerbot.learning", "Shutting down Behavior Adaptation System");
 
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
     _botModels.clear();
     _collectiveModel.reset();
     _sharedExperiences.clear();
@@ -418,9 +418,9 @@ void BehaviorAdaptation::Shutdown()
     _initialized = false;
 }
 
-std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* bot) const
+::std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* bot) const
 {
-    std::vector<float> features;
+    ::std::vector<float> features;
     features.reserve(STATE_SIZE);
 
     if (!ai || !bot)
@@ -461,7 +461,7 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
     if (Unit* target = ai->GetTargetUnit())
     {
         features.push_back(target->GetHealthPct() / 100.0f);
-        features.push_back(std::sqrt(bot->GetExactDistSq(target)) / 50.0f); // Calculate once from squared distance
+        features.push_back(::std::sqrt(bot->GetExactDistSq(target)) / 50.0f); // Calculate once from squared distance
         features.push_back(target->GetLevel() / 80.0f);
         features.push_back(target->IsPlayer() ? 1.0f : 0.0f);
     }
@@ -474,15 +474,15 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
     }
 
     // Add combat features
-    std::vector<float> combatFeatures = ExtractCombatFeatures(bot, ai->GetTargetUnit());
+    ::std::vector<float> combatFeatures = ExtractCombatFeatures(bot, ai->GetTargetUnit());
     features.insert(features.end(), combatFeatures.begin(), combatFeatures.end());
 
     // Add social features
-    std::vector<float> socialFeatures = ExtractSocialFeatures(bot);
+    ::std::vector<float> socialFeatures = ExtractSocialFeatures(bot);
     features.insert(features.end(), socialFeatures.begin(), socialFeatures.end());
 
     // Add environment features
-    std::vector<float> envFeatures = ExtractEnvironmentFeatures(bot);
+    ::std::vector<float> envFeatures = ExtractEnvironmentFeatures(bot);
     features.insert(features.end(), envFeatures.begin(), envFeatures.end());
 
     // Pad or truncate to STATE_SIZE
@@ -494,9 +494,9 @@ std::vector<float> BehaviorAdaptation::ExtractStateFeatures(BotAI* ai, Player* b
     return features;
 }
 
-std::vector<float> BehaviorAdaptation::ExtractCombatFeatures(Player* bot, Unit* target) const
+::std::vector<float> BehaviorAdaptation::ExtractCombatFeatures(Player* bot, Unit* target) const
 {
-    std::vector<float> features;
+    ::std::vector<float> features;
 
     if (!bot)
     {
@@ -557,9 +557,9 @@ std::vector<float> BehaviorAdaptation::ExtractCombatFeatures(Player* bot, Unit* 
     return features;
 }
 
-std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
+::std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
 {
-    std::vector<float> features;
+    ::std::vector<float> features;
 
     if (!bot)
     {
@@ -609,9 +609,9 @@ std::vector<float> BehaviorAdaptation::ExtractSocialFeatures(Player* bot) const
     return features;
 }
 
-std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) const
+::std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) const
 {
-    std::vector<float> features;
+    ::std::vector<float> features;
 
     if (!bot)
     {
@@ -647,15 +647,15 @@ std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) c
     features.push_back(0.0f);  // Weather intensity
 
     // Nearby entity counts
-    std::list<Player*> nearbyPlayers;
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Player*> nearbyPlayers;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetPlayerListInGrid(nearbyPlayers, 30.0f);
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, 0, 30.0f);
 
     features.push_back(nearbyPlayers.size() / 20.0f);
     features.push_back(nearbyCreatures.size() / 30.0f);
     // Movement state
-    features.push_back(bot->IsMoving() ? 1.0f : 0.0f);
+    features.push_back(bot->isMoving() ? 1.0f : 0.0f);
     features.push_back(bot->IsFalling() ? 1.0f : 0.0f);
     features.push_back(bot->IsFlying() ? 1.0f : 0.0f);
     // Pad to fixed size
@@ -665,7 +665,7 @@ std::vector<float> BehaviorAdaptation::ExtractEnvironmentFeatures(Player* bot) c
     return features;
 }
 
-void BehaviorAdaptation::RegisterAction(const std::string& actionName)
+void BehaviorAdaptation::RegisterAction(const ::std::string& actionName)
 {
     if (_actionToIndex.find(actionName) == _actionToIndex.end())
     {
@@ -675,13 +675,13 @@ void BehaviorAdaptation::RegisterAction(const std::string& actionName)
     }
 }
 
-uint32_t BehaviorAdaptation::MapActionToIndex(const std::string& actionName) const
+uint32_t BehaviorAdaptation::MapActionToIndex(const ::std::string& actionName) const
 {
     auto it = _actionToIndex.find(actionName);
     return it != _actionToIndex.end() ? it->second : 0;
 }
 
-std::string BehaviorAdaptation::MapIndexToAction(uint32_t index) const
+::std::string BehaviorAdaptation::MapIndexToAction(uint32_t index) const
 {
     if (index < _actionRegistry.size())
         return _actionRegistry[index];
@@ -708,21 +708,21 @@ float BehaviorAdaptation::CalculateReward(BotAI* ai, const ActionContext& contex
             reward -= 0.3f;
 
         // Combat effectiveness
-        if (bot->IsInCombat())
+    if (bot->IsInCombat())
         {
             if (context.damageDealt > 0)
-                reward += std::min(context.damageDealt / 10000.0f, 1.0f);
+                reward += ::std::min(context.damageDealt / 10000.0f, 1.0f);
             if (context.damageTaken > 0)
-                reward -= std::min(context.damageTaken / 5000.0f, 0.5f);
+                reward -= ::std::min(context.damageTaken / 5000.0f, 0.5f);
         }
 
         // Group cooperation
-        if (bot->GetGroup() && context.helpedAlly)
+    if (bot->GetGroup() && context.helpedAlly)
             reward += 0.5f;
     }
 
     // Clamp reward
-    return std::clamp(reward, MIN_REWARD_THRESHOLD, MAX_REWARD_THRESHOLD);
+    return ::std::clamp(reward, MIN_REWARD_THRESHOLD, MAX_REWARD_THRESHOLD);
 }
 
 void BehaviorAdaptation::RecordExperience(uint32_t botGuid, const Experience& exp)
@@ -732,7 +732,7 @@ void BehaviorAdaptation::RecordExperience(uint32_t botGuid, const Experience& ex
 
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, botGuid, "RecordExperience");
 
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model)
@@ -768,7 +768,7 @@ void BehaviorAdaptation::Learn(uint32_t botGuid)
     if (!_learningEnabled)
         return;
 
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model || model->experienceBuffer.size() < MIN_EXPERIENCES_FOR_LEARNING)
@@ -796,8 +796,8 @@ void BehaviorAdaptation::Learn(uint32_t botGuid)
             if (model->policyNetwork)
             {
                 // Collect trajectory
-                std::vector<Experience> trajectory(
-                    model->experienceBuffer.end() - std::min<size_t>(32, model->experienceBuffer.size()),
+                ::std::vector<Experience> trajectory(
+                    model->experienceBuffer.end() - ::std::min<size_t>(32, model->experienceBuffer.size()),
                     model->experienceBuffer.end());
                 model->policyNetwork->UpdatePolicy(trajectory, _learningRate);
             }
@@ -819,7 +819,7 @@ void BehaviorAdaptation::BatchLearn(uint32_t botGuid, size_t batchSize)
     if (!_learningEnabled)
         return;
 
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model || model->experienceBuffer.size() < batchSize)
@@ -828,7 +828,7 @@ void BehaviorAdaptation::BatchLearn(uint32_t botGuid, size_t batchSize)
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, botGuid, "BatchLearning");
 
     // Sample batch from experience buffer
-    std::vector<Experience> batch = SampleBatch(model->experienceBuffer, batchSize);
+    ::std::vector<Experience> batch = SampleBatch(model->experienceBuffer, batchSize);
 
     // Batch update based on algorithm
     if (model->qFunction && (_algorithm == LearningAlgorithm::Q_LEARNING ||
@@ -840,9 +840,9 @@ void BehaviorAdaptation::BatchLearn(uint32_t botGuid, size_t batchSize)
     model->metrics.learningSteps += batch.size();
 }
 
-uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const std::vector<float>& state)
+uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const ::std::vector<float>& state)
 {
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     BotLearningModel* model = GetOrCreateModel(botGuid);
     if (!model)
@@ -873,8 +873,8 @@ uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const std::vector<fl
         }
         default:
             // Random action as fallback
-            std::uniform_int_distribution<uint32_t> dist(0, ACTION_SIZE - 1);
-            std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+            ::std::uniform_int_distribution<uint32_t> dist(0, ACTION_SIZE - 1);
+            ::std::mt19937 rng(::std::chrono::steady_clock::now().time_since_epoch().count());
             action = dist(rng);
             break;
     }
@@ -884,7 +884,7 @@ uint32_t BehaviorAdaptation::SelectAction(uint32_t botGuid, const std::vector<fl
 
 float BehaviorAdaptation::GetAdaptiveEpsilon(uint32_t botGuid) const
 {
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -896,13 +896,13 @@ float BehaviorAdaptation::GetAdaptiveEpsilon(uint32_t botGuid) const
 
 void BehaviorAdaptation::UpdateExplorationRate(uint32_t botGuid)
 {
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
     {
         BotLearningModel* model = it->second.get();
-        model->epsilon = std::max(model->epsilon * _epsilonDecay, _epsilonMin);
+        model->epsilon = ::std::max(model->epsilon * _epsilonDecay, _epsilonMin);
     }
 }
 
@@ -911,7 +911,7 @@ BehaviorAdaptation::BotLearningModel* BehaviorAdaptation::GetOrCreateModel(uint3
     auto it = _botModels.find(botGuid);
     if (it == _botModels.end())
     {
-        auto model = std::make_unique<BotLearningModel>();
+        auto model = ::std::make_unique<BotLearningModel>();
         InitializeModel(model.get());
         model->epsilon = _epsilon;
         model->episodeCount = 0;
@@ -919,7 +919,7 @@ BehaviorAdaptation::BotLearningModel* BehaviorAdaptation::GetOrCreateModel(uint3
         model->metrics.Reset();
 
         auto* modelPtr = model.get();
-        _botModels[botGuid] = std::move(model);
+        _botModels[botGuid] = ::std::move(model);
         return modelPtr;
     }
     return it->second.get();
@@ -935,31 +935,31 @@ void BehaviorAdaptation::InitializeModel(BotLearningModel* model)
     {
         case LearningAlgorithm::Q_LEARNING:
         case LearningAlgorithm::DEEP_Q_NETWORK:
-            model->qFunction = std::make_unique<QFunction>(STATE_SIZE, ACTION_SIZE);
+            model->qFunction = ::std::make_unique<QFunction>(STATE_SIZE, ACTION_SIZE);
             break;
         case LearningAlgorithm::POLICY_GRADIENT:
         case LearningAlgorithm::ACTOR_CRITIC:
-            model->policyNetwork = std::make_unique<PolicyNetwork>(STATE_SIZE, ACTION_SIZE);
+            model->policyNetwork = ::std::make_unique<PolicyNetwork>(STATE_SIZE, ACTION_SIZE);
             break;
         default:
             // Default to Q-learning
-            model->qFunction = std::make_unique<QFunction>(STATE_SIZE, ACTION_SIZE);
+            model->qFunction = ::std::make_unique<QFunction>(STATE_SIZE, ACTION_SIZE);
             break;
     }
 }
 
-void BehaviorAdaptation::NormalizeFeatures(std::vector<float>& features) const
+void BehaviorAdaptation::NormalizeFeatures(::std::vector<float>& features) const
 {
     // Simple min-max normalization to [0, 1]
     for (float& f : features)
     {
-        f = std::clamp(f, 0.0f, 1.0f);
+        f = ::std::clamp(f, 0.0f, 1.0f);
     }
 }
 
-std::vector<Experience> BehaviorAdaptation::SampleBatch(const std::deque<Experience>& buffer, size_t batchSize)
+::std::vector<Experience> BehaviorAdaptation::SampleBatch(const ::std::deque<Experience>& buffer, size_t batchSize)
 {
-    std::vector<Experience> batch;
+    ::std::vector<Experience> batch;
     batch.reserve(batchSize);
 
     if (buffer.size() <= batchSize)
@@ -969,11 +969,11 @@ std::vector<Experience> BehaviorAdaptation::SampleBatch(const std::deque<Experie
     else
     {
         // Uniform random sampling
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<size_t> dist(0, buffer.size() - 1);
+        ::std::random_device rd;
+        ::std::mt19937 gen(rd());
+        ::std::uniform_int_distribution<size_t> dist(0, buffer.size() - 1);
 
-        std::unordered_set<size_t> selectedIndices;
+        ::std::unordered_set<size_t> selectedIndices;
         while (batch.size() < batchSize)
         {
             size_t idx = dist(gen);
@@ -995,16 +995,16 @@ void BehaviorAdaptation::UpdateCollectiveKnowledge()
     MEASURE_PERFORMANCE(MetricType::AI_DECISION_TIME, 0, "UpdateCollectiveKnowledge");
 
     // Sample batch from shared experiences
-    std::vector<Experience> batch = SampleBatch(_sharedExperiences, 64);
+    ::std::vector<Experience> batch = SampleBatch(_sharedExperiences, 64);
 
     // Train collective model
     for (const Experience& exp : batch)
     {
         // Create target for supervised learning from successful experiences
-        std::vector<float> target(ACTION_SIZE, 0.0f);
+        ::std::vector<float> target(ACTION_SIZE, 0.0f);
         if (exp.action < ACTION_SIZE)
         {
-            target[exp.action] = std::max(0.0f, exp.reward);  // Use reward as confidence
+            target[exp.action] = ::std::max(0.0f, exp.reward);  // Use reward as confidence
         }
 
         _collectiveModel->Train(exp.state, target, _learningRate * 0.1f);  // Lower learning rate for stability
@@ -1013,7 +1013,7 @@ void BehaviorAdaptation::UpdateCollectiveKnowledge()
 
 BehaviorAdaptation::LearningMetrics BehaviorAdaptation::GetMetrics(uint32_t botGuid) const
 {
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -1026,7 +1026,7 @@ BehaviorAdaptation::LearningMetrics BehaviorAdaptation::GetMetrics(uint32_t botG
 
 void BehaviorAdaptation::ResetMetrics(uint32_t botGuid)
 {
-    std::lock_guard lock(_modelsMutex);
+    ::std::lock_guard lock(_modelsMutex);
 
     auto it = _botModels.find(botGuid);
     if (it != _botModels.end())
@@ -1048,7 +1048,7 @@ ScopedLearningSession::~ScopedLearningSession()
         Commit();
 }
 
-void ScopedLearningSession::RecordAction(const std::string& action, bool success)
+void ScopedLearningSession::RecordAction(const ::std::string& action, bool success)
 {
     _action = action;
     _cumulativeReward += success ? 1.0f : -0.5f;
@@ -1070,7 +1070,7 @@ void ScopedLearningSession::Commit()
     exp.reward = _cumulativeReward;
     exp.nextState = sBehaviorAdaptation.ExtractStateFeatures(_ai, _ai ? _ai->GetBot() : nullptr);
     exp.terminal = false;
-    exp.timestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    exp.timestamp = ::std::chrono::steady_clock::now().time_since_epoch().count();
 
     sBehaviorAdaptation.RecordExperience(_botGuid, exp);
     _committed = true;

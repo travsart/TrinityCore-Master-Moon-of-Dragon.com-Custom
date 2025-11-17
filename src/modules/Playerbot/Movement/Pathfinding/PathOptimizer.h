@@ -100,7 +100,7 @@ namespace Playerbot
          * @param avoidanceRadius Radius to maintain from obstacles
          * @return True if adjustments made
          */
-        bool AdjustForObstacles(MovementPath& path, std::vector<Position> const& obstacles,
+        bool AdjustForObstacles(MovementPath& path, ::std::vector<Position> const& obstacles,
                                float avoidanceRadius = 2.0f);
 
         /**
@@ -109,7 +109,7 @@ namespace Playerbot
          * @param maintainFormation True to preserve formation
          * @return True if optimization successful
          */
-        bool OptimizeGroupPaths(std::vector<MovementPath>& paths, bool maintainFormation);
+        bool OptimizeGroupPaths(::std::vector<MovementPath>& paths, bool maintainFormation);
 
         /**
          * @brief Set optimization level
@@ -239,10 +239,10 @@ namespace Playerbot
         float _smoothingIterations;
 
         // Statistics
-        mutable std::atomic<uint32> _totalPathsOptimized;
-        mutable std::atomic<uint32> _totalPointsRemoved;
-        mutable std::atomic<float> _totalLengthReduction;
-        mutable std::atomic<uint32> _failedOptimizations;
+        mutable ::std::atomic<uint32> _totalPathsOptimized;
+        mutable ::std::atomic<uint32> _totalPointsRemoved;
+        mutable ::std::atomic<float> _totalLengthReduction;
+        mutable ::std::atomic<uint32> _failedOptimizations;
     };
 }
 

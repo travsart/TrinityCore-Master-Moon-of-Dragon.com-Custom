@@ -96,9 +96,9 @@ struct TC_GAME_API CommandContext
     Player* sender;              // Human player who sent command
     Player* bot;                 // Target bot
     BotSession* botSession;      // Bot's session
-    std::string message;         // Full message text
-    std::string command;         // Parsed command name
-    std::vector<std::string> args; // Command arguments
+    ::std::string message;         // Full message text
+    ::std::string command;         // Parsed command name
+    ::std::vector<::std::string> args; // Command arguments
     uint32 lang;                 // Language ID
     bool isWhisper;              // True if whisper, false if group chat
     bool isNaturalLanguage;      // True if processed via LLM
@@ -121,42 +121,42 @@ public:
     CommandResponse() = default;
 
     // Fluent interface for building responses
-    CommandResponse& SetText(std::string text);
-    CommandResponse& AppendLine(std::string line);
+    CommandResponse& SetText(::std::string text);
+    CommandResponse& AppendLine(::std::string line);
     CommandResponse& SetColor(uint32 color);
-    CommandResponse& SetLink(std::string link);
+    CommandResponse& SetLink(::std::string link);
     CommandResponse& SetIcon(uint32 icon);
 
-    std::string GetText() const { return _text; }
+    ::std::string GetText() const { return _text; }
     uint32 GetColor() const { return _color; }
     bool HasLink() const { return !_link.empty(); }
-    std::string const& GetLink() const { return _link; }
+    ::std::string const& GetLink() const { return _link; }
     bool HasIcon() const { return _icon != 0; }
     uint32 GetIcon() const { return _icon; }
 
 private:
-    std::string _text;
+    ::std::string _text;
     uint32 _color{0};
-    std::string _link;
+    ::std::string _link;
     uint32 _icon{0};
 };
 
 /**
  * @brief Command handler function signature
  */
-using CommandHandler = std::function<CommandResult(CommandContext const&, CommandResponse&)>;
+using CommandHandler = ::std::function<CommandResult(CommandContext const&, CommandResponse&)>;
 
 /**
  * @brief Chat command definition
  */
 struct TC_GAME_API ChatCommand
 {
-    std::string name;                    // Command name (e.g., "follow", "attack")
-    std::string description;             // Command description for help
-    std::string syntax;                  // Command syntax (e.g., ".bot follow [target]")
+    ::std::string name;                    // Command name (e.g., "follow", "attack")
+    ::std::string description;             // Command description for help
+    ::std::string syntax;                  // Command syntax (e.g., ".bot follow [target]")
     CommandPermission permission;        // Required permission level
     CommandHandler handler;              // Command handler function
-    std::vector<std::string> aliases;    // Command aliases
+    ::std::vector<::std::string> aliases;    // Command aliases
     bool allowAsync;                     // Allow asynchronous execution
     uint32 cooldownMs;                   // Cooldown in milliseconds
     uint32 minArgs;                      // Minimum argument count
@@ -195,7 +195,7 @@ public:
      * @param response Output command response
      * @return CommandResult indicating success/failure
      */
-    virtual std::future<CommandResult> ProcessNaturalLanguage(
+    virtual ::std::future<CommandResult> ProcessNaturalLanguage(
         CommandContext const& context,
         CommandResponse& response) = 0;
 
@@ -207,7 +207,7 @@ public:
     /**
      * @brief Get provider name for logging
      */
-    virtual std::string GetProviderName() const = 0;
+    virtual ::std::string GetProviderName() const = 0;
 
     /**
      * @brief Get estimated response time in milliseconds
@@ -245,14 +245,14 @@ public:
      * @param context Output command context
      * @return true if successfully parsed
      */
-    static bool ParseCommand(std::string const& message, CommandContext& context);
+    static bool ParseCommand(::std::string const& message, CommandContext& context);
 
     /**
      * @brief Check if message is a bot command
      * @param message Message text to check
      * @return true if message starts with command prefix
      */
-    static bool IsCommand(std::string const& message);
+    static bool IsCommand(::std::string const& message);
 
     /**
      * @brief Send response back to player
@@ -277,27 +277,27 @@ public:
      * @param name Command name
      * @return true if successfully unregistered
      */
-    static bool UnregisterCommand(std::string const& name);
+    static bool UnregisterCommand(::std::string const& name);
 
     /**
      * @brief Get command by name
      * @param name Command name
      * @return Pointer to command or nullptr if not found
      */
-    static ChatCommand const* GetCommand(std::string const& name);
+    static ChatCommand const* GetCommand(::std::string const& name);
 
     /**
      * @brief Get all registered commands
      * @return Vector of all commands
      */
-    static std::vector<ChatCommand> GetAllCommands();
+    static ::std::vector<ChatCommand> GetAllCommands();
 
     /**
      * @brief Get commands available to player based on permission
      * @param context Command context with player
      * @return Vector of available commands
      */
-    static std::vector<ChatCommand> GetAvailableCommands(CommandContext const& context);
+    static ::std::vector<ChatCommand> GetAvailableCommands(CommandContext const& context);
 
     // ========================================
     // PERMISSION SYSTEM
@@ -352,7 +352,7 @@ public:
      * @brief Register LLM provider for natural language processing
      * @param provider LLM provider implementation
      */
-    static void RegisterLLMProvider(std::shared_ptr<LLMProvider> provider);
+    static void RegisterLLMProvider(::std::shared_ptr<LLMProvider> provider);
 
     /**
      * @brief Unregister LLM provider
@@ -369,7 +369,7 @@ public:
      * @brief Get current LLM provider
      * @return Shared pointer to LLM provider or nullptr
      */
-    static std::shared_ptr<LLMProvider> GetLLMProvider();
+    static ::std::shared_ptr<LLMProvider> GetLLMProvider();
 
     // ========================================
     // CONFIGURATION
@@ -379,13 +379,13 @@ public:
      * @brief Set command prefix (default: ".bot")
      * @param prefix New command prefix
      */
-    static void SetCommandPrefix(std::string prefix);
+    static void SetCommandPrefix(::std::string prefix);
 
     /**
      * @brief Get current command prefix
      * @return Command prefix string
      */
-    static std::string GetCommandPrefix();
+    static ::std::string GetCommandPrefix();
 
     /**
      * @brief Enable/disable natural language processing
@@ -417,14 +417,14 @@ public:
 
     struct Statistics
     {
-        std::atomic<uint64_t> totalCommands{0};
-        std::atomic<uint64_t> successfulCommands{0};
-        std::atomic<uint64_t> failedCommands{0};
-        std::atomic<uint64_t> naturalLanguageCommands{0};
-        std::atomic<uint64_t> directCommands{0};
-        std::atomic<uint64_t> permissionDenied{0};
-        std::atomic<uint64_t> invalidSyntax{0};
-        std::atomic<uint64_t> rateLimited{0};
+        ::std::atomic<uint64_t> totalCommands{0};
+        ::std::atomic<uint64_t> successfulCommands{0};
+        ::std::atomic<uint64_t> failedCommands{0};
+        ::std::atomic<uint64_t> naturalLanguageCommands{0};
+        ::std::atomic<uint64_t> directCommands{0};
+        ::std::atomic<uint64_t> permissionDenied{0};
+        ::std::atomic<uint64_t> invalidSyntax{0};
+        ::std::atomic<uint64_t> rateLimited{0};
     };
 
     /**
@@ -453,14 +453,14 @@ private:
     static bool ValidateArgumentCount(CommandContext const& context, ChatCommand const& command);
 
     // State
-    static inline std::atomic<bool> _initialized{false};
-    static inline std::unordered_map<std::string, ChatCommand> _commands;
-    static inline std::unordered_map<ObjectGuid, std::unordered_map<std::string, CommandCooldown>> _cooldowns;
-    static inline std::shared_ptr<LLMProvider> _llmProvider;
-    static inline std::string _commandPrefix = ".bot";
-    static inline std::atomic<bool> _naturalLanguageEnabled{false};
-    static inline std::atomic<uint32> _maxConcurrentCommands{5};
-    static inline std::atomic<bool> _debugLogging{false};
+    static inline ::std::atomic<bool> _initialized{false};
+    static inline ::std::unordered_map<::std::string, ChatCommand> _commands;
+    static inline ::std::unordered_map<ObjectGuid, ::std::unordered_map<::std::string, CommandCooldown>> _cooldowns;
+    static inline ::std::shared_ptr<LLMProvider> _llmProvider;
+    static inline ::std::string _commandPrefix = ".bot";
+    static inline ::std::atomic<bool> _naturalLanguageEnabled{false};
+    static inline ::std::atomic<uint32> _maxConcurrentCommands{5};
+    static inline ::std::atomic<bool> _debugLogging{false};
     static inline Statistics _statistics;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _commandsMutex;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _cooldownsMutex;

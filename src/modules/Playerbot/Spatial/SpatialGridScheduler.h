@@ -62,12 +62,12 @@ public:
     /**
      * @brief Check if updates are enabled
      */
-    bool IsEnabled() const { return _enabled.load(std::memory_order_relaxed); }
+    bool IsEnabled() const { return _enabled.load(::std::memory_order_relaxed); }
 
     /**
      * @brief Enable/disable automatic updates
      */
-    void SetEnabled(bool enabled) { _enabled.store(enabled, std::memory_order_relaxed); }
+    void SetEnabled(bool enabled) { _enabled.store(enabled, ::std::memory_order_relaxed); }
 
     /**
      * @brief Get update interval in milliseconds
@@ -88,7 +88,7 @@ public:
         uint64 skippedUpdates;
         uint32 lastUpdateDurationMs;
         uint32 averageUpdateDurationMs;
-        std::chrono::steady_clock::time_point lastUpdateTime;
+        ::std::chrono::steady_clock::time_point lastUpdateTime;
     };
 
     Statistics GetStatistics() const;
@@ -98,18 +98,18 @@ private:
     ~SpatialGridScheduler() = default;
 
     // Configuration
-    std::atomic<bool> _enabled{true};
-    std::atomic<uint32> _updateInterval{100};  // 100ms default (10Hz)
+    ::std::atomic<bool> _enabled{true};
+    ::std::atomic<uint32> _updateInterval{100};  // 100ms default (10Hz)
 
     // Timing
-    std::chrono::steady_clock::time_point _lastUpdateTime;
+    ::std::chrono::steady_clock::time_point _lastUpdateTime;
     uint32 _timeSinceLastUpdate{0};
 
     // Statistics
-    std::atomic<uint64> _totalUpdates{0};
-    std::atomic<uint64> _skippedUpdates{0};
-    std::atomic<uint32> _lastUpdateDurationMs{0};
-    std::atomic<uint64> _totalUpdateTimeMs{0};
+    ::std::atomic<uint64> _totalUpdates{0};
+    ::std::atomic<uint64> _skippedUpdates{0};
+    ::std::atomic<uint32> _lastUpdateDurationMs{0};
+    ::std::atomic<uint64> _totalUpdateTimeMs{0};
 
     // Non-copyable
     SpatialGridScheduler(SpatialGridScheduler const&) = delete;

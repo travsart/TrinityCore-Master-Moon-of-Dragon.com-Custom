@@ -14,9 +14,9 @@ namespace Playerbot
 {
 
 // Meyer's singleton accessors for DLL-safe static data
-std::unordered_map<uint8, RoleDefinitions::ClassData>& RoleDefinitions::GetClassDefinitions()
+::std::unordered_map<uint8, RoleDefinitions::ClassData>& RoleDefinitions::GetClassDefinitions()
 {
-    static std::unordered_map<uint8, ClassData> classDefinitions;
+    static ::std::unordered_map<uint8, ClassData> classDefinitions;
     return classDefinitions;
 }
 
@@ -65,7 +65,7 @@ const RoleDefinitions::SpecializationData& RoleDefinitions::GetSpecializationDat
 }
 
 // Get role capabilities for a spec
-std::vector<std::pair<GroupRole, RoleCapability>> RoleDefinitions::GetRoleCapabilities(uint8 classId, uint8 specId)
+::std::vector<::std::pair<GroupRole, RoleCapability>> RoleDefinitions::GetRoleCapabilities(uint8 classId, uint8 specId)
 {
     const SpecializationData& spec = GetSpecializationData(classId, specId);
     return spec.roleCapabilities;
@@ -130,9 +130,9 @@ float RoleDefinitions::GetClassVersatility(uint8 classId)
 }
 
 // Get available roles
-std::vector<GroupRole> RoleDefinitions::GetAvailableRoles(uint8 classId, uint8 specId)
+::std::vector<GroupRole> RoleDefinitions::GetAvailableRoles(uint8 classId, uint8 specId)
 {
-    std::vector<GroupRole> roles;
+    ::std::vector<GroupRole> roles;
     const SpecializationData& spec = GetSpecializationData(classId, specId);
 
     roles.push_back(spec.primaryRole);
@@ -147,12 +147,12 @@ std::vector<GroupRole> RoleDefinitions::GetAvailableRoles(uint8 classId, uint8 s
 }
 
 // Get preferred class/specs for role
-std::vector<std::pair<uint8, uint8>> RoleDefinitions::GetPreferredClassSpecsForRole(GroupRole role)
+::std::vector<::std::pair<uint8, uint8>> RoleDefinitions::GetPreferredClassSpecsForRole(GroupRole role)
 {
     if (!GetInitialized())
         Initialize();
 
-    std::vector<std::pair<uint8, uint8>> result;
+    ::std::vector<::std::pair<uint8, uint8>> result;
 
     for (auto const& [classId, classData] : GetClassDefinitions())
     {

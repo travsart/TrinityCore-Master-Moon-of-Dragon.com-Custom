@@ -160,7 +160,7 @@ public:
      * @param name Script name
      * @return Script pointer or nullptr if not found
      */
-    virtual DungeonScript* GetScriptByName(std::string const& name) const = 0;
+    virtual DungeonScript* GetScriptByName(::std::string const& name) const = 0;
 };
 
 } // namespace Playerbot

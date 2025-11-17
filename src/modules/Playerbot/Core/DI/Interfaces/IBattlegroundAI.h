@@ -101,7 +101,7 @@ public:
      * @param player Player to query
      * @return Vector of active objectives
      */
-    virtual std::vector<BGObjective> GetActiveObjectives(Player* player) const = 0;
+    virtual ::std::vector<BGObjective> GetActiveObjectives(Player* player) const = 0;
 
     /**
      * @brief Get highest priority objective for player
@@ -209,7 +209,7 @@ public:
      * @param range Search range
      * @return Vector of nearby teammates
      */
-    virtual std::vector<Player*> GetNearbyTeammates(Player* player, float range) const = 0;
+    virtual ::std::vector<Player*> GetNearbyTeammates(Player* player, float range) const = 0;
 
     /**
      * @brief Call for backup at location

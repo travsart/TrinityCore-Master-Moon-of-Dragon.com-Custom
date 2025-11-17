@@ -50,7 +50,7 @@ public:
      * @param sql SQL query string
      * @return Query result, or nullptr on failure
      */
-    virtual std::shared_ptr<QueryResult> Query(char const* sql) = 0;
+    virtual ::std::shared_ptr<QueryResult> Query(char const* sql) = 0;
 
     /**
      * @brief Execute prepared statement
@@ -58,7 +58,7 @@ public:
      * @param stmt Prepared statement to execute
      * @return Query result, or nullptr on failure
      */
-    virtual std::shared_ptr<QueryResult> Query(std::shared_ptr<PreparedStatement> stmt) = 0;
+    virtual ::std::shared_ptr<QueryResult> Query(::std::shared_ptr<PreparedStatement> stmt) = 0;
 
     /**
      * @brief Execute async query with callback
@@ -66,7 +66,7 @@ public:
      * @param sql SQL query string
      * @param callback Function called when query completes
      */
-    virtual void AsyncQuery(char const* sql, std::function<void(std::shared_ptr<QueryResult>)> callback) = 0;
+    virtual void AsyncQuery(char const* sql, ::std::function<void(::std::shared_ptr<QueryResult>)> callback) = 0;
 
     /**
      * @brief Get pool size (number of connections)

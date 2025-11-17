@@ -20,6 +20,7 @@
 class Player;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Forward declarations
@@ -64,10 +65,10 @@ enum class SpellCategory : uint8
  */
 struct SpellCondition
 {
-    std::function<bool(Player*, Unit*)> condition; // Condition function
-    std::string description;                        // Human-readable description
+    ::std::function<bool(Player*, Unit*)> condition; // Condition function
+    ::std::string description;                        // Human-readable description
 
-    SpellCondition(std::function<bool(Player*, Unit*)> cond, const std::string& desc)
+    SpellCondition(::std::function<bool(Player*, Unit*)> cond, const ::std::string& desc)
         : condition(cond), description(desc) {}
 };
 
@@ -80,7 +81,7 @@ struct PrioritizedSpell
     uint32 spellId;                             // Spell ID
     SpellPriority basePriority;                 // Base priority level
     SpellCategory category;                     // Spell category
-    std::vector<SpellCondition> conditions;     // Conditions for casting
+    ::std::vector<SpellCondition> conditions;     // Conditions for casting
     float priorityMultiplier;                   // Dynamic priority multiplier (1.0 = normal)
     uint32 lastCastTime;                        // Last time this spell was cast
 
@@ -146,7 +147,7 @@ struct PrioritizedSpell
  * // Get highest priority spell
  * uint32 bestSpell = queue.GetHighestPrioritySpell(bot, target, context);
  * if (bestSpell != 0)
- *     CastSpell(target, bestSpell);
+ *     CastSpell(bestSpell, target);
  * @endcode
  *
  * **Performance**:
@@ -173,7 +174,7 @@ public:
      * @param condition Condition function
      * @param description Human-readable description
      */
-    void AddCondition(uint32 spellId, std::function<bool(Player*, Unit*)> condition, const std::string& description);
+    void AddCondition(uint32 spellId, ::std::function<bool(Player*, Unit*)> condition, const ::std::string& description);
 
     /**
      * @brief Set priority multiplier for dynamic priority adjustments
@@ -207,7 +208,7 @@ public:
      * @param context Current combat context
      * @return Vector of spell IDs sorted by priority (highest first)
      */
-    [[nodiscard]] std::vector<uint32> GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const;
+    [[nodiscard]] ::std::vector<uint32> GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const;
 
     /**
      * @brief Record that a spell was cast (for cooldown tracking)
@@ -232,7 +233,7 @@ public:
 
 private:
     // Registered spells
-    std::vector<PrioritizedSpell> _spells;
+    ::std::vector<PrioritizedSpell> _spells;
 
     // Debug logging
     bool _debugLogging;
@@ -260,3 +261,4 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot

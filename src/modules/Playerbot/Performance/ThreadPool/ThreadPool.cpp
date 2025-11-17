@@ -28,21 +28,21 @@ namespace Performance {
 
 template<typename T>
 WorkStealingQueue<T>::WorkStealingQueue()
-    : _array(std::make_unique<Node[]>(INITIAL_CAPACITY))
+    : _array(::std::make_unique<Node[]>(INITIAL_CAPACITY))
 {
 }
 
 template<typename T>
 bool WorkStealingQueue<T>::Push(T item)
 {
-    int64_t bottom = _bottom.load(std::memory_order_relaxed);
-    int64_t top = _top.load(std::memory_order_acquire);
+    int64_t bottom = _bottom.load(::std::memory_order_relaxed);
+    int64_t top = _top.load(::std::memory_order_acquire);
 
     // Check if queue is full
-    if (bottom - top >= static_cast<int64_t>(_capacity.load(std::memory_order_relaxed)))
+    if (bottom - top >= static_cast<int64_t>(_capacity.load(::std::memory_order_relaxed)))
     {
         // Try to expand
-        if (_capacity.load(std::memory_order_relaxed) < MAX_CAPACITY)
+    if (_capacity.load(::std::memory_order_relaxed) < MAX_CAPACITY)
         {
             Expand();
         }
@@ -54,51 +54,51 @@ bool WorkStealingQueue<T>::Push(T item)
 
     // Store item
     size_t index = static_cast<size_t>(bottom) & IndexMask();
-    _array[index].data.store(item, std::memory_order_relaxed);
+    _array[index].data.store(item, ::std::memory_order_relaxed);
 
     // Ensure item is written before incrementing bottom
-    std::atomic_thread_fence(std::memory_order_release);
+    ::std::atomic_thread_fence(::std::memory_order_release);
 
-    _bottom.store(bottom + 1, std::memory_order_relaxed);
+    _bottom.store(bottom + 1, ::std::memory_order_relaxed);
     return true;
 }
 
 template<typename T>
 bool WorkStealingQueue<T>::Pop(T& item)
 {
-    int64_t bottom = _bottom.load(std::memory_order_relaxed) - 1;
-    _bottom.store(bottom, std::memory_order_relaxed);
+    int64_t bottom = _bottom.load(::std::memory_order_relaxed) - 1;
+    _bottom.store(bottom, ::std::memory_order_relaxed);
 
-    std::atomic_thread_fence(std::memory_order_seq_cst);
+    ::std::atomic_thread_fence(::std::memory_order_seq_cst);
 
-    int64_t top = _top.load(std::memory_order_relaxed);
+    int64_t top = _top.load(::std::memory_order_relaxed);
 
     if (top <= bottom)
     {
         // Non-empty queue
         size_t index = static_cast<size_t>(bottom) & IndexMask();
-        item = _array[index].data.load(std::memory_order_relaxed);
+        item = _array[index].data.load(::std::memory_order_relaxed);
 
         if (top == bottom)
         {
             // Last item - compete with steal
-            if (!_top.compare_exchange_strong(top, top + 1,
-                std::memory_order_seq_cst,
-                std::memory_order_relaxed))
+    if (!_top.compare_exchange_strong(top, top + 1,
+                ::std::memory_order_seq_cst,
+                ::std::memory_order_relaxed))
             {
                 // Lost race with steal
                 item = nullptr;
-                _bottom.store(bottom + 1, std::memory_order_relaxed);
+                _bottom.store(bottom + 1, ::std::memory_order_relaxed);
                 return false;
             }
-            _bottom.store(bottom + 1, std::memory_order_relaxed);
+            _bottom.store(bottom + 1, ::std::memory_order_relaxed);
         }
         return true;
     }
     else
     {
         // Empty queue
-        _bottom.store(bottom + 1, std::memory_order_relaxed);
+        _bottom.store(bottom + 1, ::std::memory_order_relaxed);
         return false;
     }
 }
@@ -106,20 +106,20 @@ bool WorkStealingQueue<T>::Pop(T& item)
 template<typename T>
 bool WorkStealingQueue<T>::Steal(T& item)
 {
-    int64_t top = _top.load(std::memory_order_acquire);
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    int64_t bottom = _bottom.load(std::memory_order_acquire);
+    int64_t top = _top.load(::std::memory_order_acquire);
+    ::std::atomic_thread_fence(::std::memory_order_seq_cst);
+    int64_t bottom = _bottom.load(::std::memory_order_acquire);
 
     if (top < bottom)
     {
         // Non-empty queue
         size_t index = static_cast<size_t>(top) & IndexMask();
-        item = _array[index].data.load(std::memory_order_relaxed);
+        item = _array[index].data.load(::std::memory_order_relaxed);
 
         // Try to increment top
-        if (!_top.compare_exchange_strong(top, top + 1,
-            std::memory_order_seq_cst,
-            std::memory_order_relaxed))
+    if (!_top.compare_exchange_strong(top, top + 1,
+            ::std::memory_order_seq_cst,
+            ::std::memory_order_relaxed))
         {
             // Lost race
             return false;
@@ -134,31 +134,31 @@ bool WorkStealingQueue<T>::Steal(T& item)
 template<typename T>
 void WorkStealingQueue<T>::Expand()
 {
-    std::lock_guard lock(_expansionMutex);
+    ::std::lock_guard lock(_expansionMutex);
 
-    size_t oldCapacity = _capacity.load(std::memory_order_relaxed);
-    size_t newCapacity = std::min(oldCapacity * 2, MAX_CAPACITY);
+    size_t oldCapacity = _capacity.load(::std::memory_order_relaxed);
+    size_t newCapacity = ::std::min(oldCapacity * 2, MAX_CAPACITY);
 
     if (newCapacity == oldCapacity)
         return; // Already at max
 
-    auto newArray = std::make_unique<Node[]>(newCapacity);
+    auto newArray = ::std::make_unique<Node[]>(newCapacity);
 
     // Copy existing items
-    int64_t bottom = _bottom.load(std::memory_order_relaxed);
-    int64_t top = _top.load(std::memory_order_relaxed);
+    int64_t bottom = _bottom.load(::std::memory_order_relaxed);
+    int64_t top = _top.load(::std::memory_order_relaxed);
 
     for (int64_t i = top; i < bottom; ++i)
     {
         size_t oldIndex = static_cast<size_t>(i) & (oldCapacity - 1);
         size_t newIndex = static_cast<size_t>(i) & (newCapacity - 1);
         newArray[newIndex].data.store(
-            _array[oldIndex].data.load(std::memory_order_relaxed),
-            std::memory_order_relaxed);
+            _array[oldIndex].data.load(::std::memory_order_relaxed),
+            ::std::memory_order_relaxed);
     }
 
-    _array = std::move(newArray);
-    _capacity.store(newCapacity, std::memory_order_release);
+    _array = ::std::move(newArray);
+    _capacity.store(newCapacity, ::std::memory_order_release);
 }
 
 // Explicit template instantiation
@@ -195,28 +195,27 @@ void WorkerThread::Start()
     // CRITICAL FIX: Deferred thread start with proper initialization
     // This method is called AFTER all workers are constructed in ThreadPool
     // Prevents race conditions and startup storms
-
     if (_initialized.exchange(true))
         return; // Already started
 
     // Start thread with error handling
     try
     {
-        _thread = std::thread(&WorkerThread::Run, this);
+        _thread = ::std::thread(&WorkerThread::Run, this);
 
         // Optional: Set thread name for debugging (platform-specific)
 #ifdef _WIN32
         if (_thread.joinable())
         {
-            std::string threadName = "PlayerBot-Worker-" + std::to_string(_workerId);
+            ::std::string threadName = "PlayerBot-Worker-" + ::std::to_string(_workerId);
             // Windows thread naming requires special handling
         }
 #endif
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         _initialized.store(false);
-        throw std::runtime_error(std::string("Failed to start worker thread ") + std::to_string(_workerId) + ": " + e.what());
+        throw ::std::runtime_error(::std::string("Failed to start worker thread ") + ::std::to_string(_workerId) + ": " + e.what());
     }
 }
 
@@ -228,25 +227,25 @@ void WorkerThread::Run()
 
     // CRITICAL FIX: Add small startup delay to prevent thread storm
     // Stagger thread startup by worker ID to reduce contention
-    std::this_thread::sleep_for(std::chrono::milliseconds(_workerId * 5));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(_workerId * 5));
 
     if (_diagnostics)
         WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
 
-    auto lastActiveTime = std::chrono::steady_clock::now();
+    auto lastActiveTime = ::std::chrono::steady_clock::now();
 
     // Main worker loop with improved error handling
-    while (_running.load(std::memory_order_relaxed))
+    while (_running.load(::std::memory_order_relaxed))
     {
         bool didWork = false;
 
         try
         {
             // Try to execute task from local queues (priority order)
-            if (TryExecuteTask())
+    if (TryExecuteTask())
             {
                 didWork = true;
-                lastActiveTime = std::chrono::steady_clock::now();
+                lastActiveTime = ::std::chrono::steady_clock::now();
             }
             // Try to steal work from other workers (check pool not shutting down first)
             else if (!_pool->IsShuttingDown() && _pool->GetConfiguration().enableWorkStealing)
@@ -257,35 +256,34 @@ void WorkerThread::Run()
                 if (TryStealTask())
                 {
                     didWork = true;
-                    lastActiveTime = std::chrono::steady_clock::now();
+                    lastActiveTime = ::std::chrono::steady_clock::now();
                 }
             }
         }
-        catch (std::exception const& e)
+        catch (::std::exception const& e)
         {
             // Log error but continue running
             // NOTE: Cannot use TC_LOG here as it might not be initialized
             // Error will be recorded in metrics instead
-            _metrics.tasksCompleted.fetch_add(1, std::memory_order_relaxed); // Count as completed but failed
-
-            if (_diagnostics)
+            _metrics.tasksCompleted.fetch_add(1, ::std::memory_order_relaxed); // Count as completed but failed
+    if (_diagnostics)
             {
-                _diagnostics->tasksFailed.fetch_add(1, std::memory_order_relaxed);
+                _diagnostics->tasksFailed.fetch_add(1, ::std::memory_order_relaxed);
             }
         }
 
         if (!didWork)
         {
             // Track idle time
-            auto now = std::chrono::steady_clock::now();
-            auto idleTime = std::chrono::duration_cast<std::chrono::microseconds>(now - lastActiveTime).count();
-            _metrics.totalIdleTime.fetch_add(idleTime, std::memory_order_relaxed);
+            auto now = ::std::chrono::steady_clock::now();
+            auto idleTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(now - lastActiveTime).count();
+            _metrics.totalIdleTime.fetch_add(idleTime, ::std::memory_order_relaxed);
 
             // Sleep if no work available
             Sleep();
 
             // After waking, go back to checking queues
-            if (_diagnostics)
+    if (_diagnostics)
                 WORKER_SET_STATE(_diagnostics, CHECKING_QUEUES);
         }
     }
@@ -306,31 +304,31 @@ bool WorkerThread::TryExecuteTask()
             if (_diagnostics)
                 WORKER_SET_STATE(_diagnostics, EXECUTING);
 
-            auto startTime = std::chrono::steady_clock::now();
+            auto startTime = ::std::chrono::steady_clock::now();
 
             // Execute task
             task->Execute();
 
-            auto endTime = std::chrono::steady_clock::now();
-            auto workTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+            auto endTime = ::std::chrono::steady_clock::now();
+            auto workTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
             // Update metrics
-            _metrics.tasksCompleted.fetch_add(1, std::memory_order_relaxed);
-            _metrics.totalWorkTime.fetch_add(workTime.count(), std::memory_order_relaxed);
+            _metrics.tasksCompleted.fetch_add(1, ::std::memory_order_relaxed);
+            _metrics.totalWorkTime.fetch_add(workTime.count(), ::std::memory_order_relaxed);
 
             // Update diagnostics
-            if (_diagnostics)
+    if (_diagnostics)
             {
-                _diagnostics->tasksExecuted.fetch_add(1, std::memory_order_relaxed);
+                _diagnostics->tasksExecuted.fetch_add(1, ::std::memory_order_relaxed);
                 _diagnostics->executionTime.Record(workTime);
 
                 // Record queue wait time if available
-                auto queueTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                auto queueTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
                     task->startedAt - task->submittedAt);
                 _diagnostics->queueWaitTime.Record(queueTime);
 
                 // Record total latency
-                auto totalLatency = std::chrono::duration_cast<std::chrono::microseconds>(
+                auto totalLatency = ::std::chrono::duration_cast<::std::chrono::microseconds>(
                     task->completedAt - task->submittedAt);
                 _diagnostics->taskLatency.Record(totalLatency);
 
@@ -352,10 +350,9 @@ bool WorkerThread::TryStealTask()
     uint32 attempts = 0;
     uint32 maxAttempts = _pool->GetConfiguration().maxStealAttempts;
     uint32 yieldsPerAttempt = 1;  // Start with 1 yield
-
     while (attempts < maxAttempts)
     {
-        _metrics.stealAttempts.fetch_add(1, std::memory_order_relaxed);
+        _metrics.stealAttempts.fetch_add(1, ::std::memory_order_relaxed);
 
         // Get random worker to steal from
         uint32 victimId = GetRandomWorkerIndex();
@@ -373,30 +370,30 @@ bool WorkerThread::TryStealTask()
         }
 
         // Check if victim is sleeping (likely has no work)
-        if (victim->_sleeping.load(std::memory_order_relaxed))
+    if (victim->_sleeping.load(::std::memory_order_relaxed))
         {
             ++attempts;
             continue;  // Skip sleeping workers
         }
 
         // Try to steal from each priority level (highest priority first)
-        for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
+    for (size_t i = 0; i < static_cast<size_t>(TaskPriority::COUNT); ++i)
         {
             Task* task = nullptr;
             if (victim->_localQueues[i].Steal(task) && task)
             {
-                _metrics.stealSuccesses.fetch_add(1, std::memory_order_relaxed);
+                _metrics.stealSuccesses.fetch_add(1, ::std::memory_order_relaxed);
 
-                auto startTime = std::chrono::steady_clock::now();
+                auto startTime = ::std::chrono::steady_clock::now();
 
                 // Execute stolen task
                 task->Execute();
 
-                auto endTime = std::chrono::steady_clock::now();
-                auto workTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+                auto endTime = ::std::chrono::steady_clock::now();
+                auto workTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime).count();
 
-                _metrics.tasksCompleted.fetch_add(1, std::memory_order_relaxed);
-                _metrics.totalWorkTime.fetch_add(workTime, std::memory_order_relaxed);
+                _metrics.tasksCompleted.fetch_add(1, ::std::memory_order_relaxed);
+                _metrics.totalWorkTime.fetch_add(workTime, ::std::memory_order_relaxed);
 
                 _pool->RecordTaskCompletion(task);
 
@@ -409,13 +406,13 @@ bool WorkerThread::TryStealTask()
         // CRITICAL FIX D: Replace CV wait with yield-based backoff
         // This prevents deadlock when all threads enter backoff simultaneously
         // Using yield instead of condition variable eliminates the 1ms CV wait deadlock
-        if (attempts < maxAttempts)
+    if (attempts < maxAttempts)
         {
             // Progressive yield strategy - more yields on repeated failures
-            for (uint32 y = 0; y < yieldsPerAttempt; ++y)
+    for (uint32 y = 0; y < yieldsPerAttempt; ++y)
             {
                 // Check for shutdown or new work before each yield
-                if (!_running.load(std::memory_order_relaxed) ||
+    if (!_running.load(::std::memory_order_relaxed) ||
                     _pool->IsShuttingDown() ||
                     !_localQueues[0].Empty())  // Check CRITICAL queue for urgent work
                 {
@@ -423,11 +420,11 @@ bool WorkerThread::TryStealTask()
                 }
 
                 // Yield CPU to other threads
-                std::this_thread::yield();
+                ::std::this_thread::yield();
             }
 
             // Exponentially increase yields (cap at 8 to prevent excessive spinning)
-            yieldsPerAttempt = std::min(yieldsPerAttempt * 2, 8u);
+            yieldsPerAttempt = ::std::min(yieldsPerAttempt * 2, 8u);
         }
     }
 
@@ -444,10 +441,10 @@ void WorkerThread::Wake()
 {
     // CRITICAL FIX B: Acquire lock BEFORE checking _sleeping flag
     // This prevents lost wake signals when Sleep() sets flag after Wake() checks
-    std::lock_guard<std::mutex> lock(_wakeMutex);
+    ::std::lock_guard<::std::mutex> lock(_wakeMutex);
 
     // Clear sleeping flag under lock to ensure it's seen by Sleep()
-    _sleeping.store(false, std::memory_order_relaxed);
+    _sleeping.store(false, ::std::memory_order_relaxed);
     // NOTE: _stealBackoff removed in FIX D - no longer using CV-based backoff
 
     // Always notify - even if not currently sleeping, thread might be about to sleep
@@ -456,7 +453,7 @@ void WorkerThread::Wake()
 
 void WorkerThread::Shutdown()
 {
-    _running.store(false, std::memory_order_relaxed);
+    _running.store(false, ::std::memory_order_relaxed);
     Wake();
 }
 
@@ -497,7 +494,7 @@ bool WorkerThread::HasWorkAvailable() const
                 continue;
 
             // Check if other worker has stealable work
-            for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
+    for (size_t j = 0; j < static_cast<size_t>(TaskPriority::COUNT); ++j)
             {
                 if (!other->_localQueues[j].Empty())
                     return true;  // Work available to steal
@@ -511,15 +508,15 @@ bool WorkerThread::HasWorkAvailable() const
 void WorkerThread::Sleep()
 {
     // CRITICAL FIX: Add safety check to prevent blocking during shutdown
-    if (!_running.load(std::memory_order_relaxed) || _pool->IsShuttingDown())
+    if (!_running.load(::std::memory_order_relaxed) || _pool->IsShuttingDown())
         return;
 
     // CRITICAL FIX: Acquire lock BEFORE setting sleeping flag
     // This ensures Wake() can't check the flag between setting it and waiting
-    std::unique_lock<std::mutex> lock(_wakeMutex);
+    ::std::unique_lock<::std::mutex> lock(_wakeMutex);
 
     // Set sleeping flag AFTER acquiring lock
-    _sleeping.store(true, std::memory_order_relaxed);
+    _sleeping.store(true, ::std::memory_order_relaxed);
 
     // CRITICAL FIX #3: Use comprehensive work detection
     // Check both local queues and stealable work from other workers
@@ -528,7 +525,7 @@ void WorkerThread::Sleep()
     if (hasWork)
     {
         // Work available, don't sleep
-        _sleeping.store(false, std::memory_order_relaxed);
+        _sleeping.store(false, ::std::memory_order_relaxed);
         return;
     }
 
@@ -539,18 +536,18 @@ void WorkerThread::Sleep()
         // 1. _sleeping cleared by Wake() (new work submitted)
         // 2. Thread shutdown requested
         // 3. Pool shutting down
-        return !_sleeping.load(std::memory_order_relaxed) ||
-               !_running.load(std::memory_order_relaxed) ||
+        return !_sleeping.load(::std::memory_order_relaxed) ||
+               !_running.load(::std::memory_order_relaxed) ||
                _pool->IsShuttingDown();
     });
 
-    _sleeping.store(false, std::memory_order_relaxed);
+    _sleeping.store(false, ::std::memory_order_relaxed);
 }
 
 uint32 WorkerThread::GetRandomWorkerIndex() const
 {
-    static thread_local std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<uint32> dist(0, _pool->GetWorkerCount() - 1);
+    static thread_local ::std::mt19937 rng(::std::random_device{}());
+    ::std::uniform_int_distribution<uint32> dist(0, _pool->GetWorkerCount() - 1);
     return dist(rng);
 }
 
@@ -558,7 +555,7 @@ void WorkerThread::InitializeDiagnostics()
 {
     if (_pool && _pool->IsDiagnosticsEnabled())
     {
-        _diagnostics = std::make_unique<WorkerDiagnostics>();
+        _diagnostics = ::std::make_unique<WorkerDiagnostics>();
         _diagnostics->SetState(WorkerState::UNINITIALIZED, "WorkerThread::WorkerThread");
     }
 }
@@ -591,14 +588,14 @@ ThreadPool::~ThreadPool()
 void ThreadPool::EnsureWorkersCreated()
 {
     // Fast path: Already created (no locking needed)
-    if (_workersCreated.load(std::memory_order_acquire))
+    if (_workersCreated.load(::std::memory_order_acquire))
         return;
 
     // Slow path: Need to create workers (with locking for thread-safety)
-    std::lock_guard lock(_workerCreationMutex);
+    ::std::lock_guard lock(_workerCreationMutex);
 
     // Double-check after acquiring lock (another thread may have created workers)
-    if (_workersCreated.load(std::memory_order_relaxed))
+    if (_workersCreated.load(::std::memory_order_relaxed))
         return;
 
     // CRITICAL VALIDATION: Runtime check before creating workers
@@ -621,17 +618,17 @@ void ThreadPool::EnsureWorkersCreated()
         _workers.reserve(_config.numThreads);
         for (uint32 i = 0; i < _config.numThreads; ++i)
         {
-            uint32 cpuCore = i % std::thread::hardware_concurrency();
-            _workers.push_back(std::make_unique<WorkerThread>(this, i, cpuCore));
+            uint32 cpuCore = i % ::std::thread::hardware_concurrency();
+            _workers.push_back(::std::make_unique<WorkerThread>(this, i, cpuCore));
         }
 
         // Mark as created BEFORE starting threads
         // This ensures Submit() can proceed even if thread startup is slow
-        _workersCreated.store(true, std::memory_order_release);
+        _workersCreated.store(true, ::std::memory_order_release);
 
         // Phase 2: Start all worker threads with staggered startup
         // This prevents thread startup storm and reduces initialization time
-        for (uint32 i = 0; i < _config.numThreads; ++i)
+    for (uint32 i = 0; i < _config.numThreads; ++i)
         {
             try
             {
@@ -639,10 +636,10 @@ void ThreadPool::EnsureWorkersCreated()
 
                 // Small delay between thread starts to prevent OS scheduler contention
                 // Total delay: ~40ms for 8 threads (5ms each)
-                if (i < _config.numThreads - 1)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    if (i < _config.numThreads - 1)
+                    ::std::this_thread::sleep_for(::std::chrono::milliseconds(5));
             }
-            catch (std::exception const& e)
+            catch (::std::exception const& e)
             {
                 // Thread start failed, but continue with other threads
                 // The pool can still function with reduced worker count
@@ -654,7 +651,7 @@ void ThreadPool::EnsureWorkersCreated()
         // Use try-catch to prevent crash if logger not initialized
         try
         {
-            uint32 hwCores = std::thread::hardware_concurrency();
+            uint32 hwCores = ::std::thread::hardware_concurrency();
             TC_LOG_INFO("playerbot.performance",
                 "ThreadPool: Created and started {} worker threads (CPU: {} logical cores detected)",
                 _config.numThreads, hwCores);
@@ -664,10 +661,10 @@ void ThreadPool::EnsureWorkersCreated()
             // Logger not ready, silently continue
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         // Critical failure - mark as not created
-        _workersCreated.store(false, std::memory_order_release);
+        _workersCreated.store(false, ::std::memory_order_release);
         _workers.clear();
         throw; // Re-throw to propagate error
     }
@@ -675,9 +672,9 @@ void ThreadPool::EnsureWorkersCreated()
 
 // Note: Submit() template implementation moved to header for lambda support
 
-bool ThreadPool::WaitForCompletion(std::chrono::milliseconds timeout)
+bool ThreadPool::WaitForCompletion(::std::chrono::milliseconds timeout)
 {
-    auto start = std::chrono::steady_clock::now();
+    auto start = ::std::chrono::steady_clock::now();
 
     while (true)
     {
@@ -701,11 +698,11 @@ bool ThreadPool::WaitForCompletion(std::chrono::milliseconds timeout)
             return true;
 
         // Check timeout
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start) >= timeout)
+        auto now = ::std::chrono::steady_clock::now();
+        if (::std::chrono::duration_cast<::std::chrono::milliseconds>(now - start) >= timeout)
             return false;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
     }
 }
 
@@ -724,7 +721,7 @@ void ThreadPool::Shutdown(bool waitForPending)
         // Logger not available, continue silently
     }
 
-    if (waitForPending && _workersCreated.load(std::memory_order_relaxed))
+    if (waitForPending && _workersCreated.load(::std::memory_order_relaxed))
     {
         WaitForCompletion(_config.shutdownTimeout);
     }
@@ -741,12 +738,12 @@ void ThreadPool::Shutdown(bool waitForPending)
     // Wait for threads to finish (check if thread was actually started)
     for (auto& worker : _workers)
     {
-        if (worker && worker->_initialized.load(std::memory_order_relaxed))
+        if (worker && worker->_initialized.load(::std::memory_order_relaxed))
         {
             if (worker->_thread.joinable())
             {
                 // Give thread time to finish gracefully
-                if (worker->_thread.joinable())
+    if (worker->_thread.joinable())
                 {
                     worker->_thread.join();
                 }
@@ -755,7 +752,7 @@ void ThreadPool::Shutdown(bool waitForPending)
     }
 
     _workers.clear();
-    _workersCreated.store(false, std::memory_order_relaxed);
+    _workersCreated.store(false, ::std::memory_order_relaxed);
 
     // Only log if logger is available
     try
@@ -773,7 +770,7 @@ size_t ThreadPool::GetActiveThreads() const
     size_t active = 0;
     for (const auto& worker : _workers)
     {
-        if (!worker->_sleeping.load(std::memory_order_relaxed))
+        if (!worker->_sleeping.load(::std::memory_order_relaxed))
         {
             ++active;
         }
@@ -805,19 +802,19 @@ size_t ThreadPool::GetQueuedTasks(TaskPriority priority) const
     return total;
 }
 
-std::chrono::microseconds ThreadPool::GetAverageLatency() const
+::std::chrono::microseconds ThreadPool::GetAverageLatency() const
 {
-    uint64 completed = _metrics.totalCompleted.load(std::memory_order_relaxed);
+    uint64 completed = _metrics.totalCompleted.load(::std::memory_order_relaxed);
     if (completed == 0)
-        return std::chrono::microseconds(0);
+        return ::std::chrono::microseconds(0);
 
-    uint64 totalLatency = _metrics.totalLatency.load(std::memory_order_relaxed);
-    return std::chrono::microseconds(totalLatency / completed);
+    uint64 totalLatency = _metrics.totalLatency.load(::std::memory_order_relaxed);
+    return ::std::chrono::microseconds(totalLatency / completed);
 }
 
 double ThreadPool::GetThroughput() const
 {
-    uint64 completed = _metrics.totalCompleted.load(std::memory_order_relaxed);
+    uint64 completed = _metrics.totalCompleted.load(::std::memory_order_relaxed);
 
     // Calculate throughput over last second
     // This is a simplified calculation - in production, you'd want a sliding window
@@ -838,7 +835,6 @@ void ThreadPool::WakeAllWorkers()
     //
     // Solution: After batch submission, wake ALL workers before future.get()
     // This ensures maximum parallelism and prevents the race condition
-
     for (auto& worker : _workers)
     {
         if (worker)
@@ -852,7 +848,7 @@ void ThreadPool::WakeAllWorkers()
 
 uint32 ThreadPool::SelectWorkerRoundRobin()
 {
-    uint32 next = _nextWorker.fetch_add(1, std::memory_order_relaxed);
+    uint32 next = _nextWorker.fetch_add(1, ::std::memory_order_relaxed);
     return next % _config.numThreads;
 }
 
@@ -881,24 +877,24 @@ uint32 ThreadPool::SelectWorkerLeastLoaded()
 
 void ThreadPool::RecordTaskCompletion(Task* task)
 {
-    auto completionTime = std::chrono::steady_clock::now();
-    auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
+    auto completionTime = ::std::chrono::steady_clock::now();
+    auto latency = ::std::chrono::duration_cast<::std::chrono::microseconds>(
         completionTime - task->submittedAt).count();
 
-    _metrics.totalCompleted.fetch_add(1, std::memory_order_relaxed);
-    _metrics.totalLatency.fetch_add(latency, std::memory_order_relaxed);
+    _metrics.totalCompleted.fetch_add(1, ::std::memory_order_relaxed);
+    _metrics.totalLatency.fetch_add(latency, ::std::memory_order_relaxed);
 
     // Clean up task
     delete task;
 }
 
 // Global instance
-static std::unique_ptr<ThreadPool> g_threadPool;
-static std::recursive_mutex g_threadPoolMutex;
+static ::std::unique_ptr<ThreadPool> g_threadPool;
+static ::std::recursive_mutex g_threadPoolMutex;
 
 ThreadPool& GetThreadPool()
 {
-    std::lock_guard lock(g_threadPoolMutex);
+    ::std::lock_guard lock(g_threadPoolMutex);
     if (!g_threadPool)
     {
         ThreadPool::Configuration config;
@@ -916,7 +912,7 @@ ThreadPool& GetThreadPool()
 
                 // Handle special case: 0 = auto-detect (keep default formula)
                 // Non-zero values override the default
-                if (configThreads > 0)
+    if (configThreads > 0)
                 {
                     config.numThreads = configThreads;
                 }
@@ -947,12 +943,12 @@ ThreadPool& GetThreadPool()
         // Minimum is 16 to handle reasonable bot counts without starvation.
         //
         // REAL FIX NEEDED: Make botSession->Update() non-blocking or use a different threading model
-        if (config.numThreads < 16)
+    if (config.numThreads < 16)
         {
             config.numThreads = 16;  // Increased minimum from 4 to 16 to prevent task starvation
         }
 
-        g_threadPool = std::make_unique<ThreadPool>(config);
+        g_threadPool = ::std::make_unique<ThreadPool>(config);
 
         // CRITICAL FIX: Don't log here - GetThreadPool() may be called before logging system is ready
         // Worker creation logging happens in EnsureWorkersCreated() when workers are actually created

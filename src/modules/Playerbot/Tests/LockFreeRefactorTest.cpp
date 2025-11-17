@@ -44,13 +44,13 @@ private:
     // Test metrics
     struct TestMetrics
     {
-        std::atomic<uint32> actionsQueued{0};
-        std::atomic<uint32> actionsProcessed{0};
-        std::atomic<uint32> actionsFailed{0};
-        std::atomic<uint32> deadlocksDetected{0};
-        std::atomic<uint32> objectAccessorCalls{0};  // Should be ZERO!
-        std::atomic<uint64> totalLatencyMs{0};
-        std::atomic<uint32> maxLatencyMs{0};
+        ::std::atomic<uint32> actionsQueued{0};
+        ::std::atomic<uint32> actionsProcessed{0};
+        ::std::atomic<uint32> actionsFailed{0};
+        ::std::atomic<uint32> deadlocksDetected{0};
+        ::std::atomic<uint32> objectAccessorCalls{0};  // Should be ZERO!
+        ::std::atomic<uint64> totalLatencyMs{0};
+        ::std::atomic<uint32> maxLatencyMs{0};
 
         void Reset()
         {
@@ -89,8 +89,8 @@ private:
 
     TestConfig _config;
     TestMetrics _metrics;
-    std::vector<Player*> _testBots;
-    std::atomic<bool> _testRunning{false};
+    ::std::vector<Player*> _testBots;
+    ::std::atomic<bool> _testRunning{false};
 
 public:
     // Main test execution
@@ -137,7 +137,7 @@ private:
         uint32 targetEntry = 1234;  // Test creature entry
 
         // Simulate quest objective handling in worker thread
-        std::thread workerThread([this, bot, questId, targetEntry]()
+        ::std::thread workerThread([this, bot, questId, targetEntry]()
         {
             // Create quest objective data
             QuestObjectiveData objective;
@@ -148,18 +148,18 @@ private:
             objective.currentCount = 0;
 
             // Call lock-free quest handler (should NOT use ObjectAccessor)
-            for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 5; ++i)
             {
                 QuestCompletion::HandleKillObjective_LockFree(bot, objective);
                 _metrics.actionsQueued++;
 
                 // Small delay between actions
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
             }
         });
 
         // Simulate main thread processing
-        std::thread mainThread([this]()
+        ::std::thread mainThread([this]()
         {
             BotActionProcessor processor(*BotActionQueue::Instance());
 
@@ -168,7 +168,7 @@ private:
                 uint32 processed = processor.ProcessActions(100);
                 _metrics.actionsProcessed += processed;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
             }
         });
 
@@ -197,19 +197,19 @@ private:
         _metrics.Reset();
 
         // Create multiple bots
-        std::vector<Player*> bots;
+        ::std::vector<Player*> bots;
         for (uint32 i = 0; i < 5; ++i)
         {
-            Player* bot = CreateTestBot("GatherBot" + std::to_string(i));
+            Player* bot = CreateTestBot("GatherBot" + ::std::to_string(i));
             if (bot)
                 bots.push_back(bot);
         }
 
         // Spawn gathering nodes
-        std::vector<GameObject*> nodes = SpawnGatheringNodes(10);
+        ::std::vector<GameObject*> nodes = SpawnGatheringNodes(10);
 
         // Worker threads for each bot
-        std::vector<std::thread> workers;
+        ::std::vector<::std::thread> workers;
         for (Player* bot : bots)
         {
             workers.emplace_back([this, bot]()
@@ -219,11 +219,11 @@ private:
                 for (int i = 0; i < 5; ++i)
                 {
                     // Scan for nodes (lock-free)
-                    std::vector<GatheringNode> nearbyNodes =
+                    ::std::vector<GatheringNode> nearbyNodes =
                         manager.ScanForNodes_LockFree(100.0f);
 
                     // Queue gathering for first node
-                    if (!nearbyNodes.empty())
+    if (!nearbyNodes.empty())
                     {
                         if (manager.QueueGatherNode_LockFree(nearbyNodes[0]))
                         {
@@ -231,13 +231,13 @@ private:
                         }
                     }
 
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                    ::std::this_thread::sleep_for(::std::chrono::milliseconds(200));
                 }
             });
         }
 
         // Main thread processor
-        std::thread mainThread([this]()
+        ::std::thread mainThread([this]()
         {
             BotActionProcessor processor(*BotActionQueue::Instance());
 
@@ -246,12 +246,12 @@ private:
                 uint32 processed = processor.ProcessActions(100);
                 _metrics.actionsProcessed += processed;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
             }
         });
 
         // Wait for all threads
-        for (auto& worker : workers)
+    for (auto& worker : workers)
             worker.join();
         mainThread.join();
 
@@ -259,7 +259,7 @@ private:
         ASSERT_EQ(_metrics.objectAccessorCalls, 0);
 
         // Cleanup
-        for (Player* bot : bots)
+    for (Player* bot : bots)
             DeleteTestBot(bot);
         for (GameObject* node : nodes)
             DeleteGameObject(node);
@@ -281,7 +281,7 @@ private:
         const uint32 actionsPerThread = 100;
 
         // Create producer threads
-        std::vector<std::thread> producers;
+        ::std::vector<::std::thread> producers;
         for (uint32 i = 0; i < numThreads; ++i)
         {
             producers.emplace_back([this, i, actionsPerThread]()
@@ -333,7 +333,7 @@ private:
         }
 
         // Consumer thread
-        std::thread consumer([this, numThreads, actionsPerThread]()
+        ::std::thread consumer([this, numThreads, actionsPerThread]()
         {
             uint32 expectedActions = numThreads * actionsPerThread;
             uint32 processed = 0;
@@ -359,13 +359,13 @@ private:
                 }
                 else
                 {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    ::std::this_thread::sleep_for(::std::chrono::milliseconds(1));
                 }
             }
         });
 
         // Wait for all threads
-        for (auto& producer : producers)
+    for (auto& producer : producers)
             producer.join();
         consumer.join();
 
@@ -391,7 +391,7 @@ private:
         _testRunning = true;
 
         // Create worker threads simulating bot updates
-        std::vector<std::thread> workers;
+        ::std::vector<::std::thread> workers;
         for (uint32 i = 0; i < numBots; ++i)
         {
             workers.emplace_back([this, i]()
@@ -402,12 +402,12 @@ private:
                 while (_testRunning)
                 {
                     // Simulate various bot activities
-                    for (int j = 0; j < 5; ++j)
+    for (int j = 0; j < 5; ++j)
                     {
                         BotActionExtended action;
 
                         // Random action type
-                        switch (rand() % 10)
+    switch (rand() % 10)
                         {
                             case 0:
                             case 1:
@@ -457,7 +457,7 @@ private:
                                 // Social actions (10%)
                                 action.type = BotActionType::SEND_CHAT_MESSAGE;
                                 action.botGuid = botGuid;
-                                action.text = "Test message " + std::to_string(actionCount);
+                                action.text = "Test message " + ::std::to_string(actionCount);
                                 action.queuedTime = GameTime::GetGameTimeMS();
                                 break;
                         }
@@ -468,13 +468,13 @@ private:
                     }
 
                     // Simulate update rate (50ms per bot update)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
                 }
             });
         }
 
         // Main thread processor
-        std::thread mainProcessor([this]()
+        ::std::thread mainProcessor([this]()
         {
             BotActionProcessor processor(*BotActionQueue::Instance());
 
@@ -489,7 +489,7 @@ private:
                 uint32 frameTime = getMSTimeDiff(startTime, GameTime::GetGameTimeMS());
 
                 // Log if frame took too long
-                if (frameTime > 50)
+    if (frameTime > 50)
                 {
                     TC_LOG_WARN("test.lockfree",
                         "Slow frame detected: %u ms for %u actions",
@@ -497,20 +497,20 @@ private:
                 }
 
                 // Target 20 FPS (50ms per frame)
-                if (frameTime < 50)
+    if (frameTime < 50)
                 {
-                    std::this_thread::sleep_for(
-                        std::chrono::milliseconds(50 - frameTime));
+                    ::std::this_thread::sleep_for(
+                        ::std::chrono::milliseconds(50 - frameTime));
                 }
             }
         });
 
         // Monitor thread
-        std::thread monitor([this, testDurationSec]()
+        ::std::thread monitor([this, testDurationSec]()
         {
             for (uint32 i = 0; i < testDurationSec; ++i)
             {
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
                 // Log current stats
                 TC_LOG_INFO("test.lockfree",
@@ -553,11 +553,11 @@ private:
         // that would deadlock with the old mutex-based system
 
         const uint32 numThreads = 20;
-        std::atomic<bool> deadlockDetected{false};
+        ::std::atomic<bool> deadlockDetected{false};
         _testRunning = true;
 
         // Create threads that all try to process same entities
-        std::vector<std::thread> threads;
+        ::std::vector<::std::thread> threads;
         for (uint32 i = 0; i < numThreads; ++i)
         {
             threads.emplace_back([this, i, &deadlockDetected]()
@@ -585,12 +585,12 @@ private:
                     }
 
                     // Try to queue with timeout
-                    auto startTime = std::chrono::steady_clock::now();
+                    auto startTime = ::std::chrono::steady_clock::now();
                     BotActionQueue::Instance()->Push(action);
-                    auto elapsed = std::chrono::steady_clock::now() - startTime;
+                    auto elapsed = ::std::chrono::steady_clock::now() - startTime;
 
                     // If push took >1 second, possible deadlock
-                    if (elapsed > std::chrono::seconds(1))
+    if (elapsed > ::std::chrono::seconds(1))
                     {
                         deadlockDetected = true;
                         _metrics.deadlocksDetected++;
@@ -604,7 +604,7 @@ private:
         }
 
         // Processor thread
-        std::thread processor([this]()
+        ::std::thread processor([this]()
         {
             BotActionProcessor proc(*BotActionQueue::Instance());
 
@@ -613,16 +613,16 @@ private:
                 uint32 processed = proc.ProcessActions(500);
                 _metrics.actionsProcessed += processed;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
             }
         });
 
         // Let test run for 5 seconds
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(5));
         _testRunning = false;
 
         // Wait for threads
-        for (auto& thread : threads)
+    for (auto& thread : threads)
             thread.join();
         processor.join();
 
@@ -646,7 +646,7 @@ private:
         const uint32 numActions = 10000;
 
         // Benchmark 1: Queue throughput
-        auto startTime = std::chrono::high_resolution_clock::now();
+        auto startTime = ::std::chrono::high_resolution_clock::now();
 
         for (uint32 i = 0; i < numActions; ++i)
         {
@@ -659,21 +659,21 @@ private:
             BotActionQueue::Instance()->Push(action);
         }
 
-        auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
-        auto enqueueMicros = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        auto elapsed = ::std::chrono::high_resolution_clock::now() - startTime;
+        auto enqueueMicros = ::std::chrono::duration_cast<::std::chrono::microseconds>(elapsed).count();
         float enqueuePerSec = (numActions * 1000000.0f) / enqueueMicros;
 
         TC_LOG_INFO("test.lockfree",
             "Enqueue throughput: %.1f actions/sec", enqueuePerSec);
 
         // Benchmark 2: Processing throughput
-        startTime = std::chrono::high_resolution_clock::now();
+        startTime = ::std::chrono::high_resolution_clock::now();
 
         BotActionProcessor processor(*BotActionQueue::Instance());
         uint32 processed = processor.ProcessActions(numActions);
 
-        elapsed = std::chrono::high_resolution_clock::now() - startTime;
-        auto processMicros = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        elapsed = ::std::chrono::high_resolution_clock::now() - startTime;
+        auto processMicros = ::std::chrono::duration_cast<::std::chrono::microseconds>(elapsed).count();
         float processPerSec = (processed * 1000000.0f) / processMicros;
 
         TC_LOG_INFO("test.lockfree",
@@ -687,7 +687,7 @@ private:
     }
 
     // Helper methods
-    Player* CreateTestBot(std::string const& name)
+    Player* CreateTestBot(::std::string const& name)
     {
         // Simplified bot creation for testing
         // In real implementation, would create actual Player object
@@ -704,9 +704,9 @@ private:
         }
     }
 
-    std::vector<GameObject*> SpawnGatheringNodes(uint32 count)
+    ::std::vector<GameObject*> SpawnGatheringNodes(uint32 count)
     {
-        std::vector<GameObject*> nodes;
+        ::std::vector<GameObject*> nodes;
         TC_LOG_DEBUG("test.lockfree", "Spawning %u gathering nodes", count);
         // Spawn test nodes
         return nodes;

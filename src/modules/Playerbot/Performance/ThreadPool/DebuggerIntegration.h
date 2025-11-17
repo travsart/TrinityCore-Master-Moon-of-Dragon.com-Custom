@@ -53,7 +53,7 @@ struct DebuggerIntegrationConfig
     bool enableMinidumps{true};              // Generate minidumps on deadlock
     bool dumpOnCritical{true};               // Dump on CRITICAL severity
     bool dumpOnError{false};                 // Dump on ERROR severity
-    std::string dumpDirectory{"logs/dumps/"}; // Where to save dumps
+    ::std::string dumpDirectory{"logs/dumps/"}; // Where to save dumps
 
     // Dump type
     enum class DumpType
@@ -65,8 +65,8 @@ struct DebuggerIntegrationConfig
     DumpType dumpType{DumpType::WITH_DATA_SEGS};
 
     // Rate limiting
-    std::chrono::seconds minTimeBetweenBreaks{60};   // Don't break more than once per minute
-    std::chrono::seconds minTimeBetweenDumps{300};   // Don't dump more than once per 5 minutes
+    ::std::chrono::seconds minTimeBetweenBreaks{60};   // Don't break more than once per minute
+    ::std::chrono::seconds minTimeBetweenDumps{300};   // Don't dump more than once per 5 minutes
 };
 
 /**
@@ -93,8 +93,8 @@ public:
     void OnDeadlockDetected(const DeadlockCheckResult& result);
 
     // Manual triggers
-    void TriggerBreakpoint(const std::string& reason);
-    bool GenerateMinidump(const std::string& reason);
+    void TriggerBreakpoint(const ::std::string& reason);
+    bool GenerateMinidump(const ::std::string& reason);
 
     // Debugger detection
     static bool IsDebuggerAttached();
@@ -115,17 +115,17 @@ private:
     void HandleMinidumpGeneration(const DeadlockCheckResult& result);
 
     // Breakpoint triggering
-    void DoDebugBreak(const std::string& reason);
+    void DoDebugBreak(const ::std::string& reason);
 
     // Minidump generation (Windows-specific)
 #ifdef _WIN32
-    bool GenerateMinidumpWindows(const std::string& filename, const std::string& reason);
+    bool GenerateMinidumpWindows(const ::std::string& filename, const ::std::string& reason);
     MINIDUMP_TYPE GetMinidumpType() const;
 #endif
 
     // Cross-platform stub
 #ifndef _WIN32
-    bool GenerateMinidumpStub(const std::string& filename, const std::string& reason);
+    bool GenerateMinidumpStub(const ::std::string& filename, const ::std::string& reason);
 #endif
 
     // Rate limiting
@@ -133,18 +133,18 @@ private:
     bool ShouldDump(const DeadlockCheckResult& result);
 
     // File management
-    std::string GenerateDumpFilename(const std::string& reason) const;
+    ::std::string GenerateDumpFilename(const ::std::string& reason) const;
     void EnsureDumpDirectoryExists();
 
     // Helper: Get timestamp string
-    std::string GetTimestampString() const;
+    ::std::string GetTimestampString() const;
 
     DebuggerIntegrationConfig _config;
     bool _enabled{true};
 
     // Rate limiting state
-    std::chrono::steady_clock::time_point _lastBreakTime;
-    std::chrono::steady_clock::time_point _lastDumpTime;
+    ::std::chrono::steady_clock::time_point _lastBreakTime;
+    ::std::chrono::steady_clock::time_point _lastDumpTime;
 
     // Statistics
     Stats _stats;
@@ -163,8 +163,8 @@ private:
 class ScopedDebugBreak
 {
 public:
-    explicit ScopedDebugBreak(std::string reason)
-        : _reason(std::move(reason))
+    explicit ScopedDebugBreak(::std::string reason)
+        : _reason(::std::move(reason))
         , _shouldBreak(DebuggerIntegration::IsDebuggerAttached())
     {
     }
@@ -184,7 +184,7 @@ public:
     void Cancel() { _shouldBreak = false; }
 
 private:
-    std::string _reason;
+    ::std::string _reason;
     bool _shouldBreak;
 };
 

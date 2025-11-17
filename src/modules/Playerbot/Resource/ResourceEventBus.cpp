@@ -31,8 +31,8 @@ ResourceEvent ResourceEvent::PowerChanged(ObjectGuid player, Powers type, int32 
     event.amount = amt;
     event.maxAmount = max;
     event.isRegen = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -46,8 +46,8 @@ ResourceEvent ResourceEvent::PowerRegen(ObjectGuid player, Powers type, int32 am
     event.amount = amt;
     event.maxAmount = 0;
     event.isRegen = true;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(2000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(2000);
     return event;
 }
 
@@ -61,8 +61,8 @@ ResourceEvent ResourceEvent::PowerDrained(ObjectGuid player, Powers type, int32 
     event.amount = -amt;
     event.maxAmount = 0;
     event.isRegen = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -79,12 +79,12 @@ bool ResourceEvent::IsValid() const
 
 bool ResourceEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string ResourceEvent::ToString() const
+::std::string ResourceEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[ResourceEvent] Type: " << static_cast<uint32>(type)
         << ", Player: " << playerGuid.ToString()
         << ", Power: " << static_cast<uint32>(powerType)
@@ -98,7 +98,7 @@ std::string ResourceEvent::ToString() const
 
 ResourceEventBus::ResourceEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.resource", "ResourceEventBus initialized");
 }
 
@@ -122,7 +122,7 @@ bool ResourceEventBus::PublishEvent(ResourceEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -144,17 +144,17 @@ bool ResourceEventBus::PublishEvent(ResourceEvent const& event)
     return true;
 }
 
-bool ResourceEventBus::Subscribe(BotAI* subscriber, std::vector<ResourceEventType> const& types)
+bool ResourceEventBus::Subscribe(BotAI* subscriber, ::std::vector<ResourceEventType> const& types)
 {
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (ResourceEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
             continue;
         if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
             return false;
@@ -169,9 +169,9 @@ bool ResourceEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
 
     _globalSubscribers.push_back(subscriber);
@@ -183,25 +183,25 @@ void ResourceEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 }
 
 uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _cleanupTimer += diff;
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -211,10 +211,10 @@ uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<ResourceEvent> eventsToProcess;
+    ::std::vector<ResourceEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -234,11 +234,11 @@ uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (ResourceEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -260,8 +260,8 @@ uint32 ResourceEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         _stats.totalEventsProcessed++;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -276,9 +276,9 @@ uint32 ResourceEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void ResourceEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<ResourceEvent> remainingEvents;
+    ::std::vector<ResourceEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -297,13 +297,13 @@ void ResourceEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 ResourceEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 ResourceEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -325,7 +325,7 @@ bool ResourceEventBus::DeliverEvent(BotAI* subscriber, ResourceEvent const& even
         TC_LOG_TRACE("module.playerbot.resource", "ResourceEventBus: Delivered event to subscriber");
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.resource", "ResourceEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -339,10 +339,10 @@ bool ResourceEventBus::ValidateEvent(ResourceEvent const& event) const
 
 uint32 ResourceEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<ResourceEvent> validEvents;
+    ::std::vector<ResourceEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -361,7 +361,7 @@ uint32 ResourceEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void ResourceEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void ResourceEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -369,29 +369,29 @@ void ResourceEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void ResourceEventBus::LogEvent(ResourceEvent const& event, std::string const& action) const
+void ResourceEventBus::LogEvent(ResourceEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.resource", "ResourceEventBus: {} event - {}", action, event.ToString());
 }
 
 void ResourceEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.resource", "=== ResourceEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void ResourceEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.resource", "=== ResourceEventBus Queue: {} events ===", _eventQueue.size());
 }
 
-std::vector<ResourceEvent> ResourceEventBus::GetQueueSnapshot() const
+::std::vector<ResourceEvent> ResourceEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<ResourceEvent> snapshot;
-    std::priority_queue<ResourceEvent> tempQueue = _eventQueue;
+    ::std::vector<ResourceEvent> snapshot;
+    ::std::priority_queue<ResourceEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -410,15 +410,15 @@ void ResourceEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string ResourceEventBus::Statistics::ToString() const
+::std::string ResourceEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

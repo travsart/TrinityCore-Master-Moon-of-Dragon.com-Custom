@@ -95,7 +95,7 @@ void MountManager::Update(::Player* player, uint32 diff)
     else
     {
         // Check if player should remount after combat
-        if (profile.remountAfterCombat && !IsInCombat(player))
+    if (profile.remountAfterCombat && !IsInCombat(player))
         {
             // Check if player was recently in combat
             // This would require tracking combat exit time
@@ -111,7 +111,6 @@ bool MountManager::MountPlayer(::Player* player)
 
     if (IsMounted(player))
         return true; // Already mounted
-
     if (!ValidateMountUsage(player))
         return false;
 
@@ -447,9 +446,9 @@ bool MountManager::CanUseDragonriding(::Player* player) const
 // Mount Collection
 // ============================================================================
 
-std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
+::std::vector<MountInfo> MountManager::GetPlayerMounts(::Player* player) const
 {
-    std::vector<MountInfo> mounts;
+    ::std::vector<MountInfo> mounts;
 
     if (!player)
         return mounts;
@@ -896,7 +895,7 @@ bool MountManager::CastMountSpell(::Player* player, uint32 spellId)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
 
     // Cast mount spell
-    player->CastSpell(player, spellId, false);
+    player->CastSpell(spellId, false, player);
 
     HandleMountCastResult(player, spellId, true);
 
@@ -967,7 +966,7 @@ bool MountManager::IsInDragonridingZone(::Player* player) const
     uint32 zoneId = GetCurrentZoneId(player);
 
     // Example Dragon Isles zones
-    std::vector<uint32> dragonIslesZones = {
+    ::std::vector<uint32> dragonIslesZones = {
         13644, // The Waking Shores
         13645, // Ohn'ahran Plains
         13646, // The Azure Span

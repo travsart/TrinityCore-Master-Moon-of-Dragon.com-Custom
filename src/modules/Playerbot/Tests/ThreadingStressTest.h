@@ -61,7 +61,7 @@ public:
         uint32 assertionFailures{0};
 
         bool TestPassed() const;
-        std::string GetSummary() const;
+        ::std::string GetSummary() const;
     };
 
     // Main test entry points
@@ -72,7 +72,7 @@ public:
     static TestResults RunContentionTest();
 
     // Console commands for manual testing
-    static void RunConsoleCommand(std::string const& command);
+    static void RunConsoleCommand(::std::string const& command);
 };
 
 } // namespace Testing

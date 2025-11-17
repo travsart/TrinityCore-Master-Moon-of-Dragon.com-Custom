@@ -88,42 +88,42 @@ private:
 
     // SimpleResource specialization (Warrior, Hunter, DH)
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, bool>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, bool>::type
     HasEnoughResourceInternal(uint32 cost)
     {
         return _resource.HasEnough(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, void>::type
     ConsumeResourceInternal(uint32 cost)
     {
         _resource.Consume(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, uint32>::type
     GetCurrentResourceInternal() const
     {
         return _resource.current;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, uint32>::type
     GetMaxResourceInternal() const
     {
         return _resource.maximum;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, float>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, float>::type
     GetResourcePercentInternal() const
     {
         return _resource.GetPercent();
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, SimpleResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, SimpleResource>::value, void>::type
     RegenerateResourceInternal(uint32 diff)
     {
         _resource.Regenerate(diff, _inCombat);
@@ -135,10 +135,10 @@ private:
 
     // DualResource specialization (Rogue, Monk, Paladin)
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, bool>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, bool>::type
     HasEnoughResourceInternal(uint32 cost)
     {
         // For dual resources, cost typically applies to primary
@@ -146,50 +146,50 @@ private:
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, void>::type
     ConsumeResourceInternal(uint32 cost)
     {
         _resource.primary.Consume(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, uint32>::type
     GetCurrentResourceInternal() const
     {
         return _resource.primary.current;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, uint32>::type
     GetMaxResourceInternal() const
     {
         return _resource.primary.maximum;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, float>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, float>::type
     GetResourcePercentInternal() const
     {
         return _resource.primary.GetPercent();
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, DualResource>::value ||
-                           std::is_same<T, ComboPointResource>::value ||
-                           std::is_same<T, ChiResource>::value ||
-                           std::is_same<T, HolyPowerResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, DualResource>::value ||
+                           ::std::is_same<T, ComboPointResource>::value ||
+                           ::std::is_same<T, ChiResource>::value ||
+                           ::std::is_same<T, HolyPowerResource>::value, void>::type
     RegenerateResourceInternal(uint32 diff)
     {
         _resource.Regenerate(diff, _inCombat);
@@ -201,7 +201,7 @@ private:
 
     // RuneResource specialization (Death Knight)
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, bool>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, bool>::type
     HasEnoughResourceInternal(uint32 cost)
     {
         // For DK, cost represents runic power
@@ -209,35 +209,35 @@ private:
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, void>::type
     ConsumeResourceInternal(uint32 cost)
     {
         _resource.SpendRunicPower(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, uint32>::type
     GetCurrentResourceInternal() const
     {
         return _resource.runicPower;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, uint32>::type
     GetMaxResourceInternal() const
     {
         return _resource.maxRunicPower;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, float>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, float>::type
     GetResourcePercentInternal() const
     {
         return (float)_resource.runicPower / _resource.maxRunicPower;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, RuneResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, RuneResource>::value, void>::type
     RegenerateResourceInternal(uint32 diff)
     {
         // Get haste modifier from player stats (affects rune regeneration)
@@ -259,7 +259,7 @@ private:
             hasteModifier = 1.0f + (hastePct / 100.0f);
 
             // Clamp to reasonable bounds (prevent negative or excessive values)
-            hasteModifier = std::max(0.1f, std::min(hasteModifier, 3.0f));
+            hasteModifier = ::std::max(0.1f, ::std::min(hasteModifier, 3.0f));
         }
 
         _resource.Update(diff, _inCombat, hasteModifier);
@@ -271,42 +271,42 @@ private:
 
     // EssenceResource specialization (Evoker)
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, bool>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, bool>::type
     HasEnoughResourceInternal(uint32 cost)
     {
         return _resource.mana.HasEnough(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, void>::type
     ConsumeResourceInternal(uint32 cost)
     {
         _resource.mana.Consume(cost);
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, uint32>::type
     GetCurrentResourceInternal() const
     {
         return _resource.mana.current;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, uint32>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, uint32>::type
     GetMaxResourceInternal() const
     {
         return _resource.mana.maximum;
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, float>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, float>::type
     GetResourcePercentInternal() const
     {
         return _resource.mana.GetPercent();
     }
 
     template<typename T = ResourceType>
-    typename std::enable_if<std::is_same<T, EssenceResource>::value, void>::type
+    typename ::std::enable_if<::std::is_same<T, EssenceResource>::value, void>::type
     RegenerateResourceInternal(uint32 diff)
     {
         _resource.Update(diff);
@@ -319,21 +319,21 @@ private:
     static ResourceType DetermineResourceEnum()
     {
         // Map template type to enum
-        if (std::is_same<ResourceType, SimpleResource>::value)
+        if (::std::is_same<ResourceType, SimpleResource>::value)
         {
             // This would be determined by the specific class
             return ResourceType::RAGE; // Example
         }
-        else if (std::is_same<ResourceType, DualResource>::value ||
-                 std::is_same<ResourceType, ComboPointResource>::value)
+        else if (::std::is_same<ResourceType, DualResource>::value ||
+                 ::std::is_same<ResourceType, ComboPointResource>::value)
         {
             return ResourceType::ENERGY;
         }
-        else if (std::is_same<ResourceType, RuneResource>::value)
+        else if (::std::is_same<ResourceType, RuneResource>::value)
         {
             return ResourceType::RUNES;
         }
-        else if (std::is_same<ResourceType, EssenceResource>::value)
+        else if (::std::is_same<ResourceType, EssenceResource>::value)
         {
             return ResourceType::ESSENCE;
         }
@@ -344,12 +344,12 @@ private:
     void InitializeResource()
     {
         // Initialize resource based on type
-        if constexpr (std::is_same_v<ResourceType, SimpleResource>)
+        if constexpr (::std::is_same_v<ResourceType, SimpleResource>)
         {
             // Set up based on class
             // This would be done in the derived class
         }
-        else if constexpr (std::is_same_v<ResourceType, RuneResource>)
+        else if constexpr (::std::is_same_v<ResourceType, RuneResource>)
         {
             // Runes are already initialized in constructor
         }

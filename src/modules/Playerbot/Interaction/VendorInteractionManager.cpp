@@ -55,7 +55,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     if (!m_bot || !vendor || !vendor->IsVendor())
         return false;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     m_stats.purchaseAttempts++;
     // Find item in vendor's inventory
@@ -134,8 +134,8 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     RecordPurchase(itemId, goldCost, success);
 
     // Track performance
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     m_totalPurchaseTime += duration.count();
     m_purchaseCount++;
     m_cpuUsage = m_purchaseCount > 0 ? (float)m_totalPurchaseTime / m_purchaseCount / 1000.0f : 0.0f;
@@ -143,7 +143,7 @@ bool VendorInteractionManager::PurchaseItem(Creature* vendor, uint32 itemId, uin
     return success;
 }
 
-uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uint32> const& itemIds)
+uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, ::std::vector<uint32> const& itemIds)
 {
     if (!m_bot || !vendor || itemIds.empty())
         return 0;
@@ -152,7 +152,7 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
     BudgetAllocation budget = CalculateBudget();
 
     // Evaluate all items
-    std::vector<VendorItemEvaluation> evaluations;
+    ::std::vector<VendorItemEvaluation> evaluations;
     evaluations.reserve(itemIds.size());
 
     for (uint32 itemId : itemIds)
@@ -197,7 +197,7 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
     }
 
     // Sort by priority (highest priority first)
-    std::sort(evaluations.begin(), evaluations.end(),
+    ::std::sort(evaluations.begin(), evaluations.end(),
         [](VendorItemEvaluation const& a, VendorItemEvaluation const& b)
         {
 
@@ -225,8 +225,7 @@ uint32 VendorInteractionManager::PurchaseItems(Creature* vendor, std::vector<uin
             purchasedCount++;
 
             // Deduct from appropriate budget category
-
-            switch (eval.priority)
+    switch (eval.priority)
 
             {
 
@@ -266,14 +265,14 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
     if (!m_bot || !vendor || !vendor->IsVendor())
         return 0;
 
-    std::vector<uint32> itemsToPurchase;
+    ::std::vector<uint32> itemsToPurchase;
 
     // Step 1: Add required reagents (CRITICAL priority)
-    std::vector<uint32> reagents = GetRequiredReagents();
+    ::std::vector<uint32> reagents = GetRequiredReagents();
     itemsToPurchase.insert(itemsToPurchase.end(), reagents.begin(), reagents.end());
 
     // Step 2: Add consumables (HIGH priority)
-    std::vector<uint32> consumables = GetRequiredConsumables();
+    ::std::vector<uint32> consumables = GetRequiredConsumables();
     itemsToPurchase.insert(itemsToPurchase.end(), consumables.begin(), consumables.end());
 
     // Step 3: Add ammunition if hunter (HIGH priority)
@@ -286,7 +285,7 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
     }
 
     // Step 4: Scan vendor for useful items (MEDIUM/LOW priority)
-    std::vector<VendorItem const*> vendorItems = GetVendorItems(vendor);
+    ::std::vector<VendorItem const*> vendorItems = GetVendorItems(vendor);
     for (VendorItem const* vendorItem : vendorItems)
     {
         if (!vendorItem)
@@ -299,12 +298,12 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
             continue;
 
         // Skip items already in our purchase list
-        if (std::find(itemsToPurchase.begin(), itemsToPurchase.end(), vendorItem->item) != itemsToPurchase.end())
+    if (::std::find(itemsToPurchase.begin(), itemsToPurchase.end(), vendorItem->item) != itemsToPurchase.end())
 
             continue;
 
         // Check if it's a useful equipment upgrade
-        if (IsEquipmentUpgrade(itemTemplate))
+    if (IsEquipmentUpgrade(itemTemplate))
 
             itemsToPurchase.push_back(vendorItem->item);
     }
@@ -317,9 +316,9 @@ uint32 VendorInteractionManager::SmartPurchase(Creature* vendor)
 // Vendor Analysis Methods
 // ============================================================================
 
-std::vector<VendorItem const*> VendorInteractionManager::GetVendorItems(Creature* vendor) const
+::std::vector<VendorItem const*> VendorInteractionManager::GetVendorItems(Creature* vendor) const
 {
-    std::vector<VendorItem const*> items;
+    ::std::vector<VendorItem const*> items;
 
     if (!vendor || !vendor->IsVendor())
         return items;
@@ -589,9 +588,9 @@ bool VendorInteractionManager::FitsWithinBudget(uint64 goldCost, PurchasePriorit
 // Reagent and Consumable Methods
 // ============================================================================
 
-std::vector<uint32> VendorInteractionManager::GetRequiredReagents() const
+::std::vector<uint32> VendorInteractionManager::GetRequiredReagents() const
 {
-    std::vector<uint32> reagents;
+    ::std::vector<uint32> reagents;
 
     if (!m_bot)
         return reagents;
@@ -677,9 +676,9 @@ std::vector<uint32> VendorInteractionManager::GetRequiredReagents() const
     return reagents;
 }
 
-std::vector<uint32> VendorInteractionManager::GetRequiredConsumables() const
+::std::vector<uint32> VendorInteractionManager::GetRequiredConsumables() const
 {
-    std::vector<uint32> consumables;
+    ::std::vector<uint32> consumables;
 
     if (!m_bot)
         return consumables;
@@ -845,8 +844,8 @@ bool VendorInteractionManager::IsClassReagent(ItemTemplate const* item) const
     if (!item || !m_bot)
         return false;
 
-    std::vector<uint32> reagents = GetRequiredReagents();
-    return std::find(reagents.begin(), reagents.end(), item->GetId()) != reagents.end();
+    ::std::vector<uint32> reagents = GetRequiredReagents();
+    return ::std::find(reagents.begin(), reagents.end(), item->GetId()) != reagents.end();
 }
 
 bool VendorInteractionManager::IsConsumable(ItemTemplate const* item) const
@@ -990,15 +989,15 @@ uint32 VendorInteractionManager::GetRecommendedQuantity(ItemTemplate const* item
     {
         if (IsConsumable(item))
 
-            return std::min(FOOD_STACK_SIZE, item->GetMaxStackSize());
+            return ::std::min(FOOD_STACK_SIZE, item->GetMaxStackSize());
 
         if (item->GetClass() == ITEM_CLASS_PROJECTILE)
 
-            return std::min(AMMO_STACK_SIZE, item->GetMaxStackSize());
+            return ::std::min(AMMO_STACK_SIZE, item->GetMaxStackSize());
 
         if (IsClassReagent(item))
 
-            return std::min(REAGENT_STACK_SIZE, item->GetMaxStackSize());
+            return ::std::min(REAGENT_STACK_SIZE, item->GetMaxStackSize());
     }
 
     // Default to 1 for non-stackable items

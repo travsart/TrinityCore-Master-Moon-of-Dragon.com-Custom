@@ -88,7 +88,7 @@ Coordination::ZoneOrchestrator* IntegratedAIContext::GetZoneOrchestrator() const
     return _cachedZoneOrchestrator;
 }
 
-void IntegratedAIContext::PropagateToGroup(std::string const& key)
+void IntegratedAIContext::PropagateToGroup(::std::string const& key)
 {
     if (!IsInGroup())
         return;
@@ -99,17 +99,11 @@ void IntegratedAIContext::PropagateToGroup(std::string const& key)
 
     if (key.empty())
     {
-        // Propagate all keys (selective based on naming convention)
-        auto keys = _localBlackboard->GetKeys();
-        for (auto const& k : keys)
-        {
-            // Only propagate keys starting with "share_"
-            if (k.find("share_") == 0)
-            {
-                // Would need type-erased copy here
-                // This is a simplified placeholder
-            }
-        }
+        // TODO: Propagate all keys (selective based on naming convention)
+        // BTBlackboard doesn't expose GetKeys() method
+        // Would need type-erased copy here - placeholder removed for compilation
+        // See: https://github.com/TrinityCore/TrinityCore/issues/xxxxx
+        return;
     }
     else
     {
@@ -118,7 +112,7 @@ void IntegratedAIContext::PropagateToGroup(std::string const& key)
     }
 }
 
-void IntegratedAIContext::PullFromGroup(std::string const& key)
+void IntegratedAIContext::PullFromGroup(::std::string const& key)
 {
     if (!IsInGroup())
         return;
@@ -147,7 +141,7 @@ bool IntegratedAIContext::IsInGroup() const
     if (!_bot)
         return false;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return false;
 
@@ -159,7 +153,7 @@ bool IntegratedAIContext::IsInRaid() const
     if (!_bot)
         return false;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return false;
 
@@ -172,7 +166,7 @@ ObjectGuid IntegratedAIContext::GetBotGuid() const
     if (!_bot)
         return ObjectGuid::Empty;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return ObjectGuid::Empty;
 
@@ -184,7 +178,7 @@ uint32 IntegratedAIContext::GetGroupId() const
     if (!_bot)
         return 0;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return 0;
 
@@ -205,7 +199,7 @@ uint32 IntegratedAIContext::GetZoneId() const
     if (!_bot)
         return 0;
 
-    Player* player = _bot->GetPlayer();
+    Player* player = _bot->GetBot();
     if (!player)
         return 0;
 
@@ -287,7 +281,7 @@ BTStatus BTAttackGroupFocusTarget::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 
@@ -310,7 +304,7 @@ BTStatus BTShareThreatInfo::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 
@@ -336,7 +330,7 @@ BTStatus BTRequestGroupAssistance::TickWithContext(IntegratedAIContext& context)
     if (!ai)
         return BTStatus::FAILURE;
 
-    Player* bot = ai->GetPlayer();
+    Player* bot = ai->GetBot();
     if (!bot)
         return BTStatus::FAILURE;
 

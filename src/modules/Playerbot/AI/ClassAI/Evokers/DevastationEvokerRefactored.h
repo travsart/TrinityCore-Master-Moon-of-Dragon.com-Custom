@@ -18,13 +18,25 @@
 #include "SpellMgr.h"
 #include "SpellAuraEffects.h"
 #include "Log.h"
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // DEVASTATION EVOKER SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -70,8 +82,9 @@ enum DevastationEvokerSpells
     ONYX_LEGACY          = 386348   // Deep Breath enhanced
 };
 
-// Essence resource type for Evoker
-struct EssenceResource
+// Essence resource type for Devastation Evoker
+// Distinct type to avoid template instantiation conflicts with Preservation/Augmentation
+struct DevastationEssence
 {
     uint32 essence{0};
     uint32 maxEssence{5};
@@ -220,17 +233,18 @@ private:
 // DEVASTATION EVOKER REFACTORED
 // ============================================================================
 
-class DevastationEvokerRefactored : public DPSSpecialization<EssenceResource>
+class DevastationEvokerRefactored : public RangedDpsSpecialization<DevastationEssence>
 {
 public:
-    using Base = DPSSpecialization<EssenceResource>;
+    using Base = RangedDpsSpecialization<DevastationEssence>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
     using Base::_resource;
 
     explicit DevastationEvokerRefactored(Player* bot)
-        : DPSSpecialization<EssenceResource>(bot)
+        : RangedDpsSpecialization<DevastationEssence>(bot)
         , _empowermentTracker()
         , _dragonrageTracker()
         , _essenceBurstStacks(0)
@@ -287,11 +301,6 @@ public:
         HandleEmergencyDefensives();
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 25.0f; // Ranged caster at 25 yards
-    }
-
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
@@ -307,7 +316,7 @@ protected:
         // Priority 2: Shattering Star debuff
         if (this->CanCastSpell(SHATTERING_STAR, target))
         {
-            this->CastSpell(target, SHATTERING_STAR);
+            this->CastSpell(SHATTERING_STAR, target);
             return;
         }
 
@@ -321,7 +330,7 @@ protected:
         // Priority 4: Disintegrate channel
         if (essence >= 3 && this->CanCastSpell(DISINTEGRATE, target))
         {
-            this->CastSpell(target, DISINTEGRATE);
+            this->CastSpell(DISINTEGRATE, target);
             ConsumeEssence(3);
             return;
         }
@@ -336,7 +345,7 @@ protected:
         // Priority 6: Azure Strike for essence
         if (essence < 4 && this->CanCastSpell(AZURE_STRIKE, target))
         {
-            this->CastSpell(target, AZURE_STRIKE);
+            this->CastSpell(AZURE_STRIKE, target);
             GenerateEssence(2);
             return;
         }
@@ -344,7 +353,7 @@ protected:
         // Priority 7: Living Flame filler
         if (this->CanCastSpell(LIVING_FLAME, target))
         {
-            this->CastSpell(target, LIVING_FLAME);
+            this->CastSpell(LIVING_FLAME, target);
             GenerateEssence(1);
             return;
         }
@@ -364,7 +373,7 @@ protected:
         // Priority 2: Pyre AoE
         if (essence >= 2 && this->CanCastSpell(PYRE, target))
         {
-            this->CastSpell(target, PYRE);
+            this->CastSpell(PYRE, target);
             ConsumeEssence(2);
             return;
         }
@@ -372,14 +381,14 @@ protected:
         // Priority 3: Shattering Star
         if (this->CanCastSpell(SHATTERING_STAR, target))
         {
-            this->CastSpell(target, SHATTERING_STAR);
+            this->CastSpell(SHATTERING_STAR, target);
             return;
         }
 
         // Priority 4: Azure Strike for essence
         if (essence < 4 && this->CanCastSpell(AZURE_STRIKE, target))
         {
-            this->CastSpell(target, AZURE_STRIKE);
+            this->CastSpell(AZURE_STRIKE, target);
             GenerateEssence(2);
             return;
         }
@@ -387,7 +396,7 @@ protected:
         // Priority 5: Living Flame filler
         if (this->CanCastSpell(LIVING_FLAME, target))
         {
-            this->CastSpell(target, LIVING_FLAME);
+            this->CastSpell(LIVING_FLAME, target);
             GenerateEssence(1);
             return;
         }
@@ -414,7 +423,7 @@ protected:
 
             if (this->CanCastSpell(DISINTEGRATE, target))
             {
-                this->CastSpell(target, DISINTEGRATE);
+                this->CastSpell(DISINTEGRATE, target);
                 ConsumeEssence(3);
                 return;
             }
@@ -423,7 +432,7 @@ protected:
         // Generate essence quickly
         if (essence < 3 && this->CanCastSpell(AZURE_STRIKE, target))
         {
-            this->CastSpell(target, AZURE_STRIKE);
+            this->CastSpell(AZURE_STRIKE, target);
             GenerateEssence(2);
             return;
         }
@@ -458,14 +467,14 @@ protected:
         // Obsidian Scales at 40% HP
         if (healthPct < 40.0f && this->CanCastSpell(OBSIDIAN_SCALES, bot))
         {
-            this->CastSpell(bot, OBSIDIAN_SCALES);
+            this->CastSpell(OBSIDIAN_SCALES, bot);
             return;
         }
 
         // Renewing Blaze at 50% HP
         if (healthPct < 50.0f && this->CanCastSpell(RENEWING_BLAZE, bot))
         {
-            this->CastSpell(bot, RENEWING_BLAZE);
+            this->CastSpell(RENEWING_BLAZE, bot);
             return;
         }
     }
@@ -473,7 +482,7 @@ protected:
     void StartEmpoweredSpell(uint32 spellId, EmpowerLevel targetLevel, ::Unit* target)
     {
         _empowermentTracker.StartEmpower(spellId, targetLevel);
-        this->CastSpell(target, spellId); // Start the channel
+        this->CastSpell(spellId, target); // Start the channel
     }
 
     void ReleaseEmpoweredSpell()
@@ -498,7 +507,7 @@ protected:
 
     void GenerateEssence(uint32 amount)
     {
-        this->_resource.essence = std::min(this->_resource.essence + amount, this->_resource.maxEssence);
+        this->_resource.essence = ::std::min<uint32>(this->_resource.essence + amount, this->_resource.maxEssence);
     }
 
     void ConsumeEssence(uint32 amount)
@@ -511,14 +520,10 @@ protected:
     // ========================================================================
 
     void InitializeDevastationMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
 
-        BotAI* ai = this->GetBot()->GetBotAI();
-        if (!ai) return;
-
-        auto* queue = ai->GetActionPriorityQueue();
+        auto* queue = this->GetActionPriorityQueue();
         if (queue)
         {
             // EMERGENCY: Defensive cooldowns
@@ -593,32 +598,32 @@ protected:
             }, "< 15yd range (hover mode, reposition)");
         }
 
-        auto* behaviorTree = ai->GetBehaviorTree();
+        auto* behaviorTree = this->GetBehaviorTree();
         if (behaviorTree)
         {
             auto root = Selector("Devastation Evoker DPS", {
                 // Tier 1: Emergency Defense
                 Sequence("Emergency Defense", {
-                    Condition("Low HP", [](Player* bot) {
+                    Condition("Low HP", [](Player* bot, Unit* target) {
                         return bot && bot->GetHealthPct() < 50.0f;
                     }),
                     Selector("Use defensive", {
                         Sequence("Obsidian Scales", {
-                            Condition("< 40%", [](Player* bot) {
+                            Condition("< 40%", [](Player* bot, Unit* target) {
                                 return bot->GetHealthPct() < 40.0f;
                             }),
-                            Action("Cast Obsidian Scales", [this](Player* bot) {
+                            bot::ai::Action("Cast Obsidian Scales", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(OBSIDIAN_SCALES, bot)) {
-                                    this->CastSpell(bot, OBSIDIAN_SCALES);
+                                    this->CastSpell(OBSIDIAN_SCALES, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Renewing Blaze", {
-                            Action("Cast Renewing Blaze", [this](Player* bot) {
+                            bot::ai::Action("Cast Renewing Blaze", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(RENEWING_BLAZE, bot)) {
-                                    this->CastSpell(bot, RENEWING_BLAZE);
+                                    this->CastSpell(RENEWING_BLAZE, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -629,20 +634,20 @@ protected:
 
                 // Tier 2: Burst Cooldowns
                 Sequence("Burst Phase", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("3+ essence", [this](Player*) {
+                    Condition("3+ essence", [this](Player*, Unit*) {
                         return this->_resource.essence >= 3;
                     }),
                     Selector("Use cooldowns", {
                         Sequence("Dragonrage", {
-                            Condition("Not active", [this](Player*) {
+                            Condition("Not active", [this](Player*, Unit*) {
                                 return !this->_dragonrageTracker.IsActive();
                             }),
-                            Action("Cast Dragonrage", [this](Player* bot) {
+                            bot::ai::Action("Cast Dragonrage", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(DRAGONRAGE, bot)) {
-                                    this->CastSpell(bot, DRAGONRAGE);
+                                    this->CastSpell(DRAGONRAGE, bot);
                                     this->_dragonrageTracker.Activate();
                                     return NodeStatus::SUCCESS;
                                 }
@@ -654,28 +659,28 @@ protected:
 
                 // Tier 3: Core Rotation
                 Sequence("Core Rotation", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("Not channeling", [this](Player*) {
+                    Condition("Not channeling", [this](Player*, Unit*) {
                         return !this->_empowermentTracker.IsChanneling();
                     }),
                     Selector("Cast spells", {
                         Sequence("Shattering Star", {
-                            Action("Cast Shattering Star", [this](Player* bot) {
+                            bot::ai::Action("Cast Shattering Star", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHATTERING_STAR, target)) {
-                                    this->CastSpell(target, SHATTERING_STAR);
+                                    this->CastSpell(SHATTERING_STAR, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Eternity's Surge", {
-                            Condition("3+ essence", [this](Player*) {
+                            Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            Action("Cast Eternity's Surge", [this](Player* bot) {
+                            bot::ai::Action("Cast Eternity's Surge", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ETERNITY_SURGE, target)) {
                                     this->StartEmpoweredSpell(ETERNITY_SURGE, EmpowerLevel::RANK_3, target);
@@ -685,13 +690,13 @@ protected:
                             })
                         }),
                         Sequence("Disintegrate", {
-                            Condition("3+ essence", [this](Player*) {
+                            Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            Action("Cast Disintegrate", [this](Player* bot) {
+                            bot::ai::Action("Cast Disintegrate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DISINTEGRATE, target)) {
-                                    this->CastSpell(target, DISINTEGRATE);
+                                    this->CastSpell(DISINTEGRATE, target);
                                     this->ConsumeEssence(3);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -703,18 +708,18 @@ protected:
 
                 // Tier 4: Essence Generation
                 Sequence("Generate Essence", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
-                    Condition("< 4 essence", [this](Player*) {
+                    Condition("< 4 essence", [this](Player*, Unit*) {
                         return this->_resource.essence < 4;
                     }),
                     Selector("Generate", {
                         Sequence("Azure Strike", {
-                            Action("Cast Azure Strike", [this](Player* bot) {
+                            bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(AZURE_STRIKE, target)) {
-                                    this->CastSpell(target, AZURE_STRIKE);
+                                    this->CastSpell(AZURE_STRIKE, target);
                                     this->GenerateEssence(2);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -722,10 +727,10 @@ protected:
                             })
                         }),
                         Sequence("Living Flame", {
-                            Action("Cast Living Flame", [this](Player* bot) {
+                            bot::ai::Action("Cast Living Flame", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(LIVING_FLAME, target)) {
-                                    this->CastSpell(target, LIVING_FLAME);
+                                    this->CastSpell(LIVING_FLAME, target);
                                     this->GenerateEssence(1);
                                     return NodeStatus::SUCCESS;
                                 }

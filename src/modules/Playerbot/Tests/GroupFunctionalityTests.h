@@ -45,16 +45,16 @@ protected:
 
     // Test environment and utilities
     TestEnvironment* m_env;
-    std::unique_ptr<StressTestRunner> m_stressRunner;
+    ::std::unique_ptr<StressTestRunner> m_stressRunner;
 
     // Mock objects for isolated testing
-    std::shared_ptr<MockPlayer> m_mockLeader;
-    std::shared_ptr<MockGroup> m_mockGroup;
-    std::vector<std::shared_ptr<MockPlayer>> m_mockBots;
+    ::std::shared_ptr<MockPlayer> m_mockLeader;
+    ::std::shared_ptr<MockGroup> m_mockGroup;
+    ::std::vector<::std::shared_ptr<MockPlayer>> m_mockBots;
 
     // Test data
-    std::unique_ptr<GroupTestData> m_testGroup;
-    std::vector<std::unique_ptr<BotTestData>> m_testBots;
+    ::std::unique_ptr<GroupTestData> m_testGroup;
+    ::std::vector<::std::unique_ptr<BotTestData>> m_testBots;
 
     // Helper methods
     void CreateTestGroup(uint32 botCount = 4);
@@ -64,7 +64,7 @@ protected:
     void ValidateGroupState();
 
     // Performance measurement helpers
-    void StartPerformanceTest(const std::string& testName);
+    void StartPerformanceTest(const ::std::string& testName);
     void EndPerformanceTest();
     bool ValidatePerformanceMetrics();
 
@@ -95,7 +95,7 @@ protected:
     void SetUp() override;
 
     // Invitation-specific helpers
-    void SendGroupInvitation(const std::string& leaderName, const std::string& targetName);
+    void SendGroupInvitation(const ::std::string& leaderName, const ::std::string& targetName);
     bool WaitForInvitationResponse(uint32 timeoutMs = 5000);
     void ValidateInvitationPackets();
 };

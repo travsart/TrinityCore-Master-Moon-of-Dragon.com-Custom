@@ -14,6 +14,7 @@
 class Player;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 /**
@@ -80,10 +81,10 @@ struct ThreatTarget
  * // BEFORE (each tank spec):
  * if (Unit* target = GetTarget())
  * {
- *     if (/* complex threat calculation logic */)
+ *     if (ShouldTaunt(target)) // complex threat calculation logic
  *     {
  *         if (this->CanCastSpell(SPELL_TAUNT, target))
- *             this->CastSpell(target, SPELL_TAUNT);
+ *             this->CastSpell(SPELL_TAUNT, target);
  *     }
  * }
  *
@@ -93,11 +94,11 @@ struct ThreatTarget
  * @endcode
  *
  * **Expected Impact**:
- * - ✅ Eliminate 500 lines of duplication
- * - ✅ Consistent threat management
- * - ✅ Easier to tune (one place)
- * - ✅ Better multi-tank coordination
- * - ✅ Smart target prioritization (protect healers first)
+ * -  Eliminate 500 lines of duplication
+ * -  Consistent threat management
+ * -  Easier to tune (one place)
+ * -  Better multi-tank coordination
+ * -  Smart target prioritization (protect healers first)
  */
 class TC_GAME_API ThreatAssistant
 {
@@ -285,5 +286,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif

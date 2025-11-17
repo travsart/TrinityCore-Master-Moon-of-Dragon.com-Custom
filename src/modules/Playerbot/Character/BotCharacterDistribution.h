@@ -34,7 +34,7 @@ struct RaceClassCombination
     uint8 classId;
     float percentage;
     bool isPopular;
-    std::string faction;
+    ::std::string faction;
 };
 
 // Struktur für Geschlechterverteilung
@@ -43,14 +43,14 @@ struct GenderDistribution
     uint8 race;
     uint8 malePercentage;
     uint8 femalePercentage;
-    std::string raceName;
+    ::std::string raceName;
 };
 
 // Struktur für Klassen-Popularität
 struct ClassPopularity
 {
     uint8 classId;
-    std::string className;
+    ::std::string className;
     float overallPopularity;
     float pvePopularity;
     float pvpPopularity;
@@ -80,7 +80,7 @@ public:
     void ReloadDistributions() override;
 
     // Getter für Verteilungsdaten
-    std::pair<uint8, uint8> GetRandomRaceClassByDistribution() override;
+    ::std::pair<uint8, uint8> GetRandomRaceClassByDistribution() override;
     uint8 GetRandomGenderForRace(uint8 race) override;
     uint8 GetRandomGenderForRaceClass(uint8 race, uint8 classId) override;
 
@@ -90,8 +90,8 @@ public:
     uint8 GetMalePercentageForRace(uint8 race) const override;
 
     // Top-Kombinationen
-    std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const override;
-    std::vector<RaceClassCombination> GetPopularCombinations() const override;
+    ::std::vector<RaceClassCombination> GetTopCombinations(uint32 limit = 25) const override;
+    ::std::vector<RaceClassCombination> GetPopularCombinations() const override;
 
     // Statistiken
     uint32 GetTotalCombinations() const override { return m_raceClassCombinations.size(); }
@@ -112,20 +112,20 @@ private:
 
 private:
     // Haupt-Datenspeicher
-    std::vector<RaceClassCombination> m_raceClassCombinations;
-    std::unordered_map<uint8, GenderDistribution> m_genderDistributions;
-    std::unordered_map<uint8, ClassPopularity> m_classPopularities;
+    ::std::vector<RaceClassCombination> m_raceClassCombinations;
+    ::std::unordered_map<uint8, GenderDistribution> m_genderDistributions;
+    ::std::unordered_map<uint8, ClassPopularity> m_classPopularities;
 
     // Rasse/Klasse-spezifische Geschlechterverteilung (Overrides)
-    std::unordered_map<uint32, uint8> m_raceClassGenderOverrides; // key: (race << 8) | class
+    ::std::unordered_map<uint32, uint8> m_raceClassGenderOverrides; // key: (race << 8) | class
 
     // Kumulative Verteilung für effiziente Zufallsauswahl
-    std::vector<float> m_cumulativeDistribution;
+    ::std::vector<float> m_cumulativeDistribution;
     float m_totalPercentage = 0.0f;
 
     // Cache für häufige Abfragen
-    mutable std::unordered_map<uint8, std::vector<RaceClassCombination>> m_raceCache;
-    mutable std::unordered_map<uint8, std::vector<RaceClassCombination>> m_classCache;
+    mutable ::std::unordered_map<uint8, ::std::vector<RaceClassCombination>> m_raceCache;
+    mutable ::std::unordered_map<uint8, ::std::vector<RaceClassCombination>> m_classCache;
 
     // Status
     bool m_loaded = false;

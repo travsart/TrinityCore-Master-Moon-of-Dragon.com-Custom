@@ -21,13 +21,25 @@
 #include "Log.h"
 
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs (BLADE_FLURRY, ADRENALINE_RUSH, KILLING_SPREE, etc.) are in RogueSpecialization.h
 // Only Outlaw-UNIQUE spell IDs defined below to avoid duplicate definition errors
 // NOTE: ComboPointsOutlaw is defined in RogueResourceTypes.h (spec-specific resource type)
@@ -195,7 +207,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::vector<Buff> _buffs;
+    ::std::vector<Buff> _buffs;
 };
 
 // ============================================================================
@@ -268,18 +280,18 @@ public:
         Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, RogueAI::STEALTH);
+            this->CastSpell(RogueAI::STEALTH, bot);
         }
 
         // Defensive cooldowns
         if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
+            this->CastSpell(RogueAI::CLOAK_OF_SHADOWS, bot);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(FEINT_OUTLAW, bot))
         {
-            this->CastSpell(bot, FEINT_OUTLAW);
+            this->CastSpell(FEINT_OUTLAW, bot);
         }
     }
 
@@ -296,7 +308,7 @@ protected:
         // Priority 1: Adrenaline Rush on cooldown
         if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
+            this->CastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot());
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -307,7 +319,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
+                this->CastSpell(ROLL_THE_BONES, this->GetBot());
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -320,7 +332,7 @@ protected:
         {
             if (this->CanCastSpell(BETWEEN_THE_EYES, target))
             {
-                this->CastSpell(target, BETWEEN_THE_EYES);
+                this->CastSpell(BETWEEN_THE_EYES, target);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -332,7 +344,7 @@ protected:
         {
             if (this->CanCastSpell(DISPATCH_OUTLAW, target))
             {
-                this->CastSpell(target, DISPATCH_OUTLAW);
+                this->CastSpell(DISPATCH_OUTLAW, target);
                 _lastDispatchTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -345,7 +357,7 @@ protected:
         {
             if (this->CanCastSpell(PISTOL_SHOT, target))
             {
-                this->CastSpell(target, PISTOL_SHOT);
+                this->CastSpell(PISTOL_SHOT, target);
                 GenerateComboPoints(1);
                 // No energy cost with proc
                 return;
@@ -355,7 +367,7 @@ protected:
         // Priority 6: Blade Rush (talent)
         if (energy >= 25 && this->CanCastSpell(BLADE_RUSH, target))
         {
-            this->CastSpell(target, BLADE_RUSH);
+            this->CastSpell(BLADE_RUSH, target);
             ConsumeEnergy(25);
             GenerateComboPoints(1);
             return;
@@ -366,7 +378,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
             {
-                this->CastSpell(target, RogueAI::SINISTER_STRIKE);
+                this->CastSpell(RogueAI::SINISTER_STRIKE, target);
                 _lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(45);
                 GenerateComboPoints(1);
@@ -378,11 +390,11 @@ protected:
         }
 
         // Priority 8: Pistol Shot if can't melee
-        if (PositionUtils::GetDistance(this->GetBot(), target) > 10.0f && energy >= 40)
+        if (this->GetBot()->GetExactDist(target) > 10.0f && energy >= 40)
         {
             if (this->CanCastSpell(PISTOL_SHOT, target))
             {
-                this->CastSpell(target, PISTOL_SHOT);
+                this->CastSpell(PISTOL_SHOT, target);
                 ConsumeEnergy(40);
                 GenerateComboPoints(1);
                 return;
@@ -401,7 +413,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::BLADE_FLURRY, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::BLADE_FLURRY);
+                this->CastSpell(RogueAI::BLADE_FLURRY, this->GetBot());
                 _bladeFlurryActive = true;
                 _bladeFlurryEndTime = GameTime::GetGameTimeMS() + 12000;
                 ConsumeEnergy(15);
@@ -412,7 +424,7 @@ protected:
         // Priority 2: Adrenaline Rush
         if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::ADRENALINE_RUSH);
+            this->CastSpell(RogueAI::ADRENALINE_RUSH, this->GetBot());
             _adrenalineRushActive = true;
             _adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -423,7 +435,7 @@ protected:
         {
             if (this->CanCastSpell(ROLL_THE_BONES, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), ROLL_THE_BONES);
+                this->CastSpell(ROLL_THE_BONES, this->GetBot());
                 _rollTheBonesTracker.RollBuffs(this->GetBot());
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
@@ -436,7 +448,7 @@ protected:
         {
             if (this->CanCastSpell(BETWEEN_THE_EYES, target))
             {
-                this->CastSpell(target, BETWEEN_THE_EYES);
+                this->CastSpell(BETWEEN_THE_EYES, target);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -452,7 +464,7 @@ protected:
         // Ambush from stealth for high damage
         if (this->CanCastSpell(RogueAI::AMBUSH, target))
         {
-            this->CastSpell(target, RogueAI::AMBUSH);
+            this->CastSpell(RogueAI::AMBUSH, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -461,7 +473,7 @@ protected:
         // Cheap Shot for control
         if (this->CanCastSpell(RogueAI::CHEAP_SHOT, target))
         {
-            this->CastSpell(target, RogueAI::CHEAP_SHOT);
+            this->CastSpell(RogueAI::CHEAP_SHOT, target);
             GenerateComboPoints(2);
             _inStealth = false;
             return;
@@ -498,7 +510,7 @@ private:
         {
             uint32 regenRate = _adrenalineRushActive ? 25 : 10;
             uint32 energyRegen = (timeDiff / 100) * (regenRate / 10);
-            this->_resource.energy = std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
+            this->_resource.energy = ::std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
             lastRegenTime = now;
         }
     }
@@ -510,16 +522,14 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     // Phase 5 Integration: Decision Systems Initialization
     void InitializeOutlawMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
 
         // ========================================================================
         // ActionPriorityQueue: Register Outlaw Rogue spells with priorities
@@ -529,80 +539,104 @@ private:
         {
             // EMERGENCY: Defensive cooldowns
             queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 30.0f;
-            }, "Bot HP < 30% (spell immunity)");
+            }},
+                "Bot HP < 30% (spell immunity)");
 
             queue->RegisterSpell(FEINT_OUTLAW, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(FEINT_OUTLAW, [this](Player* bot, Unit* target) {
+            queue->AddCondition(FEINT_OUTLAW,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 50.0f;
-            }, "Bot HP < 50% (threat reduction + damage reduction)");
+            }},
+                "Bot HP < 50% (threat reduction + damage reduction)");
 
             // CRITICAL: Burst cooldowns and Roll the Bones
             queue->RegisterSpell(RogueAI::ADRENALINE_RUSH, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
-            queue->AddCondition(RogueAI::ADRENALINE_RUSH, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::ADRENALINE_RUSH,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && !this->_adrenalineRushActive;
-            }, "Not active (20s burst, 2.5x energy regen)");
+            }},
+                "Not active (20s burst, 2.5x energy regen)");
 
             queue->RegisterSpell(ROLL_THE_BONES, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
-            queue->AddCondition(ROLL_THE_BONES, [this](Player* bot, Unit* target) {
+            queue->AddCondition(ROLL_THE_BONES,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 25 &&
                        this->_resource.comboPoints >= 1 &&
                        this->_rollTheBonesTracker.NeedsReroll();
-            }, "25+ Energy, 1+ CP, needs reroll (random buffs)");
+            }},
+                "25+ Energy, 1+ CP, needs reroll (random buffs)");
 
             // HIGH: Finishers at 5-6 CP
             queue->RegisterSpell(BETWEEN_THE_EYES, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(BETWEEN_THE_EYES, [this](Player* bot, Unit* target) {
+            queue->AddCondition(BETWEEN_THE_EYES,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 25 &&
                        this->_resource.comboPoints >= this->_resource.maxComboPoints;
-            }, "25+ Energy, max CP (finisher with stun)");
+            }},
+                "25+ Energy, max CP (finisher with stun)");
 
             queue->RegisterSpell(DISPATCH_OUTLAW, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(DISPATCH_OUTLAW, [this](Player* bot, Unit* target) {
+            queue->AddCondition(DISPATCH_OUTLAW,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 35 &&
                        this->_resource.comboPoints >= (this->_resource.maxComboPoints - 1);
-            }, "35+ Energy, 4-5+ CP (finisher damage)");
+            }},
+                "35+ Energy, 4-5+ CP (finisher damage)");
 
             // MEDIUM: Combo builders and AoE
             queue->RegisterSpell(RogueAI::BLADE_FLURRY, SpellPriority::MEDIUM, SpellCategory::OFFENSIVE);
-            queue->AddCondition(RogueAI::BLADE_FLURRY, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::BLADE_FLURRY,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 15 &&
                        !this->_bladeFlurryActive &&
                        this->GetEnemiesInRange(8.0f) >= 2;
-            }, "15+ Energy, not active, 2+ enemies (12s cleave)");
+            }},
+                "15+ Energy, not active, 2+ enemies (12s cleave)");
 
             queue->RegisterSpell(BLADE_RUSH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(BLADE_RUSH, [this](Player* bot, Unit* target) {
+            queue->AddCondition(BLADE_RUSH,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return bot && bot->HasSpell(BLADE_RUSH) &&
                        target && this->_resource.energy >= 25;
-            }, "Has talent, 25+ Energy (charge + AoE + 1 CP)");
+            }},
+                "Has talent, 25+ Energy (charge + AoE + 1 CP)");
 
             queue->RegisterSpell(PISTOL_SHOT, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(PISTOL_SHOT, [this](Player* bot, Unit* target) {
+            queue->AddCondition(PISTOL_SHOT,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && bot->HasAura(OPPORTUNITY_PROC);
-            }, "Opportunity proc (free Pistol Shot, 1 CP)");
+            }},
+                "Opportunity proc (free Pistol Shot, 1 CP)");
 
             queue->RegisterSpell(RogueAI::SINISTER_STRIKE, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(RogueAI::SINISTER_STRIKE, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::SINISTER_STRIKE,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 45 &&
                        this->_resource.comboPoints < this->_resource.maxComboPoints;
-            }, "45+ Energy, not max CP (generates 1-2 CP)");
+            }},
+                "45+ Energy, not max CP (generates 1-2 CP)");
 
             queue->RegisterSpell(RogueAI::KICK, SpellPriority::MEDIUM, SpellCategory::UTILITY);
-            queue->AddCondition(RogueAI::KICK, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::KICK,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && target->IsNonMeleeSpellCast(false);
-            }, "Target casting (interrupt)");
+            }},
+                "Target casting (interrupt)");
 
             // LOW: Ranged filler
             queue->RegisterSpell(PISTOL_SHOT, SpellPriority::LOW, SpellCategory::DAMAGE_SINGLE);
-            queue->AddCondition(PISTOL_SHOT, [this](Player* bot, Unit* target) {
+            queue->AddCondition(PISTOL_SHOT,
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit* target) {
                 return target && this->_resource.energy >= 40 &&
                        !bot->HasAura(OPPORTUNITY_PROC) &&
-                       PositionUtils::GetDistance(bot, target) > 10.0f;
-            }, "40+ Energy, > 10 yards, no proc (ranged builder)");
+                       bot->GetExactDist(target) > 10.0f;
+            }},
+                "40+ Energy, > 10 yards, no proc (ranged builder)");
 
-            TC_LOG_INFO("module.playerbot", "🏴‍☠️ OUTLAW ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " OUTLAW ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -619,13 +653,13 @@ private:
                     }),
                     Selector("Use Burst", {
                         Sequence("Cast Adrenaline Rush", {
-                            Condition("Not active", [this](Player* bot, Unit* target) {
+                            Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_adrenalineRushActive;
                             }),
-                            Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Adrenaline Rush", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::ADRENALINE_RUSH, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::ADRENALINE_RUSH);
+                                    this->CastSpell(RogueAI::ADRENALINE_RUSH, bot);
                                     this->_adrenalineRushActive = true;
                                     this->_adrenalineRushEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -643,10 +677,10 @@ private:
                                this->_resource.comboPoints >= 1 &&
                                this->_rollTheBonesTracker.NeedsReroll();
                     }),
-                    Action("Cast Roll the Bones", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Roll the Bones", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(ROLL_THE_BONES, bot))
                         {
-                            this->CastSpell(bot, ROLL_THE_BONES);
+                            this->CastSpell(ROLL_THE_BONES, bot);
                             this->_rollTheBonesTracker.RollBuffs(bot);
                             this->ConsumeEnergy(25);
                             this->_resource.comboPoints = 0;
@@ -665,14 +699,14 @@ private:
                     Selector("Choose Finisher", {
                         // Between the Eyes at max CP
                         Sequence("Cast Between the Eyes", {
-                            Condition("Max CP and 25+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("Max CP and 25+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.comboPoints >= this->_resource.maxComboPoints &&
                                        this->_resource.energy >= 25;
                             }),
-                            Action("Cast Between the Eyes", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Between the Eyes", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(BETWEEN_THE_EYES, target))
                                 {
-                                    this->CastSpell(target, BETWEEN_THE_EYES);
+                                    this->CastSpell(BETWEEN_THE_EYES, target);
                                     this->ConsumeEnergy(25);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -682,13 +716,13 @@ private:
                         }),
                         // Dispatch at 4-5+ CP
                         Sequence("Cast Dispatch", {
-                            Condition("35+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("35+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 35;
                             }),
-                            Action("Cast Dispatch", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Dispatch", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(DISPATCH_OUTLAW, target))
                                 {
-                                    this->CastSpell(target, DISPATCH_OUTLAW);
+                                    this->CastSpell(DISPATCH_OUTLAW, target);
                                     this->_lastDispatchTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -709,13 +743,13 @@ private:
                     Selector("Build Combo Points", {
                         // Opportunity proc (free Pistol Shot)
                         Sequence("Cast Pistol Shot with proc", {
-                            Condition("Has Opportunity proc", [this](Player* bot, Unit* target) {
+                            Condition("Has Opportunity proc", [this](Player* bot, Unit*) {
                                 return bot && bot->HasAura(OPPORTUNITY_PROC);
                             }),
-                            Action("Cast Pistol Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Pistol Shot", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(PISTOL_SHOT, target))
                                 {
-                                    this->CastSpell(target, PISTOL_SHOT);
+                                    this->CastSpell(PISTOL_SHOT, target);
                                     this->GenerateComboPoints(1);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -724,14 +758,14 @@ private:
                         }),
                         // Blade Rush (talent)
                         Sequence("Cast Blade Rush", {
-                            Condition("Has talent and 25+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and 25+ Energy", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(BLADE_RUSH) &&
                                        this->_resource.energy >= 25;
                             }),
-                            Action("Cast Blade Rush", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Blade Rush", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(BLADE_RUSH, target))
                                 {
-                                    this->CastSpell(target, BLADE_RUSH);
+                                    this->CastSpell(BLADE_RUSH, target);
                                     this->ConsumeEnergy(25);
                                     this->GenerateComboPoints(1);
                                     return NodeStatus::SUCCESS;
@@ -741,13 +775,13 @@ private:
                         }),
                         // Sinister Strike
                         Sequence("Cast Sinister Strike", {
-                            Condition("45+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("45+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 45;
                             }),
-                            Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Sinister Strike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SINISTER_STRIKE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::SINISTER_STRIKE);
+                                    this->CastSpell(RogueAI::SINISTER_STRIKE, target);
                                     this->_lastSinisterStrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(45);
                                     this->GenerateComboPoints(1);
@@ -764,7 +798,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 OUTLAW ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " OUTLAW ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

@@ -12,7 +12,7 @@
 
 namespace Playerbot {
 
-bool BotDatabasePool::Initialize(std::string const& connectionString, uint8 asyncThreads, uint8 syncThreads)
+bool BotDatabasePool::Initialize(::std::string const& connectionString, uint8 asyncThreads, uint8 syncThreads)
 {
     if (_initialized.load()) {
         TC_LOG_WARN("module.playerbot.database", "BotDatabasePool already initialized");
@@ -26,8 +26,8 @@ bool BotDatabasePool::Initialize(std::string const& connectionString, uint8 asyn
     _syncThreads = syncThreads;
 
     // Initialize Boost.Asio context
-    _ioContext = std::make_unique<boost::asio::io_context>();
-    _workGuard = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
+    _ioContext = ::std::make_unique<boost::asio::io_context>();
+    _workGuard = ::std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
         _ioContext->get_executor());
 
     // Initialize connection pool
@@ -40,14 +40,14 @@ bool BotDatabasePool::Initialize(std::string const& connectionString, uint8 asyn
     StartWorkerThreads();
 
     // Initialize timing
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
     _lastMetricsUpdate = _startTime;
     _lastConnectionRecycle = _startTime;
 
     _initialized.store(true);
 
     TC_LOG_INFO("module.playerbot.database",
-        "✅ BotDatabasePool initialized: {} async + {} sync threads, {} connections",
+        " BotDatabasePool initialized: {} async + {} sync threads, {} connections",
         _asyncThreads, _syncThreads, _connections.size());
 
     return true;
@@ -81,11 +81,11 @@ void BotDatabasePool::Shutdown()
 
     _initialized.store(false);
 
-    TC_LOG_INFO("module.playerbot.database", "✅ BotDatabasePool shutdown complete");
+    TC_LOG_INFO("module.playerbot.database", " BotDatabasePool shutdown complete");
 }
 
 void BotDatabasePool::ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
-                                  std::function<void(PreparedQueryResult)> callback,
+                                  ::std::function<void(PreparedQueryResult)> callback,
                                   uint32 timeoutMs)
 {
     if (!stmt) {
@@ -101,28 +101,28 @@ void BotDatabasePool::ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
     }
 
     // Check cache first
-    std::string cacheKey = GenerateCacheKey(stmt);
+    ::std::string cacheKey = GenerateCacheKey(stmt);
     PreparedQueryResult cachedResult = GetCachedResult(cacheKey);
     if (cachedResult) {
-        _metrics.cacheHits.fetch_add(1, std::memory_order_relaxed);
+        _metrics.cacheHits.fetch_add(1, ::std::memory_order_relaxed);
         if (callback) callback(cachedResult);
         return;
     }
 
-    _metrics.cacheMisses.fetch_add(1, std::memory_order_relaxed);
+    _metrics.cacheMisses.fetch_add(1, ::std::memory_order_relaxed);
 
     // Create query request
-    auto request = std::make_unique<QueryRequest>();
+    auto request = ::std::make_unique<QueryRequest>();
     request->statement = stmt;
-    request->callback = std::move(callback);
-    request->submitTime = std::chrono::steady_clock::now();
+    request->callback = ::std::move(callback);
+    request->submitTime = ::std::chrono::steady_clock::now();
     request->timeoutMs = timeoutMs;
-    request->requestId = _nextRequestId.fetch_add(1, std::memory_order_relaxed);
+    request->requestId = _nextRequestId.fetch_add(1, ::std::memory_order_relaxed);
 
     // Submit to queue
     if (!_queryQueue.push(request.release())) {
         TC_LOG_WARN("module.playerbot.database", "Query queue full, dropping request");
-        _metrics.errors.fetch_add(1, std::memory_order_relaxed);
+        _metrics.errors.fetch_add(1, ::std::memory_order_relaxed);
         if (request->callback) request->callback(nullptr);
     }
 }
@@ -132,8 +132,8 @@ void BotDatabasePool::ExecuteAsyncNoResult(CharacterDatabasePreparedStatement* s
     ExecuteAsync(stmt, nullptr, timeoutMs);
 }
 
-void BotDatabasePool::ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
-                                       std::function<void(std::vector<PreparedQueryResult>)> callback,
+void BotDatabasePool::ExecuteBatchAsync(::std::vector<CharacterDatabasePreparedStatement*> const& statements,
+                                       ::std::function<void(::std::vector<PreparedQueryResult>)> callback,
                                        uint32 timeoutMs)
 {
     if (statements.empty()) {
@@ -143,16 +143,16 @@ void BotDatabasePool::ExecuteBatchAsync(std::vector<CharacterDatabasePreparedSta
 
     // For batch operations, we'll execute them sequentially in async context
     // A more advanced implementation could use parallel execution
-    auto results = std::make_shared<std::vector<PreparedQueryResult>>();
+    auto results = ::std::make_shared<::std::vector<PreparedQueryResult>>();
     results->reserve(statements.size());
 
-    auto counter = std::make_shared<std::atomic<size_t>>(0);
+    auto counter = ::std::make_shared<::std::atomic<size_t>>(0);
 
     for (auto* stmt : statements) {
         ExecuteAsync(stmt, [results, counter, callback, total = statements.size()](PreparedQueryResult result) {
             results->push_back(result);
 
-            if (counter->fetch_add(1, std::memory_order_relaxed) + 1 == total) {
+            if (counter->fetch_add(1, ::std::memory_order_relaxed) + 1 == total) {
                 if (callback) callback(*results);
             }
         }, timeoutMs);
@@ -172,22 +172,22 @@ PreparedQueryResult BotDatabasePool::ExecuteSync(CharacterDatabasePreparedStatem
     }
 
     // Check cache first
-    std::string cacheKey = GenerateCacheKey(stmt);
+    ::std::string cacheKey = GenerateCacheKey(stmt);
     PreparedQueryResult cachedResult = GetCachedResult(cacheKey);
     if (cachedResult) {
-        _metrics.cacheHits.fetch_add(1, std::memory_order_relaxed);
+        _metrics.cacheHits.fetch_add(1, ::std::memory_order_relaxed);
         return cachedResult;
     }
 
-    _metrics.cacheMisses.fetch_add(1, std::memory_order_relaxed);
+    _metrics.cacheMisses.fetch_add(1, ::std::memory_order_relaxed);
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Acquire connection
     size_t connectionIndex = AcquireConnection();
     if (connectionIndex == SIZE_MAX) {
         TC_LOG_ERROR("module.playerbot.database", "No available connections for sync query");
-        _metrics.errors.fetch_add(1, std::memory_order_relaxed);
+        _metrics.errors.fetch_add(1, ::std::memory_order_relaxed);
         return nullptr;
     }
 
@@ -201,15 +201,15 @@ PreparedQueryResult BotDatabasePool::ExecuteSync(CharacterDatabasePreparedStatem
             connectionInfo->queryCount++;
 
             // Cache the result
-            if (result) {
+    if (result) {
                 CacheResult(cacheKey, result);
             }
         }
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.database",
             "Exception during sync query execution: {}", e.what());
-        _metrics.errors.fetch_add(1, std::memory_order_relaxed);
+        _metrics.errors.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     // Release connection
@@ -232,7 +232,7 @@ CharacterDatabasePreparedStatement* BotDatabasePool::GetPreparedStatement(uint32
 
     // List of all CONNECTION_SYNCH statements that must never be accessed from async connections
     // These correspond to Trinity's sync-only prepared statements from CharacterDatabase.cpp
-    static const std::unordered_set<uint32> SYNC_ONLY_STATEMENTS = {
+    static const ::std::unordered_set<uint32> SYNC_ONLY_STATEMENTS = {
         39,   // CHAR_SEL_CHECK_GUID
         45,   // CHAR_SEL_BANINFO
         46,   // CHAR_SEL_GUID_BY_NAME_FILTER
@@ -327,15 +327,15 @@ CharacterDatabasePreparedStatement* BotDatabasePool::GetPreparedStatement(uint32
     return nullptr;
 }
 
-void BotDatabasePool::CachePreparedStatement(uint32 stmtId, std::string const& sql)
+void BotDatabasePool::CachePreparedStatement(uint32 stmtId, ::std::string const& sql)
 {
     _preparedStatements[stmtId] = sql;
     TC_LOG_DEBUG("module.playerbot.database",
         "Cached prepared statement {}: {}", stmtId, sql);
 }
 
-void BotDatabasePool::CacheResult(std::string const& key, PreparedQueryResult const& result,
-                                 std::chrono::seconds ttl)
+void BotDatabasePool::CacheResult(::std::string const& key, PreparedQueryResult const& result,
+                                 ::std::chrono::seconds ttl)
 {
     if (!result || key.empty()) return;
 
@@ -346,14 +346,14 @@ void BotDatabasePool::CacheResult(std::string const& key, PreparedQueryResult co
 
     CacheEntry entry;
     entry.result = result;
-    entry.expiry = std::chrono::steady_clock::now() + ttl;
-    entry.lastAccess = std::chrono::steady_clock::now();
+    entry.expiry = ::std::chrono::steady_clock::now() + ttl;
+    entry.lastAccess = ::std::chrono::steady_clock::now();
     entry.accessCount = 1;
 
     _resultCache[key] = entry;
 }
 
-PreparedQueryResult BotDatabasePool::GetCachedResult(std::string const& key)
+PreparedQueryResult BotDatabasePool::GetCachedResult(::std::string const& key)
 {
     auto it = _resultCache.find(key);
     if (it == _resultCache.end()) {
@@ -363,13 +363,13 @@ PreparedQueryResult BotDatabasePool::GetCachedResult(std::string const& key)
     auto& entry = it->second;
 
     // Check expiry
-    if (std::chrono::steady_clock::now() > entry.expiry) {
+    if (::std::chrono::steady_clock::now() > entry.expiry) {
         _resultCache.erase(it);
         return nullptr;
     }
 
     // Update access info
-    entry.lastAccess = std::chrono::steady_clock::now();
+    entry.lastAccess = ::std::chrono::steady_clock::now();
     entry.accessCount++;
 
     return entry.result;
@@ -411,22 +411,22 @@ bool BotDatabasePool::InitializeConnections()
     _connections.reserve(totalConnections);
 
     for (uint32 i = 0; i < totalConnections; ++i) {
-        auto connectionInfo = std::make_unique<ConnectionInfo>();
+        auto connectionInfo = ::std::make_unique<ConnectionInfo>();
 
         try {
             // Create MySQL connection
             // Note: This is a simplified example - actual implementation would
             // need proper MySQL connection setup with the connection string
-            connectionInfo->connection = std::make_unique<MySQLConnection>(/* connection params */);
-            connectionInfo->lastUsed = std::chrono::steady_clock::now();
+            connectionInfo->connection = ::std::make_unique<MySQLConnection>(/* connection params */);
+            connectionInfo->lastUsed = ::std::chrono::steady_clock::now();
 
-            _connections.push_back(std::move(connectionInfo));
+            _connections.push_back(::std::move(connectionInfo));
             _availableConnections.push(i);
 
             TC_LOG_DEBUG("module.playerbot.database",
                 "Initialized database connection {}", i);
         }
-        catch (std::exception const& e) {
+        catch (::std::exception const& e) {
             TC_LOG_ERROR("module.playerbot.database",
                 "Failed to initialize connection {}: {}", i, e.what());
             return false;
@@ -441,7 +441,7 @@ bool BotDatabasePool::InitializeConnections()
 
 void BotDatabasePool::ShutdownConnections()
 {
-    std::unique_lock lock(_connectionMutex);
+    ::std::unique_lock lock(_connectionMutex);
 
     for (auto& connectionInfo : _connections) {
         if (connectionInfo && connectionInfo->connection) {
@@ -467,8 +467,8 @@ size_t BotDatabasePool::AcquireConnection()
             auto& connectionInfo = _connections[connectionIndex];
             if (connectionInfo) {
                 connectionInfo->inUse.store(true);
-                connectionInfo->lastUsed = std::chrono::steady_clock::now();
-                _metrics.activeConnections.fetch_add(1, std::memory_order_relaxed);
+                connectionInfo->lastUsed = ::std::chrono::steady_clock::now();
+                _metrics.activeConnections.fetch_add(1, ::std::memory_order_relaxed);
                 return connectionIndex;
             }
         }
@@ -485,7 +485,7 @@ void BotDatabasePool::ReleaseConnection(size_t connectionIndex)
     if (connectionInfo) {
         connectionInfo->inUse.store(false);
         _availableConnections.push(connectionIndex);
-        _metrics.activeConnections.fetch_sub(1, std::memory_order_relaxed);
+        _metrics.activeConnections.fetch_sub(1, ::std::memory_order_relaxed);
     }
 }
 
@@ -528,14 +528,14 @@ void BotDatabasePool::WorkerThreadFunction()
             ProcessQueryQueue();
 
             // Run I/O context
-            if (_ioContext) {
+    if (_ioContext) {
                 _ioContext->run_one();
             }
 
             // Small sleep to prevent busy waiting
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(1));
         }
-        catch (std::exception const& e) {
+        catch (::std::exception const& e) {
             TC_LOG_ERROR("module.playerbot.database",
                 "Exception in worker thread: {}", e.what());
         }
@@ -555,10 +555,10 @@ void BotDatabasePool::ProcessQueryQueue()
 
 void BotDatabasePool::ExecuteQueryRequest(QueryRequest const& request)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Check timeout
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         startTime - request.submitTime);
     if (elapsed.count() >= request.timeoutMs) {
         HandleQueryTimeout(request);
@@ -582,21 +582,21 @@ void BotDatabasePool::ExecuteQueryRequest(QueryRequest const& request)
             // Execute query
             PreparedResultSet* rawResult = connectionInfo->connection->Query(request.statement);
             if (rawResult) {
-                result = std::shared_ptr<PreparedResultSet>(rawResult);
+                result = ::std::shared_ptr<PreparedResultSet>(rawResult);
             }
             connectionInfo->queryCount++;
 
             // Cache the result if successful
-            if (result) {
-                std::string cacheKey = GenerateCacheKey(request.statement);
+    if (result) {
+                ::std::string cacheKey = GenerateCacheKey(request.statement);
                 CacheResult(cacheKey, result);
             }
         }
     }
-    catch (std::exception const& e) {
+    catch (::std::exception const& e) {
         TC_LOG_ERROR("module.playerbot.database",
             "Exception executing query {}: {}", request.requestId, e.what());
-        _metrics.errors.fetch_add(1, std::memory_order_relaxed);
+        _metrics.errors.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     // Release connection
@@ -615,7 +615,7 @@ void BotDatabasePool::HandleQueryResult(QueryRequest const& request, PreparedQue
         try {
             request.callback(result);
         }
-        catch (std::exception const& e) {
+        catch (::std::exception const& e) {
             TC_LOG_ERROR("module.playerbot.database",
                 "Exception in query callback: {}", e.what());
         }
@@ -640,11 +640,11 @@ void BotDatabasePool::EvictLeastRecentlyUsed()
     _resultCache.erase(oldestIt);
 }
 
-std::string BotDatabasePool::GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const
+::std::string BotDatabasePool::GenerateCacheKey(CharacterDatabasePreparedStatement const* stmt) const
 {
     if (!stmt) return "";
 
-    std::ostringstream key;
+    ::std::ostringstream key;
     key << stmt->GetIndex();
 
     // Add parameter values to make key unique
@@ -654,23 +654,23 @@ std::string BotDatabasePool::GenerateCacheKey(CharacterDatabasePreparedStatement
     return key.str();
 }
 
-void BotDatabasePool::RecordQueryExecution(std::chrono::steady_clock::time_point startTime)
+void BotDatabasePool::RecordQueryExecution(::std::chrono::steady_clock::time_point startTime)
 {
-    auto endTime = std::chrono::steady_clock::now();
+    auto endTime = ::std::chrono::steady_clock::now();
     uint32 responseTimeMs = static_cast<uint32>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count());
+        ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime).count());
 
-    _metrics.queriesExecuted.fetch_add(1, std::memory_order_relaxed);
+    _metrics.queriesExecuted.fetch_add(1, ::std::memory_order_relaxed);
 
     // Update average response time (simplified moving average)
     uint32 currentAvg = _metrics.avgResponseTimeMs.load();
     uint32 newAvg = (currentAvg + responseTimeMs) / 2;
-    _metrics.avgResponseTimeMs.store(newAvg, std::memory_order_relaxed);
+    _metrics.avgResponseTimeMs.store(newAvg, ::std::memory_order_relaxed);
 
     // Update max response time
     uint32 currentMax = _metrics.maxResponseTimeMs.load();
     if (responseTimeMs > currentMax) {
-        _metrics.maxResponseTimeMs.store(responseTimeMs, std::memory_order_relaxed);
+        _metrics.maxResponseTimeMs.store(responseTimeMs, ::std::memory_order_relaxed);
     }
 
     // Warn if response time exceeds target
@@ -685,7 +685,7 @@ void BotDatabasePool::HandleQueryTimeout(QueryRequest const& request)
     TC_LOG_WARN("module.playerbot.database",
         "Query {} timed out after {}ms", request.requestId, request.timeoutMs);
 
-    _metrics.timeouts.fetch_add(1, std::memory_order_relaxed);
+    _metrics.timeouts.fetch_add(1, ::std::memory_order_relaxed);
 
     if (request.callback) {
         request.callback(nullptr);

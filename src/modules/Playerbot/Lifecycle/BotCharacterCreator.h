@@ -63,9 +63,9 @@ public:
         uint8 race,
         uint8 classId,
         uint8 gender,
-        std::string const& name,
+        ::std::string const& name,
         ObjectGuid& outGuid,
-        std::string& outErrorMsg);
+        ::std::string& outErrorMsg);
 
     /**
      * @brief Validate race/class combination
@@ -87,7 +87,7 @@ public:
      * @param gender Character gender
      * @return Generated name string
      */
-    static std::string GenerateDefaultBotName(uint8 race, uint8 gender);
+    static ::std::string GenerateDefaultBotName(uint8 race, uint8 gender);
 
     /**
      * @brief Get starting level for race/class combination
@@ -106,17 +106,17 @@ private:
         uint8 race,
         uint8 classId,
         uint8 gender,
-        std::string const& name,
-        std::string& outErrorMsg);
+        ::std::string const& name,
+        ::std::string& outErrorMsg);
 
     static CreateResult CreatePlayerObject(
         uint32 accountId,
         uint8 race,
         uint8 classId,
         uint8 gender,
-        std::string const& name,
+        ::std::string const& name,
         ObjectGuid& outGuid,
-        std::string& outErrorMsg);
+        ::std::string& outErrorMsg);
 };
 
 } // namespace Playerbot

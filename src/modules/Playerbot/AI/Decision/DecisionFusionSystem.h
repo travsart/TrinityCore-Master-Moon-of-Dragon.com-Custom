@@ -9,6 +9,7 @@
 
 #include "Common.h"
 #include "ObjectGuid.h"
+#include "../Common/ActionScoringEngine.h"
 #include <vector>
 #include <string>
 #include <functional>
@@ -17,6 +18,7 @@
 class BotAI;
 class Unit;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 enum class CombatContext : uint8;
@@ -50,7 +52,7 @@ struct DecisionVote
     float confidence;               // 0.0-1.0: How confident is this decision?
     float urgency;                  // 0.0-1.0: How urgent is this action?
     float utilityScore;             // Raw utility score (for debugging)
-    std::string reasoning;          // Debug info: Why this action?
+    ::std::string reasoning;          // Debug info: Why this action?
 
     DecisionVote()
         : source(DecisionSource::MAX)
@@ -62,7 +64,7 @@ struct DecisionVote
         , reasoning("")
     {}
 
-    DecisionVote(DecisionSource src, uint32 action, Unit* tgt, float conf, float urg, const std::string& reason = "")
+    DecisionVote(DecisionSource src, uint32 action, Unit* tgt, float conf, float urg, const ::std::string& reason = "")
         : source(src)
         , actionId(action)
         , target(tgt)
@@ -96,8 +98,8 @@ struct DecisionResult
     uint32 actionId;                            // Chosen action
     Unit* target;                               // Chosen target
     float consensusScore;                       // Combined vote score
-    std::vector<DecisionVote> contributingVotes;// Votes that agreed
-    std::string fusionReasoning;                // Why this action was chosen
+    ::std::vector<DecisionVote> contributingVotes;// Votes that agreed
+    ::std::string fusionReasoning;                // Why this action was chosen
 
     DecisionResult()
         : actionId(0)
@@ -144,10 +146,10 @@ struct DecisionResult
  * @endcode
  *
  * **Expected Impact**:
- * - ✅ Eliminate decision conflicts
- * - ✅ 20-30% better action selection
- * - ✅ Debuggable decision reasoning
- * - ✅ Coordinated multi-system behavior
+ * -  Eliminate decision conflicts
+ * -  20-30% better action selection
+ * -  Debuggable decision reasoning
+ * -  Coordinated multi-system behavior
  */
 class TC_GAME_API DecisionFusionSystem
 {
@@ -192,7 +194,7 @@ public:
      *
      * @note This method queries each decision system and collects their recommendations
      */
-    std::vector<DecisionVote> CollectVotes(BotAI* ai, CombatContext context);
+    ::std::vector<DecisionVote> CollectVotes(BotAI* ai, CombatContext context);
 
     /**
      * @brief Fuse votes using weighted consensus
@@ -207,7 +209,7 @@ public:
      * @param votes Collected votes from all systems
      * @return Highest consensus action or invalid result if no consensus
      */
-    DecisionResult FuseDecisions(const std::vector<DecisionVote>& votes);
+    DecisionResult FuseDecisions(const ::std::vector<DecisionVote>& votes);
 
     /**
      * @brief Enable/disable debug logging
@@ -223,7 +225,7 @@ public:
     /**
      * @brief Get current system weights (for debugging/tuning)
      */
-    [[nodiscard]] const std::array<float, static_cast<size_t>(DecisionSource::MAX)>& GetSystemWeights() const
+    [[nodiscard]] const ::std::array<float, static_cast<size_t>(DecisionSource::MAX)>& GetSystemWeights() const
     {
         return _systemWeights;
     }
@@ -237,7 +239,7 @@ public:
         uint32 conflictResolutions;     // Times multiple systems disagreed
         uint32 unanimousDecisions;      // Times all systems agreed
         uint32 urgencyOverrides;        // Times urgency overrode consensus
-        std::array<uint32, static_cast<size_t>(DecisionSource::MAX)> systemWins;
+        ::std::array<uint32, static_cast<size_t>(DecisionSource::MAX)> systemWins;
     };
 
     [[nodiscard]] DecisionStats GetStats() const { return _stats; }
@@ -245,7 +247,7 @@ public:
 
 private:
     // System weights (normalized to sum to 1.0)
-    std::array<float, static_cast<size_t>(DecisionSource::MAX)> _systemWeights;
+    ::std::array<float, static_cast<size_t>(DecisionSource::MAX)> _systemWeights;
 
     // Urgency threshold for immediate action (default: 0.85)
     float _urgencyThreshold;
@@ -269,17 +271,17 @@ private:
     /**
      * @brief Log final decision for debugging
      */
-    void LogDecision(const DecisionResult& result, const std::vector<DecisionVote>& allVotes) const;
+    void LogDecision(const DecisionResult& result, const ::std::vector<DecisionVote>& allVotes) const;
 
     /**
      * @brief Check if votes are unanimous
      */
-    [[nodiscard]] bool AreVotesUnanimous(const std::vector<DecisionVote>& votes) const;
+    [[nodiscard]] bool AreVotesUnanimous(const ::std::vector<DecisionVote>& votes) const;
 
     /**
      * @brief Find highest urgency vote
      */
-    [[nodiscard]] const DecisionVote* FindHighestUrgencyVote(const std::vector<DecisionVote>& votes) const;
+    [[nodiscard]] const DecisionVote* FindHighestUrgencyVote(const ::std::vector<DecisionVote>& votes) const;
 
     /**
      * @brief Get system name for logging
@@ -311,5 +313,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif

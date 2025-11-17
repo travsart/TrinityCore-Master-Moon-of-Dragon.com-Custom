@@ -49,10 +49,10 @@ void LearningAnalytics::Shutdown()
     TC_LOG_INFO("playerbot.learning", "Shutting down Learning Analytics");
 
     // Export final reports for all bots
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
     for (const auto& [botGuid, data] : _botData)
     {
-        std::string report = GenerateLearningReport(botGuid);
+        ::std::string report = GenerateLearningReport(botGuid);
         TC_LOG_INFO("playerbot.learning", "Final report for bot %u:\n%s", botGuid, report.c_str());
     }
 
@@ -66,7 +66,7 @@ void LearningAnalytics::RecordLearningStep(uint32_t botGuid, const LearningDataP
 
     TRACK_ML_OPERATION(botGuid, MLOperationType::EXPERIENCE_STORAGE);
 
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     BotLearningData* data = GetOrCreateBotData(botGuid);
     if (!data)
@@ -97,7 +97,7 @@ void LearningAnalytics::RecordEpisode(uint32_t botGuid, uint32_t episode, float 
     if (!_initialized)
         return;
 
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     BotLearningData* data = GetOrCreateBotData(botGuid);
     if (!data)
@@ -107,7 +107,7 @@ void LearningAnalytics::RecordEpisode(uint32_t botGuid, uint32_t episode, float 
 
     // Create data point for this episode
     LearningDataPoint point;
-    point.timestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    point.timestamp = ::std::chrono::steady_clock::now().time_since_epoch().count();
     point.episode = episode;
     point.reward = totalReward;
     point.loss = avgLoss;
@@ -121,15 +121,15 @@ LearningAnalytics::BotLearningData* LearningAnalytics::GetOrCreateBotData(uint32
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
     {
-        auto data = std::make_unique<BotLearningData>();
+        auto data = ::std::make_unique<BotLearningData>();
         data->currentPhase = LearningPhase::EXPLORATION;
         data->plateauStartEpisode = 0;
         data->convergenceEpisode = 0;
         data->peakPerformance = 0.0f;
-        data->startTime = std::chrono::steady_clock::now();
+        data->startTime = ::std::chrono::steady_clock::now();
 
         auto* ptr = data.get();
-        _botData[botGuid] = std::move(data);
+        _botData[botGuid] = ::std::move(data);
         _globalMetrics.totalBots++;
         return ptr;
     }
@@ -140,7 +140,7 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
 {
     LearningTrend trend;
 
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.size() < _minDataPoints)
@@ -149,11 +149,11 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
     const auto& dataPoints = it->second->dataPoints;
 
     // Extract performance series
-    std::vector<float> performances = ExtractMetricSeries(dataPoints,
+    ::std::vector<float> performances = ExtractMetricSeries(dataPoints,
         [](const LearningDataPoint& p) { return p.performance; });
-    std::vector<float> losses = ExtractMetricSeries(dataPoints,
+    ::std::vector<float> losses = ExtractMetricSeries(dataPoints,
         [](const LearningDataPoint& p) { return p.loss; });
-    std::vector<float> rewards = ExtractMetricSeries(dataPoints,
+    ::std::vector<float> rewards = ExtractMetricSeries(dataPoints,
         [](const LearningDataPoint& p) { return p.reward; });
 
     // Calculate slopes
@@ -165,8 +165,8 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
     size_t halfPoint = performances.size() / 2;
     if (halfPoint > 10)
     {
-        std::vector<float> firstHalf(performances.begin(), performances.begin() + halfPoint);
-        std::vector<float> secondHalf(performances.begin() + halfPoint, performances.end());
+        ::std::vector<float> firstHalf(performances.begin(), performances.begin() + halfPoint);
+        ::std::vector<float> secondHalf(performances.begin() + halfPoint, performances.end());
 
         float var1 = CalculateVariance(firstHalf);
         float var2 = CalculateVariance(secondHalf);
@@ -175,8 +175,8 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
 
     // Determine trend status
     trend.isImproving = trend.performanceSlope > 0.001f && trend.lossSlope < -0.001f;
-    trend.isStable = std::abs(trend.performanceSlope) < 0.0001f &&
-                     std::abs(trend.varianceChange) < 0.01f;
+    trend.isStable = ::std::abs(trend.performanceSlope) < 0.0001f &&
+                     ::std::abs(trend.varianceChange) < 0.01f;
     trend.hasConverged = trend.isStable && CalculateVariance(performances) < _convergenceThreshold;
 
     return trend;
@@ -184,7 +184,7 @@ LearningTrend LearningAnalytics::AnalyzeLearningTrend(uint32_t botGuid) const
 
 LearningPhase LearningAnalytics::DetectLearningPhase(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -196,7 +196,7 @@ LearningPhase LearningAnalytics::DetectLearningPhase(uint32_t botGuid) const
     if (!dataPoints.empty())
     {
         float avgExploration = 0;
-        size_t count = std::min<size_t>(10, dataPoints.size());
+        size_t count = ::std::min<size_t>(10, dataPoints.size());
         for (size_t i = dataPoints.size() - count; i < dataPoints.size(); ++i)
         {
             avgExploration += dataPoints[i].explorationRate;
@@ -228,12 +228,12 @@ LearningPhase LearningAnalytics::DetectLearningPhase(uint32_t botGuid) const
 float LearningAnalytics::GetLearningRate(uint32_t botGuid) const
 {
     LearningTrend trend = AnalyzeLearningTrend(botGuid);
-    return std::abs(trend.performanceSlope);
+    return ::std::abs(trend.performanceSlope);
 }
 
 float LearningAnalytics::GetConvergenceProgress(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.size() < _minDataPoints)
@@ -242,8 +242,8 @@ float LearningAnalytics::GetConvergenceProgress(uint32_t botGuid) const
     const auto& dataPoints = it->second->dataPoints;
 
     // Calculate current variance
-    std::vector<float> recentPerformances;
-    size_t count = std::min<size_t>(50, dataPoints.size());
+    ::std::vector<float> recentPerformances;
+    size_t count = ::std::min<size_t>(50, dataPoints.size());
     for (size_t i = dataPoints.size() - count; i < dataPoints.size(); ++i)
     {
         recentPerformances.push_back(dataPoints[i].performance);
@@ -252,13 +252,13 @@ float LearningAnalytics::GetConvergenceProgress(uint32_t botGuid) const
     float currentVariance = CalculateVariance(recentPerformances);
 
     // Progress is inverse of variance (lower variance = more converged)
-    float progress = 1.0f - std::min(1.0f, currentVariance / 0.1f);
-    return std::clamp(progress, 0.0f, 1.0f);
+    float progress = 1.0f - ::std::min(1.0f, currentVariance / 0.1f);
+    return ::std::clamp(progress, 0.0f, 1.0f);
 }
 
 bool LearningAnalytics::HasConverged(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -270,7 +270,7 @@ bool LearningAnalytics::HasConverged(uint32_t botGuid) const
 
 bool LearningAnalytics::IsInPlateau(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -281,7 +281,7 @@ bool LearningAnalytics::IsInPlateau(uint32_t botGuid) const
 
 bool LearningAnalytics::IsRegressing(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end())
@@ -292,7 +292,7 @@ bool LearningAnalytics::IsRegressing(uint32_t botGuid) const
 
 float LearningAnalytics::GetAveragePerformance(uint32_t botGuid, uint32_t lastEpisodes) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -315,7 +315,7 @@ float LearningAnalytics::GetAveragePerformance(uint32_t botGuid, uint32_t lastEp
 
 float LearningAnalytics::GetSampleEfficiency(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
@@ -334,8 +334,8 @@ float LearningAnalytics::GetSampleEfficiency(uint32_t botGuid) const
 ModelComparison LearningAnalytics::CompareModels(uint32_t botGuidA, uint32_t botGuidB) const
 {
     ModelComparison comparison;
-    comparison.modelA = "Bot_" + std::to_string(botGuidA);
-    comparison.modelB = "Bot_" + std::to_string(botGuidB);
+    comparison.modelA = "Bot_" + ::std::to_string(botGuidA);
+    comparison.modelB = "Bot_" + ::std::to_string(botGuidB);
 
     float perfA = GetAveragePerformance(botGuidA);
     float perfB = GetAveragePerformance(botGuidB);
@@ -355,20 +355,20 @@ ModelComparison LearningAnalytics::CompareModels(uint32_t botGuidA, uint32_t bot
                  comparison.stabilityDelta * 0.2f;
 
     comparison.betterModel = score > 0 ? comparison.modelA : comparison.modelB;
-    comparison.confidence = std::min(1.0f, std::abs(score));
+    comparison.confidence = ::std::min(1.0f, ::std::abs(score));
 
     return comparison;
 }
 
-std::string LearningAnalytics::GenerateLearningReport(uint32_t botGuid) const
+::std::string LearningAnalytics::GenerateLearningReport(uint32_t botGuid) const
 {
-    std::stringstream ss;
+    ::std::stringstream ss;
 
     ss << "===== Learning Report for Bot " << botGuid << " =====\n\n";
 
     // Current status
     LearningPhase phase = DetectLearningPhase(botGuid);
-    std::string phaseStr;
+    ::std::string phaseStr;
     switch (phase)
     {
         case LearningPhase::EXPLORATION: phaseStr = "Exploration"; break;
@@ -437,9 +437,9 @@ std::string LearningAnalytics::GenerateLearningReport(uint32_t botGuid) const
     return ss.str();
 }
 
-std::vector<std::string> LearningAnalytics::GetPlateauBreakingSuggestions(uint32_t botGuid) const
+::std::vector<::std::string> LearningAnalytics::GetPlateauBreakingSuggestions(uint32_t botGuid) const
 {
-    std::vector<std::string> suggestions;
+    ::std::vector<::std::string> suggestions;
 
     LearningTrend trend = AnalyzeLearningTrend(botGuid);
 
@@ -450,7 +450,7 @@ std::vector<std::string> LearningAnalytics::GetPlateauBreakingSuggestions(uint32
         suggestions.push_back("Add noise to actions for diversity");
     }
 
-    if (std::abs(trend.lossSlope) < 0.0001f)
+    if (::std::abs(trend.lossSlope) < 0.0001f)
     {
         suggestions.push_back("Adjust learning rate (current may be too small or too large)");
         suggestions.push_back("Consider curriculum learning with harder tasks");
@@ -464,7 +464,7 @@ std::vector<std::string> LearningAnalytics::GetPlateauBreakingSuggestions(uint32
     return suggestions;
 }
 
-float LearningAnalytics::CalculateSlope(const std::vector<float>& values) const
+float LearningAnalytics::CalculateSlope(const ::std::vector<float>& values) const
 {
     if (values.size() < 2)
         return 0.0f;
@@ -482,18 +482,18 @@ float LearningAnalytics::CalculateSlope(const std::vector<float>& values) const
     }
 
     float denominator = n * sumX2 - sumX * sumX;
-    if (std::abs(denominator) < 0.0001f)
+    if (::std::abs(denominator) < 0.0001f)
         return 0.0f;
 
     return (n * sumXY - sumX * sumY) / denominator;
 }
 
-float LearningAnalytics::CalculateVariance(const std::vector<float>& values) const
+float LearningAnalytics::CalculateVariance(const ::std::vector<float>& values) const
 {
     if (values.empty())
         return 0.0f;
 
-    float mean = std::accumulate(values.begin(), values.end(), 0.0f) / values.size();
+    float mean = ::std::accumulate(values.begin(), values.end(), 0.0f) / values.size();
     float variance = 0.0f;
 
     for (float value : values)
@@ -505,11 +505,11 @@ float LearningAnalytics::CalculateVariance(const std::vector<float>& values) con
     return variance / values.size();
 }
 
-std::vector<float> LearningAnalytics::ExtractMetricSeries(
-    const std::deque<LearningDataPoint>& points,
+::std::vector<float> LearningAnalytics::ExtractMetricSeries(
+    const ::std::deque<LearningDataPoint>& points,
     auto getValue) const
 {
-    std::vector<float> series;
+    ::std::vector<float> series;
     series.reserve(points.size());
 
     for (const auto& point : points)
@@ -520,7 +520,7 @@ std::vector<float> LearningAnalytics::ExtractMetricSeries(
 
 float LearningAnalytics::GetPeakPerformance(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it != _botData.end())
@@ -531,13 +531,13 @@ float LearningAnalytics::GetPeakPerformance(uint32_t botGuid) const
 
 float LearningAnalytics::GetPerformanceVariance(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
         return 0.0f;
 
-    std::vector<float> performances = ExtractMetricSeries(it->second->dataPoints,
+    ::std::vector<float> performances = ExtractMetricSeries(it->second->dataPoints,
         [](const LearningDataPoint& p) { return p.performance; });
 
     return CalculateVariance(performances);
@@ -545,14 +545,14 @@ float LearningAnalytics::GetPerformanceVariance(uint32_t botGuid) const
 
 float LearningAnalytics::GetTimeEfficiency(uint32_t botGuid) const
 {
-    std::lock_guard lock(_dataMutex);
+    ::std::lock_guard lock(_dataMutex);
 
     auto it = _botData.find(botGuid);
     if (it == _botData.end() || it->second->dataPoints.empty())
         return 0.0f;
 
-    auto now = std::chrono::steady_clock::now();
-    auto runtime = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->startTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto runtime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - it->second->startTime).count();
 
     if (runtime == 0)
         return 0.0f;
@@ -574,9 +574,9 @@ float LearningAnalytics::GetComputeEfficiency(uint32_t botGuid) const
     return currentPerformance / (totalComputeTime / 1000000.0f);  // Performance per second of compute
 }
 
-std::vector<std::string> LearningAnalytics::GetLearningAnomalies(uint32_t botGuid) const
+::std::vector<::std::string> LearningAnalytics::GetLearningAnomalies(uint32_t botGuid) const
 {
-    std::vector<std::string> anomalies;
+    ::std::vector<::std::string> anomalies;
 
     LearningTrend trend = AnalyzeLearningTrend(botGuid);
 
@@ -640,12 +640,12 @@ void LearningAnalytics::UpdateGlobalMetrics()
 }
 
 // ScopedLearningExperiment Implementation
-ScopedLearningExperiment::ScopedLearningExperiment(const std::string& name, const std::string& configuration)
+ScopedLearningExperiment::ScopedLearningExperiment(const ::std::string& name, const ::std::string& configuration)
     : _name(name)
     , _configuration(configuration)
     , _successful(false)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
     sLearningAnalytics.StartExperiment(_name, _configuration);
 }
 
@@ -654,7 +654,7 @@ ScopedLearningExperiment::~ScopedLearningExperiment()
     sLearningAnalytics.EndExperiment(_name, _successful);
 }
 
-void ScopedLearningExperiment::RecordMetric(const std::string& name, float value)
+void ScopedLearningExperiment::RecordMetric(const ::std::string& name, float value)
 {
     _metrics[name] = value;
 }

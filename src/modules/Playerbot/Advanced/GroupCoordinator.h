@@ -101,7 +101,7 @@ namespace Playerbot
         bool ShareQuest(uint32 questId);
         bool AcceptSharedQuest(uint32 questId, Player* sharer);
         void SyncGroupQuests();
-        std::vector<uint32> GetShareableQuests() const;
+        ::std::vector<uint32> GetShareableQuests() const;
 
         // Group composition
         struct GroupComposition
@@ -117,7 +117,7 @@ namespace Playerbot
         GroupComposition AnalyzeGroupComposition() const;
         bool IsGroupBalanced() const;
         GroupRole GetNeededRole() const;
-        std::vector<Player*> GetGroupMembers() const;
+        ::std::vector<Player*> GetGroupMembers() const;
 
         // Ready checks
         bool PerformReadyCheck();
@@ -201,7 +201,7 @@ namespace Playerbot
             bool canPerform;
         };
 
-        std::vector<RoleCapability> AnalyzeRoleCapabilities() const;
+        ::std::vector<RoleCapability> AnalyzeRoleCapabilities() const;
         GroupRole GetBestRole() const;
         bool HasTankingAbilities() const;
         bool HasHealingAbilities() const;
@@ -229,7 +229,7 @@ namespace Playerbot
             float sharePriority;
         };
 
-        std::vector<ShareableQuest> EvaluateQuestsToShare() const;
+        ::std::vector<ShareableQuest> EvaluateQuestsToShare() const;
         bool ShouldShareQuest(uint32 questId) const;
         bool CanMemberAcceptQuest(Player* member, uint32 questId) const;
 
@@ -237,9 +237,9 @@ namespace Playerbot
         struct BossStrategy
         {
             uint32 bossEntry;
-            std::string strategyName;
-            std::vector<std::string> phases;
-            std::unordered_map<std::string, std::string> assignments;
+            ::std::string strategyName;
+            ::std::vector<::std::string> phases;
+            ::std::unordered_map<::std::string, ::std::string> assignments;
         };
 
         BossStrategy* GetBossStrategy(uint32 bossEntry);
@@ -266,7 +266,7 @@ namespace Playerbot
             bool responded;
         };
 
-        std::unordered_map<ObjectGuid, PendingInvite> m_pendingInvites;
+        ::std::unordered_map<ObjectGuid, PendingInvite> m_pendingInvites;
         void ProcessPendingInvites(uint32 diff);
         bool ShouldAcceptInvite(Player* inviter) const;
 
@@ -279,7 +279,7 @@ namespace Playerbot
         // Ready check tracking
         bool m_readyCheckActive;
         uint32 m_readyCheckTime;
-        std::unordered_set<ObjectGuid> m_readyMembers;
+        ::std::unordered_set<ObjectGuid> m_readyMembers;
         void ProcessReadyCheck(uint32 diff);
 
         // Statistics tracking
@@ -315,19 +315,19 @@ namespace Playerbot
         uint32 m_inviteResponseDelay;
 
         // Loot tracking
-        std::unordered_map<uint32, LootDecision> m_lootDecisions;
+        ::std::unordered_map<uint32, LootDecision> m_lootDecisions;
         uint32 m_lastLootRoll;
 
         // Boss strategies
-        std::unordered_map<uint32, BossStrategy> m_bossStrategies;
+        ::std::unordered_map<uint32, BossStrategy> m_bossStrategies;
 
         // Statistics
         Statistics m_stats;
 
         // Performance metrics
-        std::chrono::high_resolution_clock::time_point m_performanceStart;
-        std::chrono::microseconds m_lastUpdateDuration;
-        std::chrono::microseconds m_totalUpdateTime;
+        ::std::chrono::high_resolution_clock::time_point m_performanceStart;
+        ::std::chrono::microseconds m_lastUpdateDuration;
+        ::std::chrono::microseconds m_totalUpdateTime;
         uint32 m_updateCount;
         float m_cpuUsage;
     };

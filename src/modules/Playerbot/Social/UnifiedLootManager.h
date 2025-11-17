@@ -36,9 +36,9 @@ namespace Playerbot
  * **Architecture:**
  * ```
  * UnifiedLootManager
- *   ├─> AnalysisModule     (item scoring, upgrade detection)
- *   ├─> CoordinationModule (session management, orchestration)
- *   └─> DistributionModule (roll handling, distribution)
+ *   > AnalysisModule     (item scoring, upgrade detection)
+ *   > CoordinationModule (session management, orchestration)
+ *   > DistributionModule (roll handling, distribution)
  * ```
  *
  * **Thread Safety:**
@@ -77,7 +77,7 @@ public:
     float CalculateStatWeight(Player* player, uint32 statType) override;
     float CompareItems(Player* player, LootItem const& newItem, Item const* currentItem) override;
     float CalculateItemScore(Player* player, LootItem const& item) override;
-    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) override;
+    ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player) override;
 
     // ========================================================================
     // COORDINATION MODULE INTERFACE
@@ -87,9 +87,9 @@ public:
     void ProcessLootSession(Group* group, uint32 lootSessionId) override;
     void CompleteLootSession(uint32 lootSessionId) override;
     void HandleLootSessionTimeout(uint32 lootSessionId) override;
-    void OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items) override;
-    void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items) override;
-    void OptimizeLootSequence(Group* group, std::vector<LootItem>& items) override;
+    void OrchestrateLootDistribution(Group* group, ::std::vector<LootItem> const& items) override;
+    void PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items) override;
+    void OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items) override;
     void FacilitateGroupLootDiscussion(Group* group, LootItem const& item) override;
     void HandleLootConflictResolution(Group* group, LootItem const& item) override;
     void BroadcastLootRecommendations(Group* group, LootItem const& item) override;
@@ -120,8 +120,8 @@ public:
     // ========================================================================
 
     void ProcessCompleteLootFlow(Group* group, Loot* loot) override;
-    std::string GetLootRecommendation(Player* player, LootItem const& item) override;
-    std::string GetLootStatistics() const override;
+    ::std::string GetLootRecommendation(Player* player, LootItem const& item) override;
+    ::std::string GetLootStatistics() const override;
 
 private:
     // ========================================================================
@@ -140,7 +140,11 @@ private:
         float CalculateStatWeight(Player* player, uint32 statType);
         float CompareItems(Player* player, LootItem const& newItem, Item const* currentItem);
         float CalculateItemScore(Player* player, LootItem const& item);
-        std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player);
+        ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player);
+
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _itemsAnalyzed{0};
+        ::std::atomic<uint64> _upgradesDetected{0};
 
     private:
         float CalculateArmorValue(Player* player, LootItem const& item);
@@ -148,10 +152,6 @@ private:
         float CalculateAccessoryValue(Player* player, LootItem const& item);
         bool IsItemForMainSpec(Player* player, LootItem const& item);
         bool IsItemForOffSpec(Player* player, LootItem const& item);
-
-        // Statistics
-        std::atomic<uint64> _itemsAnalyzed{0};
-        std::atomic<uint64> _upgradesDetected{0};
     };
 
     /**
@@ -164,9 +164,9 @@ private:
         void ProcessLootSession(Group* group, uint32 lootSessionId);
         void CompleteLootSession(uint32 lootSessionId);
         void HandleLootSessionTimeout(uint32 lootSessionId);
-        void OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items);
-        void PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items);
-        void OptimizeLootSequence(Group* group, std::vector<LootItem>& items);
+        void OrchestrateLootDistribution(Group* group, ::std::vector<LootItem> const& items);
+        void PrioritizeLootDistribution(Group* group, ::std::vector<LootItem>& items);
+        void OptimizeLootSequence(Group* group, ::std::vector<LootItem>& items);
         void FacilitateGroupLootDiscussion(Group* group, LootItem const& item);
         void HandleLootConflictResolution(Group* group, LootItem const& item);
         void BroadcastLootRecommendations(Group* group, LootItem const& item);
@@ -174,16 +174,28 @@ private:
         void MinimizeLootTime(Group* group, uint32 sessionId);
         void MaximizeLootFairness(Group* group, uint32 sessionId);
 
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _sessionsCreated{0};
+        ::std::atomic<uint64> _sessionsCompleted{0};
+
     private:
         struct LootSession
         {
             uint32 sessionId;
             uint32 groupId;
-            std::vector<LootItem> availableItems;
-            std::vector<uint32> activeRolls;
+            ::std::vector<LootItem> availableItems;
+            ::std::vector<uint32> activeRolls;
             uint32 sessionStartTime;
             uint32 sessionTimeout;
             bool isActive;
+
+            // Default constructor for STL containers
+            LootSession()
+                : sessionId(0), groupId(0)
+                , sessionStartTime(GameTime::GetGameTimeMS())
+                , sessionTimeout(GameTime::GetGameTimeMS() + 300000)
+                , isActive(false)
+            {}
 
             LootSession(uint32 id, uint32 gId)
                 : sessionId(id), groupId(gId)
@@ -193,13 +205,9 @@ private:
             {}
         };
 
-        std::unordered_map<uint32, LootSession> _activeSessions;
+        ::std::unordered_map<uint32, LootSession> _activeSessions;
         uint32 _nextSessionId{1};
         Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _sessionMutex;
-
-        // Statistics
-        std::atomic<uint64> _sessionsCreated{0};
-        std::atomic<uint64> _sessionsCompleted{0};
     };
 
     /**
@@ -222,6 +230,10 @@ private:
         void ResolveRollTies(Group* group, uint32 rollId);
         void HandleLootNinja(Group* group, uint32 suspectedPlayer);
 
+        // Statistics (public for GetLootStatistics)
+        ::std::atomic<uint64> _rollsProcessed{0};
+        ::std::atomic<uint64> _itemsDistributed{0};
+
     private:
         struct LootRoll
         {
@@ -229,33 +241,29 @@ private:
             uint32 itemId;
             uint32 lootSlot;
             uint32 groupId;
-            std::unordered_map<uint32, LootRollType> playerRolls;
-            std::unordered_map<uint32, uint32> rollValues;
+            ::std::unordered_map<uint32, LootRollType> playerRolls;
+            ::std::unordered_map<uint32, uint32> rollValues;
             bool isComplete;
 
             LootRoll(uint32 id) : rollId(id), itemId(0), lootSlot(0), groupId(0), isComplete(false) {}
         };
 
-        std::unordered_map<uint32, LootRoll> _activeRolls;
+        ::std::unordered_map<uint32, LootRoll> _activeRolls;
         uint32 _nextRollId{1};
         Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _rollMutex;
-
-        // Statistics
-        std::atomic<uint64> _rollsProcessed{0};
-        std::atomic<uint64> _itemsDistributed{0};
     };
 
     // Module instances
-    std::unique_ptr<AnalysisModule> _analysis;
-    std::unique_ptr<CoordinationModule> _coordination;
-    std::unique_ptr<DistributionModule> _distribution;
+    ::std::unique_ptr<AnalysisModule> _analysis;
+    ::std::unique_ptr<CoordinationModule> _coordination;
+    ::std::unique_ptr<DistributionModule> _distribution;
 
     // Global mutex for unified operations
     mutable Playerbot::OrderedMutex<Playerbot::LockOrder::LOOT_MANAGER> _mutex;
 
     // Statistics
-    std::atomic<uint64> _totalOperations{0};
-    std::atomic<uint64> _totalProcessingTimeMs{0};
+    ::std::atomic<uint64> _totalOperations{0};
+    ::std::atomic<uint64> _totalProcessingTimeMs{0};
 };
 
 } // namespace Playerbot

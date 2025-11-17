@@ -98,13 +98,13 @@ public:
     bool IsInWorld() const { return m_inWorld; }
     void SetInWorld(bool inWorld) { m_inWorld = inWorld; }
     const char* GetName() const { return m_name.c_str(); }
-    void SetName(std::string name) { m_name = std::move(name); }
+    void SetName(::std::string name) { m_name = ::std::move(name); }
     uint8 GetLevel() const { return m_level; }
     void SetLevel(uint8 level) { m_level = level; }
 
 private:
     bool m_inWorld;
-    std::string m_name;
+    ::std::string m_name;
     uint8 m_level;
 };
 
@@ -130,10 +130,10 @@ public:
         Player* playerPtr = reinterpret_cast<Player*>(bot);
         BotAI* aiPtr = reinterpret_cast<BotAI*>(this);
 
-        m_questManager = std::make_unique<QuestManager>(playerPtr, aiPtr);
-        m_tradeManager = std::make_unique<TradeManager>(playerPtr, aiPtr);
-        m_gatheringManager = std::make_unique<GatheringManager>(playerPtr, aiPtr);
-        m_auctionManager = std::make_unique<AuctionManager>(playerPtr, aiPtr);
+        m_questManager = ::std::make_unique<QuestManager>(playerPtr, aiPtr);
+        m_tradeManager = ::std::make_unique<TradeManager>(playerPtr, aiPtr);
+        m_gatheringManager = ::std::make_unique<GatheringManager>(playerPtr, aiPtr);
+        m_auctionManager = ::std::make_unique<AuctionManager>(playerPtr, aiPtr);
     }
 
     ~MockBotAI() = default;
@@ -181,10 +181,10 @@ private:
     uint32 m_updateManagersCalls;
 
     // The 4 managers from Phase 2.4
-    std::unique_ptr<QuestManager> m_questManager;
-    std::unique_ptr<TradeManager> m_tradeManager;
-    std::unique_ptr<GatheringManager> m_gatheringManager;
-    std::unique_ptr<AuctionManager> m_auctionManager;
+    ::std::unique_ptr<QuestManager> m_questManager;
+    ::std::unique_ptr<TradeManager> m_tradeManager;
+    ::std::unique_ptr<GatheringManager> m_gatheringManager;
+    ::std::unique_ptr<AuctionManager> m_auctionManager;
 };
 
 // ============================================================================
@@ -201,14 +201,14 @@ protected:
     void SetUp() override
     {
         // Create mock player and AI
-        mockPlayer = std::make_unique<MockPlayer>();
+        mockPlayer = ::std::make_unique<MockPlayer>();
         mockPlayer->SetName("IntegrationTestBot");
 
         // Create BotAI with all 4 managers
-        mockAI = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(mockPlayer.get()));
+        mockAI = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(mockPlayer.get()));
 
         // Create SoloStrategy for observer pattern tests
-        soloStrategy = std::make_unique<SoloStrategy>();
+        soloStrategy = ::std::make_unique<SoloStrategy>();
     }
 
     void TearDown() override
@@ -234,15 +234,15 @@ protected:
     template<typename Func>
     uint64_t MeasureTimeMicroseconds(Func&& func)
     {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = ::std::chrono::high_resolution_clock::now();
         func();
-        auto end = std::chrono::high_resolution_clock::now();
-        return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto end = ::std::chrono::high_resolution_clock::now();
+        return ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
     }
 
-    std::unique_ptr<MockPlayer> mockPlayer;
-    std::unique_ptr<MockBotAI> mockAI;
-    std::unique_ptr<SoloStrategy> soloStrategy;
+    ::std::unique_ptr<MockPlayer> mockPlayer;
+    ::std::unique_ptr<MockBotAI> mockAI;
+    ::std::unique_ptr<SoloStrategy> soloStrategy;
 };
 
 // ============================================================================
@@ -472,12 +472,12 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_LockFree_NoDeadlocks)
     BotAI* ai = reinterpret_cast<BotAI*>(mockAI.get());
 
     // Simulate concurrent observer queries and manager updates
-    std::atomic<bool> testComplete{false};
-    std::atomic<uint32> observerQueries{0};
-    std::atomic<uint32> managerUpdates{0};
+    ::std::atomic<bool> testComplete{false};
+    ::std::atomic<uint32> observerQueries{0};
+    ::std::atomic<uint32> managerUpdates{0};
 
     // Observer thread
-    std::thread observerThread([&]() {
+    ::std::thread observerThread([&]() {
         while (!testComplete.load())
         {
             soloStrategy->UpdateBehavior(ai, 16);
@@ -486,7 +486,7 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_LockFree_NoDeadlocks)
     });
 
     // Manager update thread
-    std::thread updateThread([&]() {
+    ::std::thread updateThread([&]() {
         while (!testComplete.load())
         {
             mockAI->UpdateManagers(10);
@@ -495,7 +495,7 @@ TEST_F(Phase2IntegrationTest, ObserverPattern_LockFree_NoDeadlocks)
     });
 
     // Run test for 100ms
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
     testComplete.store(true);
 
     observerThread.join();
@@ -653,7 +653,7 @@ TEST_F(Phase2IntegrationTest, UpdateChain_AllManagersActive_PerformanceTarget)
 TEST_F(Phase2IntegrationTest, UpdateChain_VaryingDeltas_HandledCorrectly)
 {
     // Simulate variable frame times
-    std::vector<uint32> deltas = {16, 33, 8, 50, 16, 16, 100, 16};
+    ::std::vector<uint32> deltas = {16, 33, 8, 50, 16, 16, 100, 16};
 
     for (uint32 delta : deltas)
     {
@@ -961,17 +961,17 @@ TEST_F(Phase2IntegrationTest, Performance_ThrottledUpdate_UnderOneMicrosecond)
 TEST_F(Phase2IntegrationTest, Performance_ConcurrentBots_NoInterference)
 {
     // Create 10 mock bots
-    std::vector<std::unique_ptr<MockPlayer>> players;
-    std::vector<std::unique_ptr<MockBotAI>> ais;
+    ::std::vector<::std::unique_ptr<MockPlayer>> players;
+    ::std::vector<::std::unique_ptr<MockBotAI>> ais;
 
     for (int i = 0; i < 10; ++i)
     {
-        auto player = std::make_unique<MockPlayer>();
-        player->SetName("Bot" + std::to_string(i));
-        auto ai = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
+        auto player = ::std::make_unique<MockPlayer>();
+        player->SetName("Bot" + ::std::to_string(i));
+        auto ai = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
 
-        players.push_back(std::move(player));
-        ais.push_back(std::move(ai));
+        players.push_back(::std::move(player));
+        ais.push_back(::std::move(ai));
     }
 
     // Initialize all bots
@@ -1011,8 +1011,8 @@ TEST_F(Phase2IntegrationTest, Performance_AtomicOperations_LockFree)
     TradeManager* tradeMgr = mockAI->GetTradeManager();
 
     // Atomic operations should not block
-    std::atomic<uint32> queryCount{0};
-    std::thread queryThread([&]() {
+    ::std::atomic<uint32> queryCount{0};
+    ::std::thread queryThread([&]() {
         for (int i = 0; i < 100000; ++i)
         {
             volatile bool q = questMgr->IsQuestingActive();
@@ -1046,11 +1046,11 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ConcurrentQueries_NoDeadlocks)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    std::atomic<bool> testComplete{false};
-    std::atomic<uint32> totalQueries{0};
+    ::std::atomic<bool> testComplete{false};
+    ::std::atomic<uint32> totalQueries{0};
 
     // Create 4 query threads
-    std::vector<std::thread> threads;
+    ::std::vector<::std::thread> threads;
     for (int t = 0; t < 4; ++t)
     {
         threads.emplace_back([&]() {
@@ -1069,7 +1069,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ConcurrentQueries_NoDeadlocks)
     }
 
     // Run for 100ms
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
     testComplete.store(true);
 
     for (auto& thread : threads)
@@ -1085,22 +1085,22 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ConcurrentQueries_NoDeadlocks)
 TEST_F(Phase2IntegrationTest, ThreadSafety_HundredConcurrentBots_NoDeadlocks)
 {
     // Create 100 bots
-    std::vector<std::unique_ptr<MockPlayer>> players;
-    std::vector<std::unique_ptr<MockBotAI>> ais;
+    ::std::vector<::std::unique_ptr<MockPlayer>> players;
+    ::std::vector<::std::unique_ptr<MockBotAI>> ais;
 
     for (int i = 0; i < 100; ++i)
     {
-        auto player = std::make_unique<MockPlayer>();
-        auto ai = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
-        players.push_back(std::move(player));
-        ais.push_back(std::move(ai));
+        auto player = ::std::make_unique<MockPlayer>();
+        auto ai = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
+        players.push_back(::std::move(player));
+        ais.push_back(::std::move(ai));
     }
 
-    std::atomic<bool> testComplete{false};
-    std::atomic<uint32> updateCount{0};
+    ::std::atomic<bool> testComplete{false};
+    ::std::atomic<uint32> updateCount{0};
 
     // Update all bots in parallel
-    std::vector<std::thread> threads;
+    ::std::vector<::std::thread> threads;
     for (size_t i = 0; i < ais.size(); ++i)
     {
         threads.emplace_back([&, i]() {
@@ -1113,7 +1113,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_HundredConcurrentBots_NoDeadlocks)
     }
 
     // Run for 100ms
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
     testComplete.store(true);
 
     for (auto& thread : threads)
@@ -1131,22 +1131,22 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_MemoryOrdering_Correct)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    std::atomic<bool> writerDone{false};
-    std::atomic<uint32> readValue{0};
+    ::std::atomic<bool> writerDone{false};
+    ::std::atomic<uint32> readValue{0};
 
     QuestManager* questMgr = mockAI->GetQuestManager();
 
     // Writer thread (simulates manager updates)
-    std::thread writer([&]() {
+    ::std::thread writer([&]() {
         // In real implementation, manager would update atomic state
         // For testing, we verify consistency of reads
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        writerDone.store(true, std::memory_order_release);
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
+        writerDone.store(true, ::std::memory_order_release);
     });
 
     // Reader thread (simulates SoloStrategy queries)
-    std::thread reader([&]() {
-        while (!writerDone.load(std::memory_order_acquire))
+    ::std::thread reader([&]() {
+        while (!writerDone.load(::std::memory_order_acquire))
         {
             volatile bool state = questMgr->IsQuestingActive();
             (void)state;
@@ -1169,12 +1169,12 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ManagerUpdates_DontBlockQueries)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    std::atomic<bool> testComplete{false};
-    std::atomic<uint32> queryCount{0};
-    std::atomic<uint32> updateCount{0};
+    ::std::atomic<bool> testComplete{false};
+    ::std::atomic<uint32> queryCount{0};
+    ::std::atomic<uint32> updateCount{0};
 
     // Query thread
-    std::thread queryThread([&]() {
+    ::std::thread queryThread([&]() {
         while (!testComplete.load())
         {
             volatile bool q = mockAI->GetQuestManager()->IsQuestingActive();
@@ -1184,7 +1184,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ManagerUpdates_DontBlockQueries)
     });
 
     // Update thread
-    std::thread updateThread([&]() {
+    ::std::thread updateThread([&]() {
         while (!testComplete.load())
         {
             mockAI->UpdateManagers(10);
@@ -1193,7 +1193,7 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_ManagerUpdates_DontBlockQueries)
     });
 
     // Run for 50ms
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
     testComplete.store(true);
 
     queryThread.join();
@@ -1213,25 +1213,25 @@ TEST_F(Phase2IntegrationTest, ThreadSafety_DataRaces_None)
     // Initialize managers
     SimulateTime(10000, 100);
 
-    std::atomic<bool> done{false};
+    ::std::atomic<bool> done{false};
 
     // Multiple threads accessing different managers
-    std::thread t1([&]() {
+    ::std::thread t1([&]() {
         while (!done.load())
             volatile bool state = mockAI->GetQuestManager()->IsQuestingActive();
     });
 
-    std::thread t2([&]() {
+    ::std::thread t2([&]() {
         while (!done.load())
             volatile bool state = mockAI->GetTradeManager()->IsTradingActive();
     });
 
-    std::thread t3([&]() {
+    ::std::thread t3([&]() {
         while (!done.load())
             mockAI->UpdateManagers(10);
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    ::std::this_thread::sleep_for(::std::chrono::milliseconds(50));
     done.store(true);
 
     t1.join();
@@ -1291,10 +1291,10 @@ TEST_F(Phase2IntegrationTest, EdgeCase_InitializationFailure_Retries)
     // This is built into BehaviorManager base class
 
     // Create new bot without in-world flag
-    auto player = std::make_unique<MockPlayer>();
+    auto player = ::std::make_unique<MockPlayer>();
     player->SetInWorld(false); // Not in world yet
 
-    auto ai = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
+    auto ai = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
 
     // Try to initialize (should fail or skip)
     ai->UpdateManagers(100);
@@ -1321,7 +1321,7 @@ TEST_F(Phase2IntegrationTest, EdgeCase_ManagerShutdown_CleanupCorrect)
     mockAI.reset();
 
     // Recreate AI
-    mockAI = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(mockPlayer.get()));
+    mockAI = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(mockPlayer.get()));
 
     // New managers should initialize cleanly
     SimulateTime(10000, 100);
@@ -1425,7 +1425,7 @@ TEST_F(Phase2IntegrationTest, Scenario_FullLifecycle_OneMinuteRuntime)
         mockAI->UpdateManagers(16);
 
         // Every second, query states from SoloStrategy
-        if (frame % 60 == 0)
+    if (frame % 60 == 0)
         {
             soloStrategy->UpdateBehavior(ai, 16);
         }
@@ -1457,21 +1457,21 @@ TEST_F(Phase2IntegrationTest, Scenario_FullLifecycle_OneMinuteRuntime)
 TEST_F(Phase2IntegrationTest, Scenario_HundredBots_TenSecondsStressTest)
 {
     // Create 100 bots
-    std::vector<std::unique_ptr<MockPlayer>> players;
-    std::vector<std::unique_ptr<MockBotAI>> ais;
+    ::std::vector<::std::unique_ptr<MockPlayer>> players;
+    ::std::vector<::std::unique_ptr<MockBotAI>> ais;
 
     for (int i = 0; i < 100; ++i)
     {
-        auto player = std::make_unique<MockPlayer>();
-        player->SetName("StressBot" + std::to_string(i));
-        auto ai = std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
+        auto player = ::std::make_unique<MockPlayer>();
+        player->SetName("StressBot" + ::std::to_string(i));
+        auto ai = ::std::make_unique<MockBotAI>(reinterpret_cast<Player*>(player.get()));
 
-        players.push_back(std::move(player));
-        ais.push_back(std::move(ai));
+        players.push_back(::std::move(player));
+        ais.push_back(::std::move(ai));
     }
 
     // Measure total time for 10 seconds of simulation
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Simulate 10 seconds at 60 FPS
     for (int frame = 0; frame < 600; ++frame)
@@ -1482,8 +1482,8 @@ TEST_F(Phase2IntegrationTest, Scenario_HundredBots_TenSecondsStressTest)
         }
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
     // 100 bots * 600 frames = 60,000 UpdateManagers calls
     // Should complete in reasonable time (< 5 seconds of real time)

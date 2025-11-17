@@ -95,7 +95,7 @@ struct GatheringMaterialSession
     uint32 endTime;              // 0 if still active
     bool isActive;
     Position startPosition;      // Where gathering started
-    std::vector<Position> nodesVisited;
+    ::std::vector<Position> nodesVisited;
 
     GatheringMaterialSession()
         : sessionId(0), playerGuid(0), targetItemId(0), targetQuantity(0)
@@ -111,12 +111,12 @@ struct GatheringMaterialSession
  */
 struct GatheringMaterialsStatistics
 {
-    std::atomic<uint32> materialsGatheredForCrafting{0};
-    std::atomic<uint32> gatheringSessionsStarted{0};
-    std::atomic<uint32> gatheringSessionsCompleted{0};
-    std::atomic<uint32> recipesUnblockedByGathering{0};
-    std::atomic<uint32> timeSpentGathering{0};  // Milliseconds
-    std::atomic<float> averageGatheringEfficiency{1.0f};
+    ::std::atomic<uint32> materialsGatheredForCrafting{0};
+    ::std::atomic<uint32> gatheringSessionsStarted{0};
+    ::std::atomic<uint32> gatheringSessionsCompleted{0};
+    ::std::atomic<uint32> recipesUnblockedByGathering{0};
+    ::std::atomic<uint32> timeSpentGathering{0};  // Milliseconds
+    ::std::atomic<float> averageGatheringEfficiency{1.0f};
 
     void Reset()
     {
@@ -176,7 +176,7 @@ public:
      * Get materials needed for bot's current crafting queue
      * Queries ProfessionManager for queued recipes and missing materials
      */
-    std::vector<MaterialRequirement> GetNeededMaterials(::Player* player);
+    ::std::vector<MaterialRequirement> GetNeededMaterials(::Player* player);
 
     /**
      * Check if gathered item is useful for bot's professions
@@ -203,9 +203,9 @@ public:
      * Prioritize gathering nodes based on material needs
      * Sorts nodes by: priority, distance, skill-up potential
      */
-    std::vector<GatheringNode> PrioritizeNodesByNeeds(
+    ::std::vector<GatheringNode> PrioritizeNodesByNeeds(
         ::Player* player,
-        std::vector<GatheringNode> const& nodes);
+        ::std::vector<GatheringNode> const& nodes);
 
     /**
      * Trigger gathering session for specific material
@@ -299,7 +299,7 @@ private:
     /**
      * Get all recipes that use this material
      */
-    std::vector<RecipeInfo> GetRecipesThatUseMaterial(::Player* player, uint32 itemId);
+    ::std::vector<RecipeInfo> GetRecipesThatUseMaterial(::Player* player, uint32 itemId);
 
     /**
      * Check if player knows any recipes that use this material
@@ -324,25 +324,25 @@ private:
     // ========================================================================
 
     // Enabled state (playerGuid -> enabled)
-    std::unordered_map<uint32, bool> _enabledState;
+    ::std::unordered_map<uint32, bool> _enabledState;
 
     // Material requirements (playerGuid -> materials)
-    std::unordered_map<uint32, std::vector<MaterialRequirement>> _materialRequirements;
+    ::std::unordered_map<uint32, ::std::vector<MaterialRequirement>> _materialRequirements;
 
     // Active gathering sessions (sessionId -> session)
-    std::unordered_map<uint32, GatheringMaterialSession> _activeSessions;
+    ::std::unordered_map<uint32, GatheringMaterialSession> _activeSessions;
 
     // Player to session mapping (playerGuid -> sessionId)
-    std::unordered_map<uint32, uint32> _playerActiveSessions;
+    ::std::unordered_map<uint32, uint32> _playerActiveSessions;
 
     // Node type to material mapping (itemId -> node type)
-    std::unordered_map<uint32, GatheringNodeType> _materialToNodeType;
+    ::std::unordered_map<uint32, GatheringNodeType> _materialToNodeType;
 
     // Statistics
-    std::unordered_map<uint32, GatheringMaterialsStatistics> _playerStatistics;
+    ::std::unordered_map<uint32, GatheringMaterialsStatistics> _playerStatistics;
     GatheringMaterialsStatistics _globalStatistics;
 
-    std::atomic<uint32> _nextSessionId{1};
+    ::std::atomic<uint32> _nextSessionId{1};
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _mutex;
 

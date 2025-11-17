@@ -40,8 +40,8 @@ bool BotScheduler::Initialize()
     LoadActivityPatterns();
     LoadBotSchedules();
 
-    _lastUpdate = std::chrono::steady_clock::now();
-    _lastDatabaseSync = std::chrono::steady_clock::now();
+    _lastUpdate = ::std::chrono::steady_clock::now();
+    _lastDatabaseSync = ::std::chrono::steady_clock::now();
 
     TC_LOG_INFO("module.playerbot.scheduler",
         "Bot Scheduler initialized - {} patterns loaded, {} bots scheduled",
@@ -59,7 +59,7 @@ void BotScheduler::Shutdown()
 
     // Clear data structures
     {
-        std::lock_guard lock(_patternMutex);
+        ::std::lock_guard lock(_patternMutex);
         _activityPatterns.clear();
     }
 
@@ -67,7 +67,7 @@ void BotScheduler::Shutdown()
 
     // Clear the schedule queue (TBB -> std::priority_queue)
     {
-        std::lock_guard lock(_scheduleQueueMutex);
+        ::std::lock_guard lock(_scheduleQueueMutex);
         while (!_scheduleQueue.empty())
         {
             _scheduleQueue.pop();
@@ -82,8 +82,8 @@ void BotScheduler::Update(uint32 diff)
     if (!_config.enabled)
         return;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - _lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto deltaTime = ::std::chrono::duration_cast<::std::chrono::milliseconds>(currentTime - _lastUpdate);
     _lastUpdate = currentTime;
 
     // Process scheduled actions
@@ -93,7 +93,7 @@ void BotScheduler::Update(uint32 diff)
     _stats.queueSize.store(_scheduleQueue.size());
 
     // Periodic database synchronization
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - _lastDatabaseSync).count() > DATABASE_SYNC_INTERVAL)
+    if (::std::chrono::duration_cast<::std::chrono::milliseconds>(currentTime - _lastDatabaseSync).count() > DATABASE_SYNC_INTERVAL)
     {
         UpdateScheduleDatabase();
         _lastDatabaseSync = currentTime;
@@ -119,7 +119,7 @@ void BotScheduler::LoadConfig()
 
 void BotScheduler::LoadActivityPatterns()
 {
-    std::lock_guard lock(_patternMutex);
+    ::std::lock_guard lock(_patternMutex);
 
     // Load default patterns first
     LoadDefaultPatterns();
@@ -214,9 +214,9 @@ ActivityPattern BotScheduler::CreateWeekendPattern() const
     return pattern;
 }
 
-void BotScheduler::RegisterPattern(std::string const& name, ActivityPattern const& pattern)
+void BotScheduler::RegisterPattern(::std::string const& name, ActivityPattern const& pattern)
 {
-    std::lock_guard lock(_patternMutex);
+    ::std::lock_guard lock(_patternMutex);
     _activityPatterns[name] = pattern;
 
     // Save to database for persistence
@@ -226,14 +226,14 @@ void BotScheduler::RegisterPattern(std::string const& name, ActivityPattern cons
         "Registered activity pattern '{}'", name);
 }
 
-ActivityPattern const* BotScheduler::GetPattern(std::string const& name) const
+ActivityPattern const* BotScheduler::GetPattern(::std::string const& name) const
 {
-    std::lock_guard lock(_patternMutex);
+    ::std::lock_guard lock(_patternMutex);
     auto it = _activityPatterns.find(name);
     return it != _activityPatterns.end() ? &it->second : nullptr;
 }
 
-void BotScheduler::ScheduleBot(ObjectGuid guid, std::string const& patternName)
+void BotScheduler::ScheduleBot(ObjectGuid guid, ::std::string const& patternName)
 {
     // Verify pattern exists
     if (!GetPattern(patternName))
@@ -249,7 +249,7 @@ void BotScheduler::ScheduleBot(ObjectGuid guid, std::string const& patternName)
     state.patternName = patternName;
     state.isScheduled = true;
     state.isActive = false;
-    state.lastActivity = std::chrono::system_clock::now();
+    state.lastActivity = ::std::chrono::system_clock::now();
 
     // Calculate initial schedule
     state.nextLogin = CalculateNextLogin(guid);
@@ -269,7 +269,7 @@ void BotScheduler::ScheduleBot(ObjectGuid guid, std::string const& patternName)
     TC_LOG_INFO("module.playerbot.scheduler",
         "Scheduled bot {} with pattern '{}', next login: {}",
         guid.ToString(), patternName,
-        std::chrono::duration_cast<std::chrono::seconds>(state.nextLogin.time_since_epoch()).count());
+        ::std::chrono::duration_cast<::std::chrono::seconds>(state.nextLogin.time_since_epoch()).count());
 }
 
 void BotScheduler::UnscheduleBot(ObjectGuid guid)
@@ -288,20 +288,20 @@ void BotScheduler::UnscheduleBot(ObjectGuid guid)
         "Unscheduled bot {}", guid.ToString());
 }
 
-std::chrono::system_clock::time_point BotScheduler::CalculateNextLogin(ObjectGuid guid)
+::std::chrono::system_clock::time_point BotScheduler::CalculateNextLogin(ObjectGuid guid)
 {
     auto it = _botSchedules.find(guid);
     if (it == _botSchedules.end())
-        return std::chrono::system_clock::now();
+        return ::std::chrono::system_clock::now();
 
     BotScheduleState const& state = it->second;
     ActivityPattern const* pattern = GetPattern(state.patternName);
     if (!pattern)
-        return std::chrono::system_clock::now();
+        return ::std::chrono::system_clock::now();
 
-    auto now = std::chrono::system_clock::now();
-    auto currentTime = std::chrono::system_clock::to_time_t(now);
-    auto* tm = std::localtime(&currentTime);
+    auto now = ::std::chrono::system_clock::now();
+    auto currentTime = ::std::chrono::system_clock::to_time_t(now);
+    auto* tm = ::std::localtime(&currentTime);
 
     // Find next active period
     for (uint32 dayOffset = 0; dayOffset < 7; ++dayOffset)
@@ -310,29 +310,29 @@ std::chrono::system_clock::time_point BotScheduler::CalculateNextLogin(ObjectGui
         if (dayOfWeek == 0) dayOfWeek = 7; // Convert Sunday from 0 to 7
 
         // Check if this day is active
-        bool isDayActive = std::find(pattern->activeDays.begin(), pattern->activeDays.end(), dayOfWeek) != pattern->activeDays.end();
+        bool isDayActive = ::std::find(pattern->activeDays.begin(), pattern->activeDays.end(), dayOfWeek) != pattern->activeDays.end();
         if (!isDayActive)
             continue;
 
         // Check active hours for this day
-        for (auto const& hourRange : pattern->activeHours)
+    for (auto const& hourRange : pattern->activeHours)
         {
             uint32 startHour = hourRange.first;
             uint32 endHour = hourRange.second;
 
             // Calculate the target time
-            auto targetTime = now + std::chrono::hours(24 * dayOffset);
-            auto targetTimeT = std::chrono::system_clock::to_time_t(targetTime);
-            auto* targetTm = std::localtime(&targetTimeT);
+            auto targetTime = now + ::std::chrono::hours(24 * dayOffset);
+            auto targetTimeT = ::std::chrono::system_clock::to_time_t(targetTime);
+            auto* targetTm = ::std::localtime(&targetTimeT);
 
             targetTm->tm_hour = startHour;
             targetTm->tm_min = urand(0, 59);
             targetTm->tm_sec = urand(0, 59);
 
-            auto loginTime = std::chrono::system_clock::from_time_t(std::mktime(targetTm));
+            auto loginTime = ::std::chrono::system_clock::from_time_t(::std::mktime(targetTm));
 
             // Apply probability check
-            if (frand(0.0f, 1.0f) > pattern->loginProbability)
+    if (frand(0.0f, 1.0f) > pattern->loginProbability)
                 continue;
 
             // Apply time multiplier and jitter
@@ -344,24 +344,24 @@ std::chrono::system_clock::time_point BotScheduler::CalculateNextLogin(ObjectGui
             loginTime = AddJitter(loginTime, pattern->jitterMinutes);
 
             // Must be in the future
-            if (loginTime > now)
+    if (loginTime > now)
                 return loginTime;
         }
     }
 
     // Fallback: schedule for tomorrow at a random active time
-    auto tomorrow = now + std::chrono::hours(24);
+    auto tomorrow = now + ::std::chrono::hours(24);
     return AddJitter(tomorrow, pattern->jitterMinutes);
 }
 
-std::chrono::system_clock::time_point BotScheduler::CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration)
+::std::chrono::system_clock::time_point BotScheduler::CalculateSessionEnd(ObjectGuid guid, uint32 minDuration, uint32 maxDuration)
 {
-    auto now = std::chrono::system_clock::now();
+    auto now = ::std::chrono::system_clock::now();
     uint32 duration = urand(minDuration, maxDuration);
-    return now + std::chrono::seconds(duration);
+    return now + ::std::chrono::seconds(duration);
 }
 
-void BotScheduler::ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::time_point when)
+void BotScheduler::ScheduleLogin(ObjectGuid guid, ::std::chrono::system_clock::time_point when)
 {
     ScheduleEntry entry;
     entry.botGuid = guid;
@@ -371,7 +371,7 @@ void BotScheduler::ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::tim
     ScheduleAction(entry);
 }
 
-void BotScheduler::ScheduleLogout(ObjectGuid guid, std::chrono::system_clock::time_point when)
+void BotScheduler::ScheduleLogout(ObjectGuid guid, ::std::chrono::system_clock::time_point when)
 {
     ScheduleEntry entry;
     entry.botGuid = guid;
@@ -396,12 +396,12 @@ void BotScheduler::ScheduleAction(ScheduleEntry const& entry)
     TC_LOG_DEBUG("module.playerbot.scheduler",
         "Scheduled action {} for bot {} at time {}",
         static_cast<int>(entry.action), entry.botGuid.ToString(),
-        std::chrono::duration_cast<std::chrono::seconds>(entry.executeTime.time_since_epoch()).count());
+        ::std::chrono::duration_cast<::std::chrono::seconds>(entry.executeTime.time_since_epoch()).count());
 }
 
 void BotScheduler::ProcessSchedule()
 {
-    auto now = std::chrono::system_clock::now();
+    auto now = ::std::chrono::system_clock::now();
     uint32 actionsProcessed = 0;
 
     // Replace TBB try_pop with std::priority_queue + mutex
@@ -409,7 +409,7 @@ void BotScheduler::ProcessSchedule()
     {
         ScheduleEntry entry;
         {
-            std::lock_guard lock(_scheduleQueueMutex);
+            ::std::lock_guard lock(_scheduleQueueMutex);
             if (_scheduleQueue.empty())
                 break;
 
@@ -418,7 +418,7 @@ void BotScheduler::ProcessSchedule()
         } // End of lock scope
 
         // Process the entry
-        if (entry.executeTime <= now)
+    if (entry.executeTime <= now)
         {
             ExecuteScheduledAction(entry);
             ++actionsProcessed;
@@ -440,7 +440,7 @@ void BotScheduler::ProcessSchedule()
 
 void BotScheduler::ExecuteScheduledAction(ScheduleEntry const& entry)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     switch (entry.action)
     {
@@ -460,7 +460,7 @@ void BotScheduler::ExecuteScheduledAction(ScheduleEntry const& entry)
                 {
                     BotScheduleState& state = it->second;
                     state.isActive = true;
-                    state.lastActivity = std::chrono::system_clock::now();
+                    state.lastActivity = ::std::chrono::system_clock::now();
                     ++state.totalSessions;
 
                     // Calculate session end time
@@ -496,8 +496,8 @@ void BotScheduler::ExecuteScheduledAction(ScheduleEntry const& entry)
                 state.isActive = false;
 
                 // Calculate playtime for this session
-                auto sessionTime = std::chrono::duration_cast<std::chrono::seconds>(
-                    std::chrono::system_clock::now() - state.lastActivity).count();
+                auto sessionTime = ::std::chrono::duration_cast<::std::chrono::seconds>(
+                    ::std::chrono::system_clock::now() - state.lastActivity).count();
                 state.totalPlaytime += sessionTime;
 
                 // Schedule next login
@@ -519,8 +519,8 @@ void BotScheduler::ExecuteScheduledAction(ScheduleEntry const& entry)
             break;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     // Update execution time statistics
     uint64 currentAvg = _stats.averageExecutionTime.load();
@@ -539,10 +539,10 @@ bool BotScheduler::IsPeakHour(uint32 hour) const
     return hour >= _config.peakStartHour && hour <= _config.peakEndHour;
 }
 
-float BotScheduler::GetTimeMultiplier(std::chrono::system_clock::time_point time, ActivityPattern const& pattern) const
+float BotScheduler::GetTimeMultiplier(::std::chrono::system_clock::time_point time, ActivityPattern const& pattern) const
 {
-    auto timeT = std::chrono::system_clock::to_time_t(time);
-    auto* tm = std::localtime(&timeT);
+    auto timeT = ::std::chrono::system_clock::to_time_t(time);
+    auto* tm = ::std::localtime(&timeT);
 
     float multiplier = 1.0f;
 
@@ -558,16 +558,16 @@ float BotScheduler::GetTimeMultiplier(std::chrono::system_clock::time_point time
         multiplier *= pattern.weekendMultiplier;
     }
 
-    return std::min(multiplier, 5.0f); // Cap at 5x
+    return ::std::min(multiplier, 5.0f); // Cap at 5x
 }
 
-std::chrono::system_clock::time_point BotScheduler::AddJitter(std::chrono::system_clock::time_point time, uint32 jitterMinutes) const
+::std::chrono::system_clock::time_point BotScheduler::AddJitter(::std::chrono::system_clock::time_point time, uint32 jitterMinutes) const
 {
     if (jitterMinutes == 0)
         return time;
 
     int32 jitter = urand(0, jitterMinutes * 2) - jitterMinutes; // +/- jitter
-    return time + std::chrono::minutes(jitter);
+    return time + ::std::chrono::minutes(jitter);
 }
 
 void BotScheduler::LoadBotSchedules()
@@ -592,7 +592,7 @@ void BotScheduler::LoadDatabasePatterns()
     TC_LOG_DEBUG("module.playerbot.scheduler", "Loading patterns from database...");
 }
 
-void BotScheduler::SavePatternToDatabase(std::string const& name, ActivityPattern const& pattern)
+void BotScheduler::SavePatternToDatabase(::std::string const& name, ActivityPattern const& pattern)
 {
     // This would save the pattern to the database
     // For now, this is a placeholder
@@ -637,12 +637,12 @@ bool BotScheduler::IsBotActive(ObjectGuid guid) const
     return it != _botSchedules.end() && it->second.isActive;
 }
 
-std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
+::std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
 {
-    std::vector<ScheduledAction> actions;
+    ::std::vector<ScheduledAction> actions;
     actions.reserve(maxCount);
 
-    auto now = std::chrono::system_clock::now();
+    auto now = ::std::chrono::system_clock::now();
     uint32 count = 0;
 
     for (auto& [guid, schedule] : _botSchedules)
@@ -654,7 +654,7 @@ std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
             continue;
 
         // Check if bot is ready for login
-        if (schedule.nextLogin <= now && !schedule.nextLogin.time_since_epoch().count() == 0)
+    if (schedule.nextLogin <= now && !schedule.nextLogin.time_since_epoch().count() == 0)
         {
             ScheduledAction action;
             action.action = ScheduleEntry::LOGIN;
@@ -668,7 +668,7 @@ std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
     }
 
     // Sort by scheduled time (earliest first)
-    std::sort(actions.begin(), actions.end(),
+    ::std::sort(actions.begin(), actions.end(),
         [](const ScheduledAction& a, const ScheduledAction& b) {
             return a.when < b.when;
         });
@@ -676,12 +676,12 @@ std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogin(uint32 maxCount)
     return actions;
 }
 
-std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogout(uint32 maxCount)
+::std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogout(uint32 maxCount)
 {
-    std::vector<ScheduledAction> actions;
+    ::std::vector<ScheduledAction> actions;
     actions.reserve(maxCount);
 
-    auto now = std::chrono::system_clock::now();
+    auto now = ::std::chrono::system_clock::now();
     uint32 count = 0;
 
     for (auto& [guid, schedule] : _botSchedules)
@@ -693,7 +693,7 @@ std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogout(uint32 maxCount
             continue;
 
         // Check if bot is ready for logout
-        if (schedule.nextLogout <= now && !schedule.nextLogout.time_since_epoch().count() == 0)
+    if (schedule.nextLogout <= now && !schedule.nextLogout.time_since_epoch().count() == 0)
         {
             ScheduledAction action;
             action.action = ScheduleEntry::LOGOUT;
@@ -707,7 +707,7 @@ std::vector<ScheduledAction> BotScheduler::GetBotsReadyForLogout(uint32 maxCount
     }
 
     // Sort by scheduled time (earliest first)
-    std::sort(actions.begin(), actions.end(),
+    ::std::sort(actions.begin(), actions.end(),
         [](const ScheduledAction& a, const ScheduledAction& b) {
             return a.when < b.when;
         });
@@ -723,36 +723,36 @@ void BotScheduler::OnBotLoggedIn(ObjectGuid guid)
 
     auto& schedule = it->second;
     schedule.isActive = true;
-    schedule.lastLogin = std::chrono::system_clock::now();
+    schedule.lastLogin = ::std::chrono::system_clock::now();
     schedule.currentSessionStart = schedule.lastLogin;
     schedule.totalSessions++;
 
     // Clear next login time and calculate next logout
-    schedule.nextLogin = std::chrono::system_clock::time_point{};
+    schedule.nextLogin = ::std::chrono::system_clock::time_point{};
 
     // Calculate session duration based on pattern
     if (auto patternIt = _activityPatterns.find(schedule.patternName); patternIt != _activityPatterns.end())
     {
         auto& pattern = patternIt->second;
         uint32 sessionDuration = urand(pattern.minSessionDuration, pattern.maxSessionDuration);
-        schedule.nextLogout = schedule.lastLogin + std::chrono::seconds(sessionDuration);
+        schedule.nextLogout = schedule.lastLogin + ::std::chrono::seconds(sessionDuration);
     }
     else
     {
         // Default 1-2 hour session
         uint32 sessionDuration = urand(3600, 7200);
-        schedule.nextLogout = schedule.lastLogin + std::chrono::seconds(sessionDuration);
+        schedule.nextLogout = schedule.lastLogin + ::std::chrono::seconds(sessionDuration);
     }
 
     // Save to database
     SaveBotSchedule(schedule);
 
     TC_LOG_DEBUG("module.playerbot.scheduler", "Bot {} logged in, next logout: {}",
-        guid.ToString(), std::chrono::duration_cast<std::chrono::seconds>(
+        guid.ToString(), ::std::chrono::duration_cast<::std::chrono::seconds>(
             schedule.nextLogout.time_since_epoch()).count());
 }
 
-void BotScheduler::OnBotLoginFailed(ObjectGuid guid, std::string const& reason)
+void BotScheduler::OnBotLoginFailed(ObjectGuid guid, ::std::string const& reason)
 {
     auto it = _botSchedules.find(guid);
     if (it == _botSchedules.end())
@@ -763,8 +763,8 @@ void BotScheduler::OnBotLoginFailed(ObjectGuid guid, std::string const& reason)
     schedule.lastFailureReason = reason;
 
     // Exponential backoff for retry
-    uint32 retryDelay = std::min(300u * (1u << std::min(schedule.consecutiveFailures, 8u)), 3600u); // Max 1 hour
-    schedule.nextRetry = std::chrono::system_clock::now() + std::chrono::seconds(retryDelay);
+    uint32 retryDelay = ::std::min(300u * (1u << ::std::min(schedule.consecutiveFailures, 8u)), 3600u); // Max 1 hour
+    schedule.nextRetry = ::std::chrono::system_clock::now() + ::std::chrono::seconds(retryDelay);
 
     // Don't retry immediately, wait for retry time
     schedule.nextLogin = schedule.nextRetry;

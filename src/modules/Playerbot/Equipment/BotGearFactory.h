@@ -61,7 +61,7 @@ public:
     /**
      * Check if factory is ready to generate gear
      */
-    bool IsReady() const override { return _cacheReady.load(std::memory_order_acquire); }
+    bool IsReady() const override { return _cacheReady.load(::std::memory_order_acquire); }
 
     /**
      * Generate complete gear set for bot
@@ -91,11 +91,11 @@ public:
      */
     void GetStats(GearFactoryStats& stats) const override
     {
-        stats.setsGenerated.store(_stats.setsGenerated.load(std::memory_order_relaxed), std::memory_order_relaxed);
-        stats.itemsSelected.store(_stats.itemsSelected.load(std::memory_order_relaxed), std::memory_order_relaxed);
-        stats.cacheLookups.store(_stats.cacheLookups.load(std::memory_order_relaxed), std::memory_order_relaxed);
-        stats.qualityRolls.store(_stats.qualityRolls.load(std::memory_order_relaxed), std::memory_order_relaxed);
-        stats.cacheSize.store(_stats.cacheSize.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        stats.setsGenerated.store(_stats.setsGenerated.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
+        stats.itemsSelected.store(_stats.itemsSelected.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
+        stats.cacheLookups.store(_stats.cacheLookups.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
+        stats.qualityRolls.store(_stats.qualityRolls.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
+        stats.cacheSize.store(_stats.cacheSize.load(::std::memory_order_relaxed), ::std::memory_order_relaxed);
     }
 
     /**
@@ -107,12 +107,12 @@ public:
     /**
      * Get appropriate bag item entries for level range
      */
-    std::vector<uint32> GetBagItemsForLevel(uint32 level) override;
+    ::std::vector<uint32> GetBagItemsForLevel(uint32 level) override;
 
     /**
      * Get class-appropriate consumables
      */
-    std::map<uint32, uint32> GetConsumablesForClass(uint8 cls, uint32 level) override;
+    ::std::map<uint32, uint32> GetConsumablesForClass(uint8 cls, uint32 level) override;
 
 private:
     BotGearFactory();
@@ -160,17 +160,17 @@ private:
     /**
      * Get cached items for specific parameters
      */
-    std::vector<CachedItem> const* GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const;
+    ::std::vector<CachedItem> const* GetItemsForSlot(uint8 cls, uint32 specId, uint32 level, uint8 slot) const;
 
     /**
      * Filter items by quality
      */
-    std::vector<CachedItem> FilterByQuality(std::vector<CachedItem> const& items, uint32 quality) const;
+    ::std::vector<CachedItem> FilterByQuality(::std::vector<CachedItem> const& items, uint32 quality) const;
 
     /**
      * Get allowed armor types for class
      */
-    std::vector<uint8> GetAllowedArmorTypes(uint8 cls) const;
+    ::std::vector<uint8> GetAllowedArmorTypes(uint8 cls) const;
 
     /**
      * Verify item is appropriate for class/spec
@@ -178,15 +178,15 @@ private:
     bool IsItemAppropriate(CachedItem const& item, uint8 cls, uint32 specId, uint32 level) const;
 
     // Cache: class -> spec -> level -> slot -> [items]
-    using SlotCache = std::unordered_map<uint8, std::vector<CachedItem>>;
-    using LevelCache = std::unordered_map<uint32, SlotCache>;
-    using SpecCache = std::unordered_map<uint32, LevelCache>;
-    using ClassCache = std::unordered_map<uint8, SpecCache>;
+    using SlotCache = ::std::unordered_map<uint8, ::std::vector<CachedItem>>;
+    using LevelCache = ::std::unordered_map<uint32, SlotCache>;
+    using SpecCache = ::std::unordered_map<uint32, LevelCache>;
+    using ClassCache = ::std::unordered_map<uint8, SpecCache>;
 
     ClassCache _gearCache;
-    std::vector<QualityDistribution> _qualityDistributions;
-    std::vector<CachedItem> _rawItems;  // Temporary storage for items before organizing into cache
-    std::atomic<bool> _cacheReady{false};
+    ::std::vector<QualityDistribution> _qualityDistributions;
+    ::std::vector<CachedItem> _rawItems;  // Temporary storage for items before organizing into cache
+    ::std::atomic<bool> _cacheReady{false};
     mutable GearFactoryStats _stats;
     Playerbot::OrderedMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _initMutex;
 

@@ -61,8 +61,8 @@ public:
     // Target selection
     virtual ::Unit* SelectBestTarget(::Player* player) const = 0;
     virtual ThreatAssessment AssessThreat(::Player* player, ::Unit* target) const = 0;
-    virtual std::vector<::Unit*> GetEnemyPlayers(::Player* player, float range) const = 0;
-    virtual std::vector<::Unit*> GetEnemyHealers(::Player* player) const = 0;
+    virtual ::std::vector<::Unit*> GetEnemyPlayers(::Player* player, float range) const = 0;
+    virtual ::std::vector<::Unit*> GetEnemyHealers(::Player* player) const = 0;
     virtual bool ShouldSwitchTarget(::Player* player) const = 0;
 
     // CC chain coordination
@@ -81,7 +81,7 @@ public:
     // Offensive bursts
     virtual bool ExecuteOffensiveBurst(::Player* player, ::Unit* target) = 0;
     virtual bool ShouldBurstTarget(::Player* player, ::Unit* target) const = 0;
-    virtual std::vector<uint32> GetOffensiveCooldowns(::Player* player) const = 0;
+    virtual ::std::vector<uint32> GetOffensiveCooldowns(::Player* player) const = 0;
     virtual bool StackOffensiveCooldowns(::Player* player) = 0;
 
     // Interrupt coordination

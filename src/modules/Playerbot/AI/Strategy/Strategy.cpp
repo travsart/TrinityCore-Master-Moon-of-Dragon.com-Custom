@@ -20,7 +20,7 @@ namespace Playerbot
 {
 
 // Strategy implementation
-Strategy::Strategy(std::string const& name) : _name(name)
+Strategy::Strategy(::std::string const& name) : _name(name)
 {
 }
 
@@ -41,21 +41,21 @@ StrategyRelevance Strategy::CalculateRelevance(BotAI* ai) const
     return relevance;
 }
 
-void Strategy::AddAction(std::string const& name, std::shared_ptr<Action> action)
+void Strategy::AddAction(::std::string const& name, ::std::shared_ptr<Action> action)
 {
     if (action)
         _actions[name] = action;
 }
 
-std::shared_ptr<Action> Strategy::GetAction(std::string const& name) const
+::std::shared_ptr<Action> Strategy::GetAction(::std::string const& name) const
 {
     auto it = _actions.find(name);
     return (it != _actions.end()) ? it->second : nullptr;
 }
 
-std::vector<std::shared_ptr<Action>> Strategy::GetActions() const
+::std::vector<::std::shared_ptr<Action>> Strategy::GetActions() const
 {
-    std::vector<std::shared_ptr<Action>> actions;
+    ::std::vector<::std::shared_ptr<Action>> actions;
     actions.reserve(_actions.size());
 
     for (auto const& pair : _actions)
@@ -64,24 +64,24 @@ std::vector<std::shared_ptr<Action>> Strategy::GetActions() const
     return actions;
 }
 
-void Strategy::AddTrigger(std::shared_ptr<Trigger> trigger)
+void Strategy::AddTrigger(::std::shared_ptr<Trigger> trigger)
 {
     if (trigger)
         _triggers.push_back(trigger);
 }
 
-std::vector<std::shared_ptr<Trigger>> Strategy::GetTriggers() const
+::std::vector<::std::shared_ptr<Trigger>> Strategy::GetTriggers() const
 {
     return _triggers;
 }
 
-void Strategy::AddValue(std::string const& name, std::shared_ptr<Value> value)
+void Strategy::AddValue(::std::string const& name, ::std::shared_ptr<Value> value)
 {
     if (value)
         _values[name] = value;
 }
 
-std::shared_ptr<Value> Strategy::GetValue(std::string const& name) const
+::std::shared_ptr<Value> Strategy::GetValue(::std::string const& name) const
 {
     auto it = _values.find(name);
     return (it != _values.end()) ? it->second : nullptr;
@@ -219,7 +219,7 @@ float SocialStrategy::GetRelevance(BotAI* ai) const
                 if (player && player != bot && player->IsInWorld())
                 {
                     // Check if player is within range
-                    if (bot->GetExactDistSq(player) <= maxRangeSq)
+    if (bot->GetExactDistSq(player) <= maxRangeSq)
                     {
                         ++nearbyPlayerCount;
                     }
@@ -252,15 +252,15 @@ bool SocialStrategy::ShouldTrade(Player* player) const
     return player->GetLevel() >= 5;
 }
 
-std::string SocialStrategy::GenerateResponse(std::string const& message) const
+::std::string SocialStrategy::GenerateResponse(::std::string const& message) const
 {
     // Simple response generation
     // Could be expanded with more sophisticated AI
-    if (message.find("hello") != std::string::npos ||
-        message.find("hi") != std::string::npos)
+    if (message.find("hello") != ::std::string::npos ||
+        message.find("hi") != ::std::string::npos)
         return "Hello there!";
 
-    if (message.find("help") != std::string::npos)
+    if (message.find("help") != ::std::string::npos)
         return "I'm here to help!";
 
     return "Interesting!";
@@ -273,13 +273,13 @@ StrategyFactory* StrategyFactory::instance()
     return &instance;
 }
 
-void StrategyFactory::RegisterStrategy(std::string const& name,
-                                     std::function<std::unique_ptr<Strategy>()> creator)
+void StrategyFactory::RegisterStrategy(::std::string const& name,
+                                     ::std::function<::std::unique_ptr<Strategy>()> creator)
 {
     _creators[name] = creator;
 }
 
-std::unique_ptr<Strategy> StrategyFactory::CreateStrategy(std::string const& name)
+::std::unique_ptr<Strategy> StrategyFactory::CreateStrategy(::std::string const& name)
 {
     auto it = _creators.find(name);
     if (it != _creators.end())
@@ -288,9 +288,9 @@ std::unique_ptr<Strategy> StrategyFactory::CreateStrategy(std::string const& nam
     return nullptr;
 }
 
-std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreateClassStrategies(uint8 classId, uint8 spec)
+::std::vector<::std::unique_ptr<Strategy>> StrategyFactory::CreateClassStrategies(uint8 classId, uint8 spec)
 {
-    std::vector<std::unique_ptr<Strategy>> strategies;
+    ::std::vector<::std::unique_ptr<Strategy>> strategies;
 
     // This will be expanded with class-specific strategies
     // For now, return empty vector
@@ -298,9 +298,9 @@ std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreateClassStrategies(ui
     return strategies;
 }
 
-std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreateLevelStrategies(uint8 level)
+::std::vector<::std::unique_ptr<Strategy>> StrategyFactory::CreateLevelStrategies(uint8 level)
 {
-    std::vector<std::unique_ptr<Strategy>> strategies;
+    ::std::vector<::std::unique_ptr<Strategy>> strategies;
 
     // This will be expanded with level-appropriate strategies
     // For now, return empty vector
@@ -308,9 +308,9 @@ std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreateLevelStrategies(ui
     return strategies;
 }
 
-std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreatePvPStrategies()
+::std::vector<::std::unique_ptr<Strategy>> StrategyFactory::CreatePvPStrategies()
 {
-    std::vector<std::unique_ptr<Strategy>> strategies;
+    ::std::vector<::std::unique_ptr<Strategy>> strategies;
 
     // This will be expanded with PvP strategies
     // For now, return empty vector
@@ -318,9 +318,9 @@ std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreatePvPStrategies()
     return strategies;
 }
 
-std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreatePvEStrategies()
+::std::vector<::std::unique_ptr<Strategy>> StrategyFactory::CreatePvEStrategies()
 {
-    std::vector<std::unique_ptr<Strategy>> strategies;
+    ::std::vector<::std::unique_ptr<Strategy>> strategies;
 
     // This will be expanded with PvE strategies
     // For now, return empty vector
@@ -328,9 +328,9 @@ std::vector<std::unique_ptr<Strategy>> StrategyFactory::CreatePvEStrategies()
     return strategies;
 }
 
-std::vector<std::string> StrategyFactory::GetAvailableStrategies() const
+::std::vector<::std::string> StrategyFactory::GetAvailableStrategies() const
 {
-    std::vector<std::string> strategies;
+    ::std::vector<::std::string> strategies;
     strategies.reserve(_creators.size());
 
     for (auto const& pair : _creators)
@@ -339,7 +339,7 @@ std::vector<std::string> StrategyFactory::GetAvailableStrategies() const
     return strategies;
 }
 
-bool StrategyFactory::HasStrategy(std::string const& name) const
+bool StrategyFactory::HasStrategy(::std::string const& name) const
 {
     return _creators.find(name) != _creators.end();
 }

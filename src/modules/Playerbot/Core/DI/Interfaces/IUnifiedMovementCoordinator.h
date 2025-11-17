@@ -33,19 +33,64 @@ struct FormationCommand;
 struct FormationConfig;
 struct FormationMetrics;
 struct MovementContext;
-struct MovementResult;
+enum class MovementResult : uint8;  // Changed from struct - matches MovementTypes.h
 struct PositionInfo;
 struct PositionWeights;
 struct AoEZone;
 struct PositionMetrics;
-enum class FormationType : uint8;
-enum class FormationRole : uint8;
+
+// Full enum definitions needed for default parameters
+enum class FormationType : uint8
+{
+    NONE = 0,               // No formation
+    LINE = 1,               // Single line formation
+    COLUMN = 2,             // Single column formation
+    WEDGE = 3,              // V-shaped wedge formation
+    DIAMOND = 4,            // Diamond formation
+    CIRCLE = 5,             // Circular formation
+    BOX = 6,                // Rectangular box formation
+    SPREAD = 7,             // Spread out formation
+    STACK = 8,              // Tight stacked formation
+    COMBAT_LINE = 9,        // Combat line with roles
+    DUNGEON = 10,           // Dungeon formation (tank front, etc.)
+    RAID = 11,              // Raid formation with groups
+    ESCORT = 12,            // Escort formation around VIP
+    FLANKING = 13,          // Flanking formation
+    DEFENSIVE = 14          // Defensive circle formation
+};
+
+enum class FormationRole : uint8
+{
+    LEADER = 0,             // Formation leader (usually tank or group leader)
+    TANK = 1,               // Tanking role in formation
+    MELEE_DPS = 2,          // Melee damage dealers
+    RANGED_DPS = 3,         // Ranged damage dealers
+    HEALER = 4,             // Healers
+    SUPPORT = 5,            // Support/utility members
+    SCOUT = 6,              // Scouts/advance guard
+    REAR_GUARD = 7,         // Rear guard protection
+    FLANKER = 8,            // Flanking positions
+    RESERVE = 9             // Reserve/flexible position
+};
+
+enum class PositionType : uint8
+{
+    MELEE_COMBAT = 0,       // Close combat positioning (2-5 yards)
+    RANGED_DPS = 1,         // Ranged damage positioning (20-40 yards)
+    HEALING = 2,            // Healing positioning (15-35 yards)
+    KITING = 3,             // Kiting/mobility positioning (variable)
+    FLANKING = 4,           // Flanking/behind target
+    TANKING = 5,            // Tank positioning (front of enemy)
+    SUPPORT = 6,            // Support/utility positioning
+    RETREAT = 7,            // Retreat/escape positioning
+    FORMATION = 8           // Group formation positioning
+};
+
 enum class FormationMovementState : uint8;
 enum class FormationIntegrity : uint8;
-enum class PositionType : uint8;
 enum class MovementPriority : uint8;
 enum class PositionValidation : uint32;
-enum class PlayerBotMovementPriority;
+enum class PlayerBotMovementPriority : uint8;  // Must match MovementPriorityMapper.h
 
 /**
  * @brief Unified interface for all movement coordination operations
@@ -89,7 +134,7 @@ public:
      */
     virtual MovementArbiterStatistics const& GetArbiterStatistics() const = 0;
     virtual void ResetArbiterStatistics() = 0;
-    virtual std::string GetArbiterDiagnosticString() const = 0;
+    virtual ::std::string GetArbiterDiagnosticString() const = 0;
     virtual void LogArbiterStatistics() const = 0;
 
     /**
@@ -159,7 +204,7 @@ public:
     /**
      * @brief Formation management
      */
-    virtual bool JoinFormation(std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) = 0;
+    virtual bool JoinFormation(::std::vector<Player*> const& groupMembers, FormationType formation = FormationType::DUNGEON) = 0;
     virtual bool LeaveFormation() = 0;
     virtual bool ChangeFormation(FormationType newFormation) = 0;
     virtual bool SetFormationLeader(Player* leader) = 0;
@@ -171,7 +216,7 @@ public:
     virtual void UpdateFormation(uint32 diff) = 0;
     virtual bool ExecuteFormationCommand(FormationCommand const& command) = 0;
     virtual bool MoveFormationToPosition(Position const& targetPos, float orientation = 0.0f) = 0;
-    virtual bool AdjustFormationForCombat(std::vector<Unit*> const& threats) = 0;
+    virtual bool AdjustFormationForCombat(::std::vector<Unit*> const& threats) = 0;
 
     /**
      * @brief Member management
@@ -180,13 +225,13 @@ public:
     virtual bool RemoveFormationMember(Player* player) = 0;
     virtual bool ChangeFormationMemberRole(Player* player, FormationRole newRole) = 0;
     virtual FormationMember* GetFormationMember(Player* player) = 0;
-    virtual std::vector<FormationMember> GetAllFormationMembers() const = 0;
+    virtual ::std::vector<FormationMember> GetAllFormationMembers() const = 0;
 
     /**
      * @brief Position calculation
      */
     virtual Position CalculateFormationPosition(FormationRole role, uint32 memberIndex) = 0;
-    virtual std::vector<Position> CalculateAllFormationPositions() = 0;
+    virtual ::std::vector<Position> CalculateAllFormationPositions() = 0;
     virtual Position GetAssignedFormationPosition() const = 0;
     virtual bool IsInFormationPosition(float tolerance = 2.0f) const = 0;
 
@@ -195,7 +240,7 @@ public:
      */
     virtual FormationIntegrity AssessFormationIntegrity() = 0;
     virtual float CalculateCohesionLevel() = 0;
-    virtual std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) = 0;
+    virtual ::std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f) = 0;
     virtual bool RequiresReformation() = 0;
 
     /**
@@ -209,15 +254,15 @@ public:
     /**
      * @brief Combat formations
      */
-    virtual void TransitionToCombatFormation(std::vector<Unit*> const& enemies) = 0;
+    virtual void TransitionToCombatFormation(::std::vector<Unit*> const& enemies) = 0;
     virtual void TransitionToTravelFormation() = 0;
-    virtual void AdjustForThreatSpread(std::vector<Unit*> const& threats) = 0;
+    virtual void AdjustForThreatSpread(::std::vector<Unit*> const& threats) = 0;
     virtual void HandleFormationBreakage() = 0;
 
     /**
      * @brief Role-specific formations
      */
-    virtual FormationType DetermineOptimalFormation(std::vector<Player*> const& members) = 0;
+    virtual FormationType DetermineOptimalFormation(::std::vector<Player*> const& members) = 0;
     virtual FormationConfig GetFormationConfig(FormationType formation) = 0;
     virtual void SetFormationConfig(FormationType formation, FormationConfig const& config) = 0;
 
@@ -225,7 +270,7 @@ public:
      * @brief Dynamic adjustments
      */
     virtual void AdjustFormationForTerrain() = 0;
-    virtual void AdjustFormationForObstacles(std::vector<Position> const& obstacles) = 0;
+    virtual void AdjustFormationForObstacles(::std::vector<Position> const& obstacles) = 0;
     virtual void AdjustFormationForGroupSize() = 0;
     virtual void HandleMemberDisconnection(Player* disconnectedMember) = 0;
 
@@ -285,8 +330,8 @@ public:
      * @brief Position evaluation
      */
     virtual PositionInfo EvaluatePosition(Position const& pos, MovementContext const& context) = 0;
-    virtual std::vector<PositionInfo> EvaluatePositions(std::vector<Position> const& positions, MovementContext const& context) = 0;
-    virtual std::vector<Position> GenerateCandidatePositions(MovementContext const& context) = 0;
+    virtual ::std::vector<PositionInfo> EvaluatePositions(::std::vector<Position> const& positions, MovementContext const& context) = 0;
+    virtual ::std::vector<Position> GenerateCandidatePositions(MovementContext const& context) = 0;
 
     /**
      * @brief Range and angle management
@@ -294,7 +339,7 @@ public:
     virtual Position FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle = 0.0f) = 0;
     virtual Position FindMeleePosition(Unit* target, bool preferBehind = true) = 0;
     virtual Position FindRangedPosition(Unit* target, float preferredRange = 25.0f) = 0;
-    virtual Position FindHealingPosition(std::vector<Player*> const& allies) = 0;
+    virtual Position FindHealingPosition(::std::vector<Player*> const& allies) = 0;
     virtual Position FindKitingPosition(Unit* threat, float minDistance = 15.0f) = 0;
 
     /**
@@ -302,8 +347,8 @@ public:
      */
     virtual Position FindTankPosition(Unit* target) = 0;
     virtual Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_COMBAT) = 0;
-    virtual Position FindHealerPosition(std::vector<Player*> const& groupMembers) = 0;
-    virtual Position FindSupportPosition(std::vector<Player*> const& groupMembers) = 0;
+    virtual Position FindHealerPosition(::std::vector<Player*> const& groupMembers) = 0;
+    virtual Position FindSupportPosition(::std::vector<Player*> const& groupMembers) = 0;
 
     /**
      * @brief Safety and avoidance
@@ -311,7 +356,7 @@ public:
     virtual bool IsPositionSafe(Position const& pos, MovementContext const& context) = 0;
     virtual bool IsInDangerZone(Position const& pos) = 0;
     virtual Position FindSafePosition(Position const& fromPos, float minDistance = 10.0f) = 0;
-    virtual Position FindEscapePosition(std::vector<Unit*> const& threats) = 0;
+    virtual Position FindEscapePosition(::std::vector<Unit*> const& threats) = 0;
 
     /**
      * @brief AoE and hazard management
@@ -319,7 +364,7 @@ public:
     virtual void RegisterAoEZone(AoEZone const& zone) = 0;
     virtual void UpdateAoEZones(uint32 currentTime) = 0;
     virtual void ClearExpiredZones(uint32 currentTime) = 0;
-    virtual std::vector<AoEZone> GetActiveZones() const = 0;
+    virtual ::std::vector<AoEZone> GetActiveZones() const = 0;
 
     /**
      * @brief Validation and pathfinding
@@ -332,7 +377,7 @@ public:
     /**
      * @brief Group coordination
      */
-    virtual Position FindFormationPositionForRole(std::vector<Player*> const& groupMembers, PositionType formationType) = 0;
+    virtual Position FindFormationPositionForRole(::std::vector<Player*> const& groupMembers, PositionType formationType) = 0;
     virtual bool ShouldMaintainGroupProximity() = 0;
     virtual float GetOptimalGroupDistance(uint8 role) = 0;
 
@@ -369,7 +414,7 @@ public:
      * @brief Position history and learning
      */
     virtual void RecordPositionSuccess(Position const& pos, PositionType type) = 0;
-    virtual void RecordPositionFailure(Position const& pos, std::string const& reason) = 0;
+    virtual void RecordPositionFailure(Position const& pos, ::std::string const& reason) = 0;
     virtual float GetPositionSuccessRate(Position const& pos, float radius = 5.0f) = 0;
 
     // ========================================================================
@@ -404,7 +449,7 @@ public:
      * @param context Movement context
      * @return Detailed recommendation string
      */
-    virtual std::string GetMovementRecommendation(Player* bot, MovementContext const& context) = 0;
+    virtual ::std::string GetMovementRecommendation(Player* bot, MovementContext const& context) = 0;
 
     /**
      * @brief Optimize movement for a bot
@@ -423,7 +468,7 @@ public:
      * @brief Get statistics for movement operations
      * @return Statistics string (for debugging/monitoring)
      */
-    virtual std::string GetMovementStatistics() const = 0;
+    virtual ::std::string GetMovementStatistics() const = 0;
 };
 
 } // namespace Playerbot

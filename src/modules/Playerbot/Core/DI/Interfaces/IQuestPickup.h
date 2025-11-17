@@ -40,9 +40,9 @@ public:
     virtual void PickupQuestsInArea(Player* bot, float radius = 50.0f) = 0;
 
     // Quest discovery and scanning
-    virtual std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) = 0;
-    virtual std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) = 0;
-    virtual std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) = 0;
+    virtual ::std::vector<uint32> DiscoverNearbyQuests(Player* bot, float scanRadius = 100.0f) = 0;
+    virtual ::std::vector<QuestGiverInfo> ScanForQuestGivers(Player* bot, float scanRadius = 100.0f) = 0;
+    virtual ::std::vector<uint32> GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot) = 0;
 
     // Quest eligibility and validation
     virtual QuestEligibility CheckQuestEligibility(uint32 questId, Player* bot) = 0;
@@ -50,8 +50,8 @@ public:
     virtual bool MeetsQuestRequirements(uint32 questId, Player* bot) = 0;
 
     // Quest filtering and prioritization
-    virtual std::vector<uint32> FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) = 0;
-    virtual std::vector<uint32> PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) = 0;
+    virtual ::std::vector<uint32> FilterQuests(const ::std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter) = 0;
+    virtual ::std::vector<uint32> PrioritizeQuests(const ::std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy) = 0;
     virtual bool ShouldAcceptQuest(uint32 questId, Player* bot) = 0;
 
     // Quest giver interaction

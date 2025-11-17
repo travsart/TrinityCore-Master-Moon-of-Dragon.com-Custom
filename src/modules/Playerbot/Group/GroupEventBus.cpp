@@ -126,8 +126,8 @@ GroupEvent GroupEvent::MemberJoined(ObjectGuid groupGuid, ObjectGuid memberGuid)
     event.data1 = 0;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000); // 30 second TTL
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000); // 30 second TTL
     return event;
 }
 
@@ -142,8 +142,8 @@ GroupEvent GroupEvent::MemberLeft(ObjectGuid groupGuid, ObjectGuid memberGuid, u
     event.data1 = removeMethod; // RemoveMethod enum
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -158,8 +158,8 @@ GroupEvent GroupEvent::LeaderChanged(ObjectGuid groupGuid, ObjectGuid newLeaderG
     event.data1 = 0;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -174,8 +174,8 @@ GroupEvent GroupEvent::GroupDisbanded(ObjectGuid groupGuid)
     event.data1 = 0;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000); // 10 second TTL (critical)
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000); // 10 second TTL (critical)
     return event;
 }
 
@@ -190,8 +190,8 @@ GroupEvent GroupEvent::ReadyCheckStarted(ObjectGuid groupGuid, ObjectGuid initia
     event.data1 = durationMs;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(durationMs + 5000); // Duration + 5s grace
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(durationMs + 5000); // Duration + 5s grace
     return event;
 }
 
@@ -206,8 +206,8 @@ GroupEvent GroupEvent::TargetIconChanged(ObjectGuid groupGuid, uint8 icon, Objec
     event.data1 = icon;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(20000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(20000);
     return event;
 }
 
@@ -224,8 +224,8 @@ GroupEvent GroupEvent::RaidMarkerChanged(ObjectGuid groupGuid, uint32 markerId, 
     event.data2 = *reinterpret_cast<uint32 const*>(&position.m_positionX);
     event.data3 = (static_cast<uint64_t>(*reinterpret_cast<uint32 const*>(&position.m_positionY)) << 32) |
                   *reinterpret_cast<uint32 const*>(&position.m_positionZ);
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(60000); // 60 second TTL
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(60000); // 60 second TTL
     return event;
 }
 
@@ -240,8 +240,8 @@ GroupEvent GroupEvent::LootMethodChanged(ObjectGuid groupGuid, uint8 lootMethod)
     event.data1 = lootMethod;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -256,8 +256,8 @@ GroupEvent GroupEvent::DifficultyChanged(ObjectGuid groupGuid, uint8 difficulty)
     event.data1 = difficulty;
     event.data2 = 0;
     event.data3 = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(20000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(20000);
     return event;
 }
 
@@ -280,12 +280,12 @@ bool GroupEvent::IsValid() const
 
 bool GroupEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string GroupEvent::ToString() const
+::std::string GroupEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[GroupEvent] "
         << "Type: " << GetEventTypeName(type)
         << ", Priority: " << GetPriorityName(priority)
@@ -302,7 +302,7 @@ std::string GroupEvent::ToString() const
 
 GroupEventBus::GroupEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.group", "GroupEventBus initialized");
 }
 
@@ -329,7 +329,7 @@ bool GroupEventBus::PublishEvent(GroupEvent const& event)
 
     // Check queue size limit
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             TC_LOG_WARN("module.playerbot.group", "GroupEventBus: Event queue full ({} events), dropping event: {}",
@@ -358,17 +358,17 @@ bool GroupEventBus::PublishEvent(GroupEvent const& event)
     return true;
 }
 
-bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> const& types)
+bool GroupEventBus::Subscribe(BotAI* subscriber, ::std::vector<GroupEventType> const& types)
 {
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (GroupEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
 
         // Check if already subscribed
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+    if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
         {
             TC_LOG_WARN("module.playerbot.group", "GroupEventBus: Subscriber already registered for event type {}",
                 GetEventTypeName(type));
@@ -376,7 +376,7 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> con
         }
 
         // Sanity check
-        if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
+    if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
         {
             TC_LOG_ERROR("module.playerbot.group", "GroupEventBus: Too many subscribers for event type {} (max {})",
                 GetEventTypeName(type), MAX_SUBSCRIBERS_PER_EVENT);
@@ -395,10 +395,10 @@ bool GroupEventBus::Subscribe(BotAI* subscriber, std::vector<GroupEventType> con
 bool GroupEventBus::SubscribeAll(BotAI* subscriber)
 {
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Check if already subscribed
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
     {
         TC_LOG_WARN("module.playerbot.group", "GroupEventBus: Subscriber already registered for all events");
         return false;
@@ -417,20 +417,20 @@ void GroupEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     // Remove from all specific event subscriptions
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     // Remove from global subscribers
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 
@@ -440,7 +440,7 @@ void GroupEventBus::Unsubscribe(BotAI* subscriber)
 
 uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Update timers
     _cleanupTimer += diff;
@@ -454,11 +454,11 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<GroupEvent> eventsToProcess;
+    ::std::vector<GroupEvent> eventsToProcess;
 
     // Extract events from queue (hold lock briefly)
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -466,7 +466,7 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
             _eventQueue.pop();
 
             // Check if expired
-            if (event.IsExpired())
+    if (event.IsExpired())
             {
                 LogEvent(event, "Expired");
                 _stats.totalEventsDropped++;
@@ -482,11 +482,11 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     for (GroupEvent const& event : eventsToProcess)
     {
         // Get subscribers for this event type
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
 
             // Add specific subscribers
             auto it = _subscribers.find(event.type);
@@ -498,14 +498,14 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         }
 
         // Deliver to specific subscribers
-        for (BotAI* subscriber : subscribers)
+    for (BotAI* subscriber : subscribers)
         {
             if (DeliverEvent(subscriber, event))
                 _stats.totalDeliveries++;
         }
 
         // Deliver to global subscribers
-        for (BotAI* subscriber : globalSubs)
+    for (BotAI* subscriber : globalSubs)
         {
             if (DeliverEvent(subscriber, event))
                 _stats.totalDeliveries++;
@@ -516,8 +516,8 @@ uint32 GroupEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     // Update metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -531,12 +531,12 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
     // This is an optimization for group-specific updates
 
     uint32 processedCount = 0;
-    std::vector<GroupEvent> eventsToProcess;
-    std::vector<GroupEvent> otherEvents;
+    ::std::vector<GroupEvent> eventsToProcess;
+    ::std::vector<GroupEvent> otherEvents;
 
     // Extract group events from queue
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty())
         {
@@ -557,18 +557,18 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
         }
 
         // Re-add other events to queue
-        for (GroupEvent const& event : otherEvents)
+    for (GroupEvent const& event : otherEvents)
             _eventQueue.push(event);
     }
 
     // Process group events (same logic as ProcessEvents)
     for (GroupEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
 
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
@@ -598,9 +598,9 @@ uint32 GroupEventBus::ProcessGroupEvents(ObjectGuid groupGuid, uint32 diff)
 
 void GroupEventBus::ClearGroupEvents(ObjectGuid groupGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<GroupEvent> remainingEvents;
+    ::std::vector<GroupEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -623,13 +623,13 @@ void GroupEventBus::ClearGroupEvents(ObjectGuid groupGuid)
 
 uint32 GroupEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 GroupEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -653,7 +653,7 @@ bool GroupEventBus::DeliverEvent(BotAI* subscriber, GroupEvent const& event)
             event.ToString(), static_cast<void*>(subscriber));
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.group", "GroupEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -673,10 +673,10 @@ bool GroupEventBus::ValidateEvent(GroupEvent const& event) const
 
 uint32 GroupEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<GroupEvent> validEvents;
+    ::std::vector<GroupEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -705,7 +705,7 @@ uint32 GroupEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void GroupEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void GroupEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     // Update moving average of processing time
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
@@ -716,14 +716,14 @@ void GroupEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void GroupEventBus::LogEvent(GroupEvent const& event, std::string const& action) const
+void GroupEventBus::LogEvent(GroupEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.group", "GroupEventBus: {} event - {}", action, event.ToString());
 }
 
 void GroupEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     TC_LOG_INFO("module.playerbot.group", "=== GroupEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.group", "Global subscribers: {}", _globalSubscribers.size());
@@ -737,7 +737,7 @@ void GroupEventBus::DumpSubscribers() const
 
 void GroupEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     TC_LOG_INFO("module.playerbot.group", "=== GroupEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.group", "Queue size: {}", _eventQueue.size());
@@ -746,12 +746,12 @@ void GroupEventBus::DumpEventQueue() const
     // Would need to copy to temp queue for full dump
 }
 
-std::vector<GroupEvent> GroupEventBus::GetQueueSnapshot() const
+::std::vector<GroupEvent> GroupEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<GroupEvent> snapshot;
-    std::priority_queue<GroupEvent> tempQueue = _eventQueue;
+    ::std::vector<GroupEvent> snapshot;
+    ::std::priority_queue<GroupEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -770,15 +770,15 @@ void GroupEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string GroupEventBus::Statistics::ToString() const
+::std::string GroupEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

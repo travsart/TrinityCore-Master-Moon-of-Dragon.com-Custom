@@ -20,8 +20,8 @@
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 
-namespace bot::ai
-{
+namespace Playerbot {
+namespace bot { namespace ai {
 
 CombatContext CombatContextDetector::DetectContext(Player const* player)
 {
@@ -39,7 +39,7 @@ CombatContext CombatContextDetector::DetectContext(Player const* player)
     if (IsInInstance(player))
     {
         // Raid instances
-        if (IsInRaidInstance(player))
+    if (IsInRaidInstance(player))
         {
             if (IsHeroicOrMythic(player))
                 return CombatContext::RAID_HEROIC;
@@ -48,7 +48,7 @@ CombatContext CombatContextDetector::DetectContext(Player const* player)
         }
 
         // Dungeon instances (5-man)
-        if (IsInDungeon(player))
+    if (IsInDungeon(player))
         {
             if (IsFightingBoss(player))
                 return CombatContext::DUNGEON_BOSS;
@@ -141,7 +141,7 @@ bool CombatContextDetector::IsFightingBoss(Player const* player)
         if (instance)
         {
             // Check if any boss encounter is in progress
-            for (auto const& [bossId, data] : instance->GetBossSaveData())
+    for (auto const& [bossId, data] : instance->GetBossSaveData())
             {
                 if (data.state == IN_PROGRESS)
                     return true;
@@ -274,4 +274,5 @@ bool CombatContextDetector::IsGroupFightingBoss(Player const* player)
     return false;
 }
 
-} // namespace bot::ai
+}} // namespace bot::ai
+} // namespace Playerbot

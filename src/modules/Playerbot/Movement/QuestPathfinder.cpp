@@ -45,7 +45,7 @@ namespace Playerbot
         state.lastUpdateTime = GameTime::GetGameTimeMS();
 
         // Validate player
-        if (!player)
+    if (!player)
         {
             state.result = QuestPathfindingResult::PLAYER_INVALID;
             return state.result;
@@ -62,7 +62,7 @@ namespace Playerbot
         }
 
         // Query appropriate quest hubs for player
-        std::vector<QuestHub const*> hubs = hubDb.GetQuestHubsForPlayer(
+        ::std::vector<QuestHub const*> hubs = hubDb.GetQuestHubsForPlayer(
             player,
             options.maxQuestHubCandidates);
 
@@ -117,7 +117,7 @@ namespace Playerbot
         }
 
         // Check if already at destination
-        if (HasArrivedAtDestination(player, state, 5.0f))
+    if (HasArrivedAtDestination(player, state, 5.0f))
         {
             TC_LOG_DEBUG("playerbot.pathfinding",
                 "QuestPathfinder: Player {} already at destination (within 5 yards)",
@@ -178,7 +178,7 @@ namespace Playerbot
         state.targetHubId = hubId;
 
         // Validate player
-        if (!player)
+    if (!player)
         {
             state.result = QuestPathfindingResult::PLAYER_INVALID;
             return state.result;
@@ -204,7 +204,7 @@ namespace Playerbot
         }
 
         // Check if hub is appropriate for player
-        if (!hub->IsAppropriateFor(player))
+    if (!hub->IsAppropriateFor(player))
         {
             TC_LOG_WARN("playerbot.pathfinding",
                 "QuestPathfinder: Quest hub {} is not appropriate for player {} (level {}, team {})",
@@ -269,7 +269,7 @@ namespace Playerbot
         state.targetCreatureGuid = creatureGuid;
 
         // Validate player
-        if (!player)
+    if (!player)
         {
             state.result = QuestPathfindingResult::PLAYER_INVALID;
             return state.result;
@@ -287,7 +287,7 @@ namespace Playerbot
         }
 
         // Check if creature is a quest giver
-        if (!questGiver->IsQuestGiver())
+    if (!questGiver->IsQuestGiver())
         {
             TC_LOG_WARN("playerbot.pathfinding",
                 "QuestPathfinder: Creature {} ({}) is not a quest giver",
@@ -333,14 +333,14 @@ namespace Playerbot
         QuestPathfindingState& state)
     {
         // Validate player
-        if (!player)
+    if (!player)
         {
             state.result = QuestPathfindingResult::PLAYER_INVALID;
             return state.result;
         }
 
         // Validate path
-        if (state.path.empty())
+    if (state.path.empty())
         {
             TC_LOG_ERROR("playerbot.pathfinding",
                 "QuestPathfinder: Cannot navigate - path is empty for player {}",
@@ -361,8 +361,8 @@ namespace Playerbot
             0,                          // Movement ID
             destination,                // Destination position
             true,                       // Generate path using navmesh
-            std::nullopt,              // No specific final orientation
-            std::nullopt               // Use default movement speed
+            ::std::nullopt,              // No specific final orientation
+            ::std::nullopt               // Use default movement speed
         );
 
         state.movementInitiated = true;
@@ -391,7 +391,7 @@ namespace Playerbot
         // Calculate 2D distance to destination
         float dx = player->GetPositionX() - state.destination.GetPositionX();
         float dy = player->GetPositionY() - state.destination.GetPositionY();
-        float distance = std::sqrt(dx * dx + dy * dy);
+        float distance = ::std::sqrt(dx * dx + dy * dy);
 
         return distance <= interactionRange;
     }
@@ -404,10 +404,10 @@ namespace Playerbot
             return nullptr;
 
         Creature* nearestQuestGiver = nullptr;
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
 
         // Iterate through all creature entries in the hub
-        for (uint32 creatureEntry : hub->creatureIds)
+    for (uint32 creatureEntry : hub->creatureIds)
         {
             // Find all creatures with this entry in the world
             // Use Map::GetCreatureBySpawnId for efficient lookup
@@ -426,15 +426,15 @@ namespace Playerbot
                     continue;
 
                 // Check if this is the creature entry we're looking for
-                if (creature->GetEntry() != creatureEntry)
+    if (creature->GetEntry() != creatureEntry)
                     continue;
 
                 // Check if creature is a quest giver
-                if (!creature->IsQuestGiver())
+    if (!creature->IsQuestGiver())
                     continue;
 
                 // Check if creature is within hub radius
-                if (!hub->ContainsPosition(*creature))
+    if (!hub->ContainsPosition(*creature))
                     continue;
 
                 // Calculate distance to player
@@ -485,7 +485,7 @@ namespace Playerbot
         Player const* player,
         Position const& destination,
         QuestPathfindingOptions const& options,
-        std::vector<Position>& path,
+        ::std::vector<Position>& path,
         float& pathLength)
     {
         path.clear();
@@ -526,7 +526,7 @@ namespace Playerbot
         PathType pathType = pathGen.GetPathType();
 
         // Check for no path
-        if (pathType & PATHFIND_NOPATH)
+    if (pathType & PATHFIND_NOPATH)
         {
             TC_LOG_WARN("playerbot.pathfinding",
                 "QuestPathfinder: No valid path found (PATHFIND_NOPATH) for player {} to ({:.1f}, {:.1f}, {:.1f})",
@@ -560,7 +560,7 @@ namespace Playerbot
         pathLength = pathGen.GetPathLength();
 
         // Check if path exceeds maximum distance
-        if (pathLength > options.maxPathDistance)
+    if (pathLength > options.maxPathDistance)
         {
             TC_LOG_WARN("playerbot.pathfinding",
                 "QuestPathfinder: Path length ({:.1f} yards) exceeds maximum ({:.1f} yards) for player {}",
@@ -569,7 +569,7 @@ namespace Playerbot
         }
 
         // Log path type diagnostics
-        if (pathType & PATHFIND_INCOMPLETE)
+    if (pathType & PATHFIND_INCOMPLETE)
         {
             TC_LOG_DEBUG("playerbot.pathfinding",
                 "QuestPathfinder: Generated incomplete path (PATHFIND_INCOMPLETE) for player {} - {:.1f} yards",
@@ -593,7 +593,7 @@ namespace Playerbot
 
     QuestHub const* QuestPathfinder::SelectBestQuestHub(
         Player const* player,
-        std::vector<QuestHub const*> const& hubs,
+        ::std::vector<QuestHub const*> const& hubs,
         QuestPathfindingOptions::SelectionStrategy strategy)
     {
         if (hubs.empty())
@@ -605,7 +605,7 @@ namespace Playerbot
             {
                 // Select hub with minimum distance
                 QuestHub const* nearest = nullptr;
-                float minDistance = std::numeric_limits<float>::max();
+                float minDistance = ::std::numeric_limits<float>::max();
 
                 for (auto const* hub : hubs)
                 {
@@ -654,11 +654,11 @@ namespace Playerbot
         Position const& destination)
     {
         // Check player validity
-        if (!player)
+    if (!player)
             return QuestPathfindingResult::PLAYER_INVALID;
 
         // Check destination validity (not 0,0,0)
-        if (destination.GetPositionX() == 0.0f &&
+    if (destination.GetPositionX() == 0.0f &&
             destination.GetPositionY() == 0.0f &&
             destination.GetPositionZ() == 0.0f)
         {
@@ -695,8 +695,7 @@ namespace Playerbot
 
         // Determine current movement speed
         float speed = RUN_SPEED; // Default to running
-
-        if (player)
+    if (player)
         {
             // Check if mounted (simplified check - real implementation would use Player::IsMounted())
             // For now, assume running speed

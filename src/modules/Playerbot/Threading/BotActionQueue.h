@@ -64,7 +64,7 @@ public:
         }
 
         _queue.Push(action);
-        _totalActionsQueued.fetch_add(1, std::memory_order_relaxed);
+        _totalActionsQueued.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_TRACE("playerbot.action",
             "Queued action type {} for bot {} (queue size ~{})",
@@ -84,8 +84,8 @@ public:
             return;
         }
 
-        _queue.Push(std::move(action));
-        _totalActionsQueued.fetch_add(1, std::memory_order_relaxed);
+        _queue.Push(::std::move(action));
+        _totalActionsQueued.fetch_add(1, ::std::memory_order_relaxed);
     }
 
     /**
@@ -118,23 +118,23 @@ public:
     /**
      * @brief Get statistics
      */
-    uint64 GetTotalQueued() const { return _totalActionsQueued.load(std::memory_order_relaxed); }
-    uint64 GetTotalProcessed() const { return _totalActionsProcessed.load(std::memory_order_relaxed); }
-    uint64 GetTotalFailed() const { return _totalActionsFailed.load(std::memory_order_relaxed); }
+    uint64 GetTotalQueued() const { return _totalActionsQueued.load(::std::memory_order_relaxed); }
+    uint64 GetTotalProcessed() const { return _totalActionsProcessed.load(::std::memory_order_relaxed); }
+    uint64 GetTotalFailed() const { return _totalActionsFailed.load(::std::memory_order_relaxed); }
 
     /**
      * @brief Increment processed counter (called by action processor)
      */
-    void IncrementProcessed() { _totalActionsProcessed.fetch_add(1, std::memory_order_relaxed); }
-    void IncrementFailed() { _totalActionsFailed.fetch_add(1, std::memory_order_relaxed); }
+    void IncrementProcessed() { _totalActionsProcessed.fetch_add(1, ::std::memory_order_relaxed); }
+    void IncrementFailed() { _totalActionsFailed.fetch_add(1, ::std::memory_order_relaxed); }
 
 private:
     ProducerConsumerQueue<BotAction> _queue;
 
     // Statistics (atomic for thread-safe reads from diagnostics)
-    std::atomic<uint64> _totalActionsQueued;
-    std::atomic<uint64> _totalActionsProcessed;
-    std::atomic<uint64> _totalActionsFailed;
+    ::std::atomic<uint64> _totalActionsQueued;
+    ::std::atomic<uint64> _totalActionsProcessed;
+    ::std::atomic<uint64> _totalActionsFailed;
 };
 
 } // namespace Playerbot

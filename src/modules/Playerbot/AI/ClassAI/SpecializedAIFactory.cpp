@@ -68,11 +68,11 @@
 namespace Playerbot
 {
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 {
 
     uint8 classId = bot->GetClass();
-    uint8 specId = static_cast<uint8>(bot->GetPrimaryTalentTree(bot->GetActiveSpec()));
+    uint8 specId = static_cast<uint8>(bot->GetPrimarySpecialization()));
 
     TC_LOG_DEBUG("module.playerbot.ai.factory",
                  "Creating specialized AI for bot {} (class: {}, spec: {})",
@@ -80,7 +80,7 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 
     try
     {
-        std::unique_ptr<BotAI> specializedAI;
+        ::std::unique_ptr<BotAI> specializedAI;
 
         switch (classId)
         {
@@ -151,7 +151,7 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 
         return specializedAI;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("module.playerbot.ai.factory",
                      "Exception creating specialized AI for bot {}: {}",
@@ -164,25 +164,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateSpecializedAI(Player* bot)
 // WARRIOR SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarriorAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarriorAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Arms
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ArmsWarriorRefactored for {}", bot->GetName());
-            return std::make_unique<ArmsWarriorRefactored>(bot);
+            return ::std::make_unique<ArmsWarriorRefactored>(bot);
 
         case 1: // Fury
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating FuryWarriorRefactored for {}", bot->GetName());
-            return std::make_unique<FuryWarriorRefactored>(bot);
+            return ::std::make_unique<FuryWarriorRefactored>(bot);
 
         case 2: // Protection
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ProtectionWarriorRefactored for {}", bot->GetName());
-            return std::make_unique<ProtectionWarriorRefactored>(bot);
+            return ::std::make_unique<ProtectionWarriorRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Warrior spec {}, defaulting to Arms", specId);
-            return std::make_unique<ArmsWarriorRefactored>(bot);
+            return ::std::make_unique<ArmsWarriorRefactored>(bot);
     }
 }
 
@@ -190,25 +190,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarriorAI(Player* bot, uint8 
 // PALADIN SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreatePaladinAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreatePaladinAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Holy
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating HolyPaladinRefactored for {}", bot->GetName());
-            return std::make_unique<HolyPaladinRefactored>(bot);
+            return ::std::make_unique<HolyPaladinRefactored>(bot);
 
         case 1: // Protection
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ProtectionPaladinRefactored for {}", bot->GetName());
-            return std::make_unique<ProtectionPaladinRefactored>(bot);
+            return ::std::make_unique<ProtectionPaladinRefactored>(bot);
 
         case 2: // Retribution
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating RetributionSpecializationRefactored for {}", bot->GetName());
-            return std::make_unique<RetributionSpecializationRefactored>(bot);
+            return ::std::make_unique<RetributionSpecializationRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Paladin spec {}, defaulting to Retribution", specId);
-            return std::make_unique<RetributionSpecializationRefactored>(bot);
+            return ::std::make_unique<RetributionSpecializationRefactored>(bot);
     }
 }
 
@@ -216,25 +216,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreatePaladinAI(Player* bot, uint8 
 // HUNTER SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateHunterAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateHunterAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Beast Mastery
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating BeastMasteryHunterRefactored for {}", bot->GetName());
-            return std::make_unique<BeastMasteryHunterRefactored>(bot);
+            return ::std::make_unique<BeastMasteryHunterRefactored>(bot);
 
         case 1: // Marksmanship
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating MarksmanshipHunterRefactored for {}", bot->GetName());
-            return std::make_unique<MarksmanshipHunterRefactored>(bot);
+            return ::std::make_unique<MarksmanshipHunterRefactored>(bot);
 
         case 2: // Survival
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating SurvivalHunterRefactored for {}", bot->GetName());
-            return std::make_unique<SurvivalHunterRefactored>(bot);
+            return ::std::make_unique<SurvivalHunterRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Hunter spec {}, defaulting to Beast Mastery", specId);
-            return std::make_unique<BeastMasteryHunterRefactored>(bot);
+            return ::std::make_unique<BeastMasteryHunterRefactored>(bot);
     }
 }
 
@@ -242,25 +242,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateHunterAI(Player* bot, uint8 s
 // ROGUE SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateRogueAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateRogueAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Assassination
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating AssassinationRogueRefactored for {}", bot->GetName());
-            return std::make_unique<AssassinationRogueRefactored>(bot);
+            return ::std::make_unique<AssassinationRogueRefactored>(bot);
 
         case 1: // Outlaw
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating OutlawRogueRefactored for {}", bot->GetName());
-            return std::make_unique<OutlawRogueRefactored>(bot);
+            return ::std::make_unique<OutlawRogueRefactored>(bot);
 
         case 2: // Subtlety
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating SubtletyRogueRefactored for {}", bot->GetName());
-            return std::make_unique<SubtletyRogueRefactored>(bot);
+            return ::std::make_unique<SubtletyRogueRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Rogue spec {}, defaulting to Assassination", specId);
-            return std::make_unique<AssassinationRogueRefactored>(bot);
+            return ::std::make_unique<AssassinationRogueRefactored>(bot);
     }
 }
 
@@ -268,25 +268,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateRogueAI(Player* bot, uint8 sp
 // PRIEST SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreatePriestAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreatePriestAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Discipline
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating DisciplinePriestRefactored for {}", bot->GetName());
-            return std::make_unique<DisciplinePriestRefactored>(bot);
+            return ::std::make_unique<DisciplinePriestRefactored>(bot);
 
         case 1: // Holy
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating HolyPriestRefactored for {}", bot->GetName());
-            return std::make_unique<HolyPriestRefactored>(bot);
+            return ::std::make_unique<HolyPriestRefactored>(bot);
 
         case 2: // Shadow
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ShadowPriestRefactored for {}", bot->GetName());
-            return std::make_unique<ShadowPriestRefactored>(bot);
+            return ::std::make_unique<ShadowPriestRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Priest spec {}, defaulting to Holy", specId);
-            return std::make_unique<HolyPriestRefactored>(bot);
+            return ::std::make_unique<HolyPriestRefactored>(bot);
     }
 }
 
@@ -294,25 +294,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreatePriestAI(Player* bot, uint8 s
 // DEATH KNIGHT SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateDeathKnightAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateDeathKnightAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Blood
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating BloodDeathKnightRefactored for {}", bot->GetName());
-            return std::make_unique<BloodDeathKnightRefactored>(bot);
+            return ::std::make_unique<BloodDeathKnightRefactored>(bot);
 
         case 1: // Frost
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating FrostDeathKnightRefactored for {}", bot->GetName());
-            return std::make_unique<FrostDeathKnightRefactored>(bot);
+            return ::std::make_unique<FrostDeathKnightRefactored>(bot);
 
         case 2: // Unholy
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating UnholyDeathKnightRefactored for {}", bot->GetName());
-            return std::make_unique<UnholyDeathKnightRefactored>(bot);
+            return ::std::make_unique<UnholyDeathKnightRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Death Knight spec {}, defaulting to Blood", specId);
-            return std::make_unique<BloodDeathKnightRefactored>(bot);
+            return ::std::make_unique<BloodDeathKnightRefactored>(bot);
     }
 }
 
@@ -320,25 +320,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateDeathKnightAI(Player* bot, ui
 // SHAMAN SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateShamanAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateShamanAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Elemental
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ElementalShamanRefactored for {}", bot->GetName());
-            return std::make_unique<ElementalShamanRefactored>(bot);
+            return ::std::make_unique<ElementalShamanRefactored>(bot);
 
         case 1: // Enhancement
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating EnhancementShamanRefactored for {}", bot->GetName());
-            return std::make_unique<EnhancementShamanRefactored>(bot);
+            return ::std::make_unique<EnhancementShamanRefactored>(bot);
 
         case 2: // Restoration
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating RestorationShamanRefactored for {}", bot->GetName());
-            return std::make_unique<RestorationShamanRefactored>(bot);
+            return ::std::make_unique<RestorationShamanRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Shaman spec {}, defaulting to Elemental", specId);
-            return std::make_unique<ElementalShamanRefactored>(bot);
+            return ::std::make_unique<ElementalShamanRefactored>(bot);
     }
 }
 
@@ -346,25 +346,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateShamanAI(Player* bot, uint8 s
 // MAGE SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateMageAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateMageAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Arcane
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating ArcaneMageRefactored for {}", bot->GetName());
-            return std::make_unique<ArcaneMageRefactored>(bot);
+            return ::std::make_unique<ArcaneMageRefactored>(bot);
 
         case 1: // Fire
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating FireMageRefactored for {}", bot->GetName());
-            return std::make_unique<FireMageRefactored>(bot);
+            return ::std::make_unique<FireMageRefactored>(bot);
 
         case 2: // Frost
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating FrostMageRefactored for {}", bot->GetName());
-            return std::make_unique<FrostMageRefactored>(bot);
+            return ::std::make_unique<FrostMageRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Mage spec {}, defaulting to Frost", specId);
-            return std::make_unique<FrostMageRefactored>(bot);
+            return ::std::make_unique<FrostMageRefactored>(bot);
     }
 }
 
@@ -372,25 +372,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateMageAI(Player* bot, uint8 spe
 // WARLOCK SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarlockAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarlockAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Affliction
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating AfflictionWarlockRefactored for {}", bot->GetName());
-            return std::make_unique<AfflictionWarlockRefactored>(bot);
+            return ::std::make_unique<AfflictionWarlockRefactored>(bot);
 
         case 1: // Demonology
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating DemonologyWarlockRefactored for {}", bot->GetName());
-            return std::make_unique<DemonologyWarlockRefactored>(bot);
+            return ::std::make_unique<DemonologyWarlockRefactored>(bot);
 
         case 2: // Destruction
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating DestructionWarlockRefactored for {}", bot->GetName());
-            return std::make_unique<DestructionWarlockRefactored>(bot);
+            return ::std::make_unique<DestructionWarlockRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Warlock spec {}, defaulting to Affliction", specId);
-            return std::make_unique<AfflictionWarlockRefactored>(bot);
+            return ::std::make_unique<AfflictionWarlockRefactored>(bot);
     }
 }
 
@@ -398,25 +398,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateWarlockAI(Player* bot, uint8 
 // MONK SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateMonkAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateMonkAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Brewmaster
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating BrewmasterMonkRefactored for {}", bot->GetName());
-            return std::make_unique<BrewmasterMonkRefactored>(bot);
+            return ::std::make_unique<BrewmasterMonkRefactored>(bot);
 
         case 1: // Mistweaver
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating MistweaverMonkRefactored for {}", bot->GetName());
-            return std::make_unique<MistweaverMonkRefactored>(bot);
+            return ::std::make_unique<MistweaverMonkRefactored>(bot);
 
         case 2: // Windwalker
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating WindwalkerMonkRefactored for {}", bot->GetName());
-            return std::make_unique<WindwalkerMonkRefactored>(bot);
+            return ::std::make_unique<WindwalkerMonkRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Monk spec {}, defaulting to Windwalker", specId);
-            return std::make_unique<WindwalkerMonkRefactored>(bot);
+            return ::std::make_unique<WindwalkerMonkRefactored>(bot);
     }
 }
 
@@ -424,29 +424,29 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateMonkAI(Player* bot, uint8 spe
 // DRUID SPECIALIZATIONS (4)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateDruidAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateDruidAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Balance
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating BalanceDruidRefactored for {}", bot->GetName());
-            return std::make_unique<BalanceDruidRefactored>(bot);
+            return ::std::make_unique<BalanceDruidRefactored>(bot);
 
         case 1: // Feral
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating FeralDruidRefactored for {}", bot->GetName());
-            return std::make_unique<FeralDruidRefactored>(bot);
+            return ::std::make_unique<FeralDruidRefactored>(bot);
 
         case 2: // Guardian
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating GuardianDruidRefactored for {}", bot->GetName());
-            return std::make_unique<GuardianDruidRefactored>(bot);
+            return ::std::make_unique<GuardianDruidRefactored>(bot);
 
         case 3: // Restoration
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating RestorationDruidRefactored for {}", bot->GetName());
-            return std::make_unique<RestorationDruidRefactored>(bot);
+            return ::std::make_unique<RestorationDruidRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Druid spec {}, defaulting to Balance", specId);
-            return std::make_unique<BalanceDruidRefactored>(bot);
+            return ::std::make_unique<BalanceDruidRefactored>(bot);
     }
 }
 
@@ -454,21 +454,21 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateDruidAI(Player* bot, uint8 sp
 // DEMON HUNTER SPECIALIZATIONS (2)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateDemonHunterAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateDemonHunterAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Havoc
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating HavocDemonHunterRefactored for {}", bot->GetName());
-            return std::make_unique<HavocDemonHunterRefactored>(bot);
+            return ::std::make_unique<HavocDemonHunterRefactored>(bot);
 
         case 1: // Vengeance
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating VengeanceDemonHunterRefactored for {}", bot->GetName());
-            return std::make_unique<VengeanceDemonHunterRefactored>(bot);
+            return ::std::make_unique<VengeanceDemonHunterRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Demon Hunter spec {}, defaulting to Havoc", specId);
-            return std::make_unique<HavocDemonHunterRefactored>(bot);
+            return ::std::make_unique<HavocDemonHunterRefactored>(bot);
     }
 }
 
@@ -476,25 +476,25 @@ std::unique_ptr<BotAI> SpecializedAIFactory::CreateDemonHunterAI(Player* bot, ui
 // EVOKER SPECIALIZATIONS (3)
 // ============================================================================
 
-std::unique_ptr<BotAI> SpecializedAIFactory::CreateEvokerAI(Player* bot, uint8 specId)
+::std::unique_ptr<BotAI> SpecializedAIFactory::CreateEvokerAI(Player* bot, uint8 specId)
 {
     switch (specId)
     {
         case 0: // Devastation
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating DevastationEvokerRefactored for {}", bot->GetName());
-            return std::make_unique<DevastationEvokerRefactored>(bot);
+            return ::std::make_unique<DevastationEvokerRefactored>(bot);
 
         case 1: // Preservation
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating PreservationEvokerRefactored for {}", bot->GetName());
-            return std::make_unique<PreservationEvokerRefactored>(bot);
+            return ::std::make_unique<PreservationEvokerRefactored>(bot);
 
         case 2: // Augmentation
             TC_LOG_INFO("module.playerbot.ai.factory", "Creating AugmentationEvokerRefactored for {}", bot->GetName());
-            return std::make_unique<AugmentationEvokerRefactored>(bot);
+            return ::std::make_unique<AugmentationEvokerRefactored>(bot);
 
         default:
             TC_LOG_WARN("module.playerbot.ai.factory", "Unknown Evoker spec {}, defaulting to Devastation", specId);
-            return std::make_unique<DevastationEvokerRefactored>(bot);
+            return ::std::make_unique<DevastationEvokerRefactored>(bot);
     }
 }
 

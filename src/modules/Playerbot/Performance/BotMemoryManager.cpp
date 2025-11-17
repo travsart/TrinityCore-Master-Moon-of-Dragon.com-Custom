@@ -40,8 +40,8 @@ void CategoryMemoryStats::RecordAllocation(uint64_t size)
     uint64_t peak = peakUsage.load();
     while (current > peak && !peakUsage.compare_exchange_weak(peak, current)) {}
 
-    lastAllocation.store(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count());
+    lastAllocation.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
 void CategoryMemoryStats::RecordDeallocation(uint64_t size)
@@ -56,8 +56,8 @@ void CategoryMemoryStats::RecordDeallocation(uint64_t size)
 
     deallocationCount.fetch_add(1);
 
-    lastDeallocation.store(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count());
+    lastDeallocation.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
 void CategoryMemoryStats::Reset()
@@ -85,8 +85,8 @@ double CategoryMemoryStats::GetFragmentationRatio() const
 
 double CategoryMemoryStats::GetAllocationRate() const
 {
-    uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
     uint64_t firstAlloc = lastAllocation.load();
 
     if (firstAlloc == 0 || now <= firstAlloc)
@@ -153,8 +153,8 @@ void BotMemoryProfile::UpdateMemoryMetrics()
     if (activeCategories > 0)
         fragmentationRatio.store(totalFragmentation / activeCategories);
 
-    lastMemoryCheck.store(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count());
+    lastMemoryCheck.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
 // SystemMemoryAnalytics Implementation
@@ -243,7 +243,7 @@ bool BotMemoryManager::Initialize()
     _systemAnalytics.UpdateSystemMetrics();
 
     // Start maintenance thread
-    _maintenanceThread = std::thread([this] { PerformMemoryMaintenance(); });
+    _maintenanceThread = ::std::thread([this] { PerformMemoryMaintenance(); });
 
     _enabled.store(true);
 
@@ -271,7 +271,7 @@ void BotMemoryManager::Shutdown()
 
 void BotMemoryManager::RegisterBot(uint32_t botGuid)
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     _botProfiles[botGuid] = BotMemoryProfile(botGuid);
 
     TC_LOG_DEBUG("playerbot", "Registered bot {} for memory tracking", botGuid);
@@ -280,13 +280,13 @@ void BotMemoryManager::RegisterBot(uint32_t botGuid)
 void BotMemoryManager::UnregisterBot(uint32_t botGuid)
 {
     {
-        std::lock_guard lock(_profilesMutex);
+        ::std::lock_guard lock(_profilesMutex);
         _botProfiles.erase(botGuid);
     }
 
     // Clean up any tracked allocations for this bot
     {
-        std::lock_guard allocLock(_allocationsMutex);
+        ::std::lock_guard allocLock(_allocationsMutex);
         auto it = _activeAllocations.begin();
         while (it != _activeAllocations.end())
         {
@@ -300,14 +300,14 @@ void BotMemoryManager::UnregisterBot(uint32_t botGuid)
     TC_LOG_DEBUG("playerbot", "Unregistered bot {} from memory tracking", botGuid);
 }
 
-void BotMemoryManager::RecordAllocation(void* address, uint64_t size, MemoryCategory category, uint32_t botGuid, const std::string& context)
+void BotMemoryManager::RecordAllocation(void* address, uint64_t size, MemoryCategory category, uint32_t botGuid, const ::std::string& context)
 {
     if (!_enabled.load())
         return;
 
     // Update bot profile
     {
-        std::lock_guard lock(_profilesMutex);
+        ::std::lock_guard lock(_profilesMutex);
         auto it = _botProfiles.find(botGuid);
         if (it != _botProfiles.end())
         {
@@ -324,13 +324,13 @@ void BotMemoryManager::RecordAllocation(void* address, uint64_t size, MemoryCate
     // Track allocation for leak detection
     if (_leakDetectionEnabled.load() && address)
     {
-        std::lock_guard allocLock(_allocationsMutex);
+        ::std::lock_guard allocLock(_allocationsMutex);
         _activeAllocations.emplace(address, MemoryLeakEntry(address, size, category, botGuid, context));
 
         // Limit tracking entries to prevent excessive memory usage
-        if (_activeAllocations.size() > MAX_LEAK_ENTRIES)
+    if (_activeAllocations.size() > MAX_LEAK_ENTRIES)
         {
-            auto oldest = std::min_element(_activeAllocations.begin(), _activeAllocations.end(),
+            auto oldest = ::std::min_element(_activeAllocations.begin(), _activeAllocations.end(),
                 [](const auto& a, const auto& b) { return a.second.allocationTime < b.second.allocationTime; });
             if (oldest != _activeAllocations.end())
                 _activeAllocations.erase(oldest);
@@ -348,7 +348,7 @@ void BotMemoryManager::RecordDeallocation(void* address, uint64_t size, MemoryCa
 
     // Update bot profile
     {
-        std::lock_guard lock(_profilesMutex);
+        ::std::lock_guard lock(_profilesMutex);
         auto it = _botProfiles.find(botGuid);
         if (it != _botProfiles.end())
         {
@@ -365,7 +365,7 @@ void BotMemoryManager::RecordDeallocation(void* address, uint64_t size, MemoryCa
     // Remove from leak tracking
     if (_leakDetectionEnabled.load() && address)
     {
-        std::lock_guard allocLock(_allocationsMutex);
+        ::std::lock_guard allocLock(_allocationsMutex);
         _activeAllocations.erase(address);
     }
 }
@@ -375,7 +375,7 @@ void BotMemoryManager::OptimizeBotMemory(uint32_t botGuid)
     if (!_optimizationEnabled.load())
         return;
 
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return;
@@ -407,8 +407,8 @@ void BotMemoryManager::OptimizeBotMemory(uint32_t botGuid)
 
 void BotMemoryManager::PerformGarbageCollection()
 {
-    uint64_t startTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t startTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
     uint64_t memoryBefore = GetTotalMemoryUsage();
 
@@ -417,12 +417,12 @@ void BotMemoryManager::PerformGarbageCollection()
     CompactMemory();
 
     uint64_t memoryAfter = GetTotalMemoryUsage();
-    uint64_t gcTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count() - startTime;
+    uint64_t gcTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count() - startTime;
 
     // Update system analytics
     {
-        std::lock_guard lock(_systemAnalyticsMutex);
+        ::std::lock_guard lock(_systemAnalyticsMutex);
         _systemAnalytics.garbageCollectionEvents.fetch_add(1);
         _systemAnalytics.totalGcTime.fetch_add(gcTime);
 
@@ -467,35 +467,35 @@ uint64_t BotMemoryManager::ReclaimUnusedMemory()
 
 BotMemoryProfile BotMemoryManager::GetBotMemoryProfile(uint32_t botGuid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     return it != _botProfiles.end() ? it->second : BotMemoryProfile();
 }
 
 SystemMemoryAnalytics BotMemoryManager::GetSystemAnalytics() const
 {
-    std::lock_guard lock(_systemAnalyticsMutex);
+    ::std::lock_guard lock(_systemAnalyticsMutex);
     return _systemAnalytics;
 }
 
-std::vector<uint32_t> BotMemoryManager::GetHighMemoryUsageBots(uint32_t count) const
+::std::vector<uint32_t> BotMemoryManager::GetHighMemoryUsageBots(uint32_t count) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
-    std::vector<std::pair<uint32_t, uint64_t>> botUsage;
+    ::std::vector<::std::pair<uint32_t, uint64_t>> botUsage;
     for (const auto& [botGuid, profile] : _botProfiles)
     {
         botUsage.emplace_back(botGuid, profile.GetTotalUsage());
     }
 
     // Sort by memory usage (descending)
-    std::sort(botUsage.begin(), botUsage.end(),
+    ::std::sort(botUsage.begin(), botUsage.end(),
              [](const auto& a, const auto& b) { return a.second > b.second; });
 
-    std::vector<uint32_t> result;
-    result.reserve(std::min(static_cast<size_t>(count), botUsage.size()));
+    ::std::vector<uint32_t> result;
+    result.reserve(::std::min(static_cast<size_t>(count), botUsage.size()));
 
-    for (size_t i = 0; i < std::min(static_cast<size_t>(count), botUsage.size()); ++i)
+    for (size_t i = 0; i < ::std::min(static_cast<size_t>(count), botUsage.size()); ++i)
     {
         result.push_back(botUsage[i].first);
     }
@@ -508,18 +508,18 @@ void BotMemoryManager::DetectMemoryLeaks()
     if (!_leakDetectionEnabled.load())
         return;
 
-    uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    std::vector<MemoryLeakEntry> suspectedLeaks;
+    ::std::vector<MemoryLeakEntry> suspectedLeaks;
 
     {
-        std::lock_guard lock(_allocationsMutex);
+        ::std::lock_guard lock(_allocationsMutex);
 
         for (const auto& [address, entry] : _activeAllocations)
         {
             // Consider allocations older than 10 minutes as potential leaks
-            if (now - entry.allocationTime > 600000000) // 10 minutes in microseconds
+    if (now - entry.allocationTime > 600000000) // 10 minutes in microseconds
             {
                 suspectedLeaks.push_back(entry);
             }
@@ -531,7 +531,7 @@ void BotMemoryManager::DetectMemoryLeaks()
         TC_LOG_WARN("playerbot", "Detected {} potential memory leaks", suspectedLeaks.size());
 
         // Update bot leak counts
-        std::lock_guard profileLock(_profilesMutex);
+        ::std::lock_guard profileLock(_profilesMutex);
         for (const auto& leak : suspectedLeaks)
         {
             auto it = _botProfiles.find(leak.botGuid);
@@ -545,14 +545,14 @@ void BotMemoryManager::DetectMemoryLeaks()
     _lastLeakDetection.store(now);
 }
 
-std::vector<MemoryLeakEntry> BotMemoryManager::GetSuspectedLeaks() const
+::std::vector<MemoryLeakEntry> BotMemoryManager::GetSuspectedLeaks() const
 {
-    std::lock_guard lock(_allocationsMutex);
+    ::std::lock_guard lock(_allocationsMutex);
 
-    uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    uint64_t now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    std::vector<MemoryLeakEntry> leaks;
+    ::std::vector<MemoryLeakEntry> leaks;
 
     for (const auto& [address, entry] : _activeAllocations)
     {
@@ -589,7 +589,7 @@ void BotMemoryManager::FlushCache(MemoryCategory category)
     // Implementation would flush caches for specific category
     // This is a placeholder for cache management logic
 
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     for (auto& [botGuid, profile] : _botProfiles)
     {
         // Reset cache-related statistics for the category
@@ -598,7 +598,7 @@ void BotMemoryManager::FlushCache(MemoryCategory category)
         {
             auto& stats = profile.categoryStats[categoryIndex];
             // Only flush temporary/cache data, not persistent allocations
-            if (category == MemoryCategory::CACHE_DATA ||
+    if (category == MemoryCategory::CACHE_DATA ||
                 category == MemoryCategory::TEMPORARY_DATA ||
                 category == MemoryCategory::DATABASE_CACHE)
             {
@@ -612,7 +612,7 @@ void BotMemoryManager::FlushCache(MemoryCategory category)
 
 void BotMemoryManager::FlushBotCache(uint32_t botGuid)
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     if (it == _botProfiles.end())
         return;
@@ -620,7 +620,7 @@ void BotMemoryManager::FlushBotCache(uint32_t botGuid)
     BotMemoryProfile& profile = it->second;
 
     // Flush cache categories
-    std::vector<MemoryCategory> cacheCategories = {
+    ::std::vector<MemoryCategory> cacheCategories = {
         MemoryCategory::CACHE_DATA,
         MemoryCategory::TEMPORARY_DATA,
         MemoryCategory::DATABASE_CACHE
@@ -646,14 +646,14 @@ void BotMemoryManager::FlushBotCache(uint32_t botGuid)
 void BotMemoryManager::OptimizeCacheSize()
 {
     // Analyze cache hit ratios and adjust cache sizes accordingly
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     for (auto& [botGuid, profile] : _botProfiles)
     {
         double cacheHitRatio = profile.cacheHitRatio.load();
 
         // If cache hit ratio is low, reduce cache size
-        if (cacheHitRatio < 0.5)
+    if (cacheHitRatio < 0.5)
         {
             FlushBotCache(botGuid);
         }
@@ -670,7 +670,7 @@ void BotMemoryManager::HandleMemoryPressure()
     TC_LOG_WARN("playerbot", "High memory pressure detected - performing emergency cleanup");
 
     {
-        std::lock_guard lock(_systemAnalyticsMutex);
+        ::std::lock_guard lock(_systemAnalyticsMutex);
         _systemAnalytics.memoryPressureEvents.fetch_add(1);
     }
 
@@ -700,9 +700,9 @@ bool BotMemoryManager::IsMemoryPressureHigh() const
     return _systemAnalytics.CalculateMemoryPressure() > _memoryPressureThreshold.load();
 }
 
-void BotMemoryManager::GenerateMemoryReport(std::string& report, uint32_t botGuid) const
+void BotMemoryManager::GenerateMemoryReport(::std::string& report, uint32_t botGuid) const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     if (botGuid == 0)
     {
@@ -715,7 +715,7 @@ void BotMemoryManager::GenerateMemoryReport(std::string& report, uint32_t botGui
         oss << "System Memory Overview:\n";
         oss << "- Total System Memory: " << analytics.totalSystemMemory.load() / (1024 * 1024) << " MB\n";
         oss << "- Available Memory: " << analytics.availableSystemMemory.load() / (1024 * 1024) << " MB\n";
-        oss << "- System Usage: " << std::fixed << std::setprecision(1) << analytics.systemMemoryUsagePercent.load() << "%\n";
+        oss << "- System Usage: " << ::std::fixed << ::std::setprecision(1) << analytics.systemMemoryUsagePercent.load() << "%\n";
         oss << "- Bot Memory Usage: " << analytics.totalBotMemory.load() / (1024 * 1024) << " MB\n";
         oss << "- Memory Pressure: " << (analytics.IsMemoryPressureHigh() ? "HIGH" : "NORMAL") << "\n\n";
 
@@ -735,7 +735,7 @@ void BotMemoryManager::GenerateMemoryReport(std::string& report, uint32_t botGui
             {
                 BotMemoryProfile profile = GetBotMemoryProfile(guid);
                 oss << "- Bot " << guid << ": " << profile.GetTotalUsage() / (1024 * 1024) << " MB"
-                    << " (Efficiency: " << std::fixed << std::setprecision(1) << profile.memoryEfficiency.load() * 100 << "%)\n";
+                    << " (Efficiency: " << ::std::fixed << ::std::setprecision(1) << profile.memoryEfficiency.load() * 100 << "%)\n";
             }
         }
     }
@@ -753,9 +753,9 @@ void BotMemoryManager::GenerateMemoryReport(std::string& report, uint32_t botGui
             oss << "Bot GUID: " << profile.botGuid << "\n";
             oss << "Total Memory Usage: " << profile.GetTotalUsage() / 1024 << " KB\n";
             oss << "Peak Memory Usage: " << profile.peakMemoryUsage.load() / 1024 << " KB\n";
-            oss << "Memory Efficiency: " << std::fixed << std::setprecision(1) << profile.memoryEfficiency.load() * 100 << "%\n";
-            oss << "Fragmentation Ratio: " << std::fixed << std::setprecision(1) << profile.fragmentationRatio.load() * 100 << "%\n";
-            oss << "Cache Hit Ratio: " << std::fixed << std::setprecision(1) << profile.cacheHitRatio.load() * 100 << "%\n";
+            oss << "Memory Efficiency: " << ::std::fixed << ::std::setprecision(1) << profile.memoryEfficiency.load() * 100 << "%\n";
+            oss << "Fragmentation Ratio: " << ::std::fixed << ::std::setprecision(1) << profile.fragmentationRatio.load() * 100 << "%\n";
+            oss << "Cache Hit Ratio: " << ::std::fixed << ::std::setprecision(1) << profile.cacheHitRatio.load() * 100 << "%\n";
             oss << "Memory Leaks Detected: " << profile.memoryLeakCount.load() << "\n";
             oss << "Optimizations Performed: " << profile.memoryOptimizations.load() << "\n\n";
 
@@ -783,7 +783,7 @@ void BotMemoryManager::GenerateMemoryReport(std::string& report, uint32_t botGui
 
 uint64_t BotMemoryManager::GetTotalMemoryUsage() const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     uint64_t total = 0;
     for (const auto& [botGuid, profile] : _botProfiles)
@@ -796,21 +796,21 @@ uint64_t BotMemoryManager::GetTotalMemoryUsage() const
 
 uint64_t BotMemoryManager::GetBotMemoryUsage(uint32_t botGuid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     return it != _botProfiles.end() ? it->second.GetTotalUsage() : 0;
 }
 
 double BotMemoryManager::GetMemoryEfficiency(uint32_t botGuid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
     auto it = _botProfiles.find(botGuid);
     return it != _botProfiles.end() ? it->second.memoryEfficiency.load() : 0.0;
 }
 
 uint32_t BotMemoryManager::GetActiveAllocations() const
 {
-    std::lock_guard lock(_allocationsMutex);
+    ::std::lock_guard lock(_allocationsMutex);
     return static_cast<uint32_t>(_activeAllocations.size());
 }
 
@@ -819,8 +819,8 @@ void BotMemoryManager::PerformMemoryMaintenance()
 {
     while (!_shutdownRequested.load())
     {
-        std::unique_lock<std::recursive_mutex> lock(_maintenanceMutex);
-        _maintenanceCondition.wait_for(lock, std::chrono::microseconds(DEFAULT_MAINTENANCE_INTERVAL_US),
+        ::std::unique_lock<::std::recursive_mutex> lock(_maintenanceMutex);
+        _maintenanceCondition.wait_for(lock, ::std::chrono::microseconds(DEFAULT_MAINTENANCE_INTERVAL_US),
                                      [this] { return _shutdownRequested.load(); });
 
         if (_shutdownRequested.load())
@@ -830,24 +830,24 @@ void BotMemoryManager::PerformMemoryMaintenance()
         _systemAnalytics.UpdateSystemMetrics();
 
         // Perform periodic maintenance
-        uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
+        uint64_t now = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count();
 
         // Garbage collection
-        if (now - _lastOptimization.load() >= _garbageCollectionInterval.load())
+    if (now - _lastOptimization.load() >= _garbageCollectionInterval.load())
         {
             PerformGarbageCollection();
             _lastOptimization.store(now);
         }
 
         // Leak detection
-        if (now - _lastLeakDetection.load() >= _leakDetectionInterval.load())
+    if (now - _lastLeakDetection.load() >= _leakDetectionInterval.load())
         {
             DetectMemoryLeaks();
         }
 
         // Handle memory pressure
-        if (IsMemoryPressureHigh())
+    if (IsMemoryPressureHigh())
         {
             HandleMemoryPressure();
         }
@@ -859,7 +859,7 @@ void BotMemoryManager::PerformMemoryMaintenance()
 
 void BotMemoryManager::UpdateMemoryStatistics()
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     for (auto& [botGuid, profile] : _botProfiles)
     {
@@ -868,7 +868,7 @@ void BotMemoryManager::UpdateMemoryStatistics()
 
     // Update system analytics
     {
-        std::lock_guard systemLock(_systemAnalyticsMutex);
+        ::std::lock_guard systemLock(_systemAnalyticsMutex);
         _systemAnalytics.totalBotMemory.store(GetTotalMemoryUsage());
 
         if (_systemAnalytics.totalSystemMemory.load() > 0)
@@ -890,7 +890,7 @@ void BotMemoryManager::ConsolidateFragmentedMemory()
 }
 
 // Utility functions
-std::string GetCategoryName(MemoryCategory category)
+::std::string GetCategoryName(MemoryCategory category)
 {
     switch (category)
     {

@@ -30,7 +30,7 @@ namespace Playerbot
 {
 
 class BotAI;
-class Blackboard;
+class SharedBlackboard;
 
 /**
  * @brief Hybrid AI Controller - Integrates Utility AI with Behavior Trees
@@ -57,7 +57,7 @@ public:
      * @param ai Bot AI instance
      * @param blackboard Shared blackboard (optional)
      */
-    HybridAIController(BotAI* ai, Blackboard* blackboard = nullptr);
+    HybridAIController(BotAI* ai, SharedBlackboard* blackboard = nullptr);
 
     /**
      * @brief Update AI decision and execution
@@ -85,7 +85,7 @@ public:
      * @brief Get current behavior name
      * @return Name of active utility behavior or "None"
      */
-    std::string GetCurrentBehaviorName() const;
+    ::std::string GetCurrentBehaviorName() const;
 
     /**
      * @brief Get current tree execution status
@@ -112,15 +112,15 @@ public:
      * @param behaviorName Utility behavior name
      * @param treeType Factory tree type to execute
      */
-    void RegisterBehaviorMapping(std::string const& behaviorName, BehaviorTreeFactory::TreeType treeType);
+    void RegisterBehaviorMapping(::std::string const& behaviorName, BehaviorTreeFactory::TreeType treeType);
 
     /**
      * @brief Register custom behavior with custom tree builder
      * @param behaviorName Utility behavior name
      * @param treeBuilder Lambda that builds custom tree
      */
-    void RegisterCustomBehaviorMapping(std::string const& behaviorName,
-        std::function<std::shared_ptr<BTNode>()> treeBuilder);
+    void RegisterCustomBehaviorMapping(::std::string const& behaviorName,
+        ::std::function<::std::shared_ptr<BTNode>()> treeBuilder);
 
     /**
      * @brief Get time since last behavior change (in milliseconds)
@@ -155,7 +155,7 @@ private:
      * @param behaviorName Name of utility behavior
      * @return Shared pointer to tree root or nullptr if not mapped
      */
-    std::shared_ptr<BTNode> GetTreeForBehavior(std::string const& behaviorName);
+    ::std::shared_ptr<BTNode> GetTreeForBehavior(::std::string const& behaviorName);
 
     /**
      * @brief Switch to new behavior tree
@@ -164,7 +164,7 @@ private:
      * @param behaviorName Name of new behavior
      * @param tree New tree root
      */
-    void SwitchBehaviorTree(std::string const& behaviorName, std::shared_ptr<BTNode> tree);
+    void SwitchBehaviorTree(::std::string const& behaviorName, ::std::shared_ptr<BTNode> tree);
 
     /**
      * @brief Execute current behavior tree
@@ -176,19 +176,19 @@ private:
 
 private:
     BotAI* _bot;
-    Blackboard* _blackboard;
+    SharedBlackboard* _blackboard;
 
     // Utility AI system (decision making)
-    std::unique_ptr<UtilityAI> _utilityAI;
+    ::std::unique_ptr<UtilityAI> _utilityAI;
 
     // Behavior Tree execution
-    std::unique_ptr<BehaviorTree> _currentTree;
-    std::string _currentBehaviorName;
+    ::std::unique_ptr<BehaviorTree> _currentTree;
+    ::std::string _currentBehaviorName;
     BTStatus _lastTreeStatus;
 
     // Behavior-to-tree mappings
-    std::unordered_map<std::string, BehaviorTreeFactory::TreeType> _behaviorToTreeMap;
-    std::unordered_map<std::string, std::function<std::shared_ptr<BTNode>()>> _customTreeBuilders;
+    ::std::unordered_map<::std::string, BehaviorTreeFactory::TreeType> _behaviorToTreeMap;
+    ::std::unordered_map<::std::string, ::std::function<::std::shared_ptr<BTNode>()>> _customTreeBuilders;
 
     // Timing and tracking
     uint32 _lastDecisionTime;

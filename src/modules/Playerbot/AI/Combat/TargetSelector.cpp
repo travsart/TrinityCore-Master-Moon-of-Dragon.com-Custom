@@ -46,10 +46,10 @@ TargetSelector::TargetSelector(Player* bot, BotThreatManager* threatManager)
 
 SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     SelectionResult result;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     try
     {
@@ -62,7 +62,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             return result;
         }
 
-        std::vector<Unit*> candidates = GetAllTargetCandidates(context);
+        ::std::vector<Unit*> candidates = GetAllTargetCandidates(context);
         if (candidates.empty())
         {
             result.failureReason = "No valid target candidates found";
@@ -70,8 +70,8 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             return result;
         }
 
-        std::vector<TargetInfo> evaluatedTargets;
-        evaluatedTargets.reserve(std::min(candidates.size(), static_cast<size_t>(_maxTargetsToEvaluate)));
+        ::std::vector<TargetInfo> evaluatedTargets;
+        evaluatedTargets.reserve(::std::min(candidates.size(), static_cast<size_t>(_maxTargetsToEvaluate)));
 
         for (Unit* candidate : candidates)
         {
@@ -84,7 +84,7 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             TargetInfo targetInfo;
             targetInfo.guid = candidate->GetGUID();
             targetInfo.unit = candidate;
-            targetInfo.distance = std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
+            targetInfo.distance = ::std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
             targetInfo.healthPercent = candidate->GetHealthPct();
             targetInfo.threatLevel = _threatManager ? _threatManager->GetThreat(candidate) : 0.0f;
             targetInfo.isInterruptTarget = IsInterruptible(candidate);
@@ -106,12 +106,12 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
             return result;
         }
 
-        std::sort(evaluatedTargets.begin(), evaluatedTargets.end(), std::greater<TargetInfo>());
+        ::std::sort(evaluatedTargets.begin(), evaluatedTargets.end(), ::std::greater<TargetInfo>());
         result.target = evaluatedTargets[0].unit;
         result.info = evaluatedTargets[0];
         result.success = true;
 
-        for (size_t i = 1; i < std::min(evaluatedTargets.size(), size_t(5)); ++i)
+        for (size_t i = 1; i < ::std::min(evaluatedTargets.size(), size_t(5)); ++i)
         {
             result.alternativeTargets.push_back(evaluatedTargets[i]);
         }
@@ -119,15 +119,15 @@ SelectionResult TargetSelector::SelectBestTarget(const SelectionContext& context
         TC_LOG_DEBUG("playerbot.target", "Selected target {} for bot {} with score {:.2f} (priority {})",
                    result.target->GetName(), _bot->GetName(), result.info.score, uint32(result.info.priority));
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.success = false;
-        result.failureReason = std::string("Exception during target selection: ") + e.what();
+        result.failureReason = ::std::string("Exception during target selection: ") + e.what();
         TC_LOG_ERROR("playerbot.target", "Exception in SelectBestTarget for bot {}: {}", _bot->GetName(), e.what());
     }
 
-    auto endTime = std::chrono::steady_clock::now();
-    result.selectionTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    result.selectionTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     UpdateMetrics(result);
     return result;
@@ -202,7 +202,7 @@ SelectionResult TargetSelector::SelectHealTarget(bool emergencyOnly)
     context.weights.tankPriority = 2.5f;
     context.weights.healerPriority = 2.0f;
 
-    std::vector<Unit*> candidates = GetNearbyAllies(context.maxRange);
+    ::std::vector<Unit*> candidates = GetNearbyAllies(context.maxRange);
     Unit* bestTarget = nullptr;
     float bestScore = 0.0f;
 
@@ -255,7 +255,7 @@ SelectionResult TargetSelector::SelectInterruptTarget(float maxRange)
     context.weights.threatWeight = 2.0f;
     context.weights.distanceWeight = 1.5f;
 
-    std::vector<Unit*> candidates = GetNearbyEnemies(context.maxRange);
+    ::std::vector<Unit*> candidates = GetNearbyEnemies(context.maxRange);
     Unit* bestTarget = nullptr;
     float bestScore = 0.0f;
 
@@ -424,7 +424,7 @@ float TargetSelector::CalculateTargetScore(Unit* target, const SelectionContext&
     totalScore += CalculateInterruptScore(target, context) * context.weights.interruptWeight;
     totalScore += CalculateGroupFocusScore(target, context) * context.weights.groupFocusWeight;
 
-    return std::max(0.0f, totalScore);
+    return ::std::max(0.0f, totalScore);
 }
 TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const SelectionContext& context)
 {
@@ -455,9 +455,9 @@ TargetPriority TargetSelector::DetermineTargetPriority(Unit* target, const Selec
     return TargetPriority::SECONDARY;
 }
 
-std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
+::std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
 {
-    std::vector<Unit*> enemies;
+    ::std::vector<Unit*> enemies;
 
     // PHASE 5B: Thread-safe spatial grid query (replaces QueryNearbyCreatureGuids + ObjectAccessor)
     auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, range, true);
@@ -477,9 +477,9 @@ std::vector<Unit*> TargetSelector::GetNearbyEnemies(float range) const
     return enemies;
 }
 
-std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
+::std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
 {
-    std::vector<Unit*> allies;
+    ::std::vector<Unit*> allies;
 
     if (Group* group = _bot->GetGroup())
     {
@@ -524,7 +524,7 @@ std::vector<Unit*> TargetSelector::GetNearbyAllies(float range) const
     return allies;
 }
 
-std::vector<Unit*> TargetSelector::GetAllTargetCandidates(const SelectionContext& context) const
+::std::vector<Unit*> TargetSelector::GetAllTargetCandidates(const SelectionContext& context) const
 {
     if (context.botRole == ThreatRole::HEALER)
         return GetNearbyAllies(context.maxRange);
@@ -566,7 +566,7 @@ float TargetSelector::CalculateDistanceScore(Unit* target, const SelectionContex
     if (!target)
         return 0.0f;
 
-    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float maxRange = context.maxRange;
 
     if (distance > maxRange)
@@ -704,12 +704,12 @@ bool TargetSelector::IsCaster(Unit* target) const
 
         // Caster unit classes: Paladin (2) and Mage (8)
         // Non-caster unit classes: Warrior (1) and Rogue (4)
-        if (unitClass == UNIT_CLASS_PALADIN || unitClass == UNIT_CLASS_MAGE)
+    if (unitClass == UNIT_CLASS_PALADIN || unitClass == UNIT_CLASS_MAGE)
             return true;
 
         // Additional heuristic: Check if creature has ranged attack vs melee only
         // Casters typically have ranged attack range > melee range
-        if (creature->GetAttackDistance(nullptr) > ATTACK_DISTANCE)
+    if (creature->GetAttackDistance(nullptr) > ATTACK_DISTANCE)
             return true;
 
         return false;
@@ -802,14 +802,14 @@ void TargetSelector::UpdateMetrics(const SelectionResult& result)
     if (result.selectionTime > _metrics.maxSelectionTime)
         _metrics.maxSelectionTime = result.selectionTime;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(currentTime - _metrics.lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - _metrics.lastUpdate);
 
     if (timeSinceLastUpdate.count() >= 1)
     {
         _metrics.averageSelectionTime = _metrics.totalSelections > 0 ?
-            std::chrono::microseconds(_metrics.totalSelections.load() / _metrics.totalSelections.load()) :
-            std::chrono::microseconds{0};
+            ::std::chrono::microseconds(_metrics.totalSelections.load() / _metrics.totalSelections.load()) :
+            ::std::chrono::microseconds{0};
         _metrics.lastUpdate = currentTime;
     }
 }

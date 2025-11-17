@@ -39,7 +39,7 @@ public:
 
     // Core benchmarking framework
     virtual BenchmarkResult RunBenchmark(BenchmarkType type, LoadLevel loadLevel, uint32 duration = 60000) = 0;
-    virtual std::vector<BenchmarkResult> RunBenchmarkSuite(LoadLevel loadLevel) = 0;
+    virtual ::std::vector<BenchmarkResult> RunBenchmarkSuite(LoadLevel loadLevel) = 0;
     virtual void RunContinuousBenchmarking(uint32 intervalMs) = 0;
     virtual void StopContinuousBenchmarking() = 0;
 
@@ -73,7 +73,7 @@ public:
     virtual bool RunRegressionBenchmarks() = 0;
     virtual void EstablishPerformanceBaseline() = 0;
     virtual bool DetectPerformanceRegression() = 0;
-    virtual void CompareWithBaseline(const std::vector<BenchmarkResult>& currentResults) = 0;
+    virtual void CompareWithBaseline(const ::std::vector<BenchmarkResult>& currentResults) = 0;
 
     // Stress testing
     virtual StressTest RunStressTest(const StressTest& testConfig) = 0;
@@ -82,7 +82,7 @@ public:
     virtual bool ValidateSystemStability(uint32 duration) = 0;
 
     // Performance optimization insights
-    virtual std::vector<OptimizationRecommendation> GenerateOptimizationRecommendations() = 0;
+    virtual ::std::vector<OptimizationRecommendation> GenerateOptimizationRecommendations() = 0;
     virtual void AnalyzePerformancePatterns() = 0;
     virtual void IdentifyBottlenecks() = 0;
     virtual void SuggestConfigurationTuning() = 0;
@@ -97,7 +97,7 @@ public:
     virtual void StartPerformanceMonitoring() = 0;
     virtual void StopPerformanceMonitoring() = 0;
     virtual PerformanceSnapshot GetCurrentPerformanceSnapshot() = 0;
-    virtual std::vector<PerformanceSnapshot> GetPerformanceHistory(uint32 durationMs) = 0;
+    virtual ::std::vector<PerformanceSnapshot> GetPerformanceHistory(uint32 durationMs) = 0;
 
     // Configuration and settings
     virtual void SetPerformanceTargets(BenchmarkType type, uint32 targetOps, float targetResponseTime) = 0;

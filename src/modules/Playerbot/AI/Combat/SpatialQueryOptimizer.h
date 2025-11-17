@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <array>
+#include <vector>
 
 namespace Playerbot
 {
@@ -44,10 +45,10 @@ public:
 private:
     static constexpr size_t WINDOW_SIZE = 60; // 1 second at 60 FPS
 
-    std::atomic<uint32> _currentFrame{0};
-    std::array<FrameMetrics, WINDOW_SIZE> _frames{};
-    std::atomic<uint64> _totalQueries{0};
-    std::atomic<uint64> _totalCacheHits{0};
+    ::std::atomic<uint32> _currentFrame{0};
+    ::std::array<FrameMetrics, WINDOW_SIZE> _frames{};
+    ::std::atomic<uint64> _totalQueries{0};
+    ::std::atomic<uint64> _totalCacheHits{0};
 };
 
 /**
@@ -78,17 +79,17 @@ public:
 
 private:
     // Adaptive parameters
-    std::atomic<uint32> _maxQueriesPerFrame{500};
-    std::atomic<uint32> _minQueryIntervalMs{100};
-    std::atomic<float> _throttleRatio{0.0f};
-    std::atomic<bool> _emergencyMode{false};
+    ::std::atomic<uint32> _maxQueriesPerFrame{500};
+    ::std::atomic<uint32> _minQueryIntervalMs{100};
+    ::std::atomic<float> _throttleRatio{0.0f};
+    ::std::atomic<bool> _emergencyMode{false};
 
     // Load tracking
-    std::atomic<uint32> _recentQueryCount{0};
-    std::atomic<uint64> _recentQueryTimeUs{0};
+    ::std::atomic<uint32> _recentQueryCount{0};
+    ::std::atomic<uint64> _recentQueryTimeUs{0};
 
     // Frame timing
-    std::chrono::steady_clock::time_point _lastFrameTime;
+    ::std::chrono::steady_clock::time_point _lastFrameTime;
     uint32 _frameTimeUs{16667}; // Target 60 FPS
 
     void CalculateThrottleRatio(uint32 queryTimeUs, uint32 queryCount);
@@ -106,14 +107,14 @@ public:
         float x, y, z;
         float range;
         uint32 zoneId;
-        std::vector<ObjectGuid> requestingBots;
+        ::std::vector<ObjectGuid> requestingBots;
     };
 
     // Add query to batch
     void AddQuery(ObjectGuid bot, float x, float y, float z, float range, uint32 zoneId);
 
     // Process batched queries
-    std::vector<BatchedQuery> GetBatchedQueries();
+    ::std::vector<BatchedQuery> GetBatchedQueries();
 
     // Clear processed batches
     void ClearBatches();
@@ -122,7 +123,7 @@ private:
     static constexpr float POSITION_EPSILON = 5.0f;  // Positions within 5 yards are considered same
     static constexpr float RANGE_EPSILON = 2.0f;     // Ranges within 2 yards are considered same
 
-    std::vector<BatchedQuery> _pendingBatches;
+    ::std::vector<BatchedQuery> _pendingBatches;
     Playerbot::OrderedMutex<Playerbot::LockOrder::SPATIAL_GRID> _batchMutex;
 
     BatchedQuery* FindSimilarQuery(float x, float y, float z, float range, uint32 zoneId);
@@ -143,7 +144,7 @@ public:
         bool throttled;
         bool batched;
         uint32 delayMs;
-        std::vector<HostileEntry> cachedResults;
+        ::std::vector<HostileEntry> cachedResults;
     };
 
     OptimizedQuery OptimizeQuery(
@@ -186,17 +187,17 @@ private:
     ~SpatialQueryOptimizer();
 
     // Components
-    std::unique_ptr<SpatialQueryMetrics> _metrics;
-    std::unique_ptr<AdaptiveThrottler> _throttler;
-    std::unique_ptr<QueryBatcher> _batcher;
+    ::std::unique_ptr<SpatialQueryMetrics> _metrics;
+    ::std::unique_ptr<AdaptiveThrottler> _throttler;
+    ::std::unique_ptr<QueryBatcher> _batcher;
 
     // Configuration
     OptimizerConfig _config;
 
     // Per-frame tracking
-    std::atomic<uint32> _frameQueryCount{0};
-    std::atomic<uint32> _frameThrottledCount{0};
-    std::atomic<uint32> _frameBatchedCount{0};
+    ::std::atomic<uint32> _frameQueryCount{0};
+    ::std::atomic<uint32> _frameThrottledCount{0};
+    ::std::atomic<uint32> _frameBatchedCount{0};
 
     // Deleted operations
     SpatialQueryOptimizer(const SpatialQueryOptimizer&) = delete;

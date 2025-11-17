@@ -22,7 +22,7 @@ namespace Playerbot
 
 SpellInterruptAction::SpellInterruptAction()
     : Action("spell_interrupt")
-    , _lastExecution(std::chrono::steady_clock::now())
+    , _lastExecution(::std::chrono::steady_clock::now())
 {
 }
 
@@ -31,11 +31,11 @@ ActionResult SpellInterruptAction::Execute(BotAI* ai, ActionContext const& conte
     if (!ai)
         return ActionResult::FAILED;
 
-    auto executionStart = std::chrono::steady_clock::now();
-    std::lock_guard lock(_executionMutex);
+    auto executionStart = ::std::chrono::steady_clock::now();
+    ::std::lock_guard lock(_executionMutex);
 
     // Check for pending interrupt assignments from coordinator
-    std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
+    ::std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
     if (assignments.empty())
     {
         TC_LOG_DEBUG("playerbot", "SpellInterruptAction: No pending interrupt assignments for bot %s",
@@ -63,7 +63,7 @@ ActionResult SpellInterruptAction::Execute(BotAI* ai, ActionContext const& conte
     // Update context with current target information
     if (Player* bot = ai->GetBot())
     {
-        interruptContext.targetDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+        interruptContext.targetDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     }
 
     // Execute the interrupt
@@ -71,21 +71,21 @@ ActionResult SpellInterruptAction::Execute(BotAI* ai, ActionContext const& conte
 
     // Update performance metrics
     {
-        std::lock_guard metricsLock(_metricsMutex);
+        ::std::lock_guard metricsLock(_metricsMutex);
         _metrics.totalAttempts++;
 
-        auto executionTime = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now() - executionStart);
+        auto executionTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now() - executionStart);
 
         // Rolling average
-        _metrics.averageExecutionTime = std::chrono::microseconds(
+        _metrics.averageExecutionTime = ::std::chrono::microseconds(
             (_metrics.averageExecutionTime.count() * 9 + executionTime.count()) / 10);
 
         if (result == ActionResult::SUCCESS)
             _metrics.successfulInterrupts++;
     }
 
-    _lastExecution = std::chrono::steady_clock::now();
+    _lastExecution = ::std::chrono::steady_clock::now();
     _executionCount++;
 
     return result;
@@ -115,7 +115,7 @@ uint32 SpellInterruptAction::GetPriority(BotAI* ai) const
     if (!IsPossible(ai))
         return 0;
 
-    std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
+    ::std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
     if (assignments.empty())
         return 0;
 
@@ -141,7 +141,7 @@ float SpellInterruptAction::GetRelevance(BotAI* ai) const
     if (!IsPossible(ai))
         return 0.0f;
 
-    std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
+    ::std::vector<InterruptAssignment> assignments = GetPendingAssignments(ai);
     if (assignments.empty())
         return 0.0f;
 
@@ -153,7 +153,7 @@ float SpellInterruptAction::GetRelevance(BotAI* ai) const
     {
         uint32 timeRemaining = assignment.GetTimeUntilDeadline();
         if (timeRemaining < 1000) // Very urgent
-            relevance = std::min(1.0f, relevance + 0.2f);
+            relevance = ::std::min(1.0f, relevance + 0.2f);
     }
 
     return relevance;
@@ -201,7 +201,7 @@ ActionResult SpellInterruptAction::ExecuteInterrupt(BotAI* ai, InterruptContext 
         ActionResult moveResult = MoveToInterruptRange(ai, target, requiredRange);
         if (moveResult != ActionResult::SUCCESS)
         {
-            std::lock_guard lock(_metricsMutex);
+            ::std::lock_guard lock(_metricsMutex);
             _metrics.movementFailures++;
             ReportInterruptResult(ai, interruptContext, false, "Failed to move to range");
             return moveResult;
@@ -219,7 +219,7 @@ ActionResult SpellInterruptAction::ExecuteInterrupt(BotAI* ai, InterruptContext 
 
     // Report result
     bool success = (castResult == ActionResult::SUCCESS);
-    std::string resultReason = success ? "Success" : "Cast failed";
+    ::std::string resultReason = success ? "Success" : "Cast failed";
     ReportInterruptResult(ai, interruptContext, success, resultReason);
 
     return castResult;
@@ -253,7 +253,7 @@ uint32 SpellInterruptAction::GetBestInterruptSpell(BotAI* ai, ::Unit* target) co
         return 0;
 
     Classes playerClass = static_cast<Classes>(bot->GetClass());
-    float targetDistance = target ? std::sqrt(bot->GetExactDistSq(static_cast<const WorldObject*>(target))) : 0.0f; // Calculate once from squared distance
+    float targetDistance = target ? ::std::sqrt(bot->GetExactDistSq(static_cast<const WorldObject*>(target))) : 0.0f; // Calculate once from squared distance
 
     // Return best available interrupt for this class
     switch (playerClass)
@@ -349,14 +349,14 @@ bool SpellInterruptAction::IsInterruptAvailable(BotAI* ai, uint32 interruptSpell
 
     // Check cooldown
     const SpellInfo* interruptSpellInfo = sSpellMgr->GetSpellInfo(interruptSpell, DIFFICULTY_NONE);
-    if (interruptSpellInfo && bot->GetSpellHistory()->GetRemainingCooldown(interruptSpellInfo) > std::chrono::milliseconds(0))
+    if (interruptSpellInfo && bot->GetSpellHistory()->GetRemainingCooldown(interruptSpellInfo) > ::std::chrono::milliseconds(0))
         return false;
 
     // Check resources (most interrupts are free, but some might require mana/rage/etc)
     const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(interruptSpell, DIFFICULTY_NONE);
     if (spellInfo)
     {
-        std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        ::std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
         for (const auto& cost : costs)
         {
             if (bot->GetPower(cost.Power) < cost.Amount)
@@ -379,17 +379,17 @@ uint32 SpellInterruptAction::CalculateOptimalTiming(InterruptContext const& cont
         return 100; // Very short casts, interrupt quickly
 
     // Standard timing - interrupt with 200-300ms remaining
-    return std::max(200u, castTime - 300u);
+    return ::std::max(200u, castTime - 300u);
 }
 
-void SpellInterruptAction::SetInterruptCoordinator(std::shared_ptr<InterruptCoordinator> coordinator)
+void SpellInterruptAction::SetInterruptCoordinator(::std::shared_ptr<InterruptCoordinator> coordinator)
 {
     _coordinator = coordinator;
 }
 
-std::vector<InterruptAssignment> SpellInterruptAction::GetPendingAssignments(BotAI* ai) const
+::std::vector<InterruptAssignment> SpellInterruptAction::GetPendingAssignments(BotAI* ai) const
 {
-    std::vector<InterruptAssignment> assignments;
+    ::std::vector<InterruptAssignment> assignments;
 
     if (auto coordinator = _coordinator.lock())
     {
@@ -407,7 +407,7 @@ std::vector<InterruptAssignment> SpellInterruptAction::GetPendingAssignments(Bot
             }
 
             // Sort by execution deadline (most urgent first)
-            std::sort(assignments.begin(), assignments.end(),
+            ::std::sort(assignments.begin(), assignments.end(),
                      [](const InterruptAssignment& a, const InterruptAssignment& b) {
                          return a.executionDeadline < b.executionDeadline;
                      });
@@ -417,7 +417,7 @@ std::vector<InterruptAssignment> SpellInterruptAction::GetPendingAssignments(Bot
     return assignments;
 }
 
-void SpellInterruptAction::ReportInterruptResult(BotAI* ai, InterruptContext const& context, bool success, std::string const& reason)
+void SpellInterruptAction::ReportInterruptResult(BotAI* ai, InterruptContext const& context, bool success, ::std::string const& reason)
 {
     if (auto coordinator = _coordinator.lock())
     {
@@ -450,7 +450,7 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
     if (!bot)
         return ActionResult::FAILED;
 
-    float currentDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (currentDistance <= requiredRange + RANGE_TOLERANCE)
         return ActionResult::SUCCESS;
 
@@ -467,18 +467,18 @@ ActionResult SpellInterruptAction::MoveToInterruptRange(BotAI* ai, ::Unit* targe
     bot->GetMotionMaster()->MovePoint(0, newX, newY, newZ);
 
     // Wait a short time for movement to start
-    auto moveStart = std::chrono::steady_clock::now();
+    auto moveStart = ::std::chrono::steady_clock::now();
     float rangeCheckSq = (requiredRange + RANGE_TOLERANCE) * (requiredRange + RANGE_TOLERANCE);
-    while (std::chrono::steady_clock::now() - moveStart < std::chrono::milliseconds(100))
+    while (::std::chrono::steady_clock::now() - moveStart < ::std::chrono::milliseconds(100))
     {
         if (bot->GetExactDistSq(target) <= rangeCheckSq)
             return ActionResult::SUCCESS;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
     }
 
     // Check if we made progress
-    float newDistance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float newDistance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (newDistance < currentDistance && newDistance <= requiredRange + RANGE_TOLERANCE)
         return ActionResult::SUCCESS;
 
@@ -641,7 +641,7 @@ ActionResult SpellInterruptAction::ExecuteWarriorInterrupt(BotAI* ai, ::Unit* ta
     // Set target and cast interrupt
     bot->SetTarget(target->GetGUID());
 
-    if (bot->CastSpell(target, spellId, false))
+    if (bot->CastSpell(CastSpellTargetArg(target), spellId))
         return ActionResult::SUCCESS;
 
     return ActionResult::FAILED;
@@ -661,7 +661,7 @@ ActionResult SpellInterruptAction::ExecuteMageInterrupt(BotAI* ai, ::Unit* targe
     // Mage counterspell is ranged
     bot->SetTarget(target->GetGUID());
 
-    if (bot->CastSpell(target, spellId, false))
+    if (bot->CastSpell(CastSpellTargetArg(target), spellId))
         return ActionResult::SUCCESS;
 
     return ActionResult::FAILED;
@@ -740,25 +740,25 @@ void SpellInterruptAction::WaitForOptimalTiming(InterruptContext const& context)
         uint32 waitTime = remainingTime - optimalTiming;
         if (waitTime <= 1000) // Don't wait more than 1 second
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(waitTime));
         }
     }
 }
 
-void SpellInterruptAction::HandleInterruptFailure(BotAI* ai, InterruptContext const& context, std::string const& reason)
+void SpellInterruptAction::HandleInterruptFailure(BotAI* ai, InterruptContext const& context, ::std::string const& reason)
 {
     TC_LOG_DEBUG("playerbot", "SpellInterruptAction: Interrupt failed for bot %s - %s",
                  ai && ai->GetBot() ? ai->GetBot()->GetName().c_str() : "unknown", reason.c_str());
 
     // Update failure metrics based on reason
-    std::lock_guard lock(_metricsMutex);
-    if (reason.find("range") != std::string::npos)
+    ::std::lock_guard lock(_metricsMutex);
+    if (reason.find("range") != ::std::string::npos)
         _metrics.rangeFailures++;
-    else if (reason.find("cooldown") != std::string::npos)
+    else if (reason.find("cooldown") != ::std::string::npos)
         _metrics.cooldownFailures++;
-    else if (reason.find("timing") != std::string::npos)
+    else if (reason.find("timing") != ::std::string::npos)
         _metrics.timingFailures++;
-    else if (reason.find("movement") != std::string::npos)
+    else if (reason.find("movement") != ::std::string::npos)
         _metrics.movementFailures++;
 }
 
@@ -774,7 +774,7 @@ void SpellInterruptAction::OptimizeForFrequency()
     if (_executionCount % 100 == 0)
     {
         // Reset metrics periodically to prevent overflow
-        std::lock_guard lock(_metricsMutex);
+        ::std::lock_guard lock(_metricsMutex);
         if (_metrics.totalAttempts > 10000)
         {
             // Scale down all metrics by half
@@ -794,7 +794,7 @@ bool SpellInterruptAction::ShouldSkipLowPriorityInterrupt(BotAI* ai, InterruptCo
     if (context.priority >= 4) // Low priority
     {
         // Check if bot is busy with more important tasks
-        if (ai && ai->IsInCombat())
+    if (ai && ai->IsInCombat())
         {
             // Could check for other high priority actions here
             return false; // For now, don't skip any interrupts in combat

@@ -44,7 +44,7 @@ BattlegroundAI::BattlegroundAI()
 
 void BattlegroundAI::Initialize()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     TC_LOG_INFO("playerbot", "BattlegroundAI: Initializing battleground strategies...");
 
@@ -199,7 +199,7 @@ void BattlegroundAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Auto-assign role if not assigned
     if (!_playerRoles.count(playerGuid))
@@ -261,19 +261,19 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     BGRole role = BGRole::ATTACKER; // Default
 
     // Assign role based on class and BG type
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (bgType)
     {
         case BGType::WARSONG_GULCH:
         case BGType::TWIN_PEAKS:
             // Assign flag carrier to mobile classes
-            if (playerClass == CLASS_DRUID || playerClass == CLASS_MONK ||
+    if (playerClass == CLASS_DRUID || playerClass == CLASS_MONK ||
                 playerClass == CLASS_DEMON_HUNTER)
                 role = BGRole::FLAG_CARRIER;
             else if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN ||
@@ -286,7 +286,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
         case BGType::ARATHI_BASIN:
         case BGType::BATTLE_FOR_GILNEAS:
             // Healers and tanks defend, DPS capture
-            if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN)
+    if (playerClass == CLASS_PRIEST || playerClass == CLASS_PALADIN)
                 role = BGRole::BASE_DEFENDER;
             else
                 role = BGRole::BASE_CAPTURER;
@@ -294,7 +294,7 @@ void BattlegroundAI::AssignRole(::Player* player, BGType bgType)
 
         case BGType::ALTERAC_VALLEY:
             // Assign varied roles
-            if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT)
+    if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT)
                 role = BGRole::SIEGE_OPERATOR;
             else
                 role = BGRole::ATTACKER;
@@ -316,7 +316,7 @@ BGRole BattlegroundAI::GetPlayerRole(::Player* player) const
     if (!player)
         return BGRole::ATTACKER;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_playerRoles.count(playerGuid))
@@ -330,7 +330,7 @@ bool BattlegroundAI::SwitchRole(::Player* player, BGRole newRole)
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     BGStrategyProfile profile = GetStrategyProfile(player->GetGUID().GetCounter());
     if (!profile.allowRoleSwitch)
@@ -353,7 +353,7 @@ bool BattlegroundAI::IsRoleAppropriate(::Player* player, BGRole role) const
     if (!player)
         return false;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     switch (role)
     {
         case BGRole::FLAG_CARRIER:
@@ -380,12 +380,12 @@ bool BattlegroundAI::IsRoleAppropriate(::Player* player, BGRole role) const
 // OBJECTIVE MANAGEMENT
 // ============================================================================
 
-std::vector<BGObjective> BattlegroundAI::GetActiveObjectives(::Player* player) const
+::std::vector<BGObjective> BattlegroundAI::GetActiveObjectives(::Player* player) const
 {
     if (!player)
         return {};
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     ::Battleground* bg = GetPlayerBattleground(player);
     if (!bg)
@@ -403,19 +403,19 @@ BGObjective BattlegroundAI::GetPlayerObjective(::Player* player) const
     if (!player)
         return BGObjective();
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_playerObjectives.count(playerGuid))
         return _playerObjectives.at(playerGuid);
 
     // No objective assigned - get highest priority objective
-    std::vector<BGObjective> objectives = GetActiveObjectives(player);
+    ::std::vector<BGObjective> objectives = GetActiveObjectives(player);
     if (objectives.empty())
         return BGObjective();
 
     // Sort by priority
-    std::sort(objectives.begin(), objectives.end(),
+    ::std::sort(objectives.begin(), objectives.end(),
         [](BGObjective const& a, BGObjective const& b) {
             return static_cast<uint32>(a.priority) < static_cast<uint32>(b.priority);
         });
@@ -428,7 +428,7 @@ bool BattlegroundAI::AssignObjective(::Player* player, BGObjective const& object
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     _playerObjectives[playerGuid] = objective;
@@ -444,7 +444,7 @@ bool BattlegroundAI::CompleteObjective(::Player* player, BGObjective const& obje
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     // Update metrics based on objective type
@@ -508,7 +508,7 @@ void BattlegroundAI::ExecuteWSGStrategy(::Player* player)
     {
         case BGRole::FLAG_CARRIER:
             // Try to pick up enemy flag
-            if (!player->HasAura(23333)) // Not carrying flag
+    if (!player->HasAura(23333)) // Not carrying flag
                 PickupFlag(player);
             break;
 
@@ -548,7 +548,7 @@ bool BattlegroundAI::PickupFlag(::Player* player)
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     // Move to enemy flag location
-    float distance = std::sqrt(player->GetExactDistSq(strategy.enemyFlagSpawn)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(strategy.enemyFlagSpawn)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Use PathGenerator to move to flag
@@ -611,7 +611,7 @@ bool BattlegroundAI::EscortFlagCarrier(::Player* player, ::Player* fc)
         return false;
 
     // Follow flag carrier
-    float distance = std::sqrt(player->GetExactDistSq(fc)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(fc)); // Calculate once from squared distance
     if (distance > 15.0f)
     {
         // Full implementation: Move closer to FC
@@ -634,7 +634,7 @@ bool BattlegroundAI::DefendFlagRoom(::Player* player)
     FlagBGStrategy strategy = _flagStrategies[bgType];
 
     // Move to friendly flag room
-    float distance = std::sqrt(player->GetExactDistSq(strategy.friendlyFlagSpawn)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(strategy.friendlyFlagSpawn)); // Calculate once from squared distance
     if (distance > strategy.friendlyFlagSpawn.GetExactDist(player))
     {
         // Full implementation: Move to flag room
@@ -675,11 +675,11 @@ void BattlegroundAI::ExecuteABStrategy(::Player* player)
         case BGRole::BASE_DEFENDER:
             {
                 // Defend captured bases
-                std::vector<Position> capturedBases = GetCapturedBases(player);
+                ::std::vector<Position> capturedBases = GetCapturedBases(player);
                 if (!capturedBases.empty())
                 {
                     // Find base under attack
-                    for (Position const& base : capturedBases)
+    for (Position const& base : capturedBases)
                     {
                         if (IsBaseUnderAttack(base))
                         {
@@ -702,7 +702,7 @@ bool BattlegroundAI::CaptureBase(::Player* player, Position const& baseLocation)
         return false;
 
     // Move to base
-    float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         // Full implementation: Move to base
@@ -725,7 +725,7 @@ bool BattlegroundAI::DefendBase(::Player* player, Position const& baseLocation)
         return false;
 
     // Move to base
-    float distance = std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(baseLocation)); // Calculate once from squared distance
     if (distance > 30.0f)
     {
         // Full implementation: Move to base
@@ -764,7 +764,6 @@ Position BattlegroundAI::FindBestBaseToCapture(::Player* player) const
     // Find closest neutral/enemy base
     Position closestBase;
     float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
-
     for (Position const& base : strategy.baseLocations)
     {
         float distanceSq = player->GetExactDistSq(base);
@@ -778,9 +777,9 @@ Position BattlegroundAI::FindBestBaseToCapture(::Player* player) const
     return closestBase;
 }
 
-std::vector<Position> BattlegroundAI::GetCapturedBases(::Player* player) const
+::std::vector<Position> BattlegroundAI::GetCapturedBases(::Player* player) const
 {
-    std::vector<Position> capturedBases;
+    ::std::vector<Position> capturedBases;
 
     if (!player)
         return capturedBases;
@@ -896,7 +895,7 @@ void BattlegroundAI::ExecuteEOTSStrategy(::Player* player)
     else
     {
         // Balance between bases and flag
-        switch (role)
+    switch (role)
         {
             case BGRole::BASE_CAPTURER:
                 CaptureBaseEOTS(player);
@@ -927,7 +926,7 @@ bool BattlegroundAI::CaptureFlagEOTS(::Player* player)
     EOTSStrategy strategy = _eotsStrategies[bgType];
 
     // Move to flag location
-    float distance = std::sqrt(player->GetExactDistSq(strategy.flagLocation)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(strategy.flagLocation)); // Calculate once from squared distance
     if (distance > OBJECTIVE_RANGE)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} moving to EOTS flag",
@@ -1152,9 +1151,9 @@ bool BattlegroundAI::GroupUpForObjective(::Player* player, BGObjective const& ob
     return true;
 }
 
-std::vector<::Player*> BattlegroundAI::GetNearbyTeammates(::Player* player, float range) const
+::std::vector<::Player*> BattlegroundAI::GetNearbyTeammates(::Player* player, float range) const
 {
-    std::vector<::Player*> teammates;
+    ::std::vector<::Player*> teammates;
 
     if (!player)
         return teammates;
@@ -1168,7 +1167,7 @@ bool BattlegroundAI::CallForBackup(::Player* player, Position const& location)
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     _backupCalls[playerGuid] = {location, GameTime::GetGameTimeMS()};
@@ -1185,7 +1184,7 @@ bool BattlegroundAI::RespondToBackupCall(::Player* player, Position const& locat
         return false;
 
     // Move to backup location
-    float distance = std::sqrt(player->GetExactDistSq(location)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(location)); // Calculate once from squared distance
     if (distance > 5.0f)
     {
         TC_LOG_DEBUG("playerbot", "BattlegroundAI: Player {} responding to backup call",
@@ -1205,7 +1204,7 @@ bool BattlegroundAI::MoveToObjective(::Player* player, BGObjective const& object
     if (!player)
         return false;
 
-    float distance = std::sqrt(player->GetExactDistSq(objective.location)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(objective.location)); // Calculate once from squared distance
     if (distance <= OBJECTIVE_RANGE)
         return true;
 
@@ -1291,13 +1290,13 @@ void BattlegroundAI::SwitchToAggressiveStrategy(::Player* player)
 
 void BattlegroundAI::SetStrategyProfile(uint32 playerGuid, BGStrategyProfile const& profile)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 BGStrategyProfile BattlegroundAI::GetStrategyProfile(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -1311,7 +1310,7 @@ BGStrategyProfile BattlegroundAI::GetStrategyProfile(uint32 playerGuid) const
 
 BattlegroundAI::BGMetrics const& BattlegroundAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {
@@ -1396,7 +1395,7 @@ uint32 BattlegroundAI::CountPlayersAtObjective(Position const& objLocation, floa
     return 0;
 }
 
-std::vector<::Player*> BattlegroundAI::GetPlayersAtObjective(Position const& objLocation,
+::std::vector<::Player*> BattlegroundAI::GetPlayersAtObjective(Position const& objLocation,
     float range) const
 {
     // Full implementation: Find all players in range

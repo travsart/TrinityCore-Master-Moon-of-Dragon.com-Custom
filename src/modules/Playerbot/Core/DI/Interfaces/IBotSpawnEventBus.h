@@ -33,7 +33,7 @@ enum class BotSpawnEventType : uint32;
 class TC_GAME_API IBotSpawnEventBus
 {
 public:
-    using EventHandler = std::function<void(std::shared_ptr<BotSpawnEvent>)>;
+    using EventHandler = ::std::function<void(::std::shared_ptr<BotSpawnEvent>)>;
     using HandlerId = uint64;
 
     struct EventStats
@@ -43,6 +43,10 @@ public:
         uint64 eventsDropped;
         uint64 totalProcessingTimeUs;
         uint32 queuedEvents;
+
+        float GetAverageProcessingTimeUs() const {
+            return eventsProcessed > 0 ? static_cast<float>(totalProcessingTimeUs) / eventsProcessed : 0.0f;
+        }
     };
 
     virtual ~IBotSpawnEventBus() = default;
@@ -53,11 +57,11 @@ public:
     virtual void Update(uint32 diff) = 0;
 
     // Event publishing
-    virtual void PublishEvent(std::shared_ptr<BotSpawnEvent> event) = 0;
-    virtual void PublishSpawnRequest(SpawnRequest const& request, std::function<void(bool, ObjectGuid)> callback) = 0;
+    virtual void PublishEvent(::std::shared_ptr<BotSpawnEvent> event) = 0;
+    virtual void PublishSpawnRequest(SpawnRequest const& request, ::std::function<void(bool, ObjectGuid)> callback) = 0;
     virtual void PublishCharacterSelected(ObjectGuid characterGuid, SpawnRequest const& request) = 0;
-    virtual void PublishSessionCreated(std::shared_ptr<BotSession> session, SpawnRequest const& request) = 0;
-    virtual void PublishSpawnCompleted(ObjectGuid botGuid, bool success, std::string const& details = "") = 0;
+    virtual void PublishSessionCreated(::std::shared_ptr<BotSession> session, SpawnRequest const& request) = 0;
+    virtual void PublishSpawnCompleted(ObjectGuid botGuid, bool success, ::std::string const& details = "") = 0;
     virtual void PublishPopulationChanged(uint32 zoneId, uint32 oldCount, uint32 newCount) = 0;
 
     // Event subscription

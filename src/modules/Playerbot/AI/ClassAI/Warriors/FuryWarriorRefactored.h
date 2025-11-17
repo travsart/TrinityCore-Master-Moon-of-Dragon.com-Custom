@@ -31,6 +31,18 @@
 namespace Playerbot
 {
 
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
+
 /**
  * Refactored Fury Warrior using template architecture
  *
@@ -99,7 +111,7 @@ public:
         // Maintain Battle Shout
         if (!bot->HasAura(SPELL_BATTLE_SHOUT) && !bot->HasAura(SPELL_COMMANDING_SHOUT))
         {
-            this->CastSpell(bot, SPELL_BATTLE_SHOUT);
+            this->CastSpell(SPELL_BATTLE_SHOUT, bot);
         }
 
         // Fury warriors should be in Berserker Stance
@@ -107,14 +119,14 @@ public:
         {
             if (this->CanUseAbility(SPELL_BERSERKER_STANCE))
             {
-                this->CastSpell(bot, SPELL_BERSERKER_STANCE);
+                this->CastSpell(SPELL_BERSERKER_STANCE, bot);
             }
         }
 
         // Use Berserker Rage when needed for rage generation or fear break
         if (ShouldUseBerserkerRage() && this->CanUseAbility(SPELL_BERSERKER_RAGE))
         {
-            this->CastSpell(bot, SPELL_BERSERKER_RAGE);
+            this->CastSpell(SPELL_BERSERKER_RAGE, bot);
         }
     }
 
@@ -132,7 +144,7 @@ protected:
         // Priority 1: Maintain Enrage with Rampage
         if (ShouldUseRampage() && this->CanUseAbility(SPELL_RAMPAGE))
         {
-            this->CastSpell(target, SPELL_RAMPAGE);
+            this->CastSpell(SPELL_RAMPAGE, target);
             _lastRampage = GameTime::GetGameTimeMS();
             TriggerEnrage();
             return;
@@ -141,14 +153,14 @@ protected:
         // Priority 2: Recklessness for burst
         if (ShouldUseRecklessness(target) && this->CanUseAbility(SPELL_RECKLESSNESS))
         {
-            this->CastSpell(this->GetBot(), SPELL_RECKLESSNESS);
+            this->CastSpell(SPELL_RECKLESSNESS, this->GetBot());
             return;
         }
 
         // Priority 3: Bloodthirst on cooldown for rage generation and enrage chance
         if (this->CanUseAbility(SPELL_BLOODTHIRST))
         {
-            this->CastSpell(target, SPELL_BLOODTHIRST);
+            this->CastSpell(SPELL_BLOODTHIRST, target);
             _lastBloodthirst = GameTime::GetGameTimeMS();
 
             // 30% chance to trigger Enrage
@@ -162,14 +174,14 @@ protected:
         // Priority 4: Raging Blow while Enraged
         if (_isEnraged && this->CanUseAbility(SPELL_RAGING_BLOW))
         {
-            this->CastSpell(target, SPELL_RAGING_BLOW);
+            this->CastSpell(SPELL_RAGING_BLOW, target);
             return;
         }
 
         // Priority 5: Whirlwind for AoE or to gain buff
         if (ShouldUseWhirlwind() && this->CanUseAbility(SPELL_WHIRLWIND))
         {
-            this->CastSpell(this->GetBot(), SPELL_WHIRLWIND);
+            this->CastSpell(SPELL_WHIRLWIND, this->GetBot());
             _hasWhirlwindBuff = true;
             return;
         }
@@ -177,15 +189,15 @@ protected:
         // Priority 6: Furious Slash as filler and to build stacks
         if (this->CanUseAbility(SPELL_FURIOUS_SLASH))
         {
-            this->CastSpell(target, SPELL_FURIOUS_SLASH);
-            _furiousSlashStacks = std::min(_furiousSlashStacks + 1, 4u);
+            this->CastSpell(SPELL_FURIOUS_SLASH, target);
+            _furiousSlashStacks = ::std::min(_furiousSlashStacks + 1, 4u);
             return;
         }
 
         // Priority 7: Heroic Strike as rage dump
         if (this->_resource >= 80 && this->CanUseAbility(SPELL_HEROIC_STRIKE))
         {
-            this->CastSpell(target, SPELL_HEROIC_STRIKE);
+            this->CastSpell(SPELL_HEROIC_STRIKE, target);
             return;
         }
     }
@@ -195,7 +207,7 @@ protected:
         // Priority 1: Maintain Enrage
         if (!_isEnraged && this->CanUseAbility(SPELL_RAMPAGE))
         {
-            this->CastSpell(target, SPELL_RAMPAGE);
+            this->CastSpell(SPELL_RAMPAGE, target);
             TriggerEnrage();
             return;
         }
@@ -203,14 +215,14 @@ protected:
         // Priority 2: Execute spam
         if (this->CanUseAbility(SPELL_EXECUTE))
         {
-            this->CastSpell(target, SPELL_EXECUTE);
+            this->CastSpell(SPELL_EXECUTE, target);
             return;
         }
 
         // Priority 3: Bloodthirst for rage
         if (this->CanUseAbility(SPELL_BLOODTHIRST))
         {
-            this->CastSpell(target, SPELL_BLOODTHIRST);
+            this->CastSpell(SPELL_BLOODTHIRST, target);
             _lastBloodthirst = GameTime::GetGameTimeMS();
             return;
         }
@@ -218,14 +230,14 @@ protected:
         // Priority 4: Raging Blow if enraged
         if (_isEnraged && this->CanUseAbility(SPELL_RAGING_BLOW))
         {
-            this->CastSpell(target, SPELL_RAGING_BLOW);
+            this->CastSpell(SPELL_RAGING_BLOW, target);
             return;
         }
 
         // Priority 5: Rampage if high rage
         if (this->_resource >= 85 && this->CanUseAbility(SPELL_RAMPAGE))
         {
-            this->CastSpell(target, SPELL_RAMPAGE);
+            this->CastSpell(SPELL_RAMPAGE, target);
             TriggerEnrage();
             return;
         }
@@ -360,14 +372,14 @@ protected:
         {
             if (this->CanUseAbility(SPELL_BERSERKER_STANCE))
             {
-                this->CastSpell(this->GetBot(), SPELL_BERSERKER_STANCE);
+                this->CastSpell(SPELL_BERSERKER_STANCE, this->GetBot());
             }
         }
 
         // Use charge if not in range
         if (!this->IsInMeleeRange(target) && this->CanUseAbility(SPELL_CHARGE))
         {
-            this->CastSpell(target, SPELL_CHARGE);
+            this->CastSpell(SPELL_CHARGE, target);
         }
 
         // Check dual-wield status
@@ -393,8 +405,8 @@ private:
 
     void InitializeFuryMechanics()
     {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
 
         // Setup Fury-specific mechanics
         CheckDualWieldStatus();
@@ -402,7 +414,7 @@ private:
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
             return;
 
@@ -419,25 +431,25 @@ private:
 
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                [](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     return target && target->GetHealthPct() < 20.0f;
-                },
+                }},
                 "Target HP < 20% (Execute range)");
 
             // Critical cooldowns
             queue->RegisterSpell(SPELL_RECKLESSNESS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(SPELL_RECKLESSNESS,
-                [](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
                     // Use on bosses or high HP targets
                     return target && (target->GetMaxHealth() > 500000 || target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
-                },
+                }},
                 "Boss fight or high HP target");
 
             queue->RegisterSpell(SPELL_RAMPAGE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(SPELL_RAMPAGE,
                 [](Player* bot, Unit*) {
                     // Rampage to trigger/maintain Enrage
-                    return !bot->HasAura(SPELL_ENRAGE) || bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                    return !bot->HasAura(SPELL_ENRAGE) || (bot->GetAura(SPELL_ENRAGE) ? bot->GetAura(SPELL_ENRAGE)->GetDuration() : 0) < 2000;
                 },
                 "Trigger or refresh Enrage");
 
@@ -454,7 +466,7 @@ private:
             queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(SPELL_WHIRLWIND,
                 [](Player* bot, Unit*) {
-                    return bot->GetAttackersCount() >= 2; // Use for 2+ targets
+                    return bot->getAttackers().size() >= 2; // Use for 2+ targets
                 },
                 "2+ targets (AoE)");
 
@@ -475,7 +487,7 @@ private:
                 },
                 "Enrage not active");
 
-            TC_LOG_INFO("module.playerbot", "⚔️  FURY WARRIOR: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  FURY WARRIOR: Registered {} spells in ActionPriorityQueue",
                 queue->GetSpellCount());
         }
 
@@ -493,10 +505,10 @@ private:
                     Condition("HP < 30%", [](Player* bot, Unit*) {
                         return bot->GetHealthPct() < 30.0f;
                     }),
-                    Action("Cast Enraged Regeneration", [this](Player* bot, Unit* target) {
-                        if (this->CanCastSpell(bot, SPELL_ENRAGED_REGENERATION))
+                    bot::ai::Action("Cast Enraged Regeneration", [this](Player* bot, Unit*) {
+                        if (this->CanCastSpell(SPELL_ENRAGED_REGENERATION, bot))
                         {
-                            this->CastSpell(bot, SPELL_ENRAGED_REGENERATION);
+                            this->CastSpell(SPELL_ENRAGED_REGENERATION, bot);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;
@@ -519,29 +531,29 @@ private:
                             Condition("Has Rage for Rampage", [this](Player* bot, Unit*) {
                                 return this->_resource >= 85;
                             }),
-                            Action("Cast Rampage", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(target, SPELL_RAMPAGE))
+                            bot::ai::Action("Cast Rampage", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_RAMPAGE, target))
                                 {
-                                    this->CastSpell(target, SPELL_RAMPAGE);
+                                    this->CastSpell(SPELL_RAMPAGE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         // Execute spam
-                        Action("Cast Execute", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_EXECUTE))
+                        bot::ai::Action("Cast Execute", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(SPELL_EXECUTE, target))
                             {
-                                this->CastSpell(target, SPELL_EXECUTE);
+                                this->CastSpell(SPELL_EXECUTE, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
                         }),
                         // Bloodthirst for Enrage proc
-                        Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_BLOODTHIRST))
+                        bot::ai::Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(SPELL_BLOODTHIRST, target))
                             {
-                                this->CastSpell(target, SPELL_BLOODTHIRST);
+                                this->CastSpell(SPELL_BLOODTHIRST, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -551,10 +563,10 @@ private:
                             Condition("Is Enraged", [](Player* bot, Unit*) {
                                 return bot->HasAura(SPELL_ENRAGE);
                             }),
-                            Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(target, SPELL_RAGING_BLOW))
+                            bot::ai::Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_RAGING_BLOW, target))
                                 {
-                                    this->CastSpell(target, SPELL_RAGING_BLOW);
+                                    this->CastSpell(SPELL_RAGING_BLOW, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -572,10 +584,10 @@ private:
                                         target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
                     }),
                     Selector("Cooldown Priority", {
-                        Action("Cast Recklessness", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(bot, SPELL_RECKLESSNESS))
+                        bot::ai::Action("Cast Recklessness", [this](Player* bot, Unit*) {
+                            if (this->CanCastSpell(SPELL_RECKLESSNESS, bot))
                             {
-                                this->CastSpell(bot, SPELL_RECKLESSNESS);
+                                this->CastSpell(SPELL_RECKLESSNESS, bot);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -592,15 +604,15 @@ private:
                         Sequence("Rampage for Enrage", {
                             Condition("No Enrage or expiring soon", [](Player* bot, Unit*) {
                                 return !bot->HasAura(SPELL_ENRAGE) ||
-                                       bot->GetAuraRemainingTime(SPELL_ENRAGE) < 2000;
+                                       (bot->GetAura(SPELL_ENRAGE) ? bot->GetAura(SPELL_ENRAGE)->GetDuration() : 0) < 2000;
                             }),
                             Condition("Has Rage", [this](Player* bot, Unit*) {
                                 return this->_resource >= 85;
                             }),
-                            Action("Cast Rampage", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(target, SPELL_RAMPAGE))
+                            bot::ai::Action("Cast Rampage", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_RAMPAGE, target))
                                 {
-                                    this->CastSpell(target, SPELL_RAMPAGE);
+                                    this->CastSpell(SPELL_RAMPAGE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -611,10 +623,10 @@ private:
                             Condition("No Enrage", [](Player* bot, Unit*) {
                                 return !bot->HasAura(SPELL_ENRAGE);
                             }),
-                            Action("Cast Berserker Rage", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(bot, SPELL_BERSERKER_RAGE))
+                            bot::ai::Action("Cast Berserker Rage", [this](Player* bot, Unit*) {
+                                if (this->CanCastSpell(SPELL_BERSERKER_RAGE, bot))
                                 {
-                                    this->CastSpell(bot, SPELL_BERSERKER_RAGE);
+                                    this->CastSpell(SPELL_BERSERKER_RAGE, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -624,10 +636,10 @@ private:
 
                     // Core rotation - Bloodthirst > Raging Blow (Enraged) > Whirlwind (AoE)
                     Selector("Core Abilities", {
-                        Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_BLOODTHIRST))
+                        bot::ai::Action("Cast Bloodthirst", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(SPELL_BLOODTHIRST, target))
                             {
-                                this->CastSpell(target, SPELL_BLOODTHIRST);
+                                this->CastSpell(SPELL_BLOODTHIRST, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -636,10 +648,10 @@ private:
                             Condition("Is Enraged", [](Player* bot, Unit*) {
                                 return bot->HasAura(SPELL_ENRAGE);
                             }),
-                            Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(target, SPELL_RAGING_BLOW))
+                            bot::ai::Action("Cast Raging Blow", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_RAGING_BLOW, target))
                                 {
-                                    this->CastSpell(target, SPELL_RAGING_BLOW);
+                                    this->CastSpell(SPELL_RAGING_BLOW, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -647,12 +659,12 @@ private:
                         }),
                         Sequence("Whirlwind (AoE)", {
                             Condition("2+ targets", [](Player* bot, Unit*) {
-                                return bot->GetAttackersCount() >= 2;
+                                return bot->getAttackers().size() >= 2;
                             }),
-                            Action("Cast Whirlwind", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(bot, SPELL_WHIRLWIND))
+                            bot::ai::Action("Cast Whirlwind", [this](Player* bot, Unit*) {
+                                if (this->CanCastSpell(SPELL_WHIRLWIND, bot))
                                 {
-                                    this->CastSpell(bot, SPELL_WHIRLWIND);
+                                    this->CastSpell(SPELL_WHIRLWIND, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -666,19 +678,19 @@ private:
                             Condition("High Rage", [this](Player* bot, Unit*) {
                                 return this->_resource >= 80;
                             }),
-                            Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
-                                if (this->CanCastSpell(target, SPELL_HEROIC_STRIKE))
+                            bot::ai::Action("Cast Heroic Strike", [this](Player* bot, Unit* target) {
+                                if (this->CanCastSpell(SPELL_HEROIC_STRIKE, target))
                                 {
-                                    this->CastSpell(target, SPELL_HEROIC_STRIKE);
+                                    this->CastSpell(SPELL_HEROIC_STRIKE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
-                        Action("Cast Furious Slash", [this](Player* bot, Unit* target) {
-                            if (this->CanCastSpell(target, SPELL_FURIOUS_SLASH))
+                        bot::ai::Action("Cast Furious Slash", [this](Player* bot, Unit* target) {
+                            if (this->CanCastSpell(SPELL_FURIOUS_SLASH, target))
                             {
-                                this->CastSpell(target, SPELL_FURIOUS_SLASH);
+                                this->CastSpell(SPELL_FURIOUS_SLASH, target);
                                 return NodeStatus::SUCCESS;
                             }
                             return NodeStatus::FAILURE;
@@ -688,7 +700,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 FURY WARRIOR: BehaviorTree initialized with hierarchical combat flow");
+            TC_LOG_INFO("module.playerbot", " FURY WARRIOR: BehaviorTree initialized with hierarchical combat flow");
         }
     }
 

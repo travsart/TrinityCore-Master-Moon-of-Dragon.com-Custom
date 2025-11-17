@@ -30,14 +30,14 @@ BotAIFactory* BotAIFactory::instance()
     return &_instance;
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
+::std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
 {
 
     TC_LOG_DEBUG("module.playerbot.ai", "Creating specialized AI for player {} (class: {})",
                  bot->GetName(), bot->GetClass());
 
     // Use SpecializedAIFactory to create spec-specific Refactored AI
-    std::unique_ptr<BotAI> specializedAI = SpecializedAIFactory::CreateSpecializedAI(bot);
+    ::std::unique_ptr<BotAI> specializedAI = SpecializedAIFactory::CreateSpecializedAI(bot);
 
     if (specializedAI)
     {
@@ -50,133 +50,133 @@ std::unique_ptr<BotAI> BotAIFactory::CreateAI(Player* bot)
     return CreateClassAI(bot, bot->GetClass());
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
+::std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId)
 {
 
     try
     {
-        std::unique_ptr<BotAI> botAI;
+        ::std::unique_ptr<BotAI> botAI;
 
         switch (classId)
         {
             case CLASS_WARRIOR:
-                botAI = std::make_unique<WarriorAI>(bot);
+                botAI = ::std::make_unique<WarriorAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created WarriorAI for player {}", bot->GetName());
                 break;
 
             case CLASS_PALADIN:
-                botAI = std::make_unique<PaladinAI>(bot);
+                botAI = ::std::make_unique<PaladinAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created PaladinAI for player {}", bot->GetName());
                 break;
 
             case CLASS_HUNTER:
-                botAI = std::make_unique<HunterAI>(bot);
+                botAI = ::std::make_unique<HunterAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created HunterAI for player {}", bot->GetName());
                 break;
 
             case CLASS_ROGUE:
-                botAI = std::make_unique<RogueAI>(bot);
+                botAI = ::std::make_unique<RogueAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created RogueAI for player {}", bot->GetName());
                 break;
 
             case CLASS_PRIEST:
-                botAI = std::make_unique<PriestAI>(bot);
+                botAI = ::std::make_unique<PriestAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created PriestAI for player {}", bot->GetName());
                 break;
 
             case CLASS_SHAMAN:
-                botAI = std::make_unique<ShamanAI>(bot);
+                botAI = ::std::make_unique<ShamanAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created ShamanAI for player {}", bot->GetName());
                 break;
 
             case CLASS_MAGE:
-                botAI = std::make_unique<MageAI>(bot);
+                botAI = ::std::make_unique<MageAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created MageAI for player {}", bot->GetName());
                 break;
 
             case CLASS_WARLOCK:
-                botAI = std::make_unique<WarlockAI>(bot);
+                botAI = ::std::make_unique<WarlockAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created WarlockAI for player {}", bot->GetName());
                 break;
 
             case CLASS_MONK:
-                botAI = std::make_unique<MonkAI>(bot);
+                botAI = ::std::make_unique<MonkAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created MonkAI for player {}", bot->GetName());
                 break;
 
             case CLASS_DRUID:
-                botAI = std::make_unique<DruidAI>(bot);
+                botAI = ::std::make_unique<DruidAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created DruidAI for player {}", bot->GetName());
                 break;
 
             case CLASS_DEMON_HUNTER:
-                botAI = std::make_unique<DemonHunterAI>(bot);
+                botAI = ::std::make_unique<DemonHunterAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created DemonHunterAI for player {}", bot->GetName());
                 break;
 
             case CLASS_DEATH_KNIGHT:
-                botAI = std::make_unique<DeathKnightAI>(bot);
+                botAI = ::std::make_unique<DeathKnightAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created DeathKnightAI for player {}", bot->GetName());
                 break;
 
             case CLASS_EVOKER:
-                botAI = std::make_unique<EvokerAI>(bot);
+                botAI = ::std::make_unique<EvokerAI>(bot);
                 TC_LOG_INFO("module.playerbot.ai", "Created EvokerAI for player {}", bot->GetName());
                 break;
 
             default:
                 TC_LOG_WARN("module.playerbot.ai", "Unknown class {} for player {}, creating DefaultBotAI",
                            classId, bot->GetName());
-                botAI = std::make_unique<DefaultBotAI>(bot);
+                botAI = ::std::make_unique<DefaultBotAI>(bot);
                 break;
         }
 
         return botAI;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("module.playerbot.ai", "Exception creating class AI for player {}: {}",
                      bot->GetName(), e.what());
         TC_LOG_WARN("module.playerbot.ai", "Falling back to DefaultBotAI for player {}", bot->GetName());
-        return std::make_unique<DefaultBotAI>(bot);
+        return ::std::make_unique<DefaultBotAI>(bot);
     }
     catch (...)
     {
         TC_LOG_ERROR("module.playerbot.ai", "Unknown exception creating class AI for player {}",
                      bot->GetName());
         TC_LOG_WARN("module.playerbot.ai", "Falling back to DefaultBotAI for player {}", bot->GetName());
-        return std::make_unique<DefaultBotAI>(bot);
+        return ::std::make_unique<DefaultBotAI>(bot);
     }
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, uint8 spec)
+::std::unique_ptr<BotAI> BotAIFactory::CreateClassAI(Player* bot, uint8 classId, uint8 spec)
 {
     // For now, create based on class and let the class AI handle specialization internally
     return CreateClassAI(bot, classId);
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, std::string const& type)
+::std::unique_ptr<BotAI> BotAIFactory::CreateSpecializedAI(Player* bot, ::std::string const& type)
 {
 
     // Implement specialized AI types as needed
     return CreateClassAI(bot, bot->GetClass());
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
+::std::unique_ptr<BotAI> BotAIFactory::CreatePvPAI(Player* bot)
 {
 
     // For now, use class-specific AI with PvP strategies
     return CreateClassAI(bot, bot->GetClass());
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
+::std::unique_ptr<BotAI> BotAIFactory::CreatePvEAI(Player* bot)
 {
 
     // For now, use class-specific AI with PvE strategies
     return CreateClassAI(bot, bot->GetClass());
 }
 
-std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
+::std::unique_ptr<BotAI> BotAIFactory::CreateRaidAI(Player* bot)
 {
 
     // For now, use class-specific AI with raid strategies

@@ -24,7 +24,7 @@ GroupStateMachine::GroupStateMachine(ObjectGuid botGuid)
     : _botGuid(botGuid)
     , _currentState(GroupState::NOT_IN_GROUP)
     , _previousState(GroupState::NOT_IN_GROUP)
-    , _stateEntryTime(std::chrono::steady_clock::now())
+    , _stateEntryTime(::std::chrono::steady_clock::now())
     , _transitionCount(0)
     , _wasRaidBeforeCombat(false)
 {
@@ -42,15 +42,15 @@ GroupStateMachine::~GroupStateMachine()
 // STATE QUERIES
 // ============================================================================
 
-bool GroupStateMachine::IsInAnyState(std::vector<GroupState> const& states) const
+bool GroupStateMachine::IsInAnyState(::std::vector<GroupState> const& states) const
 {
-    return std::find(states.begin(), states.end(), _currentState) != states.end();
+    return ::std::find(states.begin(), states.end(), _currentState) != states.end();
 }
 
 uint32 GroupStateMachine::GetTimeInState() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - _stateEntryTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _stateEntryTime);
     return static_cast<uint32>(duration.count());
 }
 
@@ -72,7 +72,6 @@ bool GroupStateMachine::Transition(GroupStateTransition transition, Group* group
 
     // Determine target state based on transition
     GroupState newState = _currentState; // Default: stay in same state
-
     switch (transition)
     {
         case GroupStateTransition::RECEIVE_INVITE:
@@ -81,7 +80,7 @@ bool GroupStateMachine::Transition(GroupStateTransition transition, Group* group
 
         case GroupStateTransition::ACCEPT_INVITE:
             // Determine if joining a forming or active group
-            if (group && group->GetMembersCount() < 3)
+    if (group && group->GetMembersCount() < 3)
                 newState = GroupState::FORMING;
             else
                 newState = GroupState::ACTIVE;
@@ -215,14 +214,14 @@ void GroupStateMachine::OnAnyTransition(StateCallback callback)
 // STATE HISTORY
 // ============================================================================
 
-std::vector<GroupStateMachine::StateHistoryEntry> GroupStateMachine::GetHistory(uint32 maxEntries) const
+::std::vector<GroupStateMachine::StateHistoryEntry> GroupStateMachine::GetHistory(uint32 maxEntries) const
 {
     if (maxEntries == 0 || maxEntries >= _history.size())
         return _history;
 
     // Return last N entries
-    auto startIt = _history.end() - std::min<size_t>(maxEntries, _history.size());
-    return std::vector<StateHistoryEntry>(startIt, _history.end());
+    auto startIt = _history.end() - ::std::min<size_t>(maxEntries, _history.size());
+    return ::std::vector<StateHistoryEntry>(startIt, _history.end());
 }
 
 void GroupStateMachine::ClearHistory()
@@ -235,12 +234,12 @@ void GroupStateMachine::ClearHistory()
 // DEBUGGING
 // ============================================================================
 
-std::string GroupStateMachine::GetStateName() const
+::std::string GroupStateMachine::GetStateName() const
 {
     return GetStateName(_currentState);
 }
 
-std::string GroupStateMachine::GetStateName(GroupState state)
+::std::string GroupStateMachine::GetStateName(GroupState state)
 {
     switch (state)
     {
@@ -261,7 +260,7 @@ std::string GroupStateMachine::GetStateName(GroupState state)
     }
 }
 
-std::string GroupStateMachine::GetTransitionName(GroupStateTransition transition)
+::std::string GroupStateMachine::GetTransitionName(GroupStateTransition transition)
 {
     switch (transition)
     {
@@ -320,9 +319,9 @@ void GroupStateMachine::DumpState() const
     }
 }
 
-std::string GroupStateMachine::GenerateStateDiagram()
+::std::string GroupStateMachine::GenerateStateDiagram()
 {
-    std::ostringstream dot;
+    ::std::ostringstream dot;
 
     dot << "digraph GroupStateMachine {\n";
     dot << "  rankdir=LR;\n";
@@ -339,14 +338,14 @@ std::string GroupStateMachine::GenerateStateDiagram()
         for (auto transition : transitions)
         {
             // For brevity, only show main transitions in diagram
-            std::string label = GetTransitionName(transition);
+            ::std::string label = GetTransitionName(transition);
 
             // This is simplified - in reality transitions go to various states
             // You would need to implement full logic here
             dot << "  " << GetStateName(fromState) << " -> ";
 
             // Simplified target state determination for diagram
-            switch (transition)
+    switch (transition)
             {
                 case GroupStateTransition::RECEIVE_INVITE:
                     dot << "INVITED";
@@ -398,7 +397,7 @@ void GroupStateMachine::ExecuteTransition(GroupState newState, GroupStateTransit
     // Update state
     _previousState = _currentState;
     _currentState = newState;
-    _stateEntryTime = std::chrono::steady_clock::now();
+    _stateEntryTime = ::std::chrono::steady_clock::now();
     _transitionCount++;
 
     // Record transition
@@ -425,7 +424,7 @@ bool GroupStateMachine::ValidateTransition(GroupStateTransition transition, Grou
         return false;
 
     auto const& validTransitions = it->second;
-    if (std::find(validTransitions.begin(), validTransitions.end(), transition) == validTransitions.end())
+    if (::std::find(validTransitions.begin(), validTransitions.end(), transition) == validTransitions.end())
         return false;
 
     // Additional context-specific validation
@@ -487,7 +486,7 @@ void GroupStateMachine::RecordTransition(GroupState fromState, GroupState toStat
     entry.fromState = fromState;
     entry.toState = toState;
     entry.transition = transition;
-    entry.timestamp = std::chrono::steady_clock::now();
+    entry.timestamp = ::std::chrono::steady_clock::now();
     entry.durationInPreviousStateMs = GetTimeInState();
 
     _history.push_back(entry);

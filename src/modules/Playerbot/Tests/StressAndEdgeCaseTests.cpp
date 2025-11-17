@@ -60,44 +60,44 @@ TEST_F(GroupFunctionalityTests, RapidGroupOperationsStress)
     constexpr uint32 CYCLES = 100;
     constexpr uint32 GROUPS_PER_CYCLE = 5;
 
-    std::vector<std::unique_ptr<GroupTestData>> tempGroups;
+    ::std::vector<::std::unique_ptr<GroupTestData>> tempGroups;
 
     for (uint32 cycle = 0; cycle < CYCLES; ++cycle)
     {
         // Formation phase - create multiple groups rapidly
-        auto formationStart = std::chrono::high_resolution_clock::now();
+        auto formationStart = ::std::chrono::high_resolution_clock::now();
 
         for (uint32 g = 0; g < GROUPS_PER_CYCLE; ++g)
         {
-            std::string leaderName = "RapidLeader_" + std::to_string(cycle) + "_" + std::to_string(g);
+            ::std::string leaderName = "RapidLeader_" + ::std::to_string(cycle) + "_" + ::std::to_string(g);
             auto group = m_env->CreateTestGroup(leaderName);
 
             // Add 4 bots quickly
-            for (uint32 b = 0; b < 4; ++b)
+    for (uint32 b = 0; b < 4; ++b)
             {
-                std::string botName = leaderName + "_Bot" + std::to_string(b);
+                ::std::string botName = leaderName + "_Bot" + ::std::to_string(b);
                 auto bot = m_env->CreateTestBot(botName);
                 m_env->AddBotToGroup(*group, *bot);
             }
 
-            tempGroups.push_back(std::move(group));
+            tempGroups.push_back(::std::move(group));
         }
 
-        auto formationEnd = std::chrono::high_resolution_clock::now();
-        auto formationTime = std::chrono::duration_cast<std::chrono::microseconds>(formationEnd - formationStart);
+        auto formationEnd = ::std::chrono::high_resolution_clock::now();
+        auto formationTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(formationEnd - formationStart);
 
-        m_currentTestMetrics.invitationAcceptanceTime = std::max(m_currentTestMetrics.invitationAcceptanceTime,
+        m_currentTestMetrics.invitationAcceptanceTime = ::std::max(m_currentTestMetrics.invitationAcceptanceTime,
                                                                  static_cast<uint64>(formationTime.count()));
 
         // Activity phase - simulate group operations
-        for (auto& group : tempGroups)
+    for (auto& group : tempGroups)
         {
             // Simulate movement
             Position newPos = m_env->GetRandomPosition(Position(0, 0, 0, 0), 100.0f);
             group->groupPosition = newPos;
 
             // Simulate combat
-            if (cycle % 3 == 0) // Every third cycle
+    if (cycle % 3 == 0) // Every third cycle
             {
                 group->isInCombat = true;
                 group->currentTarget = ObjectGuid::Create<HighGuid::Creature>(cycle * 1000 + 1);
@@ -111,9 +111,9 @@ TEST_F(GroupFunctionalityTests, RapidGroupOperationsStress)
         tempGroups.clear();
 
         // Brief pause to prevent system overload
-        if (cycle % 10 == 0)
+    if (cycle % 10 == 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
     }
 
@@ -135,33 +135,33 @@ TEST_F(GroupFunctionalityTests, MemoryPressureStressTest)
     constexpr uint32 MEMORY_STRESS_GROUPS = 50;
     constexpr uint32 BOTS_PER_GROUP = 4;
 
-    std::vector<std::unique_ptr<GroupTestData>> memoryTestGroups;
-    std::vector<std::vector<std::unique_ptr<BotTestData>>> memoryTestBots;
+    ::std::vector<::std::unique_ptr<GroupTestData>> memoryTestGroups;
+    ::std::vector<::std::vector<::std::unique_ptr<BotTestData>>> memoryTestBots;
 
     uint64 initialMemory = m_currentTestMetrics.memoryUsageStart;
 
     // Phase 1: Gradual memory allocation
     for (uint32 i = 0; i < MEMORY_STRESS_GROUPS; ++i)
     {
-        std::string leaderName = "MemoryLeader" + std::to_string(i);
+        ::std::string leaderName = "MemoryLeader" + ::std::to_string(i);
         auto group = m_env->CreateTestGroup(leaderName);
 
-        std::vector<std::unique_ptr<BotTestData>> groupBots;
+        ::std::vector<::std::unique_ptr<BotTestData>> groupBots;
         for (uint32 b = 0; b < BOTS_PER_GROUP; ++b)
         {
-            std::string botName = leaderName + "_Bot" + std::to_string(b);
+            ::std::string botName = leaderName + "_Bot" + ::std::to_string(b);
             auto bot = m_env->CreateTestBot(botName);
             m_env->AddBotToGroup(*group, *bot);
-            groupBots.push_back(std::move(bot));
+            groupBots.push_back(::std::move(bot));
         }
 
-        memoryTestGroups.push_back(std::move(group));
-        memoryTestBots.push_back(std::move(groupBots));
+        memoryTestGroups.push_back(::std::move(group));
+        memoryTestBots.push_back(::std::move(groupBots));
 
         // Record memory usage every 10 groups
-        if (i % 10 == 0)
+    if (i % 10 == 0)
         {
-            m_currentTestMetrics.memoryUsagePeak = std::max(m_currentTestMetrics.memoryUsagePeak,
+            m_currentTestMetrics.memoryUsagePeak = ::std::max(m_currentTestMetrics.memoryUsagePeak,
                                                            initialMemory + (i * BOTS_PER_GROUP * 8 * 1024 * 1024));
         }
 
@@ -170,7 +170,7 @@ TEST_F(GroupFunctionalityTests, MemoryPressureStressTest)
     }
 
     // Phase 2: Sustained memory usage
-    std::this_thread::sleep_for(std::chrono::seconds(30));
+    ::std::this_thread::sleep_for(::std::chrono::seconds(30));
 
     // Phase 3: Gradual memory deallocation
     for (uint32 i = 0; i < MEMORY_STRESS_GROUPS / 2; ++i)
@@ -182,9 +182,9 @@ TEST_F(GroupFunctionalityTests, MemoryPressureStressTest)
         }
 
         // Small delay to allow garbage collection
-        if (i % 5 == 0)
+    if (i % 5 == 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
     }
 
@@ -214,12 +214,12 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
     // Simulate various network conditions
     struct NetworkCondition
     {
-        std::string name;
+        ::std::string name;
         uint32 latencyMs;
         float packetLossPercent;
     };
 
-    std::vector<NetworkCondition> conditions = {
+    ::std::vector<NetworkCondition> conditions = {
         {"Good", 20, 0.0f},
         {"Fair", 100, 1.0f},
         {"Poor", 300, 5.0f},
@@ -232,23 +232,23 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
                     condition.name, condition.latencyMs, condition.packetLossPercent);
 
         // Create test group for this condition
-        std::string leaderName = "NetLeader_" + condition.name;
+        ::std::string leaderName = "NetLeader_" + condition.name;
         auto testGroup = m_env->CreateTestGroup(leaderName);
 
         // Add bots with simulated network delay
-        for (uint32 i = 0; i < 4; ++i)
+    for (uint32 i = 0; i < 4; ++i)
         {
-            std::string botName = leaderName + "_Bot" + std::to_string(i);
+            ::std::string botName = leaderName + "_Bot" + ::std::to_string(i);
             auto bot = m_env->CreateTestBot(botName);
 
             // Simulate network delay for invitation
-            std::this_thread::sleep_for(std::chrono::milliseconds(condition.latencyMs));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(condition.latencyMs));
 
             bool invitationSucceeded = true;
             // Simulate packet loss
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<float> lossDist(0.0f, 100.0f);
+            ::std::random_device rd;
+            ::std::mt19937 gen(rd());
+            ::std::uniform_real_distribution<float> lossDist(0.0f, 100.0f);
             if (lossDist(gen) < condition.packetLossPercent)
             {
                 invitationSucceeded = false;
@@ -265,15 +265,15 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
         }
 
         // Test group operations under this network condition
-        for (uint32 op = 0; op < 10; ++op)
+    for (uint32 op = 0; op < 10; ++op)
         {
             // Simulate command with network delay
-            std::this_thread::sleep_for(std::chrono::milliseconds(condition.latencyMs));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(condition.latencyMs));
 
             // Simulate operation success/failure based on packet loss
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<float> lossDist(0.0f, 100.0f);
+            ::std::random_device rd;
+            ::std::mt19937 gen(rd());
+            ::std::uniform_real_distribution<float> lossDist(0.0f, 100.0f);
 
             if (lossDist(gen) >= condition.packetLossPercent)
             {
@@ -288,7 +288,7 @@ TEST_F(GroupFunctionalityTests, NetworkLatencySimulationStress)
 
         // Record latency for this condition
         uint64 operationLatency = condition.latencyMs * 1000; // Convert to microseconds
-        m_currentTestMetrics.targetSwitchTime = std::max(m_currentTestMetrics.targetSwitchTime, operationLatency);
+        m_currentTestMetrics.targetSwitchTime = ::std::max(m_currentTestMetrics.targetSwitchTime, operationLatency);
     }
 
     EndPerformanceTest();
@@ -324,7 +324,7 @@ TEST_F(GroupFunctionalityTests, LeaderDisconnectionRecovery)
     m_testGroup->leaderGuid = ObjectGuid::Empty;
 
     // Simulate the system detecting disconnection and handling it
-    auto disconnectionTime = std::chrono::high_resolution_clock::now();
+    auto disconnectionTime = ::std::chrono::high_resolution_clock::now();
 
     // Bots should detect leader disconnection and stop following
     for (auto& bot : m_testBots)
@@ -334,8 +334,8 @@ TEST_F(GroupFunctionalityTests, LeaderDisconnectionRecovery)
         // Bots might remain in group or auto-leave depending on implementation
     }
 
-    auto recoveryTime = std::chrono::high_resolution_clock::now();
-    auto recoveryDuration = std::chrono::duration_cast<std::chrono::microseconds>(recoveryTime - disconnectionTime);
+    auto recoveryTime = ::std::chrono::high_resolution_clock::now();
+    auto recoveryDuration = ::std::chrono::duration_cast<::std::chrono::microseconds>(recoveryTime - disconnectionTime);
 
     m_currentTestMetrics.followingEngagementTime = recoveryDuration.count();
     m_currentTestMetrics.totalOperations = m_testBots.size();
@@ -365,15 +365,15 @@ TEST_F(GroupFunctionalityTests, CascadingMemberDisconnections)
     ASSERT_GE(m_testBots.size(), 3);
 
     // Simulate cascading disconnections (multiple members leaving rapidly)
-    std::vector<ObjectGuid> disconnectedBots;
-    uint32 disconnectionCount = std::min(3U, static_cast<uint32>(m_testBots.size()));
+    ::std::vector<ObjectGuid> disconnectedBots;
+    uint32 disconnectionCount = ::std::min(3U, static_cast<uint32>(m_testBots.size()));
 
     for (uint32 i = 0; i < disconnectionCount; ++i)
     {
         auto& bot = m_testBots[i];
 
         // Simulate disconnection with small delay between each
-        std::this_thread::sleep_for(std::chrono::milliseconds(100 * (i + 1)));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100 * (i + 1)));
 
         bot->isInGroup = false;
         bot->groupId = ObjectGuid::Empty;
@@ -411,17 +411,17 @@ TEST_F(GroupFunctionalityTests, InvalidInvitationScenarios)
 
     struct InvalidScenario
     {
-        std::string name;
-        std::function<bool()> testFunc;
+        ::std::string name;
+        ::std::function<bool()> testFunc;
         bool shouldSucceed;
     };
 
-    std::vector<InvalidScenario> scenarios = {
+    ::std::vector<InvalidScenario> scenarios = {
         {
             "Invite non-existent player",
             [this]() {
                 // Simulate inviting a player that doesn't exist
-                std::string fakePlayer = "NonExistentPlayer123";
+                ::std::string fakePlayer = "NonExistentPlayer123";
                 TC_LOG_DEBUG("playerbot.test", "Attempting to invite non-existent player: {}", fakePlayer);
                 return false; // Should always fail
             },
@@ -431,7 +431,7 @@ TEST_F(GroupFunctionalityTests, InvalidInvitationScenarios)
             "Invite to full group",
             [this]() {
                 // Group already has 4 members, try to add 5th
-                if (m_testGroup->members.size() >= 5)
+    if (m_testGroup->members.size() >= 5)
                 {
                     TC_LOG_DEBUG("playerbot.test", "Attempting to invite to full group");
                     return false; // Should fail - group is full
@@ -516,32 +516,32 @@ TEST_F(GroupFunctionalityTests, ConcurrentInvitationConflicts)
     StartPerformanceTest("ConcurrentInvitationConflicts");
 
     // Test scenario: Multiple leaders trying to invite the same bot simultaneously
-    std::string targetBotName = "ContestedBot";
+    ::std::string targetBotName = "ContestedBot";
     auto targetBot = m_env->CreateTestBot(targetBotName);
 
     // Create multiple competing groups
     constexpr uint32 COMPETING_GROUPS = 5;
-    std::vector<std::unique_ptr<GroupTestData>> competingGroups;
+    ::std::vector<::std::unique_ptr<GroupTestData>> competingGroups;
 
     for (uint32 i = 0; i < COMPETING_GROUPS; ++i)
     {
-        std::string leaderName = "CompetingLeader" + std::to_string(i);
+        ::std::string leaderName = "CompetingLeader" + ::std::to_string(i);
         auto group = m_env->CreateTestGroup(leaderName);
-        competingGroups.push_back(std::move(group));
+        competingGroups.push_back(::std::move(group));
     }
 
     // Simulate concurrent invitations using async operations
-    std::vector<std::future<bool>> invitationResults;
+    ::std::vector<::std::future<bool>> invitationResults;
 
     auto inviteBot = [this, &targetBot](const GroupTestData& group) -> bool {
         // Simulate invitation processing time with small random delay
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> delay(10, 50);
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay(gen)));
+        ::std::random_device rd;
+        ::std::mt19937 gen(rd());
+        ::std::uniform_int_distribution<> delay(10, 50);
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(delay(gen)));
 
         // Only the first invitation should succeed
-        static std::atomic<bool> alreadyInvited{false};
+        static ::std::atomic<bool> alreadyInvited{false};
         bool expected = false;
         if (alreadyInvited.compare_exchange_strong(expected, true))
         {
@@ -558,7 +558,7 @@ TEST_F(GroupFunctionalityTests, ConcurrentInvitationConflicts)
     // Launch all invitations simultaneously
     for (const auto& group : competingGroups)
     {
-        invitationResults.push_back(std::async(std::launch::async, inviteBot, std::cref(*group)));
+        invitationResults.push_back(::std::async(::std::launch::async, inviteBot, ::std::cref(*group)));
     }
 
     // Collect results
@@ -623,9 +623,9 @@ TEST_F(GroupFunctionalityTests, MapTransitionStressTest)
         bot->isFollowingLeader = true;
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32> mapDist(0, MAP_COUNT - 1);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_int_distribution<uint32> mapDist(0, MAP_COUNT - 1);
 
     for (uint32 transition = 0; transition < TRANSITION_COUNT; ++transition)
     {
@@ -639,30 +639,30 @@ TEST_F(GroupFunctionalityTests, MapTransitionStressTest)
         TC_LOG_DEBUG("playerbot.test", "Transition {}: Moving group to map {} at position ({}, {})",
                     transition, targetMapId, newMapPos.GetPositionX(), newMapPos.GetPositionY());
 
-        auto transitionStart = std::chrono::high_resolution_clock::now();
+        auto transitionStart = ::std::chrono::high_resolution_clock::now();
 
         // Simulate map transition
         m_testGroup->groupPosition = newMapPos;
 
         // Update all bot positions (they should follow/teleport)
-        for (size_t i = 0; i < m_testBots.size(); ++i)
+    for (size_t i = 0; i < m_testBots.size(); ++i)
         {
             Position botPos = m_env->GetFormationPosition(newMapPos, i, 5.0f);
             m_testBots[i]->position = botPos;
         }
 
-        auto transitionEnd = std::chrono::high_resolution_clock::now();
-        auto transitionTime = std::chrono::duration_cast<std::chrono::microseconds>(transitionEnd - transitionStart);
+        auto transitionEnd = ::std::chrono::high_resolution_clock::now();
+        auto transitionTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(transitionEnd - transitionStart);
 
         // Record transition time
-        m_currentTestMetrics.teleportTime = std::max(m_currentTestMetrics.teleportTime,
+        m_currentTestMetrics.teleportTime = ::std::max(m_currentTestMetrics.teleportTime,
                                                     static_cast<uint64>(transitionTime.count()));
 
         m_currentTestMetrics.totalOperations++;
         m_currentTestMetrics.successfulOperations++;
 
         // Brief delay between transitions
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(200));
 
         // Validate group integrity after each transition
         bool groupIntact = true;
@@ -702,27 +702,27 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
     // Test system behavior when resources are exhausted
     struct ResourceStress
     {
-        std::string name;
-        std::function<void()> induceStress;
-        std::function<bool()> validateRecovery;
+        ::std::string name;
+        ::std::function<void()> induceStress;
+        ::std::function<bool()> validateRecovery;
     };
 
-    std::vector<ResourceStress> stressTests = {
+    ::std::vector<ResourceStress> stressTests = {
         {
             "Memory exhaustion simulation",
             [this]() {
                 // Simulate memory pressure by creating many temporary objects
-                std::vector<std::vector<uint8>> memoryConsumer;
+                ::std::vector<::std::vector<uint8>> memoryConsumer;
                 for (int i = 0; i < 1000; ++i)
                 {
                     memoryConsumer.emplace_back(1024 * 1024, 0); // 1MB each
-                    if (i % 100 == 0)
+    if (i % 100 == 0)
                     {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        ::std::this_thread::sleep_for(::std::chrono::milliseconds(10));
                     }
                 }
                 // Let memory pressure build
-                std::this_thread::sleep_for(std::chrono::seconds(2));
+                ::std::this_thread::sleep_for(::std::chrono::seconds(2));
                 memoryConsumer.clear(); // Release memory
             },
             [this]() {
@@ -734,10 +734,10 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
             "Database connection exhaustion",
             [this]() {
                 // Simulate database connection pool exhaustion
-                for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i)
                 {
                     // Simulate database operations
-                    std::this_thread::sleep_for(std::chrono::microseconds(100));
+                    ::std::this_thread::sleep_for(::std::chrono::microseconds(100));
                 }
             },
             [this]() {
@@ -749,9 +749,9 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
             "Network connection exhaustion",
             [this]() {
                 // Simulate network resource exhaustion
-                for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < 50; ++i)
                 {
-                    std::this_thread::sleep_for(std::chrono::microseconds(200));
+                    ::std::this_thread::sleep_for(::std::chrono::microseconds(200));
                 }
             },
             [this]() {
@@ -768,19 +768,19 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
         TC_LOG_INFO("playerbot.test", "Inducing resource stress: {}", stress.name);
 
         // Record baseline performance
-        auto stressStart = std::chrono::high_resolution_clock::now();
+        auto stressStart = ::std::chrono::high_resolution_clock::now();
 
         // Induce resource stress
         stress.induceStress();
 
         // Allow system to stabilize
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(1));
 
         // Test recovery
         bool recovered = stress.validateRecovery();
 
-        auto stressEnd = std::chrono::high_resolution_clock::now();
-        auto stressTime = std::chrono::duration_cast<std::chrono::microseconds>(stressEnd - stressStart);
+        auto stressEnd = ::std::chrono::high_resolution_clock::now();
+        auto stressTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(stressEnd - stressStart);
 
         m_currentTestMetrics.totalOperations++;
 
@@ -797,7 +797,7 @@ TEST_F(GroupFunctionalityTests, ResourceExhaustionRecovery)
         }
 
         // Record longest recovery time
-        m_currentTestMetrics.followingEngagementTime = std::max(m_currentTestMetrics.followingEngagementTime,
+        m_currentTestMetrics.followingEngagementTime = ::std::max(m_currentTestMetrics.followingEngagementTime,
                                                                static_cast<uint64>(stressTime.count()));
     }
 

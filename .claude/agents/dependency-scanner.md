@@ -1,3 +1,8 @@
+---
+name: dependency-scanner
+description: Dependency Scanner Agent
+---
+
 # Dependency Scanner Agent
 
 ## Role

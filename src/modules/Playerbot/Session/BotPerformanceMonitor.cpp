@@ -18,7 +18,7 @@ namespace Playerbot {
 
 void UpdateTimeHistogram::RecordTime(uint32 microseconds)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 bucket = microseconds / BUCKET_SIZE_MICROS;
     if (bucket >= BUCKET_COUNT)
@@ -30,14 +30,14 @@ void UpdateTimeHistogram::RecordTime(uint32 microseconds)
 
 void UpdateTimeHistogram::Clear()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _buckets.fill(0);
     _totalCount = 0;
 }
 
 uint32 UpdateTimeHistogram::GetMin() const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     for (uint32 i = 0; i < BUCKET_COUNT; ++i)
     {
@@ -49,7 +49,7 @@ uint32 UpdateTimeHistogram::GetMin() const
 
 uint32 UpdateTimeHistogram::GetMax() const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     for (int32 i = BUCKET_COUNT - 1; i >= 0; --i)
     {
@@ -69,7 +69,7 @@ uint32 UpdateTimeHistogram::GetPercentile(uint8 percentile) const
     if (percentile > 100)
         percentile = 100;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_totalCount == 0)
         return 0;
@@ -87,10 +87,10 @@ uint32 UpdateTimeHistogram::GetPercentile(uint8 percentile) const
     return (BUCKET_COUNT - 1) * BUCKET_SIZE_MICROS;
 }
 
-std::vector<uint32> UpdateTimeHistogram::GetBuckets() const
+::std::vector<uint32> UpdateTimeHistogram::GetBuckets() const
 {
-    std::lock_guard lock(_mutex);
-    return std::vector<uint32>(_buckets.begin(), _buckets.end());
+    ::std::lock_guard lock(_mutex);
+    return ::std::vector<uint32>(_buckets.begin(), _buckets.end());
 }
 
 // ========================================
@@ -130,7 +130,7 @@ void BotPerformanceMonitor::Shutdown()
     // Log final statistics before shutdown
     LogDetailedStatistics();
 
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     _metrics = SystemPerformanceMetrics{};
     _histogram.Clear();
 
@@ -145,9 +145,9 @@ void BotPerformanceMonitor::BeginTick(uint32 currentTime)
 
     // IMPROVEMENT #9: High-resolution timer - Use steady_clock for microsecond precision
     // This allows us to see actual sub-millisecond performance (e.g., 0.45ms instead of 0.00ms)
-    _tickStartTimeHighRes = std::chrono::steady_clock::now();
+    _tickStartTimeHighRes = ::std::chrono::steady_clock::now();
 
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     _metrics.errorsThisTick = 0;
     _metrics.botsUpdatedThisTick = 0;
     _metrics.botsSkippedThisTick = 0;
@@ -157,13 +157,13 @@ void BotPerformanceMonitor::EndTick(uint32 currentTime, uint32 botsUpdated, uint
 {
     // IMPROVEMENT #9: High-resolution timer - Calculate duration using steady_clock
     // This provides actual microsecond precision instead of millisecond rounding
-    auto tickEndTimeHighRes = std::chrono::steady_clock::now();
-    auto durationMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+    auto tickEndTimeHighRes = ::std::chrono::steady_clock::now();
+    auto durationMicros = ::std::chrono::duration_cast<::std::chrono::microseconds>(
         tickEndTimeHighRes - _tickStartTimeHighRes
     );
     uint32 tickDuration = static_cast<uint32>(durationMicros.count());
 
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
 
     // Update current tick metrics
     _metrics.currentTickTime = tickDuration;
@@ -244,13 +244,13 @@ void BotPerformanceMonitor::CheckPerformanceThresholds()
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
 
     // Check if we need load shedding
     if (_metrics.isOverloaded && _consecutiveSlowTicks >= DEGRADATION_THRESHOLD)
     {
         // Cooldown check
-        if (currentTime - _lastLoadShedTime < LOAD_ADJUST_COOLDOWN_MS)
+    if (currentTime - _lastLoadShedTime < LOAD_ADJUST_COOLDOWN_MS)
             return;
 
         // Calculate how many bots to suspend (10% of low-priority bots)
@@ -270,11 +270,11 @@ void BotPerformanceMonitor::CheckPerformanceThresholds()
     else if (!_metrics.isOverloaded && _consecutiveFastTicks >= DEGRADATION_THRESHOLD && _metrics.suspendedBots > 0)
     {
         // Cooldown check
-        if (currentTime - _lastLoadRecoveryTime < LOAD_ADJUST_COOLDOWN_MS)
+    if (currentTime - _lastLoadRecoveryTime < LOAD_ADJUST_COOLDOWN_MS)
             return;
 
         // Resume 10% of suspended bots
-        uint32 targetIncrease = std::max(1u, _metrics.suspendedBots / 10);
+        uint32 targetIncrease = ::std::max(1u, _metrics.suspendedBots / 10);
 
         TC_LOG_INFO("module.playerbot.performance",
             "Performance improved! Tick time: {:.2f}ms. Resuming {} suspended bots...",
@@ -298,7 +298,7 @@ void BotPerformanceMonitor::TriggerLoadRecovery(uint32 targetIncrease)
 
 bool BotPerformanceMonitor::IsPerformanceDegraded() const
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     return _consecutiveSlowTicks >= DEGRADATION_THRESHOLD;
 }
 
@@ -312,7 +312,7 @@ float BotPerformanceMonitor::CalculateLoadPercent(uint32 tickTimeMicros) const
 
 void BotPerformanceMonitor::LogPerformanceReport() const
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
 
     TC_LOG_INFO("module.playerbot.performance",
         "=== PERFORMANCE REPORT ===");
@@ -345,7 +345,7 @@ void BotPerformanceMonitor::LogPerformanceReport() const
 
 void BotPerformanceMonitor::LogDetailedStatistics() const
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
 
     TC_LOG_INFO("module.playerbot.performance",
         "=== DETAILED PERFORMANCE STATISTICS ===");
@@ -394,7 +394,7 @@ void BotPerformanceMonitor::LogDetailedStatistics() const
 
 void BotPerformanceMonitor::ResetStatistics()
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
 
     _metrics.maxTickTime = 0;
     _metrics.minTickTime = UINT32_MAX;

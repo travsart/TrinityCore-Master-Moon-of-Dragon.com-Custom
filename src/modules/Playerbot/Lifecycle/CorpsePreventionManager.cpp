@@ -15,9 +15,9 @@
 namespace Playerbot
 {
 
-std::atomic<bool> CorpsePreventionManager::s_enabled(true);
-std::atomic<uint32> CorpsePreventionManager::s_preventedCorpses(0);
-std::atomic<uint32> CorpsePreventionManager::s_activePrevention(0);
+::std::atomic<bool> CorpsePreventionManager::s_enabled(true);
+::std::atomic<uint32> CorpsePreventionManager::s_preventedCorpses(0);
+::std::atomic<uint32> CorpsePreventionManager::s_activePrevention(0);
 
 CorpsePreventionManager::CorpsePreventionManager()
 {

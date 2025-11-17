@@ -144,7 +144,7 @@ public:
 
 private:
     // Mock data
-    std::unordered_map<uint32, DoubleBufferedSpatialGrid*> _grids;
+    ::std::unordered_map<uint32, DoubleBufferedSpatialGrid*> _grids;
 
     // Call tracking
     uint32 _createGridCalls = 0;
@@ -239,7 +239,7 @@ public:
     }
 
 private:
-    mutable std::unordered_map<uint32, BotSession*> _sessions;
+    mutable ::std::unordered_map<uint32, BotSession*> _sessions;
     bool _initialized = false;
     bool _enabled = true;
 

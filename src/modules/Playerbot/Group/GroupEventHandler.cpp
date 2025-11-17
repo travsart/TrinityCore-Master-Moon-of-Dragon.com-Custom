@@ -49,7 +49,7 @@ bool GroupEventHandler::IsBotInEventGroup(GroupEvent const& event) const
     return botGroup->GetGUID() == event.groupGuid;
 }
 
-void GroupEventHandler::LogEventHandling(GroupEvent const& event, std::string const& action) const
+void GroupEventHandler::LogEventHandling(GroupEvent const& event, ::std::string const& action) const
 {
     TC_LOG_DEBUG("playerbot.group.handler", "{}: {} - Group: {}, Action: {}",
         GetHandlerName(),
@@ -92,7 +92,7 @@ bool MemberJoinedHandler::HandleEvent(GroupEvent const& event)
         _botAI->GetFormationMgr()->AddMember(newMember);
 
         // Greet new member
-        if (_botAI->GetConfig()->SocialFeaturesEnabled())
+    if (_botAI->GetConfig()->SocialFeaturesEnabled())
             _botAI->Say(fmt::format("Welcome to the group, {}!", newMember->GetName()));
 
         // Update healing/buff priorities
@@ -187,11 +187,11 @@ bool LeaderChangedHandler::HandleEvent(GroupEvent const& event)
         _botAI->SetGroupLeader(newLeader);
 
         // If bot was following old leader, follow new leader
-        if (_botAI->IsFollowing())
+    if (_botAI->IsFollowing())
             _botAI->Follow(newLeader);
 
         // Update main assist if leader is MA
-        if (group->GetMemberFlags(newLeaderGuid) & MEMBER_FLAG_MAINASSIST)
+    if (group->GetMemberFlags(newLeaderGuid) & MEMBER_FLAG_MAINASSIST)
             _botAI->SetMainAssist(newLeader);
     }
     */
@@ -321,7 +321,7 @@ bool TargetIconChangedHandler::HandleEvent(GroupEvent const& event)
     if (Unit* target = ObjectAccessor::GetUnit(*bot, targetGuid))
     {
         // Update target priority based on icon
-        switch (iconIndex)
+    switch (iconIndex)
         {
             case 0: // Skull - kill first
                 _botAI->SetPrimaryTarget(target);
@@ -655,29 +655,29 @@ bool DifficultyChangedHandler::HandleEvent(GroupEvent const& event)
 // HANDLER FACTORY
 // ============================================================================
 
-std::vector<std::unique_ptr<GroupEventHandler>> GroupEventHandlerFactory::CreateAllHandlers(BotAI* botAI)
+::std::vector<::std::unique_ptr<GroupEventHandler>> GroupEventHandlerFactory::CreateAllHandlers(BotAI* botAI)
 {
-    std::vector<std::unique_ptr<GroupEventHandler>> handlers;
+    ::std::vector<::std::unique_ptr<GroupEventHandler>> handlers;
 
     // Create all handler instances
-    handlers.push_back(std::make_unique<MemberJoinedHandler>(botAI));
-    handlers.push_back(std::make_unique<MemberLeftHandler>(botAI));
-    handlers.push_back(std::make_unique<LeaderChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<GroupDisbandedHandler>(botAI));
-    handlers.push_back(std::make_unique<LootMethodChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<TargetIconChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<ReadyCheckHandler>(botAI));
-    handlers.push_back(std::make_unique<RaidConvertedHandler>(botAI));
-    handlers.push_back(std::make_unique<SubgroupChangedHandler>(botAI));
-    handlers.push_back(std::make_unique<RoleAssignmentHandler>(botAI));
-    handlers.push_back(std::make_unique<DifficultyChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<MemberJoinedHandler>(botAI));
+    handlers.push_back(::std::make_unique<MemberLeftHandler>(botAI));
+    handlers.push_back(::std::make_unique<LeaderChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<GroupDisbandedHandler>(botAI));
+    handlers.push_back(::std::make_unique<LootMethodChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<TargetIconChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<ReadyCheckHandler>(botAI));
+    handlers.push_back(::std::make_unique<RaidConvertedHandler>(botAI));
+    handlers.push_back(::std::make_unique<SubgroupChangedHandler>(botAI));
+    handlers.push_back(::std::make_unique<RoleAssignmentHandler>(botAI));
+    handlers.push_back(::std::make_unique<DifficultyChangedHandler>(botAI));
 
     TC_LOG_DEBUG("playerbot.group", "Created {} event handlers for bot", handlers.size());
 
     return handlers;
 }
 
-void GroupEventHandlerFactory::RegisterHandlers(std::vector<std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI)
+void GroupEventHandlerFactory::RegisterHandlers(::std::vector<::std::unique_ptr<GroupEventHandler>> const& handlers, BotAI* botAI)
 {
     if (!botAI)
         return;

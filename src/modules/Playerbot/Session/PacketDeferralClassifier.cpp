@@ -8,14 +8,14 @@
 namespace Playerbot {
 
 // Statistics (atomic for thread safety)
-std::atomic<uint64> PacketDeferralClassifier::s_totalClassified{0};
-std::atomic<uint64> PacketDeferralClassifier::s_deferredCount{0};
-std::atomic<uint64> PacketDeferralClassifier::s_workerCount{0};
+::std::atomic<uint64> PacketDeferralClassifier::s_totalClassified{0};
+::std::atomic<uint64> PacketDeferralClassifier::s_deferredCount{0};
+::std::atomic<uint64> PacketDeferralClassifier::s_workerCount{0};
 
 // ============================================================================
 // CATEGORY 1: SPELL CASTING & AURA APPLICATION (CRITICAL - RACE CONDITION FIX)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcodes = {
     CMSG_CAST_SPELL,                        // PRIMARY CRASH SOURCE
     CMSG_CANCEL_AURA,                       // Aura removal (race with application)
     CMSG_CANCEL_AUTO_REPEAT_SPELL,          // Auto-attack cancel
@@ -32,7 +32,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_spellOpcodes 
 // ============================================================================
 // CATEGORY 2: ITEM USAGE & EQUIPMENT (MODIFIES INVENTORY + TRIGGERS SPELLS)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_itemOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_itemOpcodes = {
     CMSG_USE_ITEM,                          // Can trigger spell cast → aura application
     CMSG_LOOT_ITEM,                         // Modifies inventory (11.2 opcode)
     CMSG_SWAP_INV_ITEM,                     // Equipment swap (can trigger on-equip effects)
@@ -52,7 +52,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_itemOpcodes =
 // ============================================================================
 // CATEGORY 3: RESURRECTION & DEATH RECOVERY (CRITICAL - CORPSE MANIPULATION)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_resurrectionOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_resurrectionOpcodes = {
     CMSG_RECLAIM_CORPSE,                    // Corpse reclaim (modifies corpse list)
     CMSG_REPOP_REQUEST,                     // Release spirit (creates corpse, applies Ghost aura)
     CMSG_RESURRECT_RESPONSE,                // Accept resurrection (modifies alive/dead state)
@@ -63,7 +63,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_resurrectionO
 // ============================================================================
 // CATEGORY 4: MOVEMENT & POSITION (TRIGGERS AREA AURAS + SPATIAL GRID UPDATES)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_movementOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_movementOpcodes = {
     CMSG_MOVE_TELEPORT_ACK,                 // Teleport confirmation (updates position)
     // CMSG_MOVE_WORLDPORT_ACK,             // TODO: Find 11.2 equivalent opcode
     CMSG_AREA_TRIGGER,                      // Area trigger activation (can apply auras!)
@@ -73,7 +73,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_movementOpcod
 // ============================================================================
 // CATEGORY 5: COMBAT & TARGETING (MODIFIES COMBAT STATE + THREAT)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_combatOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_combatOpcodes = {
     CMSG_ATTACK_SWING,                      // Melee attack start
     CMSG_ATTACK_STOP,                       // Combat end
     CMSG_SET_SELECTION,                     // Target selection
@@ -84,7 +84,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_combatOpcodes
 // ============================================================================
 // CATEGORY 6: QUEST & OBJECTIVE UPDATES (TRIGGERS REWARDS + SPELL CASTS)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_questOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_questOpcodes = {
     CMSG_QUEST_GIVER_ACCEPT_QUEST,          // Quest accept (can add items, apply auras)
     CMSG_QUEST_GIVER_COMPLETE_QUEST,        // Quest complete (rewards: items, spells)
     CMSG_QUEST_GIVER_QUERY_QUEST,           // Quest query (can trigger completion check)
@@ -98,7 +98,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_questOpcodes 
 // ============================================================================
 // CATEGORY 7: GROUP & RAID OPERATIONS (MODIFIES GROUP STATE)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_groupOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_groupOpcodes = {
     CMSG_PARTY_INVITE,                      // Group invite (11.2 renamed to PARTY)
     CMSG_PARTY_INVITE_RESPONSE,             // Accept/decline invite
     CMSG_PARTY_UNINVITE,                    // Kick from group
@@ -112,7 +112,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_groupOpcodes 
 // ============================================================================
 // CATEGORY 8: TRADE & ECONOMY (MODIFIES INVENTORY + GOLD)
 // ============================================================================
-const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_tradeOpcodes = {
+const ::std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_tradeOpcodes = {
     CMSG_INITIATE_TRADE,                    // Trade initiation
     CMSG_ACCEPT_TRADE,                      // Trade accept (transfers items/gold)
     CMSG_CANCEL_TRADE,                      // Trade cancel
@@ -131,7 +131,7 @@ const std::unordered_set<OpcodeClient> PacketDeferralClassifier::s_tradeOpcodes 
 bool PacketDeferralClassifier::RequiresMainThread(OpcodeClient opcode)
 {
     // Increment statistics
-    s_totalClassified.fetch_add(1, std::memory_order_relaxed);
+    s_totalClassified.fetch_add(1, ::std::memory_order_relaxed);
 
     // Check all deferral categories
     bool requiresDefer =
@@ -146,9 +146,9 @@ bool PacketDeferralClassifier::RequiresMainThread(OpcodeClient opcode)
 
     // Update statistics
     if (requiresDefer)
-        s_deferredCount.fetch_add(1, std::memory_order_relaxed);
+        s_deferredCount.fetch_add(1, ::std::memory_order_relaxed);
     else
-        s_workerCount.fetch_add(1, std::memory_order_relaxed);
+        s_workerCount.fetch_add(1, ::std::memory_order_relaxed);
 
     return requiresDefer;
 }
@@ -184,9 +184,9 @@ const char* PacketDeferralClassifier::GetDeferralReason(OpcodeClient opcode)
 
 void PacketDeferralClassifier::GetStatistics(uint64& totalPackets, uint64& deferredPackets, uint64& workerPackets)
 {
-    totalPackets = s_totalClassified.load(std::memory_order_relaxed);
-    deferredPackets = s_deferredCount.load(std::memory_order_relaxed);
-    workerPackets = s_workerCount.load(std::memory_order_relaxed);
+    totalPackets = s_totalClassified.load(::std::memory_order_relaxed);
+    deferredPackets = s_deferredCount.load(::std::memory_order_relaxed);
+    workerPackets = s_workerCount.load(::std::memory_order_relaxed);
 }
 
 } // namespace Playerbot

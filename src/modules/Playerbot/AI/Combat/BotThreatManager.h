@@ -98,7 +98,7 @@ struct ThreatTarget
 {
     Unit* target;
     ThreatInfo info;
-    std::vector<ObjectGuid> threateningBots;
+    ::std::vector<ObjectGuid> threateningBots;
     float aggregatedThreat;
     float averageThreatPercent;
     uint32 botsInCombat;
@@ -118,7 +118,7 @@ struct ThreatTarget
 // Threat analysis result
 struct ThreatAnalysis
 {
-    std::vector<ThreatTarget> sortedTargets;
+    ::std::vector<ThreatTarget> sortedTargets;
     ThreatTarget* primaryTarget;
     ThreatTarget* secondaryTarget;
     float totalThreat;
@@ -136,13 +136,13 @@ struct ThreatAnalysis
 // Performance metrics for threat management
 struct ThreatMetrics
 {
-    std::atomic<uint32> threatCalculations{0};
-    std::atomic<uint32> targetAnalyses{0};
-    std::atomic<uint32> roleAssignments{0};
-    std::atomic<uint32> priorityUpdates{0};
-    std::chrono::microseconds averageAnalysisTime{0};
-    std::chrono::microseconds maxAnalysisTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> threatCalculations{0};
+    ::std::atomic<uint32> targetAnalyses{0};
+    ::std::atomic<uint32> roleAssignments{0};
+    ::std::atomic<uint32> priorityUpdates{0};
+    ::std::chrono::microseconds averageAnalysisTime{0};
+    ::std::chrono::microseconds maxAnalysisTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -150,9 +150,9 @@ struct ThreatMetrics
         targetAnalyses = 0;
         roleAssignments = 0;
         priorityUpdates = 0;
-        averageAnalysisTime = std::chrono::microseconds{0};
-        maxAnalysisTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageAnalysisTime = ::std::chrono::microseconds{0};
+        maxAnalysisTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -175,7 +175,7 @@ public:
 
     // Threat analysis
     ThreatAnalysis AnalyzeThreatSituation();
-    std::vector<ThreatTarget> GetSortedThreatTargets();
+    ::std::vector<ThreatTarget> GetSortedThreatTargets();
     ThreatTarget* GetPrimaryThreatTarget();
     ThreatTarget* GetSecondaryThreatTarget();
 
@@ -196,17 +196,17 @@ public:
     ThreatInfo const* GetThreatInfo(Unit* target) const;
 
     // Multi-target threat management
-    std::vector<Unit*> GetAllThreatTargets();
-    std::vector<Unit*> GetThreatTargetsByPriority(ThreatPriority priority);
+    ::std::vector<Unit*> GetAllThreatTargets();
+    ::std::vector<Unit*> GetThreatTargetsByPriority(ThreatPriority priority);
     uint32 GetThreatTargetCount() const;
 
     // Emergency threat handling
     bool IsInThreatEmergency() const;
-    std::vector<Unit*> GetEmergencyTargets();
+    ::std::vector<Unit*> GetEmergencyTargets();
     void HandleThreatEmergency();
 
     // Threat coordination (for group/raid scenarios)
-    void ShareThreatInformation(const std::vector<Player*>& groupMembers);
+    void ShareThreatInformation(const ::std::vector<Player*>& groupMembers);
     void ReceiveThreatInformation(ObjectGuid sourceBot, const ThreatInfo& info);
     void SynchronizeGroupThreat();
 
@@ -252,15 +252,15 @@ private:
     void UpdateCombatState();
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, const std::string& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
 
 private:
     Player* _bot;
     ThreatRole _botRole;
 
     // Threat storage
-    std::unordered_map<ObjectGuid, ThreatInfo> _threatMap;
-    std::unordered_map<ObjectGuid, std::vector<float>> _threatHistory;
+    ::std::unordered_map<ObjectGuid, ThreatInfo> _threatMap;
+    ::std::unordered_map<ObjectGuid, ::std::vector<float>> _threatHistory;
 
     // Configuration
     uint32 _updateInterval;
@@ -298,7 +298,7 @@ public:
     // Advanced threat calculations
     static float CalculatePositionalThreat(Player* bot, Unit* target);
     static float CalculateRoleThreat(ThreatRole role, Unit* target);
-    static float CalculateGroupThreat(const std::vector<Player*>& group, Unit* target);
+    static float CalculateGroupThreat(const ::std::vector<Player*>& group, Unit* target);
 
     // Threat modifiers
     static float GetClassThreatModifier(uint8 classId);

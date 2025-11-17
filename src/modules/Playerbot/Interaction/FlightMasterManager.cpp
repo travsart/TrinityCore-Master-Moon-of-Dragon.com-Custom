@@ -69,7 +69,7 @@ namespace Playerbot
             return false;
         }
         // Check if already known
-        if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
+    if (m_bot->m_taxi.IsTaximaskNodeKnown(nodeId))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Bot %s already knows taxi node %u",
                 m_bot->GetName().c_str(), nodeId);
@@ -77,7 +77,7 @@ namespace Playerbot
         }
 
         // Learn the taxi node
-        if (m_bot->m_taxi.SetTaximaskNode(nodeId))
+    if (m_bot->m_taxi.SetTaximaskNode(nodeId))
         {
             RecordPathLearned(nodeId);
 
@@ -110,7 +110,7 @@ namespace Playerbot
         }
 
         // Can't fly to same node
-        if (currentNodeId == destinationNodeId)
+    if (currentNodeId == destinationNodeId)
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Already at destination node %u", destinationNodeId);
             m_stats.flightFailures++;
@@ -130,7 +130,7 @@ namespace Playerbot
         }
 
         // Check if both nodes are known
-        if (!m_bot->m_taxi.IsTaximaskNodeKnown(currentNodeId))
+    if (!m_bot->m_taxi.IsTaximaskNodeKnown(currentNodeId))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Current node %u not known", currentNodeId);
             m_stats.pathNotKnown++;
@@ -147,7 +147,7 @@ namespace Playerbot
         }
 
         // Calculate route
-        std::vector<uint32> route;
+        ::std::vector<uint32> route;
         if (!CalculateRoute(fromNode, toNode, route))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: No route found from %u to %u",
@@ -160,7 +160,7 @@ namespace Playerbot
         uint32 cost = CalculateFlightCost(fromNode, toNode);
 
         // Check if bot can afford it
-        if (!CanAffordFlight(cost))
+    if (!CanAffordFlight(cost))
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: Bot %s cannot afford flight cost %u copper",
                 m_bot->GetName().c_str(), cost);
@@ -191,7 +191,7 @@ namespace Playerbot
             return false;
 
         // Get all reachable destinations
-        std::vector<FlightDestination> destinations = GetReachableDestinations(flightMaster);
+        ::std::vector<FlightDestination> destinations = GetReachableDestinations(flightMaster);
         if (destinations.empty())
         {
             TC_LOG_DEBUG("bot.playerbot", "FlightMasterManager: No reachable destinations from node %u", currentNodeId);
@@ -199,7 +199,7 @@ namespace Playerbot
         }
 
         // Evaluate each destination
-        std::vector<FlightPathEvaluation> evaluations;
+        ::std::vector<FlightPathEvaluation> evaluations;
         for (auto const& dest : destinations)
         {
             if (!dest.isKnown || dest.nodeId == currentNodeId)
@@ -219,7 +219,7 @@ namespace Playerbot
         }
 
         // Sort by priority (lowest value = highest priority)
-        std::sort(evaluations.begin(), evaluations.end(),
+        ::std::sort(evaluations.begin(), evaluations.end(),
             [](FlightPathEvaluation const& a, FlightPathEvaluation const& b)
             {
                 if (a.priority != b.priority)
@@ -262,15 +262,15 @@ namespace Playerbot
         return m_bot->m_taxi.IsTaximaskNodeKnown(nodeId);
     }
 
-    std::vector<uint32> FlightMasterManager::GetKnownFlightPaths() const
+    ::std::vector<uint32> FlightMasterManager::GetKnownFlightPaths() const
     {
-        std::vector<uint32> knownPaths;
+        ::std::vector<uint32> knownPaths;
 
         if (!m_bot)
             return knownPaths;
 
         // Iterate through all taxi nodes
-        for (TaxiNodesEntry const* node : sTaxiNodesStore)
+    for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (node && m_bot->m_taxi.IsTaximaskNodeKnown(node->ID))
                 knownPaths.push_back(node->ID);
@@ -279,9 +279,9 @@ namespace Playerbot
         return knownPaths;
     }
 
-    std::vector<FlightMasterManager::FlightDestination> FlightMasterManager::GetReachableDestinations(Creature* flightMaster) const
+    ::std::vector<FlightMasterManager::FlightDestination> FlightMasterManager::GetReachableDestinations(Creature* flightMaster) const
     {
-        std::vector<FlightDestination> destinations;
+        ::std::vector<FlightDestination> destinations;
 
         if (!flightMaster || !m_bot)
             return destinations;
@@ -299,7 +299,7 @@ namespace Playerbot
         TaxiPathGraph::GetReachableNodesMask(currentNode, &reachableNodes);
 
         // Build destination list
-        for (TaxiNodesEntry const* node : sTaxiNodesStore)
+    for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
             if (!node || node->ID == currentNodeId)
                 continue;
@@ -356,7 +356,7 @@ namespace Playerbot
         eval.priority = CalculateDestinationPriority(to->ID, to);
 
         // Generate reason
-        switch (eval.priority)
+    switch (eval.priority)
         {
             case DestinationPriority::QUEST_OBJECTIVE:
                 eval.reason = "Near quest objective location";
@@ -392,7 +392,7 @@ namespace Playerbot
         DestinationPriority priority = DestinationPriority::EXPLORATION;
 
         // Check if near quest objectives (highest priority)
-        if (IsNearQuestObjectives(nodeEntry))
+    if (IsNearQuestObjectives(nodeEntry))
         {
             priority = DestinationPriority::QUEST_OBJECTIVE;
         }
@@ -419,7 +419,7 @@ namespace Playerbot
         uint32 cost = FLIGHT_COST_BASE + static_cast<uint32>(distance * FLIGHT_COST_PER_YARD);
 
         // Apply level-based discount (higher level = slight discount)
-        if (m_bot)
+    if (m_bot)
         {
             uint32 level = m_bot->GetLevel();
             if (level >= 60)
@@ -460,7 +460,7 @@ namespace Playerbot
             return 0;
 
         uint32 nearestNode = 0;
-        float minDistance = std::numeric_limits<float>::max();
+        float minDistance = ::std::numeric_limits<float>::max();
 
         for (TaxiNodesEntry const* node : sTaxiNodesStore)
         {
@@ -471,7 +471,7 @@ namespace Playerbot
             float dx = node->Pos.X - targetX;
             float dy = node->Pos.Y - targetY;
             float dz = node->Pos.Z - targetZ;
-            float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+            float dist = ::std::sqrt(dx * dx + dy * dy + dz * dz);
 
             if (dist < minDistance)
             {
@@ -500,10 +500,10 @@ namespace Playerbot
             return 0;
 
         // Return capital city based on faction
-        if (m_bot->GetTeam() == ALLIANCE)
+    if (m_bot->GetTeam() == ALLIANCE)
         {
             // Alliance - prefer Stormwind or Ironforge
-            if (IsFlightPathKnown(STORMWIND_NODE))
+    if (IsFlightPathKnown(STORMWIND_NODE))
                 return STORMWIND_NODE;
             if (IsFlightPathKnown(IRONFORGE_NODE))
                 return IRONFORGE_NODE;
@@ -511,7 +511,7 @@ namespace Playerbot
         else
         {
             // Horde - prefer Orgrimmar or Undercity
-            if (IsFlightPathKnown(ORGRIMMAR_NODE))
+    if (IsFlightPathKnown(ORGRIMMAR_NODE))
                 return ORGRIMMAR_NODE;
             if (IsFlightPathKnown(UNDERCITY_NODE))
                 return UNDERCITY_NODE;
@@ -534,7 +534,7 @@ namespace Playerbot
         return sTaxiNodesStore.LookupEntry(nodeId);
     }
 
-    bool FlightMasterManager::CalculateRoute(TaxiNodesEntry const* from, TaxiNodesEntry const* to, std::vector<uint32>& route) const
+    bool FlightMasterManager::CalculateRoute(TaxiNodesEntry const* from, TaxiNodesEntry const* to, ::std::vector<uint32>& route) const
     {
         if (!from || !to || !m_bot)
             return false;
@@ -556,7 +556,7 @@ namespace Playerbot
         float dy = to->Pos.Y - from->Pos.Y;
         float dz = to->Pos.Z - from->Pos.Z;
 
-        return std::sqrt(dx * dx + dy * dy + dz * dz);
+        return ::std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     bool FlightMasterManager::IsAppropriateForLevel(TaxiNodesEntry const* nodeEntry) const
@@ -603,7 +603,7 @@ namespace Playerbot
         return GetFlightDestinationForTraining();
     }
 
-    bool FlightMasterManager::ExecuteFlight(std::vector<uint32> const& route, Creature* flightMaster)
+    bool FlightMasterManager::ExecuteFlight(::std::vector<uint32> const& route, Creature* flightMaster)
     {
         if (route.empty() || !flightMaster || !m_bot)
             return false;

@@ -61,10 +61,10 @@ class WorkerThread;
 struct DeadlockDetectorConfig
 {
     // Detection thresholds
-    std::chrono::milliseconds checkInterval{1000};        // How often to check (1 second)
-    std::chrono::milliseconds allWorkersSleepThreshold{2000};  // All workers sleeping
-    std::chrono::milliseconds majorityWorkersSleepThreshold{5000}; // >50% sleeping
-    std::chrono::milliseconds singleWorkerStuckThreshold{30000};   // Worker stuck in state
+    ::std::chrono::milliseconds checkInterval{1000};        // How often to check (1 second)
+    ::std::chrono::milliseconds allWorkersSleepThreshold{2000};  // All workers sleeping
+    ::std::chrono::milliseconds majorityWorkersSleepThreshold{5000}; // >50% sleeping
+    ::std::chrono::milliseconds singleWorkerStuckThreshold{30000};   // Worker stuck in state
     float majorityThreshold{0.5f};                        // Percentage for majority
 
     // Queue monitoring
@@ -75,7 +75,7 @@ struct DeadlockDetectorConfig
     bool enableAutoDump{true};                            // Auto-generate diagnostic dumps
     bool enableAutoRecovery{false};                       // Attempt automatic recovery
     bool enableConsoleAlerts{true};                       // Show console warnings
-    std::string dumpDirectory{"logs/threadpool/"};        // Where to save dumps
+    ::std::string dumpDirectory{"logs/threadpool/"};        // Where to save dumps
 
     // Logging thresholds
     uint32 maxConsecutiveWarnings{10};                    // Stop spamming after N warnings
@@ -96,8 +96,8 @@ struct DeadlockCheckResult
     };
 
     Severity severity{Severity::NONE};
-    std::string description;
-    std::vector<std::string> details;
+    ::std::string description;
+    ::std::vector<::std::string> details;
     bool requiresDump{false};
     bool requiresRecovery{false};
 
@@ -106,10 +106,10 @@ struct DeadlockCheckResult
     {
         uint32 workerId;
         WorkerState state;
-        std::chrono::milliseconds timeInState;
-        std::string issue;
+        ::std::chrono::milliseconds timeInState;
+        ::std::string issue;
     };
-    std::vector<WorkerIssue> workerIssues;
+    ::std::vector<WorkerIssue> workerIssues;
 
     // Queue statistics at detection time
     size_t totalQueuedTasks{0};
@@ -127,9 +127,9 @@ private:
     DeadlockDetectorConfig _config;
 
     // Detection thread
-    std::unique_ptr<std::thread> _detectorThread;
-    std::atomic<bool> _running{false};
-    std::atomic<bool> _paused{false};
+    ::std::unique_ptr<::std::thread> _detectorThread;
+    ::std::atomic<bool> _running{false};
+    ::std::atomic<bool> _paused{false};
 
     // Detection state
     struct DetectionState
@@ -137,26 +137,26 @@ private:
         uint32 consecutiveQueueGrowths{0};
         size_t lastQueueSize{0};
         uint64 lastCompletedTasks{0};
-        std::chrono::steady_clock::time_point lastCheckTime;
+        ::std::chrono::steady_clock::time_point lastCheckTime;
         uint32 warningCount{0};
-        std::chrono::steady_clock::time_point lastDumpTime;
+        ::std::chrono::steady_clock::time_point lastDumpTime;
     } _state;
 
     // Statistics
     struct Statistics
     {
-        std::atomic<uint64> checksPerformed{0};
-        std::atomic<uint64> deadlocksDetected{0};
-        std::atomic<uint64> warningsIssued{0};
-        std::atomic<uint64> dumpsGenerated{0};
-        std::atomic<uint64> recoveriesAttempted{0};
-        std::chrono::steady_clock::time_point startTime;
+        ::std::atomic<uint64> checksPerformed{0};
+        ::std::atomic<uint64> deadlocksDetected{0};
+        ::std::atomic<uint64> warningsIssued{0};
+        ::std::atomic<uint64> dumpsGenerated{0};
+        ::std::atomic<uint64> recoveriesAttempted{0};
+        ::std::chrono::steady_clock::time_point startTime;
     } _stats;
 
     // Callbacks for external notification
-    using DeadlockCallback = std::function<void(const DeadlockCheckResult&)>;
-    std::vector<DeadlockCallback> _callbacks;
-    std::mutex _callbackMutex;
+    using DeadlockCallback = ::std::function<void(const DeadlockCheckResult&)>;
+    ::std::vector<DeadlockCallback> _callbacks;
+    ::std::mutex _callbackMutex;
 
     // Optional debugging integrations (owned externally)
     DebuggerIntegration* _debuggerIntegration{nullptr};
@@ -211,7 +211,7 @@ public:
         uint64 warningsIssued;
         uint64 dumpsGenerated;
         uint64 recoveriesAttempted;
-        std::chrono::seconds uptime;
+        ::std::chrono::seconds uptime;
     };
     Stats GetStatistics() const;
 
@@ -300,12 +300,12 @@ private:
     /**
      * @brief Get worker diagnostics safely
      */
-    std::vector<std::pair<uint32, WorkerDiagnostics*>> GetWorkerDiagnostics();
+    ::std::vector<::std::pair<uint32, WorkerDiagnostics*>> GetWorkerDiagnostics();
 
     /**
      * @brief Format timestamp for file names
      */
-    std::string GetTimestampString() const;
+    ::std::string GetTimestampString() const;
 };
 
 /**

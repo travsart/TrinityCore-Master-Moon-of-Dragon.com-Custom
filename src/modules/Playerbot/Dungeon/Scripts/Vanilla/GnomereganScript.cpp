@@ -128,7 +128,7 @@ public:
             case 6235: // Electrocutioner 6000
             {
                 // Electrocutioner casts Chain Bolt (11975) - high priority interrupt
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -136,7 +136,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Chain Bolt (11975) - jumps to entire group
-                        if (spellId == 11975 || spellId == 12167)
+    if (spellId == 11975 || spellId == 12167)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -147,7 +147,7 @@ public:
                         }
 
                         // Static (6535) - also worth interrupting
-                        if (spellId == 6535)
+    if (spellId == 6535)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -186,7 +186,7 @@ public:
                 // Grubbis spawns radiation clouds on ground
                 // Must move out of radiation zones
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 15.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -252,7 +252,7 @@ public:
             case 7079: // Viscous Fallout
             {
                 // Fallout leaves slowing ooze on ground
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 12.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -329,7 +329,7 @@ public:
                 // These walking bombs MUST be killed immediately or they explode
                 // CRITICAL: Top priority over boss
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 for (::Creature* add : adds)
                 {
@@ -337,7 +337,7 @@ public:
                         continue;
 
                     // Bomb adds (entry 7915 - Walking Bomb)
-                    if (add->GetEntry() == 7915)
+    if (add->GetEntry() == 7915)
                     {
                         TC_LOG_DEBUG("module.playerbot", "GnomereganScript: PRIORITY - Targeting Thermaplugg's bomb add");
                         player->SetSelection(add->GetGUID());
@@ -354,7 +354,7 @@ public:
                 // Crowd Pummeler can summon alarm bots
                 // Kill quickly to prevent reinforcements
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {
@@ -479,7 +479,7 @@ public:
                         continue;
 
                     // Check for slowing effects (disease type)
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
                     {
                         TC_LOG_DEBUG("module.playerbot", "GnomereganScript: Dispelling slowing disease from Viscous Fallout");
                         // Dispel disease
@@ -503,7 +503,7 @@ public:
                         continue;
 
                     // Check for fear
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
                     {
                         TC_LOG_DEBUG("module.playerbot", "GnomereganScript: Player feared by Crowd Pummeler");
                         // Break fear with damage or tremor totem
@@ -570,7 +570,7 @@ public:
             case 7800: // Mekgineer Thermaplugg
             {
                 // Walking bombs - must kite away from them while killing
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 for (::Creature* add : adds)
                 {
@@ -578,12 +578,12 @@ public:
                         continue;
 
                     // Walking Bomb (7915)
-                    if (add->GetEntry() == 7915)
+    if (add->GetEntry() == 7915)
                     {
                         float distance = player->GetExactDist(add);
 
                         // If bomb is too close, move away while attacking
-                        if (distance < 5.0f)
+    if (distance < 5.0f)
                         {
                             TC_LOG_DEBUG("module.playerbot", "GnomereganScript: Kiting away from walking bomb");
 

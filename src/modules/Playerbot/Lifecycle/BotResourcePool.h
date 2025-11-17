@@ -55,20 +55,20 @@ public:
     void Update(uint32 diff) override;
 
     // Session pool management
-    std::shared_ptr<BotSession> AcquireSession(uint32 accountId) override;
-    void ReleaseSession(std::shared_ptr<BotSession> session) override;
+    ::std::shared_ptr<BotSession> AcquireSession(uint32 accountId) override;
+    void ReleaseSession(::std::shared_ptr<BotSession> session) override;
     void ReturnSession(ObjectGuid botGuid) override;
-    void AddSession(std::shared_ptr<BotSession> session) override;
+    void AddSession(::std::shared_ptr<BotSession> session) override;
 
     // Pool statistics for monitoring
     struct PoolStats
     {
-        std::atomic<uint32> sessionsCreated{0};
-        std::atomic<uint32> sessionsReused{0};
-        std::atomic<uint32> sessionsActive{0};
-        std::atomic<uint32> sessionsPooled{0};
-        std::atomic<uint32> poolHits{0};
-        std::atomic<uint32> poolMisses{0};
+        ::std::atomic<uint32> sessionsCreated{0};
+        ::std::atomic<uint32> sessionsReused{0};
+        ::std::atomic<uint32> sessionsActive{0};
+        ::std::atomic<uint32> sessionsPooled{0};
+        ::std::atomic<uint32> poolHits{0};
+        ::std::atomic<uint32> poolMisses{0};
 
         float GetHitRate() const {
             uint32 hits = poolHits.load();
@@ -103,14 +103,14 @@ public:
 private:
     // Session pool management
     void PreallocateSessions(uint32 count);
-    std::shared_ptr<BotSession> CreateFreshSession(uint32 accountId);
+    ::std::shared_ptr<BotSession> CreateFreshSession(uint32 accountId);
     void CleanupExpiredSessions();
-    bool IsSessionReusable(std::shared_ptr<BotSession> const& session);
+    bool IsSessionReusable(::std::shared_ptr<BotSession> const& session);
 
     // Pool data
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _poolMutex;
-    std::queue<std::shared_ptr<BotSession>> _sessionPool;
-    std::unordered_set<std::shared_ptr<BotSession>> _activeSessions;
+    ::std::queue<::std::shared_ptr<BotSession>> _sessionPool;
+    ::std::unordered_set<::std::shared_ptr<BotSession>> _activeSessions;
 
     // Pool configuration
     uint32 _maxPoolSize = 1000;
@@ -118,14 +118,14 @@ private:
     uint32 _initialPoolSize = 100;
 
     // Session cleanup tracking
-    std::chrono::steady_clock::time_point _lastCleanup;
+    ::std::chrono::steady_clock::time_point _lastCleanup;
     static constexpr uint32 CLEANUP_INTERVAL_MS = 30000; // 30 seconds
 
     // Statistics
     mutable PoolStats _stats;
 
     // Singleton
-    inline static std::unique_ptr<BotResourcePool> _instance;
+    inline static ::std::unique_ptr<BotResourcePool> _instance;
     inline static Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _instanceMutex;
 
     // Non-copyable

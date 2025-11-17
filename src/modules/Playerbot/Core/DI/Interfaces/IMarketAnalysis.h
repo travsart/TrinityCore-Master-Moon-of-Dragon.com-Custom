@@ -19,7 +19,20 @@ namespace Playerbot
 // Forward declarations
 struct MarketSnapshot;
 enum class MarketTrend : uint8;
-enum class MarketSegment : uint8;
+
+// Full enum definition needed for default argument
+enum class MarketSegment : uint8
+{
+    CONSUMABLES     = 0,
+    EQUIPMENT       = 1,
+    CRAFTING        = 2,
+    GEMS            = 3,
+    ENCHANTING      = 4,
+    COLLECTIBLES    = 5,
+    TRADE_GOODS     = 6,
+    QUEST_ITEMS     = 7
+};
+
 struct MarketMetrics;
 struct PriceAnalysis;
 struct MarketOpportunity;
@@ -35,7 +48,7 @@ public:
     virtual MarketSnapshot GetMarketSnapshot(uint32 itemId) = 0;
     virtual MarketTrend GetMarketTrend(uint32 itemId, uint32 daysBack = 7) = 0;
     virtual float GetPricePrediction(uint32 itemId, uint32 hoursAhead = 24) = 0;
-    virtual std::vector<uint32> GetTrendingItems(MarketSegment segment = MarketSegment::EQUIPMENT) = 0;
+    virtual ::std::vector<uint32> GetTrendingItems(MarketSegment segment = MarketSegment::EQUIPMENT) = 0;
 
     // Market intelligence
     virtual void AnalyzeMarketConditions() = 0;
@@ -52,13 +65,13 @@ public:
     virtual bool IsPriceAnomaly(uint32 itemId, uint32 price) = 0;
 
     // Market opportunity identification
-    virtual std::vector<MarketOpportunity> IdentifyOpportunities(Player* player, uint32 budgetLimit = 0) = 0;
+    virtual ::std::vector<MarketOpportunity> IdentifyOpportunities(Player* player, uint32 budgetLimit = 0) = 0;
     virtual bool IsGoodBuyingOpportunity(uint32 itemId, uint32 price) = 0;
     virtual bool IsGoodSellingOpportunity(uint32 itemId, uint32 price) = 0;
 
     // Competitive analysis
     virtual CompetitorAnalysis AnalyzeCompetition(uint32 itemId) = 0;
-    virtual std::vector<uint32> GetTopSellers(uint32 itemId, uint32 count = 5) = 0;
+    virtual ::std::vector<uint32> GetTopSellers(uint32 itemId, uint32 count = 5) = 0;
 
     // Market segment analysis
     virtual void AnalyzeMarketSegment(MarketSegment segment) = 0;

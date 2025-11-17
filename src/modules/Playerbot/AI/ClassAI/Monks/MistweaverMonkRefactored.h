@@ -21,13 +21,25 @@
 #include "Group.h"
 #include "Log.h"
 #include "../../Services/HealingTargetSelector.h"  // Phase 5B: Unified healing service
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // MISTWEAVER MONK SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -173,7 +185,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -243,7 +255,7 @@ private:
 // MISTWEAVER MONK REFACTORED
 // ============================================================================
 
-class MistweaverMonkRefactored : public HealerSpecialization<ManaResource>, public MonkSpecialization
+class MistweaverMonkRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -251,8 +263,8 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit MistweaverMonkRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        , MonkSpecialization(bot)
+    explicit MistweaverMonkRefactored(Player* bot)
+        : HealerSpecialization<ManaResource>(bot)
         , _renewingMistTracker()
         , _soothingMistTracker()
         , _thunderFocusTeaActive(false)
@@ -284,7 +296,7 @@ public:
         UpdateMistweaverState();
 
         // Get group members
-        std::vector<Unit*> group = GetGroupMembers();
+        ::std::vector<Unit*> group = GetGroupMembers();
         if (group.empty())
 
             return;
@@ -293,13 +305,8 @@ public:
         ExecuteHealingRotation(group);
     }
 
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 40.0f; // Ranged healer
-    }
-
 protected:
-    void ExecuteHealingRotation(const std::vector<Unit*>& group)
+    void ExecuteHealingRotation(const ::std::vector<Unit*>& group)
     {
         // Priority 1: Emergency healing
         if (HandleEmergencyHealing(group))
@@ -330,7 +337,7 @@ protected:
         HandleSoothingMist(group);
     }
 
-    bool HandleEmergencyHealing(const std::vector<Unit*>& group)
+    bool HandleEmergencyHealing(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
 
@@ -364,30 +371,30 @@ protected:
         if (lowHealthCount >= 3 && this->CanCastSpell(REVIVAL, bot))
         {
 
-            this->CastSpell(bot, REVIVAL);
+            this->CastSpell(REVIVAL, bot);
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-
-            {RENEWING_MIST, 8500, 1},
-
-            {ESSENCE_FONT, 12000, 1},
-
-            {LIFE_COCOON, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {REVIVAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {INVOKE_YULON, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {INVOKE_CHI_JI, CooldownPresets::MAJOR_OFFENSIVE, 1},
-
-            {THUNDER_FOCUS_TEA, CooldownPresets::OFFENSIVE_30, 1},
-
-            {FORTIFYING_BREW_MIST, 360000, 1},
-
-            {DIFFUSE_MAGIC_MIST, 90000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {RENEWING_MIST, 8500, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ESSENCE_FONT, 12000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {LIFE_COCOON, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {REVIVAL, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {INVOKE_YULON, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {INVOKE_CHI_JI, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {THUNDER_FOCUS_TEA, CooldownPresets::OFFENSIVE_30, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {FORTIFYING_BREW_MIST, 360000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIFFUSE_MAGIC_MIST, 90000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Mistweaver: Revival raid heal");
 
@@ -398,7 +405,7 @@ protected:
         if (lowHealthCount >= 2 && this->CanCastSpell(INVOKE_YULON, bot))
         {
 
-            this->CastSpell(bot, INVOKE_YULON);
+            this->CastSpell(INVOKE_YULON, bot);
 
             TC_LOG_DEBUG("playerbot", "Mistweaver: Invoke Yu'lon");
 
@@ -423,7 +430,7 @@ protected:
         return false;
     }
 
-    bool HandleThunderFocusTea(const std::vector<Unit*>& group)
+    bool HandleThunderFocusTea(const ::std::vector<Unit*>& group)
     {
         if (!_thunderFocusTeaActive)
         {
@@ -484,7 +491,7 @@ protected:
 
             {
 
-                this->CastSpell(target, RENEWING_MIST);
+                this->CastSpell(RENEWING_MIST, target);
 
                 _renewingMistTracker.AddTarget(target->GetGUID());
 
@@ -498,7 +505,7 @@ protected:
         return false;
     }
 
-    bool HandleReNewingMist(const std::vector<Unit*>& group)
+    bool HandleReNewingMist(const ::std::vector<Unit*>& group)
     {
         // Maintain Renewing Mist on targets
         uint32 activeCount = _renewingMistTracker.GetActiveCount();
@@ -534,7 +541,7 @@ protected:
         return false;
     }
 
-    bool HandleEssenceFont(const std::vector<Unit*>& group)
+    bool HandleEssenceFont(const ::std::vector<Unit*>& group)
     {
         // Use Essence Font for AoE healing
         uint32 injuredCount = 0;
@@ -559,7 +566,7 @@ protected:
         return false;
     }
 
-    bool HandleSingleTargetHealing(const std::vector<Unit*>& group)
+    bool HandleSingleTargetHealing(const ::std::vector<Unit*>& group)
     {
         Unit* target = SelectHealingTarget(group);
         if (!target)
@@ -572,7 +579,7 @@ protected:
         if (healthPct < 70.0f && this->CanCastSpell(ENVELOPING_MIST, target))
         {
 
-            this->CastSpell(target, ENVELOPING_MIST);
+            this->CastSpell(ENVELOPING_MIST, target);
 
             return true;
         }
@@ -581,7 +588,7 @@ protected:
         if (healthPct < 80.0f && this->CanCastSpell(VIVIFY, target))
         {
 
-            this->CastSpell(target, VIVIFY);
+            this->CastSpell(VIVIFY, target);
 
             return true;
         }
@@ -589,7 +596,7 @@ protected:
         return false;
     }
 
-    bool HandleSoothingMist(const std::vector<Unit*>& group)    {
+    bool HandleSoothingMist(const ::std::vector<Unit*>& group)    {
         // If not channeling, start on lowest target
         if (!_soothingMistTracker.IsChanneling())
         {
@@ -603,7 +610,7 @@ protected:
 
                 {
 
-                    this->CastSpell(target, SOOTHING_MIST);
+                    this->CastSpell(SOOTHING_MIST, target);
 
                     _soothingMistTracker.StartChannel(target->GetGUID());
 
@@ -617,9 +624,9 @@ protected:
         {
             // Check if channel target still needs healing
 
-            ObjectGuid targetGuid = _soothingMistTracker.this->GetTarget();
+            ObjectGuid targetGuid = _soothingMistTracker.GetTarget();
 
-            Unit* target = this->GetBot()->GetMap()->GetUnit(targetGuid);
+            Unit* target = ObjectAccessor::GetUnit(*this->GetBot(), targetGuid);
 
 
             if (!target || target->GetHealthPct() > 95.0f)
@@ -643,7 +650,7 @@ protected:
 
                 {
 
-                    this->CastSpell(target, VIVIFY);
+                    this->CastSpell(VIVIFY, target);
 
                     return true;
 
@@ -679,7 +686,7 @@ private:
             this->_resource.mana = this->GetBot()->GetPower(POWER_MANA);
     }
 
-    Unit* SelectHealingTarget(const std::vector<Unit*>& group)
+    Unit* SelectHealingTarget(const ::std::vector<Unit*>& group)
     {
         // Use unified HealingTargetSelector service (Phase 5B integration)
         // Eliminates 15+ lines of duplicated healing target logic
@@ -691,11 +698,9 @@ private:
     // ========================================================================
 
     void InitializeMistweaverMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -938,7 +943,7 @@ private:
 
                 Sequence("Emergency Healing", {
 
-                    Condition("3+ critical", [this](Player*) {
+                    Condition("3+ critical", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -954,11 +959,11 @@ private:
 
                         Sequence("Revival", {
 
-                            Action("Cast Revival", [this](Player* bot) {
+                            bot::ai::Action("Cast Revival", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(REVIVAL, bot)) {
 
-                                    this->CastSpell(bot, REVIVAL);
+                                    this->CastSpell(REVIVAL, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -972,7 +977,7 @@ private:
 
                         Sequence("Life Cocoon", {
 
-                            Condition("Ally < 30%", [this](Player*) {
+                            Condition("Ally < 30%", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -982,7 +987,7 @@ private:
 
                             }),
 
-                            Action("Cast Life Cocoon", [this](Player*) {
+                            bot::ai::Action("Cast Life Cocoon", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -990,7 +995,7 @@ private:
 
                                     if (m && m->GetHealthPct() < 30.0f && this->CanCastSpell(LIFE_COCOON, m)) {
 
-                                        this->CastSpell(m, LIFE_COCOON);
+                                        this->CastSpell(LIFE_COCOON, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1012,7 +1017,7 @@ private:
 
                 Sequence("Major Cooldowns", {
 
-                    Condition("3+ injured", [this](Player*) {
+                    Condition("3+ injured", [this](Player*, Unit*) {
 
                         auto group = this->GetGroupMembers();
 
@@ -1028,17 +1033,17 @@ private:
 
                         Sequence("Invoke Yu'lon", {
 
-                            Condition("Has spell", [this](Player* bot) {
+                            Condition("Has spell", [this](Player* bot, Unit*) {
 
                                 return bot->HasSpell(INVOKE_YULON);
 
                             }),
 
-                            Action("Cast Yu'lon", [this](Player* bot) {
+                            bot::ai::Action("Cast Yu'lon", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(INVOKE_YULON, bot)) {
 
-                                    this->CastSpell(bot, INVOKE_YULON);
+                                    this->CastSpell(INVOKE_YULON, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1052,7 +1057,7 @@ private:
 
                         Sequence("Essence Font", {
 
-                            Condition("4+ injured", [this](Player*) {
+                            Condition("4+ injured", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1064,19 +1069,19 @@ private:
 
                             }),
 
-                            Condition("Has mana", [this](Player* bot) {
+                            Condition("Has mana", [this](Player* bot, Unit*) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            Action("Cast Essence Font", [this](Player* bot) {
+                            bot::ai::Action("Cast Essence Font", [this](Player* bot, Unit* target) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
                                 if (target && this->CanCastSpell(ESSENCE_FONT, target)) {
 
-                                    this->CastSpell(target, ESSENCE_FONT);
+                                    this->CastSpell(ESSENCE_FONT, target);
 
                                     this->_lastEssenceFontTime = GameTime::GetGameTimeMS();
 
@@ -1102,7 +1107,7 @@ private:
 
                         Sequence("Renewing Mist", {
 
-                            Condition("< 3 active", [this](Player*) {
+                            Condition("< 3 active", [this](Player*, Unit*) {
 
                                 uint32 active = this->_renewingMistTracker.GetActiveCount();
 
@@ -1112,13 +1117,13 @@ private:
 
                             }),
 
-                            Action("Cast Renewing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Renewing Mist", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
                                 if (target && this->CanCastSpell(RENEWING_MIST, target)) {
 
-                                    this->CastSpell(target, RENEWING_MIST);
+                                    this->CastSpell(RENEWING_MIST, target);
 
                                     this->_renewingMistTracker.AddTarget(target->GetGUID());
 
@@ -1134,13 +1139,13 @@ private:
 
                         Sequence("Enveloping Mist", {
 
-                            Condition("Has mana", [this](Player* bot) {
+                            Condition("Has mana", [this](Player* bot, Unit*) {
 
                                 return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
                             }),
 
-                            Action("Cast Enveloping Mist", [this](Player*) {
+                            bot::ai::Action("Cast Enveloping Mist", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1150,7 +1155,7 @@ private:
 
                                         if (this->CanCastSpell(ENVELOPING_MIST, m)) {
 
-                                            this->CastSpell(m, ENVELOPING_MIST);
+                                            this->CastSpell(ENVELOPING_MIST, m);
 
                                             return NodeStatus::SUCCESS;
 
@@ -1174,7 +1179,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Condition("Has mana", [this](Player* bot) {
+                    Condition("Has mana", [this](Player* bot, Unit*) {
 
                         return bot && bot->GetPowerPct(POWER_MANA) >= 10.0f;
 
@@ -1184,7 +1189,7 @@ private:
 
                         Sequence("Vivify", {
 
-                            Condition("Ally < 75%", [this](Player*) {
+                            Condition("Ally < 75%", [this](Player*, Unit*) {
 
                                 auto group = this->GetGroupMembers();
 
@@ -1194,13 +1199,13 @@ private:
 
                             }),
 
-                            Action("Cast Vivify", [this](Player*) {
+                            bot::ai::Action("Cast Vivify", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
                                 if (target && this->CanCastSpell(VIVIFY, target)) {
 
-                                    this->CastSpell(target, VIVIFY);
+                                    this->CastSpell(VIVIFY, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1214,19 +1219,19 @@ private:
 
                         Sequence("Soothing Mist", {
 
-                            Condition("Not channeling", [this](Player*) {
+                            Condition("Not channeling", [this](Player*, Unit*) {
 
                                 return !this->_soothingMistTracker.IsChanneling();
 
                             }),
 
-                            Action("Cast Soothing Mist", [this](Player*) {
+                            bot::ai::Action("Cast Soothing Mist", [this](Player*, Unit*) {
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
                                 if (target && this->CanCastSpell(SOOTHING_MIST, target)) {
 
-                                    this->CastSpell(target, SOOTHING_MIST);
+                                    this->CastSpell(SOOTHING_MIST, target);
 
                                     this->_soothingMistTracker.StartChannel(target->GetGUID());
 
@@ -1249,6 +1254,27 @@ private:
 
             behaviorTree->SetRoot(root);
         }
+    }
+
+    [[nodiscard]] ::std::vector<Unit*> GetGroupMembers() const
+    {
+        ::std::vector<Unit*> members;
+        Player* bot = this->GetBot();
+        if (!bot) return members;
+
+        Group* group = bot->GetGroup();
+        if (!group) return members;
+
+        for (GroupReference const& ref : group->GetMembers())
+        {
+            if (Player* member = ref.GetSource())
+            {
+                if (member->IsAlive() && bot->IsInMap(member))
+                    members.push_back(member);
+            }
+        }
+
+        return members;
     }
 
 private:

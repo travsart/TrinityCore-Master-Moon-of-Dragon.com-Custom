@@ -65,8 +65,8 @@ struct PerformanceThresholds
  */
 struct PerformanceBenchmark
 {
-    std::string testName;
-    std::string category;
+    ::std::string testName;
+    ::std::string category;
 
     // Timing metrics
     uint64 averageResponseTime = 0;
@@ -90,7 +90,7 @@ struct PerformanceBenchmark
     uint32 totalTests = 0;
     uint32 passedTests = 0;
     uint32 failedTests = 0;
-    std::vector<std::string> failures;
+    ::std::vector<::std::string> failures;
 
     // Calculated metrics
     float GetSuccessRate() const { return totalOperations > 0 ? (float)successfulOperations / totalOperations : 0.0f; }
@@ -131,10 +131,10 @@ struct SystemHealthMetrics
     uint32 totalErrors = 0;
     uint32 criticalErrors = 0;
     uint32 warnings = 0;
-    std::vector<std::string> recentErrors;
+    ::std::vector<::std::string> recentErrors;
 
     bool IsHealthy(const PerformanceThresholds& thresholds) const;
-    std::string GetHealthSummary() const;
+    ::std::string GetHealthSummary() const;
 };
 
 /**
@@ -150,7 +150,7 @@ public:
     // Threshold management
     void SetThresholds(const PerformanceThresholds& thresholds);
     const PerformanceThresholds& GetThresholds() const;
-    void UpdateThreshold(const std::string& metric, double value);
+    void UpdateThreshold(const ::std::string& metric, double value);
 
     // Validation methods
     bool ValidateTimingMetrics(const PerformanceMetrics& metrics) const;
@@ -161,37 +161,37 @@ public:
 
     // Comprehensive validation
     bool ValidateAllMetrics(const PerformanceMetrics& metrics, uint32 botCount = 0) const;
-    std::vector<std::string> GetValidationFailures(const PerformanceMetrics& metrics, uint32 botCount = 0) const;
+    ::std::vector<::std::string> GetValidationFailures(const PerformanceMetrics& metrics, uint32 botCount = 0) const;
 
     // Benchmark management
     void RecordBenchmark(const PerformanceBenchmark& benchmark);
-    std::vector<PerformanceBenchmark> GetBenchmarks(const std::string& category = "") const;
-    PerformanceBenchmark GetAggregatedBenchmark(const std::string& category) const;
+    ::std::vector<PerformanceBenchmark> GetBenchmarks(const ::std::string& category = "") const;
+    PerformanceBenchmark GetAggregatedBenchmark(const ::std::string& category) const;
 
     // System health monitoring
     SystemHealthMetrics GetCurrentSystemHealth() const;
     bool ValidateSystemHealth() const;
-    std::string GenerateHealthReport() const;
+    ::std::string GenerateHealthReport() const;
 
     // Performance analysis
     void AnalyzePerformanceTrends();
-    std::string GeneratePerformanceReport() const;
-    void ExportBenchmarkData(const std::string& filename) const;
-    void ImportBenchmarkData(const std::string& filename);
+    ::std::string GeneratePerformanceReport() const;
+    void ExportBenchmarkData(const ::std::string& filename) const;
+    void ImportBenchmarkData(const ::std::string& filename);
 
     // Threshold recommendations
-    PerformanceThresholds RecommendThresholds(const std::vector<PerformanceBenchmark>& benchmarks) const;
+    PerformanceThresholds RecommendThresholds(const ::std::vector<PerformanceBenchmark>& benchmarks) const;
     void AutoTuneThresholds(float confidenceLevel = 0.95f);
 
 private:
     PerformanceThresholds m_thresholds;
-    std::vector<PerformanceBenchmark> m_benchmarks;
-    std::unordered_map<std::string, std::vector<double>> m_performanceTrends;
+    ::std::vector<PerformanceBenchmark> m_benchmarks;
+    ::std::unordered_map<::std::string, ::std::vector<double>> m_performanceTrends;
 
     // Internal validation helpers
-    bool ValidateTimingThreshold(uint64 actualTime, uint64 threshold, const std::string& metric) const;
-    bool ValidateMemoryThreshold(uint64 actualMemory, uint64 threshold, const std::string& metric) const;
-    bool ValidateCpuThreshold(float actualCpu, float threshold, const std::string& metric) const;
+    bool ValidateTimingThreshold(uint64 actualTime, uint64 threshold, const ::std::string& metric) const;
+    bool ValidateMemoryThreshold(uint64 actualMemory, uint64 threshold, const ::std::string& metric) const;
+    bool ValidateCpuThreshold(float actualCpu, float threshold, const ::std::string& metric) const;
 
     // System monitoring helpers
     uint64 GetCurrentMemoryUsage() const;
@@ -200,9 +200,9 @@ private:
     uint32 GetDatabaseMetrics() const;
 
     // Statistical analysis
-    std::vector<double> CalculatePercentiles(std::vector<uint64> values) const;
-    double CalculateStandardDeviation(const std::vector<double>& values) const;
-    bool IsOutlier(double value, const std::vector<double>& dataset, double threshold = 2.0) const;
+    ::std::vector<double> CalculatePercentiles(::std::vector<uint64> values) const;
+    double CalculateStandardDeviation(const ::std::vector<double>& values) const;
+    bool IsOutlier(double value, const ::std::vector<double>& dataset, double threshold = 2.0) const;
 };
 
 /**
@@ -216,54 +216,54 @@ public:
     ~PerformanceProfiler();
 
     // Profiling control
-    void StartProfiling(const std::string& sessionName);
+    void StartProfiling(const ::std::string& sessionName);
     void StopProfiling();
     bool IsProfilingActive() const;
 
     // Metric collection
-    void RecordOperation(const std::string& operationType, uint64 duration);
+    void RecordOperation(const ::std::string& operationType, uint64 duration);
     void RecordMemorySnapshot(uint64 memoryUsage);
     void RecordCpuSnapshot(float cpuUsage);
-    void RecordCustomMetric(const std::string& metricName, double value);
+    void RecordCustomMetric(const ::std::string& metricName, double value);
 
     // Analysis methods
     PerformanceBenchmark GenerateBenchmark() const;
-    std::string GenerateDetailedReport() const;
+    ::std::string GenerateDetailedReport() const;
     void IdentifyBottlenecks();
-    std::vector<std::string> GetOptimizationSuggestions() const;
+    ::std::vector<::std::string> GetOptimizationSuggestions() const;
 
     // Real-time monitoring
     void SetRealTimeThresholds(const PerformanceThresholds& thresholds);
-    void EnableRealTimeAlerting(std::function<void(const std::string&)> callback);
+    void EnableRealTimeAlerting(::std::function<void(const ::std::string&)> callback);
     void CheckRealTimeThresholds();
 
     // Data export/import
-    void ExportProfilingData(const std::string& filename) const;
-    bool ImportProfilingData(const std::string& filename);
+    void ExportProfilingData(const ::std::string& filename) const;
+    bool ImportProfilingData(const ::std::string& filename);
 
 private:
     struct ProfilingSession
     {
-        std::string name;
-        std::chrono::high_resolution_clock::time_point startTime;
-        std::chrono::high_resolution_clock::time_point endTime;
-        std::unordered_map<std::string, std::vector<uint64>> operationTimes;
-        std::vector<uint64> memorySnapshots;
-        std::vector<float> cpuSnapshots;
-        std::unordered_map<std::string, std::vector<double>> customMetrics;
+        ::std::string name;
+        ::std::chrono::high_resolution_clock::time_point startTime;
+        ::std::chrono::high_resolution_clock::time_point endTime;
+        ::std::unordered_map<::std::string, ::std::vector<uint64>> operationTimes;
+        ::std::vector<uint64> memorySnapshots;
+        ::std::vector<float> cpuSnapshots;
+        ::std::unordered_map<::std::string, ::std::vector<double>> customMetrics;
     };
 
     bool m_profilingActive = false;
-    std::unique_ptr<ProfilingSession> m_currentSession;
+    ::std::unique_ptr<ProfilingSession> m_currentSession;
     PerformanceThresholds m_realTimeThresholds;
-    std::function<void(const std::string&)> m_alertCallback;
+    ::std::function<void(const ::std::string&)> m_alertCallback;
 
     // Analysis helpers
     void AnalyzeOperationPerformance();
     void AnalyzeResourceUsage();
     void AnalyzeTrendData();
-    std::vector<std::string> m_optimizationSuggestions;
-    std::vector<std::string> m_identifiedBottlenecks;
+    ::std::vector<::std::string> m_optimizationSuggestions;
+    ::std::vector<::std::string> m_identifiedBottlenecks;
 };
 
 /**
@@ -293,8 +293,8 @@ public:
     bool RunSpikeTest();
 
     // Results and analysis
-    std::vector<PerformanceBenchmark> GetLoadTestResults() const;
-    std::string GenerateLoadTestReport() const;
+    ::std::vector<PerformanceBenchmark> GetLoadTestResults() const;
+    ::std::string GenerateLoadTestReport() const;
     bool ValidateLoadTestResults(const PerformanceValidator& validator) const;
 
     // Configuration
@@ -303,8 +303,8 @@ public:
 
 private:
     LoadTestConfig m_config;
-    std::vector<PerformanceBenchmark> m_loadTestResults;
-    std::unique_ptr<PerformanceProfiler> m_profiler;
+    ::std::vector<PerformanceBenchmark> m_loadTestResults;
+    ::std::unique_ptr<PerformanceProfiler> m_profiler;
 
     // Load test implementations
     bool ExecuteRampUp(uint32 targetBots, uint32 rampTimeSeconds);
@@ -322,7 +322,7 @@ private:
     EXPECT_TRUE(validator.ValidateAllMetrics(metrics, botCount)) \
     << "Performance validation failed: " << [&]() { \
         auto failures = validator.GetValidationFailures(metrics, botCount); \
-        std::string result; \
+        ::std::string result; \
         for (const auto& failure : failures) result += failure + "; "; \
         return result; \
     }()

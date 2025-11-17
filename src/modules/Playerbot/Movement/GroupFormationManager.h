@@ -80,11 +80,11 @@ namespace Playerbot
     struct FormationLayout
     {
         FormationType type;                         ///< Formation type
-        std::vector<FormationPosition> positions;   ///< All positions in formation
+        ::std::vector<FormationPosition> positions;   ///< All positions in formation
         float spacing;                              ///< Distance between positions (yards)
         float width;                                ///< Formation width (yards)
         float depth;                                ///< Formation depth (yards)
-        std::string description;                    ///< Formation description
+        ::std::string description;                    ///< Formation description
 
         FormationLayout()
             : type(FormationType::WEDGE), spacing(3.0f),
@@ -195,9 +195,9 @@ namespace Playerbot
          * Performance: < 0.5ms for 40 bots
          * Thread-safety: Thread-safe (read-only bot access)
          */
-        [[nodiscard]] static std::vector<BotFormationAssignment> AssignBotsToFormation(
+        [[nodiscard]] static ::std::vector<BotFormationAssignment> AssignBotsToFormation(
             Player const* leader,
-            std::vector<Player*> const& bots,
+            ::std::vector<Player*> const& bots,
             FormationLayout const& formation);
 
         /**

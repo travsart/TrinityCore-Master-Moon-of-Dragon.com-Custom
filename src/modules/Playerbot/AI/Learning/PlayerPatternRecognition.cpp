@@ -26,7 +26,7 @@ namespace Playerbot
 {
 
 // Helper functions
-float CosineSimilarity(const std::vector<float>& a, const std::vector<float>& b)
+float CosineSimilarity(const ::std::vector<float>& a, const ::std::vector<float>& b)
 {
     if (a.size() != b.size() || a.empty())
         return 0.0f;
@@ -45,13 +45,13 @@ float CosineSimilarity(const std::vector<float>& a, const std::vector<float>& b)
     if (normA == 0.0f || normB == 0.0f)
         return 0.0f;
 
-    return dotProduct / (std::sqrt(normA) * std::sqrt(normB));
+    return dotProduct / (::std::sqrt(normA) * ::std::sqrt(normB));
 }
 
-float EuclideanDistance(const std::vector<float>& a, const std::vector<float>& b)
+float EuclideanDistance(const ::std::vector<float>& a, const ::std::vector<float>& b)
 {
     if (a.size() != b.size())
-        return std::numeric_limits<float>::max();
+        return ::std::numeric_limits<float>::max();
 
     float sum = 0.0f;
     for (size_t i = 0; i < a.size(); ++i)
@@ -59,11 +59,11 @@ float EuclideanDistance(const std::vector<float>& a, const std::vector<float>& b
         float diff = a[i] - b[i];
         sum += diff * diff;
     }
-    return std::sqrt(sum);
+    return ::std::sqrt(sum);
 }
 
 // PatternSignature Implementation
-float PatternSignature::CalculateSimilarity(const std::vector<float>& other) const
+float PatternSignature::CalculateSimilarity(const ::std::vector<float>& other) const
 {
     return CosineSimilarity(features, other);
 }
@@ -104,7 +104,7 @@ void PlayerProfile::AddSample(const BehaviorSample& sample)
         _spellUsageCounts[sample.spellId]++;
 
         // Track spell sequences
-        if (!_samples.empty() && _samples.size() >= 2)
+    if (!_samples.empty() && _samples.size() >= 2)
         {
             auto prevSample = _samples[_samples.size() - 2];
             if (prevSample.spellId != 0)
@@ -125,9 +125,9 @@ void PlayerProfile::AddSample(const BehaviorSample& sample)
 
         // Calculate speed
         float timeDelta = (sample.timestamp - prev.timestamp) / 1000000.0f; // Convert to seconds
-        if (timeDelta > 0)
+    if (timeDelta > 0)
         {
-            float distance = std::sqrt(dx*dx + dy*dy + dz*dz);
+            float distance = ::std::sqrt(dx*dx + dy*dy + dz*dz);
             float speed = distance / timeDelta;
             _averageSpeed = _averageSpeed * 0.95f + speed * 0.05f; // Exponential moving average
         }
@@ -159,7 +159,7 @@ void PlayerProfile::UpdateArchetype()
     _archetype = ClassifyArchetype();
 
     // Calculate confidence based on sample size and consistency
-    float sampleConfidence = std::min(1.0f, _samples.size() / 100.0f);
+    float sampleConfidence = ::std::min(1.0f, _samples.size() / 100.0f);
     float consistencyFactor = 1.0f; // Could be calculated based on variance in metrics
     _archetypeConfidence = sampleConfidence * consistencyFactor;
 }
@@ -192,7 +192,7 @@ void PlayerProfile::ExtractMovementPatterns()
 
     // Calculate position entropy (measure of randomness)
     // Higher entropy = more unpredictable movement
-    _positionEntropy = std::log(1.0f + _movementVariance);
+    _positionEntropy = ::std::log(1.0f + _movementVariance);
 }
 
 void PlayerProfile::ExtractAbilityPatterns()
@@ -201,8 +201,8 @@ void PlayerProfile::ExtractAbilityPatterns()
         return;
 
     // Find most common spells
-    std::vector<std::pair<uint32_t, uint32_t>> sortedSpells(_spellUsageCounts.begin(), _spellUsageCounts.end());
-    std::sort(sortedSpells.begin(), sortedSpells.end(),
+    ::std::vector<::std::pair<uint32_t, uint32_t>> sortedSpells(_spellUsageCounts.begin(), _spellUsageCounts.end());
+    ::std::sort(sortedSpells.begin(), sortedSpells.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     // Create ability pattern signature
@@ -210,10 +210,10 @@ void PlayerProfile::ExtractAbilityPatterns()
     abilitySig.type = PatternType::ABILITY_USAGE;
     abilitySig.confidence = _archetypeConfidence;
     abilitySig.occurrences = _samples.size();
-    abilitySig.lastSeen = std::chrono::steady_clock::now();
+    abilitySig.lastSeen = ::std::chrono::steady_clock::now();
 
     // Build feature vector from top spells
-    for (size_t i = 0; i < std::min<size_t>(10, sortedSpells.size()); ++i)
+    for (size_t i = 0; i < ::std::min<size_t>(10, sortedSpells.size()); ++i)
     {
         abilitySig.features.push_back(static_cast<float>(sortedSpells[i].first));
         abilitySig.features.push_back(static_cast<float>(sortedSpells[i].second) / _samples.size());
@@ -224,8 +224,8 @@ void PlayerProfile::ExtractAbilityPatterns()
     // Detect combo sequences
     if (_spellSequences.size() >= 5)
     {
-        std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
-            [](const std::pair<uint32_t, uint32_t>& p) {
+        ::std::unordered_map<::std::pair<uint32_t, uint32_t>, uint32_t,
+            [](const ::std::pair<uint32_t, uint32_t>& p) {
                 return p.first ^ (p.second << 16);
             }> sequenceCounts;
 
@@ -406,7 +406,7 @@ uint32_t PlayerProfile::PredictNextSpell() const
         return 0;
 
     // Find most likely next spell based on sequences
-    std::unordered_map<uint32_t, uint32_t> nextSpellCounts;
+    ::std::unordered_map<uint32_t, uint32_t> nextSpellCounts;
     for (const auto& seq : _spellSequences)
     {
         if (seq.first == lastSpell)
@@ -417,7 +417,7 @@ uint32_t PlayerProfile::PredictNextSpell() const
         return 0;
 
     // Return most frequent next spell
-    auto maxIt = std::max_element(nextSpellCounts.begin(), nextSpellCounts.end(),
+    auto maxIt = ::std::max_element(nextSpellCounts.begin(), nextSpellCounts.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; });
 
     return maxIt->first;
@@ -440,7 +440,7 @@ Position PlayerProfile::PredictNextPosition(float deltaTime) const
     if (_movementVectors.size() >= 5)
     {
         float avgDx = 0, avgDy = 0, avgDz = 0;
-        size_t count = std::min<size_t>(5, _movementVectors.size());
+        size_t count = ::std::min<size_t>(5, _movementVectors.size());
 
         for (size_t i = _movementVectors.size() - count; i < _movementVectors.size(); ++i)
         {
@@ -475,11 +475,11 @@ float PlayerProfile::CalculateSimilarity(const PlayerProfile& other) const
 
     // Compare behavioral metrics
     float metricsSim = 0.0f;
-    metricsSim += 1.0f - std::abs(_averageAPM - other._averageAPM) / 100.0f;
-    metricsSim += 1.0f - std::abs(_movementVariance - other._movementVariance) / 200.0f;
-    metricsSim += 1.0f - std::abs(_targetSwitchRate - other._targetSwitchRate) / 10.0f;
-    metricsSim += 1.0f - std::abs(_defensiveReactivity - other._defensiveReactivity);
-    metricsSim += 1.0f - std::abs(_aggressionLevel - other._aggressionLevel);
+    metricsSim += 1.0f - ::std::abs(_averageAPM - other._averageAPM) / 100.0f;
+    metricsSim += 1.0f - ::std::abs(_movementVariance - other._movementVariance) / 200.0f;
+    metricsSim += 1.0f - ::std::abs(_targetSwitchRate - other._targetSwitchRate) / 10.0f;
+    metricsSim += 1.0f - ::std::abs(_defensiveReactivity - other._defensiveReactivity);
+    metricsSim += 1.0f - ::std::abs(_aggressionLevel - other._aggressionLevel);
     metricsSim /= 5.0f;
 
     similarity += metricsSim * 0.4f;
@@ -500,7 +500,7 @@ float PlayerProfile::CalculateSimilarity(const PlayerProfile& other) const
     if (!_spellUsageCounts.empty() && !other._spellUsageCounts.empty())
     {
         spellSim = static_cast<float>(commonSpells) /
-                  std::max(_spellUsageCounts.size(), other._spellUsageCounts.size());
+                  ::std::max(_spellUsageCounts.size(), other._spellUsageCounts.size());
     }
 
     similarity += spellSim * 0.3f;
@@ -513,7 +513,7 @@ float PlayerProfile::CalculateSimilarity(const PlayerProfile& other) const
 BehaviorCluster::BehaviorCluster() = default;
 BehaviorCluster::~BehaviorCluster() = default;
 
-void BehaviorCluster::AddProfile(std::shared_ptr<PlayerProfile> profile)
+void BehaviorCluster::AddProfile(::std::shared_ptr<PlayerProfile> profile)
 {
     if (!profile)
         return;
@@ -550,13 +550,13 @@ void BehaviorCluster::InitializeCentroids()
     _clusters.resize(_k);
 
     // K-means++ initialization
-    std::vector<std::shared_ptr<PlayerProfile>> profileVec;
+    ::std::vector<::std::shared_ptr<PlayerProfile>> profileVec;
     for (const auto& [guid, profile] : _profiles)
         profileVec.push_back(profile);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, profileVec.size() - 1);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_int_distribution<> dis(0, profileVec.size() - 1);
 
     // Choose first centroid randomly
     _clusters[0].centroid = profileVec[dis(gen)];
@@ -564,22 +564,22 @@ void BehaviorCluster::InitializeCentroids()
     // Choose remaining centroids with probability proportional to distance
     for (uint32_t i = 1; i < _k; ++i)
     {
-        std::vector<float> distances;
+        ::std::vector<float> distances;
         float totalDistance = 0;
 
         for (const auto& profile : profileVec)
         {
-            float minDist = std::numeric_limits<float>::max();
+            float minDist = ::std::numeric_limits<float>::max();
             for (uint32_t j = 0; j < i; ++j)
             {
                 float dist = 1.0f - profile->CalculateSimilarity(*_clusters[j].centroid);
-                minDist = std::min(minDist, dist);
+                minDist = ::std::min(minDist, dist);
             }
             distances.push_back(minDist * minDist);
             totalDistance += minDist * minDist;
         }
 
-        std::discrete_distribution<> weightedDis(distances.begin(), distances.end());
+        ::std::discrete_distribution<> weightedDis(distances.begin(), distances.end());
         _clusters[i].centroid = profileVec[weightedDis(gen)];
     }
 }
@@ -632,7 +632,7 @@ bool PlayerPatternRecognition::Initialize()
 
     TC_LOG_INFO("playerbot.pattern", "Initializing Player Pattern Recognition System");
 
-    _behaviorCluster = std::make_unique<BehaviorCluster>();
+    _behaviorCluster = ::std::make_unique<BehaviorCluster>();
 
     _initialized = true;
     TC_LOG_INFO("playerbot.pattern", "Player Pattern Recognition System initialized successfully");
@@ -646,8 +646,8 @@ void PlayerPatternRecognition::Shutdown()
 
     TC_LOG_INFO("playerbot.pattern", "Shutting down Player Pattern Recognition System");
 
-    std::lock_guard profileLock(_profilesMutex);
-    std::lock_guard clusterLock(_clusterMutex);
+    ::std::lock_guard profileLock(_profilesMutex);
+    ::std::lock_guard clusterLock(_clusterMutex);
 
     _profiles.clear();
     _behaviorCluster.reset();
@@ -664,27 +664,27 @@ void PlayerPatternRecognition::CreateProfile(Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     ObjectGuid guid = player->GetGUID();
     if (_profiles.find(guid) == _profiles.end())
     {
-        auto profile = std::make_shared<PlayerProfile>(guid);
+        auto profile = ::std::make_shared<PlayerProfile>(guid);
         _profiles[guid] = profile;
         _metrics.profilesTracked++;
 
         // Add to clustering system
-        if (_behaviorCluster)
+    if (_behaviorCluster)
         {
-            std::lock_guard clusterLock(_clusterMutex);
+            ::std::lock_guard clusterLock(_clusterMutex);
             _behaviorCluster->AddProfile(profile);
         }
     }
 }
 
-std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid guid) const
+::std::shared_ptr<PlayerProfile> PlayerPatternRecognition::GetProfile(ObjectGuid guid) const
 {
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     auto it = _profiles.find(guid);
     if (it != _profiles.end())
@@ -719,7 +719,7 @@ BehaviorSample PlayerPatternRecognition::CreateBehaviorSample(Player* player) co
 {
     BehaviorSample sample;
 
-    sample.timestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    sample.timestamp = ::std::chrono::steady_clock::now().time_since_epoch().count();
 
     Position pos = player->GetPosition();
     sample.x = pos.GetPositionX();
@@ -729,7 +729,7 @@ BehaviorSample PlayerPatternRecognition::CreateBehaviorSample(Player* player) co
 
     sample.healthPct = player->GetHealthPct();
     sample.resourcePct = player->GetPowerPct(player->GetPowerType());
-    sample.isMoving = player->IsMoving();
+    sample.isMoving = player->isMoving();
     sample.isInCombat = player->IsInCombat();
     if (player->GetVictim())
         sample.targetGuid = player->GetVictim()->GetGUID();
@@ -843,7 +843,7 @@ PlayerPatternRecognition::PredictionResult PlayerPatternRecognition::PredictPlay
     PredictionValidation validation;
     validation.playerGuid = player->GetGUID();
     validation.prediction = result;
-    validation.timestamp = std::chrono::steady_clock::now();
+    validation.timestamp = ::std::chrono::steady_clock::now();
     validation.validated = false;
 
     _predictionHistory.push_back(validation);
@@ -896,8 +896,8 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
     if (!_initialized)
         return;
 
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::hours>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::hours>(
         now - _lastMetaUpdate).count();
 
     if (timeSinceLastUpdate < 1)  // Update hourly
@@ -905,18 +905,18 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
 
     TC_LOG_INFO("playerbot.pattern", "Updating meta patterns");
 
-    std::lock_guard lock(_profilesMutex);
+    ::std::lock_guard lock(_profilesMutex);
 
     // Analyze all profiles to identify meta patterns
-    std::unordered_map<PlayerArchetype, uint32_t> archetypeCounts;
-    std::unordered_map<uint32_t, uint32_t> popularSpells;
+    ::std::unordered_map<PlayerArchetype, uint32_t> archetypeCounts;
+    ::std::unordered_map<uint32_t, uint32_t> popularSpells;
 
     for (const auto& [guid, profile] : _profiles)
     {
         archetypeCounts[profile->GetArchetype()]++;
 
         // Aggregate spell usage
-        for (const auto& pattern : profile->GetPatterns(PatternType::ABILITY_USAGE))
+    for (const auto& pattern : profile->GetPatterns(PatternType::ABILITY_USAGE))
         {
             for (size_t i = 0; i < pattern.features.size(); i += 2)
             {
@@ -933,7 +933,7 @@ void PlayerPatternRecognition::UpdateMetaPatterns()
     _metaPatterns.clear();
 
     // Most popular archetype pattern
-    auto maxArchetype = std::max_element(archetypeCounts.begin(), archetypeCounts.end(),
+    auto maxArchetype = ::std::max_element(archetypeCounts.begin(), archetypeCounts.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; });
 
     if (maxArchetype != archetypeCounts.end())
@@ -968,7 +968,7 @@ void PlayerPatternRecognition::AdaptBotsToMeta()
 ScopedPatternRecording::ScopedPatternRecording(Player* player)
     : _player(player)
 {
-    _startTime = std::chrono::steady_clock::now();
+    _startTime = ::std::chrono::steady_clock::now();
 }
 
 ScopedPatternRecording::~ScopedPatternRecording()

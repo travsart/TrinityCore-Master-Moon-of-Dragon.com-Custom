@@ -85,9 +85,9 @@ public:
                    scalabilityFactor > 0.8;  // 80% linear scaling minimum
         }
 
-        std::string GetSummary() const
+        ::std::string GetSummary() const
         {
-            std::stringstream ss;
+            ::std::stringstream ss;
             ss << "=== Threading Stress Test Results ===\n";
             ss << "Performance:\n";
             ss << "  Total Updates: " << totalUpdates << "\n";
@@ -146,47 +146,47 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 config.numBots, config.numThreads, config.testDurationSeconds);
 
     TestResults results;
-    auto startTime = std::chrono::high_resolution_clock::now();
-    auto endTime = startTime + std::chrono::seconds(config.testDurationSeconds);
+    auto startTime = ::std::chrono::high_resolution_clock::now();
+    auto endTime = startTime + ::std::chrono::seconds(config.testDurationSeconds);
 
     // Initialize systems
     BotSpawnerOptimized::Instance().Initialize();
     BotWorldSessionMgrOptimized::Instance().Initialize();
 
     // Create thread pool for concurrent testing
-    std::vector<std::thread> workers;
-    std::atomic<bool> stopFlag{false};
-    std::barrier syncBarrier(config.numThreads);
-    std::latch startLatch(config.numThreads);
+    ::std::vector<::std::thread> workers;
+    ::std::atomic<bool> stopFlag{false};
+    ::std::barrier syncBarrier(config.numThreads);
+    ::std::latch startLatch(config.numThreads);
 
     // Start worker threads
     for (uint32 i = 0; i < config.numThreads; ++i)
     {
         workers.emplace_back([&, i]() {
             // Thread-local random generator
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<> opDist(0, 3);
-            std::uniform_int_distribution<> delayDist(1, 10);
+            ::std::random_device rd;
+            ::std::mt19937 gen(rd());
+            ::std::uniform_int_distribution<> opDist(0, 3);
+            ::std::uniform_int_distribution<> delayDist(1, 10);
 
             startLatch.count_down();
             startLatch.wait();
 
-            while (!stopFlag.load(std::memory_order_acquire))
+            while (!stopFlag.load(::std::memory_order_acquire))
             {
-                auto now = std::chrono::high_resolution_clock::now();
+                auto now = ::std::chrono::high_resolution_clock::now();
                 if (now >= endTime)
                 {
-                    stopFlag.store(true, std::memory_order_release);
+                    stopFlag.store(true, ::std::memory_order_release);
                     break;
                 }
 
                 // Random operation
-                switch (opDist(gen))
+    switch (opDist(gen))
                 {
                 case 0: // Spawn operation
                 {
-                    auto opStart = std::chrono::high_resolution_clock::now();
+                    auto opStart = ::std::chrono::high_resolution_clock::now();
 
                     SpawnRequest req;
                     req.type = SpawnRequest::SPAWN_ZONE;
@@ -199,8 +199,8 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                     else
                         results.failedSpawns++;
 
-                    auto opEnd = std::chrono::high_resolution_clock::now();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(opEnd - opStart);
+                    auto opEnd = ::std::chrono::high_resolution_clock::now();
+                    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(opEnd - opStart);
 
                     if (duration.count() > results.maxUpdateTimeMs)
                         results.maxUpdateTimeMs = duration.count();
@@ -216,9 +216,9 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 case 2: // Combat simulation
                 {
                     // Simulate interrupt coordination
-                    static thread_local std::unique_ptr<InterruptCoordinatorFixed> coordinator;
+                    static thread_local ::std::unique_ptr<InterruptCoordinatorFixed> coordinator;
                     if (!coordinator)
-                        coordinator = std::make_unique<InterruptCoordinatorFixed>(nullptr);
+                        coordinator = ::std::make_unique<InterruptCoordinatorFixed>(nullptr);
 
                     coordinator->Update(50);
                     break;
@@ -237,13 +237,13 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 }
 
                 // Chaos mode - random delays
-                if (config.enableChaosMode)
+    if (config.enableChaosMode)
                 {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delayDist(gen)));
+                    ::std::this_thread::sleep_for(::std::chrono::milliseconds(delayDist(gen)));
                 }
 
                 // Periodic synchronization to stress concurrent access
-                if ((results.totalUpdates % 100) == 0)
+    if ((results.totalUpdates % 100) == 0)
                 {
                     syncBarrier.arrive_and_wait();
                 }
@@ -252,13 +252,13 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
     }
 
     // Monitor thread for deadlock detection
-    std::thread monitor([&]() {
+    ::std::thread monitor([&]() {
         auto lastProgress = results.totalUpdates.load();
         uint32 stalledCount = 0;
 
-        while (!stopFlag.load(std::memory_order_acquire))
+        while (!stopFlag.load(::std::memory_order_acquire))
         {
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            ::std::this_thread::sleep_for(::std::chrono::seconds(5));
 
             auto currentProgress = results.totalUpdates.load();
             if (currentProgress == lastProgress)
@@ -268,7 +268,7 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
                 {
                     TC_LOG_ERROR("test.playerbot.threading", "DEADLOCK DETECTED! No progress for 15 seconds");
                     results.deadlocksDetected++;
-                    stopFlag.store(true, std::memory_order_release);
+                    stopFlag.store(true, ::std::memory_order_release);
                 }
             }
             else
@@ -283,8 +283,8 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
     });
 
     // Wait for test duration
-    std::this_thread::sleep_for(std::chrono::seconds(config.testDurationSeconds));
-    stopFlag.store(true, std::memory_order_release);
+    ::std::this_thread::sleep_for(::std::chrono::seconds(config.testDurationSeconds));
+    stopFlag.store(true, ::std::memory_order_release);
 
     // Join all threads
     for (auto& worker : workers)
@@ -292,8 +292,8 @@ TestResults ThreadingStressTest::RunStressTest(TestConfig const& config)
     monitor.join();
 
     // Calculate final metrics
-    auto totalDuration = std::chrono::high_resolution_clock::now() - startTime;
-    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(totalDuration).count();
+    auto totalDuration = ::std::chrono::high_resolution_clock::now() - startTime;
+    auto durationMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(totalDuration).count();
 
     results.throughputOpsPerSec = (results.totalUpdates + results.totalSpawns + results.totalDespawns) * 1000.0 / durationMs;
     results.averageUpdateTimeMs = durationMs / double(results.totalUpdates + 1);
@@ -321,8 +321,8 @@ TestResults ThreadingStressTest::RunDeadlockTest()
     TestResults results;
 
     // Create scenario that would deadlock with old design
-    std::vector<std::thread> threads;
-    std::atomic<uint32> completedOps{0};
+    ::std::vector<::std::thread> threads;
+    ::std::atomic<uint32> completedOps{0};
 
     // Thread 1: Spawner -> SessionManager
     threads.emplace_back([&]() {
@@ -362,15 +362,15 @@ TestResults ThreadingStressTest::RunDeadlockTest()
     });
 
     // Monitor for deadlock
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
     bool deadlocked = false;
 
     while (completedOps < 3000)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
 
-        auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
-        if (elapsed > std::chrono::seconds(30))
+        auto elapsed = ::std::chrono::high_resolution_clock::now() - startTime;
+        if (elapsed > ::std::chrono::seconds(30))
         {
             deadlocked = true;
             results.deadlocksDetected = 1;
@@ -407,7 +407,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         double cpuUsage;
     };
 
-    std::vector<ScalabilityPoint> dataPoints;
+    ::std::vector<ScalabilityPoint> dataPoints;
 
     // Test at different scales
     for (uint32 numBots = minBots; numBots <= maxBots; numBots *= 2)
@@ -415,7 +415,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         TC_LOG_INFO("test.playerbot.threading", "Testing with {} bots", numBots);
 
         // Spawn bots
-        for (uint32 i = 0; i < numBots; ++i)
+    for (uint32 i = 0; i < numBots; ++i)
         {
             SpawnRequest req;
             req.type = SpawnRequest::SPAWN_ZONE;
@@ -423,24 +423,24 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
         }
 
         // Wait for spawns to complete
-        while (BotSpawnerOptimized::Instance().GetActiveBotCount() < numBots * 0.9)
+    while (BotSpawnerOptimized::Instance().GetActiveBotCount() < numBots * 0.9)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
         }
 
         // Measure performance
-        auto startTime = std::chrono::high_resolution_clock::now();
+        auto startTime = ::std::chrono::high_resolution_clock::now();
         uint64 operations = 0;
 
         // Run for 10 seconds
-        while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10))
+    while (::std::chrono::high_resolution_clock::now() - startTime < ::std::chrono::seconds(10))
         {
             BotWorldSessionMgrOptimized::Instance().UpdateAllSessions(50);
             operations++;
         }
 
-        auto duration = std::chrono::high_resolution_clock::now() - startTime;
-        auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+        auto duration = ::std::chrono::high_resolution_clock::now() - startTime;
+        auto durationMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(duration).count();
 
         ScalabilityPoint point;
         point.numBots = numBots;
@@ -450,7 +450,7 @@ TestResults ThreadingStressTest::RunScalabilityTest(uint32 minBots, uint32 maxBo
 
         // Cleanup for next iteration
         BotSpawnerOptimized::Instance().DespawnAllBots();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(1));
     }
 
     // Calculate scalability factor

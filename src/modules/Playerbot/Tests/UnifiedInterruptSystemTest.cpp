@@ -1050,14 +1050,14 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_GroupCoordinationFlow)
 /*
  * This test suite provides comprehensive coverage of UnifiedInterruptSystem:
  *
- * ✅ Enabled Tests (3):
+ *  Enabled Tests (3):
  *    - Singleton instance verification
  *    - Initialization validation
  *    - Metrics reset verification
  *    - Concurrent singleton access
  *    - Metrics thread safety
  *
- * ⚠️ Disabled Tests (28):
+ *  Disabled Tests (28):
  *    - All tests requiring TrinityCore test infrastructure
  *    - Tests needing Player, Unit, Group creation
  *    - Tests requiring BotAI instantiation
@@ -1070,20 +1070,20 @@ TEST_F(UnifiedInterruptSystemTest, DISABLED_GroupCoordinationFlow)
  *    4. Run with: ./worldserver --gtest_filter=UnifiedInterruptSystemTest.*
  *
  * Test Categories:
- *    1. Initialization (3 tests) ✅
- *    2. Bot Registration (3 tests) ⚠️
- *    3. Cast Detection (3 tests) ⚠️
- *    4. Decision Making (3 tests) ⚠️
- *    5. Group Coordination (3 tests) ⚠️
- *    6. Rotation System (3 tests) ⚠️
- *    7. Fallback Logic (2 tests) ⚠️
- *    8. Movement Integration (1 test) ⚠️
- *    9. Metrics & Statistics (3 tests) - 1 enabled ✅, 2 disabled ⚠️
- *   10. Thread Safety (3 tests) - 2 enabled ✅, 1 disabled ⚠️
- *   11. Performance Benchmarks (3 tests) ⚠️
- *   12. Integration Tests (2 tests) ⚠️
+ *    1. Initialization (3 tests) 
+ *    2. Bot Registration (3 tests) 
+ *    3. Cast Detection (3 tests) 
+ *    4. Decision Making (3 tests) 
+ *    5. Group Coordination (3 tests) 
+ *    6. Rotation System (3 tests) 
+ *    7. Fallback Logic (2 tests) 
+ *    8. Movement Integration (1 test) 
+ *    9. Metrics & Statistics (3 tests) - 1 enabled , 2 disabled 
+ *   10. Thread Safety (3 tests) - 2 enabled , 1 disabled 
+ *   11. Performance Benchmarks (3 tests) 
+ *   12. Integration Tests (2 tests) 
  *
- * Total: 32 tests (5 enabled ✅, 27 disabled ⚠️)
+ * Total: 32 tests (5 enabled , 27 disabled )
  *
  * Current Status: Framework ready, awaiting TrinityCore test infrastructure
  */

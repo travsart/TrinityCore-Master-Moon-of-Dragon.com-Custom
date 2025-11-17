@@ -52,3 +52,4 @@ __pycache__/
 # Git automatically manages submodule contents via .gitmodules
 # build*/ pattern above catches TBB build artifacts
 
+phase7a-compile-log.txt

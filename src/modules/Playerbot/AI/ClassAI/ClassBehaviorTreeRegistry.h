@@ -77,9 +77,9 @@ struct ClassSpec
  */
 struct ClassSpecHash
 {
-    std::size_t operator()(ClassSpec const& spec) const
+    ::std::size_t operator()(ClassSpec const& spec) const
     {
-        return (static_cast<std::size_t>(spec.classId) << 8) | spec.specId;
+        return (static_cast<::std::size_t>(spec.classId) << 8) | spec.specId;
     }
 };
 
@@ -87,7 +87,7 @@ struct ClassSpecHash
  * @brief Class Behavior Tree Builder
  * Function that builds a behavior tree for a specific class/spec
  */
-using ClassTreeBuilder = std::function<std::shared_ptr<BTNode>()>;
+using ClassTreeBuilder = ::std::function<::std::shared_ptr<BTNode>()>;
 
 /**
  * @brief Class Behavior Tree Registry
@@ -112,7 +112,7 @@ public:
      * @param specId Spec ID
      * @return Behavior tree or nullptr if not found
      */
-    static std::shared_ptr<BTNode> GetTree(WowClass classId, uint8 specId);
+    static ::std::shared_ptr<BTNode> GetTree(WowClass classId, uint8 specId);
 
     /**
      * @brief Get role for class/spec
@@ -134,8 +134,8 @@ public:
     static void Clear();
 
 private:
-    static std::unordered_map<ClassSpec, ClassTreeBuilder, ClassSpecHash> _treeBuilders;
-    static std::unordered_map<ClassSpec, SpecRole, ClassSpecHash> _specRoles;
+    static ::std::unordered_map<ClassSpec, ClassTreeBuilder, ClassSpecHash> _treeBuilders;
+    static ::std::unordered_map<ClassSpec, SpecRole, ClassSpecHash> _specRoles;
 
     // Class-specific initialization
     static void InitializeWarrior();
@@ -159,7 +159,7 @@ private:
 class TC_GAME_API ClassBTNode : public BTNode
 {
 public:
-    ClassBTNode(std::string const& name, WowClass classId)
+    ClassBTNode(::std::string const& name, WowClass classId)
         : BTNode(name)
         , _classId(classId)
     {

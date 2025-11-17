@@ -60,7 +60,7 @@ public:
      */
     ~ObjectPool()
     {
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
 
         // Log pool statistics before shutdown
         TC_LOG_INFO("module.playerbot.pool",
@@ -80,9 +80,9 @@ public:
      * @brief Acquire object from pool (or allocate new if pool empty)
      * @return Unique pointer with custom deleter that returns to pool
      */
-    std::unique_ptr<T, std::function<void(T*)>> Acquire()
+    ::std::unique_ptr<T, ::std::function<void(T*)>> Acquire()
     {
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
 
         T* obj = nullptr;
 
@@ -91,18 +91,18 @@ public:
             // Reuse from pool
             obj = _pool.back();
             _pool.pop_back();
-            _currentPooled.fetch_sub(1, std::memory_order_relaxed);
-            _totalReused.fetch_add(1, std::memory_order_relaxed);
+            _currentPooled.fetch_sub(1, ::std::memory_order_relaxed);
+            _totalReused.fetch_add(1, ::std::memory_order_relaxed);
         }
         else
         {
             // Allocate new object
             obj = AllocateObject();
-            _totalAllocated.fetch_add(1, std::memory_order_relaxed);
+            _totalAllocated.fetch_add(1, ::std::memory_order_relaxed);
         }
 
         // Return with custom deleter that returns to pool
-        return std::unique_ptr<T, std::function<void(T*)>>(
+        return ::std::unique_ptr<T, ::std::function<void(T*)>>(
             obj,
             [this](T* ptr) { this->Release(ptr); }
         );
@@ -123,10 +123,10 @@ public:
     Stats GetStats() const
     {
         Stats stats;
-        stats.totalAllocated = _totalAllocated.load(std::memory_order_relaxed);
-        stats.totalReused = _totalReused.load(std::memory_order_relaxed);
-        stats.currentPooled = _currentPooled.load(std::memory_order_relaxed);
-        stats.peakPooled = _peakPooled.load(std::memory_order_relaxed);
+        stats.totalAllocated = _totalAllocated.load(::std::memory_order_relaxed);
+        stats.totalReused = _totalReused.load(::std::memory_order_relaxed);
+        stats.currentPooled = _currentPooled.load(::std::memory_order_relaxed);
+        stats.peakPooled = _peakPooled.load(::std::memory_order_relaxed);
 
         uint64_t total = stats.totalAllocated + stats.totalReused;
         stats.reuseRate = total > 0 ? (float(stats.totalReused) / float(total) * 100.0f) : 0.0f;
@@ -140,7 +140,7 @@ public:
      */
     void Reserve(size_t count)
     {
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
 
         size_t needed = count > _pool.size() ? (count - _pool.size()) : 0;
         if (needed > 0)
@@ -155,12 +155,12 @@ public:
      */
     void Shrink(size_t targetSize = 0)
     {
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
 
         while (_pool.size() > targetSize && !_pool.empty())
         {
             _pool.pop_back();
-            _currentPooled.fetch_sub(1, std::memory_order_relaxed);
+            _currentPooled.fetch_sub(1, ::std::memory_order_relaxed);
         }
     }
 
@@ -174,7 +174,7 @@ private:
         if (!obj)
             return;
 
-        std::lock_guard lock(_poolMutex);
+        ::std::lock_guard lock(_poolMutex);
 
         // Reset object state (placement new with default constructor)
         obj->~T();
@@ -183,11 +183,11 @@ private:
         // Return to pool
         _pool.push_back(obj);
 
-        uint32_t current = _currentPooled.fetch_add(1, std::memory_order_relaxed) + 1;
+        uint32_t current = _currentPooled.fetch_add(1, ::std::memory_order_relaxed) + 1;
 
         // Update peak
-        uint32_t peak = _peakPooled.load(std::memory_order_relaxed);
-        while (current > peak && !_peakPooled.compare_exchange_weak(peak, current, std::memory_order_relaxed)) {}
+        uint32_t peak = _peakPooled.load(::std::memory_order_relaxed);
+        while (current > peak && !_peakPooled.compare_exchange_weak(peak, current, ::std::memory_order_relaxed)) {}
     }
 
     /**
@@ -197,9 +197,9 @@ private:
     T* AllocateObject()
     {
         // Allocate new chunk
-        auto chunk = std::make_unique<std::vector<T>>(1);
+        auto chunk = ::std::make_unique<::std::vector<T>>(1);
         T* obj = &(*chunk)[0];
-        _chunks.push_back(std::move(chunk));
+        _chunks.push_back(::std::move(chunk));
         return obj;
     }
 
@@ -209,25 +209,25 @@ private:
      */
     void AllocateChunk(size_t count)
     {
-        auto chunk = std::make_unique<std::vector<T>>(count);
+        auto chunk = ::std::make_unique<::std::vector<T>>(count);
 
         for (size_t i = 0; i < count; ++i)
         {
             _pool.push_back(&(*chunk)[i]);
-            _currentPooled.fetch_add(1, std::memory_order_relaxed);
+            _currentPooled.fetch_add(1, ::std::memory_order_relaxed);
         }
 
-        _chunks.push_back(std::move(chunk));
+        _chunks.push_back(::std::move(chunk));
     }
 
     Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _poolMutex;                              // Pool access synchronization
-    std::vector<T*> _pool;                              // Available objects
-    std::vector<std::unique_ptr<std::vector<T>>> _chunks; // Allocated memory chunks
+    ::std::vector<T*> _pool;                              // Available objects
+    ::std::vector<::std::unique_ptr<::std::vector<T>>> _chunks; // Allocated memory chunks
 
-    std::atomic<uint64_t> _totalAllocated;              // Total new allocations
-    std::atomic<uint64_t> _totalReused;                 // Total pool reuses
-    std::atomic<uint32_t> _currentPooled;               // Current objects in pool
-    std::atomic<uint32_t> _peakPooled;                  // Peak pool size
+    ::std::atomic<uint64_t> _totalAllocated;              // Total new allocations
+    ::std::atomic<uint64_t> _totalReused;                 // Total pool reuses
+    ::std::atomic<uint32_t> _currentPooled;               // Current objects in pool
+    ::std::atomic<uint32_t> _peakPooled;                  // Peak pool size
 };
 
 } // namespace Playerbot

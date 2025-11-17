@@ -104,7 +104,7 @@ namespace Playerbot
         if (path.nodes.size() < 3)
             return 0;
 
-        std::vector<PathNode> optimized;
+        ::std::vector<PathNode> optimized;
         optimized.reserve(path.nodes.size());
 
         // Always keep the start point
@@ -116,7 +116,7 @@ namespace Playerbot
         while (i < path.nodes.size() - 1)
         {
             // Check if we can skip this waypoint
-            if (CanRemoveWaypoint(path, i, map))
+    if (CanRemoveWaypoint(path, i, map))
             {
                 removed++;
                 i++;
@@ -131,7 +131,7 @@ namespace Playerbot
         // Always keep the end point
         optimized.push_back(path.nodes.back());
 
-        path.nodes = std::move(optimized);
+        path.nodes = ::std::move(optimized);
         return removed;
     }
 
@@ -140,18 +140,18 @@ namespace Playerbot
         if (path.nodes.size() < 3)
             return false;
 
-        smoothingFactor = std::clamp(smoothingFactor, 0.0f, 1.0f);
+        smoothingFactor = ::std::clamp(smoothingFactor, 0.0f, 1.0f);
 
         for (uint32 iteration = 0; iteration < _smoothingIterations; ++iteration)
         {
-            std::vector<PathNode> smoothed;
+            ::std::vector<PathNode> smoothed;
             smoothed.reserve(path.nodes.size());
 
             // Keep first node unchanged
             smoothed.push_back(path.nodes[0]);
 
             // Smooth intermediate nodes
-            for (size_t i = 1; i < path.nodes.size() - 1; ++i)
+    for (size_t i = 1; i < path.nodes.size() - 1; ++i)
             {
                 Position const& prev = path.nodes[i - 1].position;
                 Position const& curr = path.nodes[i].position;
@@ -167,7 +167,7 @@ namespace Playerbot
                     (prev.GetPositionZ() + next.GetPositionZ()) * 0.5f * smoothingFactor;
 
                 // Validate the smoothed position
-                if (!map || IsDirectPathValid(map, prev, smoothPos) &&
+    if (!map || IsDirectPathValid(map, prev, smoothPos) &&
                     IsDirectPathValid(map, smoothPos, next))
                 {
                     PathNode smoothedNode = path.nodes[i];
@@ -185,7 +185,7 @@ namespace Playerbot
             // Keep last node unchanged
             smoothed.push_back(path.nodes.back());
 
-            path.nodes = std::move(smoothed);
+            path.nodes = ::std::move(smoothed);
         }
 
         return true;
@@ -197,7 +197,7 @@ namespace Playerbot
             return 0;
 
         uint32 cornersCut = 0;
-        std::vector<PathNode> optimized;
+        ::std::vector<PathNode> optimized;
         optimized.reserve(path.nodes.size());
 
         optimized.push_back(path.nodes[0]);
@@ -214,10 +214,10 @@ namespace Playerbot
             float angle2 = atan2(next.GetPositionY() - curr.GetPositionY(),
                                 next.GetPositionX() - curr.GetPositionX());
 
-            float angleDiff = std::abs(Position::NormalizeOrientation(angle2 - angle1));
+            float angleDiff = ::std::abs(Position::NormalizeOrientation(angle2 - angle1));
 
             // Check if this is a sharp corner worth cutting
-            if (angleDiff > _cornerCutThreshold && angleDiff < M_PI - _cornerCutThreshold)
+    if (angleDiff > _cornerCutThreshold && angleDiff < M_PI - _cornerCutThreshold)
             {
                 // Calculate cut position
                 float cutFactor = 0.3f; // Cut 30% into the corner
@@ -252,7 +252,7 @@ namespace Playerbot
         }
 
         optimized.push_back(path.nodes.back());
-        path.nodes = std::move(optimized);
+        path.nodes = ::std::move(optimized);
 
         return cornersCut;
     }
@@ -294,7 +294,7 @@ namespace Playerbot
         return true;
     }
 
-    bool PathOptimizer::AdjustForObstacles(MovementPath& path, std::vector<Position> const& obstacles,
+    bool PathOptimizer::AdjustForObstacles(MovementPath& path, ::std::vector<Position> const& obstacles,
                                           float avoidanceRadius)
     {
         if (path.nodes.empty() || obstacles.empty())
@@ -324,7 +324,7 @@ namespace Playerbot
         return adjusted;
     }
 
-    bool PathOptimizer::OptimizeGroupPaths(std::vector<MovementPath>& paths, bool maintainFormation)
+    bool PathOptimizer::OptimizeGroupPaths(::std::vector<MovementPath>& paths, bool maintainFormation)
     {
         if (paths.empty())
             return false;
@@ -332,17 +332,17 @@ namespace Playerbot
         if (maintainFormation)
         {
             // Find the median path length
-            std::vector<float> lengths;
+            ::std::vector<float> lengths;
             for (auto const& path : paths)
                 lengths.push_back(path.totalLength);
 
-            std::sort(lengths.begin(), lengths.end());
+            ::std::sort(lengths.begin(), lengths.end());
             float medianLength = lengths[lengths.size() / 2];
 
             // Adjust all paths to similar length for formation maintenance
-            for (auto& path : paths)
+    for (auto& path : paths)
             {
-                if (std::abs(path.totalLength - medianLength) > 5.0f)
+                if (::std::abs(path.totalLength - medianLength) > 5.0f)
                 {
                     // Add delay points or adjust speed to synchronize arrival
                     float speedAdjustment = path.totalLength / medianLength;
@@ -356,7 +356,7 @@ namespace Playerbot
         else
         {
             // Optimize each path independently
-            for (auto& path : paths)
+    for (auto& path : paths)
             {
                 OptimizePath(path, nullptr);
             }
@@ -394,7 +394,7 @@ namespace Playerbot
             return false;
 
         // Check height difference
-        float heightDiff = std::abs(start.GetPositionZ() - end.GetPositionZ());
+        float heightDiff = ::std::abs(start.GetPositionZ() - end.GetPositionZ());
         if (heightDiff > 20.0f) // Too steep
             return false;
 
@@ -434,7 +434,7 @@ namespace Playerbot
         if (path.nodes.size() < 4)
             return;
 
-        std::vector<PathNode> smoothed;
+        ::std::vector<PathNode> smoothed;
         smoothed.reserve(path.nodes.size() * 2); // May add intermediate points
 
         smoothed.push_back(path.nodes[0]);
@@ -482,7 +482,7 @@ namespace Playerbot
         }
 
         smoothed.push_back(path.nodes.back());
-        path.nodes = std::move(smoothed);
+        path.nodes = ::std::move(smoothed);
     }
 
     void PathOptimizer::ApplyDouglasPeucker(MovementPath& path, float epsilon)
@@ -490,12 +490,12 @@ namespace Playerbot
         if (path.nodes.size() < 3)
             return;
 
-        std::vector<bool> keep(path.nodes.size(), false);
+        ::std::vector<bool> keep(path.nodes.size(), false);
         keep[0] = true;
         keep[path.nodes.size() - 1] = true;
 
         // Recursive simplification
-        std::function<void(size_t, size_t)> simplify = [&](size_t start, size_t end)
+        ::std::function<void(size_t, size_t)> simplify = [&](size_t start, size_t end)
         {
             float maxDist = 0.0f;
             size_t index = 0;
@@ -522,14 +522,14 @@ namespace Playerbot
         simplify(0, path.nodes.size() - 1);
 
         // Keep only marked nodes
-        std::vector<PathNode> simplified;
+        ::std::vector<PathNode> simplified;
         for (size_t i = 0; i < path.nodes.size(); ++i)
         {
             if (keep[i])
                 simplified.push_back(path.nodes[i]);
         }
 
-        path.nodes = std::move(simplified);
+        path.nodes = ::std::move(simplified);
     }
 
     float PathOptimizer::PerpendicularDistance(Position const& point, Position const& lineStart,
@@ -574,7 +574,7 @@ namespace Playerbot
         Position const& next = path.nodes[index + 1].position;
 
         // Check if direct path is valid
-        if (!IsDirectPathValid(map, prev, next))
+    if (!IsDirectPathValid(map, prev, next))
             return false;
 
         // Check if removing this waypoint doesn't create too long segment
@@ -583,7 +583,7 @@ namespace Playerbot
             return false;
 
         // Check curvature change
-        if (index > 1 && index < path.nodes.size() - 2)
+    if (index > 1 && index < path.nodes.size() - 2)
         {
             float curvatureBefore = CalculateCurvature(path.nodes[index - 2].position,
                 path.nodes[index - 1].position, path.nodes[index].position);
@@ -591,7 +591,7 @@ namespace Playerbot
                 path.nodes[index + 1].position, path.nodes[index + 2].position);
 
             // Don't remove if it would create sudden curvature change
-            if (std::abs(curvatureAfter - curvatureBefore) > 0.5f)
+    if (::std::abs(curvatureAfter - curvatureBefore) > 0.5f)
                 return false;
         }
 
@@ -602,7 +602,7 @@ namespace Playerbot
     {
         // Simplified turn radius calculation
         // In reality, this would depend on unit's turn rate and physics
-        float speedFactor = std::max(1.0f, speed / 7.0f); // 7.0 is normal run speed
+        float speedFactor = ::std::max(1.0f, speed / 7.0f); // 7.0 is normal run speed
         return speedFactor * 2.0f / sin(angle / 2.0f);
     }
 
@@ -613,14 +613,14 @@ namespace Playerbot
             return false;
 
         // Check that start and end points match
-        if (original.nodes.front().position.GetExactDist(&optimized.nodes.front().position) > 0.1f ||
+    if (original.nodes.front().position.GetExactDist(&optimized.nodes.front().position) > 0.1f ||
             original.nodes.back().position.GetExactDist(&optimized.nodes.back().position) > 0.1f)
         {
             return false;
         }
 
         // Verify all segments are valid
-        for (size_t i = 1; i < optimized.nodes.size(); ++i)
+    for (size_t i = 1; i < optimized.nodes.size(); ++i)
         {
             if (!IsDirectPathValid(map, optimized.nodes[i - 1].position,
                 optimized.nodes[i].position))
@@ -630,7 +630,7 @@ namespace Playerbot
         }
 
         // Check that total length didn't increase significantly
-        if (optimized.totalLength > original.totalLength * 1.1f)
+    if (optimized.totalLength > original.totalLength * 1.1f)
         {
             return false;
         }

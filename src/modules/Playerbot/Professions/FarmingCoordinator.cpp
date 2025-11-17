@@ -52,7 +52,7 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
     uint32 playerGuid = player->GetGUID().GetCounter();
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Check if player has active farming session
     auto sessionIt = _activeSessions.find(playerGuid);
@@ -63,7 +63,7 @@ void FarmingCoordinator::Update(::Player* player, uint32 diff)
     }
 
     // Check if enough time passed since last check
-    static std::unordered_map<uint32, uint32> lastCheckTimes;
+    static ::std::unordered_map<uint32, uint32> lastCheckTimes;
     if (currentTime - lastCheckTimes[playerGuid] < FARMING_CHECK_INTERVAL)
         return;
 
@@ -87,7 +87,7 @@ void FarmingCoordinator::SetEnabled(::Player* player, bool enabled)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_profiles.find(playerGuid) == _profiles.end())
         _profiles[playerGuid] = FarmingCoordinatorProfile();
@@ -100,7 +100,7 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto it = _profiles.find(playerGuid);
     if (it == _profiles.end())
@@ -111,13 +111,13 @@ bool FarmingCoordinator::IsEnabled(::Player* player) const
 
 void FarmingCoordinator::SetCoordinatorProfile(uint32 playerGuid, FarmingCoordinatorProfile const& profile)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _profiles[playerGuid] = profile;
 }
 
 FarmingCoordinatorProfile FarmingCoordinator::GetCoordinatorProfile(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _profiles.find(playerGuid);
     if (it != _profiles.end())
@@ -162,9 +162,9 @@ uint16 FarmingCoordinator::GetTargetSkillLevel(::Player* player, ProfessionType 
     return static_cast<uint16>(charLevel * profile.skillLevelMultiplier);
 }
 
-std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Player* player) const
+::std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Player* player) const
 {
-    std::vector<ProfessionType> professions;
+    ::std::vector<ProfessionType> professions;
 
     if (!player)
         return professions;
@@ -183,7 +183,7 @@ std::vector<ProfessionType> FarmingCoordinator::GetProfessionsNeedingFarm(::Play
     }
 
     // Sort by skill gap (largest gap first)
-    std::sort(professions.begin(), professions.end(),
+    ::std::sort(professions.begin(), professions.end(),
         [this, player](ProfessionType a, ProfessionType b)
         {
             return GetSkillGap(player, a) > GetSkillGap(player, b);
@@ -206,8 +206,8 @@ uint32 FarmingCoordinator::CalculateFarmingDuration(::Player* player, Profession
     uint32 estimatedDuration = (skillGap / 10) * 300000; // 5 minutes in ms
 
     // Clamp to min/max
-    estimatedDuration = std::max(estimatedDuration, profile.minFarmingDuration);
-    estimatedDuration = std::min(estimatedDuration, profile.maxFarmingDuration);
+    estimatedDuration = ::std::max(estimatedDuration, profile.minFarmingDuration);
+    estimatedDuration = ::std::min(estimatedDuration, profile.maxFarmingDuration);
 
     return estimatedDuration;
 }
@@ -221,7 +221,7 @@ bool FarmingCoordinator::StartFarmingSession(::Player* player, ProfessionType pr
     if (!player || !CanStartFarming(player))
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     // Check if session already active
     if (_activeSessions.find(playerGuid) != _activeSessions.end())
@@ -276,7 +276,7 @@ void FarmingCoordinator::StopFarmingSession(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto it = _activeSessions.find(playerGuid);
     if (it == _activeSessions.end())
@@ -310,7 +310,7 @@ void FarmingCoordinator::StopFarmingSession(::Player* player)
 
 FarmingSession const* FarmingCoordinator::GetActiveFarmingSession(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _activeSessions.find(playerGuid);
     if (it != _activeSessions.end())
@@ -324,7 +324,7 @@ bool FarmingCoordinator::HasActiveFarmingSession(::Player* player) const
     if (!player)
         return false;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     return _activeSessions.find(player->GetGUID().GetCounter()) != _activeSessions.end();
 }
 
@@ -410,18 +410,18 @@ FarmingZoneInfo const* FarmingCoordinator::GetOptimalFarmingZone(::Player* playe
         }
     }
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     return bestZone;
 }
 
-std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* player, ProfessionType profession) const
+::std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* player, ProfessionType profession) const
 {
-    std::vector<FarmingZoneInfo> suitable;
+    ::std::vector<FarmingZoneInfo> suitable;
 
     if (!player)
         return suitable;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _farmingZones.find(profession);
     if (it == _farmingZones.end())
@@ -435,7 +435,7 @@ std::vector<FarmingZoneInfo> FarmingCoordinator::GetSuitableZones(::Player* play
         if (skillLevel >= zone.minSkillLevel && skillLevel <= zone.maxSkillLevel)
         {
             // Prefer zones near character level
-            if (charLevel >= zone.recommendedCharLevel - 5 && charLevel <= zone.recommendedCharLevel + 10)
+    if (charLevel >= zone.recommendedCharLevel - 5 && charLevel <= zone.recommendedCharLevel + 10)
                 suitable.push_back(zone);
         }
     }
@@ -457,7 +457,7 @@ float FarmingCoordinator::CalculateZoneScore(::Player* player, FarmingZoneInfo c
 
     // Level match bonus
     uint8 charLevel = player->GetLevel();
-    int8 levelDiff = std::abs(static_cast<int8>(charLevel) - static_cast<int8>(zone.recommendedCharLevel));
+    int8 levelDiff = ::std::abs(static_cast<int8>(charLevel) - static_cast<int8>(zone.recommendedCharLevel));
     if (levelDiff == 0)
         score += 20.0f;
     else
@@ -467,7 +467,7 @@ float FarmingCoordinator::CalculateZoneScore(::Player* player, FarmingZoneInfo c
     if (zone.isContested)
         score -= 15.0f;
 
-    return std::max(score, 0.0f);
+    return ::std::max(score, 0.0f);
 }
 
 // ============================================================================
@@ -489,9 +489,9 @@ uint32 FarmingCoordinator::GetMaterialCount(::Player* player, uint32 itemId) con
     return player->GetItemCount(itemId);
 }
 
-std::vector<std::pair<uint32, uint32>> FarmingCoordinator::GetNeededMaterials(::Player* player, ProfessionType profession) const
+::std::vector<::std::pair<uint32, uint32>> FarmingCoordinator::GetNeededMaterials(::Player* player, ProfessionType profession) const
 {
-    std::vector<std::pair<uint32, uint32>> materials;
+    ::std::vector<::std::pair<uint32, uint32>> materials;
 
     if (!player)
         return materials;
@@ -508,7 +508,7 @@ std::vector<std::pair<uint32, uint32>> FarmingCoordinator::GetNeededMaterials(::
 
 FarmingStatistics const& FarmingCoordinator::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     static FarmingStatistics emptyStats;
     auto it = _playerStatistics.find(playerGuid);
@@ -525,7 +525,7 @@ FarmingStatistics const& FarmingCoordinator::GetGlobalStatistics() const
 
 void FarmingCoordinator::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     auto it = _playerStatistics.find(playerGuid);
     if (it != _playerStatistics.end())
@@ -551,7 +551,7 @@ void FarmingCoordinator::InitializeZoneDatabase()
 
 void FarmingCoordinator::InitializeMiningZones()
 {
-    std::vector<FarmingZoneInfo> miningZones;
+    ::std::vector<FarmingZoneInfo> miningZones;
     // Elwynn Forest (Alliance - Copper 1-75)
     FarmingZoneInfo elwynn;
     elwynn.zoneId = 12;
@@ -582,7 +582,7 @@ void FarmingCoordinator::InitializeMiningZones()
 
 void FarmingCoordinator::InitializeHerbalismZones()
 {
-    std::vector<FarmingZoneInfo> herbalismZones;
+    ::std::vector<FarmingZoneInfo> herbalismZones;
 
     // Elwynn Forest (Alliance - Peacebloom/Silverleaf 1-75)
     FarmingZoneInfo elwynn;
@@ -657,7 +657,7 @@ bool FarmingCoordinator::CanStartFarming(::Player* player) const
     //     return false;
 
     // Check farming cooldown
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     auto it = _lastFarmingTimes.find(playerGuid);
     if (it != _lastFarmingTimes.end())

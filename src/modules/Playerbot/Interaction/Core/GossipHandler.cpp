@@ -23,7 +23,7 @@ namespace Playerbot
     {
         InitializeKeywordMappings();
         LoadKnownPaths();
-        m_lastCacheCleanup = std::chrono::steady_clock::now();
+        m_lastCacheCleanup = ::std::chrono::steady_clock::now();
         m_initialized = true;
     }
 
@@ -151,17 +151,17 @@ namespace Playerbot
         uint64 npcFlags = creature->GetNpcFlags();
 
         // Some NPCs provide direct service without gossip
-        switch (type)
+    switch (type)
         {
             case InteractionType::Vendor:
                 // Pure vendors often don't need gossip
-                if ((npcFlags & UNIT_NPC_FLAG_VENDOR) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
+    if ((npcFlags & UNIT_NPC_FLAG_VENDOR) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
                     return false;
                 break;
 
             case InteractionType::Trainer:
                 // Pure trainers often don't need gossip
-                if ((npcFlags & UNIT_NPC_FLAG_TRAINER) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
+    if ((npcFlags & UNIT_NPC_FLAG_TRAINER) && !(npcFlags & UNIT_NPC_FLAG_GOSSIP))
                     return false;
                 break;
 
@@ -182,19 +182,19 @@ namespace Playerbot
         return (npcFlags & UNIT_NPC_FLAG_GOSSIP) != 0;
     }
 
-    std::vector<uint32> GossipHandler::GetGossipPath(Creature* creature, InteractionType type) const
+    ::std::vector<uint32> GossipHandler::GetGossipPath(Creature* creature, InteractionType type) const
     {
         if (!creature)
             return {};
 
         uint32 entry = creature->GetEntry();
         // Check cached paths first
-        std::vector<uint32> cachedPath = GetCachedPath(entry, type);
+        ::std::vector<uint32> cachedPath = GetCachedPath(entry, type);
         if (!cachedPath.empty())
             return cachedPath;
 
         // Check known hardcoded paths
-        for (const auto& known : m_knownPaths)
+    for (const auto& known : m_knownPaths)
         {
             if (known.creatureEntry == entry && known.serviceType == type)
                 return known.optionSequence;
@@ -209,7 +209,7 @@ namespace Playerbot
         if (!bot || !target)
             return -1;
 
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         // Get or create session
         GossipSession& session = m_activeSessions[bot->GetGUID()];
@@ -225,7 +225,7 @@ namespace Playerbot
             return -1;
 
         // Check depth to prevent infinite loops
-        if (++session.currentDepth > session.MAX_DEPTH)
+    if (++session.currentDepth > session.MAX_DEPTH)
         {
             TC_LOG_WARN("playerbot", "Bot {} reached max gossip depth with NPC {}",
                      bot->GetName(), target->GetName());
@@ -239,10 +239,10 @@ namespace Playerbot
         if (bestOption >= 0)
         {
             // Cache successful navigation
-            if (Creature* creature = target->ToCreature())
+    if (Creature* creature = target->ToCreature())
             {
                 uint32 entry = creature->GetEntry();
-                std::vector<uint32> currentPath;
+                ::std::vector<uint32> currentPath;
                 currentPath.push_back(static_cast<uint32>(bestOption));
                 CacheGossipPath(entry, desiredType, currentPath);
             }
@@ -262,7 +262,7 @@ namespace Playerbot
 
         // The actual packet handling would be done by the session
         // We just track the state here
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         auto it = m_activeSessions.find(bot->GetGUID());
         if (it != m_activeSessions.end())
@@ -272,12 +272,12 @@ namespace Playerbot
         }
     }
 
-    std::vector<GossipMenuOption> GossipHandler::ParseGossipMenu(::Player* bot, uint32 menuId) const
+    ::std::vector<GossipMenuOption> GossipHandler::ParseGossipMenu(::Player* bot, uint32 menuId) const
     {
         if (!bot)
             return {};
 
-        std::vector<GossipMenuOption> options;
+        ::std::vector<GossipMenuOption> options;
 
         // Get gossip menu items from player's current gossip
         // TrinityCore 11.2: GetGossipMenu() returns reference, not pointer
@@ -303,7 +303,7 @@ namespace Playerbot
         return options;
     }
 
-    int32 GossipHandler::SelectBestOption(const std::vector<GossipMenuOption>& options, InteractionType desiredType) const
+    int32 GossipHandler::SelectBestOption(const ::std::vector<GossipMenuOption>& options, InteractionType desiredType) const
     {
         if (options.empty())
             return -1;
@@ -320,7 +320,7 @@ namespace Playerbot
             if (iconType != GossipSelectType::Option)
             {
                 // Direct service icon match
-                if ((desiredType == InteractionType::Vendor && iconType == GossipSelectType::Vendor) ||
+    if ((desiredType == InteractionType::Vendor && iconType == GossipSelectType::Vendor) ||
                     (desiredType == InteractionType::Trainer && iconType == GossipSelectType::Trainer) ||
                     (desiredType == InteractionType::FlightMaster && iconType == GossipSelectType::Taxi) ||
                     (desiredType == InteractionType::Bank && iconType == GossipSelectType::Bank) ||
@@ -361,22 +361,22 @@ namespace Playerbot
         return detectedType == desiredType;
     }
 
-    InteractionType GossipHandler::AnalyzeGossipText(const std::string& text) const
+    InteractionType GossipHandler::AnalyzeGossipText(const ::std::string& text) const
     {
         if (text.empty())
             return InteractionType::None;
 
-        std::string lowerText = ToLowerCase(text);
+        ::std::string lowerText = ToLowerCase(text);
         InteractionType bestMatch = InteractionType::None;
         int bestMatchCount = 0;
 
         // Check each service type's keywords
-        for (const auto& [type, keywords] : m_serviceKeywords)
+    for (const auto& [type, keywords] : m_serviceKeywords)
         {
             int matchCount = 0;
             for (const auto& keyword : keywords)
             {
-                if (lowerText.find(keyword) != std::string::npos)
+                if (lowerText.find(keyword) != ::std::string::npos)
                     ++matchCount;
             }
 
@@ -396,13 +396,13 @@ namespace Playerbot
             return false;
 
         // Handle coded options (require text input)
-        if (option.coded)
+    if (option.coded)
         {
-            std::string response = GenerateResponse(bot, option.boxText);
+            ::std::string response = GenerateResponse(bot, option.boxText);
             if (!response.empty())
             {
                 // Send coded response
-                if (WorldSession* session = bot->GetSession())
+    if (WorldSession* session = bot->GetSession())
                 {
                     // This would send the code through gossip
                     // session->HandleGossipSelectOptionOpcode with code
@@ -413,7 +413,7 @@ namespace Playerbot
         }
 
         // Handle money requirements
-        if (option.boxMoney > 0)
+    if (option.boxMoney > 0)
         {
             if (!CanAffordOption(bot, option))
                 return false;
@@ -422,24 +422,24 @@ namespace Playerbot
         return true;
     }
 
-    void GossipHandler::CacheGossipPath(uint32 creatureEntry, InteractionType type, const std::vector<uint32>& path)
+    void GossipHandler::CacheGossipPath(uint32 creatureEntry, InteractionType type, const ::std::vector<uint32>& path)
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         m_gossipPathCache[creatureEntry][type] = path;
 
         // Update statistics
         m_pathStatistics[creatureEntry].successCount++;
-        m_pathStatistics[creatureEntry].lastUsed = std::chrono::steady_clock::now();
+        m_pathStatistics[creatureEntry].lastUsed = ::std::chrono::steady_clock::now();
 
         // Clean cache if needed
-        auto now = std::chrono::steady_clock::now();
-        if (now - m_lastCacheCleanup > std::chrono::milliseconds(CACHE_CLEANUP_INTERVAL))
+        auto now = ::std::chrono::steady_clock::now();
+        if (now - m_lastCacheCleanup > ::std::chrono::milliseconds(CACHE_CLEANUP_INTERVAL))
         {
             // Remove old unused entries
-            for (auto it = m_pathStatistics.begin(); it != m_pathStatistics.end();)
+    for (auto it = m_pathStatistics.begin(); it != m_pathStatistics.end();)
             {
-                if (now - it->second.lastUsed > std::chrono::hours(24))
+                if (now - it->second.lastUsed > ::std::chrono::hours(24))
                 {
                     m_gossipPathCache.erase(it->first);
                     it = m_pathStatistics.erase(it);
@@ -453,9 +453,9 @@ namespace Playerbot
         }
     }
 
-    std::vector<uint32> GossipHandler::GetCachedPath(uint32 creatureEntry, InteractionType type) const
+    ::std::vector<uint32> GossipHandler::GetCachedPath(uint32 creatureEntry, InteractionType type) const
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
 
         auto creatureIt = m_gossipPathCache.find(creatureEntry);
         if (creatureIt != m_gossipPathCache.end())
@@ -470,7 +470,7 @@ namespace Playerbot
 
     void GossipHandler::ClearCache()
     {
-        std::lock_guard lock(m_mutex);
+        ::std::lock_guard lock(m_mutex);
         m_gossipPathCache.clear();
         m_pathStatistics.clear();
         m_activeSessions.clear();
@@ -492,50 +492,50 @@ namespace Playerbot
         return bot->GetMoney() >= option.boxMoney;
     }
 
-    std::string GossipHandler::GenerateResponse(::Player* bot, const std::string& boxText) const
+    ::std::string GossipHandler::GenerateResponse(::Player* bot, const ::std::string& boxText) const
     {
         if (!bot || boxText.empty())
             return "";
 
-        std::string lowerText = ToLowerCase(boxText);
+        ::std::string lowerText = ToLowerCase(boxText);
 
         // Check for known codes
-        for (const auto& [prompt, response] : m_gossipCodes)
+    for (const auto& [prompt, response] : m_gossipCodes)
         {
-            if (lowerText.find(prompt) != std::string::npos)
+            if (lowerText.find(prompt) != ::std::string::npos)
                 return response;
         }
 
         // Default responses for common prompts
-        if (lowerText.find("name") != std::string::npos)
+    if (lowerText.find("name") != ::std::string::npos)
             return bot->GetName();
 
-        if (lowerText.find("guild") != std::string::npos)
+        if (lowerText.find("guild") != ::std::string::npos)
             return bot->GetGuildName();
 
-        if (lowerText.find("level") != std::string::npos)
-            return std::to_string(bot->GetLevel());
+        if (lowerText.find("level") != ::std::string::npos)
+            return ::std::to_string(bot->GetLevel());
 
         // No suitable response
         return "";
     }
 
-    bool GossipHandler::ContainsKeywords(const std::string& text, const std::vector<std::string>& keywords) const
+    bool GossipHandler::ContainsKeywords(const ::std::string& text, const ::std::vector<::std::string>& keywords) const
     {
-        std::string lowerText = ToLowerCase(text);
+        ::std::string lowerText = ToLowerCase(text);
         for (const auto& keyword : keywords)
         {
-            if (lowerText.find(keyword) != std::string::npos)
+            if (lowerText.find(keyword) != ::std::string::npos)
                 return true;
         }
         return false;
     }
 
-    std::string GossipHandler::ToLowerCase(const std::string& text) const
+    ::std::string GossipHandler::ToLowerCase(const ::std::string& text) const
     {
-        std::string result = text;
-        std::transform(result.begin(), result.end(), result.begin(),
-                      [](unsigned char c) { return std::tolower(c); });
+        ::std::string result = text;
+        ::std::transform(result.begin(), result.end(), result.begin(),
+                      [](unsigned char c) { return ::std::tolower(c); });
         return result;
     }
 
@@ -557,22 +557,22 @@ namespace Playerbot
         auto it = m_serviceKeywords.find(desiredType);
         if (it != m_serviceKeywords.end())
         {
-            std::string lowerText = ToLowerCase(option.text);
+            ::std::string lowerText = ToLowerCase(option.text);
             for (const auto& keyword : it->second)
             {
-                if (lowerText.find(keyword) != std::string::npos)
+                if (lowerText.find(keyword) != ::std::string::npos)
                     score += 10;
             }
         }
 
         // Penalize coded options unless we know the code
-        if (option.coded)
+    if (option.coded)
         {
             bool knowCode = false;
-            std::string lowerBoxText = ToLowerCase(option.boxText);
+            ::std::string lowerBoxText = ToLowerCase(option.boxText);
             for (const auto& [prompt, response] : m_gossipCodes)
             {
-                if (lowerBoxText.find(prompt) != std::string::npos)
+                if (lowerBoxText.find(prompt) != ::std::string::npos)
                 {
                     knowCode = true;
                     break;
@@ -583,7 +583,7 @@ namespace Playerbot
         }
 
         // Penalize expensive options
-        if (option.boxMoney > 10000)  // More than 1 gold
+    if (option.boxMoney > 10000)  // More than 1 gold
             score -= 20;
 
         return score;

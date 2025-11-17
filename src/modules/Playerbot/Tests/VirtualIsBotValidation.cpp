@@ -28,8 +28,8 @@ class VirtualIsBotValidationTest
 public:
     static void ValidateVirtualIsBotFix()
     {
-        TC_LOG_INFO("test.playerbot", "🧪 VALIDATING VIRTUAL IsBot() FIX");
-        TC_LOG_INFO("test.playerbot", "🧪 Purpose: Verify that ACCESS_VIOLATION crashes are resolved");
+        TC_LOG_INFO("test.playerbot", " VALIDATING VIRTUAL IsBot() FIX");
+        TC_LOG_INFO("test.playerbot", " Purpose: Verify that ACCESS_VIOLATION crashes are resolved");
 
         TestPolymorphicIsBotCall();
         TestSocketGuardEffectiveness();
@@ -37,7 +37,7 @@ public:
         TestConcurrentAccess();
         TestDestructorSafety();
 
-        TC_LOG_INFO("test.playerbot", "🧪 VIRTUAL IsBot() VALIDATION COMPLETE");
+        TC_LOG_INFO("test.playerbot", " VIRTUAL IsBot() VALIDATION COMPLETE");
     }
 
 private:
@@ -47,12 +47,12 @@ private:
      */
     static void TestPolymorphicIsBotCall()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 1: Polymorphic IsBot() Call Validation");
+        TC_LOG_INFO("test.playerbot", " TEST 1: Polymorphic IsBot() Call Validation");
 
         try {
             auto botSession = BotSession::Create(77777);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
@@ -66,24 +66,24 @@ private:
             TC_LOG_INFO("test.playerbot", "Polymorphic WorldSession::IsBot() = {}", polymorphicResult);
 
             // CRITICAL VALIDATION
-            if (directResult && polymorphicResult) {
-                TC_LOG_INFO("test.playerbot", "✅ VIRTUAL IsBot() FIX SUCCESSFUL");
-                TC_LOG_INFO("test.playerbot", "✅ Both direct and polymorphic calls return true");
+    if (directResult && polymorphicResult) {
+                TC_LOG_INFO("test.playerbot", " VIRTUAL IsBot() FIX SUCCESSFUL");
+                TC_LOG_INFO("test.playerbot", " Both direct and polymorphic calls return true");
             } else if (directResult && !polymorphicResult) {
-                TC_LOG_ERROR("test.playerbot", "❌ VIRTUAL FUNCTION NOT WORKING");
-                TC_LOG_ERROR("test.playerbot", "❌ Polymorphic call failed - IsBot() is not virtual");
+                TC_LOG_ERROR("test.playerbot", " VIRTUAL FUNCTION NOT WORKING");
+                TC_LOG_ERROR("test.playerbot", " Polymorphic call failed - IsBot() is not virtual");
             } else {
-                TC_LOG_ERROR("test.playerbot", "❌ IsBot() implementation broken");
-                TC_LOG_ERROR("test.playerbot", "❌ Direct: {}, Polymorphic: {}", directResult, polymorphicResult);
+                TC_LOG_ERROR("test.playerbot", " IsBot() implementation broken");
+                TC_LOG_ERROR("test.playerbot", " Direct: {}, Polymorphic: {}", directResult, polymorphicResult);
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in polymorphic test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in polymorphic test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in polymorphic test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in polymorphic test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 1 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 1 COMPLETE");
     }
 
     /**
@@ -92,23 +92,23 @@ private:
      */
     static void TestSocketGuardEffectiveness()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 2: Socket Guard Effectiveness");
+        TC_LOG_INFO("test.playerbot", " TEST 2: Socket Guard Effectiveness");
 
         try {
             auto botSession = BotSession::Create(77776);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "🔍 Testing socket access prevention...");
+            TC_LOG_INFO("test.playerbot", " Testing socket access prevention...");
 
             // Verify IsBot() works through polymorphic interface
             WorldSession* sessionPtr = botSession.get();
             bool isBotViaPtr = sessionPtr->IsBot();
 
             if (isBotViaPtr) {
-                TC_LOG_INFO("test.playerbot", "✅ Socket guards should now be effective");
+                TC_LOG_INFO("test.playerbot", " Socket guards should now be effective");
 
                 // Test conditions that previously caused crashes
                 bool disconnected = sessionPtr->PlayerDisconnected();
@@ -118,23 +118,23 @@ private:
                 TC_LOG_INFO("test.playerbot", "IsConnectionIdle() through pointer: {}", idle);
 
                 // Both should be safe now
-                if (!disconnected && !idle) {
-                    TC_LOG_INFO("test.playerbot", "✅ Socket guard methods working correctly");
+    if (!disconnected && !idle) {
+                    TC_LOG_INFO("test.playerbot", " Socket guard methods working correctly");
                 } else {
-                    TC_LOG_WARN("test.playerbot", "⚠️ Unexpected results from socket guard methods");
+                    TC_LOG_WARN("test.playerbot", " Unexpected results from socket guard methods");
                 }
 
             } else {
-                TC_LOG_ERROR("test.playerbot", "❌ IsBot() still returns false - fix not working");
+                TC_LOG_ERROR("test.playerbot", " IsBot() still returns false - fix not working");
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in socket guard test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in socket guard test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in socket guard test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in socket guard test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 2 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 2 COMPLETE");
     }
 
     /**
@@ -143,12 +143,12 @@ private:
      */
     static void TestUpdateLoopStability()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 3: Update Loop Stability Test");
+        TC_LOG_INFO("test.playerbot", " TEST 3: Update Loop Stability Test");
 
         try {
             auto botSession = BotSession::Create(77775);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
@@ -163,7 +163,7 @@ private:
                 }
             } crashTestFilter;
 
-            TC_LOG_INFO("test.playerbot", "🔍 Testing crash-prone Update() path...");
+            TC_LOG_INFO("test.playerbot", " Testing crash-prone Update() path...");
 
             // Set timeout condition that triggers socket cleanup
             botSession->ResetTimeOutTime(false);
@@ -173,34 +173,34 @@ private:
             bool updateResult = botSession->Update(100, crashTestFilter);
 
             if (updateResult) {
-                TC_LOG_INFO("test.playerbot", "✅ UPDATE LOOP CRASH FIXED");
-                TC_LOG_INFO("test.playerbot", "✅ No ACCESS_VIOLATION in socket operations");
+                TC_LOG_INFO("test.playerbot", " UPDATE LOOP CRASH FIXED");
+                TC_LOG_INFO("test.playerbot", " No ACCESS_VIOLATION in socket operations");
             } else {
-                TC_LOG_WARN("test.playerbot", "⚠️ Update returned false - check implementation");
+                TC_LOG_WARN("test.playerbot", " Update returned false - check implementation");
             }
 
             // Test multiple Update() calls for stability
-            TC_LOG_INFO("test.playerbot", "🔍 Testing repeated Update() calls...");
+            TC_LOG_INFO("test.playerbot", " Testing repeated Update() calls...");
 
             for (int i = 0; i < 10; ++i) {
                 bool result = botSession->Update(50, crashTestFilter);
                 if (!result) {
-                    TC_LOG_WARN("test.playerbot", "⚠️ Update failed on iteration {}", i);
+                    TC_LOG_WARN("test.playerbot", " Update failed on iteration {}", i);
                     break;
                 }
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ Repeated Update() calls completed");
+            TC_LOG_INFO("test.playerbot", " Repeated Update() calls completed");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in update loop test: {}", e.what());
-            TC_LOG_ERROR("test.playerbot", "❌ This might indicate the fix is incomplete");
+            TC_LOG_ERROR("test.playerbot", " Exception in update loop test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " This might indicate the fix is incomplete");
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ ACCESS_VIOLATION in update loop test");
-            TC_LOG_ERROR("test.playerbot", "❌ The fix has not resolved the crash");
+            TC_LOG_ERROR("test.playerbot", " ACCESS_VIOLATION in update loop test");
+            TC_LOG_ERROR("test.playerbot", " The fix has not resolved the crash");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 3 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 3 COMPLETE");
     }
 
     /**
@@ -209,16 +209,16 @@ private:
      */
     static void TestConcurrentAccess()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 4: Concurrent Access Test");
+        TC_LOG_INFO("test.playerbot", " TEST 4: Concurrent Access Test");
 
         try {
             auto botSession = BotSession::Create(77774);
             if (!botSession) {
-                TC_LOG_ERROR("test.playerbot", "❌ Failed to create BotSession");
+                TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
 
-            TC_LOG_INFO("test.playerbot", "🔍 Testing concurrent IsBot() calls...");
+            TC_LOG_INFO("test.playerbot", " Testing concurrent IsBot() calls...");
 
             std::atomic<int> successCount{0};
             std::atomic<int> totalCalls{0};
@@ -226,7 +226,7 @@ private:
             std::vector<std::thread> threads;
 
             // Launch threads that access IsBot() concurrently
-            for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
                 threads.emplace_back([&botSession, &successCount, &totalCalls]() {
                     WorldSession* sessionPtr = botSession.get();
 
@@ -246,7 +246,7 @@ private:
             }
 
             // Wait for completion
-            for (auto& thread : threads) {
+    for (auto& thread : threads) {
                 thread.join();
             }
 
@@ -256,18 +256,18 @@ private:
             TC_LOG_INFO("test.playerbot", "Concurrent IsBot() results: {}/{} successful", successful, total);
 
             if (successful == total) {
-                TC_LOG_INFO("test.playerbot", "✅ Concurrent access is stable");
+                TC_LOG_INFO("test.playerbot", " Concurrent access is stable");
             } else {
-                TC_LOG_WARN("test.playerbot", "⚠️ Some concurrent calls failed: {}/{}", successful, total);
+                TC_LOG_WARN("test.playerbot", " Some concurrent calls failed: {}/{}", successful, total);
             }
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in concurrent test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in concurrent test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in concurrent test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in concurrent test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 4 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 4 COMPLETE");
     }
 
     /**
@@ -276,13 +276,13 @@ private:
      */
     static void TestDestructorSafety()
     {
-        TC_LOG_INFO("test.playerbot", "📋 TEST 5: Destructor Safety Test");
+        TC_LOG_INFO("test.playerbot", " TEST 5: Destructor Safety Test");
 
         try {
-            TC_LOG_INFO("test.playerbot", "🔍 Testing safe session destruction...");
+            TC_LOG_INFO("test.playerbot", " Testing safe session destruction...");
 
             // Create and destroy sessions in a loop
-            for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
                 {
                     auto botSession = BotSession::Create(77770 + i);
                     if (botSession) {
@@ -311,15 +311,15 @@ private:
                 TC_LOG_DEBUG("test.playerbot", "Session {} destroyed safely", i);
             }
 
-            TC_LOG_INFO("test.playerbot", "✅ All sessions destroyed without crashes");
+            TC_LOG_INFO("test.playerbot", " All sessions destroyed without crashes");
 
         } catch (std::exception const& e) {
-            TC_LOG_ERROR("test.playerbot", "❌ Exception in destructor test: {}", e.what());
+            TC_LOG_ERROR("test.playerbot", " Exception in destructor test: {}", e.what());
         } catch (...) {
-            TC_LOG_ERROR("test.playerbot", "❌ Unknown exception in destructor test");
+            TC_LOG_ERROR("test.playerbot", " Unknown exception in destructor test");
         }
 
-        TC_LOG_INFO("test.playerbot", "📋 TEST 5 COMPLETE");
+        TC_LOG_INFO("test.playerbot", " TEST 5 COMPLETE");
     }
 };
 
@@ -328,11 +328,11 @@ private:
  */
 void ValidateVirtualIsBotFix()
 {
-    TC_LOG_INFO("test.playerbot", "🚨 VALIDATING CRITICAL IsBot() VIRTUAL FIX");
-    TC_LOG_INFO("test.playerbot", "🚨 Expected result: No more ACCESS_VIOLATION crashes");
+    TC_LOG_INFO("test.playerbot", " VALIDATING CRITICAL IsBot() VIRTUAL FIX");
+    TC_LOG_INFO("test.playerbot", " Expected result: No more ACCESS_VIOLATION crashes");
 
     VirtualIsBotValidationTest::ValidateVirtualIsBotFix();
 
-    TC_LOG_INFO("test.playerbot", "🚨 VALIDATION COMPLETE");
-    TC_LOG_INFO("test.playerbot", "🚨 If all tests pass, the ACCESS_VIOLATION crashes should be resolved");
+    TC_LOG_INFO("test.playerbot", " VALIDATION COMPLETE");
+    TC_LOG_INFO("test.playerbot", " If all tests pass, the ACCESS_VIOLATION crashes should be resolved");
 }

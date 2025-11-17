@@ -132,10 +132,10 @@ struct PathRequest
     float nodeSpacing;
     uint32 maxNodes;
     uint32 timeoutMs;
-    std::vector<Position> avoidAreas;
-    std::vector<Position> waypoints;
+    ::std::vector<Position> avoidAreas;
+    ::std::vector<Position> waypoints;
     uint32 priority;
-    std::function<void(const std::vector<Position>&)> callback;
+    ::std::function<void(const ::std::vector<Position>&)> callback;
 
     PathRequest() : pathType(PathType::GROUND_PATH), behavior(MovementBehavior::DIRECT),
                    flags(PathFlags::BASIC), maxRange(1000.0f), nodeSpacing(1.0f),
@@ -146,14 +146,14 @@ struct PathRequest
 struct PathResult
 {
     bool success;
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     PathQuality quality;
     PathType usedPathType;
     float totalDistance;
     float estimatedTime;
     uint32 nodeCount;
     uint32 calculationTime;
-    std::string failureReason;
+    ::std::string failureReason;
     bool partialPath;
     Position furthestReachable;
 
@@ -171,7 +171,7 @@ struct DangerZone
     uint32 startTime;
     uint32 duration;
     bool isActive;
-    std::string source;     // What causes the danger
+    ::std::string source;     // What causes the danger
 
     DangerZone() : radius(0.0f), dangerLevel(0.0f), startTime(0), duration(0), isActive(false) {}
 
@@ -196,15 +196,15 @@ struct DangerZone
 // Pathfinding performance metrics
 struct PathfindingMetrics
 {
-    std::atomic<uint32> pathRequests{0};
-    std::atomic<uint32> successfulPaths{0};
-    std::atomic<uint32> failedPaths{0};
-    std::atomic<uint32> partialPaths{0};
-    std::atomic<uint32> cacheHits{0};
-    std::atomic<uint32> cacheMisses{0};
-    std::chrono::microseconds averageCalculationTime{0};
-    std::chrono::microseconds maxCalculationTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> pathRequests{0};
+    ::std::atomic<uint32> successfulPaths{0};
+    ::std::atomic<uint32> failedPaths{0};
+    ::std::atomic<uint32> partialPaths{0};
+    ::std::atomic<uint32> cacheHits{0};
+    ::std::atomic<uint32> cacheMisses{0};
+    ::std::chrono::microseconds averageCalculationTime{0};
+    ::std::chrono::microseconds maxCalculationTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -214,9 +214,9 @@ struct PathfindingMetrics
         partialPaths = 0;
         cacheHits = 0;
         cacheMisses = 0;
-        averageCalculationTime = std::chrono::microseconds{0};
-        maxCalculationTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageCalculationTime = ::std::chrono::microseconds{0};
+        maxCalculationTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     float GetSuccessRate() const
@@ -237,7 +237,7 @@ struct PathCacheEntry
 {
     Position startPos;
     Position goalPos;
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     PathQuality quality;
     uint32 timestamp;
     uint32 expirationTime;
@@ -264,7 +264,7 @@ public:
     PathResult FindPath(const PathRequest& request);
     PathResult FindPath(const Position& goal, PathFlags flags = PathFlags::BASIC);
     PathResult FindPathToUnit(Unit* target, float range = 0.0f, PathFlags flags = PathFlags::BASIC);
-    PathResult FindEscapePath(const std::vector<Unit*>& threats, float minDistance = 15.0f);
+    PathResult FindEscapePath(const ::std::vector<Unit*>& threats, float minDistance = 15.0f);
 
     // Async pathfinding
     void FindPathAsync(const PathRequest& request);
@@ -273,19 +273,19 @@ public:
 
     // A* algorithm implementation
     PathResult CalculateAStarPath(const Position& start, const Position& goal, const PathRequest& request);
-    std::vector<PathNode*> ReconstructPath(PathNode* goalNode);
+    ::std::vector<PathNode*> ReconstructPath(PathNode* goalNode);
     float CalculateHeuristic(const Position& current, const Position& goal);
 
     // Path validation and optimization
-    bool IsPathValid(const std::vector<Position>& waypoints);
-    std::vector<Position> OptimizePath(const std::vector<Position>& waypoints);
-    std::vector<Position> SmoothPath(const std::vector<Position>& waypoints);
-    PathQuality AssessPathQuality(const std::vector<Position>& waypoints, const PathRequest& request);
+    bool IsPathValid(const ::std::vector<Position>& waypoints);
+    ::std::vector<Position> OptimizePath(const ::std::vector<Position>& waypoints);
+    ::std::vector<Position> SmoothPath(const ::std::vector<Position>& waypoints);
+    PathQuality AssessPathQuality(const ::std::vector<Position>& waypoints, const PathRequest& request);
 
     // Node and terrain analysis
     bool IsNodeWalkable(const Position& pos, const PathRequest& request);
     float GetNodeCost(const Position& from, const Position& to, const PathRequest& request);
-    std::vector<Position> GetNeighborNodes(const Position& center, float spacing);
+    ::std::vector<Position> GetNeighborNodes(const Position& center, float spacing);
     float CalculateTerrainCost(const Position& pos);
 
     // Danger and avoidance systems
@@ -299,11 +299,11 @@ public:
     PathResult FindJumpPath(const Position& start, const Position& goal);
     PathResult FindSwimmingPath(const Position& start, const Position& goal);
     PathResult FindFlyingPath(const Position& start, const Position& goal);
-    PathResult FindFormationPath(const Position& goal, const std::vector<Player*>& groupMembers);
+    PathResult FindFormationPath(const Position& goal, const ::std::vector<Player*>& groupMembers);
 
     // Line of sight integration
-    bool MaintainsLineOfSight(const std::vector<Position>& waypoints, Unit* target);
-    std::vector<Position> FindLoSPreservingPath(const Position& goal, Unit* target);
+    bool MaintainsLineOfSight(const ::std::vector<Position>& waypoints, Unit* target);
+    ::std::vector<Position> FindLoSPreservingPath(const Position& goal, Unit* target);
     Position GetNextLoSPosition(const Position& current, Unit* target);
 
     // Cache management
@@ -328,22 +328,22 @@ public:
     bool CanReachPosition(const Position& pos, float tolerance = 1.0f);
     float EstimatePathLength(const Position& start, const Position& goal);
     Position GetClosestReachablePosition(const Position& target);
-    std::vector<Position> GetAlternativePaths(const Position& goal, uint32 maxAlternatives = 3);
+    ::std::vector<Position> GetAlternativePaths(const Position& goal, uint32 maxAlternatives = 3);
 
     // Group coordination
-    PathResult FindGroupCoordinatedPath(const Position& goal, const std::vector<Player*>& group);
-    bool WillPathIntersectWithGroupMember(const std::vector<Position>& waypoints, const std::vector<Player*>& group);
-    Position AdjustPathForGroupAvoidance(const Position& intended, const std::vector<Player*>& group);
+    PathResult FindGroupCoordinatedPath(const Position& goal, const ::std::vector<Player*>& group);
+    bool WillPathIntersectWithGroupMember(const ::std::vector<Position>& waypoints, const ::std::vector<Player*>& group);
+    Position AdjustPathForGroupAvoidance(const Position& intended, const ::std::vector<Player*>& group);
 
 private:
     // Core A* algorithm components
     PathNode* CreateNode(const Position& pos);
-    void AddToOpenSet(PathNode* node, std::priority_queue<PathNode>& openSet);
-    PathNode* GetLowestFCostNode(std::vector<PathNode*>& openSet);
-    bool IsInClosedSet(const Position& pos, const std::vector<PathNode*>& closedSet);
+    void AddToOpenSet(PathNode* node, ::std::priority_queue<PathNode>& openSet);
+    PathNode* GetLowestFCostNode(::std::vector<PathNode*>& openSet);
+    bool IsInClosedSet(const Position& pos, const ::std::vector<PathNode*>& closedSet);
 
     // Path calculation helpers
-    std::vector<Position> GenerateWaypoints(const Position& start, const Position& goal, uint32 count);
+    ::std::vector<Position> GenerateWaypoints(const Position& start, const Position& goal, uint32 count);
     float CalculateMovementCost(const Position& from, const Position& to, const PathRequest& request);
     bool IsDirectPathPossible(const Position& start, const Position& goal, const PathRequest& request);
     bool RequiresComplexPathfinding(const Position& start, const Position& goal, const PathRequest& request);
@@ -358,10 +358,10 @@ private:
     // Cache management helpers
     PathCacheEntry* FindCacheEntry(const Position& start, const Position& goal);
     void AddCacheEntry(const PathCacheEntry& entry);
-    std::string GenerateCacheKey(const Position& start, const Position& goal);
+    ::std::string GenerateCacheKey(const Position& start, const Position& goal);
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, bool successful, bool cached);
+    void TrackPerformance(::std::chrono::microseconds duration, bool successful, bool cached);
 
     // Utility methods
     Position ClampToWorldBounds(const Position& pos);
@@ -380,16 +380,16 @@ private:
     bool _enableDangerAvoidance;
 
     // Pathfinding state
-    std::vector<DangerZone> _dangerZones;
+    ::std::vector<DangerZone> _dangerZones;
     uint32 _lastDangerUpdate;
 
     // Cache system
-    std::unordered_map<std::string, PathCacheEntry> _pathCache;
+    ::std::unordered_map<::std::string, PathCacheEntry> _pathCache;
     uint32 _lastCacheCleanup;
 
     // Async pathfinding
-    std::unordered_map<uint32, PathResult> _asyncResults;
-    std::atomic<uint32> _nextRequestId{1};
+    ::std::unordered_map<uint32, PathResult> _asyncResults;
+    ::std::atomic<uint32> _nextRequestId{1};
 
     // Performance metrics
     mutable PathfindingMetrics _metrics;
@@ -417,10 +417,10 @@ public:
     static float CalculateOctileDistance(const Position& a, const Position& b);
 
     // Path analysis utilities
-    static float CalculatePathLength(const std::vector<Position>& waypoints);
-    static float CalculatePathSmoothness(const std::vector<Position>& waypoints);
-    static bool IsPathTooComplex(const std::vector<Position>& waypoints, float maxComplexity = 2.0f);
-    static Position InterpolateAlongPath(const std::vector<Position>& waypoints, float distance);
+    static float CalculatePathLength(const ::std::vector<Position>& waypoints);
+    static float CalculatePathSmoothness(const ::std::vector<Position>& waypoints);
+    static bool IsPathTooComplex(const ::std::vector<Position>& waypoints, float maxComplexity = 2.0f);
+    static Position InterpolateAlongPath(const ::std::vector<Position>& waypoints, float distance);
 
     // Terrain analysis utilities
     static bool IsPositionOnGround(const Position& pos, Map* map);
@@ -429,18 +429,18 @@ public:
     static bool CanWalkBetween(const Position& a, const Position& b, Map* map);
 
     // Path optimization utilities
-    static std::vector<Position> RemoveRedundantWaypoints(const std::vector<Position>& waypoints);
-    static std::vector<Position> InsertIntermediateWaypoints(const std::vector<Position>& waypoints, float maxDistance);
-    static std::vector<Position> AdjustWaypointsToGround(const std::vector<Position>& waypoints, Map* map);
+    static ::std::vector<Position> RemoveRedundantWaypoints(const ::std::vector<Position>& waypoints);
+    static ::std::vector<Position> InsertIntermediateWaypoints(const ::std::vector<Position>& waypoints, float maxDistance);
+    static ::std::vector<Position> AdjustWaypointsToGround(const ::std::vector<Position>& waypoints, Map* map);
 
     // Formation and group utilities
     static Position CalculateFormationPosition(const Position& leaderPos, float angle, float distance);
-    static std::vector<Position> GenerateFormationPositions(const Position& center, uint32 memberCount, float spacing);
-    static bool WillFormationCollide(const std::vector<Position>& formation, const std::vector<Position>& obstacles);
+    static ::std::vector<Position> GenerateFormationPositions(const Position& center, uint32 memberCount, float spacing);
+    static bool WillFormationCollide(const ::std::vector<Position>& formation, const ::std::vector<Position>& obstacles);
 
     // Emergency pathfinding utilities
-    static Position FindNearestSafePosition(const Position& current, const std::vector<DangerZone>& dangers, Map* map);
-    static std::vector<Position> GenerateEscapeRoutes(const Position& current, uint32 routeCount, float distance);
+    static Position FindNearestSafePosition(const Position& current, const ::std::vector<DangerZone>& dangers, Map* map);
+    static ::std::vector<Position> GenerateEscapeRoutes(const Position& current, uint32 routeCount, float distance);
     static Position GetFurthestSafePosition(const Position& start, const Position& direction, float maxDistance, Map* map);
 };
 

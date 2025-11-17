@@ -68,14 +68,13 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     static uint32 lastDiagLog = 0;
     uint32 currentTime = GameTime::GetGameTimeMS();
     bool shouldLog = (currentTime - lastDiagLog > 2000); // Every 2 seconds
-
     if (!ai || !ai->GetBot())
         return;
 
     Player* bot = ai->GetBot();
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - inCombat={}, hasGroup={}",
+        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombat: Bot {} - inCombat={}, hasGroup={}",
                     bot->GetName(), bot->IsInCombat(), bot->GetGroup() != nullptr);
         lastDiagLog = currentTime;
     }
@@ -88,7 +87,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     bool groupInCombat = IsGroupInCombat(ai);
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 GroupCombat: Bot {} - groupInCombat={}",
+        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombat: Bot {} - groupInCombat={}",
                     bot->GetName(), groupInCombat);
     }
 
@@ -112,7 +111,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
         // If group member has an alive target they're attacking, bot should assist
         // Don't use IsValidAttackTarget() - it fails for neutral mobs
         // The player is already fighting it, so it's valid for the bot to attack
-        if (target && target->IsAlive())
+    if (target && target->IsAlive())
         {
             // Set target
             bot->SetTarget(target->GetGUID());
@@ -120,10 +119,10 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
             // CRITICAL FIX: Delegate movement to ClassAI for proper positioning
             // ClassAI knows the bot's optimal range (melee vs ranged)
 
-            float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+            float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
             // CRITICAL: Ensure combat is initiated BEFORE allowing spell casts
             // bot->Attack() makes the target hostile but needs to process
-            if (!bot->GetVictim() || bot->GetVictim() != target)
+    if (!bot->GetVictim() || bot->GetVictim() != target)
             {
                 // CRITICAL FIX: DO NOT call SetAIState() here!
                 // UpdateCombatState() in BotAI::UpdateAI() will detect bot->IsInCombat()
@@ -139,21 +138,21 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
                 // CRITICAL FIX: For neutral mobs, make THEM attack US first
                 // This is the same fix as in autonomous combat (BotAI.cpp lines 858-876)
-                if (Creature* targetCreature = target->ToCreature())
+    if (Creature* targetCreature = target->ToCreature())
                 {
                     // Add threat (makes creature turn hostile)
-                    if (targetCreature->CanHaveThreatList())
+    if (targetCreature->CanHaveThreatList())
                     {
                         targetCreature->GetThreatManager().AddThreat(bot, 1.0f);
-                        TC_LOG_ERROR("module.playerbot.strategy", "🎯 THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
+                        TC_LOG_ERROR("module.playerbot.strategy", " THREAT ADDED: Bot {} added threat to creature {} (Entry: {})",
                                     bot->GetName(), targetCreature->GetName(), targetCreature->GetEntry());
                     }
 
                     // Make creature's AI attack us (makes it hostile)
-                    if (CreatureAI* ai = targetCreature->AI())
+    if (CreatureAI* ai = targetCreature->AI())
                     {
                         ai->AttackStart(bot);
-                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ CREATURE ENGAGED: {} AttackStart() called on bot {}",
+                        TC_LOG_ERROR("module.playerbot.strategy", " CREATURE ENGAGED: {} AttackStart() called on bot {}",
                                     targetCreature->GetName(), bot->GetName());
                     }
                 }
@@ -165,7 +164,7 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 bot->SetInCombatWith(target);
                 target->SetInCombatWith(bot);
 
-                TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
+                TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} initiating combat with {} (IsInCombat={}, HasVictim={})",
                             bot->GetName(), target->GetName(), bot->IsInCombat(), bot->GetVictim() != nullptr);
                 // Don't return - allow ClassAI combat updates to proceed
                 // Note: OnCombatUpdate() is called from BotAI::UpdateAI() when IsInCombat() returns true
@@ -174,11 +173,11 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
 
             // ALWAYS update movement while target is alive (even during combat)
             // This ensures bot follows moving targets
-            if (target->IsAlive())
+    if (target->IsAlive())
             {
                 // Get optimal range from ClassAI (if available)
                 float optimalRange = 5.0f; // Default to melee range
-                if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
+    if (ClassAI* classAI = dynamic_cast<ClassAI*>(ai))
                 {
                     optimalRange = classAI->GetOptimalRange(target);
                 }
@@ -190,12 +189,12 @@ void GroupCombatStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
                 {
                     mm->MoveChase(target, optimalRange);
 
-                    TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
+                    TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy: Bot {} chasing {} at optimal range {:.1f}yd (current: {:.1f}yd)",
                                 bot->GetName(), target->GetName(), optimalRange, distance);
                 }
                 else
                 {
-                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭️ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
+                    TC_LOG_DEBUG("module.playerbot.strategy", "⏭ GroupCombatStrategy: Bot {} already chasing, skipping", bot->GetName());
                 }
             }
             break;
@@ -233,10 +232,10 @@ float GroupCombatStrategy::GetRelevance(BotAI* ai) const
 
                     // Combat initiation is handled in UpdateBehavior
                     // Just set target here and return high relevance
-                    if (!bot->IsInCombat() && !bot->GetVictim())
+    if (!bot->IsInCombat() && !bot->GetVictim())
                     {
-                        float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-                        TC_LOG_ERROR("module.playerbot.strategy", "⚔️ GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
+                        float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+                        TC_LOG_ERROR("module.playerbot.strategy", " GroupCombatStrategy (Relevance): Bot {} targeting {} (distance: {:.1f}yd) to assist {}",
                                     bot->GetName(), target->GetName(), distance, member->GetName());
                     }
                     break;
@@ -267,7 +266,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
 
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot.strategy", "🔍 Checking group members for combat (bot is {}):", bot->GetName());
+        TC_LOG_ERROR("module.playerbot.strategy", " Checking group members for combat (bot is {}):", bot->GetName());
         TC_LOG_ERROR("module.playerbot.strategy", "   Group GUID: {}, MemberCount: {}, Leader: {}",
                     group->GetGUID().ToString(),
                     group->GetMembersCount(),
@@ -312,7 +311,7 @@ bool GroupCombatStrategy::IsGroupInCombat(BotAI* ai) const
     }
 
     if (shouldLog)
-        TC_LOG_ERROR("module.playerbot.strategy", "  ❌ No group members in combat detected");
+        TC_LOG_ERROR("module.playerbot.strategy", "   No group members in combat detected");
 
     return false;
 }

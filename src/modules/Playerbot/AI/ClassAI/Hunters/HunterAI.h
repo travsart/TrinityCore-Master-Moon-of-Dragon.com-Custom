@@ -77,16 +77,16 @@ struct PetInfo
 // Combat metrics structure for performance tracking
 struct HunterCombatMetrics
 {
-    std::atomic<uint32> shotsLanded{0};
-    std::atomic<uint32> shotsMissed{0};
-    std::atomic<uint32> criticalStrikes{0};
-    std::atomic<uint32> interrupts{0};
-    std::atomic<uint32> trapsTriggered{0};
-    std::atomic<uint32> petCommands{0};
-    std::atomic<uint32> focusSpent{0};
-    std::atomic<uint32> damageDealt{0};
-    std::atomic<float> timeAtRange{0.0f};
-    std::atomic<float> timeInDeadZone{0.0f};
+    ::std::atomic<uint32> shotsLanded{0};
+    ::std::atomic<uint32> shotsMissed{0};
+    ::std::atomic<uint32> criticalStrikes{0};
+    ::std::atomic<uint32> interrupts{0};
+    ::std::atomic<uint32> trapsTriggered{0};
+    ::std::atomic<uint32> petCommands{0};
+    ::std::atomic<uint32> focusSpent{0};
+    ::std::atomic<uint32> damageDealt{0};
+    ::std::atomic<float> timeAtRange{0.0f};
+    ::std::atomic<float> timeInDeadZone{0.0f};
 
     void Reset()
     {
@@ -202,7 +202,7 @@ private:
     void RecordTrapPlacement(uint32 trapSpell);
 
     // Member variables
-    std::unique_ptr<CombatBehaviorIntegration> _combatBehaviors;
+    ::std::unique_ptr<CombatBehaviorIntegration> _combatBehaviors;
 
     // Combat state tracking
     HunterCombatMetrics _combatMetrics;
@@ -223,7 +223,7 @@ private:
     uint32 _petTargetSwitch;
 
     // Trap management
-    std::unordered_set<ObjectGuid> _frozenTargets;
+    ::std::unordered_set<ObjectGuid> _frozenTargets;
     Position _lastTrapPosition;
     uint32 _activeTrapType;
 

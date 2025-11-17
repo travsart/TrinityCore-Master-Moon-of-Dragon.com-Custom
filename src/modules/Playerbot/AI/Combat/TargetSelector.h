@@ -124,7 +124,7 @@ struct TargetInfo
     bool isGroupFocus;
     bool isVulnerable;
     uint32 lastUpdate;
-    std::string reason;  // Why this target was selected
+    ::std::string reason;  // Why this target was selected
 
     TargetInfo() : unit(nullptr), score(0.0f), priority(TargetPriority::IGNORE),
                    distance(0.0f), healthPercent(100.0f), threatLevel(0.0f),
@@ -144,7 +144,7 @@ struct SelectionContext
 {
     Player* bot;
     ThreatRole botRole;
-    std::vector<Player*> groupMembers;
+    ::std::vector<Player*> groupMembers;
     Unit* currentTarget;
     Unit* groupTarget;
     uint32 spellId;
@@ -153,7 +153,7 @@ struct SelectionContext
     bool emergencyMode;
     TargetValidation validationFlags;
     TargetWeights weights;
-    std::string selectionReason;
+    ::std::string selectionReason;
 
     SelectionContext() : bot(nullptr), botRole(ThreatRole::UNDEFINED), currentTarget(nullptr),
                         groupTarget(nullptr), spellId(0), maxRange(0.0f), inCombat(false),
@@ -166,25 +166,25 @@ struct SelectionResult
     Unit* target;
     TargetInfo info;
     bool success;
-    std::string failureReason;
+    ::std::string failureReason;
     uint32 candidatesEvaluated;
-    std::chrono::microseconds selectionTime;
-    std::vector<TargetInfo> alternativeTargets;  // For backup selection
+    ::std::chrono::microseconds selectionTime;
+    ::std::vector<TargetInfo> alternativeTargets;  // For backup selection
 
     SelectionResult() : target(nullptr), success(false), candidatesEvaluated(0),
-                       selectionTime(std::chrono::microseconds{0}) {}
+                       selectionTime(::std::chrono::microseconds{0}) {}
 };
 
 // Performance metrics for target selection
 struct SelectionMetrics
 {
-    std::atomic<uint32> totalSelections{0};
-    std::atomic<uint32> successfulSelections{0};
-    std::atomic<uint32> failedSelections{0};
-    std::atomic<uint32> targetsEvaluated{0};
-    std::chrono::microseconds averageSelectionTime{0};
-    std::chrono::microseconds maxSelectionTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> totalSelections{0};
+    ::std::atomic<uint32> successfulSelections{0};
+    ::std::atomic<uint32> failedSelections{0};
+    ::std::atomic<uint32> targetsEvaluated{0};
+    ::std::chrono::microseconds averageSelectionTime{0};
+    ::std::chrono::microseconds maxSelectionTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -192,9 +192,9 @@ struct SelectionMetrics
         successfulSelections = 0;
         failedSelections = 0;
         targetsEvaluated = 0;
-        averageSelectionTime = std::chrono::microseconds{0};
-        maxSelectionTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageSelectionTime = ::std::chrono::microseconds{0};
+        maxSelectionTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -234,7 +234,7 @@ public:
     // Target scoring and evaluation
     float CalculateTargetScore(Unit* target, const SelectionContext& context);
     TargetPriority DetermineTargetPriority(Unit* target, const SelectionContext& context);
-    std::vector<TargetInfo> EvaluateAllTargets(const SelectionContext& context);
+    ::std::vector<TargetInfo> EvaluateAllTargets(const SelectionContext& context);
 
     // Configuration
     void SetWeights(const TargetWeights& weights) { _weights = weights; }
@@ -271,9 +271,9 @@ public:
 
 private:
     // Internal selection methods
-    std::vector<Unit*> GetNearbyEnemies(float range) const;
-    std::vector<Unit*> GetNearbyAllies(float range) const;
-    std::vector<Unit*> GetAllTargetCandidates(const SelectionContext& context) const;
+    ::std::vector<Unit*> GetNearbyEnemies(float range) const;
+    ::std::vector<Unit*> GetNearbyAllies(float range) const;
+    ::std::vector<Unit*> GetAllTargetCandidates(const SelectionContext& context) const;
 
     // Scoring components
     float CalculateThreatScore(Unit* target, const SelectionContext& context);
@@ -310,7 +310,7 @@ private:
     float _defaultMaxRange;
 
     // Cache for performance
-    mutable std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
+    mutable ::std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
     mutable uint32 _cacheTimestamp;
     mutable bool _cacheDirty;
 
@@ -350,9 +350,9 @@ public:
     static Position GetOptimalPosition(Player* bot, Unit* target);
 
     // Group coordination utilities
-    static Unit* GetGroupConsensusTarget(const std::vector<Player*>& group);
-    static bool ShouldFocusTarget(Unit* target, const std::vector<Player*>& group);
-    static float CalculateGroupThreat(Unit* target, const std::vector<Player*>& group);
+    static Unit* GetGroupConsensusTarget(const ::std::vector<Player*>& group);
+    static bool ShouldFocusTarget(Unit* target, const ::std::vector<Player*>& group);
+    static float CalculateGroupThreat(Unit* target, const ::std::vector<Player*>& group);
 };
 
 } // namespace Playerbot

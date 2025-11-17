@@ -37,7 +37,7 @@ LineOfSightManager::LineOfSightManager(Player* bot)
 
 LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     LoSResult result;
 
     // No lock needed - line of sight cache is per-bot instance data
@@ -60,8 +60,8 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
             if (cacheEntry && cacheEntry->IsValid(GameTime::GetGameTimeMS()))
             {
                 _metrics.cacheHits++;
-                auto endTime = std::chrono::steady_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+                auto endTime = ::std::chrono::steady_clock::now();
+                auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
                 TrackPerformance(duration, true, cacheEntry->result.hasLineOfSight);
                 return cacheEntry->result;
             }
@@ -89,14 +89,14 @@ LoSResult LineOfSightManager::CheckLineOfSight(const LoSContext& context)
         else
             _metrics.failedChecks++;
 
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
         TrackPerformance(duration, false, result.hasLineOfSight);
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.hasLineOfSight = false;
-        result.failureReason = std::string("Exception during LoS check: ") + e.what();
+        result.failureReason = ::std::string("Exception during LoS check: ") + e.what();
         TC_LOG_ERROR("playerbot.los", "Exception in CheckLineOfSight for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -179,7 +179,7 @@ bool LineOfSightManager::CanSeeTarget(Unit* target)
     return result.hasLineOfSight;
 }
 
-bool LineOfSightManager::CanCastSpell(Unit* target, uint32 spellId)
+bool LineOfSightManager::CanCastSpell(uint32 spellId, Unit* target)
 {
     if (!target || !spellId)
         return false;
@@ -221,9 +221,9 @@ bool LineOfSightManager::CanMoveToPosition(const Position& pos)
     return result.hasLineOfSight;
 }
 
-std::vector<Position> LineOfSightManager::FindLineOfSightPositions(Unit* target, float radius)
+::std::vector<Position> LineOfSightManager::FindLineOfSightPositions(Unit* target, float radius)
 {
-    std::vector<Position> losPositions;
+    ::std::vector<Position> losPositions;
 
     if (!target)
         return losPositions;
@@ -235,8 +235,8 @@ std::vector<Position> LineOfSightManager::FindLineOfSightPositions(Unit* target,
         for (float distance = radius * 0.5f; distance <= radius; distance += radius * 0.25f)
         {
             Position candidatePos;
-            candidatePos.m_positionX = targetPos.GetPositionX() + distance * std::cos(angle);
-            candidatePos.m_positionY = targetPos.GetPositionY() + distance * std::sin(angle);
+            candidatePos.m_positionX = targetPos.GetPositionX() + distance * ::std::cos(angle);
+            candidatePos.m_positionY = targetPos.GetPositionY() + distance * ::std::sin(angle);
             candidatePos.m_positionZ = targetPos.GetPositionZ();
 
             if (HasLineOfSightFromPosition(candidatePos, target))
@@ -254,7 +254,7 @@ Position LineOfSightManager::FindBestLineOfSightPosition(Unit* target, float pre
     if (!target)
         return _bot->GetPosition();
 
-    std::vector<Position> candidates = FindLineOfSightPositions(target, preferredRange > 0.0f ? preferredRange : 20.0f);
+    ::std::vector<Position> candidates = FindLineOfSightPositions(target, preferredRange > 0.0f ? preferredRange : 20.0f);
     if (candidates.empty())
         return _bot->GetPosition();
 
@@ -269,7 +269,7 @@ Position LineOfSightManager::FindBestLineOfSightPosition(Unit* target, float pre
 
         if (preferredRange > 0.0f)
         {
-            float rangeDiff = std::abs(pos.GetExactDist(target) - preferredRange);
+            float rangeDiff = ::std::abs(pos.GetExactDist(target) - preferredRange);
             score -= rangeDiff * 2.0f;
         }
 
@@ -301,9 +301,9 @@ bool LineOfSightManager::HasLineOfSightFromPosition(const Position& fromPos, Uni
     return result.hasLineOfSight;
 }
 
-std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
+::std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
 {
-    std::vector<Unit*> visibleEnemies;
+    ::std::vector<Unit*> visibleEnemies;
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
@@ -321,7 +321,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
     // Resolve GUIDs to Unit pointers and filter visible enemies
     for (ObjectGuid guid : nearbyGuids)
@@ -342,9 +342,9 @@ std::vector<Unit*> LineOfSightManager::GetVisibleEnemies(float maxRange)
     return visibleEnemies;
 }
 
-std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
+::std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
 {
-    std::vector<Unit*> visibleAllies;
+    ::std::vector<Unit*> visibleAllies;
 
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = _bot->GetMap();
@@ -361,7 +361,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
             return visibleAllies;
     }
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), maxRange);
 
     // Resolve GUIDs to Unit pointers and filter visible allies
@@ -383,7 +383,7 @@ std::vector<Unit*> LineOfSightManager::GetVisibleAllies(float maxRange)
     return visibleAllies;
 }
 
-Unit* LineOfSightManager::GetBestVisibleTarget(const std::vector<Unit*>& candidates)
+Unit* LineOfSightManager::GetBestVisibleTarget(const ::std::vector<Unit*>& candidates)
 {
     Unit* bestTarget = nullptr;
     float bestScore = 0.0f;
@@ -393,7 +393,7 @@ Unit* LineOfSightManager::GetBestVisibleTarget(const std::vector<Unit*>& candida
         if (!candidate || !CanSeeTarget(candidate))
             continue;
 
-        float distance = std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
+        float distance = ::std::sqrt(_bot->GetExactDistSq(candidate)); // Calculate once from squared distance
         float healthPct = candidate->GetHealthPct();
 
         float score = 100.0f - (distance * 2.0f);
@@ -415,7 +415,7 @@ bool LineOfSightManager::IsHeightDifferenceBlocking(Unit* target)
     if (!target)
         return false;
 
-    float heightDiff = std::abs(_bot->GetPositionZ() - target->GetPositionZ());
+    float heightDiff = ::std::abs(_bot->GetPositionZ() - target->GetPositionZ());
     return heightDiff > _heightTolerance;
 }
 
@@ -468,7 +468,7 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
     Position from = context.sourcePos;
     Position to = context.targetPos;
     result.distance = CalculateDistance3D(from, to);
-    result.heightDifference = std::abs(to.GetPositionZ() - from.GetPositionZ());
+    result.heightDifference = ::std::abs(to.GetPositionZ() - from.GetPositionZ());
 
     if (!IsWithinRange(from, to, context.maxRange))
     {
@@ -559,7 +559,7 @@ bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Posit
 bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Position& to)
 {
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    float searchRange = std::max(from.GetExactDist(&to), 30.0f);
+    float searchRange = ::std::max(from.GetExactDist(&to), 30.0f);
     Map* map = _bot->GetMap();
     if (!map)
         return false;
@@ -575,7 +575,7 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
     }
 
     // Query nearby GameObject GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyGameObjectGuids(
         _bot->GetPosition(), searchRange);
 
     // Resolve GUIDs to GameObject pointers and check for blocking
@@ -588,7 +588,7 @@ bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Positio
         if (obj->GetGoType() == GAMEOBJECT_TYPE_DOOR && obj->GetGoState() == GO_STATE_ACTIVE)
             continue;
 
-        float objDistance = std::sqrt(obj->GetExactDistSq(from)); // Calculate once from squared distance
+        float objDistance = ::std::sqrt(obj->GetExactDistSq(from)); // Calculate once from squared distance
         float totalDistance = from.GetExactDist(&to);
 
         if (objDistance < totalDistance && objDistance > 1.0f)
@@ -623,7 +623,7 @@ bool LineOfSightManager::CheckUnitBlocking(const Position& from, const Position&
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), searchRange);
 
     // Resolve GUIDs to Unit pointers and check for blocking
@@ -690,7 +690,7 @@ bool LineOfSightManager::IsWithinRange(const Position& from, const Position& to,
 
 bool LineOfSightManager::IsHeightDifferenceAcceptable(const Position& from, const Position& to, float maxDiff)
 {
-    return std::abs(to.GetPositionZ() - from.GetPositionZ()) <= maxDiff;
+    return ::std::abs(to.GetPositionZ() - from.GetPositionZ()) <= maxDiff;
 }
 
 bool LineOfSightManager::CheckSpellSpecificRequirements(Unit* target, uint32 spellId)
@@ -709,7 +709,7 @@ bool LineOfSightManager::CheckSpellSpecificRequirements(Unit* target, uint32 spe
         return true;
 
     float angle = _bot->GetRelativeAngle(target);
-    return std::abs(angle) <= M_PI/3;
+    return ::std::abs(angle) <= M_PI/3;
 }
 
 bool LineOfSightManager::CheckInterruptLineOfSight(Unit* target)
@@ -728,20 +728,20 @@ bool LineOfSightManager::CheckHealingLineOfSight(Unit* target)
     return !_bot->IsHostileTo(target) && _bot->GetExactDistSq(target) <= (40.0f * 40.0f); // 1600.0f
 }
 
-void LineOfSightManager::TrackPerformance(std::chrono::microseconds duration, bool cacheHit, bool successful)
+void LineOfSightManager::TrackPerformance(::std::chrono::microseconds duration, bool cacheHit, bool successful)
 {
     if (duration > _metrics.maxCheckTime)
         _metrics.maxCheckTime = duration;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(currentTime - _metrics.lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - _metrics.lastUpdate);
 
     if (timeSinceLastUpdate.count() >= 1)
     {
         uint32 totalChecks = _metrics.totalChecks.load();
         if (totalChecks > 0)
         {
-            _metrics.averageCheckTime = std::chrono::microseconds(
+            _metrics.averageCheckTime = ::std::chrono::microseconds(
                 static_cast<uint64_t>(_metrics.averageCheckTime.count() * 0.9 + duration.count() * 0.1)
             );
         }
@@ -772,7 +772,7 @@ float LoSUtils::GetLoSDistance(Player* source, Unit* target)
     if (!source || !target)
         return 0.0f;
 
-    return std::sqrt(source->GetExactDistSq(target)); // Calculate actual distance
+    return ::std::sqrt(source->GetExactDistSq(target)); // Calculate actual distance
 }
 
 bool LoSUtils::CanCastSpellAtTarget(Player* caster, Unit* target, uint32 spellId)

@@ -42,7 +42,7 @@ ArenaAI::ArenaAI()
 
 void ArenaAI::Initialize()
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     TC_LOG_INFO("playerbot", "ArenaAI: Initializing arena systems...");
 
@@ -67,7 +67,7 @@ void ArenaAI::InitializePillarDatabase()
 void ArenaAI::LoadBladesEdgePillars()
 {
     uint32 mapId = 562; // Blade's Edge Arena
-    std::vector<ArenaPillar> pillars;
+    ::std::vector<ArenaPillar> pillars;
 
     // Bridge pillar (center)
     pillars.push_back(ArenaPillar(Position(6238.0f, 262.0f, 0.8f, 0.0f), 8.0f));
@@ -82,7 +82,7 @@ void ArenaAI::LoadBladesEdgePillars()
 void ArenaAI::LoadNagrandPillars()
 {
     uint32 mapId = 559; // Nagrand Arena
-    std::vector<ArenaPillar> pillars;
+    ::std::vector<ArenaPillar> pillars;
 
     // Center pillars
     pillars.push_back(ArenaPillar(Position(4055.0f, 2919.0f, 13.6f, 0.0f), 6.0f));
@@ -98,7 +98,7 @@ void ArenaAI::LoadNagrandPillars()
 void ArenaAI::LoadLordaeronPillars()
 {
     uint32 mapId = 572; // Ruins of Lordaeron
-    std::vector<ArenaPillar> pillars;
+    ::std::vector<ArenaPillar> pillars;
 
     // Tombstone pillars
     pillars.push_back(ArenaPillar(Position(1285.0f, 1667.0f, 39.6f, 0.0f), 4.0f));
@@ -112,7 +112,7 @@ void ArenaAI::LoadLordaeronPillars()
 void ArenaAI::LoadDalaranPillars()
 {
     uint32 mapId = 617; // Dalaran Arena
-    std::vector<ArenaPillar> pillars;
+    ::std::vector<ArenaPillar> pillars;
 
     // Water pipes (center)
     pillars.push_back(ArenaPillar(Position(1299.0f, 784.0f, 9.3f, 0.0f), 6.0f));
@@ -124,7 +124,7 @@ void ArenaAI::LoadDalaranPillars()
 void ArenaAI::LoadRingOfValorPillars()
 {
     uint32 mapId = 618; // Ring of Valor
-    std::vector<ArenaPillar> pillars;
+    ::std::vector<ArenaPillar> pillars;
 
     // Center pillars (when lowered)
     pillars.push_back(ArenaPillar(Position(763.0f, -284.0f, 28.3f, 0.0f), 7.0f));
@@ -155,7 +155,7 @@ void ArenaAI::Update(::Player* player, uint32 diff)
 
     _lastUpdateTimes[playerGuid] = currentTime;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     // Update match state
     UpdateMatchState(player);
@@ -196,7 +196,7 @@ void ArenaAI::OnMatchStart(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     // Initialize match state
@@ -214,7 +214,7 @@ void ArenaAI::OnMatchEnd(::Player* player, bool won)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     // Update metrics
@@ -252,7 +252,7 @@ void ArenaAI::AnalyzeTeamComposition(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     TeamComposition teamComp = GetTeamComposition(player);
@@ -330,7 +330,7 @@ void ArenaAI::AdaptStrategy(::Player* player)
         return nullptr;
 
     ArenaProfile profile = GetArenaProfile(player->GetGUID().GetCounter());
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
 
     if (enemies.empty())
         return nullptr;
@@ -340,13 +340,13 @@ void ArenaAI::AdaptStrategy(::Player* player)
         case ArenaStrategy::KILL_HEALER_FIRST:
         {
             // Find healer
-            for (::Unit* enemy : enemies)
+    for (::Unit* enemy : enemies)
             {
                 if (enemy->IsPlayer())
                 {
                     ::Player* enemyPlayer = enemy->ToPlayer();
                     // Check if healer (simplified)
-                    uint8 enemyClass = enemyPlayer->getClass();
+                    uint8 enemyClass = enemyPlayer->GetClass();
                     if (enemyClass == CLASS_PRIEST || enemyClass == CLASS_PALADIN ||
                         enemyClass == CLASS_SHAMAN || enemyClass == CLASS_DRUID ||
                         enemyClass == CLASS_MONK || enemyClass == CLASS_EVOKER)
@@ -413,10 +413,10 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
     if (newTarget && newTarget != currentTarget)
     {
         // Switch if new target is healer and in LoS
-        if (newTarget->IsPlayer())
+    if (newTarget->IsPlayer())
         {
             ::Player* newPlayer = newTarget->ToPlayer();
-            uint8 newClass = newPlayer->getClass();
+            uint8 newClass = newPlayer->GetClass();
                  newClass == CLASS_MONK || newClass == CLASS_EVOKER) &&
                 IsInLineOfSight(player, newTarget))
             {
@@ -428,21 +428,21 @@ bool ArenaAI::ShouldSwitchTarget(::Player* player, ::Unit* currentTarget) const
     return false;
 }
 
-std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
+::std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
 {
-    std::vector<::Unit*> priorities;
+    ::std::vector<::Unit*> priorities;
 
     if (!player)
         return priorities;
 
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
     // Sort by priority: Healers > Low health > DPS
-    std::sort(enemies.begin(), enemies.end(),
+    ::std::sort(enemies.begin(), enemies.end(),
         [](::Unit* a, ::Unit* b) {
             bool aIsHealer = false, bIsHealer = false;
             if (a->IsPlayer())
             {
-                uint8 aClass = a->ToPlayer()->getClass();
+                uint8 aClass = a->ToPlayer()->GetClass();
                 aIsHealer = (aClass == CLASS_PRIEST || aClass == CLASS_PALADIN ||
                             aClass == CLASS_SHAMAN || aClass == CLASS_DRUID ||
                             aClass == CLASS_MONK || aClass == CLASS_EVOKER);
@@ -450,7 +450,7 @@ std::vector<::Unit*> ArenaAI::GetKillTargetPriority(::Player* player) const
 
             if (b->IsPlayer())
             {
-                uint8 bClass = b->ToPlayer()->getClass();
+                uint8 bClass = b->ToPlayer()->GetClass();
                 bIsHealer = (bClass == CLASS_PRIEST || bClass == CLASS_PALADIN ||
                             bClass == CLASS_SHAMAN || bClass == CLASS_DRUID ||
                             bClass == CLASS_MONK || bClass == CLASS_EVOKER);
@@ -514,14 +514,13 @@ ArenaPillar const* ArenaAI::FindBestPillar(::Player* player) const
     if (!_arenaPillars.count(mapId))
         return nullptr;
 
-    std::vector<ArenaPillar> const& pillars = _arenaPillars.at(mapId);
+    ::std::vector<ArenaPillar> const& pillars = _arenaPillars.at(mapId);
     if (pillars.empty())
         return nullptr;
 
     // Find closest pillar
     ArenaPillar const* bestPillar = nullptr;
     float closestDistanceSq = 9999.0f * 9999.0f; // Squared distance
-
     for (ArenaPillar const& pillar : pillars)
     {
         if (!pillar.isAvailable)
@@ -543,7 +542,7 @@ bool ArenaAI::MoveToPillar(::Player* player, ArenaPillar const& pillar)
     if (!player)
         return false;
 
-    float distance = std::sqrt(player->GetExactDistSq(pillar.position)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(pillar.position)); // Calculate once from squared distance
     if (distance < 5.0f)
         return true;
 
@@ -560,7 +559,7 @@ bool ArenaAI::IsUsingPillarEffectively(::Player* player) const
         return false;
 
     // Check if player is behind pillar and enemy is out of LoS
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
     for (::Unit* enemy : enemies)
     {
         if (!IsInLineOfSight(player, enemy))
@@ -576,12 +575,12 @@ bool ArenaAI::MaintainOptimalDistance(::Player* player)
         return false;
 
     float optimalRange = GetOptimalRangeForClass(player);
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
 
     for (::Unit* enemy : enemies)
     {
-        float distance = std::sqrt(player->GetExactDistSq(enemy)); // Calculate once from squared distance
-        if (distance < optimalRange)
+        float distance = ::std::sqrt(player->GetExactDistSq(enemy)); // Calculate once from squared distance
+    if (distance < optimalRange)
         {
             // Too close - kite away
             TC_LOG_DEBUG("playerbot", "ArenaAI: Player {} kiting away from enemy",
@@ -599,13 +598,13 @@ bool ArenaAI::RegroupWithTeam(::Player* player)
     if (!player)
         return false;
 
-    std::vector<::Player*> teammates = GetTeammates(player);
+    ::std::vector<::Player*> teammates = GetTeammates(player);
     if (teammates.empty())
         return false;
 
     // Find teammate position
     Position teammatePos = teammates[0]->GetPosition();
-    float distance = std::sqrt(player->GetExactDistSq(teammatePos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(player->GetExactDistSq(teammatePos)); // Calculate once from squared distance
     if (distance > REGROUP_RANGE)
     {
         // Move to teammate
@@ -636,7 +635,7 @@ bool ArenaAI::ShouldPillarKite(::Player* player) const
         return true;
 
     // Pillar kite if under heavy pressure
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
     uint32 enemiesAttacking = 0;
 
     for (::Unit* enemy : enemies)
@@ -662,7 +661,7 @@ bool ArenaAI::ExecutePillarKite(::Player* player)
         return false;
 
     // Break LoS with enemies
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
     for (::Unit* enemy : enemies)
     {
         if (IsInLineOfSight(player, enemy))
@@ -722,13 +721,13 @@ bool ArenaAI::IsTeamReadyForBurst(::Player* player) const
     if (!player)
         return false;
 
-    std::vector<::Player*> teammates = GetTeammates(player);
+    ::std::vector<::Player*> teammates = GetTeammates(player);
 
     // Check if teammates are in range and have cooldowns
     for (::Player* teammate : teammates)
     {
-        float distance = std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
-        if (distance > BURST_COORDINATION_RANGE)
+        float distance = ::std::sqrt(player->GetExactDistSq(teammate)); // Calculate once from squared distance
+    if (distance > BURST_COORDINATION_RANGE)
             return false;
 
         // Full implementation: Check if teammate has offensive CDs available
@@ -742,7 +741,7 @@ void ArenaAI::SignalBurst(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     uint32 playerGuid = player->GetGUID().GetCounter();
     _burstReady[playerGuid] = true;
 
@@ -778,7 +777,7 @@ bool ArenaAI::TeammateHasCCAvailable(::Player* player) const
     if (!player)
         return false;
 
-    std::vector<::Player*> teammates = GetTeammates(player);
+    ::std::vector<::Player*> teammates = GetTeammates(player);
     for (::Player* teammate : teammates)
     {
         // Full implementation: Check if teammate has CC available
@@ -846,7 +845,7 @@ void ArenaAI::Execute2v2DPSHealer(::Player* player)
         return;
 
     // DPS/Healer: Protect healer, pressure enemy healer
-    std::vector<::Player*> teammates = GetTeammates(player);
+    ::std::vector<::Player*> teammates = GetTeammates(player);
     for (::Player* teammate : teammates)
     {
         if (IsTeammateInDanger(teammate))
@@ -906,7 +905,7 @@ void ArenaAI::Execute3v3TripleDPS(::Player* player)
         player->SetSelection(target->GetGUID());
 
         // Save target as focus
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _focusTargets[player->GetGUID().GetCounter()] = target->GetGUID();
     }
 }
@@ -1022,7 +1021,7 @@ ArenaMatchState ArenaAI::GetMatchState(::Player* player) const
     if (!player)
         return ArenaMatchState();
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (_matchStates.count(playerGuid))
@@ -1036,7 +1035,7 @@ void ArenaAI::UpdateMatchState(::Player* player)
     if (!player)
         return;
 
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
     if (!_matchStates.count(playerGuid))
@@ -1048,7 +1047,7 @@ void ArenaAI::UpdateMatchState(::Player* player)
     state.isWinning = IsTeamWinning(player);
 
     // Count alive teammates and enemies
-    std::vector<::Player*> teammates = GetTeammates(player);
+    ::std::vector<::Player*> teammates = GetTeammates(player);
     state.teammateAliveCount = 0;
     for (::Player* teammate : teammates)
     {
@@ -1056,7 +1055,7 @@ void ArenaAI::UpdateMatchState(::Player* player)
             state.teammateAliveCount++;
     }
 
-    std::vector<::Unit*> enemies = GetEnemyTeam(player);
+    ::std::vector<::Unit*> enemies = GetEnemyTeam(player);
     state.enemyAliveCount = 0;
     for (::Unit* enemy : enemies)
     {
@@ -1091,13 +1090,13 @@ uint32 ArenaAI::GetMatchDuration(::Player* player) const
 
 void ArenaAI::SetArenaProfile(uint32 playerGuid, ArenaProfile const& profile)
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
     _playerProfiles[playerGuid] = profile;
 }
 
 ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
@@ -1111,7 +1110,7 @@ ArenaProfile ArenaAI::GetArenaProfile(uint32 playerGuid) const
 
 ArenaAI::ArenaMetrics const& ArenaAI::GetPlayerMetrics(uint32 playerGuid) const
 {
-    std::lock_guard lock(_mutex);
+    ::std::lock_guard lock(_mutex);
 
     if (!_playerMetrics.count(playerGuid))
     {
@@ -1159,9 +1158,9 @@ TeamComposition ArenaAI::GetEnemyTeamComposition(::Player* player) const
     return TeamComposition::DOUBLE_DPS_HEALER;
 }
 
-std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
+::std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
 {
-    std::vector<::Player*> teammates;
+    ::std::vector<::Player*> teammates;
 
     if (!player)
         return teammates;
@@ -1180,9 +1179,9 @@ std::vector<::Player*> ArenaAI::GetTeammates(::Player* player) const
     return teammates;
 }
 
-std::vector<::Unit*> ArenaAI::GetEnemyTeam(::Player* player) const
+::std::vector<::Unit*> ArenaAI::GetEnemyTeam(::Player* player) const
 {
-    std::vector<::Unit*> enemies;
+    ::std::vector<::Unit*> enemies;
 
     if (!player)
         return enemies;
@@ -1204,7 +1203,7 @@ float ArenaAI::GetOptimalRangeForClass(::Player* player) const
     if (!player)
         return 10.0f;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     switch (playerClass)
     {

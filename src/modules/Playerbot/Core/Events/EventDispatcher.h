@@ -302,7 +302,7 @@ private:
      * Uses unordered_map for O(1) average lookup by event type.
      * Each event type maps to a vector of manager pointers.
      */
-    std::unordered_map<StateMachine::EventType, std::vector<IManagerBase*>> _subscriptions;
+    ::std::unordered_map<StateMachine::EventType, ::std::vector<IManagerBase*>> _subscriptions;
 
     /**
      * @brief Mutex protecting the subscription map
@@ -317,7 +317,7 @@ private:
      * Phase 7.1: Simple mutex-protected deque for event dispatch.
      * Sufficient for single-threaded world updates.
      */
-    std::deque<BotEvent> _eventQueue;
+    ::std::deque<BotEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _queueMutex;
 
     /**
@@ -325,27 +325,27 @@ private:
      *
      * When false, Dispatch() calls are ignored.
      */
-    std::atomic<bool> _enabled;
+    ::std::atomic<bool> _enabled;
 
     /**
      * @brief Performance tracking - total events dispatched
      */
-    std::atomic<uint64> _totalEventsDispatched;
+    ::std::atomic<uint64> _totalEventsDispatched;
 
     /**
      * @brief Performance tracking - total events processed
      */
-    std::atomic<uint64> _totalEventsProcessed;
+    ::std::atomic<uint64> _totalEventsProcessed;
 
     /**
      * @brief Performance tracking - total processing time in milliseconds
      */
-    std::atomic<uint64> _totalProcessingTimeMs;
+    ::std::atomic<uint64> _totalProcessingTimeMs;
 
     /**
      * @brief Performance tracking - events dropped due to queue full
      */
-    std::atomic<uint64> _droppedEvents;
+    ::std::atomic<uint64> _droppedEvents;
 
     /**
      * @brief Disable copy construction

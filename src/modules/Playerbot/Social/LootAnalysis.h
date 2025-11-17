@@ -44,7 +44,7 @@ public:
     // Item comparison and evaluation
     float CompareItems(Player* player, const LootItem& newItem, const Item* currentItem) override;
     float CalculateItemScore(Player* player, const LootItem& item) override;
-    std::vector<std::pair<uint32, float>> GetStatPriorities(Player* player) override;
+    ::std::vector<::std::pair<uint32, float>> GetStatPriorities(Player* player) override;
     float GetItemLevelWeight(Player* player, uint32 itemLevel) override;
 
     // Class and spec specific analysis
@@ -64,7 +64,7 @@ public:
         float classAppropriatenessScore;
         LootPriority recommendedPriority;
         LootRollType recommendedAction;
-        std::vector<std::string> analysisNotes;
+        ::std::vector<::std::string> analysisNotes;
         bool isSignificantUpgrade;
         bool isMainSpecItem;
         bool isOffSpecItem;
@@ -115,7 +115,7 @@ public:
     bool CanEquipItem(Player* player, const LootItem& item) override;
     uint32 GetEquipmentSlot(const LootItem& item) override;
     Item* GetCurrentEquippedItem(Player* player, uint32 slot) override;
-    std::vector<uint32> GetAffectedSlots(const LootItem& item);
+    ::std::vector<uint32> GetAffectedSlots(const LootItem& item);
 
     // Market and vendor value analysis
     float CalculateVendorValue(const LootItem& item) override;
@@ -125,25 +125,51 @@ public:
 
     // Group context analysis
     void AnalyzeGroupLootNeeds(Group* group, const LootItem& item) override;
-    std::vector<std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item) override;
+    ::std::vector<::std::pair<uint32, float>> RankPlayersForItem(Group* group, const LootItem& item) override;
     bool IsItemContestedInGroup(Group* group, const LootItem& item) override;
     Player* GetBestCandidateForItem(Group* group, const LootItem& item) override;
 
     // Learning and adaptation
     void UpdateAnalysisAccuracy(Player* player, const LootItem& item, LootRollType actualDecision);
-    void LearnFromPlayerChoices(Player* player, const std::vector<std::pair<LootItem, LootRollType>>& choices);
+    void LearnFromPlayerChoices(Player* player, const ::std::vector<::std::pair<LootItem, LootRollType>>& choices);
     void AdaptAnalysisForPlayer(Player* player);
 
     // Performance monitoring
     struct AnalysisMetrics
     {
-        std::atomic<uint32> itemsAnalyzed{0};
-        std::atomic<uint32> analysisRequests{0};
-        std::atomic<uint32> cacheHits{0};
-        std::atomic<uint32> cacheMisses{0};
-        std::atomic<float> averageAnalysisTime{5.0f}; // milliseconds
-        std::atomic<float> analysisAccuracy{0.85f};
-        std::atomic<float> predictionAccuracy{0.8f};
+        ::std::atomic<uint32> itemsAnalyzed{0};
+        ::std::atomic<uint32> analysisRequests{0};
+        ::std::atomic<uint32> cacheHits{0};
+        ::std::atomic<uint32> cacheMisses{0};
+        ::std::atomic<float> averageAnalysisTime{5.0f}; // milliseconds
+        ::std::atomic<float> analysisAccuracy{0.85f};
+        ::std::atomic<float> predictionAccuracy{0.8f};
+
+        AnalysisMetrics() = default;
+
+        // Copy constructor for atomic members
+        AnalysisMetrics(const AnalysisMetrics& other) :
+            itemsAnalyzed(other.itemsAnalyzed.load()),
+            analysisRequests(other.analysisRequests.load()),
+            cacheHits(other.cacheHits.load()),
+            cacheMisses(other.cacheMisses.load()),
+            averageAnalysisTime(other.averageAnalysisTime.load()),
+            analysisAccuracy(other.analysisAccuracy.load()),
+            predictionAccuracy(other.predictionAccuracy.load()) {}
+
+        // Copy assignment operator
+        AnalysisMetrics& operator=(const AnalysisMetrics& other) {
+            if (this != &other) {
+                itemsAnalyzed.store(other.itemsAnalyzed.load());
+                analysisRequests.store(other.analysisRequests.load());
+                cacheHits.store(other.cacheHits.load());
+                cacheMisses.store(other.cacheMisses.load());
+                averageAnalysisTime.store(other.averageAnalysisTime.load());
+                analysisAccuracy.store(other.analysisAccuracy.load());
+                predictionAccuracy.store(other.predictionAccuracy.load());
+            }
+            return *this;
+        }
 
         void Reset() {
             itemsAnalyzed = 0; analysisRequests = 0; cacheHits = 0; cacheMisses = 0;
@@ -172,19 +198,19 @@ private:
     ~LootAnalysis() = default;
 
     // Analysis cache
-    std::unordered_map<uint64, ItemAnalysisResult> _analysisCache; // (playerGuid << 32 | itemId) -> result
-    std::unordered_map<uint32, std::unordered_map<uint32, float>> _statWeightCache; // playerGuid -> statType -> weight
+    ::std::unordered_map<uint64, ItemAnalysisResult> _analysisCache; // (playerGuid << 32 | itemId) -> result
+    ::std::unordered_map<uint32, ::std::unordered_map<uint32, float>> _statWeightCache; // playerGuid -> statType -> weight
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::LOOT_MANAGER> _cacheMutex;
 
     // Stat weights database
-    std::unordered_map<uint8, std::unordered_map<uint8, StatWeights>> _classSpecStatWeights; // class -> spec -> weights
-    std::unordered_map<uint32, StatWeights> _playerCustomWeights; // playerGuid -> custom weights
+    ::std::unordered_map<uint8, ::std::unordered_map<uint8, StatWeights>> _classSpecStatWeights; // class -> spec -> weights
+    ::std::unordered_map<uint32, StatWeights> _playerCustomWeights; // playerGuid -> custom weights
 
     // Learning system
     struct PlayerLearningData
     {
-        std::unordered_map<uint32, std::vector<std::pair<LootRollType, float>>> itemDecisionHistory; // itemId -> decisions
-        std::unordered_map<uint32, float> statPreferenceLearning; // statType -> preference weight
+        ::std::unordered_map<uint32, ::std::vector<::std::pair<LootRollType, float>>> itemDecisionHistory; // itemId -> decisions
+        ::std::unordered_map<uint32, float> statPreferenceLearning; // statType -> preference weight
         uint32 totalDecisions;
         uint32 correctPredictions;
         uint32 lastLearningUpdate;
@@ -192,13 +218,13 @@ private:
         PlayerLearningData() : totalDecisions(0), correctPredictions(0), lastLearningUpdate(GameTime::GetGameTimeMS()) {}
     };
 
-    std::unordered_map<uint32, PlayerLearningData> _playerLearningData; // playerGuid -> learning data
-    std::atomic<bool> _learningEnabled{true};
+    ::std::unordered_map<uint32, PlayerLearningData> _playerLearningData; // playerGuid -> learning data
+    ::std::atomic<bool> _learningEnabled{true};
 
     // Configuration
-    std::atomic<float> _analysisPrecision{0.8f};
-    std::atomic<uint32> _maxCacheSize{10000};
-    std::atomic<uint32> _cacheTimeoutMs{300000}; // 5 minutes
+    ::std::atomic<float> _analysisPrecision{0.8f};
+    ::std::atomic<uint32> _maxCacheSize{10000};
+    ::std::atomic<uint32> _cacheTimeoutMs{300000}; // 5 minutes
 
     // Performance tracking
     AnalysisMetrics _metrics;

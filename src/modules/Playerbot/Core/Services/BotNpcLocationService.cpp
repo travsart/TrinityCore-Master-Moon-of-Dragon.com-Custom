@@ -42,7 +42,7 @@ bool BotNpcLocationService::Initialize()
     TC_LOG_INFO("module.playerbot.services", "Initializing BotNpcLocationService...");
     TC_LOG_INFO("module.playerbot.services", "========================================");
 
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Build all caches
     BuildCreatureSpawnCache();
@@ -52,8 +52,8 @@ bool BotNpcLocationService::Initialize()
     BuildServiceNpcCache();
     BuildQuestPOICache();
 
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime);
 
     // Log statistics
     CacheStats stats = GetCacheStats();
@@ -151,7 +151,7 @@ void BotNpcLocationService::BuildProfessionTrainerCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each profession skill
-            for (uint32 skillId = 1; skillId < 800; ++skillId)
+    for (uint32 skillId = 1; skillId < 800; ++skillId)
             {
                 if (IsTrainerForSkill(entry, skillId))
                 {
@@ -180,7 +180,7 @@ void BotNpcLocationService::BuildClassTrainerCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each class
-            for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
+    for (uint8 classId = CLASS_WARRIOR; classId < MAX_CLASSES; ++classId)
             {
                 if (IsClassTrainer(entry, classId))
                 {
@@ -209,7 +209,7 @@ void BotNpcLocationService::BuildServiceNpcCache()
         for (auto const& [entry, locations] : entryMap)
         {
             // Check each service type
-            for (uint8 serviceType = 0; serviceType <= static_cast<uint8>(NpcServiceType::BATTLEMASTER); ++serviceType)
+    for (uint8 serviceType = 0; serviceType <= static_cast<uint8>(NpcServiceType::BATTLEMASTER); ++serviceType)
             {
                 if (ProvidesService(entry, static_cast<NpcServiceType>(serviceType)))
                 {
@@ -242,7 +242,7 @@ void BotNpcLocationService::BuildQuestPOICache()
             continue;
 
         // Cache POI positions for each objective
-        for (auto const& blob : poiData->Blobs)
+    for (auto const& blob : poiData->Blobs)
         {
             if (blob.Points.empty())
                 continue;
@@ -467,9 +467,9 @@ BotNpcLocationService::CacheStats BotNpcLocationService::GetCacheStats() const
 
 NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     Player* bot,
-    std::vector<SpawnLocationData> const& locations,
+    ::std::vector<SpawnLocationData> const& locations,
     float maxRange,
-    std::string const& sourceName)
+    ::std::string const& sourceName)
 {
     NpcLocationResult result;
 
@@ -479,7 +479,7 @@ NpcLocationResult BotNpcLocationService::FindNearestFromCache(
     for (auto const& loc : locations)
     {
         // Filter by bot's map
-        if (loc.mapId != bot->GetMapId())
+    if (loc.mapId != bot->GetMapId())
             continue;
 
         float distance = bot->GetDistance(loc.position);
@@ -580,7 +580,7 @@ NpcLocationResult BotNpcLocationService::TryFindLiveCreature(Player* bot, uint32
     NpcLocationResult result;
 
     // Use spatial grid to find live creatures (best quality - spawned and available NOW)
-    std::list<Creature*> nearbyCreatures;
+    ::std::list<Creature*> nearbyCreatures;
     bot->GetCreatureListWithEntryInGrid(nearbyCreatures, creatureEntry, maxRange);
 
     Creature* closest = nullptr;
@@ -621,7 +621,7 @@ NpcLocationResult BotNpcLocationService::TryFindLiveGameObject(Player* bot, uint
     NpcLocationResult result;
 
     // Use spatial grid to find live GameObjects
-    std::list<GameObject*> nearbyObjects;
+    ::std::list<GameObject*> nearbyObjects;
     bot->GetGameObjectListWithEntryInGrid(nearbyObjects, objectEntry, maxRange);
 
     GameObject* closest = nullptr;

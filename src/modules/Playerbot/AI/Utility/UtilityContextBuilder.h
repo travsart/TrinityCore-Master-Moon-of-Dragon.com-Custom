@@ -23,11 +23,12 @@
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
+#include "GridNotifiers.h"
 
 namespace Playerbot
 {
 
-class Blackboard;
+class SharedBlackboard;
 
 /**
  * @brief Builds utility context from game world state
@@ -42,7 +43,7 @@ public:
      * @param blackboard Shared blackboard (can be nullptr)
      * @return Populated utility context
      */
-    static UtilityContext Build(BotAI* ai, Blackboard* blackboard = nullptr)
+    static UtilityContext Build(BotAI* ai, SharedBlackboard* blackboard = nullptr)
     {
         UtilityContext context;
         context.bot = ai;
@@ -138,7 +139,7 @@ private:
         uint32 count = 0;
 
         // Use Trinity's SearcherInRange to find nearby hostile units
-        std::list<Unit*> targets;
+        ::std::list<Unit*> targets;
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         Cell::VisitAllObjects(bot, searcher, range);
@@ -154,8 +155,8 @@ private:
         if (!bot)
             return UtilityContext::Role::DPS;
 
-        uint8 classId = bot->getClass();
-        uint8 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+        uint8 classId = bot->GetClass();
+        uint8 spec = uint8(bot->GetPrimarySpecialization());
 
         // Tank specs
         if (classId == CLASS_WARRIOR && spec == 2) // Protection

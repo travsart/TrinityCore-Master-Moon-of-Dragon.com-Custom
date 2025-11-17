@@ -5,15 +5,11 @@
 #pragma once
 
 #include "Define.h"
+#include "DatabaseEnvFwd.h"
+#include "CharacterDatabase.h"
 #include <string>
 #include <functional>
 #include <thread>
-
-// Forward declarations
-class CharacterDatabasePreparedStatement;
-class PreparedQueryResult;
-class CharacterDatabaseTransaction;
-enum CharacterDatabaseStatements : uint32;
 
 namespace Playerbot
 {
@@ -43,12 +39,12 @@ public:
     virtual void CommitTransaction(CharacterDatabaseTransaction trans, bool async = true) = 0;
 
     // Direct SQL (for migrations only)
-    virtual bool ExecuteDirectSQL(std::string const& sql) = 0;
+    virtual bool ExecuteDirectSQL(::std::string const& sql) = 0;
 
     // Context checking
     virtual bool IsAsyncContext() const = 0;
     virtual bool IsSyncOnlyStatement(uint32 statementId) const = 0;
-    virtual std::thread::id GetMainThreadId() const = 0;
+    virtual ::std::thread::id GetMainThreadId() const = 0;
 
     // Configuration and metrics
     virtual void ResetMetrics() = 0;

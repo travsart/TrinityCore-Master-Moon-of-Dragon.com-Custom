@@ -106,7 +106,7 @@ public:
      * @param requests Vector of spawn requests
      * @return Number of bots successfully spawned
      */
-    virtual uint32 SpawnBots(std::vector<SpawnRequest> const& requests) = 0;
+    virtual uint32 SpawnBots(::std::vector<SpawnRequest> const& requests) = 0;
 
     /**
      * @brief Create new bot character and spawn it
@@ -118,7 +118,7 @@ public:
      * @param outCharacterGuid Output parameter for created character GUID
      * @return true if successful, false otherwise
      */
-    virtual bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, std::string const& name, ObjectGuid& outCharacterGuid) = 0;
+    virtual bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid) = 0;
 
     // ====================================================================
     // POPULATION MANAGEMENT
@@ -147,7 +147,7 @@ public:
      * @param reason Despawn reason for logging
      * @return true if successful, false otherwise
      */
-    virtual bool DespawnBot(ObjectGuid guid, std::string const& reason) = 0;
+    virtual bool DespawnBot(ObjectGuid guid, ::std::string const& reason) = 0;
 
     /**
      * @brief Despawn all bots
@@ -183,7 +183,7 @@ public:
      * @brief Get all zone populations
      * @return Vector of zone population data
      */
-    virtual std::vector<ZonePopulation> GetAllZonePopulations() const = 0;
+    virtual ::std::vector<ZonePopulation> GetAllZonePopulations() const = 0;
 
     // ====================================================================
     // BOT TRACKING
@@ -222,7 +222,7 @@ public:
      * @param zoneId Zone ID
      * @return Vector of bot character GUIDs
      */
-    virtual std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const = 0;
+    virtual ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const = 0;
 
     // ====================================================================
     // STATISTICS

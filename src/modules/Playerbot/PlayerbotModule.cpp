@@ -363,7 +363,7 @@ void PlayerbotModule::OnWorldUpdate(uint32 diff)
 
     if (!loginTriggered && totalTime > 5000) // Wait 5 seconds after startup
     {
-        TC_LOG_INFO("module.playerbot", "🔄 OnWorldUpdate: Auto-triggering character logins for existing sessions");
+        TC_LOG_INFO("module.playerbot", " OnWorldUpdate: Auto-triggering character logins for existing sessions");
         TriggerBotCharacterLogins();
         loginTriggered = true;
     }
@@ -535,7 +535,7 @@ void PlayerbotModule::TriggerBotCharacterLogins()
         return;
     }
 
-    TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
+    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Manually triggering character logins for existing sessions");
 
     // Call the BotSessionMgr method to trigger logins (legacy approach)
     sBotSessionMgr->TriggerCharacterLoginForAllSessions();
@@ -543,7 +543,7 @@ void PlayerbotModule::TriggerBotCharacterLogins()
     // Call the BotWorldSessionMgr method to trigger native logins
     Playerbot::sBotWorldSessionMgr->TriggerCharacterLoginForAllSessions();
 
-    TC_LOG_INFO("module.playerbot", "🚀 TriggerBotCharacterLogins: Complete");
+    TC_LOG_INFO("module.playerbot", " TriggerBotCharacterLogins: Complete");
 }
 
 void PlayerbotModule::ShutdownDatabase()

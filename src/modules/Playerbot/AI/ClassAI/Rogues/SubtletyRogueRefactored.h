@@ -21,13 +21,25 @@
 #include "Log.h"
 
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // NOTE: Common Rogue spell IDs are defined in RogueSpecialization.h
 // NOTE: Shared spells (SHADOW_DANCE, SYMBOLS_OF_DEATH, EVASION, SAP, etc.) are in RogueSpecialization.h
 // Only Subtlety-unique spell IDs defined below to avoid duplicate definition errors
@@ -243,18 +255,18 @@ public:
         Player* bot = this->GetBot();        // Enter stealth out of combat
         if (!bot->IsInCombat() && !_inStealth && this->CanCastSpell(RogueAI::STEALTH, bot))
         {
-            this->CastSpell(bot, RogueAI::STEALTH);
+            this->CastSpell(RogueAI::STEALTH, bot);
         }
 
         // Defensive cooldowns
         if (bot->GetHealthPct() < 30.0f && this->CanCastSpell(RogueAI::CLOAK_OF_SHADOWS, bot))
         {
-            this->CastSpell(bot, RogueAI::CLOAK_OF_SHADOWS);
+            this->CastSpell(RogueAI::CLOAK_OF_SHADOWS, bot);
         }
 
         if (bot->GetHealthPct() < 50.0f && this->CanCastSpell(RogueAI::EVASION, bot))
         {
-            this->CastSpell(bot, RogueAI::EVASION);
+            this->CastSpell(RogueAI::EVASION, bot);
         }
     }
 
@@ -271,7 +283,7 @@ protected:
         // Priority 1: Symbols of Death on cooldown
         if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
+            this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot());
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
@@ -280,7 +292,7 @@ protected:
         // Priority 2: Shadow Blades on cooldown (talent)
         if (this->CanCastSpell(RogueAI::SHADOW_BLADES, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SHADOW_BLADES);
+            this->CastSpell(RogueAI::SHADOW_BLADES, this->GetBot());
             _shadowBladesActive = true;
             _shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
             return;
@@ -291,7 +303,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
+                this->CastSpell(RogueAI::SHADOW_DANCE, this->GetBot());
                 _shadowDanceTracker.Use();
                 _inStealth = true; // Enables stealth abilities
                 return;
@@ -303,7 +315,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 _lastShadowstrikeTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
@@ -319,7 +331,7 @@ protected:
         {
             if (this->GetBot()->HasSpell(SECRET_TECHNIQUE) && this->CanCastSpell(SECRET_TECHNIQUE, target))
             {
-                this->CastSpell(target, SECRET_TECHNIQUE);
+                this->CastSpell(SECRET_TECHNIQUE, target);
                 ConsumeEnergy(30);
                 this->_resource.comboPoints = 0;
                 return;
@@ -331,7 +343,7 @@ protected:
         {
             if (this->CanCastSpell(EVISCERATE_SUB, target))
             {
-                this->CastSpell(target, EVISCERATE_SUB);
+                this->CastSpell(EVISCERATE_SUB, target);
                 _lastEviscerateTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
@@ -344,7 +356,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::RUPTURE, target))
             {
-                this->CastSpell(target, RogueAI::RUPTURE);
+                this->CastSpell(RogueAI::RUPTURE, target);
                 ConsumeEnergy(25);
                 this->_resource.comboPoints = 0;
                 return;
@@ -356,7 +368,7 @@ protected:
         {
             if (this->IsBehindTarget(target) && this->CanCastSpell(RogueAI::BACKSTAB, target))
             {
-                this->CastSpell(target, RogueAI::BACKSTAB);
+                this->CastSpell(RogueAI::BACKSTAB, target);
                 _lastBackstabTime = GameTime::GetGameTimeMS();
                 ConsumeEnergy(35);
                 GenerateComboPoints(1);
@@ -371,7 +383,7 @@ protected:
         {
             if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
             {
-                this->CastSpell(target, SHADOWSTRIKE_SUB);
+                this->CastSpell(SHADOWSTRIKE_SUB, target);
                 ConsumeEnergy(40);
                 GenerateComboPoints(2);
                 return;
@@ -388,14 +400,14 @@ protected:
         // Priority 1: Shuriken Tornado (talent, sustained AoE)
         if (this->CanCastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SHURIKEN_TORNADO_TALENT);
+            this->CastSpell(SHURIKEN_TORNADO_TALENT, this->GetBot());
             return;
         }
 
         // Priority 2: Symbols of Death
         if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), RogueAI::SYMBOLS_OF_DEATH);
+            this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, this->GetBot());
             _symbolsOfDeathActive = true;
             _symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
             return;
@@ -406,7 +418,7 @@ protected:
         {
             if (this->CanCastSpell(RogueAI::SHADOW_DANCE, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), RogueAI::SHADOW_DANCE);
+                this->CastSpell(RogueAI::SHADOW_DANCE, this->GetBot());
                 _shadowDanceTracker.Use();
                 _inStealth = true;
                 return;
@@ -418,7 +430,7 @@ protected:
         {
             if (this->CanCastSpell(BLACK_POWDER, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), BLACK_POWDER);
+                this->CastSpell(BLACK_POWDER, this->GetBot());
                 ConsumeEnergy(35);
                 this->_resource.comboPoints = 0;
                 return;
@@ -430,9 +442,9 @@ protected:
         {
             if (this->CanCastSpell(SHURIKEN_STORM, this->GetBot()))
             {
-                this->CastSpell(this->GetBot(), SHURIKEN_STORM);
+                this->CastSpell(SHURIKEN_STORM, this->GetBot());
                 ConsumeEnergy(35);
-                GenerateComboPoints(std::min(enemyCount, 5u));
+                GenerateComboPoints(::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -470,7 +482,7 @@ private:
         if (timeDiff >= 100) // Every 100ms
         {
             uint32 energyRegen = (timeDiff / 100);
-            this->_resource.energy = std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
+            this->_resource.energy = ::std::min(this->_resource.energy + energyRegen, this->_resource.maxEnergy);
             lastRegenTime = now;
         }
     }
@@ -481,7 +493,7 @@ private:
 
     void GenerateComboPoints(uint32 amount)
     {
-        this->_resource.comboPoints = std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
+        this->_resource.comboPoints = ::std::min(this->_resource.comboPoints + amount, this->_resource.maxComboPoints);
     }
 
     bool IsBehindTarget(::Unit* target) const
@@ -500,11 +512,9 @@ private:
 
     // Phase 5 Integration: Decision Systems Initialization
     void InitializeSubtletyMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
 
         // ========================================================================
         // ActionPriorityQueue: Register Subtlety Rogue spells with priorities
@@ -514,12 +524,12 @@ private:
         {
             // EMERGENCY: Defensive cooldowns
             queue->RegisterSpell(RogueAI::CLOAK_OF_SHADOWS, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::CLOAK_OF_SHADOWS, [this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 30.0f;
             }, "Bot HP < 30% (spell immunity)");
 
             queue->RegisterSpell(RogueAI::EVASION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(RogueAI::EVASION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(RogueAI::EVASION, [this](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 50.0f;
             }, "Bot HP < 50% (dodge boost)");
 
@@ -601,7 +611,7 @@ private:
                        this->_resource.comboPoints >= 5;
             }, "35+ Energy, 3+ enemies, 5+ CP (AoE finisher)");
 
-            TC_LOG_INFO("module.playerbot", "🗡️ SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -618,13 +628,13 @@ private:
                     }),
                     Selector("Use Burst", {
                         Sequence("Cast Symbols of Death", {
-                            Condition("Not active", [this](Player* bot, Unit* target) {
+                            Condition("Not active", [this](Player* bot, Unit*) {
                                 return !this->_symbolsOfDeathActive;
                             }),
-                            Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Symbols of Death", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SYMBOLS_OF_DEATH, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::SYMBOLS_OF_DEATH);
+                                    this->CastSpell(RogueAI::SYMBOLS_OF_DEATH, bot);
                                     this->_symbolsOfDeathActive = true;
                                     this->_symbolsOfDeathEndTime = GameTime::GetGameTimeMS() + 10000;
                                     return NodeStatus::SUCCESS;
@@ -633,14 +643,14 @@ private:
                             })
                         }),
                         Sequence("Cast Shadow Blades", {
-                            Condition("Has talent and not active", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and not active", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(RogueAI::SHADOW_BLADES) &&
                                        !this->_shadowBladesActive;
                             }),
-                            Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadow Blades", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::SHADOW_BLADES, bot))
                                 {
-                                    this->CastSpell(bot, RogueAI::SHADOW_BLADES);
+                                    this->CastSpell(RogueAI::SHADOW_BLADES, bot);
                                     this->_shadowBladesActive = true;
                                     this->_shadowBladesEndTime = GameTime::GetGameTimeMS() + 20000;
                                     return NodeStatus::SUCCESS;
@@ -657,10 +667,10 @@ private:
                         return target != nullptr &&
                                this->_shadowDanceTracker.ShouldUse(this->_resource.comboPoints);
                     }),
-                    Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
+                    bot::ai::Action("Cast Shadow Dance", [this](Player* bot, Unit* target) -> NodeStatus {
                         if (this->CanCastSpell(RogueAI::SHADOW_DANCE, bot))
                         {
-                            this->CastSpell(bot, RogueAI::SHADOW_DANCE);
+                            this->CastSpell(RogueAI::SHADOW_DANCE, bot);
                             this->_shadowDanceTracker.Use();
                             this->_inStealth = true;
                             return NodeStatus::SUCCESS;
@@ -683,10 +693,10 @@ private:
                                        !this->HasRupture(target) &&
                                        this->_resource.energy >= 25;
                             }),
-                            Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Rupture", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::RUPTURE, target))
                                 {
-                                    this->CastSpell(target, RogueAI::RUPTURE);
+                                    this->CastSpell(RogueAI::RUPTURE, target);
                                     this->ConsumeEnergy(25);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -696,15 +706,15 @@ private:
                         }),
                         // Secret Technique at max CP
                         Sequence("Cast Secret Technique", {
-                            Condition("Has talent and max CP", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and max CP", [this](Player* bot, Unit*) {
                                 return bot && bot->HasSpell(SECRET_TECHNIQUE) &&
                                        this->_resource.comboPoints >= this->_resource.maxComboPoints &&
                                        this->_resource.energy >= 30;
                             }),
-                            Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Secret Technique", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SECRET_TECHNIQUE, target))
                                 {
-                                    this->CastSpell(target, SECRET_TECHNIQUE);
+                                    this->CastSpell(SECRET_TECHNIQUE, target);
                                     this->ConsumeEnergy(30);
                                     this->_resource.comboPoints = 0;
                                     return NodeStatus::SUCCESS;
@@ -714,13 +724,13 @@ private:
                         }),
                         // Eviscerate at 4-5+ CP
                         Sequence("Cast Eviscerate", {
-                            Condition("35+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("35+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 35;
                             }),
-                            Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Eviscerate", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(EVISCERATE_SUB, target))
                                 {
-                                    this->CastSpell(target, EVISCERATE_SUB);
+                                    this->CastSpell(EVISCERATE_SUB, target);
                                     this->_lastEviscerateTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->_resource.comboPoints = 0;
@@ -741,13 +751,13 @@ private:
                     Selector("Build Combo Points", {
                         // Shadowstrike from stealth/Shadow Dance
                         Sequence("Cast Shadowstrike in stealth", {
-                            Condition("In stealth and 40+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("In stealth and 40+ Energy", [this](Player* bot, Unit*) {
                                 return this->_inStealth && this->_resource.energy >= 40;
                             }),
-                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->_lastShadowstrikeTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
@@ -763,10 +773,10 @@ private:
                             Condition("Behind target and 35+ Energy", [this](Player* bot, Unit* target) {
                                 return this->IsBehindTarget(target) && this->_resource.energy >= 35;
                             }),
-                            Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Backstab", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(RogueAI::BACKSTAB, target))
                                 {
-                                    this->CastSpell(target, RogueAI::BACKSTAB);
+                                    this->CastSpell(RogueAI::BACKSTAB, target);
                                     this->_lastBackstabTime = GameTime::GetGameTimeMS();
                                     this->ConsumeEnergy(35);
                                     this->GenerateComboPoints(1);
@@ -779,13 +789,13 @@ private:
                         }),
                         // Shadowstrike fallback
                         Sequence("Cast Shadowstrike fallback", {
-                            Condition("40+ Energy", [this](Player* bot, Unit* target) {
+                            Condition("40+ Energy", [this](Player* bot, Unit*) {
                                 return this->_resource.energy >= 40;
                             }),
-                            Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Shadowstrike", [this](Player* bot, Unit* target) -> NodeStatus {
                                 if (this->CanCastSpell(SHADOWSTRIKE_SUB, target))
                                 {
-                                    this->CastSpell(target, SHADOWSTRIKE_SUB);
+                                    this->CastSpell(SHADOWSTRIKE_SUB, target);
                                     this->ConsumeEnergy(40);
                                     this->GenerateComboPoints(2);
                                     return NodeStatus::SUCCESS;
@@ -798,7 +808,7 @@ private:
             });
 
             behaviorTree->SetRoot(root);
-            TC_LOG_INFO("module.playerbot", "🌲 SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " SUBTLETY ROGUE: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

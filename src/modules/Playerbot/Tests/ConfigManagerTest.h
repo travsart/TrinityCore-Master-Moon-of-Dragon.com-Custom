@@ -216,7 +216,7 @@ namespace Playerbot
 
             // Get float value
             float value = mgr->GetFloat("FormationSpacing", 0.0f);
-            if (std::abs(value - 5.0f) > 0.001f)
+            if (::std::abs(value - 5.0f) > 0.001f)
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: Expected 5.0, got %f", value);
                 return false;
@@ -236,10 +236,10 @@ namespace Playerbot
             ConfigManager* mgr = ConfigManager::instance();
 
             // Set string value
-            bool result = mgr->SetValue("DefaultFormation", std::string("diamond"));
+            bool result = mgr->SetValue("DefaultFormation", ::std::string("diamond"));
 
             // Get string value
-            std::string value = mgr->GetString("DefaultFormation", "");
+            ::std::string value = mgr->GetString("DefaultFormation", "");
             if (value != "diamond")
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: Expected 'diamond', got '%s'", value.c_str());
@@ -267,7 +267,7 @@ namespace Playerbot
                 return false;
             }
 
-            std::string error = mgr->GetLastError();
+            ::std::string error = mgr->GetLastError();
             if (error.empty())
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: Expected error message, got empty string");
@@ -487,7 +487,7 @@ namespace Playerbot
             // Register callback
             mgr->RegisterCallback("MaxActiveBots", [&](ConfigManager::ConfigValue const& value) {
                 callbackTriggered = true;
-                newValue = std::get<uint32>(value);
+                newValue = ::std::get<uint32>(value);
             });
 
             // Trigger callback by setting value
@@ -604,7 +604,7 @@ namespace Playerbot
                 return false;
             }
 
-            std::string error = mgr->GetLastError();
+            ::std::string error = mgr->GetLastError();
             if (error.empty())
             {
                 TC_LOG_ERROR("playerbot.test", "FAIL: Expected error message");

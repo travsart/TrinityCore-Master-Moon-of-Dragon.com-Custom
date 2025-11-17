@@ -26,9 +26,9 @@
 namespace Playerbot
 {
 
-HybridAIController::HybridAIController(BotAI* ai, Blackboard* blackboard)
+HybridAIController::HybridAIController(BotAI* ai, SharedBlackboard* blackboard)
     : _bot(ai), _blackboard(blackboard),
-      _utilityAI(std::make_unique<UtilityAI>()),
+      _utilityAI(::std::make_unique<UtilityAI>()),
       _currentTree(nullptr),
       _currentBehaviorName("None"),
       _lastTreeStatus(BTStatus::INVALID),
@@ -49,38 +49,38 @@ void HybridAIController::Initialize()
 
     // Create default utility behaviors
     // Combat behavior
-    auto combatBehavior = std::make_shared<UtilityBehavior>("Combat");
-    combatBehavior->AddEvaluator(std::make_shared<CombatEngageEvaluator>());
+    auto combatBehavior = ::std::make_shared<UtilityBehavior>("Combat");
+    combatBehavior->AddEvaluator(::std::make_shared<CombatEngageEvaluator>());
     _utilityAI->AddBehavior(combatBehavior);
 
     // Healing behavior
-    auto healingBehavior = std::make_shared<UtilityBehavior>("Healing");
-    healingBehavior->AddEvaluator(std::make_shared<HealAllyEvaluator>());
+    auto healingBehavior = ::std::make_shared<UtilityBehavior>("Healing");
+    healingBehavior->AddEvaluator(::std::make_shared<HealAllyEvaluator>());
     _utilityAI->AddBehavior(healingBehavior);
 
     // Tanking behavior
-    auto tankingBehavior = std::make_shared<UtilityBehavior>("Tanking");
-    tankingBehavior->AddEvaluator(std::make_shared<TankThreatEvaluator>());
+    auto tankingBehavior = ::std::make_shared<UtilityBehavior>("Tanking");
+    tankingBehavior->AddEvaluator(::std::make_shared<TankThreatEvaluator>());
     _utilityAI->AddBehavior(tankingBehavior);
 
     // Flee behavior
-    auto fleeBehavior = std::make_shared<UtilityBehavior>("Flee");
-    fleeBehavior->AddEvaluator(std::make_shared<FleeEvaluator>());
+    auto fleeBehavior = ::std::make_shared<UtilityBehavior>("Flee");
+    fleeBehavior->AddEvaluator(::std::make_shared<FleeEvaluator>());
     _utilityAI->AddBehavior(fleeBehavior);
 
     // Mana regeneration behavior
-    auto manaRegenBehavior = std::make_shared<UtilityBehavior>("ManaRegen");
-    manaRegenBehavior->AddEvaluator(std::make_shared<ManaRegenerationEvaluator>());
+    auto manaRegenBehavior = ::std::make_shared<UtilityBehavior>("ManaRegen");
+    manaRegenBehavior->AddEvaluator(::std::make_shared<ManaRegenerationEvaluator>());
     _utilityAI->AddBehavior(manaRegenBehavior);
 
     // Dispel behavior
-    auto dispelBehavior = std::make_shared<UtilityBehavior>("Dispel");
-    dispelBehavior->AddEvaluator(std::make_shared<DispelEvaluator>());
+    auto dispelBehavior = ::std::make_shared<UtilityBehavior>("Dispel");
+    dispelBehavior->AddEvaluator(::std::make_shared<DispelEvaluator>());
     _utilityAI->AddBehavior(dispelBehavior);
 
     // AoE damage behavior
-    auto aoeBehavior = std::make_shared<UtilityBehavior>("AoEDamage");
-    aoeBehavior->AddEvaluator(std::make_shared<AoEDamageEvaluator>());
+    auto aoeBehavior = ::std::make_shared<UtilityBehavior>("AoEDamage");
+    aoeBehavior->AddEvaluator(::std::make_shared<AoEDamageEvaluator>());
     _utilityAI->AddBehavior(aoeBehavior);
 
     // Create default behavior-to-tree mappings
@@ -90,22 +90,22 @@ void HybridAIController::Initialize()
     if (_bot && _bot->GetBot())
     {
         Player* player = _bot->GetBot();
-        uint8 classId = player->getClass();
-        uint8 spec = player->GetPrimaryTalentTree(player->GetActiveSpec());
+        uint8 classId = player->GetClass();
+        uint8 spec = uint8(player->GetPrimarySpecialization());
 
         // Get class-specific tree from registry
-        std::shared_ptr<BTNode> classTree = ClassBehaviorTreeRegistry::GetTree(
+        ::std::shared_ptr<BTNode> classTree = ClassBehaviorTreeRegistry::GetTree(
             static_cast<WowClass>(classId), spec);
 
         if (classTree)
         {
             // Register as custom "class_rotation" behavior
-            _customTreeBuilders["class_rotation"] = [classTree]() -> std::shared_ptr<BTNode> {
+            _customTreeBuilders["class_rotation"] = [classTree]() -> ::std::shared_ptr<BTNode> {
                 return classTree;
             };
 
             // Also map Combat behavior to use class tree instead of generic melee combat
-            _customTreeBuilders["Combat"] = [classTree]() -> std::shared_ptr<BTNode> {
+            _customTreeBuilders["Combat"] = [classTree]() -> ::std::shared_ptr<BTNode> {
                 return classTree;
             };
 
@@ -120,7 +120,7 @@ void HybridAIController::Initialize()
     }
 
     TC_LOG_INFO("playerbot.ai", "HybridAIController initialized: {} behaviors, {} mappings, {} custom builders",
-        _utilityAI->GetBehaviorCount(), _behaviorToTreeMap.size(), _customTreeBuilders.size());
+        _utilityAI->GetBehaviors().size(), _behaviorToTreeMap.size(), _customTreeBuilders.size());
 }
 
 void HybridAIController::CreateDefaultBehaviorMappings()
@@ -160,7 +160,7 @@ bool HybridAIController::Update(uint32 diff)
     if (_lastDecisionTime < _decisionUpdateInterval)
     {
         // Execute current tree if we have one
-        if (_currentTree)
+    if (_currentTree)
         {
             ExecuteCurrentTree();
             return true;
@@ -184,17 +184,17 @@ bool HybridAIController::Update(uint32 diff)
         return false;
     }
 
-    std::string selectedBehaviorName = selectedBehavior->GetName();
+    ::std::string selectedBehaviorName = selectedBehavior->GetName();
 
     // Check if behavior changed
     if (selectedBehaviorName != _currentBehaviorName)
     {
         TC_LOG_DEBUG("playerbot.ai", "Bot {} behavior transition: {} -> {} (utility score: {:.2f})",
             _bot->GetBot()->GetName(), _currentBehaviorName, selectedBehaviorName,
-            selectedBehavior->GetLastUtility());
+            selectedBehavior->GetCachedScore());
 
         // Get tree for new behavior
-        std::shared_ptr<BTNode> newTree = GetTreeForBehavior(selectedBehaviorName);
+        ::std::shared_ptr<BTNode> newTree = GetTreeForBehavior(selectedBehaviorName);
 
         // Switch to new behavior tree
         SwitchBehaviorTree(selectedBehaviorName, newTree);
@@ -218,7 +218,7 @@ UtilityBehavior* HybridAIController::SelectBehavior(UtilityContext const& contex
     return _utilityAI->SelectBehavior(context);
 }
 
-std::shared_ptr<BTNode> HybridAIController::GetTreeForBehavior(std::string const& behaviorName)
+::std::shared_ptr<BTNode> HybridAIController::GetTreeForBehavior(::std::string const& behaviorName)
 {
     // Check custom tree builders first
     auto customIt = _customTreeBuilders.find(behaviorName);
@@ -240,7 +240,7 @@ std::shared_ptr<BTNode> HybridAIController::GetTreeForBehavior(std::string const
     return nullptr;
 }
 
-void HybridAIController::SwitchBehaviorTree(std::string const& behaviorName, std::shared_ptr<BTNode> tree)
+void HybridAIController::SwitchBehaviorTree(::std::string const& behaviorName, ::std::shared_ptr<BTNode> tree)
 {
     // Reset old tree if exists
     if (_currentTree)
@@ -249,7 +249,7 @@ void HybridAIController::SwitchBehaviorTree(std::string const& behaviorName, std
     }
 
     // Create new tree container
-    _currentTree = std::make_unique<BehaviorTree>();
+    _currentTree = ::std::make_unique<BehaviorTree>();
     _currentTree->SetRoot(tree);
 
     // Update tracking
@@ -327,7 +327,7 @@ void HybridAIController::Reset()
     _failedExecutions = 0;
 }
 
-std::string HybridAIController::GetCurrentBehaviorName() const
+::std::string HybridAIController::GetCurrentBehaviorName() const
 {
     return _currentBehaviorName;
 }
@@ -337,7 +337,7 @@ BTStatus HybridAIController::GetCurrentTreeStatus() const
     return _lastTreeStatus;
 }
 
-void HybridAIController::RegisterBehaviorMapping(std::string const& behaviorName, BehaviorTreeFactory::TreeType treeType)
+void HybridAIController::RegisterBehaviorMapping(::std::string const& behaviorName, BehaviorTreeFactory::TreeType treeType)
 {
     _behaviorToTreeMap[behaviorName] = treeType;
 
@@ -345,8 +345,8 @@ void HybridAIController::RegisterBehaviorMapping(std::string const& behaviorName
         behaviorName, uint32(treeType));
 }
 
-void HybridAIController::RegisterCustomBehaviorMapping(std::string const& behaviorName,
-    std::function<std::shared_ptr<BTNode>()> treeBuilder)
+void HybridAIController::RegisterCustomBehaviorMapping(::std::string const& behaviorName,
+    ::std::function<::std::shared_ptr<BTNode>()> treeBuilder)
 {
     _customTreeBuilders[behaviorName] = treeBuilder;
 

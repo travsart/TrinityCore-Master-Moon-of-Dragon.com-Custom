@@ -248,7 +248,7 @@ namespace Playerbot
          * @param window Deque containing recent samples
          * @return Average value over window
          */
-        float CalculateAverage(const std::deque<float>& window) const;
+        float CalculateAverage(const ::std::deque<float>& window) const;
 
     private:
         // Current metrics
@@ -262,9 +262,9 @@ namespace Playerbot
         uint32 _timeSinceLastUpdate = 0;     ///< Accumulator for update timing
 
         // CPU usage tracking (sliding windows)
-        std::deque<float> _cpuSamples5s;     ///< 5-second window (5 samples @ 1Hz)
-        std::deque<float> _cpuSamples30s;    ///< 30-second window (30 samples @ 1Hz)
-        std::deque<float> _cpuSamples60s;    ///< 60-second window (60 samples @ 1Hz)
+        ::std::deque<float> _cpuSamples5s;     ///< 5-second window (5 samples @ 1Hz)
+        ::std::deque<float> _cpuSamples30s;    ///< 30-second window (30 samples @ 1Hz)
+        ::std::deque<float> _cpuSamples60s;    ///< 60-second window (60 samples @ 1Hz)
 
         // Platform-specific CPU monitoring state
 #ifdef _WIN32

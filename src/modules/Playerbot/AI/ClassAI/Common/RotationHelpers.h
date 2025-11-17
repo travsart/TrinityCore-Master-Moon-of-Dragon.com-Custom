@@ -15,6 +15,8 @@
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellAuraEffects.h"
+#include "GridNotifiers.h"
+#include "CellImpl.h"
 #include <vector>
 #include <algorithm>
 
@@ -31,9 +33,9 @@ public:
     /**
      * Get all group members below health threshold
      */
-    static std::vector<Unit*> GetInjuredGroupMembers(Player* bot, float healthPct)
+    static ::std::vector<Unit*> GetInjuredGroupMembers(Player* bot, float healthPct)
     {
-        std::vector<Unit*> injured;
+        ::std::vector<Unit*> injured;
 
         if (!bot)
             return injured;
@@ -164,8 +166,10 @@ public:
         uint32 maxNearby = CountEnemiesNear(currentTarget, range);
 
         // Check if another target has more nearby enemies
-        std::list<Unit*> enemies;
-        bot->GetAttackableUnitListInRange(enemies, 40.0f);
+        ::std::list<Unit*> enemies;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, 40.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
+        Cell::VisitAllObjects(bot, searcher, 40.0f);
 
         for (Unit* enemy : enemies)
         {
@@ -192,8 +196,10 @@ public:
             return 0;
 
         uint32 count = 0;
-        std::list<Unit*> enemies;
-        center->GetAttackableUnitListInRange(enemies, range);
+        ::std::list<Unit*> enemies;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(center, center, range);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(center, enemies, u_check);
+        Cell::VisitAllObjects(center, searcher, range);
 
         for (Unit* enemy : enemies)
         {
@@ -212,8 +218,10 @@ public:
         if (!bot)
             return nullptr;
 
-        std::list<Unit*> enemies;
-        bot->GetAttackableUnitListInRange(enemies, maxRange);
+        ::std::list<Unit*> enemies;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, maxRange);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, enemies, u_check);
+        Cell::VisitAllObjects(bot, searcher, maxRange);
 
         for (Unit* enemy : enemies)
         {
@@ -233,8 +241,11 @@ public:
             return false;
 
         // Boss or elite
-        if (target->IsWorldBoss() || target->GetCreatureType() == CREATURE_TYPE_HUMANOID)
-            return true;
+        if (Creature* creature = target->ToCreature())
+        {
+            if (creature->isWorldBoss() || creature->GetCreatureType() == CREATURE_TYPE_HUMANOID)
+                return true;
+        }
 
         // High health target
         if (target->GetMaxHealth() > 1000000)
@@ -248,7 +259,7 @@ public:
 // DISTANCE AND POSITIONING UTILITIES
 // ============================================================================
 
-class PositionUtils
+class RotationPositionUtils
 {
 public:
     /**
@@ -381,7 +392,7 @@ public:
     /**
      * Check if any of the given auras are active
      */
-    static bool HasAnyAura(Unit* unit, const std::vector<uint32>& spellIds)
+    static bool HasAnyAura(Unit* unit, const ::std::vector<uint32>& spellIds)
     {
         if (!unit)
             return false;

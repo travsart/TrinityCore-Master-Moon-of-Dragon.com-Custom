@@ -15,6 +15,7 @@ class Player;
 class Unit;
 enum DispelType : uint8;
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 /**
@@ -107,11 +108,11 @@ struct TargetPriority
  * @endcode
  *
  * **Expected Impact**:
- * - ✅ Eliminate 1,600 lines of duplication
- * - ✅ Single source of truth for healing logic
- * - ✅ Easier to improve (improve once = all specs benefit)
- * - ✅ Consistent behavior across healers
- * - ✅ Advanced features: role priority, threat awareness, incoming heal tracking
+ * -  Eliminate 1,600 lines of duplication
+ * -  Single source of truth for healing logic
+ * -  Easier to improve (improve once = all specs benefit)
+ * -  Consistent behavior across healers
+ * -  Advanced features: role priority, threat awareness, incoming heal tracking
  */
 class TC_GAME_API HealingTargetSelector
 {
@@ -305,5 +306,6 @@ private:
 };
 
 }} // namespace bot::ai
+} // namespace Playerbot
 
 #endif

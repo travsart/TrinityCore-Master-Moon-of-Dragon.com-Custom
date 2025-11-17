@@ -14,8 +14,8 @@
 namespace Playerbot {
 
 // Thread-safe registry of bot AI instances
-static std::unordered_map<WorldSession*, BotAI*> s_botAIRegistry;
-static std::recursive_mutex s_botAIMutex;
+static ::std::unordered_map<WorldSession*, BotAI*> s_botAIRegistry;
+static ::std::recursive_mutex s_botAIMutex;
 
 void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
 {
@@ -37,7 +37,7 @@ void BotSessionManager::UpdateBotSession(WorldSession* session, uint32 diff)
         // Then update bot AI
         ProcessBotAI(session, diff);
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception in BotSessionManager::UpdateBotSession for account {}: {}",
@@ -56,7 +56,7 @@ void BotSessionManager::RegisterBotAI(WorldSession* session, BotAI* ai)
     if (!session || !ai)
         return;
 
-    std::lock_guard lock(s_botAIMutex);
+    ::std::lock_guard lock(s_botAIMutex);
     s_botAIRegistry[session] = ai;
     TC_LOG_DEBUG("module.playerbot.session",
         "Registered BotAI for session {}", session->GetAccountId());
@@ -67,7 +67,7 @@ void BotSessionManager::UnregisterBotAI(WorldSession* session)
     if (!session)
         return;
 
-    std::lock_guard lock(s_botAIMutex);
+    ::std::lock_guard lock(s_botAIMutex);
     auto it = s_botAIRegistry.find(session);
     if (it != s_botAIRegistry.end())
     {
@@ -105,7 +105,7 @@ void BotSessionManager::ProcessBotAI(WorldSession* session, uint32 diff)
     // Get registered AI
     BotAI* ai = nullptr;
     {
-        std::lock_guard lock(s_botAIMutex);
+        ::std::lock_guard lock(s_botAIMutex);
         auto it = s_botAIRegistry.find(session);
         if (it != s_botAIRegistry.end())
             ai = it->second;
@@ -119,7 +119,7 @@ void BotSessionManager::ProcessBotAI(WorldSession* session, uint32 diff)
         // Update AI safely
         ai->Update(diff);
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception in BotAI::Update for account {}: {}",
@@ -152,7 +152,7 @@ void BotSessionManager::ProcessBotCallbacks(WorldSession* session)
     {
         // Only process callbacks if bot session specifically needs them
         // This avoids the recursive WorldSession::Update() calls
-        if (botSession->GetLoginState() == BotSession::LoginState::QUERY_PENDING ||
+    if (botSession->GetLoginState() == BotSession::LoginState::QUERY_PENDING ||
             botSession->GetLoginState() == BotSession::LoginState::QUERY_COMPLETE)
         {
             // CRITICAL FIX: Process ALL callback processors, not just _queryProcessor
@@ -162,13 +162,13 @@ void BotSessionManager::ProcessBotCallbacks(WorldSession* session)
         }
 
         // Process pending login state changes
-        if (botSession->GetLoginState() != BotSession::LoginState::NONE &&
+    if (botSession->GetLoginState() != BotSession::LoginState::NONE &&
             botSession->GetLoginState() != BotSession::LoginState::LOGIN_COMPLETE)
         {
             botSession->ProcessPendingLogin();
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception in ProcessBotCallbacks for account {}: {}",

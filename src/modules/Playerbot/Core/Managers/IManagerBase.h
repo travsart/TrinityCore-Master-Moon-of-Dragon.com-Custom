@@ -145,7 +145,7 @@ public:
      * Thread Safety: Must be thread-safe (const method)
      * Performance: Should be a simple string return
      */
-    virtual std::string GetManagerId() const = 0;
+    virtual ::std::string GetManagerId() const = 0;
 
     /**
      * @brief Check if the manager is currently active

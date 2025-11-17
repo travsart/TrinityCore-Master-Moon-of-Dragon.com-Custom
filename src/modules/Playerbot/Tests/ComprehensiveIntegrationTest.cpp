@@ -491,7 +491,7 @@ TEST_CASE("Integration: System performance characteristics", "[integration][perf
     SECTION("System scales to 5000+ concurrent bots")
     {
         // Create 100 zones with 50 bots each = 5000 total
-        for (uint32 zoneId = 1000; zoneId < 1100; ++zoneId)
+    for (uint32 zoneId = 1000; zoneId < 1100; ++zoneId)
         {
             auto* zone = ZoneOrchestratorManager::CreateOrchestrator(zoneId);
             REQUIRE(zone != nullptr);
@@ -566,7 +566,7 @@ TEST_CASE("Integration: Architecture compliance", "[integration][architecture]")
     SECTION("Memory management is sound")
     {
         // Create and destroy multiple times
-        for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i)
         {
             auto* zone = ZoneOrchestratorManager::CreateOrchestrator(2000 + i);
             REQUIRE(zone != nullptr);

@@ -18,12 +18,12 @@ namespace Events
 // STATIC MEMBER INITIALIZATION
 // ============================================================================
 
-std::atomic<size_t> BatchedEventSubscriber::s_totalBatchCalls{0};
-std::atomic<size_t> BatchedEventSubscriber::s_totalSubscriptions{0};
-std::atomic<size_t> BatchedEventSubscriber::s_failedSubscriptions{0};
-std::atomic<uint64_t> BatchedEventSubscriber::s_totalTimeMicros{0};
-std::atomic<uint64_t> BatchedEventSubscriber::s_maxTimeMicros{0};
-std::atomic<uint64_t> BatchedEventSubscriber::s_minTimeMicros{UINT64_MAX};
+::std::atomic<size_t> BatchedEventSubscriber::s_totalBatchCalls{0};
+::std::atomic<size_t> BatchedEventSubscriber::s_totalSubscriptions{0};
+::std::atomic<size_t> BatchedEventSubscriber::s_failedSubscriptions{0};
+::std::atomic<uint64_t> BatchedEventSubscriber::s_totalTimeMicros{0};
+::std::atomic<uint64_t> BatchedEventSubscriber::s_maxTimeMicros{0};
+::std::atomic<uint64_t> BatchedEventSubscriber::s_minTimeMicros{UINT64_MAX};
 
 // ============================================================================
 // PUBLIC API - Batched Subscription Methods
@@ -32,16 +32,16 @@ std::atomic<uint64_t> BatchedEventSubscriber::s_minTimeMicros{UINT64_MAX};
 size_t BatchedEventSubscriber::SubscribeBatch(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::initializer_list<StateMachine::EventType> eventTypes)
+    ::std::initializer_list<StateMachine::EventType> eventTypes)
 {
-    std::vector<StateMachine::EventType> vec(eventTypes.begin(), eventTypes.end());
+    ::std::vector<StateMachine::EventType> vec(eventTypes.begin(), eventTypes.end());
     return SubscribeBatch(dispatcher, manager, vec);
 }
 
 size_t BatchedEventSubscriber::SubscribeBatch(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::vector<StateMachine::EventType> const& eventTypes)
+    ::std::vector<StateMachine::EventType> const& eventTypes)
 {
     return BatchOperation(dispatcher, manager, eventTypes, true);
 }
@@ -49,16 +49,16 @@ size_t BatchedEventSubscriber::SubscribeBatch(
 size_t BatchedEventSubscriber::UnsubscribeBatch(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::initializer_list<StateMachine::EventType> eventTypes)
+    ::std::initializer_list<StateMachine::EventType> eventTypes)
 {
-    std::vector<StateMachine::EventType> vec(eventTypes.begin(), eventTypes.end());
+    ::std::vector<StateMachine::EventType> vec(eventTypes.begin(), eventTypes.end());
     return UnsubscribeBatch(dispatcher, manager, vec);
 }
 
 size_t BatchedEventSubscriber::UnsubscribeBatch(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::vector<StateMachine::EventType> const& eventTypes)
+    ::std::vector<StateMachine::EventType> const& eventTypes)
 {
     return BatchOperation(dispatcher, manager, eventTypes, false);
 }
@@ -152,11 +152,10 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
 {
 
     size_t totalSubscriptions = 0;
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     // Subscribe all managers in a single batched operation
     // This is the ULTIMATE optimization - all 33 event subscriptions in ONE operation
-
     if (questManager)
     {
         size_t count = SubscribeQuestManager(dispatcher, questManager);
@@ -178,11 +177,11 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
         TC_LOG_DEBUG("module.playerbot.batch", "AuctionManager subscribed to {} events", count);
     }
 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() - startTime);
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now() - startTime);
 
     TC_LOG_INFO("module.playerbot.batch",
-                "✅ Batched subscription complete: {} managers, {} total events in {}μs (avg: {}μs per event)",
+                " Batched subscription complete: {} managers, {} total events in {}μs (avg: {}μs per event)",
                 (questManager ? 1 : 0) + (tradeManager ? 1 : 0) + (auctionManager ? 1 : 0),
                 totalSubscriptions,
                 duration.count(),
@@ -195,19 +194,19 @@ size_t BatchedEventSubscriber::SubscribeAllManagers(
 // PERFORMANCE MEASUREMENT
 // ============================================================================
 
-std::chrono::microseconds BatchedEventSubscriber::MeasureSubscriptionTime(
+::std::chrono::microseconds BatchedEventSubscriber::MeasureSubscriptionTime(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::initializer_list<StateMachine::EventType> eventTypes)
+    ::std::initializer_list<StateMachine::EventType> eventTypes)
 {
     if (!dispatcher || !manager || eventTypes.size() == 0)
-        return std::chrono::microseconds{0};
+        return ::std::chrono::microseconds{0};
 
-    auto start = std::chrono::steady_clock::now();
+    auto start = ::std::chrono::steady_clock::now();
     SubscribeBatch(dispatcher, manager, eventTypes);
-    auto end = std::chrono::steady_clock::now();
+    auto end = ::std::chrono::steady_clock::now();
 
-    return std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    return ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
 }
 
 // ============================================================================
@@ -217,34 +216,34 @@ std::chrono::microseconds BatchedEventSubscriber::MeasureSubscriptionTime(
 BatchedEventSubscriber::SubscriptionStats BatchedEventSubscriber::GetStats()
 {
     SubscriptionStats stats;
-    stats.totalBatchCalls = s_totalBatchCalls.load(std::memory_order_relaxed);
-    stats.totalSubscriptions = s_totalSubscriptions.load(std::memory_order_relaxed);
-    stats.failedSubscriptions = s_failedSubscriptions.load(std::memory_order_relaxed);
+    stats.totalBatchCalls = s_totalBatchCalls.load(::std::memory_order_relaxed);
+    stats.totalSubscriptions = s_totalSubscriptions.load(::std::memory_order_relaxed);
+    stats.failedSubscriptions = s_failedSubscriptions.load(::std::memory_order_relaxed);
 
-    uint64_t totalMicros = s_totalTimeMicros.load(std::memory_order_relaxed);
-    stats.totalTime = std::chrono::microseconds{totalMicros};
+    uint64_t totalMicros = s_totalTimeMicros.load(::std::memory_order_relaxed);
+    stats.totalTime = ::std::chrono::microseconds{totalMicros};
 
     if (stats.totalBatchCalls > 0)
-        stats.avgTime = std::chrono::microseconds{totalMicros / stats.totalBatchCalls};
+        stats.avgTime = ::std::chrono::microseconds{totalMicros / stats.totalBatchCalls};
     else
-        stats.avgTime = std::chrono::microseconds{0};
+        stats.avgTime = ::std::chrono::microseconds{0};
 
-    stats.maxTime = std::chrono::microseconds{s_maxTimeMicros.load(std::memory_order_relaxed)};
+    stats.maxTime = ::std::chrono::microseconds{s_maxTimeMicros.load(::std::memory_order_relaxed)};
 
-    uint64_t minMicros = s_minTimeMicros.load(std::memory_order_relaxed);
-    stats.minTime = (minMicros == UINT64_MAX) ? std::chrono::microseconds{0} : std::chrono::microseconds{minMicros};
+    uint64_t minMicros = s_minTimeMicros.load(::std::memory_order_relaxed);
+    stats.minTime = (minMicros == UINT64_MAX) ? ::std::chrono::microseconds{0} : ::std::chrono::microseconds{minMicros};
 
     return stats;
 }
 
 void BatchedEventSubscriber::ResetStats()
 {
-    s_totalBatchCalls.store(0, std::memory_order_relaxed);
-    s_totalSubscriptions.store(0, std::memory_order_relaxed);
-    s_failedSubscriptions.store(0, std::memory_order_relaxed);
-    s_totalTimeMicros.store(0, std::memory_order_relaxed);
-    s_maxTimeMicros.store(0, std::memory_order_relaxed);
-    s_minTimeMicros.store(UINT64_MAX, std::memory_order_relaxed);
+    s_totalBatchCalls.store(0, ::std::memory_order_relaxed);
+    s_totalSubscriptions.store(0, ::std::memory_order_relaxed);
+    s_failedSubscriptions.store(0, ::std::memory_order_relaxed);
+    s_totalTimeMicros.store(0, ::std::memory_order_relaxed);
+    s_maxTimeMicros.store(0, ::std::memory_order_relaxed);
+    s_minTimeMicros.store(UINT64_MAX, ::std::memory_order_relaxed);
 
     TC_LOG_INFO("module.playerbot.batch", "Batched subscription statistics reset");
 }
@@ -256,11 +255,10 @@ void BatchedEventSubscriber::ResetStats()
 size_t BatchedEventSubscriber::BatchOperation(
     EventDispatcher* dispatcher,
     IManagerBase* manager,
-    std::vector<StateMachine::EventType> const& eventTypes,
+    ::std::vector<StateMachine::EventType> const& eventTypes,
     bool subscribe)
 {
     // Validate inputs
-
     if (eventTypes.empty())
     {
         TC_LOG_DEBUG("module.playerbot.batch", "BatchOperation called with empty event list");
@@ -268,7 +266,7 @@ size_t BatchedEventSubscriber::BatchOperation(
     }
 
     // Start performance measurement
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     size_t successCount = 0;
     size_t failCount = 0;
 
@@ -293,7 +291,7 @@ size_t BatchedEventSubscriber::BatchOperation(
 
                 ++successCount;
             }
-            catch (std::exception const& e)
+            catch (::std::exception const& e)
             {
                 ++failCount;
                 TC_LOG_ERROR("module.playerbot.batch",
@@ -304,7 +302,7 @@ size_t BatchedEventSubscriber::BatchOperation(
             }
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.batch",
                      "Exception during batch {}: {}",
@@ -313,26 +311,26 @@ size_t BatchedEventSubscriber::BatchOperation(
     }
 
     // End performance measurement
-    auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     // Update statistics (thread-safe atomic operations)
-    s_totalBatchCalls.fetch_add(1, std::memory_order_relaxed);
-    s_totalSubscriptions.fetch_add(successCount, std::memory_order_relaxed);
-    s_failedSubscriptions.fetch_add(failCount, std::memory_order_relaxed);
-    s_totalTimeMicros.fetch_add(duration.count(), std::memory_order_relaxed);
+    s_totalBatchCalls.fetch_add(1, ::std::memory_order_relaxed);
+    s_totalSubscriptions.fetch_add(successCount, ::std::memory_order_relaxed);
+    s_failedSubscriptions.fetch_add(failCount, ::std::memory_order_relaxed);
+    s_totalTimeMicros.fetch_add(duration.count(), ::std::memory_order_relaxed);
 
     // Update min/max times (thread-safe compare-and-swap)
-    uint64_t currentMax = s_maxTimeMicros.load(std::memory_order_relaxed);
+    uint64_t currentMax = s_maxTimeMicros.load(::std::memory_order_relaxed);
     while (duration.count() > currentMax &&
-           !s_maxTimeMicros.compare_exchange_weak(currentMax, duration.count(), std::memory_order_relaxed))
+           !s_maxTimeMicros.compare_exchange_weak(currentMax, duration.count(), ::std::memory_order_relaxed))
     {
         // Retry if another thread updated max
     }
 
-    uint64_t currentMin = s_minTimeMicros.load(std::memory_order_relaxed);
+    uint64_t currentMin = s_minTimeMicros.load(::std::memory_order_relaxed);
     while (static_cast<uint64_t>(duration.count()) < currentMin &&
-           !s_minTimeMicros.compare_exchange_weak(currentMin, duration.count(), std::memory_order_relaxed))
+           !s_minTimeMicros.compare_exchange_weak(currentMin, duration.count(), ::std::memory_order_relaxed))
     {
         // Retry if another thread updated min
     }

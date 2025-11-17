@@ -29,8 +29,8 @@ namespace Performance {
 class PerformanceManager
 {
 private:
-    std::atomic<bool> _initialized{false};
-    std::atomic<bool> _profilingEnabled{false};
+    ::std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _profilingEnabled{false};
 
 public:
     /**
@@ -47,7 +47,7 @@ public:
     /**
      * @brief Check if manager is initialized
      */
-    bool IsInitialized() const { return _initialized.load(std::memory_order_relaxed); }
+    bool IsInitialized() const { return _initialized.load(::std::memory_order_relaxed); }
 
     /**
      * @brief Enable/disable profiling
@@ -59,7 +59,7 @@ public:
      * @brief Generate comprehensive performance report
      * @param filename Output file for report
      */
-    void GeneratePerformanceReport(const std::string& filename);
+    void GeneratePerformanceReport(const ::std::string& filename);
 
     /**
      * @brief Handle memory pressure situation

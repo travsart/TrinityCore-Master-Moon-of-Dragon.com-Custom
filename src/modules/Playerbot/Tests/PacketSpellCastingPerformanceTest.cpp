@@ -66,9 +66,9 @@ bool Week4TestMetrics::MeetsPerformanceTargets() const
            successRateTargetMet && blockingTargetMet && tpsTargetMet && noCrashes;
 }
 
-std::string Week4TestMetrics::GenerateReport() const
+::std::string Week4TestMetrics::GenerateReport() const
 {
-    std::ostringstream report;
+    ::std::ostringstream report;
 
     report << "============================================\n";
     report << "Week 4 Performance Test Report\n";
@@ -78,13 +78,13 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "Scenario: " << scenario << "\n";
     report << "Bot Count: " << botCount << "\n";
     report << "Duration: " << GetDuration() << " seconds\n";
-    report << "Status: " << (MeetsPerformanceTargets() ? "✅ PASS" : "❌ FAIL") << "\n\n";
+    report << "Status: " << (MeetsPerformanceTargets() ? " PASS" : " FAIL") << "\n\n";
 
     report << "--- CPU Metrics ---\n";
-    report << "Average CPU: " << std::fixed << std::setprecision(2) << avgCpuUsage << "%\n";
+    report << "Average CPU: " << ::std::fixed << ::std::setprecision(2) << avgCpuUsage << "%\n";
     report << "Peak CPU: " << peakCpuUsage << "%\n";
     report << "CPU per Bot: " << cpuPerBot << "% ";
-    report << (cpuPerBot <= 0.1f ? "✅" : "❌") << " (Target: <0.1%)\n\n";
+    report << (cpuPerBot <= 0.1f ? "" : "") << " (Target: <0.1%)\n\n";
 
     report << "--- Memory Metrics ---\n";
     report << "Initial Memory: " << (initialMemory / 1024 / 1024) << " MB\n";
@@ -92,18 +92,18 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "Final Memory: " << (finalMemory / 1024 / 1024) << " MB\n";
     report << "Memory Growth: " << (memoryGrowth / 1024 / 1024) << " MB\n";
     report << "Avg Memory per Bot: " << (avgMemoryPerBot / 1024 / 1024) << " MB ";
-    report << (avgMemoryPerBot <= 10 * 1024 * 1024 ? "✅" : "❌") << " (Target: <10MB)\n\n";
+    report << (avgMemoryPerBot <= 10 * 1024 * 1024 ? "" : "") << " (Target: <10MB)\n\n";
 
     report << "--- Spell Casting Metrics ---\n";
     report << "Total Casts: " << totalSpellCasts << "\n";
     report << "Successful: " << successfulCasts << "\n";
     report << "Failed: " << failedCasts << "\n";
-    report << "Success Rate: " << std::fixed << std::setprecision(2) << (spellCastSuccessRate * 100.0f) << "% ";
-    report << (spellCastSuccessRate >= 0.99f ? "✅" : "❌") << " (Target: >99%)\n\n";
+    report << "Success Rate: " << ::std::fixed << ::std::setprecision(2) << (spellCastSuccessRate * 100.0f) << "% ";
+    report << (spellCastSuccessRate >= 0.99f ? "" : "") << " (Target: >99%)\n\n";
 
     report << "--- Latency Metrics ---\n";
     report << "Avg Spell Cast Latency: " << (avgSpellCastLatency / 1000.0) << " ms ";
-    report << (avgSpellCastLatency <= 10000 ? "✅" : "❌") << " (Target: <10ms)\n";
+    report << (avgSpellCastLatency <= 10000 ? "" : "") << " (Target: <10ms)\n";
     report << "Min Latency: " << (minSpellCastLatency / 1000.0) << " ms\n";
     report << "Max Latency: " << (maxSpellCastLatency / 1000.0) << " ms\n";
     report << "P95 Latency: " << (p95SpellCastLatency / 1000.0) << " ms\n";
@@ -118,16 +118,16 @@ std::string Week4TestMetrics::GenerateReport() const
     report << "--- Main Thread Metrics ---\n";
     report << "Avg Cycle Time: " << (avgMainThreadCycleTime / 1000.0) << " ms\n";
     report << "Max Cycle Time: " << (maxMainThreadCycleTime / 1000.0) << " ms ";
-    report << (maxMainThreadCycleTime <= 5000 ? "✅" : "❌") << " (Target: <5ms)\n";
+    report << (maxMainThreadCycleTime <= 5000 ? "" : "") << " (Target: <5ms)\n";
     report << "Blocking Events (>5ms): " << mainThreadBlockingEvents << "\n\n";
 
     report << "--- Server Metrics ---\n";
-    report << "Avg TPS: " << std::fixed << std::setprecision(1) << avgTicksPerSecond << " ";
-    report << (avgTicksPerSecond >= 20.0f ? "✅" : "❌") << " (Target: >20 TPS)\n";
+    report << "Avg TPS: " << ::std::fixed << ::std::setprecision(1) << avgTicksPerSecond << " ";
+    report << (avgTicksPerSecond >= 20.0f ? "" : "") << " (Target: >20 TPS)\n";
     report << "Min TPS: " << minTicksPerSecond << "\n";
     report << "Uptime: " << uptime << " seconds\n";
     report << "Crashes: " << crashCount << " ";
-    report << (crashCount == 0 ? "✅" : "❌") << " (Target: 0)\n\n";
+    report << (crashCount == 0 ? "" : "") << " (Target: 0)\n\n";
 
     report << "--- Bot Behavior Metrics ---\n";
     report << "Bots in Combat: " << botsInCombat << "\n";
@@ -146,9 +146,9 @@ std::string Week4TestMetrics::GenerateReport() const
     return report.str();
 }
 
-void Week4TestMetrics::ExportToCSV(std::string const& filename) const
+void Week4TestMetrics::ExportToCSV(::std::string const& filename) const
 {
-    std::ofstream csv(filename, std::ios::app);
+    ::std::ofstream csv(filename, ::std::ios::app);
     if (!csv.is_open())
     {
         TC_LOG_ERROR("test.week4", "Failed to open CSV file: {}", filename);
@@ -156,7 +156,7 @@ void Week4TestMetrics::ExportToCSV(std::string const& filename) const
     }
 
     // Write header if file is empty
-    csv.seekp(0, std::ios::end);
+    csv.seekp(0, ::std::ios::end);
     if (csv.tellp() == 0)
     {
         csv << "TestName,Scenario,BotCount,Duration,AvgCPU,PeakCPU,CPUPerBot,"
@@ -228,9 +228,9 @@ Week4PerformanceTest::Week4PerformanceTest()
 {
 }
 
-std::vector<Week4TestScenario> Week4PerformanceTest::GetWeek4Scenarios()
+::std::vector<Week4TestScenario> Week4PerformanceTest::GetWeek4Scenarios()
 {
-    std::vector<Week4TestScenario> scenarios;
+    ::std::vector<Week4TestScenario> scenarios;
 
     // Scenario 1: Baseline Performance (100 bots)
     {
@@ -383,10 +383,10 @@ bool Week4PerformanceTest::RunAllScenarios()
         allPassed &= passed;
 
         TC_LOG_INFO("test.week4", "Scenario {} result: {}",
-            scenarios[i].name, passed ? "✅ PASS" : "❌ FAIL");
+            scenarios[i].name, passed ? " PASS" : " FAIL");
 
         // Export metrics to CSV
-        std::string csvPath = "week4_performance_metrics.csv";
+        ::std::string csvPath = "week4_performance_metrics.csv";
         metrics.ExportToCSV(csvPath);
     }
 
@@ -395,7 +395,7 @@ bool Week4PerformanceTest::RunAllScenarios()
 
     TC_LOG_INFO("test.week4", "\n============================================");
     TC_LOG_INFO("test.week4", "Week 4 Test Suite Complete");
-    TC_LOG_INFO("test.week4", "Overall Result: {}", allPassed ? "✅ ALL PASSED" : "❌ SOME FAILED");
+    TC_LOG_INFO("test.week4", "Overall Result: {}", allPassed ? " ALL PASSED" : " SOME FAILED");
     TC_LOG_INFO("test.week4", "============================================");
 
     return allPassed;
@@ -430,7 +430,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
     _currentMetrics.testName = scenario.name;
     _currentMetrics.scenario = scenario.description;
     _currentMetrics.botCount = scenario.botCount;
-    _currentMetrics.startTime = std::chrono::system_clock::now();
+    _currentMetrics.startTime = ::std::chrono::system_clock::now();
 
     // Clear sample histories
     _spellCastLatencySamples.clear();
@@ -459,17 +459,17 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
     TC_LOG_INFO("test.week4", "Running test for {} minutes...", scenario.durationMinutes);
 
     uint32 durationSeconds = scenario.durationMinutes * 60;
-    auto testEndTime = std::chrono::system_clock::now() + std::chrono::seconds(durationSeconds);
+    auto testEndTime = ::std::chrono::system_clock::now() + ::std::chrono::seconds(durationSeconds);
 
-    while (std::chrono::system_clock::now() < testEndTime)
+    while (::std::chrono::system_clock::now() < testEndTime)
     {
         // Sample metrics at configured interval
-        std::this_thread::sleep_for(std::chrono::seconds(scenario.metricSampleIntervalSeconds));
+        ::std::this_thread::sleep_for(::std::chrono::seconds(scenario.metricSampleIntervalSeconds));
         SampleMetrics();
 
         // Log progress every 5 minutes
-        auto elapsed = std::chrono::duration_cast<std::chrono::minutes>(
-            std::chrono::system_clock::now() - _currentMetrics.startTime).count();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::minutes>(
+            ::std::chrono::system_clock::now() - _currentMetrics.startTime).count();
 
         if (elapsed > 0 && elapsed % 5 == 0)
         {
@@ -482,7 +482,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
     StopMetricCollection();
 
     // Capture final metrics
-    _currentMetrics.endTime = std::chrono::system_clock::now();
+    _currentMetrics.endTime = ::std::chrono::system_clock::now();
     _currentMetrics.finalMemory = GetCurrentMemoryUsage();
     _currentMetrics.memoryGrowth = _currentMetrics.finalMemory - _currentMetrics.initialMemory;
 
@@ -493,7 +493,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
     // Calculate final statistics
     if (!_spellCastLatencySamples.empty())
     {
-        std::sort(_spellCastLatencySamples.begin(), _spellCastLatencySamples.end());
+        ::std::sort(_spellCastLatencySamples.begin(), _spellCastLatencySamples.end());
         size_t p95_index = static_cast<size_t>(_spellCastLatencySamples.size() * 0.95);
         size_t p99_index = static_cast<size_t>(_spellCastLatencySamples.size() * 0.99);
         _currentMetrics.p95SpellCastLatency = _spellCastLatencySamples[p95_index];
@@ -503,7 +503,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
     // Calculate average memory per bot
     if (!_memoryUsageSamples.empty() && scenario.botCount > 0)
     {
-        uint64 avgMemory = std::accumulate(_memoryUsageSamples.begin(), _memoryUsageSamples.end(), 0ULL) / _memoryUsageSamples.size();
+        uint64 avgMemory = ::std::accumulate(_memoryUsageSamples.begin(), _memoryUsageSamples.end(), 0ULL) / _memoryUsageSamples.size();
         _currentMetrics.avgMemoryPerBot = avgMemory / scenario.botCount;
     }
 
@@ -516,7 +516,7 @@ Week4TestMetrics Week4PerformanceTest::ExecuteScenario(Week4TestScenario const& 
 
     TC_LOG_INFO("test.week4", "Scenario {} complete", scenario.name);
     TC_LOG_INFO("test.week4", "Result: {}",
-        _currentMetrics.MeetsPerformanceTargets() ? "✅ PASS" : "❌ FAIL");
+        _currentMetrics.MeetsPerformanceTargets() ? " PASS" : " FAIL");
 
     // Print report to log
     TC_LOG_INFO("test.week4", "\n{}", _currentMetrics.GenerateReport());
@@ -531,7 +531,6 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
 
     // Integration Hook 1: Bot spawning via BotWorldSessionMgr
     // Using BotWorldSessionMgr instead of BotLifecycleMgr for direct character creation
-
     if (!sBotWorldSessionMgr->IsEnabled())
     {
         TC_LOG_ERROR("test.week4", "BotWorldSessionMgr is disabled - cannot spawn bots");
@@ -543,7 +542,7 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
     uint32 botsSpawned = 0;
 
     // Zone distribution (cycle through available zones)
-    std::vector<std::string> const& zones = scenario.zones;
+    ::std::vector<::std::string> const& zones = scenario.zones;
     if (zones.empty())
     {
         TC_LOG_ERROR("test.week4", "No zones configured for bot spawning");
@@ -561,13 +560,12 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
     //
     // For now, we'll attempt to add existing bot accounts
     // Actual bot character creation requires database access and account setup
-
     for (uint32 i = 0; i < count; ++i)
     {
         // Calculate delay for gradual spawn
-        if (spawnInterval > 0 && i > 0)
+    if (spawnInterval > 0 && i > 0)
         {
-            std::this_thread::sleep_for(std::chrono::seconds(spawnInterval));
+            ::std::this_thread::sleep_for(::std::chrono::seconds(spawnInterval));
         }
 
         // PLACEHOLDER: In production, this would query database for bot GUID
@@ -582,7 +580,7 @@ void Week4PerformanceTest::SpawnBots(uint32 count, Week4TestScenario const& scen
         ++botsSpawned;
 
         // Progress logging every 100 bots
-        if (botsSpawned % 100 == 0)
+    if (botsSpawned % 100 == 0)
         {
             TC_LOG_INFO("test.week4", "Spawn progress: {} / {} bots", botsSpawned, count);
         }
@@ -658,7 +656,7 @@ void Week4PerformanceTest::StartMetricCollection(Week4TestScenario const& scenar
 {
     _metricsCollectionActive = true;
     _sampleInterval = scenario.metricSampleIntervalSeconds;
-    _testStartTime = std::chrono::system_clock::now();
+    _testStartTime = ::std::chrono::system_clock::now();
     _lastSampleTime = _testStartTime;
 
     TC_LOG_INFO("test.week4", "Metric collection started (interval: {}s)", _sampleInterval);
@@ -678,8 +676,8 @@ void Week4PerformanceTest::SampleMetrics()
     // Sample CPU usage
     float cpuUsage = GetBotSystemCpuUsage();
     _cpuUsageSamples.push_back(cpuUsage);
-    _currentMetrics.avgCpuUsage = std::accumulate(_cpuUsageSamples.begin(), _cpuUsageSamples.end(), 0.0f) / _cpuUsageSamples.size();
-    _currentMetrics.peakCpuUsage = std::max(_currentMetrics.peakCpuUsage, cpuUsage);
+    _currentMetrics.avgCpuUsage = ::std::accumulate(_cpuUsageSamples.begin(), _cpuUsageSamples.end(), 0.0f) / _cpuUsageSamples.size();
+    _currentMetrics.peakCpuUsage = ::std::max(_currentMetrics.peakCpuUsage, cpuUsage);
 
     if (_currentMetrics.botCount > 0)
         _currentMetrics.cpuPerBot = _currentMetrics.avgCpuUsage / _currentMetrics.botCount;
@@ -687,19 +685,19 @@ void Week4PerformanceTest::SampleMetrics()
     // Sample memory usage
     uint64 memUsage = GetCurrentMemoryUsage();
     _memoryUsageSamples.push_back(memUsage);
-    _currentMetrics.peakMemory = std::max(_currentMetrics.peakMemory, memUsage);
+    _currentMetrics.peakMemory = ::std::max(_currentMetrics.peakMemory, memUsage);
 
     // Sample packet queue depth
     uint32 queueDepth = GetCurrentQueueDepth();
     _queueDepthSamples.push_back(queueDepth);
-    _currentMetrics.maxQueueDepth = std::max(_currentMetrics.maxQueueDepth, queueDepth);
-    _currentMetrics.avgQueueDepth = std::accumulate(_queueDepthSamples.begin(), _queueDepthSamples.end(), 0U) / _queueDepthSamples.size();
+    _currentMetrics.maxQueueDepth = ::std::max(_currentMetrics.maxQueueDepth, queueDepth);
+    _currentMetrics.avgQueueDepth = ::std::accumulate(_queueDepthSamples.begin(), _queueDepthSamples.end(), 0U) / _queueDepthSamples.size();
 
     // Sample main thread cycle time
     uint64 cycleTime = GetLastMainThreadCycleTime();
     _mainThreadCycleSamples.push_back(cycleTime);
-    _currentMetrics.maxMainThreadCycleTime = std::max(_currentMetrics.maxMainThreadCycleTime, cycleTime);
-    _currentMetrics.avgMainThreadCycleTime = std::accumulate(_mainThreadCycleSamples.begin(), _mainThreadCycleSamples.end(), 0ULL) / _mainThreadCycleSamples.size();
+    _currentMetrics.maxMainThreadCycleTime = ::std::max(_currentMetrics.maxMainThreadCycleTime, cycleTime);
+    _currentMetrics.avgMainThreadCycleTime = ::std::accumulate(_mainThreadCycleSamples.begin(), _mainThreadCycleSamples.end(), 0ULL) / _mainThreadCycleSamples.size();
 
     if (cycleTime > 5000) // >5ms blocking
         ++_currentMetrics.mainThreadBlockingEvents;
@@ -713,7 +711,7 @@ void Week4PerformanceTest::SampleMetrics()
     // Update bot states
     UpdateBotStates();
 
-    _lastSampleTime = std::chrono::system_clock::now();
+    _lastSampleTime = ::std::chrono::system_clock::now();
 }
 
 void Week4PerformanceTest::TrackSpellCast(bool success, uint64 latencyMicroseconds)
@@ -727,9 +725,9 @@ void Week4PerformanceTest::TrackSpellCast(bool success, uint64 latencyMicrosecon
 
     _spellCastLatencySamples.push_back(latencyMicroseconds);
 
-    _currentMetrics.minSpellCastLatency = std::min(_currentMetrics.minSpellCastLatency, latencyMicroseconds);
-    _currentMetrics.maxSpellCastLatency = std::max(_currentMetrics.maxSpellCastLatency, latencyMicroseconds);
-    _currentMetrics.avgSpellCastLatency = std::accumulate(_spellCastLatencySamples.begin(), _spellCastLatencySamples.end(), 0ULL) / _spellCastLatencySamples.size();
+    _currentMetrics.minSpellCastLatency = ::std::min(_currentMetrics.minSpellCastLatency, latencyMicroseconds);
+    _currentMetrics.maxSpellCastLatency = ::std::max(_currentMetrics.maxSpellCastLatency, latencyMicroseconds);
+    _currentMetrics.avgSpellCastLatency = ::std::accumulate(_spellCastLatencySamples.begin(), _spellCastLatencySamples.end(), 0ULL) / _spellCastLatencySamples.size();
 }
 
 // ============================================================================
@@ -794,11 +792,11 @@ float Week4PerformanceTest::GetCurrentCpuUsage()
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
 
-    static auto lastTime = std::chrono::steady_clock::now();
+    static auto lastTime = ::std::chrono::steady_clock::now();
     static struct rusage lastUsage = usage;
 
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - lastTime).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::microseconds>(now - lastTime).count();
 
     if (elapsed == 0)
         return 0.0f;
@@ -816,13 +814,13 @@ float Week4PerformanceTest::GetCurrentCpuUsage()
 
 uint64 Week4PerformanceTest::GetCurrentMemoryUsage()
 {
-    std::ifstream status("/proc/self/status");
-    std::string line;
-    while (std::getline(status, line))
+    ::std::ifstream status("/proc/self/status");
+    ::std::string line;
+    while (::std::getline(status, line))
     {
         if (line.substr(0, 6) == "VmRSS:")
         {
-            std::istringstream iss(line.substr(7));
+            ::std::istringstream iss(line.substr(7));
             uint64 kb;
             iss >> kb;
             return kb * 1024;
@@ -977,8 +975,8 @@ uint64 Week4PerformanceTest::GetServerUptime()
     // return sWorld->GetUptime(); // Returns uptime in seconds
 
     // Placeholder: Use test start time as reference
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now() - _testStartTime);
+    auto duration = ::std::chrono::duration_cast<::std::chrono::seconds>(
+        ::std::chrono::system_clock::now() - _testStartTime);
     return duration.count();
 }
 
@@ -999,7 +997,8 @@ void Week4PerformanceTest::UpdateBotStates()
     // {
     //     if (bot->IsDead())
     //         ++dead;
-    //     else if (bot->IsInCombat())
+    //     else
+    if (bot->IsInCombat())
     //         ++inCombat;
     //     else
     //         ++idle;
@@ -1016,9 +1015,9 @@ void Week4PerformanceTest::UpdateBotStates()
     _currentMetrics.botsResurrected = 0;           // Track via event system
 }
 
-void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& outputPath)
+void Week4PerformanceTest::GenerateComprehensiveReport(::std::string const& outputPath)
 {
-    std::ofstream report(outputPath);
+    ::std::ofstream report(outputPath);
     if (!report.is_open())
     {
         TC_LOG_ERROR("test.week4", "Failed to create comprehensive report: {}", outputPath);
@@ -1026,7 +1025,7 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
     }
 
     report << "# Week 4 Performance Test - Comprehensive Report\n\n";
-    report << "**Date**: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << "\n";
+    report << "**Date**: " << ::std::chrono::system_clock::to_time_t(::std::chrono::system_clock::now()) << "\n";
     report << "**Test Suite**: Packet-Based Spell Casting Validation\n";
     report << "**Total Scenarios**: " << _allResults.size() << "\n\n";
 
@@ -1040,7 +1039,7 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
             ++passedCount;
     }
 
-    report << "**Overall Result**: " << (passedCount == _allResults.size() ? "✅ ALL PASSED" : "❌ SOME FAILED") << "\n\n";
+    report << "**Overall Result**: " << (passedCount == _allResults.size() ? " ALL PASSED" : " SOME FAILED") << "\n\n";
     report << "**Passed**: " << passedCount << " / " << _allResults.size() << "\n\n";
 
     report << "---\n\n";
@@ -1055,41 +1054,41 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
     report << "## Recommendations\n\n";
 
     // Analyze results and provide recommendations
-    bool anyLatencyIssues = std::any_of(_allResults.begin(), _allResults.end(),
+    bool anyLatencyIssues = ::std::any_of(_allResults.begin(), _allResults.end(),
         [](Week4TestMetrics const& m) { return m.avgSpellCastLatency > 10000; });
 
-    bool anyMemoryIssues = std::any_of(_allResults.begin(), _allResults.end(),
+    bool anyMemoryIssues = ::std::any_of(_allResults.begin(), _allResults.end(),
         [](Week4TestMetrics const& m) { return m.avgMemoryPerBot > 10 * 1024 * 1024; });
 
-    bool anyCpuIssues = std::any_of(_allResults.begin(), _allResults.end(),
+    bool anyCpuIssues = ::std::any_of(_allResults.begin(), _allResults.end(),
         [](Week4TestMetrics const& m) { return m.cpuPerBot > 0.1f; });
 
     if (anyLatencyIssues)
-        report << "⚠️ **Latency Optimization Needed**: Some scenarios exceeded 10ms spell cast latency. Consider packet batching optimization.\n\n";
+        report << " **Latency Optimization Needed**: Some scenarios exceeded 10ms spell cast latency. Consider packet batching optimization.\n\n";
 
     if (anyMemoryIssues)
-        report << "⚠️ **Memory Optimization Needed**: Memory per bot exceeded 10MB target. Investigate memory leaks or excessive caching.\n\n";
+        report << " **Memory Optimization Needed**: Memory per bot exceeded 10MB target. Investigate memory leaks or excessive caching.\n\n";
 
     if (anyCpuIssues)
-        report << "⚠️ **CPU Optimization Needed**: CPU usage per bot exceeded 0.1% target. Profile hot paths and optimize validation logic.\n\n";
+        report << " **CPU Optimization Needed**: CPU usage per bot exceeded 0.1% target. Profile hot paths and optimize validation logic.\n\n";
 
     if (!anyLatencyIssues && !anyMemoryIssues && !anyCpuIssues)
-        report << "✅ **No Issues Detected**: All performance targets met. System ready for production testing.\n\n";
+        report << " **No Issues Detected**: All performance targets met. System ready for production testing.\n\n";
 
     report << "---\n\n";
     report << "## Next Steps\n\n";
 
     if (passedCount == _allResults.size())
     {
-        report << "1. ✅ Week 4 testing COMPLETE\n";
-        report << "2. 📋 Proceed with Priority 1 tasks (Quest pathfinding, Vendor purchases, etc.)\n";
-        report << "3. 📋 Schedule production deployment planning\n\n";
+        report << "1.  Week 4 testing COMPLETE\n";
+        report << "2.  Proceed with Priority 1 tasks (Quest pathfinding, Vendor purchases, etc.)\n";
+        report << "3.  Schedule production deployment planning\n\n";
     }
     else
     {
-        report << "1. ⚠️ Address failed scenarios\n";
-        report << "2. 🔧 Implement recommended optimizations\n";
-        report << "3. 🔄 Re-run failed tests after fixes\n\n";
+        report << "1.  Address failed scenarios\n";
+        report << "2.  Implement recommended optimizations\n";
+        report << "3.  Re-run failed tests after fixes\n\n";
     }
 
     report.close();
@@ -1097,13 +1096,13 @@ void Week4PerformanceTest::GenerateComprehensiveReport(std::string const& output
     TC_LOG_INFO("test.week4", "Comprehensive report written to: {}", outputPath);
 }
 
-std::string Week4PerformanceTest::FormatDuration(uint64 seconds) const
+::std::string Week4PerformanceTest::FormatDuration(uint64 seconds) const
 {
     uint64 hours = seconds / 3600;
     uint64 minutes = (seconds % 3600) / 60;
     uint64 secs = seconds % 60;
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     if (hours > 0)
         oss << hours << "h ";
     if (minutes > 0)
@@ -1113,7 +1112,7 @@ std::string Week4PerformanceTest::FormatDuration(uint64 seconds) const
     return oss.str();
 }
 
-std::string Week4PerformanceTest::FormatBytes(uint64 bytes) const
+::std::string Week4PerformanceTest::FormatBytes(uint64 bytes) const
 {
     const char* units[] = {"B", "KB", "MB", "GB", "TB"};
     int unit = 0;
@@ -1125,19 +1124,19 @@ std::string Week4PerformanceTest::FormatBytes(uint64 bytes) const
         ++unit;
     }
 
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(2) << size << " " << units[unit];
+    ::std::ostringstream oss;
+    oss << ::std::fixed << ::std::setprecision(2) << size << " " << units[unit];
     return oss.str();
 }
 
-std::string Week4PerformanceTest::FormatMicroseconds(uint64 microseconds) const
+::std::string Week4PerformanceTest::FormatMicroseconds(uint64 microseconds) const
 {
     if (microseconds < 1000)
-        return std::to_string(microseconds) + " µs";
+        return ::std::to_string(microseconds) + " µs";
     else if (microseconds < 1000000)
-        return std::to_string(microseconds / 1000) + " ms";
+        return ::std::to_string(microseconds / 1000) + " ms";
     else
-        return std::to_string(microseconds / 1000000) + " s";
+        return ::std::to_string(microseconds / 1000000) + " s";
 }
 
 } // namespace Test

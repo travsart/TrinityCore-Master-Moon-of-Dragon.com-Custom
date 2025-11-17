@@ -45,7 +45,7 @@ protected:
         TC_LOG_INFO("test.playerbot", "Setting up BotSessionIntegrationTest");
 
         // Ensure sWorld is available for tests
-        if (!sWorld) {
+    if (!sWorld) {
             GTEST_SKIP() << "sWorld not initialized - integration test requires full server context";
             return;
         }
@@ -107,7 +107,7 @@ TEST_F(BotSessionIntegrationTest, VerifyIsBotImplementation)
 
     EXPECT_TRUE(isBotResult) << "IsBot() should consistently return true";
 
-    TC_LOG_INFO("test.playerbot", "✅ IsBot() implementation verified");
+    TC_LOG_INFO("test.playerbot", " IsBot() implementation verified");
 }
 
 /**
@@ -147,7 +147,7 @@ TEST_F(BotSessionIntegrationTest, SocketOperationSafety)
         botSession->CloseSocket();
     }) << "Socket methods should not throw exceptions";
 
-    TC_LOG_INFO("test.playerbot", "✅ Socket operation safety verified");
+    TC_LOG_INFO("test.playerbot", " Socket operation safety verified");
 }
 
 /**
@@ -189,7 +189,7 @@ TEST_F(BotSessionIntegrationTest, UpdateLoopIntegration)
         }
     }) << "Multiple Update calls should not cause crashes";
 
-    TC_LOG_INFO("test.playerbot", "✅ Update loop integration verified");
+    TC_LOG_INFO("test.playerbot", " Update loop integration verified");
 }
 
 /**
@@ -203,7 +203,7 @@ TEST_F(BotSessionIntegrationTest, BuildPlayerbotGuardEffectiveness)
     TC_LOG_INFO("test.playerbot", "TEST 4: Testing BUILD_PLAYERBOT guard effectiveness");
 
 #ifdef BUILD_PLAYERBOT
-    TC_LOG_INFO("test.playerbot", "✅ BUILD_PLAYERBOT is defined - guards should be active");
+    TC_LOG_INFO("test.playerbot", " BUILD_PLAYERBOT is defined - guards should be active");
 
     auto botSession = CreateTestBotSession();
     ASSERT_NE(botSession, nullptr) << "Failed to create BotSession";
@@ -229,7 +229,7 @@ TEST_F(BotSessionIntegrationTest, BuildPlayerbotGuardEffectiveness)
     GTEST_SKIP() << "BUILD_PLAYERBOT not defined - cannot test guard effectiveness";
 #endif
 
-    TC_LOG_INFO("test.playerbot", "✅ BUILD_PLAYERBOT guard effectiveness verified");
+    TC_LOG_INFO("test.playerbot", " BUILD_PLAYERBOT guard effectiveness verified");
 }
 
 /**
@@ -271,7 +271,7 @@ TEST_F(BotSessionIntegrationTest, MinimalCrashReproduction)
 
     }) << "Crash reproduction test should be safe due to guards";
 
-    TC_LOG_INFO("test.playerbot", "✅ Minimal crash reproduction test completed");
+    TC_LOG_INFO("test.playerbot", " Minimal crash reproduction test completed");
 }
 
 /**
@@ -293,7 +293,7 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
         std::atomic<int> totalCount{0};
 
         // Launch multiple threads calling Update simultaneously
-        for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
             threads.emplace_back([&botSession, &successCount, &totalCount]() {
                 class ThreadTestFilter : public PacketFilter {
                 public:
@@ -316,7 +316,7 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
         }
 
         // Wait for all threads to complete
-        for (auto& thread : threads) {
+    for (auto& thread : threads) {
             thread.join();
         }
 
@@ -329,7 +329,7 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
 
     }) << "Concurrent access should not cause crashes";
 
-    TC_LOG_INFO("test.playerbot", "✅ Thread safety validation completed");
+    TC_LOG_INFO("test.playerbot", " Thread safety validation completed");
 }
 
 /**
@@ -346,7 +346,7 @@ TEST_F(BotSessionIntegrationTest, MemoryCorruptionDetection)
         std::vector<std::shared_ptr<BotSession>> sessions;
 
         // Create multiple sessions rapidly
-        for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
             auto session = CreateTestBotSession(12345 + i);
             if (session) {
                 sessions.push_back(session);
@@ -375,7 +375,7 @@ TEST_F(BotSessionIntegrationTest, MemoryCorruptionDetection)
 
     }) << "Memory stress test should not cause corruption";
 
-    TC_LOG_INFO("test.playerbot", "✅ Memory corruption detection completed");
+    TC_LOG_INFO("test.playerbot", " Memory corruption detection completed");
 }
 
 /**
@@ -424,7 +424,7 @@ TEST_F(BotSessionIntegrationTest, TrinityCoreSystems)
 
     }) << "Packet system integration should be safe";
 
-    TC_LOG_INFO("test.playerbot", "✅ TrinityCore systems integration verified");
+    TC_LOG_INFO("test.playerbot", " TrinityCore systems integration verified");
 }
 
 /**
@@ -435,7 +435,7 @@ TEST_F(BotSessionIntegrationTest, TrinityCoreSystems)
  */
 void RunBotSessionIntegrationTests()
 {
-    TC_LOG_INFO("test.playerbot", "🧪 Starting BotSession Integration Tests");
+    TC_LOG_INFO("test.playerbot", " Starting BotSession Integration Tests");
     TC_LOG_INFO("test.playerbot", "Purpose: Identify root cause of ACCESS_VIOLATION crashes at Socket.h:230");
 
     ::testing::InitGoogleTest();
@@ -444,10 +444,10 @@ void RunBotSessionIntegrationTests()
     int result = RUN_ALL_TESTS();
 
     if (result == 0) {
-        TC_LOG_INFO("test.playerbot", "✅ All BotSession integration tests PASSED");
-        TC_LOG_INFO("test.playerbot", "✅ No ACCESS_VIOLATION crashes detected in test scenarios");
+        TC_LOG_INFO("test.playerbot", " All BotSession integration tests PASSED");
+        TC_LOG_INFO("test.playerbot", " No ACCESS_VIOLATION crashes detected in test scenarios");
     } else {
-        TC_LOG_ERROR("test.playerbot", "❌ BotSession integration tests FAILED");
-        TC_LOG_ERROR("test.playerbot", "❌ Root cause of ACCESS_VIOLATION crashes identified");
+        TC_LOG_ERROR("test.playerbot", " BotSession integration tests FAILED");
+        TC_LOG_ERROR("test.playerbot", " Root cause of ACCESS_VIOLATION crashes identified");
     }
 }

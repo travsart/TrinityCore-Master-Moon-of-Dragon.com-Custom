@@ -31,7 +31,7 @@ namespace Playerbot::StateMachine
 
 BotInitStateMachine::BotInitStateMachine(Player* bot)
     : BotStateMachine(bot, BotInitState::CREATED, TransitionPolicy::STRICT)
-    , m_startTime(std::chrono::steady_clock::now())
+    , m_startTime(::std::chrono::steady_clock::now())
 {
     TC_LOG_DEBUG("module.playerbot.statemachine",
         "BotInitStateMachine created for bot {}",
@@ -62,7 +62,7 @@ bool BotInitStateMachine::Start()
         return false;
     }
 
-    m_startTime = std::chrono::steady_clock::now();
+    m_startTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_INFO("module.playerbot.statemachine",
         "Starting initialization sequence for bot {}",
@@ -86,8 +86,8 @@ void BotInitStateMachine::Update(uint32 diff)
         return;
 
     // Check for overall timeout
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_startTime
     ).count();
 
@@ -102,7 +102,7 @@ void BotInitStateMachine::Update(uint32 diff)
     }
 
     // Check for per-state timeout
-    auto stateElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto stateElapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_stateEntryTime
     ).count();
 
@@ -149,7 +149,7 @@ void BotInitStateMachine::Update(uint32 diff)
             if (readyToAdvance)
             {
                 TransitionTo(BotInitState::READY, "Initialization complete");
-                m_readyTime = std::chrono::steady_clock::now();
+                m_readyTime = ::std::chrono::steady_clock::now();
             }
             break;
 
@@ -263,8 +263,8 @@ bool BotInitStateMachine::HasActivatedStrategies() const
 
 uint32 BotInitStateMachine::GetInitializationTime() const
 {
-    auto now = IsReady() ? m_readyTime : std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = IsReady() ? m_readyTime : ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         now - m_startTime
     ).count();
     return static_cast<uint32>(elapsed);
@@ -276,7 +276,7 @@ uint32 BotInitStateMachine::GetInitializationTime() const
 
 void BotInitStateMachine::OnEnter(BotInitState newState, BotInitState previousState)
 {
-    m_stateEntryTime = std::chrono::steady_clock::now();
+    m_stateEntryTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.statemachine",
         "Bot {} entering state {} from {}",
@@ -358,7 +358,7 @@ void BotInitStateMachine::OnTransitionFailed(
         ToString(from), ToString(to),
         ToString(result.result), result.reason);
 
-    m_lastErrorReason = std::string(result.reason);
+    m_lastErrorReason = ::std::string(result.reason);
     m_lastErrorTime = GameTime::GetGameTimeMS();
 }
 
@@ -453,7 +453,7 @@ bool BotInitStateMachine::HandleCheckingGroup()
             "Bot {} is already in group at login (leader: {})",
             bot->GetName(), m_groupLeaderGuid.ToString());
         // Additional validation
-        if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
+    if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
         {
             TC_LOG_DEBUG("module.playerbot.statemachine",
                 "Group leader {} is online",
@@ -506,7 +506,7 @@ bool BotInitStateMachine::HandleActivatingStrategies()
             ai->OnGroupJoined(group);
 
             // Verify follow strategy was activated if there's a leader
-            if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
+    if (Player* leader = ObjectAccessor::FindPlayer(m_groupLeaderGuid))
             {
                 if (leader != bot)
                 {

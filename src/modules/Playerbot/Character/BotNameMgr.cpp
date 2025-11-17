@@ -156,7 +156,7 @@ void BotNameMgr::ReleaseName(uint32 characterGuid)
         entry.usedByGuid = 0;
         
         // Add back to available names
-        if (entry.gender == 0)
+    if (entry.gender == 0)
             _availableMaleNames.insert(nameId);
         else if (entry.gender == 1)
             _availableFemaleNames.insert(nameId);
@@ -288,7 +288,7 @@ void BotNameMgr::LoadNamesFromDatabase()
         _nameToId[entry.name] = entry.nameId;
         
         // Add to available names (will be adjusted when loading used names)
-        if (entry.gender == 0)
+    if (entry.gender == 0)
             _availableMaleNames.insert(entry.nameId);
         else if (entry.gender == 1)
             _availableFemaleNames.insert(entry.nameId);
@@ -332,7 +332,7 @@ void BotNameMgr::LoadUsedNames()
         entry.usedByGuid = characterGuid;
         
         // Remove from available names
-        if (entry.gender == 0)
+    if (entry.gender == 0)
             _availableMaleNames.erase(nameId);
         else if (entry.gender == 1)
             _availableFemaleNames.erase(nameId);

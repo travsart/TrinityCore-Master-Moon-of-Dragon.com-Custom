@@ -37,7 +37,7 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     uint32 groupId = group->GetGUID().GetCounter();
     _groupStrategies[groupId] = strategy;
@@ -102,7 +102,7 @@ bool RoleAssignment::AssignRole(uint32 playerGuid, GroupRole role, Group* group)
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     Player* player = ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(playerGuid));
     if (!player)
@@ -135,7 +135,7 @@ bool RoleAssignment::SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* gr
     if (!group)
         return false;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     auto it1 = _playerProfiles.find(player1Guid);
     auto it2 = _playerProfiles.find(player2Guid);
@@ -168,7 +168,7 @@ PlayerRoleProfile RoleAssignment::AnalyzePlayerCapabilities(Player* player)
     if (!player)
         return PlayerRoleProfile(0, 0, 0, 0);
 
-    PlayerRoleProfile profile(player->GetGUID().GetCounter(), player->getClass(), 0, player->GetLevel());
+    PlayerRoleProfile profile(player->GetGUID().GetCounter(), player->GetClass(), 0, player->GetLevel());
 
     BuildPlayerProfile(profile, player);
     CalculateRoleCapabilities(profile, player);
@@ -178,9 +178,9 @@ PlayerRoleProfile RoleAssignment::AnalyzePlayerCapabilities(Player* player)
     return profile;
 }
 
-std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group* group)
+::std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group* group)
 {
-    std::vector<RoleScore> scores;
+    ::std::vector<RoleScore> scores;
 
     if (!player)
         return scores;
@@ -191,7 +191,7 @@ std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group
         GroupRole role = static_cast<GroupRole>(roleInt);
         RoleScore score(role);
 
-        score.effectiveness = CalculateClassRoleEffectiveness(player->getClass(), 0, role);
+        score.effectiveness = CalculateClassRoleEffectiveness(player->GetClass(), 0, role);
         score.gearScore = CalculateGearScore(player, role);
         score.experienceScore = CalculateExperienceScore(player->GetGUID().GetCounter(), role);
         score.synergy = CalculateSynergyScore(player, role, group);
@@ -202,7 +202,7 @@ std::vector<RoleScore> RoleAssignment::CalculateRoleScores(Player* player, Group
     }
 
     // Sort by total score (highest first)
-    std::sort(scores.begin(), scores.end(),
+    ::std::sort(scores.begin(), scores.end(),
               [](const RoleScore& a, const RoleScore& b) {
                   return a.totalScore > b.totalScore;
               });
@@ -215,7 +215,7 @@ GroupRole RoleAssignment::RecommendRole(Player* player, Group* group)
     if (!player)
         return GroupRole::NONE;
 
-    std::vector<RoleScore> scores = CalculateRoleScores(player, group);
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, group);
 
     if (!scores.empty())
         return scores[0].role;
@@ -230,7 +230,7 @@ GroupComposition RoleAssignment::AnalyzeGroupComposition(Group* group)
     if (!group)
         return composition;
 
-    std::lock_guard lock(_assignmentMutex);
+    ::std::lock_guard lock(_assignmentMutex);
 
     // Count assigned roles
     for (GroupReference const& itr : group->GetMembers())
@@ -278,9 +278,9 @@ bool RoleAssignment::IsCompositionViable(const GroupComposition& composition)
     return composition.compositionScore >= COMPOSITION_SCORE_THRESHOLD;
 }
 
-std::vector<GroupRole> RoleAssignment::GetMissingRoles(Group* group)
+::std::vector<GroupRole> RoleAssignment::GetMissingRoles(Group* group)
 {
-    std::vector<GroupRole> missingRoles;
+    ::std::vector<GroupRole> missingRoles;
 
     GroupComposition composition = AnalyzeGroupComposition(group);
 
@@ -525,7 +525,7 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
     if (!player)
         return;
 
-    profile.playerClass = player->getClass();
+    profile.playerClass = player->GetClass();
     profile.playerLevel = player->GetLevel();
     profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
@@ -535,8 +535,8 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
     profile.overallRating = 5.0f;
 
     // Initialize alternative roles
-    std::vector<RoleScore> scores = CalculateRoleScores(player, nullptr);
-    for (size_t i = 1; i < std::min(scores.size(), size_t(3)); ++i)
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, nullptr);
+    for (size_t i = 1; i < ::std::min(scores.size(), size_t(3)); ++i)
     {
         if (scores[i].totalScore >= MIN_ROLE_EFFECTIVENESS)
             profile.alternativeRoles.push_back(scores[i].role);
@@ -548,7 +548,7 @@ void RoleAssignment::CalculateRoleCapabilities(PlayerRoleProfile& profile, Playe
     if (!player)
         return;
 
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
     // Get player's active specialization
     uint8 playerSpec = 0;
     if (ChrSpecialization primarySpec = player->GetPrimarySpecialization())
@@ -645,7 +645,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
         float roleBonus = 0.0f;
 
         // Get item's primary stats
-        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
         {
             if (itemTemplate->ItemStat[i].ItemStatValue == 0)
                 continue;
@@ -657,7 +657,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
             {
                 case GroupRole::TANK:
                     // Tanks need Stamina, Armor, Avoidance
-                    if (statType == ITEM_MOD_STAMINA)
+    if (statType == ITEM_MOD_STAMINA)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
                         roleBonus += statValue * 0.3f;
@@ -669,7 +669,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::HEALER:
                     // Healers need Intellect, Spirit, Mana Regen
-                    if (statType == ITEM_MOD_INTELLECT)
+    if (statType == ITEM_MOD_INTELLECT)
                         roleBonus += statValue * 0.5f;
                     else if (statType == ITEM_MOD_SPIRIT || statType == ITEM_MOD_MANA_REGENERATION)
                         roleBonus += statValue * 0.3f;
@@ -679,7 +679,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::MELEE_DPS:
                     // Melee DPS need Strength/Agility, Crit, Haste
-                    if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
+    if (statType == ITEM_MOD_STRENGTH || statType == ITEM_MOD_AGILITY)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING)
                         roleBonus += statValue * 0.3f;
@@ -691,7 +691,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
                 case GroupRole::RANGED_DPS:
                     // Ranged DPS need Intellect/Agility, Crit, Mastery
-                    if (statType == ITEM_MOD_INTELLECT || statType == ITEM_MOD_AGILITY)
+    if (statType == ITEM_MOD_INTELLECT || statType == ITEM_MOD_AGILITY)
                         roleBonus += statValue * 0.4f;
                     else if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_MASTERY_RATING)
                         roleBonus += statValue * 0.3f;
@@ -714,9 +714,9 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
     // Normalize score to 0.0 - 1.0 range
     float averageItemLevel = totalItemLevel / itemCount;
-    float itemLevelScore = std::min(1.0f, averageItemLevel / 300.0f); // Normalize around ilvl 300
+    float itemLevelScore = ::std::min(1.0f, averageItemLevel / 300.0f); // Normalize around ilvl 300
 
-    float roleAppropriateness = std::min(1.0f, gearScore / (itemCount * 50.0f)); // Normalize based on stats
+    float roleAppropriateness = ::std::min(1.0f, gearScore / (itemCount * 50.0f)); // Normalize based on stats
 
     // Combined score (70% item level, 30% role-appropriate stats)
     float finalScore = (itemLevelScore * 0.7f) + (roleAppropriateness * 0.3f);
@@ -729,7 +729,7 @@ float RoleAssignment::CalculateGearScore(Player* player, GroupRole role)
 
 float RoleAssignment::CalculateExperienceScore(uint32 playerGuid, GroupRole role)
 {
-    std::lock_guard lock(_performanceMutex);
+    ::std::lock_guard lock(_performanceMutex);
 
     auto playerIt = _rolePerformance.find(playerGuid);
     if (playerIt == _rolePerformance.end())
@@ -748,12 +748,11 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
         return 0.5f;
 
     float synergyScore = 0.5f; // Base score
-    uint8 playerClass = player->getClass();
+    uint8 playerClass = player->GetClass();
 
     // Get group composition
-    std::unordered_map<uint8, uint32> classCounts; // class -> count
-    std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
-
+    ::std::unordered_map<uint8, uint32> classCounts; // class -> count
+    ::std::unordered_map<GroupRole, uint32> roleCounts; // role -> count
     for (GroupReference const& itr : group->GetMembers())
     {
         if (Player* member = itr.GetSource())
@@ -761,7 +760,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             if (member->GetGUID() == player->GetGUID())
                 continue; // Skip the player we're evaluating
 
-            uint8 memberClass = member->getClass();
+            uint8 memberClass = member->GetClass();
             classCounts[memberClass]++;
 
             // Determine member's role (simplified)
@@ -785,10 +784,10 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     {
         case CLASS_WARRIOR:
             // Warriors synergize with healers (more risk taking)
-            if (roleCounts[GroupRole::HEALER] > 0)
+    if (roleCounts[GroupRole::HEALER] > 0)
                 synergyScore += 0.1f;
             // Battle Shout benefits physical DPS
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.15f;
             break;
 
@@ -796,10 +795,10 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Paladins provide great utility and buffs
             synergyScore += 0.1f; // Always valuable
             // Blessings benefit all roles
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             // Auras benefit everyone
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
@@ -807,7 +806,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Priests provide Power Word: Fortitude (stamina buff)
             synergyScore += 0.15f;
             // Shadow priests benefit from having other casters
-            if (role == GroupRole::RANGED_DPS && roleCounts[GroupRole::RANGED_DPS] > 0)
+    if (role == GroupRole::RANGED_DPS && roleCounts[GroupRole::RANGED_DPS] > 0)
                 synergyScore += 0.2f;
             break;
 
@@ -815,7 +814,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Mages provide Arcane Intellect (intellect buff)
             synergyScore += 0.15f;
             // Benefits from having tank for aggro control
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             // Food/water utility always valuable
             synergyScore += 0.05f;
@@ -827,7 +826,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Summons provide utility
             synergyScore += 0.05f;
             // Benefits from having tank
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -835,7 +834,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Druids are extremely flexible and synergize with everything
             synergyScore += 0.15f;
             // Mark of the Wild benefits all
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             // Battle res is invaluable
             synergyScore += 0.1f;
@@ -847,16 +846,16 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Bloodlust/Heroism is extremely valuable
             synergyScore += 0.15f;
             // Benefits melee groups especially
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
         case CLASS_ROGUE:
             // Rogues benefit from having a tank
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.15f;
             // Tricks of the Trade benefits tanks
-            if (role == GroupRole::MELEE_DPS && roleCounts[GroupRole::TANK] > 0)
+    if (role == GroupRole::MELEE_DPS && roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -866,7 +865,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Aspect of the Pack helps with travel
             synergyScore += 0.05f;
             // Misdirection benefits tanks
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -876,7 +875,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Battle res
             synergyScore += 0.1f;
             // Horn of Winter benefits physical DPS
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             break;
 
@@ -884,13 +883,13 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Monks are versatile
             synergyScore += 0.1f;
             // Legacy of the White Tiger benefits all
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             break;
 
         case CLASS_DEMON_HUNTER:
             // Chaos Brand debuff benefits all damage dealers
-            if (roleCounts[GroupRole::MELEE_DPS] + roleCounts[GroupRole::RANGED_DPS] > 2)
+    if (roleCounts[GroupRole::MELEE_DPS] + roleCounts[GroupRole::RANGED_DPS] > 2)
                 synergyScore += 0.2f;
             break;
 
@@ -898,7 +897,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Evokers provide unique buffs
             synergyScore += 0.15f;
             // Blessing of the Bronze is valuable
-            if (group->GetMembersCount() >= 4)
+    if (group->GetMembersCount() >= 4)
                 synergyScore += 0.1f;
             break;
 
@@ -911,28 +910,28 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     {
         case GroupRole::TANK:
             // Tanks synergize with healers
-            if (roleCounts[GroupRole::HEALER] > 0)
+    if (roleCounts[GroupRole::HEALER] > 0)
                 synergyScore += 0.2f;
             // Multiple tanks have anti-synergy unless needed
-            if (roleCounts[GroupRole::TANK] >= 2)
+    if (roleCounts[GroupRole::TANK] >= 2)
                 synergyScore -= 0.3f;
             break;
 
         case GroupRole::HEALER:
             // Healers synergize with tanks
-            if (roleCounts[GroupRole::TANK] > 0)
+    if (roleCounts[GroupRole::TANK] > 0)
                 synergyScore += 0.2f;
             // Multiple healers can be redundant in 5-man
-            if (roleCounts[GroupRole::HEALER] >= 2 && group->GetMembersCount() < 10)
+    if (roleCounts[GroupRole::HEALER] >= 2 && group->GetMembersCount() < 10)
                 synergyScore -= 0.2f;
             break;
 
         case GroupRole::MELEE_DPS:
             // Melee DPS benefit from other melee (cleave synergy)
-            if (roleCounts[GroupRole::MELEE_DPS] > 1)
+    if (roleCounts[GroupRole::MELEE_DPS] > 1)
                 synergyScore += 0.1f;
             // Too many melee can be problematic
-            if (roleCounts[GroupRole::MELEE_DPS] >= 4)
+    if (roleCounts[GroupRole::MELEE_DPS] >= 4)
                 synergyScore -= 0.2f;
             break;
 
@@ -940,7 +939,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
             // Ranged DPS are safe and flexible
             synergyScore += 0.1f;
             // Balance with melee is good
-            if (roleCounts[GroupRole::MELEE_DPS] > 0 && roleCounts[GroupRole::RANGED_DPS] > 0)
+    if (roleCounts[GroupRole::MELEE_DPS] > 0 && roleCounts[GroupRole::RANGED_DPS] > 0)
                 synergyScore += 0.1f;
             break;
 
@@ -949,7 +948,7 @@ float RoleAssignment::CalculateSynergyScore(Player* player, GroupRole role, Grou
     }
 
     // Cap synergy score between 0.0 and 1.0
-    synergyScore = std::max(0.0f, std::min(1.0f, synergyScore));
+    synergyScore = ::std::max(0.0f, ::std::min(1.0f, synergyScore));
 
     TC_LOG_DEBUG("playerbot", "RoleAssignment: Synergy score for player {} (class {}) in role {}: {:.2f}",
                  player->GetName(), playerClass, static_cast<uint8>(role), synergyScore);
@@ -962,7 +961,7 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
     if (!player)
         return GroupRole::NONE;
 
-    std::vector<RoleScore> scores = CalculateRoleScores(player, group);
+    ::std::vector<RoleScore> scores = CalculateRoleScores(player, group);
 
     if (scores.empty())
         return GroupRole::NONE;
@@ -972,7 +971,7 @@ GroupRole RoleAssignment::DetermineOptimalRole(Player* player, Group* group, Rol
     {
         case RoleAssignmentStrategy::STRICT:
             // Only consider primary roles
-            for (const auto& score : scores)
+    for (const auto& score : scores)
             {
                 uint32 playerGuid = player->GetGUID().GetCounter();
                 auto profileIt = _playerProfiles.find(playerGuid);
@@ -1025,7 +1024,7 @@ float RoleAssignment::CalculateCompositionScore(const GroupComposition& composit
     else if (composition.totalMembers > 5)
         score -= 0.5f;
 
-    return std::max(0.0f, std::min(10.0f, score));
+    return ::std::max(0.0f, ::std::min(10.0f, score));
 }
 
 void RoleAssignment::ExecuteOptimalStrategy(Group* group)
@@ -1034,7 +1033,7 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
         return;
 
     // Get all members and their optimal roles
-    std::vector<std::pair<Player*, GroupRole>> assignments;
+    ::std::vector<::std::pair<Player*, GroupRole>> assignments;
 
     for (GroupReference const& itr : group->GetMembers())
     {
@@ -1046,7 +1045,7 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
     }
 
     // Sort by role priority (tank > healer > dps)
-    std::sort(assignments.begin(), assignments.end(),
+    ::std::sort(assignments.begin(), assignments.end(),
               [](const auto& a, const auto& b) {
                   return static_cast<int>(a.second) < static_cast<int>(b.second);
               });
@@ -1073,7 +1072,7 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
         return;
 
     // Analyze gear for each possible role
-    std::vector<GroupRole> roles = {
+    ::std::vector<GroupRole> roles = {
         GroupRole::TANK,
         GroupRole::HEALER,
         GroupRole::MELEE_DPS,
@@ -1115,7 +1114,7 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
         totalItemLevel += itemTemplate->ItemLevel;
 
         // Detect gear type based on primary stats
-        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
         {
             if (itemTemplate->ItemStat[i].ItemStatValue == 0)
                 continue;
@@ -1123,15 +1122,15 @@ void RoleAssignment::AnalyzePlayerGear(PlayerRoleProfile& profile, Player* playe
             uint32 statType = itemTemplate->ItemStat[i].ItemStatType;
 
             // Tank stats
-            if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
+    if (statType == ITEM_MOD_DODGE_RATING || statType == ITEM_MOD_PARRY_RATING)
                 hasTankGear = true;
 
             // Healer stats
-            if (statType == ITEM_MOD_SPIRIT && player->GetPowerType() == POWER_MANA)
+    if (statType == ITEM_MOD_SPIRIT && player->GetPowerType() == POWER_MANA)
                 hasHealerGear = true;
 
             // DPS stats
-            if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING ||
+    if (statType == ITEM_MOD_CRIT_RATING || statType == ITEM_MOD_HASTE_RATING ||
                 statType == ITEM_MOD_MASTERY_RATING)
                 hasDPSGear = true;
         }
@@ -1175,7 +1174,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
     if (!player)
         return;
 
-    std::lock_guard lock(_performanceMutex);
+    ::std::lock_guard lock(_performanceMutex);
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
@@ -1201,7 +1200,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
         uint32 failCount = performance.failedEncounters.load();
 
         // Base experience from encounter count (logarithmic growth)
-        float experienceBase = std::min(1.0f, std::log10(static_cast<float>(encounterCount) + 1.0f) / 2.0f);
+        float experienceBase = ::std::min(1.0f, ::std::log10(static_cast<float>(encounterCount) + 1.0f) / 2.0f);
 
         // Performance modifier (50% weight)
         float performanceMod = avgEffectiveness * 0.5f;
@@ -1216,7 +1215,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
 
         // Calculate final experience score
         float experienceScore = experienceBase + performanceMod + successMod + consistencyMod;
-        experienceScore = std::max(0.0f, std::min(1.0f, experienceScore)); // Clamp to [0, 1]
+        experienceScore = ::std::max(0.0f, ::std::min(1.0f, experienceScore)); // Clamp to [0, 1]
 
         // Update role score
         auto& roleScore = profile.roleScores[role];
@@ -1230,22 +1229,22 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
                      encounterCount, avgEffectiveness, successRate);
 
         // Update role capability based on experience
-        if (experienceScore >= 0.8f && avgEffectiveness >= 0.7f)
+    if (experienceScore >= 0.8f && avgEffectiveness >= 0.7f)
         {
             // Very experienced and effective - upgrade to PRIMARY if currently SECONDARY
-            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+    if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
                 profile.roleCapabilities[role] = RoleCapability::PRIMARY;
         }
         else if (experienceScore >= 0.5f && avgEffectiveness >= 0.5f)
         {
             // Moderately experienced - upgrade to SECONDARY if currently EMERGENCY
-            if (profile.roleCapabilities[role] == RoleCapability::EMERGENCY)
+    if (profile.roleCapabilities[role] == RoleCapability::EMERGENCY)
                 profile.roleCapabilities[role] = RoleCapability::SECONDARY;
         }
         else if (experienceScore < 0.2f && avgEffectiveness < 0.3f && encounterCount >= 5)
         {
             // Poor experience after many encounters - downgrade
-            if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
+    if (profile.roleCapabilities[role] == RoleCapability::SECONDARY)
                 profile.roleCapabilities[role] = RoleCapability::EMERGENCY;
         }
     }
@@ -1258,7 +1257,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
         const RoleScore& score = roleScorePair.second;
 
         // Add to alternatives if capable and experienced enough
-        if (role != profile.preferredRole &&
+    if (role != profile.preferredRole &&
             profile.roleCapabilities[role] != RoleCapability::INCAPABLE &&
             score.experienceScore >= 0.4f)
         {
@@ -1267,7 +1266,7 @@ void RoleAssignment::UpdateRoleExperience(PlayerRoleProfile& profile, Player* pl
     }
 
     // Sort alternative roles by experience score (descending)
-    std::sort(profile.alternativeRoles.begin(), profile.alternativeRoles.end(),
+    ::std::sort(profile.alternativeRoles.begin(), profile.alternativeRoles.end(),
               [&profile](GroupRole a, GroupRole b) {
                   return profile.roleScores[a].experienceScore > profile.roleScores[b].experienceScore;
               });
@@ -1320,7 +1319,7 @@ void RoleAssignment::CleanupInactiveProfiles()
         if (currentTime - it->second.lastRoleUpdate > CLEANUP_THRESHOLD)
         {
             // Check if player is still online
-            if (!ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(it->first)))
+    if (!ObjectAccessor::FindPlayer(ObjectGuid::Create<HighGuid::Player>(it->first)))
             {
                 it = _playerProfiles.erase(it);
                 continue;
@@ -1332,7 +1331,7 @@ void RoleAssignment::CleanupInactiveProfiles()
 
 void RoleAssignment::UpdateRoleStatistics()
 {
-    _globalStatistics.lastStatsUpdate = std::chrono::steady_clock::now();
+    _globalStatistics.lastStatsUpdate = ::std::chrono::steady_clock::now();
 }
 
 RoleAssignment::RoleStatistics RoleAssignment::GetGlobalRoleStatistics()

@@ -29,29 +29,40 @@ namespace Playerbot
 {
     class BotScheduler;
     class BotSpawner;
-}
 
-struct LifecycleEventInfo
-{
-    enum Type
+    // LifecycleEventInfo is defined in IBotLifecycleMgr.h
+
+    // Performance monitoring metrics (internal, with atomics)
+    struct LifecyclePerformanceMetrics
     {
-        SCHEDULER_LOGIN,
-        SCHEDULER_LOGOUT,
-        SPAWNER_SUCCESS,
-        SPAWNER_FAILURE,
-        POPULATION_UPDATE,
-        SYSTEM_SHUTDOWN,
-        MAINTENANCE_REQUIRED
+        std::atomic<uint32> totalBotsManaged{0};
+        std::atomic<uint32> activeBots{0};
+        std::atomic<uint32> scheduledBots{0};
+        std::atomic<uint32> eventsProcessedPerSecond{0};
+        std::atomic<uint32> averageEventProcessingTimeMs{0};
+        std::atomic<uint32> failedSpawnsLastHour{0};
+        std::atomic<float> systemCpuUsage{0.0f};
+        std::atomic<uint64> memoryUsageMB{0};
+
+        std::chrono::system_clock::time_point lastUpdate;
+        uint32 eventCountThisSecond = 0;
+        uint32 totalProcessingTimeThisSecond = 0;
     };
 
-    Type eventType;
-    ObjectGuid botGuid;
-    uint32 accountId;
-    std::string data;
-    std::chrono::system_clock::time_point timestamp;
-    uint32 processingTimeMs = 0;
-    std::string correlationId;
-};
+    // Lifecycle statistics
+    struct LifecycleStatistics
+    {
+        uint32 totalLifecycleEvents = 0;
+        uint32 successfulSpawns = 0;
+        uint32 failedSpawns = 0;
+        uint32 scheduledLogins = 0;
+        uint32 scheduledLogouts = 0;
+        uint32 populationUpdates = 0;
+        uint32 maintenanceRuns = 0;
+        float averageResponseTimeMs = 0.0f;
+        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point lastUpdate;
+    };
 
 class TC_GAME_API BotLifecycleMgr final : public IBotLifecycleMgr
 {
@@ -81,22 +92,6 @@ public:
     void HandlePopulationPressure() override;
 
     // Performance monitoring
-    struct PerformanceMetrics
-    {
-        std::atomic<uint32> totalBotsManaged{0};
-        std::atomic<uint32> activeBots{0};
-        std::atomic<uint32> scheduledBots{0};
-        std::atomic<uint32> eventsProcessedPerSecond{0};
-        std::atomic<uint32> averageEventProcessingTimeMs{0};
-        std::atomic<uint32> failedSpawnsLastHour{0};
-        std::atomic<float> systemCpuUsage{0.0f};
-        std::atomic<uint64> memoryUsageMB{0};
-
-        std::chrono::system_clock::time_point lastUpdate;
-        uint32 eventCountThisSecond = 0;
-        uint32 totalProcessingTimeThisSecond = 0;
-    };
-
     PerformanceMetrics const& GetPerformanceMetrics() const override { return _metrics; }
     void LogPerformanceReport() override;
 
@@ -116,26 +111,12 @@ public:
     void EmergencyShutdown() override;
 
     // Statistics and reporting
-    struct LifecycleStatistics
-    {
-        uint32 totalLifecycleEvents = 0;
-        uint32 successfulSpawns = 0;
-        uint32 failedSpawns = 0;
-        uint32 scheduledLogins = 0;
-        uint32 scheduledLogouts = 0;
-        uint32 populationUpdates = 0;
-        uint32 maintenanceRuns = 0;
-        float averageResponseTimeMs = 0.0f;
-        std::chrono::system_clock::time_point startTime;
-        std::chrono::system_clock::time_point lastUpdate;
-    };
-
     LifecycleStatistics GetStatistics() const override { return _statistics; }
     void ResetStatistics() override;
 
     // Event subscription system
     using EventHandler = std::function<void(LifecycleEventInfo const&)>;
-    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler) override;
+    uint32 RegisterEventHandler(LifecycleEventInfo::Type eventType, EventHandler handler);
     void UnregisterEventHandler(uint32 handlerId) override;
 
 private:
@@ -148,7 +129,7 @@ private:
 
     // Event processing (TBB removed - using std:: equivalents)
     std::queue<LifecycleEventInfo> _eventQueue;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _eventQueueMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _eventQueueMutex;
 
     // Thread management
     std::unique_ptr<std::thread> _workerThread;
@@ -156,7 +137,8 @@ private:
     std::atomic<bool> _enabled{true};
 
     // Performance and configuration
-    mutable PerformanceMetrics _metrics;
+    mutable LifecyclePerformanceMetrics _metricsInternal; // Internal atomic version
+    mutable IBotLifecycleMgr::PerformanceMetrics _metrics; // Interface version
     mutable LifecycleStatistics _statistics;
 
     uint32 _updateIntervalMs = 1000; // 1 second default
@@ -173,7 +155,7 @@ private:
 
     std::vector<EventSubscription> _eventHandlers;
     std::atomic<uint32> _nextHandlerId{1};
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _handlersMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _handlersMutex;
 
     // Internal processing
     void WorkerThreadProc();
@@ -212,8 +194,10 @@ private:
     // Correlation tracking
     std::string GenerateCorrelationId();
     std::unordered_map<std::string, std::vector<LifecycleEventInfo>> _correlatedEvents;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _correlationMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _correlationMutex;
 };
+
+} // namespace Playerbot
 
 // Lifecycle event logging macros
 #define LIFECYCLE_LOG_INFO(message, ...) \
@@ -227,3 +211,6 @@ private:
 
 #define LIFECYCLE_LOG_DEBUG(message, ...) \
     TC_LOG_DEBUG("playerbots.lifecycle", "[BotLifecycleMgr] " message, ##__VA_ARGS__)
+
+#define LIFECYCLE_LOG_TRACE(message, ...) \
+    TC_LOG_TRACE("playerbots.lifecycle", "[BotLifecycleMgr] " message, ##__VA_ARGS__)

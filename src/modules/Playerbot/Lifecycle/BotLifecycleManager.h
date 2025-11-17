@@ -66,8 +66,8 @@ struct BotActivity
 
     Type type = NONE;
     uint32 targetId = 0;
-    std::string description;
-    std::chrono::steady_clock::time_point startTime;
+    ::std::string description;
+    ::std::chrono::steady_clock::time_point startTime;
     uint32 durationMs = 0;
 };
 
@@ -99,8 +99,8 @@ struct BotPerformanceMetrics
     uint64 bytesSent = 0;            // Bytes sent
 
     // Time metrics
-    std::chrono::steady_clock::time_point loginTime;
-    std::chrono::steady_clock::time_point lastActivityTime;
+    ::std::chrono::steady_clock::time_point loginTime;
+    ::std::chrono::steady_clock::time_point lastActivityTime;
     uint64 totalActiveTime = 0;      // Total active time in seconds
     uint64 totalIdleTime = 0;        // Total idle time in seconds
 };
@@ -111,7 +111,7 @@ struct BotPerformanceMetrics
 class TC_GAME_API BotLifecycle
 {
 public:
-    BotLifecycle(ObjectGuid botGuid, std::shared_ptr<BotSession> session);
+    BotLifecycle(ObjectGuid botGuid, ::std::shared_ptr<BotSession> session);
     ~BotLifecycle();
 
     // === Lifecycle Management ===
@@ -224,15 +224,15 @@ private:
 private:
     // Core identifiers
     ObjectGuid _botGuid;
-    std::shared_ptr<BotSession> _session;
+    ::std::shared_ptr<BotSession> _session;
 
     // State management
-    std::atomic<BotLifecycleState> _state;
-    std::chrono::steady_clock::time_point _stateChangeTime;
+    ::std::atomic<BotLifecycleState> _state;
+    ::std::chrono::steady_clock::time_point _stateChangeTime;
 
     // Activity tracking
     BotActivity _currentActivity;
-    std::queue<BotActivity> _activityQueue;
+    ::std::queue<BotActivity> _activityQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _activityMutex;
 
     // Performance metrics
@@ -245,7 +245,7 @@ private:
     static constexpr uint32 IDLE_ACTION_INTERVAL = 30000; // 30 seconds
 
     // Cleanup flag
-    std::atomic<bool> _pendingCleanup{false};
+    ::std::atomic<bool> _pendingCleanup{false};
 };
 
 /**
@@ -267,7 +267,7 @@ public:
      * @param session The bot's session
      * @return Shared pointer to the lifecycle controller
      */
-    std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, std::shared_ptr<BotSession> session) override;
+    ::std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, ::std::shared_ptr<BotSession> session) override;
 
     /**
      * Remove a bot lifecycle
@@ -280,12 +280,12 @@ public:
      * @param botGuid The bot's GUID
      * @return Shared pointer to lifecycle, nullptr if not found
      */
-    std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const override;
+    ::std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const override;
 
     /**
      * Get all active bot lifecycles
      */
-    std::vector<std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const override;
+    ::std::vector<::std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const override;
 
     // === Global Updates ===
 
@@ -352,7 +352,7 @@ private:
     ~BotLifecycleManager();
 
     // Bot storage
-    std::unordered_map<ObjectGuid, std::shared_ptr<BotLifecycle>> _botLifecycles;
+    ::std::unordered_map<ObjectGuid, ::std::shared_ptr<BotLifecycle>> _botLifecycles;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _lifecycleMutex;
 
     // Configuration
@@ -361,11 +361,11 @@ private:
 
     // Statistics tracking
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _statsMutex;
-    std::chrono::steady_clock::time_point _lastStatsUpdate;
-    static constexpr auto STATS_UPDATE_INTERVAL = std::chrono::seconds(1);
+    ::std::chrono::steady_clock::time_point _lastStatsUpdate;
+    static constexpr auto STATS_UPDATE_INTERVAL = ::std::chrono::seconds(1);
 
     // Event handlers
-    std::vector<LifecycleEventHandler> _eventHandlers;
+    ::std::vector<LifecycleEventHandler> _eventHandlers;
     Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _eventMutex;
 
     // Broadcast state change event

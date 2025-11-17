@@ -48,15 +48,15 @@ enum class TransitionPolicy : uint8_t {
 struct StateTransitionRule {
     BotInitState fromState;
     BotInitState toState;
-    std::string_view description;
+    ::std::string_view description;
     Priority priority;
 
     // Precondition function - returns true if transition is allowed
     // Takes BotStateMachine* for context (bot, group, etc.)
-    std::function<bool(const BotStateMachine*)> precondition;
+    ::std::function<bool(const BotStateMachine*)> precondition;
 
     // Optional: Event that should trigger this transition
-    std::optional<EventType> triggerEvent;
+    ::std::optional<EventType> triggerEvent;
 
     // Whether this transition can be forced (bypassing preconditions)
     bool allowForce;
@@ -71,7 +71,7 @@ struct TransitionEvent {
     BotInitState toState;
     EventType triggerEvent;
     uint64_t timestamp;      // GameTime::GetGameTimeMS()
-    std::string_view reason; // Human-readable reason
+    ::std::string_view reason; // Human-readable reason
     bool wasForced;          // True if transition was forced
 
     // Performance tracking
@@ -85,7 +85,7 @@ struct TransitionEvent {
  */
 struct TransitionValidation {
     StateTransitionResult result;
-    std::string failureReason;
+    ::std::string failureReason;
     const StateTransitionRule* rule;
     bool preconditionPassed;
 };
@@ -102,13 +102,13 @@ struct TransitionValidation {
  *      ↓
  *   LOADING_CHARACTER
  *      ↓
- *   IN_WORLD  ←────────────┐
- *      ↓                    │
- *   CHECKING_GROUP         │ (retry on failure)
- *      ↓                    │
- *   ACTIVATING_STRATEGIES  │
- *      ↓                    │
- *   READY ──────────────────┘
+ *   IN_WORLD  ←
+ *      ↓                    
+ *   CHECKING_GROUP          (retry on failure)
+ *      ↓                    
+ *   ACTIVATING_STRATEGIES  
+ *      ↓                    
+ *   READY 
  *      ↓
  *   (any state can go to FAILED on error)
  *
@@ -123,7 +123,7 @@ struct TransitionValidation {
  *   }
  * @endcode
  */
-constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
+constexpr ::std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
     // Transition 1: CREATED → LOADING_CHARACTER
     {
         BotInitState::CREATED,
@@ -161,7 +161,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
                    sm->GetBot()->IsInWorld() &&
                    sm->GetBot()->IsAlive();
         },
-        std::nullopt, // No specific event
+        ::std::nullopt, // No specific event
         false
     },
 
@@ -175,7 +175,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Always allowed after group check
             return true;
         },
-        std::nullopt,
+        ::std::nullopt,
         false
     },
 
@@ -190,7 +190,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             return sm && sm->GetBot() && sm->GetBot()->GetBotAI() &&
                    sm->GetBot()->GetBotAI()->IsInitialized();
         },
-        std::nullopt,
+        ::std::nullopt,
         false
     },
 
@@ -272,7 +272,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Limit retry count
             return sm && sm->GetRetryCount() < 3;
         },
-        std::nullopt,
+        ::std::nullopt,
         true // Can force retry
     },
 
@@ -288,7 +288,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Only allow if retry count exceeded
             return sm && sm->GetRetryCount() >= 3;
         },
-        std::nullopt,
+        ::std::nullopt,
         true // Can force reset
     },
 
@@ -316,7 +316,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Allow retry if timeout exceeded
             return sm && sm->GetTimeInState() > 5000; // 5 seconds
         },
-        std::nullopt,
+        ::std::nullopt,
         false
     },
 
@@ -330,7 +330,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Allow if strategy activation failed
             return sm && !sm->GetBot()->GetBotAI()->IsInitialized();
         },
-        std::nullopt,
+        ::std::nullopt,
         false
     },
 
@@ -374,7 +374,7 @@ constexpr std::array<StateTransitionRule, 20> INIT_STATE_TRANSITIONS = {{
             // Timeout after 10 seconds
             return sm && sm->GetTimeInState() > 10000;
         },
-        std::nullopt,
+        ::std::nullopt,
         false
     },
 
@@ -427,7 +427,7 @@ public:
      * @param from Current state
      * @return Vector of possible target states
      */
-    static std::vector<BotInitState> GetValidTransitions(BotInitState from);
+    static ::std::vector<BotInitState> GetValidTransitions(BotInitState from);
 
     /**
      * @brief Check if a transition can be forced
@@ -444,7 +444,7 @@ public:
      * @param to Target state
      * @return Detailed error message
      */
-    static std::string GetFailureReason(
+    static ::std::string GetFailureReason(
         StateTransitionResult result,
         BotInitState from,
         BotInitState to

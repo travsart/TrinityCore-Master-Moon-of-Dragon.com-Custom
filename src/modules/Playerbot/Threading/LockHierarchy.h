@@ -160,7 +160,7 @@ public:
         if (stack.empty())
             return 0;
 
-        return *std::max_element(stack.begin(), stack.end());
+        return *::std::max_element(stack.begin(), stack.end());
     }
 
     /**
@@ -186,9 +186,9 @@ private:
      * @brief Get thread-local lock stack
      * @return Reference to thread's lock stack
      */
-    static std::vector<uint32>& GetLockStack()
+    static ::std::vector<uint32>& GetLockStack()
     {
-        thread_local std::vector<uint32> lockStack;
+        thread_local ::std::vector<uint32> lockStack;
         return lockStack;
     }
 };
@@ -254,7 +254,7 @@ public:
 #endif
 
             // Throw exception to prevent deadlock
-            throw std::runtime_error("Lock ordering violation detected");
+            throw ::std::runtime_error("Lock ordering violation detected");
         }
 #endif
 
@@ -301,7 +301,7 @@ public:
     }
 
 private:
-    std::mutex _mutex;
+    ::std::mutex _mutex;
 };
 
 /**
@@ -322,14 +322,14 @@ class MultiLockGuard
 {
 public:
     explicit MultiLockGuard(Mutexes&... mutexes)
-        : _mutexes(std::tie(mutexes...))
+        : _mutexes(::std::tie(mutexes...))
     {
-        LockAll(std::index_sequence_for<Mutexes...>{});
+        LockAll(::std::index_sequence_for<Mutexes...>{});
     }
 
     ~MultiLockGuard()
     {
-        UnlockAll(std::index_sequence_for<Mutexes...>{});
+        UnlockAll(::std::index_sequence_for<Mutexes...>{});
     }
 
     MultiLockGuard(MultiLockGuard const&) = delete;
@@ -337,20 +337,20 @@ public:
 
 private:
     template<size_t... Is>
-    void LockAll(std::index_sequence<Is...>)
+    void LockAll(::std::index_sequence<Is...>)
     {
         // Lock in parameter order (should already be in correct order)
-        (..., std::get<Is>(_mutexes).lock());
+        (..., ::std::get<Is>(_mutexes).lock());
     }
 
     template<size_t... Is>
-    void UnlockAll(std::index_sequence<Is...>)
+    void UnlockAll(::std::index_sequence<Is...>)
     {
         // Unlock in reverse order
-        (..., std::get<sizeof...(Is) - 1 - Is>(_mutexes).unlock());
+        (..., ::std::get<sizeof...(Is) - 1 - Is>(_mutexes).unlock());
     }
 
-    std::tuple<Mutexes&...> _mutexes;
+    ::std::tuple<Mutexes&...> _mutexes;
 };
 
 /**
@@ -392,7 +392,7 @@ public:
             __builtin_trap();
 #endif
 
-            throw std::runtime_error("Shared lock ordering violation detected");
+            throw ::std::runtime_error("Shared lock ordering violation detected");
         }
 #endif
 
@@ -437,7 +437,7 @@ public:
             __builtin_trap();
 #endif
 
-            throw std::runtime_error("Shared lock ordering violation detected");
+            throw ::std::runtime_error("Shared lock ordering violation detected");
         }
 #endif
 
@@ -467,7 +467,7 @@ public:
     }
 
 private:
-    std::shared_mutex _mutex;
+    ::std::shared_mutex _mutex;
 };
 
 /**
@@ -509,7 +509,7 @@ public:
                 __builtin_trap();
 #endif
 
-                throw std::runtime_error("Recursive lock ordering violation detected");
+                throw ::std::runtime_error("Recursive lock ordering violation detected");
             }
         }
 #endif
@@ -517,7 +517,7 @@ public:
         _mutex.lock();
 
         // Only track first acquisition
-        if (_lockCount.fetch_add(1, std::memory_order_relaxed) == 0)
+        if (_lockCount.fetch_add(1, ::std::memory_order_relaxed) == 0)
         {
             ThreadLocalLockTracker::PushLock(static_cast<uint32>(Order));
         }
@@ -526,7 +526,7 @@ public:
     void unlock()
     {
         // Only untrack final release
-        if (_lockCount.fetch_sub(1, std::memory_order_relaxed) == 1)
+        if (_lockCount.fetch_sub(1, ::std::memory_order_relaxed) == 1)
         {
             ThreadLocalLockTracker::PopLock(static_cast<uint32>(Order));
         }
@@ -538,7 +538,7 @@ public:
     {
         if (_mutex.try_lock())
         {
-            if (_lockCount.fetch_add(1, std::memory_order_relaxed) == 0)
+            if (_lockCount.fetch_add(1, ::std::memory_order_relaxed) == 0)
             {
                 ThreadLocalLockTracker::PushLock(static_cast<uint32>(Order));
             }
@@ -553,8 +553,8 @@ public:
     }
 
 private:
-    std::recursive_mutex _mutex;
-    std::atomic<uint32> _lockCount{0};
+    ::std::recursive_mutex _mutex;
+    ::std::atomic<uint32> _lockCount{0};
 };
 
 } // namespace Playerbot

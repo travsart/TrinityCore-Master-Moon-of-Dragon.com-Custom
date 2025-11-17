@@ -112,9 +112,9 @@ void CombatTestFramework::Update(uint32 diff)
     }
 }
 
-bool CombatTestFramework::LoadScenario(const std::string& scenarioFile)
+bool CombatTestFramework::LoadScenario(const ::std::string& scenarioFile)
 {
-    std::ifstream file(scenarioFile);
+    ::std::ifstream file(scenarioFile);
     if (!file.is_open())
     {
         TC_LOG_ERROR("playerbot", "CombatTestFramework: Failed to open scenario file: {}", scenarioFile);
@@ -123,19 +123,19 @@ bool CombatTestFramework::LoadScenario(const std::string& scenarioFile)
 
     // Simple JSON-like parsing for scenario files
     // In a real implementation, you'd use a proper JSON parser
-    std::string line;
+    ::std::string line;
     TestScenario scenario;
 
-    while (std::getline(file, line))
+    while (::std::getline(file, line))
     {
         // Parse basic scenario properties
-        if (line.find("\"name\":") != std::string::npos)
+    if (line.find("\"name\":") != ::std::string::npos)
         {
             size_t start = line.find("\"", line.find(":") + 1) + 1;
             size_t end = line.find("\"", start);
             scenario.name = line.substr(start, end - start);
         }
-        else if (line.find("\"description\":") != std::string::npos)
+        else if (line.find("\"description\":") != ::std::string::npos)
         {
             size_t start = line.find("\"", line.find(":") + 1) + 1;
             size_t end = line.find("\"", start);
@@ -168,9 +168,9 @@ bool CombatTestFramework::CreateScenario(const TestScenario& scenario)
     return true;
 }
 
-std::vector<std::string> CombatTestFramework::GetAvailableScenarios() const
+::std::vector<::std::string> CombatTestFramework::GetAvailableScenarios() const
 {
-    std::vector<std::string> scenarioNames;
+    ::std::vector<::std::string> scenarioNames;
     scenarioNames.reserve(_scenarios.size());
 
     for (const auto& [name, scenario] : _scenarios)
@@ -179,15 +179,15 @@ std::vector<std::string> CombatTestFramework::GetAvailableScenarios() const
     return scenarioNames;
 }
 
-TestScenario* CombatTestFramework::GetScenario(const std::string& name)
+TestScenario* CombatTestFramework::GetScenario(const ::std::string& name)
 {
     auto it = _scenarios.find(name);
     return it != _scenarios.end() ? &it->second : nullptr;
 }
 
-bool CombatTestFramework::SaveScenario(const TestScenario& scenario, const std::string& filename)
+bool CombatTestFramework::SaveScenario(const TestScenario& scenario, const ::std::string& filename)
 {
-    std::ofstream file(filename);
+    ::std::ofstream file(filename);
     if (!file.is_open())
     {
         TC_LOG_ERROR("playerbot", "CombatTestFramework: Failed to create scenario file: {}", filename);
@@ -214,7 +214,7 @@ bool CombatTestFramework::SaveScenario(const TestScenario& scenario, const std::
     return true;
 }
 
-TestResult CombatTestFramework::ExecuteScenario(const std::string& scenarioName)
+TestResult CombatTestFramework::ExecuteScenario(const ::std::string& scenarioName)
 {
     auto it = _scenarios.find(scenarioName);
     if (it == _scenarios.end())
@@ -233,7 +233,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
 {
     TestResult result;
     result.scenarioName = scenario.name;
-    result.startTime = std::chrono::steady_clock::now();
+    result.startTime = ::std::chrono::steady_clock::now();
 
     LogTestEvent("Starting scenario: " + scenario.name);
 
@@ -241,7 +241,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
     StopCurrentScenario();
 
     // Create new test context
-    _currentContext = std::make_unique<TestContext>();
+    _currentContext = ::std::make_unique<TestContext>();
     _currentContext->scenario = scenario;
 
     // Initialize the scenario
@@ -249,9 +249,9 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
     {
         result.success = false;
         result.failures.push_back("Failed to initialize scenario");
-        result.endTime = std::chrono::steady_clock::now();
+        result.endTime = ::std::chrono::steady_clock::now();
         result.executionTimeMs = static_cast<uint32>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(result.endTime - result.startTime).count());
+            ::std::chrono::duration_cast<::std::chrono::milliseconds>(result.endTime - result.startTime).count());
         return result;
     }
 
@@ -273,7 +273,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
             _currentContext->currentTimeMs += updateInterval;
 
             // Check success criteria
-            if (CheckSuccessCriteria(scenario, *_currentContext))
+    if (CheckSuccessCriteria(scenario, *_currentContext))
             {
                 LogTestEvent("Success criteria met early");
                 break;
@@ -281,19 +281,19 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
         }
 
         // In a real implementation, this would be handled by the server update loop
-        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(updateInterval));
     }
 
     // Finalize the scenario
     FinalizeScenario(*_currentContext, result);
 
-    result.endTime = std::chrono::steady_clock::now();
+    result.endTime = ::std::chrono::steady_clock::now();
     result.executionTimeMs = static_cast<uint32>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(result.endTime - result.startTime).count());
+        ::std::chrono::duration_cast<::std::chrono::milliseconds>(result.endTime - result.startTime).count());
 
     // Store in history
     {
-        std::lock_guard lock(_resultMutex);
+        ::std::lock_guard lock(_resultMutex);
         _scenarioHistory[scenario.name].push_back(result);
         if (_scenarioHistory[scenario.name].size() > MAX_HISTORY_ENTRIES)
             _scenarioHistory[scenario.name].erase(_scenarioHistory[scenario.name].begin());
@@ -304,7 +304,7 @@ TestResult CombatTestFramework::ExecuteScenario(const TestScenario& scenario)
     return result;
 }
 
-bool CombatTestFramework::StartScenario(const std::string& scenarioName)
+bool CombatTestFramework::StartScenario(const ::std::string& scenarioName)
 {
     auto it = _scenarios.find(scenarioName);
     if (it == _scenarios.end())
@@ -317,7 +317,7 @@ bool CombatTestFramework::StartScenario(const std::string& scenarioName)
     StopCurrentScenario();
 
     // Create new test context
-    _currentContext = std::make_unique<TestContext>();
+    _currentContext = ::std::make_unique<TestContext>();
     _currentContext->scenario = it->second;
 
     // Initialize the scenario
@@ -392,7 +392,7 @@ bool CombatTestFramework::RemoveParticipant(ObjectGuid guid)
         return false;
 
     auto& participants = _currentContext->scenario.participants;
-    auto it = std::find_if(participants.begin(), participants.end(),
+    auto it = ::std::find_if(participants.begin(), participants.end(),
         [guid](const TestParticipant& p) { return p.guid == guid; });
 
     if (it != participants.end())
@@ -412,15 +412,15 @@ TestParticipant* CombatTestFramework::GetParticipant(ObjectGuid guid)
         return nullptr;
 
     auto& participants = _currentContext->scenario.participants;
-    auto it = std::find_if(participants.begin(), participants.end(),
+    auto it = ::std::find_if(participants.begin(), participants.end(),
         [guid](const TestParticipant& p) { return p.guid == guid; });
 
     return it != participants.end() ? &(*it) : nullptr;
 }
 
-std::vector<TestParticipant*> CombatTestFramework::GetParticipantsByRole(TestRole role)
+::std::vector<TestParticipant*> CombatTestFramework::GetParticipantsByRole(TestRole role)
 {
-    std::vector<TestParticipant*> result;
+    ::std::vector<TestParticipant*> result;
     if (!_currentContext)
         return result;
 
@@ -453,7 +453,7 @@ bool CombatTestFramework::SetupTestEnvironment(TestEnvironment environment, cons
     if (!CreateTestArea(environment, center, radius))
         return false;
 
-    LogTestEvent("Setup test environment: " + std::to_string(static_cast<uint32>(environment)));
+    LogTestEvent("Setup test environment: " + ::std::to_string(static_cast<uint32>(environment)));
     return true;
 }
 
@@ -473,7 +473,7 @@ bool CombatTestFramework::RemoveObstacle(ObjectGuid guid)
         return false;
 
     auto& obstacles = _currentContext->scenario.obstacles;
-    auto it = std::find_if(obstacles.begin(), obstacles.end(),
+    auto it = ::std::find_if(obstacles.begin(), obstacles.end(),
         [guid](const TestObstacle& o) { return o.guid == guid; });
 
     if (it != obstacles.end())
@@ -495,7 +495,7 @@ void CombatTestFramework::ClearObstacles()
     LogTestEvent("Cleared all obstacles");
 }
 
-bool CombatTestFramework::SpawnTestCreatures(const std::vector<TestParticipant>& enemies)
+bool CombatTestFramework::SpawnTestCreatures(const ::std::vector<TestParticipant>& enemies)
 {
     if (!_currentContext)
         return false;
@@ -509,11 +509,11 @@ bool CombatTestFramework::SpawnTestCreatures(const std::vector<TestParticipant>&
         }
     }
 
-    LogTestEvent("Spawned " + std::to_string(enemies.size()) + " test creatures");
+    LogTestEvent("Spawned " + ::std::to_string(enemies.size()) + " test creatures");
     return true;
 }
 
-void CombatTestFramework::RegisterCombatSystem(const std::string& name, void* system)
+void CombatTestFramework::RegisterCombatSystem(const ::std::string& name, void* system)
 {
     _registeredSystems[name] = system;
 
@@ -526,19 +526,19 @@ void CombatTestFramework::RegisterCombatSystem(const std::string& name, void* sy
     LogTestEvent("Registered combat system: " + name);
 }
 
-void CombatTestFramework::UnregisterCombatSystem(const std::string& name)
+void CombatTestFramework::UnregisterCombatSystem(const ::std::string& name)
 {
     _registeredSystems.erase(name);
     _globalMetrics.erase(name);
     LogTestEvent("Unregistered combat system: " + name);
 }
 
-bool CombatTestFramework::IsCombatSystemRegistered(const std::string& name) const
+bool CombatTestFramework::IsCombatSystemRegistered(const ::std::string& name) const
 {
     return _registeredSystems.find(name) != _registeredSystems.end();
 }
 
-CombatSystemMetrics* CombatTestFramework::GetSystemMetrics(const std::string& name)
+CombatSystemMetrics* CombatTestFramework::GetSystemMetrics(const ::std::string& name)
 {
     auto it = _globalMetrics.find(name);
     return it != _globalMetrics.end() ? &it->second : nullptr;
@@ -570,7 +570,7 @@ void CombatTestFramework::ResetMetrics()
     LogTestEvent("Reset all metrics");
 }
 
-std::unordered_map<std::string, CombatSystemMetrics> CombatTestFramework::GetAllMetrics() const
+::std::unordered_map<::std::string, CombatSystemMetrics> CombatTestFramework::GetAllMetrics() const
 {
     return _globalMetrics;
 }
@@ -588,7 +588,7 @@ float CombatTestFramework::CalculateOverallPerformanceScore() const
         float systemScore = metrics.GetSuccessRate() * 100.0f;
 
         // Penalize for high execution times
-        if (metrics.averageExecutionTime.count() > 1000) // > 1ms
+    if (metrics.averageExecutionTime.count() > 1000) // > 1ms
             systemScore *= 0.8f;
 
         totalScore += systemScore;
@@ -615,22 +615,22 @@ bool CombatTestFramework::ValidateScenario(const TestScenario& scenario) const
     return true;
 }
 
-std::vector<std::string> CombatTestFramework::GetScenarioValidationErrors(const TestScenario& scenario) const
+::std::vector<::std::string> CombatTestFramework::GetScenarioValidationErrors(const TestScenario& scenario) const
 {
-    std::vector<std::string> errors;
+    ::std::vector<::std::string> errors;
 
     if (scenario.name.empty())
         errors.push_back("Scenario name cannot be empty");
 
     if (scenario.participants.size() > scenario.maxParticipants)
-        errors.push_back("Too many participants (" + std::to_string(scenario.participants.size()) +
-                        " > " + std::to_string(scenario.maxParticipants) + ")");
+        errors.push_back("Too many participants (" + ::std::to_string(scenario.participants.size()) +
+                        " > " + ::std::to_string(scenario.maxParticipants) + ")");
 
     if (scenario.arenaRadius < MIN_ARENA_RADIUS)
-        errors.push_back("Arena radius too small (minimum: " + std::to_string(MIN_ARENA_RADIUS) + ")");
+        errors.push_back("Arena radius too small (minimum: " + ::std::to_string(MIN_ARENA_RADIUS) + ")");
 
     if (scenario.arenaRadius > MAX_ARENA_RADIUS)
-        errors.push_back("Arena radius too large (maximum: " + std::to_string(MAX_ARENA_RADIUS) + ")");
+        errors.push_back("Arena radius too large (maximum: " + ::std::to_string(MAX_ARENA_RADIUS) + ")");
 
     if (scenario.durationMs == 0)
         errors.push_back("Test duration cannot be zero");
@@ -685,9 +685,9 @@ bool CombatTestFramework::CheckSuccessCriteria(const TestScenario& scenario, con
     return true;
 }
 
-std::unordered_map<TestCriteria, float> CombatTestFramework::EvaluateAllCriteria(const TestContext& context) const
+::std::unordered_map<TestCriteria, float> CombatTestFramework::EvaluateAllCriteria(const TestContext& context) const
 {
-    std::unordered_map<TestCriteria, float> results;
+    ::std::unordered_map<TestCriteria, float> results;
 
     for (TestCriteria criteria : context.scenario.successCriteria)
         results[criteria] = EvaluateCriteria(criteria, context);
@@ -695,25 +695,25 @@ std::unordered_map<TestCriteria, float> CombatTestFramework::EvaluateAllCriteria
     return results;
 }
 
-std::string CombatTestFramework::GenerateDetailedReport(const TestResult& result) const
+::std::string CombatTestFramework::GenerateDetailedReport(const TestResult& result) const
 {
-    std::ostringstream report;
+    ::std::ostringstream report;
 
     report << "=== Combat Test Framework - Detailed Report ===\n";
     report << "Scenario: " << result.scenarioName << "\n";
     report << "Success: " << (result.success ? "YES" : "NO") << "\n";
-    report << "Overall Score: " << std::fixed << std::setprecision(2) << result.overallScore << "%\n";
+    report << "Overall Score: " << ::std::fixed << ::std::setprecision(2) << result.overallScore << "%\n";
     report << "Execution Time: " << result.executionTimeMs << "ms\n";
-    report << "Start Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(
+    report << "Start Time: " << ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         result.startTime.time_since_epoch()).count() << "\n";
-    report << "End Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(
+    report << "End Time: " << ::std::chrono::duration_cast<::std::chrono::milliseconds>(
         result.endTime.time_since_epoch()).count() << "\n\n";
 
     report << "=== Criteria Scores ===\n";
     for (const auto& [criteria, score] : result.criteriaScores)
     {
         report << "- " << static_cast<uint32>(criteria) << ": "
-               << std::fixed << std::setprecision(2) << score << "%\n";
+               << ::std::fixed << ::std::setprecision(2) << score << "%\n";
     }
     report << "\n";
 
@@ -721,7 +721,7 @@ std::string CombatTestFramework::GenerateDetailedReport(const TestResult& result
     for (const auto& [system, performance] : result.systemPerformance)
     {
         report << "- " << system << ": "
-               << std::fixed << std::setprecision(2) << performance << "%\n";
+               << ::std::fixed << ::std::setprecision(2) << performance << "%\n";
     }
     report << "\n";
 
@@ -750,12 +750,12 @@ std::string CombatTestFramework::GenerateDetailedReport(const TestResult& result
     return report.str();
 }
 
-std::string CombatTestFramework::GeneratePerformanceReport() const
+::std::string CombatTestFramework::GeneratePerformanceReport() const
 {
-    std::ostringstream report;
+    ::std::ostringstream report;
 
     report << "=== Combat Test Framework - Performance Report ===\n";
-    report << "Overall Score: " << std::fixed << std::setprecision(2)
+    report << "Overall Score: " << ::std::fixed << ::std::setprecision(2)
            << CalculateOverallPerformanceScore() << "%\n\n";
 
     report << "=== System Metrics ===\n";
@@ -763,7 +763,7 @@ std::string CombatTestFramework::GeneratePerformanceReport() const
     {
         report << "System: " << name << "\n";
         report << "  Update Calls: " << metrics.updateCalls.load() << "\n";
-        report << "  Success Rate: " << std::fixed << std::setprecision(2)
+        report << "  Success Rate: " << ::std::fixed << ::std::setprecision(2)
                << metrics.GetSuccessRate() * 100.0f << "%\n";
         report << "  Avg Execution Time: " << metrics.averageExecutionTime.count() << "μs\n";
         report << "  Min Execution Time: " << metrics.minExecutionTime.count() << "μs\n";
@@ -774,9 +774,9 @@ std::string CombatTestFramework::GeneratePerformanceReport() const
     return report.str();
 }
 
-bool CombatTestFramework::SaveTestResults(const TestResult& result, const std::string& filename) const
+bool CombatTestFramework::SaveTestResults(const TestResult& result, const ::std::string& filename) const
 {
-    std::ofstream file(filename);
+    ::std::ofstream file(filename);
     if (!file.is_open())
         return false;
 
@@ -784,21 +784,21 @@ bool CombatTestFramework::SaveTestResults(const TestResult& result, const std::s
     return true;
 }
 
-std::vector<TestResult> CombatTestFramework::LoadTestHistory(const std::string& scenarioName) const
+::std::vector<TestResult> CombatTestFramework::LoadTestHistory(const ::std::string& scenarioName) const
 {
-    std::lock_guard lock(_resultMutex);
+    ::std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
-    return it != _scenarioHistory.end() ? it->second : std::vector<TestResult>();
+    return it != _scenarioHistory.end() ? it->second : ::std::vector<TestResult>();
 }
 
-void CombatTestFramework::LogTestEvent(const std::string& event, const std::string& details)
+void CombatTestFramework::LogTestEvent(const ::std::string& event, const ::std::string& details)
 {
-    std::lock_guard lock(_logMutex);
+    ::std::lock_guard lock(_logMutex);
 
-    auto now = std::chrono::steady_clock::now();
-    auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    auto now = ::std::chrono::steady_clock::now();
+    auto timestamp = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-    std::string logEntry = "[" + std::to_string(timestamp) + "] " + event;
+    ::std::string logEntry = "[" + ::std::to_string(timestamp) + "] " + event;
     if (!details.empty())
         logEntry += " - " + details;
 
@@ -814,7 +814,7 @@ void CombatTestFramework::LogTestEvent(const std::string& event, const std::stri
 
 TestScenario CombatTestFramework::CreateBasicCombatScenario(uint32 botCount, uint32 enemyCount)
 {
-    return ScenarioBuilder("Basic Combat " + std::to_string(botCount) + "v" + std::to_string(enemyCount))
+    return ScenarioBuilder("Basic Combat " + ::std::to_string(botCount) + "v" + ::std::to_string(enemyCount))
         .SetType(TestScenarioType::BASIC_COMBAT)
         .SetEnvironment(TestEnvironment::OPEN_FIELD)
         .SetDuration(60000)
@@ -826,7 +826,7 @@ TestScenario CombatTestFramework::CreateBasicCombatScenario(uint32 botCount, uin
 
 TestScenario CombatTestFramework::CreateGroupFormationScenario(uint32 groupSize)
 {
-    return ScenarioBuilder("Group Formation " + std::to_string(groupSize))
+    return ScenarioBuilder("Group Formation " + ::std::to_string(groupSize))
         .SetType(TestScenarioType::FORMATION_TEST)
         .SetEnvironment(TestEnvironment::OPEN_FIELD)
         .SetDuration(30000)
@@ -850,7 +850,7 @@ TestScenario CombatTestFramework::CreateKitingScenario(TestRole kitingRole)
 
 TestScenario CombatTestFramework::CreateInterruptScenario(uint32 casterCount)
 {
-    return ScenarioBuilder("Interrupt Test " + std::to_string(casterCount))
+    return ScenarioBuilder("Interrupt Test " + ::std::to_string(casterCount))
         .SetType(TestScenarioType::INTERRUPT_TEST)
         .SetEnvironment(TestEnvironment::OPEN_FIELD)
         .SetDuration(40000)
@@ -874,7 +874,7 @@ TestScenario CombatTestFramework::CreatePositioningScenario(TestEnvironment envi
 
 TestScenario CombatTestFramework::CreatePathfindingScenario(uint32 obstacleCount)
 {
-    return ScenarioBuilder("Pathfinding Test " + std::to_string(obstacleCount))
+    return ScenarioBuilder("Pathfinding Test " + ::std::to_string(obstacleCount))
         .SetType(TestScenarioType::PATHFINDING_TEST)
         .SetEnvironment(TestEnvironment::OBSTACLE_COURSE)
         .SetDuration(35000)
@@ -897,7 +897,7 @@ TestScenario CombatTestFramework::CreateThreatManagementScenario()
 
 TestScenario CombatTestFramework::CreateBossEncounterScenario(uint32 bossId)
 {
-    return ScenarioBuilder("Boss Encounter " + std::to_string(bossId))
+    return ScenarioBuilder("Boss Encounter " + ::std::to_string(bossId))
         .SetType(TestScenarioType::BOSS_MECHANICS_TEST)
         .SetEnvironment(TestEnvironment::DUNGEON_ROOM)
         .SetDuration(120000)
@@ -908,9 +908,9 @@ TestScenario CombatTestFramework::CreateBossEncounterScenario(uint32 bossId)
         .Build();
 }
 
-float CombatTestFramework::GetAverageExecutionTime(const std::string& scenarioName) const
+float CombatTestFramework::GetAverageExecutionTime(const ::std::string& scenarioName) const
 {
-    std::lock_guard lock(_resultMutex);
+    ::std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
     if (it == _scenarioHistory.end() || it->second.empty())
         return 0.0f;
@@ -922,9 +922,9 @@ float CombatTestFramework::GetAverageExecutionTime(const std::string& scenarioNa
     return static_cast<float>(totalTime) / it->second.size();
 }
 
-float CombatTestFramework::GetScenarioSuccessRate(const std::string& scenarioName) const
+float CombatTestFramework::GetScenarioSuccessRate(const ::std::string& scenarioName) const
 {
-    std::lock_guard lock(_resultMutex);
+    ::std::lock_guard lock(_resultMutex);
     auto it = _scenarioHistory.find(scenarioName);
     if (it == _scenarioHistory.end() || it->second.empty())
         return 0.0f;
@@ -939,12 +939,12 @@ float CombatTestFramework::GetScenarioSuccessRate(const std::string& scenarioNam
     return static_cast<float>(successCount) / it->second.size() * 100.0f;
 }
 
-std::vector<std::string> CombatTestFramework::GetMostFailedScenarios(uint32 count) const
+::std::vector<::std::string> CombatTestFramework::GetMostFailedScenarios(uint32 count) const
 {
-    std::vector<std::pair<std::string, float>> failureRates;
+    ::std::vector<::std::pair<::std::string, float>> failureRates;
 
     {
-        std::lock_guard lock(_resultMutex);
+        ::std::lock_guard lock(_resultMutex);
         for (const auto& [name, history] : _scenarioHistory)
         {
             if (!history.empty())
@@ -955,26 +955,26 @@ std::vector<std::string> CombatTestFramework::GetMostFailedScenarios(uint32 coun
         }
     }
 
-    std::sort(failureRates.begin(), failureRates.end(),
+    ::std::sort(failureRates.begin(), failureRates.end(),
         [](const auto& a, const auto& b) { return a.second > b.second; });
 
-    std::vector<std::string> result;
-    for (uint32 i = 0; i < std::min(count, static_cast<uint32>(failureRates.size())); ++i)
+    ::std::vector<::std::string> result;
+    for (uint32 i = 0; i < ::std::min(count, static_cast<uint32>(failureRates.size())); ++i)
         result.push_back(failureRates[i].first);
 
     return result;
 }
 
-std::unordered_map<std::string, float> CombatTestFramework::GetSystemPerformanceRanking() const
+::std::unordered_map<::std::string, float> CombatTestFramework::GetSystemPerformanceRanking() const
 {
-    std::unordered_map<std::string, float> ranking;
+    ::std::unordered_map<::std::string, float> ranking;
 
     for (const auto& [name, metrics] : _globalMetrics)
     {
         float score = metrics.GetSuccessRate() * 100.0f;
 
         // Adjust score based on performance characteristics
-        if (metrics.averageExecutionTime.count() > 1000) // > 1ms
+    if (metrics.averageExecutionTime.count() > 1000) // > 1ms
             score *= 0.9f;
         if (metrics.memoryUsage.load() > 1048576) // > 1MB
             score *= 0.95f;
@@ -985,7 +985,7 @@ std::unordered_map<std::string, float> CombatTestFramework::GetSystemPerformance
     return ranking;
 }
 
-std::string CombatTestFramework::GetCurrentScenarioName() const
+::std::string CombatTestFramework::GetCurrentScenarioName() const
 {
     return _currentContext ? _currentContext->scenario.name : "";
 }
@@ -1124,7 +1124,7 @@ void CombatTestFramework::FinalizeScenario(TestContext& context, TestResult& res
         result.systemPerformance[name] = metrics.GetSuccessRate() * 100.0f;
 
     // Generate detailed log
-    std::ostringstream log;
+    ::std::ostringstream log;
     for (const auto& entry : _testLog)
         log << entry << "\n";
     result.detailedLog = log.str();
@@ -1132,7 +1132,7 @@ void CombatTestFramework::FinalizeScenario(TestContext& context, TestResult& res
     // Cleanup
     CleanupScenario(context);
 
-    LogTestEvent("Scenario finalization complete. Success: " + std::to_string(result.success));
+    LogTestEvent("Scenario finalization complete. Success: " + ::std::to_string(result.success));
 }
 
 void CombatTestFramework::CleanupScenario(TestContext& context)
@@ -1186,12 +1186,12 @@ void CombatTestFramework::RemoveParticipantFromWorld(const TestParticipant& part
 bool CombatTestFramework::CreateTestArea(TestEnvironment environment, const Position& center, float radius)
 {
     // In a real implementation, this would create the test environment
-    LogTestEvent("Created test area - Environment: " + std::to_string(static_cast<uint32>(environment)) +
-                ", Radius: " + std::to_string(radius));
+    LogTestEvent("Created test area - Environment: " + ::std::to_string(static_cast<uint32>(environment)) +
+                ", Radius: " + ::std::to_string(radius));
     return true;
 }
 
-void CombatTestFramework::SpawnObstacles(const std::vector<TestObstacle>& obstacles, TestContext& context)
+void CombatTestFramework::SpawnObstacles(const ::std::vector<TestObstacle>& obstacles, TestContext& context)
 {
     for (const auto& obstacle : obstacles)
         LogTestEvent("Spawned obstacle: " + obstacle.name);
@@ -1208,8 +1208,8 @@ Position CombatTestFramework::GenerateRandomPosition(const Position& center, flo
     float angle = frand(0.0f, 2.0f * M_PI);
     float dist = frand(minDistance, radius);
 
-    float x = center.GetPositionX() + dist * std::cos(angle);
-    float y = center.GetPositionY() + dist * std::sin(angle);
+    float x = center.GetPositionX() + dist * ::std::cos(angle);
+    float y = center.GetPositionY() + dist * ::std::sin(angle);
     float z = center.GetPositionZ();
 
     return Position(x, y, z);
@@ -1224,7 +1224,7 @@ void CombatTestFramework::MonitorCombatSystems(TestContext& context, uint32 diff
         metrics.updateCalls++;
 
         // In a real implementation, you would measure actual system performance here
-        auto executionTime = std::chrono::microseconds(100); // Simulated execution time
+        auto executionTime = ::std::chrono::microseconds(100); // Simulated execution time
         bool success = true; // Simulated success
 
         metrics.UpdateExecutionTime(executionTime);
@@ -1235,7 +1235,7 @@ void CombatTestFramework::MonitorCombatSystems(TestContext& context, uint32 diff
     }
 }
 
-void CombatTestFramework::UpdateSystemMetrics(const std::string& systemName, std::chrono::microseconds executionTime, bool success)
+void CombatTestFramework::UpdateSystemMetrics(const ::std::string& systemName, ::std::chrono::microseconds executionTime, bool success)
 {
     auto it = _globalMetrics.find(systemName);
     if (it != _globalMetrics.end())
@@ -1250,7 +1250,7 @@ void CombatTestFramework::UpdateSystemMetrics(const std::string& systemName, std
     }
 }
 
-void CombatTestFramework::RecordSystemMemoryUsage(const std::string& systemName, uint64 memoryBytes)
+void CombatTestFramework::RecordSystemMemoryUsage(const ::std::string& systemName, uint64 memoryBytes)
 {
     auto it = _globalMetrics.find(systemName);
     if (it != _globalMetrics.end())
@@ -1282,7 +1282,7 @@ float CombatTestFramework::EvaluateTimeLimitCriteria(const TestContext& context)
         return 100.0f;
 
     float progress = static_cast<float>(context.currentTimeMs) / context.scenario.durationMs;
-    return std::min(100.0f, progress * 100.0f);
+    return ::std::min(100.0f, progress * 100.0f);
 }
 
 float CombatTestFramework::EvaluateDamageDealtCriteria(const TestContext& context) const
@@ -1345,12 +1345,12 @@ bool CombatTestFramework::ValidateEnvironment(TestEnvironment environment, const
     return true;
 }
 
-std::string CombatTestFramework::GenerateUniqueTestId() const
+::std::string CombatTestFramework::GenerateUniqueTestId() const
 {
-    return "TEST_" + std::to_string(_nextTestId++);
+    return "TEST_" + ::std::to_string(_nextTestId++);
 }
 
-uint32 CombatTestFramework::CalculateTestScore(const std::unordered_map<TestCriteria, float>& scores) const
+uint32 CombatTestFramework::CalculateTestScore(const ::std::unordered_map<TestCriteria, float>& scores) const
 {
     if (scores.empty())
         return 0;
@@ -1364,7 +1364,7 @@ uint32 CombatTestFramework::CalculateTestScore(const std::unordered_map<TestCrit
 
 // ScenarioBuilder implementation
 
-ScenarioBuilder::ScenarioBuilder(const std::string& name)
+ScenarioBuilder::ScenarioBuilder(const ::std::string& name)
     : _nextParticipantId(1), _nextObstacleId(1)
 {
     _scenario.name = name;
@@ -1395,7 +1395,7 @@ ScenarioBuilder& ScenarioBuilder::SetArena(const Position& center, float radius)
     return *this;
 }
 
-ScenarioBuilder& ScenarioBuilder::SetDescription(const std::string& description)
+ScenarioBuilder& ScenarioBuilder::SetDescription(const ::std::string& description)
 {
     _scenario.description = description;
     return *this;
@@ -1408,7 +1408,7 @@ ScenarioBuilder& ScenarioBuilder::AddBot(TestRole role, uint8 playerClass, uint8
     participant.playerClass = playerClass;
     participant.level = level;
     participant.isBot = true;
-    participant.name = "Bot" + std::to_string(_nextParticipantId++);
+    participant.name = "Bot" + ::std::to_string(_nextParticipantId++);
     _scenario.participants.push_back(participant);
     return *this;
 }
@@ -1419,7 +1419,7 @@ ScenarioBuilder& ScenarioBuilder::AddEnemy(TestRole role, uint8 level)
     participant.role = role;
     participant.level = level;
     participant.isBot = false;
-    participant.name = "Enemy" + std::to_string(_nextParticipantId++);
+    participant.name = "Enemy" + ::std::to_string(_nextParticipantId++);
     _scenario.participants.push_back(participant);
     return *this;
 }
@@ -1436,7 +1436,7 @@ ScenarioBuilder& ScenarioBuilder::AddObstacle(const Position& pos, float radius,
     obstacle.position = pos;
     obstacle.radius = radius;
     obstacle.blocksLoS = blocksLoS;
-    obstacle.name = "Obstacle" + std::to_string(_nextObstacleId++);
+    obstacle.name = "Obstacle" + ::std::to_string(_nextObstacleId++);
     _scenario.obstacles.push_back(obstacle);
     return *this;
 }
@@ -1448,7 +1448,7 @@ ScenarioBuilder& ScenarioBuilder::AddDynamicObstacle(const Position& pos, float 
     obstacle.radius = radius;
     obstacle.isDynamic = true;
     obstacle.lifespan = lifespanMs;
-    obstacle.name = "DynamicObstacle" + std::to_string(_nextObstacleId++);
+    obstacle.name = "DynamicObstacle" + ::std::to_string(_nextObstacleId++);
     _scenario.obstacles.push_back(obstacle);
     return *this;
 }
@@ -1507,13 +1507,13 @@ ScenarioBuilder& ScenarioBuilder::RequireCoordination(float minScore)
     return *this;
 }
 
-ScenarioBuilder& ScenarioBuilder::RequireSystem(const std::string& systemName)
+ScenarioBuilder& ScenarioBuilder::RequireSystem(const ::std::string& systemName)
 {
     _scenario.requiredSystems.push_back(systemName);
     return *this;
 }
 
-ScenarioBuilder& ScenarioBuilder::SetParameter(const std::string& key, float value)
+ScenarioBuilder& ScenarioBuilder::SetParameter(const ::std::string& key, float value)
 {
     _scenario.parameters[key] = value;
     return *this;

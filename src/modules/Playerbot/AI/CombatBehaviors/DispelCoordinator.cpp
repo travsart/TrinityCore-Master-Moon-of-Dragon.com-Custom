@@ -46,7 +46,7 @@ namespace {
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -128,7 +128,7 @@ DispelCoordinator::DispelCoordinator(BotAI* ai)
     // Initialize database if needed
     if (!s_databaseInitialized)
     {
-        std::lock_guard lock(s_databaseMutex);
+        ::std::lock_guard lock(s_databaseMutex);
         if (!s_databaseInitialized)
         {
             InitializeGlobalDatabase();
@@ -364,10 +364,10 @@ void DispelCoordinator::UpdateDispelAssignments()
         return;
 
     // Gather all debuffs on group members
-    std::vector<DebuffTarget> debuffs = GatherGroupDebuffs();
+    ::std::vector<DebuffTarget> debuffs = GatherGroupDebuffs();
 
     // Sort by adjusted priority (highest first)
-    std::sort(debuffs.begin(), debuffs.end(),
+    ::std::sort(debuffs.begin(), debuffs.end(),
         [](const DebuffTarget& a, const DebuffTarget& b)
         {
             return a.adjustedPriority > b.adjustedPriority;
@@ -379,11 +379,11 @@ void DispelCoordinator::UpdateDispelAssignments()
     for (const auto& debuff : debuffs)
     {
         // Skip if priority too low
-        if (debuff.adjustedPriority < m_config.priorityThreshold)
+    if (debuff.adjustedPriority < m_config.priorityThreshold)
             break;
 
         // Skip if already being handled
-        if (IsBeingDispelled(debuff.targetGuid, debuff.auraId))
+    if (IsBeingDispelled(debuff.targetGuid, debuff.auraId))
             continue;
 
         // Find best dispeller
@@ -405,7 +405,7 @@ void DispelCoordinator::UpdateDispelAssignments()
         ++m_statistics.assignmentsCreated;
 
         // If this is our assignment, save it
-        if (bestDispeller == m_bot->GetGUID())
+    if (bestDispeller == m_bot->GetGUID())
         {
             m_currentAssignment = assignment;
         }
@@ -430,20 +430,20 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
     if (player)
     {
         // Tank priority adjustments
-        if (GetPlayerRole(player) == BOT_ROLE_TANK)
+    if (GetPlayerRole(player) == BOT_ROLE_TANK)
         {
             if (slowPercent > 0 || preventsActions)
                 priority += 2.0f;  // Tank mobility is critical
-            if (damagePerTick > 0 && target->GetHealthPct() < 50.0f)
+    if (damagePerTick > 0 && target->GetHealthPct() < 50.0f)
                 priority += 1.0f;  // Tank taking DOT damage at low health
         }
 
         // Healer priority adjustments
-        if (GetPlayerRole(player) == BOT_ROLE_HEALER)
+    if (GetPlayerRole(player) == BOT_ROLE_HEALER)
         {
             if (preventsCasting)
                 priority += 2.5f;  // Healer silenced is emergency
-            if (preventsActions)
+    if (preventsActions)
                 priority += 2.0f;  // Healer CC'd is critical
         }
     }
@@ -453,7 +453,7 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
     if (healthPct < 30.0f && damagePerTick > 0)
     {
         priority += 1.5f;  // Low HP with DOT
-        if (damagePerTick > target->GetMaxHealth() * 0.05f)
+    if (damagePerTick > target->GetMaxHealth() * 0.05f)
             priority += 1.0f;  // Heavy DOT at low health
     }
 
@@ -472,7 +472,7 @@ float DispelCoordinator::DebuffData::GetAdjustedPriority(Unit* target) const
 
 ObjectGuid DispelCoordinator::FindBestDispeller(const DebuffTarget& target) const
 {
-    std::vector<std::pair<ObjectGuid, float>> candidates;
+    ::std::vector<::std::pair<ObjectGuid, float>> candidates;
 
     for (const auto& dispeller : m_dispellers)
     {
@@ -490,7 +490,7 @@ ObjectGuid DispelCoordinator::FindBestDispeller(const DebuffTarget& target) cons
         return ObjectGuid::Empty;
 
     // Sort by score (highest first)
-    std::sort(candidates.begin(), candidates.end(),
+    ::std::sort(candidates.begin(), candidates.end(),
         [](const auto& a, const auto& b)
         {
             return a.second > b.second;
@@ -543,7 +543,7 @@ float DispelCoordinator::CalculateDispellerScore(const DispellerCapability& disp
             score += 20.0f;
 
             // Extra bonus if target is low HP and dispeller is healer
-            if (target.targetHealthPct < 50.0f)
+    if (target.targetHealthPct < 50.0f)
             {
                 score += 20.0f;
             }
@@ -593,9 +593,9 @@ void DispelCoordinator::UpdateDispellerCapabilities()
     }
 }
 
-std::vector<DispelType> DispelCoordinator::GetClassDispelTypes(Classes botClass) const
+::std::vector<DispelType> DispelCoordinator::GetClassDispelTypes(Classes botClass) const
 {
-    std::vector<DispelType> types;
+    ::std::vector<DispelType> types;
 
     switch (botClass)
     {
@@ -855,7 +855,7 @@ bool DispelCoordinator::ExecutePurge()
         return false;
 
     // Get purge targets
-    std::vector<PurgeTarget> targets = GatherPurgeTargets();
+    ::std::vector<PurgeTarget> targets = GatherPurgeTargets();
     if (targets.empty())
         return false;
 
@@ -925,9 +925,9 @@ bool DispelCoordinator::ExecutePurge()
 // Gathering Functions
 // ============================================================================
 
-std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuffs() const
+::std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuffs() const
 {
-    std::vector<DebuffTarget> debuffs;
+    ::std::vector<DebuffTarget> debuffs;
 
     if (!m_group)
         return debuffs;
@@ -972,7 +972,7 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
     }
 
     // Sort by adjusted priority
-    std::sort(debuffs.begin(), debuffs.end(),
+    ::std::sort(debuffs.begin(), debuffs.end(),
         [](const DebuffTarget& a, const DebuffTarget& b)
         {
             return a.adjustedPriority > b.adjustedPriority;
@@ -981,9 +981,9 @@ std::vector<DispelCoordinator::DebuffTarget> DispelCoordinator::GatherGroupDebuf
     return debuffs;
 }
 
-std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
+::std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTargets() const
 {
-    std::vector<PurgeTarget> targets;
+    ::std::vector<PurgeTarget> targets;
 
     if (!m_bot)
         return targets;
@@ -1018,7 +1018,7 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
             continue;
 
         // Check if enemy (must be hostile)
-        if (!m_bot->IsHostileTo(enemy))
+    if (!m_bot->IsHostileTo(enemy))
             continue;
         // Check all auras
         Unit::AuraApplicationMap const& auras = enemy->GetAppliedAuras();
@@ -1034,7 +1034,7 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
                 continue;
 
             // Skip if not worth purging
-            if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
+    if (!m_config.smartPurging || !EvaluatePurgeBenefit(*buffData, enemy))
                 continue;
 
             PurgeTarget target;
@@ -1044,14 +1044,14 @@ std::vector<DispelCoordinator::PurgeTarget> DispelCoordinator::GatherPurgeTarget
             target.isEnrage = buffData->isEnrage;
             target.isImmunity = buffData->providesImmunity;
             target.threatLevel = m_bot->GetThreatManager().GetThreat(enemy);
-            target.distance = std::sqrt(m_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
+            target.distance = ::std::sqrt(m_bot->GetExactDistSq(enemy)); // Calculate once from squared distance
 
             targets.push_back(target);
         }
     }
 
     // Sort by priority, then by threat
-    std::sort(targets.begin(), targets.end(),
+    ::std::sort(targets.begin(), targets.end(),
         [](const PurgeTarget& a, const PurgeTarget& b)
         {
             if (a.priority != b.priority)
@@ -1116,7 +1116,7 @@ bool DispelCoordinator::IsTankTakingDamage() const
             continue;
 
         // Simple check - tank below 70% health
-        if (member->GetHealthPct() < 70.0f)
+    if (member->GetHealthPct() < 70.0f)
             return true;
     }
 
@@ -1141,12 +1141,12 @@ bool DispelCoordinator::EvaluatePurgeBenefit(const PurgeableBuff& buff, Unit* en
     if (buff.priority == PURGE_MODERATE_BUFF)
     {
         // Purge damage increases if enemy is high threat
-        if (buff.increasesDamage &&
+    if (buff.increasesDamage &&
             m_bot->GetThreatManager().GetThreat(enemy) > 1000)
             return true;
 
         // Purge healing increases if enemy can heal
-        if (buff.increasesHealing)
+    if (buff.increasesHealing)
             return true;
     }
 
@@ -1223,7 +1223,7 @@ void DispelCoordinator::CleanupAssignments()
 
     // Remove expired or fulfilled assignments
     m_assignments.erase(
-        std::remove_if(m_assignments.begin(), m_assignments.end(),
+        ::std::remove_if(m_assignments.begin(), m_assignments.end(),
             [this, now](const DispelAssignment& assign)
             {
                 if (assign.fulfilled)
@@ -1287,7 +1287,7 @@ bool DispelCoordinator::ShouldPurge(Unit* enemy, uint32 auraId) const
 
 DispelCoordinator::PurgeTarget DispelCoordinator::GetPurgeTarget() const
 {
-    std::vector<PurgeTarget> targets = GatherPurgeTargets();
+    ::std::vector<PurgeTarget> targets = GatherPurgeTargets();
     if (!targets.empty())
         return targets[0];
 

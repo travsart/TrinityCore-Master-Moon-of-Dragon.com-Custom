@@ -85,7 +85,7 @@ namespace Playerbot
          * @param count Number of snapshots to retrieve (default: all)
          * @return Vector of historical snapshots (newest first)
          */
-        virtual std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const = 0;
+        virtual ::std::vector<PerformanceSnapshot> GetSnapshotHistory(uint32 count = 0) const = 0;
 
         // =====================================================================
         // ACTIVITY TRACKING
@@ -166,14 +166,14 @@ namespace Playerbot
          * @param category Error category (e.g., "Combat", "Movement", "Database")
          * @param message Error message
          */
-        virtual void RecordError(std::string const& category, std::string const& message) = 0;
+        virtual void RecordError(::std::string const& category, ::std::string const& message) = 0;
 
         /**
          * @brief Record warning occurrence
          * @param category Warning category
          * @param message Warning message
          */
-        virtual void RecordWarning(std::string const& category, std::string const& message) = 0;
+        virtual void RecordWarning(::std::string const& category, ::std::string const& message) = 0;
 
         // =====================================================================
         // TREND ANALYSIS
@@ -224,14 +224,14 @@ namespace Playerbot
          * @param minLevel Minimum alert level to retrieve (default: WARNING)
          * @return Vector of active alerts
          */
-        virtual std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const = 0;
+        virtual ::std::vector<PerformanceAlert> GetActiveAlerts(AlertLevel minLevel = AlertLevel::WARNING) const = 0;
 
         /**
          * @brief Get alert history
          * @param count Number of alerts to retrieve (default: 100)
          * @return Vector of historical alerts (newest first)
          */
-        virtual std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const = 0;
+        virtual ::std::vector<PerformanceAlert> GetAlertHistory(uint32 count = 100) const = 0;
 
         /**
          * @brief Clear alert history
@@ -242,7 +242,7 @@ namespace Playerbot
          * @brief Register alert callback
          * @param callback Function to call when alert is triggered
          */
-        virtual void RegisterAlertCallback(std::function<void(PerformanceAlert const&)> callback) = 0;
+        virtual void RegisterAlertCallback(::std::function<void(PerformanceAlert const&)> callback) = 0;
 
         // =====================================================================
         // STATISTICS
@@ -252,7 +252,7 @@ namespace Playerbot
          * @brief Get formatted statistics summary
          * @return Human-readable statistics string
          */
-        virtual std::string GetStatisticsSummary() const = 0;
+        virtual ::std::string GetStatisticsSummary() const = 0;
 
         /**
          * @brief Get uptime in seconds

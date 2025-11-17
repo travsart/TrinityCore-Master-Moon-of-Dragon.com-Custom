@@ -160,7 +160,7 @@ namespace Playerbot
          *
          * Forwards to circuit breaker for failure tracking
          */
-        void RecordSpawnFailure(std::string_view reason = "");
+        void RecordSpawnFailure(::std::string_view reason = "");
 
         /**
          * @brief Get current spawn interval in milliseconds
@@ -253,7 +253,7 @@ namespace Playerbot
         uint32 _currentSpawnInterval = 100;      ///< Current calculated interval (ms)
 
         // Burst prevention tracking
-        std::deque<TimePoint> _recentSpawnTimes; ///< Timestamps for burst detection
+        ::std::deque<TimePoint> _recentSpawnTimes; ///< Timestamps for burst detection
         uint32 _burstPreventionCount = 0;        ///< Times burst prevention triggered
 
         // Metrics

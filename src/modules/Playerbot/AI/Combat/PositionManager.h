@@ -21,6 +21,8 @@
 #include <atomic>
 #include <shared_mutex>
 #include <chrono>
+#include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
+#include "../../Movement/Core/MovementTypes.h"
 
 // Forward declarations
 class Player;
@@ -30,30 +32,10 @@ class Map;
 namespace Playerbot
 {
 
-// Position types for different combat roles
-enum class PositionType : uint8
-{
-    MELEE_COMBAT = 0,       // Close combat positioning (2-5 yards)
-    RANGED_DPS = 1,         // Ranged damage positioning (20-40 yards)
-    HEALING = 2,            // Healing positioning (15-35 yards)
-    KITING = 3,             // Kiting/mobility positioning (variable)
-    FLANKING = 4,           // Flanking/behind target
-    TANKING = 5,            // Tank positioning (front of enemy)
-    SUPPORT = 6,            // Support/utility positioning
-    RETREAT = 7,            // Retreat/escape positioning
-    FORMATION = 8           // Group formation positioning
-};
-
-// Movement priorities for positioning decisions
-enum class MovementPriority : uint8
-{
-    EMERGENCY = 0,          // Immediate movement required (fire, mechanics)
-    CRITICAL = 1,           // High priority movement (optimal positioning)
-    TACTICAL = 2,           // Tactical repositioning
-    OPTIMIZATION = 3,       // Position optimization
-    MAINTENANCE = 4,        // Position maintenance/minor adjustments
-    IDLE = 5               // No movement needed
-};
+// DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
+// enum class PositionType : uint8 { ... } - REMOVED
+// enum class MovementPriority : uint8 { ... } - REMOVED
+// Include at line 21 provides these definitions
 
 // Position validation flags
 enum class PositionValidation : uint32
@@ -113,10 +95,10 @@ struct PositionInfo
     bool hasLineOfSight;
     bool isOptimalRange;
     float movementCost;
-    std::string reason;
+    ::std::string reason;
     uint32 evaluationTime;
 
-    PositionInfo() : score(0.0f), type(PositionType::MELEE_COMBAT), priority(MovementPriority::IDLE),
+    PositionInfo() : score(0.0f), type(PositionType::MELEE_COMBAT), priority(MovementPriority::PRIORITY_NONE),
                     distanceToTarget(0.0f), safetyRating(0.0f), hasLineOfSight(false),
                     isOptimalRange(false), movementCost(0.0f), evaluationTime(0) {}
 
@@ -134,8 +116,8 @@ struct MovementContext
     Player* bot;
     Unit* target;
     Unit* primaryThreat;
-    std::vector<Unit*> nearbyEnemies;
-    std::vector<Player*> groupMembers;
+    ::std::vector<Unit*> nearbyEnemies;
+    ::std::vector<Player*> groupMembers;
     PositionType desiredType;
     ThreatRole botRole;
     float preferredRange;
@@ -144,7 +126,7 @@ struct MovementContext
     bool emergencyMode;
     PositionValidation validationFlags;
     PositionWeights weights;
-    std::vector<Position> avoidZones;  // Areas to avoid (fire, aoe, etc.)
+    ::std::vector<Position> avoidZones;  // Areas to avoid (fire, aoe, etc.)
 
     MovementContext() : bot(nullptr), target(nullptr), primaryThreat(nullptr),
                        desiredType(PositionType::MELEE_COMBAT), botRole(ThreatRole::DPS),
@@ -152,8 +134,8 @@ struct MovementContext
                        emergencyMode(false), validationFlags(PositionValidation::BASIC) {}
 };
 
-// Movement execution result
-struct MovementResult
+// Position-specific movement execution result
+struct PositionMovementResult
 {
     bool success;
     Position targetPosition;
@@ -161,12 +143,12 @@ struct MovementResult
     MovementPriority priority;
     float estimatedTime;
     float pathDistance;
-    std::string failureReason;
-    std::vector<Position> waypoints;
+    ::std::string failureReason;
+    ::std::vector<Position> waypoints;
     bool requiresJump;
     bool requiresSprint;
 
-    MovementResult() : success(false), priority(MovementPriority::IDLE),
+    PositionMovementResult() : success(false), priority(MovementPriority::PRIORITY_NONE),
                       estimatedTime(0.0f), pathDistance(0.0f),
                       requiresJump(false), requiresSprint(false) {}
 };
@@ -196,13 +178,13 @@ struct AoEZone
 // Performance metrics for positioning
 struct PositionMetrics
 {
-    std::atomic<uint32> positionEvaluations{0};
-    std::atomic<uint32> movementCommands{0};
-    std::atomic<uint32> emergencyMoves{0};
-    std::atomic<uint32> pathfindingCalls{0};
-    std::chrono::microseconds averageEvaluationTime{0};
-    std::chrono::microseconds maxEvaluationTime{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> positionEvaluations{0};
+    ::std::atomic<uint32> movementCommands{0};
+    ::std::atomic<uint32> emergencyMoves{0};
+    ::std::atomic<uint32> pathfindingCalls{0};
+    ::std::chrono::microseconds averageEvaluationTime{0};
+    ::std::chrono::microseconds maxEvaluationTime{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -210,9 +192,9 @@ struct PositionMetrics
         movementCommands = 0;
         emergencyMoves = 0;
         pathfindingCalls = 0;
-        averageEvaluationTime = std::chrono::microseconds{0};
-        maxEvaluationTime = std::chrono::microseconds{0};
-        lastUpdate = std::chrono::steady_clock::now();
+        averageEvaluationTime = ::std::chrono::microseconds{0};
+        maxEvaluationTime = ::std::chrono::microseconds{0};
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -223,39 +205,39 @@ public:
     ~PositionManager() = default;
 
     // Main positioning interface
-    MovementResult UpdatePosition(const MovementContext& context);
-    MovementResult FindOptimalPosition(const MovementContext& context);
-    MovementResult ExecuteMovement(const Position& targetPos, MovementPriority priority);
+    PositionMovementResult UpdatePosition(const MovementContext& context);
+    PositionMovementResult FindOptimalPosition(const MovementContext& context);
+    PositionMovementResult ExecuteMovement(const Position& targetPos, MovementPriority priority);
 
     // Position evaluation
     PositionInfo EvaluatePosition(const Position& pos, const MovementContext& context);
-    std::vector<PositionInfo> EvaluatePositions(const std::vector<Position>& positions, const MovementContext& context);
-    std::vector<Position> GenerateCandidatePositions(const MovementContext& context);
+    ::std::vector<PositionInfo> EvaluatePositions(const ::std::vector<Position>& positions, const MovementContext& context);
+    ::std::vector<Position> GenerateCandidatePositions(const MovementContext& context);
 
     // Range and angle management
     Position FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle = 0.0f);
     Position FindMeleePosition(Unit* target, bool preferBehind = true);
     Position FindRangedPosition(Unit* target, float preferredRange = 25.0f);
-    Position FindHealingPosition(const std::vector<Player*>& allies);
+    Position FindHealingPosition(const ::std::vector<Player*>& allies);
     Position FindKitingPosition(Unit* threat, float minDistance = 15.0f);
 
     // Role-specific positioning
     Position FindTankPosition(Unit* target);
     Position FindDpsPosition(Unit* target, PositionType type = PositionType::MELEE_COMBAT);
-    Position FindHealerPosition(const std::vector<Player*>& groupMembers);
-    Position FindSupportPosition(const std::vector<Player*>& groupMembers);
+    Position FindHealerPosition(const ::std::vector<Player*>& groupMembers);
+    Position FindSupportPosition(const ::std::vector<Player*>& groupMembers);
 
     // Safety and avoidance
     bool IsPositionSafe(const Position& pos, const MovementContext& context);
     bool IsInDangerZone(const Position& pos);
     Position FindSafePosition(const Position& fromPos, float minDistance = 10.0f);
-    Position FindEscapePosition(const std::vector<Unit*>& threats);
+    Position FindEscapePosition(const ::std::vector<Unit*>& threats);
 
     // AoE and hazard management
     void RegisterAoEZone(const AoEZone& zone);
     void UpdateAoEZones(uint32 currentTime);
     void ClearExpiredZones(uint32 currentTime);
-    std::vector<AoEZone> GetActiveZones() const;
+    ::std::vector<AoEZone> GetActiveZones() const;
 
     // Validation and pathfinding
     bool ValidatePosition(const Position& pos, PositionValidation flags);
@@ -264,7 +246,7 @@ public:
     float CalculateMovementCost(const Position& from, const Position& to);
 
     // Group coordination
-    Position FindFormationPosition(const std::vector<Player*>& groupMembers, PositionType formationType);
+    Position FindFormationPosition(const ::std::vector<Player*>& groupMembers, PositionType formationType);
     bool ShouldMaintainGroupProximity();
     float GetOptimalGroupDistance(ThreatRole role);
 
@@ -285,13 +267,13 @@ public:
     void ResetMetrics() { _metrics.Reset(); }
 
     // Emergency response
-    MovementResult HandleEmergencyMovement(const MovementContext& context);
+    PositionMovementResult HandleEmergencyMovement(const MovementContext& context);
     bool IsInEmergencyPosition();
     Position FindEmergencyEscapePosition();
 
     // Position history and learning
     void RecordPositionSuccess(const Position& pos, PositionType type);
-    void RecordPositionFailure(const Position& pos, const std::string& reason);
+    void RecordPositionFailure(const Position& pos, const ::std::string& reason);
     float GetPositionSuccessRate(const Position& pos, float radius = 5.0f);
 
 private:
@@ -306,21 +288,21 @@ private:
     // Utility methods
     float GetOptimalRange(PositionType type, ThreatRole role);
     float GetOptimalAngle(PositionType type, Unit* target);
-    std::vector<Position> GenerateCircularPositions(const Position& center, float radius, uint32 count);
-    std::vector<Position> GenerateArcPositions(const Position& center, float radius, float startAngle, float endAngle, uint32 count);
+    ::std::vector<Position> GenerateCircularPositions(const Position& center, float radius, uint32 count);
+    ::std::vector<Position> GenerateArcPositions(const Position& center, float radius, float startAngle, float endAngle, uint32 count);
 
     // Safety analysis
-    float AnalyzeThreatLevel(const Position& pos, const std::vector<Unit*>& threats);
+    float AnalyzeThreatLevel(const Position& pos, const ::std::vector<Unit*>& threats);
     float CalculateAoEThreat(const Position& pos);
     bool IsNearPatrolRoute(const Position& pos);
 
     // Movement execution helpers
     bool CanReachPosition(const Position& pos);
-    std::vector<Position> CalculateWaypoints(const Position& from, const Position& to);
+    ::std::vector<Position> CalculateWaypoints(const Position& from, const Position& to);
     float EstimateMovementTime(const Position& from, const Position& to);
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, const std::string& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
 
 private:
     Player* _bot;
@@ -334,12 +316,12 @@ private:
     uint32 _maxCandidates;
 
     // AoE and hazard tracking
-    std::vector<AoEZone> _activeZones;
+    ::std::vector<AoEZone> _activeZones;
     uint32 _lastZoneUpdate;
 
     // Position history for learning
-    std::unordered_map<std::string, float> _positionSuccessRates;
-    std::unordered_map<std::string, uint32> _positionAttempts;
+    ::std::unordered_map<::std::string, float> _positionSuccessRates;
+    ::std::unordered_map<::std::string, uint32> _positionAttempts;
 
     // Performance metrics
     mutable PositionMetrics _metrics;
@@ -377,20 +359,20 @@ public:
     static float GetMaxRange(Player* bot, Unit* target);
 
     // Safety and validation utilities
-    static bool IsPositionSafeFromAoE(const Position& pos, const std::vector<AoEZone>& zones);
+    static bool IsPositionSafeFromAoE(const Position& pos, const ::std::vector<AoEZone>& zones);
     static bool IsPositionInWater(const Position& pos, Map* map);
     static bool IsPositionOnGround(const Position& pos, Map* map);
     static float GetGroundHeight(const Position& pos, Map* map);
 
     // Pathfinding utilities
     static bool CanWalkStraightLine(const Position& from, const Position& to, Map* map);
-    static std::vector<Position> SmoothPath(const std::vector<Position>& rawPath);
+    static ::std::vector<Position> SmoothPath(const ::std::vector<Position>& rawPath);
     static Position GetNearestWalkablePosition(const Position& pos, Map* map, float searchRadius = 10.0f);
 
     // Group positioning utilities
-    static Position CalculateGroupCenter(const std::vector<Player*>& players);
-    static float CalculateGroupSpread(const std::vector<Player*>& players);
-    static bool IsGroupTooSpread(const std::vector<Player*>& players, float maxDistance = 30.0f);
+    static Position CalculateGroupCenter(const ::std::vector<Player*>& players);
+    static float CalculateGroupSpread(const ::std::vector<Player*>& players);
+    static bool IsGroupTooSpread(const ::std::vector<Player*>& players, float maxDistance = 30.0f);
 };
 
 } // namespace Playerbot

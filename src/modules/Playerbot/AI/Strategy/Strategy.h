@@ -52,7 +52,7 @@ struct StrategyRelevance
 class TC_GAME_API Strategy
 {
 public:
-    Strategy(std::string const& name);
+    Strategy(::std::string const& name);
     virtual ~Strategy() = default;
 
     // Core strategy interface
@@ -66,20 +66,20 @@ public:
     virtual bool IsActive(BotAI* ai) const { return _active; }
 
     // Action management
-    void AddAction(std::string const& name, std::shared_ptr<Action> action);
-    std::shared_ptr<Action> GetAction(std::string const& name) const;
-    std::vector<std::shared_ptr<Action>> GetActions() const;
+    void AddAction(::std::string const& name, ::std::shared_ptr<Action> action);
+    ::std::shared_ptr<Action> GetAction(::std::string const& name) const;
+    ::std::vector<::std::shared_ptr<Action>> GetActions() const;
 
     // Trigger management
-    void AddTrigger(std::shared_ptr<Trigger> trigger);
-    std::vector<std::shared_ptr<Trigger>> GetTriggers() const;
+    void AddTrigger(::std::shared_ptr<Trigger> trigger);
+    ::std::vector<::std::shared_ptr<Trigger>> GetTriggers() const;
 
     // Value management
-    void AddValue(std::string const& name, std::shared_ptr<Value> value);
-    std::shared_ptr<Value> GetValue(std::string const& name) const;
+    void AddValue(::std::string const& name, ::std::shared_ptr<Value> value);
+    ::std::shared_ptr<Value> GetValue(::std::string const& name) const;
 
     // Strategy metadata
-    std::string const& GetName() const { return _name; }
+    ::std::string const& GetName() const { return _name; }
     uint32 GetPriority() const { return _priority; }
     void SetPriority(uint32 priority) { _priority = priority; }
 
@@ -94,21 +94,21 @@ public:
     virtual void UpdateBehavior(BotAI* ai, uint32 diff) {}
 
 protected:
-    std::string _name;
+    ::std::string _name;
     uint32 _priority = 100;
-    std::atomic<bool> _active{false};
+    ::std::atomic<bool> _active{false};
 
     // Strategy components
-    std::unordered_map<std::string, std::shared_ptr<Action>> _actions;
-    std::vector<std::shared_ptr<Trigger>> _triggers;
-    std::unordered_map<std::string, std::shared_ptr<Value>> _values;
+    ::std::unordered_map<::std::string, ::std::shared_ptr<Action>> _actions;
+    ::std::vector<::std::shared_ptr<Trigger>> _triggers;
+    ::std::unordered_map<::std::string, ::std::shared_ptr<Value>> _values;
 };
 
 // Combat strategy base
 class TC_GAME_API CombatStrategy : public Strategy
 {
 public:
-    CombatStrategy(std::string const& name) : Strategy(name) {}
+    CombatStrategy(::std::string const& name) : Strategy(name) {}
 
     virtual void InitializeActions() override;
     virtual void InitializeTriggers() override;
@@ -124,7 +124,7 @@ public:
 class TC_GAME_API SocialStrategy : public Strategy
 {
 public:
-    SocialStrategy(std::string const& name) : Strategy(name) {}
+    SocialStrategy(::std::string const& name) : Strategy(name) {}
 
     virtual void InitializeActions() override;
     virtual void InitializeTriggers() override;
@@ -133,7 +133,7 @@ public:
     // Social-specific methods
     virtual bool ShouldGroupWith(Player* player) const;
     virtual bool ShouldTrade(Player* player) const;
-    virtual std::string GenerateResponse(std::string const& message) const;
+    virtual ::std::string GenerateResponse(::std::string const& message) const;
 };
 
 // Strategy factory
@@ -148,22 +148,22 @@ public:
     static StrategyFactory* instance();
 
     // Strategy registration
-    void RegisterStrategy(std::string const& name,
-                         std::function<std::unique_ptr<Strategy>()> creator) override;
+    void RegisterStrategy(::std::string const& name,
+                         ::std::function<::std::unique_ptr<Strategy>()> creator) override;
 
     // Strategy creation
-    std::unique_ptr<Strategy> CreateStrategy(std::string const& name) override;
-    std::vector<std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec) override;
-    std::vector<std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level) override;
-    std::vector<std::unique_ptr<Strategy>> CreatePvPStrategies() override;
-    std::vector<std::unique_ptr<Strategy>> CreatePvEStrategies() override;
+    ::std::unique_ptr<Strategy> CreateStrategy(::std::string const& name) override;
+    ::std::vector<::std::unique_ptr<Strategy>> CreateClassStrategies(uint8 classId, uint8 spec) override;
+    ::std::vector<::std::unique_ptr<Strategy>> CreateLevelStrategies(uint8 level) override;
+    ::std::vector<::std::unique_ptr<Strategy>> CreatePvPStrategies() override;
+    ::std::vector<::std::unique_ptr<Strategy>> CreatePvEStrategies() override;
 
     // Available strategies
-    std::vector<std::string> GetAvailableStrategies() const override;
-    bool HasStrategy(std::string const& name) const override;
+    ::std::vector<::std::string> GetAvailableStrategies() const override;
+    bool HasStrategy(::std::string const& name) const override;
 
 private:
-    std::unordered_map<std::string, std::function<std::unique_ptr<Strategy>()>> _creators;
+    ::std::unordered_map<::std::string, ::std::function<::std::unique_ptr<Strategy>()>> _creators;
 };
 
 #define sStrategyFactory StrategyFactory::instance()

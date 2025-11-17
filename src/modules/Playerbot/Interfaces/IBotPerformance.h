@@ -38,7 +38,7 @@ struct PerformanceMetrics
     float cpuUsagePercent = 0.0f;           // CPU usage percentage
 
     bool scalabilityHealthy = true;         // Overall scalability health
-    std::string performanceStatus = "HEALTHY"; // Performance status string
+    ::std::string performanceStatus = "HEALTHY"; // Performance status string
 };
 
 /**
@@ -83,15 +83,15 @@ public:
     // === METRICS RETRIEVAL ===
     virtual PerformanceMetrics GetSnapshot() const = 0;
     virtual bool IsPerformanceHealthy() const = 0;
-    virtual std::string GetPerformanceStatus() const = 0;
+    virtual ::std::string GetPerformanceStatus() const = 0;
 
     // === STATISTICS MANAGEMENT ===
     virtual void ResetCounters() = 0;
 
     // === TIMER CREATION ===
-    virtual std::unique_ptr<class IBotPerformanceTimer> CreateSpawnTimer() = 0;
-    virtual std::unique_ptr<class IBotPerformanceTimer> CreateDatabaseTimer() = 0;
-    virtual std::unique_ptr<class IBotPerformanceTimer> CreateCallbackTimer() = 0;
+    virtual ::std::unique_ptr<class IBotPerformanceTimer> CreateSpawnTimer() = 0;
+    virtual ::std::unique_ptr<class IBotPerformanceTimer> CreateDatabaseTimer() = 0;
+    virtual ::std::unique_ptr<class IBotPerformanceTimer> CreateCallbackTimer() = 0;
 };
 
 /**
@@ -149,13 +149,13 @@ public:
     virtual void CollectBotMetrics() = 0;
 
     // === METRICS EXPORT ===
-    virtual std::string ExportMetricsAsJson() const = 0;
-    virtual std::string ExportMetricsAsPrometheus() const = 0;
-    virtual void WriteMetricsToFile(std::string const& filename) const = 0;
+    virtual ::std::string ExportMetricsAsJson() const = 0;
+    virtual ::std::string ExportMetricsAsPrometheus() const = 0;
+    virtual void WriteMetricsToFile(::std::string const& filename) const = 0;
 
     // === HISTORICAL DATA ===
     virtual void StoreHistoricalSnapshot() = 0;
-    virtual std::vector<PerformanceMetrics> GetHistoricalData(std::chrono::minutes duration) const = 0;
+    virtual ::std::vector<PerformanceMetrics> GetHistoricalData(::std::chrono::minutes duration) const = 0;
 };
 
 } // namespace Playerbot

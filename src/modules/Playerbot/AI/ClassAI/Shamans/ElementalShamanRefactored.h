@@ -27,13 +27,25 @@
 #include <unordered_map>
 #include "Log.h"
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Elemental Shaman Spell IDs
 constexpr uint32 ELEM_LIGHTNING_BOLT = 188196;
 constexpr uint32 ELEM_LAVA_BURST = 51505;
@@ -66,7 +78,7 @@ public:
 
     void Generate(uint32 amount)
     {
-        _maelstrom = std::min(_maelstrom + amount, _maxMaelstrom);
+        _maelstrom = ::std::min(_maelstrom + amount, _maxMaelstrom);
     }
 
     void Spend(uint32 amount)
@@ -87,7 +99,6 @@ public:
     }
 
 private:
-    CooldownManager _cooldowns;
     uint32 _maelstrom;
     uint32 _maxMaelstrom;
 };
@@ -164,7 +175,7 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _flameShockTargets; // GUID -> expiration time
 };
 
 // Lava Surge proc tracker (instant Lava Burst)
@@ -199,7 +210,8 @@ public:
         {
             _lavaSurgeActive = true;
             if (Aura* aura = bot->GetAura(77762))
-                _lavaSurgeEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+                _lavaSurgeEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
+        }
         else
         {
             _lavaSurgeActive = false;
@@ -248,7 +260,9 @@ public:
         // Check if Stormkeeper buff is active
         if (Aura* aura = bot->GetAura(ELEM_STORMKEEPER))
         {
-            _stormkeeperStacks = aura->GetStackAmount();            _stormkeeperEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+            _stormkeeperStacks = aura->GetStackAmount();
+            _stormkeeperEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
+        }
         else
         {
             _stormkeeperStacks = 0;
@@ -264,7 +278,7 @@ private:
     uint32 _stormkeeperEndTime;
 };
 
-class ElementalShamanRefactored : public RangedDpsSpecialization<ManaResource>, public ShamanSpecialization
+class ElementalShamanRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -273,8 +287,8 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit ElementalShamanRefactored(Player* bot)        : RangedDpsSpecialization<ManaResource>(bot)
-        , ShamanSpecialization(bot)
+    explicit ElementalShamanRefactored(Player* bot)
+        : RangedDpsSpecialization<ManaResource>(bot)
         , _maelstromTracker()
         , _flameShockTracker()
         , _lavaSurgeTracker()
@@ -282,22 +296,22 @@ public:
         , _ascendanceActive(false)
         , _ascendanceEndTime(0)
         , _lastAscendanceTime(0)
-        
-        
         , _lastEchoingShockTime(0)
         , _lastPrimordialWaveTime(0)
-        , _cooldowns()
+        , _lastFireElementalTime(0)
+        , _lastStormkeeperTime(0)
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-            {ELEMENTAL_FIRE_ELEMENTAL, 150000, 1},
-            {ELEMENTAL_STORM_ELEMENTAL, 150000, 1},
-            {ELEMENTAL_STORMKEEPER, 60000, 1},
-            {ELEMENTAL_LIQUID_MAGMA_TOTEM, 60000, 1},
-            {ELEMENTAL_ASCENDANCE, 180000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {ELEMENTAL_FIRE_ELEMENTAL, 150000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_STORM_ELEMENTAL, 150000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_STORMKEEPER, 60000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_LIQUID_MAGMA_TOTEM, 60000, 1},
+        // COMMENTED OUT:             {ELEMENTAL_ASCENDANCE, 180000, 1}
+        // COMMENTED OUT:         });
 
-        // Resource initialization handled by base class CombatSpecializationTemplate        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
+        // Resource initialization handled by base class CombatSpecializationTemplate
+        TC_LOG_DEBUG("playerbot", "ElementalShamanRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems
         InitializeElementalMechanics();
@@ -321,6 +335,7 @@ public:
 
     void UpdateBuffs() override
     {
+        Player* bot = this->GetBot();
         if (!bot)
             return;
 
@@ -329,7 +344,7 @@ public:
         {
             if (this->CanCastSpell(ELEM_EARTH_SHIELD, bot))
             {
-                this->CastSpell(bot, ELEM_EARTH_SHIELD);
+                this->CastSpell(ELEM_EARTH_SHIELD, bot);
             }
         }
     }
@@ -345,7 +360,7 @@ public:
         // Astral Shift (damage reduction)
         if (healthPct < 40.0f && this->CanCastSpell(ELEM_ASTRAL_SHIFT, bot))
         {
-            this->CastSpell(bot, ELEM_ASTRAL_SHIFT);
+            this->CastSpell(ELEM_ASTRAL_SHIFT, bot);
             return;
         }
 
@@ -354,7 +369,7 @@ public:
         {
             if (this->CanCastSpell(ELEM_CAPACITOR_TOTEM, bot))
             {
-                this->CastSpell(bot, ELEM_CAPACITOR_TOTEM);
+                this->CastSpell(ELEM_CAPACITOR_TOTEM, bot);
                 return;
             }
         }
@@ -390,7 +405,9 @@ private:
         if (bot->HasAura(ELEM_ASCENDANCE))
         {
             _ascendanceActive = true;
-            if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))                _ascendanceEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+            if (Aura* aura = bot->GetAura(ELEM_ASCENDANCE))
+                _ascendanceEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();
+        }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
@@ -406,7 +423,7 @@ private:
         {
             if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
             {
-                this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
+                this->CastSpell(ELEM_FIRE_ELEMENTAL, bot);
                 _lastFireElementalTime = GameTime::GetGameTimeMS();
                 return;
             }
@@ -420,17 +437,21 @@ private:
             {
                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                 {
-                    this->CastSpell(bot, ELEM_ASCENDANCE);
+                    this->CastSpell(ELEM_ASCENDANCE, bot);
                     _ascendanceActive = true;
                     _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
                     _lastAscendanceTime = GameTime::GetGameTimeMS();
                     return;
                 }
-            }        }        // Stormkeeper (instant Lightning Bolts)
+            }
+        }
+
+        // Stormkeeper (instant Lightning Bolts)
         if ((GameTime::GetGameTimeMS() - _lastStormkeeperTime) >= 60000) // 60 sec CD
         {
-            if (this->CanCastSpell(ELEM_STORMKEEPER, bot))            {
-                this->CastSpell(bot, ELEM_STORMKEEPER);
+            if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
+            {
+                this->CastSpell(ELEM_STORMKEEPER, bot);
                 _stormkeeperTracker.ActivateProc(2);
                 _lastStormkeeperTime = GameTime::GetGameTimeMS();
                 return;
@@ -439,21 +460,29 @@ private:
 
         // Primordial Wave (buff + Flame Shock application)
         if ((GameTime::GetGameTimeMS() - _lastPrimordialWaveTime) >= 45000) // 45 sec CD
-        {            if (bot->HasSpell(ELEM_PRIMORDIAL_WAVE))
+        {
+            if (bot->HasSpell(ELEM_PRIMORDIAL_WAVE))
             {
-                if (this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))                {
-                    this->CastSpell(target, ELEM_PRIMORDIAL_WAVE);                    _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
+                if (this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
+                {
+                    this->CastSpell(ELEM_PRIMORDIAL_WAVE, target);
+                    _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                     _lastPrimordialWaveTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
         }
 
-        // Flame Shock (maintain DoT)        if (!_flameShockTracker.HasFlameShock(target->GetGUID()) ||            _flameShockTracker.NeedsFlameShockRefresh(target->GetGUID()))        {
+        // Flame Shock (maintain DoT)
+        if (!_flameShockTracker.HasFlameShock(target->GetGUID()) ||
+            _flameShockTracker.NeedsFlameShockRefresh(target->GetGUID()))
+        {
             if (this->CanCastSpell(ELEM_FLAME_SHOCK, target))
             {
-                this->CastSpell(target, ELEM_FLAME_SHOCK);                _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
-                _maelstromTracker.Generate(5);                return;
+                this->CastSpell(ELEM_FLAME_SHOCK, target);
+                _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
+                _maelstromTracker.Generate(5);
+                return;
             }
         }
 
@@ -462,17 +491,19 @@ private:
         {
             if (this->CanCastSpell(ELEM_LAVA_BURST, target))
             {
-                this->CastSpell(target, ELEM_LAVA_BURST);
+                this->CastSpell(ELEM_LAVA_BURST, target);
                 _lavaSurgeTracker.ConsumeProc();
                 _maelstromTracker.Generate(10);
                 return;
             }
         }
 
-        // Lava Burst (normal cast on Flame Shock target)        if (_flameShockTracker.HasFlameShock(target->GetGUID()))
+        // Lava Burst (normal cast on Flame Shock target)
+        if (_flameShockTracker.HasFlameShock(target->GetGUID()))
         {
-            if (this->CanCastSpell(ELEM_LAVA_BURST, target))            {
-                this->CastSpell(target, ELEM_LAVA_BURST);
+            if (this->CanCastSpell(ELEM_LAVA_BURST, target))
+            {
+                this->CastSpell(ELEM_LAVA_BURST, target);
                 _maelstromTracker.Generate(10);
 
                 // Chance to proc Lava Surge
@@ -488,17 +519,18 @@ private:
         {
             if (this->CanCastSpell(ELEM_EARTH_SHOCK, target))
             {
-                this->CastSpell(target, ELEM_EARTH_SHOCK);
+                this->CastSpell(ELEM_EARTH_SHOCK, target);
                 _maelstromTracker.Spend(60);
                 return;
             }
         }
 
-        // Elemental Blast (talent - generates Maelstrom + random buff)        if (bot->HasSpell(ELEM_ELEMENTAL_BLAST))
+        // Elemental Blast (talent - generates Maelstrom + random buff)
+        if (bot->HasSpell(ELEM_ELEMENTAL_BLAST))
         {
             if (this->CanCastSpell(ELEM_ELEMENTAL_BLAST, target))
             {
-                this->CastSpell(target, ELEM_ELEMENTAL_BLAST);
+                this->CastSpell(ELEM_ELEMENTAL_BLAST, target);
                 _maelstromTracker.Generate(12);
                 return;
             }
@@ -510,17 +542,18 @@ private:
         {
             if (this->CanCastSpell(ELEM_ICEFURY, target))
             {
-                this->CastSpell(target, ELEM_ICEFURY);
+                this->CastSpell(ELEM_ICEFURY, target);
                 _maelstromTracker.Generate(15);
                 return;
             }
         }
 
-        // Lightning Bolt with Stormkeeper proc (instant cast)        if (_stormkeeperTracker.HasStack())
+        // Lightning Bolt with Stormkeeper proc (instant cast)
+        if (_stormkeeperTracker.HasStack())
         {
             if (this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
             {
-                this->CastSpell(target, ELEM_LIGHTNING_BOLT);
+                this->CastSpell(ELEM_LIGHTNING_BOLT, target);
                 _stormkeeperTracker.ConsumeStack();
                 _maelstromTracker.Generate(8);
                 return;
@@ -529,18 +562,22 @@ private:
 
         // Echoing Shock (duplicates next spell)
         if ((GameTime::GetGameTimeMS() - _lastEchoingShockTime) >= 30000) // 30 sec CD
-        {            if (bot->HasSpell(ELEM_ECHOING_SHOCK))
+        {
+            if (bot->HasSpell(ELEM_ECHOING_SHOCK))
             {
                 if (this->CanCastSpell(ELEM_ECHOING_SHOCK, bot))
                 {
-                    this->CastSpell(bot, ELEM_ECHOING_SHOCK);                    _lastEchoingShockTime = GameTime::GetGameTimeMS();
+                    this->CastSpell(ELEM_ECHOING_SHOCK, bot);
+                    _lastEchoingShockTime = GameTime::GetGameTimeMS();
                     return;
                 }
             }
-        }        // Lightning Bolt (builder)
+        }
+
+        // Lightning Bolt (builder)
         if (this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
         {
-            this->CastSpell(target, ELEM_LIGHTNING_BOLT);
+            this->CastSpell(ELEM_LIGHTNING_BOLT, target);
             _maelstromTracker.Generate(8);
             return;
         }
@@ -559,7 +596,7 @@ private:
         {
             if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
             {
-                this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
+                this->CastSpell(ELEM_FIRE_ELEMENTAL, bot);
                 _lastFireElementalTime = GameTime::GetGameTimeMS();
                 return;
             }
@@ -567,11 +604,12 @@ private:
 
         // Ascendance for AoE burst
         if (maelstrom >= 60 && (GameTime::GetGameTimeMS() - _lastAscendanceTime) >= 180000 && enemyCount >= 5)
-        {            if (bot->HasSpell(ELEM_ASCENDANCE))
+        {
+            if (bot->HasSpell(ELEM_ASCENDANCE))
             {
                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                 {
-                    this->CastSpell(bot, ELEM_ASCENDANCE);
+                    this->CastSpell(ELEM_ASCENDANCE, bot);
                     _ascendanceActive = true;
                     _ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
                     _lastAscendanceTime = GameTime::GetGameTimeMS();
@@ -581,10 +619,11 @@ private:
         }
 
         // Liquid Magma Totem (AoE DoT)
-        if (bot->HasSpell(ELEM_LIQUID_MAGMA_TOTEM) && enemyCount >= 3)        {
+        if (bot->HasSpell(ELEM_LIQUID_MAGMA_TOTEM) && enemyCount >= 3)
+        {
             if (this->CanCastSpell(ELEM_LIQUID_MAGMA_TOTEM, bot))
             {
-                this->CastSpell(bot, ELEM_LIQUID_MAGMA_TOTEM);
+                this->CastSpell(ELEM_LIQUID_MAGMA_TOTEM, bot);
                 return;
             }
         }
@@ -594,7 +633,7 @@ private:
         {
             if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
             {
-                this->CastSpell(bot, ELEM_STORMKEEPER);
+                this->CastSpell(ELEM_STORMKEEPER, bot);
                 _stormkeeperTracker.ActivateProc(2);
                 _lastStormkeeperTime = GameTime::GetGameTimeMS();
                 return;
@@ -603,11 +642,13 @@ private:
 
         // Flame Shock on multiple targets (up to 3)
         if (enemyCount <= 3 && _flameShockTracker.GetActiveFlameShockCount() < 3)
-        {            if (!_flameShockTracker.HasFlameShock(target->GetGUID()))
+        {
+            if (!_flameShockTracker.HasFlameShock(target->GetGUID()))
             {
                 if (this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                 {
-                    this->CastSpell(target, ELEM_FLAME_SHOCK);                    _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
+                    this->CastSpell(ELEM_FLAME_SHOCK, target);
+                    _flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                     _maelstromTracker.Generate(5);
                     return;
                 }
@@ -619,7 +660,7 @@ private:
         {
             if (this->CanCastSpell(ELEM_EARTHQUAKE, target))
             {
-                this->CastSpell(target, ELEM_EARTHQUAKE);
+                this->CastSpell(ELEM_EARTHQUAKE, target);
                 _maelstromTracker.Spend(60);
                 return;
             }
@@ -630,9 +671,9 @@ private:
         {
             if (this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
             {
-                this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
+                this->CastSpell(ELEM_CHAIN_LIGHTNING, target);
                 _stormkeeperTracker.ConsumeStack();
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u)); // 4 per target hit
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u)); // 4 per target hit
                 return;
             }
         }
@@ -642,8 +683,8 @@ private:
         {
             if (this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
             {
-                this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                _maelstromTracker.Generate(4 * std::min(enemyCount, 5u));
+                this->CastSpell(ELEM_CHAIN_LIGHTNING, target);
+                _maelstromTracker.Generate(4 * ::std::min(enemyCount, 5u));
                 return;
             }
         }
@@ -651,7 +692,7 @@ private:
         // Lightning Bolt (single-target filler)
         if (this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
         {
-            this->CastSpell(target, ELEM_LIGHTNING_BOLT);
+            this->CastSpell(ELEM_LIGHTNING_BOLT, target);
             _maelstromTracker.Generate(8);
             return;
         }
@@ -665,15 +706,14 @@ private:
 
         uint32 count = 0;
         // Simplified enemy counting
-        return std::min(count, 10u);
+        return ::std::min(count, 10u);
     }
 
     void InitializeElementalMechanics()
     {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -688,7 +728,7 @@ private:
             // CRITICAL: Major burst cooldowns
             queue->RegisterSpell(ELEM_FIRE_ELEMENTAL, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(ELEM_FIRE_ELEMENTAL, [this](Player*, Unit* target) {
-                return target && this->_maelstromTracker.GetMaelstrom() >= 40;
+                return target && this->_maelstromTracker.GetCurrent() >= 40;
             }, "40+ Maelstrom (major CD, 2.5min)");
 
             queue->RegisterSpell(ELEM_ASCENDANCE, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
@@ -698,13 +738,13 @@ private:
 
             queue->RegisterSpell(ELEM_STORMKEEPER, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(ELEM_STORMKEEPER, [this](Player*, Unit*) {
-                return !this->_stormkeeperTracker.IsActive();
+                return !this->_stormkeeperTracker.HasStack();
             }, "2 instant Lightning Bolts (60s CD)");
 
             // HIGH: DoT maintenance & Maelstrom spenders
             queue->RegisterSpell(ELEM_FLAME_SHOCK, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(ELEM_FLAME_SHOCK, [this](Player*, Unit* target) {
-                return target && this->_flameShockTracker.NeedsRefresh(target->GetGUID());
+                return target && this->_flameShockTracker.NeedsFlameShockRefresh(target->GetGUID());
             }, "Refresh Flame Shock (pandemic window)");
 
             queue->RegisterSpell(ELEM_LAVA_BURST, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
@@ -715,12 +755,12 @@ private:
 
             queue->RegisterSpell(ELEM_EARTH_SHOCK, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(ELEM_EARTH_SHOCK, [this](Player*, Unit* target) {
-                return target && this->_maelstromTracker.GetMaelstrom() >= 60;
+                return target && this->_maelstromTracker.GetCurrent() >= 60;
             }, "60+ Maelstrom (spender)");
 
             queue->RegisterSpell(ELEM_EARTHQUAKE, SpellPriority::HIGH, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(ELEM_EARTHQUAKE, [this](Player*, Unit* target) {
-                return target && this->_maelstromTracker.GetMaelstrom() >= 60 &&
+                return target && this->_maelstromTracker.GetCurrent() >= 60 &&
                        this->GetEnemiesInRange(40.0f) >= 3;
             }, "60+ Maelstrom, 3+ enemies (AoE spender)");
 
@@ -769,28 +809,28 @@ private:
             auto root = Selector("Elemental Shaman DPS", {
                 // Tier 1: Burst Cooldowns (Fire Elemental, Ascendance, Stormkeeper)
                 Sequence("Burst Cooldowns", {
-                    Condition("Has Maelstrom and target", [this](Player* bot) {
-                        return bot && bot->GetVictim() && this->_maelstromTracker.GetMaelstrom() >= 40;
+                    Condition("Has Maelstrom and target", [this](Player* bot, Unit*) {
+                        return bot && bot->GetVictim() && this->_maelstromTracker.GetCurrent() >= 40;
                     }),
                     Selector("Use burst cooldowns", {
                         Sequence("Fire Elemental", {
-                            Action("Summon Fire Elemental", [this](Player* bot) {
+                            bot::ai::Action("Summon Fire Elemental", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_FIRE_ELEMENTAL, bot))
                                 {
-                                    this->CastSpell(bot, ELEM_FIRE_ELEMENTAL);
+                                    this->CastSpell(ELEM_FIRE_ELEMENTAL, bot);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Ascendance (talent)", {
-                            Condition("Has Ascendance and not active", [this](Player* bot) {
+                            Condition("Has Ascendance and not active", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(ELEM_ASCENDANCE) && !this->_ascendanceActive;
                             }),
-                            Action("Cast Ascendance", [this](Player* bot) {
+                            bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_ASCENDANCE, bot))
                                 {
-                                    this->CastSpell(bot, ELEM_ASCENDANCE);
+                                    this->CastSpell(ELEM_ASCENDANCE, bot);
                                     this->_ascendanceActive = true;
                                     this->_ascendanceEndTime = GameTime::GetGameTimeMS() + 15000;
                                     return NodeStatus::SUCCESS;
@@ -799,14 +839,14 @@ private:
                             })
                         }),
                         Sequence("Stormkeeper", {
-                            Condition("Not active", [this](Player*) {
-                                return !this->_stormkeeperTracker.IsActive();
+                            Condition("Not active", [this](Player*, Unit*) {
+                                return !this->_stormkeeperTracker.HasStack();
                             }),
-                            Action("Cast Stormkeeper", [this](Player* bot) {
+                            bot::ai::Action("Cast Stormkeeper", [this](Player* bot, Unit*) {
                                 if (this->CanCastSpell(ELEM_STORMKEEPER, bot))
                                 {
-                                    this->CastSpell(bot, ELEM_STORMKEEPER);
-                                    this->_stormkeeperTracker.Activate(2);
+                                    this->CastSpell(ELEM_STORMKEEPER, bot);
+                                    this->_stormkeeperTracker.ActivateProc(2);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -817,20 +857,20 @@ private:
 
                 // Tier 2: DoT Maintenance & Priority Abilities
                 Sequence("DoT & Priority", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Maintain DoT and use priority", {
                         Sequence("Flame Shock", {
-                            Condition("Needs refresh", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
-                                return target && this->_flameShockTracker.NeedsRefresh(target->GetGUID());
+                            Condition("Needs refresh", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
+                                return target && this->_flameShockTracker.NeedsFlameShockRefresh(target->GetGUID());
                             }),
-                            Action("Cast Flame Shock", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Flame Shock", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                                 {
-                                    this->CastSpell(target, ELEM_FLAME_SHOCK);
+                                    this->CastSpell(ELEM_FLAME_SHOCK, target);
                                     this->_flameShockTracker.ApplyFlameShock(target->GetGUID(), 18000);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -838,33 +878,33 @@ private:
                             })
                         }),
                         Sequence("Lava Burst (proc or Flame Shock)", {
-                            Condition("Lava Surge or Flame Shock active", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            Condition("Lava Surge or Flame Shock active", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 return target && (this->_lavaSurgeTracker.IsActive() ||
                                        this->_flameShockTracker.HasFlameShock(target->GetGUID()));
                             }),
-                            Action("Cast Lava Burst", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Lava Burst", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LAVA_BURST, target))
                                 {
-                                    this->CastSpell(target, ELEM_LAVA_BURST);
+                                    this->CastSpell(ELEM_LAVA_BURST, target);
                                     this->_maelstromTracker.Generate(10);
                                     if (this->_lavaSurgeTracker.IsActive())
-                                        this->_lavaSurgeTracker.Consume();
+                                        this->_lavaSurgeTracker.ConsumeProc();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
                             })
                         }),
                         Sequence("Primordial Wave (talent)", {
-                            Condition("Has talent", [this](Player* bot) {
+                            Condition("Has talent", [this](Player* bot, Unit*) {
                                 return bot->HasSpell(ELEM_PRIMORDIAL_WAVE);
                             }),
-                            Action("Cast Primordial Wave", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Primordial Wave", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
                                 {
-                                    this->CastSpell(target, ELEM_PRIMORDIAL_WAVE);
+                                    this->CastSpell(ELEM_PRIMORDIAL_WAVE, target);
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -875,19 +915,19 @@ private:
 
                 // Tier 3: Maelstrom Spender (Earth Shock, Earthquake)
                 Sequence("Maelstrom Spender", {
-                    Condition("60+ Maelstrom and target", [this](Player* bot) {
-                        return bot && bot->GetVictim() && this->_maelstromTracker.GetMaelstrom() >= 60;
+                    Condition("60+ Maelstrom and target", [this](Player* bot, Unit*) {
+                        return bot && bot->GetVictim() && this->_maelstromTracker.GetCurrent() >= 60;
                     }),
                     Selector("Spend Maelstrom", {
                         Sequence("Earthquake (AoE)", {
-                            Condition("3+ enemies", [this](Player*) {
+                            Condition("3+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
-                            Action("Cast Earthquake", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Earthquake", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTHQUAKE, target))
                                 {
-                                    this->CastSpell(target, ELEM_EARTHQUAKE);
+                                    this->CastSpell(ELEM_EARTHQUAKE, target);
                                     this->_maelstromTracker.Spend(60);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -895,11 +935,11 @@ private:
                             })
                         }),
                         Sequence("Earth Shock (ST)", {
-                            Action("Cast Earth Shock", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Earth Shock", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTH_SHOCK, target))
                                 {
-                                    this->CastSpell(target, ELEM_EARTH_SHOCK);
+                                    this->CastSpell(ELEM_EARTH_SHOCK, target);
                                     this->_maelstromTracker.Spend(60);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -911,20 +951,20 @@ private:
 
                 // Tier 4: Maelstrom Builder (Chain Lightning, Lightning Bolt)
                 Sequence("Maelstrom Builder", {
-                    Condition("Has target", [this](Player* bot) {
+                    Condition("Has target", [this](Player* bot, Unit*) {
                         return bot && bot->GetVictim();
                     }),
                     Selector("Generate Maelstrom", {
                         Sequence("Chain Lightning (AoE)", {
-                            Condition("2+ enemies", [this](Player*) {
+                            Condition("2+ enemies", [this](Player*, Unit*) {
                                 return this->GetEnemiesInRange(40.0f) >= 2;
                             }),
-                            Action("Cast Chain Lightning", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Chain Lightning", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
                                 {
-                                    this->CastSpell(target, ELEM_CHAIN_LIGHTNING);
-                                    uint32 enemies = std::min(this->GetEnemiesInRange(40.0f), 5u);
+                                    this->CastSpell(ELEM_CHAIN_LIGHTNING, target);
+                                    uint32 enemies = ::std::min(this->GetEnemiesInRange(40.0f), 5u);
                                     this->_maelstromTracker.Generate(4 * enemies);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -932,14 +972,14 @@ private:
                             })
                         }),
                         Sequence("Lightning Bolt (ST)", {
-                            Action("Cast Lightning Bolt", [this](Player* bot) {
-                                Unit* target = bot->GetVictim();
+                            bot::ai::Action("Cast Lightning Bolt", [this](Player* bot, Unit* target) {
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
                                 {
-                                    this->CastSpell(target, ELEM_LIGHTNING_BOLT);
+                                    this->CastSpell(ELEM_LIGHTNING_BOLT, target);
                                     this->_maelstromTracker.Generate(8);
-                                    if (this->_stormkeeperTracker.IsActive())
-                                        this->_stormkeeperTracker.ConsumeCharge();
+                                    if (this->_stormkeeperTracker.HasStack())
+                                        this->_stormkeeperTracker.ConsumeStack();
                                     return NodeStatus::SUCCESS;
                                 }
                                 return NodeStatus::FAILURE;
@@ -962,8 +1002,11 @@ private:
     bool _ascendanceActive;
     uint32 _ascendanceEndTime;
 
-    uint32 _lastAscendanceTime;    uint32 _lastEchoingShockTime;
+    uint32 _lastAscendanceTime;
+    uint32 _lastEchoingShockTime;
     uint32 _lastPrimordialWaveTime;
+    uint32 _lastFireElementalTime;
+    uint32 _lastStormkeeperTime;
 };
 
 } // namespace Playerbot

@@ -50,7 +50,7 @@ public:
     virtual void TriggerCharacterLoginForAllSessions() = 0;
 
     // Account-level operations
-    virtual std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const = 0;
+    virtual ::std::vector<Player*> GetPlayerBotsByAccount(uint32 accountId) const = 0;
     virtual void RemoveAllPlayerBots(uint32 accountId) = 0;
     virtual uint32 GetBotCountByAccount(uint32 accountId) const = 0;
 };

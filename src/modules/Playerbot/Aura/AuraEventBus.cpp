@@ -34,8 +34,8 @@ AuraEvent AuraEvent::AuraApplied(ObjectGuid target, ObjectGuid caster, uint32 sp
     event.duration = 0;
     event.isBuff = !harmful;
     event.isHarmful = harmful;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(30000);
     return event;
 }
 
@@ -52,8 +52,8 @@ AuraEvent AuraEvent::AuraRemoved(ObjectGuid target, uint32 spellId)
     event.duration = 0;
     event.isBuff = false;
     event.isHarmful = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -70,8 +70,8 @@ AuraEvent AuraEvent::AuraUpdated(ObjectGuid target, uint32 spellId, uint8 stacks
     event.duration = 0;
     event.isBuff = false;
     event.isHarmful = false;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(10000);
     return event;
 }
 
@@ -88,12 +88,12 @@ bool AuraEvent::IsValid() const
 
 bool AuraEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string AuraEvent::ToString() const
+::std::string AuraEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[AuraEvent] Type: " << static_cast<uint32>(type)
         << ", Target: " << targetGuid.ToString()
         << ", Spell: " << spellId
@@ -108,7 +108,7 @@ std::string AuraEvent::ToString() const
 
 AuraEventBus::AuraEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.aura", "AuraEventBus initialized");
 }
 
@@ -132,7 +132,7 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             _stats.totalEventsDropped++;
@@ -154,17 +154,17 @@ bool AuraEventBus::PublishEvent(AuraEvent const& event)
     return true;
 }
 
-bool AuraEventBus::Subscribe(BotAI* subscriber, std::vector<AuraEventType> const& types)
+bool AuraEventBus::Subscribe(BotAI* subscriber, ::std::vector<AuraEventType> const& types)
 {
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (AuraEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
             continue;
         if (subscriberList.size() >= MAX_SUBSCRIBERS_PER_EVENT)
             return false;
@@ -179,9 +179,9 @@ bool AuraEventBus::SubscribeAll(BotAI* subscriber)
     if (!subscriber)
         return false;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
         return false;
 
     _globalSubscribers.push_back(subscriber);
@@ -193,25 +193,25 @@ void AuraEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 }
 
 uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _cleanupTimer += diff;
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -221,10 +221,10 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<AuraEvent> eventsToProcess;
+    ::std::vector<AuraEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -244,11 +244,11 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (AuraEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
                 subscribers = it->second;
@@ -270,8 +270,8 @@ uint32 AuraEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         _stats.totalEventsProcessed++;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -286,9 +286,9 @@ uint32 AuraEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void AuraEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<AuraEvent> remainingEvents;
+    ::std::vector<AuraEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -307,13 +307,13 @@ void AuraEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 AuraEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 AuraEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -335,7 +335,7 @@ bool AuraEventBus::DeliverEvent(BotAI* subscriber, AuraEvent const& event)
         TC_LOG_TRACE("module.playerbot.aura", "AuraEventBus: Delivered event to subscriber");
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.aura", "AuraEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -349,10 +349,10 @@ bool AuraEventBus::ValidateEvent(AuraEvent const& event) const
 
 uint32 AuraEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<AuraEvent> validEvents;
+    ::std::vector<AuraEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -371,7 +371,7 @@ uint32 AuraEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void AuraEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void AuraEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -379,29 +379,29 @@ void AuraEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void AuraEventBus::LogEvent(AuraEvent const& event, std::string const& action) const
+void AuraEventBus::LogEvent(AuraEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.aura", "AuraEventBus: {} event - {}", action, event.ToString());
 }
 
 void AuraEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
     TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Subscribers: {} global ===", _globalSubscribers.size());
 }
 
 void AuraEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     TC_LOG_INFO("module.playerbot.aura", "=== AuraEventBus Queue: {} events ===", _eventQueue.size());
 }
 
-std::vector<AuraEvent> AuraEventBus::GetQueueSnapshot() const
+::std::vector<AuraEvent> AuraEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<AuraEvent> snapshot;
-    std::priority_queue<AuraEvent> tempQueue = _eventQueue;
+    ::std::vector<AuraEvent> snapshot;
+    ::std::priority_queue<AuraEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -420,15 +420,15 @@ void AuraEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string AuraEventBus::Statistics::ToString() const
+::std::string AuraEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

@@ -37,9 +37,9 @@ static constexpr uint32 SPELL_HERBALISM = 2366;
  * Lock-Free Implementation of ScanForNodes
  * Uses spatial grid snapshots instead of ObjectAccessor
  */
-std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
+::std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
 {
-    std::vector<GatheringNode> nodes;
+    ::std::vector<GatheringNode> nodes;
 
     Player* bot = GetBot();
     if (!bot)
@@ -59,7 +59,7 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
     if (HasGatheringSkill(GatheringSkillType::HERBALISM) ||
         HasGatheringSkill(GatheringSkillType::MINING))
     {
-        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
+        ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
             spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), range);
 
         for (auto const& snapshot : objects)
@@ -70,11 +70,11 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
                 continue;
 
             // Check if node is available
-            if (!snapshot.isSpawned || snapshot.isInUse)
+    if (!snapshot.isSpawned || snapshot.isInUse)
                 continue;
 
             // Check skill requirements
-            if (nodeType == GatheringNodeType::HERB &&
+    if (nodeType == GatheringNodeType::HERB &&
                 !HasGatheringSkill(GatheringSkillType::HERBALISM))
                 continue;
                 !HasGatheringSkill(GatheringSkillType::MINING))
@@ -102,20 +102,20 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
     // Scan for skinnable creatures
     if (HasGatheringSkill(GatheringSkillType::SKINNING))
     {
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
             spatialGrid->QueryNearbyCreatures(bot->GetPosition(), range);
 
         for (auto const& snapshot : creatures)
         {
             // Check if creature is dead and skinnable
-            if (snapshot.isAlive)
+    if (snapshot.isAlive)
                 continue;
 
             if (!snapshot.isSkinnable)
                 continue;
 
             // Check if it's lootable by the bot
-            if (!snapshot.lootRecipients.empty())
+    if (!snapshot.lootRecipients.empty())
             {
                 bool canLoot = false;
                 for (auto const& recipient : snapshot.lootRecipients)
@@ -150,7 +150,7 @@ std::vector<GatheringNode> GatheringManager::ScanForNodes_LockFree(float range)
     }
 
     // Sort by distance
-    std::sort(nodes.begin(), nodes.end(),
+    ::std::sort(nodes.begin(), nodes.end(),
         [](GatheringNode const& a, GatheringNode const& b)
         {
             return a.distance < b.distance;
@@ -212,7 +212,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
     if (node.nodeType == GatheringNodeType::CREATURE_CORPSE)
     {
         // Check creature snapshots
-        std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
+        ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> creatures =
             spatialGrid->QueryNearbyCreatures(bot->GetPosition(), GATHERING_SEARCH_RANGE);
 
         for (auto const& snapshot : creatures)
@@ -220,7 +220,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
             if (snapshot.guid == node.guid)
             {
                 // Verify creature is still dead and skinnable
-                if (!snapshot.isAlive && snapshot.isSkinnable)
+    if (!snapshot.isAlive && snapshot.isSkinnable)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -233,7 +233,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
     else
     {
         // Check GameObject snapshots
-        std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
+        ::std::vector<DoubleBufferedSpatialGrid::GameObjectSnapshot> objects =
             spatialGrid->QueryNearbyGameObjects(bot->GetPosition(), GATHERING_SEARCH_RANGE);
 
         for (auto const& snapshot : objects)
@@ -241,7 +241,7 @@ bool GatheringManager::QueueGatherNode_LockFree(GatheringNode const& node)
             if (snapshot.guid == node.guid)
             {
                 // Verify object is still spawned and not in use
-                if (snapshot.isSpawned && !snapshot.isInUse)
+    if (snapshot.isSpawned && !snapshot.isInUse)
                 {
                     nodeValid = true;
                     nodeDistance = snapshot.position.GetExactDist(bot->GetPosition());
@@ -369,7 +369,7 @@ void GatheringManager::Update_LockFree(uint32 diff)
         return;
 
     // Scan for new nodes
-    std::vector<GatheringNode> nearbyNodes = ScanForNodes_LockFree(GATHERING_SEARCH_RANGE);
+    ::std::vector<GatheringNode> nearbyNodes = ScanForNodes_LockFree(GATHERING_SEARCH_RANGE);
 
     if (nearbyNodes.empty())
     {
@@ -381,11 +381,11 @@ void GatheringManager::Update_LockFree(uint32 diff)
     for (auto const& node : nearbyNodes)
     {
         // Check if we can gather this node
-        if (GetGatheringSkillLevel(node.nodeType) < node.skillRequired)
+    if (GetGatheringSkillLevel(node.nodeType) < node.skillRequired)
             continue;
 
         // Try to queue gathering
-        if (QueueGatherNode_LockFree(node))
+    if (QueueGatherNode_LockFree(node))
         {
             break;  // Successfully queued gathering
         }

@@ -23,18 +23,34 @@
 #include "PetDefines.h"
 #include "MotionMaster.h"
 #include "CharmInfo.h"
+#include "HunterAI.h"
 #include <unordered_map>
 #include <queue>
 
 // Phase 5 Integration: Decision Systems
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 #include "GameTime.h"
 
 namespace Playerbot
 {
 
+// Forward declaration for trap management
+struct TrapInfo;
+
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 Beast Mastery Hunter Spell IDs
 enum BeastMasterySpells
 {
@@ -114,7 +130,7 @@ public:
         if (_bot->GetPetGUID().IsEmpty())
         {
 
-            _bot->CastSpell(_bot, SPELL_CALL_PET_1, false);
+            _bot->CastSpell(CastSpellTargetArg(_bot), SPELL_CALL_PET_1);
         }
     }
 
@@ -212,7 +228,7 @@ public:
         Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
 
-            _bot->CastSpell(pet, SPELL_MEND_PET, false);
+            _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET);
 
             _lastMendPet = currentTime;
         }
@@ -235,7 +251,7 @@ public:
     void ApplyBarbedShot()
     {
         // Barbed Shot applies/refreshes Pet Frenzy
-        _petFrenzyStacks = std::min<uint32>(_petFrenzyStacks + 1, 3);
+        _petFrenzyStacks = ::std::min<uint32>(_petFrenzyStacks + 1, 3);
         _petFrenzyExpireTime = GameTime::GetGameTimeMS() + 8000; // 8 second duration
     }
 
@@ -357,14 +373,14 @@ public:
         if (!bot->IsInCombat() && !bot->HasAura(SPELL_ASPECT_OF_CHEETAH))
         {
 
-            this->CastSpell(bot, SPELL_ASPECT_OF_CHEETAH);
+            this->CastSpell(SPELL_ASPECT_OF_CHEETAH, bot);
         }
 
         // Use Exhilaration for emergency healing
         if (bot->GetHealthPct() < 40.0f && this->CanUseAbility(SPELL_EXHILARATION))
         {
 
-            this->CastSpell(bot, SPELL_EXHILARATION);
+            this->CastSpell(SPELL_EXHILARATION, bot);
         }
 
         // Apply Hunter's Mark to current target
@@ -374,7 +390,7 @@ public:
 
             {
 
-                this->CastSpell(target, SPELL_HUNTERS_MARK);
+                this->CastSpell(SPELL_HUNTERS_MARK, target);
 
             }
         }
@@ -385,7 +401,7 @@ public:
         if (this->CanUseAbility(SPELL_COUNTER_SHOT))
         {
 
-            this->CastSpell(target, SPELL_COUNTER_SHOT);
+            this->CastSpell(SPELL_COUNTER_SHOT, target);
         }
     }
 
@@ -394,7 +410,7 @@ public:
         if (this->CanUseAbility(SPELL_TRANQUILIZING_SHOT))
         {
 
-            this->CastSpell(target, SPELL_TRANQUILIZING_SHOT);
+            this->CastSpell(SPELL_TRANQUILIZING_SHOT, target);
         }
     }
 
@@ -450,7 +466,7 @@ protected:
         if (ShouldUseBestialWrath(target) && this->CanUseAbility(SPELL_BESTIAL_WRATH))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_BESTIAL_WRATH);
+            this->CastSpell(SPELL_BESTIAL_WRATH, this->GetBot());
 
             _bestialWrathActive = true;
 
@@ -463,7 +479,7 @@ protected:
         if (_bestialWrathActive && this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
         {
 
-            this->CastSpell(this->GetBot(), SPELL_ASPECT_OF_THE_WILD);
+            this->CastSpell(SPELL_ASPECT_OF_THE_WILD, this->GetBot());
 
             _aspectOfTheWildActive = true;
 
@@ -476,7 +492,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_KILL_COMMAND))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND);
+            this->CastSpell(SPELL_KILL_COMMAND, target);
 
             _lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -489,13 +505,13 @@ protected:
         if (ShouldUseBarbedShot() && HasBarbedShotCharge())
         {
 
-            this->CastSpell(target, SPELL_BARBED_SHOT);
+            this->CastSpell(SPELL_BARBED_SHOT, target);
 
             _petManager.ApplyBarbedShot();
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
+            _resource = ::std::min<uint32>(_resource + 20, 100); // Barbed Shot generates 20 focus
 
             return;
         }
@@ -504,7 +520,7 @@ protected:
         if (currentFocus >= 25 && this->CanUseAbility(SPELL_DIRE_BEAST))
         {
 
-            this->CastSpell(target, SPELL_DIRE_BEAST);
+            this->CastSpell(SPELL_DIRE_BEAST, target);
 
             this->ConsumeResource(25);
 
@@ -515,13 +531,13 @@ protected:
         if (currentFocus >= 35)
         {
 
-            this->CastSpell(target, SPELL_COBRA_SHOT);
+            this->CastSpell(SPELL_COBRA_SHOT, target);
 
             _lastCobraShot = GameTime::GetGameTimeMS();
 
             this->ConsumeResource(35);
 
-            _resource = std::min<uint32>(_resource + 5, 100); // Small focus return
+            _resource = ::std::min<uint32>(_resource + 5, 100); // Small focus return
 
             return;
         }
@@ -537,7 +553,7 @@ protected:
         if (currentFocus >= 40)
         {
 
-            this->CastSpell(target, SPELL_MULTISHOT);
+            this->CastSpell(SPELL_MULTISHOT, target);
 
             this->ConsumeResource(40);
 
@@ -548,11 +564,11 @@ protected:
         if (HasBarbedShotCharge())
         {
 
-            this->CastSpell(target, SPELL_BARBED_SHOT);
+            this->CastSpell(SPELL_BARBED_SHOT, target);
 
             _barbedShotCharges--;
 
-            _resource = std::min<uint32>(_resource + 20, 100);
+            _resource = ::std::min<uint32>(_resource + 20, 100);
 
             return;
         }
@@ -561,7 +577,7 @@ protected:
         if (currentFocus >= 30 && this->CanUseAbility(SPELL_KILL_COMMAND))
         {
 
-            this->CastSpell(target, SPELL_KILL_COMMAND);
+            this->CastSpell(SPELL_KILL_COMMAND, target);
 
             this->ConsumeResource(30);
 
@@ -679,14 +695,14 @@ private:
     void MendPetIfNeeded() { _petManager.MendPet(); }
     void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
-    PetInfo GetPetInfo() const { return PetInfo(); /* Stub */ }
+    ::Playerbot::PetInfo GetPetInfo() const { return ::Playerbot::PetInfo(); /* Stub */ }
 
     // Trap management - delegated to AI
     void UpdateTrapManagement() { /* Traps managed by AI */ }
     void PlaceTrap(uint32 /*trapSpell*/, Position /*position*/) { /* Traps managed by AI */ }
     bool ShouldPlaceTrap() const { return false; }
     uint32 GetOptimalTrapSpell() const { return 0; }
-    std::vector<TrapInfo> GetActiveTraps() const { return std::vector<TrapInfo>(); }
+    ::std::vector<TrapInfo> GetActiveTraps() const { return ::std::vector<TrapInfo>(); }
 
     // Aspect management - delegated to UpdateBuffs
     void UpdateAspectManagement() { /* Aspects managed in UpdateBuffs */ }
@@ -717,11 +733,9 @@ private:
 
     // Phase 5 Integration: Decision Systems Initialization
     void InitializeBeastMasteryMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
 
         // ========================================================================
         // ActionPriorityQueue: Register Beast Mastery Hunter spells with priorities
@@ -733,7 +747,7 @@ private:
 
             queue->RegisterSpell(SPELL_EXHILARATION, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(SPELL_EXHILARATION, [this](Player* bot, Unit* target) {
+            queue->AddCondition(SPELL_EXHILARATION, [this](Player* bot, Unit*) {
 
                 return bot && bot->GetHealthPct() < 40.0f;
 
@@ -829,7 +843,7 @@ private:
             }, "40+ Focus, 3+ enemies (AoE filler + Beast Cleave)");
 
 
-            TC_LOG_INFO("module.playerbot", "🏹 BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: Registered {} spells in ActionPriorityQueue", queue->GetSpellCount());
         }
 
         // ========================================================================
@@ -863,13 +877,13 @@ private:
 
                             }),
 
-                            Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Bestial Wrath", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_BESTIAL_WRATH))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_BESTIAL_WRATH);
+                                    this->CastSpell(SPELL_BESTIAL_WRATH, bot);
 
                                     this->_bestialWrathActive = true;
 
@@ -888,19 +902,19 @@ private:
 
                         Sequence("Cast Aspect of the Wild", {
 
-                            Condition("During Bestial Wrath", [this](Player* bot, Unit* target) {
+                            Condition("During Bestial Wrath", [this](Player* bot, Unit*) {
 
                                 return this->_bestialWrathActive && !this->_aspectOfTheWildActive;
 
                             }),
 
-                            Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Aspect of the Wild", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_ASPECT_OF_THE_WILD))
 
                                 {
 
-                                    this->CastSpell(bot, SPELL_ASPECT_OF_THE_WILD);
+                                    this->CastSpell(SPELL_ASPECT_OF_THE_WILD, bot);
 
                                     this->_aspectOfTheWildActive = true;
 
@@ -935,19 +949,19 @@ private:
 
                         Sequence("Cast Kill Command", {
 
-                            Condition("30+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("30+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 30;
 
                             }),
 
-                            Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Kill Command", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_KILL_COMMAND))
 
                                 {
 
-                                    this->CastSpell(target, SPELL_KILL_COMMAND);
+                                    this->CastSpell(SPELL_KILL_COMMAND, target);
 
                                     this->_lastKillCommand = GameTime::GetGameTimeMS();
 
@@ -966,7 +980,7 @@ private:
 
                         Sequence("Cast Dire Beast", {
 
-                            Condition("Has talent and 25+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("Has talent and 25+ Focus", [this](Player* bot, Unit*) {
 
                                 return bot && bot->HasSpell(SPELL_DIRE_BEAST) &&
 
@@ -974,13 +988,13 @@ private:
 
                             }),
 
-                            Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Dire Beast", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->CanUseAbility(SPELL_DIRE_BEAST))
 
                                 {
 
-                                    this->CastSpell(target, SPELL_DIRE_BEAST);
+                                    this->CastSpell(SPELL_DIRE_BEAST, target);
 
                                     this->ConsumeResource(25);
 
@@ -1013,7 +1027,7 @@ private:
 
                         Sequence("Cast Barbed Shot", {
 
-                            Condition("Should use Barbed Shot", [this](Player* bot, Unit* target) {
+                            Condition("Should use Barbed Shot", [this](Player* bot, Unit*) {
 
                                 return this->HasBarbedShotCharge() &&
 
@@ -1025,19 +1039,19 @@ private:
 
                             }),
 
-                            Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Barbed Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->HasBarbedShotCharge())
 
                                 {
 
-                                    this->CastSpell(target, SPELL_BARBED_SHOT);
+                                    this->CastSpell(SPELL_BARBED_SHOT, target);
 
                                     this->_petManager.ApplyBarbedShot();
 
                                     this->_barbedShotCharges--;
 
-                                    this->_resource = std::min<uint32>(this->_resource + 20, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 20, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1068,19 +1082,19 @@ private:
 
                         Sequence("AoE Filler", {
 
-                            Condition("3+ enemies and 40+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("3+ enemies and 40+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->GetEnemiesInRange(40.0f) >= 3 && this->_resource >= 40;
 
                             }),
 
-                            Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Multishot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 40)
 
                                 {
 
-                                    this->CastSpell(target, SPELL_MULTISHOT);
+                                    this->CastSpell(SPELL_MULTISHOT, target);
 
                                     this->ConsumeResource(40);
 
@@ -1097,25 +1111,25 @@ private:
 
                         Sequence("Single Target Filler", {
 
-                            Condition("35+ Focus", [this](Player* bot, Unit* target) {
+                            Condition("35+ Focus", [this](Player* bot, Unit*) {
 
                                 return this->_resource >= 35;
 
                             }),
 
-                            Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
+                            bot::ai::Action("Cast Cobra Shot", [this](Player* bot, Unit* target) -> NodeStatus {
 
                                 if (this->_resource >= 35)
 
                                 {
 
-                                    this->CastSpell(target, SPELL_COBRA_SHOT);
+                                    this->CastSpell(SPELL_COBRA_SHOT, target);
 
                                     this->_lastCobraShot = GameTime::GetGameTimeMS();
 
                                     this->ConsumeResource(35);
 
-                                    this->_resource = std::min<uint32>(this->_resource + 5, 100);
+                                    this->_resource = ::std::min<uint32>(this->_resource + 5, 100);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1136,7 +1150,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
+            TC_LOG_INFO("module.playerbot", " BEAST MASTERY HUNTER: BehaviorTree initialized with 4-tier DPS rotation");
         }
     }
 

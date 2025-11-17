@@ -29,6 +29,18 @@
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // PROTECTION PALADIN SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -212,7 +224,7 @@ private:
 // PROTECTION PALADIN REFACTORED
 // ============================================================================
 
-class ProtectionPaladinRefactored : public TankSpecialization<ManaHolyPowerResource>, public PaladinSpecialization
+class ProtectionPaladinRefactored : public TankSpecialization<ManaHolyPowerResource>
 {
 public:
     using Base = TankSpecialization<ManaHolyPowerResource>;
@@ -221,7 +233,6 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ProtectionPaladinRefactored(Player* bot)        : TankSpecialization<ManaHolyPowerResource>(bot)
-        , PaladinSpecialization(bot)
         , _shieldTracker()
         , _consecrationActive(false)        , _consecrationEndTime(0)
         , _grandCrusaderProc(false)
@@ -269,7 +280,7 @@ public:
         if (!bot->HasAura(DEVOTION_AURA_PROT) && this->CanCastSpell(DEVOTION_AURA_PROT, bot))
         {
 
-            this->CastSpell(bot, DEVOTION_AURA_PROT);
+            this->CastSpell(DEVOTION_AURA_PROT, bot);
         }
 
         // Emergency defensives
@@ -305,7 +316,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), SHIELD_OF_THE_RIGHTEOUS);
+                this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, this->GetBot());
 
                 _shieldTracker.ApplyShield();
 
@@ -324,7 +335,7 @@ protected:
 
             {
 
-                this->CastSpell(target, AVENGERS_SHIELD);
+                this->CastSpell(AVENGERS_SHIELD, target);
 
                 _lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -339,7 +350,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(JUDGMENT_PROT, target))
         {
 
-            this->CastSpell(target, JUDGMENT_PROT);
+            this->CastSpell(JUDGMENT_PROT, target);
 
             _lastJudgmentTime = GameTime::GetGameTimeMS();
 
@@ -356,7 +367,7 @@ protected:
 
             {
 
-                this->CastSpell(target, HAMMER_OF_WRATH_PROT);
+                this->CastSpell(HAMMER_OF_WRATH_PROT, target);
 
                 GenerateHolyPower(1);
 
@@ -369,7 +380,7 @@ protected:
         if (this->CanCastSpell(AVENGERS_SHIELD, target))
         {
 
-            this->CastSpell(target, AVENGERS_SHIELD);
+            this->CastSpell(AVENGERS_SHIELD, target);
 
             _lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -380,7 +391,7 @@ protected:
         if (!_consecrationActive && this->CanCastSpell(CONSECRATION, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), CONSECRATION);
+            this->CastSpell(CONSECRATION, this->GetBot());
 
             _consecrationActive = true;
 
@@ -393,7 +404,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(BLESSED_HAMMER, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), BLESSED_HAMMER);
+            this->CastSpell(BLESSED_HAMMER, this->GetBot());
 
             GenerateHolyPower(1);
 
@@ -404,7 +415,7 @@ protected:
         if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
 
-            this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+            this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
             return;
         }
@@ -422,7 +433,7 @@ protected:
 
             {
 
-                this->CastSpell(this->GetBot(), SHIELD_OF_THE_RIGHTEOUS);
+                this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, this->GetBot());
 
                 _shieldTracker.ApplyShield();
 
@@ -437,7 +448,7 @@ protected:
         if (this->CanCastSpell(AVENGERS_SHIELD, target))
         {
 
-            this->CastSpell(target, AVENGERS_SHIELD);
+            this->CastSpell(AVENGERS_SHIELD, target);
 
             return;
         }
@@ -446,7 +457,7 @@ protected:
         if (!_consecrationActive && this->CanCastSpell(CONSECRATION, this->GetBot()))
         {
 
-            this->CastSpell(this->GetBot(), CONSECRATION);
+            this->CastSpell(CONSECRATION, this->GetBot());
 
             _consecrationActive = true;
 
@@ -459,7 +470,7 @@ protected:
         if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
 
-            this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+            this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
             return;
         }
@@ -468,7 +479,7 @@ protected:
         if (hp < 5 && this->CanCastSpell(JUDGMENT_PROT, target))
         {
 
-            this->CastSpell(target, JUDGMENT_PROT);
+            this->CastSpell(JUDGMENT_PROT, target);
 
             GenerateHolyPower(1);
 
@@ -485,34 +496,34 @@ protected:
         if (healthPct < 15.0f && this->CanCastSpell(DIVINE_SHIELD_PROT, bot))
         {
 
-            this->CastSpell(bot, DIVINE_SHIELD_PROT);
+            this->CastSpell(DIVINE_SHIELD_PROT, bot);
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-
-            {JUDGMENT_PROT, 6000, 1},
-
-            {HAMMER_OF_WRATH_PROT, 7500, 1},
-
-            {AVENGERS_SHIELD, CooldownPresets::INTERRUPT, 1},
-
-            {GUARDIAN_OF_ANCIENT_KINGS, 300000, 1},
-
-            {ARDENT_DEFENDER, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {DIVINE_PROTECTION_PROT, CooldownPresets::OFFENSIVE_60, 1},
-
-            {AVENGING_WRATH_PROT, CooldownPresets::MINOR_OFFENSIVE, 1},
-
-            {LAY_ON_HANDS_PROT, CooldownPresets::BLOODLUST, 1},
-
-            {DIVINE_SHIELD_PROT, 300000, 1},
-
-            {HAND_OF_RECKONING, CooldownPresets::DISPEL, 1},
-
-            {SERAPHIM, CooldownPresets::OFFENSIVE_45, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {JUDGMENT_PROT, 6000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HAMMER_OF_WRATH_PROT, 7500, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {AVENGERS_SHIELD, CooldownPresets::INTERRUPT, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {GUARDIAN_OF_ANCIENT_KINGS, 300000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {ARDENT_DEFENDER, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIVINE_PROTECTION_PROT, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {AVENGING_WRATH_PROT, CooldownPresets::MINOR_OFFENSIVE, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {LAY_ON_HANDS_PROT, CooldownPresets::BLOODLUST, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DIVINE_SHIELD_PROT, 300000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HAND_OF_RECKONING, CooldownPresets::DISPEL, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {SERAPHIM, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Protection: Divine Shield emergency");
 
@@ -523,7 +534,7 @@ protected:
         if (healthPct < 20.0f && this->CanCastSpell(LAY_ON_HANDS_PROT, bot))
         {
 
-            this->CastSpell(bot, LAY_ON_HANDS_PROT);
+            this->CastSpell(LAY_ON_HANDS_PROT, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Lay on Hands emergency");
 
@@ -534,7 +545,7 @@ protected:
         if (healthPct < 35.0f && this->CanCastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot))
         {
 
-            this->CastSpell(bot, GUARDIAN_OF_ANCIENT_KINGS);
+            this->CastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Guardian of Ancient Kings");
 
@@ -545,7 +556,7 @@ protected:
         if (healthPct < 50.0f && this->CanCastSpell(ARDENT_DEFENDER, bot))
         {
 
-            this->CastSpell(bot, ARDENT_DEFENDER);
+            this->CastSpell(ARDENT_DEFENDER, bot);
 
             TC_LOG_DEBUG("playerbot", "Protection: Ardent Defender");
 
@@ -560,7 +571,7 @@ protected:
 
             {
 
-                this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                 ConsumeHolyPower(3);
 
@@ -603,7 +614,7 @@ private:
 
     void GenerateHolyPower(uint32 amount)
     {
-        this->_resource.holyPower = std::min(this->_resource.holyPower + amount, this->_resource.maxHolyPower);
+        this->_resource.holyPower = ::std::min(this->_resource.holyPower + amount, this->_resource.maxHolyPower);
     }
 
     void ConsumeHolyPower(uint32 amount)
@@ -612,14 +623,12 @@ private:
     }
 
     void InitializeProtectionPaladinMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Tank + Holy Power Focus)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
 
             return;
@@ -875,7 +884,7 @@ private:
 
                     return (target && target->GetMaxHealth() > 500000) ||
 
-                           bot->GetAttackersCount() >= 3;
+                           bot->getAttackers().size() >= 3;
 
                 },
 
@@ -926,7 +935,7 @@ private:
                 SpellCategory::DEFENSIVE);
 
 
-            TC_LOG_INFO("module.playerbot", "🛡️  PROTECTION PALADIN: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", "  PROTECTION PALADIN: Registered {} spells in ActionPriorityQueue",
 
                 queue->GetSpellCount());
         }
@@ -954,7 +963,7 @@ private:
                     Selector("Emergency Response", {
                         // Divine Shield at critical HP
 
-                        Action("Cast Divine Shield", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Divine Shield", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 15.0f &&
 
@@ -962,7 +971,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, DIVINE_SHIELD_PROT);
+                                this->CastSpell(DIVINE_SHIELD_PROT, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -973,7 +982,7 @@ private:
                         }),
                         // Lay on Hands
 
-                        Action("Cast Lay on Hands", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Lay on Hands", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 20.0f &&
 
@@ -981,7 +990,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, LAY_ON_HANDS_PROT);
+                                this->CastSpell(LAY_ON_HANDS_PROT, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -992,7 +1001,7 @@ private:
                         }),
                         // Guardian of Ancient Kings
 
-                        Action("Cast Guardian", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Guardian", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 35.0f &&
 
@@ -1000,7 +1009,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, GUARDIAN_OF_ANCIENT_KINGS);
+                                this->CastSpell(GUARDIAN_OF_ANCIENT_KINGS, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1011,7 +1020,7 @@ private:
                         }),
                         // Ardent Defender
 
-                        Action("Cast Ardent Defender", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Ardent Defender", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 50.0f &&
 
@@ -1019,7 +1028,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, ARDENT_DEFENDER);
+                                this->CastSpell(ARDENT_DEFENDER, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1030,7 +1039,7 @@ private:
                         }),
                         // Word of Glory emergency heal
 
-                        Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
 
                             if (this->_resource.holyPower >= 3 &&
 
@@ -1040,7 +1049,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                                 this->ConsumeHolyPower(3);
 
@@ -1074,13 +1083,13 @@ private:
 
                     }),
 
-                    Action("Cast Shield of the Righteous", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Shield of the Righteous", [this](Player* bot, Unit*) {
 
                         if (this->CanCastSpell(SHIELD_OF_THE_RIGHTEOUS, bot))
 
                         {
 
-                            this->CastSpell(bot, SHIELD_OF_THE_RIGHTEOUS);
+                            this->CastSpell(SHIELD_OF_THE_RIGHTEOUS, bot);
 
                             this->_shieldTracker.ApplyShield();
 
@@ -1108,7 +1117,7 @@ private:
 
                     }),
 
-                    Action("Cast Hand of Reckoning", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Hand of Reckoning", [this](Player* bot, Unit* target) {
 
                         if (this->CanCastSpell(HAND_OF_RECKONING, target))
 
@@ -1149,7 +1158,7 @@ private:
 
                             }),
 
-                            Action("Cast Word of Glory", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Word of Glory", [this](Player* bot, Unit*) {
 
                                 if (bot->GetHealthPct() < 90.0f &&
 
@@ -1157,7 +1166,7 @@ private:
 
                                 {
 
-                                    this->CastSpell(bot, WORD_OF_GLORY_PROT);
+                                    this->CastSpell(WORD_OF_GLORY_PROT, bot);
 
                                     this->ConsumeHolyPower(3);
 
@@ -1183,13 +1192,13 @@ private:
                             Selector("HP Generator Priority", {
                                 // Avenger's Shield (high threat)
 
-                                Action("Cast Avenger's Shield", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Avenger's Shield", [this](Player* bot, Unit* target) {
 
                                     if (this->CanCastSpell(AVENGERS_SHIELD, target))
 
                                     {
 
-                                        this->CastSpell(target, AVENGERS_SHIELD);
+                                        this->CastSpell(AVENGERS_SHIELD, target);
 
                                         this->_lastAvengersShieldTime = GameTime::GetGameTimeMS();
 
@@ -1202,13 +1211,13 @@ private:
                                 }),
                                 // Judgment
 
-                                Action("Cast Judgment", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Judgment", [this](Player* bot, Unit* target) {
 
                                     if (this->CanCastSpell(JUDGMENT_PROT, target))
 
                                     {
 
-                                        this->CastSpell(target, JUDGMENT_PROT);
+                                        this->CastSpell(JUDGMENT_PROT, target);
 
                                         this->_lastJudgmentTime = GameTime::GetGameTimeMS();
 
@@ -1231,13 +1240,13 @@ private:
 
                                     }),
 
-                                    Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
+                                    bot::ai::Action("Cast Hammer of Wrath", [this](Player* bot, Unit* target) {
 
                                         if (this->CanCastSpell(HAMMER_OF_WRATH_PROT, target))
 
                                         {
 
-                                            this->CastSpell(target, HAMMER_OF_WRATH_PROT);
+                                            this->CastSpell(HAMMER_OF_WRATH_PROT, target);
 
                                             this->GenerateHolyPower(1);
 
@@ -1252,13 +1261,13 @@ private:
                                 }),
                                 // Blessed Hammer (talent)
 
-                                Action("Cast Blessed Hammer", [this](Player* bot, Unit* target) {
+                                bot::ai::Action("Cast Blessed Hammer", [this](Player* bot, Unit*) {
 
                                     if (this->CanCastSpell(BLESSED_HAMMER, bot))
 
                                     {
 
-                                        this->CastSpell(bot, BLESSED_HAMMER);
+                                        this->CastSpell(BLESSED_HAMMER, bot);
 
                                         this->GenerateHolyPower(1);
 
@@ -1295,13 +1304,13 @@ private:
 
                             }),
 
-                            Action("Cast Consecration", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Consecration", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(CONSECRATION, bot))
 
                                 {
 
-                                    this->CastSpell(bot, CONSECRATION);
+                                    this->CastSpell(CONSECRATION, bot);
 
                                     this->_consecrationActive = true;
 
@@ -1325,17 +1334,17 @@ private:
 
                                 return (target && target->GetMaxHealth() > 500000) ||
 
-                                       bot->GetAttackersCount() >= 3;
+                                       bot->getAttackers().size() >= 3;
 
                             }),
 
-                            Action("Cast Avenging Wrath", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Avenging Wrath", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(AVENGING_WRATH_PROT, bot))
 
                                 {
 
-                                    this->CastSpell(bot, AVENGING_WRATH_PROT);
+                                    this->CastSpell(AVENGING_WRATH_PROT, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1349,13 +1358,13 @@ private:
 
                         // Hammer of the Righteous filler
 
-                        Action("Cast Hammer of the Righteous", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Hammer of the Righteous", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
 
                             {
 
-                                this->CastSpell(target, HAMMER_OF_THE_RIGHTEOUS);
+                                this->CastSpell(HAMMER_OF_THE_RIGHTEOUS, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1374,7 +1383,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 PROTECTION PALADIN: BehaviorTree initialized with tank flow");
+            TC_LOG_INFO("module.playerbot", " PROTECTION PALADIN: BehaviorTree initialized with tank flow");
         }
     }
 

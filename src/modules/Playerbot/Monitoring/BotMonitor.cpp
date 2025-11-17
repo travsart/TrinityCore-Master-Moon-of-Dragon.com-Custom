@@ -66,13 +66,13 @@ namespace Playerbot
 
     bool BotMonitor::Initialize()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (_initialized)
 
             return true;
 
-        _initTime = std::chrono::system_clock::now();
+        _initTime = ::std::chrono::system_clock::now();
         _lastUpdateTime = _initTime;
         _lastCpuCheck = _initTime;
 
@@ -87,7 +87,7 @@ namespace Playerbot
 
     void BotMonitor::Shutdown()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (!_initialized)
 
@@ -114,17 +114,17 @@ namespace Playerbot
 
     void BotMonitor::Update(uint32 diff)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (!_initialized)
 
             return;
 
-        auto now = std::chrono::system_clock::now();
-        auto elapsedSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUpdateTime).count();
+        auto now = ::std::chrono::system_clock::now();
+        auto elapsedSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - _lastUpdateTime).count();
 
         // Update every 60 seconds (1 minute)
-        if (elapsedSinceLastUpdate >= 60000)
+    if (elapsedSinceLastUpdate >= 60000)
         {
 
             UpdateActivityMetrics();
@@ -144,8 +144,7 @@ namespace Playerbot
             _snapshotHistory.push_back(snapshot);
 
             // Keep only MAX_SNAPSHOT_HISTORY snapshots
-
-            if (_snapshotHistory.size() > MAX_SNAPSHOT_HISTORY)
+    if (_snapshotHistory.size() > MAX_SNAPSHOT_HISTORY)
 
                 _snapshotHistory.pop_front();
 
@@ -160,19 +159,19 @@ namespace Playerbot
 
     PerformanceSnapshot BotMonitor::CaptureSnapshot()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         PerformanceSnapshot snapshot;
-        snapshot.timestamp = std::chrono::system_clock::now();
+        snapshot.timestamp = ::std::chrono::system_clock::now();
         snapshot.activity = CollectActivityMetrics();
         snapshot.resources = CollectResourceMetrics();
         snapshot.database = CollectDatabaseMetrics();
 
         // Calculate average update time
-        if (!_updateTimes.empty())
+    if (!_updateTimes.empty())
         {
 
-            double sum = std::accumulate(_updateTimes.begin(), _updateTimes.end(), 0.0);
+            double sum = ::std::accumulate(_updateTimes.begin(), _updateTimes.end(), 0.0);
 
             snapshot.avgUpdateTimeMs = sum / _updateTimes.size();
         }
@@ -185,10 +184,10 @@ namespace Playerbot
         snapshot.maxUpdateTimeMs = _maxUpdateTime;
 
         // Calculate average AI decision time
-        if (!_aiDecisionTimes.empty())
+    if (!_aiDecisionTimes.empty())
         {
 
-            double sum = std::accumulate(_aiDecisionTimes.begin(), _aiDecisionTimes.end(), 0.0);
+            double sum = ::std::accumulate(_aiDecisionTimes.begin(), _aiDecisionTimes.end(), 0.0);
 
             snapshot.avgAIDecisionTimeMs = sum / _aiDecisionTimes.size();
         }
@@ -207,7 +206,7 @@ namespace Playerbot
 
     PerformanceSnapshot BotMonitor::GetLatestSnapshot() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (_snapshotHistory.empty())
 
@@ -216,11 +215,11 @@ namespace Playerbot
         return _snapshotHistory.back();
     }
 
-    std::vector<PerformanceSnapshot> BotMonitor::GetSnapshotHistory(uint32 count) const
+    ::std::vector<PerformanceSnapshot> BotMonitor::GetSnapshotHistory(uint32 count) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
-        std::vector<PerformanceSnapshot> result;
+        ::std::vector<PerformanceSnapshot> result;
 
         if (count == 0 || count > _snapshotHistory.size())
 
@@ -241,52 +240,52 @@ namespace Playerbot
 
     void BotMonitor::RecordBotCombatStart(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsInCombat.insert(botGuid);
         _botActivityState[botGuid] = "combat";
-        _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
+        _botActivityStartTime[botGuid] = ::std::chrono::system_clock::now();
     }
 
     void BotMonitor::RecordBotCombatEnd(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsInCombat.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotQuestStart(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsQuesting.insert(botGuid);
         _botActivityState[botGuid] = "questing";
-        _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
+        _botActivityStartTime[botGuid] = ::std::chrono::system_clock::now();
     }
 
     void BotMonitor::RecordBotQuestEnd(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsQuesting.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotDeath(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsDead.insert(botGuid);
         _botActivityState[botGuid] = "dead";
-        _botActivityStartTime[botGuid] = std::chrono::system_clock::now();
+        _botActivityStartTime[botGuid] = ::std::chrono::system_clock::now();
     }
 
     void BotMonitor::RecordBotResurrection(ObjectGuid botGuid)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botsDead.erase(botGuid);
         _botActivityState[botGuid] = "idle";
     }
 
     void BotMonitor::RecordBotUpdateTime(ObjectGuid botGuid, double updateTimeMs)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         _updateTimes.push_back(updateTimeMs);
         _totalUpdateTime += updateTimeMs;
@@ -297,7 +296,7 @@ namespace Playerbot
             _maxUpdateTime = updateTimeMs;
 
         // Keep only last 1000 update times
-        if (_updateTimes.size() > 1000)
+    if (_updateTimes.size() > 1000)
         {
 
             _totalUpdateTime -= _updateTimes.front();
@@ -308,12 +307,12 @@ namespace Playerbot
 
     void BotMonitor::RecordAIDecisionTime(ObjectGuid botGuid, double decisionTimeMs)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         _aiDecisionTimes.push_back(decisionTimeMs);
 
         // Keep only last 1000 decision times
-        if (_aiDecisionTimes.size() > 1000)
+    if (_aiDecisionTimes.size() > 1000)
 
             _aiDecisionTimes.pop_front();
     }
@@ -324,7 +323,7 @@ namespace Playerbot
 
     void BotMonitor::RecordDatabaseQuery(double queryTimeMs)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         _queryTimes.push_back(queryTimeMs);
         _totalQueries++;
@@ -335,7 +334,7 @@ namespace Playerbot
             _maxQueryTime = queryTimeMs;
 
         // Keep only last 1000 query times
-        if (_queryTimes.size() > 1000)
+    if (_queryTimes.size() > 1000)
         {
 
             _totalQueryTime -= _queryTimes.front();
@@ -346,28 +345,28 @@ namespace Playerbot
 
     void BotMonitor::RecordDatabaseCacheHit()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _totalCacheHits++;
     }
 
     void BotMonitor::RecordDatabaseCacheMiss()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _totalCacheMisses++;
     }
 
-    void BotMonitor::RecordError(std::string const& category, std::string const& message)
+    void BotMonitor::RecordError(::std::string const& category, ::std::string const& message)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _errorCount++;
         _errorsByCategory[category]++;
 
         TC_LOG_ERROR("playerbot", "BotMonitor: Error in %s: %s", category.c_str(), message.c_str());
     }
 
-    void BotMonitor::RecordWarning(std::string const& category, std::string const& message)
+    void BotMonitor::RecordWarning(::std::string const& category, ::std::string const& message)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _warningCount++;
         _warningsByCategory[category]++;
 
@@ -380,25 +379,25 @@ namespace Playerbot
 
     TrendData BotMonitor::GetCpuTrend() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _cpuTrend;
     }
 
     TrendData BotMonitor::GetMemoryTrend() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _memoryTrend;
     }
 
     TrendData BotMonitor::GetBotCountTrend() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _botCountTrend;
     }
 
     TrendData BotMonitor::GetQueryTimeTrend() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _queryTimeTrend;
     }
 
@@ -408,25 +407,25 @@ namespace Playerbot
 
     AlertThresholds BotMonitor::GetAlertThresholds() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         return _alertThresholds;
     }
 
     void BotMonitor::SetAlertThresholds(AlertThresholds const& thresholds)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _alertThresholds = thresholds;
     }
 
-    std::vector<PerformanceAlert> BotMonitor::GetActiveAlerts(AlertLevel minLevel) const
+    ::std::vector<PerformanceAlert> BotMonitor::GetActiveAlerts(AlertLevel minLevel) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
-        std::vector<PerformanceAlert> result;
+        ::std::vector<PerformanceAlert> result;
 
         // Get recent alerts (last 5 minutes)
-        auto now = std::chrono::system_clock::now();
-        auto fiveMinutesAgo = now - std::chrono::minutes(5);
+        auto now = ::std::chrono::system_clock::now();
+        auto fiveMinutesAgo = now - ::std::chrono::minutes(5);
 
         for (auto it = _alertHistory.rbegin(); it != _alertHistory.rend(); ++it)
         {
@@ -444,11 +443,11 @@ namespace Playerbot
         return result;
     }
 
-    std::vector<PerformanceAlert> BotMonitor::GetAlertHistory(uint32 count) const
+    ::std::vector<PerformanceAlert> BotMonitor::GetAlertHistory(uint32 count) const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
-        std::vector<PerformanceAlert> result;
+        ::std::vector<PerformanceAlert> result;
 
         if (count == 0 || count > _alertHistory.size())
 
@@ -465,13 +464,13 @@ namespace Playerbot
 
     void BotMonitor::ClearAlertHistory()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _alertHistory.clear();
     }
 
-    void BotMonitor::RegisterAlertCallback(std::function<void(PerformanceAlert const&)> callback)
+    void BotMonitor::RegisterAlertCallback(::std::function<void(PerformanceAlert const&)> callback)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _alertCallbacks.push_back(callback);
     }
 
@@ -479,14 +478,14 @@ namespace Playerbot
     // STATISTICS
     // =====================================================================
 
-    std::string BotMonitor::GetStatisticsSummary() const
+    ::std::string BotMonitor::GetStatisticsSummary() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         PerformanceSnapshot snapshot = const_cast<BotMonitor*>(this)->CaptureSnapshot();
 
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2);
+        ::std::ostringstream oss;
+        oss << ::std::fixed << ::std::setprecision(2);
 
         oss << "Playerbot Performance Summary\n";
         oss << "================================================================================\n\n";
@@ -498,11 +497,9 @@ namespace Playerbot
         oss << "  Questing:        " << snapshot.activity.questingCount << "\n";
         oss << "  Traveling:       " << snapshot.activity.travelingCount << "\n";
 
-        oss << "  Idle:
-        " << snapshot.activity.idleCount << "\n";
+        oss << "  Idle:            " << snapshot.activity.idleCount << "\n";
 
-        oss << "  Dead:
-        " << snapshot.activity.deadCount << "\n\n";
+        oss << "  Dead:            " << snapshot.activity.deadCount << "\n\n";
 
         // System Resources
         oss << "[System Resources]\n";
@@ -542,20 +539,20 @@ namespace Playerbot
 
     uint64 BotMonitor::GetUptimeSeconds() const
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         if (!_initialized)
 
             return 0;
 
-        auto now = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - _initTime);
+        auto now = ::std::chrono::system_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::seconds>(now - _initTime);
         return elapsed.count();
     }
 
     void BotMonitor::ResetStatistics()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         _totalUpdateTime = 0.0;
         _maxUpdateTime = 0.0;
@@ -610,7 +607,7 @@ namespace Playerbot
         if (!_queryTimes.empty())
         {
 
-            double avgQueryTime = std::accumulate(_queryTimes.begin(), _queryTimes.end(), 0.0) / _queryTimes.size();
+            double avgQueryTime = ::std::accumulate(_queryTimes.begin(), _queryTimes.end(), 0.0) / _queryTimes.size();
 
             _queryTimeTrend.AddDataPoint(avgQueryTime);
         }
@@ -622,7 +619,7 @@ namespace Playerbot
         DatabaseMetrics database = CollectDatabaseMetrics();
 
         // Check CPU usage
-        if (resources.cpuUsagePercent >= _alertThresholds.cpuCritical)
+    if (resources.cpuUsagePercent >= _alertThresholds.cpuCritical)
         {
 
             PerformanceAlert alert{
@@ -633,7 +630,7 @@ namespace Playerbot
 
                 "CPU usage critical",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 resources.cpuUsagePercent,
 
@@ -654,7 +651,7 @@ namespace Playerbot
 
                 "CPU usage high",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 resources.cpuUsagePercent,
 
@@ -678,7 +675,7 @@ namespace Playerbot
 
                 "Memory usage critical",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 static_cast<double>(memoryMB),
 
@@ -699,7 +696,7 @@ namespace Playerbot
 
                 "Memory usage high",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 static_cast<double>(memoryMB),
 
@@ -711,7 +708,7 @@ namespace Playerbot
         }
 
         // Check query time
-        if (database.avgQueryTimeMs >= _alertThresholds.queryTimeCriticalMs)
+    if (database.avgQueryTimeMs >= _alertThresholds.queryTimeCriticalMs)
         {
 
             PerformanceAlert alert{
@@ -722,7 +719,7 @@ namespace Playerbot
 
                 "Database query time critical",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 database.avgQueryTimeMs,
 
@@ -743,7 +740,7 @@ namespace Playerbot
 
                 "Database query time high",
 
-                std::chrono::system_clock::now(),
+                ::std::chrono::system_clock::now(),
 
                 database.avgQueryTimeMs,
 
@@ -760,12 +757,12 @@ namespace Playerbot
         _alertHistory.push_back(alert);
 
         // Keep only MAX_ALERT_HISTORY alerts
-        if (_alertHistory.size() > MAX_ALERT_HISTORY)
+    if (_alertHistory.size() > MAX_ALERT_HISTORY)
 
             _alertHistory.pop_front();
 
         // Trigger callbacks
-        for (auto const& callback : _alertCallbacks)
+    for (auto const& callback : _alertCallbacks)
         {
 
             try
@@ -776,7 +773,7 @@ namespace Playerbot
 
             }
 
-            catch (std::exception const& ex)
+            catch (::std::exception const& ex)
 
             {
 
@@ -821,7 +818,7 @@ namespace Playerbot
         metrics.deadCount = _botsDead.size();
 
         // Count traveling and idle bots
-        for (auto const& [guid, state] : _botActivityState)
+    for (auto const& [guid, state] : _botActivityState)
         {
 
             if (state == "traveling")
@@ -874,10 +871,10 @@ namespace Playerbot
             metrics.queriesPerSecond = _totalQueries / uptime;
 
         // Calculate average query time
-        if (!_queryTimes.empty())
+    if (!_queryTimes.empty())
         {
 
-            double sum = std::accumulate(_queryTimes.begin(), _queryTimes.end(), 0.0);
+            double sum = ::std::accumulate(_queryTimes.begin(), _queryTimes.end(), 0.0);
 
             metrics.avgQueryTimeMs = sum / _queryTimes.size();
         }
@@ -959,11 +956,11 @@ namespace Playerbot
         // This is a simplified version - production would need full implementation
         static long lastTotal = 0, lastIdle = 0;
 
-        std::ifstream file("/proc/stat");
+        ::std::ifstream file("/proc/stat");
         if (file.is_open())
         {
 
-            std::string cpu;
+            ::std::string cpu;
 
             long user, nice, system, idle;
 

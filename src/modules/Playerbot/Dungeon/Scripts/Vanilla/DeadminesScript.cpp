@@ -162,7 +162,7 @@ public:
             return;
 
         // Route to boss-specific handlers
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 644: // Rhahk'Zor
                 HandleRhahkZorEngage(player, boss);
@@ -252,12 +252,12 @@ public:
             return;
 
         // Boss-specific interrupt logic
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 647: // Captain Greenskin
             {
                 // Check if casting Cleave (SpellID 40504)
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -325,7 +325,7 @@ public:
             return;
 
         // Boss-specific add logic
-        switch (boss->GetEntry())
+    switch (boss->GetEntry())
         {
             case 642: // Sneed's Shredder
             {
@@ -354,7 +354,7 @@ public:
             case 646: // Mr. Smite
             {
                 // Mr. Smite spawns adds - kill adds first if low health
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
                 for (::Creature* add : adds)
                 {
                     if (add->GetHealthPct() < 30)
@@ -372,7 +372,7 @@ public:
             {
                 // VanCleef summons two Defias adds at low health
                 // Kill adds first if they exist
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
                 if (!adds.empty())
                 {
                     player->SetSelection(adds[0]->GetGUID());

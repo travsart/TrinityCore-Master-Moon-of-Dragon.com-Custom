@@ -59,11 +59,11 @@ protected:
     // Helper: Create complete test environment for class
     struct TestEnvironment
     {
-        std::shared_ptr<MockPlayer> bot;
-        std::shared_ptr<BotAI> botAI;
-        std::shared_ptr<MockUnit> enemy;
-        std::shared_ptr<MockGroup> group;
-        std::vector<std::shared_ptr<MockPlayer>> groupMembers;
+        ::std::shared_ptr<MockPlayer> bot;
+        ::std::shared_ptr<BotAI> botAI;
+        ::std::shared_ptr<MockUnit> enemy;
+        ::std::shared_ptr<MockGroup> group;
+        ::std::vector<::std::shared_ptr<MockPlayer>> groupMembers;
     };
 
     TestEnvironment CreatePriestTestEnvironment(uint32 spec = SPEC_DISCIPLINE)
@@ -78,7 +78,7 @@ protected:
         env.bot->SetPower(POWER_MANA, 16000);
 
         // Create BotAI with PriestAI specialization
-        env.botAI = std::make_shared<PriestAI>(
+        env.botAI = ::std::make_shared<PriestAI>(
             reinterpret_cast<Player*>(env.bot.get())
         );
 
@@ -87,12 +87,12 @@ protected:
         env.enemy->SetPosition(Position(0, 10, 0, 0));
 
         // Create group if healer spec
-        if (spec == SPEC_DISCIPLINE || spec == SPEC_HOLY)
+    if (spec == SPEC_DISCIPLINE || spec == SPEC_HOLY)
         {
             env.group = MockFactory::CreateMockGroup(env.bot.get());
 
             // Add 4 group members
-            for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
             {
                 auto member = MockFactory::CreateMockPlayer(CLASS_WARRIOR, 80);
                 member->SetMaxHealth(30000);
@@ -346,15 +346,15 @@ TEST_F(ClassAIIntegrationTest, Performance_CompleteUpdateChain_Under100Microseco
         .WillByDefault(Return(reinterpret_cast<MockUnit*>(env.enemy.get())));
 
     // Act: Measure complete update chain
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 1000; ++i)
     {
         env.botAI->UpdateAI(100); // BotAI → ClassAI update chain
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
 
     // Assert: Average under 100µs per complete update
     float avgMicroseconds = static_cast<float>(duration) / 1000.0f;
@@ -377,15 +377,15 @@ TEST_F(ClassAIIntegrationTest, Performance_GroupHealingScenario_Under200Microsec
     }
 
     // Act: Measure group healing update chain
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 1000; ++i)
     {
         env.botAI->UpdateAI(100);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
 
     // Assert: Average under 200µs (more expensive due to group scanning)
     float avgMicroseconds = static_cast<float>(duration) / 1000.0f;

@@ -32,12 +32,12 @@ namespace Test
 {
 
 // Static instance
-std::unique_ptr<TestEnvironment> TestEnvironment::s_instance = nullptr;
+::std::unique_ptr<TestEnvironment> TestEnvironment::s_instance = nullptr;
 
 TestEnvironment* TestEnvironment::Instance()
 {
     if (!s_instance)
-        s_instance = std::unique_ptr<TestEnvironment>(new TestEnvironment());
+        s_instance = ::std::unique_ptr<TestEnvironment>(new TestEnvironment());
     return s_instance.get();
 }
 
@@ -62,9 +62,9 @@ void TestEnvironment::Cleanup()
     ResetPerformanceMetrics();
 }
 
-std::unique_ptr<BotTestData> TestEnvironment::CreateTestBot(const std::string& name, uint8 class_, uint8 level)
+::std::unique_ptr<BotTestData> TestEnvironment::CreateTestBot(const ::std::string& name, uint8 class_, uint8 level)
 {
-    auto bot = std::make_unique<BotTestData>(name);
+    auto bot = ::std::make_unique<BotTestData>(name);
 
     bot->characterId = m_nextBotId++;
     bot->guid = ObjectGuid::Create<HighGuid::Player>(bot->characterId);
@@ -75,9 +75,9 @@ std::unique_ptr<BotTestData> TestEnvironment::CreateTestBot(const std::string& n
     return bot;
 }
 
-std::unique_ptr<GroupTestData> TestEnvironment::CreateTestGroup(const std::string& leaderName)
+::std::unique_ptr<GroupTestData> TestEnvironment::CreateTestGroup(const ::std::string& leaderName)
 {
-    auto group = std::make_unique<GroupTestData>(leaderName);
+    auto group = ::std::make_unique<GroupTestData>(leaderName);
 
     group->groupId = ObjectGuid::Create<HighGuid::Group>(m_nextGroupId++);
     group->creationTime = m_currentTime;
@@ -106,7 +106,7 @@ bool TestEnvironment::AddBotToGroup(GroupTestData& group, const BotTestData& bot
 
 bool TestEnvironment::RemoveBotFromGroup(GroupTestData& group, const ObjectGuid& botGuid)
 {
-    auto it = std::find_if(group.members.begin(), group.members.end(),
+    auto it = ::std::find_if(group.members.begin(), group.members.end(),
         [&botGuid](const BotTestData& bot) { return bot.guid == botGuid; });
 
     if (it == group.members.end())
@@ -123,10 +123,10 @@ bool TestEnvironment::RemoveBotFromGroup(GroupTestData& group, const ObjectGuid&
 
 Position TestEnvironment::GetRandomPosition(const Position& center, float radius)
 {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
-    std::uniform_real_distribution<float> radiusDist(0.0f, radius);
+    static ::std::random_device rd;
+    static ::std::mt19937 gen(rd());
+    ::std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
+    ::std::uniform_real_distribution<float> radiusDist(0.0f, radius);
 
     float angle = angleDist(gen);
     float distance = radiusDist(gen);
@@ -162,10 +162,10 @@ void TestEnvironment::AdvanceTime(uint32 milliseconds)
     m_currentTime += milliseconds;
 }
 
-void TestEnvironment::StartPerformanceMonitoring(const std::string& testName)
+void TestEnvironment::StartPerformanceMonitoring(const ::std::string& testName)
 {
     m_currentTestName = testName;
-    m_testStartTime = std::chrono::high_resolution_clock::now();
+    m_testStartTime = ::std::chrono::high_resolution_clock::now();
 
     // Record starting metrics
     m_currentMetrics.memoryUsageStart = GetMemoryUsage();
@@ -186,8 +186,8 @@ void TestEnvironment::StopPerformanceMonitoring()
     m_currentMetrics.memoryUsageEnd = GetMemoryUsage();
     m_currentMetrics.cpuUsageEnd = GetCpuUsage();
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - m_testStartTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - m_testStartTime);
 
     TC_LOG_INFO("playerbot.test", "Performance monitoring completed for test: {} (Duration: {}μs)",
                 m_currentTestName, duration.count());
@@ -281,9 +281,9 @@ bool TestEnvironment::ValidatePerformanceThresholds(const PerformanceMetrics& me
     return true;
 }
 
-std::shared_ptr<MockPlayer> TestEnvironment::CreateMockPlayer(const BotTestData& data)
+::std::shared_ptr<MockPlayer> TestEnvironment::CreateMockPlayer(const BotTestData& data)
 {
-    auto mockPlayer = std::make_shared<MockPlayer>();
+    auto mockPlayer = ::std::make_shared<MockPlayer>();
 
     // Configure default expectations
     ON_CALL(*mockPlayer, GetGUID()).WillByDefault(testing::Return(data.guid));
@@ -298,9 +298,9 @@ std::shared_ptr<MockPlayer> TestEnvironment::CreateMockPlayer(const BotTestData&
     return mockPlayer;
 }
 
-std::shared_ptr<MockGroup> TestEnvironment::CreateMockGroup(const GroupTestData& data)
+::std::shared_ptr<MockGroup> TestEnvironment::CreateMockGroup(const GroupTestData& data)
 {
-    auto mockGroup = std::make_shared<MockGroup>();
+    auto mockGroup = ::std::make_shared<MockGroup>();
 
     // Configure default expectations
     ON_CALL(*mockGroup, GetGUID()).WillByDefault(testing::Return(data.groupId));
@@ -310,9 +310,9 @@ std::shared_ptr<MockGroup> TestEnvironment::CreateMockGroup(const GroupTestData&
     return mockGroup;
 }
 
-std::shared_ptr<MockWorldSession> TestEnvironment::CreateMockSession(bool isBot)
+::std::shared_ptr<MockWorldSession> TestEnvironment::CreateMockSession(bool isBot)
 {
-    auto mockSession = std::make_shared<MockWorldSession>();
+    auto mockSession = ::std::make_shared<MockWorldSession>();
 
     // Configure default expectations
     ON_CALL(*mockSession, IsBot()).WillByDefault(testing::Return(isBot));
@@ -357,11 +357,11 @@ uint64 TestEnvironment::GetMemoryUsage() const
 float TestEnvironment::GetCpuUsage() const
 {
     // Simple CPU usage estimation - in a real implementation, this would be more sophisticated
-    static auto lastTime = std::chrono::high_resolution_clock::now();
+    static auto lastTime = ::std::chrono::high_resolution_clock::now();
     static uint64 lastUsage = 0;
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    auto timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastTime);
+    auto currentTime = ::std::chrono::high_resolution_clock::now();
+    auto timeDiff = ::std::chrono::duration_cast<::std::chrono::microseconds>(currentTime - lastTime);
 
     if (timeDiff.count() < 1000000) // Less than 1 second
         return 0.0f;
@@ -373,9 +373,9 @@ float TestEnvironment::GetCpuUsage() const
 }
 
 // PerformanceTimer implementation
-PerformanceTimer::PerformanceTimer(std::function<void(uint64)> callback)
-    : m_startTime(std::chrono::high_resolution_clock::now())
-    , m_callback(std::move(callback))
+PerformanceTimer::PerformanceTimer(::std::function<void(uint64)> callback)
+    : m_startTime(::std::chrono::high_resolution_clock::now())
+    , m_callback(::std::move(callback))
 {
 }
 
@@ -390,8 +390,8 @@ PerformanceTimer::~PerformanceTimer()
 
 uint64 PerformanceTimer::GetElapsedMicroseconds() const
 {
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration_cast<std::chrono::microseconds>(currentTime - m_startTime).count();
+    auto currentTime = ::std::chrono::high_resolution_clock::now();
+    return ::std::chrono::duration_cast<::std::chrono::microseconds>(currentTime - m_startTime).count();
 }
 
 void PerformanceTimer::Cancel()
@@ -400,7 +400,7 @@ void PerformanceTimer::Cancel()
 }
 
 // GroupTestHelper implementation
-bool GroupTestHelper::TestGroupCreation(const std::string& leaderName, const std::vector<std::string>& memberNames)
+bool GroupTestHelper::TestGroupCreation(const ::std::string& leaderName, const ::std::vector<::std::string>& memberNames)
 {
     auto env = TestEnvironment::Instance();
     auto group = env->CreateTestGroup(leaderName);
@@ -416,7 +416,7 @@ bool GroupTestHelper::TestGroupCreation(const std::string& leaderName, const std
     return group->members.size() == memberNames.size();
 }
 
-bool GroupTestHelper::TestGroupInvitation(const std::string& leaderName, const std::string& memberName)
+bool GroupTestHelper::TestGroupInvitation(const ::std::string& leaderName, const ::std::string& memberName)
 {
     // Simulate invitation process
     TC_LOG_DEBUG("playerbot.test", "Testing invitation from {} to {}", leaderName, memberName);
@@ -426,7 +426,7 @@ bool GroupTestHelper::TestGroupInvitation(const std::string& leaderName, const s
     return true;
 }
 
-bool GroupTestHelper::TestGroupAcceptance(const std::string& memberName)
+bool GroupTestHelper::TestGroupAcceptance(const ::std::string& memberName)
 {
     // Simulate acceptance process
     TC_LOG_DEBUG("playerbot.test", "Testing acceptance by {}", memberName);
@@ -490,33 +490,33 @@ bool StressTestRunner::RunConcurrentGroupTest(uint32 groupCount, uint32 botsPerG
     m_activeGroups.clear();
     for (uint32 i = 0; i < groupCount; ++i)
     {
-        std::string leaderName = "Leader" + std::to_string(i + 1);
+        ::std::string leaderName = "Leader" + ::std::to_string(i + 1);
         auto group = env->CreateTestGroup(leaderName);
 
         // Add bots to each group
-        for (uint32 j = 0; j < botsPerGroup; ++j)
+    for (uint32 j = 0; j < botsPerGroup; ++j)
         {
-            std::string botName = "Bot" + std::to_string(i + 1) + "_" + std::to_string(j + 1);
+            ::std::string botName = "Bot" + ::std::to_string(i + 1) + "_" + ::std::to_string(j + 1);
             auto bot = env->CreateTestBot(botName);
             env->AddBotToGroup(*group, *bot);
         }
 
-        m_activeGroups.push_back(std::move(group));
+        m_activeGroups.push_back(::std::move(group));
     }
 
     // Simulate activity for the specified duration
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
     while (true)
     {
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime);
+        auto currentTime = ::std::chrono::high_resolution_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - startTime);
 
         if (elapsed.count() >= durationSeconds)
             break;
 
         // Simulate group activities
         env->AdvanceTime(100);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ::std::this_thread::sleep_for(::std::chrono::milliseconds(100));
     }
 
     env->StopPerformanceMonitoring();
@@ -539,8 +539,8 @@ void StressTestRunner::AggregateMetrics(const PerformanceMetrics& metrics)
     m_aggregatedMetrics.successfulOperations += metrics.successfulOperations;
     m_aggregatedMetrics.failedOperations += metrics.failedOperations;
 
-    m_aggregatedMetrics.memoryUsagePeak = std::max(m_aggregatedMetrics.memoryUsagePeak, metrics.memoryUsagePeak);
-    m_aggregatedMetrics.cpuUsagePeak = std::max(m_aggregatedMetrics.cpuUsagePeak, metrics.cpuUsagePeak);
+    m_aggregatedMetrics.memoryUsagePeak = ::std::max(m_aggregatedMetrics.memoryUsagePeak, metrics.memoryUsagePeak);
+    m_aggregatedMetrics.cpuUsagePeak = ::std::max(m_aggregatedMetrics.cpuUsagePeak, metrics.cpuUsagePeak);
 }
 
 } // namespace Test

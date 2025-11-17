@@ -47,20 +47,20 @@ struct InstanceEvent
     uint32 encounterId;
     uint32 encounterFrame;
     uint32 errorCode;
-    std::string message;
-    std::vector<uint32> bossStates;  // For raid info
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::string message;
+    ::std::vector<uint32> bossStates;  // For raid info
+    ::std::chrono::steady_clock::time_point timestamp;
 
     static InstanceEvent InstanceReset(ObjectGuid playerGuid, uint32 mapId);
     static InstanceEvent InstanceResetFailed(ObjectGuid playerGuid, uint32 mapId, uint32 errorCode);
     static InstanceEvent EncounterFrameUpdate(ObjectGuid playerGuid, uint32 encounterId, uint32 frame);
-    static InstanceEvent RaidInfoReceived(ObjectGuid playerGuid, uint32 mapId, uint32 instanceId, std::vector<uint32> bossStates);
+    static InstanceEvent RaidInfoReceived(ObjectGuid playerGuid, uint32 mapId, uint32 instanceId, ::std::vector<uint32> bossStates);
     static InstanceEvent RaidGroupOnlyWarning(ObjectGuid playerGuid);
     static InstanceEvent InstanceSaveCreated(ObjectGuid playerGuid, uint32 mapId, uint32 instanceId);
-    static InstanceEvent InstanceMessageReceived(ObjectGuid playerGuid, uint32 mapId, std::string message);
+    static InstanceEvent InstanceMessageReceived(ObjectGuid playerGuid, uint32 mapId, ::std::string message);
 
     bool IsValid() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 class TC_GAME_API InstanceEventBus final : public IInstanceEventBus
@@ -69,13 +69,13 @@ public:
     static InstanceEventBus* instance();
     bool PublishEvent(InstanceEvent const& event) override;
 
-    using EventHandler = std::function<void(InstanceEvent const&)>;
+    using EventHandler = ::std::function<void(InstanceEvent const&)>;
 
-    void Subscribe(BotAI* subscriber, std::vector<InstanceEventType> const& types) override;
+    void Subscribe(BotAI* subscriber, ::std::vector<InstanceEventType> const& types) override;
     void SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
-    uint32 SubscribeCallback(EventHandler handler, std::vector<InstanceEventType> const& types) override;
+    uint32 SubscribeCallback(EventHandler handler, ::std::vector<InstanceEventType> const& types) override;
     void UnsubscribeCallback(uint32 subscriptionId) override;
 
     uint64 GetTotalEventsPublished() const override { return _totalEventsPublished; }
@@ -85,19 +85,19 @@ private:
     InstanceEventBus() = default;
     void DeliverEvent(InstanceEvent const& event);
 
-    std::unordered_map<InstanceEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<InstanceEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
 
     struct CallbackSubscription
     {
         uint32 id;
         EventHandler handler;
-        std::vector<InstanceEventType> types;
+        ::std::vector<InstanceEventType> types;
     };
-    std::vector<CallbackSubscription> _callbackSubscriptions;
+    ::std::vector<CallbackSubscription> _callbackSubscriptions;
     uint32 _nextCallbackId = 1;
 
-    std::unordered_map<InstanceEventType, uint64> _eventCounts;
+    ::std::unordered_map<InstanceEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _subscriberMutex;

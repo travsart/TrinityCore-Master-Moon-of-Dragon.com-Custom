@@ -126,7 +126,7 @@ public:
     bool IsInitialized() const { return _initialized; }
 
     // Configuration
-    void SetConfig(ETWProviderConfig config) { _config = std::move(config); }
+    void SetConfig(ETWProviderConfig config) { _config = ::std::move(config); }
     ETWProviderConfig GetConfig() const { return _config; }
 
     // Event logging
@@ -169,7 +169,7 @@ private:
     ETWProviderConfig _config;
 
     // Sampling counters
-    std::atomic<uint32> _taskExecutionCounter{0};
+    ::std::atomic<uint32> _taskExecutionCounter{0};
 
     // Statistics
     mutable Stats _stats;
@@ -198,7 +198,7 @@ private:
     uint32 _workerId;
     const char* _eventName;
     uint64 _eventId;
-    std::chrono::steady_clock::time_point _startTime;
+    ::std::chrono::steady_clock::time_point _startTime;
 };
 
 #else // !_WIN32

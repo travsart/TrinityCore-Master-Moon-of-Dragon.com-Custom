@@ -13,6 +13,7 @@
 #include "Define.h"
 #include "CombatStateAnalyzer.h"
 #include "SharedDefines.h"
+#include "AI/Decision/DecisionFusionSystem.h" // Full definition for DecisionVote and CombatContext
 #include <string>
 #include <vector>
 #include <map>
@@ -23,12 +24,6 @@ class Player;
 class Unit;
 class Group;
 class SpellInfo;
-
-// Forward declarations for DecisionFusion integration
-namespace bot { namespace ai {
-    struct DecisionVote;
-    enum class CombatContext : uint8;
-}} // namespace bot::ai
 
 namespace Playerbot
 {
@@ -86,10 +81,10 @@ namespace Playerbot
     // Behavior profile for specific situations
     struct BehaviorProfile
     {
-        std::string name;                                                      // Profile name for logging
+        ::std::string name;                                                      // Profile name for logging
         BehaviorPriority priority;                                             // Priority level
-        std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
-        std::function<void(Player*, uint32)> applyFunction;                   // Apply behavior changes
+        ::std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
+        ::std::function<void(::Player*, uint32)> applyFunction;                 // Apply behavior changes
         uint32 strategyFlags;                                                  // Strategy flags to activate
         uint32 minDuration;                                                    // Minimum time to stay active (ms)
         uint32 maxDuration;                                                    // Maximum time to stay active (ms)
@@ -154,7 +149,7 @@ namespace Playerbot
     class AdaptiveBehaviorManager
     {
     public:
-        explicit AdaptiveBehaviorManager(Player* bot);
+        explicit AdaptiveBehaviorManager(::Player* bot);
         ~AdaptiveBehaviorManager();
 
         // Main update function
@@ -171,11 +166,11 @@ namespace Playerbot
 
         // Profile management
         void RegisterProfile(const BehaviorProfile& profile);
-        void ActivateProfile(const std::string& name);
-        void DeactivateProfile(const std::string& name);
-        bool IsProfileActive(const std::string& name) const;
+        void ActivateProfile(const ::std::string& name);
+        void DeactivateProfile(const ::std::string& name);
+        bool IsProfileActive(const ::std::string& name) const;
         const BehaviorProfile* GetActiveProfile() const;
-        std::vector<std::string> GetActiveProfileNames() const;
+        ::std::vector<::std::string> GetActiveProfileNames() const;
 
         // Role management
         BotRole GetPrimaryRole() const { return _roleAssignment.primaryRole; }
@@ -242,8 +237,8 @@ namespace Playerbot
         uint32 GetStrategySwitchCount() const { return _strategySwitchCount; }
 
         // Learning and adaptation
-        void RecordDecisionOutcome(const std::string& decision, bool success);
-        float GetDecisionSuccessRate(const std::string& decision) const;
+        void RecordDecisionOutcome(const ::std::string& decision, bool success);
+        float GetDecisionSuccessRate(const ::std::string& decision) const;
         void AdjustBehaviorWeights();
 
         // Reset and cleanup
@@ -290,13 +285,13 @@ namespace Playerbot
         float GetGearScore() const;
 
         // Member variables
-        Player* _bot;
+        ::Player* _bot;
         uint32 _activeStrategies;
         RoleAssignment _roleAssignment;
         GroupComposition _groupComposition;
 
         // Behavior profiles
-        std::vector<BehaviorProfile> _profiles;
+        ::std::vector<BehaviorProfile> _profiles;
         BehaviorProfile* _activeProfile;
         uint32 _lastProfileSwitch;
         uint32 _profileSwitchCount;
@@ -304,7 +299,7 @@ namespace Playerbot
         // Strategy tracking
         uint32 _lastStrategyUpdate;
         uint32 _strategySwitchCount;
-        std::map<uint32, uint32> _strategyActiveTimes;
+        ::std::map<uint32, uint32> _strategyActiveTimes;
 
         // Decision tracking for learning
         struct DecisionOutcome
@@ -313,7 +308,7 @@ namespace Playerbot
             uint32 failureCount;
             float successRate;
         };
-        std::map<std::string, DecisionOutcome> _decisionHistory;
+        ::std::map<::std::string, DecisionOutcome> _decisionHistory;
 
         // Performance tracking
         uint32 _updateTimer;

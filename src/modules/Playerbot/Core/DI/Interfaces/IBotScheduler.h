@@ -60,26 +60,26 @@ public:
 
     // Activity patterns
     virtual void LoadActivityPatterns() = 0;
-    virtual void RegisterPattern(std::string const& name, ActivityPattern const& pattern) = 0;
-    virtual ActivityPattern const* GetPattern(std::string const& name) const = 0;
-    virtual std::vector<std::string> GetAvailablePatterns() const = 0;
-    virtual bool RemovePattern(std::string const& name) = 0;
+    virtual void RegisterPattern(::std::string const& name, ActivityPattern const& pattern) = 0;
+    virtual ActivityPattern const* GetPattern(::std::string const& name) const = 0;
+    virtual ::std::vector<::std::string> GetAvailablePatterns() const = 0;
+    virtual bool RemovePattern(::std::string const& name) = 0;
 
     // Scheduling operations
-    virtual void ScheduleBot(ObjectGuid guid, std::string const& patternName = "default") = 0;
+    virtual void ScheduleBot(ObjectGuid guid, ::std::string const& patternName = "default") = 0;
     virtual void UnscheduleBot(ObjectGuid guid) = 0;
     virtual void ScheduleAction(ScheduleEntry const& entry) = 0;
-    virtual void ScheduleLogin(ObjectGuid guid, std::chrono::system_clock::time_point when) = 0;
-    virtual void ScheduleLogout(ObjectGuid guid, std::chrono::system_clock::time_point when) = 0;
+    virtual void ScheduleLogin(ObjectGuid guid, ::std::chrono::system_clock::time_point when) = 0;
+    virtual void ScheduleLogout(ObjectGuid guid, ::std::chrono::system_clock::time_point when) = 0;
 
     // Pattern management
-    virtual void AssignPattern(ObjectGuid guid, std::string const& patternName) = 0;
-    virtual std::string GetBotPattern(ObjectGuid guid) const = 0;
+    virtual void AssignPattern(ObjectGuid guid, ::std::string const& patternName) = 0;
+    virtual ::std::string GetBotPattern(ObjectGuid guid) const = 0;
     virtual BotScheduleState const* GetBotScheduleState(ObjectGuid guid) const = 0;
 
     // Time calculations
-    virtual std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) = 0;
-    virtual std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) = 0;
+    virtual ::std::chrono::system_clock::time_point CalculateNextLogin(ObjectGuid guid) = 0;
+    virtual ::std::chrono::system_clock::time_point CalculateNextLogout(ObjectGuid guid) = 0;
 
     // Schedule processing
     virtual void ProcessSchedule() = 0;
@@ -96,7 +96,7 @@ public:
 
     // Event callbacks
     virtual void OnBotLoggedIn(ObjectGuid guid) = 0;
-    virtual void OnBotLoginFailed(ObjectGuid guid, std::string const& reason = "") = 0;
+    virtual void OnBotLoginFailed(ObjectGuid guid, ::std::string const& reason = "") = 0;
 
     // Control
     virtual void SetEnabled(bool enabled) = 0;

@@ -48,7 +48,7 @@ struct AuctionEvent
     uint64 buyoutAmount;
     uint32 command;      // AuctionAction enum
     uint32 errorCode;    // AuctionError enum
-    std::chrono::steady_clock::time_point timestamp;
+    ::std::chrono::steady_clock::time_point timestamp;
 
     static AuctionEvent CommandResult(ObjectGuid playerGuid, uint32 auctionId, uint32 command, uint32 errorCode);
     static AuctionEvent ListReceived(ObjectGuid playerGuid, uint32 itemCount);
@@ -58,7 +58,7 @@ struct AuctionEvent
     static AuctionEvent Expired(ObjectGuid playerGuid, uint32 auctionId, uint32 itemId);
 
     bool IsValid() const;
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 class TC_GAME_API AuctionEventBus final : public IAuctionEventBus
@@ -67,13 +67,13 @@ public:
     static AuctionEventBus* instance();
     bool PublishEvent(AuctionEvent const& event) override;
 
-    using EventHandler = std::function<void(AuctionEvent const&)>;
+    using EventHandler = ::std::function<void(AuctionEvent const&)>;
 
-    void Subscribe(BotAI* subscriber, std::vector<AuctionEventType> const& types) override;
+    void Subscribe(BotAI* subscriber, ::std::vector<AuctionEventType> const& types) override;
     void SubscribeAll(BotAI* subscriber) override;
     void Unsubscribe(BotAI* subscriber) override;
 
-    uint32 SubscribeCallback(EventHandler handler, std::vector<AuctionEventType> const& types) override;
+    uint32 SubscribeCallback(EventHandler handler, ::std::vector<AuctionEventType> const& types) override;
     void UnsubscribeCallback(uint32 subscriptionId) override;
 
     uint64 GetTotalEventsPublished() const override { return _totalEventsPublished; }
@@ -83,19 +83,19 @@ private:
     AuctionEventBus() = default;
     void DeliverEvent(AuctionEvent const& event);
 
-    std::unordered_map<AuctionEventType, std::vector<BotAI*>> _subscribers;
-    std::vector<BotAI*> _globalSubscribers;
+    ::std::unordered_map<AuctionEventType, ::std::vector<BotAI*>> _subscribers;
+    ::std::vector<BotAI*> _globalSubscribers;
 
     struct CallbackSubscription
     {
         uint32 id;
         EventHandler handler;
-        std::vector<AuctionEventType> types;
+        ::std::vector<AuctionEventType> types;
     };
-    std::vector<CallbackSubscription> _callbackSubscriptions;
+    ::std::vector<CallbackSubscription> _callbackSubscriptions;
     uint32 _nextCallbackId = 1;
 
-    std::unordered_map<AuctionEventType, uint64> _eventCounts;
+    ::std::unordered_map<AuctionEventType, uint64> _eventCounts;
     uint64 _totalEventsPublished = 0;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> _subscriberMutex;

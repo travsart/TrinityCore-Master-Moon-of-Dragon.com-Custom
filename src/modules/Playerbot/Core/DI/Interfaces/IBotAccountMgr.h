@@ -62,9 +62,9 @@ public:
     {
         uint32 bnetAccountId;
         uint32 legacyAccountId;
-        std::string email;
-        std::string passwordHash;
-        std::chrono::system_clock::time_point createdAt;
+        ::std::string email;
+        ::std::string passwordHash;
+        ::std::chrono::system_clock::time_point createdAt;
         uint8 characterCount;
         bool isActive;
         bool isInPool;
@@ -99,7 +99,7 @@ public:
      * @param requestedEmail Optional specific email
      * @return BattleNet account ID, 0 on failure
      */
-    virtual uint32 CreateBotAccount(std::string const& requestedEmail = "") = 0;
+    virtual uint32 CreateBotAccount(::std::string const& requestedEmail = "") = 0;
 
     /**
      * @brief Batch create multiple accounts
@@ -107,7 +107,7 @@ public:
      * @param callback Async callback with created account IDs
      */
     virtual void CreateBotAccountsBatch(uint32 count,
-        std::function<void(std::vector<uint32>)> callback) = 0;
+        ::std::function<void(::std::vector<uint32>)> callback) = 0;
 
     /**
      * @brief Pre-create accounts for instant availability
@@ -163,13 +163,13 @@ public:
      * @param callback Optional async completion callback
      */
     virtual void DeleteBotAccount(uint32 bnetAccountId,
-        std::function<void(bool success)> callback = nullptr) = 0;
+        ::std::function<void(bool success)> callback = nullptr) = 0;
 
     /**
      * @brief Delete all bot accounts (cleanup)
      * @param callback Optional callback with delete count
      */
-    virtual void DeleteAllBotAccounts(std::function<void(uint32 deleted)> callback = nullptr) = 0;
+    virtual void DeleteAllBotAccounts(::std::function<void(uint32 deleted)> callback = nullptr) = 0;
 
     /**
      * @brief Check if account can create more characters

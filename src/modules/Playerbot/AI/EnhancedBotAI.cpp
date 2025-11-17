@@ -60,7 +60,7 @@ EnhancedBotAI::EnhancedBotAI(Player* bot) :
     InitializeClassAI();
     LoadConfiguration();
 
-    _lastUpdateTime = std::chrono::high_resolution_clock::now();
+    _lastUpdateTime = ::std::chrono::high_resolution_clock::now();
     TC_LOG_DEBUG("bot.ai.enhanced", "EnhancedBotAI initialized for bot {}", bot->GetName());
 }
 
@@ -71,7 +71,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
     // CRITICAL: Call parent UpdateAI for core functionality (group invitations, etc.)
     BotAI::UpdateAI(diff);
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Performance throttling
     if (_updateThrottleMs > 0)
@@ -95,7 +95,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
     try
     {
         // State-based update routing
-        switch (_currentState)
+    switch (_currentState)
         {
             case BotAIState::COMBAT:
                 UpdateCombat(diff);
@@ -133,7 +133,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
 
             case BotAIState::RESTING:
                 // Rest logic
-                if (GetBot()->GetHealthPct() >= 95.0f && GetBot()->GetPowerPct(POWER_MANA) >= 95.0f)
+    if (GetBot()->GetHealthPct() >= 95.0f && GetBot()->GetPowerPct(POWER_MANA) >= 95.0f)
                 {
                     TransitionToState(BotAIState::SOLO);
                 }
@@ -141,7 +141,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
         }
 
         // Always update group coordination if in a group
-        if (_currentGroup)
+    if (_currentGroup)
         {
             UpdateGroupCoordination(diff);
         }
@@ -160,14 +160,14 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
             _lastMemoryCheck = 0;
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("bot.ai.enhanced", "Update exception for bot {}: {}",
             GetBot()->GetName(), e.what());
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     EndPerformanceCapture(elapsed);
 
@@ -621,10 +621,10 @@ void EnhancedBotAI::StartPerformanceCapture()
     // Capture start metrics
 }
 
-void EnhancedBotAI::EndPerformanceCapture(std::chrono::microseconds elapsed)
+void EnhancedBotAI::EndPerformanceCapture(::std::chrono::microseconds elapsed)
 {
     _stats.totalUpdateTime += elapsed;
-    _stats.avgUpdateTime = _stats.totalUpdateTime / std::max(1u, _stats.totalUpdates);
+    _stats.avgUpdateTime = _stats.totalUpdateTime / ::std::max(1u, _stats.totalUpdates);
 
     if (elapsed > _stats.maxUpdateTime)
         _stats.maxUpdateTime = elapsed;
@@ -811,7 +811,7 @@ void EnhancedBotAI::CleanupExpiredData()
 {
     // Clean up threat list
     _threatList.erase(
-        std::remove_if(_threatList.begin(), _threatList.end(),
+        ::std::remove_if(_threatList.begin(), _threatList.end(),
             [](Unit* unit) { return !unit || !unit->IsAlive(); }),
         _threatList.end()
     );
@@ -830,14 +830,14 @@ void EnhancedBotAI::CompactMemory()
 }
 
 // Factory implementations
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateEnhancedAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateEnhancedAI(Player* bot)
 {
-    return std::make_unique<EnhancedBotAI>(bot);
+    return ::std::make_unique<EnhancedBotAI>(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateTankAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateTankAI(Player* bot)
 {
-    auto ai = std::make_unique<EnhancedBotAI>(bot);
+    auto ai = ::std::make_unique<EnhancedBotAI>(bot);
 
     CombatAIConfig config;
     config.enableThreatManagement = true;
@@ -848,9 +848,9 @@ std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateTankAI(Player* bot)
     return ai;
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateHealerAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateHealerAI(Player* bot)
 {
-    auto ai = std::make_unique<EnhancedBotAI>(bot);
+    auto ai = ::std::make_unique<EnhancedBotAI>(bot);
 
     CombatAIConfig config;
     config.enableKiting = true;
@@ -861,9 +861,9 @@ std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateHealerAI(Player* bot)
     return ai;
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDPSAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDPSAI(Player* bot)
 {
-    auto ai = std::make_unique<EnhancedBotAI>(bot);
+    auto ai = ::std::make_unique<EnhancedBotAI>(bot);
 
     CombatAIConfig config;
     config.enableInterrupts = true;
@@ -874,9 +874,9 @@ std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDPSAI(Player* bot)
 }
 
 // Class-specific factory methods
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateWarriorAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateWarriorAI(Player* bot)
 {
-    auto ai = std::make_unique<EnhancedBotAI>(bot);
+    auto ai = ::std::make_unique<EnhancedBotAI>(bot);
 
     // Warriors are typically tanks or melee DPS
     CombatAIConfig config;
@@ -888,9 +888,9 @@ std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateWarriorAI(Player* bot
     return ai;
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreatePriestAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreatePriestAI(Player* bot)
 {
-    auto ai = std::make_unique<EnhancedBotAI>(bot);
+    auto ai = ::std::make_unique<EnhancedBotAI>(bot);
 
     // Priests are typically healers
     CombatAIConfig config;
@@ -903,57 +903,57 @@ std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreatePriestAI(Player* bot)
 }
 
 // Implement remaining class-specific factory methods...
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreatePaladinAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreatePaladinAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateHunterAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateHunterAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateRogueAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateRogueAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDeathKnightAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDeathKnightAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateShamanAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateShamanAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateMageAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateMageAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateWarlockAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateWarlockAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateMonkAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateMonkAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDruidAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDruidAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDemonHunterAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateDemonHunterAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }
 
-std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateEvokerAI(Player* bot)
+::std::unique_ptr<EnhancedBotAI> EnhancedBotAIFactory::CreateEvokerAI(Player* bot)
 {
     return CreateEnhancedAI(bot);
 }

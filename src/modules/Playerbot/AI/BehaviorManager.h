@@ -78,7 +78,7 @@ namespace Playerbot
          * @param managerName Name for logging purposes (e.g., "QuestManager")
          */
         explicit BehaviorManager(Player* bot, BotAI* ai, uint32 updateInterval = 1000,
-                                 std::string managerName = "BehaviorManager");
+                                 ::std::string managerName = "BehaviorManager");
 
         /**
          * @brief Virtual destructor for proper cleanup of derived classes
@@ -102,7 +102,7 @@ namespace Playerbot
          * Thread-safe: Uses atomic operations for lock-free access
          * Performance: <0.001ms guaranteed
          */
-        bool IsEnabled() const { return m_enabled.load(std::memory_order_acquire); }
+        bool IsEnabled() const { return m_enabled.load(::std::memory_order_acquire); }
 
         /**
          * @brief Enable or disable this manager
@@ -110,7 +110,7 @@ namespace Playerbot
          *
          * Thread-safe: Uses atomic operations
          */
-        void SetEnabled(bool enable) { m_enabled.store(enable, std::memory_order_release); }
+        void SetEnabled(bool enable) { m_enabled.store(enable, ::std::memory_order_release); }
 
         /**
          * @brief Check if the manager is currently busy processing an update
@@ -119,7 +119,7 @@ namespace Playerbot
          * Thread-safe: Uses atomic operations for lock-free access
          * Performance: <0.001ms guaranteed
          */
-        bool IsBusy() const { return m_isBusy.load(std::memory_order_acquire); }
+        bool IsBusy() const { return m_isBusy.load(::std::memory_order_acquire); }
 
         /**
          * @brief Get the configured update interval
@@ -137,7 +137,7 @@ namespace Playerbot
          * @brief Get the manager name for debugging/logging
          * @return Manager name string
          */
-        const std::string& GetManagerName() const { return m_managerName; }
+        const ::std::string& GetManagerName() const { return m_managerName; }
 
         /**
          * @brief Get time since last successful update
@@ -150,7 +150,7 @@ namespace Playerbot
          *
          * Use sparingly as this bypasses throttling mechanism
          */
-        void ForceUpdate() { m_forceUpdate.store(true, std::memory_order_release); }
+        void ForceUpdate() { m_forceUpdate.store(true, ::std::memory_order_release); }
 
         /**
          * @brief Check if manager has been initialized
@@ -159,7 +159,7 @@ namespace Playerbot
          * Thread-safe: Uses atomic operations for lock-free access
          * Performance: <0.001ms guaranteed
          */
-        bool IsInitialized() const { return m_initialized.load(std::memory_order_acquire); }
+        bool IsInitialized() const { return m_initialized.load(::std::memory_order_acquire); }
 
         // Delete copy constructor and assignment operator to prevent copying
         BehaviorManager(const BehaviorManager&) = delete;
@@ -200,7 +200,7 @@ namespace Playerbot
          * @brief Get the manager's unique identifier (IManagerBase interface)
          * @return Manager identifier string
          */
-        std::string GetManagerId() const override { return m_managerName; }
+        ::std::string GetManagerId() const override { return m_managerName; }
 
         /**
          * @brief Check if the manager is currently active (IManagerBase interface)
@@ -300,23 +300,23 @@ namespace Playerbot
         void LogWarning(const char* format, Args... args) const;
 
         // Protected state flags for derived classes (atomic for thread safety)
-        std::atomic<bool> m_hasWork{false};        ///< Set when manager has pending work
-        std::atomic<bool> m_needsUpdate{false};    ///< Set when immediate update needed
-        std::atomic<uint32> m_updateCount{0};      ///< Total number of OnUpdate calls
+        ::std::atomic<bool> m_hasWork{false};        ///< Set when manager has pending work
+        ::std::atomic<bool> m_needsUpdate{false};    ///< Set when immediate update needed
+        ::std::atomic<uint32> m_updateCount{0};      ///< Total number of OnUpdate calls
 
     private:
         Player* m_bot;                              ///< The bot this manager belongs to
         BotAI* m_ai;                                ///< The AI controller
-        std::string m_managerName;                  ///< Name for logging/debugging
+        ::std::string m_managerName;                  ///< Name for logging/debugging
 
         uint32 m_updateInterval;                    ///< Update interval in milliseconds
         uint32 m_lastUpdate;                        ///< Timestamp of last update (getMSTime)
         uint32 m_timeSinceLastUpdate;              ///< Accumulated time since last update
 
-        std::atomic<bool> m_enabled{true};         ///< Whether manager is enabled
-        std::atomic<bool> m_initialized{false};    ///< Whether OnInitialize has succeeded
-        std::atomic<bool> m_isBusy{false};         ///< Whether currently in OnUpdate
-        std::atomic<bool> m_forceUpdate{false};    ///< Force update on next tick
+        ::std::atomic<bool> m_enabled{true};         ///< Whether manager is enabled
+        ::std::atomic<bool> m_initialized{false};    ///< Whether OnInitialize has succeeded
+        ::std::atomic<bool> m_isBusy{false};         ///< Whether currently in OnUpdate
+        ::std::atomic<bool> m_forceUpdate{false};    ///< Force update on next tick
 
         uint32 m_slowUpdateThreshold{50};          ///< Threshold for slow update warning (ms)
         uint32 m_consecutiveSlowUpdates{0};        ///< Counter for consecutive slow updates

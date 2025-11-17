@@ -448,7 +448,7 @@ namespace StateMachine
     struct TransitionValidation
     {
         StateTransitionResult result;     ///< The validation result
-        std::string_view reason;          ///< Human-readable explanation
+        ::std::string_view reason;          ///< Human-readable explanation
 
         uint32 errorCode = 0;
         ///< Optional error code for debugging
@@ -546,31 +546,31 @@ namespace StateMachine
      */
     struct InitStateInfo
     {
-        std::atomic<BotInitState> currentState{BotInitState::CREATED};     ///< Current initialization state
-        std::atomic<BotInitState> previousState{BotInitState::CREATED};    ///< Previous state (for rollback)
-        std::atomic<StateFlags> flags{StateFlags::INITIALIZING};           ///< Current state flags
+        ::std::atomic<BotInitState> currentState{BotInitState::CREATED};     ///< Current initialization state
+        ::std::atomic<BotInitState> previousState{BotInitState::CREATED};    ///< Previous state (for rollback)
+        ::std::atomic<StateFlags> flags{StateFlags::INITIALIZING};           ///< Current state flags
 
-        std::atomic<uint64_t> transitionCount{0};
+        ::std::atomic<uint64_t> transitionCount{0};
         ///< Total transitions performed
 
-        std::atomic<uint64_t> lastTransitionTime{0};
+        ::std::atomic<uint64_t> lastTransitionTime{0};
         ///< Time of last transition (getMSTime)
 
-        std::atomic<uint32_t> errorCount{0};
+        ::std::atomic<uint32_t> errorCount{0};
         ///< Number of errors encountered
 
-        std::atomic<uint32_t> retryCount{0};
+        ::std::atomic<uint32_t> retryCount{0};
         ///< Number of retry attempts
-        std::atomic<EventType> lastEvent{EventType::BOT_CREATED};         ///< Last event processed
+        ::std::atomic<EventType> lastEvent{EventType::BOT_CREATED};         ///< Last event processed
 
-        std::atomic<uint32_t> stateStartTime{0};
+        ::std::atomic<uint32_t> stateStartTime{0};
         ///< When entered current state (getMSTime)
 
         /// Check if state is terminal (READY or FAILED)
         bool IsTerminal() const noexcept
         {
 
-            BotInitState state = currentState.load(std::memory_order_acquire);
+            BotInitState state = currentState.load(::std::memory_order_acquire);
 
             return state == BotInitState::READY || state == BotInitState::FAILED;
         }
@@ -579,21 +579,21 @@ namespace StateMachine
         bool IsReady() const noexcept
         {
 
-            return currentState.load(std::memory_order_acquire) == BotInitState::READY;
+            return currentState.load(::std::memory_order_acquire) == BotInitState::READY;
         }
 
         /// Check if initialization failed
         bool IsFailed() const noexcept
         {
 
-            return currentState.load(std::memory_order_acquire) == BotInitState::FAILED;
+            return currentState.load(::std::memory_order_acquire) == BotInitState::FAILED;
         }
 
         /// Get time spent in current state (milliseconds)
         uint32_t GetTimeInCurrentState(uint32_t currentTime) const noexcept
         {
 
-            uint32_t startTime = stateStartTime.load(std::memory_order_acquire);
+            uint32_t startTime = stateStartTime.load(::std::memory_order_acquire);
 
             return startTime > 0 ? (currentTime - startTime) : 0;
         }
@@ -602,7 +602,7 @@ namespace StateMachine
     /**
      * @brief Convert BotInitState to string representation
      */
-    constexpr std::string_view ToString(BotInitState state) noexcept
+    constexpr ::std::string_view ToString(BotInitState state) noexcept
     {
         switch (state)
         {
@@ -635,7 +635,7 @@ namespace StateMachine
     /**
      * @brief Convert EventType to string representation
      */
-    constexpr std::string_view ToString(EventType event) noexcept
+    constexpr ::std::string_view ToString(EventType event) noexcept
     {
         switch (event)
         {
@@ -860,7 +860,7 @@ namespace StateMachine
     /**
      * @brief Convert StateTransitionResult to string representation
      */
-    constexpr std::string_view ToString(StateTransitionResult result) noexcept
+    constexpr ::std::string_view ToString(StateTransitionResult result) noexcept
     {
         switch (result)
         {
@@ -896,7 +896,7 @@ namespace StateMachine
      * @brief Convert StateFlags to string representation
      * @note Returns primary flag only; use for debugging
      */
-    constexpr std::string_view ToString(StateFlags flags) noexcept
+    constexpr ::std::string_view ToString(StateFlags flags) noexcept
     {
 
         if (flags == StateFlags::NONE)

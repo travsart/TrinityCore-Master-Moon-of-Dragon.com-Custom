@@ -85,6 +85,7 @@ enum class PlayerBotMovementPriority : uint8
     // ========================================================================
     COMBAT_MOVEMENT_STRATEGY = 130,     // Generic combat movement
     PVP_TACTICAL = 120,                 // PvP tactical positioning
+    TACTICAL_POSITIONING = 115,         // General tactical combat positioning
     DUNGEON_POSITIONING = 110,          // Dungeon pull positioning
     GROUP_COORDINATION = 100,           // Coordinated group movement
 
@@ -136,7 +137,7 @@ struct TrinityCorePriority
     }
 
     // Debug string
-    std::string ToString() const;
+    ::std::string ToString() const;
 };
 
 /**
@@ -172,7 +173,7 @@ public:
      * @param priority PlayerBot priority
      * @return String name (e.g., "BOSS_MECHANIC")
      */
-    static std::string GetPriorityName(PlayerBotMovementPriority priority);
+    static ::std::string GetPriorityName(PlayerBotMovementPriority priority);
 
     /**
      * Get human-readable description for PlayerBot priority
@@ -180,7 +181,7 @@ public:
      * @param priority PlayerBot priority
      * @return Description string
      */
-    static std::string GetPriorityDescription(PlayerBotMovementPriority priority);
+    static ::std::string GetPriorityDescription(PlayerBotMovementPriority priority);
 
     /**
      * Validate that priority value is within valid range
@@ -196,7 +197,7 @@ public:
      * @param priority PlayerBot priority
      * @return Category name ("CRITICAL", "VERY_HIGH", etc.)
      */
-    static std::string GetCategoryName(PlayerBotMovementPriority priority);
+    static ::std::string GetCategoryName(PlayerBotMovementPriority priority);
 
 private:
     // Private constructor - utility class, no instances

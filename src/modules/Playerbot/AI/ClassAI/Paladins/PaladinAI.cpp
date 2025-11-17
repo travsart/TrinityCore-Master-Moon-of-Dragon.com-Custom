@@ -58,11 +58,11 @@ void PaladinAI::UpdateRotation(::Unit* target)
         baselineManager.HandleAutoSpecialization(GetBot());
 
         // Execute baseline rotation
-        if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
+    if (baselineManager.ExecuteBaselineRotation(GetBot(), target))
             return;
 
         // Fallback to basic auto-attack
-        if (!GetBot()->IsNonMeleeSpellCast(false))
+    if (!GetBot()->IsNonMeleeSpellCast(false))
         {
             if (GetBot()->GetDistance(target) <= OPTIMAL_MELEE_RANGE)
             {
@@ -84,9 +84,9 @@ void PaladinAI::UpdateRotation(::Unit* target)
         if (interruptTarget)
         {
             // Try Rebuke first (instant interrupt)
-            if (CanUseAbility(REBUKE))
+    if (CanUseAbility(REBUKE))
             {
-                if (CastSpell(interruptTarget, REBUKE))
+                if (CastSpell(REBUKE, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, REBUKE, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} interrupted {} with Rebuke",
@@ -96,9 +96,9 @@ void PaladinAI::UpdateRotation(::Unit* target)
             }
 
             // Try Hammer of Justice as secondary interrupt (stun)
-            if (CanUseAbility(HAMMER_OF_JUSTICE))
+    if (CanUseAbility(HAMMER_OF_JUSTICE))
             {
-                if (CastSpell(interruptTarget, HAMMER_OF_JUSTICE))
+                if (CastSpell(HAMMER_OF_JUSTICE, interruptTarget))
                 {
                     RecordInterruptAttempt(interruptTarget, HAMMER_OF_JUSTICE, true);
                     TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} stunned {} with Hammer of Justice",
@@ -144,7 +144,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         uint32 nearbyEnemies = GetNearbyEnemyCount(DIVINE_STORM_RADIUS);
 
         // Divine Storm for heavy AoE damage (Retribution)
-        if (nearbyEnemies >= 3 && GetHolyPower() >= 3 && CanUseAbility(DIVINE_STORM))
+    if (nearbyEnemies >= 3 && GetHolyPower() >= 3 && CanUseAbility(DIVINE_STORM))
         {
             if (CastSpell(DIVINE_STORM))
             {
@@ -157,7 +157,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         }
 
         // Consecration for AoE damage/threat
-        if (nearbyEnemies >= 2 && CanUseAbility(CONSECRATION))
+    if (nearbyEnemies >= 2 && CanUseAbility(CONSECRATION))
         {
             uint32 currentTime = GameTime::GetGameTimeMS();
             if (currentTime - _lastConsecration > 8000)  // 8 second duration
@@ -174,7 +174,7 @@ void PaladinAI::UpdateRotation(::Unit* target)
         }
 
         // Wake of Ashes for AoE + Holy Power generation (Retribution)
-        if (nearbyEnemies >= 2 && CanUseAbility(WAKE_OF_ASHES))
+    if (nearbyEnemies >= 2 && CanUseAbility(WAKE_OF_ASHES))
         {
             if (CastSpell(WAKE_OF_ASHES))
             {
@@ -241,7 +241,7 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
     return true;}
 
 void PaladinAI::OnCombatStart(::Unit* target){
-    _paladinMetrics.combatStartTime = std::chrono::steady_clock::now();
+    _paladinMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
@@ -307,9 +307,9 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     if (GetHolyPower() < 3)
     {
         // Try Blade of Justice first (better damage)
-        if (CanUseAbility(BLADE_OF_JUSTICE))
+    if (CanUseAbility(BLADE_OF_JUSTICE))
         {
-            if (CastSpell(target, BLADE_OF_JUSTICE))
+            if (CastSpell(BLADE_OF_JUSTICE, target))
             {
                 RecordAbilityUsage(BLADE_OF_JUSTICE);
                 _paladinMetrics.holyPowerGenerated += 2;
@@ -318,9 +318,9 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Fallback to Crusader Strike
-        if (CanUseAbility(CRUSADER_STRIKE))
+    if (CanUseAbility(CRUSADER_STRIKE))
         {
-            if (CastSpell(target, CRUSADER_STRIKE))
+            if (CastSpell(CRUSADER_STRIKE, target))
             {
                 RecordAbilityUsage(CRUSADER_STRIKE);
                 _paladinMetrics.holyPowerGenerated += 1;
@@ -329,9 +329,9 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Judgment for ranged Holy Power generation
-        if (CanUseAbility(JUDGMENT))
+    if (CanUseAbility(JUDGMENT))
         {
-            if (CastSpell(target, JUDGMENT))
+            if (CastSpell(JUDGMENT, target))
             {
                 RecordAbilityUsage(JUDGMENT);
                 _paladinMetrics.holyPowerGenerated += 1;
@@ -344,9 +344,9 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     if (GetHolyPower() >= 3)
     {
         // Check if we need healing
-        if (GetBot()->GetHealthPct() < 50.0f && CanUseAbility(WORD_OF_GLORY))
+    if (GetBot()->GetHealthPct() < 50.0f && CanUseAbility(WORD_OF_GLORY))
         {
-            if (CastSpell(GetBot(), WORD_OF_GLORY))
+            if (CastSpell(WORD_OF_GLORY, GetBot()))
             {
                 RecordAbilityUsage(WORD_OF_GLORY);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -355,9 +355,9 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Use Templar's Verdict for single target
-        if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) < 2 && CanUseAbility(TEMPLARS_VERDICT))
+    if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) < 2 && CanUseAbility(TEMPLARS_VERDICT))
         {
-            if (CastSpell(target, TEMPLARS_VERDICT))
+            if (CastSpell(TEMPLARS_VERDICT, target))
             {
                 RecordAbilityUsage(TEMPLARS_VERDICT);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -366,7 +366,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
         }
 
         // Use Divine Storm for AoE
-        if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) >= 2 && CanUseAbility(DIVINE_STORM))
+    if (GetNearbyEnemyCount(DIVINE_STORM_RADIUS) >= 2 && CanUseAbility(DIVINE_STORM))
         {
             if (CastSpell(DIVINE_STORM))
             {
@@ -380,7 +380,7 @@ void PaladinAI::ExecuteBasicPaladinRotation(::Unit* target)
     // Use Hammer of Wrath on low health targets
     if (target->GetHealthPct() < 20.0f && CanUseAbility(HAMMER_OF_WRATH))
     {
-        if (CastSpell(target, HAMMER_OF_WRATH))
+        if (CastSpell(HAMMER_OF_WRATH, target))
         {
             RecordAbilityUsage(HAMMER_OF_WRATH);
             return;
@@ -423,7 +423,7 @@ void PaladinAI::UseDefensiveCooldowns()
         uint32 currentTime = GameTime::GetGameTimeMS();
         if (currentTime - _lastLayOnHands > 600000)  // 10 minute cooldown
         {
-            if (CastSpell(GetBot(), LAY_ON_HANDS))
+            if (CastSpell(LAY_ON_HANDS, GetBot()))
             {
                 RecordAbilityUsage(LAY_ON_HANDS);
                 _lastLayOnHands = currentTime;
@@ -479,7 +479,7 @@ void PaladinAI::UseDefensiveCooldowns()
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)
     {
         // Ardent Defender
-        if (healthPct < 35.0f && CanUseAbility(ARDENT_DEFENDER))
+    if (healthPct < 35.0f && CanUseAbility(ARDENT_DEFENDER))
         {
             if (CastSpell(ARDENT_DEFENDER))
             {
@@ -491,7 +491,7 @@ void PaladinAI::UseDefensiveCooldowns()
         }
 
         // Guardian of Ancient Kings
-        if (healthPct < 50.0f && CanUseAbility(GUARDIAN_OF_ANCIENT_KINGS))
+    if (healthPct < 50.0f && CanUseAbility(GUARDIAN_OF_ANCIENT_KINGS))
         {
             if (CastSpell(GUARDIAN_OF_ANCIENT_KINGS))
             {
@@ -513,7 +513,7 @@ void PaladinAI::UseDefensiveCooldowns()
             {
                 Player* member = itr.GetSource();
                 if (member && member != GetBot() && member->GetHealthPct() < 30.0f)                {
-                    if (CastSpell(member, BLESSING_OF_PROTECTION))
+                    if (CastSpell(BLESSING_OF_PROTECTION, member))
                     {
                         RecordAbilityUsage(BLESSING_OF_PROTECTION);
                         TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} cast Blessing of Protection on {}",
@@ -566,7 +566,7 @@ void PaladinAI::UseOffensiveCooldowns()
     // Execution Sentence on primary target
     Unit* target = GetBot()->GetSelectedUnit();    if (target && CanUseAbility(EXECUTION_SENTENCE))
     {
-        if (CastSpell(target, EXECUTION_SENTENCE))
+        if (CastSpell(EXECUTION_SENTENCE, target))
         {
             RecordAbilityUsage(EXECUTION_SENTENCE);
             TC_LOG_DEBUG("module.playerbot.ai", "Paladin {} cast Execution Sentence on {}",
@@ -609,9 +609,9 @@ void PaladinAI::UpdateBlessingManagement()
     if (spec == ChrSpecialization::PaladinProtection || spec == ChrSpecialization::PaladinRetribution)
     {
         // Blessing of Might for physical damage dealers
-        if (CanUseAbility(BLESSING_OF_MIGHT))
+    if (CanUseAbility(BLESSING_OF_MIGHT))
         {
-            if (CastSpell(GetBot(), BLESSING_OF_MIGHT))
+            if (CastSpell(BLESSING_OF_MIGHT, GetBot()))
             {
                 RecordAbilityUsage(BLESSING_OF_MIGHT);
                 _currentBlessing = BLESSING_OF_MIGHT;
@@ -622,9 +622,9 @@ void PaladinAI::UpdateBlessingManagement()
     else if (spec == ChrSpecialization::PaladinHoly)
     {
         // Blessing of Wisdom for mana users
-        if (CanUseAbility(BLESSING_OF_WISDOM))
+    if (CanUseAbility(BLESSING_OF_WISDOM))
         {
-            if (CastSpell(GetBot(), BLESSING_OF_WISDOM))
+            if (CastSpell(BLESSING_OF_WISDOM, GetBot()))
             {
                 RecordAbilityUsage(BLESSING_OF_WISDOM);
                 _currentBlessing = BLESSING_OF_WISDOM;
@@ -636,7 +636,7 @@ void PaladinAI::UpdateBlessingManagement()
     // Default to Blessing of Kings
     if (CanUseAbility(BLESSING_OF_KINGS))
     {
-        if (CastSpell(GetBot(), BLESSING_OF_KINGS))
+        if (CastSpell(BLESSING_OF_KINGS, GetBot()))
         {
             RecordAbilityUsage(BLESSING_OF_KINGS);
             _currentBlessing = BLESSING_OF_KINGS;
@@ -656,7 +656,7 @@ void PaladinAI::UpdateAuraManagement()
     if (spec == ChrSpecialization::PaladinRetribution)
     {
         // Retribution Aura for damage reflection
-        if (CanUseAbility(RETRIBUTION_AURA) && _currentAura != RETRIBUTION_AURA)
+    if (CanUseAbility(RETRIBUTION_AURA) && _currentAura != RETRIBUTION_AURA)
         {
             if (CastSpell(RETRIBUTION_AURA))
             {
@@ -670,7 +670,7 @@ void PaladinAI::UpdateAuraManagement()
     else if (spec == ChrSpecialization::PaladinProtection)
     {
         // Devotion Aura for damage reduction
-        if (CanUseAbility(DEVOTION_AURA) && _currentAura != DEVOTION_AURA)
+    if (CanUseAbility(DEVOTION_AURA) && _currentAura != DEVOTION_AURA)
         {
             if (CastSpell(DEVOTION_AURA))
             {
@@ -745,7 +745,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Blade of Justice generates 2 Holy Power
     if (CanUseAbility(BLADE_OF_JUSTICE))
     {
-        if (CastSpell(target, BLADE_OF_JUSTICE))
+        if (CastSpell(BLADE_OF_JUSTICE, target))
         {
             RecordAbilityUsage(BLADE_OF_JUSTICE);
             _paladinMetrics.holyPowerGenerated += 2;
@@ -756,7 +756,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Crusader Strike generates 1 Holy Power
     if (CanUseAbility(CRUSADER_STRIKE))
     {
-        if (CastSpell(target, CRUSADER_STRIKE))
+        if (CastSpell(CRUSADER_STRIKE, target))
         {
             RecordAbilityUsage(CRUSADER_STRIKE);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -767,7 +767,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Hammer of the Righteous for Protection (AoE generator, spec ID 1)
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection && CanUseAbility(HAMMER_OF_THE_RIGHTEOUS))
     {
-        if (CastSpell(target, HAMMER_OF_THE_RIGHTEOUS))
+        if (CastSpell(HAMMER_OF_THE_RIGHTEOUS, target))
         {
             RecordAbilityUsage(HAMMER_OF_THE_RIGHTEOUS);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -778,7 +778,7 @@ void PaladinAI::GenerateHolyPower(::Unit* target)
     // Judgment generates 1 Holy Power
     if (CanUseAbility(JUDGMENT))
     {
-        if (CastSpell(target, JUDGMENT))
+        if (CastSpell(JUDGMENT, target))
         {
             RecordAbilityUsage(JUDGMENT);
             _paladinMetrics.holyPowerGenerated += 1;
@@ -836,7 +836,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
                 }
             }
 
-            if (CastSpell(healTarget, WORD_OF_GLORY))
+            if (CastSpell(WORD_OF_GLORY, healTarget))
             {
                 RecordAbilityUsage(WORD_OF_GLORY);
                 _paladinMetrics.holyPowerSpent += 3;
@@ -862,7 +862,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
     // Templar's Verdict for single target
     if (CanUseAbility(TEMPLARS_VERDICT))
     {
-        if (CastSpell(target, TEMPLARS_VERDICT))
+        if (CastSpell(TEMPLARS_VERDICT, target))
         {
             RecordAbilityUsage(TEMPLARS_VERDICT);
             _paladinMetrics.holyPowerSpent += 3;
@@ -873,7 +873,7 @@ void PaladinAI::SpendHolyPower(::Unit* target)
     // Final Verdict (if talented)
     if (CanUseAbility(FINAL_VERDICT))
     {
-        if (CastSpell(target, FINAL_VERDICT))
+        if (CastSpell(FINAL_VERDICT, target))
         {
             RecordAbilityUsage(FINAL_VERDICT);
             _paladinMetrics.holyPowerSpent += 3;
@@ -910,7 +910,7 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> targets;
+    ::std::list<Unit*> targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -928,7 +928,7 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -951,7 +951,6 @@ uint32 PaladinAI::GetNearbyEnemyCount(float range) const
         // Original filtering logic from searcher goes here
     }
     // End of spatial grid fix
-
     for (auto& target : targets)
     {
         if (GetBot()->IsValidAttackTarget(target))
@@ -967,7 +966,7 @@ uint32 PaladinAI::GetNearbyAllyCount(float range) const
         return 0;
 
     uint32 count = 0;
-    std::list<Unit*> allies;
+    ::std::list<Unit*> allies;
     Trinity::AnyFriendlyUnitInObjectRangeCheck u_check(GetBot(), GetBot(), range);
     Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(GetBot(), allies, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -985,7 +984,7 @@ uint32 PaladinAI::GetNearbyAllyCount(float range) const
     }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         GetBot()->GetPosition(), range);
 
     // Process results (replace old searcher logic)
@@ -1032,7 +1031,8 @@ bool PaladinAI::IsAllyInDanger() const
 }
 
 bool PaladinAI::ShouldUseLayOnHands() const{
-    if (!GetBot())        return false;    // Use on self if critical    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
+    if (!GetBot())        return false;    // Use on self if critical
+    if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
 
     // Use on tank if critical
     Group* group = GetBot()->GetGroup();
@@ -1041,7 +1041,7 @@ bool PaladinAI::ShouldUseLayOnHands() const{
         for (GroupReference const& itr : group->GetMembers())        {
             Player* member = itr.GetSource();
             // TODO: Check if member is tank
-            if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
+    if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
                 return true;
         }
     }
@@ -1055,7 +1055,8 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
         return Position();
 
     // Get behind target for Retribution DPS
-    float angle = target->GetOrientation() + M_PI;  // Behind target    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
+    float angle = target->GetOrientation() + M_PI;  // Behind target
+    if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::PaladinProtection)  // Protection spec ID
         angle = target->GetOrientation();  // Face target for tanking    float x = target->GetPositionX() + cos(angle) * OPTIMAL_MELEE_RANGE;    float y = target->GetPositionY() + sin(angle) * OPTIMAL_MELEE_RANGE;    float z = target->GetPositionZ();    return Position(x, y, z, angle);
 }
 
@@ -1098,7 +1099,7 @@ void PaladinAI::AnalyzeCombatEffectiveness()
 
 void PaladinAI::UpdateMetrics(uint32 diff)
 {
-    _paladinMetrics.lastMetricsUpdate = std::chrono::steady_clock::now();
+    _paladinMetrics.lastMetricsUpdate = ::std::chrono::steady_clock::now();
 }
 
 float PaladinAI::CalculateHolyPowerEfficiency()

@@ -20,10 +20,11 @@ namespace Playerbot
     struct CombatMetrics;
 
     /**
-     * @enum TargetPriority
-     * @brief Target priority classification
+     * @enum TMTargetPriority
+     * @brief Target priority classification (TargetManager-specific)
+     * @note Renamed to avoid collision with TargetSelector::TargetPriority
      */
-    enum class TargetPriority : uint8
+    enum class TMTargetPriority : uint8
     {
         CRITICAL,       // Healers, low HP enemies that can be killed quickly
         HIGH,           // Casters, ranged DPS, high-threat targets
@@ -33,13 +34,14 @@ namespace Playerbot
     };
 
     /**
-     * @struct TargetInfo
-     * @brief Comprehensive target assessment
+     * @struct TMTargetInfo
+     * @brief Comprehensive target assessment (TargetManager-specific)
+     * @note Renamed to avoid collision with TargetSelector::TargetInfo
      */
-    struct TargetInfo
+    struct TMTargetInfo
     {
         Unit* target;
-        TargetPriority priority;
+        TMTargetPriority priority;
         float healthPercent;
         float distance;
         bool isCaster;
@@ -50,9 +52,9 @@ namespace Playerbot
         float damageDealt;          // Recent damage to group
         uint32 timeSinceLastSwitch; // Time since we last targeted this
 
-        TargetInfo()
+        TMTargetInfo()
             : target(nullptr)
-            , priority(TargetPriority::IGNORE)
+            , priority(TMTargetPriority::IGNORE)
             , healthPercent(100.0f)
             , distance(0.0f)
             , isCaster(false)
@@ -98,10 +100,10 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * - ✅ 15-25% DPS increase through intelligent targeting
-     * - ✅ Better focus fire in group content
-     * - ✅ Automatic healer/caster interruption
-     * - ✅ Smart execute priority (finish low HP targets)
+     * -  15-25% DPS increase through intelligent targeting
+     * -  Better focus fire in group content
+     * -  Automatic healer/caster interruption
+     * -  Smart execute priority (finish low HP targets)
      */
     class TC_GAME_API TargetManager
     {
@@ -156,7 +158,7 @@ namespace Playerbot
          * @param target Target to evaluate
          * @return Priority classification
          */
-        TargetPriority ClassifyTarget(Unit* target);
+        TMTargetPriority ClassifyTarget(Unit* target);
 
         /**
          * @brief Check if target is high priority
@@ -171,7 +173,7 @@ namespace Playerbot
          *
          * @return Vector of all targetable enemies
          */
-        std::vector<Unit*> GetCombatTargets();
+        ::std::vector<Unit*> GetCombatTargets();
 
         /**
          * @brief Get target assessment info
@@ -179,7 +181,7 @@ namespace Playerbot
          * @param target Target to assess
          * @return Detailed target information
          */
-        TargetInfo AssessTarget(Unit* target);
+        TMTargetInfo AssessTarget(Unit* target);
 
         /**
          * @brief Set current target
@@ -202,7 +204,7 @@ namespace Playerbot
         ObjectGuid _currentTarget;
         uint32 _lastUpdate;
         uint32 _lastSwitchTime;
-        std::unordered_map<ObjectGuid, TargetInfo> _targetCache;
+        ::std::unordered_map<ObjectGuid, TMTargetInfo> _targetCache;
 
         static constexpr uint32 UPDATE_INTERVAL = 1000;      // 1 second
         static constexpr uint32 MIN_SWITCH_INTERVAL = 3000;  // 3 seconds

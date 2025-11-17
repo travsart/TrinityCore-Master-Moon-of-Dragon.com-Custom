@@ -76,7 +76,7 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
         {
             if (Group* group = _bot->GetGroup())
             {
-                std::vector<Player*> groupMembers;
+                ::std::vector<Player*> groupMembers;
                 for (GroupReference const& ref : group->GetMembers())
                 {
                     if (Player* member = ref.GetSource())
@@ -96,15 +96,15 @@ void InterruptManager::UpdateInterruptSystem(uint32 diff)
                 ++it;
         }
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.interrupt", "Exception in UpdateInterruptSystem for bot {}: {}", _bot->GetName(), e.what());
     }
 }
 
-std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
+::std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
 {
-    std::vector<InterruptTarget> targets;
+    ::std::vector<InterruptTarget> targets;
 
     // Lock-free spatial grid query
     Map* map = _bot->GetMap();
@@ -121,7 +121,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
             return targets;
     }
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), _maxInterruptRange);
 
     // Resolve GUIDs to Unit pointers and apply filtering logic
@@ -166,7 +166,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
         }
     }
 
-    std::sort(targets.begin(), targets.end(),
+    ::std::sort(targets.begin(), targets.end(),
         [](const InterruptTarget& a, const InterruptTarget& b) {
             if (a.priority != b.priority)
                 return a.priority < b.priority;
@@ -178,7 +178,7 @@ std::vector<InterruptTarget> InterruptManager::ScanForInterruptTargets()
 
 InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     InterruptResult result;
     result.originalTarget = target;
 
@@ -217,13 +217,13 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
         result.usedMethod = plan.method;
         result.usedSpell = capability->spellId;
 
-        auto endTime = std::chrono::steady_clock::now();
-        auto reactionTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto reactionTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
         result.executionTime = static_cast<uint32>(reactionTime.count());
 
         float expectedTime = target.remainingCastTime;
         float actualTime = static_cast<float>(reactionTime.count()) / 1000.0f;
-        result.timingAccuracy = 1.0f - std::abs(expectedTime - actualTime) / expectedTime;
+        result.timingAccuracy = 1.0f - ::std::abs(expectedTime - actualTime) / expectedTime;
 
         _metrics.interruptAttempts++;
         if (result.success)
@@ -244,10 +244,10 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
                    _bot->GetName(), target.targetName, target.spellName,
                    result.success ? "SUCCESS" : result.failureReason);
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.success = false;
-        result.failureReason = std::string("Exception during interrupt: ") + e.what();
+        result.failureReason = ::std::string("Exception during interrupt: ") + e.what();
         TC_LOG_ERROR("playerbot.interrupt", "Exception in AttemptInterrupt for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -256,17 +256,17 @@ InterruptResult InterruptManager::AttemptInterrupt(const InterruptTarget& target
 
 void InterruptManager::ProcessInterruptOpportunities()
 {
-    std::vector<InterruptTarget> targets = ScanForInterruptTargets();
+    ::std::vector<InterruptTarget> targets = ScanForInterruptTargets();
     _trackedTargets = targets;
 
     if (targets.empty())
         return;
 
-    std::vector<InterruptPlan> plans = GenerateInterruptPlans(targets);
+    ::std::vector<InterruptPlan> plans = GenerateInterruptPlans(targets);
     if (plans.empty())
         return;
 
-    std::sort(plans.begin(), plans.end());
+    ::std::sort(plans.begin(), plans.end());
 
     for (const InterruptPlan& plan : plans)
     {
@@ -365,7 +365,7 @@ void InterruptManager::InitializeInterruptCapabilities()
     _interruptCapabilities.clear();
 
     uint8 botClass = _bot->GetClass();
-    std::vector<uint32> classInterrupts = InterruptUtils::GetClassInterruptSpells(botClass);
+    ::std::vector<uint32> classInterrupts = InterruptUtils::GetClassInterruptSpells(botClass);
     for (uint32 spellId : classInterrupts)
     {
         const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
@@ -391,8 +391,7 @@ void InterruptManager::InitializeInterruptCapabilities()
         capability.castTime = static_cast<float>(spellInfo->CalcCastTime());
         capability.requiresLoS = true; // Default to requiring LoS
         capability.requiresFacing = true; // Default to requiring facing
-
-        if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
+    if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
             capability.method = InterruptMethod::SPELL_INTERRUPT;
         else if (spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA))
         {
@@ -492,7 +491,7 @@ InterruptPlan InterruptManager::CreateInterruptPlan(const InterruptTarget& targe
         return plan;
     }
 
-    plan.successProbability = std::min(1.0f, (target.remainingCastTime - reactionDelay) / executionTime);
+    plan.successProbability = ::std::min(1.0f, (target.remainingCastTime - reactionDelay) / executionTime);
 
     if (capability->requiresLoS && !HasLineOfSightToTarget(target.unit))
     {
@@ -504,9 +503,9 @@ InterruptPlan InterruptManager::CreateInterruptPlan(const InterruptTarget& targe
     return plan;
 }
 
-std::vector<InterruptPlan> InterruptManager::GenerateInterruptPlans(const std::vector<InterruptTarget>& targets)
+::std::vector<InterruptPlan> InterruptManager::GenerateInterruptPlans(const ::std::vector<InterruptTarget>& targets)
 {
-    std::vector<InterruptPlan> plans;
+    ::std::vector<InterruptPlan> plans;
     plans.reserve(targets.size());
 
     for (const InterruptTarget& target : targets)
@@ -588,7 +587,7 @@ bool InterruptManager::ExecuteInterruptPlan(const InterruptPlan& plan)
 
         return success;
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.interrupt", "Exception executing interrupt plan for bot {}: {}", _bot->GetName(), e.what());
         _isInterrupting = false;
@@ -612,7 +611,7 @@ bool InterruptManager::ShouldInterruptCrowdControl(const SpellInfo* spellInfo, U
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-            effect.ApplyAuraName == SPELL_AURA_MOD_CHARM ||
+        if (effect.ApplyAuraName == SPELL_AURA_MOD_CHARM ||
             effect.ApplyAuraName == SPELL_AURA_MOD_CONFUSE)
         {
             return true;
@@ -629,7 +628,7 @@ bool InterruptManager::ShouldInterruptDamage(const SpellInfo* spellInfo, Unit* c
 
     for (SpellEffectInfo const& effect : spellInfo->GetEffects())
     {
-            effect.Effect == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)
+        if (effect.Effect == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)
         {
             return effect.CalcValue() > 1000;
         }
@@ -663,16 +662,16 @@ float InterruptManager::CalculateInterruptUrgency(const InterruptTarget& target)
     float timeUrgency = 1.0f - (target.remainingCastTime / target.totalCastTime);
     urgency += timeUrgency * 0.5f;
 
-    return std::min(1.0f, urgency);
+    return ::std::min(1.0f, urgency);
 }
 
 void InterruptManager::ScanNearbyUnitsForCasts()
 {
-    std::vector<InterruptTarget> newTargets = ScanForInterruptTargets();
+    ::std::vector<InterruptTarget> newTargets = ScanForInterruptTargets();
 
     for (const InterruptTarget& newTarget : newTargets)
     {
-        auto it = std::find_if(_trackedTargets.begin(), _trackedTargets.end(),
+        auto it = ::std::find_if(_trackedTargets.begin(), _trackedTargets.end(),
             [&newTarget](const InterruptTarget& existing) {
                 return existing.guid == newTarget.guid && existing.spellId == newTarget.spellId;
             });
@@ -742,7 +741,7 @@ bool InterruptManager::CastInterruptSpell(uint32 spellId, Unit* target)
     float maxRangeSq = maxRange * maxRange;
     if (_bot->GetExactDistSq(target) > maxRangeSq)
         return false;
-    _bot->CastSpell(target, spellId, false);
+    _bot->CastSpell(CastSpellTargetArg(target), spellId);
     return true;
 }
 
@@ -803,18 +802,18 @@ Position InterruptManager::CalculateOptimalInterruptPosition(Unit* target)
     Position targetPos = target->GetPosition();
     Position botPos = _bot->GetPosition();
 
-    float angle = std::atan2(targetPos.GetPositionY() - botPos.GetPositionY(),
+    float angle = ::std::atan2(targetPos.GetPositionY() - botPos.GetPositionY(),
                            targetPos.GetPositionX() - botPos.GetPositionX());
 
     Position optimalPos;
-    optimalPos.m_positionX = targetPos.GetPositionX() - 15.0f * std::cos(angle);
-    optimalPos.m_positionY = targetPos.GetPositionY() - 15.0f * std::sin(angle);
+    optimalPos.m_positionX = targetPos.GetPositionX() - 15.0f * ::std::cos(angle);
+    optimalPos.m_positionY = targetPos.GetPositionY() - 15.0f * ::std::sin(angle);
     optimalPos.m_positionZ = targetPos.GetPositionZ();
 
     return optimalPos;
 }
 
-void InterruptManager::UpdateReactionTimeMetrics(std::chrono::microseconds reactionTime)
+void InterruptManager::UpdateReactionTimeMetrics(::std::chrono::microseconds reactionTime)
 {
     if (reactionTime < _metrics.minReactionTime)
         _metrics.minReactionTime = reactionTime;
@@ -822,7 +821,7 @@ void InterruptManager::UpdateReactionTimeMetrics(std::chrono::microseconds react
     if (reactionTime > _metrics.maxReactionTime)
         _metrics.maxReactionTime = reactionTime;
 
-    _metrics.averageReactionTime = std::chrono::microseconds(
+    _metrics.averageReactionTime = ::std::chrono::microseconds(
         static_cast<uint64_t>(_metrics.averageReactionTime.count() * 0.9 + reactionTime.count() * 0.1)
     );
 }
@@ -860,9 +859,9 @@ InterruptPriority InterruptUtils::GetSpellInterruptPriority(uint32 spellId)
     }
 }
 
-std::vector<uint32> InterruptUtils::GetClassInterruptSpells(uint8 playerClass)
+::std::vector<uint32> InterruptUtils::GetClassInterruptSpells(uint8 playerClass)
 {
-    std::vector<uint32> interrupts;
+    ::std::vector<uint32> interrupts;
 
     switch (playerClass)
     {
@@ -931,7 +930,7 @@ std::vector<uint32> InterruptUtils::GetClassInterruptSpells(uint8 playerClass)
 
 bool InterruptUtils::CanClassInterrupt(uint8 playerClass)
 {
-    std::vector<uint32> interrupts = GetClassInterruptSpells(playerClass);
+    ::std::vector<uint32> interrupts = GetClassInterruptSpells(playerClass);
     return !interrupts.empty();
 }
 
@@ -1068,7 +1067,7 @@ void InterruptManager::HandleMultipleInterruptTargets()
         return;
 
     // Process the highest priority target
-    auto highestPriorityTarget = std::min_element(_trackedTargets.begin(), _trackedTargets.end(),
+    auto highestPriorityTarget = ::std::min_element(_trackedTargets.begin(), _trackedTargets.end(),
         [](const InterruptTarget& a, const InterruptTarget& b) {
             return a.priority < b.priority;
         });
@@ -1106,7 +1105,7 @@ bool InterruptManager::ShouldLetOthersInterrupt(const InterruptTarget& target)
     return false;
 }
 
-void InterruptManager::CoordinateInterruptsWithGroup(const std::vector<Player*>& groupMembers)
+void InterruptManager::CoordinateInterruptsWithGroup(const ::std::vector<Player*>& groupMembers)
 {
     if (groupMembers.empty())
         return;
@@ -1172,12 +1171,12 @@ bool InterruptManager::AttemptMovementInterrupt(Unit* target)
     Position botPos = _bot->GetPosition();
 
     // Move away from target
-    float angle = std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
+    float angle = ::std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
                            botPos.GetPositionX() - targetPos.GetPositionX());
 
     Position movePos;
-    movePos.m_positionX = botPos.GetPositionX() + 10.0f * std::cos(angle);
-    movePos.m_positionY = botPos.GetPositionY() + 10.0f * std::sin(angle);
+    movePos.m_positionX = botPos.GetPositionX() + 10.0f * ::std::cos(angle);
+    movePos.m_positionY = botPos.GetPositionY() + 10.0f * ::std::sin(angle);
     movePos.m_positionZ = botPos.GetPositionZ();
 
     // PHASE 6B: Use Movement Arbiter with INTERRUPT_POSITIONING priority (220)

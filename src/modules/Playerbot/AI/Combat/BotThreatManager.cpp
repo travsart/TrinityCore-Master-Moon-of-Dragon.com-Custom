@@ -62,7 +62,7 @@ void BotThreatManager::UpdateThreat(uint32 diff)
     if (!_bot)
         return;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _lastUpdate += diff;
     if (_lastUpdate < _updateInterval)
@@ -93,8 +93,8 @@ void BotThreatManager::UpdateThreat(uint32 diff)
         _analysisDirty = true;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "UpdateThreat");
 
     _metrics.threatCalculations++;
@@ -121,7 +121,7 @@ float BotThreatManager::CalculateThreat(Unit* target) const
     if (!target || !_bot)
         return 0.0f;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     float baseThreat = CalculateBaseThreat(target);
     float roleModifier = CalculateRoleModifier();
@@ -131,8 +131,8 @@ float BotThreatManager::CalculateThreat(Unit* target) const
 
     float finalThreat = baseThreat * roleModifier * distanceModifier * healthModifier * abilityModifier;
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     const_cast<BotThreatManager*>(this)->TrackPerformance(duration, "CalculateThreat");
 
     return finalThreat;
@@ -186,7 +186,7 @@ void BotThreatManager::UpdateThreatValue(Unit* target, float threat, ThreatType 
     info.lastUpdate = now;
     info.isActive = true;
     info.isInCombat = target->IsInCombat();
-    info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
+    info.distance = ::std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
     info.lastPosition = target->GetPosition();
     // Update specific threat metrics based on type
     switch (type)
@@ -240,7 +240,7 @@ void BotThreatManager::ModifyThreat(Unit* target, float modifier)
 
 ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -253,7 +253,7 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
     // No lock needed - threat data is per-bot instance data
 
     ThreatAnalysis analysis;
-    std::vector<ThreatTarget> targets;
+    ::std::vector<ThreatTarget> targets;
 
     // Analyze each threat target
     for (const auto& [guid, info] : _threatMap)
@@ -292,9 +292,9 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
     }
 
     // Sort targets by priority and threat
-    std::sort(targets.begin(), targets.end());
+    ::std::sort(targets.begin(), targets.end());
 
-    analysis.sortedTargets = std::move(targets);
+    analysis.sortedTargets = ::std::move(targets);
     // Determine primary and secondary targets
     if (!analysis.sortedTargets.empty())
     {
@@ -316,15 +316,15 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
     _analysisTimestamp = now;
     _analysisDirty = false;
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     const_cast<BotThreatManager*>(this)->TrackPerformance(duration, "AnalyzeThreatSituation");
 
     _metrics.targetAnalyses++;
     return analysis;
 }
 
-std::vector<ThreatTarget> BotThreatManager::GetSortedThreatTargets()
+::std::vector<ThreatTarget> BotThreatManager::GetSortedThreatTargets()
 {
     ThreatAnalysis analysis = AnalyzeThreatSituation();
     return analysis.sortedTargets;
@@ -380,7 +380,6 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 void BotThreatManager::UpdateTargetPriorities()
 {
     // No lock needed - threat data is per-bot instance data
-
     for (auto& [guid, info] : _threatMap)
     {
         // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
@@ -406,36 +405,35 @@ void BotThreatManager::UpdateRoleBasedThreat()
 {
     // Role-based threat modifications are applied in CalculateRoleModifier()
     // This method can be used for role-specific threat behaviors
-
     switch (_botRole)
     {
         case ThreatRole::TANK:
             // Tanks should try to maintain aggro on all targets
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 if (info.threatPercent < 110.0f) // If not solidly ahead
                 {
                     info.priority = static_cast<ThreatPriority>(
-                        std::max(0, static_cast<int>(info.priority) - 1));
+                        ::std::max(0, static_cast<int>(info.priority) - 1));
                 }
             }
             break;
 
         case ThreatRole::DPS:
             // DPS should avoid pulling aggro
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 if (info.threatPercent > 90.0f) // Close to pulling aggro
                 {
                     info.priority = static_cast<ThreatPriority>(
-                        std::min(4, static_cast<int>(info.priority) + 1));
+                        ::std::min(4, static_cast<int>(info.priority) + 1));
                 }
             }
             break;
 
         case ThreatRole::HEALER:
             // Healers should focus on staying alive
-            for (auto& [guid, info] : _threatMap)
+    for (auto& [guid, info] : _threatMap)
             {
                 // PHASE 5B: Thread-safe spatial grid validation (replaces ObjectAccessor::GetUnit)
                 auto snapshot = SpatialGridQueryHelpers::FindCreatureByGuid(_bot, guid);
@@ -513,12 +511,11 @@ ThreatInfo const* BotThreatManager::GetThreatInfo(Unit* target) const
     return nullptr;
 }
 
-std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
+::std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
 {
-    std::vector<Unit*> targets;
+    ::std::vector<Unit*> targets;
 
     // No lock needed - threat data is per-bot instance data
-
     for (const auto& [guid, info] : _threatMap)
     {
         if (!info.isActive)
@@ -538,12 +535,11 @@ std::vector<Unit*> BotThreatManager::GetAllThreatTargets()
     return targets;
 }
 
-std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority priority)
+::std::vector<Unit*> BotThreatManager::GetThreatTargetsByPriority(ThreatPriority priority)
 {
-    std::vector<Unit*> targets;
+    ::std::vector<Unit*> targets;
 
     // No lock needed - threat data is per-bot instance data
-
     for (const auto& [guid, info] : _threatMap)
     {
         if (!info.isActive || info.priority != priority)
@@ -583,7 +579,7 @@ bool BotThreatManager::IsInThreatEmergency() const
     return analysis.emergencyResponse || analysis.threatOverload;
 }
 
-std::vector<Unit*> BotThreatManager::GetEmergencyTargets()
+::std::vector<Unit*> BotThreatManager::GetEmergencyTargets()
 {
     return GetThreatTargetsByPriority(ThreatPriority::CRITICAL);
 }
@@ -818,7 +814,7 @@ void BotThreatManager::UpdateThreatTable(uint32 diff)
         // Update current threat values
         info.threatValue = CalculateThreat(target);
         info.threatPercent = CalculateThreatPercent(target);
-        info.distance = std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
+        info.distance = ::std::sqrt(_bot->GetExactDist2dSq(target)); // Calculate once from squared 2D distance
         info.isInCombat = target->IsInCombat();
         info.lastPosition = target->GetPosition();
         info.lastUpdate = now;
@@ -856,7 +852,7 @@ void BotThreatManager::UpdateDistances()
             continue;
 
         // Use snapshot data directly (lock-free)
-        info.distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared 3D distance
+        info.distance = ::std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared 3D distance
         info.lastPosition = snapshot->position;
     }
 }
@@ -875,12 +871,12 @@ void BotThreatManager::UpdateCombatState()
     }
 }
 
-void BotThreatManager::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void BotThreatManager::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
 {
-    _metrics.maxAnalysisTime = std::max(_metrics.maxAnalysisTime, duration);
+    _metrics.maxAnalysisTime = ::std::max(_metrics.maxAnalysisTime, duration);
 
     // Update moving average
-    static std::chrono::microseconds totalTime{0};
+    static ::std::chrono::microseconds totalTime{0};
     static uint32 samples = 0;
 
     totalTime += duration;
@@ -889,7 +885,7 @@ void BotThreatManager::TrackPerformance(std::chrono::microseconds duration, cons
     if (samples >= 100) // Reset every 100 samples
     {
         _metrics.averageAnalysisTime = totalTime / samples;
-        totalTime = std::chrono::microseconds{0};
+        totalTime = ::std::chrono::microseconds{0};
         samples = 0;
     }
 }

@@ -19,6 +19,7 @@
 
 #include "Define.h"
 #include "SharedDefines.h"
+#include <string>
 
 namespace Playerbot
 {
@@ -65,7 +66,7 @@ public:
 
     // Reporting
     virtual void PrintDistributionReport() const = 0;
-    virtual std::string GetDistributionSummary() const = 0;
+    virtual ::std::string GetDistributionSummary() const = 0;
 };
 
 } // namespace Playerbot

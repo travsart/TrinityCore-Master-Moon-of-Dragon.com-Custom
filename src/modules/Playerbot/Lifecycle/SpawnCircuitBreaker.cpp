@@ -61,7 +61,7 @@ bool SpawnCircuitBreaker::Initialize()
     _lastDurationUpdate = GameTime::Now();
 
     _initialized = true;
-    TC_LOG_INFO("module.playerbot.circuit", "✅ SpawnCircuitBreaker initialized successfully");
+    TC_LOG_INFO("module.playerbot.circuit", " SpawnCircuitBreaker initialized successfully");
     return true;
 }
 
@@ -96,7 +96,7 @@ void SpawnCircuitBreaker::Update(uint32 diff)
         case CircuitState::OPEN:
         {
             // Check if cooldown elapsed → HALF_OPEN
-            if (CanTransitionToHalfOpen())
+    if (CanTransitionToHalfOpen())
             {
                 TransitionTo(CircuitState::HALF_OPEN, "Cooldown period elapsed, testing recovery");
                 _consecutiveFailures = 0;
@@ -107,7 +107,7 @@ void SpawnCircuitBreaker::Update(uint32 diff)
         case CircuitState::HALF_OPEN:
         {
             // Check if recovery successful → CLOSED
-            if (CanTransitionToClosed())
+    if (CanTransitionToClosed())
             {
                 TransitionTo(CircuitState::CLOSED, "Recovery successful, failure rate below threshold");
             }
@@ -154,7 +154,7 @@ void SpawnCircuitBreaker::RecordSuccess()
         _totalSuccesses, GetFailureRate());
 }
 
-void SpawnCircuitBreaker::RecordFailure(std::string_view reason)
+void SpawnCircuitBreaker::RecordFailure(::std::string_view reason)
 {
     if (!_initialized)
         return;
@@ -187,7 +187,6 @@ bool SpawnCircuitBreaker::AllowSpawn()
 {
     if (!_initialized)
         return true;  // Default allow if not initialized
-
     switch (_state)
     {
         case CircuitState::CLOSED:
@@ -197,7 +196,7 @@ bool SpawnCircuitBreaker::AllowSpawn()
         {
             // Rate-limited spawning in half-open state (1 attempt per 5 seconds)
             TimePoint now = GameTime::Now();
-            Milliseconds timeSinceLastAttempt = std::chrono::duration_cast<Milliseconds>(
+            Milliseconds timeSinceLastAttempt = ::std::chrono::duration_cast<Milliseconds>(
                 now - _lastAttemptTime);
 
             return timeSinceLastAttempt >= Milliseconds(5000);
@@ -252,7 +251,7 @@ void SpawnCircuitBreaker::Reset()
     _attemptWindow.clear();
 }
 
-void SpawnCircuitBreaker::TransitionTo(CircuitState newState, std::string_view reason)
+void SpawnCircuitBreaker::TransitionTo(CircuitState newState, ::std::string_view reason)
 {
     if (newState == _state)
         return;
@@ -263,7 +262,7 @@ void SpawnCircuitBreaker::TransitionTo(CircuitState newState, std::string_view r
 
     // Log state transition
     TC_LOG_WARN("module.playerbot.circuit",
-        "🔴 Circuit breaker state transition: {} → {} - {}",
+        " Circuit breaker state transition: {} → {} - {}",
         GetCircuitStateName(oldState),
         GetCircuitStateName(newState),
         reason);
@@ -310,7 +309,7 @@ bool SpawnCircuitBreaker::CanTransitionToHalfOpen() const
         return false;
 
     TimePoint now = GameTime::Now();
-    Milliseconds timeInOpen = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeInOpen = ::std::chrono::duration_cast<Milliseconds>(
         now - _stateEntryTime);
 
     return timeInOpen >= _config.cooldownDuration;
@@ -322,7 +321,7 @@ bool SpawnCircuitBreaker::CanTransitionToClosed() const
         return false;
 
     TimePoint now = GameTime::Now();
-    Milliseconds timeInHalfOpen = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds timeInHalfOpen = ::std::chrono::duration_cast<Milliseconds>(
         now - _stateEntryTime);
 
     // Must be in half-open for recovery duration
@@ -337,7 +336,7 @@ bool SpawnCircuitBreaker::CanTransitionToClosed() const
 void SpawnCircuitBreaker::UpdateStateDurations()
 {
     TimePoint now = GameTime::Now();
-    Milliseconds elapsed = std::chrono::duration_cast<Milliseconds>(
+    Milliseconds elapsed = ::std::chrono::duration_cast<Milliseconds>(
         now - _lastDurationUpdate);
 
     switch (_state)

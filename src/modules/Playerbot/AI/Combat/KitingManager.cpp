@@ -63,7 +63,7 @@ void KitingManager::UpdateKiting(uint32 diff)
             context.currentHealth = _bot->GetHealthPct();
             context.currentMana = _bot->GetPowerPct(POWER_MANA);
             context.inCombat = _bot->IsInCombat();
-            context.isMoving = _bot->IsMoving();
+            context.isMoving = _bot->isMoving();
             context.isCasting = _bot->HasUnitState(UNIT_STATE_CASTING);
 
             // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
@@ -82,11 +82,11 @@ void KitingManager::UpdateKiting(uint32 diff)
                 if (spatialGrid)
                 {
                     // Query nearby creature GUIDs (lock-free!)
-                    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+                    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
                         _bot->GetPosition(), searchRadius);
 
                     // Resolve GUIDs to Unit pointers and filter enemies
-                    for (ObjectGuid guid : nearbyGuids)
+    for (ObjectGuid guid : nearbyGuids)
                     {
                         /* MIGRATION TODO: Convert to BotActionQueue or spatial grid */ ::Unit* enemy = ObjectAccessor::GetUnit(*_bot, guid);
                         if (enemy && _bot->IsHostileTo(enemy) && enemy->IsAlive())
@@ -118,7 +118,7 @@ void KitingManager::UpdateKiting(uint32 diff)
 
         UpdateKitingStatistics();
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.kiting", "Exception in UpdateKiting for bot {}: {}", _bot->GetName(), e.what());
     }
@@ -184,7 +184,7 @@ KitingResult KitingManager::EvaluateKitingNeed(const KitingContext& context)
 
 KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
     KitingResult result;
 
     try
@@ -239,14 +239,14 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
             StopKiting();
         }
 
-        auto endTime = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
         TrackPerformance(duration, "ExecuteKiting");
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         result.success = false;
-        result.failureReason = std::string("Exception during kiting execution: ") + e.what();
+        result.failureReason = ::std::string("Exception during kiting execution: ") + e.what();
         TC_LOG_ERROR("playerbot.kiting", "Exception in ExecuteKiting for bot {}: {}", _bot->GetName(), e.what());
     }
 
@@ -256,7 +256,6 @@ KitingResult KitingManager::ExecuteKiting(const KitingContext& context)
 void KitingManager::StopKiting()
 {
     // No lock needed - kiting state is per-bot instance data
-
     if (!_kitingActive)
         return;
 
@@ -272,7 +271,7 @@ void KitingManager::StopKiting()
         uint32 duration = GameTime::GetGameTimeMS() - _kitingStartTime;
         if (duration > _metrics.maxKitingDuration.count() / 1000)
         {
-            _metrics.maxKitingDuration = std::chrono::microseconds(duration * 1000);
+            _metrics.maxKitingDuration = ::std::chrono::microseconds(duration * 1000);
         }
         _kitingStartTime = 0;
     }
@@ -307,7 +306,7 @@ KitingType KitingManager::SelectOptimalKitingType(const KitingContext& context)
         return KitingType::FIGURE_EIGHT;
     }
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     switch (botClass)
     {
         case CLASS_HUNTER:
@@ -408,7 +407,7 @@ float KitingManager::GetOptimalKitingDistance(Unit* target)
     if (!target)
         return _optimalKitingDistance;
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     float baseDistance = KitingUtils::GetClassKitingRange(botClass);
 
     if (target->GetTypeId() == TYPEID_UNIT)
@@ -420,7 +419,7 @@ float KitingManager::GetOptimalKitingDistance(Unit* target)
             baseDistance *= 1.2f;
     }
 
-    return std::max(baseDistance, _minKitingDistance);
+    return ::std::max(baseDistance, _minKitingDistance);
 }
 
 bool KitingManager::IsAtOptimalKitingDistance(Unit* target)
@@ -428,7 +427,7 @@ bool KitingManager::IsAtOptimalKitingDistance(Unit* target)
     if (!target)
         return false;
 
-    float distance = std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
+    float distance = ::std::sqrt(_bot->GetExactDistSq(target)); // Calculate once from squared distance
     float optimal = GetOptimalKitingDistance(target);
 
     return distance >= optimal * 0.9f && distance <= optimal * 1.1f;
@@ -447,7 +446,7 @@ KitingResult KitingManager::ExecuteCircularKiting(const KitingContext& context)
     }
 
     Position targetPos = target->GetPosition();
-    float angle = std::atan2(_bot->GetPositionY() - targetPos.GetPositionY(),
+    float angle = ::std::atan2(_bot->GetPositionY() - targetPos.GetPositionY(),
                            _bot->GetPositionX() - targetPos.GetPositionX());
 
     angle += M_PI / 4;
@@ -587,9 +586,9 @@ KitingResult KitingManager::ExecuteFigureEight(const KitingContext& context)
     return result;
 }
 
-std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>& enemies)
+::std::vector<KitingTarget> KitingManager::AnalyzeThreats(const ::std::vector<Unit*>& enemies)
 {
-    std::vector<KitingTarget> threats;
+    ::std::vector<KitingTarget> threats;
     threats.reserve(enemies.size());
 
     Position botPos = _bot->GetPosition();
@@ -603,15 +602,15 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         threat.unit = enemy;
         threat.position = enemy->GetPosition();
         threat.distance = botPos.GetExactDist(&threat.position);
-        threat.isMoving = enemy->IsMoving();
+        threat.isMoving = enemy->isMoving();
         threat.isCasting = enemy->HasUnitState(UNIT_STATE_CASTING);
         threat.name = enemy->GetName();
         threat.lastUpdate = GameTime::GetGameTimeMS();
 
         if (threat.isMoving)
         {
-            threat.velocity.m_positionX = enemy->GetSpeedXY() * std::cos(enemy->GetOrientation());
-            threat.velocity.m_positionY = enemy->GetSpeedXY() * std::sin(enemy->GetOrientation());
+            threat.velocity.m_positionX = enemy->GetSpeedXY() * ::std::cos(enemy->GetOrientation());
+            threat.velocity.m_positionY = enemy->GetSpeedXY() * ::std::sin(enemy->GetOrientation());
             threat.relativeSpeed = CalculateRelativeSpeed(enemy);
         }
 
@@ -619,7 +618,7 @@ std::vector<KitingTarget> KitingManager::AnalyzeThreats(const std::vector<Unit*>
         threats.push_back(threat);
     }
 
-    std::sort(threats.begin(), threats.end(),
+    ::std::sort(threats.begin(), threats.end(),
         [](const KitingTarget& a, const KitingTarget& b) {
             return a.distance < b.distance;
         });
@@ -655,7 +654,7 @@ Position KitingManager::CalculateKitingPosition(Unit* target, KitingType type)
     {
         case KitingType::CIRCULAR_KITING:
             {
-                float angle = std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
+                float angle = ::std::atan2(botPos.GetPositionY() - targetPos.GetPositionY(),
                                        botPos.GetPositionX() - targetPos.GetPositionX());
                 return GetCircularKitingPosition(target, angle + M_PI/6);
             }
@@ -669,7 +668,7 @@ Position KitingManager::CalculateKitingPosition(Unit* target, KitingType type)
     }
 }
 
-Position KitingManager::FindSafeKitingDirection(const std::vector<Unit*>& threats)
+Position KitingManager::FindSafeKitingDirection(const ::std::vector<Unit*>& threats)
 {
     Position botPos = _bot->GetPosition();
     Position safeDirection(0.0f, 0.0f, 0.0f);
@@ -680,14 +679,14 @@ Position KitingManager::FindSafeKitingDirection(const std::vector<Unit*>& threat
             continue;
 
         Position threatPos = threat->GetPosition();
-        float angle = std::atan2(botPos.GetPositionY() - threatPos.GetPositionY(),
+        float angle = ::std::atan2(botPos.GetPositionY() - threatPos.GetPositionY(),
                                botPos.GetPositionX() - threatPos.GetPositionX());
 
-        safeDirection.m_positionX += std::cos(angle);
-        safeDirection.m_positionY += std::sin(angle);
+        safeDirection.m_positionX += ::std::cos(angle);
+        safeDirection.m_positionY += ::std::sin(angle);
     }
 
-    float length = std::sqrt(safeDirection.m_positionX * safeDirection.m_positionX +
+    float length = ::std::sqrt(safeDirection.m_positionX * safeDirection.m_positionX +
                            safeDirection.m_positionY * safeDirection.m_positionY);
 
     if (length > 0.0f)
@@ -712,14 +711,14 @@ Position KitingManager::GetCircularKitingPosition(Unit* target, float angle)
     Position targetPos = target->GetPosition();
     Position kitingPos;
 
-    kitingPos.m_positionX = targetPos.GetPositionX() + _optimalKitingDistance * std::cos(angle);
-    kitingPos.m_positionY = targetPos.GetPositionY() + _optimalKitingDistance * std::sin(angle);
+    kitingPos.m_positionX = targetPos.GetPositionX() + _optimalKitingDistance * ::std::cos(angle);
+    kitingPos.m_positionY = targetPos.GetPositionY() + _optimalKitingDistance * ::std::sin(angle);
     kitingPos.m_positionZ = targetPos.GetPositionZ();
 
     return kitingPos;
 }
 
-Position KitingManager::GetRetreatPosition(const std::vector<Unit*>& threats, float distance)
+Position KitingManager::GetRetreatPosition(const ::std::vector<Unit*>& threats, float distance)
 {
     Position safeDirection = FindSafeKitingDirection(threats);
     Position botPos = _bot->GetPosition();
@@ -745,16 +744,16 @@ Position KitingManager::GetAttackPosition(Unit* target)
     if (!target)
         return _bot->GetPosition();
 
-    float attackRange = std::max(5.0f, GetOptimalKitingDistance(target) * 0.8f);
+    float attackRange = ::std::max(5.0f, GetOptimalKitingDistance(target) * 0.8f);
     Position targetPos = target->GetPosition();
     Position botPos = _bot->GetPosition();
 
-    float angle = std::atan2(targetPos.GetPositionY() - botPos.GetPositionY(),
+    float angle = ::std::atan2(targetPos.GetPositionY() - botPos.GetPositionY(),
                            targetPos.GetPositionX() - botPos.GetPositionX());
 
     Position attackPos;
-    attackPos.m_positionX = targetPos.GetPositionX() - attackRange * std::cos(angle);
-    attackPos.m_positionY = targetPos.GetPositionY() - attackRange * std::sin(angle);
+    attackPos.m_positionX = targetPos.GetPositionX() - attackRange * ::std::cos(angle);
+    attackPos.m_positionY = targetPos.GetPositionY() - attackRange * ::std::sin(angle);
     attackPos.m_positionZ = targetPos.GetPositionZ();
 
     return attackPos;
@@ -780,7 +779,7 @@ KitingTrigger KitingManager::EvaluateKitingTriggers(const KitingContext& context
     if (context.isCasting)
         triggers |= KitingTrigger::CASTING_INTERRUPT;
 
-    uint8 botClass = _bot->getClass();
+    uint8 botClass = _bot->GetClass();
     if (botClass == CLASS_HUNTER || botClass == CLASS_MAGE || botClass == CLASS_WARLOCK)
         triggers |= KitingTrigger::FORMATION_ROLE;
 
@@ -807,7 +806,7 @@ void KitingManager::UpdateKitingState()
         return;
     }
 
-    float distance = std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
+    float distance = ::std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
     if (distance > _maxKitingDistance)
     {
         _currentState = KitingState::REPOSITIONING;
@@ -851,9 +850,9 @@ void KitingManager::ExecuteCurrentPattern()
     }
 }
 
-std::vector<Position> KitingManager::GenerateCircularWaypoints(Unit* target, float radius, uint32 points)
+::std::vector<Position> KitingManager::GenerateCircularWaypoints(Unit* target, float radius, uint32 points)
 {
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     if (!target)
         return waypoints;
 
@@ -864,8 +863,8 @@ std::vector<Position> KitingManager::GenerateCircularWaypoints(Unit* target, flo
     {
         float angle = (2.0f * M_PI * i) / points;
         Position waypoint;
-        waypoint.m_positionX = centerPos.GetPositionX() + radius * std::cos(angle);
-        waypoint.m_positionY = centerPos.GetPositionY() + radius * std::sin(angle);
+        waypoint.m_positionX = centerPos.GetPositionX() + radius * ::std::cos(angle);
+        waypoint.m_positionY = centerPos.GetPositionY() + radius * ::std::sin(angle);
         waypoint.m_positionZ = centerPos.GetPositionZ();
         waypoints.push_back(waypoint);
     }
@@ -873,9 +872,9 @@ std::vector<Position> KitingManager::GenerateCircularWaypoints(Unit* target, flo
     return waypoints;
 }
 
-std::vector<Position> KitingManager::GenerateFigureEightWaypoints(Unit* target, float radius)
+::std::vector<Position> KitingManager::GenerateFigureEightWaypoints(Unit* target, float radius)
 {
-    std::vector<Position> waypoints;
+    ::std::vector<Position> waypoints;
     if (!target)
         return waypoints;
 
@@ -885,8 +884,8 @@ std::vector<Position> KitingManager::GenerateFigureEightWaypoints(Unit* target, 
     for (uint32 i = 0; i < points; ++i)
     {
         float t = (2.0f * M_PI * i) / points;
-        float x = radius * std::sin(t);
-        float y = radius * std::sin(t) * std::cos(t);
+        float x = radius * ::std::sin(t);
+        float y = radius * ::std::sin(t) * ::std::cos(t);
 
         Position waypoint;
         waypoint.m_positionX = centerPos.GetPositionX() + x;
@@ -927,14 +926,14 @@ bool KitingManager::ExecuteMovementToPosition(const Position& target)
             return true;
         }
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.kiting", "Failed to execute movement for bot {}: {}", _bot->GetName(), e.what());
         return false;
     }
 }
 
-bool KitingManager::IsPositionSafe(const Position& pos, const std::vector<Unit*>& threats)
+bool KitingManager::IsPositionSafe(const Position& pos, const ::std::vector<Unit*>& threats)
 {
     for (Unit* threat : threats)
     {
@@ -949,7 +948,7 @@ bool KitingManager::IsPositionSafe(const Position& pos, const std::vector<Unit*>
     return true;
 }
 
-float KitingManager::CalculateSafetyRating(const Position& pos, const std::vector<Unit*>& threats)
+float KitingManager::CalculateSafetyRating(const Position& pos, const ::std::vector<Unit*>& threats)
 {
     float safetyRating = 100.0f;
 
@@ -967,7 +966,7 @@ float KitingManager::CalculateSafetyRating(const Position& pos, const std::vecto
         }
     }
 
-    return std::max(0.0f, safetyRating);
+    return ::std::max(0.0f, safetyRating);
 }
 
 void KitingManager::UpdateAttackTiming()
@@ -998,17 +997,17 @@ float KitingManager::CalculateRelativeSpeed(Unit* target)
     return botSpeed - targetSpeed;
 }
 
-void KitingManager::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void KitingManager::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
 {
     if (duration > _metrics.maxKitingDuration)
         _metrics.maxKitingDuration = duration;
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(currentTime - _metrics.lastUpdate);
+    auto currentTime = ::std::chrono::steady_clock::now();
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::seconds>(currentTime - _metrics.lastUpdate);
 
     if (timeSinceLastUpdate.count() >= 1)
     {
-        _metrics.averageKitingDuration = std::chrono::microseconds(
+        _metrics.averageKitingDuration = ::std::chrono::microseconds(
             static_cast<uint64_t>(_metrics.averageKitingDuration.count() * 0.9 + duration.count() * 0.1)
         );
         _metrics.lastUpdate = currentTime;
@@ -1020,7 +1019,7 @@ void KitingManager::UpdateKitingStatistics()
     if (!_kitingActive || !_kitingTarget)
         return;
 
-    float currentDistance = std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(_bot->GetExactDistSq(_kitingTarget)); // Calculate once from squared distance
     _metrics.averageDistanceMaintained = _metrics.averageDistanceMaintained * 0.95f + currentDistance * 0.05f;
 
     float optimalDistance = GetOptimalKitingDistance(_kitingTarget);
@@ -1040,7 +1039,7 @@ float KitingUtils::CalculateOptimalKitingDistance(Player* bot, Unit* target)
     if (!bot || !target)
         return 20.0f;
 
-    uint8 botClass = bot->getClass();
+    uint8 botClass = bot->GetClass();
     return GetClassKitingRange(botClass);
 }
 
@@ -1079,7 +1078,7 @@ bool KitingUtils::CanClassKiteEffectively(uint8 playerClass)
     }
 }
 
-Position KitingUtils::FindBestKitingDirection(Player* bot, const std::vector<Unit*>& threats)
+Position KitingUtils::FindBestKitingDirection(Player* bot, const ::std::vector<Unit*>& threats)
 {
     if (!bot || threats.empty())
         return Position();
@@ -1093,14 +1092,14 @@ Position KitingUtils::FindBestKitingDirection(Player* bot, const std::vector<Uni
             continue;
 
         Position threatPos = threat->GetPosition();
-        float angle = std::atan2(botPos.GetPositionY() - threatPos.GetPositionY(),
+        float angle = ::std::atan2(botPos.GetPositionY() - threatPos.GetPositionY(),
                                botPos.GetPositionX() - threatPos.GetPositionX());
 
-        resultDirection.m_positionX += std::cos(angle);
-        resultDirection.m_positionY += std::sin(angle);
+        resultDirection.m_positionX += ::std::cos(angle);
+        resultDirection.m_positionY += ::std::sin(angle);
     }
 
-    float length = std::sqrt(resultDirection.m_positionX * resultDirection.m_positionX +
+    float length = ::std::sqrt(resultDirection.m_positionX * resultDirection.m_positionX +
                            resultDirection.m_positionY * resultDirection.m_positionY);
 
     if (length > 0.0f)
@@ -1112,7 +1111,7 @@ Position KitingUtils::FindBestKitingDirection(Player* bot, const std::vector<Uni
     return resultDirection;
 }
 
-bool KitingUtils::IsPositionGoodForKiting(const Position& pos, Player* bot, const std::vector<Unit*>& threats)
+bool KitingUtils::IsPositionGoodForKiting(const Position& pos, Player* bot, const ::std::vector<Unit*>& threats)
 {
     if (!bot)
         return false;

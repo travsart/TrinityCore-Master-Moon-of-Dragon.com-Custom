@@ -27,7 +27,7 @@ namespace Playerbot
 
 InterruptAwareness::InterruptAwareness(Player* observer)
     : _observer(observer)
-    , _lastUpdate(std::chrono::steady_clock::now())
+    , _lastUpdate(::std::chrono::steady_clock::now())
 {
     // Set default configuration
     _config.maxDetectionRange = 40.0f;
@@ -49,10 +49,10 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
     if (!_active.load() || !_observer)
         return result;
 
-    auto updateStart = std::chrono::steady_clock::now();
+    auto updateStart = ::std::chrono::steady_clock::now();
 
     // Check if it's time for a scan
-    auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(updateStart - _lastUpdate);
+    auto timeSinceLastUpdate = ::std::chrono::duration_cast<::std::chrono::milliseconds>(updateStart - _lastUpdate);
     if (timeSinceLastUpdate.count() < _config.detectionIntervalMs)
         return result;
 
@@ -70,11 +70,11 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
     ProcessCompletedCasts(result);
 
     // Update performance metrics
-    auto scanTime = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() - updateStart);
+    auto scanTime = ::std::chrono::duration_cast<::std::chrono::microseconds>(
+        ::std::chrono::steady_clock::now() - updateStart);
 
     {
-        std::lock_guard lock(_metricsMutex);
+        ::std::lock_guard lock(_metricsMutex);
         _metrics.totalScans.fetch_add(1);
         _metrics.unitsScanned.fetch_add(result.totalUnitsScanned);
         _metrics.spellsDetected.fetch_add(result.totalSpellsDetected);
@@ -86,7 +86,7 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
 
         // Rolling average calculation
         auto currentAvg = _metrics.averageScanTime;
-        _metrics.averageScanTime = std::chrono::microseconds(
+        _metrics.averageScanTime = ::std::chrono::microseconds(
             (currentAvg.count() * 9 + scanTime.count()) / 10
         );
     }
@@ -106,16 +106,16 @@ SpellScanResult InterruptAwareness::Update(uint32 diff)
 
 void InterruptAwareness::SetObserver(Player* observer)
 {
-    std::lock_guard lock(_observerMutex);
+    ::std::lock_guard lock(_observerMutex);
     _observer = observer;
     TC_LOG_DEBUG("playerbot", "InterruptAwareness: Observer set to %s",
                  observer ? observer->GetName().c_str() : "nullptr");
 }
 
-std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
+::std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
 {
-    std::lock_guard lock(_castMutex);
-    std::vector<DetectedSpellCast> allCasts;
+    ::std::lock_guard lock(_castMutex);
+    ::std::vector<DetectedSpellCast> allCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -129,13 +129,13 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetActiveCasts() const
     return allCasts;
 }
 
-std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid casterGuid) const
+::std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid casterGuid) const
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
-        std::vector<DetectedSpellCast> validCasts;
+        ::std::vector<DetectedSpellCast> validCasts;
         for (const auto& cast : it->second)
         {
             if (cast.IsValid())
@@ -146,10 +146,10 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetCastsFromUnit(ObjectGuid c
     return {};
 }
 
-std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float maxRange) const
+::std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float maxRange) const
 {
-    std::lock_guard lock(_castMutex);
-    std::vector<DetectedSpellCast> interruptibleCasts;
+    ::std::lock_guard lock(_castMutex);
+    ::std::vector<DetectedSpellCast> interruptibleCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -158,7 +158,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float m
             if (cast.IsValid() && cast.isInterruptible)
             {
                 // Check range if specified
-                if (maxRange > 0.0f && cast.detectionRange > maxRange)
+    if (maxRange > 0.0f && cast.detectionRange > maxRange)
                     continue;
 
                 interruptibleCasts.push_back(cast);
@@ -167,7 +167,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float m
     }
 
     // Sort by remaining cast time (most urgent first)
-    std::sort(interruptibleCasts.begin(), interruptibleCasts.end(),
+    ::std::sort(interruptibleCasts.begin(), interruptibleCasts.end(),
               [](const DetectedSpellCast& a, const DetectedSpellCast& b) {
                   return a.GetRemainingTime() < b.GetRemainingTime();
               });
@@ -175,10 +175,10 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetInterruptibleCasts(float m
     return interruptibleCasts;
 }
 
-std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
+::std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 {
-    std::lock_guard lock(_castMutex);
-    std::vector<DetectedSpellCast> hostileCasts;
+    ::std::lock_guard lock(_castMutex);
+    ::std::vector<DetectedSpellCast> hostileCasts;
 
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -196,7 +196,7 @@ std::vector<DetectedSpellCast> InterruptAwareness::GetHostileCasts() const
 
 bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(unitGuid);
     if (it != _activeCasts.end())
     {
@@ -211,7 +211,7 @@ bool InterruptAwareness::IsUnitCasting(ObjectGuid unitGuid) const
 
 DetectedSpellCast const* InterruptAwareness::GetSpellCast(ObjectGuid casterGuid, uint32 spellId) const
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
     auto it = _activeCasts.find(casterGuid);
     if (it != _activeCasts.end())
     {
@@ -224,27 +224,27 @@ DetectedSpellCast const* InterruptAwareness::GetSpellCast(ObjectGuid casterGuid,
     return nullptr;
 }
 
-void InterruptAwareness::SetInterruptCoordinator(std::shared_ptr<InterruptCoordinator> coordinator)
+void InterruptAwareness::SetInterruptCoordinator(::std::shared_ptr<InterruptCoordinator> coordinator)
 {
     _coordinator = coordinator;
     TC_LOG_DEBUG("playerbot", "InterruptAwareness: Interrupt coordinator set");
 }
 
-void InterruptAwareness::RegisterSpellCastCallback(std::function<void(DetectedSpellCast const&)> callback)
+void InterruptAwareness::RegisterSpellCastCallback(::std::function<void(DetectedSpellCast const&)> callback)
 {
-    std::lock_guard lock(_callbackMutex);
+    ::std::lock_guard lock(_callbackMutex);
     _spellCastCallbacks.push_back(callback);
 }
 
-void InterruptAwareness::RegisterSpellCompleteCallback(std::function<void(ObjectGuid, uint32, bool)> callback)
+void InterruptAwareness::RegisterSpellCompleteCallback(::std::function<void(ObjectGuid, uint32, bool)> callback)
 {
-    std::lock_guard lock(_callbackMutex);
+    ::std::lock_guard lock(_callbackMutex);
     _spellCompleteCallbacks.push_back(callback);
 }
 
 size_t InterruptAwareness::GetActiveCastCount() const
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
     size_t count = 0;
     for (const auto& [casterGuid, casts] : _activeCasts)
     {
@@ -259,26 +259,26 @@ size_t InterruptAwareness::GetActiveCastCount() const
 
 void InterruptAwareness::ResetMetrics()
 {
-    std::lock_guard lock(_metricsMutex);
+    ::std::lock_guard lock(_metricsMutex);
     _metrics.totalScans.store(0);
     _metrics.unitsScanned.store(0);
     _metrics.spellsDetected.store(0);
     _metrics.interruptibleSpells.store(0);
     _metrics.hostileSpells.store(0);
-    _metrics.averageScanTime = std::chrono::microseconds{0};
-    _metrics.maxScanTime = std::chrono::microseconds{0};
+    _metrics.averageScanTime = ::std::chrono::microseconds{0};
+    _metrics.maxScanTime = ::std::chrono::microseconds{0};
 }
 
-void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const& spellSequence)
+void InterruptAwareness::AddSpellPattern(uint32 npcId, ::std::vector<uint32> const& spellSequence)
 {
     if (spellSequence.empty())
         return;
 
-    std::lock_guard lock(_patternMutex);
+    ::std::lock_guard lock(_patternMutex);
     SpellPattern pattern;
     pattern.npcId = npcId;
     pattern.spellSequence = spellSequence;
-    pattern.lastMatch = std::chrono::steady_clock::now();
+    pattern.lastMatch = ::std::chrono::steady_clock::now();
     pattern.currentIndex = 0;
 
     _spellPatterns[npcId] = pattern;
@@ -289,23 +289,23 @@ void InterruptAwareness::AddSpellPattern(uint32 npcId, std::vector<uint32> const
 
 void InterruptAwareness::ClearSpellPatterns()
 {
-    std::lock_guard lock(_patternMutex);
+    ::std::lock_guard lock(_patternMutex);
     _spellPatterns.clear();
 }
 
 void InterruptAwareness::SetScanPriority(CreatureType creatureType, uint32 priority)
 {
-    std::lock_guard lock(_priorityMutex);
+    ::std::lock_guard lock(_priorityMutex);
     _creatureTypePriorities[creatureType] = priority;
 }
 
 void InterruptAwareness::SetScanPriority(uint32 npcId, uint32 priority)
 {
-    std::lock_guard lock(_priorityMutex);
+    ::std::lock_guard lock(_priorityMutex);
     _npcPriorities[npcId] = priority;
 }
 
-std::vector<uint32> InterruptAwareness::PredictUpcomingSpells(ObjectGuid casterGuid) const
+::std::vector<uint32> InterruptAwareness::PredictUpcomingSpells(ObjectGuid casterGuid) const
 {
     if (!_enablePatterns)
         return {};
@@ -323,14 +323,14 @@ SpellScanResult InterruptAwareness::ScanNearbyUnits()
         return result;
 
     // Get nearby units to scan
-    std::vector<Unit*> units = GetNearbyUnits();
+    ::std::vector<Unit*> units = GetNearbyUnits();
     result.totalUnitsScanned = static_cast<uint32>(units.size());
 
     // Limit scanning to prevent performance issues
     if (units.size() > MAX_SCAN_UNITS)
     {
         // Sort by priority and distance, then take the top ones
-        std::sort(units.begin(), units.end(),
+        ::std::sort(units.begin(), units.end(),
                  [this](Unit* a, Unit* b) {
                      uint32 priorityA = GetUnitScanPriority(a);
                      uint32 priorityB = GetUnitScanPriority(b);
@@ -368,7 +368,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
     if (unit->HasUnitState(UNIT_STATE_CASTING))
     {
         // Check generic spell
-        if (Spell* currentSpell = unit->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    if (Spell* currentSpell = unit->GetCurrentSpell(CURRENT_GENERIC_SPELL))
         {
             if (ShouldDetectSpell(unit, currentSpell))
             {
@@ -378,7 +378,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Check if this is a new cast or an update
                     bool isNewCast = true;
                     {
-                        std::lock_guard lock(_castMutex);
+                        ::std::lock_guard lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -400,7 +400,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                         result.totalSpellsDetected++;
 
                         // Update metrics
-                        if (cast.isInterruptible)
+    if (cast.isInterruptible)
                             _metrics.interruptibleSpells.fetch_add(1);
                         if (cast.isHostile)
                             _metrics.hostileSpells.fetch_add(1);
@@ -413,7 +413,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
         }
 
         // Check channeled spell
-        if (Spell* channeledSpell = unit->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+    if (Spell* channeledSpell = unit->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
         {
             if (_config.detectChanneledSpells && ShouldDetectSpell(unit, channeledSpell))
             {
@@ -425,7 +425,7 @@ void InterruptAwareness::ProcessUnit(Unit* unit, SpellScanResult& result)
                     // Similar new cast check as above
                     bool isNewCast = true;
                     {
-                        std::lock_guard lock(_castMutex);
+                        ::std::lock_guard lock(_castMutex);
                         auto it = _activeCasts.find(unitGuid);
                         if (it != _activeCasts.end())
                         {
@@ -479,7 +479,7 @@ DetectedSpellCast InterruptAwareness::AnalyzeSpellCast(Unit* caster, Spell const
 
     cast.casterGuid = caster->GetGUID();
     cast.spellId = spellInfo->Id;
-    cast.detectionTime = std::chrono::steady_clock::now();
+    cast.detectionTime = ::std::chrono::steady_clock::now();
     cast.casterPosition = Position(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ());
     cast.isChanneled = spellInfo->IsChanneled();
     cast.isInterruptible = IsSpellInterruptible(spell);
@@ -487,7 +487,7 @@ DetectedSpellCast InterruptAwareness::AnalyzeSpellCast(Unit* caster, Spell const
     cast.schoolMask = spellInfo->SchoolMask;
 
     if (_observer)
-        cast.detectionRange = std::sqrt(_observer->GetExactDistSq(caster)); // Calculate once from squared distance
+        cast.detectionRange = ::std::sqrt(_observer->GetExactDistSq(caster)); // Calculate once from squared distance
 
     // Calculate cast timing
     if (cast.isChanneled)
@@ -504,13 +504,13 @@ DetectedSpellCast InterruptAwareness::AnalyzeSpellCast(Unit* caster, Spell const
     if (elapsedTime < cast.castTimeMs)
     {
         cast.remainingTimeMs = cast.castTimeMs - elapsedTime;
-        cast.estimatedCastEnd = cast.detectionTime + std::chrono::milliseconds(cast.remainingTimeMs);
+        cast.estimatedCastEnd = cast.detectionTime + ::std::chrono::milliseconds(cast.remainingTimeMs);
     }
     else
     {
         // Spell is nearly complete or we detected it very late
         cast.remainingTimeMs = 100; // Give a small buffer
-        cast.estimatedCastEnd = cast.detectionTime + std::chrono::milliseconds(100);
+        cast.estimatedCastEnd = cast.detectionTime + ::std::chrono::milliseconds(100);
     }
 
     return cast;
@@ -541,7 +541,7 @@ bool InterruptAwareness::ShouldDetectSpell(Unit* caster, Spell const* spell) con
             return false;
 
         // Check line of sight if required
-        if (_config.requireLineOfSight && !_observer->IsWithinLOSInMap(caster))
+    if (_config.requireLineOfSight && !_observer->IsWithinLOSInMap(caster))
             return false;
     }
 
@@ -566,7 +566,6 @@ bool InterruptAwareness::IsSpellInterruptible(Spell const* spell) const
 
     // Check for uninterruptible attributes
     // Note: SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY not available in this TrinityCore version
-
     if (spellInfo->HasAttribute(SPELL_ATTR4_CANNOT_BE_STOLEN))
         return false;
 
@@ -628,7 +627,7 @@ void InterruptAwareness::UpdateActiveCasts()
     RemoveExpiredCasts();
 
     // Update remaining times for active casts
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
     for (auto& [casterGuid, casts] : _activeCasts)
     {
         for (auto& cast : casts)
@@ -643,19 +642,19 @@ void InterruptAwareness::UpdateActiveCasts()
 
 void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
 
     // Limit total active casts to prevent memory issues
     if (GetActiveCastCount() >= MAX_ACTIVE_CASTS)
     {
         // Remove oldest casts
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
         for (auto& [casterGuid, casts] : _activeCasts)
         {
             casts.erase(
-                std::remove_if(casts.begin(), casts.end(),
+                ::std::remove_if(casts.begin(), casts.end(),
                               [now](const DetectedSpellCast& c) {
-                                  auto age = std::chrono::duration_cast<std::chrono::seconds>(now - c.detectionTime);
+                                  auto age = ::std::chrono::duration_cast<::std::chrono::seconds>(now - c.detectionTime);
                                   return age.count() > 30; // Remove casts older than 30 seconds
                               }),
                 casts.end()
@@ -668,7 +667,7 @@ void InterruptAwareness::AddDetectedCast(DetectedSpellCast const& cast)
 
 void InterruptAwareness::RemoveExpiredCasts()
 {
-    std::lock_guard lock(_castMutex);
+    ::std::lock_guard lock(_castMutex);
 
     for (auto it = _activeCasts.begin(); it != _activeCasts.end();)
     {
@@ -676,7 +675,7 @@ void InterruptAwareness::RemoveExpiredCasts()
 
         // Remove expired casts
         casts.erase(
-            std::remove_if(casts.begin(), casts.end(),
+            ::std::remove_if(casts.begin(), casts.end(),
                           [](const DetectedSpellCast& cast) {
                               return cast.IsExpired();
                           }),
@@ -684,7 +683,7 @@ void InterruptAwareness::RemoveExpiredCasts()
         );
 
         // Remove empty entries
-        if (casts.empty())
+    if (casts.empty())
             it = _activeCasts.erase(it);
         else
             ++it;
@@ -697,9 +696,9 @@ void InterruptAwareness::ProcessCompletedCasts(SpellScanResult& result)
     // Implementation would depend on how TrinityCore reports spell completion
     // For now, we rely on the expiration system
 }
-std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
+::std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
 {
-    std::vector<Unit*> units;
+    ::std::vector<Unit*> units;
     if (!_observer)
         return units;
 
@@ -719,7 +718,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
     }
 
     // Query nearby creature GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _observer->GetPosition(), _config.maxDetectionRange);
 
     // Resolve GUIDs to Unit pointers and filter appropriate units
@@ -730,7 +729,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
             continue;
 
         // Filter for casting or combat units to reduce processing load
-        if (unit->HasUnitState(UNIT_STATE_CASTING) || unit->IsInCombat())
+    if (unit->HasUnitState(UNIT_STATE_CASTING) || unit->IsInCombat())
         {
             units.push_back(unit);
         }
@@ -748,7 +747,7 @@ std::vector<Unit*> InterruptAwareness::GetNearbyUnits() const
         if (_observer->GetExactDistSq(target) <= maxRangeSq)
         {
             // Check if target is already in the list
-            auto it = std::find(units.begin(), units.end(), target);
+            auto it = ::std::find(units.begin(), units.end(), target);
             if (it == units.end())
             {
                 units.push_back(target);
@@ -825,7 +824,7 @@ void InterruptAwareness::OptimizeForPerformance()
 
     // Reset metrics if they get too large
     {
-        std::lock_guard lock(_metricsMutex);
+        ::std::lock_guard lock(_metricsMutex);
         if (_metrics.totalScans.load() > 100000)
         {
             // Scale down metrics to prevent overflow
@@ -871,7 +870,7 @@ void InterruptAwareness::NotifySpellDetected(DetectedSpellCast const& cast)
     }
 
     // Notify registered callbacks
-    std::lock_guard lock(_callbackMutex);
+    ::std::lock_guard lock(_callbackMutex);
     for (const auto& callback : _spellCastCallbacks)
     {
         try
@@ -897,7 +896,7 @@ void InterruptAwareness::NotifySpellCompleted(ObjectGuid casterGuid, uint32 spel
     }
 
     // Notify registered callbacks
-    std::lock_guard lock(_callbackMutex);
+    ::std::lock_guard lock(_callbackMutex);
     for (const auto& callback : _spellCompleteCallbacks)
     {
         try

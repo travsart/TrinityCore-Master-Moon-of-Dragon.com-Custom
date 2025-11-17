@@ -18,7 +18,7 @@
 namespace Playerbot
 {
 
-TargetAssistAction::TargetAssistAction(std::string const& name)
+TargetAssistAction::TargetAssistAction(::std::string const& name)
     : CombatAction(name)
 {
     // SIMPLIFIED IMPLEMENTATION - TECHNICAL DEBT DOCUMENTED
@@ -45,7 +45,7 @@ ActionResult TargetAssistAction::Execute(BotAI* ai, ActionContext const& context
                     targetFromContext->GetName(), bot->GetName());
 
         // Engage the target
-        if (EngageTarget(bot, targetFromContext))
+    if (EngageTarget(bot, targetFromContext))
         {
             TC_LOG_INFO("module.playerbot.combat", "SUCCESS: Bot {} now attacking {}",
                         bot->GetName(), targetFromContext->GetName());
@@ -199,7 +199,6 @@ bool TargetAssistAction::ShouldSwitchTarget(Player* bot, Unit* newTarget) const
     Unit* currentTarget = bot->GetVictim();
     if (!currentTarget)
         return true; // No current target, switch
-
     if (currentTarget == newTarget)
         return false; // Already targeting
 
@@ -264,8 +263,8 @@ float TargetAssistAction::CalculateAssistPriority(Player* bot, Unit* target, Gro
     priority += attackers * 5.0f;
 
     // Distance factor (closer = higher priority)
-    float distance = std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
-    priority += std::max(0.0f, 30.0f - distance);
+    float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
+    priority += ::std::max(0.0f, 30.0f - distance);
 
     // Health factor (lower health = higher priority)
     float healthPct = target->GetHealthPct();

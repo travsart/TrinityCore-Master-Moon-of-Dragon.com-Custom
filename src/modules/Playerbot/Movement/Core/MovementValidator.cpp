@@ -53,7 +53,7 @@ namespace Playerbot
 
         Map* map = bot->GetMap();
         // Check if destination is in void
-        if (IsVoidPosition(map, destination))
+    if (IsVoidPosition(map, destination))
         {
             TC_LOG_DEBUG("playerbot.movement", "Destination in void for bot %s",
                 bot->GetName().c_str());
@@ -61,7 +61,7 @@ namespace Playerbot
             return false;
         }
         // Check if destination is in dangerous terrain
-        if (IsDangerousTerrain(map, destination))
+    if (IsDangerousTerrain(map, destination))
         {
             TC_LOG_DEBUG("playerbot.movement", "Destination in dangerous terrain for bot %s",
                 bot->GetName().c_str());
@@ -70,7 +70,7 @@ namespace Playerbot
         }
 
         // Check if destination requires flying and bot can't fly
-        if (RequiresFlying(map, destination) && !bot->CanFly())
+    if (RequiresFlying(map, destination) && !bot->CanFly())
         {
             TC_LOG_DEBUG("playerbot.movement", "Destination requires flying for bot %s",
                 bot->GetName().c_str());
@@ -78,7 +78,7 @@ namespace Playerbot
             return false;
         }
         // Check if destination is reachable (basic LOS check)
-        if (!HasLineOfSight(map, bot->GetPosition(), destination))
+    if (!HasLineOfSight(map, bot->GetPosition(), destination))
         {
             // LOS blocked doesn't mean unreachable if we can path around
             // This is just a quick check, pathfinding will do detailed validation
@@ -87,7 +87,7 @@ namespace Playerbot
         }
 
         // Check height difference for non-flying movement
-        if (!bot->CanFly())
+    if (!bot->CanFly())
         {
             float currentZ = bot->GetPositionZ();
             float destZ = destination.GetPositionZ();
@@ -96,7 +96,7 @@ namespace Playerbot
             if (GetGroundHeight(map, destination.GetPositionX(),
                               destination.GetPositionY(), groundZ))
             {
-                float heightDiff = std::abs(destZ - groundZ);
+                float heightDiff = ::std::abs(destZ - groundZ);
                 if (heightDiff > 10.0f) // Destination is too far from ground
                 {
                     TC_LOG_DEBUG("playerbot.movement",
@@ -130,7 +130,7 @@ namespace Playerbot
         _totalValidations.fetch_add(1);
 
         // Validate each segment
-        for (size_t i = 0; i < path.nodes.size() - 1; ++i)
+    for (size_t i = 0; i < path.nodes.size() - 1; ++i)
         {
             if (!ValidatePathSegment(bot, path.nodes[i].position, path.nodes[i + 1].position))
             {
@@ -140,7 +140,7 @@ namespace Playerbot
         }
 
         // Check total path length
-        if (path.totalLength > MovementConstants::DISTANCE_VERY_FAR * 3)
+    if (path.totalLength > MovementConstants::DISTANCE_VERY_FAR * 3)
         {
             TC_LOG_DEBUG("playerbot.movement", "Path too long (%.2f) for bot %s",
                 path.totalLength, bot->GetName().c_str());
@@ -168,7 +168,7 @@ namespace Playerbot
         }
 
         // Check for collision
-        if (CheckCollision(map, start, end))
+    if (CheckCollision(map, start, end))
         {
             TC_LOG_DEBUG("playerbot.movement", "Collision detected in path segment");
             return false;
@@ -196,7 +196,7 @@ namespace Playerbot
             return false;
 
         // Check known danger zones
-        for (auto const& zone : _dangerZones)
+    for (auto const& zone : _dangerZones)
         {
             if (zone.mapId == map->GetId() &&
                 zone.center.GetExactDist(&position) <= zone.radius)
@@ -214,7 +214,7 @@ namespace Playerbot
         if (liquidStatus != LIQUID_MAP_NO_WATER)
         {
             // Check if it's lava or slime
-            if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) ||
+    if (liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Magma) ||
                 liquidData.type_flags.HasFlag(map_liquidHeaderTypeFlags::Slime))
                 return true;
         }
@@ -231,7 +231,7 @@ namespace Playerbot
             return true;
 
         // Check if ground is too far below (void)
-        if (groundZ < _voidThreshold)
+    if (groundZ < _voidThreshold)
             return true;
 
         // Check if position is outside map bounds using line of sight check
@@ -253,13 +253,13 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
-        auto now = std::chrono::steady_clock::now();
+        auto now = ::std::chrono::steady_clock::now();
 
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         // Check if enough time has passed since last check
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - data.lastCheck).count();
         if (elapsed < _stuckCheckInterval)
             return data.isStuck;
@@ -273,7 +273,7 @@ namespace Playerbot
         data.totalDistanceMoved += distance;
 
         // Check if stuck
-        if (distance < _stuckThreshold && bot->isMoving())
+    if (distance < _stuckThreshold && bot->isMoving())
         {
             data.stuckCounter++;
 
@@ -294,7 +294,7 @@ namespace Playerbot
         else
         {
             // Moving normally, reset counter
-            if (data.stuckCounter > 0)
+    if (data.stuckCounter > 0)
                 data.stuckCounter--;
             if (data.isStuck && distance > _stuckThreshold * 2)
             {
@@ -304,7 +304,7 @@ namespace Playerbot
             }
 
             // Update last valid position if we've moved significantly
-            if (distance > _stuckThreshold)
+    if (distance > _stuckThreshold)
                 data.lastValidPosition = currentPos;
         }
 
@@ -318,7 +318,7 @@ namespace Playerbot
             return false;
 
         ObjectGuid guid = bot->GetGUID();
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto& data = _stuckData[guid];
 
         if (!data.isStuck)
@@ -347,7 +347,7 @@ namespace Playerbot
         else
         {
             // Strategy 3: Teleport to last valid position
-            if (data.lastValidPosition.GetPositionX() != 0)
+    if (data.lastValidPosition.GetPositionX() != 0)
             {
                 unstuckPos = data.lastValidPosition;
                 foundPosition = true;
@@ -366,7 +366,7 @@ namespace Playerbot
         }
 
         // Give up after too many attempts
-        if (data.unstuckAttempts > 10)
+    if (data.unstuckAttempts > 10)
         {
             TC_LOG_WARN("playerbot.movement", "Failed to unstuck bot %s after %u attempts",
                 bot->GetName().c_str(), data.unstuckAttempts);
@@ -382,7 +382,7 @@ namespace Playerbot
         if (!bot)
             return;
 
-        std::lock_guard lock(_dataLock);
+        ::std::lock_guard lock(_dataLock);
         auto it = _stuckData.find(bot->GetGUID());
         if (it != _stuckData.end())
         {
@@ -446,11 +446,11 @@ namespace Playerbot
         float safeDist = _maxFallDistance;
 
         // Check for fall damage reduction auras
-        if (bot->HasAuraType(SPELL_AURA_SAFE_FALL))
+    if (bot->HasAuraType(SPELL_AURA_SAFE_FALL))
             safeDist *= 2.0f;
 
         // Check for slow fall
-        if (bot->HasAuraType(SPELL_AURA_FEATHER_FALL))
+    if (bot->HasAuraType(SPELL_AURA_FEATHER_FALL))
             safeDist = 1000.0f; // Effectively no fall damage
 
         return safeDist;
@@ -500,17 +500,17 @@ namespace Playerbot
         TerrainType terrain = TerrainType::TERRAIN_GROUND;
 
         // Check water
-        if (IsInWater(map, position))
+    if (IsInWater(map, position))
             terrain = TerrainType::TERRAIN_WATER;
 
         // Check indoor
-        if (IsIndoors(map, position))
+    if (IsIndoors(map, position))
             terrain = static_cast<TerrainType>(terrain | TerrainType::TERRAIN_INDOOR);
         else
             terrain = static_cast<TerrainType>(terrain | TerrainType::TERRAIN_OUTDOOR);
 
         // Check if in air
-        if (RequiresFlying(map, position))
+    if (RequiresFlying(map, position))
             terrain = static_cast<TerrainType>(terrain | TerrainType::TERRAIN_AIR);
 
         return terrain;
@@ -545,13 +545,13 @@ namespace Playerbot
         if (!bot)
             return false;
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<float> angleDist(0.0f, 2 * M_PI);
-        std::uniform_real_distribution<float> distDist(5.0f, 15.0f);
+        ::std::random_device rd;
+        ::std::mt19937 gen(rd());
+        ::std::uniform_real_distribution<float> angleDist(0.0f, 2 * M_PI);
+        ::std::uniform_real_distribution<float> distDist(5.0f, 15.0f);
 
         // Try random positions around the bot
-        for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 8; ++i)
         {
             float angle = angleDist(gen);
             float distance = distDist(gen);

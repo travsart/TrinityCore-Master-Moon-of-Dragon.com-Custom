@@ -55,7 +55,8 @@ enum class EncounterPhase : uint8
     BURN,           // Burn/execute phase
     ADD_PHASE,      // Add management phase
     TRANSITION,     // Phase transition
-    INTERMISSION    // Boss intermission
+    INTERMISSION,   // Boss intermission
+    DEFENSIVE       // Defensive phase (survival focus)
 };
 
 /**
@@ -63,11 +64,11 @@ enum class EncounterPhase : uint8
  */
 struct RaidDirective
 {
-    std::string directiveType;      // "focus_adds", "lust", "defensive_cd", "spread", "stack"
+    ::std::string directiveType;      // "focus_adds", "lust", "defensive_cd", "spread", "stack"
     uint32 priority;                // 0-100
     uint32 timestamp;
     uint32 duration;                // How long directive is active (ms)
-    std::unordered_map<std::string, float> parameters; // Type-specific parameters
+    ::std::unordered_map<::std::string, float> parameters; // Type-specific parameters
 
     bool IsActive() const;
 };
@@ -121,7 +122,7 @@ public:
     /**
      * @brief Get active directives
      */
-    std::vector<RaidDirective> GetActiveDirectives() const;
+    ::std::vector<RaidDirective> GetActiveDirectives() const;
 
     /**
      * @brief Set raid formation
@@ -161,18 +162,18 @@ public:
      * @param cooldownType Type of defensive (e.g., "barrier", "aura")
      * @return True if cooldown was used
      */
-    bool RequestRaidDefensiveCooldown(std::string const& cooldownType);
+    bool RequestRaidDefensiveCooldown(::std::string const& cooldownType);
 
     /**
      * @brief Designate add priority targets
      * @param targetGuids Ordered list of add GUIDs (highest to lowest priority)
      */
-    void SetAddPriorities(std::vector<ObjectGuid> const& targetGuids);
+    void SetAddPriorities(::std::vector<ObjectGuid> const& targetGuids);
 
     /**
      * @brief Get add priority list
      */
-    std::vector<ObjectGuid> GetAddPriorities() const { return _addPriorities; }
+    ::std::vector<ObjectGuid> GetAddPriorities() const { return _addPriorities; }
 
     /**
      * @brief Get raid-wide statistics
@@ -223,7 +224,7 @@ private:
     void AssignDPSToAdds();
 
     Group* _raid;
-    std::vector<std::unique_ptr<GroupCoordinator>> _groupCoordinators;
+    ::std::vector<::std::unique_ptr<GroupCoordinator>> _groupCoordinators;
     RoleCoordinatorManager _roleCoordinatorManager;
 
     // Raid state
@@ -233,10 +234,10 @@ private:
     EncounterPhase _currentPhase = EncounterPhase::NORMAL;
 
     // Directives
-    std::vector<RaidDirective> _activeDirectives;
+    ::std::vector<RaidDirective> _activeDirectives;
 
     // Add management
-    std::vector<ObjectGuid> _addPriorities;
+    ::std::vector<ObjectGuid> _addPriorities;
 
     // Bloodlust/Heroism
     bool _bloodlustActive = false;
@@ -244,7 +245,7 @@ private:
     uint32 _bloodlustCooldown = 600000; // 10 minutes
 
     // Raid-wide cooldowns
-    std::unordered_map<std::string, uint32> _raidCooldowns; // Type → Expire time
+    ::std::unordered_map<::std::string, uint32> _raidCooldowns; // Type → Expire time
 
     // Statistics
     RaidStats _cachedStats;
@@ -296,14 +297,14 @@ public:
      * @param bossEntry Boss creature entry ID
      * @param strategy Strategy implementation
      */
-    static void RegisterStrategy(uint32 bossEntry, std::shared_ptr<BossEncounterStrategy> strategy);
+    static void RegisterStrategy(uint32 bossEntry, ::std::shared_ptr<BossEncounterStrategy> strategy);
 
     /**
      * @brief Get strategy for boss
      * @param bossEntry Boss creature entry ID
      * @return Strategy or nullptr if not found
      */
-    static std::shared_ptr<BossEncounterStrategy> GetStrategy(uint32 bossEntry);
+    static ::std::shared_ptr<BossEncounterStrategy> GetStrategy(uint32 bossEntry);
 
     /**
      * @brief Clear all strategies
@@ -311,7 +312,7 @@ public:
     static void Clear();
 
 private:
-    static std::unordered_map<uint32, std::shared_ptr<BossEncounterStrategy>> _strategies;
+    static ::std::unordered_map<uint32, ::std::shared_ptr<BossEncounterStrategy>> _strategies;
 };
 
 /**

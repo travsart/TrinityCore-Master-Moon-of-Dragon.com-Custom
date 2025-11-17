@@ -37,7 +37,7 @@ namespace Playerbot
 
 // Thread-local optimization for frequently accessed data
 thread_local uint32 g_currentUpdateTime = 0;
-thread_local std::array<float, 16> g_distanceCache;
+thread_local ::std::array<float, 16> g_distanceCache;
 thread_local uint32 g_distanceCacheTime = 0;
 
 // Object pool for performance metrics (avoid allocations during combat)
@@ -88,7 +88,7 @@ void CombatSpecializationBase::UpdateBuffs()
     RefreshExpiringBuffs();
 
     // Clean up expired buff tracking data
-    std::erase_if(_buffExpirationTimes, [currentTime](const auto& pair) {
+    ::std::erase_if(_buffExpirationTimes, [currentTime](const auto& pair) {
         return pair.second < currentTime;
     });
 }
@@ -116,7 +116,7 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
     static uint32 lastCleanup = 0;
     if (currentTime - lastCleanup > 5000)
     {
-        std::erase_if(_cooldowns, [](const auto& pair) {
+        ::std::erase_if(_cooldowns, [](const auto& pair) {
 
             return pair.second == 0;
         });
@@ -127,7 +127,8 @@ void CombatSpecializationBase::UpdateCooldowns(uint32 diff)
 // High-performance ability validation with caching
 bool CombatSpecializationBase::CanUseAbility(uint32 spellId)
 {
-    // Fast path checks first    if (!_bot || !_bot->IsAlive())
+    // Fast path checks first
+    if (!_bot || !_bot->IsAlive())
         return false;
 
     // Check if we have the spell
@@ -168,7 +169,7 @@ void CombatSpecializationBase::OnCombatStart(::Unit* target)
     _consecutiveFailedCasts = 0;
 
     // Start performance tracking
-    _metrics.combatStartTime = std::chrono::steady_clock::now();
+    _metrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     // Pre-calculate frequently used values
     if (target)
@@ -191,8 +192,8 @@ void CombatSpecializationBase::OnCombatEnd()
     _currentTarget = nullptr;
 
     // Update combat metrics
-    auto combatDuration = std::chrono::steady_clock::now() - _metrics.combatStartTime;
-    _metrics.totalCombatTime += std::chrono::duration_cast<std::chrono::milliseconds>(combatDuration);
+    auto combatDuration = ::std::chrono::steady_clock::now() - _metrics.combatStartTime;
+    _metrics.totalCombatTime += ::std::chrono::duration_cast<::std::chrono::milliseconds>(combatDuration);
 
     // Clear combat-specific data
     _dotTracking.clear();
@@ -200,7 +201,7 @@ void CombatSpecializationBase::OnCombatEnd()
     _procExpirationTimes.clear();
 
     // Log performance if significant combat
-    if (combatDuration > std::chrono::seconds(10))
+    if (combatDuration > ::std::chrono::seconds(10))
     {        LogPerformance();
     }
 }// Optimized resource management
@@ -208,7 +209,8 @@ bool CombatSpecializationBase::HasEnoughResource(uint32 spellId){
     SpellInfo const* spellInfo = GetSpellInfo(spellId);
     if (!spellInfo)        return false;
 
-    // Check primary resource based on type    switch (_primaryResource)
+    // Check primary resource based on type
+    switch (_primaryResource)
     {
         case ResourceType::MANA:
 
@@ -252,7 +254,7 @@ Position CombatSpecializationBase::GetOptimalPosition(::Unit* target)
     // Calculate based on role
     float optimalDistance = GetOptimalRange(target);
     float currentDistance = GetDistance(target);    // If already in optimal range, maintain position
-    if (std::abs(currentDistance - optimalDistance) < 2.0f)
+    if (::std::abs(currentDistance - optimalDistance) < 2.0f)
     {
         _lastOptimalPosition = _bot->GetPosition();        return _lastOptimalPosition;
     }
@@ -342,7 +344,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 // Optimized target selection with threat consideration
 ::Unit* CombatSpecializationBase::SelectBestTarget()
 {
-    std::vector<::Unit*> enemies = GetNearbyEnemies();
+    ::std::vector<::Unit*> enemies = GetNearbyEnemies();
     if (enemies.empty())
         return nullptr;
 
@@ -351,7 +353,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
         float score = 100.0f;
 
         // Prefer current target (target switching penalty)
-        if (target == _currentTarget)
+    if (target == _currentTarget)
 
             score += 20.0f;
 
@@ -364,18 +366,17 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
         // Distance factor (closer is better for melee, optimal range for ranged)
         float distance = GetDistance(target);
         float optimalRange = GetOptimalRange(target);
-        float distancePenalty = std::abs(distance - optimalRange);        score -= distancePenalty;
+        float distancePenalty = ::std::abs(distance - optimalRange);        score -= distancePenalty;
 
         // Threat factor (tanks want high threat targets)
-        if (_role == CombatRole::TANK)        {
+    if (_role == CombatRole::TANK)        {
 
             float threat = CalculateThreatLevel(target);
             score += threat * 0.5f;
         }
 
         // Debuff factor (prefer targets with our DoTs)
-
-        if (_dotTracking.contains(target->GetGUID().GetRawValue()))
+    if (_dotTracking.contains(target->GetGUID().GetRawValue()))
         score += 10.0f;
 
         return score;
@@ -384,7 +385,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
     // Find best target using parallel execution for large enemy counts
     if (enemies.size() > 10)
     {
-        return *std::max_element(std::execution::par_unseq,
+        return *::std::max_element(::std::execution::par_unseq,
 
             enemies.begin(), enemies.end(),
 
@@ -396,7 +397,7 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
     }
     else
     {
-        return *std::max_element(enemies.begin(), enemies.end(),
+        return *::std::max_element(enemies.begin(), enemies.end(),
 
             [&scoreTarget](::Unit* a, ::Unit* b) {
 
@@ -407,9 +408,9 @@ bool CombatSpecializationBase::ShouldInterrupt(::Unit* target){
 }
 
 // Efficient nearby unit detection with spatial indexing
-std::vector<ObjectGuid> GetNearbyEnemies(float range) const
+::std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 {
-    std::vector<ObjectGuid> guids;    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());    if (!grid) return guids;
+    ::std::vector<ObjectGuid> guids;    auto grid = sSpatialGridManager.GetGrid(_bot->GetMap());    if (!grid) return guids;
 
     float range = range;
     auto creatures = grid->QueryNearbyCreatures(_bot->GetPosition(), range);
@@ -423,7 +424,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
 }
 
     // Query nearby GUIDs (lock-free!)
-    std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
+    ::std::vector<ObjectGuid> nearbyGuids = spatialGrid->QueryNearbyCreatureGuids(
         _bot->GetPosition(), range);
 
     // Process results (replace old loop)
@@ -443,7 +444,7 @@ std::vector<ObjectGuid> GetNearbyEnemies(float range) const
     // End of spatial grid fix
 
     // Filter out invalid targets
-    std::erase_if(enemies, [this](::Unit* unit) {
+    ::std::erase_if(enemies, [this](::Unit* unit) {
         return !IsValidTarget(unit);
     });
 
@@ -524,7 +525,7 @@ void CombatSpecializationBase::UpdateDoTTracking(::Unit* target)
             });
 
         // Remove target entry if no DoTs remain
-        if (dots.empty())
+    if (dots.empty())
 
             _dotTracking.erase(targetGuid);
     }
@@ -571,12 +572,12 @@ void CombatSpecializationBase::HandleEmergencySituation()
         UseDefensiveCooldowns();
 
         // Try to use potions
-        if (ShouldUsePotions())
+    if (ShouldUsePotions())
 
             UsePotions();
 
         // Notify healer if in group
-        if (IsInGroup())
+    if (IsInGroup())
         {
 
             Player* healer = GetGroupHealer();
@@ -628,7 +629,7 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
             return false;
 
         // Range check
-        if (!IsInCastRange(actualTarget, spellId))
+    if (!IsInCastRange(actualTarget, spellId))
 
             return false;
     }
@@ -639,7 +640,7 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
         targets.SetUnitTarget(actualTarget);
 
     Spell* spell = new Spell(_bot, spellInfo, TRIGGERED_NONE);
-    SpellCastResult result = spell->prepare(targets);
+    ::SpellCastResult result = spell->prepare(targets);
 
     if (result == SPELL_CAST_OK)
     {
@@ -653,7 +654,7 @@ bool CombatSpecializationBase::CastSpell(uint32 spellId, ::Unit* target)
             SetSpellCooldown(spellId, cooldown);
 
         // Set global cooldown
-        if (!spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
+    if (!spellInfo->HasAttribute(SPELL_ATTR0_NO_GCD))
 
             _globalCooldownEnd = GameTime::GetGameTimeMS() + GLOBAL_COOLDOWN_MS;
 
@@ -720,7 +721,8 @@ void CombatSpecializationBase::UpdateBuffTimers(uint32 diff)
 {
     uint32 currentTime = GameTime::GetGameTimeMS();
 
-    // Update buff expiration times    for (auto it = _buffExpirationTimes.begin(); it != _buffExpirationTimes.end();)
+    // Update buff expiration times
+    for (auto it = _buffExpirationTimes.begin(); it != _buffExpirationTimes.end();)
     {
         if (it->second <= currentTime)
 
@@ -855,7 +857,8 @@ Player* CombatSpecializationBase::GetGroupTank() const
             continue;
 
         // Simple tank detection based on spec/stance
-        // This would need proper implementation based on your spec system        if (member->GetClass() == CLASS_WARRIOR || member->GetClass() == CLASS_PALADIN)        {
+        // This would need proper implementation based on your spec system
+    if (member->GetClass() == CLASS_WARRIOR || member->GetClass() == CLASS_PALADIN)        {
 
             const_cast<CombatSpecializationBase*>(this)->_cachedTank = member;
 
@@ -1103,7 +1106,7 @@ void CombatSpecializationBase::UpdateThreatTable()
     for (auto& [guid, threat] : _threatTable)
     {
         threat *= 0.95f; // 5% decay per second
-        if (threat < 1.0f)
+    if (threat < 1.0f)
 
             threat = 0.0f;
     }
@@ -1167,7 +1170,7 @@ bool CombatSpecializationBase::IsBehindTarget(::Unit* target) const
 
 bool CombatSpecializationBase::IsMoving() const
 {
-    return _bot && _bot->IsMoving();
+    return _bot && _bot->isMoving();
 }
 
 void CombatSpecializationBase::UpdatePositioning(::Unit* target)
@@ -1283,8 +1286,7 @@ Player* CombatSpecializationBase::GetGroupHealer() const
             continue;
 
         // Simple healer detection based on class
-
-        if (member->GetClass() == CLASS_PRIEST ||
+    if (member->GetClass() == CLASS_PRIEST ||
         member->GetClass() == CLASS_DRUID ||
         member->GetClass() == CLASS_SHAMAN ||
         member->GetClass() == CLASS_PALADIN)

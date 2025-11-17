@@ -50,12 +50,12 @@ protected:
     BotSpawnEventBus* eventBus = nullptr;
 
     // Test event counters
-    std::atomic<uint32> spawnRequestsReceived{0};
-    std::atomic<uint32> spawnCompletedReceived{0};
-    std::atomic<uint32> characterSelectedReceived{0};
-    std::atomic<uint32> sessionCreatedReceived{0};
-    std::atomic<uint32> populationChangedReceived{0};
-    std::atomic<uint32> globalEventsReceived{0};
+    ::std::atomic<uint32> spawnRequestsReceived{0};
+    ::std::atomic<uint32> spawnCompletedReceived{0};
+    ::std::atomic<uint32> characterSelectedReceived{0};
+    ::std::atomic<uint32> sessionCreatedReceived{0};
+    ::std::atomic<uint32> populationChangedReceived{0};
+    ::std::atomic<uint32> globalEventsReceived{0};
 
     // Helper methods
     SpawnRequest CreateTestSpawnRequest(uint32 zoneId = 1) const
@@ -74,33 +74,33 @@ protected:
     {
         // Subscribe to specific event types
         eventBus->Subscribe(BotSpawnEventType::SPAWN_REQUESTED,
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 spawnRequestsReceived.fetch_add(1);
             });
 
         eventBus->Subscribe(BotSpawnEventType::SPAWN_COMPLETED,
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 spawnCompletedReceived.fetch_add(1);
             });
 
         eventBus->Subscribe(BotSpawnEventType::CHARACTER_SELECTED,
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 characterSelectedReceived.fetch_add(1);
             });
 
         eventBus->Subscribe(BotSpawnEventType::SESSION_CREATED,
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 sessionCreatedReceived.fetch_add(1);
             });
 
         eventBus->Subscribe(BotSpawnEventType::POPULATION_CHANGED,
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 populationChangedReceived.fetch_add(1);
             });
 
         // Subscribe to all events
         eventBus->SubscribeToAll(
-            [this](std::shared_ptr<BotSpawnEvent> event) {
+            [this](::std::shared_ptr<BotSpawnEvent> event) {
                 globalEventsReceived.fetch_add(1);
             });
     }
@@ -178,7 +178,7 @@ TEST_F(BotSpawnEventBusTest, PublishesSessionCreatedEventCorrectly)
 {
     SetupEventHandlers();
 
-    auto session = std::make_shared<BotSession>(12345, ObjectGuid::Create<HighGuid::Player>(12345));
+    auto session = ::std::make_shared<BotSession>(12345, ObjectGuid::Create<HighGuid::Player>(12345));
     SpawnRequest request = CreateTestSpawnRequest();
 
     eventBus->PublishSessionCreated(session, request);
@@ -216,7 +216,7 @@ TEST_F(BotSpawnEventBusTest, PublishesPopulationChangedEventCorrectly)
 TEST_F(BotSpawnEventBusTest, SubscriptionReturnsValidHandlerId)
 {
     auto handlerId = eventBus->Subscribe(BotSpawnEventType::SPAWN_REQUESTED,
-        [](std::shared_ptr<BotSpawnEvent> event) {
+        [](::std::shared_ptr<BotSpawnEvent> event) {
             // Empty handler for test
         });
 
@@ -229,7 +229,7 @@ TEST_F(BotSpawnEventBusTest, UnsubscribeRemovesHandler)
 
     // Subscribe and get handler ID
     auto handlerId = eventBus->Subscribe(BotSpawnEventType::SPAWN_REQUESTED,
-        [this](std::shared_ptr<BotSpawnEvent> event) {
+        [this](::std::shared_ptr<BotSpawnEvent> event) {
             spawnRequestsReceived.fetch_add(1);
         });
 
@@ -254,7 +254,7 @@ TEST_F(BotSpawnEventBusTest, GlobalSubscriptionReceivesAllEvents)
 {
     ResetCounters();
 
-    eventBus->SubscribeToAll([this](std::shared_ptr<BotSpawnEvent> event) {
+    eventBus->SubscribeToAll([this](::std::shared_ptr<BotSpawnEvent> event) {
         globalEventsReceived.fetch_add(1);
     });
 
@@ -324,7 +324,7 @@ TEST_F(BotSpawnEventBusTest, HandlesHighThroughputEventPublishing)
     SetupEventHandlers();
 
     const int numEvents = 10000;
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     // Publish many events rapidly
     for (int i = 0; i < numEvents; ++i)
@@ -333,15 +333,15 @@ TEST_F(BotSpawnEventBusTest, HandlesHighThroughputEventPublishing)
         eventBus->PublishSpawnRequest(request, [](bool, ObjectGuid) {});
     }
 
-    auto publishEnd = std::chrono::high_resolution_clock::now();
+    auto publishEnd = ::std::chrono::high_resolution_clock::now();
 
     // Process all events
     eventBus->ProcessEvents();
 
-    auto processEnd = std::chrono::high_resolution_clock::now();
+    auto processEnd = ::std::chrono::high_resolution_clock::now();
 
-    auto publishDuration = std::chrono::duration_cast<std::chrono::milliseconds>(publishEnd - start);
-    auto processDuration = std::chrono::duration_cast<std::chrono::milliseconds>(processEnd - publishEnd);
+    auto publishDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(publishEnd - start);
+    auto processDuration = ::std::chrono::duration_cast<::std::chrono::milliseconds>(processEnd - publishEnd);
 
     // Publishing should be fast (under 100ms for 10k events)
     EXPECT_LT(publishDuration.count(), 100);
@@ -390,7 +390,7 @@ TEST_F(BotSpawnEventBusTest, ConcurrentEventPublishingIsSafe)
 
     const int numThreads = 10;
     const int eventsPerThread = 1000;
-    std::vector<std::thread> threads;
+    ::std::vector<::std::thread> threads;
 
     // Launch multiple threads publishing events concurrently
     for (int t = 0; t < numThreads; ++t)
@@ -430,13 +430,13 @@ TEST_F(BotSpawnEventBusTest, HandlesExceptionInEventHandlerGracefully)
 
     // Subscribe handler that throws exception
     eventBus->Subscribe(BotSpawnEventType::SPAWN_REQUESTED,
-        [](std::shared_ptr<BotSpawnEvent> event) {
-            throw std::runtime_error("Test exception");
+        [](::std::shared_ptr<BotSpawnEvent> event) {
+            throw ::std::runtime_error("Test exception");
         });
 
     // Subscribe normal handler
     eventBus->Subscribe(BotSpawnEventType::SPAWN_REQUESTED,
-        [this](std::shared_ptr<BotSpawnEvent> event) {
+        [this](::std::shared_ptr<BotSpawnEvent> event) {
             spawnRequestsReceived.fetch_add(1);
         });
 

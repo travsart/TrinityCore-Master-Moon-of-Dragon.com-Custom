@@ -36,16 +36,16 @@ namespace Test
  */
 struct QuestPathfinderTestResult
 {
-    std::string testName;
+    ::std::string testName;
     bool passed = false;
     QuestPathfindingResult pathfindingResult = QuestPathfindingResult::SUCCESS;
     float pathLength = 0.0f;
     float estimatedTime = 0.0f;
     uint32 pathPointCount = 0;
     uint32 targetHubId = 0;
-    std::string errorMessage;
+    ::std::string errorMessage;
 
-    [[nodiscard]] std::string GetStatusString() const
+    [[nodiscard]] ::std::string GetStatusString() const
     {
         return passed ? "PASS" : "FAIL";
     }
@@ -200,7 +200,7 @@ public:
      * @param results Vector of all test results
      * @return Formatted markdown report
      */
-    std::string GenerateTestReport(std::vector<QuestPathfinderTestResult> const& results);
+    ::std::string GenerateTestReport(::std::vector<QuestPathfinderTestResult> const& results);
 
 private:
     /**

@@ -137,7 +137,7 @@ public:
             case 4831: // Lady Sarevess
             {
                 // Sarevess casts Forked Lightning (chain lightning)
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -145,7 +145,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Forked Lightning (8147) - high damage, jumps between targets
-                        if (spellId == 8147 || spellId == 8285)
+    if (spellId == 8147 || spellId == 8285)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -156,7 +156,7 @@ public:
                         }
 
                         // Frost Nova also interruptible
-                        if (spellId == 865 || spellId == 6131)
+    if (spellId == 865 || spellId == 6131)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -172,7 +172,7 @@ public:
             case 4832: // Twilight Lord Kelris
             {
                 // Kelris casts Mind Blast (high shadow damage) and Sleep
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -180,7 +180,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Mind Blast (15587) - priority interrupt
-                        if (spellId == 15587 || spellId == 8105)
+    if (spellId == 15587 || spellId == 8105)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -191,7 +191,7 @@ public:
                         }
 
                         // Sleep (8399) - also high priority
-                        if (spellId == 8399 || spellId == 8040)
+    if (spellId == 8399 || spellId == 8040)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -208,7 +208,7 @@ public:
             case 12902: // Lorgus Jett
             {
                 // Lorgus casts Lightning Bolt frequently
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -216,7 +216,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Lightning Bolt (9532)
-                        if (spellId == 9532 || spellId == 915)
+    if (spellId == 9532 || spellId == 915)
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -248,7 +248,7 @@ public:
                 // Aku'mai spawns poison clouds on ground
                 // Must move out immediately
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 15.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -329,7 +329,7 @@ public:
                 // Gelihast summons murloc adds
                 // Adds should be killed quickly before they overwhelm group
 
-                std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
+                ::std::vector<::Creature*> adds = GetAddsInCombat(player, boss);
 
                 if (!adds.empty())
                 {
@@ -406,7 +406,7 @@ public:
                 if (role == DungeonRole::RANGED_DPS || role == DungeonRole::HEALER)
                 {
                     // Stay at max range to reduce frost nova impact
-                    if (distance < 25.0f)
+    if (distance < 25.0f)
                     {
                         Position rangedPos = CalculateRangedPosition(player, boss);
                         MoveTo(player, rangedPos);
@@ -456,7 +456,7 @@ public:
                         continue;
 
                     // Check for slow debuffs
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
                     {
                         TC_LOG_DEBUG("module.playerbot", "BlackfathomDeepsScript: Dispelling frost slow from Sarevess");
                         // Dispel magic/curse
@@ -480,7 +480,7 @@ public:
                         continue;
 
                     // Check for sleep
-                    if (groupMember->HasAura(8399) || groupMember->HasAura(8040))
+    if (groupMember->HasAura(8399) || groupMember->HasAura(8040))
                     {
                         TC_LOG_DEBUG("module.playerbot", "BlackfathomDeepsScript: Player sleeping from Kelris");
                         // Dispel or damage to wake up
@@ -504,7 +504,7 @@ public:
                         continue;
 
                     // Check for net (root)
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_ROOT))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_ROOT))
                     {
                         TC_LOG_DEBUG("module.playerbot", "BlackfathomDeepsScript: Player netted by Gelihast");
                         // Can't dispel net, must wait or break with damage
@@ -567,7 +567,7 @@ public:
                 // Constantly spawns poison clouds - be ready to move frequently
                 // Check for nearby poison clouds and maintain safe distance
 
-                std::list<::DynamicObject*> dynamicObjects;
+                ::std::list<::DynamicObject*> dynamicObjects;
                 Trinity::AllWorldObjectsInRange check(player, 20.0f);
                 Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
                 // DEADLOCK FIX: Spatial grid replaces Cell::Visit

@@ -57,7 +57,7 @@ protected:
     void SetUp() override
     {
         // Create mock Holy Priest (level 80, spec 1)
-        mockPriest = std::make_shared<MockPriestPlayer>();
+        mockPriest = ::std::make_shared<MockPriestPlayer>();
         mockPriest->SetLevel(80);
         mockPriest->SetSpec(1); // Holy specialization
 
@@ -118,9 +118,9 @@ protected:
     }
 
     // Helper: Create low-health ally
-    std::shared_ptr<MockPriestPlayer> CreateInjuredAlly(float healthPct)
+    ::std::shared_ptr<MockPriestPlayer> CreateInjuredAlly(float healthPct)
     {
-        auto ally = std::make_shared<MockPriestPlayer>();
+        auto ally = ::std::make_shared<MockPriestPlayer>();
         ally->SetLevel(80);
         ally->SetClass(CLASS_WARRIOR);
         ally->SetMaxHealth(30000);
@@ -162,8 +162,8 @@ protected:
     }
 
     // Test objects
-    std::shared_ptr<MockPriestPlayer> mockPriest;
-    std::unique_ptr<HolySpecialization> holySpec;
+    ::std::shared_ptr<MockPriestPlayer> mockPriest;
+    ::std::unique_ptr<HolySpecialization> holySpec;
 };
 
 // ============================================================================
@@ -295,7 +295,7 @@ TEST_F(HolyPriestSpecializationTest, HolyWord_SanctifyAvailable_UsesForGroupHeal
 TEST_F(HolyPriestSpecializationTest, HolyWord_ChastiseUsedOffensively_NotWastedOnHealing)
 {
     // Arrange: Combat scenario with enemy target
-    auto enemy = std::make_shared<MockUnit>();
+    auto enemy = ::std::make_shared<MockUnit>();
     enemy->SetMaxHealth(50000);
     enemy->SetHealth(30000); // Enemy at 60% health
     enemy->SetCombatState(true);
@@ -629,7 +629,7 @@ TEST_F(HolyPriestSpecializationTest, TargetSelection_NoTank_LowestHealthAlly)
     auto scenario = PriestScenarioBuilder::CreateHolyHealingScenario(5, 60.0f, false);
 
     // Find lowest health member
-    std::shared_ptr<MockPriestPlayer> lowestHealthMember = scenario.groupMembers[0];
+    ::std::shared_ptr<MockPriestPlayer> lowestHealthMember = scenario.groupMembers[0];
     for (auto const& member : scenario.groupMembers)
     {
         if (member->GetHealthPct() < lowestHealthMember->GetHealthPct())
@@ -800,7 +800,7 @@ TEST_F(HolyPriestSpecializationTest, Performance_GetBestHealTarget_Under10Micros
     // Act: Benchmark target selection
     auto selectionFunc = [&scenario]() -> void* {
         // Simulate target selection algorithm
-        std::shared_ptr<MockPriestPlayer> bestTarget = nullptr;
+        ::std::shared_ptr<MockPriestPlayer> bestTarget = nullptr;
         float lowestHealthPct = 100.0f;
 
         for (auto const& member : scenario.groupMembers)
@@ -849,7 +849,7 @@ TEST_F(HolyPriestSpecializationTest, Integration_Full5ManHealingScenario_NoError
     for (uint32 i = 0; i < 100; ++i)
     {
         // Find heal target
-        std::shared_ptr<MockPriestPlayer> healTarget = nullptr;
+        ::std::shared_ptr<MockPriestPlayer> healTarget = nullptr;
         for (auto const& member : scenario.groupMembers)
         {
             if (member->GetHealthPct() < 90.0f)
@@ -860,7 +860,7 @@ TEST_F(HolyPriestSpecializationTest, Integration_Full5ManHealingScenario_NoError
         }
 
         // Cast heal if target found and mana available
-        if (healTarget && scenario.priest->GetPower(POWER_MANA) > 500)
+    if (healTarget && scenario.priest->GetPower(POWER_MANA) > 500)
         {
             SimulateSpellCast(FLASH_HEAL, 0);
             ++successfulHeals;

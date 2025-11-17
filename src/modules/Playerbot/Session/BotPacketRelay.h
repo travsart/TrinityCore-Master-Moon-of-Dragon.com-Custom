@@ -200,7 +200,7 @@ public:
      * @brief Get all relay opcodes
      * @return Set of all opcodes that are relayed
      */
-    static std::unordered_set<uint32> const& GetRelayOpcodes();
+    static ::std::unordered_set<uint32> const& GetRelayOpcodes();
 
     // ========================================================================
     // GROUP MEMBER ENUMERATION
@@ -217,14 +217,14 @@ public:
      *
      * Performance: O(n) where n = group size (max 40)
      */
-    static std::vector<Player*> GetHumanGroupMembers(Player* bot);
+    static ::std::vector<Player*> GetHumanGroupMembers(Player* bot);
 
     /**
      * @brief Get all players in bot's group (including bots)
      * @param bot Bot player
      * @return Vector of all players in bot's group
      */
-    static std::vector<Player*> GetAllGroupMembers(Player* bot);
+    static ::std::vector<Player*> GetAllGroupMembers(Player* bot);
 
     /**
      * @brief Check if player is a bot
@@ -275,13 +275,13 @@ public:
      */
     struct RelayStatistics
     {
-        std::atomic<uint64_t> totalPacketsRelayed{0};
-        std::atomic<uint64_t> totalPacketsFiltered{0};
-        std::atomic<uint64_t> totalRelayErrors{0};
-        std::atomic<uint64_t> combatLogPackets{0};
-        std::atomic<uint64_t> chatPackets{0};
-        std::atomic<uint64_t> partyUpdatePackets{0};
-        std::atomic<uint64_t> emotePackets{0};
+        ::std::atomic<uint64_t> totalPacketsRelayed{0};
+        ::std::atomic<uint64_t> totalPacketsFiltered{0};
+        ::std::atomic<uint64_t> totalRelayErrors{0};
+        ::std::atomic<uint64_t> combatLogPackets{0};
+        ::std::atomic<uint64_t> chatPackets{0};
+        ::std::atomic<uint64_t> partyUpdatePackets{0};
+        ::std::atomic<uint64_t> emotePackets{0};
     };
 
     /**
@@ -355,27 +355,27 @@ private:
     // ========================================================================
 
     // Initialization state
-    static inline std::atomic<bool> _initialized{false};
+    static inline ::std::atomic<bool> _initialized{false};
 
     // Relay opcode whitelist (thread-safe for reads after initialization)
-    static inline std::unordered_set<uint32> _relayOpcodes;
+    static inline ::std::unordered_set<uint32> _relayOpcodes;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _opcodesMutex;
 
     // Statistics
     static inline RelayStatistics _statistics;
 
     // Debug logging
-    static inline std::atomic<bool> _debugLogging{false};
+    static inline ::std::atomic<bool> _debugLogging{false};
 
     // RACE CONDITION FIX: Deferred packet queue for early relay attempts
     // Packets sent before Initialize() completes are queued here and processed after initialization
     struct DeferredPacket
     {
         BotSession* botSession;
-        std::unique_ptr<WorldPacket> packet;
+        ::std::unique_ptr<WorldPacket> packet;
         uint32 timestamp; // GameTime::GetGameTimeMS() when queued
     };
-    static inline std::queue<DeferredPacket> _deferredPackets;
+    static inline ::std::queue<DeferredPacket> _deferredPackets;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredMutex;
 
     /**

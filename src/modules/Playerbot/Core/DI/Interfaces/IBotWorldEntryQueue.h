@@ -39,7 +39,7 @@ public:
     virtual ~IBotWorldEntryQueue() = default;
 
     // Queue management
-    virtual uint32 QueueEntry(std::shared_ptr<BotWorldEntry> entry) = 0;
+    virtual uint32 QueueEntry(::std::shared_ptr<BotWorldEntry> entry) = 0;
     virtual void ProcessQueue(uint32 maxConcurrent = 10) = 0;
 
     // Statistics

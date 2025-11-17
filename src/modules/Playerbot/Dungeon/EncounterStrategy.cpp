@@ -60,7 +60,7 @@ EncounterStrategy::EncounterStrategy()
 void EncounterStrategy::ExecuteEncounterStrategy(Group* group, uint32 encounterId)
 {
 
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     TC_LOG_INFO("module.playerbot", "Executing encounter strategy for encounter {} (group {})",
         encounterId, group->GetGUID().GetCounter());
@@ -119,12 +119,12 @@ void EncounterStrategy::UpdateEncounterExecution(Group* group, uint32 encounterI
     OptimizeResourceUsage(group, encounterId);
 }
 
-void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId, const std::string& mechanic)
+void EncounterStrategy::HandleEncounterMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic)
 {
     if (!group)
         return;
 
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     TC_LOG_DEBUG("module.playerbot", "Handling mechanic '{}' for encounter {}", mechanic, encounterId);
 
@@ -229,7 +229,7 @@ void EncounterStrategy::AdaptStrategyToGroupComposition(Group* group, uint32 enc
         complexityAdjustment -= 0.1f; // Slightly simpler with low DPS
     }
 
-    float adjustedComplexity = std::max(0.1f, std::min(1.0f, _strategyComplexity.load() + complexityAdjustment));
+    float adjustedComplexity = ::std::max(0.1f, ::std::min(1.0f, _strategyComplexity.load() + complexityAdjustment));
 
     TC_LOG_DEBUG("module.playerbot", "Adapted strategy complexity to {} for group {} (T:{} H:{} D:{})",
         adjustedComplexity, group->GetGUID().GetCounter(), tankCount, healerCount, dpsCount);
@@ -357,7 +357,7 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
             // Calculate safe position away from danger
             float angle = dangerZone.GetAngle(player) + M_PI; // Opposite direction
             Position safePos = dangerZone;
-            safePos.RelocateOffset({std::cos(angle) * (radius + 5.0f), std::sin(angle) * (radius + 5.0f), 0.0f});
+            safePos.RelocateOffset({::std::cos(angle) * (radius + 5.0f), ::std::sin(angle) * (radius + 5.0f), 0.0f});
 
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
@@ -391,7 +391,7 @@ void EncounterStrategy::HandleAoEDamageMechanic(Group* group, const Position& da
     }
 }
 
-void EncounterStrategy::HandleAddSpawnMechanic(Group* group, const std::vector<Unit*>& adds)
+void EncounterStrategy::HandleAddSpawnMechanic(Group* group, const ::std::vector<Unit*>& adds)
 {
     if (!group || adds.empty())
         return;
@@ -432,7 +432,7 @@ void EncounterStrategy::HandleEnrageMechanic(Group* group, Unit* boss, uint32 ti
 
 EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encounterId, Player* tank)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto itr = _tankStrategies.find(encounterId);
     if (itr != _tankStrategies.end())
@@ -448,7 +448,7 @@ EncounterStrategy::TankStrategy EncounterStrategy::GetTankStrategy(uint32 encoun
 }
 EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 encounterId, Player* healer)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
     auto itr = _healerStrategies.find(encounterId);
     if (itr != _healerStrategies.end())
         return itr->second;
@@ -464,7 +464,7 @@ EncounterStrategy::HealerStrategy EncounterStrategy::GetHealerStrategy(uint32 en
 
 EncounterStrategy::DpsStrategy EncounterStrategy::GetDpsStrategy(uint32 encounterId, Player* dps)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto itr = _dpsStrategies.find(encounterId);
     if (itr != _dpsStrategies.end())
@@ -500,7 +500,7 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
         Position optimalPos = CalculateOptimalPosition(player, encounterId, role);
 
         // Move if too far from optimal position
-        if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
+    if (player->GetExactDist(&optimalPos) > POSITIONING_TOLERANCE * 2.0f)
         {
             // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
@@ -529,7 +529,7 @@ void EncounterStrategy::UpdateEncounterPositioning(Group* group, uint32 encounte
     }
 }
 
-void EncounterStrategy::HandleMovementMechanic(Group* group, uint32 encounterId, const std::string& mechanic)
+void EncounterStrategy::HandleMovementMechanic(Group* group, uint32 encounterId, const ::std::string& mechanic)
 {
     if (!group)
         return;
@@ -566,7 +566,7 @@ Position EncounterStrategy::CalculateOptimalPosition(Player* player, uint32 enco
     return optimalPos;
 }
 
-void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Position>& dangerAreas)
+void EncounterStrategy::AvoidMechanicAreas(Group* group, const ::std::vector<Position>& dangerAreas)
 {
     if (!group || dangerAreas.empty())
         return;
@@ -585,7 +585,7 @@ void EncounterStrategy::AvoidMechanicAreas(Group* group, const std::vector<Posit
                 // Move away from danger
                 float angle = dangerZone.GetAngle(player) + M_PI;
                 Position safePos = dangerZone;
-                safePos.RelocateOffset({std::cos(angle) * 15.0f, std::sin(angle) * 15.0f, 0.0f});
+                safePos.RelocateOffset({::std::cos(angle) * 15.0f, ::std::sin(angle) * 15.0f, 0.0f});
 
                 // PHASE 6B: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
                 BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
@@ -693,7 +693,7 @@ void EncounterStrategy::AdaptStrategyBasedOnFailures(Group* group, uint32 encoun
     if (!group || !_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -717,7 +717,7 @@ void EncounterStrategy::LearnFromSuccessfulEncounters(Group* group, uint32 encou
     if (!group)
         return;
 
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -806,7 +806,7 @@ void EncounterStrategy::ExecuteRazorfenKraulStrategies(Group* group, uint32 enco
 
 EncounterStrategy::StrategyMetrics EncounterStrategy::GetStrategyMetrics(uint32 encounterId)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto itr = _encounterMetrics.find(encounterId);
     if (itr != _encounterMetrics.end())
@@ -876,7 +876,7 @@ void EncounterStrategy::LoadEncounterMechanics()
 {
     // Load encounter mechanics database
     // Example: VanCleef mechanics
-    std::vector<EncounterMechanic> vancleefMechanics;
+    ::std::vector<EncounterMechanic> vancleefMechanics;
 
     EncounterMechanic addSpawns("add_spawns", "Adds spawn throughout fight");
     addSpawns.dangerLevel = 6.0f;
@@ -936,7 +936,7 @@ void EncounterStrategy::HandleSpecificMechanic(Group* group, const EncounterMech
     }
 }
 
-void EncounterStrategy::CoordinateGroupResponse(Group* group, const std::string& mechanic)
+void EncounterStrategy::CoordinateGroupResponse(Group* group, const ::std::string& mechanic)
 {
     if (!group)
         return;
@@ -994,12 +994,12 @@ void EncounterStrategy::UpdateGroupFormation(Group* group, uint32 encounterId)
     UpdateEncounterPositioning(group, encounterId);
 }
 
-void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string& mechanic, bool wasSuccessful)
+void EncounterStrategy::UpdateLearningData(uint32 encounterId, const ::std::string& mechanic, bool wasSuccessful)
 {
     if (!_adaptiveStrategiesEnabled.load())
         return;
 
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     if (_learningData.find(encounterId) == _learningData.end())
     {
@@ -1023,7 +1023,7 @@ void EncounterStrategy::UpdateLearningData(uint32 encounterId, const std::string
 
 void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -1037,7 +1037,7 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
     if (successRate < 0.5f)
     {
         // Low success rate, simplify strategy
-        float newComplexity = std::max(0.3f, _strategyComplexity.load() - 0.1f);
+        float newComplexity = ::std::max(0.3f, _strategyComplexity.load() - 0.1f);
         _strategyComplexity = newComplexity;
 
         TC_LOG_INFO("module.playerbot", "Simplified strategy complexity to {} for encounter {} (success rate: {})",
@@ -1046,7 +1046,7 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
     else if (successRate > 0.9f)
     {
         // High success rate, can increase complexity for optimization
-        float newComplexity = std::min(1.0f, _strategyComplexity.load() + 0.05f);
+        float newComplexity = ::std::min(1.0f, _strategyComplexity.load() + 0.05f);
         _strategyComplexity = newComplexity;
 
         TC_LOG_DEBUG("module.playerbot", "Increased strategy complexity to {} for encounter {}",
@@ -1056,7 +1056,7 @@ void EncounterStrategy::AdaptStrategyComplexity(uint32 encounterId)
 
 void EncounterStrategy::OptimizeStrategyBasedOnLearning(uint32 encounterId)
 {
-    std::lock_guard lock(_strategyMutex);
+    ::std::lock_guard lock(_strategyMutex);
 
     auto learningItr = _learningData.find(encounterId);
     if (learningItr == _learningData.end())
@@ -1085,7 +1085,7 @@ void EncounterStrategy::OptimizeStrategyBasedOnLearning(uint32 encounterId)
     }
 }
 
-uint32 EncounterStrategy::GenerateMechanicHash(const std::string& mechanic)
+uint32 EncounterStrategy::GenerateMechanicHash(const ::std::string& mechanic)
 {
     // Simple hash function for mechanic names
     uint32 hash = 0;
@@ -1145,11 +1145,11 @@ DungeonRole EncounterStrategy::DeterminePlayerRole(Player* player)
         case CLASS_DEATH_KNIGHT:
         case CLASS_DRUID:
         case CLASS_MONK:
-            return player->GetPrimaryTalentTree() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
+            return player->GetPrimarySpecialization() == 0 ? DungeonRole::TANK : DungeonRole::MELEE_DPS;
 
         case CLASS_PRIEST:
         case CLASS_SHAMAN:
-            return player->GetPrimaryTalentTree() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
+            return player->GetPrimarySpecialization() == 2 ? DungeonRole::HEALER : DungeonRole::RANGED_DPS;
 
         case CLASS_HUNTER:
         case CLASS_MAGE:
@@ -1215,7 +1215,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
 
     // Check if player has interrupt available
     uint32 interruptSpell = 0;
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR: interruptSpell = 6552; break;  // Pummel
         case CLASS_PALADIN: interruptSpell = 96231; break; // Rebuke
@@ -1243,7 +1243,7 @@ void EncounterStrategy::HandleGenericInterrupts(::Player* player, ::Creature* bo
             player->GetGUID().GetCounter(), spellId, interruptPriority);
 
         // Would cast interrupt spell here
-        // player->CastSpell(boss, interruptSpell, false);
+        // player->CastSpell(interruptSpell, false, boss);
     }
 }
 
@@ -1253,7 +1253,7 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
         return;
 
     // Find dangerous ground effects near player
-    std::list<::DynamicObject*> dynamicObjects;
+    ::std::list<::DynamicObject*> dynamicObjects;
     Trinity::AllWorldObjectsInRange check(player, 15.0f);
     Trinity::DynamicObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, dynamicObjects, check);
     // DEADLOCK FIX: Spatial grid replaces Cell::Visit
@@ -1306,8 +1306,8 @@ void EncounterStrategy::HandleGenericGroundAvoidance(::Player* player, ::Creatur
             {
                 // Move away from ground effect
                 float angle = dynObj->GetAngle(player); // Direction away from effect
-                float x = player->GetPositionX() + 10.0f * std::cos(angle);
-                float y = player->GetPositionY() + 10.0f * std::sin(angle);
+                float x = player->GetPositionX() + 10.0f * ::std::cos(angle);
+                float y = player->GetPositionY() + 10.0f * ::std::sin(angle);
                 float z = player->GetPositionZ();
                 Position safePos(x, y, z);
 
@@ -1348,7 +1348,7 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
         return;
 
     // Find all creatures in combat within 50 yards
-    std::list<::Creature*> creatures;
+    ::std::list<::Creature*> creatures;
     Trinity::AllWorldObjectsInRange check(player, 50.0f);
     Trinity::CreatureListSearcher<Trinity::AllWorldObjectsInRange> searcher(player, creatures, check);
     
@@ -1363,15 +1363,15 @@ void EncounterStrategy::HandleGenericAddPriority(::Player* player, ::Creature* b
         uint32 priority = 50; // Base priority
 
         // Healers get highest priority
-        if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
+    if (creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
             priority += 100;
 
         // Casters get medium-high priority
-        if (creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
+    if (creature->GetCreatureTemplate()->unit_class == UNIT_CLASS_MAGE)
             priority += 50;
 
         // Low health gets bonus priority
-        if (creature->GetHealthPct() < 30)
+    if (creature->GetHealthPct() < 30)
             priority += 30;
 
         // Closest gets slight bonus
@@ -1414,7 +1414,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
             angle = boss->GetOrientation();
             distance = 5.0f;
             targetPos = boss->GetPosition();
-            targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
+            targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
             break;
 
         case DungeonRole::MELEE_DPS:
@@ -1422,7 +1422,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
             angle = boss->GetOrientation() + M_PI; // Opposite direction
             distance = 5.0f;
             targetPos = boss->GetPosition();
-            targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
+            targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
             break;
 
         case DungeonRole::RANGED_DPS:
@@ -1430,7 +1430,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
             angle = player->GetAngle(boss);
             distance = 25.0f;
             targetPos = boss->GetPosition();
-            targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
+            targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
             break;
 
         case DungeonRole::HEALER:
@@ -1438,7 +1438,7 @@ void EncounterStrategy::HandleGenericPositioning(::Player* player, ::Creature* b
             angle = player->GetAngle(boss);
             distance = 18.0f;
             targetPos = boss->GetPosition();
-            targetPos.RelocateOffset({std::cos(angle) * distance, std::sin(angle) * distance, 0.0f});
+            targetPos.RelocateOffset({::std::cos(angle) * distance, ::std::sin(angle) * distance, 0.0f});
             break;
 
         default:
@@ -1486,7 +1486,7 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
     bool canDispelDisease = false;
     bool canDispelPoison = false;
 
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_PRIEST:
         case CLASS_PALADIN:
@@ -1534,13 +1534,13 @@ void EncounterStrategy::HandleGenericDispel(::Player* player, ::Creature* boss)
                 continue;
 
             // Check if harmful and dispellable
-            if (!spellInfo->IsPositive())
+    if (!spellInfo->IsPositive())
             {
                 TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericDispel - Player {} attempting dispel on {}",
                     player->GetGUID().GetCounter(), groupMember->GetGUID().GetCounter());
 
                 // Would cast dispel spell here
-                // player->CastSpell(groupMember, dispelSpellId, false);
+                // player->CastSpell(dispelSpellId, false, groupMember);
                 return;
             }
         }
@@ -1577,7 +1577,7 @@ void EncounterStrategy::HandleGenericMovement(::Player* player, ::Creature* boss
     }
 
     // Adjust position if out of range
-    if (std::abs(currentDistance - optimalDistance) > 5.0f)
+    if (::std::abs(currentDistance - optimalDistance) > 5.0f)
     {
         TC_LOG_DEBUG("module.playerbot", "EncounterStrategy::HandleGenericMovement - Player {} adjusting range (current: {}, optimal: {})",
             player->GetGUID().GetCounter(), currentDistance, optimalDistance);
@@ -1607,8 +1607,8 @@ void EncounterStrategy::HandleGenericSpread(::Player* player, ::Creature* boss, 
         {
             // Too close, move away
             float angle = groupMember->GetAngle(player); // Direction away from member
-            float x = player->GetPositionX() + (distance - distanceToMember) * std::cos(angle);
-            float y = player->GetPositionY() + (distance - distanceToMember) * std::sin(angle);
+            float x = player->GetPositionX() + (distance - distanceToMember) * ::std::cos(angle);
+            float y = player->GetPositionY() + (distance - distanceToMember) * ::std::sin(angle);
             float z = player->GetPositionZ();
             Position spreadPos(x, y, z);
 
@@ -1715,7 +1715,7 @@ void EncounterStrategy::HandleTankSwapGeneric(Group* group)
         return;
 
     // Find tanks and coordinate swap
-    std::vector<Player*> tanks;
+    ::std::vector<Player*> tanks;
     for (auto const& member : group->GetMemberSlots())
     {
         Player* player = ObjectAccessor::FindPlayer(member.guid);

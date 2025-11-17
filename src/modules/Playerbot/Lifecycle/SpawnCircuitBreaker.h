@@ -150,7 +150,7 @@ namespace Playerbot
          * @brief Record spawn failure
          * @param reason Optional failure reason for logging
          */
-        void RecordFailure(std::string_view reason = "");
+        void RecordFailure(::std::string_view reason = "");
 
         /**
          * @brief Check if spawn is allowed in current state
@@ -201,7 +201,7 @@ namespace Playerbot
          * @param newState State to transition to
          * @param reason Reason for transition (for logging)
          */
-        void TransitionTo(CircuitState newState, std::string_view reason);
+        void TransitionTo(CircuitState newState, ::std::string_view reason);
 
         /**
          * @brief Calculate failure rate from sliding window
@@ -250,7 +250,7 @@ namespace Playerbot
         TimePoint _lastAttemptTime;          ///< Last spawn attempt time (for half-open rate limiting)
 
         // Sliding window for failure rate calculation
-        std::deque<AttemptRecord> _attemptWindow;
+        ::std::deque<AttemptRecord> _attemptWindow;
 
         // Metrics
         uint32 _totalAttempts = 0;

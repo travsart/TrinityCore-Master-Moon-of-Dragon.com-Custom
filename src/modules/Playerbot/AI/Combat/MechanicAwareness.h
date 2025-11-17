@@ -128,7 +128,7 @@ struct MechanicInfo
     float damageEstimate = 0.0f;
     bool isActive = false;
     bool requiresGroupResponse = false;
-    std::string description;
+    ::std::string description;
 
     bool IsExpired(uint32 currentTime) const
     {
@@ -214,8 +214,8 @@ struct SafePositionResult
     MechanicResponse requiredResponse = MechanicResponse::NONE;
     bool requiresMovement = false;
     bool isOptimal = false;
-    std::vector<Position> alternativePositions;
-    std::string reasoning;
+    ::std::vector<Position> alternativePositions;
+    ::std::string reasoning;
 };
 
 // Mechanic prediction
@@ -226,19 +226,19 @@ struct MechanicPrediction
     float confidence = 0.0f;
     Position predictedLocation;
     float predictedRadius = 0.0f;
-    std::string basis;  // What the prediction is based on
+    ::std::string basis;  // What the prediction is based on
 };
 
 // Performance metrics for mechanic handling
 struct MechanicMetrics
 {
-    std::atomic<uint32> mechanicsDetected{0};
-    std::atomic<uint32> mechanicsAvoided{0};
-    std::atomic<uint32> mechanicsFailed{0};
-    std::atomic<uint32> falsePositives{0};
-    std::atomic<uint32> reactionTimeTotal{0};
-    std::atomic<uint32> reactionCount{0};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::atomic<uint32> mechanicsDetected{0};
+    ::std::atomic<uint32> mechanicsAvoided{0};
+    ::std::atomic<uint32> mechanicsFailed{0};
+    ::std::atomic<uint32> falsePositives{0};
+    ::std::atomic<uint32> reactionTimeTotal{0};
+    ::std::atomic<uint32> reactionCount{0};
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     float GetAverageReactionTime() const
     {
@@ -260,7 +260,7 @@ public:
     ~MechanicAwareness() = default;
 
     // Mechanic detection
-    std::vector<MechanicInfo> DetectMechanics(Player* bot, Unit* target);
+    ::std::vector<MechanicInfo> DetectMechanics(Player* bot, Unit* target);
     MechanicInfo AnalyzeSpellMechanic(uint32 spellId, Unit* caster, Unit* target = nullptr);
     bool DetectAOECast(Unit* caster, float& radius, Position& center);
     bool DetectCleave(Unit* target, float& angle, float& range);
@@ -272,10 +272,10 @@ public:
     void HandleGroundEffect(const Position& center, float radius, Player* bot);
 
     // Safe position calculation
-    SafePositionResult CalculateSafePosition(Player* bot, const std::vector<MechanicInfo>& threats);
+    SafePositionResult CalculateSafePosition(Player* bot, const ::std::vector<MechanicInfo>& threats);
     Position FindSafeSpot(Player* bot, const AOEZone& danger, float minSafeDistance = 5.0f);
-    std::vector<Position> GenerateSafePositions(const Position& currentPos, float searchRadius = 20.0f);
-    bool IsPositionSafe(const Position& pos, const std::vector<AOEZone>& dangers, uint32 currentTime = 0);
+    ::std::vector<Position> GenerateSafePositions(const Position& currentPos, float searchRadius = 20.0f);
+    bool IsPositionSafe(const Position& pos, const ::std::vector<AOEZone>& dangers, uint32 currentTime = 0);
 
     // Response determination
     MechanicResponse DetermineResponse(Player* bot, const MechanicInfo& mechanic);
@@ -287,13 +287,13 @@ public:
     void RegisterAOEZone(const AOEZone& zone);
     void UpdateAOEZones(uint32 currentTime);
     void RemoveExpiredZones(uint32 currentTime);
-    std::vector<AOEZone> GetActiveAOEZones() const;
-    std::vector<AOEZone> GetUpcomingAOEZones(uint32 timeWindow = 3000) const;
+    ::std::vector<AOEZone> GetActiveAOEZones() const;
+    ::std::vector<AOEZone> GetUpcomingAOEZones(uint32 timeWindow = 3000) const;
 
     // Projectile tracking
     void TrackProjectile(const ProjectileInfo& projectile);
     void UpdateProjectiles(uint32 currentTime);
-    std::vector<ProjectileInfo> GetIncomingProjectiles(Player* target) const;
+    ::std::vector<ProjectileInfo> GetIncomingProjectiles(Player* target) const;
     bool WillProjectileHit(const ProjectileInfo& projectile, Player* target, float tolerance = 2.0f);
 
     // Cleave tracking
@@ -303,14 +303,14 @@ public:
     Position GetCleaveAvoidancePosition(Player* bot, Unit* source);
 
     // Mechanic prediction
-    std::vector<MechanicPrediction> PredictMechanics(Unit* target, uint32 timeAhead = 5000);
+    ::std::vector<MechanicPrediction> PredictMechanics(Unit* target, uint32 timeAhead = 5000);
     MechanicPrediction PredictNextMechanic(Unit* target);
     float CalculateMechanicProbability(Unit* target, MechanicType type);
 
     // Group coordination
-    void CoordinateGroupResponse(const MechanicInfo& mechanic, std::vector<Player*> group);
-    std::unordered_map<ObjectGuid, Position> CalculateSpreadPositions(const std::vector<Player*>& group, float minDistance = 8.0f);
-    Position CalculateStackPosition(const std::vector<Player*>& group);
+    void CoordinateGroupResponse(const MechanicInfo& mechanic, ::std::vector<Player*> group);
+    ::std::unordered_map<ObjectGuid, Position> CalculateSpreadPositions(const ::std::vector<Player*>& group, float minDistance = 8.0f);
+    Position CalculateStackPosition(const ::std::vector<Player*>& group);
 
     // Spell database integration
     bool IsInterruptibleSpell(uint32 spellId);
@@ -321,7 +321,7 @@ public:
     // Environmental hazards
     void RegisterEnvironmentalHazard(const Position& location, float radius, uint32 duration);
     bool IsEnvironmentalHazard(const Position& pos);
-    std::vector<Position> GetEnvironmentalHazards() const;
+    ::std::vector<Position> GetEnvironmentalHazards() const;
 
     // Performance and configuration
     void SetReactionTime(uint32 minMs, uint32 maxMs);
@@ -338,7 +338,7 @@ public:
         _metrics.falsePositives.store(0);
         _metrics.reactionTimeTotal.store(0);
         _metrics.reactionCount.store(0);
-        _metrics.lastUpdate = std::chrono::steady_clock::now();
+        _metrics.lastUpdate = ::std::chrono::steady_clock::now();
     }
 
     // Debugging and logging
@@ -356,17 +356,17 @@ private:
     MechanicInfo DetectCastingMechanic(Unit* caster);
     MechanicInfo DetectAreaTrigger(AreaTrigger* trigger);
     MechanicInfo DetectDebuffMechanic(Player* bot);
-    std::vector<MechanicInfo> ScanForThreats(Player* bot, float scanRadius = 50.0f);
+    ::std::vector<MechanicInfo> ScanForThreats(Player* bot, float scanRadius = 50.0f);
 
     // Position evaluation
-    float EvaluatePositionSafety(const Position& pos, const std::vector<MechanicInfo>& threats);
+    float EvaluatePositionSafety(const Position& pos, const ::std::vector<MechanicInfo>& threats);
     float CalculateDangerScore(const Position& pos, const AOEZone& zone, uint32 currentTime);
     bool ValidateSafePosition(const Position& pos, Player* bot);
 
     // Response execution helpers
     void ExecuteMovementResponse(Player* bot, const Position& safePos, MechanicUrgency urgency);
     void ExecuteDefensiveResponse(Player* bot, const MechanicInfo& mechanic);
-    void ExecuteGroupResponse(const std::vector<Player*>& group, MechanicResponse response);
+    void ExecuteGroupResponse(const ::std::vector<Player*>& group, MechanicResponse response);
 
     // Prediction helpers
     void UpdateMechanicHistory(Unit* target, const MechanicInfo& mechanic);
@@ -378,14 +378,14 @@ private:
 
 private:
     // Active tracking
-    std::vector<AOEZone> _activeAOEZones;
-    std::vector<ProjectileInfo> _trackedProjectiles;
-    std::unordered_map<ObjectGuid, CleaveMechanic> _cleaveMechanics;
-    std::vector<Position> _environmentalHazards;
+    ::std::vector<AOEZone> _activeAOEZones;
+    ::std::vector<ProjectileInfo> _trackedProjectiles;
+    ::std::unordered_map<ObjectGuid, CleaveMechanic> _cleaveMechanics;
+    ::std::vector<Position> _environmentalHazards;
 
     // Mechanic history for prediction
-    std::unordered_map<ObjectGuid, std::vector<MechanicInfo>> _mechanicHistory;
-    std::unordered_map<uint32, MechanicType> _spellMechanicCache;
+    ::std::unordered_map<ObjectGuid, ::std::vector<MechanicInfo>> _mechanicHistory;
+    ::std::unordered_map<uint32, MechanicType> _spellMechanicCache;
 
     // Configuration
     uint32 _minReactionTime = 200;    // Minimum 200ms reaction time
@@ -442,7 +442,7 @@ private:
         bool requiresSoak = false;
     };
 
-    std::unordered_map<uint32, SpellMechanicData> _spellMechanics;
+    ::std::unordered_map<uint32, SpellMechanicData> _spellMechanics;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;
 };
 

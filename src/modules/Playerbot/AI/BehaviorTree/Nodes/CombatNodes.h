@@ -26,6 +26,7 @@
 #include "Spell.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "SpellHistory.h"
 #include "SharedDefines.h"
 #include "GameTime.h"
 
@@ -205,17 +206,22 @@ public:
         }
 
         // Check if bot has enough resources (mana/rage/energy)
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
         if (!spellInfo)
         {
             _status = BTStatus::FAILURE;
             return _status;
         }
 
-        if (bot->GetPower(Powers(spellInfo->PowerType)) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+        // TrinityCore 11.2: CalcPowerCost returns vector of all power costs
+        auto powerCosts = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+        for (auto const& cost : powerCosts)
         {
-            _status = BTStatus::FAILURE;
-            return _status;
+            if (bot->GetPower(cost.Power) < cost.Amount)
+            {
+                _status = BTStatus::FAILURE;
+                return _status;
+            }
         }
 
         blackboard.Set<uint32>("ReadySpell", _spellId);
@@ -269,7 +275,7 @@ public:
             }
 
             // Attempt to cast
-            SpellCastResult result = ai->CastSpell(_spellId, target);
+            ::SpellCastResult result = ai->CastSpell(_spellId, target);
 
             if (result != SPELL_CAST_OK)
             {
@@ -598,7 +604,7 @@ public:
         }
 
         // Cast on self
-        SpellCastResult result = ai->CastSpell(_spellId, bot);
+        ::SpellCastResult result = ai->CastSpell(_spellId, bot);
 
         _status = (result == SPELL_CAST_OK) ? BTStatus::SUCCESS : BTStatus::FAILURE;
         return _status;

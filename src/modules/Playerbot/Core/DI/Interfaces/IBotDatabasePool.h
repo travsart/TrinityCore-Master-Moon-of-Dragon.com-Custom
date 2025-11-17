@@ -65,16 +65,16 @@ public:
      */
     struct DatabaseMetrics
     {
-        std::atomic<uint64> queriesExecuted{0};
-        std::atomic<uint64> queriesPerSecond{0};
-        std::atomic<uint64> cacheHits{0};
-        std::atomic<uint64> cacheMisses{0};
-        std::atomic<uint32> avgResponseTimeMs{0};
-        std::atomic<uint32> activeConnections{0};
-        std::atomic<uint32> maxResponseTimeMs{0};
-        std::atomic<uint32> timeouts{0};
-        std::atomic<uint32> errors{0};
-        std::atomic<size_t> memoryUsage{0};
+        ::std::atomic<uint64> queriesExecuted{0};
+        ::std::atomic<uint64> queriesPerSecond{0};
+        ::std::atomic<uint64> cacheHits{0};
+        ::std::atomic<uint64> cacheMisses{0};
+        ::std::atomic<uint32> avgResponseTimeMs{0};
+        ::std::atomic<uint32> activeConnections{0};
+        ::std::atomic<uint32> maxResponseTimeMs{0};
+        ::std::atomic<uint32> timeouts{0};
+        ::std::atomic<uint32> errors{0};
+        ::std::atomic<size_t> memoryUsage{0};
     };
 
     virtual ~IBotDatabasePool() = default;
@@ -86,7 +86,7 @@ public:
      * @param syncThreads Number of sync worker threads
      * @return true if initialization successful, false otherwise
      */
-    virtual bool Initialize(std::string const& connectionString,
+    virtual bool Initialize(::std::string const& connectionString,
                            uint8 asyncThreads = 4,
                            uint8 syncThreads = 2) = 0;
 
@@ -102,7 +102,7 @@ public:
      * @param timeoutMs Query timeout in milliseconds
      */
     virtual void ExecuteAsync(CharacterDatabasePreparedStatement* stmt,
-                             std::function<void(PreparedQueryResult)> callback,
+                             ::std::function<void(PreparedQueryResult)> callback,
                              uint32 timeoutMs = 30000) = 0;
 
     /**
@@ -119,8 +119,8 @@ public:
      * @param callback Function called with all results
      * @param timeoutMs Query timeout in milliseconds
      */
-    virtual void ExecuteBatchAsync(std::vector<CharacterDatabasePreparedStatement*> const& statements,
-                                  std::function<void(std::vector<PreparedQueryResult>)> callback,
+    virtual void ExecuteBatchAsync(::std::vector<CharacterDatabasePreparedStatement*> const& statements,
+                                  ::std::function<void(::std::vector<PreparedQueryResult>)> callback,
                                   uint32 timeoutMs = 30000) = 0;
 
     /**
@@ -144,7 +144,7 @@ public:
      * @param stmtId Statement ID
      * @param sql SQL query string
      */
-    virtual void CachePreparedStatement(uint32 stmtId, std::string const& sql) = 0;
+    virtual void CachePreparedStatement(uint32 stmtId, ::std::string const& sql) = 0;
 
     /**
      * @brief Cache query result with TTL
@@ -152,15 +152,15 @@ public:
      * @param result Query result to cache
      * @param ttl Time to live in seconds
      */
-    virtual void CacheResult(std::string const& key, PreparedQueryResult const& result,
-                            std::chrono::seconds ttl = std::chrono::seconds(60)) = 0;
+    virtual void CacheResult(::std::string const& key, PreparedQueryResult const& result,
+                            ::std::chrono::seconds ttl = ::std::chrono::seconds(60)) = 0;
 
     /**
      * @brief Get cached result
      * @param key Cache key
      * @return Cached result, or nullptr if not found/expired
      */
-    virtual PreparedQueryResult GetCachedResult(std::string const& key) = 0;
+    virtual PreparedQueryResult GetCachedResult(::std::string const& key) = 0;
 
     /**
      * @brief Get performance metrics
@@ -202,7 +202,7 @@ public:
      * @brief Set connection recycle interval
      * @param interval Recycle interval
      */
-    virtual void SetConnectionRecycleInterval(std::chrono::seconds interval) = 0;
+    virtual void SetConnectionRecycleInterval(::std::chrono::seconds interval) = 0;
 };
 
 } // namespace Playerbot

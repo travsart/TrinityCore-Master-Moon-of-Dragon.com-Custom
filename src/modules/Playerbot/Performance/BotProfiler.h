@@ -84,20 +84,20 @@ enum class AggregationLevel : uint8
 // Performance call stack frame
 struct ProfileCallFrame
 {
-    std::string functionName;
-    std::string fileName;
+    ::std::string functionName;
+    ::std::string fileName;
     uint32_t lineNumber;
     uint64_t timestamp;
     uint64_t duration;
     uint64_t inclusiveTime;   // Time including child calls
     uint64_t exclusiveTime;   // Time excluding child calls
     uint32_t callCount;
-    std::vector<std::shared_ptr<ProfileCallFrame>> children;
+    ::std::vector<::std::shared_ptr<ProfileCallFrame>> children;
 
     ProfileCallFrame() : lineNumber(0), timestamp(0), duration(0),
         inclusiveTime(0), exclusiveTime(0), callCount(0) {}
 
-    ProfileCallFrame(const std::string& func, const std::string& file, uint32_t line)
+    ProfileCallFrame(const ::std::string& func, const ::std::string& file, uint32_t line)
         : functionName(func), fileName(file), lineNumber(line), timestamp(0),
           duration(0), inclusiveTime(0), exclusiveTime(0), callCount(1) {}
 };
@@ -106,21 +106,21 @@ struct ProfileCallFrame
 struct PerformanceHotspot
 {
     HotspotCategory category;
-    std::string location;         // Function/method name
-    std::string description;      // Human-readable description
+    ::std::string location;         // Function/method name
+    ::std::string description;      // Human-readable description
     double impact;               // Performance impact score (0-100)
     uint64_t hitCount;           // Number of times hit
     uint64_t totalTime;          // Total time spent (microseconds)
     uint64_t averageTime;        // Average time per hit
     uint64_t maxTime;            // Maximum time observed
     double percentOfTotal;       // Percentage of total execution time
-    std::string stackTrace;      // Call stack leading to hotspot
-    std::vector<std::string> optimizationSuggestions;
+    ::std::string stackTrace;      // Call stack leading to hotspot
+    ::std::vector<::std::string> optimizationSuggestions;
 
     PerformanceHotspot() : category(HotspotCategory::UNKNOWN_HOTSPOT), impact(0.0),
         hitCount(0), totalTime(0), averageTime(0), maxTime(0), percentOfTotal(0.0) {}
 
-    PerformanceHotspot(HotspotCategory cat, const std::string& loc, double imp)
+    PerformanceHotspot(HotspotCategory cat, const ::std::string& loc, double imp)
         : category(cat), location(loc), impact(imp), hitCount(0), totalTime(0),
           averageTime(0), maxTime(0), percentOfTotal(0.0) {}
 };
@@ -131,8 +131,8 @@ struct ProfilingSession
     uint64_t sessionId;
     ProfilingSessionType type;
     ProfilingScope scope;
-    std::string sessionName;
-    std::string description;
+    ::std::string sessionName;
+    ::std::string description;
     uint64_t startTime;
     uint64_t endTime;
     uint64_t duration;
@@ -145,13 +145,13 @@ struct ProfilingSession
     bool enableDatabaseProfiling;
     bool enableNetworkProfiling;
     uint32_t maxCallStackDepth;
-    std::vector<uint32_t> targetBotGuids;
-    std::vector<std::string> targetFunctions;
+    ::std::vector<uint32_t> targetBotGuids;
+    ::std::vector<::std::string> targetFunctions;
 
     // Results
-    std::vector<PerformanceHotspot> hotspots;
-    std::vector<std::shared_ptr<ProfileCallFrame>> callStacks;
-    std::unordered_map<std::string, double> aggregatedMetrics;
+    ::std::vector<PerformanceHotspot> hotspots;
+    ::std::vector<::std::shared_ptr<ProfileCallFrame>> callStacks;
+    ::std::unordered_map<::std::string, double> aggregatedMetrics;
 
     ProfilingSession() : sessionId(0), type(ProfilingSessionType::CONTINUOUS),
         scope(ProfilingScope::SYSTEM_WIDE), startTime(0), endTime(0), duration(0),
@@ -159,7 +159,7 @@ struct ProfilingSession
         enableMemoryProfiling(true), enableDatabaseProfiling(true),
         enableNetworkProfiling(true), maxCallStackDepth(50) {}
 
-    ProfilingSession(uint64_t id, const std::string& name, ProfilingSessionType sessionType)
+    ProfilingSession(uint64_t id, const ::std::string& name, ProfilingSessionType sessionType)
         : sessionId(id), type(sessionType), scope(ProfilingScope::SYSTEM_WIDE),
           sessionName(name), startTime(0), endTime(0), duration(0), active(false),
           samplingIntervalMs(100), enableCallStack(true), enableMemoryProfiling(true),
@@ -169,18 +169,18 @@ struct ProfilingSession
 // Real-time profiling statistics
 struct RealTimeProfilingStats
 {
-    std::atomic<uint64_t> totalSamples{0};
-    std::atomic<uint64_t> activeProfilers{0};
-    std::atomic<uint64_t> hotspotsDetected{0};
-    std::atomic<double> overheadPercentage{0.0};
-    std::atomic<uint64_t> memoryUsed{0};
-    std::atomic<uint64_t> lastUpdateTime{0};
+    ::std::atomic<uint64_t> totalSamples{0};
+    ::std::atomic<uint64_t> activeProfilers{0};
+    ::std::atomic<uint64_t> hotspotsDetected{0};
+    ::std::atomic<double> overheadPercentage{0.0};
+    ::std::atomic<uint64_t> memoryUsed{0};
+    ::std::atomic<uint64_t> lastUpdateTime{0};
 
     // Performance counters
-    std::atomic<uint64_t> cpuSamples{0};
-    std::atomic<uint64_t> memorySamples{0};
-    std::atomic<uint64_t> databaseSamples{0};
-    std::atomic<uint64_t> networkSamples{0};
+    ::std::atomic<uint64_t> cpuSamples{0};
+    ::std::atomic<uint64_t> memorySamples{0};
+    ::std::atomic<uint64_t> databaseSamples{0};
+    ::std::atomic<uint64_t> networkSamples{0};
 
     void Reset()
     {
@@ -193,8 +193,8 @@ struct RealTimeProfilingStats
         memorySamples.store(0);
         databaseSamples.store(0);
         networkSamples.store(0);
-        lastUpdateTime.store(std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count());
+        lastUpdateTime.store(::std::chrono::duration_cast<::std::chrono::microseconds>(
+            ::std::chrono::steady_clock::now().time_since_epoch()).count());
     }
 };
 
@@ -202,7 +202,7 @@ struct RealTimeProfilingStats
 class TC_GAME_API ScopedProfiler
 {
 public:
-    ScopedProfiler(const std::string& functionName, const std::string& fileName = "", uint32_t lineNumber = 0);
+    ScopedProfiler(const ::std::string& functionName, const ::std::string& fileName = "", uint32_t lineNumber = 0);
     ~ScopedProfiler();
 
     // Disable copy/move
@@ -212,21 +212,21 @@ public:
     ScopedProfiler& operator=(ScopedProfiler&&) = delete;
 
     // Manual control
-    void AddMetadata(const std::string& key, const std::string& value);
+    void AddMetadata(const ::std::string& key, const ::std::string& value);
     void SetCategory(HotspotCategory category);
     void MarkAsHotspot(double impact);
 
 private:
     void RecordProfile();
 
-    std::string _functionName;
-    std::string _fileName;
+    ::std::string _functionName;
+    ::std::string _fileName;
     uint32_t _lineNumber;
     uint64_t _startTime;
     HotspotCategory _category;
     double _impactScore;
     bool _isHotspot;
-    std::unordered_map<std::string, std::string> _metadata;
+    ::std::unordered_map<::std::string, ::std::string> _metadata;
 };
 
 // Main profiler engine
@@ -245,7 +245,7 @@ public:
     bool IsEnabled() const { return _enabled.load(); }
 
     // Session management
-    uint64_t StartProfilingSession(const std::string& sessionName, ProfilingSessionType type = ProfilingSessionType::CONTINUOUS);
+    uint64_t StartProfilingSession(const ::std::string& sessionName, ProfilingSessionType type = ProfilingSessionType::CONTINUOUS);
     bool StopProfilingSession(uint64_t sessionId);
     bool PauseProfilingSession(uint64_t sessionId);
     bool ResumeProfilingSession(uint64_t sessionId);
@@ -253,24 +253,24 @@ public:
 
     // Session configuration
     void ConfigureSession(uint64_t sessionId, ProfilingScope scope, uint32_t samplingIntervalMs = 100);
-    void SetSessionTargets(uint64_t sessionId, const std::vector<uint32_t>& botGuids);
-    void SetSessionFunctions(uint64_t sessionId, const std::vector<std::string>& functions);
+    void SetSessionTargets(uint64_t sessionId, const ::std::vector<uint32_t>& botGuids);
+    void SetSessionFunctions(uint64_t sessionId, const ::std::vector<::std::string>& functions);
     void EnableCallStackProfiling(uint64_t sessionId, bool enable, uint32_t maxDepth = 50);
 
     // Data collection
-    void RecordFunctionCall(const std::string& functionName, uint64_t duration, uint32_t botGuid = 0);
+    void RecordFunctionCall(const ::std::string& functionName, uint64_t duration, uint32_t botGuid = 0);
     void RecordHotspot(const PerformanceHotspot& hotspot, uint64_t sessionId = 0);
-    void RecordCallStack(const std::vector<std::string>& callStack, uint64_t duration, uint64_t sessionId = 0);
+    void RecordCallStack(const ::std::vector<::std::string>& callStack, uint64_t duration, uint64_t sessionId = 0);
 
     // Analysis and reporting
-    std::vector<PerformanceHotspot> AnalyzeHotspots(uint64_t sessionId = 0, uint32_t topN = 10);
-    std::vector<PerformanceHotspot> FindBottlenecks(HotspotCategory category, uint64_t sessionId = 0);
-    std::shared_ptr<ProfileCallFrame> GetCallStackAnalysis(uint64_t sessionId = 0);
-    std::vector<std::string> GetOptimizationRecommendations(uint64_t sessionId = 0);
+    ::std::vector<PerformanceHotspot> AnalyzeHotspots(uint64_t sessionId = 0, uint32_t topN = 10);
+    ::std::vector<PerformanceHotspot> FindBottlenecks(HotspotCategory category, uint64_t sessionId = 0);
+    ::std::shared_ptr<ProfileCallFrame> GetCallStackAnalysis(uint64_t sessionId = 0);
+    ::std::vector<::std::string> GetOptimizationRecommendations(uint64_t sessionId = 0);
 
     // Real-time monitoring
     RealTimeProfilingStats GetRealTimeStats() const;
-    std::vector<PerformanceHotspot> GetCurrentHotspots(uint32_t topN = 5);
+    ::std::vector<PerformanceHotspot> GetCurrentHotspots(uint32_t topN = 5);
     double GetProfilingOverhead() const;
 
     // Integration with other performance systems
@@ -282,30 +282,30 @@ public:
     void IntegrateLoadTester();
 
     // Comparative analysis
-    bool CompareProfilingSessions(uint64_t sessionId1, uint64_t sessionId2, std::string& comparisonReport);
-    bool CompareBotPerformance(uint32_t botGuid1, uint32_t botGuid2, std::string& comparisonReport);
-    void GenerateRegressionReport(const std::vector<uint64_t>& sessionIds, std::string& report);
+    bool CompareProfilingSessions(uint64_t sessionId1, uint64_t sessionId2, ::std::string& comparisonReport);
+    bool CompareBotPerformance(uint32_t botGuid1, uint32_t botGuid2, ::std::string& comparisonReport);
+    void GenerateRegressionReport(const ::std::vector<uint64_t>& sessionIds, ::std::string& report);
 
     // Export and visualization
-    bool ExportProfilingData(uint64_t sessionId, const std::string& filename, const std::string& format = "json");
-    bool GenerateFlameGraph(uint64_t sessionId, const std::string& outputFile);
-    bool GeneratePerformanceReport(uint64_t sessionId, std::string& report);
-    bool GenerateHotspotReport(const std::vector<PerformanceHotspot>& hotspots, std::string& report);
+    bool ExportProfilingData(uint64_t sessionId, const ::std::string& filename, const ::std::string& format = "json");
+    bool GenerateFlameGraph(uint64_t sessionId, const ::std::string& outputFile);
+    bool GeneratePerformanceReport(uint64_t sessionId, ::std::string& report);
+    bool GenerateHotspotReport(const ::std::vector<PerformanceHotspot>& hotspots, ::std::string& report);
 
     // Statistical analysis
     void PerformStatisticalAnalysis(uint64_t sessionId);
-    std::vector<std::pair<std::string, double>> GetCorrelationAnalysis(uint64_t sessionId);
-    std::vector<std::string> IdentifyPerformancePatterns(uint64_t sessionId);
+    ::std::vector<::std::pair<::std::string, double>> GetCorrelationAnalysis(uint64_t sessionId);
+    ::std::vector<::std::string> IdentifyPerformancePatterns(uint64_t sessionId);
 
     // Advanced profiling features
     void StartSamplingProfiler(uint32_t intervalMicroseconds = 10000);
     void StopSamplingProfiler();
     void EnableInstrumentationProfiling(bool enable);
-    void SetProfilingMode(const std::string& mode); // "sampling", "instrumentation", "hybrid"
+    void SetProfilingMode(const ::std::string& mode); // "sampling", "instrumentation", "hybrid"
 
     // Session queries
-    std::vector<ProfilingSession> GetActiveSessions() const;
-    std::vector<ProfilingSession> GetSessionHistory() const;
+    ::std::vector<ProfilingSession> GetActiveSessions() const;
+    ::std::vector<ProfilingSession> GetSessionHistory() const;
     ProfilingSession GetSession(uint64_t sessionId) const;
     bool IsSessionActive(uint64_t sessionId) const;
 
@@ -317,9 +317,9 @@ public:
     void SetProfilingOverheadLimit(double percent) { _maxOverheadPercent = percent; }
 
     // Utility functions
-    std::string GetHotspotCategoryName(HotspotCategory category) const;
-    std::string GetSessionTypeName(ProfilingSessionType type) const;
-    std::string GetScopeName(ProfilingScope scope) const;
+    ::std::string GetHotspotCategoryName(HotspotCategory category) const;
+    ::std::string GetSessionTypeName(ProfilingSessionType type) const;
+    ::std::string GetScopeName(ProfilingScope scope) const;
 
 private:
     BotProfiler() = default;
@@ -332,7 +332,7 @@ private:
 
     // Data collection internals
     void CollectSample();
-    void ProcessCallStack(const std::vector<std::string>& callStack, uint64_t duration, ProfilingSession* session);
+    void ProcessCallStack(const ::std::vector<::std::string>& callStack, uint64_t duration, ProfilingSession* session);
     void UpdateHotspotStatistics(PerformanceHotspot& hotspot, uint64_t duration);
 
     // Analysis internals
@@ -350,19 +350,19 @@ private:
     void SyncWithLoadTester();
 
     // Reporting helpers
-    void GenerateSessionSummary(const ProfilingSession* session, std::string& summary);
-    void GenerateHotspotAnalysis(const std::vector<PerformanceHotspot>& hotspots, std::string& analysis);
-    void GenerateCallStackReport(const std::shared_ptr<ProfileCallFrame>& rootFrame, std::string& report);
+    void GenerateSessionSummary(const ProfilingSession* session, ::std::string& summary);
+    void GenerateHotspotAnalysis(const ::std::vector<PerformanceHotspot>& hotspots, ::std::string& analysis);
+    void GenerateCallStackReport(const ::std::shared_ptr<ProfileCallFrame>& rootFrame, ::std::string& report);
 
     // Export helpers
-    void ExportToJSON(const ProfilingSession* session, std::ofstream& file);
-    void ExportToCSV(const ProfilingSession* session, std::ofstream& file);
-    void ExportToXML(const ProfilingSession* session, std::ofstream& file);
+    void ExportToJSON(const ProfilingSession* session, ::std::ofstream& file);
+    void ExportToCSV(const ProfilingSession* session, ::std::ofstream& file);
+    void ExportToXML(const ProfilingSession* session, ::std::ofstream& file);
 
     // Statistical helpers
-    double CalculateStatisticalSignificance(const std::vector<double>& baseline, const std::vector<double>& current);
-    std::vector<double> CalculatePercentiles(const std::vector<uint64_t>& values);
-    double CalculateCorrelation(const std::vector<double>& x, const std::vector<double>& y);
+    double CalculateStatisticalSignificance(const ::std::vector<double>& baseline, const ::std::vector<double>& current);
+    ::std::vector<double> CalculatePercentiles(const ::std::vector<uint64_t>& values);
+    double CalculateCorrelation(const ::std::vector<double>& x, const ::std::vector<double>& y);
 
     // Threading and synchronization
     void StartBackgroundProcessing();
@@ -371,47 +371,47 @@ private:
     void UpdateRealTimeStatistics();
 
     // Configuration
-    std::atomic<bool> _enabled{false};
-    std::atomic<bool> _shutdownRequested{false};
-    std::atomic<bool> _samplingActive{false};
-    std::atomic<bool> _instrumentationActive{false};
-    std::atomic<uint32_t> _maxSessions{100};
-    std::atomic<uint32_t> _dataRetentionDays{30};
-    std::atomic<double> _samplingRate{1.0};
-    std::atomic<double> _maxOverheadPercent{5.0};
+    ::std::atomic<bool> _enabled{false};
+    ::std::atomic<bool> _shutdownRequested{false};
+    ::std::atomic<bool> _samplingActive{false};
+    ::std::atomic<bool> _instrumentationActive{false};
+    ::std::atomic<uint32_t> _maxSessions{100};
+    ::std::atomic<uint32_t> _dataRetentionDays{30};
+    ::std::atomic<double> _samplingRate{1.0};
+    ::std::atomic<double> _maxOverheadPercent{5.0};
 
     // Session management
-    mutable std::recursive_mutex _sessionsMutex;
-    std::unordered_map<uint64_t, ProfilingSession> _activeSessions;
-    std::vector<ProfilingSession> _sessionHistory;
-    std::atomic<uint64_t> _nextSessionId{1};
+    mutable ::std::recursive_mutex _sessionsMutex;
+    ::std::unordered_map<uint64_t, ProfilingSession> _activeSessions;
+    ::std::vector<ProfilingSession> _sessionHistory;
+    ::std::atomic<uint64_t> _nextSessionId{1};
 
     // Data storage
-    mutable std::recursive_mutex _dataMutex;
-    std::queue<std::function<void()>> _pendingOperations;
-    std::vector<PerformanceHotspot> _globalHotspots;
+    mutable ::std::recursive_mutex _dataMutex;
+    ::std::queue<::std::function<void()>> _pendingOperations;
+    ::std::vector<PerformanceHotspot> _globalHotspots;
 
     // Real-time statistics
     RealTimeProfilingStats _realTimeStats;
-    mutable std::recursive_mutex _statsMutex;
+    mutable ::std::recursive_mutex _statsMutex;
 
     // Background processing
-    std::thread _processingThread;
-    std::thread _samplingThread;
-    std::condition_variable _processingCondition;
-    std::recursive_mutex _processingMutex;
+    ::std::thread _processingThread;
+    ::std::thread _samplingThread;
+    ::std::condition_variable _processingCondition;
+    ::std::recursive_mutex _processingMutex;
 
     // Call stack tracking
-    thread_local std::stack<std::shared_ptr<ProfileCallFrame>> _callStack;
-    mutable std::recursive_mutex _callStackMutex;
+    thread_local ::std::stack<::std::shared_ptr<ProfileCallFrame>> _callStack;
+    mutable ::std::recursive_mutex _callStackMutex;
 
     // Integration states
-    std::atomic<bool> _performanceMonitorIntegrated{false};
-    std::atomic<bool> _analyticsIntegrated{false};
-    std::atomic<bool> _memoryManagerIntegrated{false};
-    std::atomic<bool> _aiProfilerIntegrated{false};
-    std::atomic<bool> _databaseOptimizerIntegrated{false};
-    std::atomic<bool> _loadTesterIntegrated{false};
+    ::std::atomic<bool> _performanceMonitorIntegrated{false};
+    ::std::atomic<bool> _analyticsIntegrated{false};
+    ::std::atomic<bool> _memoryManagerIntegrated{false};
+    ::std::atomic<bool> _aiProfilerIntegrated{false};
+    ::std::atomic<bool> _databaseOptimizerIntegrated{false};
+    ::std::atomic<bool> _loadTesterIntegrated{false};
 
     // Constants
     static constexpr uint32_t MAX_PROFILING_SESSIONS = 1000;

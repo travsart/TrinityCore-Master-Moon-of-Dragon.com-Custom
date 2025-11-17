@@ -13,6 +13,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // TargetPriority implementation
@@ -301,7 +302,7 @@ float HealingTargetSelector::CalculateRolePriority(Player* target)
     // TODO: Integrate with bot role detection system if available
 
     // Simple heuristic for now
-    switch (target->getClass())
+    switch (target->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:
@@ -352,10 +353,10 @@ bool HealingTargetSelector::HasIncomingHeals(Player* target)
             continue;
 
         // Check if member is currently casting
-        if (Spell* spell = member->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+    if (Spell* spell = member->GetCurrentSpell(CURRENT_GENERIC_SPELL))
         {
             // Check if spell targets our target
-            if (spell->m_targets.GetUnitTarget() == target)
+    if (spell->m_targets.GetUnitTarget() == target)
             {
                 // Check if spell is a healing spell
                 SpellInfo const* spellInfo = spell->GetSpellInfo();
@@ -369,7 +370,7 @@ bool HealingTargetSelector::HasIncomingHeals(Player* target)
         }
 
         // Also check channeled spells
-        if (Spell* channelSpell = member->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+    if (Spell* channelSpell = member->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
         {
             if (channelSpell->m_targets.GetUnitTarget() == target)
             {
@@ -410,10 +411,10 @@ uint32 HealingTargetSelector::CountDispellableDebuffs(Player* target, DispelType
             continue;
 
         // Check if negative aura (debuff)
-        if (!spellInfo->IsPositive())
+    if (!spellInfo->IsPositive())
         {
             // Check dispel type
-            if (type == DISPEL_ALL || spellInfo->Dispel == type)
+    if (type == DISPEL_ALL || spellInfo->Dispel == type)
                 ++count;
         }
     }
@@ -468,7 +469,7 @@ std::vector<Player*> HealingTargetSelector::GetGroupMembersInRange(Player* heale
             continue;
 
         // Check range
-        if (healer->GetDistance(member) <= range)
+    if (healer->GetDistance(member) <= range)
             members.push_back(member);
     }
 
@@ -511,3 +512,4 @@ float HealingTargetSelector::CalculateAoEHealingScore(Unit* position, Player* he
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

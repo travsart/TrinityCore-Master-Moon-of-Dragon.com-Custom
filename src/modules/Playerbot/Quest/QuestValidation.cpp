@@ -49,7 +49,7 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
         _metrics.cacheMisses++;
     }
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // Core validations
     bool valid = true;
@@ -152,8 +152,8 @@ bool QuestValidation::ValidateQuestAcceptance(uint32 questId, Player* bot)
     if (_enableCaching)
         CacheValidationResult(questId, bot->GetGUID().GetCounter(), result);
     // Update metrics
-    auto endTime = std::chrono::high_resolution_clock::now();
-    float duration = std::chrono::duration<float, std::milli>(endTime - startTime).count();
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    float duration = ::std::chrono::duration<float, ::std::milli>(endTime - startTime).count();
 
     _metrics.totalValidations++;
     if (valid)
@@ -219,9 +219,9 @@ QuestEligibility QuestValidation::GetDetailedEligibility(uint32 questId, Player*
     return QuestEligibility::ELIGIBLE;
 }
 
-std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Player* bot)
+::std::vector<::std::string> QuestValidation::GetValidationErrors(uint32 questId, Player* bot)
 {
-    std::vector<std::string> errors;
+    ::std::vector<::std::string> errors;
 
     if (!bot)
     {
@@ -238,7 +238,7 @@ std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Pl
 
     if (!ValidateLevelRequirements(questId, bot))
     {
-        std::ostringstream oss;
+        ::std::ostringstream oss;
         int32 minLevel = bot->GetQuestMinLevel(quest);
         oss << "Level requirement: " << minLevel << " (bot level: " << bot->GetLevel() << ")";
         errors.push_back(oss.str());
@@ -255,7 +255,7 @@ std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Pl
         auto missing = GetMissingPrerequisites(questId, bot);
         if (!missing.empty())
         {
-            std::ostringstream oss;
+            ::std::ostringstream oss;
             oss << "Missing prerequisites: ";
             for (size_t i = 0; i < missing.size(); ++i)
             {
@@ -271,7 +271,7 @@ std::vector<std::string> QuestValidation::GetValidationErrors(uint32 questId, Pl
         auto missingItems = GetMissingItems(questId, bot);
         if (!missingItems.empty())
         {
-            std::ostringstream oss;
+            ::std::ostringstream oss;
             oss << "Missing items: ";
             for (size_t i = 0; i < missingItems.size(); ++i)
             {
@@ -412,7 +412,7 @@ bool QuestValidation::ValidateQuestPrerequisites(uint32 questId, Player* bot)
     if (prevQuestId != 0)
     {
         // If prevQuestId is negative, it's an alternative prerequisite
-        if (prevQuestId > 0)
+    if (prevQuestId > 0)
         {
             if (!bot->GetQuestRewardStatus(prevQuestId))
                 return false;
@@ -424,7 +424,7 @@ bool QuestValidation::ValidateQuestPrerequisites(uint32 questId, Player* bot)
     if (nextQuestId != 0)
     {
         // Quest is part of a chain, check if bot should be at this step
-        if (nextQuestId < 0) // Exclusive group
+    if (nextQuestId < 0) // Exclusive group
         {
             // Check if any quest in exclusive group is completed
             // (Implementation depends on TrinityCore version)
@@ -439,9 +439,9 @@ bool QuestValidation::ValidateQuestChainPosition(uint32 questId, Player* bot)
     return ValidateQuestPrerequisites(questId, bot);
 }
 
-std::vector<uint32> QuestValidation::GetMissingPrerequisites(uint32 questId, Player* bot)
+::std::vector<uint32> QuestValidation::GetMissingPrerequisites(uint32 questId, Player* bot)
 {
-    std::vector<uint32> missing;
+    ::std::vector<uint32> missing;
 
     if (!bot)
         return missing;
@@ -517,9 +517,9 @@ bool QuestValidation::ValidateQuestItemRequirements(uint32 questId, Player* bot)
     return ValidateRequiredItems(questId, bot);
 }
 
-std::vector<std::pair<uint32, uint32>> QuestValidation::GetMissingItems(uint32 questId, Player* bot)
+::std::vector<::std::pair<uint32, uint32>> QuestValidation::GetMissingItems(uint32 questId, Player* bot)
 {
-    std::vector<std::pair<uint32, uint32>> missingItems;
+    ::std::vector<::std::pair<uint32, uint32>> missingItems;
 
     if (!bot)
         return missingItems;
@@ -535,7 +535,7 @@ std::vector<std::pair<uint32, uint32>> QuestValidation::GetMissingItems(uint32 q
         uint32 botCount = bot->GetItemCount(srcItem);
         if (botCount < srcCount)
         {
-            missingItems.push_back(std::make_pair(srcItem, srcCount - botCount));
+            missingItems.push_back(::std::make_pair(srcItem, srcCount - botCount));
         }
     }
 
@@ -661,9 +661,9 @@ bool QuestValidation::ValidateMaximumReputation(uint32 questId, Player* bot)
     return botRep <= reqValue;
 }
 
-std::vector<std::pair<uint32, int32>> QuestValidation::GetReputationRequirements(uint32 questId)
+::std::vector<::std::pair<uint32, int32>> QuestValidation::GetReputationRequirements(uint32 questId)
 {
-    std::vector<std::pair<uint32, int32>> requirements;
+    ::std::vector<::std::pair<uint32, int32>> requirements;
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
     if (!quest)
@@ -673,14 +673,14 @@ std::vector<std::pair<uint32, int32>> QuestValidation::GetReputationRequirements
     if (minFaction != 0)
     {
         int32 minValue = quest->GetRequiredMinRepValue();
-        requirements.push_back(std::make_pair(minFaction, minValue));
+        requirements.push_back(::std::make_pair(minFaction, minValue));
     }
 
     uint32 maxFaction = quest->GetRequiredMaxRepFaction();
     if (maxFaction != 0)
     {
         int32 maxValue = quest->GetRequiredMaxRepValue();
-        requirements.push_back(std::make_pair(maxFaction, -maxValue)); // Negative to indicate maximum
+        requirements.push_back(::std::make_pair(maxFaction, -maxValue)); // Negative to indicate maximum
     }
 
     return requirements;
@@ -731,7 +731,7 @@ bool QuestValidation::ValidateDailyQuestLimits(uint32 questId, Player* bot)
     if (quest->IsDaily())
     {
         // Check if bot has already completed this daily quest today
-        if (bot->IsDailyQuestDone(questId))
+    if (bot->IsDailyQuestDone(questId))
             return false;
     }
 
@@ -924,9 +924,9 @@ bool QuestValidation::ValidateQuestDifficulty(uint32 questId, Player* bot)
 
 // ========== Validation Caching and Optimization ==========
 
-QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
+ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     uint64_t key = ((uint64_t)questId << 32) | botGuid;
     auto it = _validationCache.find(key);
@@ -941,7 +941,7 @@ QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 qu
 
 void QuestValidation::CacheValidationResult(uint32 questId, uint32 botGuid, const ValidationResult& result)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     uint64_t key = ((uint64_t)questId << 32) | botGuid;
     ValidationResult cached = result;
@@ -951,7 +951,7 @@ void QuestValidation::CacheValidationResult(uint32 questId, uint32 botGuid, cons
 
 void QuestValidation::InvalidateValidationCache(uint32 botGuid)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     // Remove all entries for this bot
     auto it = _validationCache.begin();
@@ -967,7 +967,7 @@ void QuestValidation::InvalidateValidationCache(uint32 botGuid)
 
 void QuestValidation::CleanupExpiredCache()
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     uint32 now = GameTime::GetGameTimeMS();
     auto it = _validationCache.begin();
@@ -982,10 +982,10 @@ void QuestValidation::CleanupExpiredCache()
 
 // ========== Batch Validation ==========
 
-std::unordered_map<uint32, QuestValidation::ValidationResult> QuestValidation::ValidateMultipleQuests(
-    const std::vector<uint32>& questIds, Player* bot)
+::std::unordered_map<uint32, ValidationResult> QuestValidation::ValidateMultipleQuests(
+    const ::std::vector<uint32>& questIds, Player* bot)
 {
-    std::unordered_map<uint32, ValidationResult> results;
+    ::std::unordered_map<uint32, ValidationResult> results;
 
     for (uint32 questId : questIds)
     {
@@ -999,9 +999,9 @@ std::unordered_map<uint32, QuestValidation::ValidationResult> QuestValidation::V
     return results;
 }
 
-std::vector<uint32> QuestValidation::FilterValidQuests(const std::vector<uint32>& questIds, Player* bot)
+::std::vector<uint32> QuestValidation::FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot)
 {
-    std::vector<uint32> valid;
+    ::std::vector<uint32> valid;
 
     for (uint32 questId : questIds)
     {
@@ -1012,16 +1012,16 @@ std::vector<uint32> QuestValidation::FilterValidQuests(const std::vector<uint32>
     return valid;
 }
 
-std::vector<uint32> QuestValidation::GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates)
+::std::vector<uint32> QuestValidation::GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates)
 {
     return FilterValidQuests(candidates, bot);
 }
 
 // ========== Error Reporting and Diagnostics ==========
 
-std::string QuestValidation::GetDetailedValidationReport(uint32 questId, Player* bot)
+::std::string QuestValidation::GetDetailedValidationReport(uint32 questId, Player* bot)
 {
-    std::ostringstream report;
+    ::std::ostringstream report;
 
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
     if (!quest)
@@ -1071,7 +1071,7 @@ std::string QuestValidation::GetDetailedValidationReport(uint32 questId, Player*
     return report.str();
 }
 
-void QuestValidation::LogValidationFailure(uint32 questId, Player* bot, const std::string& reason)
+void QuestValidation::LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason)
 {
     if (bot)
     {
@@ -1080,9 +1080,9 @@ void QuestValidation::LogValidationFailure(uint32 questId, Player* bot, const st
     }
 }
 
-std::vector<std::string> QuestValidation::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
+::std::vector<::std::string> QuestValidation::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
 {
-    std::vector<std::string> recommendations;
+    ::std::vector<::std::string> recommendations;
 
     if (!bot)
     {
@@ -1102,7 +1102,7 @@ std::vector<std::string> QuestValidation::GetRecommendationsForFailedQuest(uint3
             auto missing = GetMissingPrerequisites(questId, bot);
             if (!missing.empty())
             {
-                std::ostringstream oss;
+                ::std::ostringstream oss;
                 oss << "Complete prerequisite quests: ";
                 for (size_t i = 0; i < missing.size(); ++i)
                 {
@@ -1121,7 +1121,7 @@ std::vector<std::string> QuestValidation::GetRecommendationsForFailedQuest(uint3
             auto missingItems = GetMissingItems(questId, bot);
             if (!missingItems.empty())
             {
-                std::ostringstream oss;
+                ::std::ostringstream oss;
                 oss << "Acquire required items: ";
                 for (size_t i = 0; i < missingItems.size(); ++i)
                 {

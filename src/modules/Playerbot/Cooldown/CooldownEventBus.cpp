@@ -32,8 +32,8 @@ CooldownEvent CooldownEvent::SpellCooldownStart(ObjectGuid caster, uint32 spellI
     event.category = 0;
     event.cooldownMs = cooldownMs;
     event.modRateMs = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(cooldownMs + 5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(cooldownMs + 5000);
     return event;
 }
 
@@ -48,8 +48,8 @@ CooldownEvent CooldownEvent::SpellCooldownClear(ObjectGuid caster, uint32 spellI
     event.category = 0;
     event.cooldownMs = 0;
     event.modRateMs = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(5000);
     return event;
 }
 
@@ -64,8 +64,8 @@ CooldownEvent CooldownEvent::ItemCooldownStart(ObjectGuid caster, uint32 itemId,
     event.category = 0;
     event.cooldownMs = cooldownMs;
     event.modRateMs = 0;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(cooldownMs + 5000);
+    event.timestamp = ::std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + ::std::chrono::milliseconds(cooldownMs + 5000);
     return event;
 }
 
@@ -82,12 +82,12 @@ bool CooldownEvent::IsValid() const
 
 bool CooldownEvent::IsExpired() const
 {
-    return std::chrono::steady_clock::now() >= expiryTime;
+    return ::std::chrono::steady_clock::now() >= expiryTime;
 }
 
-std::string CooldownEvent::ToString() const
+::std::string CooldownEvent::ToString() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "[CooldownEvent] Type: " << static_cast<uint32>(type)
         << ", Caster: " << casterGuid.ToString()
         << ", Spell: " << spellId
@@ -102,7 +102,7 @@ std::string CooldownEvent::ToString() const
 
 CooldownEventBus::CooldownEventBus()
 {
-    _stats.startTime = std::chrono::steady_clock::now();
+    _stats.startTime = ::std::chrono::steady_clock::now();
     TC_LOG_INFO("module.playerbot.cooldown", "CooldownEventBus initialized");
 }
 
@@ -127,7 +127,7 @@ bool CooldownEventBus::PublishEvent(CooldownEvent const& event)
     }
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
         if (_eventQueue.size() >= _maxQueueSize)
         {
             TC_LOG_WARN("module.playerbot.cooldown", "CooldownEventBus: Event queue full ({} events), dropping event: {}",
@@ -151,16 +151,16 @@ bool CooldownEventBus::PublishEvent(CooldownEvent const& event)
     return true;
 }
 
-bool CooldownEventBus::Subscribe(BotAI* subscriber, std::vector<CooldownEventType> const& types)
+bool CooldownEventBus::Subscribe(BotAI* subscriber, ::std::vector<CooldownEventType> const& types)
 {
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (CooldownEventType type : types)
     {
         auto& subscriberList = _subscribers[type];
 
-        if (std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
+        if (::std::find(subscriberList.begin(), subscriberList.end(), subscriber) != subscriberList.end())
         {
             TC_LOG_WARN("module.playerbot.cooldown", "CooldownEventBus: Subscriber already registered for event type {}",
                 static_cast<uint32>(type));
@@ -186,9 +186,9 @@ bool CooldownEventBus::Subscribe(BotAI* subscriber, std::vector<CooldownEventTyp
 bool CooldownEventBus::SubscribeAll(BotAI* subscriber)
 {
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
-    if (std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
+    if (::std::find(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber) != _globalSubscribers.end())
     {
         TC_LOG_WARN("module.playerbot.cooldown", "CooldownEventBus: Subscriber already registered for all events");
         return false;
@@ -207,18 +207,18 @@ void CooldownEventBus::Unsubscribe(BotAI* subscriber)
     if (!subscriber)
         return;
 
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     for (auto& [type, subscriberList] : _subscribers)
     {
         subscriberList.erase(
-            std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
+            ::std::remove(subscriberList.begin(), subscriberList.end(), subscriber),
             subscriberList.end()
         );
     }
 
     _globalSubscribers.erase(
-        std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
+        ::std::remove(_globalSubscribers.begin(), _globalSubscribers.end(), subscriber),
         _globalSubscribers.end()
     );
 
@@ -228,7 +228,7 @@ void CooldownEventBus::Unsubscribe(BotAI* subscriber)
 
 uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     _cleanupTimer += diff;
     if (_cleanupTimer >= CLEANUP_INTERVAL)
@@ -238,10 +238,10 @@ uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
     }
 
     uint32 processedCount = 0;
-    std::vector<CooldownEvent> eventsToProcess;
+    ::std::vector<CooldownEvent> eventsToProcess;
 
     {
-        std::lock_guard lock(_queueMutex);
+        ::std::lock_guard lock(_queueMutex);
 
         while (!_eventQueue.empty() && (maxEvents == 0 || processedCount < maxEvents))
         {
@@ -262,11 +262,11 @@ uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
 
     for (CooldownEvent const& event : eventsToProcess)
     {
-        std::vector<BotAI*> subscribers;
-        std::vector<BotAI*> globalSubs;
+        ::std::vector<BotAI*> subscribers;
+        ::std::vector<BotAI*> globalSubs;
 
         {
-            std::lock_guard lock(_subscriberMutex);
+            ::std::lock_guard lock(_subscriberMutex);
 
             auto it = _subscribers.find(event.type);
             if (it != _subscribers.end())
@@ -291,8 +291,8 @@ uint32 CooldownEventBus::ProcessEvents(uint32 diff, uint32 maxEvents)
         LogEvent(event, "Processed");
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
 
     if (processedCount > 0)
         UpdateMetrics(duration);
@@ -307,9 +307,9 @@ uint32 CooldownEventBus::ProcessUnitEvents(ObjectGuid unitGuid, uint32 diff)
 
 void CooldownEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<CooldownEvent> remainingEvents;
+    ::std::vector<CooldownEvent> remainingEvents;
 
     while (!_eventQueue.empty())
     {
@@ -331,13 +331,13 @@ void CooldownEventBus::ClearUnitEvents(ObjectGuid unitGuid)
 
 uint32 CooldownEventBus::GetPendingEventCount() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
     return static_cast<uint32>(_eventQueue.size());
 }
 
 uint32 CooldownEventBus::GetSubscriberCount() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     uint32 count = static_cast<uint32>(_globalSubscribers.size());
 
@@ -361,7 +361,7 @@ bool CooldownEventBus::DeliverEvent(BotAI* subscriber, CooldownEvent const& even
             event.ToString(), static_cast<void*>(subscriber));
         return true;
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("module.playerbot.cooldown", "CooldownEventBus: Exception delivering event: {}", e.what());
         return false;
@@ -375,10 +375,10 @@ bool CooldownEventBus::ValidateEvent(CooldownEvent const& event) const
 
 uint32 CooldownEventBus::CleanupExpiredEvents()
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     uint32 cleanedCount = 0;
-    std::vector<CooldownEvent> validEvents;
+    ::std::vector<CooldownEvent> validEvents;
 
     while (!_eventQueue.empty())
     {
@@ -406,7 +406,7 @@ uint32 CooldownEventBus::CleanupExpiredEvents()
     return cleanedCount;
 }
 
-void CooldownEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
+void CooldownEventBus::UpdateMetrics(::std::chrono::microseconds processingTime)
 {
     uint64_t currentAvg = _stats.averageProcessingTimeUs.load();
     uint64_t newTime = processingTime.count();
@@ -414,14 +414,14 @@ void CooldownEventBus::UpdateMetrics(std::chrono::microseconds processingTime)
     _stats.averageProcessingTimeUs.store(newAvg);
 }
 
-void CooldownEventBus::LogEvent(CooldownEvent const& event, std::string const& action) const
+void CooldownEventBus::LogEvent(CooldownEvent const& event, ::std::string const& action) const
 {
     TC_LOG_TRACE("module.playerbot.cooldown", "CooldownEventBus: {} event - {}", action, event.ToString());
 }
 
 void CooldownEventBus::DumpSubscribers() const
 {
-    std::lock_guard lock(_subscriberMutex);
+    ::std::lock_guard lock(_subscriberMutex);
 
     TC_LOG_INFO("module.playerbot.cooldown", "=== CooldownEventBus Subscribers Dump ===");
     TC_LOG_INFO("module.playerbot.cooldown", "Global subscribers: {}", _globalSubscribers.size());
@@ -435,18 +435,18 @@ void CooldownEventBus::DumpSubscribers() const
 
 void CooldownEventBus::DumpEventQueue() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
     TC_LOG_INFO("module.playerbot.cooldown", "=== CooldownEventBus Queue Dump ===");
     TC_LOG_INFO("module.playerbot.cooldown", "Queue size: {}", _eventQueue.size());
 }
 
-std::vector<CooldownEvent> CooldownEventBus::GetQueueSnapshot() const
+::std::vector<CooldownEvent> CooldownEventBus::GetQueueSnapshot() const
 {
-    std::lock_guard lock(_queueMutex);
+    ::std::lock_guard lock(_queueMutex);
 
-    std::vector<CooldownEvent> snapshot;
-    std::priority_queue<CooldownEvent> tempQueue = _eventQueue;
+    ::std::vector<CooldownEvent> snapshot;
+    ::std::priority_queue<CooldownEvent> tempQueue = _eventQueue;
 
     while (!tempQueue.empty())
     {
@@ -465,15 +465,15 @@ void CooldownEventBus::Statistics::Reset()
     totalDeliveries.store(0);
     averageProcessingTimeUs.store(0);
     peakQueueSize.store(0);
-    startTime = std::chrono::steady_clock::now();
+    startTime = ::std::chrono::steady_clock::now();
 }
 
-std::string CooldownEventBus::Statistics::ToString() const
+::std::string CooldownEventBus::Statistics::ToString() const
 {
-    auto now = std::chrono::steady_clock::now();
-    auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+    auto now = ::std::chrono::steady_clock::now();
+    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime);
 
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "Published: " << totalEventsPublished.load()
         << ", Processed: " << totalEventsProcessed.load()
         << ", Dropped: " << totalEventsDropped.load()

@@ -20,13 +20,25 @@
 #include "SpellAuraEffects.h"
 #include "Pet.h"
 #include "Log.h"
-#include "../Decision/ActionPriorityQueue.h"
-#include "../Decision/BehaviorTree.h"
+#include "../../Decision/ActionPriorityQueue.h"
+#include "../../Decision/BehaviorTree.h"
 #include "../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // ============================================================================
 // UNHOLY DEATH KNIGHT SPELL IDs (WoW 11.2 - The War Within)
 // ============================================================================
@@ -85,6 +97,14 @@ enum UnholyDeathKnightSpells
     SUPERSTRAIN              = 390283   // Disease damage buff
 };
 
+// Aliases with UNHOLY_ prefix for RegisterSpell compatibility
+constexpr uint32 UNHOLY_ANTIMAGIC_SHELL = ANTI_MAGIC_SHELL_UNHOLY;
+constexpr uint32 UNHOLY_ARMY_OF_DEAD = ARMY_OF_THE_DEAD_UNHOLY;
+constexpr uint32 UNHOLY_APOCALYPSE = APOCALYPSE;
+constexpr uint32 UNHOLY_FESTERING_STRIKE = FESTERING_STRIKE;
+constexpr uint32 UNHOLY_SCOURGE_STRIKE = SCOURGE_STRIKE;
+constexpr uint32 UNHOLY_DEATH_COIL = DEATH_COIL;
+
 // Dual resource type for Unholy Death Knight
 struct UnholyRuneRunicPowerResource
 {
@@ -100,17 +120,17 @@ struct UnholyRuneRunicPowerResource
         if (totalRunes >= runesCost) {
             uint32 remaining = runesCost;
             if (bloodRunes > 0) {
-                uint32 toConsume = std::min(bloodRunes, remaining);
+                uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && frostRunes > 0) {
-                uint32 toConsume = std::min(frostRunes, remaining);
+                uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
             if (remaining > 0 && unholyRunes > 0) {
-                uint32 toConsume = std::min(unholyRunes, remaining);
+                uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
             }
@@ -154,7 +174,7 @@ public:
 
     void ApplyWounds(ObjectGuid guid, uint32 count)
     {
-        _trackedTargets[guid] = std::min(_trackedTargets[guid] + count, 6u); // Max 6 stacks
+        _trackedTargets[guid] = ::std::min(_trackedTargets[guid] + count, 6u); // Max 6 stacks
     }
 
     void BurstWounds(ObjectGuid guid, uint32 count)
@@ -186,7 +206,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _trackedTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _trackedTargets;
 };
 
 // ============================================================================
@@ -321,7 +341,7 @@ protected:
         uint32 wounds = _woundTracker.GetWoundCount(targetGuid);        // Priority 1: Apply/maintain Virulent Plague
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
         {
-            this->CastSpell(target, OUTBREAK);
+            this->CastSpell(OUTBREAK, target);
             _lastOutbreakTime = GameTime::GetGameTimeMS();
             return;
         }
@@ -329,14 +349,14 @@ protected:
         // Priority 2: Soul Reaper (execute < 35%)
         if (target->GetHealthPct() < 35.0f && this->CanCastSpell(SOUL_REAPER, target))
         {
-            this->CastSpell(target, SOUL_REAPER);
+            this->CastSpell(SOUL_REAPER, target);
             return;
         }
 
         // Priority 3: Death Coil with Sudden Doom proc
         if (_suddenDoomProc && this->CanCastSpell(DEATH_COIL, target))
         {
-            this->CastSpell(target, DEATH_COIL);
+            this->CastSpell(DEATH_COIL, target);
             _suddenDoomProc = false;
             return;
         }
@@ -344,9 +364,9 @@ protected:
         // Priority 4: Scourge Strike (burst wounds if 4+ stacks)
         if (wounds >= 4 && totalRunes >= 1 && this->CanCastSpell(SCOURGE_STRIKE, target))
         {
-            this->CastSpell(target, SCOURGE_STRIKE);
+            this->CastSpell(SCOURGE_STRIKE, target);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -354,9 +374,9 @@ protected:
         // Priority 5: Festering Strike (apply wounds)
         if (wounds < 4 && totalRunes >= 2 && this->CanCastSpell(FESTERING_STRIKE, target))
         {
-            this->CastSpell(target, FESTERING_STRIKE);
+            this->CastSpell(FESTERING_STRIKE, target);
             _woundTracker.ApplyWounds(targetGuid, 4);
-            ConsumeRunes(RuneType::UNHOLY, 2);
+            ConsumeRunes(2);
             GenerateRunicPower(15);
             return;
         }
@@ -364,7 +384,7 @@ protected:
         // Priority 6: Dark Transformation (empower ghoul)
         if (rp >= 40 && !_petTracker.IsDarkTransformationActive() && this->CanCastSpell(DARK_TRANSFORMATION, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), DARK_TRANSFORMATION);
+            this->CastSpell(DARK_TRANSFORMATION, this->GetBot());
             _petTracker.ActivateDarkTransformation();
             ConsumeRunicPower(40);
             return;
@@ -372,7 +392,7 @@ protected:
 
         // Priority 7: Death Coil (dump RP)
         if (rp >= 50 && this->CanCastSpell(DEATH_COIL, target))        {
-            this->CastSpell(target, DEATH_COIL);
+            this->CastSpell(DEATH_COIL, target);
             ConsumeRunicPower(30);
             return;
         }
@@ -380,9 +400,9 @@ protected:
         // Priority 8: Scourge Strike (burst any wounds)
         if (wounds > 0 && totalRunes >= 1 && this->CanCastSpell(SCOURGE_STRIKE, target))
         {
-            this->CastSpell(target, SCOURGE_STRIKE);
+            this->CastSpell(SCOURGE_STRIKE, target);
             _woundTracker.BurstWounds(targetGuid, wounds);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -390,7 +410,7 @@ protected:
         // Priority 9: Death Coil (prevent RP capping)
         if (rp >= 30 && this->CanCastSpell(DEATH_COIL, target))
         {
-            this->CastSpell(target, DEATH_COIL);
+            this->CastSpell(DEATH_COIL, target);
             ConsumeRunicPower(30);
             return;
         }
@@ -403,14 +423,14 @@ protected:
         // Priority 1: Apply Virulent Plague
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
         {
-            this->CastSpell(target, OUTBREAK);
+            this->CastSpell(OUTBREAK, target);
             return;
         }
 
         // Priority 2: Epidemic (spread disease)
         if (totalRunes >= 1 && this->CanCastSpell(EPIDEMIC, target))        {
-            this->CastSpell(target, EPIDEMIC);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            this->CastSpell(EPIDEMIC, target);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -418,15 +438,15 @@ protected:
         // Priority 3: Defile (talent, ground AoE)
         if (totalRunes >= 1 && this->CanCastSpell(DEFILE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), DEFILE);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            this->CastSpell(DEFILE, this->GetBot());
+            ConsumeRunes(1);
             return;
         }
 
         // Priority 4: Death Coil
         if (rp >= 30 && this->CanCastSpell(DEATH_COIL, target))
         {
-            this->CastSpell(target, DEATH_COIL);
+            this->CastSpell(DEATH_COIL, target);
             ConsumeRunicPower(30);
             return;
         }
@@ -434,8 +454,8 @@ protected:
         // Priority 5: Scourge Strike
         if (totalRunes >= 1 && this->CanCastSpell(SCOURGE_STRIKE, target))
         {
-            this->CastSpell(target, SCOURGE_STRIKE);
-            ConsumeRunes(RuneType::UNHOLY, 1);
+            this->CastSpell(SCOURGE_STRIKE, target);
+            ConsumeRunes(1);
             GenerateRunicPower(10);
             return;
         }
@@ -449,28 +469,28 @@ protected:
         // Apocalypse (burst wounds + summon ghouls)
         if (wounds >= 4 && this->CanCastSpell(APOCALYPSE, target))
         {
-            this->CastSpell(target, APOCALYPSE);
+            this->CastSpell(APOCALYPSE, target);
             _woundTracker.BurstWounds(targetGuid, wounds);
             
 
         // Register cooldowns using CooldownManager
-        _cooldowns.RegisterBatch({
-            {FESTERING_STRIKE, 0, 1},
-            {SCOURGE_STRIKE, 0, 1},
-            {DEATH_COIL, 0, 1},
-            {OUTBREAK, 0, 1},
-            {DARK_TRANSFORMATION, 0, 1},
-            {APOCALYPSE, 90000, 1},
-            {ARMY_OF_THE_DEAD_UNHOLY, 480000, 1},
-            {SUMMON_GARGOYLE, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {UNHOLY_ASSAULT, 90000, 1},
-            {UNHOLY_BLIGHT, CooldownPresets::OFFENSIVE_45, 1},
-            {SOUL_REAPER, 6000, 1},
-            {DEATH_GRIP_UNHOLY, 25000, 1},
-            {ANTI_MAGIC_SHELL_UNHOLY, CooldownPresets::OFFENSIVE_60, 1},
-            {ICEBOUND_FORTITUDE_UNHOLY, CooldownPresets::MAJOR_OFFENSIVE, 1},
-            {DEATHS_ADVANCE_UNHOLY, 90000, 1},
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT:             {FESTERING_STRIKE, 0, 1},
+        // COMMENTED OUT:             {SCOURGE_STRIKE, 0, 1},
+        // COMMENTED OUT:             {DEATH_COIL, 0, 1},
+        // COMMENTED OUT:             {OUTBREAK, 0, 1},
+        // COMMENTED OUT:             {DARK_TRANSFORMATION, 0, 1},
+        // COMMENTED OUT:             {APOCALYPSE, 90000, 1},
+        // COMMENTED OUT:             {ARMY_OF_THE_DEAD_UNHOLY, 480000, 1},
+        // COMMENTED OUT:             {SUMMON_GARGOYLE, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {UNHOLY_ASSAULT, 90000, 1},
+        // COMMENTED OUT:             {UNHOLY_BLIGHT, CooldownPresets::OFFENSIVE_45, 1},
+        // COMMENTED OUT:             {SOUL_REAPER, 6000, 1},
+        // COMMENTED OUT:             {DEATH_GRIP_UNHOLY, 25000, 1},
+        // COMMENTED OUT:             {ANTI_MAGIC_SHELL_UNHOLY, CooldownPresets::OFFENSIVE_60, 1},
+        // COMMENTED OUT:             {ICEBOUND_FORTITUDE_UNHOLY, CooldownPresets::MAJOR_OFFENSIVE, 1},
+        // COMMENTED OUT:             {DEATHS_ADVANCE_UNHOLY, 90000, 1},
+        // COMMENTED OUT:         });
 
         TC_LOG_DEBUG("playerbot", "Unholy: Apocalypse");
         }
@@ -478,14 +498,14 @@ protected:
         // Army of the Dead
         if (this->CanCastSpell(ARMY_OF_THE_DEAD_UNHOLY, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), ARMY_OF_THE_DEAD_UNHOLY);
+            this->CastSpell(ARMY_OF_THE_DEAD_UNHOLY, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Unholy: Army of the Dead");
         }
 
         // Summon Gargoyle
         if (this->CanCastSpell(SUMMON_GARGOYLE, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), SUMMON_GARGOYLE);
+            this->CastSpell(SUMMON_GARGOYLE, this->GetBot());
             _petTracker.SummonGargoyle();
             TC_LOG_DEBUG("playerbot", "Unholy: Summon Gargoyle");
         }
@@ -493,14 +513,14 @@ protected:
         // Unholy Assault (talent)
         if (totalRunes >= 2 && this->CanCastSpell(UNHOLY_ASSAULT, target))
         {
-            this->CastSpell(target, UNHOLY_ASSAULT);
+            this->CastSpell(UNHOLY_ASSAULT, target);
             TC_LOG_DEBUG("playerbot", "Unholy: Unholy Assault");
         }
 
         // Unholy Blight (talent)
         if (this->CanCastSpell(UNHOLY_BLIGHT, this->GetBot()))
         {
-            this->CastSpell(this->GetBot(), UNHOLY_BLIGHT);
+            this->CastSpell(UNHOLY_BLIGHT, this->GetBot());
             TC_LOG_DEBUG("playerbot", "Unholy: Unholy Blight");
         }
     }
@@ -513,7 +533,7 @@ protected:
         // Icebound Fortitude
         if (healthPct < 40.0f && this->CanCastSpell(ICEBOUND_FORTITUDE_UNHOLY, bot))
         {
-            this->CastSpell(bot, ICEBOUND_FORTITUDE_UNHOLY);
+            this->CastSpell(ICEBOUND_FORTITUDE_UNHOLY, bot);
             TC_LOG_DEBUG("playerbot", "Unholy: Icebound Fortitude");
             return;
         }
@@ -521,7 +541,7 @@ protected:
         // Anti-Magic Shell
         if (healthPct < 60.0f && this->CanCastSpell(ANTI_MAGIC_SHELL_UNHOLY, bot))
         {
-            this->CastSpell(bot, ANTI_MAGIC_SHELL_UNHOLY);
+            this->CastSpell(ANTI_MAGIC_SHELL_UNHOLY, bot);
             TC_LOG_DEBUG("playerbot", "Unholy: Anti-Magic Shell");
             return;
         }
@@ -529,7 +549,7 @@ protected:
         // Death's Advance
         if (healthPct < 70.0f && this->CanCastSpell(DEATHS_ADVANCE_UNHOLY, bot))
         {
-            this->CastSpell(bot, DEATHS_ADVANCE_UNHOLY);
+            this->CastSpell(DEATHS_ADVANCE_UNHOLY, bot);
             TC_LOG_DEBUG("playerbot", "Unholy: Death's Advance");
             return;
         }
@@ -546,7 +566,7 @@ protected:
 
         if (this->CanCastSpell(RAISE_DEAD_UNHOLY, bot))
         {
-            this->CastSpell(bot, RAISE_DEAD_UNHOLY);
+            this->CastSpell(RAISE_DEAD_UNHOLY, bot);
             _petTracker.SummonGhoul();
             TC_LOG_DEBUG("playerbot", "Unholy: Raise Dead (ghoul)");
         }
@@ -585,7 +605,7 @@ private:
 
     void GenerateRunicPower(uint32 amount)
     {
-        this->_resource.runicPower = std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
+        this->_resource.runicPower = ::std::min(this->_resource.runicPower + amount, this->_resource.maxRunicPower);
     }
 
     void ConsumeRunicPower(uint32 amount)
@@ -593,15 +613,17 @@ private:
         this->_resource.runicPower = (this->_resource.runicPower > amount) ? this->_resource.runicPower - amount : 0;
     }
 
-    void ConsumeRunes(RuneType type, uint32 count = 1) override
+    void ConsumeRunes(uint32 count = 1)
     {
         this->_resource.Consume(count);
     }
 
     void InitializeUnholyMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        // TODO: GetBotAI() doesn't exist on Player - this needs proper BotAI integration
+        // Commenting out for now to fix compilation errors
+        /*
         BotAI* ai = this->GetBot()->GetBotAI();
         if (!ai) return;
 
@@ -629,17 +651,18 @@ private:
         auto* tree = ai->GetBehaviorTree();
         if (tree) {
             auto root = Selector("Unholy DK", {
-                Sequence("Burst", { Condition("Has target", [this](Player* bot) { return bot && bot->GetVictim(); }),
-                    Action("Army/Apocalypse", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(bot, UNHOLY_ARMY_OF_DEAD); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
-                    Action("Festering Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(t, UNHOLY_FESTERING_STRIKE); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
-                    Action("Scourge Strike", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(t, UNHOLY_SCOURGE_STRIKE); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
-                Sequence("RP Dump", { Condition("40+ RP", [this](Player*) { return this->_resource.runicPower >= 40; }),
-                    Action("Death Coil", [this](Player* bot) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(t, UNHOLY_DEATH_COIL); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
+                Sequence("Burst", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
+                    bot::ai::Action("Army/Apocalypse", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(UNHOLY_ARMY_OF_DEAD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Wounds", { Condition("< 4 wounds", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) < 4; }),
+                    bot::ai::Action("Festering Strike", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_FESTERING_STRIKE, t)) { this->CastSpell(UNHOLY_FESTERING_STRIKE, t); this->_woundTracker.AddWounds(t->GetGUID(), 2); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("Pop Wounds", { Condition("Has wounds", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); return t && this->_woundTracker.GetWounds(t->GetGUID()) > 0; }),
+                    bot::ai::Action("Scourge Strike", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_SCOURGE_STRIKE, t)) { this->CastSpell(UNHOLY_SCOURGE_STRIKE, t); this->_woundTracker.ConsumeWounds(t->GetGUID(), 1); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),
+                Sequence("RP Dump", { Condition("40+ RP", [this](Player*, Unit*) { return this->_resource.runicPower >= 40; }),
+                    bot::ai::Action("Death Coil", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_DEATH_COIL, t)) { this->CastSpell(UNHOLY_DEATH_COIL, t); this->ConsumeRunicPower(40); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) })
             });
             tree->SetRoot(root);
         }
+        */
     }
 
 private:

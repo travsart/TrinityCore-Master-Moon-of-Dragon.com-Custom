@@ -47,13 +47,13 @@ void BotCharacterSelector::Shutdown()
 
     // Clear cache
     {
-        std::lock_guard lock(_cacheMutex);
+        ::std::lock_guard lock(_cacheMutex);
         _characterCache.clear();
     }
 
     // Clear pending requests
     {
-        std::lock_guard lock(_requestMutex);
+        ::std::lock_guard lock(_requestMutex);
         while (!_pendingRequests.empty())
             _pendingRequests.pop();
     }
@@ -63,12 +63,12 @@ void BotCharacterSelector::Shutdown()
 
 void BotCharacterSelector::SelectCharacterAsync(SpawnRequest const& request, CharacterCallback callback)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     try
     {
         // Get available accounts for this request
-        std::vector<uint32> accounts = GetAvailableAccounts(request);
+        ::std::vector<uint32> accounts = GetAvailableAccounts(request);
         if (accounts.empty())
         {
             TC_LOG_WARN("module.playerbot.character.selector",
@@ -78,13 +78,13 @@ void BotCharacterSelector::SelectCharacterAsync(SpawnRequest const& request, Cha
         }
 
         // Start recursive account processing
-        SelectCharacterFromAccounts(std::move(accounts), 0, request, std::move(callback));
+        SelectCharacterFromAccounts(::std::move(accounts), 0, request, ::std::move(callback));
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        auto end = ::std::chrono::high_resolution_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start);
         RecordSelection(duration.count(), false);
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.character.selector",
             "Exception in SelectCharacterAsync: {}", ex.what());
@@ -97,34 +97,34 @@ void BotCharacterSelector::GetAvailableCharactersAsync(uint32 accountId, SpawnRe
     try
     {
         // Check cache first
-        std::vector<ObjectGuid> cachedCharacters = GetCachedCharacters(accountId);
+        ::std::vector<ObjectGuid> cachedCharacters = GetCachedCharacters(accountId);
         if (!cachedCharacters.empty())
         {
             auto filtered = FilterCharactersByRequest(cachedCharacters, request);
             RecordSelection(0, true); // Cache hit
-            callback(std::move(filtered));
+            callback(::std::move(filtered));
             return;
         }
 
         // For now, return empty list - would implement async DB query in full version
-        callback(std::vector<ObjectGuid>());
+        callback(::std::vector<ObjectGuid>());
         RecordSelection(0, false); // Cache miss
     }
-    catch (std::exception const& ex)
+    catch (::std::exception const& ex)
     {
         TC_LOG_ERROR("module.playerbot.character.selector",
             "Exception in GetAvailableCharactersAsync: {}", ex.what());
-        callback(std::vector<ObjectGuid>());
+        callback(::std::vector<ObjectGuid>());
     }
 }
 
 // === BATCH OPERATIONS ===
 
-void BotCharacterSelector::ProcessBatchSelection(std::vector<SpawnRequest> const& requests,
-                                                std::function<void(std::vector<ObjectGuid>)> callback)
+void BotCharacterSelector::ProcessBatchSelection(::std::vector<SpawnRequest> const& requests,
+                                                ::std::function<void(::std::vector<ObjectGuid>)> callback)
 {
     // Simplified batch processing - would implement proper async batching in full version
-    std::vector<ObjectGuid> results;
+    ::std::vector<ObjectGuid> results;
     results.reserve(requests.size());
 
     for (auto const& request : requests)
@@ -137,7 +137,7 @@ void BotCharacterSelector::ProcessBatchSelection(std::vector<SpawnRequest> const
         }
     }
 
-    callback(std::move(results));
+    callback(::std::move(results));
 }
 
 // === CHARACTER CREATION ===
@@ -192,7 +192,7 @@ void BotCharacterSelector::ResetStats()
 
 // === PRIVATE IMPLEMENTATION ===
 
-void BotCharacterSelector::SelectCharacterFromAccounts(std::vector<uint32> accounts, size_t index,
+void BotCharacterSelector::SelectCharacterFromAccounts(::std::vector<uint32> accounts, size_t index,
                                                       SpawnRequest const& request, CharacterCallback callback)
 {
     if (index >= accounts.size())
@@ -206,10 +206,10 @@ void BotCharacterSelector::SelectCharacterFromAccounts(std::vector<uint32> accou
 
     // Get characters for this account
     GetAvailableCharactersAsync(accountId, request,
-        [this, accounts = std::move(accounts), index, request, callback = std::move(callback)]
-        (std::vector<ObjectGuid> characters) mutable {
-            ProcessAccountCharacters(accounts[index], request, std::move(characters),
-                [this, accounts = std::move(accounts), index, request, callback = std::move(callback)]
+        [this, accounts = ::std::move(accounts), index, request, callback = ::std::move(callback)]
+        (::std::vector<ObjectGuid> characters) mutable {
+            ProcessAccountCharacters(accounts[index], request, ::std::move(characters),
+                [this, accounts = ::std::move(accounts), index, request, callback = ::std::move(callback)]
                 (ObjectGuid selectedCharacter) mutable {
                     if (!selectedCharacter.IsEmpty())
                     {
@@ -218,19 +218,19 @@ void BotCharacterSelector::SelectCharacterFromAccounts(std::vector<uint32> accou
                     else
                     {
                         // Try next account
-                        SelectCharacterFromAccounts(std::move(accounts), index + 1, request, std::move(callback));
+                        SelectCharacterFromAccounts(::std::move(accounts), index + 1, request, ::std::move(callback));
                     }
                 });
         });
 }
 
 void BotCharacterSelector::ProcessAccountCharacters(uint32 accountId, SpawnRequest const& request,
-                                                   std::vector<ObjectGuid> characters, CharacterCallback callback)
+                                                   ::std::vector<ObjectGuid> characters, CharacterCallback callback)
 {
     if (!characters.empty())
     {
         // Return first suitable character
-        for (auto const& characterGuid : characters)
+    for (auto const& characterGuid : characters)
         {
             if (ValidateCharacter(characterGuid, request))
             {
@@ -241,7 +241,7 @@ void BotCharacterSelector::ProcessAccountCharacters(uint32 accountId, SpawnReque
     }
 
     // No suitable characters found, try to create one
-    HandleCharacterCreation(accountId, request, std::move(callback));
+    HandleCharacterCreation(accountId, request, ::std::move(callback));
 }
 
 void BotCharacterSelector::HandleCharacterCreation(uint32 accountId, SpawnRequest const& request, CharacterCallback callback)
@@ -263,10 +263,10 @@ void BotCharacterSelector::HandleCharacterCreation(uint32 accountId, SpawnReques
 
 // === CHARACTER FILTERING ===
 
-std::vector<ObjectGuid> BotCharacterSelector::FilterCharactersByRequest(std::vector<ObjectGuid> const& characters,
+::std::vector<ObjectGuid> BotCharacterSelector::FilterCharactersByRequest(::std::vector<ObjectGuid> const& characters,
                                                                         SpawnRequest const& request) const
 {
-    std::vector<ObjectGuid> filtered;
+    ::std::vector<ObjectGuid> filtered;
     filtered.reserve(characters.size());
 
     for (auto const& characterGuid : characters)
@@ -292,10 +292,10 @@ bool BotCharacterSelector::MatchesRequestCriteria(ObjectGuid characterGuid, Spaw
 
 // === ACCOUNT MANAGEMENT ===
 
-std::vector<uint32> BotCharacterSelector::GetAvailableAccounts(SpawnRequest const& request) const
+::std::vector<uint32> BotCharacterSelector::GetAvailableAccounts(SpawnRequest const& request) const
 {
     // Simplified account selection - would use BotAccountMgr in full version
-    std::vector<uint32> accounts;
+    ::std::vector<uint32> accounts;
 
     // For now, just return some dummy account IDs
     for (uint32 i = 1; i <= 10; ++i)
@@ -314,9 +314,9 @@ uint32 BotCharacterSelector::AcquireSuitableAccount(SpawnRequest const& request)
 
 // === CHARACTER CACHING ===
 
-void BotCharacterSelector::UpdateCharacterCache(uint32 accountId, std::vector<ObjectGuid> const& characters)
+void BotCharacterSelector::UpdateCharacterCache(uint32 accountId, ::std::vector<ObjectGuid> const& characters)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     if (_characterCache.size() >= MAX_CACHED_ACCOUNTS)
     {
@@ -332,20 +332,20 @@ void BotCharacterSelector::UpdateCharacterCache(uint32 accountId, std::vector<Ob
 
     CharacterCacheEntry& entry = _characterCache[accountId];
     entry.characters = characters;
-    entry.lastUpdate = std::chrono::steady_clock::now();
+    entry.lastUpdate = ::std::chrono::steady_clock::now();
     entry.isValid = true;
 }
 
-std::vector<ObjectGuid> BotCharacterSelector::GetCachedCharacters(uint32 accountId) const
+::std::vector<ObjectGuid> BotCharacterSelector::GetCachedCharacters(uint32 accountId) const
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto it = _characterCache.find(accountId);
     if (it == _characterCache.end() || !it->second.isValid)
         return {};
 
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->second.lastUpdate);
+    auto now = ::std::chrono::steady_clock::now();
+    auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(now - it->second.lastUpdate);
 
     if (elapsed.count() > CACHE_VALIDITY_MS)
     {
@@ -358,7 +358,7 @@ std::vector<ObjectGuid> BotCharacterSelector::GetCachedCharacters(uint32 account
 
 void BotCharacterSelector::InvalidateCache(uint32 accountId)
 {
-    std::lock_guard lock(_cacheMutex);
+    ::std::lock_guard lock(_cacheMutex);
 
     auto it = _characterCache.find(accountId);
     if (it != _characterCache.end())
@@ -371,7 +371,7 @@ void BotCharacterSelector::InvalidateCache(uint32 accountId)
 
 void BotCharacterSelector::QueueRequest(SpawnRequest const& request, CharacterCallback callback)
 {
-    std::lock_guard lock(_requestMutex);
+    ::std::lock_guard lock(_requestMutex);
 
     if (_pendingRequests.size() >= MAX_PENDING_REQUESTS)
     {
@@ -382,24 +382,24 @@ void BotCharacterSelector::QueueRequest(SpawnRequest const& request, CharacterCa
 
     PendingRequest pending;
     pending.request = request;
-    pending.callback = std::move(callback);
-    pending.timestamp = std::chrono::steady_clock::now();
+    pending.callback = ::std::move(callback);
+    pending.timestamp = ::std::chrono::steady_clock::now();
 
-    _pendingRequests.push(std::move(pending));
+    _pendingRequests.push(::std::move(pending));
 }
 
 void BotCharacterSelector::ProcessPendingRequests()
 {
     // Simplified queue processing - would implement proper async processing in full version
-    std::lock_guard lock(_requestMutex);
+    ::std::lock_guard lock(_requestMutex);
 
     while (!_pendingRequests.empty())
     {
-        auto request = std::move(_pendingRequests.front());
+        auto request = ::std::move(_pendingRequests.front());
         _pendingRequests.pop();
 
         // Process immediately for now
-        SelectCharacterAsync(request.request, std::move(request.callback));
+        SelectCharacterAsync(request.request, ::std::move(request.callback));
     }
 }
 

@@ -13,6 +13,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // ============================================================================
@@ -36,20 +37,20 @@ float PrioritizedSpell::CalculateEffectivePriority(Player* bot, Unit* target, Co
         case CombatContext::DUNGEON_BOSS:
         case CombatContext::RAID_HEROIC:
             // Boost offensive cooldowns in boss fights
-            if (category == SpellCategory::OFFENSIVE)
+    if (category == SpellCategory::OFFENSIVE)
                 priority *= 1.2f;
             break;
 
         case CombatContext::DUNGEON_TRASH:
             // Boost AoE in trash packs
-            if (category == SpellCategory::DAMAGE_AOE)
+    if (category == SpellCategory::DAMAGE_AOE)
                 priority *= 1.5f;
             break;
 
         case CombatContext::PVP_ARENA:
         case CombatContext::PVP_BG:
             // Boost defensive and CC in PvP
-            if (category == SpellCategory::DEFENSIVE || category == SpellCategory::CROWD_CONTROL)
+    if (category == SpellCategory::DEFENSIVE || category == SpellCategory::CROWD_CONTROL)
                 priority *= 1.3f;
             break;
 
@@ -60,12 +61,11 @@ float PrioritizedSpell::CalculateEffectivePriority(Player* bot, Unit* target, Co
     // Health-based priority adjustments
     if (bot->GetHealthPct() < 30.0f && category == SpellCategory::DEFENSIVE)
         priority *= 2.0f; // Double defensive priority at low health
-
     if (target && target->GetHealthPct() < 20.0f && category == SpellCategory::DAMAGE_SINGLE)
         priority *= 1.3f; // Boost execute-range damage
 
     // Clamp to 0.0-1.0 range
-    return std::min(std::max(priority, 0.0f), 1.0f);
+    return ::std::min(::std::max(priority, 0.0f), 1.0f);
 }
 
 bool PrioritizedSpell::AreConditionsMet(Player* bot, Unit* target) const
@@ -104,7 +104,7 @@ void ActionPriorityQueue::RegisterSpell(uint32 spellId, SpellPriority priority, 
             spellId, static_cast<uint32>(priority));
 }
 
-void ActionPriorityQueue::AddCondition(uint32 spellId, std::function<bool(Player*, Unit*)> condition, const std::string& description)
+void ActionPriorityQueue::AddCondition(uint32 spellId, ::std::function<bool(Player*, Unit*)> condition, const ::std::string& description)
 {
     PrioritizedSpell* spell = FindSpell(spellId);
     if (!spell)
@@ -142,19 +142,19 @@ uint32 ActionPriorityQueue::GetHighestPrioritySpell(Player* bot, Unit* target, C
     for (const auto& spell : _spells)
     {
         // Check if spell is on cooldown
-        if (IsOnCooldown(bot, spell.spellId))
+    if (IsOnCooldown(bot, spell.spellId))
             continue;
 
         // Check if bot has enough resources
-        if (!HasEnoughResources(bot, spell.spellId))
+    if (!HasEnoughResources(bot, spell.spellId))
             continue;
 
         // Check if target is valid
-        if (!IsValidTarget(bot, target, spell.spellId))
+    if (!IsValidTarget(bot, target, spell.spellId))
             continue;
 
         // Check custom conditions
-        if (!spell.AreConditionsMet(bot, target))
+    if (!spell.AreConditionsMet(bot, target))
             continue;
 
         // Calculate effective priority
@@ -212,12 +212,12 @@ DecisionVote ActionPriorityQueue::GetVote(Player* bot, Unit* target, CombatConte
         vote.urgency = 0.3f;
 
     // Set reasoning
-    vote.reasoning = "ActionPriorityQueue: Spell " + std::to_string(bestSpell);
+    vote.reasoning = "ActionPriorityQueue: Spell " + ::std::to_string(bestSpell);
 
     return vote;
 }
 
-std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const
+::std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit* target, CombatContext context) const
 {
     if (!bot)
         return {};
@@ -228,12 +228,12 @@ std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit*
         float priority;
     };
 
-    std::vector<SpellScore> scores;
+    ::std::vector<SpellScore> scores;
 
     for (const auto& spell : _spells)
     {
         // Check availability
-        if (IsOnCooldown(bot, spell.spellId))
+    if (IsOnCooldown(bot, spell.spellId))
             continue;
         if (!HasEnoughResources(bot, spell.spellId))
             continue;
@@ -247,12 +247,12 @@ std::vector<uint32> ActionPriorityQueue::GetPrioritizedSpells(Player* bot, Unit*
     }
 
     // Sort by priority (highest first)
-    std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b) {
+    ::std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b) {
         return a.priority > b.priority;
     });
 
     // Extract spell IDs
-    std::vector<uint32> result;
+    ::std::vector<uint32> result;
     result.reserve(scores.size());
     for (const auto& score : scores)
         result.push_back(score.spellId);
@@ -369,3 +369,4 @@ const PrioritizedSpell* ActionPriorityQueue::FindSpell(uint32 spellId) const
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

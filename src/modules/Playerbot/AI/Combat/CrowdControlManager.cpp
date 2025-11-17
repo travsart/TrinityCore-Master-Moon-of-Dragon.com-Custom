@@ -51,7 +51,7 @@ bool CrowdControlManager::ShouldUseCrowdControl()
         return false;
 
     // Get combat enemies
-    std::vector<Unit*> enemies = GetCombatEnemies();
+    ::std::vector<Unit*> enemies = GetCombatEnemies();
 
     // Need at least 2 enemies to justify CC
     if (enemies.size() < 2)
@@ -70,7 +70,7 @@ bool CrowdControlManager::ShouldUseCrowdControl()
         return false;
 
     // Check if bot has CC abilities available
-    std::vector<uint32> ccSpells = GetAvailableCCSpells();
+    ::std::vector<uint32> ccSpells = GetAvailableCCSpells();
     return !ccSpells.empty();
 }
 
@@ -79,15 +79,15 @@ Unit* CrowdControlManager::GetPriorityTarget()
     if (!_bot)
         return nullptr;
 
-    std::vector<Unit*> enemies = GetCombatEnemies();
+    ::std::vector<Unit*> enemies = GetCombatEnemies();
 
     // Score each target
-    std::vector<std::pair<Unit*, float>> scored;
+    ::std::vector<::std::pair<Unit*, float>> scored;
 
     for (Unit* enemy : enemies)
     {
         // Skip already CC'd targets
-        if (IsTargetCCd(enemy))
+    if (IsTargetCCd(enemy))
             continue;
 
         float priority = CalculateCCPriority(enemy);
@@ -99,7 +99,7 @@ Unit* CrowdControlManager::GetPriorityTarget()
         return nullptr;
 
     // Sort by priority (highest first)
-    std::sort(scored.begin(), scored.end(),
+    ::std::sort(scored.begin(), scored.end(),
         [](const auto& a, const auto& b) {
             return a.second > b.second;
         });
@@ -112,7 +112,7 @@ uint32 CrowdControlManager::GetRecommendedSpell(Unit* target)
     if (!target)
         return 0;
 
-    std::vector<uint32> spells = GetAvailableCCSpells();
+    ::std::vector<uint32> spells = GetAvailableCCSpells();
 
     // Filter spells suitable for target
     for (uint32 spellId : spells)
@@ -193,7 +193,7 @@ Player* CrowdControlManager::GetChainCCBot(Unit* target)
     if (group)
     {
         // Find another player with CC
-        for (GroupReference& ref : group->GetMembers())
+    for (GroupReference& ref : group->GetMembers())
         {
             Player* member = ref.GetSource();
             if (!member || member == cc->appliedBy)
@@ -232,9 +232,9 @@ const CCTarget* CrowdControlManager::GetActiveCC(Unit* target) const
     return &it->second;
 }
 
-std::vector<Unit*> CrowdControlManager::GetCCdTargets() const
+::std::vector<Unit*> CrowdControlManager::GetCCdTargets() const
 {
-    std::vector<Unit*> targets;
+    ::std::vector<Unit*> targets;
 
     for (const auto& [guid, cc] : _activeCCs)
     {
@@ -251,7 +251,7 @@ bool CrowdControlManager::ShouldBreakCC(Unit* target) const
         return false;
 
     // Check if last enemy
-    std::vector<Unit*> enemies = GetCombatEnemies();
+    ::std::vector<Unit*> enemies = GetCombatEnemies();
 
     uint32 activeEnemies = 0;
     for (Unit* enemy : enemies)
@@ -266,15 +266,15 @@ bool CrowdControlManager::ShouldBreakCC(Unit* target) const
 
 // Private helper functions
 
-std::vector<Unit*> CrowdControlManager::GetCombatEnemies() const
+::std::vector<Unit*> CrowdControlManager::GetCombatEnemies() const
 {
-    std::vector<Unit*> enemies;
+    ::std::vector<Unit*> enemies;
 
     if (!_bot)
         return enemies;
 
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
+    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
     for (HostileReference* ref : threatList)
     {
@@ -346,9 +346,9 @@ float CrowdControlManager::CalculateCCPriority(Unit* target) const
     return priority;
 }
 
-std::vector<uint32> CrowdControlManager::GetAvailableCCSpells() const
+::std::vector<uint32> CrowdControlManager::GetAvailableCCSpells() const
 {
-    std::vector<uint32> spells;
+    ::std::vector<uint32> spells;
 
     if (!_bot)
         return spells;
@@ -404,7 +404,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
 
         // Check spell mechanic/effect to determine which creature types it works on
         // Polymorph-like spells: work on beasts, humanoids, critters
-        if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
+    if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
             spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_CONFUSE))
         {
             if (creatureType != CREATURE_TYPE_BEAST &&
@@ -416,7 +416,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Banish: works on demons and elementals
-        if (spellInfo->GetMechanic() == MECHANIC_BANISH)
+    if (spellInfo->GetMechanic() == MECHANIC_BANISH)
         {
             if (creatureType != CREATURE_TYPE_DEMON &&
                 creatureType != CREATURE_TYPE_ELEMENTAL)
@@ -426,7 +426,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Shackle: works on undead
-        if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
+    if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
             spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_SHAPESHIFT))
         {
             if (creatureType != CREATURE_TYPE_UNDEAD)
@@ -436,7 +436,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Fear: works on humanoids and beasts (generally)
-        if (spellInfo->GetMechanic() == MECHANIC_FEAR)
+    if (spellInfo->GetMechanic() == MECHANIC_FEAR)
         {
             if (creatureType == CREATURE_TYPE_MECHANICAL ||
                 creatureType == CREATURE_TYPE_UNDEAD ||

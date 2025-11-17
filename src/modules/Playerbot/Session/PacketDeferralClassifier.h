@@ -71,36 +71,36 @@ private:
     // Spell Casting & Aura Application
     // CRITICAL: Spell::_cast → Unit::_ApplyAura → AuraApplication::_HandleEffect
     // Race Condition: Multiple threads applying same aura → Assertion failure (crash)
-    static const std::unordered_set<OpcodeClient> s_spellOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_spellOpcodes;
 
     // Item Usage & Equipment
     // Modifies inventory state, triggers spell casts, can apply auras
-    static const std::unordered_set<OpcodeClient> s_itemOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_itemOpcodes;
 
     // Resurrection & Death Recovery
     // CRITICAL: Modifies player state (alive/dead), removes corpse, applies auras
     // Race Condition: Map::Update may be iterating corpses while removal happens
-    static const std::unordered_set<OpcodeClient> s_resurrectionOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_resurrectionOpcodes;
 
     // Movement & Position Changes
     // Modifies spatial grid, triggers area triggers, can apply auras
-    static const std::unordered_set<OpcodeClient> s_movementOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_movementOpcodes;
 
     // Combat & Targeting
     // Modifies combat state, threat tables, target selection
-    static const std::unordered_set<OpcodeClient> s_combatOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_combatOpcodes;
 
     // Quest & Objective Updates
     // Modifies quest state, triggers quest rewards (items, spells)
-    static const std::unordered_set<OpcodeClient> s_questOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_questOpcodes;
 
     // Group & Raid Operations
     // Modifies group composition, roles, loot distribution
-    static const std::unordered_set<OpcodeClient> s_groupOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_groupOpcodes;
 
     // Trade & Economy
     // Modifies inventory, gold, mailbox state
-    static const std::unordered_set<OpcodeClient> s_tradeOpcodes;
+    static const ::std::unordered_set<OpcodeClient> s_tradeOpcodes;
 
     /**
      * CATEGORY 2: WORKER THREAD SAFE (NO DEFERRAL)
@@ -115,9 +115,9 @@ private:
     // - CMSG_*_ACK (acknowledgments, no side effects)
 
     // Statistics tracking (atomic for thread safety)
-    static std::atomic<uint64> s_totalClassified;
-    static std::atomic<uint64> s_deferredCount;
-    static std::atomic<uint64> s_workerCount;
+    static ::std::atomic<uint64> s_totalClassified;
+    static ::std::atomic<uint64> s_deferredCount;
+    static ::std::atomic<uint64> s_workerCount;
 };
 
 } // namespace Playerbot

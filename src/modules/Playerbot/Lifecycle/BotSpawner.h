@@ -60,13 +60,43 @@ struct SpawnConfig
 // Spawn statistics
 struct SpawnStats
 {
-    std::atomic<uint32> totalSpawned{0};
-    std::atomic<uint32> totalDespawned{0};
-    std::atomic<uint32> currentlyActive{0};
-    std::atomic<uint32> peakConcurrent{0};
-    std::atomic<uint32> failedSpawns{0};
-    std::atomic<uint64> totalSpawnTime{0}; // microseconds
-    std::atomic<uint32> spawnAttempts{0};
+    ::std::atomic<uint32> totalSpawned{0};
+    ::std::atomic<uint32> totalDespawned{0};
+    ::std::atomic<uint32> currentlyActive{0};
+    ::std::atomic<uint32> peakConcurrent{0};
+    ::std::atomic<uint32> failedSpawns{0};
+    ::std::atomic<uint64> totalSpawnTime{0}; // microseconds
+    ::std::atomic<uint32> spawnAttempts{0};
+
+    // Default constructor
+    SpawnStats() = default;
+
+    // Copy constructor for atomic members
+    SpawnStats(const SpawnStats& other)
+        : totalSpawned(other.totalSpawned.load())
+        , totalDespawned(other.totalDespawned.load())
+        , currentlyActive(other.currentlyActive.load())
+        , peakConcurrent(other.peakConcurrent.load())
+        , failedSpawns(other.failedSpawns.load())
+        , totalSpawnTime(other.totalSpawnTime.load())
+        , spawnAttempts(other.spawnAttempts.load())
+    {}
+
+    // Copy assignment operator for atomic members
+    SpawnStats& operator=(const SpawnStats& other)
+    {
+        if (this != &other)
+        {
+            totalSpawned.store(other.totalSpawned.load());
+            totalDespawned.store(other.totalDespawned.load());
+            currentlyActive.store(other.currentlyActive.load());
+            peakConcurrent.store(other.peakConcurrent.load());
+            failedSpawns.store(other.failedSpawns.load());
+            totalSpawnTime.store(other.totalSpawnTime.load());
+            spawnAttempts.store(other.spawnAttempts.load());
+        }
+        return *this;
+    }
 
     float GetAverageSpawnTime() const {
         uint32 attempts = spawnAttempts.load();
@@ -89,48 +119,48 @@ public:
     static BotSpawner* instance();
 
     // IBotSpawner interface implementation
-    bool Initialize() override;
-    void Shutdown() override;
-    void Update(uint32 diff) override;
+    bool Initialize();
+    void Shutdown();
+    void Update(uint32 diff);
 
     // Configuration
-    void LoadConfig() override;
+    void LoadConfig();
     SpawnConfig const& GetConfig() const override { return _config; }
-    void SetConfig(SpawnConfig const& config) override { _config = config; }
+    void SetConfig(SpawnConfig const& config) { _config = config; }
 
     // Single bot spawning
-    bool SpawnBot(SpawnRequest const& request) override;
+    bool SpawnBot(SpawnRequest const& request);
 
     // Batch spawning
-    uint32 SpawnBots(std::vector<SpawnRequest> const& requests) override;
+    uint32 SpawnBots(::std::vector<SpawnRequest> const& requests);
 
     // Population management
-    void SpawnToPopulationTarget() override;
-    void UpdatePopulationTargets() override;
-    void DespawnBot(ObjectGuid guid, bool forced = false) override;
-    bool DespawnBot(ObjectGuid guid, std::string const& reason) override;
-    void DespawnAllBots() override;
+    void SpawnToPopulationTarget();
+    void UpdatePopulationTargets();
+    void DespawnBot(ObjectGuid guid, bool forced = false);
+    bool DespawnBot(ObjectGuid guid, ::std::string const& reason);
+    void DespawnAllBots();
 
     // Zone management
-    void UpdateZonePopulation(uint32 zoneId, uint32 mapId) override;
-    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId) override;
+    void UpdateZonePopulation(uint32 zoneId, uint32 mapId);
+    void UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId);
     ZonePopulation GetZonePopulation(uint32 zoneId) const override;
-    std::vector<ZonePopulation> GetAllZonePopulations() const override;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const override;
 
     // Bot tracking
     bool IsBotActive(ObjectGuid guid) const override;
     uint32 GetActiveBotCount() const override;
     uint32 GetActiveBotCount(uint32 zoneId) const override;
     uint32 GetActiveBotCount(uint32 mapId, bool useMapId) const override;
-    std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
+    ::std::vector<ObjectGuid> GetActiveBotsInZone(uint32 zoneId) const override;
 
     // Statistics
     SpawnStats const& GetStats() const override { return _stats; }
-    void ResetStats() override;
+    void ResetStats();
 
     // Player login detection
-    void OnPlayerLogin() override;
-    void CheckAndSpawnForPlayers() override;
+    void OnPlayerLogin();
+    void CheckAndSpawnForPlayers();
 
     // Population caps
     bool CanSpawnMore() const override;
@@ -138,20 +168,19 @@ public:
     bool CanSpawnOnMap(uint32 mapId) const override;
 
     // Runtime control
-    void SetEnabled(bool enabled) override { _enabled = enabled; }
+    void SetEnabled(bool enabled) { _enabled = enabled; }
     bool IsEnabled() const override { return _enabled.load(); }
 
     // Configuration methods
-    void SetMaxBots(uint32 maxBots) override { _config.maxBotsTotal = maxBots; }
-    void SetBotToPlayerRatio(float ratio) override { _config.botToPlayerRatio = ratio; }
+    void SetMaxBots(uint32 maxBots) { _config.maxBotsTotal = maxBots; }
+    void SetBotToPlayerRatio(float ratio) { _config.botToPlayerRatio = ratio; }
 
     // Chat command support - Create new bot character and spawn it
-    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, std::string const& name, ObjectGuid& outCharacterGuid) override;
+    bool CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid);
 
     // Allow adapter access to constructor
-    friend class std::unique_ptr<BotSpawner>;
-    friend std::unique_ptr<BotSpawner> std::make_unique<BotSpawner>();
-    friend class std::default_delete<BotSpawner>;
+    friend class ::std::unique_ptr<BotSpawner>;
+    friend class ::std::default_delete<BotSpawner>;
 
 private:
     BotSpawner();  // Explicit constructor for debugging
@@ -167,10 +196,10 @@ private:
 
     // Character selection
     ObjectGuid SelectCharacterForSpawn(SpawnRequest const& request);
-    void SelectCharacterForSpawnAsync(SpawnRequest const& request, std::function<void(ObjectGuid)> callback);
-    std::vector<ObjectGuid> GetAvailableCharacters(uint32 accountId, SpawnRequest const& request);
-    void GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, std::function<void(std::vector<ObjectGuid>)> callback);
-    void SelectCharacterAsyncRecursive(std::vector<uint32> accounts, size_t index, SpawnRequest const& request, std::function<void(ObjectGuid)> callback);
+    void SelectCharacterForSpawnAsync(SpawnRequest const& request, ::std::function<void(ObjectGuid)> callback);
+    ::std::vector<ObjectGuid> GetAvailableCharacters(uint32 accountId, SpawnRequest const& request);
+    void GetAvailableCharactersAsync(uint32 accountId, SpawnRequest const& request, ::std::function<void(::std::vector<ObjectGuid>)> callback);
+    void SelectCharacterAsyncRecursive(::std::vector<uint32> accounts, size_t index, SpawnRequest const& request, ::std::function<void(ObjectGuid)> callback);
     void ContinueSpawnWithCharacter(ObjectGuid characterGuid, SpawnRequest const& request);
     uint32 GetAccountIdFromCharacter(ObjectGuid characterGuid) const;
 
@@ -213,28 +242,28 @@ private:
     // Replaces: _botMutex + std::unordered_map
     // Enables simultaneous reads/writes from multiple spawner threads
     tbb::concurrent_hash_map<ObjectGuid, uint32> _activeBots; // guid -> zoneId
-    tbb::concurrent_hash_map<uint32, std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
+    tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
     // LOCK-FREE async spawning queue for high throughput
     // Replaces: _spawnQueueMutex + std::queue
     // Supports multiple producer threads (schedulers) and multiple consumer threads (spawners)
     // No contention, no blocking - pure lock-free algorithm
     tbb::concurrent_queue<SpawnRequest> _spawnQueue;
-    std::atomic<bool> _processingQueue{false};
+    ::std::atomic<bool> _processingQueue{false};
 
     // Lock-free counters for hot path operations
-    std::atomic<uint32> _activeBotCount{0};
-    std::atomic<uint32> _totalSpawnRequests{0};
+    ::std::atomic<uint32> _activeBotCount{0};
+    ::std::atomic<uint32> _totalSpawnRequests{0};
 
     // Timing
     uint32 _lastPopulationUpdate = 0;
     uint32 _lastTargetCalculation = 0;
 
     // Runtime state
-    std::atomic<bool> _enabled{true};
-    std::atomic<bool> _firstPlayerSpawned{false};
-    std::atomic<uint32> _lastRealPlayerCount{0};
-    std::atomic<bool> _inCheckAndSpawn{false}; // Prevent reentrant calls causing deadlock
+    ::std::atomic<bool> _enabled{true};
+    ::std::atomic<bool> _firstPlayerSpawned{false};
+    ::std::atomic<uint32> _lastRealPlayerCount{0};
+    ::std::atomic<bool> _inCheckAndSpawn{false}; // Prevent reentrant calls causing deadlock
     bool _initialCalculationDone = false; // Track if initial zone calculation happened in Initialize()
 
     // ========================================================================

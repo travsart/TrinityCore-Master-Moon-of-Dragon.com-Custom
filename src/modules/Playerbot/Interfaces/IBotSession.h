@@ -58,8 +58,8 @@ public:
 
     // === BOT-SPECIFIC FUNCTIONALITY ===
     virtual void SimulatePacketReceive(WorldPacket const& packet) = 0;
-    virtual void SetBotBehavior(std::string const& behavior) = 0;
-    virtual std::string GetBotBehavior() const = 0;
+    virtual void SetBotBehavior(::std::string const& behavior) = 0;
+    virtual ::std::string GetBotBehavior() const = 0;
 
     // === SESSION STATE ===
     virtual void SetOnline(bool online) = 0;
@@ -83,9 +83,9 @@ class IBotSessionFactory
 public:
     virtual ~IBotSessionFactory() = default;
 
-    virtual std::shared_ptr<IBotSession> CreateSession(uint32 accountId, ObjectGuid characterGuid) = 0;
-    virtual std::shared_ptr<IBotSession> CreateSessionFromTemplate(std::string const& templateName, ObjectGuid characterGuid) = 0;
-    virtual bool ValidateSession(std::shared_ptr<IBotSession> session) const = 0;
+    virtual ::std::shared_ptr<IBotSession> CreateSession(uint32 accountId, ObjectGuid characterGuid) = 0;
+    virtual ::std::shared_ptr<IBotSession> CreateSessionFromTemplate(::std::string const& templateName, ObjectGuid characterGuid) = 0;
+    virtual bool ValidateSession(::std::shared_ptr<IBotSession> session) const = 0;
 };
 
 /**
@@ -103,16 +103,16 @@ public:
     virtual void Update(uint32 diff) = 0;
 
     // === SESSION MANAGEMENT ===
-    virtual std::shared_ptr<IBotSession> GetSession(ObjectGuid characterGuid) const = 0;
-    virtual std::shared_ptr<IBotSession> GetSession(uint32 accountId) const = 0;
-    virtual bool AddSession(std::shared_ptr<IBotSession> session) = 0;
+    virtual ::std::shared_ptr<IBotSession> GetSession(ObjectGuid characterGuid) const = 0;
+    virtual ::std::shared_ptr<IBotSession> GetSession(uint32 accountId) const = 0;
+    virtual bool AddSession(::std::shared_ptr<IBotSession> session) = 0;
     virtual bool RemoveSession(ObjectGuid characterGuid) = 0;
 
     // === QUERIES ===
     virtual uint32 GetSessionCount() const = 0;
     virtual uint32 GetActiveSessionCount() const = 0;
-    virtual std::vector<std::shared_ptr<IBotSession>> GetAllSessions() const = 0;
-    virtual std::vector<std::shared_ptr<IBotSession>> GetActiveSessions() const = 0;
+    virtual ::std::vector<::std::shared_ptr<IBotSession>> GetAllSessions() const = 0;
+    virtual ::std::vector<::std::shared_ptr<IBotSession>> GetActiveSessions() const = 0;
 
     // === BATCH OPERATIONS ===
     virtual void UpdateAllSessions(uint32 diff) = 0;

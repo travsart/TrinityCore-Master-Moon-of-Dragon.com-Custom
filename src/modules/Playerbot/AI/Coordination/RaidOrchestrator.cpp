@@ -65,8 +65,8 @@ RaidOrchestrator::RaidOrchestrator(Group* raid)
 
         if (hasMembers)
         {
-            auto coordinator = std::make_unique<GroupCoordinator>(_raid);
-            _groupCoordinators.push_back(std::move(coordinator));
+            auto coordinator = ::std::make_unique<GroupCoordinator>(_raid);
+            _groupCoordinators.push_back(::std::move(coordinator));
         }
     }
 
@@ -110,9 +110,9 @@ void RaidOrchestrator::IssueDirective(RaidDirective const& directive)
         directive.directiveType, directive.priority, directive.duration);
 }
 
-std::vector<RaidDirective> RaidOrchestrator::GetActiveDirectives() const
+::std::vector<RaidDirective> RaidOrchestrator::GetActiveDirectives() const
 {
-    std::vector<RaidDirective> active;
+    ::std::vector<RaidDirective> active;
 
     for (auto const& directive : _activeDirectives)
     {
@@ -203,7 +203,7 @@ bool RaidOrchestrator::IsBloodlustActive() const
     return now < _bloodlustTime + 40000; // 40s duration
 }
 
-bool RaidOrchestrator::RequestRaidDefensiveCooldown(std::string const& cooldownType)
+bool RaidOrchestrator::RequestRaidDefensiveCooldown(::std::string const& cooldownType)
 {
     uint32 now = GameTime::GetGameTimeMS();
 
@@ -234,7 +234,7 @@ bool RaidOrchestrator::RequestRaidDefensiveCooldown(std::string const& cooldownT
     return true;
 }
 
-void RaidOrchestrator::SetAddPriorities(std::vector<ObjectGuid> const& targetGuids)
+void RaidOrchestrator::SetAddPriorities(::std::vector<ObjectGuid> const& targetGuids)
 {
     _addPriorities = targetGuids;
 
@@ -273,7 +273,7 @@ void RaidOrchestrator::UpdateDirectives(uint32 diff)
 {
     // Clean up expired directives
     _activeDirectives.erase(
-        std::remove_if(_activeDirectives.begin(), _activeDirectives.end(),
+        ::std::remove_if(_activeDirectives.begin(), _activeDirectives.end(),
             [](RaidDirective const& directive) {
                 return !directive.IsActive();
             }),
@@ -342,7 +342,7 @@ void RaidOrchestrator::UpdateEncounterPhase(uint32 diff)
 
         case EncounterPhase::BURN:
             // Execute/burn phase - use all cooldowns
-            if (!IsBloodlustActive())
+    if (!IsBloodlustActive())
             {
                 RequestBloodlust();
             }
@@ -470,7 +470,7 @@ void RaidOrchestrator::DetectBossEncounter()
             continue;
 
         Creature* creature = target->ToCreature();
-        if (creature->IsDungeonBoss() || creature->IsWorldBoss())
+        if (creature->IsDungeonBoss() || creature->isWorldBoss())
         {
             bossGuid = creature->GetGUID();
             bossEntry = creature->GetEntry();
@@ -551,7 +551,7 @@ void RaidOrchestrator::CoordinateBloodlustTiming()
 void RaidOrchestrator::UpdateAddPriorities()
 {
     // Scan for adds and prioritize by threat/health/type
-    std::vector<ObjectGuid> adds;
+    ::std::vector<ObjectGuid> adds;
 
     for (GroupReference& ref : _raid->GetMembers())
     {
@@ -564,10 +564,10 @@ void RaidOrchestrator::UpdateAddPriorities()
             continue;
 
         Creature* creature = target->ToCreature();
-        if (!creature->IsDungeonBoss() && !creature->IsWorldBoss())
+        if (!creature->IsDungeonBoss() && !creature->isWorldBoss())
         {
             // This is an add
-            if (std::find(adds.begin(), adds.end(), creature->GetGUID()) == adds.end())
+    if (::std::find(adds.begin(), adds.end(), creature->GetGUID()) == adds.end())
             {
                 adds.push_back(creature->GetGUID());
             }
@@ -618,15 +618,15 @@ EncounterPhase BossEncounterStrategy::DetectPhase(float bossHealthPct) const
 // BossStrategyRegistry
 // ============================================================================
 
-std::unordered_map<uint32, std::shared_ptr<BossEncounterStrategy>> BossStrategyRegistry::_strategies;
+::std::unordered_map<uint32, ::std::shared_ptr<BossEncounterStrategy>> BossStrategyRegistry::_strategies;
 
-void BossStrategyRegistry::RegisterStrategy(uint32 bossEntry, std::shared_ptr<BossEncounterStrategy> strategy)
+void BossStrategyRegistry::RegisterStrategy(uint32 bossEntry, ::std::shared_ptr<BossEncounterStrategy> strategy)
 {
     _strategies[bossEntry] = strategy;
     TC_LOG_INFO("playerbot.coordination", "Registered boss strategy for entry {}", bossEntry);
 }
 
-std::shared_ptr<BossEncounterStrategy> BossStrategyRegistry::GetStrategy(uint32 bossEntry)
+::std::shared_ptr<BossEncounterStrategy> BossStrategyRegistry::GetStrategy(uint32 bossEntry)
 {
     auto it = _strategies.find(bossEntry);
     if (it != _strategies.end())
@@ -674,7 +674,6 @@ EncounterPhase OnyxiaStrategy::DetectPhase(float bossHealthPct) const
 {
     if (bossHealthPct < 40.0f)
         return EncounterPhase::BURN; // Phase 3
-
     if (bossHealthPct < 65.0f)
         return EncounterPhase::TRANSITION; // Phase 2 (air)
 

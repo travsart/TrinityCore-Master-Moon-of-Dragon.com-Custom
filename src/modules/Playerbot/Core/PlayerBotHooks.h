@@ -88,7 +88,7 @@ public:
      * @param group The group that gained a member
      * @param player The player who joined
      */
-    static inline std::function<void(Group*, Player*)> OnGroupMemberAdded = nullptr;
+    static inline ::std::function<void(Group*, Player*)> OnGroupMemberAdded = nullptr;
 
     /**
      * Hook: Member removed from group
@@ -98,7 +98,7 @@ public:
      * @param guid GUID of removed member
      * @param method How member was removed (left, kicked, etc.)
      */
-    static inline std::function<void(Group*, ObjectGuid, RemoveMethod)> OnGroupMemberRemoved = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid, RemoveMethod)> OnGroupMemberRemoved = nullptr;
 
     /**
      * Hook: Group leadership changed
@@ -107,7 +107,7 @@ public:
      * @param group The group with new leader
      * @param newLeaderGuid GUID of new leader
      */
-    static inline std::function<void(Group*, ObjectGuid)> OnGroupLeaderChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid)> OnGroupLeaderChanged = nullptr;
 
     /**
      * Hook: Group is disbanding
@@ -117,7 +117,7 @@ public:
      *
      * Note: Called BEFORE disbanding so bots can cleanup properly
      */
-    static inline std::function<void(Group*)> OnGroupDisbanding = nullptr;
+    static inline ::std::function<void(Group*)> OnGroupDisbanding = nullptr;
 
     // ========================================================================
     // GROUP COMPOSITION HOOKS
@@ -130,7 +130,7 @@ public:
      * @param group The group that was converted
      * @param isRaid true if converted to raid, false if converted to party
      */
-    static inline std::function<void(Group*, bool)> OnGroupRaidConverted = nullptr;
+    static inline ::std::function<void(Group*, bool)> OnGroupRaidConverted = nullptr;
 
     /**
      * Hook: Member moved to different subgroup
@@ -140,7 +140,7 @@ public:
      * @param playerGuid GUID of player moved
      * @param newSubgroup New subgroup number (0-7)
      */
-    static inline std::function<void(Group*, ObjectGuid, uint8)> OnSubgroupChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid, uint8)> OnSubgroupChanged = nullptr;
 
     // ========================================================================
     // LOOT SYSTEM HOOKS
@@ -153,7 +153,7 @@ public:
      * @param group The group with changed loot method
      * @param method New loot method
      */
-    static inline std::function<void(Group*, LootMethod)> OnLootMethodChanged = nullptr;
+    static inline ::std::function<void(Group*, LootMethod)> OnLootMethodChanged = nullptr;
 
     /**
      * Hook: Loot threshold changed
@@ -162,7 +162,7 @@ public:
      * @param group The group with changed threshold
      * @param threshold New item quality threshold
      */
-    static inline std::function<void(Group*, uint8)> OnLootThresholdChanged = nullptr;
+    static inline ::std::function<void(Group*, uint8)> OnLootThresholdChanged = nullptr;
 
     /**
      * Hook: Master looter changed
@@ -171,7 +171,7 @@ public:
      * @param group The group with new master looter
      * @param masterLooterGuid GUID of new master looter (may be empty)
      */
-    static inline std::function<void(Group*, ObjectGuid)> OnMasterLooterChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid)> OnMasterLooterChanged = nullptr;
 
     // ========================================================================
     // ROLE AND ASSIGNMENT HOOKS
@@ -185,7 +185,7 @@ public:
      * @param memberGuid GUID of member with changed status
      * @param isAssistant true if promoted to assistant, false if demoted
      */
-    static inline std::function<void(Group*, ObjectGuid, bool)> OnAssistantChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid, bool)> OnAssistantChanged = nullptr;
 
     /**
      * Hook: Main tank assignment changed
@@ -194,7 +194,7 @@ public:
      * @param group The group with changed main tank
      * @param tankGuid GUID of new main tank (may be empty)
      */
-    static inline std::function<void(Group*, ObjectGuid)> OnMainTankChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid)> OnMainTankChanged = nullptr;
 
     /**
      * Hook: Main assist assignment changed
@@ -203,7 +203,7 @@ public:
      * @param group The group with changed main assist
      * @param assistGuid GUID of new main assist (may be empty)
      */
-    static inline std::function<void(Group*, ObjectGuid)> OnMainAssistChanged = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid)> OnMainAssistChanged = nullptr;
 
     // ========================================================================
     // COMBAT COORDINATION HOOKS
@@ -217,7 +217,7 @@ public:
      * @param icon Icon number (0-7, or 0xFF for clear)
      * @param targetGuid GUID of target unit (may be empty if clearing)
      */
-    static inline std::function<void(Group*, uint8, ObjectGuid)> OnRaidTargetIconChanged = nullptr;
+    static inline ::std::function<void(Group*, uint8, ObjectGuid)> OnRaidTargetIconChanged = nullptr;
 
     /**
      * Hook: Raid world marker changed
@@ -230,7 +230,7 @@ public:
      * @param y Y coordinate (0 if marker deleted)
      * @param z Z coordinate (0 if marker deleted)
      */
-    static inline std::function<void(Group*, uint32, uint32, float, float, float)> OnRaidMarkerChanged = nullptr;
+    static inline ::std::function<void(Group*, uint32, uint32, float, float, float)> OnRaidMarkerChanged = nullptr;
 
     // ========================================================================
     // READY CHECK HOOKS
@@ -244,7 +244,7 @@ public:
      * @param initiatorGuid GUID of player who started it
      * @param durationMs Duration of ready check in milliseconds
      */
-    static inline std::function<void(Group*, ObjectGuid, uint32)> OnReadyCheckStarted = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid, uint32)> OnReadyCheckStarted = nullptr;
 
     /**
      * Hook: Ready check response received
@@ -254,7 +254,7 @@ public:
      * @param memberGuid GUID of member who responded
      * @param ready true if ready, false if not ready
      */
-    static inline std::function<void(Group*, ObjectGuid, bool)> OnReadyCheckResponse = nullptr;
+    static inline ::std::function<void(Group*, ObjectGuid, bool)> OnReadyCheckResponse = nullptr;
 
     /**
      * Hook: Ready check completed
@@ -265,7 +265,7 @@ public:
      * @param respondedCount Number of members who responded
      * @param totalMembers Total number of group members
      */
-    static inline std::function<void(Group*, bool, uint32, uint32)> OnReadyCheckCompleted = nullptr;
+    static inline ::std::function<void(Group*, bool, uint32, uint32)> OnReadyCheckCompleted = nullptr;
 
     // ========================================================================
     // INSTANCE AND DIFFICULTY HOOKS
@@ -278,7 +278,7 @@ public:
      * @param group The group with changed difficulty
      * @param difficulty New difficulty setting
      */
-    static inline std::function<void(Group*, Difficulty)> OnDifficultyChanged = nullptr;
+    static inline ::std::function<void(Group*, Difficulty)> OnDifficultyChanged = nullptr;
 
     /**
      * Hook: Instance bind created or updated
@@ -288,7 +288,7 @@ public:
      * @param instanceId Instance ID bound to
      * @param permanent true if permanent bind, false if temporary
      */
-    static inline std::function<void(Group*, uint32, bool)> OnInstanceBind = nullptr;
+    static inline ::std::function<void(Group*, uint32, bool)> OnInstanceBind = nullptr;
 
     // ========================================================================
     // PLAYER LIFECYCLE HOOKS
@@ -302,7 +302,7 @@ public:
      *
      * Note: Called when player transitions to JUST_DIED state, before corpse creation
      */
-    static inline std::function<void(Player*)> OnPlayerDeath = nullptr;
+    static inline ::std::function<void(Player*)> OnPlayerDeath = nullptr;
 
     /**
      * Hook: Player resurrected
@@ -310,7 +310,7 @@ public:
      *
      * @param player The player who was resurrected
      */
-    static inline std::function<void(Player*)> OnPlayerResurrected = nullptr;
+    static inline ::std::function<void(Player*)> OnPlayerResurrected = nullptr;
 
     // ========================================================================
     // UTILITY FUNCTIONS
@@ -356,7 +356,7 @@ public:
         uint64_t playerDeathCalls{0};
         uint64_t playerResurrectedCalls{0};
 
-        std::string ToString() const;
+        ::std::string ToString() const;
         void Reset();
     };
 

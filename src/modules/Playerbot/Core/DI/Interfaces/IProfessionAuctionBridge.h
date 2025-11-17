@@ -19,7 +19,7 @@ namespace Playerbot
 {
 
 // Forward declarations
-enum class ProfessionType : uint8;
+enum class ProfessionType : uint16;  // Must match ProfessionManager.h (supports SkillType values)
 enum class ProfessionAuctionStrategy : uint8;
 class AuctionHouse;
 struct MaterialStockpileConfig;
@@ -54,7 +54,7 @@ public:
 
     // Material purchasing automation
     virtual void BuyMaterialsForLeveling(::Player* player, ProfessionType profession) = 0;
-    virtual std::vector<std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const = 0;
+    virtual ::std::vector<::std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const = 0;
     virtual bool IsMaterialAvailableForPurchase(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const = 0;
     virtual bool PurchaseMaterial(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) = 0;
 

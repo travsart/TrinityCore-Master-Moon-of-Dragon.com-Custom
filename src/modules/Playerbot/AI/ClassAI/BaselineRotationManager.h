@@ -119,7 +119,7 @@ private:
      * @param classId Class ID
      * @return Vector of baseline abilities
      */
-    std::vector<BaselineAbility> const* GetBaselineAbilities(uint8 classId) const;
+    ::std::vector<BaselineAbility> const* GetBaselineAbilities(uint8 classId) const;
 
     /**
      * Cast ability if conditions are met
@@ -147,10 +147,10 @@ private:
     uint32 SelectOptimalSpecialization(Player* bot) const;
 
     // Baseline abilities by class
-    std::unordered_map<uint8, std::vector<BaselineAbility>> _baselineAbilities;
+    ::std::unordered_map<uint8, ::std::vector<BaselineAbility>> _baselineAbilities;
 
     // Cooldown tracking for baseline abilities
-    std::unordered_map<uint32 /*bot GUID*/, std::unordered_map<uint32 /*spell ID*/, uint32 /*expiry time*/>> _cooldowns;
+    ::std::unordered_map<uint32 /*bot GUID*/, ::std::unordered_map<uint32 /*spell ID*/, uint32 /*expiry time*/>> _cooldowns;
 };
 
 /**

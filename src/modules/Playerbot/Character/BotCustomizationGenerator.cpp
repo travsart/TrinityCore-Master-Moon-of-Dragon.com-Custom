@@ -34,7 +34,7 @@ void BotCustomizationGenerator::Initialize()
 
         for (uint8 gender = GENDER_MALE; gender <= GENDER_FEMALE; ++gender) {
             // Verify this race/gender combination has a valid model
-            if (sDB2Manager.GetChrModel(raceEntry->ID, gender)) {
+    if (sDB2Manager.GetChrModel(raceEntry->ID, gender)) {
                 LoadCustomizationOptions(raceEntry->ID, gender);
                 ++totalCombinations;
 
@@ -53,14 +53,14 @@ void BotCustomizationGenerator::Initialize()
         totalCombinations, totalOptions);
 }
 
-std::array<WorldPackets::Character::ChrCustomizationChoice, 250>
+::std::array<WorldPackets::Character::ChrCustomizationChoice, 250>
 BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
 {
     if (!_initialized) {
         Initialize();
     }
 
-    std::array<WorldPackets::Character::ChrCustomizationChoice, 250> customizations{};
+    ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250> customizations{};
     uint32 customizationCount = 0;
 
     uint64 key = GetCacheKey(race, gender);
@@ -123,7 +123,7 @@ BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
 void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gender)
 {
     uint64 key = GetCacheKey(race, gender);
-    std::vector<CustomizationOption> options;
+    ::std::vector<CustomizationOption> options;
 
     // Get the character model for this race/gender
     ChrModelEntry const* chrModel = sDB2Manager.GetChrModel(race, gender);
@@ -153,15 +153,15 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
         }
     }
 
-    _customizationCache[key] = std::move(options);
+    _customizationCache[key] = ::std::move(options);
 
     TC_LOG_DEBUG("module.playerbot.character",
         "Loaded {} customization options for race {} gender {}", optionCount, race, gender);
 }
 
-std::vector<uint32> BotCustomizationGenerator::GetValidChoicesForOption(uint32 optionId)
+::std::vector<uint32> BotCustomizationGenerator::GetValidChoicesForOption(uint32 optionId)
 {
-    std::vector<uint32> choices;
+    ::std::vector<uint32> choices;
 
     // Use DB2Manager to get customization choices
     if (auto const* choiceVector = sDB2Manager.GetCustomiztionChoices(optionId)) {
@@ -175,7 +175,7 @@ std::vector<uint32> BotCustomizationGenerator::GetValidChoicesForOption(uint32 o
     return choices;
 }
 
-uint32 BotCustomizationGenerator::GetRandomChoice(std::vector<uint32> const& choices)
+uint32 BotCustomizationGenerator::GetRandomChoice(::std::vector<uint32> const& choices)
 {
     if (choices.empty()) {
         return 0;
@@ -204,7 +204,7 @@ bool BotCustomizationGenerator::IsRequiredOption(uint32 /*optionId*/)
 uint32 BotCustomizationGenerator::GetDefaultChoice(uint32 optionId)
 {
     // Get the first available choice as default
-    std::vector<uint32> choices = GetValidChoicesForOption(optionId);
+    ::std::vector<uint32> choices = GetValidChoicesForOption(optionId);
     if (!choices.empty()) {
         return choices[0];
     }
@@ -214,7 +214,7 @@ uint32 BotCustomizationGenerator::GetDefaultChoice(uint32 optionId)
 }
 
 bool BotCustomizationGenerator::ValidateCustomizations(uint8 race, uint8 gender,
-    std::array<WorldPackets::Character::ChrCustomizationChoice, 250> const& customizations)
+    ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250> const& customizations)
 {
     // Basic validation - ensure we have some customizations
     bool hasCustomizations = false;

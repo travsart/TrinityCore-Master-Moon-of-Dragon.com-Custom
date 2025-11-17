@@ -31,8 +31,8 @@ public:
     static void SetupDungeonGroup(Group* group)
     {
         // Create coordinators
-        auto threatCoordinator = std::make_unique<ThreatCoordinator>(group);
-        auto interruptCoordinator = std::make_unique<InterruptCoordinator>(group);
+        auto threatCoordinator = ::std::make_unique<ThreatCoordinator>(group);
+        auto interruptCoordinator = ::std::make_unique<InterruptCoordinator>(group);
 
         // Configure threat thresholds for dungeon content
         threatCoordinator->SetTankThreatThreshold(130.0f);    // Tanks maintain 130% threat
@@ -176,10 +176,10 @@ public:
                     if (threatPercent < 110.0f) // Lost aggro
                     {
                         // Use taunt ability
-                        uint32 tauntSpell = GetTauntSpell(bot->getClass());
+                        uint32 tauntSpell = GetTauntSpell(bot->GetClass());
                         if (tauntSpell && bot->IsSpellReady(tauntSpell))
                         {
-                            bot->CastSpell(target, tauntSpell, false);
+                            bot->CastSpell(tauntSpell, false, target);
                             threatMgr->OnTauntUsed(target);
                         }
                     }
@@ -194,14 +194,14 @@ public:
                 if (primaryTarget && primaryTarget->info.threatPercent > 85.0f)
                 {
                     // Use threat reduction
-                    if (bot->getClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
+                    if (bot->GetClass() == CLASS_ROGUE && bot->IsSpellReady(ThreatSpells::FEINT))
                     {
-                        bot->CastSpell(bot, ThreatSpells::FEINT, false);
+                        bot->CastSpell(ThreatSpells::FEINT, false, bot);
                         threatMgr->ModifyThreat(primaryTarget->target, 0.5f);
                     }
-                    else if (bot->getClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
+                    else if (bot->GetClass() == CLASS_HUNTER && bot->IsSpellReady(ThreatSpells::FEIGN_DEATH))
                     {
-                        bot->CastSpell(bot, ThreatSpells::FEIGN_DEATH, false);
+                        bot->CastSpell(ThreatSpells::FEIGN_DEATH, false, bot);
                         threatMgr->ClearAllThreat();
                     }
                 }
@@ -217,9 +217,9 @@ public:
                     if (threat->GetVictim() == bot)
                     {
                         // Emergency threat drop
-                        if (bot->getClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
+                        if (bot->GetClass() == CLASS_PRIEST && bot->IsSpellReady(ThreatSpells::FADE))
                         {
-                            bot->CastSpell(bot, ThreatSpells::FADE, false);
+                            bot->CastSpell(ThreatSpells::FADE, false, bot);
                             threatMgr->ModifyThreat(threat, 0.1f);
                         }
                     }
@@ -296,7 +296,7 @@ private:
             return false;
 
         // Simplified check - in production, check actual spec
-        uint8 classId = player->getClass();
+        uint8 classId = player->GetClass();
         return classId == CLASS_PRIEST || classId == CLASS_SHAMAN ||
                classId == CLASS_DRUID || classId == CLASS_MONK ||
                classId == CLASS_PALADIN || classId == CLASS_EVOKER;
@@ -355,9 +355,9 @@ public:
     }
 
 private:
-    std::unique_ptr<ThreatCoordinator> _threatCoordinator;
-    std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
-    std::unique_ptr<BotThreatManager> _threatManager;
+    ::std::unique_ptr<ThreatCoordinator> _threatCoordinator;
+    ::std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
+    ::std::unique_ptr<BotThreatManager> _threatManager;
     uint32 _perfCounter = 0;
 };
 

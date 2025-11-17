@@ -89,7 +89,7 @@ public:
 
         // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
         // which would acquire BotAI::_mutex recursively
-        if (!_behavior->HasFollowTarget())
+    if (!_behavior->HasFollowTarget())
             return false;
 
         return _behavior->GetDistanceToLeader() > 30.0f;
@@ -113,7 +113,7 @@ public:
 
         // DEADLOCK FIX: Use stored pointer instead of calling ai->GetStrategy()
         // which would acquire BotAI::_mutex recursively
-        if (!_behavior->HasFollowTarget())
+    if (!_behavior->HasFollowTarget())
             return false;
 
         return !_behavior->IsLeaderInSight() &&
@@ -135,23 +135,23 @@ LeaderFollowBehavior::LeaderFollowBehavior()
 
 void LeaderFollowBehavior::InitializeActions()
 {
-    AddAction("follow", std::make_shared<FollowAction>());
+    AddAction("follow", ::std::make_shared<FollowAction>());
 
     // DEADLOCK FIX: Pass 'this' pointer to StopFollowAction so it doesn't need to call GetStrategy()
-    AddAction("stop follow", std::make_shared<StopFollowAction>(this));
+    AddAction("stop follow", ::std::make_shared<StopFollowAction>(this));
 
     // CRITICAL FIX: Add combat assistance action
-    AddAction("assist_group", std::make_shared<TargetAssistAction>("assist_group"));
+    AddAction("assist_group", ::std::make_shared<TargetAssistAction>("assist_group"));
 }
 
 void LeaderFollowBehavior::InitializeTriggers()
 {
     // DEADLOCK FIX: Pass 'this' pointer to triggers so they don't need to call GetStrategy()
-    AddTrigger(std::make_shared<LeaderFarTrigger>(this));
-    AddTrigger(std::make_shared<LeaderLostTrigger>(this));
+    AddTrigger(::std::make_shared<LeaderFarTrigger>(this));
+    AddTrigger(::std::make_shared<LeaderLostTrigger>(this));
 
     // CRITICAL FIX: Add group combat trigger for combat assistance
-    AddTrigger(std::make_shared<GroupCombatTrigger>("group_combat"));
+    AddTrigger(::std::make_shared<GroupCombatTrigger>("group_combat"));
 }
 
 void LeaderFollowBehavior::InitializeValues()
@@ -170,13 +170,13 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
     if (Group* group = bot->GetGroup())
     {
         // Don't follow if we're the leader
-        if (group->GetLeaderGUID() == bot->GetGUID())
+    if (group->GetLeaderGUID() == bot->GetGUID())
             return 0.0f;
 
         // CRITICAL FIX FOR ISSUES #2 & #3: ZERO relevance during combat
         // This prevents follow from interfering with combat positioning and facing
         // BehaviorPriorityManager will prioritize combat behaviors (priority 100) over follow (priority 0)
-        if (bot->IsInCombat())
+    if (bot->IsInCombat())
         {
             TC_LOG_TRACE("module.playerbot.follow",
                 "Bot {} in combat - follow behavior disabled (FIX FOR ISSUE #2 & #3)",
@@ -192,7 +192,7 @@ float LeaderFollowBehavior::GetRelevance(BotAI* ai) const
 
 void LeaderFollowBehavior::OnActivate(BotAI* ai)
 {
-    TC_LOG_ERROR("module.playerbot", "🎬🎬🎬 LeaderFollowBehavior::OnActivate() CALLED for bot {}",
+    TC_LOG_ERROR("module.playerbot", " LeaderFollowBehavior::OnActivate() CALLED for bot {}",
                  ai && ai->GetBot() ? ai->GetBot()->GetName() : "NULL");
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate START ===");
     if (!ai || !ai->GetBot())
@@ -228,7 +228,7 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         if (Player* member = itr.GetSource())
         {
             // FIX: Only use members that are fully loaded in world
-            if (member->IsInWorld() && member->GetGUID() == leaderGuid)
+    if (member->IsInWorld() && member->GetGUID() == leaderGuid)
             {
                 leader = member;
                 TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Found leader {} in group members ===",
@@ -253,11 +253,11 @@ void LeaderFollowBehavior::OnActivate(BotAI* ai)
         return;
     }
 
-    TC_LOG_ERROR("module.playerbot", "🎯 LeaderFollowBehavior::OnActivate: About to call SetFollowTarget({}) for bot {}",
+    TC_LOG_ERROR("module.playerbot", " LeaderFollowBehavior::OnActivate: About to call SetFollowTarget({}) for bot {}",
                  leader->GetName(), bot->GetName());
     TC_LOG_INFO("playerbot.debug", "=== LeaderFollowBehavior::OnActivate: Calling SetFollowTarget({}) ===", leader->GetName());
     SetFollowTarget(leader);
-    TC_LOG_ERROR("module.playerbot", "✅ SetFollowTarget() completed for bot {}", bot->GetName());
+    TC_LOG_ERROR("module.playerbot", " SetFollowTarget() completed for bot {}", bot->GetName());
 
     _currentGroup = group;
     _formationRole = DetermineFormationRole(bot);
@@ -317,26 +317,26 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     static uint32 updateCounter = 0;
     if (++updateCounter % 100 == 0)
     {
-        TC_LOG_ERROR("module.playerbot", "🔄 UpdateFollowBehavior CALLED {} times", updateCounter);
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior CALLED {} times", updateCounter);
     }
 
     if (!ai || !ai->GetBot())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ UpdateFollowBehavior: NULL ai or bot");
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: NULL ai or bot");
         return;
     }
 
     Player* bot = ai->GetBot();
 
     // DEBUG LOGGING THROTTLE: Only log for test bots every 50 seconds
-    static const std::set<std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
-    static std::unordered_map<std::string, uint32> followLogAccumulators;
+    static const ::std::set<::std::string> testBots = {"Anderenz", "Boone", "Nelona", "Sevtap"};
+    static ::std::unordered_map<::std::string, uint32> followLogAccumulators;
     bool isTestBot = testBots.find(bot->GetName()) != testBots.end();
     bool shouldLog = false;
 
     if (isTestBot)
     {
-        std::string const& botName = bot->GetName();
+        ::std::string const& botName = bot->GetName();
         // Throttle by call count (every 1000 calls ~= 50s)
         followLogAccumulators[botName]++;
         if (followLogAccumulators[botName] >= 1000)
@@ -348,7 +348,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
 
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot", "🎯 UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: Bot {} state={}, _followTarget.player={}, guid={}",
                     bot->GetName(), static_cast<uint8>(_state),
                     (void*)_followTarget.player, _followTarget.guid.ToString());
     }
@@ -364,7 +364,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     if (!leader)
     {
         // Leader logged out or not found - clear follow target and stop
-        if (_followTarget.player != nullptr)
+    if (_followTarget.player != nullptr)
         {
             TC_LOG_INFO("module.playerbot", "LeaderFollowBehavior: Leader {} not found (logged out?), stopping follow for bot {}",
                        _followTarget.guid.ToString(), bot->GetName());
@@ -378,12 +378,12 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
     // Update cached pointer if it changed
     _followTarget.player = leader;
 
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = ::std::chrono::high_resolution_clock::now();
 
     // CRITICAL DEBUG: Log state at entry (already throttled above via shouldLog)
     if (shouldLog)
     {
-        TC_LOG_ERROR("module.playerbot", "🔧 UpdateFollowBehavior: Bot {} state={}",
+        TC_LOG_ERROR("module.playerbot", " UpdateFollowBehavior: Bot {} state={}",
                     bot->GetName(), static_cast<uint8>(_state));
     }
 
@@ -423,7 +423,7 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
             break;
         case FollowState::WAITING:
             // Check if leader started moving
-            if (_followTarget.isMoving)
+    if (_followTarget.isMoving)
                 SetFollowState(FollowState::FOLLOWING);
             break;
         case FollowState::TELEPORTING:
@@ -438,8 +438,8 @@ void LeaderFollowBehavior::UpdateFollowBehavior(BotAI* ai, uint32 diff)
             break;
     }
     // Track performance
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    auto endTime = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
     TrackPerformance(duration, "UpdateFollowBehavior");
 }
 
@@ -553,7 +553,7 @@ bool LeaderFollowBehavior::ShouldTeleportToLeader(Player* bot, Player* leader)
         return false;
 
     // Check distance
-    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     if (distance > _config.teleportDistance)
         return true;
 
@@ -615,7 +615,7 @@ FormationRole LeaderFollowBehavior::DetermineFormationRole(Player* bot)
         case CLASS_WARRIOR:
         case CLASS_PALADIN:
             // Check for tank stance
-            if (bot->HasAura(71)) // Defensive Stance aura ID
+    if (bot->HasAura(71)) // Defensive Stance aura ID
                 return FormationRole::TANK;
             return FormationRole::MELEE_DPS;
 
@@ -647,49 +647,49 @@ bool LeaderFollowBehavior::MoveToFollowPosition(BotAI* ai, const Position& targe
 {
     if (!ai || !ai->GetBot())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: NULL ai or bot");
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: NULL ai or bot");
         return false;
     }
 
     Player* bot = ai->GetBot();
 
-    TC_LOG_ERROR("module.playerbot", "📍 MoveToFollowPosition CALLED: Bot {} target=({:.2f},{:.2f},{:.2f}) state={}",
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition CALLED: Bot {} target=({:.2f},{:.2f},{:.2f}) state={}",
                  bot->GetName(), targetPos.GetPositionX(), targetPos.GetPositionY(), targetPos.GetPositionZ(),
                  static_cast<uint8>(_state));
 
     // Validate target position
     if (targetPos.GetPositionX() == 0.0f && targetPos.GetPositionY() == 0.0f)
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: Bot {} has invalid target position (0,0,0)", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} has invalid target position (0,0,0)", bot->GetName());
         return false;
     }
 
     // Check if we're already close enough
-    float distance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
     if (distance <= POSITION_TOLERANCE)
     {
-        TC_LOG_ERROR("module.playerbot", "⛔ MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} already at target (dist={:.2f})", bot->GetName(), distance);
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
         return true;
     }
 
-    TC_LOG_ERROR("module.playerbot", "🚀 MoveToFollowPosition: Bot {} initiating movement (dist={:.2f})", bot->GetName(), distance);
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} initiating movement (dist={:.2f})", bot->GetName(), distance);
     // SIMPLIFIED: Skip complex pathfinding for now, use direct movement
     // This ensures movement works reliably
     // Pathfinding can be re-enabled after basic movement is confirmed working
 
-    TC_LOG_ERROR("module.playerbot", "⚡ MoveToFollowPosition: Bot {} using DIRECT movement", bot->GetName());
+    TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} using DIRECT movement", bot->GetName());
 
     // Start movement using StartMovement which has comprehensive error handling
     bool result = StartMovement(bot, targetPos);
     if (result)
     {
-        TC_LOG_ERROR("module.playerbot", "✅ MoveToFollowPosition: Bot {} movement initiated successfully", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} movement initiated successfully", bot->GetName());
     }
     else
     {
-        TC_LOG_ERROR("module.playerbot", "❌ MoveToFollowPosition: Bot {} movement FAILED", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " MoveToFollowPosition: Bot {} movement FAILED", bot->GetName());
     }
 
     return result;
@@ -703,7 +703,7 @@ void LeaderFollowBehavior::UpdateFollowTarget(Player* bot, Player* leader)
         return;
 
     _followTarget.lastKnownPosition = leader->GetPosition();
-    _followTarget.currentDistance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    _followTarget.currentDistance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     _followTarget.isMoving = leader->isMoving();
     _followTarget.currentSpeed = leader->GetSpeed(MOVE_RUN);
 
@@ -750,26 +750,26 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     Position targetPos = CalculateFollowPosition(leader, _formationRole);
 
     // Check current distance
-    float currentDistance = std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
+    float currentDistance = ::std::sqrt(bot->GetExactDistSq(targetPos)); // Calculate once from squared distance
 
-    TC_LOG_ERROR("module.playerbot", "🚶 UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
+    TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} distance={:.2f}, min={:.2f}, max={:.2f}",
                  bot->GetName(), currentDistance, _config.minDistance, _config.maxDistance);
 
     // Determine if we need to move
     if (currentDistance < _config.minDistance)
     {
         // Too close, back up slightly
-        TC_LOG_ERROR("module.playerbot", "⛔ UpdateMovement: Bot {} TOO CLOSE, stopping", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} TOO CLOSE, stopping", bot->GetName());
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
     }
     else if (currentDistance > _config.maxDistance)
     {
         // Too far, need to catch up
-        TC_LOG_ERROR("module.playerbot", "🏃 UpdateMovement: Bot {} TOO FAR (dist={:.2f}), catching up", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} TOO FAR (dist={:.2f}), catching up", bot->GetName(), currentDistance);
         // Only set state to CATCHING_UP if not already in that state
         // This prevents spamming state changes every frame
-        if (_state != FollowState::CATCHING_UP)
+    if (_state != FollowState::CATCHING_UP)
             SetFollowState(FollowState::CATCHING_UP);
 
         AdjustMovementSpeed(bot, currentDistance);
@@ -778,9 +778,9 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     else if (currentDistance > _config.minDistance + POSITION_TOLERANCE)
     {
         // Normal following distance - transition back to FOLLOWING if we were catching up
-        TC_LOG_ERROR("module.playerbot", "✅ UpdateMovement: Bot {} NORMAL FOLLOW (dist={:.2f}), moving", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} NORMAL FOLLOW (dist={:.2f}), moving", bot->GetName(), currentDistance);
         // Transition from CATCHING_UP back to FOLLOWING when we're back in range
-        if (_state == FollowState::CATCHING_UP)
+    if (_state == FollowState::CATCHING_UP)
         {
             TC_LOG_INFO("module.playerbot", "Bot {} successfully caught up, transitioning to FOLLOWING", bot->GetName());
             SetFollowState(FollowState::FOLLOWING);
@@ -791,7 +791,7 @@ void LeaderFollowBehavior::UpdateMovement(BotAI* ai)
     else
     {
         // In position
-        TC_LOG_ERROR("module.playerbot", "✋ UpdateMovement: Bot {} IN POSITION (dist={:.2f}), waiting", bot->GetName(), currentDistance);
+        TC_LOG_ERROR("module.playerbot", " UpdateMovement: Bot {} IN POSITION (dist={:.2f}), waiting", bot->GetName(), currentDistance);
         StopMovement(bot);
         SetFollowState(FollowState::WAITING);
     }
@@ -811,7 +811,7 @@ void LeaderFollowBehavior::UpdateFormation(BotAI* ai)
     Position formationPos = CalculateFollowPosition(leader, _formationRole);
 
     // Move to formation position
-    float distance = std::sqrt(bot->GetExactDistSq(formationPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(formationPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 1.5f)
     {
         MoveToFollowPosition(ai, formationPos);
@@ -844,7 +844,7 @@ void LeaderFollowBehavior::UpdateCombatFollowing(BotAI* ai)
     Position combatPos = CalculateCombatPosition(bot, leader, target);
 
     // Move to combat position if needed
-    float distance = std::sqrt(bot->GetExactDistSq(combatPos)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(combatPos)); // Calculate once from squared distance
     if (distance > POSITION_TOLERANCE * 2)
     {
         MoveToFollowPosition(ai, combatPos);
@@ -891,8 +891,8 @@ void LeaderFollowBehavior::SetFollowMode(FollowMode mode)
 
 void LeaderFollowBehavior::SetFollowDistance(float min, float max)
 {
-    _config.minDistance = std::max(MIN_FOLLOW_DISTANCE, min);
-    _config.maxDistance = std::min(MAX_FOLLOW_DISTANCE, max);
+    _config.minDistance = ::std::max(MIN_FOLLOW_DISTANCE, min);
+    _config.maxDistance = ::std::min(MAX_FOLLOW_DISTANCE, max);
     _config.mode = FollowMode::CUSTOM;
 }
 
@@ -975,24 +975,24 @@ bool LeaderFollowBehavior::GenerateFollowPath(Player* bot, const Position& desti
     return false;
 }
 
-void LeaderFollowBehavior::OptimizePath(std::vector<Position>& path)
+void LeaderFollowBehavior::OptimizePath(::std::vector<Position>& path)
 {
     if (path.size() < 3)
         return;
 
     // Simple path smoothing - remove unnecessary waypoints
-    std::vector<Position> optimized;
+    ::std::vector<Position> optimized;
     optimized.push_back(path[0]);
 
     for (size_t i = 1; i < path.size() - 1; ++i)
     {
         // Check if this waypoint is necessary
-        float angle1 = std::atan2(path[i].GetPositionY() - path[i-1].GetPositionY(),
+        float angle1 = ::std::atan2(path[i].GetPositionY() - path[i-1].GetPositionY(),
                                  path[i].GetPositionX() - path[i-1].GetPositionX());
-        float angle2 = std::atan2(path[i+1].GetPositionY() - path[i].GetPositionY(),
+        float angle2 = ::std::atan2(path[i+1].GetPositionY() - path[i].GetPositionY(),
                                  path[i+1].GetPositionX() - path[i].GetPositionX());
 
-        float angleDiff = std::abs(angle1 - angle2);
+        float angleDiff = ::std::abs(angle1 - angle2);
         if (angleDiff > M_PI / 6) // 30 degree threshold
         {
             optimized.push_back(path[i]);
@@ -1032,7 +1032,7 @@ void LeaderFollowBehavior::HandleLostLeader(BotAI* ai)
     if (_followTarget.lostDuration > 10000 && _config.autoTeleport)
     {
         // FIX #21: Use _followTarget.player instead of ObjectAccessor lookup
-        if (_followTarget.player)
+    if (_followTarget.player)
         {
             TeleportToLeader(bot, _followTarget.player);
         }
@@ -1068,7 +1068,7 @@ Position LeaderFollowBehavior::CalculateCombatPosition(Player* bot, Player* lead
         case FormationRole::HEALER:
             // Stay at range from target, near leader
             {
-                float angle = std::atan2(leader->GetPositionY() - target->GetPositionY(),
+                float angle = ::std::atan2(leader->GetPositionY() - target->GetPositionY(),
                                         leader->GetPositionX() - target->GetPositionX());
                 float distance = _formationRole == FormationRole::HEALER ? 25.0f : 20.0f;
                 combatPos.m_positionX = target->GetPositionX() + cos(angle) * distance;
@@ -1127,7 +1127,7 @@ void LeaderFollowBehavior::AdjustMovementSpeed(Player* bot, float distanceToTarg
     }
 
     // Apply speed modifier if changed
-    if (std::abs(_currentSpeedModifier - speedMod) > 0.01f)
+    if (::std::abs(_currentSpeedModifier - speedMod) > 0.01f)
     {
         _currentSpeedModifier = speedMod;
         bot->SetSpeed(MOVE_RUN, bot->GetSpeed(MOVE_RUN) * speedMod);
@@ -1262,14 +1262,14 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
 
     if (!bot->IsAlive())
     {
-        TC_LOG_ERROR("module.playerbot", "❌ StartMovement: Bot {} is dead, cannot move", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} is dead, cannot move", bot->GetName());
         return false;
     }
 
     MotionMaster* motionMaster = bot->GetMotionMaster();
     if (!motionMaster)
     {
-        TC_LOG_ERROR("module.playerbot", "❌ StartMovement: Bot {} has NULL MotionMaster", bot->GetName());
+        TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} has NULL MotionMaster", bot->GetName());
         return false;
     }
 
@@ -1292,9 +1292,9 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
         if (currentType != FOLLOW_MOTION_TYPE)
         {
             // If there's leftover combat movement (CHASE/POINT), clear it first
-            if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
+    if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
             {
-                TC_LOG_ERROR("module.playerbot", "🧹 StartMovement: Clearing leftover {} motion for bot {}",
+                TC_LOG_ERROR("module.playerbot", " StartMovement: Clearing leftover {} motion for bot {}",
                             static_cast<uint32>(currentType), bot->GetName());
                 motionMaster->Clear();
             }
@@ -1316,7 +1316,7 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
                 bool accepted = botAI->GetMovementArbiter()->RequestMovement(req);
                 if (accepted)
                 {
-                    TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                    TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
                                 bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
                 }
                 else
@@ -1330,13 +1330,13 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
             {
                 // FALLBACK: Direct MotionMaster call if arbiter not available
                 motionMaster->MoveFollow(leader, followDist, followAngle);
-                TC_LOG_ERROR("module.playerbot", "✅ StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
+                TC_LOG_ERROR("module.playerbot", " StartMovement: Bot {} now following {} at {:.1f}yd, angle {:.1f}rad (was: {})",
                             bot->GetName(), leader->GetName(), followDist, followAngle, static_cast<uint32>(currentType));
             }
         }
         else
         {
-            TC_LOG_DEBUG("module.playerbot", "⏭️ StartMovement: Bot {} already following, skipping", bot->GetName());
+            TC_LOG_DEBUG("module.playerbot", "⏭ StartMovement: Bot {} already following, skipping", bot->GetName());
         }
 
         return true;
@@ -1387,7 +1387,7 @@ float LeaderFollowBehavior::CalculateDistance2D(const Position& pos1, const Posi
 {
     float dx = pos1.GetPositionX() - pos2.GetPositionX();
     float dy = pos1.GetPositionY() - pos2.GetPositionY();
-    return std::sqrt(dx * dx + dy * dy);
+    return ::std::sqrt(dx * dx + dy * dy);
 }
 
 float LeaderFollowBehavior::CalculateDistance3D(const Position& pos1, const Position& pos2)
@@ -1395,7 +1395,7 @@ float LeaderFollowBehavior::CalculateDistance3D(const Position& pos1, const Posi
     float dx = pos1.GetPositionX() - pos2.GetPositionX();
     float dy = pos1.GetPositionY() - pos2.GetPositionY();
     float dz = pos1.GetPositionZ() - pos2.GetPositionZ();
-    return std::sqrt(dx * dx + dy * dy + dz * dz);
+    return ::std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 bool LeaderFollowBehavior::IsWithinRange(float distance, float min, float max)
@@ -1409,35 +1409,35 @@ uint32 LeaderFollowBehavior::GetTimeSince(uint32 timestamp)
     return (now >= timestamp) ? (now - timestamp) : 0;
 }
 
-void LeaderFollowBehavior::TrackPerformance(std::chrono::microseconds duration, const std::string& operation)
+void LeaderFollowBehavior::TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation)
 {
     if (duration > _metrics.maxUpdateTime)
         _metrics.maxUpdateTime = duration;
 
     // Update rolling average
-    _metrics.averageUpdateTime = std::chrono::microseconds(
+    _metrics.averageUpdateTime = ::std::chrono::microseconds(
         (_metrics.averageUpdateTime.count() * 9 + duration.count()) / 10);
 }
 
 // Factory implementations
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateFollowBehavior(FollowMode mode)
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateFollowBehavior(FollowMode mode)
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->SetFollowMode(mode);
     return behavior;
 }
 
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateRoleBasedFollowBehavior(FormationRole role)
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateRoleBasedFollowBehavior(FormationRole role)
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->SetFollowMode(FollowMode::FORMATION);
     // Role will be used in position calculations
     return behavior;
 }
 
-std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateCombatFollowBehavior()
+::std::unique_ptr<LeaderFollowBehavior> FollowBehaviorFactory::CreateCombatFollowBehavior()
 {
-    auto behavior = std::make_unique<LeaderFollowBehavior>();
+    auto behavior = ::std::make_unique<LeaderFollowBehavior>();
     behavior->GetConfig().followInCombat = true;
     behavior->GetConfig().minDistance = 10.0f;
     behavior->GetConfig().maxDistance = 20.0f;
@@ -1465,7 +1465,7 @@ float FollowBehaviorUtils::CalculateOptimalFollowDistance(Player* bot, Player* l
             break;
         case FollowMode::FORMATION:
             // Calculate based on bot's class
-            switch (bot->GetClass())
+    switch (bot->GetClass())
             {
                 case CLASS_WARRIOR:
                 case CLASS_PALADIN:
@@ -1499,7 +1499,7 @@ bool FollowBehaviorUtils::IsInFollowRange(Player* bot, Player* leader, float min
     if (!bot || !leader)
         return false;
 
-    float distance = std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
+    float distance = ::std::sqrt(bot->GetExactDistSq(leader)); // Calculate once from squared distance
     return distance >= minDist && distance <= maxDist;
 }
 

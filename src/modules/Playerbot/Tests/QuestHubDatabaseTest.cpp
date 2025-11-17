@@ -269,7 +269,7 @@ namespace
         bool result = db.Initialize();
 
         // If initialization succeeds, flag should be set
-        if (result)
+    if (result)
         {
             EXPECT_TRUE(db.IsInitialized());
         }
@@ -409,7 +409,7 @@ namespace
             threads.emplace_back([&db, &successCount]()
             {
                 // Perform 100 read operations
-                for (int j = 0; j < 100; ++j)
+    for (int j = 0; j < 100; ++j)
                 {
                     size_t count = db.GetQuestHubCount();
                     if (count >= 0) // Always true, just to use the value
@@ -421,7 +421,7 @@ namespace
         }
 
         // Wait for all threads to complete
-        for (auto& thread : threads)
+    for (auto& thread : threads)
         {
             thread.join();
         }
@@ -442,7 +442,7 @@ namespace
         auto start = std::chrono::high_resolution_clock::now();
 
         // Perform 10000 count queries
-        for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
         {
             volatile size_t count = db.GetQuestHubCount();
             (void)count; // Suppress unused variable warning
@@ -467,7 +467,7 @@ namespace
         auto start = std::chrono::high_resolution_clock::now();
 
         // Perform 10000 memory usage queries
-        for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
         {
             volatile size_t usage = db.GetMemoryUsage();
             (void)usage; // Suppress unused variable warning
@@ -493,7 +493,7 @@ namespace
         auto start = std::chrono::high_resolution_clock::now();
 
         // Perform 10000 lookups
-        for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
         {
             volatile QuestHub const* hub = db.GetQuestHubById(1);
             (void)hub; // Suppress unused variable warning

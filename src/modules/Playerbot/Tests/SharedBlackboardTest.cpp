@@ -360,7 +360,7 @@ TEST_CASE("SharedBlackboard: Concurrent writes", "[blackboard][thread-safety]")
             thread.join();
 
         // Verify all thread keys exist
-        for (int i = 0; i < numThreads; ++i)
+    for (int i = 0; i < numThreads; ++i)
         {
             std::string key = "thread_" + std::to_string(i);
             REQUIRE(blackboard.Has(key));

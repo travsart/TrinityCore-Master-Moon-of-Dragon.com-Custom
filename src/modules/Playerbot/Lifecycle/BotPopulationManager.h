@@ -32,7 +32,7 @@ struct ZonePopulation
     uint8 minLevel;
     uint8 maxLevel;
     float botDensity;
-    std::chrono::system_clock::time_point lastUpdate;
+    ::std::chrono::system_clock::time_point lastUpdate;
 };
 
 /**
@@ -73,15 +73,15 @@ public:
 
     // === POPULATION QUERIES ===
     ZonePopulation GetZonePopulation(uint32 zoneId) const;
-    std::vector<ZonePopulation> GetAllZonePopulations() const;
+    ::std::vector<ZonePopulation> GetAllZonePopulations() const;
     uint32 GetBotCountInZone(uint32 zoneId) const;
-    uint32 GetTotalBotCount() const { return _totalBotCount.load(std::memory_order_acquire); }
+    uint32 GetTotalBotCount() const { return _totalBotCount.load(::std::memory_order_acquire); }
 
     // === TARGET CALCULATIONS ===
     void CalculateZoneTargets();
     uint32 CalculateTargetBotCount(ZonePopulation const& zone) const;
-    std::vector<uint32> GetUnderpopulatedZones() const;
-    std::vector<uint32> GetOverpopulatedZones() const;
+    ::std::vector<uint32> GetUnderpopulatedZones() const;
+    ::std::vector<uint32> GetOverpopulatedZones() const;
 
     // === POPULATION LIMITS ===
     bool CanSpawnInZone(uint32 zoneId, uint32 maxBotsPerZone) const;
@@ -107,16 +107,16 @@ private:
     bool IsDataStale(ZonePopulation const& zone) const;
 
     // Lock-free counters for hot path operations
-    std::atomic<uint32> _totalBotCount{0};
-    std::atomic<uint32> _totalPlayerCount{0};
+    ::std::atomic<uint32> _totalBotCount{0};
+    ::std::atomic<uint32> _totalPlayerCount{0};
 
     // Zone population tracking (requires synchronization)
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _populationMutex;
-    std::unordered_map<uint32, ZonePopulation> _zonePopulations; // zoneId -> population data
-    std::unordered_map<uint32, std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _populationMutex;
+    ::std::unordered_map<uint32, ZonePopulation> _zonePopulations; // zoneId -> population data
+    ::std::unordered_map<uint32, ::std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
     // Map-level tracking for map limits
-    std::unordered_map<uint32, uint32> _botsPerMap; // mapId -> bot count
+    ::std::unordered_map<uint32, uint32> _botsPerMap; // mapId -> bot count
 
     // Configuration
     float _botToPlayerRatio = 2.0f;
@@ -126,15 +126,15 @@ private:
     // Performance optimization
     struct PopulationCache
     {
-        std::unordered_map<uint32, uint32> zoneBotCounts;
-        std::chrono::steady_clock::time_point lastUpdate;
+        ::std::unordered_map<uint32, uint32> zoneBotCounts;
+        ::std::chrono::steady_clock::time_point lastUpdate;
         bool isValid = false;
     };
     mutable PopulationCache _cache;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _cacheMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _cacheMutex;
 
     // Timing
-    std::chrono::steady_clock::time_point _lastUpdate;
+    ::std::chrono::steady_clock::time_point _lastUpdate;
     static constexpr uint32 UPDATE_INTERVAL_MS = 10000; // 10 seconds
     static constexpr uint32 CACHE_VALIDITY_MS = 5000;   // 5 seconds
     static constexpr uint32 DATA_STALE_THRESHOLD_MS = 300000; // 5 minutes

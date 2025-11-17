@@ -190,7 +190,7 @@ TEST_CASE("BotAI Integration: Decision updates are properly throttled", "[botai]
         REQUIRE(lastUpdate == 100);
 
         // After 5 updates of 100ms each = 500ms
-        for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
             lastUpdate += diff;
 
         REQUIRE(lastUpdate >= 500);

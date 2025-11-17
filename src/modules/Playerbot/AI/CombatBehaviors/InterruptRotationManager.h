@@ -136,7 +136,7 @@ public:
         bool isAssigned = false;            // Currently assigned to interrupt
 
         // Additional interrupt abilities (stuns, silences)
-        std::vector<uint32> alternativeInterrupts;
+        ::std::vector<uint32> alternativeInterrupts;
     };
 
     /**
@@ -188,7 +188,7 @@ public:
      * Get all active casts being tracked
      * @return Vector of active casts
      */
-    const std::vector<ActiveCast>& GetActiveCasts() const { return _activeCasts; }
+    const ::std::vector<ActiveCast>& GetActiveCasts() const { return _activeCasts; }
 
     /**
      * Check if we're tracking a specific cast
@@ -265,7 +265,7 @@ public:
      * Coordinate interrupts across group
      * @param casters List of enemy casters
      */
-    void CoordinateGroupInterrupts(const std::vector<Unit*>& casters);
+    void CoordinateGroupInterrupts(const ::std::vector<Unit*>& casters);
 
     // ========================================================================
     // STATISTICS AND LEARNING
@@ -277,8 +277,8 @@ public:
         uint32 successfulInterrupts = 0;
         uint32 failedInterrupts = 0;
         uint32 fallbacksUsed = 0;
-        std::unordered_map<uint32, uint32> interruptsBySpell;
-        std::unordered_map<ObjectGuid, uint32> interruptsByBot;
+        ::std::unordered_map<uint32, uint32> interruptsBySpell;
+        ::std::unordered_map<ObjectGuid, uint32> interruptsByBot;
     };
 
     const InterruptStatistics& GetStatistics() const { return _statistics; }
@@ -321,7 +321,7 @@ public:
      * @param classId Class to check
      * @return Vector of interrupt spell IDs
      */
-    static std::vector<uint32> GetClassInterrupts(uint8 classId);
+    static ::std::vector<uint32> GetClassInterrupts(uint8 classId);
 
     /**
      * Calculate time until spell completes
@@ -390,18 +390,18 @@ private:
     Player* _bot;
 
     // Interrupt database (static, shared across all managers)
-    static inline std::unordered_map<uint32, InterruptableSpell> s_interruptDatabase;
+    static inline ::std::unordered_map<uint32, InterruptableSpell> s_interruptDatabase;
     static inline bool s_databaseInitialized = false;
 
     // Interrupter tracking
-    std::vector<InterrupterBot> _interrupters;
-    std::queue<ObjectGuid> _rotationQueue;
+    ::std::vector<InterrupterBot> _interrupters;
+    ::std::queue<ObjectGuid> _rotationQueue;
 
     // Active cast tracking
-    std::vector<ActiveCast> _activeCasts;
+    ::std::vector<ActiveCast> _activeCasts;
 
     // Delayed interrupt scheduling
-    std::vector<DelayedInterrupt> _delayedInterrupts;
+    ::std::vector<DelayedInterrupt> _delayedInterrupts;
 
     // Statistics
     InterruptStatistics _statistics;
@@ -414,7 +414,7 @@ private:
     uint32 _lastUpdateTime;
 
     // Cache for performance
-    mutable std::unordered_map<ObjectGuid, Unit*> _unitCache;
+    mutable ::std::unordered_map<ObjectGuid, Unit*> _unitCache;
     mutable uint32 _unitCacheTime;
     static constexpr uint32 UNIT_CACHE_DURATION = 100; // ms
 };

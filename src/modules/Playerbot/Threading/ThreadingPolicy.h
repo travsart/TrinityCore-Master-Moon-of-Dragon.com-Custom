@@ -97,13 +97,13 @@ namespace Threading
     public:
         RelaxedAtomic(T initial = T{}) : _value(initial) {}
 
-        T load() const { return _value.load(std::memory_order_relaxed); }
-        void store(T val) { _value.store(val, std::memory_order_relaxed); }
-        T fetch_add(T val) { return _value.fetch_add(val, std::memory_order_relaxed); }
-        T fetch_sub(T val) { return _value.fetch_sub(val, std::memory_order_relaxed); }
+        T load() const { return _value.load(::std::memory_order_relaxed); }
+        void store(T val) { _value.store(val, ::std::memory_order_relaxed); }
+        T fetch_add(T val) { return _value.fetch_add(val, ::std::memory_order_relaxed); }
+        T fetch_sub(T val) { return _value.fetch_sub(val, ::std::memory_order_relaxed); }
 
     private:
-        std::atomic<T> _value;
+        ::std::atomic<T> _value;
     };
 
     /**
@@ -117,9 +117,9 @@ namespace Threading
 
     private:
         const char* _lockName;
-        std::chrono::high_resolution_clock::time_point _startTime;
-        static std::atomic<uint64> _totalLockTime;
-        static std::atomic<uint32> _lockCount;
+        ::std::chrono::high_resolution_clock::time_point _startTime;
+        static ::std::atomic<uint64> _totalLockTime;
+        static ::std::atomic<uint32> _lockCount;
     };
 
     /**
@@ -131,36 +131,36 @@ namespace Threading
     {
     public:
         LockFreeState()
-            : _state(std::make_shared<T>()), _version(0)
+            : _state(::std::make_shared<T>()), _version(0)
         {}
 
         void Update(T newState)
         {
             // Create new shared_ptr with the updated state
-            auto newPtr = std::make_shared<T>(std::move(newState));
+            auto newPtr = ::std::make_shared<T>(::std::move(newState));
 
             // Atomically update the shared_ptr
-            std::atomic_store_explicit(&_state, newPtr, std::memory_order_release);
+            ::std::atomic_store_explicit(&_state, newPtr, ::std::memory_order_release);
 
             // Increment version
-            _version.fetch_add(1, std::memory_order_release);
+            _version.fetch_add(1, ::std::memory_order_release);
         }
 
         T Read(uint64& version) const
         {
             // Atomically load the shared_ptr
-            auto statePtr = std::atomic_load_explicit(&_state, std::memory_order_acquire);
+            auto statePtr = ::std::atomic_load_explicit(&_state, ::std::memory_order_acquire);
 
             // Get version
-            version = _version.load(std::memory_order_acquire);
+            version = _version.load(::std::memory_order_acquire);
 
             // Return copy of the state
             return *statePtr;
         }
 
     private:
-        std::shared_ptr<T> _state;
-        std::atomic<uint64> _version;
+        ::std::shared_ptr<T> _state;
+        ::std::atomic<uint64> _version;
     };
 
     /**
@@ -186,9 +186,9 @@ namespace Threading
 
         void WorkerThread();
 
-        std::vector<std::thread> _workers;
-        ConcurrentQueue<std::function<void()>> _taskQueue;
-        std::atomic<bool> _shutdown{false};
+        ::std::vector<::std::thread> _workers;
+        ConcurrentQueue<::std::function<void()>> _taskQueue;
+        ::std::atomic<bool> _shutdown{false};
         uint32 _threadCount{0};
     };
 
@@ -218,7 +218,7 @@ namespace Threading
         }
 
     private:
-        std::lock_guard<MutexType> _lock;
+        ::std::lock_guard<MutexType> _lock;
         LockLevel _level;
         LockLevel _previousLevel;
         static thread_local LockLevel _currentLevel;
@@ -227,7 +227,7 @@ namespace Threading
     /**
      * Reader-writer lock with ordering
      */
-    template<typename MutexType = std::shared_mutex>
+    template<typename MutexType = ::std::shared_mutex>
     class OrderedSharedLock
     {
     public:
@@ -250,7 +250,7 @@ namespace Threading
         }
 
     private:
-        std::shared_lock<MutexType> _lock;
+        ::std::shared_lock<MutexType> _lock;
         LockLevel _level;
         LockLevel _previousLevel;
         static thread_local LockLevel _currentLevel;

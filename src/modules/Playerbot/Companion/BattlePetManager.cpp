@@ -121,7 +121,7 @@ void BattlePetManager::LoadRarePetList()
     // Full implementation would load from world database
 
     // Example: Rare dragonkin spawn in zone 1
-    std::vector<Position> dragonkinSpawns;
+    ::std::vector<Position> dragonkinSpawns;
     dragonkinSpawns.push_back(Position(100.0f, 200.0f, 50.0f, 0.0f));
     dragonkinSpawns.push_back(Position(150.0f, 250.0f, 55.0f, 0.0f));
     _rarePetSpawns[2] = dragonkinSpawns;
@@ -175,7 +175,7 @@ void BattlePetManager::Update(::Player* player, uint32 diff)
     }
 }
 
-std::vector<BattlePetInfo> BattlePetManager::GetPlayerPets(::Player* player) const
+::std::vector<BattlePetInfo> BattlePetManager::GetPlayerPets(::Player* player) const
 {
     if (!player)
         return {};
@@ -183,7 +183,7 @@ std::vector<BattlePetInfo> BattlePetManager::GetPlayerPets(::Player* player) con
     // No lock needed - battle pet data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    std::vector<BattlePetInfo> pets;
+    ::std::vector<BattlePetInfo> pets;
 
     if (_playerPetInstances.count(playerGuid))
     {
@@ -447,7 +447,7 @@ void BattlePetManager::AutoLevelPets(::Player* player)
     if (!player)
         return;
 
-    std::vector<BattlePetInfo> petsNeedingLevel = GetPetsNeedingLevel(player);
+    ::std::vector<BattlePetInfo> petsNeedingLevel = GetPetsNeedingLevel(player);
     if (petsNeedingLevel.empty())
         return;
 
@@ -457,7 +457,7 @@ void BattlePetManager::AutoLevelPets(::Player* player)
     // Full implementation: Queue battles with appropriate opponents to level pets
 }
 
-std::vector<BattlePetInfo> BattlePetManager::GetPetsNeedingLevel(::Player* player) const
+::std::vector<BattlePetInfo> BattlePetManager::GetPetsNeedingLevel(::Player* player) const
 {
     if (!player)
         return {};
@@ -467,7 +467,7 @@ std::vector<BattlePetInfo> BattlePetManager::GetPetsNeedingLevel(::Player* playe
     uint32 playerGuid = player->GetGUID().GetCounter();
     PetBattleAutomationProfile profile = GetAutomationProfile(playerGuid);
 
-    std::vector<BattlePetInfo> result;
+    ::std::vector<BattlePetInfo> result;
 
     if (!_playerPetInstances.count(playerGuid))
         return result;
@@ -488,7 +488,7 @@ uint32 BattlePetManager::GetXPRequiredForLevel(uint32 currentLevel) const
         return 0;
 
     // XP required increases exponentially
-    return static_cast<uint32>(100 * std::pow(1.1f, currentLevel));
+    return static_cast<uint32>(100 * ::std::pow(1.1f, currentLevel));
 }
 
 void BattlePetManager::AwardPetXP(::Player* player, uint32 speciesId, uint32 xp)
@@ -563,8 +563,8 @@ bool BattlePetManager::LevelUpPet(::Player* player, uint32 speciesId)
 // TEAM COMPOSITION
 // ============================================================================
 
-bool BattlePetManager::CreatePetTeam(::Player* player, std::string const& teamName,
-    std::vector<uint32> const& petSpeciesIds)
+bool BattlePetManager::CreatePetTeam(::Player* player, ::std::string const& teamName,
+    ::std::vector<uint32> const& petSpeciesIds)
 {
     if (!player || petSpeciesIds.empty() || petSpeciesIds.size() > 3)
         return false;
@@ -596,7 +596,7 @@ bool BattlePetManager::CreatePetTeam(::Player* player, std::string const& teamNa
     return true;
 }
 
-std::vector<PetTeam> BattlePetManager::GetPlayerTeams(::Player* player) const
+::std::vector<PetTeam> BattlePetManager::GetPlayerTeams(::Player* player) const
 {
     if (!player)
         return {};
@@ -610,7 +610,7 @@ std::vector<PetTeam> BattlePetManager::GetPlayerTeams(::Player* player) const
     return _playerTeams.at(playerGuid);
 }
 
-bool BattlePetManager::SetActiveTeam(::Player* player, std::string const& teamName)
+bool BattlePetManager::SetActiveTeam(::Player* player, ::std::string const& teamName)
 {
     if (!player)
         return false;
@@ -662,7 +662,7 @@ PetTeam BattlePetManager::GetActiveTeam(::Player* player) const
     return PetTeam();
 }
 
-std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
+::std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
     PetFamily opponentFamily) const
 {
     if (!player)
@@ -671,13 +671,13 @@ std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
     // No lock needed - battle pet data is per-bot instance data
 
     uint32 playerGuid = player->GetGUID().GetCounter();
-    std::vector<uint32> optimizedTeam;
+    ::std::vector<uint32> optimizedTeam;
 
     if (!_playerPetInstances.count(playerGuid))
         return optimizedTeam;
 
     // Score each pet based on type effectiveness against opponent
-    std::vector<std::pair<uint32, float>> petScores;
+    ::std::vector<::std::pair<uint32, float>> petScores;
 
     for (auto const& [speciesId, petInfo] : _playerPetInstances.at(playerGuid))
     {
@@ -690,11 +690,11 @@ std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
     }
 
     // Sort by score descending
-    std::sort(petScores.begin(), petScores.end(),
+    ::std::sort(petScores.begin(), petScores.end(),
         [](auto const& a, auto const& b) { return a.second > b.second; });
 
     // Select top 3 pets
-    for (size_t i = 0; i < std::min(petScores.size(), size_t(3)); ++i)
+    for (size_t i = 0; i < ::std::min(petScores.size(), size_t(3)); ++i)
         optimizedTeam.push_back(petScores[i].first);
 
     return optimizedTeam;
@@ -798,7 +798,7 @@ void BattlePetManager::TrackRarePetSpawns(::Player* player)
     if (!player)
         return;
 
-    std::vector<uint32> rarePetsInZone = GetRarePetsInZone(player);
+    ::std::vector<uint32> rarePetsInZone = GetRarePetsInZone(player);
     if (rarePetsInZone.empty())
         return;
 
@@ -811,26 +811,24 @@ void BattlePetManager::TrackRarePetSpawns(::Player* player)
 bool BattlePetManager::IsRarePet(uint32 speciesId) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_petDatabase.count(speciesId))
         return false;
 
     return _petDatabase.at(speciesId).isRare;
 }
 
-std::vector<uint32> BattlePetManager::GetRarePetsInZone(::Player* player) const
+::std::vector<uint32> BattlePetManager::GetRarePetsInZone(::Player* player) const
 {
     if (!player)
         return {};
 
     // No lock needed - battle pet data is per-bot instance data
 
-    std::vector<uint32> result;
+    ::std::vector<uint32> result;
 
     // Get player's current zone
     // Query rare pet spawns in that zone
     // Return species IDs
-
     for (auto const& [speciesId, spawns] : _rarePetSpawns)
     {
         if (IsRarePet(speciesId))
@@ -846,7 +844,6 @@ bool BattlePetManager::NavigateToRarePet(::Player* player, uint32 speciesId)
         return false;
 
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_rarePetSpawns.count(speciesId) || _rarePetSpawns[speciesId].empty())
         return false;
 
@@ -875,7 +872,6 @@ void BattlePetManager::SetAutomationProfile(uint32 playerGuid,
 PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerGuid) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (_playerProfiles.count(playerGuid))
         return _playerProfiles.at(playerGuid);
 
@@ -889,7 +885,6 @@ PetBattleAutomationProfile BattlePetManager::GetAutomationProfile(uint32 playerG
 BattlePetManager::PetMetrics const& BattlePetManager::GetPlayerMetrics(uint32 playerGuid) const
 {
     // No lock needed - battle pet data is per-bot instance data
-
     if (!_playerMetrics.count(playerGuid))
     {
         static PetMetrics emptyMetrics;

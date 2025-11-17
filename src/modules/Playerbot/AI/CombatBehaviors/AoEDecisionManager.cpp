@@ -46,7 +46,7 @@ namespace
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-        switch (cls) {
+    switch (cls) {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;
@@ -198,13 +198,13 @@ void AoEDecisionManager::Update(uint32 diff)
     if (IsTank(_bot))
     {
         // Tanks should use AoE more aggressively for threat
-        if (targetCount >= 2)
-            _currentStrategy = std::max(_currentStrategy, static_cast<AoEStrategy>(CLEAVE));
+    if (targetCount >= 2)
+            _currentStrategy = ::std::max(_currentStrategy, static_cast<AoEStrategy>(CLEAVE));
     }
     else if (IsHealer(_bot))
     {
         // Healers should be conservative with AoE
-        if (_currentStrategy > CLEAVE)
+    if (_currentStrategy > CLEAVE)
             _currentStrategy = CLEAVE;
     }
 }
@@ -254,11 +254,11 @@ uint32 AoEDecisionManager::GetTargetCount(float range) const
 
 bool AoEDecisionManager::ShouldUseAoE(uint32 minTargets) const
 {
-    uint32 actualMin = std::max(minTargets, _minAoETargets);
+    uint32 actualMin = ::std::max(minTargets, _minAoETargets);
 
     // Role-based adjustments
     if (IsTank(_bot))
-        actualMin = std::max(2u, actualMin - 1);  // Tanks need AoE for threat
+        actualMin = ::std::max(2u, actualMin - 1);  // Tanks need AoE for threat
     else if (IsHealer(_bot))
         actualMin = actualMin + 1;  // Healers should be conservative
 
@@ -269,9 +269,9 @@ bool AoEDecisionManager::ShouldUseAoE(uint32 minTargets) const
 // TARGET CLUSTERING
 // ============================================================================
 
-std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClusters(float maxRange) const
+::std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClusters(float maxRange) const
 {
-    std::vector<TargetCluster> clusters;
+    ::std::vector<TargetCluster> clusters;
     if (!_bot)
         return clusters;
 
@@ -288,7 +288,7 @@ std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClu
     }
 
     // Find clusters using DBSCAN-like algorithm
-    std::unordered_set<ObjectGuid> processed;
+    ::std::unordered_set<ObjectGuid> processed;
     for (auto const& [guid, info] : _targetCache)
     {
         if (processed.count(guid) > 0)
@@ -299,7 +299,7 @@ std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClu
 
         // Find all targets within cluster radius (8 yards default)
         float clusterRadius = 8.0f;
-        std::vector<ObjectGuid> neighbors = GetGridNeighbors(info.position, clusterRadius);
+        ::std::vector<ObjectGuid> neighbors = GetGridNeighbors(info.position, clusterRadius);
 
         if (neighbors.size() < 2)  // Need at least 2 targets for a cluster
             continue;
@@ -337,7 +337,7 @@ std::vector<AoEDecisionManager::TargetCluster> AoEDecisionManager::FindTargetClu
     }
 
     // Sort clusters by target count (descending)
-    std::sort(clusters.begin(), clusters.end(),
+    ::std::sort(clusters.begin(), clusters.end(),
         [](TargetCluster const& a, TargetCluster const& b) {
             return a.targetCount > b.targetCount;
         });
@@ -359,7 +359,7 @@ Position AoEDecisionManager::GetBestAoEPosition(uint32 spellId) const
         radius = 30.0f;  // Default search radius
 
     // Find clusters
-    std::vector<TargetCluster> clusters = FindTargetClusters(radius);
+    ::std::vector<TargetCluster> clusters = FindTargetClusters(radius);
     if (clusters.empty())
         return _bot->GetPosition();
 
@@ -378,11 +378,11 @@ float AoEDecisionManager::GetCleavePriority() const
         return 0.0f;
 
     // Base priority on target count
-    float priority = std::min(1.0f, targetCount / 5.0f);
+    float priority = ::std::min(1.0f, targetCount / 5.0f);
 
     // Adjust for role
     if (IsTank(_bot))
-        priority = std::min(1.0f, priority * 1.5f);  // Tanks need cleave for threat
+        priority = ::std::min(1.0f, priority * 1.5f);  // Tanks need cleave for threat
     else if (IsHealer(_bot))
         priority *= 0.5f;  // Healers should focus on healing
 
@@ -403,7 +403,7 @@ float AoEDecisionManager::GetCleavePriority() const
     {
         avgHealth /= validTargets;
         // Reduce priority if targets are low health (will die soon anyway)
-        if (avgHealth < 30.0f)
+    if (avgHealth < 30.0f)
             priority *= 0.5f;
     }
 
@@ -426,10 +426,10 @@ float AoEDecisionManager::GetBestCleaveAngle(float coneAngle) const
         for (auto const& [guid, info] : _targetCache)
         {
             float angleToTarget = _bot->GetAbsoluteAngle(&info.position);
-            float angleDiff = std::abs(angleToTarget - testAngle);
+            float angleDiff = ::std::abs(angleToTarget - testAngle);
 
             // Normalize angle difference
-            if (angleDiff > M_PI)
+    if (angleDiff > M_PI)
                 angleDiff = 2 * M_PI - angleDiff;
 
             if (angleDiff <= coneAngle / 2)
@@ -484,7 +484,7 @@ float AoEDecisionManager::CalculateAoEEfficiency(uint32 targets, float spellRadi
     else if (IsHealer(_bot))
         efficiency *= 0.7f;  // Healers should conserve mana
 
-    _cachedEfficiency = std::min(1.0f, efficiency);
+    _cachedEfficiency = ::std::min(1.0f, efficiency);
     _lastEfficiencyCalc = now;
 
     return _cachedEfficiency;
@@ -536,9 +536,9 @@ float AoEDecisionManager::CalculateResourceEfficiency(uint32 aoeSpellId, uint32 
 // DOT SPREADING
 // ============================================================================
 
-std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) const
+::std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) const
 {
-    std::vector<Unit*> targets;
+    ::std::vector<Unit*> targets;
     if (!_bot)
         return targets;
 
@@ -548,7 +548,7 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
         Unit* unit;
         float priority;
     };
-    std::vector<DoTTarget> candidates;
+    ::std::vector<DoTTarget> candidates;
 
     for (auto const& [guid, info] : _targetCache)
     {
@@ -563,18 +563,18 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
         float priority = 100.0f;
 
         // Prioritize targets without DoTs
-        if (!info.hasDot)
+    if (!info.hasDot)
             priority += 50.0f;
 
         // Prioritize high health targets
         priority += info.healthPercent * 0.5f;
 
         // Prioritize elites
-        if (info.isElite)
+    if (info.isElite)
             priority += 30.0f;
 
         // Deprioritize distant targets (use snapshot position for lock-free calculation)
-        float distance = std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
+        float distance = ::std::sqrt(_bot->GetExactDistSq(snapshot->position)); // Calculate once from squared distance
         priority -= distance * 2.0f;
 
         // MIGRATION TODO: Convert to GUID-based
@@ -584,13 +584,13 @@ std::vector<Unit*> AoEDecisionManager::GetDoTSpreadTargets(uint32 maxTargets) co
     }
 
     // Sort by priority
-    std::sort(candidates.begin(), candidates.end(),
+    ::std::sort(candidates.begin(), candidates.end(),
         [](DoTTarget const& a, DoTTarget const& b) {
             return a.priority > b.priority;
         });
 
     // Return top N targets
-    for (size_t i = 0; i < std::min(static_cast<size_t>(maxTargets), candidates.size()); ++i)
+    for (size_t i = 0; i < ::std::min(static_cast<size_t>(maxTargets), candidates.size()); ++i)
         targets.push_back(candidates[i].unit);
 
     return targets;
@@ -624,7 +624,7 @@ bool AoEDecisionManager::NeedsDoTRefresh(Unit* target, uint32 dotSpellId) const
 
 void AoEDecisionManager::SetMinimumAoETargets(uint32 count)
 {
-    _minAoETargets = std::max(2u, count);
+    _minAoETargets = ::std::max(2u, count);
 }
 
 void AoEDecisionManager::SetAoEAggression(bool aggressive)
@@ -717,7 +717,7 @@ float AoEDecisionManager::ScoreAoEPosition(Position const& pos, float radius) co
     }
 
     // Penalize positions too far from bot
-    float botDistance = std::sqrt(_bot->GetExactDistSq(pos)); // Calculate once from squared distance
+    float botDistance = ::std::sqrt(_bot->GetExactDistSq(pos)); // Calculate once from squared distance
     if (botDistance > 30.0f)
         score *= 0.5f;
     else if (botDistance > 20.0f)
@@ -776,11 +776,11 @@ uint32 AoEDecisionManager::GetGridKey(Position const& pos) const
     return (gridX & 0xFFFF) | ((gridY & 0xFFFF) << 16);
 }
 
-std::vector<ObjectGuid> AoEDecisionManager::GetGridNeighbors(Position const& pos, float radius) const
+::std::vector<ObjectGuid> AoEDecisionManager::GetGridNeighbors(Position const& pos, float radius) const
 {
-    std::vector<ObjectGuid> neighbors;
+    ::std::vector<ObjectGuid> neighbors;
 
-    int32 gridRadius = static_cast<int32>(std::ceil(radius / GRID_SIZE));
+    int32 gridRadius = static_cast<int32>(::std::ceil(radius / GRID_SIZE));
     int32 centerX = static_cast<int32>(pos.GetPositionX() / GRID_SIZE);
     int32 centerY = static_cast<int32>(pos.GetPositionY() / GRID_SIZE);
 

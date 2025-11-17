@@ -37,9 +37,9 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreateBotCharacter(
     uint8 race,
     uint8 classId,
     uint8 gender,
-    std::string const& name,
+    ::std::string const& name,
     ObjectGuid& outGuid,
-    std::string& outErrorMsg)
+    ::std::string& outErrorMsg)
 {
     // Phase 1: Validation
     CreateResult validationResult = ValidateCreationRequest(
@@ -83,32 +83,32 @@ bool BotCharacterCreator::CanCreateCharacter(uint32 accountId, uint32& currentCo
     return currentCount < maxChars;
 }
 
-std::string BotCharacterCreator::GenerateDefaultBotName(uint8 race, uint8 gender)
+::std::string BotCharacterCreator::GenerateDefaultBotName(uint8 race, uint8 gender)
 {
     // Simple name generator - can be enhanced with race-specific names
-    static const std::vector<std::string> prefixes = {
+    static const ::std::vector<::std::string> prefixes = {
         "Bot", "AI", "Auto", "Servo", "Mech", "Cyber", "Droid"
     };
 
-    static const std::vector<std::string> suffixes = {
+    static const ::std::vector<::std::string> suffixes = {
         "warrior", "mage", "hunter", "rogue", "priest", "knight", "slayer"
     };
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> prefixDist(0, prefixes.size() - 1);
-    std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
-    std::uniform_int_distribution<> numberDist(1, 9999);
+    ::std::random_device rd;
+    ::std::mt19937 gen(rd());
+    ::std::uniform_int_distribution<> prefixDist(0, prefixes.size() - 1);
+    ::std::uniform_int_distribution<> suffixDist(0, suffixes.size() - 1);
+    ::std::uniform_int_distribution<> numberDist(1, 9999);
 
-    std::string name;
+    ::std::string name;
     name.reserve(32); // Pre-allocate reasonable size for name
     name = prefixes[prefixDist(gen)];
     name += suffixes[suffixDist(gen)];
-    name += std::to_string(numberDist(gen));
+    name += ::std::to_string(numberDist(gen));
 
     // Capitalize first letter
     if (!name.empty())
-        name[0] = std::toupper(name[0]);
+        name[0] = ::std::toupper(name[0]);
 
     return name;
 }
@@ -162,8 +162,8 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
     uint8 race,
     uint8 classId,
     uint8 gender,
-    std::string const& name,
-    std::string& outErrorMsg)
+    ::std::string const& name,
+    ::std::string& outErrorMsg)
 {
     // 1. Validate race/class combination
     if (!IsValidRaceClassCombination(race, classId))
@@ -180,7 +180,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
     }
 
     // 3. Validate name
-    std::string nameToCheck = name;
+    ::std::string nameToCheck = name;
     if (!normalizePlayerName(nameToCheck))
     {
         outErrorMsg = "Character name is empty or invalid";
@@ -213,7 +213,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::ValidateCreationRequest(
     if (!CanCreateCharacter(accountId, currentCount))
     {
         outErrorMsg = "Account has reached character limit (";
-        outErrorMsg += std::to_string(sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM));
+        outErrorMsg += ::std::to_string(sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM));
         outErrorMsg += ")";
         return CreateResult::REALM_LIMIT;
     }
@@ -266,22 +266,22 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     uint8 race,
     uint8 classId,
     uint8 gender,
-    std::string const& name,
+    ::std::string const& name,
     ObjectGuid& outGuid,
-    std::string& outErrorMsg)
+    ::std::string& outErrorMsg)
 {
     // Create a minimal WorldSession for character creation
     // Note: This is a temporary session just for the creation process
-    std::shared_ptr<WorldSession> tempSession = std::make_shared<WorldSession>(
+    ::std::shared_ptr<WorldSession> tempSession = ::std::make_shared<WorldSession>(
         accountId,                                  // Account ID
-        std::string(""),                            // Account name (battle tag)
+        ::std::string(""),                            // Account name (battle tag)
         0,                                          // Battle.net account ID
         nullptr,                                    // No socket
         AccountTypes::SEC_PLAYER,                   // Security level
         CURRENT_EXPANSION,                          // Expansion
         0,                                          // Mute time
         "",                                         // OS string
-        std::chrono::minutes(0),                    // Timezone offset
+        ::std::chrono::minutes(0),                    // Timezone offset
         0,                                          // Build
         ClientBuild::VariantId{},                   // Client build variant
         DEFAULT_LOCALE,                             // Locale
@@ -291,7 +291,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     );
 
     // Build CharacterCreateInfo structure
-    auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+    auto createInfo = ::std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
     createInfo->Race = race;
     createInfo->Class = classId;
     createInfo->Sex = gender;
@@ -305,7 +305,7 @@ BotCharacterCreator::CreateResult BotCharacterCreator::CreatePlayerObject(
     // Note: Customizations array is already default-initialized by CharacterCreateInfo constructor
 
     // Create Player object
-    std::shared_ptr<Player> newChar(new Player(tempSession.get()), [](Player* ptr)
+    ::std::shared_ptr<Player> newChar(new Player(tempSession.get()), [](Player* ptr)
     {
         ptr->CleanupsBeforeDelete();
         delete ptr;

@@ -28,9 +28,9 @@ namespace Playerbot {
 namespace Performance {
 
 DebuggerIntegration::DebuggerIntegration(DebuggerIntegrationConfig config)
-    : _config(std::move(config))
-    , _lastBreakTime(std::chrono::steady_clock::now() - std::chrono::hours(1))
-    , _lastDumpTime(std::chrono::steady_clock::now() - std::chrono::hours(1))
+    : _config(::std::move(config))
+    , _lastBreakTime(::std::chrono::steady_clock::now() - ::std::chrono::hours(1))
+    , _lastDumpTime(::std::chrono::steady_clock::now() - ::std::chrono::hours(1))
 {
     EnsureDumpDirectoryExists();
 }
@@ -52,7 +52,7 @@ void DebuggerIntegration::Disable()
 
 void DebuggerIntegration::SetConfig(DebuggerIntegrationConfig config)
 {
-    _config = std::move(config);
+    _config = ::std::move(config);
     EnsureDumpDirectoryExists();
 }
 
@@ -93,7 +93,7 @@ void DebuggerIntegration::HandleAutoBreak(const DeadlockCheckResult& result)
     // Trigger breakpoint
     DoDebugBreak(result.description);
     _stats.breakpointsTriggered++;
-    _lastBreakTime = std::chrono::steady_clock::now();
+    _lastBreakTime = ::std::chrono::steady_clock::now();
 }
 
 void DebuggerIntegration::HandleMinidumpGeneration(const DeadlockCheckResult& result)
@@ -105,11 +105,11 @@ void DebuggerIntegration::HandleMinidumpGeneration(const DeadlockCheckResult& re
     }
 
     // Generate minidump
-    std::string reason = result.description;
+    ::std::string reason = result.description;
     if (GenerateMinidump(reason))
     {
         _stats.minidumpsGenerated++;
-        _lastDumpTime = std::chrono::steady_clock::now();
+        _lastDumpTime = ::std::chrono::steady_clock::now();
     }
 }
 
@@ -136,8 +136,8 @@ bool DebuggerIntegration::ShouldBreak(const DeadlockCheckResult& result)
         return false;
 
     // Check rate limiting
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastBreak = std::chrono::duration_cast<std::chrono::seconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastBreak = ::std::chrono::duration_cast<::std::chrono::seconds>(
         now - _lastBreakTime);
 
     return timeSinceLastBreak >= _config.minTimeBetweenBreaks;
@@ -163,21 +163,21 @@ bool DebuggerIntegration::ShouldDump(const DeadlockCheckResult& result)
         return false;
 
     // Check rate limiting
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceLastDump = std::chrono::duration_cast<std::chrono::seconds>(
+    auto now = ::std::chrono::steady_clock::now();
+    auto timeSinceLastDump = ::std::chrono::duration_cast<::std::chrono::seconds>(
         now - _lastDumpTime);
 
     return timeSinceLastDump >= _config.minTimeBetweenDumps;
 }
 
-void DebuggerIntegration::DoDebugBreak(const std::string& reason)
+void DebuggerIntegration::DoDebugBreak(const ::std::string& reason)
 {
 #ifdef _WIN32
     TC_LOG_ERROR("playerbot.threadpool.debugger",
         "TRIGGERING DEBUGBREAK: {}", reason);
 
     // Output to debugger console
-    std::string debugMessage = "=== THREADPOOL DEADLOCK DETECTED ===\n" + reason + "\n";
+    ::std::string debugMessage = "=== THREADPOOL DEADLOCK DETECTED ===\n" + reason + "\n";
     OutputDebugStringA(debugMessage.c_str());
 
     // Trigger breakpoint
@@ -188,7 +188,7 @@ void DebuggerIntegration::DoDebugBreak(const std::string& reason)
 #endif
 }
 
-void DebuggerIntegration::TriggerBreakpoint(const std::string& reason)
+void DebuggerIntegration::TriggerBreakpoint(const ::std::string& reason)
 {
     if (!_enabled)
         return;
@@ -204,9 +204,9 @@ void DebuggerIntegration::TriggerBreakpoint(const std::string& reason)
     _stats.breakpointsTriggered++;
 }
 
-bool DebuggerIntegration::GenerateMinidump(const std::string& reason)
+bool DebuggerIntegration::GenerateMinidump(const ::std::string& reason)
 {
-    std::string filename = GenerateDumpFilename(reason);
+    ::std::string filename = GenerateDumpFilename(reason);
 
 #ifdef _WIN32
     return GenerateMinidumpWindows(filename, reason);
@@ -216,7 +216,7 @@ bool DebuggerIntegration::GenerateMinidump(const std::string& reason)
 }
 
 #ifdef _WIN32
-bool DebuggerIntegration::GenerateMinidumpWindows(const std::string& filename, const std::string& reason)
+bool DebuggerIntegration::GenerateMinidumpWindows(const ::std::string& filename, const ::std::string& reason)
 {
     try
     {
@@ -270,7 +270,7 @@ bool DebuggerIntegration::GenerateMinidumpWindows(const std::string& filename, c
             // Get file size
             try
             {
-                auto fileSize = std::filesystem::file_size(filename);
+                auto fileSize = ::std::filesystem::file_size(filename);
                 TC_LOG_INFO("playerbot.threadpool.debugger",
                     "Minidump size: {} MB", fileSize / (1024 * 1024));
             }
@@ -285,7 +285,7 @@ bool DebuggerIntegration::GenerateMinidumpWindows(const std::string& filename, c
             return false;
         }
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.threadpool.debugger",
             "Exception while generating minidump: {}", e.what());
@@ -330,18 +330,18 @@ LONG WINAPI MinidumpExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
     try
     {
         // Generate crash dump filename
-        auto now = std::chrono::system_clock::now();
-        auto time_t_val = std::chrono::system_clock::to_time_t(now);
-        std::tm tm_val = *std::localtime(&time_t_val);
+        auto now = ::std::chrono::system_clock::now();
+        auto time_t_val = ::std::chrono::system_clock::to_time_t(now);
+        ::std::tm tm_val = *::std::localtime(&time_t_val);
 
-        std::stringstream ss;
+        ::std::stringstream ss;
         ss << "logs/dumps/crash_"
-           << std::put_time(&tm_val, "%Y%m%d_%H%M%S")
+           << ::std::put_time(&tm_val, "%Y%m%d_%H%M%S")
            << ".dmp";
-        std::string filename = ss.str();
+        ::std::string filename = ss.str();
 
         // Ensure directory exists
-        std::filesystem::create_directories("logs/dumps/");
+        ::std::filesystem::create_directories("logs/dumps/");
 
         // Create dump file
         HANDLE hFile = CreateFileA(
@@ -394,7 +394,7 @@ LONG WINAPI MinidumpExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 #endif // _WIN32
 
 #ifndef _WIN32
-bool DebuggerIntegration::GenerateMinidumpStub(const std::string& filename, const std::string& reason)
+bool DebuggerIntegration::GenerateMinidumpStub(const ::std::string& filename, const ::std::string& reason)
 {
     TC_LOG_WARN("playerbot.threadpool.debugger",
         "Minidump generation requested but not supported on this platform: {}",
@@ -414,16 +414,16 @@ bool DebuggerIntegration::IsDebuggerAttached()
 #endif
 }
 
-std::string DebuggerIntegration::GenerateDumpFilename(const std::string& reason) const
+::std::string DebuggerIntegration::GenerateDumpFilename(const ::std::string& reason) const
 {
-    auto now = std::chrono::system_clock::now();
-    auto time_t_val = std::chrono::system_clock::to_time_t(now);
-    std::tm tm_val = *std::localtime(&time_t_val);
+    auto now = ::std::chrono::system_clock::now();
+    auto time_t_val = ::std::chrono::system_clock::to_time_t(now);
+    ::std::tm tm_val = *::std::localtime(&time_t_val);
 
-    std::stringstream ss;
+    ::std::stringstream ss;
     ss << _config.dumpDirectory
        << "threadpool_deadlock_"
-       << std::put_time(&tm_val, "%Y%m%d_%H%M%S")
+       << ::std::put_time(&tm_val, "%Y%m%d_%H%M%S")
        << ".dmp";
 
     return ss.str();
@@ -433,9 +433,9 @@ void DebuggerIntegration::EnsureDumpDirectoryExists()
 {
     try
     {
-        std::filesystem::create_directories(_config.dumpDirectory);
+        ::std::filesystem::create_directories(_config.dumpDirectory);
     }
-    catch (const std::exception& e)
+    catch (const ::std::exception& e)
     {
         TC_LOG_ERROR("playerbot.threadpool.debugger",
             "Failed to create dump directory {}: {}",
@@ -443,14 +443,14 @@ void DebuggerIntegration::EnsureDumpDirectoryExists()
     }
 }
 
-std::string DebuggerIntegration::GetTimestampString() const
+::std::string DebuggerIntegration::GetTimestampString() const
 {
-    auto now = std::chrono::system_clock::now();
-    auto time_t_val = std::chrono::system_clock::to_time_t(now);
-    std::tm tm_val = *std::localtime(&time_t_val);
+    auto now = ::std::chrono::system_clock::now();
+    auto time_t_val = ::std::chrono::system_clock::to_time_t(now);
+    ::std::tm tm_val = *::std::localtime(&time_t_val);
 
-    std::stringstream ss;
-    ss << std::put_time(&tm_val, "%Y%m%d_%H%M%S");
+    ::std::stringstream ss;
+    ss << ::std::put_time(&tm_val, "%Y%m%d_%H%M%S");
     return ss.str();
 }
 

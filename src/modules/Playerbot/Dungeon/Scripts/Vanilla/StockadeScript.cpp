@@ -100,7 +100,7 @@ public:
             case 1663: // Dextren Ward
             {
                 // Ward casts Mind Blast (frequent, high damage)
-                if (boss->HasUnitState(UNIT_STATE_CASTING))
+    if (boss->HasUnitState(UNIT_STATE_CASTING))
                 {
                     ::Spell* currentSpell = boss->GetCurrentSpell(CURRENT_GENERIC_SPELL);
                     if (currentSpell && currentSpell->m_spellInfo)
@@ -108,7 +108,7 @@ public:
                         uint32 spellId = currentSpell->m_spellInfo->Id;
 
                         // Mind Blast is interruptible and deals significant damage
-                        if (spellId == 15587 || spellId == 13860) // Mind Blast variations
+    if (spellId == 15587 || spellId == 13860) // Mind Blast variations
                         {
                             if (HasInterruptAvailable(player))
                             {
@@ -145,14 +145,14 @@ public:
                 if (!group)
                     break;
                 // Check for feared players
-                for (auto const& member : group->GetMemberSlots())
+    for (auto const& member : group->GetMemberSlots())
                 {
                     Player* groupMember = ObjectAccessor::FindPlayer(member.guid);
                     if (!groupMember || !groupMember->IsInWorld() || groupMember->IsDead())
                         continue;
 
                     // Check for fear debuff
-                    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
+    if (groupMember->HasAuraType(SPELL_AURA_MOD_FEAR))
                     {
                         TC_LOG_DEBUG("module.playerbot", "StockadeScript: Player is feared by Dextren Ward");
                         // Dispel fear if possible
@@ -188,13 +188,12 @@ public:
             {
                 // Bazil uses Smoke Bomb (blind effect in area)
                 // If blinded, move away from boss briefly
-
-                if (player->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED)) // Blind-like effect
+    if (player->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED)) // Blind-like effect
                 {
                     // Move away briefly
                     float angle = boss->GetAngle(player) + M_PI; // Away from boss
-                    float x = player->GetPositionX() + 5.0f * std::cos(angle);
-                    float y = player->GetPositionY() + 5.0f * std::sin(angle);
+                    float x = player->GetPositionX() + 5.0f * ::std::cos(angle);
+                    float y = player->GetPositionY() + 5.0f * ::std::sin(angle);
                     float z = player->GetPositionZ();
                     TC_LOG_DEBUG("module.playerbot", "StockadeScript: Moving away from Bazil's Smoke Bomb");
                     player->GetMotionMaster()->MovePoint(0, x, y, z);
@@ -255,8 +254,7 @@ public:
             {
                 // When Kam enrages (below 20% health), tank should use defensive cooldowns
                 // DPS should maximize damage to end fight quickly
-
-                if (boss->GetHealthPct() < 20.0f)
+    if (boss->GetHealthPct() < 20.0f)
                 {
                     DungeonRole role = GetPlayerRole(player);
 

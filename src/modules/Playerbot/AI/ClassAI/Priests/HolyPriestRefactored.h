@@ -30,11 +30,24 @@
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
+#include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Holy Priest Spell IDs
 constexpr uint32 HOLY_HEAL = 2050;
 constexpr uint32 HOLY_FLASH_HEAL = 2061;
@@ -141,7 +154,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _renewTargets; // GUID -> expiration time
 };
 
 // Prayer of Mending tracker (bouncing heal)
@@ -204,10 +217,10 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _pomTargets; // GUID -> expiration time
 };
 
-class HolyPriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
+class HolyPriestRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -215,32 +228,32 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit HolyPriestRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        , PriestSpecialization(bot)
+    explicit HolyPriestRefactored(Player* bot)
+        : HealerSpecialization<ManaResource>(bot)
         , _renewTracker()
         , _pomTracker()
         , _apotheosisActive(false)
         , _apotheosisEndTime(0)
         , _lastApotheosisTime(0)
-
-
+        , _lastGuardianSpiritTime(0)
+        , _lastDivineHymnTime(0)
         , _lastSalvationTime(0)
         , _lastSymbolOfHopeTime(0)
         , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {HOLY_DIVINE_HYMN, 180000, 1},
-
-            {HOLY_HOLY_WORD_SALVATION, 720000, 1},
-
-            {HOLY_APOTHEOSIS, 120000, 1},
-
-            {HOLY_GUARDIAN_SPIRIT, 180000, 1},
-
-            {HOLY_SYMBOL_OF_HOPE, 300000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_DIVINE_HYMN, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_HOLY_WORD_SALVATION, 720000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_APOTHEOSIS, 120000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_GUARDIAN_SPIRIT, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {HOLY_SYMBOL_OF_HOPE, 300000, 1}
+        // COMMENTED OUT:         });
 
         // Initialize Phase 5 systems
         InitializeHolyMechanics();
@@ -261,7 +274,7 @@ public:
         
         {
 
-            std::vector<Unit*> groupMembers;
+            ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -318,7 +331,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_POWER_WORD_FORTITUDE);
+                this->CastSpell(HOLY_POWER_WORD_FORTITUDE, bot);
 
             }
         }
@@ -337,7 +350,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(HOLY_DESPERATE_PRAYER, bot))
         {
 
-            this->CastSpell(bot, HOLY_DESPERATE_PRAYER);
+            this->CastSpell(HOLY_DESPERATE_PRAYER, bot);
 
             return;
         }
@@ -350,7 +363,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_GUARDIAN_SPIRIT);
+                this->CastSpell(HOLY_GUARDIAN_SPIRIT, bot);
 
                 _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
 
@@ -367,7 +380,7 @@ public:
 
             {
 
-                this->CastSpell(bot, HOLY_FADE);
+                this->CastSpell(HOLY_FADE, bot);
 
                 return;
 
@@ -411,7 +424,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -440,7 +453,7 @@ private:
         return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Salvation (massive AoE heal)
         uint32 criticalHealthCount = 0;
@@ -463,7 +476,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_HOLY_WORD_SALVATION);
+                    this->CastSpell(HOLY_HOLY_WORD_SALVATION, bot);
 
                     _lastSalvationTime = GameTime::GetGameTimeMS();
 
@@ -490,7 +503,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_DIVINE_HYMN);
+                this->CastSpell(HOLY_DIVINE_HYMN, bot);
 
                 _lastDivineHymnTime = GameTime::GetGameTimeMS();
 
@@ -511,7 +524,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_APOTHEOSIS);
+                    this->CastSpell(HOLY_APOTHEOSIS, bot);
                     _apotheosisActive = true;
 
                     _apotheosisEndTime = GameTime::GetGameTimeMS() + 20000; // 20 sec
@@ -540,7 +553,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_GUARDIAN_SPIRIT);
+                        this->CastSpell(HOLY_GUARDIAN_SPIRIT, member);
 
                         _lastGuardianSpiritTime = GameTime::GetGameTimeMS();
 
@@ -569,7 +582,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_SYMBOL_OF_HOPE);
+                    this->CastSpell(HOLY_SYMBOL_OF_HOPE, bot);
 
                     _lastSymbolOfHopeTime = GameTime::GetGameTimeMS();
 
@@ -582,7 +595,7 @@ private:
         return false;
     }
 
-    bool HandleHoTs(const std::vector<Unit*>& group)
+    bool HandleHoTs(const ::std::vector<Unit*>& group)
     {
         uint32 activeRenews = _renewTracker.GetActiveRenewCount();
 
@@ -601,7 +614,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_PRAYER_OF_MENDING);
+                        this->CastSpell(HOLY_PRAYER_OF_MENDING, member);
 
                         _pomTracker.ApplyPoM(member->GetGUID(), 30000);
 
@@ -633,7 +646,7 @@ private:
 
                         {
 
-                            this->CastSpell(member, HOLY_RENEW);
+                            this->CastSpell(HOLY_RENEW, member);
 
                             _renewTracker.ApplyRenew(member->GetGUID(), 15000);
 
@@ -651,7 +664,7 @@ private:
         return false;
     }
 
-    bool HandleHolyWords(const std::vector<Unit*>& group)
+    bool HandleHolyWords(const ::std::vector<Unit*>& group)
     {
         // Holy Word: Serenity (big single-target heal)
         for (Unit* member : group)
@@ -664,7 +677,7 @@ private:
                 if (this->CanCastSpell(HOLY_HOLY_WORD_SERENITY, member))
                 {
 
-                    this->CastSpell(member, HOLY_HOLY_WORD_SERENITY);
+                    this->CastSpell(HOLY_HOLY_WORD_SERENITY, member);
 
                     return true;
 
@@ -717,7 +730,7 @@ private:
             if (this->CanCastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget))
 
             {
-            this->CastSpell(stackedTarget, HOLY_HOLY_WORD_SANCTIFY);
+            this->CastSpell(HOLY_HOLY_WORD_SANCTIFY, stackedTarget);
 
                 return true;
 
@@ -727,7 +740,7 @@ private:
         return false;
     }
 
-    bool HandleAoEHealing(const std::vector<Unit*>& group)
+    bool HandleAoEHealing(const ::std::vector<Unit*>& group)
     {
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
@@ -757,7 +770,7 @@ private:
 
                         {
 
-                            this->CastSpell(member, HOLY_CIRCLE_OF_HEALING);
+                            this->CastSpell(HOLY_CIRCLE_OF_HEALING, member);
 
                             return true;
 
@@ -786,7 +799,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, HOLY_PRAYER_OF_HEALING);
+                        this->CastSpell(HOLY_PRAYER_OF_HEALING, member);
 
                         return true;
 
@@ -809,7 +822,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_DIVINE_STAR);
+                    this->CastSpell(HOLY_DIVINE_STAR, bot);
 
                     return true;
 
@@ -830,7 +843,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, HOLY_HALO);
+                    this->CastSpell(HOLY_HALO, bot);
 
                     return true;
 
@@ -842,7 +855,7 @@ private:
         return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {
         // Flash Heal for emergency
         for (Unit* member : group)
@@ -856,7 +869,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, HOLY_FLASH_HEAL);
+                    this->CastSpell(HOLY_FLASH_HEAL, member);
 
                     return true;
 
@@ -877,7 +890,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, HOLY_HEAL);
+                    this->CastSpell(HOLY_HEAL, member);
 
                     return true;
 
@@ -902,7 +915,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_RENEW);
+                this->CastSpell(HOLY_RENEW, bot);
 
                 _renewTracker.ApplyRenew(bot->GetGUID(), 15000);
 
@@ -919,7 +932,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_FLASH_HEAL);
+                this->CastSpell(HOLY_FLASH_HEAL, bot);
 
                 return true;
 
@@ -934,7 +947,7 @@ private:
 
             {
 
-                this->CastSpell(bot, HOLY_HEAL);
+                this->CastSpell(HOLY_HEAL, bot);
 
                 return true;
 
@@ -950,7 +963,7 @@ private:
         if (this->CanCastSpell(HOLY_HOLY_FIRE, target))
         {
 
-            this->CastSpell(target, HOLY_HOLY_FIRE);
+            this->CastSpell(HOLY_HOLY_FIRE, target);
 
             return;
         }
@@ -959,7 +972,7 @@ private:
         if (this->CanCastSpell(HOLY_SMITE, target))
         {
 
-            this->CastSpell(target, HOLY_SMITE);
+            this->CastSpell(HOLY_SMITE, target);
 
             return;
         }
@@ -986,11 +999,9 @@ private:
     }
 
     void InitializeHolyMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
-        BotAI* ai = this->GetBot()->GetBotAI();
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        BotAI* ai = this;
         if (!ai)
 
             return;
@@ -1073,7 +1084,7 @@ private:
             queue->RegisterSpell(HOLY_PURIFY, SpellPriority::LOW, SpellCategory::UTILITY);
 
 
-            TC_LOG_INFO("module.playerbot", "✨ HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: Registered {} spells", queue->GetSpellCount());
         }
 
         auto* behaviorTree = ai->GetBehaviorTree();
@@ -1104,7 +1115,7 @@ private:
 
                     Selector("Response", {
 
-                        Action("Guardian Spirit", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Guardian Spirit", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1118,7 +1129,7 @@ private:
 
                                         this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m)) {
 
-                                        this->CastSpell(m, HOLY_GUARDIAN_SPIRIT);
+                                        this->CastSpell(HOLY_GUARDIAN_SPIRIT, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1128,7 +1139,7 @@ private:
 
                         }),
 
-                        Action("Flash Heal", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Flash Heal", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1142,7 +1153,7 @@ private:
 
                                         this->CanCastSpell(HOLY_FLASH_HEAL, m)) {
 
-                                        this->CastSpell(m, HOLY_FLASH_HEAL);
+                                        this->CastSpell(HOLY_FLASH_HEAL, m);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1163,7 +1174,7 @@ private:
 
                     Selector("HoT Priority", {
 
-                        Action("Prayer of Mending", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Prayer of Mending", [this](Player* bot, Unit*) {
 
                             if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
 
@@ -1179,7 +1190,7 @@ private:
 
                                             this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m)) {
 
-                                            this->CastSpell(m, HOLY_PRAYER_OF_MENDING);
+                                            this->CastSpell(HOLY_PRAYER_OF_MENDING, m);
 
                                             this->_pomTracker.ApplyPoM(m->GetGUID(), 30000);
 
@@ -1193,7 +1204,7 @@ private:
 
                         }),
 
-                        Action("Renew", [this](Player* bot, Unit*) {
+                        bot::ai::Action("Renew", [this](Player* bot, Unit*) {
 
                             Group* g = bot->GetGroup();
 
@@ -1209,7 +1220,7 @@ private:
 
                                         this->CanCastSpell(HOLY_RENEW, m)) {
 
-                                        this->CastSpell(m, HOLY_RENEW);
+                                        this->CastSpell(HOLY_RENEW, m);
 
                                         this->_renewTracker.ApplyRenew(m->GetGUID(), 15000);
 
@@ -1228,7 +1239,7 @@ private:
 
                 Sequence("Direct Healing", {
 
-                    Action("Heal", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Heal", [this](Player* bot, Unit*) {
 
                         Group* g = bot->GetGroup();
 
@@ -1242,7 +1253,7 @@ private:
 
                                     this->CanCastSpell(HOLY_HEAL, m)) {
 
-                                    this->CastSpell(m, HOLY_HEAL);
+                                    this->CastSpell(HOLY_HEAL, m);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1259,7 +1270,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 HOLY PRIEST: BehaviorTree initialized");
+            TC_LOG_INFO("module.playerbot", " HOLY PRIEST: BehaviorTree initialized");
         }
     }
 
@@ -1271,8 +1282,12 @@ private:
     uint32 _apotheosisEndTime;
 
     uint32 _lastApotheosisTime;
+    uint32 _lastGuardianSpiritTime;
+    uint32 _lastDivineHymnTime;
     uint32 _lastSalvationTime;
     uint32 _lastSymbolOfHopeTime;
+
+    CooldownManager _cooldowns;
 };
 
 } // namespace Playerbot

@@ -77,8 +77,8 @@ public:
         float distance;                   // Flight distance
         uint32 estimatedTime;             // Estimated flight time in seconds
         bool isKnown;                     // Whether bot knows this node
-        std::vector<uint32> route;        // Full route (node IDs)
-        std::string reason;               // Human-readable reason for priority
+        ::std::vector<uint32> route;        // Full route (node IDs)
+        ::std::string reason;               // Human-readable reason for priority
 
         FlightPathEvaluation()
             : nodeId(0), priority(DestinationPriority::EXPLORATION)
@@ -93,7 +93,7 @@ public:
     struct FlightDestination
     {
         uint32 nodeId;
-        std::string name;
+        ::std::string name;
         float x, y, z;
         uint32 mapId;
         uint32 continentId;
@@ -162,14 +162,14 @@ public:
      * @brief Get all known flight paths
      * @return Vector of known taxi node IDs
      */
-    std::vector<uint32> GetKnownFlightPaths() const;
+    ::std::vector<uint32> GetKnownFlightPaths() const;
 
     /**
      * @brief Get all reachable destinations from current location
      * @param flightMaster Flight master creature
      * @return Vector of reachable flight destinations
      */
-    std::vector<FlightDestination> GetReachableDestinations(Creature* flightMaster) const;
+    ::std::vector<FlightDestination> GetReachableDestinations(Creature* flightMaster) const;
 
     // Flight Evaluation Methods
 
@@ -289,7 +289,7 @@ private:
      * @param route Output vector of node IDs
      * @return True if route found
      */
-    bool CalculateRoute(TaxiNodesEntry const* from, TaxiNodesEntry const* to, std::vector<uint32>& route) const;
+    bool CalculateRoute(TaxiNodesEntry const* from, TaxiNodesEntry const* to, ::std::vector<uint32>& route) const;
 
     /**
      * @brief Calculate distance between two nodes
@@ -332,7 +332,7 @@ private:
      * @param flightMaster Flight master creature
      * @return True if flight successfully initiated
      */
-    bool ExecuteFlight(std::vector<uint32> const& route, Creature* flightMaster);
+    bool ExecuteFlight(::std::vector<uint32> const& route, Creature* flightMaster);
 
     /**
      * @brief Record flight in statistics
@@ -359,8 +359,8 @@ private:
     uint32 m_flightDecisionCount;
 
     // Cache for frequently accessed data
-    std::unordered_map<uint32, DestinationPriority> m_priorityCache;
-    std::unordered_set<uint32> m_knownPathsCache;
+    ::std::unordered_map<uint32, DestinationPriority> m_priorityCache;
+    ::std::unordered_set<uint32> m_knownPathsCache;
     uint32 m_lastCacheUpdate;
     static constexpr uint32 CACHE_UPDATE_INTERVAL = 60000; // 1 minute
 };

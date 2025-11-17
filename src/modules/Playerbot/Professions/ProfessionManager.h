@@ -97,7 +97,7 @@ struct RecipeInfo
         uint32 itemId;
         uint32 quantity;
     };
-    std::vector<Reagent> reagents;
+    ::std::vector<Reagent> reagents;
 
     uint32 productItemId;
     uint32 productQuantity;
@@ -143,10 +143,33 @@ struct ProfessionAutomationProfile
     bool learnAllRecipes = false;          // Learn all available recipes vs optimal only
 
     // Class-specific profession preferences
-    std::vector<ProfessionType> preferredProfessions;
-    std::unordered_set<uint32> neverCraftItems;
+    ::std::vector<ProfessionType> preferredProfessions;
+    ::std::unordered_set<uint32> neverCraftItems;
 
     ProfessionAutomationProfile() = default;
+};
+
+// Profession performance monitoring
+struct ProfessionMetrics
+{
+    ::std::atomic<uint32> professionsLearned{0};
+    ::std::atomic<uint32> recipesLearned{0};
+    ::std::atomic<uint32> itemsCrafted{0};
+    ::std::atomic<uint32> resourcesGathered{0};
+    ::std::atomic<uint32> skillPointsGained{0};
+    ::std::atomic<uint32> goldSpentOnMaterials{0};
+    ::std::atomic<uint32> goldEarnedFromCrafts{0};
+
+    void Reset()
+    {
+        professionsLearned = 0;
+        recipesLearned = 0;
+        itemsCrafted = 0;
+        resourcesGathered = 0;
+        skillPointsGained = 0;
+        goldSpentOnMaterials = 0;
+        goldEarnedFromCrafts = 0;
+    }
 };
 
 /**
@@ -194,7 +217,7 @@ public:
     /**
      * Get all professions for player
      */
-    std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const override;
+    ::std::vector<ProfessionSkillInfo> GetPlayerProfessions(::Player* player) const override;
 
     /**
      * Unlearn profession (for respec)
@@ -214,7 +237,7 @@ public:
     /**
      * Get recommended professions for class
      */
-    std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const override;
+    ::std::vector<ProfessionType> GetRecommendedProfessions(uint8 classId) const override;
 
     /**
      * Check if profession is suitable for class
@@ -230,7 +253,7 @@ public:
      * Get beneficial profession pair for a given profession
      * Example: Mining → Blacksmithing/Engineering/Jewelcrafting
      */
-    std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const override;
+    ::std::vector<ProfessionType> GetBeneficialPairs(ProfessionType profession) const override;
 
     /**
      * Check if two professions form a beneficial pair
@@ -260,12 +283,12 @@ public:
     /**
      * Get all recipes for profession
      */
-    std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const override;
+    ::std::vector<RecipeInfo> GetRecipesForProfession(ProfessionType profession) const override;
 
     /**
      * Get craftable recipes for player (has skill + reagents)
      */
-    std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const override;
+    ::std::vector<RecipeInfo> GetCraftableRecipes(::Player* player, ProfessionType profession) const override;
 
     /**
      * Get optimal recipe for leveling (highest skill-up chance)
@@ -314,7 +337,7 @@ public:
     /**
      * Get missing materials for recipe
      */
-    std::vector<std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const override;
+    ::std::vector<::std::pair<uint32, uint32>> GetMissingMaterials(::Player* player, RecipeInfo const& recipe) const override;
 
     // ============================================================================
     // AUTOMATION PROFILES
@@ -326,28 +349,6 @@ public:
     // ============================================================================
     // METRICS
     // ============================================================================
-
-    struct ProfessionMetrics
-    {
-        std::atomic<uint32> professionsLearned{0};
-        std::atomic<uint32> recipesLearned{0};
-        std::atomic<uint32> itemsCrafted{0};
-        std::atomic<uint32> resourcesGathered{0};
-        std::atomic<uint32> skillPointsGained{0};
-        std::atomic<uint32> goldSpentOnMaterials{0};
-        std::atomic<uint32> goldEarnedFromCrafts{0};
-
-        void Reset()
-        {
-            professionsLearned = 0;
-            recipesLearned = 0;
-            itemsCrafted = 0;
-            resourcesGathered = 0;
-            skillPointsGained = 0;
-            goldSpentOnMaterials = 0;
-            goldEarnedFromCrafts = 0;
-        }
-    };
 
     ProfessionMetrics const& GetPlayerMetrics(uint32 playerGuid) const override;
     ProfessionMetrics const& GetGlobalMetrics() const override;
@@ -402,22 +403,22 @@ private:
     // ============================================================================
 
     // Recipe database (recipeId -> RecipeInfo)
-    std::unordered_map<uint32, RecipeInfo> _recipeDatabase;
+    ::std::unordered_map<uint32, RecipeInfo> _recipeDatabase;
 
     // Profession recipes (profession -> vector of recipeIds)
-    std::unordered_map<ProfessionType, std::vector<uint32>> _professionRecipes;
+    ::std::unordered_map<ProfessionType, ::std::vector<uint32>> _professionRecipes;
 
     // Class profession recommendations (classId -> preferred professions)
-    std::unordered_map<uint8, std::vector<ProfessionType>> _classRecommendations;
+    ::std::unordered_map<uint8, ::std::vector<ProfessionType>> _classRecommendations;
 
     // Beneficial profession pairs (profession -> synergistic partners)
-    std::unordered_map<ProfessionType, std::vector<ProfessionType>> _professionPairs;
+    ::std::unordered_map<ProfessionType, ::std::vector<ProfessionType>> _professionPairs;
 
     // Race profession bonuses (raceId -> (profession -> bonus))
-    std::unordered_map<uint8, std::unordered_map<ProfessionType, uint16>> _raceBonuses;
+    ::std::unordered_map<uint8, ::std::unordered_map<ProfessionType, uint16>> _raceBonuses;
 
     // Player automation profiles
-    std::unordered_map<uint32, ProfessionAutomationProfile> _playerProfiles;
+    ::std::unordered_map<uint32, ProfessionAutomationProfile> _playerProfiles;
 
     // Crafting queues (playerGuid -> queue of recipe IDs)
     struct CraftingTask
@@ -426,10 +427,10 @@ private:
         uint32 quantity;
         uint32 queueTime;
     };
-    std::unordered_map<uint32, std::vector<CraftingTask>> _craftingQueues;
+    ::std::unordered_map<uint32, ::std::vector<CraftingTask>> _craftingQueues;
 
     // Metrics
-    std::unordered_map<uint32, ProfessionMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, ProfessionMetrics> _playerMetrics;
     ProfessionMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::PROFESSION_MANAGER> _mutex;
@@ -437,7 +438,7 @@ private:
     // Update intervals
     static constexpr uint32 PROFESSION_UPDATE_INTERVAL = 5000;  // 5 seconds
     static constexpr uint32 CRAFTING_CAST_TIME = 3000;          // 3 seconds per craft
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 };
 
 } // namespace Playerbot

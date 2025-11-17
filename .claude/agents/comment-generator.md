@@ -1,3 +1,8 @@
+---
+name: comment-generator
+description: Code Comment Generator Agent
+---
+
 # Code Comment Generator Agent
 
 ## Role

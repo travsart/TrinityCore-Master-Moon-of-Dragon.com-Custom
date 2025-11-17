@@ -47,7 +47,7 @@ BotLevelManager* BotLevelManager::instance()
 
 bool BotLevelManager::Initialize()
 {
-    if (_initialized.load(std::memory_order_acquire))
+    if (_initialized.load(::std::memory_order_acquire))
     {
         TC_LOG_WARN("playerbot", "BotLevelManager::Initialize() - Already initialized");
         return true;
@@ -69,13 +69,13 @@ bool BotLevelManager::Initialize()
     }
 
     // Load configuration
-    _maxBotsPerUpdate.store(sPlayerbotConfig->GetInt("Playerbot.LevelManager.MaxBotsPerUpdate", 10), std::memory_order_release);
-    _verboseLogging.store(sPlayerbotConfig->GetBool("Playerbot.LevelManager.VerboseLogging", false), std::memory_order_release);
+    _maxBotsPerUpdate.store(sPlayerbotConfig->GetInt("Playerbot.LevelManager.MaxBotsPerUpdate", 10), ::std::memory_order_release);
+    _verboseLogging.store(sPlayerbotConfig->GetBool("Playerbot.LevelManager.VerboseLogging", false), ::std::memory_order_release);
 
     // Reset statistics
     _stats = LevelManagerStats();
 
-    _initialized.store(true, std::memory_order_release);
+    _initialized.store(true, ::std::memory_order_release);
 
     TC_LOG_INFO("playerbot", "BotLevelManager::Initialize() - All subsystems ready");
     TC_LOG_INFO("playerbot", "  -> Gear Factory ready");
@@ -88,7 +88,7 @@ bool BotLevelManager::Initialize()
 
 void BotLevelManager::Shutdown()
 {
-    if (!_initialized.load(std::memory_order_acquire))
+    if (!_initialized.load(::std::memory_order_acquire))
         return;
 
     TC_LOG_INFO("playerbot", "BotLevelManager::Shutdown() - Shutting down...");
@@ -96,14 +96,14 @@ void BotLevelManager::Shutdown()
     // Clear task queue
     {
         // No lock needed - level queue is per-bot instance data
-        while (!_mainThreadQueue.empty())
+    while (!_mainThreadQueue.empty())
             _mainThreadQueue.pop();
     }
 
     // Print final statistics
     PrintReport();
 
-    _initialized.store(false, std::memory_order_release);
+    _initialized.store(false, ::std::memory_order_release);
 }
 
 // ====================================================================
@@ -125,8 +125,8 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
     }
 
     // Create task
-    auto task = std::make_shared<BotCreationTask>();
-    task->taskId = _nextTaskId.fetch_add(1, std::memory_order_relaxed);
+    auto task = ::std::make_shared<BotCreationTask>();
+    task->taskId = _nextTaskId.fetch_add(1, ::std::memory_order_relaxed);
     task->botGuid = bot->GetGUID();
     task->accountId = bot->GetSession()->GetAccountId();
     task->botName = bot->GetName();
@@ -136,7 +136,7 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
 
     ++_stats.totalTasksSubmitted;
 
-    if (_verboseLogging.load(std::memory_order_acquire))
+    if (_verboseLogging.load(::std::memory_order_acquire))
     {
         TC_LOG_DEBUG("playerbot", "BotLevelManager::CreateBotAsync() - Task {} submitted for bot {}",
             task->taskId, task->botName);
@@ -145,7 +145,7 @@ uint64 BotLevelManager::CreateBotAsync(Player* bot)
     return task->taskId;
 }
 
-uint32 BotLevelManager::CreateBotsAsync(std::vector<Player*> const& bots)
+uint32 BotLevelManager::CreateBotsAsync(::std::vector<Player*> const& bots)
 {
     uint32 submitted = 0;
 
@@ -167,7 +167,7 @@ uint32 BotLevelManager::ProcessBotCreationQueue(uint32 maxBots)
         return 0;
 
     uint32 processed = 0;
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     while (processed < maxBots)
     {
@@ -184,7 +184,7 @@ uint32 BotLevelManager::ProcessBotCreationQueue(uint32 maxBots)
             ++_stats.totalTasksCompleted;
             ++processed;
 
-            if (_verboseLogging.load(std::memory_order_acquire))
+            if (_verboseLogging.load(::std::memory_order_acquire))
             {
                 TC_LOG_DEBUG("playerbot", "BotLevelManager::ProcessBotCreationQueue() - Task {} completed for bot {}",
                     task->taskId, task->botName);
@@ -201,8 +201,8 @@ uint32 BotLevelManager::ProcessBotCreationQueue(uint32 maxBots)
     // Update statistics
     if (processed > 0)
     {
-        auto endTime = std::chrono::steady_clock::now();
-        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto elapsedMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(endTime - startTime).count();
 
         _stats.totalApplyTimeMs += elapsedMs;
         _stats.averageApplyTimeMs = static_cast<uint32>(_stats.totalApplyTimeMs / _stats.totalTasksCompleted);
@@ -218,9 +218,9 @@ uint32 BotLevelManager::ProcessBotCreationQueue(uint32 maxBots)
 // WORKER THREAD TASKS (Phase 1: Data Preparation)
 // ====================================================================
 
-void BotLevelManager::PrepareBot_WorkerThread(std::shared_ptr<BotCreationTask> task)
+void BotLevelManager::PrepareBot_WorkerThread(::std::shared_ptr<BotCreationTask> task)
 {
-    auto startTime = std::chrono::steady_clock::now();
+    auto startTime = ::std::chrono::steady_clock::now();
 
     try
     {
@@ -240,10 +240,10 @@ void BotLevelManager::PrepareBot_WorkerThread(std::shared_ptr<BotCreationTask> t
         SelectZone(task.get());
 
         // Mark as prepared
-        task->preparedAt = std::chrono::steady_clock::now();
+        task->preparedAt = ::std::chrono::steady_clock::now();
 
         // Calculate preparation time
-        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto elapsedMs = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             task->preparedAt - task->createdAt).count();
         _stats.totalPrepTimeMs += elapsedMs;
         _stats.averagePrepTimeMs = static_cast<uint32>(
@@ -252,13 +252,13 @@ void BotLevelManager::PrepareBot_WorkerThread(std::shared_ptr<BotCreationTask> t
         // Queue for main thread processing
         QueueMainThreadTask(task);
 
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::PrepareBot_WorkerThread() - Task {} prepared in {}ms",
                 task->taskId, elapsedMs);
         }
     }
-    catch (std::exception const& e)
+    catch (::std::exception const& e)
     {
         TC_LOG_ERROR("playerbot", "BotLevelManager::PrepareBot_WorkerThread() - Task {} failed: {}",
             task->taskId, e.what());
@@ -283,7 +283,7 @@ void BotLevelManager::SelectLevel(BotCreationTask* task)
     if (!task->levelBracket)
     {
         TC_LOG_ERROR("playerbot", "BotLevelManager::SelectLevel() - No bracket for faction {}", task->faction);
-        throw std::runtime_error("No level bracket available");
+        throw ::std::runtime_error("No level bracket available");
     }
 
     // Select specific level within bracket (weighted towards middle)
@@ -304,7 +304,7 @@ void BotLevelManager::SelectLevel(BotCreationTask* task)
             task->targetLevel = task->levelBracket->minLevel + (range / 2);
     }
 
-    if (_verboseLogging.load(std::memory_order_acquire))
+    if (_verboseLogging.load(::std::memory_order_acquire))
     {
         TC_LOG_DEBUG("playerbot", "BotLevelManager::SelectLevel() - Task {}: Level {} (Bracket {}-{})",
             task->taskId, task->targetLevel, task->levelBracket->minLevel, task->levelBracket->maxLevel);
@@ -327,7 +327,7 @@ void BotLevelManager::SelectSpecializations(BotCreationTask* task)
             task->cls, task->faction, task->targetLevel, task->primarySpec);
         task->secondarySpec = secondaryChoice.specId;
 
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::SelectSpecializations() - Task {}: Spec1={}, Spec2={}",
                 task->taskId, task->primarySpec, task->secondarySpec);
@@ -335,7 +335,7 @@ void BotLevelManager::SelectSpecializations(BotCreationTask* task)
     }
     else
     {
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::SelectSpecializations() - Task {}: Spec={}",
                 task->taskId, task->primarySpec);
@@ -348,7 +348,7 @@ void BotLevelManager::GenerateGear(BotCreationTask* task)
     // Skip gear for L1-4 (natural leveling)
     if (task->targetLevel <= 4)
     {
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::GenerateGear() - Task {}: Skipping gear (L1-4)",
                 task->taskId);
@@ -361,9 +361,9 @@ void BotLevelManager::GenerateGear(BotCreationTask* task)
 
     if (gearSet.IsComplete())
     {
-        task->gearSet = std::make_unique<GearSet>(std::move(gearSet));
+        task->gearSet = ::std::make_unique<GearSet>(::std::move(gearSet));
 
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::GenerateGear() - Task {}: Generated {} items (iLvl {:.1f})",
                 task->taskId, task->gearSet->items.size(), task->gearSet->averageIlvl);
@@ -385,7 +385,7 @@ void BotLevelManager::SelectZone(BotCreationTask* task)
     {
         task->zonePlacement = zoneChoice.placement;
 
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_DEBUG("playerbot", "BotLevelManager::SelectZone() - Task {}: Zone {} ({})",
                 task->taskId, task->zonePlacement->zoneId, task->zonePlacement->zoneName);
@@ -461,7 +461,7 @@ bool BotLevelManager::ApplyBot_MainThread(BotCreationTask* task)
     {
         bot->SaveToDB();
 
-        if (_verboseLogging.load(std::memory_order_acquire))
+        if (_verboseLogging.load(::std::memory_order_acquire))
         {
             TC_LOG_INFO("playerbot", "BotLevelManager::ApplyBot_MainThread() - Bot {} fully created (L{}, Spec {}, Zone {})",
                 bot->GetName(), task->targetLevel, task->primarySpec, task->zonePlacement->zoneName);
@@ -490,7 +490,7 @@ bool BotLevelManager::ApplyLevel(Player* bot, BotCreationTask* task)
 
     ++_stats.totalLevelUps;
 
-    if (_verboseLogging.load(std::memory_order_acquire))
+    if (_verboseLogging.load(::std::memory_order_acquire))
     {
         TC_LOG_DEBUG("playerbot", "BotLevelManager::ApplyLevel() - Bot {} leveled to {}",
             bot->GetName(), task->targetLevel);
@@ -562,7 +562,7 @@ bool BotLevelManager::ApplyZone(Player* bot, BotCreationTask* task)
 // TASK QUEUE MANAGEMENT
 // ====================================================================
 
-void BotLevelManager::QueueMainThreadTask(std::shared_ptr<BotCreationTask> task)
+void BotLevelManager::QueueMainThreadTask(::std::shared_ptr<BotCreationTask> task)
 {
     // No lock needed - level queue is per-bot instance data
     _mainThreadQueue.push(task);
@@ -572,10 +572,9 @@ void BotLevelManager::QueueMainThreadTask(std::shared_ptr<BotCreationTask> task)
         _stats.peakQueueSize = _stats.currentQueueSize;
 }
 
-std::shared_ptr<BotCreationTask> BotLevelManager::DequeueTask()
+::std::shared_ptr<BotCreationTask> BotLevelManager::DequeueTask()
 {
     // No lock needed - level queue is per-bot instance data
-
     if (_mainThreadQueue.empty())
         return nullptr;
 
@@ -663,9 +662,9 @@ void BotLevelManager::PrintReport() const
     TC_LOG_INFO("playerbot", "====================================================================");
 }
 
-std::string BotLevelManager::GetSummary() const
+::std::string BotLevelManager::GetSummary() const
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
     oss << "BotLevelManager: " << _stats.totalTasksCompleted << " bots created, "
         << _stats.currentQueueSize << " queued, "
         << _stats.averageApplyTimeMs << "ms avg";

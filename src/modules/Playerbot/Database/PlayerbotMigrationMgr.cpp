@@ -151,7 +151,7 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
         uint32 executionTime = fields[3].GetUInt32();
 
         // Skip empty or invalid migration records
-        if (version.empty()) {
+    if (version.empty()) {
             TC_LOG_WARN("playerbots.migration", "Skipping empty migration version");
             continue;
         }
@@ -159,7 +159,7 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
         _appliedMigrations.push_back(version);
 
         // Update migration info if we have it registered
-        if (_migrations.find(version) != _migrations.end())
+    if (_migrations.find(version) != _migrations.end())
         {
             _migrations[version].isApplied = true;
             _migrations[version].executionTimeMs = executionTime;
@@ -211,7 +211,7 @@ bool PlayerbotMigrationMgr::LoadMigrationFiles()
             std::string toVersion = filename.substr(toPos + 4, secondUnderscore - toPos - 4);
 
             // Register migration if not already registered
-            if (_migrations.find(toVersion) == _migrations.end())
+    if (_migrations.find(toVersion) == _migrations.end())
             {
                 MigrationInfo migration;
                 migration.version = toVersion;
@@ -379,7 +379,7 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
     {
         TC_LOG_DEBUG("module.playerbot.migration", "Migration {} succeeded, recording in database", version);
         // Record successful migration
-        if (!RecordMigration(version, migration.description, executionTime, migration.checksum))
+    if (!RecordMigration(version, migration.description, executionTime, migration.checksum))
         {
             MIGRATION_LOG_ERROR(version, "Failed to record migration in database");
             TC_LOG_ERROR("module.playerbot.migration", "Failed to record migration {} in database", version);
@@ -392,7 +392,7 @@ bool PlayerbotMigrationMgr::ApplyMigration(std::string const& version)
         _appliedMigrations.push_back(version);
 
         // Update current version
-        if (CompareVersions(version, _currentVersion) > 0)
+    if (CompareVersions(version, _currentVersion) > 0)
             _currentVersion = version;
 
         LogMigrationSuccess(version, executionTime);
@@ -440,7 +440,7 @@ bool PlayerbotMigrationMgr::ExecuteSQLFile(std::string const& filepath)
             continue;
 
         // Skip comments
-        if (statement.substr(0, 2) == "--" || statement.substr(0, 2) == "/*")
+    if (statement.substr(0, 2) == "--" || statement.substr(0, 2) == "/*")
             continue;
 
         if (!ExecuteSQLStatement(statement + ";"))
@@ -775,14 +775,14 @@ std::vector<PlayerbotMigrationMgr::MigrationFile> PlayerbotMigrationMgr::Discove
         std::filesystem::path migrationDir(migrationPath);
 
         // Check if migration directory exists
-        if (!std::filesystem::exists(migrationDir) || !std::filesystem::is_directory(migrationDir))
+    if (!std::filesystem::exists(migrationDir) || !std::filesystem::is_directory(migrationDir))
         {
             TC_LOG_WARN("playerbots.migration", "Migration directory {} does not exist", migrationPath);
             return migrations;
         }
 
         // Scan directory for .sql files
-        for (auto const& entry : std::filesystem::directory_iterator(migrationDir))
+    for (auto const& entry : std::filesystem::directory_iterator(migrationDir))
         {
             if (entry.is_regular_file() && entry.path().extension() == ".sql")
             {

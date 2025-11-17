@@ -14,6 +14,7 @@
 #include "Log.h"
 #include <algorithm>
 
+namespace Playerbot {
 namespace bot { namespace ai {
 
 // Static member initialization
@@ -89,7 +90,7 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
     }
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(tauntSpellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(tauntSpellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
@@ -103,7 +104,7 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
         return false;
 
     // Cast taunt spell
-    SpellCastResult result = tank->CastSpell(target, tauntSpellId, false);
+    ::SpellCastResult result = tank->CastSpell(tauntSpellId, false, target);
 
     if (result == SPELL_CAST_OK)
     {
@@ -146,7 +147,7 @@ std::vector<ThreatTarget> ThreatAssistant::GetDangerousTargets(Player* tank, flo
             tt.currentTarget = victim->GetGUID();
 
         // Only include targets above threat threshold
-        if (tt.threatPercent >= minThreatPercent || tt.isDangerous)
+    if (tt.threatPercent >= minThreatPercent || tt.isDangerous)
             targets.push_back(tt);
     }
 
@@ -332,7 +333,7 @@ float ThreatAssistant::CalculateDangerRating(Unit* target)
     if (target->IsElite())
         danger += 2.0f;
 
-    if (target->IsWorldBoss())
+    if (target->isWorldBoss())
         danger = 10.0f;
 
     // Caster bonus (ranged attacks, spells)
@@ -370,7 +371,7 @@ ThreatAssistant::PlayerRole ThreatAssistant::GetPlayerRole(Player* player)
 
     // Simple heuristic based on class
     // TODO: Integrate with proper role detection system
-    switch (player->getClass())
+    switch (player->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:
@@ -417,3 +418,4 @@ uint32 ThreatAssistant::GetTimeOutOfControl(Unit* target)
 }
 
 }} // namespace bot::ai
+} // namespace Playerbot

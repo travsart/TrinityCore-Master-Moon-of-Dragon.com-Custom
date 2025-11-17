@@ -21,6 +21,7 @@
 #include "RaidOrchestrator.h"
 #include "Define.h"
 #include "ObjectGuid.h"
+#include "Position.h"
 #include <vector>
 #include <unordered_map>
 #include <memory>
@@ -63,7 +64,7 @@ enum class ThreatLevel : uint8
  */
 struct ZoneObjective
 {
-    std::string objectiveType;      // "kill_boss", "defend_npc", "gather_resources"
+    ::std::string objectiveType;      // "kill_boss", "defend_npc", "gather_resources"
     uint32 priority;                // 0-100
     uint32 assignedBots;            // Number of bots assigned
     uint32 requiredBots;            // Number of bots needed
@@ -125,13 +126,13 @@ public:
     /**
      * @brief Get all bots
      */
-    std::vector<ObjectGuid> const& GetBots() const { return _bots; }
+    ::std::vector<ObjectGuid> const& GetBots() const { return _bots; }
 
     /**
      * @brief Add raid orchestrator
      * @param raid Raid to add
      */
-    void AddRaid(std::unique_ptr<RaidOrchestrator> raid);
+    void AddRaid(::std::unique_ptr<RaidOrchestrator> raid);
 
     /**
      * @brief Get raid count
@@ -175,13 +176,13 @@ public:
     /**
      * @brief Get active objectives
      */
-    std::vector<ZoneObjective> GetActiveObjectives() const;
+    ::std::vector<ZoneObjective> GetActiveObjectives() const;
 
     /**
      * @brief Complete objective
      * @param objectiveType Objective type to complete
      */
-    void CompleteObjective(std::string const& objectiveType);
+    void CompleteObjective(::std::string const& objectiveType);
 
     /**
      * @brief Assign bots to objective
@@ -189,14 +190,14 @@ public:
      * @param botCount Number of bots to assign
      * @return Number of bots actually assigned
      */
-    uint32 AssignBotsToObjective(std::string const& objectiveType, uint32 botCount);
+    uint32 AssignBotsToObjective(::std::string const& objectiveType, uint32 botCount);
 
     /**
      * @brief Broadcast zone-wide message
      * @param message Message to broadcast
      * @param priority Message priority (0-100)
      */
-    void BroadcastMessage(std::string const& message, uint32 priority);
+    void BroadcastMessage(::std::string const& message, uint32 priority);
 
     /**
      * @brief Request zone-wide assembly
@@ -252,15 +253,15 @@ private:
     void OptimizeRaidComposition();
 
     uint32 _zoneId;
-    std::vector<ObjectGuid> _bots;
-    std::vector<std::unique_ptr<RaidOrchestrator>> _raids;
+    ::std::vector<ObjectGuid> _bots;
+    ::std::vector<::std::unique_ptr<RaidOrchestrator>> _raids;
 
     // Zone state
     ZoneActivity _currentActivity = ZoneActivity::IDLE;
     ThreatLevel _threatLevel = ThreatLevel::PEACEFUL;
 
     // Objectives
-    std::vector<ZoneObjective> _objectives;
+    ::std::vector<ZoneObjective> _objectives;
 
     // Statistics
     ZoneStats _cachedStats;
@@ -307,7 +308,7 @@ public:
     /**
      * @brief Get all orchestrators
      */
-    static std::unordered_map<uint32, std::unique_ptr<ZoneOrchestrator>> const& GetAll();
+    static ::std::unordered_map<uint32, ::std::unique_ptr<ZoneOrchestrator>> const& GetAll();
 
     /**
      * @brief Clear all orchestrators
@@ -329,7 +330,7 @@ public:
     static GlobalStats GetGlobalStats();
 
 private:
-    static std::unordered_map<uint32, std::unique_ptr<ZoneOrchestrator>> _orchestrators;
+    static ::std::unordered_map<uint32, ::std::unique_ptr<ZoneOrchestrator>> _orchestrators;
 };
 
 } // namespace Coordination

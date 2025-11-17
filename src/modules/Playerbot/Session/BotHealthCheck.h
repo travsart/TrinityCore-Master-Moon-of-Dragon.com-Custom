@@ -47,8 +47,8 @@ enum class HealthStatus : uint8
 struct HealthCheckResult
 {
     HealthStatus status{HealthStatus::HEALTHY};
-    std::string component;
-    std::string message;
+    ::std::string component;
+    ::std::string message;
     uint32 timestamp{0};
 };
 
@@ -79,7 +79,7 @@ public:
 
     // Stall detection
     void CheckForStalledBots(uint32 currentTime) override;
-    std::vector<ObjectGuid> GetStalledBots() const override;
+    ::std::vector<ObjectGuid> GetStalledBots() const override;
     bool IsBotStalled(ObjectGuid botGuid) const override;
 
     // Deadlock detection
@@ -88,14 +88,14 @@ public:
     uint32 GetTimeSinceLastProgress() const override;
 
     // Error rate monitoring
-    void RecordError(ObjectGuid botGuid, std::string const& errorType) override;
+    void RecordError(ObjectGuid botGuid, ::std::string const& errorType) override;
     float GetSystemErrorRate() const override;
     bool IsErrorRateExcessive() const override;
 
     // System health
     HealthStatus GetSystemHealth() const override;
     HealthStatus GetBotHealth(ObjectGuid botGuid) const override;
-    std::vector<HealthCheckResult> GetRecentHealthIssues() const override;
+    ::std::vector<HealthCheckResult> GetRecentHealthIssues() const override;
 
     // Recovery actions
     void TriggerAutomaticRecovery(ObjectGuid botGuid) override;
@@ -131,11 +131,11 @@ private:
 
     // Stall tracking
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _stalledBotsMutex;
-    std::unordered_set<ObjectGuid> _stalledBots;
+    ::std::unordered_set<ObjectGuid> _stalledBots;
     uint32 _stallThresholdMs{5000}; // 5 seconds
 
     // Deadlock tracking
-    std::atomic<bool> _systemDeadlocked{false};
+    ::std::atomic<bool> _systemDeadlocked{false};
     uint32 _lastHeartbeatTime{0};
     uint32 _deadlockThresholdMs{10000}; // 10 seconds
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _heartbeatMutex;
@@ -144,21 +144,21 @@ private:
     struct ErrorRecord
     {
         ObjectGuid botGuid;
-        std::string errorType;
+        ::std::string errorType;
         uint32 timestamp;
     };
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _errorsMutex;
-    std::vector<ErrorRecord> _recentErrors;
+    ::std::vector<ErrorRecord> _recentErrors;
     static constexpr uint32 ERROR_HISTORY_DURATION_MS = 60000; // 1 minute
     float _errorRateThreshold{10.0f}; // 10 errors per second
 
     // Health issues history
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::SESSION_MANAGER> _healthIssuesMutex;
-    std::vector<HealthCheckResult> _healthIssues;
+    ::std::vector<HealthCheckResult> _healthIssues;
     static constexpr uint32 HEALTH_ISSUE_HISTORY_SIZE = 100;
 
     // Auto-recovery
-    std::atomic<bool> _autoRecoveryEnabled{true};
+    ::std::atomic<bool> _autoRecoveryEnabled{true};
     uint32 _lastRecoveryTime{0};
     static constexpr uint32 RECOVERY_COOLDOWN_MS = 30000; // 30 seconds between recoveries
 
@@ -171,12 +171,12 @@ private:
     static constexpr uint32 ERROR_CHECK_INTERVAL_MS = 5000;      // Check every 5 seconds
 
     // Helper methods
-    void AddHealthIssue(HealthStatus status, std::string const& component, std::string const& message, uint32 currentTime);
+    void AddHealthIssue(HealthStatus status, ::std::string const& component, ::std::string const& message, uint32 currentTime);
     void PruneOldErrors(uint32 currentTime);
     void PruneHealthIssues();
 
     // Initialization state
-    std::atomic<bool> _initialized{false};
+    ::std::atomic<bool> _initialized{false};
 };
 
 // Global instance accessor

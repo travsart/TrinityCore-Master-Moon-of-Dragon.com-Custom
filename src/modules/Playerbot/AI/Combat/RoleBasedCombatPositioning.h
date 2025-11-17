@@ -142,7 +142,7 @@ struct RolePositionScore
     float mobilityScore = 0.0f;       // Ability to respond to mechanics
     PositionalRequirement metRequirements = PositionalRequirement::NONE;
     PositionalRequirement failedRequirements = PositionalRequirement::NONE;
-    std::string reasoning;
+    ::std::string reasoning;
     bool isValid = false;
 
     bool operator>(const RolePositionScore& other) const
@@ -163,10 +163,10 @@ struct CombatPositionContext
     PositionalRequirement requirements = PositionalRequirement::NONE;
 
     // Group information
-    std::vector<Player*> tanks;
-    std::vector<Player*> healers;
-    std::vector<Player*> meleeDPS;
-    std::vector<Player*> rangedDPS;
+    ::std::vector<Player*> tanks;
+    ::std::vector<Player*> healers;
+    ::std::vector<Player*> meleeDPS;
+    ::std::vector<Player*> rangedDPS;
     Player* mainTank = nullptr;
     Player* offTank = nullptr;
 
@@ -178,8 +178,8 @@ struct CombatPositionContext
     uint32 combatTime = 0;
 
     // Mechanic information
-    std::vector<Position> dangerZones;
-    std::vector<Position> safeZones;
+    ::std::vector<Position> dangerZones;
+    ::std::vector<Position> safeZones;
     float cleaveAngle = 0.0f;
     float tailSwipeAngle = 0.0f;
     bool hasActiveAOE = false;
@@ -204,11 +204,11 @@ public:
 
     // Threat and facing management
     void HandleThreatPositioning(Player* tank, Unit* target);
-    float CalculateOptimalFacing(Unit* target, const std::vector<Player*>& groupMembers);
+    float CalculateOptimalFacing(Unit* target, const ::std::vector<Player*>& groupMembers);
     bool ShouldRotateBoss(Unit* target, float currentFacing, float desiredFacing);
 
     // Cleave and mechanic handling
-    void ManageCleaveMechanics(Unit* target, const std::vector<Player*>& groupMembers);
+    void ManageCleaveMechanics(Unit* target, const ::std::vector<Player*>& groupMembers);
     Position CalculateCleaveAvoidancePosition(Unit* target, float cleaveAngle);
     bool IsGroupSafeFromCleave(Unit* target, const Position& tankPos, float cleaveAngle);
 
@@ -219,7 +219,7 @@ public:
 
     // Position optimization
     Position FindOptimalTankSpot(Unit* target, float minDistance = 3.0f, float maxDistance = 5.0f);
-    std::vector<RolePositionScore> EvaluateTankPositions(const std::vector<Position>& candidates,
+    ::std::vector<RolePositionScore> EvaluateTankPositions(const ::std::vector<Position>& candidates,
                                                           const CombatPositionContext& context);
 
     // Configuration
@@ -229,7 +229,7 @@ public:
 private:
     Position CalculateFrontalPosition(Unit* target, float distance);
     float CalculateThreatAngle(const Position& tankPos, const Position& targetPos,
-                               const std::vector<Player*>& group);
+                               const ::std::vector<Player*>& group);
     bool ValidateTankPosition(const Position& pos, Unit* target, const CombatPositionContext& context);
     float ScoreTankPosition(const Position& pos, const CombatPositionContext& context);
 
@@ -253,31 +253,31 @@ public:
 
     // Main healer positioning
     Position CalculateHealerPosition(Group* group, Unit* combatTarget, const CombatPositionContext& context);
-    Position CalculateRaidHealerPosition(const std::vector<Player*>& raidMembers, const CombatPositionContext& context);
+    Position CalculateRaidHealerPosition(const ::std::vector<Player*>& raidMembers, const CombatPositionContext& context);
     Position CalculateTankHealerPosition(Player* tank, Unit* threat, const CombatPositionContext& context);
 
     // Range and coverage optimization
-    bool IsInOptimalHealingRange(Player* healer, const std::vector<Player*>& allies);
-    float CalculateHealingCoverage(const Position& healerPos, const std::vector<Player*>& allies);
-    Position OptimizeHealingCoverage(Player* healer, const std::vector<Player*>& allies);
+    bool IsInOptimalHealingRange(Player* healer, const ::std::vector<Player*>& allies);
+    float CalculateHealingCoverage(const Position& healerPos, const ::std::vector<Player*>& allies);
+    Position OptimizeHealingCoverage(Player* healer, const ::std::vector<Player*>& allies);
 
     // Safety and positioning
     Position FindSafeHealingSpot(Player* healer, Unit* threat, const CombatPositionContext& context);
     bool IsPositionSafeForHealing(const Position& pos, const CombatPositionContext& context);
-    float CalculateSafetyScore(const Position& pos, const std::vector<Unit*>& threats);
+    float CalculateSafetyScore(const Position& pos, const ::std::vector<Unit*>& threats);
 
     // Line of sight management
-    void MaintainLineOfSight(Player* healer, const std::vector<Player*>& allies);
-    bool HasLineOfSightToAll(const Position& healerPos, const std::vector<Player*>& allies);
-    Position FindBestLOSPosition(Player* healer, const std::vector<Player*>& priorityTargets);
+    void MaintainLineOfSight(Player* healer, const ::std::vector<Player*>& allies);
+    bool HasLineOfSightToAll(const Position& healerPos, const ::std::vector<Player*>& allies);
+    Position FindBestLOSPosition(Player* healer, const ::std::vector<Player*>& priorityTargets);
 
     // Multi-healer coordination
-    std::vector<Position> CalculateMultiHealerPositions(const std::vector<Player*>& healers,
-                                                         const std::vector<Player*>& group);
-    void CoordinateHealerPositioning(const std::vector<Player*>& healers, Group* group);
+    ::std::vector<Position> CalculateMultiHealerPositions(const ::std::vector<Player*>& healers,
+                                                         const ::std::vector<Player*>& group);
+    void CoordinateHealerPositioning(const ::std::vector<Player*>& healers, Group* group);
 
     // Position evaluation
-    std::vector<RolePositionScore> EvaluateHealerPositions(const std::vector<Position>& candidates,
+    ::std::vector<RolePositionScore> EvaluateHealerPositions(const ::std::vector<Position>& candidates,
                                                             const CombatPositionContext& context);
 
     // Configuration
@@ -287,7 +287,7 @@ public:
 private:
     float CalculateHealerScore(const Position& pos, const CombatPositionContext& context);
     bool ValidateHealerPosition(const Position& pos, const CombatPositionContext& context);
-    Position CalculateCenterOfCare(const std::vector<Player*>& allies);
+    Position CalculateCenterOfCare(const ::std::vector<Player*>& allies);
     float GetEffectiveHealingRange(Player* healer);
 
 private:
@@ -312,11 +312,11 @@ public:
     Position CalculateMeleeDPSPosition(Unit* target, Player* tank, const CombatPositionContext& context);
     Position CalculateBackstabPosition(Unit* target, float requiredAngle = 135.0f);
     Position CalculateFlankPosition(Unit* target, bool leftFlank = true);
-    void DistributeMeleePositions(const std::vector<Player*>& meleeDPS, Unit* target, Player* tank);
+    void DistributeMeleePositions(const ::std::vector<Player*>& meleeDPS, Unit* target, Player* tank);
 
     // Ranged DPS positioning
     Position CalculateRangedDPSPosition(Unit* target, float optimalRange, const CombatPositionContext& context);
-    void SpreadRangedPositions(const std::vector<Player*>& rangedDPS, Unit* target, float spreadDistance);
+    void SpreadRangedPositions(const ::std::vector<Player*>& rangedDPS, Unit* target, float spreadDistance);
     Position CalculateCasterPosition(Player* caster, Unit* target, uint32 spellId);
 
     // Cleave and mechanic avoidance
@@ -334,11 +334,11 @@ public:
     float CalculateDPSEfficiency(const Position& pos, Player* dps, Unit* target);
 
     // Multi-target positioning
-    Position CalculateAOEPosition(Player* dps, const std::vector<Unit*>& targets);
-    Position CalculateCleaveDPSPosition(Player* dps, const std::vector<Unit*>& targets);
+    Position CalculateAOEPosition(Player* dps, const ::std::vector<Unit*>& targets);
+    Position CalculateCleaveDPSPosition(Player* dps, const ::std::vector<Unit*>& targets);
 
     // Position evaluation
-    std::vector<RolePositionScore> EvaluateDPSPositions(const std::vector<Position>& candidates,
+    ::std::vector<RolePositionScore> EvaluateDPSPositions(const ::std::vector<Position>& candidates,
                                                          Player* dps, const CombatPositionContext& context);
 
     // Configuration
@@ -375,7 +375,7 @@ public:
 
     // Main positioning interface
     Position CalculateCombatPosition(Player* bot, const CombatPositionContext& context);
-    MovementResult UpdateCombatPosition(Player* bot, const CombatPositionContext& context);
+    PositionMovementResult UpdateCombatPosition(Player* bot, const CombatPositionContext& context);
 
     // Role-specific position calculation
     Position CalculateRolePosition(Player* bot, ThreatRole role, const CombatPositionContext& context);
@@ -395,10 +395,10 @@ public:
     // Group coordination
     void CoordinateGroupPositioning(Group* group, Unit* target);
     void OptimizeRoleDistribution(Group* group);
-    std::unordered_map<ObjectGuid, Position> CalculateGroupFormation(Group* group, Unit* target);
+    ::std::unordered_map<ObjectGuid, Position> CalculateGroupFormation(Group* group, Unit* target);
 
     // Dynamic adjustment
-    void AdjustForMechanics(Player* bot, const std::vector<Position>& dangerZones);
+    void AdjustForMechanics(Player* bot, const ::std::vector<Position>& dangerZones);
     void RespondToEmergency(Player* bot, const Position& safeZone);
 
     // Performance monitoring
@@ -425,7 +425,7 @@ private:
     // Position calculation helpers
     Position CalculatePositionByStrategy(Player* bot, CombatPositionStrategy strategy,
                                         const CombatPositionContext& context);
-    std::vector<Position> GenerateCandidatePositions(Player* bot, const CombatPositionContext& context);
+    ::std::vector<Position> GenerateCandidatePositions(Player* bot, const CombatPositionContext& context);
     RolePositionScore EvaluatePosition(const Position& pos, Player* bot,
                                        const CombatPositionContext& context);
 
@@ -435,13 +435,13 @@ private:
     void IdentifyDangerZones(Unit* target, CombatPositionContext& context);
 
     // Performance tracking
-    void TrackCalculationTime(std::chrono::microseconds duration);
+    void TrackCalculationTime(::std::chrono::microseconds duration);
 
 private:
     // Component systems
-    std::unique_ptr<TankPositioning> _tankPositioning;
-    std::unique_ptr<HealerPositioning> _healerPositioning;
-    std::unique_ptr<DPSPositioning> _dpsPositioning;
+    ::std::unique_ptr<TankPositioning> _tankPositioning;
+    ::std::unique_ptr<HealerPositioning> _healerPositioning;
+    ::std::unique_ptr<DPSPositioning> _dpsPositioning;
 
     // Integration with existing systems
     PositionManager* _positionManager;
@@ -449,14 +449,14 @@ private:
     FormationManager* _formationManager;
 
     // Strategy cache
-    std::unordered_map<ObjectGuid, CombatPositionStrategy> _strategyCache;
-    std::unordered_map<ObjectGuid, uint32> _lastStrategyUpdate;
+    ::std::unordered_map<ObjectGuid, CombatPositionStrategy> _strategyCache;
+    ::std::unordered_map<ObjectGuid, uint32> _lastStrategyUpdate;
 
     // Performance metrics
-    std::atomic<uint32> _positionUpdates{0};
-    std::atomic<uint32> _calculationCount{0};
-    std::chrono::microseconds _totalCalculationTime{0};
-    std::chrono::microseconds _averageCalculationTime{0};
+    ::std::atomic<uint32> _positionUpdates{0};
+    ::std::atomic<uint32> _calculationCount{0};
+    ::std::chrono::microseconds _totalCalculationTime{0};
+    ::std::chrono::microseconds _averageCalculationTime{0};
 
     // Thread safety
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _mutex;

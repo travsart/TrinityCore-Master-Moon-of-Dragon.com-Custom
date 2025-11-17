@@ -61,7 +61,7 @@ template class HealerSpecialization<ChiSystem>;
 /**
  * Factory for creating appropriate specialization based on class and spec
  */
-std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
+::std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
     Player* bot, Classes botClass, uint32 specId)
 {
     switch (botClass)
@@ -72,9 +72,9 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             {
                 case SPEC_WARRIOR_ARMS:
                 case SPEC_WARRIOR_FURY:
-                    return std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
                 case SPEC_WARRIOR_PROTECTION:
-                    return std::make_unique<TankSpecialization<uint32>>(bot);
+                    return ::std::make_unique<TankSpecialization<uint32>>(bot);
             }
             break;
         }
@@ -84,11 +84,11 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_PALADIN_HOLY:
-                    return std::make_unique<HealerSpecialization<uint32>>(bot);
+                    return ::std::make_unique<HealerSpecialization<uint32>>(bot);
                 case SPEC_PALADIN_PROTECTION:
-                    return std::make_unique<TankSpecialization<uint32>>(bot);
+                    return ::std::make_unique<TankSpecialization<uint32>>(bot);
                 case SPEC_PALADIN_RETRIBUTION:
-                    return std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
             }
             break;
         }
@@ -96,13 +96,13 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
         case CLASS_HUNTER:
         {
             // All hunter specs are ranged DPS with Focus
-            return std::make_unique<RangedDpsSpecialization<uint32>>(bot);
+            return ::std::make_unique<RangedDpsSpecialization<uint32>>(bot);
         }
 
         case CLASS_ROGUE:
         {
             // All rogue specs are melee DPS with Energy/Combo Points
-            return std::make_unique<MeleeDpsSpecialization<ComboPointSystem>>(bot);
+            return ::std::make_unique<MeleeDpsSpecialization<ComboPointSystem>>(bot);
         }
 
         case CLASS_PRIEST:
@@ -111,11 +111,11 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             {
                 case SPEC_PRIEST_DISCIPLINE:
                     // Discipline is hybrid DPS/Healer
-                    return std::make_unique<HybridDpsHealerSpecialization<uint32>>(bot);
+                    return ::std::make_unique<HybridDpsHealerSpecialization<uint32>>(bot);
                 case SPEC_PRIEST_HOLY:
-                    return std::make_unique<HealerSpecialization<uint32>>(bot);
+                    return ::std::make_unique<HealerSpecialization<uint32>>(bot);
                 case SPEC_PRIEST_SHADOW:
-                    return std::make_unique<RangedDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<RangedDpsSpecialization<uint32>>(bot);
             }
             break;
         }
@@ -125,10 +125,10 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_DEATH_KNIGHT_BLOOD:
-                    return std::make_unique<TankSpecialization<RuneSystem>>(bot);
+                    return ::std::make_unique<TankSpecialization<RuneSystem>>(bot);
                 case SPEC_DEATH_KNIGHT_FROST:
                 case SPEC_DEATH_KNIGHT_UNHOLY:
-                    return std::make_unique<MeleeDpsSpecialization<RuneSystem>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<RuneSystem>>(bot);
             }
             break;
         }
@@ -138,11 +138,11 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_SHAMAN_ELEMENTAL:
-                    return std::make_unique<RangedDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<RangedDpsSpecialization<uint32>>(bot);
                 case SPEC_SHAMAN_ENHANCEMENT:
-                    return std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<uint32>>(bot);
                 case SPEC_SHAMAN_RESTORATION:
-                    return std::make_unique<HealerSpecialization<uint32>>(bot);
+                    return ::std::make_unique<HealerSpecialization<uint32>>(bot);
             }
             break;
         }
@@ -150,13 +150,13 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
         case CLASS_MAGE:
         {
             // All mage specs are ranged DPS with Mana
-            return std::make_unique<RangedDpsSpecialization<uint32>>(bot);
+            return ::std::make_unique<RangedDpsSpecialization<uint32>>(bot);
         }
 
         case CLASS_WARLOCK:
         {
             // All warlock specs use soul shards
-            return std::make_unique<RangedDpsSpecialization<SoulShardSystem>>(bot);
+            return ::std::make_unique<RangedDpsSpecialization<SoulShardSystem>>(bot);
         }
 
         case CLASS_MONK:
@@ -164,11 +164,11 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_MONK_BREWMASTER:
-                    return std::make_unique<AvoidanceTankSpecialization<ChiSystem>>(bot);
+                    return ::std::make_unique<AvoidanceTankSpecialization<ChiSystem>>(bot);
                 case SPEC_MONK_MISTWEAVER:
-                    return std::make_unique<HealerSpecialization<ChiSystem>>(bot);
+                    return ::std::make_unique<HealerSpecialization<ChiSystem>>(bot);
                 case SPEC_MONK_WINDWALKER:
-                    return std::make_unique<MeleeDpsSpecialization<ChiSystem>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<ChiSystem>>(bot);
             }
             break;
         }
@@ -178,13 +178,13 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_DRUID_BALANCE:
-                    return std::make_unique<RangedDpsSpecialization<uint32>>(bot);
+                    return ::std::make_unique<RangedDpsSpecialization<uint32>>(bot);
                 case SPEC_DRUID_FERAL:
-                    return std::make_unique<MeleeDpsSpecialization<ComboPointSystem>>(bot);
+                    return ::std::make_unique<MeleeDpsSpecialization<ComboPointSystem>>(bot);
                 case SPEC_DRUID_GUARDIAN:
-                    return std::make_unique<TankSpecialization<uint32>>(bot);
+                    return ::std::make_unique<TankSpecialization<uint32>>(bot);
                 case SPEC_DRUID_RESTORATION:
-                    return std::make_unique<HealerSpecialization<uint32>>(bot);
+                    return ::std::make_unique<HealerSpecialization<uint32>>(bot);
             }
             break;
         }
@@ -194,9 +194,9 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
             switch (specId)
             {
                 case SPEC_DEMON_HUNTER_HAVOC:
-                    return std::make_unique<MeleeDpsSpecialization<uint32>>(bot); // Fury resource
+                    return ::std::make_unique<MeleeDpsSpecialization<uint32>>(bot); // Fury resource
                 case SPEC_DEMON_HUNTER_VENGEANCE:
-                    return std::make_unique<TankSpecialization<uint32>>(bot); // Pain resource
+                    return ::std::make_unique<TankSpecialization<uint32>>(bot); // Pain resource
             }
             break;
         }
@@ -205,7 +205,7 @@ std::unique_ptr<ClassAI> CombatSpecializationFactory::CreateSpecialization(
     // Fallback to basic template
     LOG_WARN("module.playerbot", "No specific template for class {} spec {}, using default",
              botClass, specId);
-    return std::make_unique<CombatSpecializationTemplate<uint32>>(bot);
+    return ::std::make_unique<CombatSpecializationTemplate<uint32>>(bot);
 }
 
 // ============================================================================
@@ -226,24 +226,24 @@ public:
 
     void RecordUpdate(uint32 botGuid, uint32 updateTimeUs)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         auto& stats = _botStats[botGuid];
         stats.totalUpdates++;
         stats.totalTimeUs += updateTimeUs;
-        stats.maxTimeUs = std::max(stats.maxTimeUs, updateTimeUs);
-        stats.minTimeUs = std::min(stats.minTimeUs, updateTimeUs);
+        stats.maxTimeUs = ::std::max(stats.maxTimeUs, updateTimeUs);
+        stats.minTimeUs = ::std::min(stats.minTimeUs, updateTimeUs);
     }
 
-    void RecordTemplateInstantiation(const std::string& templateType)
+    void RecordTemplateInstantiation(const ::std::string& templateType)
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _templateInstantiations[templateType]++;
     }
 
     void PrintStatistics()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
 
         LOG_INFO("module.playerbot", "=== Template Performance Statistics ===");
 
@@ -279,7 +279,7 @@ public:
 
     void Reset()
     {
-        std::lock_guard lock(_mutex);
+        ::std::lock_guard lock(_mutex);
         _botStats.clear();
         _templateInstantiations.clear();
     }
@@ -293,9 +293,9 @@ private:
         uint32 minTimeUs = UINT32_MAX;
     };
 
-    std::recursive_mutex _mutex;
-    std::unordered_map<uint32, BotStatistics> _botStats;
-    std::unordered_map<std::string, uint32> _templateInstantiations;
+    ::std::recursive_mutex _mutex;
+    ::std::unordered_map<uint32, BotStatistics> _botStats;
+    ::std::unordered_map<::std::string, uint32> _templateInstantiations;
 };
 
 // ============================================================================
@@ -311,7 +311,7 @@ constexpr bool ValidateResourceType()
     if constexpr (SimpleResource<T>)
     {
         static_assert(sizeof(T) <= 4, "Simple resource must be 4 bytes or less");
-        static_assert(std::is_arithmetic_v<T>, "Simple resource must be arithmetic");
+        static_assert(::std::is_arithmetic_v<T>, "Simple resource must be arithmetic");
         return true;
     }
     else if constexpr (ComplexResource<T>)
@@ -350,7 +350,7 @@ public:
         // This allows gradual migration
 
         // For now, enable templates for specific specs that are complete
-        switch (botClass)
+    switch (botClass)
         {
             case CLASS_PALADIN:
                 return specId == SPEC_PALADIN_RETRIBUTION; // Migrated as example

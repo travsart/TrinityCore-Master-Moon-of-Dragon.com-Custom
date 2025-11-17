@@ -32,7 +32,7 @@ void ParseTypedSpellCooldown(WorldSession* session, WorldPackets::Spells::SpellC
         event.category = 0;
         event.cooldownMs = cooldownEntry.ForcedCooldown;
         event.modRateMs = static_cast<int32>(cooldownEntry.ModRate);
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
         CooldownEventBus::instance()->PublishEvent(event);
     }
 
@@ -57,7 +57,7 @@ void ParseTypedCooldownEvent(WorldSession* session, WorldPackets::Spells::Cooldo
     event.category = 0;
     event.cooldownMs = 0;
     event.modRateMs = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     CooldownEventBus::instance()->PublishEvent(event);
 
@@ -82,7 +82,7 @@ void ParseTypedClearCooldown(WorldSession* session, WorldPackets::Spells::ClearC
     event.category = 0;
     event.cooldownMs = 0;
     event.modRateMs = 0;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     CooldownEventBus::instance()->PublishEvent(event);
 
@@ -109,7 +109,7 @@ void ParseTypedClearCooldowns(WorldSession* session, WorldPackets::Spells::Clear
         event.category = 0;
         event.cooldownMs = 0;
         event.modRateMs = 0;
-        event.timestamp = std::chrono::steady_clock::now();
+        event.timestamp = ::std::chrono::steady_clock::now();
 
         CooldownEventBus::instance()->PublishEvent(event);
     }
@@ -135,7 +135,7 @@ void ParseTypedModifyCooldown(WorldSession* session, WorldPackets::Spells::Modif
     event.category = 0;
     event.cooldownMs = 0;
     event.modRateMs = packet.DeltaTime;
-    event.timestamp = std::chrono::steady_clock::now();
+    event.timestamp = ::std::chrono::steady_clock::now();
 
     CooldownEventBus::instance()->PublishEvent(event);
 

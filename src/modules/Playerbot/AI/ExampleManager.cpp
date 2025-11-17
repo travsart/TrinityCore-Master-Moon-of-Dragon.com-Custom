@@ -31,10 +31,10 @@ namespace Playerbot
         m_taskQueue.clear();
 
         // Initialize atomic flags
-        m_hasTasks.store(false, std::memory_order_release);
-        m_isProcessing.store(false, std::memory_order_release);
-        m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), std::memory_order_release);
-        m_taskCount.store(0, std::memory_order_release);
+        m_hasTasks.store(false, ::std::memory_order_release);
+        m_isProcessing.store(false, ::std::memory_order_release);
+        m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), ::std::memory_order_release);
+        m_taskCount.store(0, ::std::memory_order_release);
 
         LogDebug("Created for bot {}", bot ? bot->GetName() : "unknown");
     }
@@ -45,7 +45,7 @@ namespace Playerbot
         OnShutdown();
 
         // Log final statistics
-        if (GetBot())
+    if (GetBot())
         {
             LogDebug("Shutting down for bot {} - Completed: {}, Failed: {}, Longest task: {}ms",
                     GetBot()->GetName(), m_completedTasks.load(), m_failedTasks.load(), m_longestTaskMs);
@@ -60,14 +60,14 @@ namespace Playerbot
             return false;
 
         // Check if bot is fully loaded in world
-        if (!bot->IsInWorld())
+    if (!bot->IsInWorld())
         {
             LogDebug("Bot {} not yet in world, deferring initialization", bot->GetName());
             return false; // Retry on next update
         }
 
         // Check if bot has required data loaded
-        if (bot->GetLevel() == 0)
+    if (bot->GetLevel() == 0)
         {
             LogDebug("Bot {} level not loaded, deferring initialization", bot->GetName());
             return false; // Retry on next update
@@ -91,8 +91,8 @@ namespace Playerbot
         m_currentTask.reset();
 
         // Update flags
-        m_isProcessing.store(false, std::memory_order_release);
-        m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), std::memory_order_release);
+        m_isProcessing.store(false, ::std::memory_order_release);
+        m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), ::std::memory_order_release);
 
         LogDebug("Shutdown complete - processed {} tasks total", m_completedTasks.load());
     }
@@ -111,7 +111,7 @@ namespace Playerbot
         }
 
         // Process current task if any
-        if (m_currentTask)
+    if (m_currentTask)
         {
             bool completed = ProcessTask(*m_currentTask);
 
@@ -119,29 +119,29 @@ namespace Playerbot
             {
                 // Task completed
                 uint32 taskDuration = static_cast<uint32>(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now() - m_currentTask->startTime
+                    ::std::chrono::duration_cast<::std::chrono::milliseconds>(
+                        ::std::chrono::steady_clock::now() - m_currentTask->startTime
                     ).count()
                 );
 
-                m_longestTaskMs = std::max(m_longestTaskMs, taskDuration);
+                m_longestTaskMs = ::std::max(m_longestTaskMs, taskDuration);
                 m_totalProcessingTimeMs += taskDuration;
-                m_completedTasks.fetch_add(1, std::memory_order_acq_rel);
+                m_completedTasks.fetch_add(1, ::std::memory_order_acq_rel);
 
                 LogDebug("Task completed: Type={}, Duration={}ms",
                         static_cast<uint32>(m_currentTask->type), taskDuration);
 
                 // Clear current task
                 m_currentTask.reset();
-                m_isProcessing.store(false, std::memory_order_release);
-                m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), std::memory_order_release);
+                m_isProcessing.store(false, ::std::memory_order_release);
+                m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), ::std::memory_order_release);
                 m_tasksProcessedThisUpdate++;
             }
             else
             {
                 // Check for timeout
-                auto now = std::chrono::steady_clock::now();
-                auto taskAge = std::chrono::duration_cast<std::chrono::milliseconds>(
+                auto now = ::std::chrono::steady_clock::now();
+                auto taskAge = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
                     now - m_currentTask->startTime
                 ).count();
 
@@ -150,16 +150,16 @@ namespace Playerbot
                     LogWarning("Task timed out after {}ms: Type={}",
                               taskAge, static_cast<uint32>(m_currentTask->type));
 
-                    m_failedTasks.fetch_add(1, std::memory_order_acq_rel);
+                    m_failedTasks.fetch_add(1, ::std::memory_order_acq_rel);
                     m_currentTask.reset();
-                    m_isProcessing.store(false, std::memory_order_release);
-                    m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), std::memory_order_release);
+                    m_isProcessing.store(false, ::std::memory_order_release);
+                    m_currentTaskType.store(static_cast<uint32>(Task::TASK_IDLE), ::std::memory_order_release);
                 }
             }
         }
 
         // Process queued tasks up to limit
-        while (!m_taskQueue.empty() &&
+    while (!m_taskQueue.empty() &&
                m_tasksProcessedThisUpdate < m_maxTasksPerUpdate &&
                !m_currentTask)
         {
@@ -173,25 +173,25 @@ namespace Playerbot
             }
 
             // Start next task
-            m_currentTask = std::make_unique<Task>(m_taskQueue.front());
+            m_currentTask = ::std::make_unique<Task>(m_taskQueue.front());
             m_taskQueue.pop_front();
 
-            m_isProcessing.store(true, std::memory_order_release);
-            m_currentTaskType.store(static_cast<uint32>(m_currentTask->type), std::memory_order_release);
+            m_isProcessing.store(true, ::std::memory_order_release);
+            m_currentTaskType.store(static_cast<uint32>(m_currentTask->type), ::std::memory_order_release);
 
             LogDebug("Starting task: Type={}, Target={}",
                     static_cast<uint32>(m_currentTask->type), m_currentTask->targetId);
 
             // Update task count
             uint32 newCount = static_cast<uint32>(m_taskQueue.size());
-            m_taskCount.store(newCount, std::memory_order_release);
+            m_taskCount.store(newCount, ::std::memory_order_release);
         }
 
         // Update state flags based on current state
         UpdateStateFlags();
 
         // Log performance metrics periodically
-        if (m_updateCount % 20 == 0) // Every 20 updates
+    if (m_updateCount % 20 == 0) // Every 20 updates
         {
             uint32 avgTaskTime = m_completedTasks > 0 ?
                 static_cast<uint32>(m_totalProcessingTimeMs / m_completedTasks) : 0;
@@ -212,7 +212,7 @@ namespace Playerbot
     bool ExampleManager::AddTask(const Task& task)
     {
         // Check queue size limit
-        if (m_taskQueue.size() >= m_maxQueueSize)
+    if (m_taskQueue.size() >= m_maxQueueSize)
         {
             LogWarning("Task queue full ({} tasks), rejecting new task", m_maxQueueSize);
             return false;
@@ -223,13 +223,13 @@ namespace Playerbot
 
         // Update atomic counters
         uint32 newCount = static_cast<uint32>(m_taskQueue.size());
-        m_taskCount.store(newCount, std::memory_order_release);
-        m_hasTasks.store(true, std::memory_order_release);
+        m_taskCount.store(newCount, ::std::memory_order_release);
+        m_hasTasks.store(true, ::std::memory_order_release);
 
         // Request immediate update if this is the only task and we're idle
-        if (newCount == 1 && !m_isProcessing.load(std::memory_order_acquire))
+    if (newCount == 1 && !m_isProcessing.load(::std::memory_order_acquire))
         {
-            m_needsUpdate.store(true, std::memory_order_release);
+            m_needsUpdate.store(true, ::std::memory_order_release);
             LogDebug("Task added to empty queue, requesting immediate update");
         }
 
@@ -245,8 +245,8 @@ namespace Playerbot
         m_taskQueue.clear();
 
         // Update atomic flags
-        m_taskCount.store(0, std::memory_order_release);
-        m_hasTasks.store(false, std::memory_order_release);
+        m_taskCount.store(0, ::std::memory_order_release);
+        m_hasTasks.store(false, ::std::memory_order_release);
 
         if (clearedCount > 0)
         {
@@ -259,8 +259,8 @@ namespace Playerbot
         // Simulate task processing based on type
         // In a real implementation, this would perform actual game actions
 
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto now = ::std::chrono::steady_clock::now();
+        auto elapsed = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             now - task.startTime
         ).count();
 
@@ -312,19 +312,19 @@ namespace Playerbot
     {
         // Update has tasks flag
         bool hasTasks = !m_taskQueue.empty() || m_currentTask != nullptr;
-        m_hasTasks.store(hasTasks, std::memory_order_release);
+        m_hasTasks.store(hasTasks, ::std::memory_order_release);
 
         // Update task count
         uint32 count = static_cast<uint32>(m_taskQueue.size());
-        m_taskCount.store(count, std::memory_order_release);
+        m_taskCount.store(count, ::std::memory_order_release);
 
         // Set hasWork flag for base class if we have tasks to process
-        m_hasWork.store(hasTasks, std::memory_order_release);
+        m_hasWork.store(hasTasks, ::std::memory_order_release);
 
         // Request update if we have many pending tasks
-        if (count > 10)
+    if (count > 10)
         {
-            m_needsUpdate.store(true, std::memory_order_release);
+            m_needsUpdate.store(true, ::std::memory_order_release);
         }
     }
 

@@ -34,7 +34,7 @@ public:
     // Core validation methods
     virtual bool ValidateQuestAcceptance(uint32 questId, Player* bot) = 0;
     virtual QuestEligibility GetDetailedEligibility(uint32 questId, Player* bot) = 0;
-    virtual std::vector<std::string> GetValidationErrors(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<::std::string> GetValidationErrors(uint32 questId, Player* bot) = 0;
     virtual bool CanQuestBeStarted(uint32 questId, Player* bot) = 0;
 
     // Requirement validation
@@ -47,14 +47,14 @@ public:
     // Prerequisite validation
     virtual bool ValidateQuestPrerequisites(uint32 questId, Player* bot) = 0;
     virtual bool ValidateQuestChainPosition(uint32 questId, Player* bot) = 0;
-    virtual std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetMissingPrerequisites(uint32 questId, Player* bot) = 0;
     virtual bool HasCompletedPrerequisiteQuests(uint32 questId, Player* bot) = 0;
 
     // Item and inventory validation
     virtual bool ValidateRequiredItems(uint32 questId, Player* bot) = 0;
     virtual bool ValidateInventorySpace(uint32 questId, Player* bot) = 0;
     virtual bool ValidateQuestItemRequirements(uint32 questId, Player* bot) = 0;
-    virtual std::vector<std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot) = 0;
+    virtual ::std::vector<::std::pair<uint32, uint32>> GetMissingItems(uint32 questId, Player* bot) = 0;
 
     // Status and state validation
     virtual bool ValidateQuestStatus(uint32 questId, Player* bot) = 0;
@@ -67,7 +67,7 @@ public:
     virtual bool ValidateReputationRequirements(uint32 questId, Player* bot) = 0;
     virtual bool ValidateMinimumReputation(uint32 questId, Player* bot) = 0;
     virtual bool ValidateMaximumReputation(uint32 questId, Player* bot) = 0;
-    virtual std::vector<std::pair<uint32, int32>> GetReputationRequirements(uint32 questId) = 0;
+    virtual ::std::vector<::std::pair<uint32, int32>> GetReputationRequirements(uint32 questId) = 0;
 
     // Time and availability validation
     virtual bool ValidateQuestAvailability(uint32 questId, Player* bot) = 0;
@@ -100,15 +100,15 @@ public:
     virtual void CleanupExpiredCache() = 0;
 
     // Batch validation for efficiency
-    virtual std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
-        const std::vector<uint32>& questIds, Player* bot) = 0;
-    virtual std::vector<uint32> FilterValidQuests(const std::vector<uint32>& questIds, Player* bot) = 0;
-    virtual std::vector<uint32> GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates) = 0;
+    virtual ::std::unordered_map<uint32, ValidationResult> ValidateMultipleQuests(
+        const ::std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> FilterValidQuests(const ::std::vector<uint32>& questIds, Player* bot) = 0;
+    virtual ::std::vector<uint32> GetEligibleQuests(Player* bot, const ::std::vector<uint32>& candidates) = 0;
 
     // Error reporting and diagnostics
-    virtual std::string GetDetailedValidationReport(uint32 questId, Player* bot) = 0;
-    virtual void LogValidationFailure(uint32 questId, Player* bot, const std::string& reason) = 0;
-    virtual std::vector<std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) = 0;
+    virtual ::std::string GetDetailedValidationReport(uint32 questId, Player* bot) = 0;
+    virtual void LogValidationFailure(uint32 questId, Player* bot, const ::std::string& reason) = 0;
+    virtual ::std::vector<::std::string> GetRecommendationsForFailedQuest(uint32 questId, Player* bot) = 0;
 
     // Performance monitoring
     virtual ValidationMetrics GetValidationMetrics() const = 0;

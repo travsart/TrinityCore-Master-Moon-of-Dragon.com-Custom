@@ -65,7 +65,7 @@ protected:
         mockPlayer->SetMaxHealth(25000);
 
         // Create specialization instance
-        disciplineSpec = std::make_unique<DisciplineSpecialization>(
+        disciplineSpec = ::std::make_unique<DisciplineSpecialization>(
             reinterpret_cast<Player*>(mockPlayer.get()),
             reinterpret_cast<BotAI*>(mockBotAI.get())
         );
@@ -101,7 +101,7 @@ protected:
     }
 
     // Helper: Create mock spell info for Discipline spells
-    std::shared_ptr<MockSpellInfo> GetSpellInfo(uint32 spellId)
+    ::std::shared_ptr<MockSpellInfo> GetSpellInfo(uint32 spellId)
     {
         if (spellInfoCache.find(spellId) != spellInfoCache.end())
             return spellInfoCache[spellId];
@@ -109,7 +109,7 @@ protected:
         auto spellInfo = MockFactory::CreateMockSpellInfo(spellId, 100, 0, 1500);
 
         // Configure spell-specific properties
-        switch (spellId)
+    switch (spellId)
         {
             case FLASH_HEAL:
                 spellInfo->SetManaCost(380);
@@ -145,7 +145,7 @@ protected:
     }
 
     // Helper: Create low-health ally for healing tests
-    std::shared_ptr<MockPlayer> CreateLowHealthAlly(float healthPct)
+    ::std::shared_ptr<MockPlayer> CreateLowHealthAlly(float healthPct)
     {
         auto ally = MockFactory::CreateMockPlayer(CLASS_WARRIOR, 80);
         ally->SetMaxHealth(30000);
@@ -177,12 +177,12 @@ protected:
     static constexpr uint32 SPEC_DISCIPLINE = 1;
 
     // Test objects
-    std::shared_ptr<MockPlayer> mockPlayer;
-    std::shared_ptr<MockBotAI> mockBotAI;
-    std::unique_ptr<DisciplineSpecialization> disciplineSpec;
+    ::std::shared_ptr<MockPlayer> mockPlayer;
+    ::std::shared_ptr<MockBotAI> mockBotAI;
+    ::std::unique_ptr<DisciplineSpecialization> disciplineSpec;
 
     // Spell info cache
-    std::unordered_map<uint32, std::shared_ptr<MockSpellInfo>> spellInfoCache;
+    ::std::unordered_map<uint32, ::std::shared_ptr<MockSpellInfo>> spellInfoCache;
 };
 
 // ============================================================================
@@ -631,15 +631,15 @@ TEST_F(DisciplinePriestSpecializationTest, Performance_ExecuteRotation_Under50Mi
         .WillByDefault(Return(SPELL_CAST_OK));
 
     // Act: Measure execution time
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 1000; ++i)
     {
         disciplineSpec->ExecuteRotation(100);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
 
     // Assert: Average under 50µs
     float avgMicroseconds = static_cast<float>(duration) / 1000.0f;
@@ -653,7 +653,7 @@ TEST_F(DisciplinePriestSpecializationTest, Performance_TargetSelection_Under10Mi
     auto scenario = CreateHealingScenario(5, 60.0f);
 
     // Act: Measure target selection time
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = ::std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 10000; ++i)
     {
@@ -661,8 +661,8 @@ TEST_F(DisciplinePriestSpecializationTest, Performance_TargetSelection_Under10Mi
         disciplineSpec->SelectBestHealTarget();
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = ::std::chrono::high_resolution_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(end - start).count();
 
     // Assert: Average under 10µs
     float avgMicroseconds = static_cast<float>(duration) / 10000.0f;

@@ -113,7 +113,7 @@ public:
      * @param inviterGuid GUID of the inviter
      * @param reason Optional reason for declining
      */
-    void DeclineInvitation(ObjectGuid inviterGuid, std::string const& reason = "");
+    void DeclineInvitation(ObjectGuid inviterGuid, ::std::string const& reason = "");
 
     // State management
     /**
@@ -159,8 +159,8 @@ public:
         uint32 acceptedInvitations = 0;
         uint32 declinedInvitations = 0;
         uint32 invalidInvitations = 0;
-        std::chrono::milliseconds averageResponseTime{0};
-        std::chrono::steady_clock::time_point lastInvitation;
+        ::std::chrono::milliseconds averageResponseTime{0};
+        ::std::chrono::steady_clock::time_point lastInvitation;
     };
 
     /**
@@ -187,9 +187,9 @@ private:
     struct PendingInvitation
     {
         ObjectGuid inviterGuid;
-        std::string inviterName;
+        ::std::string inviterName;
         uint32 proposedRoles;
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
         bool isProcessing = false;
     };
 
@@ -204,7 +204,7 @@ private:
      * Send decline packet to server
      * @param reason Optional reason for declining
      */
-    void SendDeclinePacket(std::string const& reason);
+    void SendDeclinePacket(::std::string const& reason);
 
     /**
      * Validate invitation against anti-loop logic
@@ -226,14 +226,14 @@ private:
      * @param inviterGuid The inviter involved
      * @param reason Optional reason for the action
      */
-    void LogInvitationEvent(std::string const& action, ObjectGuid inviterGuid, std::string const& reason = "") const;
+    void LogInvitationEvent(::std::string const& action, ObjectGuid inviterGuid, ::std::string const& reason = "") const;
 
     /**
      * Update statistics after processing invitation
      * @param accepted Whether invitation was accepted
      * @param responseTime Time taken to respond
      */
-    void UpdateStatistics(bool accepted, std::chrono::milliseconds responseTime);
+    void UpdateStatistics(bool accepted, ::std::chrono::milliseconds responseTime);
 
     /**
      * Process the oldest pending invitation
@@ -258,12 +258,12 @@ private:
      * @param inviterGuid GUID of the inviter
      * @param reason Optional reason for declining
      */
-    void DeclineInvitationInternal(ObjectGuid inviterGuid, std::string const& reason = "");
+    void DeclineInvitationInternal(ObjectGuid inviterGuid, ::std::string const& reason = "");
 
     // Member variables
     Player* _bot;                                           // The bot player instance
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> _invitationMutex;                   // Thread safety mutex
-    std::queue<PendingInvitation> _pendingInvitations;     // Queue of pending invitations
+    ::std::queue<PendingInvitation> _pendingInvitations;     // Queue of pending invitations
     ObjectGuid _currentInviter;                            // Currently processing inviter
 
     // Configuration
@@ -273,8 +273,8 @@ private:
     float _maxAcceptRange = 100.0f;                        // Maximum range to accept invitations
 
     // Tracking
-    std::unordered_set<ObjectGuid> _recentInviters;        // Track recent inviters to prevent loops
-    std::chrono::steady_clock::time_point _lastAcceptTime; // Time of last acceptance
+    ::std::unordered_set<ObjectGuid> _recentInviters;        // Track recent inviters to prevent loops
+    ::std::chrono::steady_clock::time_point _lastAcceptTime; // Time of last acceptance
     InvitationStats _stats;                                // Performance statistics
 
     // Timers

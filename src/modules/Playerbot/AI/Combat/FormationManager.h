@@ -19,6 +19,7 @@
 #include <atomic>
 #include <shared_mutex>
 #include <chrono>
+#include "Core/DI/Interfaces/IUnifiedMovementCoordinator.h"
 
 // Forward declarations
 class Player;
@@ -28,40 +29,10 @@ class Group;
 namespace Playerbot
 {
 
-// Formation types for different scenarios
-enum class FormationType : uint8
-{
-    NONE = 0,               // No formation
-    LINE = 1,               // Single line formation
-    COLUMN = 2,             // Single column formation
-    WEDGE = 3,              // V-shaped wedge formation
-    DIAMOND = 4,            // Diamond formation
-    CIRCLE = 5,             // Circular formation
-    BOX = 6,                // Rectangular box formation
-    SPREAD = 7,             // Spread out formation
-    STACK = 8,              // Tight stacked formation
-    COMBAT_LINE = 9,        // Combat line with roles
-    DUNGEON = 10,           // Dungeon formation (tank front, etc.)
-    RAID = 11,              // Raid formation with groups
-    ESCORT = 12,            // Escort formation around VIP
-    FLANKING = 13,          // Flanking formation
-    DEFENSIVE = 14          // Defensive circle formation
-};
-
-// Formation roles within the group
-enum class FormationRole : uint8
-{
-    LEADER = 0,             // Formation leader (usually tank or group leader)
-    TANK = 1,               // Tanking role in formation
-    MELEE_DPS = 2,          // Melee damage dealers
-    RANGED_DPS = 3,         // Ranged damage dealers
-    HEALER = 4,             // Healers
-    SUPPORT = 5,            // Support/utility members
-    SCOUT = 6,              // Scouts/advance guard
-    REAR_GUARD = 7,         // Rear guard protection
-    FLANKER = 8,            // Flanking positions
-    RESERVE = 9             // Reserve/flexible position
-};
+// DUPLICATE ENUMS REMOVED - Using definitions from IUnifiedMovementCoordinator.h
+// enum class FormationType : uint8 { ... } - REMOVED
+// enum class FormationRole : uint8 { ... } - REMOVED
+// Include at line 22 provides these definitions
 
 // Formation movement states
 enum class FormationMovementState : uint8
@@ -100,7 +71,7 @@ struct FormationMember
     bool isMoving;
     uint32 lastPositionUpdate;
     float movementSpeed;
-    std::string name;
+    ::std::string name;
 
     // Formation-specific data
     uint32 formationSlot;
@@ -129,7 +100,7 @@ struct FormationCommand
     uint32 timeoutMs;
     bool maintainCohesion;
     bool allowBreaking;
-    std::string reason;
+    ::std::string reason;
 
     FormationCommand() : newFormation(FormationType::NONE), targetOrientation(0.0f),
                         movementState(FormationMovementState::MOVING), movementSpeed(0.0f),
@@ -147,8 +118,8 @@ struct FormationConfig
     bool maintainOrientation;       // Keep relative orientation
     bool allowDynamicAdjustment;    // Allow real-time adjustments
     bool combatFormation;           // Is this a combat formation
-    std::vector<FormationRole> roleOrder;  // Preferred role positioning
-    std::unordered_map<FormationRole, Position> roleOffsets;  // Role-specific offsets
+    ::std::vector<FormationRole> roleOrder;  // Preferred role positioning
+    ::std::unordered_map<FormationRole, Position> roleOffsets;  // Role-specific offsets
 
     FormationConfig() : type(FormationType::NONE), baseSpacing(5.0f),
                        cohesionRadius(15.0f), reformationThreshold(10.0f),
@@ -159,15 +130,15 @@ struct FormationConfig
 // Formation performance metrics
 struct FormationMetrics
 {
-    std::atomic<uint32> formationChanges{0};
-    std::atomic<uint32> membersRepositioned{0};
-    std::atomic<uint32> cohesionBreaks{0};
-    std::atomic<uint32> reformationEvents{0};
-    std::chrono::microseconds averageFormationTime{0};
-    std::chrono::microseconds maxFormationTime{0};
+    ::std::atomic<uint32> formationChanges{0};
+    ::std::atomic<uint32> membersRepositioned{0};
+    ::std::atomic<uint32> cohesionBreaks{0};
+    ::std::atomic<uint32> reformationEvents{0};
+    ::std::chrono::microseconds averageFormationTime{0};
+    ::std::chrono::microseconds maxFormationTime{0};
     float averageIntegrity{100.0f};
     float minIntegrity{100.0f};
-    std::chrono::steady_clock::time_point lastUpdate;
+    ::std::chrono::steady_clock::time_point lastUpdate;
 
     void Reset()
     {
@@ -175,11 +146,11 @@ struct FormationMetrics
         membersRepositioned = 0;
         cohesionBreaks = 0;
         reformationEvents = 0;
-        averageFormationTime = std::chrono::microseconds{0};
-        maxFormationTime = std::chrono::microseconds{0};
+        averageFormationTime = ::std::chrono::microseconds{0};
+        maxFormationTime = ::std::chrono::microseconds{0};
         averageIntegrity = 100.0f;
         minIntegrity = 100.0f;
-        lastUpdate = std::chrono::steady_clock::now();
+        lastUpdate = ::std::chrono::steady_clock::now();
     }
 };
 
@@ -190,7 +161,7 @@ public:
     ~FormationManager() = default;
 
     // Formation management interface
-    bool JoinFormation(const std::vector<Player*>& groupMembers, FormationType formation = FormationType::DUNGEON);
+    bool JoinFormation(const ::std::vector<Player*>& groupMembers, FormationType formation = FormationType::DUNGEON);
     bool LeaveFormation();
     bool ChangeFormation(FormationType newFormation);
     bool SetFormationLeader(Player* leader);
@@ -200,25 +171,25 @@ public:
     void UpdateFormation(uint32 diff);
     bool ExecuteFormationCommand(const FormationCommand& command);
     bool MoveFormationToPosition(const Position& targetPos, float orientation = 0.0f);
-    bool AdjustFormationForCombat(const std::vector<Unit*>& threats);
+    bool AdjustFormationForCombat(const ::std::vector<Unit*>& threats);
 
     // Member management
     bool AddMember(Player* player, FormationRole role = FormationRole::SUPPORT);
     bool RemoveMember(Player* player);
     bool ChangeMemberRole(Player* player, FormationRole newRole);
     FormationMember* GetMember(Player* player);
-    std::vector<FormationMember> GetAllMembers() const;
+    ::std::vector<FormationMember> GetAllMembers() const;
 
     // Position calculation
     Position CalculateFormationPosition(FormationRole role, uint32 memberIndex);
-    std::vector<Position> CalculateAllFormationPositions();
+    ::std::vector<Position> CalculateAllFormationPositions();
     Position GetAssignedPosition() const;
     bool IsInFormationPosition(float tolerance = 2.0f) const;
 
     // Formation analysis
     FormationIntegrity AssessFormationIntegrity();
     float CalculateCohesionLevel();
-    std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f);
+    ::std::vector<Player*> GetOutOfPositionMembers(float tolerance = 3.0f);
     bool RequiresReformation();
 
     // Movement coordination
@@ -228,19 +199,19 @@ public:
     Position AdjustMovementForFormation(const Position& intendedPos);
 
     // Combat formations
-    void TransitionToCombatFormation(const std::vector<Unit*>& enemies);
+    void TransitionToCombatFormation(const ::std::vector<Unit*>& enemies);
     void TransitionToTravelFormation();
-    void AdjustForThreatSpread(const std::vector<Unit*>& threats);
+    void AdjustForThreatSpread(const ::std::vector<Unit*>& threats);
     void HandleFormationBreakage();
 
     // Role-specific formations
-    FormationType DetermineOptimalFormation(const std::vector<Player*>& members);
+    FormationType DetermineOptimalFormation(const ::std::vector<Player*>& members);
     FormationConfig GetFormationConfig(FormationType formation);
     void SetFormationConfig(FormationType formation, const FormationConfig& config);
 
     // Dynamic adjustments
     void AdjustForTerrain();
-    void AdjustForObstacles(const std::vector<Position>& obstacles);
+    void AdjustForObstacles(const ::std::vector<Position>& obstacles);
     void AdjustForGroupSize();
     void HandleMemberDisconnection(Player* disconnectedMember);
 
@@ -277,14 +248,14 @@ public:
 
 private:
     // Formation calculation methods
-    std::vector<Position> CalculateLineFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateColumnFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateWedgeFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateDiamondFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateCircleFormation(const Position& leaderPos);
-    std::vector<Position> CalculateBoxFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateDungeonFormation(const Position& leaderPos, float orientation);
-    std::vector<Position> CalculateRaidFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateLineFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateColumnFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateWedgeFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateDiamondFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateCircleFormation(const Position& leaderPos);
+    ::std::vector<Position> CalculateBoxFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateDungeonFormation(const Position& leaderPos, float orientation);
+    ::std::vector<Position> CalculateRaidFormation(const Position& leaderPos, float orientation);
 
     // Position assignment methods
     void AssignFormationPositions();
@@ -311,7 +282,7 @@ private:
     Position ClampPositionToFormation(const Position& pos);
 
     // Performance tracking
-    void TrackPerformance(std::chrono::microseconds duration, const std::string& operation);
+    void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
 
 private:
     Player* _bot;
@@ -323,8 +294,8 @@ private:
     FormationType _currentFormation;
     FormationMovementState _movementState;
     FormationIntegrity _currentIntegrity;
-    std::vector<FormationMember> _members;
-    std::unordered_map<FormationType, FormationConfig> _formationConfigs;
+    ::std::vector<FormationMember> _members;
+    ::std::unordered_map<FormationType, FormationConfig> _formationConfigs;
 
     // Position tracking
     Position _formationCenter;
@@ -366,39 +337,39 @@ class TC_GAME_API FormationUtils
 {
 public:
     // Formation type analysis
-    static FormationType GetOptimalFormationForGroup(const std::vector<Player*>& members);
-    static FormationType GetOptimalFormationForCombat(const std::vector<Player*>& members, const std::vector<Unit*>& enemies);
+    static FormationType GetOptimalFormationForGroup(const ::std::vector<Player*>& members);
+    static FormationType GetOptimalFormationForCombat(const ::std::vector<Player*>& members, const ::std::vector<Unit*>& enemies);
     static FormationType GetOptimalFormationForTerrain(const Position& location);
     static bool IsFormationSuitableForCombat(FormationType formation);
 
     // Position calculations
-    static Position CalculateFormationCenterFromMembers(const std::vector<Player*>& members);
-    static float CalculateOptimalSpacing(const std::vector<Player*>& members, FormationType formation);
-    static std::vector<Position> GenerateFormationGrid(const Position& center, uint32 rows, uint32 columns, float spacing);
+    static Position CalculateFormationCenterFromMembers(const ::std::vector<Player*>& members);
+    static float CalculateOptimalSpacing(const ::std::vector<Player*>& members, FormationType formation);
+    static ::std::vector<Position> GenerateFormationGrid(const Position& center, uint32 rows, uint32 columns, float spacing);
 
     // Role assignment utilities
     static FormationRole DetermineOptimalRole(Player* player);
-    static std::vector<FormationRole> GetRoleOrderForFormation(FormationType formation);
+    static ::std::vector<FormationRole> GetRoleOrderForFormation(FormationType formation);
     static bool IsRoleCompatibleWithFormation(FormationRole role, FormationType formation);
 
     // Formation validation
-    static bool IsFormationValid(const std::vector<Position>& positions, FormationType formation);
-    static float CalculateFormationEfficiency(const std::vector<Player*>& members, FormationType formation);
+    static bool IsFormationValid(const ::std::vector<Position>& positions, FormationType formation);
+    static float CalculateFormationEfficiency(const ::std::vector<Player*>& members, FormationType formation);
     static bool CanFormationFitInArea(FormationType formation, uint32 memberCount, float availableRadius);
 
     // Movement coordination utilities
-    static std::vector<Position> CalculateStaggeredMovement(const std::vector<Player*>& members, const Position& destination);
-    static float EstimateFormationMovementTime(const std::vector<Player*>& members, const Position& destination);
-    static bool WillMovementBreakFormation(const std::vector<Player*>& members, const Position& destination, float threshold);
+    static ::std::vector<Position> CalculateStaggeredMovement(const ::std::vector<Player*>& members, const Position& destination);
+    static float EstimateFormationMovementTime(const ::std::vector<Player*>& members, const Position& destination);
+    static bool WillMovementBreakFormation(const ::std::vector<Player*>& members, const Position& destination, float threshold);
 
     // Combat formation utilities
     static FormationType GetCounterFormation(FormationType enemyFormation);
-    static std::vector<Position> CalculateFlankingPositions(const Position& enemyCenter, uint32 flankerCount);
+    static ::std::vector<Position> CalculateFlankingPositions(const Position& enemyCenter, uint32 flankerCount);
     static bool IsFormationVulnerableToAoE(FormationType formation, float aoERadius);
 
     // Terrain adaptation utilities
     static FormationType AdaptFormationToTerrain(FormationType currentFormation, const Position& location);
-    static std::vector<Position> AdjustFormationForObstacles(const std::vector<Position>& originalPositions, const std::vector<Position>& obstacles);
+    static ::std::vector<Position> AdjustFormationForObstacles(const ::std::vector<Position>& originalPositions, const ::std::vector<Position>& obstacles);
     static bool IsTerrainSuitableForFormation(FormationType formation, const Position& location, float radius);
 };
 

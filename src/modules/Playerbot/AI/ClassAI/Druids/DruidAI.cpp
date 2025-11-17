@@ -59,12 +59,11 @@ void DruidAI::UpdateRotation(::Unit* target)
             return;
 
         // Fallback: basic melee or ranged attack based on form
-        if (!GetBot()->IsNonMeleeSpellCast(false))
+    if (!GetBot()->IsNonMeleeSpellCast(false))
         {
 
-            float distance = std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
-
-            if (distance <= 5.0f || GetBot()->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+            float distance = ::std::sqrt(GetBot()->GetExactDistSq(target)); // Calculate once from squared distance
+    if (distance <= 5.0f || GetBot()->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
 
             {
 
@@ -147,7 +146,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     if ((IsInForm(DruidForm::CAT) || IsInForm(DruidForm::BEAR)) &&
         CanUseAbility(SKULL_BASH_CAT))
     {
-        if (CastSpell(interruptTarget, SKULL_BASH_CAT))
+        if (CastSpell(SKULL_BASH_CAT, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Skull Bash",
@@ -161,7 +160,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     // Solar Beam - Balance spec interrupt
     if (GetBot()->GetPrimarySpecialization() == ChrSpecialization::DruidBalance && CanUseAbility(SOLAR_BEAM))
     {
-        if (CastSpell(interruptTarget, SOLAR_BEAM))
+        if (CastSpell(SOLAR_BEAM, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Solar Beam",
@@ -176,7 +175,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     float rangeSq_typhoon = 15.0f * 15.0f; // 225.0f
     if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_typhoon && CanUseAbility(TYPHOON))
     {
-        if (CastSpell(interruptTarget, TYPHOON))
+        if (CastSpell(TYPHOON, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Typhoon",
@@ -191,7 +190,7 @@ bool DruidAI::HandleInterrupts(::Unit* target)
     float rangeSq_bash = 5.0f * 5.0f; // 25.0f
     if (GetBot()->GetExactDistSq(interruptTarget) <= rangeSq_bash && CanUseAbility(MIGHTY_BASH))
     {
-        if (CastSpell(interruptTarget, MIGHTY_BASH))
+        if (CastSpell(MIGHTY_BASH, interruptTarget))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} interrupted {} with Mighty Bash",
@@ -272,7 +271,7 @@ bool DruidAI::HandleDefensives()
             CanUseAbility(IRONBARK))
         {
 
-            if (CastSpell(lowestAlly, IRONBARK))
+            if (CastSpell(IRONBARK, lowestAlly))
 
             {
 
@@ -286,18 +285,11 @@ bool DruidAI::HandleDefensives()
         }
     }
 
-if (!priorityTarget)
-
-{
-    return nullptr;
-
-}
-
     // Cenarion Ward - preemptive defense
     if (bot->GetPrimarySpecialization() == ChrSpecialization::DruidRestoration &&        healthPercent < 70.0f &&
         CanUseAbility(CENARION_WARD))
     {
-        if (CastSpell(bot, CENARION_WARD))
+        if (CastSpell(CENARION_WARD, bot))
         {
 
             TC_LOG_DEBUG("module.playerbot.ai", "Druid {} activated Cenarion Ward",
@@ -318,14 +310,6 @@ bool DruidAI::HandleTargetSwitching(::Unit*& target)
     {
         OnTargetChanged(priorityTarget);
         target = priorityTarget;
-
-                     if (!priorityTarget)
-
-                     {
-
-                         return;
-
-                     }
         TC_LOG_DEBUG("module.playerbot.ai", "Druid {} switching target to {}",
 
                      GetBot()->GetName(), priorityTarget->GetName());
@@ -347,8 +331,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
         case ChrSpecialization::DruidFeral:
         {
             // Ensure we're in Cat Form for Feral AoE
-
-            if (!IsInForm(DruidForm::CAT))
+    if (!IsInForm(DruidForm::CAT))
 
             {
 
@@ -359,12 +342,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Primal Wrath - combo point AoE finisher
-
-            if (_comboPoints >= 4 && CanUseAbility(PRIMAL_WRATH))
+    if (_comboPoints >= 4 && CanUseAbility(PRIMAL_WRATH))
 
             {
 
-                if (CastSpell(target, PRIMAL_WRATH))
+                if (CastSpell(PRIMAL_WRATH, target))
 
                 {
 
@@ -379,12 +361,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Thrash - AoE bleed
-
-            if (currentTime > _lastThrash + 6000 && CanUseAbility(THRASH_CAT))
+    if (currentTime > _lastThrash + 6000 && CanUseAbility(THRASH_CAT))
 
             {
 
-                if (CastSpell(target, THRASH_CAT))
+                if (CastSpell(THRASH_CAT, target))
 
                 {
 
@@ -401,12 +382,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Swipe - AoE builder
-
-            if (currentTime > _lastSwipe + 3000 && CanUseAbility(SWIPE_CAT))
+    if (currentTime > _lastSwipe + 3000 && CanUseAbility(SWIPE_CAT))
 
             {
 
-                if (CastSpell(target, SWIPE_CAT))
+                if (CastSpell(SWIPE_CAT, target))
 
                 {
 
@@ -428,8 +408,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
         case ChrSpecialization::DruidGuardian:
         {
             // Ensure we're in Bear Form for Guardian AoE
-
-            if (!IsInForm(DruidForm::BEAR))
+    if (!IsInForm(DruidForm::BEAR))
 
             {
 
@@ -440,12 +419,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Thrash - primary AoE threat
-
-            if (currentTime > _lastThrash + 6000 && CanUseAbility(THRASH_BEAR))
+    if (currentTime > _lastThrash + 6000 && CanUseAbility(THRASH_BEAR))
 
             {
 
-                if (CastSpell(target, THRASH_BEAR))
+                if (CastSpell(THRASH_BEAR, target))
 
                 {
 
@@ -462,12 +440,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Swipe - AoE damage
-
-            if (currentTime > _lastSwipe + 3000 && CanUseAbility(SWIPE_BEAR))
+    if (currentTime > _lastSwipe + 3000 && CanUseAbility(SWIPE_BEAR))
 
             {
 
-                if (CastSpell(target, SWIPE_BEAR))
+                if (CastSpell(SWIPE_BEAR, target))
 
                 {
 
@@ -489,12 +466,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
         case ChrSpecialization::DruidBalance:
         {
             // Starfall - major AoE
-
-            if (CanUseAbility(STARFALL))
+    if (CanUseAbility(STARFALL))
 
             {
 
-                if (CastSpell(target, STARFALL))
+                if (CastSpell(STARFALL, target))
 
                 {
 
@@ -509,12 +485,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Lunar Strike - cleave
-
-            if (CanUseAbility(LUNAR_STRIKE))
+    if (CanUseAbility(LUNAR_STRIKE))
 
             {
 
-                if (CastSpell(target, LUNAR_STRIKE))
+                if (CastSpell(LUNAR_STRIKE, target))
 
                 {
 
@@ -529,12 +504,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Sunfire - spread DoT
-
-            if (CanUseAbility(SUNFIRE))
+    if (CanUseAbility(SUNFIRE))
 
             {
 
-                if (CastSpell(target, SUNFIRE))
+                if (CastSpell(SUNFIRE, target))
 
                 {
 
@@ -554,8 +528,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
         case ChrSpecialization::DruidRestoration:
         {
             // Wild Growth - AoE heal
-
-            if (CanUseAbility(WILD_GROWTH))
+    if (CanUseAbility(WILD_GROWTH))
 
             {
 
@@ -565,7 +538,7 @@ bool DruidAI::HandleAoERotation(::Unit* target)
 
                 {
 
-                    if (CastSpell(healTarget, WILD_GROWTH))
+                    if (CastSpell(WILD_GROWTH, healTarget))
 
                     {
 
@@ -582,12 +555,11 @@ bool DruidAI::HandleAoERotation(::Unit* target)
             }
 
             // Efflorescence - ground AoE heal
-
-            if (CanUseAbility(EFFLORESCENCE))
+    if (CanUseAbility(EFFLORESCENCE))
 
             {
 
-                if (CastSpell(target, EFFLORESCENCE))
+                if (CastSpell(EFFLORESCENCE, target))
 
                 {
 
@@ -621,8 +593,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
         case ChrSpecialization::DruidFeral:
         {
             // Tiger's Fury - energy and damage boost
-
-            if (currentTime > _lastTigersFury + 30000 &&
+    if (currentTime > _lastTigersFury + 30000 &&
 
                 _energy < 40 &&
 
@@ -647,8 +618,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             }
 
             // Berserk - major DPS cooldown
-
-            if (currentTime > _lastBerserk + 180000 &&
+    if (currentTime > _lastBerserk + 180000 &&
 
                 CanUseAbility(BERSERK_CAT))
 
@@ -671,8 +641,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             }
 
             // Incarnation: King of the Jungle
-
-            if (currentTime > _lastIncarnation + 180000 &&
+    if (currentTime > _lastIncarnation + 180000 &&
 
                 CanUseAbility(INCARNATION_KING))
 
@@ -700,8 +669,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
         case ChrSpecialization::DruidGuardian:
         {
             // Berserk - rage generation and defense
-
-            if (currentTime > _lastBerserk + 180000 &&
+    if (currentTime > _lastBerserk + 180000 &&
 
                 CanUseAbility(BERSERK_BEAR))
 
@@ -724,8 +692,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             }
 
             // Incarnation: Guardian of Ursoc
-
-            if (currentTime > _lastIncarnation + 180000 &&
+    if (currentTime > _lastIncarnation + 180000 &&
 
                 CanUseAbility(INCARNATION_GUARDIAN))
 
@@ -753,8 +720,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
         case ChrSpecialization::DruidBalance:
         {
             // Celestial Alignment - major DPS window
-
-            if (currentTime > _lastCelestialAlignment + 180000 &&
+    if (currentTime > _lastCelestialAlignment + 180000 &&
 
                 CanUseAbility(CELESTIAL_ALIGNMENT))
 
@@ -777,8 +743,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             }
 
             // Incarnation: Chosen of Elune
-
-            if (currentTime > _lastIncarnation + 180000 &&
+    if (currentTime > _lastIncarnation + 180000 &&
 
                 CanUseAbility(INCARNATION_BALANCE))
 
@@ -830,8 +795,7 @@ bool DruidAI::HandleOffensiveCooldowns(::Unit* target)
             }
 
             // Incarnation: Tree of Life
-
-            if (currentTime > _lastIncarnation + 180000 &&
+    if (currentTime > _lastIncarnation + 180000 &&
 
                 CanUseAbility(INCARNATION_TREE))
 
@@ -880,10 +844,10 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
     if (_comboPoints >= 5)
     {
         // Rip - maintain bleed
-        if (!HasAura(RIP, target) && CanUseAbility(RIP))
+    if (!HasAura(RIP, target) && CanUseAbility(RIP))
         {
 
-            if (CastSpell(target, RIP))
+            if (CastSpell(RIP, target))
 
             {
 
@@ -897,7 +861,7 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         }
 
         // Savage Roar - maintain buff
-        if (!HasAura(SAVAGE_ROAR) && CanUseAbility(SAVAGE_ROAR))
+    if (!HasAura(SAVAGE_ROAR) && CanUseAbility(SAVAGE_ROAR))
         {
 
             if (CastSpell(SAVAGE_ROAR))
@@ -914,10 +878,10 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         }
 
         // Ferocious Bite - dump combo points
-        if (CanUseAbility(FEROCIOUS_BITE))
+    if (CanUseAbility(FEROCIOUS_BITE))
         {
 
-            if (CastSpell(target, FEROCIOUS_BITE))
+            if (CastSpell(FEROCIOUS_BITE, target))
 
             {
 
@@ -935,10 +899,10 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
     if (_comboPoints < 5)
     {
         // Rake - maintain bleed and build CP
-        if (!HasAura(RAKE, target) && CanUseAbility(RAKE))
+    if (!HasAura(RAKE, target) && CanUseAbility(RAKE))
         {
 
-            if (CastSpell(target, RAKE))
+            if (CastSpell(RAKE, target))
 
             {
 
@@ -952,10 +916,10 @@ void DruidAI::HandleComboPointManagement(::Unit* target)
         }
 
         // Shred - primary builder from behind
-        if (CanUseAbility(SHRED))
+    if (CanUseAbility(SHRED))
         {
 
-            if (CastSpell(target, SHRED))
+            if (CastSpell(SHRED, target))
 
             {
 
@@ -982,8 +946,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
         case ChrSpecialization::DruidFeral:
         {
             // Ensure Cat Form
-
-            if (!IsInForm(DruidForm::CAT))
+    if (!IsInForm(DruidForm::CAT))
 
             {
 
@@ -994,12 +957,11 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             }
 
             // Basic Feral rotation
-
-            if (!HasAura(RAKE, target) && CanUseAbility(RAKE))
+    if (!HasAura(RAKE, target) && CanUseAbility(RAKE))
 
             {
 
-                CastSpell(target, RAKE);
+                CastSpell(RAKE, target);
 
                 return;
 
@@ -1014,7 +976,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(target, RIP);
+                    CastSpell(RIP, target);
 
                     return;
 
@@ -1024,7 +986,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(target, FEROCIOUS_BITE);
+                    CastSpell(FEROCIOUS_BITE, target);
 
                     return;
 
@@ -1037,7 +999,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SHRED);
+                CastSpell(SHRED, target);
 
                 return;
 
@@ -1049,8 +1011,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
         case ChrSpecialization::DruidGuardian:
         {
             // Ensure Bear Form
-
-            if (!IsInForm(DruidForm::BEAR))
+    if (!IsInForm(DruidForm::BEAR))
 
             {
 
@@ -1061,12 +1022,11 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             }
 
             // Basic Guardian rotation
-
-            if (CanUseAbility(MANGLE_BEAR))
+    if (CanUseAbility(MANGLE_BEAR))
 
             {
 
-                CastSpell(target, MANGLE_BEAR);
+                CastSpell(MANGLE_BEAR, target);
 
                 return;
 
@@ -1077,7 +1037,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, THRASH_BEAR);
+                CastSpell(THRASH_BEAR, target);
 
                 return;
 
@@ -1088,7 +1048,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, MAUL);
+                CastSpell(MAUL, target);
 
                 return;
 
@@ -1099,7 +1059,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SWIPE_BEAR);
+                CastSpell(SWIPE_BEAR, target);
 
                 return;
 
@@ -1111,8 +1071,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
         case ChrSpecialization::DruidBalance:
         {
             // Ensure Moonkin Form if available
-
-            if (!IsInForm(DruidForm::MOONKIN) && CanUseAbility(MOONKIN_FORM))
+    if (!IsInForm(DruidForm::MOONKIN) && CanUseAbility(MOONKIN_FORM))
 
             {
 
@@ -1123,12 +1082,11 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             }
 
             // Basic Balance rotation
-
-            if (!HasAura(MOONFIRE, target) && CanUseAbility(MOONFIRE))
+    if (!HasAura(MOONFIRE, target) && CanUseAbility(MOONFIRE))
 
             {
 
-                CastSpell(target, MOONFIRE);
+                CastSpell(MOONFIRE, target);
 
                 return;
 
@@ -1139,7 +1097,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SUNFIRE);
+                CastSpell(SUNFIRE, target);
 
                 return;
 
@@ -1150,7 +1108,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, STARSURGE);
+                CastSpell(STARSURGE, target);
 
                 return;
 
@@ -1161,7 +1119,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, SOLAR_WRATH);
+                CastSpell(SOLAR_WRATH, target);
 
                 return;
 
@@ -1172,7 +1130,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, LUNAR_STRIKE);
+                CastSpell(LUNAR_STRIKE, target);
 
                 return;
 
@@ -1183,7 +1141,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, WRATH);
+                CastSpell(WRATH, target);
 
                 return;
 
@@ -1206,7 +1164,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, SWIFTMEND);
+                    CastSpell(SWIFTMEND, healTarget);
 
                     return;
 
@@ -1217,7 +1175,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, REJUVENATION);
+                    CastSpell(REJUVENATION, healTarget);
 
                     return;
 
@@ -1228,7 +1186,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, LIFEBLOOM);
+                    CastSpell(LIFEBLOOM, healTarget);
 
                     return;
 
@@ -1239,7 +1197,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, REGROWTH);
+                    CastSpell(REGROWTH, healTarget);
 
                     return;
 
@@ -1250,7 +1208,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
                 {
 
-                    CastSpell(healTarget, HEALING_TOUCH);
+                    CastSpell(HEALING_TOUCH, healTarget);
 
                     return;
 
@@ -1259,12 +1217,11 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
             }
 
             // If no healing needed, do some damage
-
-            if (!HasAura(MOONFIRE, target) && CanUseAbility(MOONFIRE))
+    if (!HasAura(MOONFIRE, target) && CanUseAbility(MOONFIRE))
 
             {
 
-                CastSpell(target, MOONFIRE);
+                CastSpell(MOONFIRE, target);
 
                 return;
 
@@ -1275,7 +1232,7 @@ void DruidAI::ExecuteSpecializationRotation(::Unit* target)
 
             {
 
-                CastSpell(target, WRATH);
+                CastSpell(WRATH, target);
 
                 return;
 
@@ -1317,10 +1274,11 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     if (!HasEnoughResource(spellId))
         return false;
 
-    // Check form requirements    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    // Check form requirements
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
     if (spellInfo)
     {        // Check if spell requires specific form
-        if (spellInfo->Stances)
+    if (spellInfo->Stances)
         {
 
             bool canCastInForm = false;
@@ -1343,9 +1301,7 @@ bool DruidAI::CanUseAbility(uint32 spellId)
             else if (IsInForm(DruidForm::TREE_OF_LIFE))
 
                 currentFormMask = 1 << 5; // Tree form bit
-
-
-            if (spellInfo->Stances & currentFormMask)
+    if (spellInfo->Stances & currentFormMask)
 
                 canCastInForm = true;
 
@@ -1535,7 +1491,8 @@ bool DruidAI::ShiftToForm(DruidForm form)
 
             break;
             case DruidForm::HUMANOID:
-            // Cancel current form            if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+            // Cancel current form
+    if (bot->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
 
             {
             bot->RemoveAurasByType(SPELL_AURA_MOD_SHAPESHIFT);

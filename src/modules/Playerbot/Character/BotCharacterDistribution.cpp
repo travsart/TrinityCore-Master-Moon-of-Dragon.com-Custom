@@ -246,7 +246,7 @@ void BotCharacterDistribution::BuildCumulativeDistribution()
                  m_totalPercentage);
 }
 
-std::pair<uint8, uint8> BotCharacterDistribution::GetRandomRaceClassByDistribution()
+::std::pair<uint8, uint8> BotCharacterDistribution::GetRandomRaceClassByDistribution()
 {
     if (m_raceClassCombinations.empty())
     {
@@ -258,13 +258,13 @@ std::pair<uint8, uint8> BotCharacterDistribution::GetRandomRaceClassByDistributi
     float random = frand(0.0f, m_totalPercentage);
 
     // Binäre Suche in kumulativer Verteilung
-    auto it = std::lower_bound(m_cumulativeDistribution.begin(),
+    auto it = ::std::lower_bound(m_cumulativeDistribution.begin(),
                                m_cumulativeDistribution.end(),
                                random);
 
     if (it != m_cumulativeDistribution.end())
     {
-        size_t index = std::distance(m_cumulativeDistribution.begin(), it);
+        size_t index = ::std::distance(m_cumulativeDistribution.begin(), it);
         if (index < m_raceClassCombinations.size())
         {
             const auto& combo = m_raceClassCombinations[index];
@@ -304,9 +304,9 @@ uint8 BotCharacterDistribution::GetRandomGenderForRaceClass(uint8 race, uint8 cl
     return GetRandomGenderForRace(race);
 }
 
-std::vector<RaceClassCombination> BotCharacterDistribution::GetTopCombinations(uint32 limit) const
+::std::vector<RaceClassCombination> BotCharacterDistribution::GetTopCombinations(uint32 limit) const
 {
-    std::vector<RaceClassCombination> top;
+    ::std::vector<RaceClassCombination> top;
 
     uint32 count = 0;
     for (const auto& combo : m_raceClassCombinations)
@@ -321,9 +321,9 @@ std::vector<RaceClassCombination> BotCharacterDistribution::GetTopCombinations(u
     return top;
 }
 
-std::vector<RaceClassCombination> BotCharacterDistribution::GetPopularCombinations() const
+::std::vector<RaceClassCombination> BotCharacterDistribution::GetPopularCombinations() const
 {
-    std::vector<RaceClassCombination> popular;
+    ::std::vector<RaceClassCombination> popular;
 
     for (const auto& combo : m_raceClassCombinations)
     {

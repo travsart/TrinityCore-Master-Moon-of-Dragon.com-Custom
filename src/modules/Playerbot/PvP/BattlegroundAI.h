@@ -144,9 +144,9 @@ struct FlagBGStrategy
  */
 struct BaseBGStrategy
 {
-    std::vector<Position> baseLocations;
-    std::unordered_map<uint32, uint32> baseDefenderCount; // baseId -> defender count
-    std::vector<uint32> priorityBases;  // Bases to prioritize (e.g., Blacksmith in AB)
+    ::std::vector<Position> baseLocations;
+    ::std::unordered_map<uint32, uint32> baseDefenderCount; // baseId -> defender count
+    ::std::vector<uint32> priorityBases;  // Bases to prioritize (e.g., Blacksmith in AB)
     bool rotateCaptures = true;         // Rotate between bases
     uint32 minDefendersPerBase = 2;
 
@@ -163,8 +163,8 @@ struct AVStrategy
     bool killBoss = true;
     bool escortNPCs = true;
     bool collectResources = true;
-    std::vector<Position> graveyardLocations;
-    std::vector<Position> towerLocations;
+    ::std::vector<Position> graveyardLocations;
+    ::std::vector<Position> towerLocations;
     Position bossLocation;
 
     AVStrategy() : captureGraveyards(true), captureTowers(true),
@@ -179,7 +179,7 @@ struct EOTSStrategy
     bool captureBases = true;
     bool captureFlag = true;
     bool prioritizeFlagWhenLeading = false; // Focus flag if winning
-    std::vector<Position> baseLocations;
+    ::std::vector<Position> baseLocations;
     Position flagLocation;
     uint32 flagCarrierEscortCount = 3;
 
@@ -196,8 +196,8 @@ struct SiegeStrategy
     bool defendGates = true;
     bool attackGates = true;
     bool prioritizeDemolishers = true;
-    std::vector<Position> gateLocations;
-    std::vector<Position> siegeWeaponLocations;
+    ::std::vector<Position> gateLocations;
+    ::std::vector<Position> siegeWeaponLocations;
 
     SiegeStrategy() : operateSiegeWeapons(true), defendGates(true),
         attackGates(true), prioritizeDemolishers(true) {}
@@ -257,7 +257,7 @@ public:
     /**
      * Get all active objectives for battleground
      */
-    std::vector<BGObjective> GetActiveObjectives(::Player* player) const override;
+    ::std::vector<BGObjective> GetActiveObjectives(::Player* player) const override;
 
     /**
      * Get highest priority objective for player
@@ -297,7 +297,7 @@ public:
     bool CaptureBase(::Player* player, Position const& baseLocation);
     bool DefendBase(::Player* player, Position const& baseLocation);
     Position FindBestBaseToCapture(::Player* player) const;
-    std::vector<Position> GetCapturedBases(::Player* player) const;
+    ::std::vector<Position> GetCapturedBases(::Player* player) const;
     bool IsBaseUnderAttack(Position const& baseLocation) const;
 
     // Alterac Valley
@@ -345,7 +345,7 @@ public:
     /**
      * Find nearby team members
      */
-    std::vector<::Player*> GetNearbyTeammates(::Player* player, float range) const override;
+    ::std::vector<::Player*> GetNearbyTeammates(::Player* player, float range) const override;
 
     /**
      * Call for backup at location
@@ -413,14 +413,14 @@ public:
 
     struct BGMetrics
     {
-        std::atomic<uint32> objectivesCaptured{0};
-        std::atomic<uint32> objectivesDefended{0};
-        std::atomic<uint32> flagCaptures{0};
-        std::atomic<uint32> flagReturns{0};
-        std::atomic<uint32> basesAssaulted{0};
-        std::atomic<uint32> basesDefended{0};
-        std::atomic<uint32> matchesWon{0};
-        std::atomic<uint32> matchesLost{0};
+        ::std::atomic<uint32> objectivesCaptured{0};
+        ::std::atomic<uint32> objectivesDefended{0};
+        ::std::atomic<uint32> flagCaptures{0};
+        ::std::atomic<uint32> flagReturns{0};
+        ::std::atomic<uint32> basesAssaulted{0};
+        ::std::atomic<uint32> basesDefended{0};
+        ::std::atomic<uint32> matchesWon{0};
+        ::std::atomic<uint32> matchesLost{0};
 
         void Reset()
         {
@@ -458,7 +458,7 @@ private:
     uint32 GetEnemyTeamScore(::Player* player) const;
     bool IsObjectiveInRange(::Player* player, Position const& objLocation, float range) const;
     uint32 CountPlayersAtObjective(Position const& objLocation, float range) const;
-    std::vector<::Player*> GetPlayersAtObjective(Position const& objLocation, float range) const;
+    ::std::vector<::Player*> GetPlayersAtObjective(Position const& objLocation, float range) const;
 
     // ============================================================================
     // INITIALIZATION HELPERS
@@ -475,36 +475,36 @@ private:
     // ============================================================================
 
     // Strategy profiles
-    std::unordered_map<uint32, BGStrategyProfile> _playerProfiles;
+    ::std::unordered_map<uint32, BGStrategyProfile> _playerProfiles;
 
     // Role assignments (playerGuid -> role)
-    std::unordered_map<uint32, BGRole> _playerRoles;
+    ::std::unordered_map<uint32, BGRole> _playerRoles;
 
     // Objective assignments (playerGuid -> objective)
-    std::unordered_map<uint32, BGObjective> _playerObjectives;
+    ::std::unordered_map<uint32, BGObjective> _playerObjectives;
 
     // Active objectives per BG (bgInstanceId -> objectives)
-    std::unordered_map<uint32, std::vector<BGObjective>> _activeObjectives;
+    ::std::unordered_map<uint32, ::std::vector<BGObjective>> _activeObjectives;
 
     // BG-specific strategies
-    std::unordered_map<BGType, FlagBGStrategy> _flagStrategies;
-    std::unordered_map<BGType, BaseBGStrategy> _baseStrategies;
-    std::unordered_map<BGType, AVStrategy> _avStrategies;
-    std::unordered_map<BGType, EOTSStrategy> _eotsStrategies;
-    std::unordered_map<BGType, SiegeStrategy> _siegeStrategies;
+    ::std::unordered_map<BGType, FlagBGStrategy> _flagStrategies;
+    ::std::unordered_map<BGType, BaseBGStrategy> _baseStrategies;
+    ::std::unordered_map<BGType, AVStrategy> _avStrategies;
+    ::std::unordered_map<BGType, EOTSStrategy> _eotsStrategies;
+    ::std::unordered_map<BGType, SiegeStrategy> _siegeStrategies;
 
     // Backup calls (location -> timestamp)
-    std::unordered_map<uint32, std::pair<Position, uint32>> _backupCalls;
+    ::std::unordered_map<uint32, ::std::pair<Position, uint32>> _backupCalls;
 
     // Metrics
-    std::unordered_map<uint32, BGMetrics> _playerMetrics;
+    ::std::unordered_map<uint32, BGMetrics> _playerMetrics;
     BGMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 
     // Update intervals
     static constexpr uint32 BG_UPDATE_INTERVAL = 500;  // 500ms
-    std::unordered_map<uint32, uint32> _lastUpdateTimes;
+    ::std::unordered_map<uint32, uint32> _lastUpdateTimes;
 
     // Constants
     static constexpr float OBJECTIVE_RANGE = 10.0f;

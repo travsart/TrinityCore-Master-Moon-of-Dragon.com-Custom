@@ -114,15 +114,15 @@ void BotWorldSessionMgr::Shutdown()
     sBotPerformanceMon->Shutdown();
     sBotPriorityMgr->Shutdown();
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     // Clean logout all bot sessions
     for (auto& [guid, session] : _botSessions)
     {
         if (!session)
         {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-            return nullptr;
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in Shutdown");
+            continue;  // Skip null sessions
         }
         if (session && session->GetPlayer())
         {
@@ -156,7 +156,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
         return false;
     }
 
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     // Check if bot is already loading
     if (_botsLoading.find(playerGuid) != _botsLoading.end())
@@ -224,7 +224,7 @@ bool BotWorldSessionMgr::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccoun
     //
     // ROOT CAUSE OF SERVER HANG: "ENTERPRISE FIX V2" removed all throttling, causing:
     // - 296 bots spawning immediately at server startup
-    // - 296 � 66 async queries = 19,536 database queries flooding connection pool
+    // - 296  66 async queries = 19,536 database queries flooding connection pool
     // - ProcessQueryCallbacks() overwhelmed, world thread hangs 60+ seconds
     //
     // NEW SOLUTION: Queue-based rate-limited spawning
@@ -258,7 +258,7 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
     // Solution: Use async disconnection queue (same pattern as worker thread disconnects)
     // The session will be cleaned up in next UpdateSessions() call on main thread
     // when Map::Update() is NOT iterating over players
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -267,11 +267,11 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
         return;
     }
 
-    std::shared_ptr<BotSession> session = it->second;
+    ::std::shared_ptr<BotSession> session = it->second;
     if (session)
     {
         // Log removal (safely handle name access)
-        if (session->GetPlayer())
+    if (session->GetPlayer())
         {
             try {
                 TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal: {}", session->GetPlayer()->GetName());
@@ -294,7 +294,7 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
 
 Player* BotWorldSessionMgr::GetPlayerBot(ObjectGuid playerGuid) const
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     auto it = _botSessions.find(playerGuid);
     if (it == _botSessions.end())
@@ -332,7 +332,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // PHASE 0.5: CRITICAL FIX - Process pending spawns at controlled rate
     // Prevents database overload by rate-limiting async login submissions
     {
-        std::lock_guard lock(_sessionsMutex);
+        ::std::lock_guard lock(_sessionsMutex);
 
         _spawnsProcessedThisTick = 0;
 
@@ -346,7 +346,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                 playerGuid.ToString(), accountId, _pendingSpawns.size());
 
             // Synchronize character cache
-            if (!SynchronizeCharacterCache(playerGuid))
+    if (!SynchronizeCharacterCache(playerGuid))
             {
                 TC_LOG_ERROR("module.playerbot.session",
                     "?? Failed to synchronize character cache for {}", playerGuid.ToString());
@@ -357,7 +357,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             _botsLoading.insert(playerGuid);
 
             // Create BotSession
-            std::shared_ptr<BotSession> botSession = BotSession::Create(accountId);
+            ::std::shared_ptr<BotSession> botSession = BotSession::Create(accountId);
             if (!botSession)
             {
                 TC_LOG_ERROR("module.playerbot.session",
@@ -369,8 +369,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             // Store session
             _botSessions[playerGuid] = botSession;
 
-            // Initiate async login (1 bot � 66 queries)
-            if (!botSession->LoginCharacter(playerGuid))
+            // Initiate async login (1 bot  66 queries)
+    if (!botSession->LoginCharacter(playerGuid))
             {
                 TC_LOG_ERROR("module.playerbot.session",
                     "?? Failed to initiate async login for {}", playerGuid.ToString());
@@ -402,13 +402,13 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         sSpatialGridScheduler.UpdateAllGrids(diff);
     }
 
-    std::vector<std::pair<ObjectGuid, std::shared_ptr<BotSession>>> sessionsToUpdate;
-    std::vector<ObjectGuid> sessionsToRemove;
+    ::std::vector<::std::pair<ObjectGuid, ::std::shared_ptr<BotSession>>> sessionsToUpdate;
+    ::std::vector<ObjectGuid> sessionsToRemove;
     uint32 botsSkipped = 0;
 
     // PHASE 1: Priority-based session collection (minimal lock time)
     {
-        std::lock_guard lock(_sessionsMutex);
+        ::std::lock_guard lock(_sessionsMutex);
 
         if (_botSessions.empty() && _pendingSpawns.empty())
         {
@@ -417,21 +417,20 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
 
         sessionsToUpdate.reserve(200); // Reserve for typical load
-
-        for (auto it = _botSessions.begin(); it != _botSessions.end(); ++it)
+    for (auto it = _botSessions.begin(); it != _botSessions.end(); ++it)
         {
             ObjectGuid guid = it->first;
-            std::shared_ptr<BotSession> session = it->second;
+            ::std::shared_ptr<BotSession> session = it->second;
 
             // CRITICAL SAFETY: Validate session
-            if (!session || !session->IsBot())
+    if (!session || !session->IsBot())
             {
                 sessionsToRemove.push_back(guid);
                 continue;
             }
 
             // Check if bot should update this tick based on priority
-            if (_enterpriseMode && !sBotPriorityMgr->ShouldUpdateThisTick(guid, _tickCounter))
+    if (_enterpriseMode && !sBotPriorityMgr->ShouldUpdateThisTick(guid, _tickCounter))
             {
                 sBotPriorityMgr->RecordUpdateSkipped(guid);
                 botsSkipped++;
@@ -439,7 +438,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             }
 
             // Handle loading sessions
-            if (_botsLoading.find(guid) != _botsLoading.end())
+    if (_botsLoading.find(guid) != _botsLoading.end())
             {
                 if (session->IsLoginComplete())
                 {
@@ -447,7 +446,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     TC_LOG_INFO("module.playerbot.session", "?? ? Bot login completed: {}", guid.ToString());
 
                     // Initialize priority for newly logged-in bot (default to LOW, will adjust in Phase 2 if needed)
-                    if (_enterpriseMode)
+    if (_enterpriseMode)
                         sBotPriorityMgr->SetPriority(guid, BotPriority::LOW);
 
                     sessionsToUpdate.emplace_back(guid, session);
@@ -470,7 +469,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
         }
 
         // Clean up invalid sessions
-        for (ObjectGuid const& guid : sessionsToRemove)
+    for (ObjectGuid const& guid : sessionsToRemove)
         {
             _botSessions.erase(guid);
             sBotPriorityMgr->RemoveBot(guid);
@@ -481,8 +480,8 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     //
     // PHASE A THREADPOOL INTEGRATION: Replace sequential bot updates with parallel execution
     //
-    // Before (Sequential): 145 bots � 1ms = 145ms
-    // After (Parallel, 8 threads): 145 bots � 8 threads = 18 bots/thread � 1ms = 18ms (7x speedup)
+    // Before (Sequential): 145 bots  1ms = 145ms
+    // After (Parallel, 8 threads): 145 bots  8 threads = 18 bots/thread  1ms = 18ms (7x speedup)
     //
     // Architecture:
     // 1. Submit each bot update as a task to ThreadPool with mapped priority
@@ -495,7 +494,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // During server startup, World components aren't ready and ThreadPool workers would crash
     // Fallback to sequential execution if parallel execution isn't safe yet
 
-    std::vector<ObjectGuid> disconnectedSessions;
+    ::std::vector<ObjectGuid> disconnectedSessions;
 
     // OPTION 5: _asyncBotsUpdated and _asyncDisconnections now in header (class members)
     // Thread-safe without mutex - using boost::lockfree::queue and std::atomic
@@ -563,7 +562,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
         // Safety: Ensure minimum threshold to handle edge cases
         // Even with minimum 16 workers enforced by ThreadPool, be defensive
-        if (busyThreshold < 3)
+    if (busyThreshold < 3)
             busyThreshold = 3;
         if (queuedTasks > 100 || activeWorkers > busyThreshold)
         {
@@ -576,14 +575,14 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     for (auto& [guid, botSession] : sessionsToUpdate)
     {
         // Validate session before submitting task
-        if (!botSession || !botSession->IsActive())
+    if (!botSession || !botSession->IsActive())
         {
             disconnectedSessions.push_back(guid);
             continue;
         }
 
         // OPTION 5: Capture weak_ptr for session lifetime detection
-        std::weak_ptr<BotSession> weakSession = botSession;
+        ::std::weak_ptr<BotSession> weakSession = botSession;
 
         // Define the update logic (will be used in both parallel and sequential paths)
         auto updateLogic = [guid, weakSession, diff, currentTime, enterpriseMode, tickCounter, this]()
@@ -622,12 +621,12 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                     }
 
                     // Increment success counter (atomic, thread-safe)
-                    _asyncBotsUpdated.fetch_add(1, std::memory_order_relaxed);
+                    _asyncBotsUpdated.fetch_add(1, ::std::memory_order_relaxed);
 
                     // IMPROVEMENT #1: ADAPTIVE AutoAdjustPriority frequency based on bot activity
                     // Active bots (combat/group) = more frequent checks (250ms)
                     // Idle bots (high health, not moving) = less frequent checks (2.5s)
-                    if (enterpriseMode && session->IsLoginComplete())
+    if (enterpriseMode && session->IsLoginComplete())
                     {
                         Player* bot = session->GetPlayer();
                         if (!bot || !bot->IsInWorld())
@@ -646,13 +645,12 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
 
                         // Adaptive frequency: Adjust interval based on bot activity
                         uint32 adjustInterval = 10; // Default 500ms
-
-                        if (bot->IsInCombat() || bot->GetGroup())
+    if (bot->IsInCombat() || bot->GetGroup())
                             adjustInterval = 5;  // Active bots: 250ms (more responsive)
                         else if (!bot->isMoving() && bot->GetHealthPct() > 80.0f)
                             adjustInterval = 50; // Idle healthy bots: 2.5s (save CPU)
                         // Call AutoAdjustPriority at adaptive interval
-                        if (tickCounter % adjustInterval == 0)
+    if (tickCounter % adjustInterval == 0)
                         {
                             sBotPriorityMgr->AutoAdjustPriority(bot, currentTime);
                         }
@@ -660,7 +658,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         else
                         {
                             // Immediate priority boost for critical situations (no group/movement checks)
-                            if (bot->IsInCombat())
+    if (bot->IsInCombat())
                             {
                                 sBotPriorityMgr->SetPriority(guid, BotPriority::HIGH);
                             }
@@ -671,7 +669,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
                         }
                     }
                 }
-                catch (std::exception const& e)
+                catch (::std::exception const& e)
                 {
                     TC_LOG_ERROR("module.playerbot.session", "?? Exception updating bot {}: {}", guid.ToString(), e.what());
                     sBotHealthCheck->RecordError(guid, "UpdateException");
@@ -688,7 +686,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
             };
 
         // Execute either parallel (ThreadPool) or sequential (direct call)
-        if (useThreadPool)
+    if (useThreadPool)
         {
             // OPTION 5: Fire-and-forget submission (no future storage)
             try
@@ -726,7 +724,7 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     // PHASE 3: Cleanup disconnected sessions
     if (!disconnectedSessions.empty())
     {
-        std::lock_guard lock(_sessionsMutex);
+        ::std::lock_guard lock(_sessionsMutex);
         for (ObjectGuid const& guid : disconnectedSessions)
         {
             _botSessions.erase(guid);
@@ -738,18 +736,18 @@ void BotWorldSessionMgr::UpdateSessions(uint32 diff)
     if (_enterpriseMode)
     {
         // OPTION 5: Get async update count and reset for next tick
-        uint32 asyncUpdated = _asyncBotsUpdated.exchange(0, std::memory_order_relaxed);
+        uint32 asyncUpdated = _asyncBotsUpdated.exchange(0, ::std::memory_order_relaxed);
         sBotPerformanceMon->EndTick(currentTime, asyncUpdated, botsSkipped);
 
         // Only check thresholds every 10 ticks (500ms) instead of every tick
-        if (_tickCounter % 10 == 0)
+    if (_tickCounter % 10 == 0)
         {
             sBotPerformanceMon->CheckPerformanceThresholds();
             sBotHealthCheck->PerformHealthChecks(currentTime);
         }
 
         // Periodic enterprise logging (every 60 seconds)
-        if (_tickCounter % 1200 == 0)
+    if (_tickCounter % 1200 == 0)
         {
             sBotPriorityMgr->LogPriorityDistribution();
             sBotPerformanceMon->LogPerformanceReport();
@@ -776,9 +774,9 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
     uint32 totalProcessed = 0;
 
     // Collect sessions that need deferred packet processing
-    std::vector<std::shared_ptr<BotSession>> sessionsToProcess;
+    ::std::vector<::std::shared_ptr<BotSession>> sessionsToProcess;
     {
-        std::lock_guard lock(_sessionsMutex);
+        ::std::lock_guard lock(_sessionsMutex);
         sessionsToProcess.reserve(_botSessions.size());
 
         for (auto const& [guid, session] : _botSessions)
@@ -820,7 +818,7 @@ uint32 BotWorldSessionMgr::ProcessAllDeferredPackets()
 
 uint32 BotWorldSessionMgr::GetBotCount() const
 {
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
     return static_cast<uint32>(_botSessions.size());
 }
 
@@ -841,7 +839,7 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 
     // CRITICAL FIX: Use synchronous prepared statement for character lookup
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_DATA_FOR_GUILD);
-    stmt->SetData(0, playerGuid.GetCounter());
+    stmt->setUInt64(0, playerGuid.GetCounter());
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
     if (!result)
@@ -851,10 +849,10 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
     }
 
     Field* fields = result->Fetch();
-    std::string dbName = fields[0].GetString();       // name is first field
+    ::std::string dbName = fields[0].GetString();       // name is first field
     uint32 dbAccountId = fields[6].GetUInt32();      // account is 7th field (0-indexed: field 6)
     // Get current cache data
-    std::string cacheName = "<unknown>";
+    ::std::string cacheName = "<unknown>";
     uint32 cacheAccountId = sCharacterCache->GetCharacterAccountIdByGuid(playerGuid);
     sCharacterCache->GetCharacterNameByGuid(playerGuid, cacheName);
 
@@ -882,10 +880,10 @@ bool BotWorldSessionMgr::SynchronizeCharacterCache(ObjectGuid playerGuid)
 // Chat Command Support APIs - Added for PlayerBot command system
 // ============================================================================
 
-std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId) const
+::std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId) const
 {
-    std::vector<Player*> bots;
-    std::lock_guard lock(_sessionsMutex);
+    ::std::vector<Player*> bots;
+    ::std::lock_guard lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {
@@ -897,7 +895,7 @@ std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId
             continue;
 
         // Check if this bot belongs to the specified account
-        if (bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
+    if (bot->GetSession() && bot->GetSession()->GetAccountId() == accountId)
             bots.push_back(bot);
     }
 
@@ -906,11 +904,11 @@ std::vector<Player*> BotWorldSessionMgr::GetPlayerBotsByAccount(uint32 accountId
 
 void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 {
-    std::vector<ObjectGuid> botsToRemove;
+    ::std::vector<ObjectGuid> botsToRemove;
 
     // Collect GUIDs to remove (avoid modifying map while iterating)
     {
-        std::lock_guard lock(_sessionsMutex);
+        ::std::lock_guard lock(_sessionsMutex);
         for (auto const& [guid, session] : _botSessions)
         {
             if (!session)
@@ -933,7 +931,7 @@ void BotWorldSessionMgr::RemoveAllPlayerBots(uint32 accountId)
 uint32 BotWorldSessionMgr::GetBotCountByAccount(uint32 accountId) const
 {
     uint32 count = 0;
-    std::lock_guard lock(_sessionsMutex);
+    ::std::lock_guard lock(_sessionsMutex);
 
     for (auto const& [guid, session] : _botSessions)
     {

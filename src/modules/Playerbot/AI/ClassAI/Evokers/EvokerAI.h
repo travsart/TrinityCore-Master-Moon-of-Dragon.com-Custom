@@ -65,7 +65,7 @@ struct EssenceInfo
 
     bool HasEssence(uint32 required = 1) const { return current >= required; }
     void SpendEssence(uint32 amount) { current = current >= amount ? current - amount : 0; }
-    void GenerateEssence(uint32 amount) { current = std::min(current + amount, maximum); generation += amount; }
+    void GenerateEssence(uint32 amount) { current = ::std::min(current + amount, maximum); generation += amount; }
 };
 
 // Empowered spell tracking
@@ -214,12 +214,12 @@ private:
 
     // Empowerment system
     EmpoweredSpell _currentEmpoweredSpell;
-    std::unordered_map<uint32, EmpowermentLevel> _optimalEmpowermentLevels;
+    ::std::unordered_map<uint32, EmpowermentLevel> _optimalEmpowermentLevels;
     uint32 _lastEmpoweredSpell;
     bool _isChannelingEmpowered;
 
     // Echo system (Preservation)
-    std::vector<Echo> _activeEchoes;
+    ::std::vector<Echo> _activeEchoes;
     uint32 _lastEchoUpdate;
     uint32 _echoUpdateInterval;
     uint32 _maxEchoes;
@@ -237,14 +237,14 @@ private:
     uint32 _callOfYseraStacks;
     uint32 _lastVerdantEmbrace;
     uint32 _lastTemporalAnomaly;
-    std::unordered_map<ObjectGuid, uint32> _rendezvousTargets;
+    ::std::unordered_map<ObjectGuid, uint32> _rendezvousTargets;
 
     // Augmentation tracking
     uint32 _prescientStacks;
     uint32 _blisteryScalesStacks;
     uint32 _lastEbon;
     uint32 _lastBreathOfEons;
-    std::unordered_map<ObjectGuid, uint32> _augmentationBuffs;
+    ::std::unordered_map<ObjectGuid, uint32> _augmentationBuffs;
 
     // Aspect management
     uint32 _aspectDuration;
@@ -361,7 +361,7 @@ private:
     ::Unit* GetBestEchoTarget();
     ::Unit* GetBestAugmentationTarget();
     ::Unit* GetHighestPriorityDamageTarget();
-    std::vector<::Unit*> GetEmpoweredSpellTargets(uint32 spellId);
+    ::std::vector<::Unit*> GetEmpoweredSpellTargets(uint32 spellId);
 
     // Buff and debuff management
     void ManageBuffs();
@@ -427,19 +427,19 @@ public:
     static bool ShouldConserveEssence(Player* caster, uint32 currentEssence);
 
     // Echo optimization
-    static uint32 CalculateOptimalEchoTargets(Player* caster, const std::vector<::Unit*>& allies);
+    static uint32 CalculateOptimalEchoTargets(Player* caster, const ::std::vector<::Unit*>& allies);
     static bool ShouldCreateEcho(Player* caster, ::Unit* target);
     static uint32 CalculateEchoValue(Player* caster, ::Unit* target);
 
     // Augmentation calculations
     static uint32 CalculateBuffEfficiency(uint32 spellId, Player* caster, ::Unit* target);
-    static ::Unit* GetOptimalAugmentationTarget(Player* caster, const std::vector<::Unit*>& allies);
+    static ::Unit* GetOptimalAugmentationTarget(Player* caster, const ::std::vector<::Unit*>& allies);
 
 private:
     // Cache for evoker calculations
-    static inline std::unordered_map<uint32, uint32> _damageCache;
-    static inline std::unordered_map<uint32, uint32> _healingCache;
-    static inline std::unordered_map<EmpowermentLevel, uint32> _empowermentCache;
+    static inline ::std::unordered_map<uint32, uint32> _damageCache;
+    static inline ::std::unordered_map<uint32, uint32> _healingCache;
+    static inline ::std::unordered_map<EmpowermentLevel, uint32> _empowermentCache;
     static inline Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE> _cacheMutex;
 
     static void CacheEvokerData();
@@ -533,7 +533,7 @@ public:
 
 private:
     EvokerAI* _owner;
-    std::vector<Echo> _echoes;
+    ::std::vector<Echo> _echoes;
     uint32 _lastUpdate;
     uint32 _maxEchoes;
 

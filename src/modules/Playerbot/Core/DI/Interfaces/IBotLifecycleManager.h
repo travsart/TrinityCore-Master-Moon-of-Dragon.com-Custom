@@ -79,7 +79,7 @@ public:
     /**
      * @brief Lifecycle event handler callback type
      */
-    using LifecycleEventHandler = std::function<void(ObjectGuid, BotLifecycleState, BotLifecycleState)>;
+    using LifecycleEventHandler = ::std::function<void(ObjectGuid, BotLifecycleState, BotLifecycleState)>;
 
     virtual ~IBotLifecycleManager() = default;
 
@@ -89,7 +89,7 @@ public:
      * @param session The bot's session
      * @return Shared pointer to the lifecycle controller
      */
-    virtual std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, std::shared_ptr<BotSession> session) = 0;
+    virtual ::std::shared_ptr<BotLifecycle> CreateBotLifecycle(ObjectGuid botGuid, ::std::shared_ptr<BotSession> session) = 0;
 
     /**
      * @brief Remove a bot lifecycle
@@ -102,13 +102,13 @@ public:
      * @param botGuid The bot's GUID
      * @return Shared pointer to lifecycle, nullptr if not found
      */
-    virtual std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const = 0;
+    virtual ::std::shared_ptr<BotLifecycle> GetBotLifecycle(ObjectGuid botGuid) const = 0;
 
     /**
      * @brief Get all active bot lifecycles
      * @return Vector of all active lifecycle controllers
      */
-    virtual std::vector<std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const = 0;
+    virtual ::std::vector<::std::shared_ptr<BotLifecycle>> GetActiveLifecycles() const = 0;
 
     /**
      * @brief Update all bot lifecycles

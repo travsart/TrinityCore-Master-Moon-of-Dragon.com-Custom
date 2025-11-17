@@ -326,16 +326,23 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
-            if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
+            if (spellInfo)
             {
-                _status = BTStatus::FAILURE;
-                Reset();
-                return _status;
+                auto costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+                for (auto const& cost : costs)
+                {
+                    if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) < cost.Amount)
+                    {
+                        _status = BTStatus::FAILURE;
+                        Reset();
+                        return _status;
+                    }
+                }
             }
 
             // Attempt to cast
-            SpellCastResult result = ai->CastSpell(_spellId, healTarget);
+            ::SpellCastResult result = ai->CastSpell(_spellId, healTarget);
 
             if (result != SPELL_CAST_OK)
             {
@@ -386,11 +393,11 @@ public:
         float manaCost; // Relative mana cost (for efficiency)
     };
 
-    BTSelectHealSpell(std::vector<HealSpellOption> const& spells)
+    BTSelectHealSpell(::std::vector<HealSpellOption> const& spells)
         : BTLeaf("SelectHealSpell"), _spells(spells)
     {
         // Sort by health threshold (descending)
-        std::sort(_spells.begin(), _spells.end(),
+        ::std::sort(_spells.begin(), _spells.end(),
             [](HealSpellOption const& a, HealSpellOption const& b)
             {
                 return a.healthThreshold > b.healthThreshold;
@@ -439,7 +446,7 @@ public:
     }
 
 private:
-    std::vector<HealSpellOption> _spells;
+    ::std::vector<HealSpellOption> _spells;
 };
 
 /**
@@ -467,7 +474,7 @@ public:
                 if (!bot->HasSpell(spellId) || bot->GetSpellHistory()->HasCooldown(spellId))
                     return BTStatus::FAILURE;
 
-                SpellCastResult result = ai->CastSpell(spellId, dispelTarget);
+                ::SpellCastResult result = ai->CastSpell(spellId, dispelTarget);
                 return (result == SPELL_CAST_OK) ? BTStatus::SUCCESS : BTStatus::FAILURE;
             })
     {}
@@ -582,16 +589,23 @@ public:
             }
 
             // Check mana
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId);
-            if (spellInfo && bot->GetPower(POWER_MANA) < spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask()))
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_spellId, DIFFICULTY_NONE);
+            if (spellInfo)
             {
-                _status = BTStatus::FAILURE;
-                Reset();
-                return _status;
+                auto costs = spellInfo->CalcPowerCost(bot, spellInfo->GetSchoolMask());
+                for (auto const& cost : costs)
+                {
+                    if (cost.Power == POWER_MANA && bot->GetPower(POWER_MANA) < cost.Amount)
+                    {
+                        _status = BTStatus::FAILURE;
+                        Reset();
+                        return _status;
+                    }
+                }
             }
 
             // Cast on self (AoE heal will affect nearby allies)
-            SpellCastResult result = ai->CastSpell(_spellId, bot);
+            ::SpellCastResult result = ai->CastSpell(_spellId, bot);
 
             if (result != SPELL_CAST_OK)
             {
@@ -688,8 +702,8 @@ public:
                 if (!bot)
                     return false;
 
-                uint8 classId = bot->getClass();
-                uint8 spec = bot->GetPrimaryTalentTree(bot->GetActiveSpec());
+                uint8 classId = bot->GetClass();
+                uint8 spec = uint8(bot->GetPrimarySpecialization());
 
                 // Healer specs
                 if (classId == CLASS_PRIEST && (spec == 1 || spec == 2)) // Discipline or Holy

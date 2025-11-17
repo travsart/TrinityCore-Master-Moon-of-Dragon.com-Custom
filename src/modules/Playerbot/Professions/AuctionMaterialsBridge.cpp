@@ -41,7 +41,7 @@ AuctionMaterialsBridge::AuctionMaterialsBridge()
 
 void AuctionMaterialsBridge::Initialize()
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     TC_LOG_INFO("playerbot", "AuctionMaterialsBridge::Initialize - Initializing smart material sourcing system");
 
@@ -58,7 +58,7 @@ void AuctionMaterialsBridge::Update(::Player* player, uint32 diff)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // Check if enabled for this player
     auto profileItr = _economicProfiles.find(playerGuid);
@@ -90,12 +90,12 @@ void AuctionMaterialsBridge::SetEnabled(::Player* player, bool enabled)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     if (enabled)
     {
         // Create default profile if doesn't exist
-        if (_economicProfiles.find(playerGuid) == _economicProfiles.end())
+    if (_economicProfiles.find(playerGuid) == _economicProfiles.end())
         {
             _economicProfiles[playerGuid] = BotEconomicProfile();
         }
@@ -114,20 +114,20 @@ bool AuctionMaterialsBridge::IsEnabled(::Player* player) const
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     return _economicProfiles.find(playerGuid) != _economicProfiles.end();
 }
 
 void AuctionMaterialsBridge::SetEconomicProfile(uint32 playerGuid, BotEconomicProfile const& profile)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _economicProfiles[playerGuid] = profile;
 }
 
 BotEconomicProfile AuctionMaterialsBridge::GetEconomicProfile(uint32 playerGuid) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _economicProfiles.find(playerGuid);
     if (itr != _economicProfiles.end())
@@ -157,7 +157,7 @@ MaterialSourcingDecision AuctionMaterialsBridge::GetBestMaterialSource(
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // Get economic profile
     auto profileItr = _economicProfiles.find(playerGuid);
@@ -309,7 +309,7 @@ MaterialSourcingDecision AuctionMaterialsBridge::GetBestMaterialSource(
         {
             // Balance between cost and time
             // Vendor is always preferred if available (instant + cheap)
-            if (decision.canBuyVendor)
+    if (decision.canBuyVendor)
             {
                 decision.recommendedMethod = MaterialAcquisitionMethod::VENDOR;
             }
@@ -396,7 +396,7 @@ MaterialAcquisitionPlan AuctionMaterialsBridge::GetMaterialAcquisitionPlan(
         return plan;
 
     // Find recipe across all professions
-    static const std::vector<ProfessionType> allProfessions = {
+    static const ::std::vector<ProfessionType> allProfessions = {
         ProfessionType::ALCHEMY, ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING, ProfessionType::ENGINEERING,
         ProfessionType::INSCRIPTION, ProfessionType::JEWELCRAFTING,
@@ -431,7 +431,7 @@ MaterialAcquisitionPlan AuctionMaterialsBridge::GetMaterialAcquisitionPlan(
         plan.materialDecisions.push_back(decision);
 
         // Accumulate costs and time
-        switch (decision.recommendedMethod)
+    switch (decision.recommendedMethod)
         {
             case MaterialAcquisitionMethod::GATHER:
                 plan.totalCost += decision.gatheringTimeCost;
@@ -464,7 +464,7 @@ MaterialAcquisitionPlan AuctionMaterialsBridge::GetMaterialAcquisitionPlan(
         plan.efficiencyScore = 1.0f / (1.0f + plan.timeScore + plan.costScore);
     }
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     _globalStatistics.plansGenerated++;
 
     return plan;
@@ -519,7 +519,7 @@ bool AuctionMaterialsBridge::IsBuyingCheaperThanGathering(
     uint32 auctionTime = EstimateAuctionPurchaseTime(player);
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     EconomicParameters params;
     auto profileItr = _economicProfiles.find(playerGuid);
@@ -596,7 +596,7 @@ float AuctionMaterialsBridge::GetBotGoldPerHour(::Player* player)
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _economicProfiles.find(playerGuid);
     if (profileItr != _economicProfiles.end())
@@ -657,7 +657,7 @@ uint32 AuctionMaterialsBridge::EstimateGatheringTime(
     // Apply gathering efficiency
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     float efficiency = DEFAULT_GATHERING_EFFICIENCY;
     auto profileItr = _economicProfiles.find(playerGuid);
@@ -679,7 +679,7 @@ float AuctionMaterialsBridge::GetGatheringSuccessProbability(
 
     uint32 playerGuid = player->GetGUID().GetCounter();
 
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto profileItr = _economicProfiles.find(playerGuid);
     if (profileItr != _economicProfiles.end())
@@ -748,7 +748,7 @@ bool AuctionMaterialsBridge::CanCraftMaterial(::Player* player, uint32 itemId)
     if (!profMgr)
         return false;
 
-    static const std::vector<ProfessionType> allProfessions = {
+    static const ::std::vector<ProfessionType> allProfessions = {
         ProfessionType::ALCHEMY, ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING, ProfessionType::ENGINEERING,
         ProfessionType::INSCRIPTION, ProfessionType::JEWELCRAFTING,
@@ -781,7 +781,7 @@ uint32 AuctionMaterialsBridge::CalculateCraftingCost(
     if (!profMgr)
         return 0;
 
-    static const std::vector<ProfessionType> allProfessions = {
+    static const ::std::vector<ProfessionType> allProfessions = {
         ProfessionType::ALCHEMY, ProfessionType::BLACKSMITHING,
         ProfessionType::ENCHANTING, ProfessionType::ENGINEERING,
         ProfessionType::INSCRIPTION, ProfessionType::JEWELCRAFTING,
@@ -833,13 +833,13 @@ uint32 AuctionMaterialsBridge::EstimateCraftingTime(
 
 bool AuctionMaterialsBridge::IsAvailableFromVendor(uint32 itemId)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     return _vendorMaterials.find(itemId) != _vendorMaterials.end();
 }
 
 uint32 AuctionMaterialsBridge::GetVendorPrice(uint32 itemId)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _vendorMaterials.find(itemId);
     if (itr != _vendorMaterials.end())
@@ -869,7 +869,7 @@ bool AuctionMaterialsBridge::ExecuteAcquisitionPlan(
 
     if (allSuccessful)
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        ::std::lock_guard<decltype(_mutex)> lock(_mutex);
         _globalStatistics.plansExecuted++;
     }
 
@@ -933,7 +933,7 @@ bool AuctionMaterialsBridge::AcquireMaterial(
 
 MaterialSourcingStatistics const& AuctionMaterialsBridge::GetPlayerStatistics(uint32 playerGuid) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _playerStatistics.find(playerGuid);
     if (itr != _playerStatistics.end())
@@ -945,13 +945,13 @@ MaterialSourcingStatistics const& AuctionMaterialsBridge::GetPlayerStatistics(ui
 
 MaterialSourcingStatistics const& AuctionMaterialsBridge::GetGlobalStatistics() const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
     return _globalStatistics;
 }
 
 void AuctionMaterialsBridge::ResetStatistics(uint32 playerGuid)
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    ::std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     auto itr = _playerStatistics.find(playerGuid);
     if (itr != _playerStatistics.end())
@@ -1060,10 +1060,10 @@ float AuctionMaterialsBridge::ScoreAcquisitionMethod(
     return score;
 }
 
-std::string AuctionMaterialsBridge::GenerateDecisionRationale(
+::std::string AuctionMaterialsBridge::GenerateDecisionRationale(
     MaterialSourcingDecision const& decision)
 {
-    std::ostringstream oss;
+    ::std::ostringstream oss;
 
     oss << "Recommended: ";
 

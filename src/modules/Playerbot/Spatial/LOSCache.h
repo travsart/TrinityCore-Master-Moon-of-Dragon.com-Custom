@@ -86,7 +86,7 @@ public:
     struct LOSResult
     {
         bool hasLOS{false};
-        std::chrono::steady_clock::time_point timestamp;
+        ::std::chrono::steady_clock::time_point timestamp;
 
         /**
          * @brief Check if this cache entry has expired (older than TTL)
@@ -94,8 +94,8 @@ public:
          */
         bool IsExpired() const
         {
-            auto now = std::chrono::steady_clock::now();
-            auto age = std::chrono::duration_cast<std::chrono::seconds>(now - timestamp);
+            auto now = ::std::chrono::steady_clock::now();
+            auto age = ::std::chrono::duration_cast<::std::chrono::seconds>(now - timestamp);
             return age.count() > CACHE_TTL_SECONDS;
         }
     };
@@ -127,7 +127,7 @@ public:
      * if (losCache->HasLOS(bot->GetPosition(), targetPos, bot->GetPhaseShift()))
      * {
      *     // Target is visible, can cast spell
-     *     bot->CastSpell(target, spellId, false);
+     *     bot->CastSpell(spellId, false, target);
      * }
      * @endcode
      */
@@ -197,7 +197,7 @@ public:
      */
     Statistics GetStatistics() const
     {
-        std::shared_lock<std::shared_mutex> lock(_mutex);
+        ::std::shared_lock<::std::shared_mutex> lock(_mutex);
         return _stats;
     }
 
@@ -226,7 +226,7 @@ private:
      * @param pos World position
      * @return Cell coordinates (cellX, cellY) in range [0, 511]
      */
-    std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
+    ::std::pair<uint32, uint32> GetCellCoords(Position const& pos) const;
 
     /**
      * @brief Check if two positions are in the same grid cell
@@ -254,7 +254,7 @@ private:
     void EvictOldest();
 
     Map* _map;  // Map pointer (not owned, must remain valid)
-    std::unordered_map<uint64_t, LOSResult> _cache;  // Position-pair cache
+    ::std::unordered_map<uint64_t, LOSResult> _cache;  // Position-pair cache
     mutable Playerbot::OrderedSharedMutex<Playerbot::LockOrder::SPATIAL_GRID> _mutex;  // Allows concurrent reads, exclusive writes
     mutable Statistics _stats;  // Performance counters
 };

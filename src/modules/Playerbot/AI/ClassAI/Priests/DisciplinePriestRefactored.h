@@ -19,6 +19,7 @@
 #define PLAYERBOT_DISCIPLINEPRIESTREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
+#include "../CooldownManager.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -30,11 +31,24 @@
 // Phase 5 Integration: Decision Systems
 #include "../../Decision/ActionPriorityQueue.h"
 #include "../../Decision/BehaviorTree.h"
+#include "../Common/CooldownManager.h"
 #include "../../BotAI.h"
 
 namespace Playerbot
 {
 
+
+// Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
+using bot::ai::Sequence;
+using bot::ai::Selector;
+using bot::ai::Condition;
+using bot::ai::Inverter;
+using bot::ai::Repeater;
+using bot::ai::NodeStatus;
+using bot::ai::SpellPriority;
+using bot::ai::SpellCategory;
+
+// Note: bot::ai::Action() conflicts with Playerbot::Action, use bot::ai::Action() explicitly
 // WoW 11.2 (The War Within) - Discipline Priest Spell IDs
 constexpr uint32 DISC_SMITE = 585;
 constexpr uint32 DISC_PENANCE = 47540;
@@ -139,7 +153,7 @@ public:
 
 private:
     CooldownManager _cooldowns;
-    std::unordered_map<ObjectGuid, uint32> _atonementTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _atonementTargets; // GUID -> expiration time
 };
 
 // Power Word: Shield tracker
@@ -189,10 +203,10 @@ public:
     }
 
 private:
-    std::unordered_map<ObjectGuid, uint32> _shieldTargets; // GUID -> expiration time
+    ::std::unordered_map<ObjectGuid, uint32> _shieldTargets; // GUID -> expiration time
 };
 
-class DisciplinePriestRefactored : public HealerSpecialization<ManaResource>, public PriestSpecialization
+class DisciplinePriestRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -202,30 +216,26 @@ public:
     using Base::_resource;
     explicit DisciplinePriestRefactored(Player* bot)
         : HealerSpecialization<ManaResource>(bot)
-        , PriestSpecialization(bot)
         , _atonementTracker()
         , _shieldTracker()
         , _raptureActive(false)
         , _raptureEndTime(0)
-
         , _lastEvangelismTime(0)
-
         , _lastPainSuppressionTime(0)
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
-        _cooldowns.RegisterBatch({
-
-            {DISC_POWER_WORD_BARRIER, 180000, 1},
-
-            {DISC_RAPTURE, 90000, 1},
-
-            {DISC_PAIN_SUPPRESSION, 180000, 1},
-
-            {DISC_EVANGELISM, 90000, 1},
-
-            {DISC_SHADOW_FIEND, 180000, 1}
-        });
+        // COMMENTED OUT:         _cooldowns.RegisterBatch({
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_POWER_WORD_BARRIER, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_RAPTURE, 90000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_PAIN_SUPPRESSION, 180000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_EVANGELISM, 90000, 1},
+        // COMMENTED OUT: 
+        // COMMENTED OUT:             {DISC_SHADOW_FIEND, 180000, 1}
+        // COMMENTED OUT:         });
 
         // Initialize Phase 5 systems
         InitializeDisciplineMechanics();
@@ -246,7 +256,7 @@ public:
 
         if (Group* group = bot->GetGroup())
         {
-        std::vector<Unit*> groupMembers;
+        ::std::vector<Unit*> groupMembers;
 
             for (GroupReference const& ref : group->GetMembers())
 
@@ -303,7 +313,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_FORTITUDE);
+                this->CastSpell(DISC_POWER_WORD_FORTITUDE, bot);
 
             }
         }
@@ -320,7 +330,7 @@ public:
         if (healthPct < 30.0f && this->CanCastSpell(DISC_DESPERATE_PRAYER, bot))
         {
 
-            this->CastSpell(bot, DISC_DESPERATE_PRAYER);
+            this->CastSpell(DISC_DESPERATE_PRAYER, bot);
 
             return;
         }
@@ -333,7 +343,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_FADE);
+                this->CastSpell(DISC_FADE, bot);
 
                 return;
 
@@ -347,7 +357,7 @@ public:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_SHIELD);
+                this->CastSpell(DISC_POWER_WORD_SHIELD, bot);
                 _shieldTracker.ApplyShield(bot->GetGUID(), 15000);
                 _atonementTracker.ApplyAtonement(bot->GetGUID(), 15000);
 
@@ -393,7 +403,7 @@ private:
                 }
     }
 
-    bool HandleGroupHealing(const std::vector<Unit*>& group)
+    bool HandleGroupHealing(const ::std::vector<Unit*>& group)
     {
         // Emergency cooldowns
         if (HandleEmergencyCooldowns(group))
@@ -418,7 +428,7 @@ private:
         return false;
     }
 
-    bool HandleEmergencyCooldowns(const std::vector<Unit*>& group)
+    bool HandleEmergencyCooldowns(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -441,7 +451,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_PAIN_SUPPRESSION);
+                        this->CastSpell(DISC_PAIN_SUPPRESSION, member);
 
                         _lastPainSuppressionTime = GameTime::GetGameTimeMS();
 
@@ -471,7 +481,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_BARRIER); // Ground-targeted AoE
+                this->CastSpell(DISC_BARRIER, bot); // Ground-targeted AoE
 
                 _lastBarrierTime = GameTime::GetGameTimeMS();
 
@@ -487,7 +497,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_RAPTURE);
+                this->CastSpell(DISC_RAPTURE, bot);
 
                 _raptureActive = true;
                 _raptureEndTime = GameTime::GetGameTimeMS() + 8000; // 8 sec duration
@@ -500,7 +510,7 @@ private:
         return false;
     }
 
-    bool HandleAtonementMaintenance(const std::vector<Unit*>& group)
+    bool HandleAtonementMaintenance(const ::std::vector<Unit*>& group)
     {
         Player* bot = this->GetBot();        if (!bot)
 
@@ -519,7 +529,7 @@ private:
 
                 {
 
-                    this->CastSpell(bot, DISC_EVANGELISM);
+                    this->CastSpell(DISC_EVANGELISM, bot);
 
                     _lastEvangelismTime = GameTime::GetGameTimeMS();
 
@@ -562,7 +572,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_RADIANCE);
+                        this->CastSpell(DISC_POWER_WORD_RADIANCE, member);
                         // Radiance applies Atonement to 5 nearby allies
 
                         _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
@@ -593,7 +603,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -609,7 +619,7 @@ private:
         }        return false;
     }
 
-    bool HandleDirectHealing(const std::vector<Unit*>& group)
+    bool HandleDirectHealing(const ::std::vector<Unit*>& group)
     {        Player* bot = this->GetBot();        if (!bot)
 
             return false;
@@ -625,7 +635,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, DISC_SHADOW_MEND);
+                    this->CastSpell(DISC_SHADOW_MEND, member);
 
                     _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -634,7 +644,10 @@ private:
                 }
 
             }
-        }        // Power Word: Life (instant emergency heal)        for (Unit* member : group)
+        }
+
+        // Power Word: Life (instant emergency heal)
+        for (Unit* member : group)
         {
 
             if (member && member->GetHealthPct() < 35.0f)
@@ -648,7 +661,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_LIFE);
+                        this->CastSpell(DISC_POWER_WORD_LIFE, member);
 
                         return true;
 
@@ -671,7 +684,7 @@ private:
 
                 {
 
-                    this->CastSpell(member, DISC_PENANCE);
+                    this->CastSpell(DISC_PENANCE, member);
 
                     return true;
 
@@ -683,7 +696,7 @@ private:
         return false;
     }
 
-    bool HandleShielding(const std::vector<Unit*>& group)    {
+    bool HandleShielding(const ::std::vector<Unit*>& group)    {
         // During Rapture, spam shields on everyone
         if (_raptureActive)
         {
@@ -699,7 +712,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
                         _atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
@@ -727,7 +740,7 @@ private:
 
                     {
 
-                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                         _shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -757,7 +770,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_POWER_WORD_SHIELD);
+                this->CastSpell(DISC_POWER_WORD_SHIELD, bot);
 
                 _shieldTracker.ApplyShield(bot->GetGUID(), 15000);
 
@@ -776,7 +789,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_SHADOW_MEND);
+                this->CastSpell(DISC_SHADOW_MEND, bot);
 
                 return true;
 
@@ -791,7 +804,7 @@ private:
 
             {
 
-                this->CastSpell(bot, DISC_PENANCE);
+                this->CastSpell(DISC_PENANCE, bot);
 
                 return true;
 
@@ -817,7 +830,7 @@ private:
 
             {
 
-                this->CastSpell(target, DISC_SCHISM);
+                this->CastSpell(DISC_SCHISM, target);
 
                 return;
 
@@ -832,7 +845,7 @@ private:
 
             {
 
-                this->CastSpell(target, DISC_MINDGAMES);
+                this->CastSpell(DISC_MINDGAMES, target);
 
                 return;
 
@@ -843,15 +856,15 @@ private:
         if (this->CanCastSpell(DISC_PENANCE, target))
         {
 
-            this->CastSpell(target, DISC_PENANCE);
+            this->CastSpell(DISC_PENANCE, target);
 
             return;
         }
 
-        // Purge the Wicked (DoT - continuous Atonement healing)        if (bot->HasSpell(DISC_PURGE_WICKED))
-
+        // Purge the Wicked (DoT - continuous Atonement healing)
+        if (bot->HasSpell(DISC_PURGE_WICKED))
         {
-        if (!target->HasAura(DISC_PURGE_WICKED))
+            if (!target->HasAura(DISC_PURGE_WICKED))
 
             {
 
@@ -859,7 +872,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, DISC_PURGE_WICKED);
+                    this->CastSpell(DISC_PURGE_WICKED, target);
 
                     return;
 
@@ -869,7 +882,8 @@ private:
         }
         else
         {
-            // Shadow Word: Pain (alternative DoT)            if (!target->HasAura(DISC_SHADOW_WORD_PAIN))
+            // Shadow Word: Pain (alternative DoT)
+            if (!target->HasAura(DISC_SHADOW_WORD_PAIN))
 
             {
 
@@ -877,7 +891,7 @@ private:
 
                 {
 
-                    this->CastSpell(target, DISC_SHADOW_WORD_PAIN);
+                    this->CastSpell(DISC_SHADOW_WORD_PAIN, target);
 
                     return;
 
@@ -890,7 +904,7 @@ private:
         if (this->CanCastSpell(DISC_SMITE, target))
         {
 
-            this->CastSpell(target, DISC_SMITE);
+            this->CastSpell(DISC_SMITE, target);
 
             return;
         }
@@ -917,14 +931,12 @@ private:
     }
 
     void InitializeDisciplineMechanics()
-    {
-        using namespace bot::ai;
-        using namespace bot::ai::BehaviorTreeBuilder;
-
+    {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
+        // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue (Disc Healer + Atonement)
         // ========================================================================
-        BotAI* ai = this->GetBot()->GetBotAI();
+        BotAI* ai = this;
         if (!ai)
 
             return;
@@ -1041,7 +1053,7 @@ private:
 
             queue->AddCondition(DISC_POWER_WORD_RADIANCE,
 
-                [this](Player* bot, Unit* target) {
+                [this](Player* bot, Unit*) {
                     // AoE Atonement application
 
                     return this->_atonementTracker.GetActiveAtonementCount() < 3;
@@ -1235,7 +1247,7 @@ private:
                 "Has threat and HP < 50%");
 
 
-            TC_LOG_INFO("module.playerbot", "✨ DISCIPLINE PRIEST: Registered {} spells in ActionPriorityQueue",
+            TC_LOG_INFO("module.playerbot", " DISCIPLINE PRIEST: Registered {} spells in ActionPriorityQueue",
 
                 queue->GetSpellCount());
         }
@@ -1292,7 +1304,7 @@ private:
                     Selector("Emergency Response", {
                         // Pain Suppression for tank
 
-                        Action("Cast Pain Suppression", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Pain Suppression", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1317,7 +1329,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_PAIN_SUPPRESSION);
+                                        this->CastSpell(DISC_PAIN_SUPPRESSION, member);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1332,7 +1344,7 @@ private:
                         }),
                         // Desperate Prayer for self
 
-                        Action("Cast Desperate Prayer", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Desperate Prayer", [this](Player* bot, Unit*) {
 
                             if (bot->GetHealthPct() < 30.0f &&
 
@@ -1340,7 +1352,7 @@ private:
 
                             {
 
-                                this->CastSpell(bot, DISC_DESPERATE_PRAYER);
+                                this->CastSpell(DISC_DESPERATE_PRAYER, bot);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1351,7 +1363,7 @@ private:
                         }),
                         // Shadow Mend emergency spam
 
-                        Action("Cast Shadow Mend", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Shadow Mend", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1374,7 +1386,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_SHADOW_MEND);
+                                        this->CastSpell(DISC_SHADOW_MEND, member);
 
                                         this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -1417,13 +1429,13 @@ private:
 
                             }),
 
-                            Action("Cast Evangelism", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Evangelism", [this](Player* bot, Unit*) {
 
                                 if (this->CanCastSpell(DISC_EVANGELISM, bot))
 
                                 {
 
-                                    this->CastSpell(bot, DISC_EVANGELISM);
+                                    this->CastSpell(DISC_EVANGELISM, bot);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1444,7 +1456,7 @@ private:
 
                             }),
 
-                            Action("Cast Radiance", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Radiance", [this](Player* bot, Unit*) {
 
                                 Group* group = bot->GetGroup();
 
@@ -1467,7 +1479,7 @@ private:
 
                                         {
 
-                                            this->CastSpell(member, DISC_POWER_WORD_RADIANCE);
+                                            this->CastSpell(DISC_POWER_WORD_RADIANCE, member);
 
                                             this->_atonementTracker.ApplyAtonement(member->GetGUID(), 15000);
 
@@ -1486,7 +1498,7 @@ private:
                         }),
                         // Power Word: Shield - Single target Atonement
 
-                        Action("Cast Shield", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Shield", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1513,7 +1525,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_POWER_WORD_SHIELD);
+                                        this->CastSpell(DISC_POWER_WORD_SHIELD, member);
 
                                         this->_shieldTracker.ApplyShield(member->GetGUID(), 15000);
 
@@ -1573,7 +1585,7 @@ private:
                     Selector("Healing Priority", {
                         // Penance for moderate damage
 
-                        Action("Cast Penance Heal", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Penance Heal", [this](Player* bot, Unit*) {
 
                             Group* group = bot->GetGroup();
 
@@ -1596,7 +1608,7 @@ private:
 
                                     {
 
-                                        this->CastSpell(member, DISC_PENANCE);
+                                        this->CastSpell(DISC_PENANCE, member);
 
                                         return NodeStatus::SUCCESS;
 
@@ -1643,13 +1655,13 @@ private:
 
                             }),
 
-                            Action("Cast Schism", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Schism", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(DISC_SCHISM, target))
 
                                 {
 
-                                    this->CastSpell(target, DISC_SCHISM);
+                                    this->CastSpell(DISC_SCHISM, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1662,13 +1674,13 @@ private:
                         }),
                         // Mindgames - burst damage
 
-                        Action("Cast Mindgames", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mindgames", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_MINDGAMES, target))
 
                             {
 
-                                this->CastSpell(target, DISC_MINDGAMES);
+                                this->CastSpell(DISC_MINDGAMES, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1679,13 +1691,13 @@ private:
                         }),
                         // Penance (offensive)
 
-                        Action("Cast Penance Damage", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Penance Damage", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_PENANCE, target))
 
                             {
 
-                                this->CastSpell(target, DISC_PENANCE);
+                                this->CastSpell(DISC_PENANCE, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1704,13 +1716,13 @@ private:
 
                             }),
 
-                            Action("Cast Purge the Wicked", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Purge the Wicked", [this](Player* bot, Unit* target) {
 
                                 if (this->CanCastSpell(DISC_PURGE_WICKED, target))
 
                                 {
 
-                                    this->CastSpell(target, DISC_PURGE_WICKED);
+                                    this->CastSpell(DISC_PURGE_WICKED, target);
 
                                     return NodeStatus::SUCCESS;
 
@@ -1723,13 +1735,13 @@ private:
                         }),
                         // Smite (filler)
 
-                        Action("Cast Smite", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Smite", [this](Player* bot, Unit* target) {
 
                             if (this->CanCastSpell(DISC_SMITE, target))
 
                             {
 
-                                this->CastSpell(target, DISC_SMITE);
+                                this->CastSpell(DISC_SMITE, target);
 
                                 return NodeStatus::SUCCESS;
 
@@ -1748,7 +1760,7 @@ private:
 
             behaviorTree->SetRoot(root);
 
-            TC_LOG_INFO("module.playerbot", "🌲 DISCIPLINE PRIEST: BehaviorTree initialized with Atonement flow");
+            TC_LOG_INFO("module.playerbot", " DISCIPLINE PRIEST: BehaviorTree initialized with Atonement flow");
         }
     }
 
@@ -1757,7 +1769,11 @@ private:
     PowerWordShieldTracker _shieldTracker;
 
     bool _raptureActive;
-    uint32 _raptureEndTime;    uint32 _lastEvangelismTime;    uint32 _lastPainSuppressionTime;
+    uint32 _raptureEndTime;
+    uint32 _lastEvangelismTime;
+    uint32 _lastPainSuppressionTime;
+    uint32 _lastBarrierTime;
+    uint32 _lastRaptureTime;
 };
 
 } // namespace Playerbot
