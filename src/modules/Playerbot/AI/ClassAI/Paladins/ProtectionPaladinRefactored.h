@@ -224,7 +224,7 @@ private:
 // PROTECTION PALADIN REFACTORED
 // ============================================================================
 
-class ProtectionPaladinRefactored : public TankSpecialization<ManaHolyPowerResource>, public PaladinSpecialization
+class ProtectionPaladinRefactored : public TankSpecialization<ManaHolyPowerResource>
 {
 public:
     using Base = TankSpecialization<ManaHolyPowerResource>;
@@ -233,7 +233,6 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit ProtectionPaladinRefactored(Player* bot)        : TankSpecialization<ManaHolyPowerResource>(bot)
-        , PaladinSpecialization(bot)
         , _shieldTracker()
         , _consecrationActive(false)        , _consecrationEndTime(0)
         , _grandCrusaderProc(false)

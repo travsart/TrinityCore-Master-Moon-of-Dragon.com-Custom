@@ -1554,7 +1554,7 @@ void HunterAI::UpdateTracking()
 
                     default:
                         // For other types, default to humanoid tracking if in PvP zone
-                        if (_bot->HasPvPFlag() && _bot->HasSpell(TRACK_HUMANOIDS))
+                        if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
                             optimalTracking = TRACK_HUMANOIDS;
 
                         break;
@@ -1604,7 +1604,8 @@ void HunterAI::UpdateTracking()
                 Creature* creature = nullptr;
                 if (snapshot_entity)
                 {
-                    creature = snapshot_entity;
+                    // FIXED: CreatureSnapshot to Creature conversion via GetCreature
+                    creature = spatialGrid->GetCreature(snapshot_entity->guid);
                 }
                 if (!creature || creature->IsFriendlyTo(_bot))
                     continue;
@@ -1713,7 +1714,7 @@ void HunterAI::UpdateTracking()
             optimalTracking = TRACK_HIDDEN;
         }
         // In PvP zones, track humanoids
-        else if (_bot->HasPvPFlag() && _bot->HasSpell(TRACK_HUMANOIDS))
+        else if (_bot->IsPvP() && _bot->HasSpell(TRACK_HUMANOIDS))
         {
             optimalTracking = TRACK_HUMANOIDS;
         }

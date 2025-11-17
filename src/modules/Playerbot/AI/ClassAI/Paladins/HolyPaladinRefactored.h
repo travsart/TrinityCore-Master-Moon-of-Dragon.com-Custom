@@ -192,7 +192,7 @@ private:
 // HOLY PALADIN REFACTORED
 // ============================================================================
 
-class HolyPaladinRefactored : public HealerSpecialization<ManaHolyPowerResource>, public PaladinSpecialization
+class HolyPaladinRefactored : public HealerSpecialization<ManaHolyPowerResource>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -202,7 +202,6 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit HolyPaladinRefactored(Player* bot)        : HealerSpecialization<ManaHolyPowerResource>(bot)
-        , PaladinSpecialization(bot)
         , _beaconTracker()
         , _avengingWrathActive(false)
         , _avengingWrathEndTime(0)

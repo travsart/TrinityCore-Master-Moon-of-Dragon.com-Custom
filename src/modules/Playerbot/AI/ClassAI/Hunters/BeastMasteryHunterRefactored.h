@@ -694,7 +694,7 @@ private:
     void MendPetIfNeeded() { _petManager.MendPet(); }
     void FeedPetIfNeeded() { /* Feeding not implemented in WoW 11.2 */ }
     bool HasActivePet() const { return _petManager.HasActivePet(); }
-    PetInfo GetPetInfo() const { return PetInfo(); /* Stub */ }
+    ::Playerbot::PetInfo GetPetInfo() const { return ::Playerbot::PetInfo(); /* Stub */ }
 
     // Trap management - delegated to AI
     void UpdateTrapManagement() { /* Traps managed by AI */ }

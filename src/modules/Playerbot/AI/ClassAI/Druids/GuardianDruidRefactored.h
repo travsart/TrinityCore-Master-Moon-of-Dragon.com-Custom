@@ -722,7 +722,7 @@ private:
 
             queue->RegisterSpell(GUARDIAN_IRONFUR, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(GUARDIAN_IRONFUR, [this](Player* bot, Unit*) {
+            queue->AddCondition(GUARDIAN_IRONFUR, [this](::Player* bot, ::Unit*) {
 
                 return bot && this->_resource.GetAvailable() >= 40 &&
 
@@ -734,7 +734,7 @@ private:
 
             queue->RegisterSpell(GUARDIAN_INCARNATION_BEAR, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
 
-            queue->AddCondition(GUARDIAN_INCARNATION_BEAR, [this](Player* bot, Unit*) {
+            queue->AddCondition(GUARDIAN_INCARNATION_BEAR, [this](::Player* bot, ::Unit*) {
 
                 return bot && bot->HasSpell(GUARDIAN_INCARNATION_BEAR) && this->CanUseMajorCooldown();
 
@@ -948,13 +948,13 @@ private:
 
                 Sequence("Active Mitigation", {
 
-                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*, Unit*) {
+                    Condition("40+ rage and < 3 Ironfur stacks", [this](::Player*, ::Unit*) {
 
                         return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() < 3;
 
                     }),
 
-                    bot::ai::Action("Cast Ironfur", [this](Player* bot, Unit*) {
+                    bot::ai::Action("Cast Ironfur", [this](::Player* bot, ::Unit*) {
 
                         if (this->CanCastSpell(GUARDIAN_IRONFUR, bot))
                         {
@@ -1102,13 +1102,13 @@ private:
 
                         Sequence("Maul (rage dump)", {
 
-                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*, Unit*) {
+                            Condition("40+ rage and 2+ Ironfur stacks", [this](::Player*, ::Unit*) {
 
                                 return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() >= 2;
 
                             }),
 
-                            bot::ai::Action("Cast Maul", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Maul", [this](::Player* bot, ::Unit* target) {
                                 if (target && this->CanCastSpell(GUARDIAN_MAUL, target))
                                 {
                                     this->CastSpell(GUARDIAN_MAUL, target);

@@ -280,12 +280,9 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
 
     auto result = SpellPacketBuilder::BuildCastSpellPacket(bot, ability.spellId, castTarget, options);
     if (!castTarget)
-
-                     {
-
-                         return;
-
-                     }
+    {
+        return false;
+    }
 
     if (result.result == SpellPacketBuilder::ValidationResult::SUCCESS)
     {

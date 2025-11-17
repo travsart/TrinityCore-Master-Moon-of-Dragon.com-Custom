@@ -512,21 +512,19 @@ private:
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
+    // NOTE: InitializeDebuffTracking() and InitializeArmsRotation() are
+    // declared at class level and should be defined in .cpp file
 
-    void InitializeDebuffTracking()
+    // IMPLEMENTATION MOVED TO .CPP - REMOVED DUPLICATE INLINE DEFINITIONS
+
+    // ========================================================================
+    // INLINE HELPER METHODS
+    // ========================================================================
+
+    // Previous initialization code moved to .cpp to avoid C2535 duplicate definition error
+
+    void inline SetupActionPriorityQueue()
     {
-        _deepWoundsTracking.clear();
-        _rendTracking.clear();
-    }
-
-    void InitializeArmsRotation()
-    {
-        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
-        // REMOVED: using namespace BehaviorTreeBuilder; (not needed here)
-
-        // Setup any Arms-specific initialization
-        _tacticalMasteryRage = 0;
-
         // ========================================================================
         // PHASE 5 INTEGRATION: ActionPriorityQueue
         // ========================================================================

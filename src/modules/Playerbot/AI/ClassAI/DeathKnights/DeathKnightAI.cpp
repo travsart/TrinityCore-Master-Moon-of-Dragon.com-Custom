@@ -892,7 +892,7 @@ void DeathKnightAI::UpdateBuffs()
         if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
         {
 
-            CastSpell(GetBot(), presenceSpell);
+            CastSpell(presenceSpell, GetBot());
 
             _lastPresence = currentTime;
         }
@@ -1920,7 +1920,7 @@ void DeathKnightAI::UpdatePresenceIfNeeded()
 
     if (presenceSpell && !HasAura(presenceSpell) && CanUseAbility(presenceSpell))
     {
-        CastSpell(GetBot(), presenceSpell);
+        CastSpell(presenceSpell, GetBot());
         _lastPresence = currentTime;
     }
 }
@@ -2025,7 +2025,7 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
 
     uint32 count = 0;
     ::std::list<Unit*> targets;
-    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), range);
+    Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetBot(), range, true);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(GetBot(), targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
     Map* map = GetBot()->GetMap();
@@ -2054,7 +2054,8 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = snapshot_entity;
+            // FIXED: CreatureSnapshot to Creature conversion via GetCreature
+            entity = spatialGrid->GetCreature(snapshot_entity->guid);
         }
 
         if (!entity)

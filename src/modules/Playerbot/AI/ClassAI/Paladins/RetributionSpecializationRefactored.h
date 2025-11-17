@@ -49,7 +49,7 @@ using bot::ai::SpellCategory;
  * - Uses HolyPowerSystem as secondary resource
  * - Eliminates ~280 lines of duplicate code
  */
-class RetributionPaladinRefactored : public MeleeDpsSpecialization<ManaResource>, public PaladinSpecialization
+class RetributionPaladinRefactored : public MeleeDpsSpecialization<ManaResource>
 {
 public:
     using Base = MeleeDpsSpecialization<ManaResource>;
@@ -61,7 +61,6 @@ public:
     using Base::_resource;
     explicit RetributionPaladinRefactored(Player* bot)
         : MeleeDpsSpecialization<ManaResource>(bot)
-        , PaladinSpecialization(bot)
         , _holyPower()
         , _hasArtOfWar(false)
         , _hasDivinePurpose(false)

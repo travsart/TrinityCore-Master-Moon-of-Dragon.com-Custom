@@ -715,12 +715,12 @@ void MonkAI::ConsumeResource(uint32 spellId)
             }
             break;
 
-        case JAB:
-            if (GetBot()->GetPower(POWER_ENERGY) >= 40)
+        case TIGER_PALM:  // FIXED: Was duplicate JAB case, changed to TIGER_PALM
+            if (GetBot()->GetPower(POWER_ENERGY) >= 50)
             {
-                GetBot()->ModifyPower(POWER_ENERGY, -40);
-                _energyManager.SpendEnergy(40);
-                _energySpent.store(_energySpent.load() + 40);
+                GetBot()->ModifyPower(POWER_ENERGY, -50);
+                _energyManager.SpendEnergy(50);
+                _energySpent.store(_energySpent.load() + 50);
             }
             break;
 
@@ -1372,7 +1372,7 @@ void MonkAI::ExecuteMistweaverRotation(::Unit* target)
         {
             if (CastSpell(ESSENCE_FONT, GetBot()))
             {
-                ConsumeChiForAbility(ESSENCE_FONT);
+                ConsumeChiForAbility(ESSENCE_FONT, 2);
                 RecordAbilityUsage(ESSENCE_FONT);
                 return;
             }
