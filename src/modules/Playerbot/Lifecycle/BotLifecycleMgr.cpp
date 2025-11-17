@@ -545,8 +545,8 @@ void BotLifecycleMgr::LogLifecycleEvent(LifecycleEventInfo const& eventInfo)
         // metadata (JSON)
         ss << "JSON_OBJECT("
            << "'processingTimeMs', " << eventInfo.processingTimeMs << ", "
-           << "'memoryUsageMB', " << static_cast<float>(_metrics.memoryUsageMB.load()) << ", "
-           << "'activeBots', " << _metrics.activeBots.load();
+           << "'memoryUsageMB', " << static_cast<float>(_metrics.memoryUsageMB) << ", "
+           << "'activeBots', " << _metrics.activeBots;
 
         if (!eventInfo.correlationId.empty())
         {

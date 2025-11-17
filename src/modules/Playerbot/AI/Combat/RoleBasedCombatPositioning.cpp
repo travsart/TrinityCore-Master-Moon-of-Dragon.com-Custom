@@ -1521,7 +1521,7 @@ MovementResult RoleBasedCombatPositioning::UpdateCombatPosition(Player* bot,
     moveContext.inCombat = context.inCombat;
     moveContext.emergencyMode = context.hasActiveAOE;
 
-    return _positionManager->ExecuteMovement(targetPos, MovementPriority::CRITICAL);
+    return _positionManager->ExecuteMovement(targetPos, MovementPriority::PRIORITY_CRITICAL);
 }
 
 Position RoleBasedCombatPositioning::CalculateRolePosition(Player* bot, ThreatRole role,
