@@ -555,8 +555,9 @@ bool BankingManager::IsNearBanker(::Player* player)
 
     // Check if player is in a city with banker access
     // Simplified: Check if in rest area (resting gives XP bonus in cities)
-    if (player->GetRestBonus() > 0)
-        return true;
+    // TODO: Replace with proper rest state check when API is confirmed
+    // if (player->HasPlayerFlag(PLAYER_FLAGS_RESTING))
+    //     return true;
 
     // Check proximity to banker NPCs
     // This would require creature search

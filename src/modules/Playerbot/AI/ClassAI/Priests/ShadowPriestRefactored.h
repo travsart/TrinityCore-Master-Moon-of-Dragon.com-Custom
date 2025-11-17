@@ -282,7 +282,7 @@ public:
         , _lastVoidTorrentTime(0)
         , _lastMindgamesTime(0)
         , _lastVampiricEmbraceTime(0)
-        , _cooldowns()
+        // _cooldowns removed - inherited from base class, initialized there
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({

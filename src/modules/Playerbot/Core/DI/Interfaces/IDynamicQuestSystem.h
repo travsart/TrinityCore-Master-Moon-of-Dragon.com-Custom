@@ -24,7 +24,22 @@ namespace Playerbot
 // Forward declarations
 enum class QuestPriority : uint8;
 enum class QuestType : uint8;
-enum class QuestStrategy : uint8;
+
+/**
+ * @enum QuestStrategy
+ * @brief Strategy for quest selection and prioritization
+ */
+enum class QuestStrategy : uint8
+{
+    SOLO_FOCUSED,        // Prioritize solo-friendly quests
+    GROUP_PREFERRED,     // Prefer group quests when available
+    ZONE_OPTIMIZATION,   // Optimize for zone completion
+    LEVEL_PROGRESSION,   // Focus on leveling efficiency (default)
+    GEAR_PROGRESSION,    // Prioritize quests with gear rewards
+    STORY_PROGRESSION,   // Focus on storyline/quest chains
+    MAX
+};
+
 struct QuestMetadata;
 struct QuestProgress;
 struct QuestReward;

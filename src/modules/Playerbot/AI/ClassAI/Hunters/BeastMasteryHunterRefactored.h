@@ -23,6 +23,7 @@
 #include "PetDefines.h"
 #include "MotionMaster.h"
 #include "CharmInfo.h"
+#include "HunterAI.h"
 #include <unordered_map>
 #include <queue>
 

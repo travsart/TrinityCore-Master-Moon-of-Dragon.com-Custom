@@ -1604,8 +1604,8 @@ void HunterAI::UpdateTracking()
                 Creature* creature = nullptr;
                 if (snapshot_entity)
                 {
-                    // FIXED: CreatureSnapshot to Creature conversion via GetCreature
-                    creature = spatialGrid->GetCreature(snapshot_entity->guid);
+                    // FIXED: CreatureSnapshot to Creature conversion via ObjectAccessor
+                    creature = ObjectAccessor::GetCreature(*_bot, snapshot_entity->guid);
                 }
                 if (!creature || creature->IsFriendlyTo(_bot))
                     continue;

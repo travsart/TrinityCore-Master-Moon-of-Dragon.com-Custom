@@ -29,29 +29,28 @@ namespace Playerbot
 {
     class BotScheduler;
     class BotSpawner;
-}
 
-// LifecycleEventInfo is defined in IBotLifecycleMgr.h
+    // LifecycleEventInfo is defined in IBotLifecycleMgr.h
 
-// Performance monitoring metrics
-struct PerformanceMetrics
-{
-    std::atomic<uint32> totalBotsManaged{0};
-    std::atomic<uint32> activeBots{0};
-    std::atomic<uint32> scheduledBots{0};
-    std::atomic<uint32> eventsProcessedPerSecond{0};
-    std::atomic<uint32> averageEventProcessingTimeMs{0};
-    std::atomic<uint32> failedSpawnsLastHour{0};
-    std::atomic<float> systemCpuUsage{0.0f};
-    std::atomic<uint64> memoryUsageMB{0};
+    // Performance monitoring metrics (internal, with atomics)
+    struct LifecyclePerformanceMetrics
+    {
+        std::atomic<uint32> totalBotsManaged{0};
+        std::atomic<uint32> activeBots{0};
+        std::atomic<uint32> scheduledBots{0};
+        std::atomic<uint32> eventsProcessedPerSecond{0};
+        std::atomic<uint32> averageEventProcessingTimeMs{0};
+        std::atomic<uint32> failedSpawnsLastHour{0};
+        std::atomic<float> systemCpuUsage{0.0f};
+        std::atomic<uint64> memoryUsageMB{0};
 
-    std::chrono::system_clock::time_point lastUpdate;
-    uint32 eventCountThisSecond = 0;
-    uint32 totalProcessingTimeThisSecond = 0;
-};
+        std::chrono::system_clock::time_point lastUpdate;
+        uint32 eventCountThisSecond = 0;
+        uint32 totalProcessingTimeThisSecond = 0;
+    };
 
-// Lifecycle statistics
-struct LifecycleStatistics
+    // Lifecycle statistics
+    struct LifecycleStatistics
 {
     uint32 totalLifecycleEvents = 0;
     uint32 successfulSpawns = 0;
@@ -138,7 +137,8 @@ private:
     std::atomic<bool> _enabled{true};
 
     // Performance and configuration
-    mutable PerformanceMetrics _metrics;
+    mutable LifecyclePerformanceMetrics _metricsInternal; // Internal atomic version
+    mutable IBotLifecycleMgr::PerformanceMetrics _metrics; // Interface version
     mutable LifecycleStatistics _statistics;
 
     uint32 _updateIntervalMs = 1000; // 1 second default
