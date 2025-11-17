@@ -263,7 +263,7 @@ private:
 // BREWMASTER MONK REFACTORED
 // ============================================================================
 
-class BrewmasterMonkRefactored : public TankSpecialization<EnergyChiResource>, public MonkSpecialization
+class BrewmasterMonkRefactored : public TankSpecialization<EnergyChiResource>
 {
 public:
     using Base = TankSpecialization<EnergyChiResource>;
@@ -271,14 +271,15 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit BrewmasterMonkRefactored(Player* bot)        : TankSpecialization<EnergyChiResource>(bot)
-        , MonkSpecialization(bot)
+    explicit BrewmasterMonkRefactored(Player* bot)
+        : TankSpecialization<EnergyChiResource>(bot)
         , _staggerTracker()
         , _shuffleTracker()
         , _ironskinBrewActive(false)
         , _ironskinEndTime(0)
         , _lastKegSmashTime(0)
-    {        // Initialize energy/chi resources
+    {
+        // Initialize energy/chi resources
         this->_resource.Initialize(bot);
 
         // Phase 5: Initialize decision systems
@@ -287,7 +288,8 @@ public:
         TC_LOG_DEBUG("playerbot", "BrewmasterMonkRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -307,7 +309,9 @@ public:
         {
             ExecuteSingleTargetThreatRotation(target);
         }
-    }    void UpdateBuffs() override
+    }
+
+    void UpdateBuffs() override
     {
         Player* bot = this->GetBot();
         if (!bot)
@@ -318,7 +322,8 @@ public:
     }
 
     // Phase 5C: Threat management using ThreatAssistant service
-    void OnTauntRequired(::Unit* target) override    {
+    void OnTauntRequired(::Unit* target) override
+    {
         // Use ThreatAssistant to determine best taunt target and execute
         Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(PROVOKE, tauntTarget))
@@ -706,12 +711,12 @@ private:
             auto root = Selector("Brewmaster Tank", {
                 // Tier 1: Emergency Defensives
                 Sequence("Emergency Defense", {
-                    Condition("Critical HP", [](Player* bot), Unit* target {
+                    Condition("Critical HP", [](Player* bot, Unit* target) {
                         return bot && bot->GetHealthPct() < 35.0f;
                     }),
                     Selector("Use emergency", {
                         Sequence("Zen Meditation", {
-                            Condition("HP < 20%", [](Player* bot), Unit* target {
+                            Condition("HP < 20%", [](Player* bot, Unit* target) {
                                 return bot->GetHealthPct() < 20.0f;
                             }),
                             bot::ai::Action("Cast Zen Meditation", [this](Player* bot, Unit*) {
@@ -750,7 +755,7 @@ private:
                             })
                         }),
                         Sequence("Celestial Brew", {
-                            Condition("HP < 60%", [](Player* bot), Unit* target {
+                            Condition("HP < 60%", [](Player* bot, Unit* target) {
                                 return bot && bot->GetHealthPct() < 60.0f;
                             }),
                             bot::ai::Action("Cast Celestial Brew", [this](Player* bot, Unit*) {
