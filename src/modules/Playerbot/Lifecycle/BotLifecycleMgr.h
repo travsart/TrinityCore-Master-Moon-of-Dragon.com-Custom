@@ -51,18 +51,18 @@ namespace Playerbot
 
     // Lifecycle statistics
     struct LifecycleStatistics
-{
-    uint32 totalLifecycleEvents = 0;
-    uint32 successfulSpawns = 0;
-    uint32 failedSpawns = 0;
-    uint32 scheduledLogins = 0;
-    uint32 scheduledLogouts = 0;
-    uint32 populationUpdates = 0;
-    uint32 maintenanceRuns = 0;
-    float averageResponseTimeMs = 0.0f;
-    std::chrono::system_clock::time_point startTime;
-    std::chrono::system_clock::time_point lastUpdate;
-};
+    {
+        uint32 totalLifecycleEvents = 0;
+        uint32 successfulSpawns = 0;
+        uint32 failedSpawns = 0;
+        uint32 scheduledLogins = 0;
+        uint32 scheduledLogouts = 0;
+        uint32 populationUpdates = 0;
+        uint32 maintenanceRuns = 0;
+        float averageResponseTimeMs = 0.0f;
+        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point lastUpdate;
+    };
 
 class TC_GAME_API BotLifecycleMgr final : public IBotLifecycleMgr
 {
