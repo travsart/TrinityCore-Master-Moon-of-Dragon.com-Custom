@@ -722,7 +722,7 @@ private:
 
             queue->RegisterSpell(GUARDIAN_IRONFUR, SpellPriority::CRITICAL, SpellCategory::DEFENSIVE);
 
-            queue->AddCondition(GUARDIAN_IRONFUR, [this](::Player* bot, ::Unit*) {
+            queue->AddCondition(GUARDIAN_IRONFUR, [this](Player* bot, Unit*) {
 
                 return bot && this->_resource.GetAvailable() >= 40 &&
 
@@ -948,7 +948,7 @@ private:
 
                 Sequence("Active Mitigation", {
 
-                    Condition("40+ rage and < 3 Ironfur stacks", [this](::Player*, ::Unit*) {
+                    Condition("40+ rage and < 3 Ironfur stacks", [this](Player*, Unit*) {
 
                         return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() < 3;
 
@@ -1102,7 +1102,7 @@ private:
 
                         Sequence("Maul (rage dump)", {
 
-                            Condition("40+ rage and 2+ Ironfur stacks", [this](::Player*, ::Unit*) {
+                            Condition("40+ rage and 2+ Ironfur stacks", [this](Player*, Unit*) {
 
                                 return this->_resource.GetAvailable() >= 40 && this->_ironfurTracker.GetStacks() >= 2;
 

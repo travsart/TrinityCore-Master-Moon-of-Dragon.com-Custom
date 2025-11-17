@@ -597,12 +597,10 @@ bool MonkAI::HasEnoughResource(uint32 spellId)
     switch (spellId)
     {
         // Chi generators (Energy cost)
-        case TIGER_PALM:
+        case TIGER_PALM:  // Note: JAB = 100780 (same as TIGER_PALM, removed duplicate)
             return GetBot()->GetPower(POWER_ENERGY) >= 50;
         case EXPEL_HARM:
             return GetBot()->GetPower(POWER_ENERGY) >= 15;
-        case JAB:
-            return GetBot()->GetPower(POWER_ENERGY) >= 40;
 
         // Chi spenders
         case BLACKOUT_KICK:
@@ -715,14 +713,7 @@ void MonkAI::ConsumeResource(uint32 spellId)
             }
             break;
 
-        case TIGER_PALM:  // FIXED: Was duplicate JAB case, changed to TIGER_PALM
-            if (GetBot()->GetPower(POWER_ENERGY) >= 50)
-            {
-                GetBot()->ModifyPower(POWER_ENERGY, -50);
-                _energyManager.SpendEnergy(50);
-                _energySpent.store(_energySpent.load() + 50);
-            }
-            break;
+        // REMOVED: Duplicate TIGER_PALM case (JAB=100780 same as TIGER_PALM)
 
         // Chi spenders
         case BLACKOUT_KICK:

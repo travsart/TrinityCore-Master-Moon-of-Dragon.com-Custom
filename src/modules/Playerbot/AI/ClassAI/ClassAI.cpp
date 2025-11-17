@@ -902,7 +902,7 @@ void ClassAI::CancelPendingSpell()
         // Optimistic resource consumption and cooldown tracking
         // (Will be validated again on main thread, but tracking here for ClassAI responsiveness)
         ConsumeResource(spellId);
-        _cooldownManager->TriggerCooldown(spellId, spellInfo->RecoveryTime);
+        _cooldownManager->StartCooldown(spellId, spellInfo->RecoveryTime);
 
         TC_LOG_DEBUG("playerbot.classai.spell",
                      "ClassAI queued CMSG_CAST_SPELL for spell {} (bot: {}, target: {})",
@@ -921,11 +921,8 @@ void ClassAI::CancelPendingSpell()
     }
 }
 
-bool ClassAI::CastSpell(uint32 spellId)
-{
-    // Self-cast version
-    return CastSpell(spellId, GetBot());
-}
+// REMOVED: bool ClassAI::CastSpell(uint32 spellId) - not declared in header
+// Use CastSpell(spellId, GetBot()) directly for self-cast
 
 // ============================================================================
 // AURA UTILITIES
