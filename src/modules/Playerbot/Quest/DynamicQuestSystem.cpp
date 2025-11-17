@@ -105,9 +105,9 @@ DynamicQuestSystem::DynamicQuestSystem()
         case QuestStrategy::STORY_PROGRESSION:
             ExecuteStoryStrategy(bot);
             break;
-        case QuestStrategy::REPUTATION_FOCUSED:
-            ExecuteReputationStrategy(bot);
-            break;
+        // case QuestStrategy::REPUTATION_FOCUSED: // TODO: Add to QuestStrategy enum in IDynamicQuestSystem.h
+        //     ExecuteReputationStrategy(bot);
+        //     break;
         default:
             ExecuteLevelStrategy(bot);
             break;
