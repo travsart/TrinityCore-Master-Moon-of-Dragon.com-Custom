@@ -669,7 +669,7 @@ void DemonHunterAI::UpdateBuffs()
     if (spec == ChrSpecialization::DemonHunterHavoc)
     {
         // Maintain Momentum buff through movement abilities if talented
-    if (_bot->HasSpell(MOMENTUM_TALENT) && !_bot->HasAura(BUFF_MOMENTUM))
+    if (_bot->HasSpell(MOMENTUM_TALENT) && !_bot->HasAura(208628)) // BUFF_MOMENTUM
         {
             // Fel Rush for momentum
     if (CanUseAbility(FEL_RUSH))
@@ -688,7 +688,7 @@ void DemonHunterAI::UpdateBuffs()
         }
 
         // Refresh Prepared buff from Vengeful Retreat if talented
-    if (_bot->HasSpell(203650) && !_bot->HasAura(BUFF_PREPARED) && CanUseAbility(VENGEFUL_RETREAT))
+    if (_bot->HasSpell(203650) && !_bot->HasAura(203650) && CanUseAbility(VENGEFUL_RETREAT)) // BUFF_PREPARED
         {
             Unit* target = _bot->GetSelectedUnit();
             if (target && _bot->GetDistance(target) < 3.0f)
