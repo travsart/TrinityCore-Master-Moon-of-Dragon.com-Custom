@@ -197,6 +197,8 @@ private:
     mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _correlationMutex;
 };
 
+} // namespace Playerbot
+
 // Lifecycle event logging macros
 #define LIFECYCLE_LOG_INFO(message, ...) \
     TC_LOG_INFO("playerbots.lifecycle", "[BotLifecycleMgr] " message, ##__VA_ARGS__)
