@@ -546,87 +546,48 @@ private:
     {
         Player* bot = this->GetBot();
         if (!bot)
-
             return false;
-            uint32 activeRiptides = _riptideTracker.GetActiveRiptideCount();
+
+        uint32 activeRiptides = _riptideTracker.GetActiveRiptideCount();
 
         // Earth Shield on tank
         Unit* tankTarget = nullptr;
-        for (Unit* member : group)        {
-
+        for (Unit* member : group)
+        {
             if (member && IsTankRole(member))
-
             {
-
                 tankTarget = member;
-
-                if (!tankTarget)
-
-                {
-
-                    return;
-
-                }
-
-                if (!tankTarget)
-
-                {
-
-                    return;
-
-                }
-
                 break;
-
             }
         }
 
         if (tankTarget && !_earthShieldTracker.HasEarthShield(tankTarget->GetGUID()))
         {
-
             if (this->CanCastSpell(REST_EARTH_SHIELD, tankTarget))
-
             {
-
                 this->CastSpell(REST_EARTH_SHIELD, tankTarget);
-
                 _earthShieldTracker.ApplyEarthShield(tankTarget->GetGUID(), 600000);
-
                 return true;
-
             }
         }
 
         // Riptide on injured allies
         if (activeRiptides < group.size())
         {
-
             for (Unit* member : group)
             {
-
                 if (member && member->GetHealthPct() < 90.0f)
-
                 {
-
                     if (_riptideTracker.NeedsRiptideRefresh(member->GetGUID()))
-
                     {
-
                         if (this->CanCastSpell(REST_RIPTIDE, member))
-
                         {
-
                             this->CastSpell(REST_RIPTIDE, member);
-
                             _riptideTracker.ApplyRiptide(member->GetGUID(), 18000);
-
                             return true;
-
                         }
-                        }
-
+                    }
                 }
-
             }
         }
 
