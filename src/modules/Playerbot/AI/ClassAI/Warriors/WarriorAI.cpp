@@ -607,7 +607,8 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            entity = snapshot_entity;
+            // FIXED: CreatureSnapshot to Creature conversion via GetCreature
+            entity = spatialGrid->GetCreature(snapshot_entity->guid);
         }
         if (!entity)
             continue;

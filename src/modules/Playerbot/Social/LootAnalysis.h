@@ -145,6 +145,32 @@ public:
         ::std::atomic<float> analysisAccuracy{0.85f};
         ::std::atomic<float> predictionAccuracy{0.8f};
 
+        AnalysisMetrics() = default;
+
+        // Copy constructor for atomic members
+        AnalysisMetrics(const AnalysisMetrics& other) :
+            itemsAnalyzed(other.itemsAnalyzed.load()),
+            analysisRequests(other.analysisRequests.load()),
+            cacheHits(other.cacheHits.load()),
+            cacheMisses(other.cacheMisses.load()),
+            averageAnalysisTime(other.averageAnalysisTime.load()),
+            analysisAccuracy(other.analysisAccuracy.load()),
+            predictionAccuracy(other.predictionAccuracy.load()) {}
+
+        // Copy assignment operator
+        AnalysisMetrics& operator=(const AnalysisMetrics& other) {
+            if (this != &other) {
+                itemsAnalyzed.store(other.itemsAnalyzed.load());
+                analysisRequests.store(other.analysisRequests.load());
+                cacheHits.store(other.cacheHits.load());
+                cacheMisses.store(other.cacheMisses.load());
+                averageAnalysisTime.store(other.averageAnalysisTime.load());
+                analysisAccuracy.store(other.analysisAccuracy.load());
+                predictionAccuracy.store(other.predictionAccuracy.load());
+            }
+            return *this;
+        }
+
         void Reset() {
             itemsAnalyzed = 0; analysisRequests = 0; cacheHits = 0; cacheMisses = 0;
             averageAnalysisTime = 5.0f; analysisAccuracy = 0.85f; predictionAccuracy = 0.8f;

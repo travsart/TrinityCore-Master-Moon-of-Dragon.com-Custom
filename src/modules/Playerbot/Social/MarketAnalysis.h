@@ -34,17 +34,7 @@ enum class MarketTrend : uint8
     BEARISH     = 5   // Strong downward trend
 };
 
-enum class MarketSegment : uint8
-{
-    CONSUMABLES     = 0,
-    EQUIPMENT       = 1,
-    CRAFTING        = 2,
-    GEMS            = 3,
-    ENCHANTING      = 4,
-    COLLECTIBLES    = 5,
-    TRADE_GOODS     = 6,
-    QUEST_ITEMS     = 7
-};
+// NOTE: MarketSegment enum now defined in IMarketAnalysis.h to support default arguments
 
 struct MarketSnapshot
 {

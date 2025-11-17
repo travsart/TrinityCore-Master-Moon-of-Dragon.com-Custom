@@ -27,7 +27,7 @@
 namespace Playerbot
 {
 
-AdaptiveBehaviorManager::AdaptiveBehaviorManager(Player* bot) :
+AdaptiveBehaviorManager::AdaptiveBehaviorManager(::Player* bot) :
     _bot(bot),
     _activeStrategies(STRATEGY_NONE),
     _activeProfile(nullptr),
@@ -72,7 +72,7 @@ void AdaptiveBehaviorManager::CreateEmergencyTankProfile()
                (!metrics.tankAlive && (metrics.eliteCount > 0 || metrics.bossCount > 0));
     };
 
-    profile.applyFunction = [this](Player* bot, uint32 flags) {
+    profile.applyFunction = [this](::Player* bot, uint32 flags) {
         // Emergency tank activation logic
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating emergency tank mode", bot->GetName());
         ActivateStrategy(flags);
@@ -97,7 +97,7 @@ void AdaptiveBehaviorManager::CreateAOEProfile()
                (metrics.enemyCount >= 3 && metrics.nearestEnemyDistance <= 8.0f);
     };
 
-    profile.applyFunction = [this](Player* bot, uint32 flags) {
+    profile.applyFunction = [this](::Player* bot, uint32 flags) {
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating AOE mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -122,7 +122,7 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
                (metrics.averageGroupHealth < 40.0f && !metrics.healerAlive);
     };
 
-    profile.applyFunction = [this](Player* bot, uint32 flags) {
+    profile.applyFunction = [this](::Player* bot, uint32 flags) {
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating survival mode", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -145,7 +145,7 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
                (metrics.bossCount > 0 && metrics.enrageTimer > 0 && metrics.enrageTimer < 30000);
     };
 
-    profile.applyFunction = [this](Player* bot, uint32 flags) {
+    profile.applyFunction = [this](::Player* bot, uint32 flags) {
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating burst phase", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -168,7 +168,7 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
                (metrics.combatDuration < 30000 && metrics.bossCount > 0); // Save resources early in boss fight
     };
 
-    profile.applyFunction = [this](Player* bot, uint32 flags) {
+    profile.applyFunction = [this](::Player* bot, uint32 flags) {
         TC_LOG_DEBUG("bot.playerbot", "Bot {} activating resource conservation", bot->GetName());
         ActivateStrategy(flags);
     };
@@ -518,7 +518,7 @@ void AdaptiveBehaviorManager::UpdateGroupComposition()
 {
     _groupComposition.Reset();
 
-    Group* group = _bot->GetGroup();
+    ::Group* group = _bot->GetGroup();
     if (!group)
     {
         _groupComposition.totalMembers = 1;
@@ -528,7 +528,7 @@ void AdaptiveBehaviorManager::UpdateGroupComposition()
 
     for (GroupReference const& groupRef : group->GetMembers())
     {
-        Player* member = groupRef.GetSource();
+        ::Player* member = groupRef.GetSource();
         if (!member)
             continue;
 

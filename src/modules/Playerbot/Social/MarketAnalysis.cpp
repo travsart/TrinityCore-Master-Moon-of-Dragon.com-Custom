@@ -524,7 +524,7 @@ bool MarketAnalysis::IsGoodSellingOpportunity(uint32 itemId, uint32 price)
     return aboveFairValue && trendOk && analysis.confidence > PREDICTION_CONFIDENCE_THRESHOLD;
 }
 
-MarketAnalysis::CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 itemId)
+CompetitorAnalysis MarketAnalysis::AnalyzeCompetition(uint32 itemId)
 {
     CompetitorAnalysis analysis;
 

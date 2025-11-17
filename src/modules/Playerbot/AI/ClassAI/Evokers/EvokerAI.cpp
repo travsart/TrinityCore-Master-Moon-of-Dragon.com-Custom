@@ -1081,7 +1081,7 @@ void EvokerAI::CastEmeraldBlossom()
     if (!CanUseAbility(EMERALD_BLOSSOM))
         return;
 
-    _bot->CastSpell(CastSpellTargetArg(EMERALD_BLOSSOM), _bot);
+    _bot->CastSpell(CastSpellTargetArg(_bot), EMERALD_BLOSSOM);
     ConsumeResource(EMERALD_BLOSSOM);
 }
 
@@ -1147,7 +1147,7 @@ void EvokerAI::CastHover()
     if (!CanUseAbility(HOVER))
         return;
 
-    _bot->CastSpell(CastSpellTargetArg(HOVER), _bot);
+    _bot->CastSpell(CastSpellTargetArg(_bot), HOVER);
     _isHovering = true;
     _hoverRemaining = 8000; // 8 seconds
 }

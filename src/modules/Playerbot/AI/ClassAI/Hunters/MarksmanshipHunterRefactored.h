@@ -706,7 +706,7 @@ private:
     void MendPetIfNeeded() { /* Lone Wolf - no pet */ }
     void FeedPetIfNeeded() { /* Lone Wolf - no pet */ }
     bool HasActivePet() const { return false; /* Lone Wolf */ }
-    PetInfo GetPetInfo() const { return PetInfo(); /* No pet */ }
+    ::Playerbot::PetInfo GetPetInfo() const { return ::Playerbot::PetInfo(); /* No pet */ }
 
     // Trap management - delegated to AI
     void UpdateTrapManagement() { /* Traps managed by AI */ }

@@ -20,7 +20,7 @@ namespace Playerbot
 
 // Forward declarations
 enum class FarmingSessionType : uint8;
-enum class ProfessionType : uint8;
+enum class ProfessionType : uint16;  // Must match ProfessionManager.h (supports SkillType values)
 struct FarmingZoneInfo;
 struct FarmingSession;
 struct FarmingCoordinatorProfile;

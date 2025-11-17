@@ -20,7 +20,7 @@ const float MovementIntegration::MELEE_RANGE = 5.0f;
 const float MovementIntegration::RANGED_OPTIMAL = 35.0f;
 const float MovementIntegration::KITING_DISTANCE = 15.0f;
 
-MovementIntegration::MovementIntegration(Player* bot)
+MovementIntegration::MovementIntegration(::Player* bot)
     : _bot(bot)
     , _lastUpdate(0)
     , _currentSituation(static_cast<CombatSituation>(0))
@@ -143,7 +143,7 @@ Position MovementIntegration::GetTargetPosition()
     return Position();
 }
 
-float MovementIntegration::GetOptimalRange(Unit* target)
+float MovementIntegration::GetOptimalRange(::Unit* target)
 {
     if (!_bot || !target)
         return MELEE_RANGE;
@@ -263,7 +263,7 @@ Position MovementIntegration::FindNearestSafePosition(const Position& from, floa
     return from;
 }
 
-bool MovementIntegration::ShouldKite(Unit* target)
+bool MovementIntegration::ShouldKite(::Unit* target)
 {
     if (!_bot || !target)
         return false;
@@ -284,7 +284,7 @@ bool MovementIntegration::ShouldKite(Unit* target)
     return distance < KITING_DISTANCE;
 }
 
-Position MovementIntegration::GetKitingPosition(Unit* target)
+Position MovementIntegration::GetKitingPosition(::Unit* target)
 {
     if (!_bot || !target)
         return Position();
@@ -341,7 +341,7 @@ MovementCommand MovementIntegration::CheckRange()
     if (!_bot)
         return command;
 
-    Unit* target = _bot->GetVictim();
+    ::Unit* target = _bot->GetVictim();
     if (!target)
         return command;
 
@@ -413,7 +413,7 @@ MovementCommand MovementIntegration::CheckLineOfSight()
     if (!_bot)
         return command;
 
-    Unit* target = _bot->GetVictim();
+    ::Unit* target = _bot->GetVictim();
     if (!target)
         return command;
 
@@ -443,7 +443,7 @@ Position MovementIntegration::CalculateRolePosition()
     if (!_bot)
         return Position();
 
-    Unit* target = _bot->GetVictim();
+    ::Unit* target = _bot->GetVictim();
     if (!target)
         return *_bot;  // No target, stay in place
 

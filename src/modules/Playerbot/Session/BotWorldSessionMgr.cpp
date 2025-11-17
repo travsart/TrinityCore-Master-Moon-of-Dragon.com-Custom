@@ -121,8 +121,8 @@ void BotWorldSessionMgr::Shutdown()
     {
         if (!session)
         {
-            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in method GetPlayer");
-            return nullptr;
+            TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: session in Shutdown");
+            continue;  // Skip null sessions
         }
         if (session && session->GetPlayer())
         {

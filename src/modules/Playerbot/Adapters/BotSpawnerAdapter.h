@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Core/DI/Interfaces/IBotSpawner.h"
+#include "Lifecycle/BotSpawner.h"  // For SpawnConfig and SpawnStats definitions
 #include "Define.h"
 #include <memory>
 
