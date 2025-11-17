@@ -266,16 +266,16 @@ private:
     SchedulerStats _stats;
 
     // Thread-safe activity pattern storage
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _patternMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _patternMutex;
     ::std::unordered_map<::std::string, ActivityPattern> _activityPatterns;
 
     // Thread-safe bot schedule state storage (TBB removed)
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _scheduleMutex;
     ::std::unordered_map<ObjectGuid, BotScheduleState> _botSchedules;
 
     // Priority queue for scheduled actions (TBB removed)
     ::std::priority_queue<ScheduleEntry> _scheduleQueue;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _scheduleQueueMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _scheduleQueueMutex;
 
     // Runtime state
     ::std::atomic<bool> _enabled{true};
