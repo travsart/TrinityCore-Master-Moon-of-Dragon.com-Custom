@@ -578,7 +578,7 @@ private:
     mutable ::std::atomic<uint32> _readBufferIndex{0};
 
     mutable ::std::chrono::steady_clock::time_point _lastUpdate;
-    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SPATIAL_GRID> _updateMutex;  // Protects Update() to ensure only one thread updates at a time
+    mutable OrderedMutex<LockOrder::SPATIAL_GRID> _updateMutex;  // Protects Update() to ensure only one thread updates at a time
 
     // Statistics (atomic for thread-safe access)
     mutable ::std::atomic<uint64_t> _totalQueries{0};

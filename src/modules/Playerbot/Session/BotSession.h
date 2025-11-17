@@ -172,7 +172,7 @@ private:
     // Deferred packet queue (main thread processing)
     // Packets that require serialization with Map::Update() to prevent race conditions
     ::std::queue<::std::unique_ptr<WorldPacket>> _deferredPackets;
-    mutable Playerbot::OrderedMutex<Playerbot::LockOrder::SESSION_MANAGER> _deferredPacketMutex; // Simple mutex (no recursion needed)
+    mutable OrderedMutex<LockOrder::SESSION_MANAGER> _deferredPacketMutex; // Simple mutex (no recursion needed)
 
     // Bot state
     ::std::atomic<bool> _active{true};

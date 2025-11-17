@@ -301,8 +301,8 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
     _totalOperations++;
 
     // 1. Position evaluation (Position module)
-    MovementResult posResult = _position->FindOptimalPosition(context);
-    
+    PositionMovementResult posResult = _position->FindOptimalPosition(context);
+
     if (!posResult.success)
     {
         TC_LOG_DEBUG("playerbot.movement", "Failed to find optimal position for bot {}", bot->GetName());
@@ -311,7 +311,7 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
 
     // 2. Path calculation (Pathfinding module)
     MovementPath path;
-    if (!_pathfinding->CalculatePath(bot, posResult.targetPosition, path, false))
+    if (!_pathfinding->CalculatePath(bot, posResult.targetPosition, path))
     {
         TC_LOG_DEBUG("playerbot.movement", "Failed to calculate path for bot {}", bot->GetName());
         return;
@@ -332,10 +332,14 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
     MovementRequest req = MovementRequest::MakePointMovement(
         PlayerBotMovementPriority::TACTICAL_POSITIONING,
         posResult.targetPosition,
-        true, {}, {}, {},
-        "Coordinated movement", "UnifiedMovementCoordinator"
+        true,
+        {},
+        {},
+        {},
+        "Coordinated movement",
+        "UnifiedMovementCoordinator"
     );
-    
+
     _arbiter->RequestMovement(req);
 
     auto endTime = GameTime::GetGameTimeMS();
@@ -347,11 +351,11 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
     ::std::ostringstream oss;
 
     // Position evaluation
-    MovementResult posResult = _position->FindOptimalPosition(context);
-    
+    PositionMovementResult posResult = _position->FindOptimalPosition(context);
+
     // Path quality
     MovementPath path;
-    bool hasPath = _pathfinding->CalculatePath(bot, posResult.targetPosition, path, false);
+    bool hasPath = _pathfinding->CalculatePath(bot, posResult.targetPosition, path);
     
     // Formation impact
     bool inFormation = _formation->IsInFormation();

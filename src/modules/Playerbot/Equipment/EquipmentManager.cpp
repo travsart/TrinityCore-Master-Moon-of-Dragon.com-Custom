@@ -806,9 +806,9 @@ void EquipmentManager::AutoEquipBestGear(::Player* player)
     }
 }
 
-ItemComparisonResult EquipmentManager::CompareItems(::Player* player, ::Item* currentItem, ::Item* newItem)
+IEquipmentManager::ItemComparisonResult EquipmentManager::CompareItems(::Player* player, ::Item* currentItem, ::Item* newItem)
 {
-    ItemComparisonResult result;
+    IEquipmentManager::ItemComparisonResult result;
 
     if (!player || !newItem)
         return result;
@@ -902,7 +902,7 @@ bool EquipmentManager::IsItemUpgrade(::Player* player, ::Item* item)
 
     ::Item* currentItem = GetEquippedItemInSlot(player, equipSlot);
 
-    ItemComparisonResult result = CompareItems(player, currentItem, item);
+    IEquipmentManager::ItemComparisonResult result = CompareItems(player, currentItem, item);
     return result.isUpgrade;
 }
 
