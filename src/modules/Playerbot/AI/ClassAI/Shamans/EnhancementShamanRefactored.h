@@ -177,7 +177,7 @@ private:
     uint32 _stormbringerEndTime;
 };
 
-class EnhancementShamanRefactored : public MeleeDpsSpecialization<ManaResource>, public ShamanSpecialization
+class EnhancementShamanRefactored : public MeleeDpsSpecialization<ManaResource>
 {
 public:
     using Base = MeleeDpsSpecialization<ManaResource>;
@@ -186,14 +186,13 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit EnhancementShamanRefactored(Player* bot)        : MeleeDpsSpecialization<ManaResource>(bot)
-        , ShamanSpecialization(bot)
         , _maelstromWeaponTracker()
         , _stormbringerTracker()
         , _ascendanceActive(false)
         , _ascendanceEndTime(0)
-        
+        , _lastAscendanceTime(0)
+        , _lastFeralSpiritTime(0)
         , _lastSunderingTime(0)
-        , _cooldowns()
     {
         // Register cooldowns for major abilities
         // COMMENTED OUT:         _cooldowns.RegisterBatch({
@@ -739,7 +738,9 @@ private:
     void InitializeEnhancementMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        BotAI* ai = this->GetBot()->GetBotAI();
+        // COMMENTED OUT: BotAI* ai = this->GetBot()->GetBotAI(); // Player doesn't have GetBotAI()
+        // TODO: Fix BotAI access pattern
+        BotAI* ai = nullptr; // Temporary fix
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
@@ -773,7 +774,7 @@ private:
 
             queue->RegisterSpell(ENH_STORMSTRIKE, SpellPriority::HIGH, SpellCategory::DAMAGE_SINGLE);
 
-            queue->AddCondition(ENH_STORMSTRIKE, [this](Player*, Unit* target) { return target && this->_stormbringerActive; }, "Stormbringer proc");
+            queue->AddCondition(ENH_STORMSTRIKE, [this](Player*, Unit* target) { return target && this->_stormbringerTracker.IsActive(); }, "Stormbringer proc");
 
 
             queue->RegisterSpell(ENH_LAVA_LASH, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
@@ -821,7 +822,9 @@ private:
     bool _ascendanceActive;
     uint32 _ascendanceEndTime;
 
-    uint32 _lastAscendanceTime;    uint32 _lastSunderingTime;
+    uint32 _lastAscendanceTime;
+    uint32 _lastFeralSpiritTime;
+    uint32 _lastSunderingTime;
 };
 
 } // namespace Playerbot

@@ -278,7 +278,7 @@ private:
     uint32 _stormkeeperEndTime;
 };
 
-class ElementalShamanRefactored : public RangedDpsSpecialization<ManaResource>, public ShamanSpecialization
+class ElementalShamanRefactored : public RangedDpsSpecialization<ManaResource>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -289,7 +289,6 @@ public:
     using Base::_resource;
     explicit ElementalShamanRefactored(Player* bot)
         : RangedDpsSpecialization<ManaResource>(bot)
-        , ShamanSpecialization(bot)
         , _maelstromTracker()
         , _flameShockTracker()
         , _lavaSurgeTracker()
@@ -864,11 +863,11 @@ private:
                     Selector("Maintain DoT and use priority", {
                         Sequence("Flame Shock", {
                             Condition("Needs refresh", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 return target && this->_flameShockTracker.NeedsFlameShockRefresh(target->GetGUID());
                             }),
                             bot::ai::Action("Cast Flame Shock", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_FLAME_SHOCK, target))
                                 {
                                     this->CastSpell(ELEM_FLAME_SHOCK, target);
@@ -880,12 +879,12 @@ private:
                         }),
                         Sequence("Lava Burst (proc or Flame Shock)", {
                             Condition("Lava Surge or Flame Shock active", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 return target && (this->_lavaSurgeTracker.IsActive() ||
                                        this->_flameShockTracker.HasFlameShock(target->GetGUID()));
                             }),
                             bot::ai::Action("Cast Lava Burst", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LAVA_BURST, target))
                                 {
                                     this->CastSpell(ELEM_LAVA_BURST, target);
@@ -902,7 +901,7 @@ private:
                                 return bot->HasSpell(ELEM_PRIMORDIAL_WAVE);
                             }),
                             bot::ai::Action("Cast Primordial Wave", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_PRIMORDIAL_WAVE, target))
                                 {
                                     this->CastSpell(ELEM_PRIMORDIAL_WAVE, target);
@@ -925,7 +924,7 @@ private:
                                 return this->GetEnemiesInRange(40.0f) >= 3;
                             }),
                             bot::ai::Action("Cast Earthquake", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTHQUAKE, target))
                                 {
                                     this->CastSpell(ELEM_EARTHQUAKE, target);
@@ -937,7 +936,7 @@ private:
                         }),
                         Sequence("Earth Shock (ST)", {
                             bot::ai::Action("Cast Earth Shock", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_EARTH_SHOCK, target))
                                 {
                                     this->CastSpell(ELEM_EARTH_SHOCK, target);
@@ -961,7 +960,7 @@ private:
                                 return this->GetEnemiesInRange(40.0f) >= 2;
                             }),
                             bot::ai::Action("Cast Chain Lightning", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_CHAIN_LIGHTNING, target))
                                 {
                                     this->CastSpell(ELEM_CHAIN_LIGHTNING, target);
@@ -974,7 +973,7 @@ private:
                         }),
                         Sequence("Lightning Bolt (ST)", {
                             bot::ai::Action("Cast Lightning Bolt", [this](Player* bot, Unit* target) {
-                                Unit* target = bot->GetVictim();
+                                target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ELEM_LIGHTNING_BOLT, target))
                                 {
                                     this->CastSpell(ELEM_LIGHTNING_BOLT, target);
