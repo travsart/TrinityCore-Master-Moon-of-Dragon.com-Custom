@@ -137,32 +137,32 @@ public:
     using QuestCompletionMetricsSnapshot = QuestCompletionMetrics::Snapshot;
 
     // Core quest completion management
-    bool StartQuestCompletion(uint32 questId, Player* bot) override;
-    void UpdateQuestProgress(Player* bot) override;
-    void CompleteQuest(uint32 questId, Player* bot) override;
-    bool TurnInQuest(uint32 questId, Player* bot) override;
+    bool StartQuestCompletion(uint32 questId, ::Player* bot) override;
+    void UpdateQuestProgress(::Player* bot) override;
+    void CompleteQuest(uint32 questId, ::Player* bot) override;
+    bool TurnInQuest(uint32 questId, ::Player* bot) override;
 
     // Objective tracking and execution
-    void TrackQuestObjectives(Player* bot) override;
-    void ExecuteObjective(Player* bot, QuestObjectiveData& objective) override;
-    void UpdateObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex) override;
+    void TrackQuestObjectives(::Player* bot) override;
+    void ExecuteObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void UpdateObjectiveProgress(::Player* bot, uint32 questId, uint32 objectiveIndex) override;
     bool IsObjectiveComplete(const QuestObjectiveData& objective) override;
 
     // Objective-specific handlers
-    void HandleKillObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleCollectObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleLocationObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleSpellCastObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleEmoteObjective(Player* bot, QuestObjectiveData& objective) override;
-    void HandleEscortObjective(Player* bot, QuestObjectiveData& objective) override;
+    void HandleKillObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleCollectObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleTalkToNpcObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleLocationObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleGameObjectObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleSpellCastObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleEmoteObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void HandleEscortObjective(::Player* bot, QuestObjectiveData& objective) override;
 
     // Navigation and pathfinding
-    void NavigateToObjective(Player* bot, const QuestObjectiveData& objective) override;
-    bool FindObjectiveTarget(Player* bot, QuestObjectiveData& objective) override;
+    void NavigateToObjective(::Player* bot, const QuestObjectiveData& objective) override;
+    bool FindObjectiveTarget(::Player* bot, QuestObjectiveData& objective) override;
     ::std::vector<Position> GetObjectiveLocations(const QuestObjectiveData& objective) override;
-    Position GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective) override;
+    Position GetOptimalObjectivePosition(::Player* bot, const QuestObjectiveData& objective) override;
 
     // Group coordination for quest completion
     void CoordinateGroupQuestCompletion(Group* group, uint32 questId) override;
@@ -171,22 +171,22 @@ public:
     void HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex) override;
 
     // Quest completion optimization
-    void OptimizeQuestCompletionOrder(Player* bot) override;
-    void OptimizeObjectiveSequence(Player* bot, uint32 questId) override;
-    void FindEfficientCompletionPath(Player* bot, const ::std::vector<uint32>& questIds) override;
-    void MinimizeTravelTime(Player* bot, const ::std::vector<QuestObjectiveData>& objectives) override;
+    void OptimizeQuestCompletionOrder(::Player* bot) override;
+    void OptimizeObjectiveSequence(::Player* bot, uint32 questId) override;
+    void FindEfficientCompletionPath(::Player* bot, const ::std::vector<uint32>& questIds) override;
+    void MinimizeTravelTime(::Player* bot, const ::std::vector<QuestObjectiveData>& objectives) override;
 
     // Stuck detection and recovery
-    void DetectStuckState(Player* bot, uint32 questId) override;
-    void HandleStuckObjective(Player* bot, QuestObjectiveData& objective) override;
-    void RecoverFromStuckState(Player* bot, uint32 questId) override;
-    void SkipProblematicObjective(Player* bot, QuestObjectiveData& objective) override;
+    void DetectStuckState(::Player* bot, uint32 questId) override;
+    void HandleStuckObjective(::Player* bot, QuestObjectiveData& objective) override;
+    void RecoverFromStuckState(::Player* bot, uint32 questId) override;
+    void SkipProblematicObjective(::Player* bot, QuestObjectiveData& objective) override;
 
     // Quest turn-in management
-    void ProcessQuestTurnIn(Player* bot, uint32 questId) override;
-    bool FindQuestTurnInNpc(Player* bot, uint32 questId) override;
-    void HandleQuestRewardSelection(Player* bot, uint32 questId) override;
-    void CompleteQuestDialog(Player* bot, uint32 questId) override;
+    void ProcessQuestTurnIn(::Player* bot, uint32 questId) override;
+    bool FindQuestTurnInNpc(::Player* bot, uint32 questId) override;
+    void HandleQuestRewardSelection(::Player* bot, uint32 questId) override;
+    void CompleteQuestDialog(::Player* bot, uint32 questId) override;
 
     // Performance monitoring
     struct QuestCompletionMetrics
@@ -260,10 +260,10 @@ public:
     QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
 
     // Quest data analysis
-    ::std::vector<uint32> GetActiveQuests(Player* bot) override;
-    ::std::vector<uint32> GetCompletableQuests(Player* bot) override;
-    uint32 GetHighestPriorityQuest(Player* bot) override;
-    float CalculateQuestProgress(uint32 questId, Player* bot) override;
+    ::std::vector<uint32> GetActiveQuests(::Player* bot) override;
+    ::std::vector<uint32> GetCompletableQuests(::Player* bot) override;
+    uint32 GetHighestPriorityQuest(::Player* bot) override;
+    float CalculateQuestProgress(uint32 questId, ::Player* bot) override;
 
     // Configuration and settings
     void SetQuestCompletionStrategy(uint32 botGuid, QuestCompletionStrategy strategy) override;
@@ -272,20 +272,20 @@ public:
     void EnableGroupCoordination(uint32 botGuid, bool enable) override;
 
     // Advanced quest completion features
-    void HandleDungeonQuests(Player* bot, uint32 dungeonId) override;
-    void HandlePvPQuests(Player* bot, uint32 battlegroundId) override;
-    void HandleSeasonalQuests(Player* bot) override;
-    void HandleDailyQuests(Player* bot) override;
+    void HandleDungeonQuests(::Player* bot, uint32 dungeonId) override;
+    void HandlePvPQuests(::Player* bot, uint32 battlegroundId) override;
+    void HandleSeasonalQuests(::Player* bot) override;
+    void HandleDailyQuests(::Player* bot) override;
 
     // Error handling and recovery
-    void HandleQuestCompletionError(Player* bot, uint32 questId, const ::std::string& error) override;
-    void RecoverFromCompletionFailure(Player* bot, uint32 questId) override;
-    void AbandonUncompletableQuest(Player* bot, uint32 questId) override;
-    void DiagnoseCompletionIssues(Player* bot, uint32 questId) override;
+    void HandleQuestCompletionError(::Player* bot, uint32 questId, const ::std::string& error) override;
+    void RecoverFromCompletionFailure(::Player* bot, uint32 questId) override;
+    void AbandonUncompletableQuest(::Player* bot, uint32 questId) override;
+    void DiagnoseCompletionIssues(::Player* bot, uint32 questId) override;
 
     // Update and maintenance
     void Update(uint32 diff) override;
-    void UpdateBotQuestCompletion(Player* bot, uint32 diff) override;
+    void UpdateBotQuestCompletion(::Player* bot, uint32 diff) override;
     void CleanupCompletedQuests() override;
     void ValidateQuestStates() override;
 
@@ -297,7 +297,7 @@ private:
     ::std::unordered_map<uint32, ::std::vector<QuestProgressData>> _botQuestProgress; // botGuid -> quests
     ::std::unordered_map<uint32, QuestCompletionStrategy> _botStrategies;
     ::std::unordered_map<uint32, QuestCompletionMetrics> _botMetrics;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _completionMutex;
+    mutable OrderedRecursiveMutex<LockOrder::QUEST_MANAGER> _completionMutex;
 
     // Objective execution state
     ::std::unordered_map<uint32, uint32> _botCurrentObjective; // botGuid -> objectiveIndex
@@ -307,60 +307,60 @@ private:
     // Group coordination data
     ::std::unordered_map<uint32, ::std::vector<uint32>> _groupQuestSharing; // groupId -> questIds
     ::std::unordered_map<uint32, ::std::unordered_map<uint32, uint32>> _groupObjectiveSync; // groupId -> questId -> syncTime
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::QUEST_MANAGER> _groupMutex;
+    mutable OrderedRecursiveMutex<LockOrder::QUEST_MANAGER> _groupMutex;
 
     // Performance tracking
     QuestCompletionMetrics _globalMetrics;
 
     // Helper functions
-    void InitializeQuestProgress(Player* bot, uint32 questId);
+    void InitializeQuestProgress(::Player* bot, uint32 questId);
     void ParseQuestObjectives(QuestProgressData& progress, const Quest* quest);
-    void UpdateQuestObjectiveFromProgress(QuestObjectiveData& objective, Player* bot);
-    bool CanExecuteObjective(Player* bot, const QuestObjectiveData& objective);
-    void MoveToObjectiveTarget(Player* bot, const QuestObjectiveData& objective);
-    bool IsInObjectiveRange(Player* bot, const QuestObjectiveData& objective);
+    void UpdateQuestObjectiveFromProgress(QuestObjectiveData& objective, ::Player* bot);
+    bool CanExecuteObjective(::Player* bot, const QuestObjectiveData& objective);
+    void MoveToObjectiveTarget(::Player* bot, const QuestObjectiveData& objective);
+    bool IsInObjectiveRange(::Player* bot, const QuestObjectiveData& objective);
 
     // Objective-specific implementations
-    bool FindKillTarget(Player* bot, QuestObjectiveData& objective);
-    bool FindCollectibleItem(Player* bot, QuestObjectiveData& objective);
-    bool FindNpcTarget(Player* bot, QuestObjectiveData& objective);
-    bool FindGameObjectTarget(Player* bot, QuestObjectiveData& objective);
-    void InteractWithTarget(Player* bot, const QuestObjectiveData& objective, uint32 targetGuid);
+    bool FindKillTarget(::Player* bot, QuestObjectiveData& objective);
+    bool FindCollectibleItem(::Player* bot, QuestObjectiveData& objective);
+    bool FindNpcTarget(::Player* bot, QuestObjectiveData& objective);
+    bool FindGameObjectTarget(::Player* bot, QuestObjectiveData& objective);
+    void InteractWithTarget(::Player* bot, const QuestObjectiveData& objective, uint32 targetGuid);
 
     // Combat integration
-    void HandleQuestCombat(Player* bot, const QuestObjectiveData& objective, Unit* target);
-    void PrioritizeQuestTargets(Player* bot, const ::std::vector<Unit*>& enemies);
-    bool ShouldEngageQuestTarget(Player* bot, Unit* target, const QuestObjectiveData& objective);
+    void HandleQuestCombat(::Player* bot, const QuestObjectiveData& objective, Unit* target);
+    void PrioritizeQuestTargets(::Player* bot, const ::std::vector<Unit*>& enemies);
+    bool ShouldEngageQuestTarget(::Player* bot, Unit* target, const QuestObjectiveData& objective);
 
     // Pathfinding and navigation
-    ::std::vector<Position> GenerateObjectivePath(Player* bot, const QuestObjectiveData& objective);
-    Position FindNearestObjectiveLocation(Player* bot, const QuestObjectiveData& objective);
+    ::std::vector<Position> GenerateObjectivePath(::Player* bot, const QuestObjectiveData& objective);
+    Position FindNearestObjectiveLocation(::Player* bot, const QuestObjectiveData& objective);
     bool ValidateObjectivePosition(const Position& position, const QuestObjectiveData& objective);
 
     // Group coordination helpers
-    void BroadcastObjectiveProgress(Group* group, uint32 questId, uint32 objectiveIndex, Player* bot);
+    void BroadcastObjectiveProgress(Group* group, uint32 questId, uint32 objectiveIndex, ::Player* bot);
     void SynchronizeObjectiveStates(Group* group, uint32 questId);
     void CoordinateObjectiveExecution(Group* group, uint32 questId, uint32 objectiveIndex);
 
     // Strategy implementations
-    void ExecuteEfficientStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteSafeStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteGroupStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteSoloStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteExperienceStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteSpeedStrategy(Player* bot, QuestProgressData& progress);
-    void ExecuteExplorationStrategy(Player* bot, QuestProgressData& progress);
+    void ExecuteEfficientStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteSafeStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteGroupStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteSoloStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteExperienceStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteSpeedStrategy(::Player* bot, QuestProgressData& progress);
+    void ExecuteExplorationStrategy(::Player* bot, QuestProgressData& progress);
 
     // Performance optimization
-    void OptimizeQuestCompletionPerformance(Player* bot);
-    void CacheObjectiveTargets(Player* bot);
-    void PreloadQuestData(Player* bot);
+    void OptimizeQuestCompletionPerformance(::Player* bot);
+    void CacheObjectiveTargets(::Player* bot);
+    void PreloadQuestData(::Player* bot);
     void BatchObjectiveUpdates();
 
     // Error handling
-    void LogCompletionError(Player* bot, uint32 questId, const ::std::string& error);
-    void HandleObjectiveTimeout(Player* bot, QuestObjectiveData& objective);
-    void RecoverFromObjectiveFailure(Player* bot, QuestObjectiveData& objective);
+    void LogCompletionError(::Player* bot, uint32 questId, const ::std::string& error);
+    void HandleObjectiveTimeout(::Player* bot, QuestObjectiveData& objective);
+    void RecoverFromObjectiveFailure(::Player* bot, QuestObjectiveData& objective);
 
     // Constants
     static constexpr uint32 OBJECTIVE_UPDATE_INTERVAL = 2000; // 2 seconds

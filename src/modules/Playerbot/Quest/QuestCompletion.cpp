@@ -61,7 +61,7 @@ QuestCompletion::QuestCompletion()
  * @param bot Bot player
  * @return True if quest tracking started successfully
  */
-bool QuestCompletion::StartQuestCompletion(uint32 questId, Player* bot)
+bool QuestCompletion::StartQuestCompletion(uint32 questId, ::Player* bot)
 {
     if (!bot || !questId)
         return false;
@@ -106,7 +106,7 @@ bool QuestCompletion::StartQuestCompletion(uint32 questId, Player* bot)
  * @brief Update quest progress for a bot
  * @param bot Bot player
  */
-void QuestCompletion::UpdateQuestProgress(Player* bot)
+void QuestCompletion::UpdateQuestProgress(::Player* bot)
 {
     if (!bot)
         return;
@@ -187,7 +187,7 @@ void QuestCompletion::UpdateQuestProgress(Player* bot)
  * @param questId Quest ID
  * @param bot Bot player
  */
-void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
+void QuestCompletion::CompleteQuest(uint32 questId, ::Player* bot)
 {
     if (!bot || !questId)
         return;
@@ -239,7 +239,7 @@ void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
  * @param bot Bot player
  * @return True if quest was turned in successfully
  */
-bool QuestCompletion::TurnInQuest(uint32 questId, Player* bot)
+bool QuestCompletion::TurnInQuest(uint32 questId, ::Player* bot)
 {
     if (!bot || !questId)
         return false;
@@ -252,7 +252,7 @@ bool QuestCompletion::TurnInQuest(uint32 questId, Player* bot)
  * @brief Track quest objectives for a bot
  * @param bot Bot player
  */
-void QuestCompletion::TrackQuestObjectives(Player* bot)
+void QuestCompletion::TrackQuestObjectives(::Player* bot)
 {
     if (!bot)
         return;
@@ -302,7 +302,7 @@ void QuestCompletion::TrackQuestObjectives(Player* bot)
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::ExecuteObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::ExecuteObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot || objective.status == ObjectiveStatus::COMPLETED)
         return;
@@ -360,7 +360,7 @@ void QuestCompletion::ExecuteObjective(Player* bot, QuestObjectiveData& objectiv
  * @param questId Quest ID
  * @param objectiveIndex Objective index
  */
-void QuestCompletion::UpdateObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex)
+void QuestCompletion::UpdateObjectiveProgress(::Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return;
@@ -416,7 +416,7 @@ bool QuestCompletion::IsObjectiveComplete(const QuestObjectiveData& objective)
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleKillObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -508,7 +508,7 @@ void QuestCompletion::HandleKillObjective(Player* bot, QuestObjectiveData& objec
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleCollectObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleCollectObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -542,7 +542,7 @@ void QuestCompletion::HandleCollectObjective(Player* bot, QuestObjectiveData& ob
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleTalkToNpcObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -625,7 +625,7 @@ void QuestCompletion::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& 
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleLocationObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleLocationObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -654,7 +654,7 @@ void QuestCompletion::HandleLocationObjective(Player* bot, QuestObjectiveData& o
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleGameObjectObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -732,7 +732,7 @@ void QuestCompletion::HandleGameObjectObjective(Player* bot, QuestObjectiveData&
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleSpellCastObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleSpellCastObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -777,7 +777,7 @@ void QuestCompletion::HandleSpellCastObjective(Player* bot, QuestObjectiveData& 
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleEmoteObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -849,7 +849,7 @@ void QuestCompletion::HandleEmoteObjective(Player* bot, QuestObjectiveData& obje
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& objective)
+void QuestCompletion::HandleEscortObjective(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -923,7 +923,7 @@ void QuestCompletion::HandleEscortObjective(Player* bot, QuestObjectiveData& obj
  * @param bot Bot player
  * @param objective Objective data
  */
-void QuestCompletion::NavigateToObjective(Player* bot, const QuestObjectiveData& objective)
+void QuestCompletion::NavigateToObjective(::Player* bot, const QuestObjectiveData& objective)
 {
     if (!bot)
         return;
@@ -943,7 +943,7 @@ void QuestCompletion::NavigateToObjective(Player* bot, const QuestObjectiveData&
  * @param objective Objective data
  * @return True if target found
  */
-bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
+bool QuestCompletion::FindKillTarget(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return false;
@@ -1004,7 +1004,7 @@ bool QuestCompletion::FindKillTarget(Player* bot, QuestObjectiveData& objective)
  * @param objective Objective data
  * @return True if item source found
  */
-bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objective)
+bool QuestCompletion::FindCollectibleItem(::Player* bot, QuestObjectiveData& objective)
 {
     if (!bot)
         return false;
@@ -1066,7 +1066,7 @@ bool QuestCompletion::FindCollectibleItem(Player* bot, QuestObjectiveData& objec
  * @param objective Objective data
  * @return Optimal position
  */
-Position QuestCompletion::GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective)
+Position QuestCompletion::GetOptimalObjectivePosition(::Player* bot, const QuestObjectiveData& objective)
 {
     if (!bot)
         return Position();
@@ -1172,7 +1172,7 @@ void QuestCompletion::ParseQuestObjectives(QuestProgressData& progress, const Qu
  * @param objective Objective data to update
  * @param bot Bot player
  */
-void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objective, Player* bot)
+void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objective, ::Player* bot)
 {
     if (!bot)
         return;
@@ -1228,7 +1228,7 @@ void QuestCompletion::UpdateQuestObjectiveFromProgress(QuestObjectiveData& objec
  * @param objective Objective data
  * @return True if objective can be executed
  */
-bool QuestCompletion::CanExecuteObjective(Player* bot, const QuestObjectiveData& objective)
+bool QuestCompletion::CanExecuteObjective(::Player* bot, const QuestObjectiveData& objective)
 {
     if (!bot)
         return false;
@@ -1261,7 +1261,7 @@ bool QuestCompletion::CanExecuteObjective(Player* bot, const QuestObjectiveData&
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteEfficientStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteEfficientStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
@@ -1294,7 +1294,7 @@ void QuestCompletion::ExecuteEfficientStrategy(Player* bot, QuestProgressData& p
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteSafeStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteSafeStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
@@ -1322,7 +1322,7 @@ void QuestCompletion::ExecuteSafeStrategy(Player* bot, QuestProgressData& progre
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteGroupStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteGroupStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot || !bot->GetGroup())
     {
@@ -1344,7 +1344,7 @@ void QuestCompletion::ExecuteGroupStrategy(Player* bot, QuestProgressData& progr
             bool groupNearby = false;
             for (GroupReference const& itr : group->GetMembers())
             {
-                Player* member = itr.GetSource();
+                ::Player* member = itr.GetSource();
                 if (member && member != bot && member->IsAlive())
                 {
                     if (member->GetDistance(objective.targetLocation) < 50.0f)
@@ -1389,7 +1389,7 @@ void QuestCompletion::ShareObjectiveProgress(Group* group, uint32 questId)
  * @param bot Bot player
  * @param questId Quest ID
  */
-void QuestCompletion::DetectStuckState(Player* bot, uint32 questId)
+void QuestCompletion::DetectStuckState(::Player* bot, uint32 questId)
 {
     if (!bot)
         return;
@@ -1426,7 +1426,7 @@ void QuestCompletion::DetectStuckState(Player* bot, uint32 questId)
  * @param bot Bot player
  * @param questId Quest ID
  */
-void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
+void QuestCompletion::RecoverFromStuckState(::Player* bot, uint32 questId)
 {
     if (!bot)
         return;
@@ -1566,7 +1566,7 @@ void QuestCompletion::CleanupCompletedQuests()
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteSoloStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteSoloStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
@@ -1590,7 +1590,7 @@ void QuestCompletion::ExecuteSoloStrategy(Player* bot, QuestProgressData& progre
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteExperienceStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteExperienceStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
@@ -1615,7 +1615,7 @@ void QuestCompletion::ExecuteExperienceStrategy(Player* bot, QuestProgressData& 
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteSpeedStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteSpeedStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
@@ -1650,7 +1650,7 @@ void QuestCompletion::ExecuteSpeedStrategy(Player* bot, QuestProgressData& progr
  * @param bot Bot player
  * @param progress Quest progress data
  */
-void QuestCompletion::ExecuteExplorationStrategy(Player* bot, QuestProgressData& progress)
+void QuestCompletion::ExecuteExplorationStrategy(::Player* bot, QuestProgressData& progress)
 {
     if (!bot)
         return;
