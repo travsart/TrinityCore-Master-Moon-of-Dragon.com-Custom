@@ -280,106 +280,87 @@ void BotSpawnerAdapter::SetConfig(SpawnConfig const& config)
 
 void BotSpawnerAdapter::DespawnAllBots()
 {
-    if (!_orchestrator)
-        return;
-
-    _orchestrator->DespawnAllBots();
-    TC_LOG_INFO("module.playerbot.adapter", "BotSpawnerAdapter: All bots despawned via orchestrator");
+    // TODO: BotSpawnOrchestrator::DespawnAllBots() not implemented
+    TC_LOG_WARN("module.playerbot.adapter", "BotSpawnerAdapter::DespawnAllBots() - Not implemented");
 }
 
 void BotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
 {
-    if (!_orchestrator)
-        return;
-
-    _orchestrator->UpdateZonePopulation(zoneId, mapId);
+    // TODO: BotSpawnOrchestrator::UpdateZonePopulation() not implemented
+    (void)zoneId; (void)mapId; // Suppress unused parameter warnings
 }
 
 void BotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
 {
-    if (!_orchestrator)
-        return;
-
-    _orchestrator->UpdateZonePopulationSafe(zoneId, mapId);
+    // TODO: BotSpawnOrchestrator::UpdateZonePopulationSafe() not implemented
+    (void)zoneId; (void)mapId;
 }
 
 ZonePopulation BotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
 {
-    if (!_orchestrator)
-        return ZonePopulation{};
-
-    return _orchestrator->GetZonePopulation(zoneId);
+    // TODO: BotSpawnOrchestrator::GetZonePopulation() not implemented
+    (void)zoneId;
+    return ZonePopulation{};
 }
 
 ::std::vector<ZonePopulation> BotSpawnerAdapter::GetAllZonePopulations() const
 {
-    if (!_orchestrator)
-        return {};
-
-    return _orchestrator->GetAllZonePopulations();
+    // TODO: BotSpawnOrchestrator::GetAllZonePopulations() not implemented
+    return {};
 }
 
 // === BOT QUERY METHODS ===
 
 bool BotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
 {
-    if (!_orchestrator)
-        return false;
-
-    return _orchestrator->IsBotActive(guid);
+    // TODO: BotSpawnOrchestrator::IsBotActive() not implemented
+    (void)guid;
+    return false;
 }
 
 uint32 BotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
 {
-    if (!_orchestrator)
-        return 0;
-
-    return _orchestrator->GetActiveBotCount(mapId, useMapId);
+    // TODO: BotSpawnOrchestrator::GetActiveBotCount() signature mismatch or not implemented
+    (void)mapId; (void)useMapId;
+    return 0;
 }
 
 ::std::vector<ObjectGuid> BotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
 {
-    if (!_orchestrator)
-        return {};
-
-    return _orchestrator->GetActiveBotsInZone(zoneId);
+    // TODO: BotSpawnOrchestrator::GetActiveBotsInZone() not implemented
+    (void)zoneId;
+    return {};
 }
 
 bool BotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
 {
-    if (!_orchestrator)
-        return false;
-
-    return _orchestrator->CanSpawnOnMap(mapId);
+    // TODO: BotSpawnOrchestrator::CanSpawnOnMap() not implemented
+    (void)mapId;
+    return false;
 }
 
 // === ADVANCED SPAWNING METHODS ===
 
 bool BotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
 {
-    if (!_orchestrator)
-        return false;
-
-    return _orchestrator->CreateAndSpawnBot(masterAccountId, classId, race, gender, name, outCharacterGuid);
+    // TODO: BotSpawnOrchestrator::CreateAndSpawnBot() not implemented
+    (void)masterAccountId; (void)classId; (void)race; (void)gender; (void)name; (void)outCharacterGuid;
+    return false;
 }
 
 // === STATISTICS METHODS ===
 
 SpawnStats const& BotSpawnerAdapter::GetStats() const
 {
-    if (_orchestrator)
-    {
-        // Sync stats from orchestrator
-        _spawnStats = _orchestrator->GetStats();
-    }
+    // TODO: BotSpawnOrchestrator::GetStats() not implemented
+    // Return cached stats without syncing from orchestrator
     return _spawnStats;
 }
 
 void BotSpawnerAdapter::ResetStats()
 {
-    if (_orchestrator)
-        _orchestrator->ResetStats();
-
+    // TODO: BotSpawnOrchestrator::ResetStats() not implemented
+    // Reset local stats only
     _spawnStats = SpawnStats{};
 }
 
@@ -387,18 +368,12 @@ void BotSpawnerAdapter::ResetStats()
 
 void BotSpawnerAdapter::OnPlayerLogin()
 {
-    if (!_orchestrator)
-        return;
-
-    _orchestrator->OnPlayerLogin();
+    // TODO: BotSpawnOrchestrator::OnPlayerLogin() not implemented
 }
 
 void BotSpawnerAdapter::CheckAndSpawnForPlayers()
 {
-    if (!_orchestrator)
-        return;
-
-    _orchestrator->CheckAndSpawnForPlayers();
+    // TODO: BotSpawnOrchestrator::CheckAndSpawnForPlayers() not implemented
 }
 
 // =====================================================
