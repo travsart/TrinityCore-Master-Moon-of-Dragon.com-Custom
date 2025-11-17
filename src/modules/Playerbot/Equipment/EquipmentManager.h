@@ -109,22 +109,6 @@ struct StatPriority
 };
 
 /**
- * @brief Item comparison result
- */
-struct ItemComparisonResult
-{
-    bool isUpgrade = false;
-    float scoreDifference = 0.0f;
-    float currentItemScore = 0.0f;
-    float newItemScore = 0.0f;
-    uint32 currentItemLevel = 0;
-    uint32 newItemLevel = 0;
-    ::std::string upgradeReason;
-
-    ItemComparisonResult() = default;
-};
-
-/**
  * @brief Complete equipment manager for all bot equipment operations
  *
  * Implements IEquipmentManager for dependency injection compatibility.

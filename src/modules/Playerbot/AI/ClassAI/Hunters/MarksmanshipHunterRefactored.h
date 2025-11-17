@@ -34,8 +34,9 @@
 namespace Playerbot
 {
 
-// Forward declaration for trap management
+// Forward declarations
 struct TrapInfo;
+struct PetInfo;
 
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
@@ -688,8 +689,7 @@ private:
         // Dismiss pet if we have one
         if (!this->GetBot()->GetPetGUID().IsEmpty())
         {
-
-            this->GetBot()->CastSpell(SPELL_DISMISS_PET, false, this->GetBot());
+            this->GetBot()->CastSpell(this->GetBot(), SPELL_DISMISS_PET);
         }
     }
 

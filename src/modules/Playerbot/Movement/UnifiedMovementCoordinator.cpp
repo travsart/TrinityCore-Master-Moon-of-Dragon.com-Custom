@@ -270,7 +270,14 @@ bool UnifiedMovementCoordinator::JoinFormation(::std::vector<Player*> const& gro
 MovementResult UnifiedMovementCoordinator::PositionModule::UpdatePosition(MovementContext const& context)
 {
     _positionsEvaluated++;
-    return _manager->UpdatePosition(context);
+    PositionMovementResult result = _manager->UpdatePosition(context);
+    return result.success ? MovementResult::MOVEMENT_SUCCESS : MovementResult::MOVEMENT_FAILED;
+}
+
+PositionMovementResult UnifiedMovementCoordinator::PositionModule::FindOptimalPosition(MovementContext const& context)
+{
+    _positionsEvaluated++;
+    return _manager->FindOptimalPosition(context);
 }
 
 // ... [Position module delegation continues]
@@ -393,18 +400,18 @@ void UnifiedMovementCoordinator::OptimizeBotMovement(Player* bot)
     oss << "Total Operations: " << _totalOperations.load() << "\n";
     oss << "Total Processing Time (ms): " << _totalProcessingTimeMs.load() << "\n";
     oss << "\n--- Arbiter Module ---\n";
-    oss << "Requests Processed: " << _arbiter->_requestsProcessed.load() << "\n";
+    oss << "Requests Processed: " << _arbiter->GetRequestsProcessed() << "\n";
     oss << "Pending Requests: " << _arbiter->GetPendingRequestCount() << "\n";
     oss << "\n--- Pathfinding Module ---\n";
-    oss << "Paths Calculated: " << _pathfinding->_pathsCalculated.load() << "\n";
+    oss << "Paths Calculated: " << _pathfinding->GetPathsCalculated() << "\n";
     uint32 hits, misses, evictions;
     _pathfinding->GetCacheStatistics(hits, misses, evictions);
     oss << "Cache Hits: " << hits << ", Misses: " << misses << ", Evictions: " << evictions << "\n";
     oss << "\n--- Formation Module ---\n";
-    oss << "Formations Executed: " << _formation->_formationsExecuted.load() << "\n";
+    oss << "Formations Executed: " << _formation->GetFormationsExecuted() << "\n";
     oss << "In Formation: " << (_formation->IsInFormation() ? "Yes" : "No") << "\n";
     oss << "\n--- Position Module ---\n";
-    oss << "Positions Evaluated: " << _position->_positionsEvaluated.load() << "\n";
+    oss << "Positions Evaluated: " << _position->GetPositionsEvaluated() << "\n";
     
     return oss.str();
 }

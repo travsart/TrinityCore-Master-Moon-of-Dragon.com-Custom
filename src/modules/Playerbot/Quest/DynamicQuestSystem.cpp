@@ -728,7 +728,7 @@ bool DynamicQuestSystem::ShouldMoveToNewZone(Player* bot)
     return valuableQuests < ZONE_OPTIMIZATION_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
+QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
 {
     QuestReward reward;
 
@@ -788,7 +788,7 @@ bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, Player* bot)
     return value >= MIN_QUEST_VALUE_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
+QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
 {
     ::std::lock_guard lock(_questMutex);
     auto it = _botMetrics.find(botGuid);
@@ -800,7 +800,7 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 b
     return metrics;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
+QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 {
     QuestMetrics globalMetrics;
     globalMetrics.Reset();

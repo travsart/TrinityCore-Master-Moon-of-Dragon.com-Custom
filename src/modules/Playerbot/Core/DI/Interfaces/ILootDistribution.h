@@ -20,6 +20,7 @@ namespace Playerbot
 
 // Forward declarations
 struct LootItem;
+struct LootRoll;
 enum class LootRollType : uint8;
 enum class LootPriority : uint8;
 enum class LootDecisionStrategy : uint8;

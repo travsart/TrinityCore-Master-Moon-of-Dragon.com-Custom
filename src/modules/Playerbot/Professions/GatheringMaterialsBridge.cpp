@@ -14,6 +14,8 @@
 #include "Log.h"
 #include "Session/BotSession.h"
 #include "AI/BotAI.h"
+#include "ObjectMgr.h"
+#include "ItemTemplate.h"
 #include <algorithm>
 
 namespace Playerbot

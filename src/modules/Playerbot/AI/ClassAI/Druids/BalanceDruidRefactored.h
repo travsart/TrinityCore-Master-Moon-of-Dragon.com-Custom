@@ -746,11 +746,11 @@ private:
                     }),
                     Selector("Apply/Refresh DoTs", {
                         Sequence("Moonfire", {
-                            Condition("Needs Moonfire", [this](Player* bot, Unit* target) {
+                            Condition("Needs Moonfire", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), MOONFIRE);
                             }),
-                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(MOONFIRE, target))
                                 {
@@ -762,11 +762,11 @@ private:
                             })
                         }),
                         Sequence("Sunfire", {
-                            Condition("Needs Sunfire", [this](Player* bot, Unit* target) {
+                            Condition("Needs Sunfire", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_dotTracker.NeedsRefresh(target->GetGUID(), SUNFIRE);
                             }),
-                            bot::ai::Action("Cast Sunfire", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Sunfire", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SUNFIRE, target))
                                 {
@@ -778,12 +778,12 @@ private:
                             })
                         }),
                         Sequence("Stellar Flare (talent)", {
-                            Condition("Needs Stellar Flare", [this](Player* bot, Unit* target) {
+                            Condition("Needs Stellar Flare", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return bot->HasSpell(STELLAR_FLARE) && target &&
                                        this->_dotTracker.NeedsRefresh(target->GetGUID(), STELLAR_FLARE);
                             }),
-                            bot::ai::Action("Cast Stellar Flare", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Stellar Flare", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STELLAR_FLARE, target))
                                 {
@@ -825,7 +825,7 @@ private:
                             Condition("30+ AP or Shooting Stars proc", [this](Player*, Unit*) {
                                 return this->_resource.astralPower >= 30 || this->_shootingStarsProc;
                             }),
-                            bot::ai::Action("Cast Starsurge", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Starsurge", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STARSURGE, target))
                                 {
@@ -852,7 +852,7 @@ private:
                             Condition("Lunar Eclipse or no Eclipse", [this](Player*, Unit*) {
                                 return this->_eclipseTracker.IsInLunarEclipse() || !this->_eclipseTracker.IsInEclipse();
                             }),
-                            bot::ai::Action("Cast Starfire", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Starfire", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(STARFIRE, target))
                                 {
@@ -869,7 +869,7 @@ private:
                             Condition("Solar Eclipse", [this](Player*, Unit*) {
                                 return this->_eclipseTracker.IsInSolarEclipse();
                             }),
-                            bot::ai::Action("Cast Wrath", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Wrath", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(WRATH, target))
                                 {

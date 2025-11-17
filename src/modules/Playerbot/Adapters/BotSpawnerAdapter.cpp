@@ -256,6 +256,151 @@ void BotSpawnerAdapter::RecordApiCall(uint64 durationMicroseconds)
         _stats.avgCallDurationUs = (_stats.avgCallDurationUs + durationMicroseconds) / 2;
 }
 
+// === CONFIGURATION METHODS ===
+
+void BotSpawnerAdapter::LoadConfig()
+{
+    // Load configuration from database or config file
+    // For now, use defaults from member variables
+    TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter: Configuration loaded");
+}
+
+SpawnConfig const& BotSpawnerAdapter::GetConfig() const
+{
+    return _config;
+}
+
+void BotSpawnerAdapter::SetConfig(SpawnConfig const& config)
+{
+    _config = config;
+    TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter: Configuration updated");
+}
+
+// === ZONE/MAP MANAGEMENT METHODS ===
+
+void BotSpawnerAdapter::DespawnAllBots()
+{
+    if (!_orchestrator)
+        return;
+
+    _orchestrator->DespawnAllBots();
+    TC_LOG_INFO("module.playerbot.adapter", "BotSpawnerAdapter: All bots despawned via orchestrator");
+}
+
+void BotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
+{
+    if (!_orchestrator)
+        return;
+
+    _orchestrator->UpdateZonePopulation(zoneId, mapId);
+}
+
+void BotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
+{
+    if (!_orchestrator)
+        return;
+
+    _orchestrator->UpdateZonePopulationSafe(zoneId, mapId);
+}
+
+ZonePopulation BotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
+{
+    if (!_orchestrator)
+        return ZonePopulation{};
+
+    return _orchestrator->GetZonePopulation(zoneId);
+}
+
+::std::vector<ZonePopulation> BotSpawnerAdapter::GetAllZonePopulations() const
+{
+    if (!_orchestrator)
+        return {};
+
+    return _orchestrator->GetAllZonePopulations();
+}
+
+// === BOT QUERY METHODS ===
+
+bool BotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
+{
+    if (!_orchestrator)
+        return false;
+
+    return _orchestrator->IsBotActive(guid);
+}
+
+uint32 BotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
+{
+    if (!_orchestrator)
+        return 0;
+
+    return _orchestrator->GetActiveBotCount(mapId, useMapId);
+}
+
+::std::vector<ObjectGuid> BotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
+{
+    if (!_orchestrator)
+        return {};
+
+    return _orchestrator->GetActiveBotsInZone(zoneId);
+}
+
+bool BotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
+{
+    if (!_orchestrator)
+        return false;
+
+    return _orchestrator->CanSpawnOnMap(mapId);
+}
+
+// === ADVANCED SPAWNING METHODS ===
+
+bool BotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
+{
+    if (!_orchestrator)
+        return false;
+
+    return _orchestrator->CreateAndSpawnBot(masterAccountId, classId, race, gender, name, outCharacterGuid);
+}
+
+// === STATISTICS METHODS ===
+
+SpawnStats const& BotSpawnerAdapter::GetStats() const
+{
+    if (_orchestrator)
+    {
+        // Sync stats from orchestrator
+        _spawnStats = _orchestrator->GetStats();
+    }
+    return _spawnStats;
+}
+
+void BotSpawnerAdapter::ResetStats()
+{
+    if (_orchestrator)
+        _orchestrator->ResetStats();
+
+    _spawnStats = SpawnStats{};
+}
+
+// === PLAYER INTERACTION METHODS ===
+
+void BotSpawnerAdapter::OnPlayerLogin()
+{
+    if (!_orchestrator)
+        return;
+
+    _orchestrator->OnPlayerLogin();
+}
+
+void BotSpawnerAdapter::CheckAndSpawnForPlayers()
+{
+    if (!_orchestrator)
+        return;
+
+    _orchestrator->CheckAndSpawnForPlayers();
+}
+
 // =====================================================
 // LegacyBotSpawnerAdapter Implementation
 // =====================================================
@@ -387,6 +532,117 @@ void LegacyBotSpawnerAdapter::SetEnabled(bool enabled)
 {
     if (_legacySpawner)
         _legacySpawner->SetEnabled(enabled);
+}
+
+// === CONFIGURATION METHODS ===
+
+void LegacyBotSpawnerAdapter::LoadConfig()
+{
+    if (_legacySpawner)
+        _legacySpawner->LoadConfig();
+}
+
+SpawnConfig const& LegacyBotSpawnerAdapter::GetConfig() const
+{
+    if (_legacySpawner)
+        _config = _legacySpawner->GetConfig();
+    return _config;
+}
+
+void LegacyBotSpawnerAdapter::SetConfig(SpawnConfig const& config)
+{
+    _config = config;
+    if (_legacySpawner)
+        _legacySpawner->SetConfig(config);
+}
+
+// === ZONE/MAP MANAGEMENT METHODS ===
+
+void LegacyBotSpawnerAdapter::DespawnAllBots()
+{
+    if (_legacySpawner)
+        _legacySpawner->DespawnAllBots();
+}
+
+void LegacyBotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
+{
+    if (_legacySpawner)
+        _legacySpawner->UpdateZonePopulation(zoneId, mapId);
+}
+
+void LegacyBotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
+{
+    if (_legacySpawner)
+        _legacySpawner->UpdateZonePopulationSafe(zoneId, mapId);
+}
+
+ZonePopulation LegacyBotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
+{
+    return _legacySpawner ? _legacySpawner->GetZonePopulation(zoneId) : ZonePopulation{};
+}
+
+::std::vector<ZonePopulation> LegacyBotSpawnerAdapter::GetAllZonePopulations() const
+{
+    return _legacySpawner ? _legacySpawner->GetAllZonePopulations() : ::std::vector<ZonePopulation>{};
+}
+
+// === BOT QUERY METHODS ===
+
+bool LegacyBotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
+{
+    return _legacySpawner ? _legacySpawner->IsBotActive(guid) : false;
+}
+
+uint32 LegacyBotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
+{
+    return _legacySpawner ? _legacySpawner->GetActiveBotCount(mapId, useMapId) : 0;
+}
+
+::std::vector<ObjectGuid> LegacyBotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
+{
+    return _legacySpawner ? _legacySpawner->GetActiveBotsInZone(zoneId) : ::std::vector<ObjectGuid>{};
+}
+
+bool LegacyBotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
+{
+    return _legacySpawner ? _legacySpawner->CanSpawnOnMap(mapId) : false;
+}
+
+// === ADVANCED SPAWNING METHODS ===
+
+bool LegacyBotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
+{
+    return _legacySpawner ? _legacySpawner->CreateAndSpawnBot(masterAccountId, classId, race, gender, name, outCharacterGuid) : false;
+}
+
+// === STATISTICS METHODS ===
+
+SpawnStats const& LegacyBotSpawnerAdapter::GetStats() const
+{
+    if (_legacySpawner)
+        _stats = _legacySpawner->GetStats();
+    return _stats;
+}
+
+void LegacyBotSpawnerAdapter::ResetStats()
+{
+    if (_legacySpawner)
+        _legacySpawner->ResetStats();
+    _stats = SpawnStats{};
+}
+
+// === PLAYER INTERACTION METHODS ===
+
+void LegacyBotSpawnerAdapter::OnPlayerLogin()
+{
+    if (_legacySpawner)
+        _legacySpawner->OnPlayerLogin();
+}
+
+void LegacyBotSpawnerAdapter::CheckAndSpawnForPlayers()
+{
+    if (_legacySpawner)
+        _legacySpawner->CheckAndSpawnForPlayers();
 }
 
 // =====================================================

@@ -24,6 +24,22 @@
 #include <chrono>
 #include "GameTime.h"
 
+// Forward declared in IGuildIntegration.h - defined here at global scope for interface compatibility
+struct GuildChatMessage
+{
+    uint32 senderId;
+    ::std::string senderName;
+    ::std::string content;
+    ChatMsg chatType;
+    uint32 timestamp;
+    bool requiresResponse;
+    ::std::vector<::std::string> keywords;
+    float relevanceScore;
+
+    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
+        , requiresResponse(false), relevanceScore(0.0f) {}
+};
+
 namespace Playerbot
 {
 
@@ -58,21 +74,6 @@ enum class GuildRole : uint8
     BANKER          = 4,
     RECRUITER       = 5,
     EVENT_ORGANIZER = 6
-};
-
-struct GuildChatMessage
-{
-    uint32 senderId;
-    ::std::string senderName;
-    ::std::string content;
-    ChatMsg chatType;
-    uint32 timestamp;
-    bool requiresResponse;
-    ::std::vector<::std::string> keywords;
-    float relevanceScore;
-
-    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
-        , requiresResponse(false), relevanceScore(0.0f) {}
 };
 
 // Guild profile configuration
@@ -188,13 +189,13 @@ public:
 
     // Core guild functionality using TrinityCore's Guild system
     void ProcessGuildInteraction(Player* player) override;
-    void HandleGuildChat(Player* player, const GuildChatMessage& message);
+    void HandleGuildChat(Player* player, const GuildChatMessage& message) override;
     void ParticipateInGuildActivities(Player* player) override;
     void ManageGuildResponsibilities(Player* player) override;
 
     // Guild chat automation
     void AutomateGuildChatParticipation(Player* player) override;
-    void RespondToGuildChat(Player* player, const GuildChatMessage& message);
+    void RespondToGuildChat(Player* player, const GuildChatMessage& message) override;
     void InitiateGuildConversation(Player* player) override;
     void ShareGuildInformation(Player* player, const ::std::string& topic) override;
 
@@ -245,9 +246,9 @@ public:
         ChatIntelligence() : lastResponseTime(0), responseFrequency(0.3f) {}
     };
 
-    ::std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message);
+    ::std::string GenerateGuildChatResponse(Player* player, const GuildChatMessage& message) override;
     ::std::string GenerateConversationStarter(Player* player) override;
-    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message);
+    bool ShouldRespondToMessage(Player* player, const GuildChatMessage& message) override;
     void LearnFromGuildConversations(Player* player) override;
 
     // Guild achievement coordination

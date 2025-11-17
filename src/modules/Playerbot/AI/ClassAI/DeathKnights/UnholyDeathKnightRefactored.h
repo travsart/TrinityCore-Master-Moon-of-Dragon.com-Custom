@@ -97,6 +97,14 @@ enum UnholyDeathKnightSpells
     SUPERSTRAIN              = 390283   // Disease damage buff
 };
 
+// Aliases with UNHOLY_ prefix for RegisterSpell compatibility
+constexpr uint32 UNHOLY_ANTIMAGIC_SHELL = ANTI_MAGIC_SHELL_UNHOLY;
+constexpr uint32 UNHOLY_ARMY_OF_DEAD = ARMY_OF_THE_DEAD_UNHOLY;
+constexpr uint32 UNHOLY_APOCALYPSE = APOCALYPSE;
+constexpr uint32 UNHOLY_FESTERING_STRIKE = FESTERING_STRIKE;
+constexpr uint32 UNHOLY_SCOURGE_STRIKE = SCOURGE_STRIKE;
+constexpr uint32 UNHOLY_DEATH_COIL = DEATH_COIL;
+
 // Dual resource type for Unholy Death Knight
 struct UnholyRuneRunicPowerResource
 {
@@ -605,7 +613,7 @@ private:
         this->_resource.runicPower = (this->_resource.runicPower > amount) ? this->_resource.runicPower - amount : 0;
     }
 
-    void ConsumeRunes(uint32 count = 1) override
+    void ConsumeRunes(uint32 count = 1)
     {
         this->_resource.Consume(count);
     }
@@ -613,6 +621,9 @@ private:
     void InitializeUnholyMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
+        // TODO: GetBotAI() doesn't exist on Player - this needs proper BotAI integration
+        // Commenting out for now to fix compilation errors
+        /*
         BotAI* ai = this->GetBot()->GetBotAI();
         if (!ai) return;
 
@@ -651,6 +662,7 @@ private:
             });
             tree->SetRoot(root);
         }
+        */
     }
 
 private:

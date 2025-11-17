@@ -15,6 +15,11 @@
 namespace Playerbot
 {
 
+// Static constant definitions
+const float MovementIntegration::MELEE_RANGE = 5.0f;
+const float MovementIntegration::RANGED_OPTIMAL = 35.0f;
+const float MovementIntegration::KITING_DISTANCE = 15.0f;
+
 MovementIntegration::MovementIntegration(Player* bot)
     : _bot(bot)
     , _lastUpdate(0)

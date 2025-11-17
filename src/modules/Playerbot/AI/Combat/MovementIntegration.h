@@ -338,9 +338,9 @@ namespace Playerbot
         CombatSituation _currentSituation;
 
         static constexpr uint32 UPDATE_INTERVAL = 200;  // 200ms (5 FPS)
-        static constexpr float MELEE_RANGE = 5.0f;
-        static constexpr float RANGED_OPTIMAL = 35.0f;
-        static constexpr float KITING_DISTANCE = 15.0f;
+        static const float MELEE_RANGE;  // = 5.0f (defined in .cpp)
+        static const float RANGED_OPTIMAL;  // = 35.0f (defined in .cpp)
+        static const float KITING_DISTANCE;  // = 15.0f (defined in .cpp)
 
         /**
          * @brief Update danger zones (remove expired)

@@ -432,7 +432,7 @@ void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& pr
     _playerProfiles[playerGuid] = profile;
 }
 
-GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
+GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
 {
     ::std::lock_guard lock(_guildMutex);
     auto it = _playerProfiles.find(playerGuid);
@@ -442,7 +442,7 @@ GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGu
     return GuildProfile(); // Return default profile
 }
 
-GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
+GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
 {
     ::std::lock_guard lock(_guildMutex);
     auto it = _playerParticipation.find(playerGuid);
@@ -754,7 +754,7 @@ void GuildIntegration::CelebrateGuildAchievements(Player* player)
     // Boost guild morale
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
+GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
 {
     ::std::lock_guard lock(_guildMutex);
     auto it = _playerMetrics.find(playerGuid);
@@ -766,7 +766,7 @@ GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 pl
     return metrics;
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
+GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
 {
     GuildMetrics combinedMetrics;
     combinedMetrics.Reset();

@@ -14,7 +14,6 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "Position.h"
-#include "../Core/DI/Interfaces/IDynamicQuestSystem.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -199,6 +198,9 @@ struct QuestMetrics
         return *this;
     }
 };
+
+// Include interface after defining the forward-declared types
+#include "../Core/DI/Interfaces/IDynamicQuestSystem.h"
 
 class TC_GAME_API DynamicQuestSystem final : public IDynamicQuestSystem
 {

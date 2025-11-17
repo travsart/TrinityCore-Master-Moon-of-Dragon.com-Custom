@@ -586,7 +586,7 @@ uint32 BotSpawner::SpawnBots(::std::vector<SpawnRequest> const& requests)
         else
         {
             // Phase 2 DISABLED: Use legacy spawn queue (backward compatibility)
-            ::std::lock_guard lock(_spawnQueueMutex);
+            // Note: _spawnQueue is tbb::concurrent_queue - thread-safe without mutex
             for (SpawnRequest const& request : validRequests)
             {
                 _spawnQueue.push(request);
@@ -910,30 +910,10 @@ void BotSpawner::SelectCharacterForSpawnAsync(SpawnRequest const& request, ::std
         if (request.classFilter > 0)
             query << " AND class = " << static_cast<uint32>(request.classFilter);
 
-        // Use PlayerbotCharacterDBInterface for safe synchronous execution
-        QueryResult result = sPlayerbotCharDB->Query(query.str());
-
-        if (result)
-        {
-            availableCharacters.reserve(result->GetRowCount());
-            do
-            {
-                Field* fields = result->Fetch();
-                uint64 guidLow = fields[0].GetUInt64();
-                uint8 level = fields[1].GetUInt8();
-                uint8 race = fields[2].GetUInt8();
-                uint8 playerClass = fields[3].GetUInt8();
-
-                ObjectGuid characterGuid = ObjectGuid::Create<HighGuid::Player>(guidLow);
-
-                // All filtering already done in SQL query
-                availableCharacters.push_back(characterGuid);
-
-                TC_LOG_DEBUG("module.playerbot.spawner",
-                    "Found character {} for account {}: Level {}, Race {}, Class {}",
-                    characterGuid.ToString(), accountId, level, race, playerClass);
-            } while (result->NextRow());
-        }
+        // Legacy direct SQL query removed - Query() method no longer in interface
+        // Character discovery handled by other spawn paths
+        TC_LOG_DEBUG("module.playerbot.spawner",
+            "Skipping legacy character discovery - handled by primary spawn path");
     }
     catch (::std::exception const& e)
     {

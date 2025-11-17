@@ -236,7 +236,7 @@ public:
     // ========================================================================
 
     ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
-    ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
+    ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy) override;
     bool AssignQuestToBot(uint32 questId, Player* bot) override;
     void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) override;
     QuestPriority CalculateQuestPriority(uint32 questId, Player* bot) override;

@@ -133,6 +133,9 @@ class TC_GAME_API QuestCompletion final : public IQuestCompletion
 public:
     static QuestCompletion* instance();
 
+    // Type alias for interface compatibility
+    using QuestCompletionMetricsSnapshot = QuestCompletionMetrics::Snapshot;
+
     // Core quest completion management
     bool StartQuestCompletion(uint32 questId, Player* bot) override;
     void UpdateQuestProgress(Player* bot) override;

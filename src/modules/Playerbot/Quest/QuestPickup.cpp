@@ -1223,7 +1223,7 @@ bool QuestPickup::ShouldMoveToNextZone(Player* bot)
 }
 
 // Get bot pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
+QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 {
     ::std::lock_guard lock(_pickupMutex);
 
@@ -1235,7 +1235,7 @@ QuestPickup::QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 }
 
 // Get global pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
+QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
 {
     return _globalMetrics;  // Copy constructor will be used
 }
