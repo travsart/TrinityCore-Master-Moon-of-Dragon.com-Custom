@@ -51,6 +51,7 @@ enum AfflictionWarlockSpells
     CORRUPTION               = 172,     // Core DoT
     UNSTABLE_AFFLICTION      = 316099,  // Strong DoT, generates shards on refresh
     SIPHON_LIFE              = 63106,   // DoT + heal (talent)
+    HAUNT                    = 48181,   // Burst DoT, haunts target (talent)
 
     // Direct Damage
     SHADOW_BOLT_AFF          = 686,     // Filler, generates shards
@@ -62,6 +63,7 @@ enum AfflictionWarlockSpells
     VILE_TAINT               = 278350,  // 20 sec CD, AoE DoT (talent)
     SOUL_ROT                 = 386997,  // 1 min CD, AoE DoT (talent)
     SUMMON_DARKGLARE         = 205180,  // 2 min CD, extends DoTs
+    DARK_SOUL_MISERY         = 113860,  // 2 min CD, damage increase (talent)
 
     // AoE
     SEED_OF_CORRUPTION       = 27243,   // AoE DoT spread
