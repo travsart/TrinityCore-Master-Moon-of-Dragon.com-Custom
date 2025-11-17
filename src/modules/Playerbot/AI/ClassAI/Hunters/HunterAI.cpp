@@ -9,9 +9,9 @@
 
 #include "HunterAI.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
-#include "BeastMasteryHunterRefactored.h"
-#include "MarksmanshipHunterRefactored.h"
-#include "SurvivalHunterRefactored.h"
+#include "BeastMasteryHunter.h"
+#include "MarksmanshipHunter.h"
+#include "SurvivalHunter.h"
 #include "../BaselineRotationManager.h"
 #include "Player.h"
 #include "Pet.h"
