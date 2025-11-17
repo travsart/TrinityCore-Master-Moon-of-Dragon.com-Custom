@@ -2295,7 +2295,8 @@ uint32 ShamanAI::GetElementalMaelstrom() const
 
 uint32 ShamanAI::GetMaelstromWeaponStacks() const
 {
-    // In real implementation, this would check the Maelstrom Weapon buff stacks    return _maelstromWeaponStacks;
+    // In real implementation, this would check the Maelstrom Weapon buff stacks
+    return _maelstromWeaponStacks;
 }
 
 bool ShamanAI::ShouldUseInstantLightningBolt() const
