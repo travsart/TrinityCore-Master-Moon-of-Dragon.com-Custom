@@ -111,7 +111,7 @@ private:
     ::std::atomic<uint32> _totalPlayerCount{0};
 
     // Zone population tracking (requires synchronization)
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _populationMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _populationMutex;
     ::std::unordered_map<uint32, ZonePopulation> _zonePopulations; // zoneId -> population data
     ::std::unordered_map<uint32, ::std::vector<ObjectGuid>> _botsByZone; // zoneId -> bot guids
 
@@ -131,7 +131,7 @@ private:
         bool isValid = false;
     };
     mutable PopulationCache _cache;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_SPAWNER> _cacheMutex;
+    mutable OrderedRecursiveMutex<LockOrder::BOT_SPAWNER> _cacheMutex;
 
     // Timing
     ::std::chrono::steady_clock::time_point _lastUpdate;
