@@ -667,7 +667,7 @@ protected:
                     }),
                     Selector("Cast spells", {
                         Sequence("Shattering Star", {
-                            bot::ai::Action("Cast Shattering Star", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shattering Star", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHATTERING_STAR, target)) {
                                     this->CastSpell(SHATTERING_STAR, target);
@@ -680,7 +680,7 @@ protected:
                             Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            bot::ai::Action("Cast Eternity's Surge", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Eternity's Surge", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(ETERNITY_SURGE, target)) {
                                     this->StartEmpoweredSpell(ETERNITY_SURGE, EmpowerLevel::RANK_3, target);
@@ -693,7 +693,7 @@ protected:
                             Condition("3+ essence", [this](Player*, Unit*) {
                                 return this->_resource.essence >= 3;
                             }),
-                            bot::ai::Action("Cast Disintegrate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Disintegrate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(DISINTEGRATE, target)) {
                                     this->CastSpell(DISINTEGRATE, target);
@@ -716,7 +716,7 @@ protected:
                     }),
                     Selector("Generate", {
                         Sequence("Azure Strike", {
-                            bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(AZURE_STRIKE, target)) {
                                     this->CastSpell(AZURE_STRIKE, target);
@@ -727,7 +727,7 @@ protected:
                             })
                         }),
                         Sequence("Living Flame", {
-                            bot::ai::Action("Cast Living Flame", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Living Flame", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(LIVING_FLAME, target)) {
                                     this->CastSpell(LIVING_FLAME, target);
