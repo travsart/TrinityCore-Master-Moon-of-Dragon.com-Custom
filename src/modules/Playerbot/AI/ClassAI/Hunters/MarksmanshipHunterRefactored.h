@@ -22,6 +22,7 @@
 #include "Pet.h"
 #include "MotionMaster.h"
 #include "CharmInfo.h"
+#include "HunterAI.h"
 #include <unordered_map>
 #include <deque>
 // Old HunterSpecialization.h removed
@@ -36,7 +37,6 @@ namespace Playerbot
 
 // Forward declarations
 struct TrapInfo;
-struct PetInfo;
 
 
 // Import BehaviorTree helper functions (avoid conflict with Playerbot::Action)
