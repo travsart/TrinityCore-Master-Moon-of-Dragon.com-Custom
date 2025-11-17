@@ -189,6 +189,14 @@ private:
             uint32 sessionTimeout;
             bool isActive;
 
+            // Default constructor for STL containers
+            LootSession()
+                : sessionId(0), groupId(0)
+                , sessionStartTime(GameTime::GetGameTimeMS())
+                , sessionTimeout(GameTime::GetGameTimeMS() + 300000)
+                , isActive(false)
+            {}
+
             LootSession(uint32 id, uint32 gId)
                 : sessionId(id), groupId(gId)
                 , sessionStartTime(GameTime::GetGameTimeMS())

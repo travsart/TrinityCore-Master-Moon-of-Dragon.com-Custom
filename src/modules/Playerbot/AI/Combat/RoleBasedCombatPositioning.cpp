@@ -1503,7 +1503,7 @@ Position RoleBasedCombatPositioning::CalculateCombatPosition(Player* bot,
     return targetPos;
 }
 
-MovementResult RoleBasedCombatPositioning::UpdateCombatPosition(Player* bot,
+PositionMovementResult RoleBasedCombatPositioning::UpdateCombatPosition(Player* bot,
                                                                const CombatPositionContext& context)
 {
     if (!bot || !_positionManager)

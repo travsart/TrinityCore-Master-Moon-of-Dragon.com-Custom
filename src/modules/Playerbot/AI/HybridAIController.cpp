@@ -26,7 +26,7 @@
 namespace Playerbot
 {
 
-HybridAIController::HybridAIController(BotAI* ai, Blackboard* blackboard)
+HybridAIController::HybridAIController(BotAI* ai, SharedBlackboard* blackboard)
     : _bot(ai), _blackboard(blackboard),
       _utilityAI(::std::make_unique<UtilityAI>()),
       _currentTree(nullptr),

@@ -398,7 +398,14 @@ bool LegacyBotSpawnerAdapter::Initialize()
 
     try
     {
-        _legacySpawner = ::std::make_unique<BotSpawner>();
+        // Use singleton instance instead of creating new instance
+        _legacySpawner = BotSpawner::instance();
+        if (!_legacySpawner)
+        {
+            TC_LOG_ERROR("module.playerbot.adapter",
+                "LegacyBotSpawnerAdapter: Failed to get BotSpawner singleton instance");
+            return false;
+        }
         return _legacySpawner->Initialize();
     }
     catch (::std::exception const& ex)
@@ -414,7 +421,7 @@ void LegacyBotSpawnerAdapter::Shutdown()
     if (_legacySpawner)
     {
         _legacySpawner->Shutdown();
-        _legacySpawner.reset();
+        _legacySpawner = nullptr; // Clear reference to singleton
     }
 }
 
