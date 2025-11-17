@@ -311,7 +311,7 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
 
     // 2. Path calculation (Pathfinding module)
     MovementPath path;
-    if (!_pathfinding->CalculatePath(bot, posResult.targetPosition, path))
+    if (!_pathfinding->CalculatePath(bot, posResult.targetPosition, path, false))
     {
         TC_LOG_DEBUG("playerbot.movement", "Failed to calculate path for bot {}", bot->GetName());
         return;
@@ -355,7 +355,7 @@ void UnifiedMovementCoordinator::CoordinateCompleteMovement(Player* bot, Movemen
 
     // Path quality
     MovementPath path;
-    bool hasPath = _pathfinding->CalculatePath(bot, posResult.targetPosition, path);
+    bool hasPath = _pathfinding->CalculatePath(bot, posResult.targetPosition, path, false);
     
     // Formation impact
     bool inFormation = _formation->IsInFormation();

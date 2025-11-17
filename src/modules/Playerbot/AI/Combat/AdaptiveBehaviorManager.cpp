@@ -1134,6 +1134,9 @@ void AdaptiveBehaviorManager::ResetStrategies()
     // ========================================================================
     // 3. CONTEXT-BASED URGENCY ADJUSTMENTS
     // ========================================================================
+    // COMMENTED OUT: CombatContext enum values not defined (only forward-declared)
+    // TODO: Define CombatContext enum with RAID_NORMAL, RAID_HEROIC, etc.
+    /*
     switch (context)
     {
         case CombatContext::RAID_NORMAL:
@@ -1152,6 +1155,7 @@ void AdaptiveBehaviorManager::ResetStrategies()
         default:
             break;
     }
+    */
 
     // ========================================================================
     // 4. STRATEGY-BASED URGENCY ADJUSTMENTS
