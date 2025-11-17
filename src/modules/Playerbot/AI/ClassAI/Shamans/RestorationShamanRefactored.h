@@ -212,7 +212,7 @@ private:
     uint32 _earthShieldEndTime = 0;
 };
 
-class RestorationShamanRefactored : public HealerSpecialization<ManaResource>, public ShamanSpecialization
+class RestorationShamanRefactored : public HealerSpecialization<ManaResource>
 {
 public:
     using Base = HealerSpecialization<ManaResource>;
@@ -221,7 +221,6 @@ public:
     using Base::CanCastSpell;
     using Base::_resource;
     explicit RestorationShamanRefactored(Player* bot)        : HealerSpecialization<ManaResource>(bot)
-        , ShamanSpecialization(bot)
         , _riptideTracker()
         , _earthShieldTracker()
         , _ascendanceActive(false)
@@ -528,40 +527,15 @@ private:
 
         // Earthen Wall Totem (shield wall)
         if (lowHealthCount >= 3 && (GameTime::GetGameTimeMS() - _lastEarthenWallTotemTime) >= 60000) // 60 sec CD
-
         {
-        if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
-
+            if (bot->HasSpell(REST_EARTHEN_WALL_TOTEM))
             {
-
                 if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
-
-                if (!tankTarget)
-
                 {
-
-                    return nullptr;
-
-                }
-
-                {
-
                     this->CastSpell(REST_EARTHEN_WALL_TOTEM, bot);
-
                     _lastEarthenWallTotemTime = GameTime::GetGameTimeMS();
-
                     return true;
-
                 }
-
-            if (!tankTarget)
-
-            {
-
-                return;
-
-            }
-
             }
         }
 
