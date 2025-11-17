@@ -1316,11 +1316,11 @@ private:
 
                             bot::ai::Action("Cast Fel Barrage", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot->GetVictim();
+                                Unit* victim = bot->GetVictim();
 
-                                if (target && this->CanCastSpell(SPELL_FEL_BARRAGE, target)) {
+                                if (victim && this->CanCastSpell(SPELL_FEL_BARRAGE, victim)) {
 
-                                    this->CastSpell(SPELL_FEL_BARRAGE, target);
+                                    this->CastSpell(SPELL_FEL_BARRAGE, victim);
 
                                     this->ConsumeResource(SPELL_FEL_BARRAGE);
 
@@ -1366,7 +1366,7 @@ private:
 
                             Condition("In range", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot->GetVictim();
+                                Unit* victim = bot->GetVictim();
 
                                 return target && bot->GetDistance(target) <= 20.0f;
 
@@ -1374,11 +1374,11 @@ private:
 
                             bot::ai::Action("Cast Eye Beam", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot->GetVictim();
+                                Unit* victim = bot->GetVictim();
 
-                                if (target && this->CanCastSpell(SPELL_EYE_BEAM, target)) {
+                                if (victim && this->CanCastSpell(SPELL_EYE_BEAM, victim)) {
 
-                                    this->CastSpell(SPELL_EYE_BEAM, target);
+                                    this->CastSpell(SPELL_EYE_BEAM, victim);
 
                                     this->_eyeBeamChanneling = true;
 
@@ -1532,7 +1532,7 @@ private:
 
                                     Condition("5-20yd range", [this](Player* bot, Unit* target) {
 
-                                        Unit* target = bot->GetVictim();
+                                        Unit* victim = bot->GetVictim();
 
                                         return target && bot->GetDistance(target) > 5.0f && bot->GetDistance(target) < 20.0f;
 
@@ -1540,11 +1540,11 @@ private:
 
                                     bot::ai::Action("Cast Fel Rush", [this](Player* bot, Unit* target) {
 
-                                        Unit* target = bot->GetVictim();
+                                        Unit* victim = bot->GetVictim();
 
-                                        if (target && this->CanCastSpell(SPELL_FEL_RUSH, target)) {
+                                        if (victim && this->CanCastSpell(SPELL_FEL_RUSH, victim)) {
 
-                                            this->CastSpell(SPELL_FEL_RUSH, target);
+                                            this->CastSpell(SPELL_FEL_RUSH, victim);
 
                                             this->_momentumTracker.UseFelRush();
 
@@ -1570,7 +1570,7 @@ private:
 
                                     Condition("Melee range", [this](Player* bot, Unit* target) {
 
-                                        Unit* target = bot->GetVictim();
+                                        Unit* victim = bot->GetVictim();
 
                                         return target && bot->GetDistance(target) < 5.0f;
 
@@ -1630,11 +1630,11 @@ private:
 
                             bot::ai::Action("Cast Annihilation", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot->GetVictim();
+                                Unit* victim = bot->GetVictim();
 
-                                if (target && this->CanCastSpell(SPELL_ANNIHILATION, target)) {
+                                if (victim && this->CanCastSpell(SPELL_ANNIHILATION, victim)) {
 
-                                    this->CastSpell(SPELL_ANNIHILATION, target);
+                                    this->CastSpell(SPELL_ANNIHILATION, victim);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1672,11 +1672,11 @@ private:
 
                             bot::ai::Action("Cast Chaos Strike", [this](Player* bot, Unit* target) {
 
-                                Unit* target = bot->GetVictim();
+                                Unit* victim = bot->GetVictim();
 
-                                if (target && this->CanCastSpell(SPELL_CHAOS_STRIKE, target)) {
+                                if (victim && this->CanCastSpell(SPELL_CHAOS_STRIKE, victim)) {
 
-                                    this->CastSpell(SPELL_CHAOS_STRIKE, target);
+                                    this->CastSpell(SPELL_CHAOS_STRIKE, victim);
 
                                     this->_lastChaosStrike = GameTime::GetGameTimeMS();
 
@@ -1718,11 +1718,11 @@ private:
 
                     bot::ai::Action("Cast Demon's Bite", [this](Player* bot, Unit* target) {
 
-                        Unit* target = bot->GetVictim();
+                        Unit* victim = bot->GetVictim();
 
-                        if (target && this->CanCastSpell(SPELL_DEMONS_BITE, target)) {
+                        if (victim && this->CanCastSpell(SPELL_DEMONS_BITE, victim)) {
 
-                            this->CastSpell(SPELL_DEMONS_BITE, target);
+                            this->CastSpell(SPELL_DEMONS_BITE, victim);
 
                             this->_lastDemonsBite = GameTime::GetGameTimeMS();
 

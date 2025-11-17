@@ -477,17 +477,17 @@ namespace Playerbot
     auto root = ::std::make_shared<BTSequence>("BuffMaintenance");
 
     // Check not in combat OR combat duration < 5 seconds
-    root->AddChild(::std::make_shared<BTSelector>("CanBuff",
-        ::std::make_shared<BTInverter>("NotInCombat",
-            ::std::make_shared<BTCheckInCombat>()
-        ),
-        ::std::make_shared<BTCondition>("EarlyCombat",
-            [](BotAI* ai, BTBlackboard& bb) {
-                // TODO: Check combat duration
-                return false; // Placeholder
-            }
-        )
+    auto canBuffSelector = ::std::make_shared<BTSelector>("CanBuff");
+    canBuffSelector->AddChild(::std::make_shared<BTInverter>("NotInCombat",
+        ::std::make_shared<BTCheckInCombat>()
     ));
+    canBuffSelector->AddChild(::std::make_shared<BTCondition>("EarlyCombat",
+        [](BotAI* ai, BTBlackboard& bb) {
+            // TODO: Check combat duration
+            return false; // Placeholder
+        }
+    ));
+    root->AddChild(canBuffSelector);
 
     // Check missing self buff
     root->AddChild(::std::make_shared<BTCondition>("MissingBuff",

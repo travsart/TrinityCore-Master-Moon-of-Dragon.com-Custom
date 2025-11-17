@@ -1471,7 +1471,7 @@ void QuestCompletion::RecoverFromStuckState(::Player* bot, uint32 questId)
  * @param botGuid Bot GUID
  * @return Completion metrics
  */
-IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
+QuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
     ::std::lock_guard lock(_completionMutex);
 
@@ -1487,7 +1487,7 @@ IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompleti
  * @brief Get global completion metrics
  * @return Global completion metrics
  */
-IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
+QuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
 {
     return _globalMetrics.CreateSnapshot();
 }

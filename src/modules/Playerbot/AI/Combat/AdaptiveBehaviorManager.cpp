@@ -1082,12 +1082,12 @@ void AdaptiveBehaviorManager::ResetStrategies()
 // DECISION FUSION INTEGRATION
 // ============================================================================
 
-::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, ::bot::ai::CombatContext context) const
+Playerbot::bot::ai::DecisionVote AdaptiveBehaviorManager::GetRecommendedAction(Unit* target, Playerbot::bot::ai::CombatContext context) const
 {
     // TODO: DecisionVote and DecisionSource not fully defined (only forward-declared)
     // TODO: Implement when DecisionFusionSystem.h provides full definitions
     (void)target; (void)context; // Suppress unused warnings
-    return ::bot::ai::DecisionVote{}; // Return default-constructed vote
+    return Playerbot::bot::ai::DecisionVote{}; // Return default-constructed vote
 }
 
 } // namespace Playerbot

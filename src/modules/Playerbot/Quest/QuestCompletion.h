@@ -239,8 +239,8 @@ public:
         };
 
         // Create a snapshot of current metrics
-        IQuestCompletion::QuestCompletionMetricsSnapshot CreateSnapshot() const {
-            IQuestCompletion::QuestCompletionMetricsSnapshot snapshot;
+        QuestCompletionMetricsSnapshot CreateSnapshot() const {
+            QuestCompletionMetricsSnapshot snapshot;
             snapshot.questsStarted = questsStarted.load();
             snapshot.questsCompleted = questsCompleted.load();
             snapshot.questsFailed = questsFailed.load();
@@ -255,13 +255,8 @@ public:
         }
     };
 
-<<<<<<< HEAD
-    IQuestCompletion::QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
-    IQuestCompletion::QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
-=======
     QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
     QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
->>>>>>> playerbot-dev
 
     // Quest data analysis
     ::std::vector<uint32> GetActiveQuests(::Player* bot) override;

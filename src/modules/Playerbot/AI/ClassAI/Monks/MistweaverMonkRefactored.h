@@ -271,7 +271,7 @@ public:
         , _lastEssenceFontTime(0)
     {
         // Initialize mana resources
-        this->_resource.Initialize(bot);
+        this->_resource = bot->GetPower(POWER_MANA);
 
         // Phase 5: Initialize decision systems
         InitializeMistweaverMechanics();
@@ -682,8 +682,7 @@ private:
 
         // Update mana from bot
         if (this->GetBot())
-
-            this->_resource.mana = this->GetBot()->GetPower(POWER_MANA);
+            this->_resource = this->GetBot()->GetPower(POWER_MANA);
     }
 
     Unit* SelectHealingTarget(const ::std::vector<Unit*>& group)
@@ -1077,11 +1076,11 @@ private:
 
                             bot::ai::Action("Cast Essence Font", [this](Player* bot, Unit* target) {
 
-                                Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
+                                Unit* healTarget = this->SelectHealingTarget(this->GetGroupMembers());
 
-                                if (target && this->CanCastSpell(ESSENCE_FONT, target)) {
+                                if (healTarget && this->CanCastSpell(ESSENCE_FONT, healTarget)) {
 
-                                    this->CastSpell(ESSENCE_FONT, target);
+                                    this->CastSpell(ESSENCE_FONT, healTarget);
 
                                     this->_lastEssenceFontTime = GameTime::GetGameTimeMS();
 

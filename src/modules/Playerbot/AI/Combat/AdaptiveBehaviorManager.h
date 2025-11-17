@@ -217,7 +217,7 @@ namespace Playerbot
          *
          * Integrates with Phase 5 DecisionFusion system for unified action arbitration.
          */
-        bot::ai::DecisionVote GetRecommendedAction(Unit* target, bot::ai::CombatContext context) const;
+        Playerbot::bot::ai::DecisionVote GetRecommendedAction(Unit* target, Playerbot::bot::ai::CombatContext context) const;
 
         // Resource management
         bool ShouldConserveMana() const { return IsStrategyActive(STRATEGY_CONSERVE_MANA); }
