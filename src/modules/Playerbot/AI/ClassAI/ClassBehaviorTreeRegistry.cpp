@@ -159,7 +159,7 @@ void ClassBehaviorTreeRegistry::InitializePaladin()
 
         auto healSeq = std::make_shared<BTSequence>("HolyHeal");
         healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
-        healSeq->AddChild(std::make_shared<BTCastHeal>()); // Flash of Light
+        healSeq->AddChild(std::make_shared<BTCastHeal>(19750)); // Flash of Light
 
         root->AddChild(healSeq);
         return root;
@@ -304,7 +304,7 @@ void ClassBehaviorTreeRegistry::InitializePriest()
         auto healSeq = std::make_shared<BTSequence>("DisciplineHeal");
         healSeq->AddChild(std::make_shared<BTFindWoundedAlly>());
         healSeq->AddChild(std::make_shared<BTPriestPowerWordShield>()); // Shield first
-        healSeq->AddChild(std::make_shared<BTCastHeal>());
+        healSeq->AddChild(std::make_shared<BTCastHeal>(2061)); // Flash Heal
 
         root->AddChild(healSeq);
         return root;
