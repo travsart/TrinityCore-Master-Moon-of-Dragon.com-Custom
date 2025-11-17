@@ -19,6 +19,7 @@
 #define PLAYERBOT_FERALDRDUIDREFACTORED_H
 
 #include "../CombatSpecializationTemplates.h"
+#include "../Rogues/RogueResourceTypes.h"  // For EnergyComboResource
 #include "Player.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -68,54 +69,32 @@ constexpr uint32 FERAL_BARKSKIN = 22812;
 constexpr uint32 FERAL_RENEWAL = 108238;
 constexpr uint32 FERAL_REGROWTH = 8936;
 
-// Energy and Combo Points resource
-struct EnergyComboResource
+// Feral Druid resource type (Energy + Combo Points)
+// Uses distinct type to avoid template instantiation conflicts with Rogue specs
+struct FeralDruidEnergy : public EnergyComboResource
 {
-    uint32 energy = 0;
-    uint32 maxEnergy = 100;
-    uint32 comboPoints = 0;
-    uint32 maxComboPoints = 5;
-    bool available = true;
-
+    // Override Initialize to properly set resource values
     void Initialize(Player* bot)
     {
         if (!bot)
-
             return;
 
-        energy = bot->GetPower(POWER_ENERGY);        maxEnergy = bot->GetMaxPower(POWER_ENERGY);
-        comboPoints = bot->GetPower(POWER_COMBO_POINTS);        maxComboPoints = bot->GetMaxPower(POWER_COMBO_POINTS);
+        energy = bot->GetPower(POWER_ENERGY);
+        maxEnergy = bot->GetMaxPower(POWER_ENERGY);
+        comboPoints = bot->GetPower(POWER_COMBO_POINTS);
+        maxComboPoints = bot->GetMaxPower(POWER_COMBO_POINTS);
     }
 
     void Update(Player* bot)
     {
         if (!bot)
-
             return;
 
-        energy = bot->GetPower(POWER_ENERGY);        comboPoints = bot->GetPower(POWER_COMBO_POINTS);    }
-
-    // ComplexResource interface requirements
-    [[nodiscard]] bool Consume(uint32 amount)
-    {
-        if (energy >= amount)
-        {
-
-            energy -= amount;
-
-            return true;
-        }
-        return false;
+        energy = bot->GetPower(POWER_ENERGY);
+        comboPoints = bot->GetPower(POWER_COMBO_POINTS);
     }
 
-    void Regenerate(uint32 /*diff*/)
-    {
-        available = true;
-    }
-
-    [[nodiscard]] uint32 GetAvailable() const { return energy; }
-    [[nodiscard]] uint32 GetMax() const { return maxEnergy; }
-
+    // Feral-specific helper methods
     [[nodiscard]] bool HasEnergy(uint32 amount) const { return energy >= amount; }
     [[nodiscard]] bool HasComboPoints(uint32 amount) const { return comboPoints >= amount; }
     [[nodiscard]] bool IsMaxComboPoints() const { return comboPoints >= maxComboPoints; }
@@ -351,18 +330,18 @@ private:
     uint32 _bloodtalonsStacks;
 };
 
-class FeralDruidRefactored : public MeleeDpsSpecialization<EnergyComboResource>
+class FeralDruidRefactored : public MeleeDpsSpecialization<FeralDruidEnergy>
 {
 public:
     // Use base class members with type alias for cleaner syntax
-    using Base = MeleeDpsSpecialization<EnergyComboResource>;
+    using Base = MeleeDpsSpecialization<FeralDruidEnergy>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::GetEnemiesInRange;
     using Base::_resource;
-    explicit FeralDruidRefactored(Player* bot)        : MeleeDpsSpecialization<EnergyComboResource>(bot)
-
+    explicit FeralDruidRefactored(Player* bot)
+        : MeleeDpsSpecialization<FeralDruidEnergy>(bot)
         , _bleedTracker()
         , _bloodtalonsTracker()
         , _tigersFuryActive(false)
@@ -392,8 +371,8 @@ public:
 
     void UpdateRotation(::Unit* target) override
     {
+        Player* bot = this->GetBot();
         if (!target || !bot)
-
             return;
 
         UpdateFeralState(target);
@@ -411,15 +390,15 @@ public:
 
     void UpdateBuffs() override
     {
+        Player* bot = this->GetBot();
         if (!bot)
-
             return;
 
         MaintainCatForm();
     }    void UpdateDefensives()
     {
+        Player* bot = this->GetBot();
         if (!bot)
-
             return;
 
         float healthPct = bot->GetHealthPct();
@@ -464,6 +443,7 @@ private:
 
     void UpdateFeralState(::Unit* target)
     {
+        Player* bot = this->GetBot();
         this->_resource.Update(bot);
         _bleedTracker.Update(target);
         _bloodtalonsTracker.Update(bot);
@@ -472,9 +452,11 @@ private:
 
     void UpdateCooldownStates()
     {
+        Player* bot = this->GetBot();
+        if (!bot) return;
+
         // Tiger's Fury state
         if (_tigersFuryActive && GameTime::GetGameTimeMS() >= _tigersFuryEndTime)
-
             _tigersFuryActive = false;
 
         if (bot->HasAura(FERAL_TIGERS_FURY))
@@ -511,22 +493,25 @@ private:
 
     void MaintainCatForm()
     {
+        Player* bot = this->GetBot();
+        if (!bot) return;
+
         if (!bot->HasAura(FERAL_CAT_FORM))
         {
-
             if (this->CanCastSpell(FERAL_CAT_FORM, bot))
-
             {
-
                 this->CastSpell(FERAL_CAT_FORM, bot);
-
             }
         }
     }
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 cp = this->_resource.comboPoints;
+        Player* bot = this->GetBot();
+        if (!bot) return;
+
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy regeneration (use when low energy and not capped on combo points)
         if (this->_resource.GetEnergyPercent() < 50 && cp < this->_resource.maxComboPoints)
@@ -716,7 +701,11 @@ private:
 
     void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 cp = this->_resource.comboPoints;
+        Player* bot = this->GetBot();
+        if (!bot) return;
+
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 cp = this->_resource.comboPoints;
 
         // Tiger's Fury for energy
         if (this->_resource.GetEnergyPercent() < 50 && cp < this->_resource.maxComboPoints)
