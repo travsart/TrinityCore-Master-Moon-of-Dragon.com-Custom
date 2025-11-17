@@ -46,11 +46,11 @@ enum AugmentationEvokerSpells
     AZURE_STRIKE_AUG     = 362969,  // Generates 2 essence
     ERUPTION             = 395160,  // 3 essence, AoE damage
 
-    // Utility
-    OBSIDIAN_SCALES      = 363916,
-    RENEWING_BLAZE       = 374348,
-    QUELL                = 351338,
-    HOVER                = 358267
+    // Utility (shared with other Evoker specs)
+    AUG_OBSIDIAN_SCALES  = 363916,
+    AUG_RENEWING_BLAZE   = 374348,
+    AUG_QUELL            = 351338,
+    AUG_HOVER            = 358267
 };
 
 struct EssenceResourceAug
@@ -94,17 +94,18 @@ public:
     }
 };
 
-class AugmentationEvokerRefactored : public SupportSpecialization<EssenceResourceAug>
+class AugmentationEvokerRefactored : public RangedDpsSpecialization<EssenceResourceAug>
 {
 public:
-    using Base = SupportSpecialization<EssenceResourceAug>;
+    using Base = RangedDpsSpecialization<EssenceResourceAug>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
     using Base::_resource;
 
     explicit AugmentationEvokerRefactored(Player* bot)
-        : SupportSpecialization<EssenceResourceAug>(bot)
+        : RangedDpsSpecialization<EssenceResourceAug>(bot)
         , _buffTracker()
     {
         this->_resource.Initialize(bot);
@@ -140,12 +141,11 @@ public:
         // Priority 5: Generate essence
         if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
             this->CastSpell(AZURE_STRIKE_AUG, target);
-            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+            this->_resource.essence = ::std::min<uint32>(this->_resource.essence + 2, this->_resource.maxEssence);
         }
     }
 
     void UpdateBuffs() override { /* Handled in UpdateRotation */ }
-    float GetOptimalRange(::Unit* target) override { return 25.0f; }
 
 protected:
     bool MaintainEbonMight()
@@ -221,10 +221,8 @@ protected:
     void InitializeAugmentationMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        BotAI* ai = this;
-        if (!ai) return;
 
-        auto* queue = ai->GetActionPriorityQueue();
+        auto* queue = this->GetActionPriorityQueue();
         if (queue)
         {
             queue->RegisterSpell(EBON_MIGHT, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
@@ -258,13 +256,13 @@ protected:
                 return target && this->_resource.essence < 4;
             }, "Essence < 4 (generates 2 essence)");
 
-            queue->RegisterSpell(OBSIDIAN_SCALES, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
-            queue->AddCondition(OBSIDIAN_SCALES, [](Player* bot, Unit*) {
+            queue->RegisterSpell(AUG_OBSIDIAN_SCALES, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
+            queue->AddCondition(AUG_OBSIDIAN_SCALES, [](Player* bot, Unit*) {
                 return bot && bot->GetHealthPct() < 40.0f;
             }, "HP < 40% (30% dmg reduction)");
         }
 
-        auto* tree = ai->GetBehaviorTree();
+        auto* tree = this->GetBehaviorTree();
         if (tree)
         {
             auto root = Selector("Augmentation Evoker Support", {
@@ -286,7 +284,7 @@ protected:
                 Sequence("Deal Damage", {
                     Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
                     Condition("3+ essence", [this](Player*, Unit*) { return this->_resource.essence >= 3; }),
-                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Breath of Eons", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
                             this->CastSpell(BREATH_OF_EONS, target);
@@ -299,11 +297,11 @@ protected:
                 Sequence("Generate Essence", {
                     Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
                     Condition("< 4 essence", [this](Player*, Unit*) { return this->_resource.essence < 4; }),
-                    bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit* target) {
+                    bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
                         if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
                             this->CastSpell(AZURE_STRIKE_AUG, target);
-                            this->_resource.essence = ::std::min(this->_resource.essence + 2, this->_resource.maxEssence);
+                            this->_resource.essence = ::std::min<uint32>(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;
                         }
                         return NodeStatus::FAILURE;

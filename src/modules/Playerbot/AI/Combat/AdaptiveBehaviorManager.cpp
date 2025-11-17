@@ -8,7 +8,7 @@
  */
 
 #include "AdaptiveBehaviorManager.h"
-#include "Decision/DecisionFusionSystem.h"
+#include "../Decision/DecisionFusionSystem.h"
 #include "../Common/ActionScoringEngine.h"
 #include "Player.h"
 #include "Group.h"
