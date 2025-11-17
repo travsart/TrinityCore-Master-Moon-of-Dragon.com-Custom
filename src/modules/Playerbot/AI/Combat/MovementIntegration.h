@@ -148,7 +148,7 @@ namespace Playerbot
     class TC_GAME_API MovementIntegration
     {
     public:
-        explicit MovementIntegration(Player* bot);
+        explicit MovementIntegration(::Player* bot);
         ~MovementIntegration() = default;
 
         /**
@@ -255,7 +255,7 @@ namespace Playerbot
          * - Abilities (max spell range)
          * - Safety (kiting distance)
          */
-        float GetOptimalRange(Unit* target);
+        float GetOptimalRange(::Unit* target);
 
         /**
          * @brief Execute movement to position
@@ -320,7 +320,7 @@ namespace Playerbot
          *
          * For: Hunters, mages, warlocks vs melee
          */
-        bool ShouldKite(Unit* target);
+        bool ShouldKite(::Unit* target);
 
         /**
          * @brief Get kiting position
@@ -328,10 +328,10 @@ namespace Playerbot
          * @param target Enemy to kite from
          * @return Position that maintains optimal kiting distance
          */
-        Position GetKitingPosition(Unit* target);
+        Position GetKitingPosition(::Unit* target);
 
     private:
-        Player* _bot;
+        ::Player* _bot;
         ::std::vector<DangerZone> _dangerZones;
         MovementCommand _currentCommand;
         uint32 _lastUpdate;

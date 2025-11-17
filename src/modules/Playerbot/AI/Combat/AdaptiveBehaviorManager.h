@@ -89,7 +89,7 @@ namespace Playerbot
         ::std::string name;                                                      // Profile name for logging
         BehaviorPriority priority;                                             // Priority level
         ::std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
-        ::std::function<void(Player*, uint32)> applyFunction;                   // Apply behavior changes
+        ::std::function<void(::Player*, uint32)> applyFunction;                 // Apply behavior changes
         uint32 strategyFlags;                                                  // Strategy flags to activate
         uint32 minDuration;                                                    // Minimum time to stay active (ms)
         uint32 maxDuration;                                                    // Maximum time to stay active (ms)
@@ -154,7 +154,7 @@ namespace Playerbot
     class AdaptiveBehaviorManager
     {
     public:
-        explicit AdaptiveBehaviorManager(Player* bot);
+        explicit AdaptiveBehaviorManager(::Player* bot);
         ~AdaptiveBehaviorManager();
 
         // Main update function
@@ -290,7 +290,7 @@ namespace Playerbot
         float GetGearScore() const;
 
         // Member variables
-        Player* _bot;
+        ::Player* _bot;
         uint32 _activeStrategies;
         RoleAssignment _roleAssignment;
         GroupComposition _groupComposition;
