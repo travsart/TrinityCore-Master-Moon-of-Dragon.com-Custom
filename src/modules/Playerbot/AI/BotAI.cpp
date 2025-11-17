@@ -11,6 +11,7 @@
  */
 
 #include "BotAI.h"
+#include "HybridAIController.h"
 #include "BehaviorPriorityManager.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
