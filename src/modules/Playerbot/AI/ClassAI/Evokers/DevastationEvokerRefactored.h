@@ -82,8 +82,9 @@ enum DevastationEvokerSpells
     ONYX_LEGACY          = 386348   // Deep Breath enhanced
 };
 
-// Essence resource type for Evoker
-struct EssenceResource
+// Essence resource type for Devastation Evoker
+// Distinct type to avoid template instantiation conflicts with Preservation/Augmentation
+struct DevastationEssence
 {
     uint32 essence{0};
     uint32 maxEssence{5};
@@ -232,17 +233,18 @@ private:
 // DEVASTATION EVOKER REFACTORED
 // ============================================================================
 
-class DevastationEvokerRefactored : public DPSSpecialization<EssenceResource>
+class DevastationEvokerRefactored : public RangedDpsSpecialization<DevastationEssence>
 {
 public:
-    using Base = DPSSpecialization<EssenceResource>;
+    using Base = RangedDpsSpecialization<DevastationEssence>;
     using Base::GetBot;
     using Base::CastSpell;
     using Base::CanCastSpell;
+    using Base::GetEnemiesInRange;
     using Base::_resource;
 
     explicit DevastationEvokerRefactored(Player* bot)
-        : DPSSpecialization<EssenceResource>(bot)
+        : RangedDpsSpecialization<DevastationEssence>(bot)
         , _empowermentTracker()
         , _dragonrageTracker()
         , _essenceBurstStacks(0)
@@ -297,11 +299,6 @@ public:
 
         // Emergency defensives
         HandleEmergencyDefensives();
-    }
-
-    float GetOptimalRange(::Unit* target) override
-    {
-        return 25.0f; // Ranged caster at 25 yards
     }
 
 protected:
@@ -510,7 +507,7 @@ protected:
 
     void GenerateEssence(uint32 amount)
     {
-        this->_resource.essence = ::std::min(this->_resource.essence + amount, this->_resource.maxEssence);
+        this->_resource.essence = ::std::min<uint32>(this->_resource.essence + amount, this->_resource.maxEssence);
     }
 
     void ConsumeEssence(uint32 amount)
@@ -525,10 +522,8 @@ protected:
     void InitializeDevastationMechanics()
     {        // REMOVED: using namespace bot::ai; (conflicts with ::bot::ai::)
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
-        BotAI* ai = this;
-        if (!ai) return;
 
-        auto* queue = ai->GetActionPriorityQueue();
+        auto* queue = this->GetActionPriorityQueue();
         if (queue)
         {
             // EMERGENCY: Defensive cooldowns
@@ -603,18 +598,18 @@ protected:
             }, "< 15yd range (hover mode, reposition)");
         }
 
-        auto* behaviorTree = ai->GetBehaviorTree();
+        auto* behaviorTree = this->GetBehaviorTree();
         if (behaviorTree)
         {
             auto root = Selector("Devastation Evoker DPS", {
                 // Tier 1: Emergency Defense
                 Sequence("Emergency Defense", {
-                    Condition("Low HP", [](Player* bot), Unit* target {
+                    Condition("Low HP", [](Player* bot, Unit* target) {
                         return bot && bot->GetHealthPct() < 50.0f;
                     }),
                     Selector("Use defensive", {
                         Sequence("Obsidian Scales", {
-                            Condition("< 40%", [](Player* bot), Unit* target {
+                            Condition("< 40%", [](Player* bot, Unit* target) {
                                 return bot->GetHealthPct() < 40.0f;
                             }),
                             bot::ai::Action("Cast Obsidian Scales", [this](Player* bot, Unit*) {
