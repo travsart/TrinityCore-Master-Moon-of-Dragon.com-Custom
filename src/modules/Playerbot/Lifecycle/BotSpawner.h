@@ -68,6 +68,36 @@ struct SpawnStats
     ::std::atomic<uint64> totalSpawnTime{0}; // microseconds
     ::std::atomic<uint32> spawnAttempts{0};
 
+    // Default constructor
+    SpawnStats() = default;
+
+    // Copy constructor for atomic members
+    SpawnStats(const SpawnStats& other)
+        : totalSpawned(other.totalSpawned.load())
+        , totalDespawned(other.totalDespawned.load())
+        , currentlyActive(other.currentlyActive.load())
+        , peakConcurrent(other.peakConcurrent.load())
+        , failedSpawns(other.failedSpawns.load())
+        , totalSpawnTime(other.totalSpawnTime.load())
+        , spawnAttempts(other.spawnAttempts.load())
+    {}
+
+    // Copy assignment operator for atomic members
+    SpawnStats& operator=(const SpawnStats& other)
+    {
+        if (this != &other)
+        {
+            totalSpawned.store(other.totalSpawned.load());
+            totalDespawned.store(other.totalDespawned.load());
+            currentlyActive.store(other.currentlyActive.load());
+            peakConcurrent.store(other.peakConcurrent.load());
+            failedSpawns.store(other.failedSpawns.load());
+            totalSpawnTime.store(other.totalSpawnTime.load());
+            spawnAttempts.store(other.spawnAttempts.load());
+        }
+        return *this;
+    }
+
     float GetAverageSpawnTime() const {
         uint32 attempts = spawnAttempts.load();
         return attempts > 0 ? static_cast<float>(totalSpawnTime.load()) / attempts / 1000.0f : 0.0f; // ms

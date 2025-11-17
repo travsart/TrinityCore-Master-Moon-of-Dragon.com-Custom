@@ -809,11 +809,11 @@ void BotLifecycleMgr::LogPerformanceReport()
     LIFECYCLE_LOG_INFO("Scheduled Logouts:      {}", _statistics.scheduledLogouts);
 
     // Load atomics before passing to logging to avoid immediate function issues
-    uint32 activeBots = _metrics.activeBots.load();
-    uint32 scheduledBots = _metrics.scheduledBots.load();
-    uint32 eventsPerSec = _metrics.eventsProcessedPerSecond.load();
-    uint32 avgProcessingTime = _metrics.averageEventProcessingTimeMs.load();
-    uint32 memoryUsage = _metrics.memoryUsageMB.load();
+    uint32 activeBots = _metricsInternal.activeBots.load();
+    uint32 scheduledBots = _metricsInternal.scheduledBots.load();
+    uint32 eventsPerSec = _metricsInternal.eventsProcessedPerSecond.load();
+    uint32 avgProcessingTime = _metricsInternal.averageEventProcessingTimeMs.load();
+    uint32 memoryUsage = _metricsInternal.memoryUsageMB.load();
 
     LIFECYCLE_LOG_INFO("Active Bots: {}", activeBots);
     LIFECYCLE_LOG_INFO("Scheduled Bots: {}", scheduledBots);

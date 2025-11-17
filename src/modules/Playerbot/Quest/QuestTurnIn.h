@@ -121,10 +121,41 @@ struct TurnInMetrics
     ::std::atomic<float> rewardSelectionAccuracy{0.85f};
     ::std::chrono::steady_clock::time_point lastUpdate;
 
-    // Delete copy operations (atomics are not copyable)
+    // Default constructor
     TurnInMetrics() = default;
-    TurnInMetrics(TurnInMetrics const&) = delete;
-    TurnInMetrics& operator=(TurnInMetrics const&) = delete;
+
+    // Copy constructor for atomic members
+    TurnInMetrics(TurnInMetrics const& other)
+        : questsTurnedIn(other.questsTurnedIn.load())
+        , turnInAttempts(other.turnInAttempts.load())
+        , successfulTurnIns(other.successfulTurnIns.load())
+        , failedTurnIns(other.failedTurnIns.load())
+        , averageTurnInTime(other.averageTurnInTime.load())
+        , turnInSuccessRate(other.turnInSuccessRate.load())
+        , totalTravelDistance(other.totalTravelDistance.load())
+        , rewardsSelected(other.rewardsSelected.load())
+        , rewardSelectionAccuracy(other.rewardSelectionAccuracy.load())
+        , lastUpdate(other.lastUpdate)
+    {}
+
+    // Copy assignment operator for atomic members
+    TurnInMetrics& operator=(TurnInMetrics const& other)
+    {
+        if (this != &other)
+        {
+            questsTurnedIn.store(other.questsTurnedIn.load());
+            turnInAttempts.store(other.turnInAttempts.load());
+            successfulTurnIns.store(other.successfulTurnIns.load());
+            failedTurnIns.store(other.failedTurnIns.load());
+            averageTurnInTime.store(other.averageTurnInTime.load());
+            turnInSuccessRate.store(other.turnInSuccessRate.load());
+            totalTravelDistance.store(other.totalTravelDistance.load());
+            rewardsSelected.store(other.rewardsSelected.load());
+            rewardSelectionAccuracy.store(other.rewardSelectionAccuracy.load());
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
 
     void Reset() {
         questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;

@@ -2054,8 +2054,8 @@ uint32 DeathKnightAI::GetNearbyEnemyCount(float range) const
         Creature* entity = nullptr;
         if (snapshot_entity)
         {
-            // FIXED: CreatureSnapshot to Creature conversion via GetCreature
-            entity = spatialGrid->GetCreature(snapshot_entity->guid);
+            // FIXED: CreatureSnapshot to Creature conversion via ObjectAccessor
+            entity = ObjectAccessor::GetCreature(*GetBot(), snapshot_entity->guid);
         }
 
         if (!entity)

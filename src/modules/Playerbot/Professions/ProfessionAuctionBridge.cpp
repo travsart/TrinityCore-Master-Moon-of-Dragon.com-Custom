@@ -799,12 +799,13 @@ bool ProfessionAuctionBridge::CanAccessAuctionHouse(::Player* player) const
     // 2. Or have recently interacted with auction house
 
     // Check if player is in a rest area (cities have rest areas with XP bonus)
-    if (player->GetRestBonus() > 0)
-    {
-        TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} has access (in city)",
-            player->GetName());
-        return true;
-    }
+    // TODO: Replace with proper rest state check when API is confirmed
+    // if (player->HasPlayerFlag(PLAYER_FLAGS_RESTING))
+    // {
+    //     TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Player {} has access (in city)",
+    //         player->GetName());
+    //     return true;
+    // }
 
     // Alternative: Check if player is in a zone with an auction house
     // Major cities with auction houses:
