@@ -653,7 +653,7 @@ private:
                 score -= 30.0f; // Deprioritize far targets
 
             // Prefer targets without Havoc already applied
-            if (_havocTracker.GetHavocTarget() == enemy->GetGUID())
+            if (_havocTracker.GetTarget() == enemy->GetGUID())
                 score -= 100.0f;
 
             // Prefer elite/boss targets over normal mobs
@@ -664,8 +664,9 @@ private:
                 {
                     if (creature->isWorldBoss() || creature->IsDungeonBoss())
                         score += 100.0f; // Highest priority for bosses
-                    else if (creature->GetCreatureTemplate()->rank >= CREATURE_ELITE_ELITE)
-                        score += 50.0f; // High priority for elites
+                    // TODO: Elite classification - CreatureTemplate no longer has 'rank' field
+                    // else if (creature->GetCreatureTemplate()->rank >= CREATURE_ELITE_ELITE)
+                    //     score += 50.0f; // High priority for elites
                 }
             }
 
