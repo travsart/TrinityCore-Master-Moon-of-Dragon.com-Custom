@@ -247,7 +247,7 @@ private:
 // DESTRUCTION WARLOCK REFACTORED
 // ============================================================================
 
-class DestructionWarlockRefactored : public RangedDpsSpecialization<ManaSoulShardResourceDestro>, public WarlockSpecialization
+class DestructionWarlockRefactored : public RangedDpsSpecialization<ManaSoulShardResourceDestro>
 {
 public:
     // Use base class members with type alias for cleaner syntax
@@ -256,13 +256,14 @@ public:
     using Base::CastSpell;
     using Base::CanCastSpell;
     using Base::_resource;
-    explicit DestructionWarlockRefactored(Player* bot)        : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
-        , WarlockSpecialization(bot)
+    explicit DestructionWarlockRefactored(Player* bot)
+        : RangedDpsSpecialization<ManaSoulShardResourceDestro>(bot)
         , _immolateTracker()
         , _havocTracker()
         , _backdraftStacks(0)
         , _lastInfernalTime(0)
-    {        // Initialize mana/soul shard resources
+    {
+        // Initialize mana/soul shard resources
         this->_resource.Initialize(bot);
         TC_LOG_DEBUG("playerbot", "DestructionWarlockRefactored initialized for {}", bot->GetName());
 
@@ -270,7 +271,8 @@ public:
         InitializeDestructionMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -292,7 +294,8 @@ public:
         }
         else
         {
-            ExecuteSingleTargetRotation(target);        }
+            ExecuteSingleTargetRotation(target);
+        }
     }
 
     void UpdateBuffs() override
@@ -818,11 +821,11 @@ private:
                     }),
                     Selector("Maintain DoT and generate shards", {
                         Sequence("Immolate", {
-                            Condition("Needs Immolate", [this](Player* bot, Unit* target) {
+                            Condition("Needs Immolate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->_immolateTracker.NeedsRefresh(target->GetGUID());
                             }),
-                            bot::ai::Action("Cast Immolate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Immolate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(IMMOLATE, target))
                                 {
@@ -834,11 +837,11 @@ private:
                             })
                         }),
                         Sequence("Conflagrate", {
-                            Condition("Can cast Conflagrate", [this](Player* bot, Unit* target) {
+                            Condition("Can cast Conflagrate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return target && this->CanCastSpell(CONFLAGRATE, target);
                             }),
-                            bot::ai::Action("Cast Conflagrate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Conflagrate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 this->CastSpell(CONFLAGRATE, target);
                                 this->GenerateSoulShard(1);
@@ -873,7 +876,7 @@ private:
                             Condition("2+ shards", [this](Player*, Unit*) {
                                 return this->_resource.soulShards >= 2;
                             }),
-                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Chaos Bolt", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(CHAOS_BOLT, target))
                                 {
@@ -894,11 +897,11 @@ private:
                     }),
                     Selector("Generate shards", {
                         Sequence("Shadowburn (execute)", {
-                            Condition("Target < 20% HP and has spell", [this](Player* bot, Unit* target) {
+                            Condition("Target < 20% HP and has spell", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 return target && bot->HasSpell(SHADOWBURN) && target->GetHealthPct() < 20.0f;
                             }),
-                            bot::ai::Action("Cast Shadowburn", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Shadowburn", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(SHADOWBURN, target))
                                 {
@@ -910,7 +913,7 @@ private:
                             })
                         }),
                         Sequence("Incinerate (filler)", {
-                            bot::ai::Action("Cast Incinerate", [this](Player* bot, Unit* target) {
+                            bot::ai::Action("Cast Incinerate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
                                 if (target && this->CanCastSpell(INCINERATE, target))
                                 {
