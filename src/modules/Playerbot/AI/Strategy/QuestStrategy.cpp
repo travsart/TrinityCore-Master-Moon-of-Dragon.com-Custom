@@ -29,7 +29,7 @@
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
 #include "../../Equipment/EquipmentManager.h"  // For reward evaluation
-#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "LootItemType.h"  // For LootItemType enum used in RewardQuest
 #include "UnitAI.h"
@@ -660,7 +660,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
 
                 // PHASE 5 MIGRATION: Use Movement Arbiter with QUEST priority (50)
                 BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
-                if (botAI && botAI->GetMovementArbiter())
+                if (botAI && botAI->GetUnifiedMovementCoordinator())
                 {
                     bool accepted = botAI->RequestPointMovement(
                         PlayerBotMovementPriority::QUEST,  // Priority 50 - LOW tier

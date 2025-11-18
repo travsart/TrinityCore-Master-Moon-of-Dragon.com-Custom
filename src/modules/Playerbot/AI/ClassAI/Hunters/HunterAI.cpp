@@ -29,7 +29,7 @@
 #include <chrono>
 #include "../../../Spatial/SpatialGridManager.h"
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
-#include "../../../Movement/Arbiter/MovementArbiter.h"
+#include "../../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
 #include "../../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../../BotAI.h"
 #include "UnitAI.h"
@@ -1496,7 +1496,7 @@ void HunterAI::MaintainRange(::Unit* target){
         Position pos = GetOptimalPosition(target);
 
         // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
-        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());        if (botAI && botAI->GetMovementArbiter())
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
 
             botAI->RequestPointMovement(

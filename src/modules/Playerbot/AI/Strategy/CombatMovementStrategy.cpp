@@ -30,7 +30,7 @@
 #include "Log.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/DoubleBufferedSpatialGrid.h"
-#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "DBCEnums.h"
 #include "SpellMgr.h"
@@ -466,7 +466,7 @@ namespace Playerbot
 
         // PHASE 5 MIGRATION: Use Movement Arbiter with COMBAT_MOVEMENT_STRATEGY priority (130)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::COMBAT_MOVEMENT_STRATEGY,  // Priority 130 - MEDIUM tier

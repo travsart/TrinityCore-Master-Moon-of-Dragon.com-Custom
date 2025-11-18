@@ -15,7 +15,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
@@ -385,7 +385,7 @@ void FormationManager::CoordinateMovement(const Position& destination)
         {
             // PHASE 6B: Use Movement Arbiter with FORMATION priority (160)
             BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
-            if (botAI && botAI->GetMovementArbiter())
+            if (botAI && botAI->GetUnifiedMovementCoordinator())
             {
                 botAI->RequestPointMovement(
                     PlayerBotMovementPriority::FORMATION,
