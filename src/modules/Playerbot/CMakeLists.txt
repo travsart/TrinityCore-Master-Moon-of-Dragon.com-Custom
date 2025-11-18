@@ -171,6 +171,12 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IManagerBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/ManagerRegistry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/ManagerRegistry.h
+
+    # Phase 6: Game Systems Facade - BotAI Decoupling
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IGameSystemsManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/GameSystemsManager.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Events/EventDispatcher.h
 
