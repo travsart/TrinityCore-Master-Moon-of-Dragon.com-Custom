@@ -46,8 +46,7 @@ class GatheringManager;
 class AuctionManager;
 class GroupCoordinator; // Advanced/GroupCoordinator
 class DeathRecoveryManager;
-class MovementArbiter;
-class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (completing incomplete migration)
+class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (Week 3 complete)
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
@@ -315,21 +314,11 @@ public:
     DeathRecoveryManager const* GetDeathRecoveryManager() const { return _deathRecoveryManager.get(); }
 
     // ========================================================================
-    // MOVEMENT ARBITER - Enterprise movement request arbitration (DEPRECATED)
+    // UNIFIED MOVEMENT COORDINATOR - Phase 2 Migration Complete (Week 3)
     // ========================================================================
-    // DEPRECATED: Use GetUnifiedMovementCoordinator() instead.
-    // MovementArbiter will be removed in Week 3 after all call sites migrated.
-    // See: docs/playerbot/MOVEMENT_MIGRATION_GUIDE.md
-
-    [[deprecated("Use GetUnifiedMovementCoordinator() instead. MovementArbiter will be removed after migration (Week 3).")]]
-    MovementArbiter* GetMovementArbiter() { return _movementArbiter.get(); }
-
-    [[deprecated("Use GetUnifiedMovementCoordinator() instead. MovementArbiter will be removed after migration (Week 3).")]]
-    MovementArbiter const* GetMovementArbiter() const { return _movementArbiter.get(); }
-
-    // ========================================================================
-    // UNIFIED MOVEMENT COORDINATOR - Phase 2 Migration (NEW primary system)
-    // ========================================================================
+    // Primary movement system - consolidates MovementArbiter, CombatMovementStrategy,
+    // GroupFormationManager, and MovementIntegration into unified interface.
+    // Migration complete: All user code now uses UnifiedMovementCoordinator.
 
     UnifiedMovementCoordinator* GetUnifiedMovementCoordinator() { return _unifiedMovementCoordinator.get(); }
     UnifiedMovementCoordinator const* GetUnifiedMovementCoordinator() const { return _unifiedMovementCoordinator.get(); }
@@ -785,10 +774,7 @@ protected:
     // Death recovery system
     std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
-    // Movement arbiter - Enterprise movement request arbitration (LEGACY - being migrated)
-    std::unique_ptr<MovementArbiter> _movementArbiter;
-
-    // Unified Movement Coordinator - Phase 2 Migration (NEW primary system)
+    // Unified Movement Coordinator - Phase 2 Migration Complete (Week 3)
     // Consolidates: MovementArbiter, CombatMovementStrategy, GroupFormationManager, MovementIntegration
     std::unique_ptr<UnifiedMovementCoordinator> _unifiedMovementCoordinator;
 

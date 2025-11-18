@@ -46,10 +46,9 @@
 #include "Decision/ActionPriorityQueue.h"
 #include "Decision/BehaviorTree.h"
 #include "Lifecycle/DeathRecoveryManager.h"
-#include "Movement/Arbiter/MovementArbiter.h"
+#include "Movement/UnifiedMovementCoordinator.h" // Phase 2: Unified Movement System (Week 3 complete)
 #include "Movement/Arbiter/MovementRequest.h"
 #include "Movement/Arbiter/MovementPriorityMapper.h"
-#include "Movement/UnifiedMovementCoordinator.h" // Phase 2: Unified Movement System (completing incomplete migration)
 #include "Session/BotPriorityManager.h"
 #include "Player.h"
 #include "Unit.h"
@@ -107,14 +106,10 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Initialize death recovery system
     _deathRecoveryManager = std::make_unique<DeathRecoveryManager>(_bot, this);
 
-    // Phase 2: Initialize Unified Movement Coordinator (NEW primary movement system)
+    // Phase 2: Initialize Unified Movement Coordinator (PRIMARY movement system)
     // Consolidates: MovementArbiter, CombatMovementStrategy, GroupFormationManager, MovementIntegration
+    // Week 3: MovementArbiter removed - all code now uses UnifiedMovementCoordinator
     _unifiedMovementCoordinator = std::make_unique<UnifiedMovementCoordinator>(_bot);
-
-    // Initialize movement arbiter for priority-based movement request arbitration
-    // LEGACY: Kept temporarily for backward compatibility during gradual migration
-    // TODO: Remove after all call sites migrated to UnifiedMovementCoordinator (Week 3)
-    _movementArbiter = std::make_unique<MovementArbiter>(_bot);
 
     // Initialize combat state manager for automatic combat state synchronization
     _combatStateManager = std::make_unique<CombatStateManager>(_bot, this);
@@ -125,7 +120,7 @@ BotAI::BotAI(Player* bot) : _bot(bot)
     // Phase 2 Week 3: Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
     InitializeHybridAI();
 
-    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, UnifiedMovement, MovementArbiter(legacy), CombatState, SharedBlackboard, HybridAI systems ready",
+    TC_LOG_INFO("module.playerbot", "📋 MANAGERS INITIALIZED: {} - Quest, Trade, Gathering, Auction, Group, DeathRecovery, UnifiedMovement, CombatState, SharedBlackboard, HybridAI systems ready",
                 _bot->GetName());
 
     // Phase 7.1: Initialize event dispatcher and manager registry
@@ -377,17 +372,11 @@ BotAI::~BotAI()
         _deathRecoveryManager.reset();
     }
 
-    // 3. Movement systems - Phase 2 unified coordinator + legacy arbiter
+    // 3. Movement system - Phase 2 unified coordinator (MovementArbiter removed Week 3)
     if (_unifiedMovementCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying UnifiedMovementCoordinator");
         _unifiedMovementCoordinator.reset();
-    }
-
-    if (_movementArbiter)
-    {
-        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying MovementArbiter (LEGACY)");
-        _movementArbiter.reset();
     }
 
     // 4. Game system managers (order doesn't matter, no interdependencies)
