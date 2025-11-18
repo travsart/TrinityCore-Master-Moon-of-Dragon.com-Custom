@@ -56,6 +56,7 @@ namespace Playerbot
 class QuestManager;
 class TradeManager;
 class GatheringManager;
+class ProfessionManager;
 class AuctionManager;
 class DeathRecoveryManager;
 class UnifiedMovementCoordinator;
@@ -152,6 +153,12 @@ public:
      * @return Non-owning pointer to GatheringManager (owned by facade)
      */
     virtual GatheringManager* GetGatheringManager() const = 0;
+
+    /**
+     * @brief Get profession management system
+     * @return Non-owning pointer to ProfessionManager (owned by facade)
+     */
+    virtual ProfessionManager* GetProfessionManager() const = 0;
 
     /**
      * @brief Get auction house management system

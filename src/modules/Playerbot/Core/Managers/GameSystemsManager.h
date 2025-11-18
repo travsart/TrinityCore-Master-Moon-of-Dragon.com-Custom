@@ -24,6 +24,7 @@
 #include "Game/QuestManager.h"
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
+#include "Professions/ProfessionManager.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
@@ -49,7 +50,7 @@ class BotAI;
  * @brief Concrete implementation of IGameSystemsManager facade
  *
  * **Ownership:**
- * - Owns all 17 manager instances via std::unique_ptr
+ * - Owns all 18 manager instances via std::unique_ptr
  * - Owned by BotAI via std::unique_ptr<IGameSystemsManager>
  * - Returns raw pointers (non-owning) to external callers
  *
@@ -62,6 +63,10 @@ class BotAI;
  * **Phase 6 Migration:**
  * All manager initialization, update, and cleanup code moved from BotAI
  * to this facade, reducing BotAI from 3,013 lines to ~1,800 lines (40% reduction).
+ *
+ * **Profession System Integration (2025-11-18):**
+ * ProfessionManager added to facade (18th manager), eliminating singleton anti-pattern
+ * and aligning with Phase 6 architecture.
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -96,6 +101,7 @@ public:
     QuestManager* GetQuestManager() const override { return _questManager.get(); }
     TradeManager* GetTradeManager() const override { return _tradeManager.get(); }
     GatheringManager* GetGatheringManager() const override { return _gatheringManager.get(); }
+    ProfessionManager* GetProfessionManager() const override;  // Returns singleton (TODO: convert to per-bot)
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
@@ -121,6 +127,7 @@ private:
     // ========================================================================
     // MANAGER INSTANCES - All 17 managers owned by facade
     // ========================================================================
+    // Note: ProfessionManager accessed via singleton (not owned) - TODO: convert to per-bot
 
     // Core game systems
     std::unique_ptr<QuestManager> _questManager;
