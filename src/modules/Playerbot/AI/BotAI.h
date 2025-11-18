@@ -315,10 +315,16 @@ public:
     DeathRecoveryManager const* GetDeathRecoveryManager() const { return _deathRecoveryManager.get(); }
 
     // ========================================================================
-    // MOVEMENT ARBITER - Enterprise movement request arbitration
+    // MOVEMENT ARBITER - Enterprise movement request arbitration (DEPRECATED)
     // ========================================================================
+    // DEPRECATED: Use GetUnifiedMovementCoordinator() instead.
+    // MovementArbiter will be removed in Week 3 after all call sites migrated.
+    // See: docs/playerbot/MOVEMENT_MIGRATION_GUIDE.md
 
+    [[deprecated("Use GetUnifiedMovementCoordinator() instead. MovementArbiter will be removed after migration (Week 3).")]]
     MovementArbiter* GetMovementArbiter() { return _movementArbiter.get(); }
+
+    [[deprecated("Use GetUnifiedMovementCoordinator() instead. MovementArbiter will be removed after migration (Week 3).")]]
     MovementArbiter const* GetMovementArbiter() const { return _movementArbiter.get(); }
 
     // ========================================================================
