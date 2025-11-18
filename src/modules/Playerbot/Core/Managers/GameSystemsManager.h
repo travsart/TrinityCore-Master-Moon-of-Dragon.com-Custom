@@ -31,6 +31,7 @@
 #include "Professions/FarmingCoordinator.h"
 #include "Economy/AuctionManager.h"
 #include "Banking/BankingManager.h"
+#include "Equipment/EquipmentManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -55,7 +56,7 @@ class BotAI;
  * @brief Concrete implementation of IGameSystemsManager facade
  *
  * **Ownership:**
- * - Owns all 23 manager instances via std::unique_ptr (including bridges)
+ * - Owns all 24 manager instances via std::unique_ptr (including bridges)
  * - Owned by BotAI via std::unique_ptr<IGameSystemsManager>
  * - Returns raw pointers (non-owning) to external callers
  *
@@ -87,6 +88,9 @@ class BotAI;
  *
  * **Phase 5.2 Integration (2025-11-18):**
  * FarmingCoordinator converted from singleton to per-bot instance (23rd manager)
+ *
+ * **Phase 6.1 Integration (2025-11-18):**
+ * EquipmentManager converted from singleton to per-bot instance (24th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -128,6 +132,7 @@ public:
     FarmingCoordinator* GetFarmingCoordinator() const { return _farmingCoordinator.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     BankingManager* GetBankingManager() const { return _bankingManager.get(); }
+    EquipmentManager* GetEquipmentManager() const { return _equipmentManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -164,6 +169,7 @@ private:
     std::unique_ptr<FarmingCoordinator> _farmingCoordinator;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<BankingManager> _bankingManager;
+    std::unique_ptr<EquipmentManager> _equipmentManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems

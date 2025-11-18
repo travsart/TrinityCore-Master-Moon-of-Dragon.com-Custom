@@ -2143,39 +2143,47 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
 
     if (hasChoiceRewards)
     {
-        Playerbot::EquipmentManager* equipMgr = Playerbot::EquipmentManager::instance();
-
-        float bestScore = -10000.0f; // Start with very low score
-        uint32 bestChoice = 0;
-        bool foundUsableReward = false;
-
-        TC_LOG_ERROR("module.playerbot.quest", "🎁 Evaluating {} reward choices for quest {}",
-                     QUEST_REWARD_CHOICES_COUNT, questId);
-
-        for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
+        // Get EquipmentManager via GameSystemsManager facade (Phase 6.1)
+        Playerbot::EquipmentManager* equipMgr = ai->GetGameSystems()->GetEquipmentManager();
+        if (!equipMgr)
         {
-            uint32 itemId = quest->RewardChoiceItemId[i];
-            if (itemId == 0)
-                continue;
+            TC_LOG_ERROR("module.playerbot.quest", "⚠️ EquipmentManager not available for quest reward selection");
+            // Fall back to first choice
+            selectedRewardIndex = 0;
+        }
+        else
+        {
+            float bestScore = -10000.0f; // Start with very low score
+            uint32 bestChoice = 0;
+            bool foundUsableReward = false;
 
-            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
-            if (!itemTemplate)
+            TC_LOG_ERROR("module.playerbot.quest", "🎁 Evaluating {} reward choices for quest {}",
+                         QUEST_REWARD_CHOICES_COUNT, questId);
+
+            for (uint32 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
             {
-                TC_LOG_WARN("module.playerbot.quest", "⚠️ Invalid item template for reward choice {} (itemId {})",
-                            i, itemId);
-                continue;
-            }
+                uint32 itemId = quest->RewardChoiceItemId[i];
+                if (itemId == 0)
+                    continue;
 
-            // Check if bot can equip this item (class/level restrictions)
-            if (!equipMgr->CanPlayerEquipItem(bot, itemTemplate))
-            {
-                TC_LOG_TRACE("module.playerbot.quest", "❌ Bot {} cannot equip reward choice {}: {} (class/level restriction)",
-                             bot->GetName(), i, itemTemplate->GetName(LOCALE_enUS));
-                continue;
-            }
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
+                if (!itemTemplate)
+                {
+                    TC_LOG_WARN("module.playerbot.quest", "⚠️ Invalid item template for reward choice {} (itemId {})",
+                                i, itemId);
+                    continue;
+                }
 
-            // Calculate comprehensive item score using EquipmentManager's stat priority system
-            float itemScore = equipMgr->CalculateItemTemplateScore(bot, itemTemplate);
+                // Check if bot can equip this item (class/level restrictions)
+                if (!equipMgr->CanEquipItem(itemTemplate))
+                {
+                    TC_LOG_TRACE("module.playerbot.quest", "❌ Bot {} cannot equip reward choice {}: {} (class/level restriction)",
+                                 bot->GetName(), i, itemTemplate->GetName(LOCALE_enUS));
+                    continue;
+                }
+
+                // Calculate comprehensive item score using EquipmentManager's stat priority system
+                float itemScore = equipMgr->CalculateItemTemplateScore(itemTemplate);
 
             TC_LOG_ERROR("module.playerbot.quest", "   Choice {}: {} - Score: {:.2f} (ilvl {}, quality {})",
                          i,
@@ -2216,6 +2224,7 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
                 }
             }
         }
+        } // end else (equipMgr available)
     }
     else
     {

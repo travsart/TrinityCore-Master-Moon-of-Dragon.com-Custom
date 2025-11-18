@@ -141,6 +141,12 @@ GameSystemsManager::~GameSystemsManager()
         _bankingManager.reset();
     }
 
+    if (_equipmentManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying EquipmentManager");
+        _equipmentManager.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -257,6 +263,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _farmingCoordinator = std::make_unique<FarmingCoordinator>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _bankingManager = std::make_unique<BankingManager>(_bot);
+    _equipmentManager = std::make_unique<EquipmentManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -604,7 +611,8 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     if (_equipmentCheckTimer >= 10000) // 10 seconds
     {
         _equipmentCheckTimer = 0;
-        EquipmentManager::instance()->AutoEquipBestGear(_bot);
+        if (_equipmentManager)
+            _equipmentManager->AutoEquipBestGear();
     }
 
     // ========================================================================

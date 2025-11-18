@@ -285,14 +285,9 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDungeonScriptMgr");
 
-        // Register EquipmentManager (Phase 4)
-        container.RegisterInstance<IEquipmentManager>(
-            std::shared_ptr<IEquipmentManager>(
-                Playerbot::EquipmentManager::instance(),
-                [](IEquipmentManager*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IEquipmentManager");
+        // NOTE: EquipmentManager is now per-bot (Phase 6.1)
+        // No longer registered as singleton - owned by GameSystemsManager
+        // Access via: botAI->GetGameSystems()->GetEquipmentManager()
 
         // Register BotAccountMgr (Phase 4)
         container.RegisterInstance<IBotAccountMgr>(
