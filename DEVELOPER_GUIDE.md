@@ -2260,3 +2260,867 @@ For detailed API documentation, see:
 **Document Status**: ✅ Complete
 **Maintainer**: TrinityCore PlayerBot Team
 **Last Review**: 2025-11-18
+
+---
+
+## Bot Creation and Spawning Systems
+
+### Overview
+
+The bot creation and spawning system manages the entire lifecycle of PlayerBot instances, from initial creation through active gameplay to cleanup and removal.
+
+### System Architecture
+
+```
+Bot Creation Flow:
+    ↓
+BotManager (Singleton)
+    ↓
+BotFactory → Creates Bot Player Instance
+    ↓
+BotSession → Creates Session for Bot
+    ↓
+BotAI → Creates AI Controller
+    ↓
+GameSystemsManager → Initializes 21 Managers
+    ↓
+Bot Active in World
+```
+
+---
+
+### BotManager
+
+**Purpose**: Central manager for all bot instances in the world.
+
+**Location**: `src/modules/Playerbot/Core/BotManager.h`
+
+**Architecture**: Global singleton (manages all bots server-wide)
+
+#### Key Responsibilities
+
+- Bot instance tracking and registry
+- Bot creation and deletion
+- Bot-to-player association
+- Bot command processing
+- Bot persistence (database save/load)
+
+#### Core Methods
+
+##### Bot Creation
+
+```cpp
+/**
+ * @brief Create a new bot
+ * @param owner Player who owns the bot
+ * @param name Bot character name
+ * @param race Race ID (1=Human, 2=Orc, etc.)
+ * @param class_ Class ID (1=Warrior, 2=Paladin, etc.)
+ * @param gender Gender (0=Male, 1=Female)
+ * @return Pointer to created bot, nullptr on failure
+ */
+Player* CreateBot(Player* owner, std::string const& name, uint8 race, uint8 class_, uint8 gender);
+
+/**
+ * @brief Spawn an existing bot character
+ * @param botGuid GUID of bot character
+ * @param owner Player who owns the bot
+ * @return Pointer to spawned bot, nullptr on failure
+ */
+Player* SpawnBot(ObjectGuid botGuid, Player* owner);
+
+/**
+ * @brief Load bot from database
+ * @param botGuid GUID of bot character
+ * @return true if bot was loaded successfully
+ */
+bool LoadBot(ObjectGuid botGuid);
+```
+
+##### Bot Management
+
+```cpp
+/**
+ * @brief Get all bots owned by a player
+ * @param ownerGuid Owner player GUID
+ * @return Vector of bot player pointers
+ */
+std::vector<Player*> GetPlayerBots(ObjectGuid ownerGuid) const;
+
+/**
+ * @brief Get bot by GUID
+ * @param botGuid Bot GUID
+ * @return Pointer to bot, nullptr if not found
+ */
+Player* GetBot(ObjectGuid botGuid) const;
+
+/**
+ * @brief Check if character is a bot
+ * @param playerGuid Player GUID to check
+ * @return true if player is a bot
+ */
+bool IsBot(ObjectGuid playerGuid) const;
+
+/**
+ * @brief Get bot owner
+ * @param botGuid Bot GUID
+ * @return Owner player GUID (null if no owner)
+ */
+ObjectGuid GetBotOwner(ObjectGuid botGuid) const;
+```
+
+##### Bot Removal
+
+```cpp
+/**
+ * @brief Remove bot from world (despawn)
+ * @param botGuid Bot GUID
+ * @return true if bot was removed
+ */
+bool RemoveBot(ObjectGuid botGuid);
+
+/**
+ * @brief Delete bot permanently
+ * @param botGuid Bot GUID
+ * @return true if bot was deleted
+ */
+bool DeleteBot(ObjectGuid botGuid);
+
+/**
+ * @brief Remove all bots owned by a player
+ * @param ownerGuid Owner player GUID
+ */
+void RemoveAllPlayerBots(ObjectGuid ownerGuid);
+```
+
+##### Bot Control
+
+```cpp
+/**
+ * @brief Set bot AI state
+ * @param botGuid Bot GUID
+ * @param state AI state (IDLE, ACTIVE, PAUSED, DISABLED)
+ */
+void SetBotAIState(ObjectGuid botGuid, BotAIState state);
+
+/**
+ * @brief Teleport bot to owner
+ * @param botGuid Bot GUID
+ * @return true if teleport was successful
+ */
+bool TeleportBotToOwner(ObjectGuid botGuid);
+
+/**
+ * @brief Update all bots
+ * @param diff Time delta in milliseconds
+ */
+void Update(uint32 diff);
+```
+
+##### Statistics
+
+```cpp
+/**
+ * @brief Get total number of active bots
+ * @return Active bot count
+ */
+uint32 GetActiveBotCount() const;
+
+/**
+ * @brief Get maximum allowed bots per player
+ * @return Max bots per player
+ */
+uint32 GetMaxBotsPerPlayer() const;
+
+/**
+ * @brief Set maximum allowed bots per player
+ * @param maxBots Maximum number
+ */
+void SetMaxBotsPerPlayer(uint32 maxBots);
+```
+
+#### Usage Example
+
+```cpp
+auto* botMgr = BotManager::instance();
+
+// Create a new bot
+Player* owner = GetPlayer();
+Player* bot = botMgr->CreateBot(
+    owner,
+    "MyBot",          // Name
+    1,                // Human
+    1,                // Warrior
+    0                 // Male
+);
+
+if (bot)
+{
+    TC_LOG_INFO("Created bot: {} (GUID: {})", bot->GetName(), bot->GetGUID());
+    
+    // Get owner's bots
+    auto bots = botMgr->GetPlayerBots(owner->GetGUID());
+    TC_LOG_INFO("{} has {} bots", owner->GetName(), bots.size());
+    
+    // Control the bot
+    botMgr->SetBotAIState(bot->GetGUID(), BotAIState::ACTIVE);
+    
+    // Teleport bot to owner
+    botMgr->TeleportBotToOwner(bot->GetGUID());
+}
+
+// Remove a bot
+botMgr->RemoveBot(bot->GetGUID());
+
+// Get statistics
+uint32 activeBots = botMgr->GetActiveBotCount();
+TC_LOG_INFO("Total active bots: {}", activeBots);
+```
+
+---
+
+### BotFactory
+
+**Purpose**: Factory pattern for creating bot instances with proper initialization.
+
+**Location**: `src/modules/Playerbot/Core/BotFactory.h`
+
+#### Core Methods
+
+```cpp
+/**
+ * @brief Create a bot player instance
+ * @param name Bot character name
+ * @param race Race ID
+ * @param class_ Class ID
+ * @param gender Gender
+ * @param level Starting level (default: 1)
+ * @return Pointer to created player instance
+ */
+Player* CreateBotPlayer(
+    std::string const& name,
+    uint8 race,
+    uint8 class_,
+    uint8 gender,
+    uint8 level = 1
+);
+
+/**
+ * @brief Initialize bot equipment
+ * @param bot Bot player instance
+ * @param level Bot level
+ */
+void InitializeBotEquipment(Player* bot, uint8 level);
+
+/**
+ * @brief Initialize bot spells and abilities
+ * @param bot Bot player instance
+ */
+void InitializeBotSpells(Player* bot);
+
+/**
+ * @brief Set bot starting location
+ * @param bot Bot player instance
+ * @return Starting position
+ */
+Position GetBotStartingLocation(Player* bot) const;
+```
+
+#### Usage Example
+
+```cpp
+auto* factory = BotFactory::instance();
+
+// Create a level 20 warrior bot
+Player* bot = factory->CreateBotPlayer("WarriorBot", 1, 1, 0, 20);
+
+if (bot)
+{
+    // Initialize equipment for level 20
+    factory->InitializeBotEquipment(bot, 20);
+    
+    // Initialize spells
+    factory->InitializeBotSpells(bot);
+    
+    // Set starting location
+    Position startPos = factory->GetBotStartingLocation(bot);
+    bot->Relocate(startPos);
+}
+```
+
+---
+
+### BotSession
+
+**Purpose**: Session management for bot connections (mimics player sessions).
+
+**Location**: `src/modules/Playerbot/Core/BotSession.h`
+
+#### Key Responsibilities
+
+- Bot-server connection management
+- Packet handling (simulated)
+- Bot authentication
+- Session state tracking
+
+#### Core Methods
+
+```cpp
+/**
+ * @brief Create a bot session
+ * @param bot Player instance for the bot
+ * @param owner Owner player
+ * @return Pointer to created session
+ */
+static BotSession* CreateSession(Player* bot, Player* owner);
+
+/**
+ * @brief Get bot AI instance
+ * @return Pointer to BotAI
+ */
+BotAI* GetBotAI() const;
+
+/**
+ * @brief Update session
+ * @param diff Time delta
+ */
+void Update(uint32 diff);
+
+/**
+ * @brief Handle incoming packet (simulated)
+ * @param packet WorldPacket to process
+ */
+void HandlePacket(WorldPacket& packet);
+
+/**
+ * @brief Check if session is active
+ * @return true if session is connected
+ */
+bool IsActive() const;
+
+/**
+ * @brief Logout bot
+ * @param save Save bot to database
+ */
+void LogoutBot(bool save = true);
+```
+
+---
+
+### BotAI
+
+**Purpose**: Core AI controller for bot behavior.
+
+**Location**: `src/modules/Playerbot/Core/BotAI.h`
+
+#### Initialization Flow
+
+```cpp
+// BotAI constructor
+BotAI::BotAI(Player* bot)
+    : _bot(bot)
+{
+    // Create GameSystemsManager facade (owns all 21 managers)
+    _gameSystems = std::make_unique<GameSystemsManager>(bot, this);
+}
+
+// Initialize all systems
+void BotAI::Initialize()
+{
+    // Initialize all managers via facade
+    _gameSystems->Initialize(_bot);
+    
+    TC_LOG_INFO("BotAI initialized for bot: {}", _bot->GetName());
+}
+
+// Main update loop
+void BotAI::Update(uint32 diff)
+{
+    // Update all managers
+    _gameSystems->Update(diff);
+    
+    // Execute bot behavior
+    ExecuteBehavior();
+}
+```
+
+#### Core Methods
+
+```cpp
+/**
+ * @brief Get GameSystemsManager facade
+ * @return Pointer to IGameSystemsManager
+ */
+IGameSystemsManager* GetGameSystems() const;
+
+/**
+ * @brief Execute bot AI behavior
+ * Called every update cycle
+ */
+void ExecuteBehavior();
+
+/**
+ * @brief Handle bot command
+ * @param command Command string
+ * @param args Command arguments
+ */
+void HandleCommand(std::string const& command, std::vector<std::string> const& args);
+
+/**
+ * @brief Set bot strategy
+ * @param strategy Strategy type (FOLLOW, GRIND, QUEST, PVP, etc.)
+ */
+void SetStrategy(BotStrategy strategy);
+
+/**
+ * @brief Get current strategy
+ * @return Current BotStrategy
+ */
+BotStrategy GetStrategy() const;
+```
+
+---
+
+### Bot Command System
+
+**Purpose**: Handle player commands to control bots.
+
+**Location**: `src/modules/Playerbot/Commands/BotCommands.h`
+
+#### Available Commands
+
+```cpp
+// Bot management commands
+.bot add <name> <class> <race>     // Create and spawn a new bot
+.bot remove <name>                  // Remove a bot
+.bot delete <name>                  // Permanently delete a bot
+.bot list                           // List all your bots
+
+// Bot control commands
+.bot summon <name>                  // Teleport bot to you
+.bot follow                         // Make bots follow you
+.bot stay                           // Make bots stay at current position
+.bot attack                         // Make bots attack your target
+
+// Bot AI commands
+.bot ai <enable|disable>            // Enable/disable bot AI
+.bot strategy <strategy>            // Set bot strategy
+.bot autoloot <on|off>              // Enable/disable auto-looting
+
+// Bot profession commands
+.bot profession learn <prof>        // Learn a profession
+.bot profession craft <item>        // Craft an item
+.bot gather <on|off>                // Enable/disable auto-gathering
+
+// Bot economy commands
+.bot sell                           // Sell junk items
+.bot repair                         // Repair equipment
+.bot auction <buy|sell>             // Auction house operations
+```
+
+#### Command Implementation Example
+
+```cpp
+// .bot add command handler
+void HandleBotAddCommand(Player* player, std::string const& name, 
+                         uint8 classId, uint8 raceId)
+{
+    auto* botMgr = BotManager::instance();
+    
+    // Validate inputs
+    if (!IsValidClass(classId) || !IsValidRace(raceId))
+    {
+        player->SendSystemMessage("Invalid class or race");
+        return;
+    }
+    
+    // Check bot limit
+    auto bots = botMgr->GetPlayerBots(player->GetGUID());
+    if (bots.size() >= botMgr->GetMaxBotsPerPlayer())
+    {
+        player->SendSystemMessage("You have reached the maximum number of bots");
+        return;
+    }
+    
+    // Create bot
+    Player* bot = botMgr->CreateBot(player, name, raceId, classId, 0);
+    
+    if (bot)
+    {
+        player->SendSystemMessage("Bot created successfully: " + name);
+        
+        // Auto-summon to player
+        botMgr->TeleportBotToOwner(bot->GetGUID());
+    }
+    else
+    {
+        player->SendSystemMessage("Failed to create bot");
+    }
+}
+```
+
+---
+
+### Bot Database Schema
+
+#### Characters Table Extensions
+
+```sql
+-- Bot-specific fields in characters table
+ALTER TABLE characters ADD COLUMN is_bot TINYINT(1) DEFAULT 0;
+ALTER TABLE characters ADD COLUMN bot_owner_guid BIGINT DEFAULT 0;
+ALTER TABLE characters ADD COLUMN bot_ai_state TINYINT DEFAULT 1;
+
+-- Bot configuration table
+CREATE TABLE IF NOT EXISTS bot_config (
+    bot_guid BIGINT PRIMARY KEY,
+    owner_guid BIGINT NOT NULL,
+    auto_loot TINYINT(1) DEFAULT 1,
+    auto_gather TINYINT(1) DEFAULT 0,
+    auto_quest TINYINT(1) DEFAULT 0,
+    strategy VARCHAR(32) DEFAULT 'FOLLOW',
+    FOREIGN KEY (bot_guid) REFERENCES characters(guid)
+);
+
+-- Bot profession configuration
+CREATE TABLE IF NOT EXISTS bot_professions (
+    bot_guid BIGINT,
+    profession_type SMALLINT,
+    auto_craft TINYINT(1) DEFAULT 0,
+    auto_sell TINYINT(1) DEFAULT 0,
+    PRIMARY KEY (bot_guid, profession_type)
+);
+```
+
+---
+
+### Bot Lifecycle States
+
+```cpp
+enum class BotLifecycleState
+{
+    UNINITIALIZED,      // Bot created but not initialized
+    INITIALIZING,       // Bot systems initializing
+    READY,              // Bot ready to be spawned
+    SPAWNING,           // Bot being added to world
+    ACTIVE,             // Bot active in world
+    PAUSED,             // Bot AI paused
+    DESPAWNING,         // Bot being removed from world
+    CLEANUP             // Bot being deleted
+};
+```
+
+#### State Transition Example
+
+```cpp
+void BotManager::TransitionBotState(ObjectGuid botGuid, BotLifecycleState newState)
+{
+    Player* bot = GetBot(botGuid);
+    if (!bot)
+        return;
+    
+    BotLifecycleState oldState = GetBotState(botGuid);
+    
+    // Validate state transition
+    if (!IsValidStateTransition(oldState, newState))
+    {
+        TC_LOG_ERROR("Invalid state transition: {} -> {}", 
+            StateToString(oldState), StateToString(newState));
+        return;
+    }
+    
+    // Execute state transition
+    switch (newState)
+    {
+        case BotLifecycleState::INITIALIZING:
+            InitializeBot(bot);
+            break;
+            
+        case BotLifecycleState::SPAWNING:
+            SpawnBotInWorld(bot);
+            break;
+            
+        case BotLifecycleState::ACTIVE:
+            ActivateBotAI(bot);
+            break;
+            
+        case BotLifecycleState::PAUSED:
+            PauseBotAI(bot);
+            break;
+            
+        case BotLifecycleState::DESPAWNING:
+            DespawnBot(bot);
+            break;
+            
+        case BotLifecycleState::CLEANUP:
+            CleanupBot(bot);
+            break;
+    }
+    
+    SetBotState(botGuid, newState);
+    TC_LOG_DEBUG("Bot {} transitioned: {} -> {}", 
+        bot->GetName(), StateToString(oldState), StateToString(newState));
+}
+```
+
+---
+
+### Complete Bot Creation Example
+
+```cpp
+/**
+ * @brief Complete workflow for creating and spawning a bot
+ */
+Player* CreateAndSpawnBot(Player* owner, std::string const& name, 
+                         uint8 race, uint8 class_, uint8 level)
+{
+    auto* botMgr = BotManager::instance();
+    auto* factory = BotFactory::instance();
+    
+    // 1. Create bot player instance
+    Player* bot = factory->CreateBotPlayer(name, race, class_, 0, level);
+    if (!bot)
+    {
+        TC_LOG_ERROR("Failed to create bot player instance");
+        return nullptr;
+    }
+    
+    // 2. Initialize bot equipment and spells
+    factory->InitializeBotEquipment(bot, level);
+    factory->InitializeBotSpells(bot);
+    
+    // 3. Create bot session
+    BotSession* session = BotSession::CreateSession(bot, owner);
+    if (!session)
+    {
+        TC_LOG_ERROR("Failed to create bot session");
+        delete bot;
+        return nullptr;
+    }
+    
+    // 4. Create bot AI
+    BotAI* botAI = new BotAI(bot);
+    bot->SetBotAI(botAI);
+    
+    // 5. Initialize AI systems (GameSystemsManager + 21 managers)
+    botAI->Initialize();
+    
+    // 6. Register bot with manager
+    botMgr->RegisterBot(bot, owner->GetGUID());
+    
+    // 7. Save bot to database
+    bot->SaveToDB(true, false);
+    
+    // 8. Add bot to world
+    Position spawnPos = factory->GetBotStartingLocation(bot);
+    bot->Relocate(spawnPos);
+    
+    if (!bot->IsInWorld())
+    {
+        bot->AddToWorld();
+    }
+    
+    // 9. Set initial AI state
+    botMgr->SetBotAIState(bot->GetGUID(), BotAIState::ACTIVE);
+    
+    // 10. Teleport to owner
+    botMgr->TeleportBotToOwner(bot->GetGUID());
+    
+    TC_LOG_INFO("Bot {} created and spawned successfully for owner {}",
+        bot->GetName(), owner->GetName());
+    
+    return bot;
+}
+```
+
+---
+
+### Bot Cleanup and Removal
+
+```cpp
+/**
+ * @brief Proper bot cleanup and removal
+ */
+void RemoveAndCleanupBot(ObjectGuid botGuid)
+{
+    auto* botMgr = BotManager::instance();
+    Player* bot = botMgr->GetBot(botGuid);
+    
+    if (!bot)
+        return;
+    
+    TC_LOG_INFO("Removing bot: {}", bot->GetName());
+    
+    // 1. Pause AI
+    botMgr->SetBotAIState(botGuid, BotAIState::PAUSED);
+    
+    // 2. Save to database
+    bot->SaveToDB(false, false);
+    
+    // 3. Remove from group (if in group)
+    if (Group* group = bot->GetGroup())
+    {
+        group->RemoveMember(bot->GetGUID());
+    }
+    
+    // 4. Shutdown GameSystemsManager (destroys all 21 managers)
+    if (BotAI* botAI = bot->GetBotAI())
+    {
+        botAI->GetGameSystems()->Shutdown();
+    }
+    
+    // 5. Remove from world
+    if (bot->IsInWorld())
+    {
+        bot->RemoveFromWorld();
+    }
+    
+    // 6. Cleanup session
+    if (BotSession* session = bot->GetBotSession())
+    {
+        session->LogoutBot(true);
+        delete session;
+    }
+    
+    // 7. Cleanup AI
+    if (BotAI* botAI = bot->GetBotAI())
+    {
+        delete botAI;
+        bot->SetBotAI(nullptr);
+    }
+    
+    // 8. Unregister from manager
+    botMgr->UnregisterBot(botGuid);
+    
+    TC_LOG_INFO("Bot {} removed and cleaned up", bot->GetName());
+}
+```
+
+---
+
+### Bot Performance Considerations
+
+#### Memory Management
+
+```cpp
+// Per-bot memory footprint estimate
+// - Player instance: ~2-4 KB
+// - BotAI instance: ~1 KB
+// - GameSystemsManager + 21 managers: ~5-10 KB
+// - Total per bot: ~8-15 KB
+
+// For 100 bots: ~800 KB - 1.5 MB
+// For 1000 bots: ~8-15 MB
+```
+
+#### Update Performance
+
+```cpp
+// Bot update frequency
+const uint32 BOT_UPDATE_INTERVAL = 100; // Update every 100ms
+
+void BotManager::Update(uint32 diff)
+{
+    _updateTimer += diff;
+    
+    if (_updateTimer < BOT_UPDATE_INTERVAL)
+        return;
+    
+    _updateTimer = 0;
+    
+    // Update all active bots
+    for (auto& [botGuid, bot] : _activeBots)
+    {
+        if (bot && bot->IsInWorld())
+        {
+            bot->Update(BOT_UPDATE_INTERVAL);
+        }
+    }
+}
+```
+
+#### Optimization Tips
+
+```cpp
+// 1. Limit bot count per player
+const uint32 MAX_BOTS_PER_PLAYER = 5;
+
+// 2. Throttle expensive operations
+const uint32 PROFESSION_CHECK_INTERVAL = 5000;  // Every 5 seconds
+const uint32 AUCTION_CHECK_INTERVAL = 60000;    // Every minute
+
+// 3. Use spatial partitioning for bot updates
+// Only update bots near players
+
+// 4. Lazy initialization
+// Don't initialize unused managers until needed
+
+// 5. Pool bot instances
+// Reuse deleted bot instances instead of creating new ones
+```
+
+---
+
+### Best Practices for Bot Systems
+
+#### 1. Always Check Bot Validity
+
+```cpp
+// ✅ GOOD
+Player* bot = botMgr->GetBot(botGuid);
+if (bot && bot->IsInWorld())
+{
+    bot->Update(diff);
+}
+
+// ❌ BAD
+Player* bot = botMgr->GetBot(botGuid);
+bot->Update(diff); // Crash if bot is null!
+```
+
+#### 2. Proper Lifecycle Management
+
+```cpp
+// ✅ GOOD: Follow complete lifecycle
+CreateBot() → InitializeBot() → SpawnBot() → ... → DespawnBot() → CleanupBot()
+
+// ❌ BAD: Skip initialization
+CreateBot() → SpawnBot() // Missing initialization!
+```
+
+#### 3. Resource Cleanup
+
+```cpp
+// ✅ GOOD: Cleanup in reverse order of creation
+Shutdown GameSystemsManager
+→ Cleanup BotAI
+→ Cleanup BotSession
+→ Remove from world
+→ Delete bot instance
+
+// ❌ BAD: Skip cleanup steps
+delete bot; // Memory leaks!
+```
+
+#### 4. Thread Safety
+
+```cpp
+// ✅ GOOD: Update bots on main thread only
+MainThread::Update()
+{
+    botMgr->Update(diff); // Safe
+}
+
+// ❌ BAD: Update bots from multiple threads
+WorkerThread::Update()
+{
+    botMgr->Update(diff); // NOT THREAD-SAFE!
+}
+```
+
+---
+
+**Section Complete**: Bot Creation and Spawning Systems
+
+This documentation covers the complete bot lifecycle from creation to cleanup, including all management systems, commands, database schema, and best practices.
+
