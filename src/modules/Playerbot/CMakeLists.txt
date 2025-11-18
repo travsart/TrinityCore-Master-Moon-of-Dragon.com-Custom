@@ -408,6 +408,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
@@ -983,6 +985,8 @@ source_group("Movement" FILES
 source_group("Resource" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
 )
 
 source_group("Social" FILES
