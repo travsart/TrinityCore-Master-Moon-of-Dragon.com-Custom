@@ -692,14 +692,8 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IAuctionHouse");
 
-        // Register ProfessionAuctionBridge (Phase 36)
-        container.RegisterInstance<IProfessionAuctionBridge>(
-            std::shared_ptr<IProfessionAuctionBridge>(
-                Playerbot::ProfessionAuctionBridge::instance(),
-                [](IProfessionAuctionBridge*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IProfessionAuctionBridge");
+        // ProfessionAuctionBridge now per-bot (Phase 4.3) - managed by GameSystemsManager
+        // DI registration removed - access via GameSystemsManager::GetProfessionAuctionBridge()
 
         // Register LFGRoleDetector (Phase 37)
         container.RegisterInstance<ILFGRoleDetector>(

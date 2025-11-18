@@ -27,6 +27,7 @@
 #include "Professions/ProfessionManager.h"
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
+#include "Professions/ProfessionAuctionBridge.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
@@ -52,7 +53,7 @@ class BotAI;
  * @brief Concrete implementation of IGameSystemsManager facade
  *
  * **Ownership:**
- * - Owns all 19 manager instances via std::unique_ptr (including bridges)
+ * - Owns all 21 manager instances via std::unique_ptr (including bridges)
  * - Owned by BotAI via std::unique_ptr<IGameSystemsManager>
  * - Returns raw pointers (non-owning) to external callers
  *
@@ -112,6 +113,7 @@ public:
     ProfessionManager* GetProfessionManager() const override { return _professionManager.get(); }
     GatheringMaterialsBridge* GetGatheringMaterialsBridge() const { return _gatheringMaterialsBridge.get(); }
     AuctionMaterialsBridge* GetAuctionMaterialsBridge() const { return _auctionMaterialsBridge.get(); }
+    ProfessionAuctionBridge* GetProfessionAuctionBridge() const { return _professionAuctionBridge.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
@@ -135,7 +137,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 20 managers owned by facade
+    // MANAGER INSTANCES - All 21 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -145,6 +147,7 @@ private:
     std::unique_ptr<ProfessionManager> _professionManager;
     std::unique_ptr<GatheringMaterialsBridge> _gatheringMaterialsBridge;
     std::unique_ptr<AuctionMaterialsBridge> _auctionMaterialsBridge;
+    std::unique_ptr<ProfessionAuctionBridge> _professionAuctionBridge;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 

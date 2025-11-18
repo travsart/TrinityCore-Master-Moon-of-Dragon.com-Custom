@@ -1091,8 +1091,14 @@ GatheringMaterialsBridge* AuctionMaterialsBridge::GetGatheringBridge()
 
 ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
 {
-    // ProfessionAuctionBridge is still singleton (will be refactored in Phase 4.3)
-    return ProfessionAuctionBridge::instance();
+    if (!_bot)
+        return nullptr;
+
+    BotSession* session = static_cast<BotSession*>(_bot->GetSession());
+    if (!session || !session->GetBotAI())
+        return nullptr;
+
+    return session->GetBotAI()->GetGameSystems()->GetProfessionAuctionBridge();
 }
 
 ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()

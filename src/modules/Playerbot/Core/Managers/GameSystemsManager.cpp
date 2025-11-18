@@ -123,6 +123,12 @@ GameSystemsManager::~GameSystemsManager()
         _auctionMaterialsBridge.reset();
     }
 
+    if (_professionAuctionBridge)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ProfessionAuctionBridge");
+        _professionAuctionBridge.reset();
+    }
+
     if (_auctionManager)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionManager");
@@ -235,6 +241,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _professionManager = std::make_unique<ProfessionManager>(_bot);
     _gatheringMaterialsBridge = std::make_unique<GatheringMaterialsBridge>(_bot);
     _auctionMaterialsBridge = std::make_unique<AuctionMaterialsBridge>(_bot);
+    _professionAuctionBridge = std::make_unique<ProfessionAuctionBridge>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
@@ -324,6 +331,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _auctionMaterialsBridge->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ AuctionMaterialsBridge initialized - material sourcing optimization active");
+        }
+
+        if (_professionAuctionBridge)
+        {
+            _professionAuctionBridge->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ ProfessionAuctionBridge initialized - profession-auction coordination active");
         }
 
         if (_auctionManager)
@@ -538,15 +551,13 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     if (_auctionMaterialsBridge)
         _auctionMaterialsBridge->Update(diff);
 
+    // Profession auction bridge handles selling materials/crafts and buying materials for leveling
+    if (_professionAuctionBridge)
+        _professionAuctionBridge->Update(diff);
+
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
         _auctionManager->Update(diff);
-
-    // Profession auction bridge coordinates profession materials with auction house
-    ProfessionAuctionBridge::instance()->Update(_bot, diff);
-
-    // Auction materials bridge provides smart material sourcing decisions
-    AuctionMaterialsBridge::instance()->Update(_bot, diff);
 
     // Group coordinator handles group/raid mechanics, role assignment, and coordination
     if (_groupCoordinator)

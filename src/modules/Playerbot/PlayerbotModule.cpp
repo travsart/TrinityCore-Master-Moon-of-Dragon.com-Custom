@@ -188,17 +188,10 @@ bool PlayerbotModule::Initialize()
     TC_LOG_INFO("server.loading", "Profession Database initialized successfully");
 
     // Initialize Profession Bridges (Phase 3 Option C: Economic integration)
-    TC_LOG_INFO("server.loading", "Initializing Profession-Auction Bridge...");
-    Playerbot::ProfessionAuctionBridge::instance()->Initialize();
-    TC_LOG_INFO("server.loading", "Profession-Auction Bridge initialized successfully");
-
-    TC_LOG_INFO("server.loading", "Initializing Gathering-Materials Bridge...");
-    Playerbot::GatheringMaterialsBridge::instance()->Initialize();
-    TC_LOG_INFO("server.loading", "Gathering-Materials Bridge initialized successfully");
-
-    TC_LOG_INFO("server.loading", "Initializing Auction-Materials Bridge...");
-    Playerbot::AuctionMaterialsBridge::instance()->Initialize();
-    TC_LOG_INFO("server.loading", "Auction-Materials Bridge initialized successfully");
+    // NOTE: All bridges now per-bot (Phase 4.1-4.3), initialized in GameSystemsManager
+    //  - GatheringMaterialsBridge (Phase 4.1)
+    //  - AuctionMaterialsBridge (Phase 4.2)
+    //  - ProfessionAuctionBridge (Phase 4.3)
 
     TC_LOG_INFO("server.loading", "Initializing Banking Manager...");
     Playerbot::BankingManager::instance()->OnInitialize();
