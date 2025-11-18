@@ -29,6 +29,7 @@
 #include "Professions/AuctionMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Economy/AuctionManager.h"
+#include "Banking/BankingManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -76,6 +77,12 @@ class BotAI;
  *
  * **Phase 4.2 Integration (2025-11-18):**
  * AuctionMaterialsBridge converted from singleton to per-bot instance (20th manager)
+ *
+ * **Phase 4.3 Integration (2025-11-18):**
+ * ProfessionAuctionBridge converted from singleton to per-bot instance (21st manager)
+ *
+ * **Phase 5.1 Integration (2025-11-18):**
+ * BankingManager converted from singleton to per-bot instance (22nd manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -115,6 +122,7 @@ public:
     AuctionMaterialsBridge* GetAuctionMaterialsBridge() const { return _auctionMaterialsBridge.get(); }
     ProfessionAuctionBridge* GetProfessionAuctionBridge() const { return _professionAuctionBridge.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
+    BankingManager* GetBankingManager() const { return _bankingManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -137,7 +145,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 21 managers owned by facade
+    // MANAGER INSTANCES - All 22 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -149,6 +157,7 @@ private:
     std::unique_ptr<AuctionMaterialsBridge> _auctionMaterialsBridge;
     std::unique_ptr<ProfessionAuctionBridge> _professionAuctionBridge;
     std::unique_ptr<AuctionManager> _auctionManager;
+    std::unique_ptr<BankingManager> _bankingManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
