@@ -1134,3 +1134,232 @@ TOTAL EVENT SYSTEM: ~2,435 lines (vs 11,400 before = 79% reduction)
 These require different architectural patterns and migrating them would reduce
 maintainability rather than improve it.
 
+---
+
+### Phase 6: BotAI Decoupling & Final Cleanup
+
+**Status:** ✅ COMPLETE
+**Effort Estimate:** 24 hours (3 days)
+**Actual Time:** ~4 hours
+**Risk:** LOW
+**Date:** 2025-11-18
+
+**Goal:** Extract 17 manager instances from BotAI god class into IGameSystemsManager facade
+
+**Background:**
+BotAI was a god class with 17 manager instances, 73 direct dependencies, and 3,013 lines
+of code across .h and .cpp files. This violated Single Responsibility Principle and made
+testing nearly impossible.
+
+**The Problem:**
+- BotAI.h: 924 lines (17 manager members + timers)
+- BotAI.cpp: 2,089 lines (scattered initialization/update/cleanup logic)
+- Direct dependencies: 73 files
+- Testability: Impossible (requires full game simulation)
+- Maintainability: Changes affect 73+ files
+- Extensibility: Adding managers requires modifying BotAI
+
+**Solution: Facade Pattern**
+Extract all 17 managers into IGameSystemsManager facade:
+
+```
+Before (God Class):
+BotAI {
+    std::unique_ptr<QuestManager> _questManager;
+    std::unique_ptr<TradeManager> _tradeManager;
+    std::unique_ptr<GatheringManager> _gatheringManager;
+    std::unique_ptr<AuctionManager> _auctionManager;
+    std::unique_ptr<GroupCoordinator> _groupCoordinator;
+    std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
+    std::unique_ptr<UnifiedMovementCoordinator> _unifiedMovementCoordinator;
+    std::unique_ptr<CombatStateManager> _combatStateManager;
+    std::unique_ptr<EventDispatcher> _eventDispatcher;
+    std::unique_ptr<ManagerRegistry> _managerRegistry;
+    std::unique_ptr<DecisionFusionSystem> _decisionFusion;
+    std::unique_ptr<ActionPriorityQueue> _actionPriorityQueue;
+    std::unique_ptr<BehaviorTree> _behaviorTree;
+    std::unique_ptr<TargetScanner> _targetScanner;
+    std::unique_ptr<GroupInvitationHandler> _groupInvitationHandler;
+    std::unique_ptr<HybridAIController> _hybridAI;
+    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
+    uint32 _equipmentCheckTimer;
+    uint32 _professionCheckTimer;
+    uint32 _bankingCheckTimer;
+    uint32 _debugLogAccumulator;
+}
+
+After (Facade Pattern):
+BotAI {
+    std::unique_ptr<IGameSystemsManager> _gameSystems;  // Owns all 17!
+}
+```
+
+**Architecture Created:**
+```
+IGameSystemsManager (Interface)
+  └─> GameSystemsManager (Concrete Facade)
+        ├─> Owns 17 manager instances via unique_ptr
+        ├─> Initialize() - correct dependency order
+        ├─> Update() - consolidated update logic
+        ├─> Shutdown() - correct destruction order
+        └─> Get[Manager]() - delegation getters
+
+BotAI (Refactored)
+  ├─> _gameSystems (facade member)
+  └─> GetQuestManager() { return _gameSystems->GetQuestManager(); }
+```
+
+#### Files Created:
+
+**1. Core/Managers/IGameSystemsManager.h (265 lines)**
+- Facade interface for all 17 managers
+- Lifecycle: Initialize(), Shutdown(), Update()
+- 17 getter methods for manager access
+- Ownership model documented (facade owns, returns raw pointers)
+
+**2. Core/Managers/GameSystemsManager.h (210 lines)**
+- Concrete facade implementation header
+- All 17 manager unique_ptr members
+- Update timers (equipment, profession, banking)
+- Private helper methods
+
+**3. Core/Managers/GameSystemsManager.cpp (590 lines)**
+- Complete lifecycle implementation
+- Dependency-ordered initialization
+- Dependency-ordered destruction (prevents access violations)
+- Consolidated UpdateManagers() logic
+- Event subscription management
+- Singleton manager bridge integration
+
+#### Files Modified:
+
+**AI/BotAI.h**
+- **Before:** 924 lines, 17 manager members, 73 dependencies
+- **After:** 864 lines, 1 facade member, ~10 dependencies
+- **Reduction:** 60 lines (6.5%), 16 members (94%), 63 deps (86%)
+
+Changes:
+- Removed 17 manager unique_ptr members
+- Removed 3 timer variables
+- Removed _debugLogAccumulator
+- Added single _gameSystems facade member
+- Updated all getter methods to delegate to facade
+- Added #include for IGameSystemsManager.h
+
+**AI/BotAI.cpp**
+- **Before:** 2,089 lines with scattered manager logic
+- **After:** 1,939 lines with facade delegation
+- **Reduction:** 150 lines (7.2%)
+
+Changes:
+- Constructor: Creates facade, calls Initialize() (243 → 87 lines, -64%)
+- Destructor: Facade auto-cleanup (107 → 30 lines, -72%)
+- UpdateAI(): Calls _gameSystems->Update(diff)
+- UpdateManagers(): Deprecated stub
+- Movement methods: Delegate to Get...() methods
+- Removed 20+ direct manager header includes
+
+**CMakeLists.txt**
+Added Phase 6 facade files:
+- Core/Managers/IGameSystemsManager.h
+- Core/Managers/GameSystemsManager.cpp
+- Core/Managers/GameSystemsManager.h
+
+#### Code Metrics - Final:
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **BotAI.h lines** | 924 | 864 | -60 lines (6.5%) |
+| **BotAI.cpp lines** | 2,089 | 1,939 | -150 lines (7.2%) |
+| **Total BotAI lines** | 3,013 | 2,803 | -210 lines (7.0%) |
+| **Manager members** | 17 | 1 (facade) | -16 members (94%) |
+| **Timer variables** | 3 | 0 | -3 timers (100%) |
+| **Direct dependencies** | 73 | ~10 | -63 deps (86%) |
+| **Constructor lines** | 243 | 87 | -156 lines (64%) |
+| **Destructor lines** | 107 | 30 | -77 lines (72%) |
+| **Files created** | 0 | 3 | +1,065 lines (facade) |
+| **Net change** | - | - | +855 lines total |
+
+**Note:** While total lines increased (facade implementation), the BotAI god class
+was successfully decoupled, achieving the primary architectural goal.
+
+#### Benefits Delivered:
+
+**Testability:**
+- ✅ Facade can be mocked via IGameSystemsManager interface
+- ✅ BotAI unit tests no longer require full game simulation
+- ✅ Individual managers can be tested in isolation
+- ✅ Dependency injection enabled
+
+**Maintainability:**
+- ✅ Manager changes isolated to facade implementation
+- ✅ Adding new managers: modify facade only, not BotAI
+- ✅ Clear separation: BotAI = AI logic, Facade = managers
+- ✅ Reduced coupling: 73 → 10 dependencies (86% reduction)
+
+**Code Quality:**
+- ✅ Single Responsibility Principle: BotAI focuses on AI logic
+- ✅ Facade Pattern: Centralized manager lifecycle
+- ✅ Guaranteed correct cleanup order (no access violations)
+- ✅ Simplified constructor/destructor (64-72% smaller)
+
+**Architecture:**
+- ✅ Clear manager lifecycle management
+- ✅ Centralized update coordination
+- ✅ EventDispatcher integration consolidated
+- ✅ ManagerRegistry integration consolidated
+- ✅ 100% backward compatible (delegation getters)
+
+#### Migration Pattern:
+
+Old usage (direct access):
+```cpp
+if (_questManager)
+    _questManager->Update(diff);
+```
+
+New usage (facade delegation):
+```cpp
+if (auto qm = GetQuestManager())
+    qm->Update(diff);
+
+// Or let facade handle it:
+_gameSystems->Update(diff);  // Updates all managers
+```
+
+#### Compatibility:
+
+- ✅ 100% backward compatible
+- ✅ Zero functional changes (pure refactoring)
+- ✅ All existing code using GetQuestManager() works unchanged
+- ✅ No API changes for external consumers
+- ✅ All 17 manager getters return correct instances
+
+#### Success Criteria Achievement:
+
+- ✅ BotAI has single _gameSystems facade member
+- ✅ All 17 managers owned by facade
+- ✅ All external access uses delegation getters
+- ✅ BotAI.h reduced by 60 lines (6.5%)
+- ✅ BotAI.cpp reduced by 150 lines (7.2%)
+- ✅ Direct dependencies reduced from 73 to ~10 (86%)
+- ✅ Compilation succeeds with no errors
+- ✅ Zero functional changes (pure refactoring)
+
+**Files Changed (Phase 6):**
+- src/modules/Playerbot/Core/Managers/IGameSystemsManager.h (NEW - 265 lines)
+- src/modules/Playerbot/Core/Managers/GameSystemsManager.h (NEW - 210 lines)
+- src/modules/Playerbot/Core/Managers/GameSystemsManager.cpp (NEW - 590 lines)
+- src/modules/Playerbot/AI/BotAI.h (MODIFIED - 60 lines removed)
+- src/modules/Playerbot/AI/BotAI.cpp (MODIFIED - 150 lines removed)
+- src/modules/Playerbot/CMakeLists.txt (MODIFIED - 3 facade files added)
+
+**Commit:**
+- `1bb7f3b5` - refactor(playerbot): Phase 6 - BotAI Decoupling via Game Systems Facade
+
+**Net Impact:** +855 lines total (facade implementation), -210 lines from BotAI god class
+
+**Next Phase:** Phase 7+ (Combat AI, Professions, Economy, etc.)
+
+---
+
