@@ -26,6 +26,7 @@
 #include "Professions/GatheringManager.h"
 #include "Professions/ProfessionManager.h"
 #include "Professions/GatheringMaterialsBridge.h"
+#include "Professions/AuctionMaterialsBridge.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
@@ -71,6 +72,9 @@ class BotAI;
  *
  * **Phase 4.1 Integration (2025-11-18):**
  * GatheringMaterialsBridge converted from singleton to per-bot instance (19th manager)
+ *
+ * **Phase 4.2 Integration (2025-11-18):**
+ * AuctionMaterialsBridge converted from singleton to per-bot instance (20th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -106,6 +110,8 @@ public:
     TradeManager* GetTradeManager() const override { return _tradeManager.get(); }
     GatheringManager* GetGatheringManager() const override { return _gatheringManager.get(); }
     ProfessionManager* GetProfessionManager() const override { return _professionManager.get(); }
+    GatheringMaterialsBridge* GetGatheringMaterialsBridge() const { return _gatheringMaterialsBridge.get(); }
+    AuctionMaterialsBridge* GetAuctionMaterialsBridge() const { return _auctionMaterialsBridge.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
@@ -129,7 +135,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 19 managers owned by facade
+    // MANAGER INSTANCES - All 20 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -138,6 +144,7 @@ private:
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<ProfessionManager> _professionManager;
     std::unique_ptr<GatheringMaterialsBridge> _gatheringMaterialsBridge;
+    std::unique_ptr<AuctionMaterialsBridge> _auctionMaterialsBridge;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
