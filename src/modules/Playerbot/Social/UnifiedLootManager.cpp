@@ -8,12 +8,13 @@
  */
 
 #include "UnifiedLootManager.h"
-#include "LootAnalysis.h"
-#include "LootCoordination.h"
 #include "LootDistribution.h"
 #include "Log.h"
 #include <sstream>
 #include "GameTime.h"
+
+// Note: LootAnalysis and LootCoordination were stub headers with no implementations.
+// They have been removed during consolidation. Real implementations needed here.
 
 namespace Playerbot
 {
@@ -47,44 +48,53 @@ UnifiedLootManager::~UnifiedLootManager()
 
 float UnifiedLootManager::AnalysisModule::CalculateItemValue(Player* player, LootItem const& item)
 {
-    // Delegate to existing LootAnalysis for now
-    // TODO: Move logic here after migration
+    // TODO: Implement item value calculation
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
     _itemsAnalyzed++;
-    return LootAnalysis::instance()->CalculateItemValue(player, item);
+    return 0.0f;  // Placeholder - needs real implementation
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateUpgradeValue(Player* player, LootItem const& item)
 {
-    // Delegate to existing LootAnalysis
-    auto value = LootAnalysis::instance()->CalculateUpgradeValue(player, item);
-    if (value >= 15.0f) // Significant upgrade threshold
-        _upgradesDetected++;
-    return value;
+    // TODO: Implement upgrade value calculation
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    _upgradesDetected++;
+    return 0.0f;  // Placeholder - needs real implementation
 }
 
 bool UnifiedLootManager::AnalysisModule::IsSignificantUpgrade(Player* player, LootItem const& item)
 {
-    return LootAnalysis::instance()->IsSignificantUpgrade(player, item);
+    // TODO: Implement upgrade significance check
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    return false;  // Placeholder - needs real implementation
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateStatWeight(Player* player, uint32 statType)
 {
-    return LootAnalysis::instance()->CalculateStatWeight(player, statType);
+    // TODO: Implement stat weight calculation
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    return 0.0f;  // Placeholder - needs real implementation
 }
 
 float UnifiedLootManager::AnalysisModule::CompareItems(Player* player, LootItem const& newItem, Item const* currentItem)
 {
-    return LootAnalysis::instance()->CompareItems(player, newItem, currentItem);
+    // TODO: Implement item comparison
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    return 0.0f;  // Placeholder - needs real implementation
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateItemScore(Player* player, LootItem const& item)
 {
-    return LootAnalysis::instance()->CalculateItemScore(player, item);
+    // TODO: Implement item scoring
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    return 0.0f;  // Placeholder - needs real implementation
 }
 
 std::vector<std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetStatPriorities(Player* player)
 {
-    return LootAnalysis::instance()->GetStatPriorities(player);
+    // TODO: Implement stat priority calculation
+    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    return {};  // Placeholder - needs real implementation
 }
 
 // ============================================================================
@@ -95,8 +105,8 @@ void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, L
 {
     std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
 
-    // Delegate to existing LootCoordination
-    LootCoordination::instance()->InitiateLootSession(group, loot);
+    // TODO: Implement loot session initiation
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 
     // Track in unified system
     uint32 sessionId = _nextSessionId++;
@@ -107,14 +117,16 @@ void UnifiedLootManager::CoordinationModule::InitiateLootSession(Group* group, L
 
 void UnifiedLootManager::CoordinationModule::ProcessLootSession(Group* group, uint32 lootSessionId)
 {
-    LootCoordination::instance()->ProcessLootSession(group, lootSessionId);
+    // TODO: Implement loot session processing
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::CompleteLootSession(uint32 lootSessionId)
 {
     std::lock_guard<decltype(_sessionMutex)> lock(_sessionMutex);
 
-    LootCoordination::instance()->CompleteLootSession(lootSessionId);
+    // TODO: Implement loot session completion
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 
     // Clean up from unified tracking
     auto it = _activeSessions.find(lootSessionId);
@@ -127,53 +139,63 @@ void UnifiedLootManager::CoordinationModule::CompleteLootSession(uint32 lootSess
 
 void UnifiedLootManager::CoordinationModule::HandleLootSessionTimeout(uint32 lootSessionId)
 {
-    LootCoordination::instance()->HandleLootSessionTimeout(lootSessionId);
+    // TODO: Implement loot session timeout handling
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
     CompleteLootSession(lootSessionId); // Cleanup
 }
 
 void UnifiedLootManager::CoordinationModule::OrchestrateLootDistribution(Group* group, std::vector<LootItem> const& items)
 {
-    LootCoordination::instance()->OrchestrateLootDistribution(group, items);
+    // TODO: Implement loot distribution orchestration
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::PrioritizeLootDistribution(Group* group, std::vector<LootItem>& items)
 {
-    LootCoordination::instance()->PrioritizeLootDistribution(group, items);
+    // TODO: Implement loot distribution prioritization
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::OptimizeLootSequence(Group* group, std::vector<LootItem>& items)
 {
-    LootCoordination::instance()->OptimizeLootSequence(group, items);
+    // TODO: Implement loot sequence optimization
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::FacilitateGroupLootDiscussion(Group* group, LootItem const& item)
 {
-    LootCoordination::instance()->FacilitateGroupLootDiscussion(group, item);
+    // TODO: Implement group loot discussion facilitation
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::HandleLootConflictResolution(Group* group, LootItem const& item)
 {
-    LootCoordination::instance()->HandleLootConflictResolution(group, item);
+    // TODO: Implement loot conflict resolution
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::BroadcastLootRecommendations(Group* group, LootItem const& item)
 {
-    LootCoordination::instance()->BroadcastLootRecommendations(group, item);
+    // TODO: Implement loot recommendation broadcasting
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::OptimizeLootEfficiency(Group* group)
 {
-    LootCoordination::instance()->OptimizeLootEfficiency(group);
+    // TODO: Implement loot efficiency optimization
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::MinimizeLootTime(Group* group, uint32 sessionId)
 {
-    LootCoordination::instance()->MinimizeLootTime(group, sessionId);
+    // TODO: Implement loot time minimization
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 void UnifiedLootManager::CoordinationModule::MaximizeLootFairness(Group* group, uint32 sessionId)
 {
-    LootCoordination::instance()->MaximizeLootFairness(group, sessionId);
+    // TODO: Implement loot fairness maximization
+    // LootCoordination was a stub interface with no implementation - removed during consolidation
 }
 
 // ============================================================================
