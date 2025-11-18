@@ -192,10 +192,7 @@ bool PlayerbotModule::Initialize()
     //  - GatheringMaterialsBridge (Phase 4.1)
     //  - AuctionMaterialsBridge (Phase 4.2)
     //  - ProfessionAuctionBridge (Phase 4.3)
-
-    TC_LOG_INFO("server.loading", "Initializing Banking Manager...");
-    Playerbot::BankingManager::instance()->OnInitialize();
-    TC_LOG_INFO("server.loading", "Banking Manager initialized successfully");
+    //  - BankingManager (Phase 5.1) - Personal banking automation
 
     TC_LOG_INFO("server.loading", "Initializing Profession Event Bus...");
     // ProfessionEventBus is event-driven, no initialization required (lazy init)

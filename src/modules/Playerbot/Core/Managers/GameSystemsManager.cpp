@@ -135,6 +135,12 @@ GameSystemsManager::~GameSystemsManager()
         _auctionManager.reset();
     }
 
+    if (_bankingManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BankingManager");
+        _bankingManager.reset();
+    }
+
     if (_groupCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GroupCoordinator");
@@ -243,6 +249,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _auctionMaterialsBridge = std::make_unique<AuctionMaterialsBridge>(_bot);
     _professionAuctionBridge = std::make_unique<ProfessionAuctionBridge>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
+    _bankingManager = std::make_unique<BankingManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -343,6 +350,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _auctionManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ AuctionManager initialized via IManagerBase");
+        }
+
+        if (_bankingManager)
+        {
+            _bankingManager->OnInitialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ BankingManager initialized - personal banking automation active");
         }
 
         if (_groupCoordinator)
@@ -563,6 +576,10 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     if (_groupCoordinator)
         _groupCoordinator->Update(diff);
 
+    // Banking manager handles personal banking automation (gold/items)
+    if (_bankingManager)
+        _bankingManager->OnUpdate(_bot, diff);
+
     // ========================================================================
     // EQUIPMENT AUTO-EQUIP - Check every 10 seconds
     // ========================================================================
@@ -582,16 +599,6 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         _professionCheckTimer = 0;
         if (_professionManager)
             _professionManager->Update(diff);
-    }
-
-    // ========================================================================
-    // BANKING AUTOMATION - Check every 5 minutes
-    // ========================================================================
-    _bankingCheckTimer += diff;
-    if (_bankingCheckTimer >= 300000) // 5 minutes
-    {
-        _bankingCheckTimer = 0;
-        BankingManager::instance()->Update(_bot, diff);
     }
 }
 
