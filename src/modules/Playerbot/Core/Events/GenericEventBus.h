@@ -23,6 +23,7 @@
 #include <atomic>
 #include <mutex>
 #include <algorithm>
+#include <functional>
 
 namespace Playerbot
 {
@@ -537,6 +538,95 @@ public:
         TC_LOG_DEBUG("playerbot.events", "EventBus: Statistics reset");
     }
 
+    /**
+     * @brief Get maximum queue size limit
+     *
+     * @return Current maximum queue size
+     */
+    uint32 GetMaxQueueSize() const
+    {
+        return _maxQueueSize;
+    }
+
+    // ====================================================================
+    // CALLBACK SUBSCRIPTION SUPPORT (for non-BotAI subscribers)
+    // ====================================================================
+
+    using EventHandler = std::function<void(TEvent const&)>;
+
+    /**
+     * @brief Subscribe a callback function to specific event types
+     *
+     * Allows non-BotAI code to subscribe using callback functions.
+     * Useful for system components that need event notifications.
+     *
+     * @param handler Callback function to invoke when events occur
+     * @param types Event types to subscribe to
+     * @return Subscription ID for later unsubscription (0 on failure)
+     *
+     * Thread Safety: Yes (mutex-protected)
+     * Performance: O(1)
+     */
+    uint32 SubscribeCallback(EventHandler handler, std::vector<EventType> const& types)
+    {
+        if (!handler || types.empty())
+            return 0;
+
+        std::lock_guard lock(_callbackMutex);
+
+        uint32 subscriptionId = _nextCallbackId++;
+        _callbackSubscriptions[subscriptionId] = CallbackSubscription{subscriptionId, handler, types};
+
+        TC_LOG_DEBUG("playerbot.events", "EventBus: Callback {} subscribed to {} event types",
+            subscriptionId, types.size());
+        return subscriptionId;
+    }
+
+    /**
+     * @brief Unsubscribe a callback by subscription ID
+     *
+     * Removes the callback subscription identified by the given ID.
+     *
+     * @param subscriptionId The ID returned from SubscribeCallback
+     *
+     * Thread Safety: Yes (mutex-protected)
+     * Performance: O(1)
+     */
+    void UnsubscribeCallback(uint32 subscriptionId)
+    {
+        std::lock_guard lock(_callbackMutex);
+
+        auto it = _callbackSubscriptions.find(subscriptionId);
+        if (it != _callbackSubscriptions.end())
+        {
+            _callbackSubscriptions.erase(it);
+            TC_LOG_DEBUG("playerbot.events", "EventBus: Callback {} unsubscribed", subscriptionId);
+        }
+    }
+
+    /**
+     * @brief Get total number of events published for specific type
+     *
+     * @param type Event type to query
+     * @return Number of events published for this type
+     */
+    uint64 GetEventCount(EventType type) const
+    {
+        std::lock_guard lock(_eventCountMutex);
+        auto it = _eventCounts.find(type);
+        return it != _eventCounts.end() ? it->second : 0;
+    }
+
+    /**
+     * @brief Get total events published across all types
+     *
+     * @return Total event count
+     */
+    uint64 GetTotalEventsPublished() const
+    {
+        return _stats.totalEventsPublished.load();
+    }
+
 private:
     /**
      * @brief Private constructor (singleton pattern)
@@ -558,65 +648,92 @@ private:
     }
 
     /**
-     * @brief Dispatch event to subscribed bots
+     * @brief Dispatch event to subscribed bots and callbacks
      *
      * Internal method that routes events to appropriate subscribers using
-     * the IEventHandler<TEvent> interface for type-safe event delivery.
+     * the IEventHandler<TEvent> interface for type-safe event delivery,
+     * and also invokes callback subscriptions.
      *
      * @param event The event to dispatch
      *
-     * Thread Safety: Called with _subscriptionMutex held
-     * Performance: O(n) where n is number of subscribers
+     * Thread Safety: Acquires both _subscriptionMutex and _callbackMutex
+     * Performance: O(n + m) where n is BotAI subscribers, m is callbacks
      */
     void DispatchEvent(TEvent const& event)
     {
-        std::lock_guard lock(_subscriptionMutex);
-
-        // Iterate through all subscriptions and dispatch to matching bots
-        for (auto const& [subscriberGuid, eventTypes] : _subscriptions)
+        // Dispatch to BotAI subscribers
         {
-            // Check if this subscriber is interested in this event type
-            if (eventTypes.find(event.type) == eventTypes.end())
-                continue;  // Not subscribed to this event type
+            std::lock_guard lock(_subscriptionMutex);
 
-            // Find the bot pointer
-            auto pointerIt = _subscriberPointers.find(subscriberGuid);
-            if (pointerIt == _subscriberPointers.end())
+            for (auto const& [subscriberGuid, eventTypes] : _subscriptions)
             {
-                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} subscribed but pointer not found!",
-                    subscriberGuid.ToString());
-                continue;
-            }
+                // Check if this subscriber is interested in this event type
+                if (eventTypes.find(event.type) == eventTypes.end())
+                    continue;  // Not subscribed to this event type
 
-            BotAI* botAI = pointerIt->second;
-            if (!botAI)
-            {
-                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} has null BotAI pointer!",
-                    subscriberGuid.ToString());
-                continue;
-            }
+                // Find the bot pointer
+                auto pointerIt = _subscriberPointers.find(subscriberGuid);
+                if (pointerIt == _subscriberPointers.end())
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} subscribed but pointer not found!",
+                        subscriberGuid.ToString());
+                    continue;
+                }
 
-            // Cast to event handler interface and dispatch
-            // BotAI must implement IEventHandler<TEvent> for each event type it subscribes to
-            IEventHandler<TEvent>* handler = dynamic_cast<IEventHandler<TEvent>*>(botAI);
-            if (!handler)
-            {
-                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} does not implement IEventHandler<{}>!",
-                    subscriberGuid.ToString(), typeid(TEvent).name());
-                continue;
-            }
+                BotAI* botAI = pointerIt->second;
+                if (!botAI)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} has null BotAI pointer!",
+                        subscriberGuid.ToString());
+                    continue;
+                }
 
-            // Dispatch event to handler
-            try
-            {
-                handler->HandleEvent(event);
-                TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
-                    subscriberGuid.ToString(), event.ToString());
+                // Cast to event handler interface and dispatch
+                IEventHandler<TEvent>* handler = dynamic_cast<IEventHandler<TEvent>*>(botAI);
+                if (!handler)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} does not implement IEventHandler<{}>!",
+                        subscriberGuid.ToString(), typeid(TEvent).name());
+                    continue;
+                }
+
+                // Dispatch event to handler
+                try
+                {
+                    handler->HandleEvent(event);
+                    TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
+                        subscriberGuid.ToString(), event.ToString());
+                }
+                catch (std::exception const& e)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
+                        subscriberGuid.ToString(), e.what());
+                }
             }
-            catch (std::exception const& e)
+        }
+
+        // Dispatch to callback subscribers
+        {
+            std::lock_guard lock(_callbackMutex);
+
+            for (auto const& [subscriptionId, subscription] : _callbackSubscriptions)
             {
-                TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
-                    subscriberGuid.ToString(), e.what());
+                // Check if callback is interested in this event type
+                if (std::find(subscription.types.begin(), subscription.types.end(), event.type) == subscription.types.end())
+                    continue;
+
+                // Invoke callback
+                try
+                {
+                    subscription.handler(event);
+                    TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to callback {}: {}",
+                        subscriptionId, event.ToString());
+                }
+                catch (std::exception const& e)
+                {
+                    TC_LOG_ERROR("playerbot.events", "EventBus: Exception in callback {} handler: {}",
+                        subscriptionId, e.what());
+                }
             }
         }
     }
@@ -627,17 +744,34 @@ private:
     EventBus(EventBus&&) = delete;
     EventBus& operator=(EventBus&&) = delete;
 
+    // Callback subscription structure
+    struct CallbackSubscription
+    {
+        uint32 id;
+        EventHandler handler;
+        std::vector<EventType> types;
+    };
+
     // Priority queue for events (highest priority first)
     std::priority_queue<TEvent> _eventQueue;
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _queueMutex;
 
-    // Subscriptions: botGuid -> set of subscribed event types
+    // BotAI Subscriptions: botGuid -> set of subscribed event types
     std::unordered_map<ObjectGuid, std::unordered_set<EventType>> _subscriptions;
 
     // Subscriber pointers: botGuid -> BotAI* (for event dispatch)
     std::unordered_map<ObjectGuid, BotAI*> _subscriberPointers;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _subscriptionMutex;
+
+    // Callback Subscriptions: subscriptionId -> CallbackSubscription
+    std::unordered_map<uint32, CallbackSubscription> _callbackSubscriptions;
+    uint32 _nextCallbackId{1};
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _callbackMutex;
+
+    // Event counts per type (for statistics)
+    mutable std::unordered_map<EventType, uint64> _eventCounts;
+    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _eventCountMutex;
 
     // Configuration
     uint32 _maxQueueSize{10000};
