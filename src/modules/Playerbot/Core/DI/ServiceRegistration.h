@@ -159,7 +159,7 @@
 #include "Social/AuctionHouse.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "LFG/LFGRoleDetector.h"
-#include "Social/VendorInteraction.h"
+// Social/VendorInteraction.h removed - skeleton with no implementation
 #include "LFG/LFGBotSelector.h"
 #include "Social/GuildIntegration.h"
 #include "Dungeon/DungeonBehavior.h"
@@ -710,14 +710,10 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered ILFGRoleDetector");
 
-        // Register VendorInteraction (Phase 38)
-        container.RegisterInstance<IVendorInteraction>(
-            std::shared_ptr<IVendorInteraction>(
-                Playerbot::VendorInteraction::instance(),
-                [](IVendorInteraction*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IVendorInteraction");
+        // Register VendorInteraction (Phase 38) - REMOVED
+        // VendorInteraction skeleton had no implementation
+        // Real vendor code is in Interaction/VendorInteractionManager (not using DI)
+        // TODO: Consider migrating VendorInteractionManager to DI in future
 
         // Register LFGBotSelector (Phase 39)
         container.RegisterInstance<ILFGBotSelector>(

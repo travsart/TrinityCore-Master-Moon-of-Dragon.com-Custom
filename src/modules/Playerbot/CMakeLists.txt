@@ -757,7 +757,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Vendors/VendorInteraction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.cpp
@@ -1288,7 +1287,6 @@ source_group("Interaction" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/GossipHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Core/InteractionValidator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/Vendors/VendorInteraction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/VendorInteractionManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interaction/FlightMasterManager.cpp
