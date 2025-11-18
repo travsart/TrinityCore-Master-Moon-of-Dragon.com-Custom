@@ -888,14 +888,9 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IBotWorldEntryQueue");
 
-        // Register MountManager (Phase 60)
-        container.RegisterInstance<Playerbot::IMountManager>(
-            std::shared_ptr<Playerbot::IMountManager>(
-                Playerbot::MountManager::instance(),
-                [](Playerbot::IMountManager*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IMountManager");
+        // NOTE: MountManager is now per-bot (Phase 6.2)
+        // No longer registered as singleton - owned by GameSystemsManager
+        // Access via: botAI->GetGameSystems()->GetMountManager()
 
         // Register PlayerbotCharacterDBInterface (Phase 61)
         container.RegisterInstance<Playerbot::IPlayerbotCharacterDBInterface>(

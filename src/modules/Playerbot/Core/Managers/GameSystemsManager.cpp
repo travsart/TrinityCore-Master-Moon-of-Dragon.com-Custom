@@ -147,6 +147,12 @@ GameSystemsManager::~GameSystemsManager()
         _equipmentManager.reset();
     }
 
+    if (_mountManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying MountManager");
+        _mountManager.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -264,6 +270,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _bankingManager = std::make_unique<BankingManager>(_bot);
     _equipmentManager = std::make_unique<EquipmentManager>(_bot);
+    _mountManager = std::make_unique<MountManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -376,6 +383,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _farmingCoordinator->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ FarmingCoordinator initialized - profession farming automation active");
+        }
+
+        if (_mountManager)
+        {
+            _mountManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ MountManager initialized - mount automation and collection tracking active");
         }
 
         if (_groupCoordinator)
@@ -614,6 +627,12 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         if (_equipmentManager)
             _equipmentManager->AutoEquipBestGear();
     }
+
+    // ========================================================================
+    // MOUNT AUTOMATION - Update every frame for responsive mounting
+    // ========================================================================
+    if (_mountManager)
+        _mountManager->Update(diff);
 
     // ========================================================================
     // PROFESSION AUTOMATION - Check every 15 seconds

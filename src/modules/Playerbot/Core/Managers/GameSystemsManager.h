@@ -32,6 +32,7 @@
 #include "Economy/AuctionManager.h"
 #include "Banking/BankingManager.h"
 #include "Equipment/EquipmentManager.h"
+#include "Companion/MountManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -91,6 +92,9 @@ class BotAI;
  *
  * **Phase 6.1 Integration (2025-11-18):**
  * EquipmentManager converted from singleton to per-bot instance (24th manager)
+ *
+ * **Phase 6.2 Integration (2025-11-18):**
+ * MountManager converted from singleton to per-bot instance (25th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -133,6 +137,7 @@ public:
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     BankingManager* GetBankingManager() const { return _bankingManager.get(); }
     EquipmentManager* GetEquipmentManager() const { return _equipmentManager.get(); }
+    MountManager* GetMountManager() const { return _mountManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -155,7 +160,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 23 managers owned by facade
+    // MANAGER INSTANCES - All 25 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -170,6 +175,7 @@ private:
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<BankingManager> _bankingManager;
     std::unique_ptr<EquipmentManager> _equipmentManager;
+    std::unique_ptr<MountManager> _mountManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
