@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
-#include "../Movement/Arbiter/MovementArbiter.h"
+#include "../Movement/UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
 #include "../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../AI/BotAI.h"
 #include "UnitAI.h"
@@ -453,7 +453,7 @@ void DungeonBehavior::CoordinateTankBehavior(Player* tank, const DungeonEncounte
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
         BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             botAI->RequestPointMovement(
                 PlayerBotMovementPriority::DUNGEON_POSITIONING,
@@ -493,7 +493,7 @@ void DungeonBehavior::CoordinateHealerBehavior(Player* healer, const DungeonEnco
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
         BotAI* botAI = dynamic_cast<BotAI*>(healer->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             botAI->RequestPointMovement(
                 PlayerBotMovementPriority::DUNGEON_POSITIONING,
@@ -538,7 +538,7 @@ void DungeonBehavior::CoordinateDpsBehavior(Player* dps, const DungeonEncounter&
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
         BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             botAI->RequestPointMovement(
                 PlayerBotMovementPriority::DUNGEON_POSITIONING,
@@ -681,7 +681,7 @@ void DungeonBehavior::UpdateGroupPositioning(Group* group, const DungeonEncounte
         {
             // PHASE 6D: Use Movement Arbiter with DUNGEON_POSITIONING priority (110)
             BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
-            if (botAI && botAI->GetMovementArbiter())
+            if (botAI && botAI->GetUnifiedMovementCoordinator())
             {
                 botAI->RequestPointMovement(
                     PlayerBotMovementPriority::DUNGEON_POSITIONING,
@@ -784,7 +784,7 @@ void DungeonBehavior::AvoidDangerousAreas(Player* player, const std::vector<Posi
     {
         // PHASE 6D: Use Movement Arbiter with DUNGEON_MECHANIC priority (205)
         BotAI* botAI = dynamic_cast<BotAI*>(player->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             botAI->RequestPointMovement(
                 PlayerBotMovementPriority::DUNGEON_MECHANIC,
