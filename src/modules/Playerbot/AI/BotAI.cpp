@@ -36,7 +36,7 @@
 #include "Professions/AuctionMaterialsBridge.h"
 #include "Banking/BankingManager.h"
 #include "Advanced/GroupCoordinator.h"
-#include "Coordination/GroupCoordinator.h"
+// Coordination::GroupCoordinator removed - now using Advanced/TacticalCoordinator
 #include "Spatial/SpatialGridManager.h"
 #include "Spatial/DoubleBufferedSpatialGrid.h"
 // Phase 7.3: Direct EventDispatcher integration (BotEventSystem and Observers removed as dead code)
@@ -1325,13 +1325,8 @@ void BotAI::OnGroupJoined(Group* group)
     // Deactivate solo strategy when joining a group
     DeactivateStrategy("solo");
 
-    // Phase 3: Initialize Tactical Group Coordinator for combat coordination
-    if (group && !_tacticalCoordinator)
-    {
-        _tacticalCoordinator = std::make_unique<Coordination::GroupCoordinator>(group);
-        TC_LOG_INFO("playerbot.coordination", "🎯 Tactical Coordinator initialized for bot {} in group {}",
-            _bot->GetName(), group->GetGUID().ToString());
-    }
+    // Phase 3: Tactical coordinator now integrated into Advanced/GroupCoordinator
+    // TacticalCoordinator is created by GroupCoordinator::Initialize()
 
     // Set state to following if not in combat (no lock needed - atomic operation)
     if (!IsInCombat())

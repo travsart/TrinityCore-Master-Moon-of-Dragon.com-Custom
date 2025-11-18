@@ -51,10 +51,7 @@ class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
 // Phase 3: Tactical Coordination forward declarations
-namespace Coordination
-{
-    class GroupCoordinator;
-}
+class TacticalCoordinator;
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -269,8 +266,15 @@ public:
      * Combat-focused coordination separate from Advanced/GroupCoordinator
      * @return Pointer to tactical coordinator, or nullptr if not in group
      */
-    Coordination::GroupCoordinator* GetTacticalCoordinator() { return _tacticalCoordinator.get(); }
-    Coordination::GroupCoordinator const* GetTacticalCoordinator() const { return _tacticalCoordinator.get(); }
+    // Get tactical coordinator from unified GroupCoordinator
+    TacticalCoordinator* GetTacticalCoordinator()
+    {
+        return _groupCoordinator ? _groupCoordinator->GetTacticalCoordinator() : nullptr;
+    }
+    TacticalCoordinator const* GetTacticalCoordinator() const
+    {
+        return _groupCoordinator ? _groupCoordinator->GetTacticalCoordinator() : nullptr;
+    }
 
     // ========================================================================
     // UTILITY AI DECISION SYSTEM - Hybrid AI Phase 1
@@ -762,10 +766,7 @@ protected:
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<AuctionManager> _auctionManager;
-    std::unique_ptr<GroupCoordinator> _groupCoordinator; // Advanced/GroupCoordinator - loot/quest/formation
-
-    // Phase 3: Tactical Group Coordination (separate from Advanced/GroupCoordinator)
-    std::unique_ptr<Coordination::GroupCoordinator> _tacticalCoordinator;
+    std::unique_ptr<GroupCoordinator> _groupCoordinator; // Advanced/GroupCoordinator - includes TacticalCoordinator
 
     // Death recovery system
     std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
