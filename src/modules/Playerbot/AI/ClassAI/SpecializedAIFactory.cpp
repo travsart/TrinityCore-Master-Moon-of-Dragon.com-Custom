@@ -19,7 +19,7 @@
 
 #include "Paladins/HolyPaladinRefactored.h"
 #include "Paladins/ProtectionPaladinRefactored.h"
-#include "Paladins/RetributionPaladinRefactored.h"
+#include "Paladins/RetributionSpecializationRefactored.h"
 
 #include "Hunters/BeastMasteryHunterRefactored.h"
 #include "Hunters/MarksmanshipHunterRefactored.h"
