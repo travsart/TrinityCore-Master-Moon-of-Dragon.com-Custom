@@ -28,6 +28,7 @@
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
+#include "Professions/FarmingCoordinator.h"
 #include "Economy/AuctionManager.h"
 #include "Banking/BankingManager.h"
 #include "Advanced/GroupCoordinator.h"
@@ -54,7 +55,7 @@ class BotAI;
  * @brief Concrete implementation of IGameSystemsManager facade
  *
  * **Ownership:**
- * - Owns all 21 manager instances via std::unique_ptr (including bridges)
+ * - Owns all 23 manager instances via std::unique_ptr (including bridges)
  * - Owned by BotAI via std::unique_ptr<IGameSystemsManager>
  * - Returns raw pointers (non-owning) to external callers
  *
@@ -83,6 +84,9 @@ class BotAI;
  *
  * **Phase 5.1 Integration (2025-11-18):**
  * BankingManager converted from singleton to per-bot instance (22nd manager)
+ *
+ * **Phase 5.2 Integration (2025-11-18):**
+ * FarmingCoordinator converted from singleton to per-bot instance (23rd manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -121,6 +125,7 @@ public:
     GatheringMaterialsBridge* GetGatheringMaterialsBridge() const { return _gatheringMaterialsBridge.get(); }
     AuctionMaterialsBridge* GetAuctionMaterialsBridge() const { return _auctionMaterialsBridge.get(); }
     ProfessionAuctionBridge* GetProfessionAuctionBridge() const { return _professionAuctionBridge.get(); }
+    FarmingCoordinator* GetFarmingCoordinator() const { return _farmingCoordinator.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     BankingManager* GetBankingManager() const { return _bankingManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
@@ -145,7 +150,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 22 managers owned by facade
+    // MANAGER INSTANCES - All 23 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -156,6 +161,7 @@ private:
     std::unique_ptr<GatheringMaterialsBridge> _gatheringMaterialsBridge;
     std::unique_ptr<AuctionMaterialsBridge> _auctionMaterialsBridge;
     std::unique_ptr<ProfessionAuctionBridge> _professionAuctionBridge;
+    std::unique_ptr<FarmingCoordinator> _farmingCoordinator;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<BankingManager> _bankingManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;

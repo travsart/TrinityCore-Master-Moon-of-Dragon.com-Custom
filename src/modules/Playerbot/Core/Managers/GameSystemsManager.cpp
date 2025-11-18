@@ -141,6 +141,12 @@ GameSystemsManager::~GameSystemsManager()
         _bankingManager.reset();
     }
 
+    if (_farmingCoordinator)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
+        _farmingCoordinator.reset();
+    }
+
     if (_groupCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GroupCoordinator");
@@ -248,6 +254,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _gatheringMaterialsBridge = std::make_unique<GatheringMaterialsBridge>(_bot);
     _auctionMaterialsBridge = std::make_unique<AuctionMaterialsBridge>(_bot);
     _professionAuctionBridge = std::make_unique<ProfessionAuctionBridge>(_bot);
+    _farmingCoordinator = std::make_unique<FarmingCoordinator>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _bankingManager = std::make_unique<BankingManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
@@ -356,6 +363,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _bankingManager->OnInitialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ BankingManager initialized - personal banking automation active");
+        }
+
+        if (_farmingCoordinator)
+        {
+            _farmingCoordinator->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ FarmingCoordinator initialized - profession farming automation active");
         }
 
         if (_groupCoordinator)
@@ -579,6 +592,10 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // Banking manager handles personal banking automation (gold/items)
     if (_bankingManager)
         _bankingManager->OnUpdate(_bot, diff);
+
+    // Farming coordinator handles profession skill leveling automation
+    if (_farmingCoordinator)
+        _farmingCoordinator->Update(_bot, diff);
 
     // ========================================================================
     // EQUIPMENT AUTO-EQUIP - Check every 10 seconds

@@ -674,14 +674,9 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IDynamicQuestSystem");
 
-        // Register FarmingCoordinator (Phase 34)
-        container.RegisterInstance<IFarmingCoordinator>(
-            std::shared_ptr<IFarmingCoordinator>(
-                Playerbot::FarmingCoordinator::instance(),
-                [](IFarmingCoordinator*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IFarmingCoordinator");
+        // NOTE: FarmingCoordinator is now per-bot (Phase 5.2)
+        // No longer registered as singleton - owned by GameSystemsManager
+        // Access via: botAI->GetGameSystems()->GetFarmingCoordinator()
 
         // Register AuctionHouse (Phase 35)
         container.RegisterInstance<IAuctionHouse>(
