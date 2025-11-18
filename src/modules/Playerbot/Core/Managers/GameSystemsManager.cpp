@@ -105,6 +105,12 @@ GameSystemsManager::~GameSystemsManager()
         _gatheringManager.reset();
     }
 
+    if (_professionManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ProfessionManager");
+        _professionManager.reset();
+    }
+
     if (_auctionManager)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionManager");
@@ -214,8 +220,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _questManager = std::make_unique<QuestManager>(_bot, _botAI);
     _tradeManager = std::make_unique<TradeManager>(_bot, _botAI);
     _gatheringManager = std::make_unique<GatheringManager>(_bot, _botAI);
-    // Note: ProfessionManager remains singleton (accessed via facade for now)
-    // TODO: Convert to per-bot instance like other managers (Phase 1B)
+    _professionManager = std::make_unique<ProfessionManager>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
@@ -533,7 +538,8 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     if (_professionCheckTimer >= 15000) // 15 seconds
     {
         _professionCheckTimer = 0;
-        GetProfessionManager()->Update(_bot, diff);
+        if (_professionManager)
+            _professionManager->Update(diff);
     }
 
     // ========================================================================
@@ -545,20 +551,6 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         _bankingCheckTimer = 0;
         BankingManager::instance()->Update(_bot, diff);
     }
-}
-
-// ============================================================================
-// PROFESSION MANAGER ACCESSOR (Singleton Pattern - Phase 1A)
-// ============================================================================
-
-ProfessionManager* GameSystemsManager::GetProfessionManager() const
-{
-    // Pragmatic Phase 1A: Return global singleton
-    // ProfessionManager manages data for ALL bots using playerGuid keys internally
-    // TODO Phase 1B: Convert to per-bot instance like other managers
-    //   - Requires refactoring ~1,200 lines to change map<playerGuid, T> → direct members
-    //   - Benefits: Aligns with QuestManager/TradeManager per-bot pattern
-    return ProfessionManager::instance();
 }
 
 } // namespace Playerbot

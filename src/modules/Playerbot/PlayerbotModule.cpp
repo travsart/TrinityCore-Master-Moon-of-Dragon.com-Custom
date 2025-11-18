@@ -24,6 +24,7 @@
 #include "Session/BotPacketRelay.h"
 #include "Chat/BotChatCommandHandler.h"
 #include "Professions/ProfessionManager.h"
+#include "Professions/ProfessionDatabase.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
@@ -179,10 +180,12 @@ bool PlayerbotModule::Initialize()
     //         return false;
     //     }
     //
-    // Initialize Profession Manager (must happen before bots are created)
-    TC_LOG_INFO("server.loading", "Initializing Profession Manager...");
-    Playerbot::ProfessionManager::instance()->Initialize();
-    TC_LOG_INFO("server.loading", "Profession Manager initialized successfully");
+    // Initialize Profession Database (must happen before bots are created)
+    // Phase 1B: Shared profession data now in ProfessionDatabase singleton
+    // Per-bot ProfessionManager instances created by GameSystemsManager
+    TC_LOG_INFO("server.loading", "Initializing Profession Database...");
+    Playerbot::ProfessionDatabase::instance()->Initialize();
+    TC_LOG_INFO("server.loading", "Profession Database initialized successfully");
 
     // Initialize Profession Bridges (Phase 3 Option C: Economic integration)
     TC_LOG_INFO("server.loading", "Initializing Profession-Auction Bridge...");

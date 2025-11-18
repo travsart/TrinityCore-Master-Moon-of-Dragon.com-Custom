@@ -640,6 +640,8 @@ set(PLAYERBOT_SOURCES
     # Profession System - Complete Crafting + Gathering Automation (Phase 1, 2, 3)
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionDatabase.h
     # Phase 2.4: Replaced by GatheringManager (BehaviorManager pattern)
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.h
@@ -1181,6 +1183,8 @@ source_group("Talents" FILES
 source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionDatabase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/FarmingCoordinator.cpp
