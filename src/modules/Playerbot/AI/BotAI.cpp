@@ -377,10 +377,16 @@ BotAI::~BotAI()
         _deathRecoveryManager.reset();
     }
 
-    // 3. Movement arbiter - coordinates movement requests
+    // 3. Movement systems - Phase 2 unified coordinator + legacy arbiter
+    if (_unifiedMovementCoordinator)
+    {
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying UnifiedMovementCoordinator");
+        _unifiedMovementCoordinator.reset();
+    }
+
     if (_movementArbiter)
     {
-        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying MovementArbiter");
+        TC_LOG_DEBUG("module.playerbot", "BotAI::~BotAI: Destroying MovementArbiter (LEGACY)");
         _movementArbiter.reset();
     }
 
@@ -647,12 +653,12 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
     }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
 
     // ========================================================================
-    // CRITICAL: Movement Arbiter MUST update even during death recovery
+    // CRITICAL: Movement Coordinator MUST update even during death recovery
     // ========================================================================
-    // Death recovery uses MovementArbiter for corpse navigation with HIGHEST priority (255)
+    // Death recovery uses UnifiedMovementCoordinator for corpse navigation with HIGHEST priority (255)
     // If we skip this, bots can't move to their corpse!
-    if (_movementArbiter)
-        _movementArbiter->Update(diff);
+    if (_unifiedMovementCoordinator)
+        _unifiedMovementCoordinator->Update(diff);
 
     // ========================================================================
     // PHASE 5: MANAGER UPDATES - Throttled heavyweight operations
@@ -2007,15 +2013,16 @@ void BotAI::UpdateManagers(uint32 diff)
 }
 
 // ============================================================================
-// MOVEMENT ARBITER INTEGRATION - Convenience Methods
+// UNIFIED MOVEMENT COORDINATOR INTEGRATION - Convenience Methods
 // ============================================================================
+// Phase 2 Migration: Migrated from MovementArbiter to UnifiedMovementCoordinator
 
 bool BotAI::RequestMovement(MovementRequest const& request)
 {
-    if (!_movementArbiter)
+    if (!_unifiedMovementCoordinator)
         return false;
 
-    return _movementArbiter->RequestMovement(request);
+    return _unifiedMovementCoordinator->RequestMovement(request);
 }
 
 bool BotAI::RequestPointMovement(
@@ -2024,7 +2031,7 @@ bool BotAI::RequestPointMovement(
     std::string const& reason,
     std::string const& sourceSystem)
 {
-    if (!_movementArbiter)
+    if (!_unifiedMovementCoordinator)
         return false;
 
     MovementRequest req = MovementRequest::MakePointMovement(
@@ -2037,7 +2044,7 @@ bool BotAI::RequestPointMovement(
         reason,
         sourceSystem);
 
-    return _movementArbiter->RequestMovement(req);
+    return _unifiedMovementCoordinator->RequestMovement(req);
 }
 
 bool BotAI::RequestChaseMovement(
@@ -2046,7 +2053,7 @@ bool BotAI::RequestChaseMovement(
     std::string const& reason,
     std::string const& sourceSystem)
 {
-    if (!_movementArbiter)
+    if (!_unifiedMovementCoordinator)
         return false;
 
     MovementRequest req = MovementRequest::MakeChaseMovement(
@@ -2057,7 +2064,7 @@ bool BotAI::RequestChaseMovement(
         reason,
         sourceSystem);
 
-    return _movementArbiter->RequestMovement(req);
+    return _unifiedMovementCoordinator->RequestMovement(req);
 }
 
 bool BotAI::RequestFollowMovement(
@@ -2067,7 +2074,7 @@ bool BotAI::RequestFollowMovement(
     std::string const& reason,
     std::string const& sourceSystem)
 {
-    if (!_movementArbiter)
+    if (!_unifiedMovementCoordinator)
         return false;
 
     MovementRequest req = MovementRequest::MakeFollowMovement(
@@ -2079,13 +2086,13 @@ bool BotAI::RequestFollowMovement(
         reason,
         sourceSystem);
 
-    return _movementArbiter->RequestMovement(req);
+    return _unifiedMovementCoordinator->RequestMovement(req);
 }
 
 void BotAI::StopAllMovement()
 {
-    if (_movementArbiter)
-        _movementArbiter->StopMovement();
+    if (_unifiedMovementCoordinator)
+        _unifiedMovementCoordinator->StopMovement();
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp
