@@ -31,6 +31,9 @@
 
 #pragma once
 
+#ifndef PLAYERBOT_PROFESSION_DATABASE_H
+#define PLAYERBOT_PROFESSION_DATABASE_H
+
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
