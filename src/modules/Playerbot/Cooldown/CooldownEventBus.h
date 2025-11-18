@@ -12,10 +12,8 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "ObjectGuid.h"
+#include "CooldownEvents.h"
 #include "Core/DI/Interfaces/ICooldownEventBus.h"
-#include <chrono>
-#include <string>
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -26,55 +24,6 @@ namespace Playerbot
 {
 
 class BotAI;
-
-enum class CooldownEventType : uint8
-{
-    SPELL_COOLDOWN_START = 0,
-    SPELL_COOLDOWN_CLEAR,
-    SPELL_COOLDOWN_MODIFY,
-    SPELL_COOLDOWNS_CLEAR_ALL,
-    ITEM_COOLDOWN_START,
-    CATEGORY_COOLDOWN_START,
-    MAX_COOLDOWN_EVENT
-};
-
-enum class CooldownEventPriority : uint8
-{
-    CRITICAL = 0,
-    HIGH = 1,
-    MEDIUM = 2,
-    LOW = 3,
-    BATCH = 4
-};
-
-struct CooldownEvent
-{
-    CooldownEventType type;
-    CooldownEventPriority priority;
-    ObjectGuid casterGuid;
-    uint32 spellId;
-    uint32 itemId;
-    uint32 category;
-    uint32 cooldownMs;
-    int32 modRateMs;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
-
-    bool IsValid() const;
-    bool IsExpired() const;
-    std::string ToString() const;
-
-    // Helper constructors
-    static CooldownEvent SpellCooldownStart(ObjectGuid caster, uint32 spellId, uint32 cooldownMs);
-    static CooldownEvent SpellCooldownClear(ObjectGuid caster, uint32 spellId);
-    static CooldownEvent ItemCooldownStart(ObjectGuid caster, uint32 itemId, uint32 cooldownMs);
-
-    // Priority comparison for priority queue
-    bool operator<(CooldownEvent const& other) const
-    {
-        return priority > other.priority; // Higher priority = lower value
-    }
-};
 
 class TC_GAME_API CooldownEventBus final : public ICooldownEventBus
 {

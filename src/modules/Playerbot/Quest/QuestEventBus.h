@@ -12,10 +12,8 @@
 
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
-#include "ObjectGuid.h"
+#include "QuestEvents.h"
 #include "Core/DI/Interfaces/IQuestEventBus.h"
-#include <chrono>
-#include <string>
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -26,70 +24,6 @@ namespace Playerbot
 {
 
 class BotAI;
-
-enum class QuestEventType : uint8
-{
-    QUEST_GIVER_STATUS = 0,
-    QUEST_LIST_RECEIVED,
-    QUEST_DETAILS_RECEIVED,
-    QUEST_REQUEST_ITEMS,
-    QUEST_OFFER_REWARD,
-    QUEST_COMPLETED,
-    QUEST_FAILED,
-    QUEST_CREDIT_ADDED,
-    QUEST_OBJECTIVE_COMPLETE,
-    QUEST_UPDATE_FAILED,
-    QUEST_CONFIRM_ACCEPT,
-    QUEST_POI_RECEIVED,
-    MAX_QUEST_EVENT
-};
-
-enum class QuestEventPriority : uint8
-{
-    CRITICAL = 0,
-    HIGH = 1,
-    MEDIUM = 2,
-    LOW = 3,
-    BATCH = 4
-};
-
-enum class QuestState : uint8
-{
-    NONE = 0,
-    COMPLETE,
-    UNAVAILABLE,
-    INCOMPLETE,
-    AVAILABLE,
-    FAILED
-};
-
-struct QuestEvent
-{
-    QuestEventType type;
-    QuestEventPriority priority;
-    ObjectGuid playerGuid;
-    uint32 questId;
-    uint32 objectiveId;
-    int32 objectiveCount;
-    QuestState state;
-    std::chrono::steady_clock::time_point timestamp;
-    std::chrono::steady_clock::time_point expiryTime;
-
-    bool IsValid() const;
-    bool IsExpired() const;
-    std::string ToString() const;
-
-    // Helper constructors
-    static QuestEvent QuestAccepted(ObjectGuid player, uint32 questId);
-    static QuestEvent QuestCompleted(ObjectGuid player, uint32 questId);
-    static QuestEvent ObjectiveProgress(ObjectGuid player, uint32 questId, uint32 objId, int32 count);
-
-    // Priority comparison for priority queue
-    bool operator<(QuestEvent const& other) const
-    {
-        return priority > other.priority;
-    }
-};
 
 class TC_GAME_API QuestEventBus final : public IQuestEventBus
 {

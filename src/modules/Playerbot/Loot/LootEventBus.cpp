@@ -12,89 +12,9 @@
 #include "Player.h"
 #include "Log.h"
 #include "Timer.h"
-#include <sstream>
 
 namespace Playerbot
 {
-
-// ============================================================================
-// LootEvent Helper Constructors
-// ============================================================================
-
-LootEvent LootEvent::ItemLooted(ObjectGuid looter, ObjectGuid item, uint32 entry, uint32 count, LootType type)
-{
-    LootEvent event;
-    event.type = LootEventType::LOOT_ITEM_RECEIVED;
-    event.priority = LootEventPriority::MEDIUM;
-    event.looterGuid = looter;
-    event.itemGuid = item;
-    event.itemEntry = entry;
-    event.itemCount = count;
-    event.lootType = type;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(30000);
-    return event;
-}
-
-LootEvent LootEvent::LootRollStarted(ObjectGuid item, uint32 entry)
-{
-    LootEvent event;
-    event.type = LootEventType::LOOT_ROLL_STARTED;
-    event.priority = LootEventPriority::HIGH;
-    event.looterGuid = ObjectGuid::Empty;
-    event.itemGuid = item;
-    event.itemEntry = entry;
-    event.itemCount = 1;
-    event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(60000);
-    return event;
-}
-
-LootEvent LootEvent::LootRollWon(ObjectGuid winner, ObjectGuid item, uint32 entry)
-{
-    LootEvent event;
-    event.type = LootEventType::LOOT_ROLL_WON;
-    event.priority = LootEventPriority::HIGH;
-    event.looterGuid = winner;
-    event.itemGuid = item;
-    event.itemEntry = entry;
-    event.itemCount = 1;
-    event.lootType = LootType::CORPSE;
-    event.timestamp = std::chrono::steady_clock::now();
-    event.expiryTime = event.timestamp + std::chrono::milliseconds(10000);
-    return event;
-}
-
-bool LootEvent::IsValid() const
-{
-    if (type >= LootEventType::MAX_LOOT_EVENT)
-        return false;
-    if (timestamp.time_since_epoch().count() == 0)
-        return false;
-    if (looterGuid.IsEmpty() && type != LootEventType::LOOT_ROLL_STARTED)
-        return false;
-    return true;
-}
-
-bool LootEvent::IsExpired() const
-{
-    return std::chrono::steady_clock::now() >= expiryTime;
-}
-
-std::string LootEvent::ToString() const
-{
-    std::ostringstream oss;
-    oss << "[LootEvent] Type: " << static_cast<uint32>(type)
-        << ", Looter: " << looterGuid.ToString()
-        << ", Item: " << itemEntry
-        << " x" << itemCount;
-    return oss.str();
-}
-
-// ============================================================================
-// LootEventBus Implementation
-// ============================================================================
 
 LootEventBus::LootEventBus()
 {
