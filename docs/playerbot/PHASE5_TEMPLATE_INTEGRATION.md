@@ -2,7 +2,7 @@
 
 **Date**: 2025-11-18
 **Branch**: `claude/playerbot-cleanup-analysis-01CcHSnAWQM7W9zVeUuJMF4h`
-**Status**: 🚀 **IN PROGRESS**
+**Status**: ✅ **92% COMPLETE** (12/13 EventBuses migrated)
 
 ---
 
@@ -112,9 +112,9 @@ Migrate in order of simplicity (simplest first):
 
 ### Batch 3: Complex EventBuses
 10. ✅ **CombatEventBus** → `EventBus<CombatEvent>` (43 event types)
-11. ✅ **ProfessionEventBus** → `EventBus<ProfessionEvent>` (12 event types)
+11. ✅ **ProfessionEventBus** → `EventBus<ProfessionEvent>` (12 event types) - COMPLETED 2025-11-18
 12. ✅ **GroupEventBus** → `EventBus<GroupEvent>` (complex state)
-13. ✅ **BotSpawnEventBus** → `EventBus<BotSpawnEvent>` (inheritance-based)
+13. ⏳ **BotSpawnEventBus** → `EventBus<BotSpawnEvent>` (inheritance-based) - PENDING
 
 ## Expected Benefits
 
@@ -214,5 +214,52 @@ struct XxxEvent
 
 ---
 
-**Status**: 🚀 Ready to begin migration
-**Next Step**: Migrate Batch 1 (Loot, Quest, Resource, Cooldown, Aura)
+## Phase 5 Completion Status
+
+**Overall Progress**: 92% Complete (12/13 EventBuses)
+
+### Completed Migrations:
+1. ✅ LootEventBus (Batch 1)
+2. ✅ QuestEventBus (Batch 1)
+3. ✅ ResourceEventBus (Batch 1)
+4. ✅ CooldownEventBus (Batch 1)
+5. ✅ AuraEventBus (Batch 1)
+6. ✅ NPCEventBus (Batch 2)
+7. ✅ AuctionEventBus (Batch 2)
+8. ✅ InstanceEventBus (Batch 2)
+9. ✅ SocialEventBus (Batch 2)
+10. ✅ CombatEventBus (Batch 3)
+11. ✅ GroupEventBus (Batch 3)
+12. ✅ **ProfessionEventBus (Batch 3) - Completed 2025-11-18**
+
+### Remaining:
+13. ⏳ BotSpawnEventBus (inheritance-based architecture, requires additional design work)
+
+### ProfessionEventBus Migration Details (2025-11-18):
+
+**Files Modified:**
+- `ProfessionEvents.h` - Added priority, expiryTime, IsExpired(), operator<
+- `ProfessionEvents.cpp` - Updated 12 factory methods with priorities and expiry times
+- `ProfessionEventBus.h` - Rewritten as template adapter (~440 lines → ~120 lines)
+- `ProfessionEventBus.cpp` - DELETED (infrastructure now in template)
+- `BotAI.h` - Added IEventHandler<ProfessionEvent> (12th event type)
+- `BotAI_EventHandlers.cpp` - Implemented OnProfessionEvent() handler
+- `CMakeLists.txt` - Removed ProfessionEventBus.cpp from build
+
+**Priority Assignments:**
+- **HIGH**: CraftingCompleted, CraftingFailed, MaterialsNeeded (1-2 min expiry)
+- **MEDIUM**: RecipeLearned, CraftingStarted, MaterialGathered, MaterialPurchased, ItemWithdrawn, GoldWithdrawn (5-10 min)
+- **LOW**: SkillUp (10 min expiry)
+- **BATCH**: ItemBanked, GoldBanked (30 min expiry - can be batched)
+
+**Code Reduction:**
+- ProfessionEventBus: ~440 lines → ~120 lines (73% reduction)
+- Commit: 7 files changed, 328 insertions(+), 683 deletions(-)
+- **Net reduction: 355 lines**
+
+**Commit Hash**: `9a5bd00a`
+
+---
+
+**Status**: ✅ 92% Complete
+**Next Step**: Design BotSpawnEventBus template migration strategy (requires special handling due to inheritance-based architecture)
