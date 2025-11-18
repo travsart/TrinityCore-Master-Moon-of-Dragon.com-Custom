@@ -363,6 +363,8 @@ set(PLAYERBOT_SOURCES
     # Group Event System - Event-Driven Architecture for Group Coordination
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.cpp
@@ -398,6 +400,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.cpp
@@ -412,12 +416,20 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.h
 
     # Phase 4: BotAI Event Handler Integration
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_EventHandlers.cpp
@@ -493,6 +505,7 @@ set(PLAYERBOT_SOURCES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEvents.h
 
     # Performance Optimization System (Phase 5)
     ${CMAKE_CURRENT_SOURCE_DIR}/Performance/ObjectPool.h
@@ -645,6 +658,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.h
 
     # Banking System - Personal Bank Automation
     ${CMAKE_CURRENT_SOURCE_DIR}/Banking/BankingManager.cpp
@@ -953,6 +968,8 @@ source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.cpp
@@ -992,21 +1009,29 @@ source_group("Resource" FILES
 source_group("Social" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
 )
 
 source_group("Auction" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
 )
 
 source_group("NPC" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.h
 )
 
 source_group("Instance" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.h
 )
 
 source_group("Combat" FILES
@@ -1026,6 +1051,8 @@ source_group("Cooldown" FILES
 source_group("Aura" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.h
 )
 
 source_group("Loot" FILES
@@ -1083,6 +1110,7 @@ source_group("Lifecycle" FILES
     # ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotPerformanceMonitor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawnEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/DeathRecoveryManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/ResourceMonitor.cpp
@@ -1182,6 +1210,8 @@ source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.h
 )
 
 source_group("Banking" FILES
