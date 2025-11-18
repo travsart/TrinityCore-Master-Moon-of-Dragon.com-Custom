@@ -67,6 +67,7 @@ struct SocialEvent;
 struct AuctionEvent;
 struct NPCEvent;
 struct InstanceEvent;
+struct ProfessionEvent;
 
 namespace Events
 {
@@ -131,7 +132,8 @@ class TC_GAME_API BotAI : public IEventHandler<LootEvent>,
                            public IEventHandler<AuctionEvent>,
                            public IEventHandler<NPCEvent>,
                            public IEventHandler<InstanceEvent>,
-                           public IEventHandler<GroupEvent>
+                           public IEventHandler<GroupEvent>,
+                           public IEventHandler<ProfessionEvent>
 {
 public:
     explicit BotAI(Player* bot);
@@ -638,6 +640,20 @@ public:
      */
     virtual void OnInstanceEvent(InstanceEvent const& event);
 
+    /**
+     * Profession event handler - Called when profession-related events occur
+     * Override in ClassAI for class-specific profession handling
+     *
+     * @param event Profession event (crafting, learning, banking, materials)
+     *
+     * Default implementation:
+     * - Handles recipe learning notifications
+     * - Tracks crafting progress and completion
+     * - Manages material gathering and purchasing
+     * - Coordinates banking operations
+     */
+    virtual void OnProfessionEvent(ProfessionEvent const& event);
+
     // ========================================================================
     // IEVENTHANDLER INTERFACE IMPLEMENTATIONS (Phase 5)
     // ========================================================================
@@ -655,6 +671,7 @@ public:
     void HandleEvent(NPCEvent const& event) override { OnNPCEvent(event); }
     void HandleEvent(InstanceEvent const& event) override { OnInstanceEvent(event); }
     void HandleEvent(GroupEvent const& event) override { OnGroupEvent(event); }
+    void HandleEvent(ProfessionEvent const& event) override { OnProfessionEvent(event); }
 
     // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization

@@ -45,12 +45,32 @@ enum class ProfessionEventPriority : uint8
     BATCH = 4
 };
 
+/**
+ * @brief Profession event data structure
+ *
+ * **Phase 5 Template Compatibility:**
+ * This struct now includes all fields required by GenericEventBus<TEvent>:
+ * - type (EventType)
+ * - priority (Priority)
+ * - timestamp (creation time)
+ * - expiryTime (when event becomes invalid)
+ * - IsValid() (validation check)
+ * - IsExpired() (expiry check)
+ * - ToString() (debug/logging)
+ * - operator< (priority queue ordering)
+ */
 struct ProfessionEvent
 {
     using EventType = ProfessionEventType;
     using Priority = ProfessionEventPriority;
 
+    // Core event fields
     ProfessionEventType type;
+    ProfessionEventPriority priority;
+    std::chrono::steady_clock::time_point timestamp;
+    std::chrono::steady_clock::time_point expiryTime;
+
+    // Profession-specific fields
     ObjectGuid playerGuid;
     ProfessionType profession;
     uint32 recipeId;
@@ -60,10 +80,23 @@ struct ProfessionEvent
     uint32 skillAfter;
     uint32 goldAmount;              // For banking events
     std::string reason;             // Human-readable event reason
-    std::chrono::steady_clock::time_point timestamp;
 
+    // GenericEventBus interface requirements
     bool IsValid() const;
+    bool IsExpired() const;
     std::string ToString() const;
+
+    /**
+     * Priority queue ordering: Higher priority first
+     * CRITICAL(0) > HIGH(1) > MEDIUM(2) > LOW(3) > BATCH(4)
+     * Same priority: newer events first (reverse timestamp order)
+     */
+    bool operator<(ProfessionEvent const& other) const
+    {
+        if (priority != other.priority)
+            return priority > other.priority;  // Lower numeric value = higher priority
+        return timestamp > other.timestamp;    // Newer events last in queue
+    }
 
     // Factory methods for each event type
     static ProfessionEvent RecipeLearned(ObjectGuid playerGuid, ProfessionType profession, uint32 recipeId);

@@ -651,7 +651,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.h
@@ -1192,7 +1191,6 @@ source_group("Professions" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/GatheringMaterialsBridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/AuctionMaterialsBridge.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Professions/ProfessionEvents.h

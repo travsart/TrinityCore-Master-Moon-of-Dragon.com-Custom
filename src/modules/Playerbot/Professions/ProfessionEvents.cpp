@@ -5,6 +5,11 @@
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
+ *
+ * PROFESSION EVENTS - Phase 5 Template Compatibility
+ *
+ * Updated factory methods to include priority and expiryTime fields
+ * for GenericEventBus<TEvent> template compatibility.
  */
 
 #include "ProfessionEvents.h"
@@ -17,6 +22,9 @@ ProfessionEvent ProfessionEvent::RecipeLearned(ObjectGuid playerGuid, Profession
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::RECIPE_LEARNED;
+    event.priority = ProfessionEventPriority::MEDIUM;  // Recipe learning is moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(5);  // Expires in 5 minutes
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = recipeId;
@@ -26,7 +34,6 @@ ProfessionEvent ProfessionEvent::RecipeLearned(ObjectGuid playerGuid, Profession
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Recipe learned";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -34,6 +41,9 @@ ProfessionEvent ProfessionEvent::SkillUp(ObjectGuid playerGuid, ProfessionType p
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::SKILL_UP;
+    event.priority = ProfessionEventPriority::LOW;  // Skill-up notifications are low priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(10);  // Expires in 10 minutes
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = 0;
@@ -43,7 +53,6 @@ ProfessionEvent ProfessionEvent::SkillUp(ObjectGuid playerGuid, ProfessionType p
     event.skillAfter = skillAfter;
     event.goldAmount = 0;
     event.reason = "Skill increased";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -51,6 +60,9 @@ ProfessionEvent ProfessionEvent::CraftingStarted(ObjectGuid playerGuid, Professi
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::CRAFTING_STARTED;
+    event.priority = ProfessionEventPriority::MEDIUM;  // Crafting start is moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::seconds(30);  // Expires in 30 seconds
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = recipeId;
@@ -60,7 +72,6 @@ ProfessionEvent ProfessionEvent::CraftingStarted(ObjectGuid playerGuid, Professi
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Crafting started";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -68,6 +79,9 @@ ProfessionEvent ProfessionEvent::CraftingCompleted(ObjectGuid playerGuid, Profes
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::CRAFTING_COMPLETED;
+    event.priority = ProfessionEventPriority::HIGH;  // Crafting completion is high priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(1);  // Expires in 1 minute
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = recipeId;
@@ -77,7 +91,6 @@ ProfessionEvent ProfessionEvent::CraftingCompleted(ObjectGuid playerGuid, Profes
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Crafting completed";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -85,6 +98,9 @@ ProfessionEvent ProfessionEvent::CraftingFailed(ObjectGuid playerGuid, Professio
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::CRAFTING_FAILED;
+    event.priority = ProfessionEventPriority::HIGH;  // Crafting failure needs immediate attention
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(2);  // Expires in 2 minutes
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = recipeId;
@@ -94,7 +110,6 @@ ProfessionEvent ProfessionEvent::CraftingFailed(ObjectGuid playerGuid, Professio
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = reason;
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -102,6 +117,9 @@ ProfessionEvent ProfessionEvent::MaterialsNeeded(ObjectGuid playerGuid, Professi
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::MATERIALS_NEEDED;
+    event.priority = ProfessionEventPriority::HIGH;  // Material shortages need prompt action
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(10);  // Expires in 10 minutes
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = recipeId;
@@ -111,7 +129,6 @@ ProfessionEvent ProfessionEvent::MaterialsNeeded(ObjectGuid playerGuid, Professi
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Materials needed for crafting";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -119,6 +136,9 @@ ProfessionEvent ProfessionEvent::MaterialGathered(ObjectGuid playerGuid, Profess
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::MATERIAL_GATHERED;
+    event.priority = ProfessionEventPriority::MEDIUM;  // Gathering is moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(5);  // Expires in 5 minutes
     event.playerGuid = playerGuid;
     event.profession = profession;
     event.recipeId = 0;
@@ -128,7 +148,6 @@ ProfessionEvent ProfessionEvent::MaterialGathered(ObjectGuid playerGuid, Profess
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Material gathered from node";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -136,6 +155,9 @@ ProfessionEvent ProfessionEvent::MaterialPurchased(ObjectGuid playerGuid, uint32
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::MATERIAL_PURCHASED;
+    event.priority = ProfessionEventPriority::MEDIUM;  // AH purchases are moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(5);  // Expires in 5 minutes
     event.playerGuid = playerGuid;
     event.profession = ProfessionType::NONE;
     event.recipeId = 0;
@@ -145,7 +167,6 @@ ProfessionEvent ProfessionEvent::MaterialPurchased(ObjectGuid playerGuid, uint32
     event.skillAfter = 0;
     event.goldAmount = goldSpent;
     event.reason = "Material purchased from auction house";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -153,6 +174,9 @@ ProfessionEvent ProfessionEvent::ItemBanked(ObjectGuid playerGuid, uint32 itemId
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::ITEM_BANKED;
+    event.priority = ProfessionEventPriority::BATCH;  // Banking can be batched
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(30);  // Expires in 30 minutes
     event.playerGuid = playerGuid;
     event.profession = ProfessionType::NONE;
     event.recipeId = 0;
@@ -162,7 +186,6 @@ ProfessionEvent ProfessionEvent::ItemBanked(ObjectGuid playerGuid, uint32 itemId
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Item deposited to bank";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -170,6 +193,9 @@ ProfessionEvent ProfessionEvent::ItemWithdrawn(ObjectGuid playerGuid, uint32 ite
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::ITEM_WITHDRAWN;
+    event.priority = ProfessionEventPriority::MEDIUM;  // Withdrawals are moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(10);  // Expires in 10 minutes
     event.playerGuid = playerGuid;
     event.profession = ProfessionType::NONE;
     event.recipeId = 0;
@@ -179,7 +205,6 @@ ProfessionEvent ProfessionEvent::ItemWithdrawn(ObjectGuid playerGuid, uint32 ite
     event.skillAfter = 0;
     event.goldAmount = 0;
     event.reason = "Item withdrawn from bank";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -187,6 +212,9 @@ ProfessionEvent ProfessionEvent::GoldBanked(ObjectGuid playerGuid, uint32 goldAm
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::GOLD_BANKED;
+    event.priority = ProfessionEventPriority::BATCH;  // Banking can be batched
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(30);  // Expires in 30 minutes
     event.playerGuid = playerGuid;
     event.profession = ProfessionType::NONE;
     event.recipeId = 0;
@@ -196,7 +224,6 @@ ProfessionEvent ProfessionEvent::GoldBanked(ObjectGuid playerGuid, uint32 goldAm
     event.skillAfter = 0;
     event.goldAmount = goldAmount;
     event.reason = "Gold deposited to bank";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -204,6 +231,9 @@ ProfessionEvent ProfessionEvent::GoldWithdrawn(ObjectGuid playerGuid, uint32 gol
 {
     ProfessionEvent event;
     event.type = ProfessionEventType::GOLD_WITHDRAWN;
+    event.priority = ProfessionEventPriority::MEDIUM;  // Gold withdrawals are moderate priority
+    event.timestamp = std::chrono::steady_clock::now();
+    event.expiryTime = event.timestamp + std::chrono::minutes(10);  // Expires in 10 minutes
     event.playerGuid = playerGuid;
     event.profession = ProfessionType::NONE;
     event.recipeId = 0;
@@ -213,7 +243,6 @@ ProfessionEvent ProfessionEvent::GoldWithdrawn(ObjectGuid playerGuid, uint32 gol
     event.skillAfter = 0;
     event.goldAmount = goldAmount;
     event.reason = "Gold withdrawn from bank";
-    event.timestamp = std::chrono::steady_clock::now();
     return event;
 }
 
@@ -264,6 +293,11 @@ bool ProfessionEvent::IsValid() const
     }
 }
 
+bool ProfessionEvent::IsExpired() const
+{
+    return std::chrono::steady_clock::now() >= expiryTime;
+}
+
 std::string ProfessionEvent::ToString() const
 {
     std::ostringstream oss;
@@ -312,7 +346,8 @@ std::string ProfessionEvent::ToString() const
             break;
     }
 
-    oss << ", player=" << playerGuid.ToString() << "]";
+    oss << ", player=" << playerGuid.ToString()
+        << ", priority=" << static_cast<int>(priority) << "]";
     return oss.str();
 }
 
