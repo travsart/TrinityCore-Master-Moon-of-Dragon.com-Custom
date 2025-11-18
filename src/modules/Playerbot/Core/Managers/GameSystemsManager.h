@@ -34,6 +34,7 @@
 #include "Equipment/EquipmentManager.h"
 #include "Companion/MountManager.h"
 #include "Companion/BattlePetManager.h"
+#include "PvP/ArenaAI.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -99,6 +100,9 @@ class BotAI;
  *
  * **Phase 6.3 Integration (2025-11-18):**
  * BattlePetManager converted from singleton to per-bot instance (26th manager)
+ *
+ * **Phase 7.1 Integration (2025-11-18):**
+ * ArenaAI converted from singleton to per-bot instance (27th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -143,6 +147,7 @@ public:
     EquipmentManager* GetEquipmentManager() const { return _equipmentManager.get(); }
     MountManager* GetMountManager() const { return _mountManager.get(); }
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
+    ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -165,7 +170,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 26 managers owned by facade
+    // MANAGER INSTANCES - All 27 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -182,6 +187,7 @@ private:
     std::unique_ptr<EquipmentManager> _equipmentManager;
     std::unique_ptr<MountManager> _mountManager;
     std::unique_ptr<BattlePetManager> _battlePetManager;
+    std::unique_ptr<ArenaAI> _arenaAI;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems

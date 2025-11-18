@@ -905,14 +905,9 @@ inline void RegisterPlayerbotServices()
         // No longer registered as singleton - owned by GameSystemsManager
         // Access via: botAI->GetGameSystems()->GetBattlePetManager()
 
-        // Register ArenaAI (Phase 63)
-        container.RegisterInstance<Playerbot::IArenaAI>(
-            std::shared_ptr<Playerbot::IArenaAI>(
-                Playerbot::ArenaAI::instance(),
-                [](Playerbot::IArenaAI*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IArenaAI");
+        // NOTE: ArenaAI is now per-bot (Phase 7.1)
+        // No longer registered as singleton - owned by GameSystemsManager
+        // Access via: botAI->GetGameSystems()->GetArenaAI()
 
         // Register PvPCombatAI (Phase 64)
         container.RegisterInstance<Playerbot::IPvPCombatAI>(

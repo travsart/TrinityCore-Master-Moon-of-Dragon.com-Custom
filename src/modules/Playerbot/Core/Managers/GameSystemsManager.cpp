@@ -159,6 +159,12 @@ GameSystemsManager::~GameSystemsManager()
         _battlePetManager.reset();
     }
 
+    if (_arenaAI)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying ArenaAI");
+        _arenaAI.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -278,6 +284,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _equipmentManager = std::make_unique<EquipmentManager>(_bot);
     _mountManager = std::make_unique<MountManager>(_bot);
     _battlePetManager = std::make_unique<BattlePetManager>(_bot);
+    _arenaAI = std::make_unique<ArenaAI>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -402,6 +409,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _battlePetManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ BattlePetManager initialized - battle pet automation and collection active");
+        }
+
+        if (_arenaAI)
+        {
+            _arenaAI->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ ArenaAI initialized - arena PvP automation active");
         }
 
         if (_groupCoordinator)
@@ -652,6 +665,12 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     if (_battlePetManager)
         _battlePetManager->Update(diff);
+
+    // ========================================================================
+    // ARENA PVP AI - Update every frame for arena automation
+    // ========================================================================
+    if (_arenaAI)
+        _arenaAI->Update(diff);
 
     // ========================================================================
     // PROFESSION AUTOMATION - Check every 15 seconds
