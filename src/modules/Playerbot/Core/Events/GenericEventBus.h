@@ -14,6 +14,7 @@
 #include "Threading/LockHierarchy.h"
 #include "ObjectGuid.h"
 #include "Log.h"
+#include "IEventHandler.h"
 #include <queue>
 #include <vector>
 #include <unordered_map>
@@ -241,6 +242,9 @@ public:
         if (subscriberGuid.IsEmpty())
             return false;
 
+        // Store BotAI pointer for event dispatch
+        _subscriberPointers[subscriberGuid] = subscriber;
+
         // Add types to subscription set (automatically deduplicates)
         auto& subscribedTypes = _subscriptions[subscriberGuid];
         for (auto type : types)
@@ -276,6 +280,7 @@ public:
             return;
 
         _subscriptions.erase(subscriberGuid);
+        _subscriberPointers.erase(subscriberGuid);
 
         TC_LOG_DEBUG("playerbot.events", "EventBus: Bot {} unsubscribed from all events",
             subscriberGuid.ToString());
@@ -555,9 +560,13 @@ private:
     /**
      * @brief Dispatch event to subscribed bots
      *
-     * Internal method that routes events to appropriate subscribers.
+     * Internal method that routes events to appropriate subscribers using
+     * the IEventHandler<TEvent> interface for type-safe event delivery.
      *
      * @param event The event to dispatch
+     *
+     * Thread Safety: Called with _subscriptionMutex held
+     * Performance: O(n) where n is number of subscribers
      */
     void DispatchEvent(TEvent const& event)
     {
@@ -570,13 +579,45 @@ private:
             if (eventTypes.find(event.type) == eventTypes.end())
                 continue;  // Not subscribed to this event type
 
-            // Find the bot and dispatch event
-            // Note: In real implementation, would call bot->OnEvent(event) or similar
-            TC_LOG_TRACE("playerbot.events", "EventBus: Dispatching event to bot {}: {}",
-                subscriberGuid.ToString(), event.ToString());
+            // Find the bot pointer
+            auto pointerIt = _subscriberPointers.find(subscriberGuid);
+            if (pointerIt == _subscriberPointers.end())
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} subscribed but pointer not found!",
+                    subscriberGuid.ToString());
+                continue;
+            }
 
-            // TODO: Actual dispatch implementation depends on how BotAI handles events
-            // Could be: bot->OnEvent(event) or bot->GetEventHandler()->HandleEvent(event)
+            BotAI* botAI = pointerIt->second;
+            if (!botAI)
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} has null BotAI pointer!",
+                    subscriberGuid.ToString());
+                continue;
+            }
+
+            // Cast to event handler interface and dispatch
+            // BotAI must implement IEventHandler<TEvent> for each event type it subscribes to
+            IEventHandler<TEvent>* handler = dynamic_cast<IEventHandler<TEvent>*>(botAI);
+            if (!handler)
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Bot {} does not implement IEventHandler<{}>!",
+                    subscriberGuid.ToString(), typeid(TEvent).name());
+                continue;
+            }
+
+            // Dispatch event to handler
+            try
+            {
+                handler->HandleEvent(event);
+                TC_LOG_TRACE("playerbot.events", "EventBus: Dispatched event to bot {}: {}",
+                    subscriberGuid.ToString(), event.ToString());
+            }
+            catch (std::exception const& e)
+            {
+                TC_LOG_ERROR("playerbot.events", "EventBus: Exception in event handler for bot {}: {}",
+                    subscriberGuid.ToString(), e.what());
+            }
         }
     }
 
@@ -592,6 +633,10 @@ private:
 
     // Subscriptions: botGuid -> set of subscribed event types
     std::unordered_map<ObjectGuid, std::unordered_set<EventType>> _subscriptions;
+
+    // Subscriber pointers: botGuid -> BotAI* (for event dispatch)
+    std::unordered_map<ObjectGuid, BotAI*> _subscriberPointers;
+
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _subscriptionMutex;
 
     // Configuration

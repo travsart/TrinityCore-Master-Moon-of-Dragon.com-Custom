@@ -22,6 +22,7 @@
 #include "Core/DI/Interfaces/IBotAIFactory.h"
 #include "ObjectCache.h"
 #include "Blackboard/SharedBlackboard.h"
+#include "Core/Events/IEventHandler.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -119,7 +120,17 @@ struct AIUpdateResult
     std::chrono::microseconds updateTime{0};
 };
 
-class TC_GAME_API BotAI
+class TC_GAME_API BotAI : public IEventHandler<LootEvent>,
+                           public IEventHandler<QuestEvent>,
+                           public IEventHandler<CombatEvent>,
+                           public IEventHandler<CooldownEvent>,
+                           public IEventHandler<AuraEvent>,
+                           public IEventHandler<ResourceEvent>,
+                           public IEventHandler<SocialEvent>,
+                           public IEventHandler<AuctionEvent>,
+                           public IEventHandler<NPCEvent>,
+                           public IEventHandler<InstanceEvent>,
+                           public IEventHandler<GroupEvent>
 {
 public:
     explicit BotAI(Player* bot);
@@ -622,6 +633,24 @@ public:
      * - Handles encounter mechanics
      */
     virtual void OnInstanceEvent(InstanceEvent const& event);
+
+    // ========================================================================
+    // IEVENTHANDLER INTERFACE IMPLEMENTATIONS (Phase 5)
+    // ========================================================================
+    // These methods implement the IEventHandler<T> interfaces and delegate
+    // to the existing OnXxxEvent() methods for backward compatibility
+
+    void HandleEvent(LootEvent const& event) override { OnLootEvent(event); }
+    void HandleEvent(QuestEvent const& event) override { OnQuestEvent(event); }
+    void HandleEvent(CombatEvent const& event) override { OnCombatEvent(event); }
+    void HandleEvent(CooldownEvent const& event) override { OnCooldownEvent(event); }
+    void HandleEvent(AuraEvent const& event) override { OnAuraEvent(event); }
+    void HandleEvent(ResourceEvent const& event) override { OnResourceEvent(event); }
+    void HandleEvent(SocialEvent const& event) override { OnSocialEvent(event); }
+    void HandleEvent(AuctionEvent const& event) override { OnAuctionEvent(event); }
+    void HandleEvent(NPCEvent const& event) override { OnNPCEvent(event); }
+    void HandleEvent(InstanceEvent const& event) override { OnInstanceEvent(event); }
+    void HandleEvent(GroupEvent const& event) override { OnGroupEvent(event); }
 
     // ========================================================================
     // PERFORMANCE METRICS - Monitoring and optimization
