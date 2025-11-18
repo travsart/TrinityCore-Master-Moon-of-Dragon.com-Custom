@@ -422,8 +422,6 @@ set(PLAYERBOT_SOURCES
 
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Movement/QuestPathfinder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Movement/GroupFormationManager.h
 
     # Phase 2: Account Management System
     ${CMAKE_CURRENT_SOURCE_DIR}/Account/BotAccountMgr.cpp
