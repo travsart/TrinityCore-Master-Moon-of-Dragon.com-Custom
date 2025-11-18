@@ -239,9 +239,48 @@ Game/NPCInteractionManager (HIGH-LEVEL COORDINATOR)
 
 ---
 
+## In Progress 🔄
+
+### Phase 2 Analysis: Movement System - Incomplete Migration Discovered
+
+**Status:** 🔄 ANALYSIS COMPLETE - Discovered Incomplete Previous Migration
+**Effort Estimate:** 120 hours (to complete the migration)
+**Actual Time (Analysis):** 2 hours
+**Risk:** HIGH
+**Date:** 2025-11-18
+
+**MAJOR DISCOVERY:** Phase 2 was **STARTED but NEVER COMPLETED** by previous developers!
+
+**Evidence of Incomplete Migration:**
+- ✅ UnifiedMovementCoordinator EXISTS (877 lines) - consolidates 4 systems
+- ✅ DI registration complete
+- ❌ Only 94 references (mostly self-refs)
+- ❌ NOT integrated into BotAI
+- ❌ Old 6 systems still in heavy use (204+ refs)
+
+**The 7 Movement Systems (7,597 total lines):**
+1. MovementArbiter (1,194 lines) - ✅ PRIMARY (204 refs, 35 files)
+2. UnifiedMovementCoordinator (877 lines) - ⚠️ **CREATED BUT UNUSED** (94 refs)
+3. CombatMovementStrategy (1,084 lines) - 🔴 DUPLICATE
+4. MovementIntegration (919 lines) - 🔴 OVERLAP
+5. GroupFormationManager (1,309 lines) - 🔴 DUPLICATE
+6. LeaderFollowBehavior (1,941 lines) - 🔴 NOT CONSOLIDATED (largest!)
+7. BotMovementUtil (273 lines) - 🟡 UTILITY (keep)
+
+**Recommended Action:** FINISH the incomplete migration (Option A - 120 hours)
+- Expected savings: ~5,253 lines removed (69% reduction)
+- 7 systems → 2-3 unified systems
+
+**Analysis Document:**
+- `docs/playerbot/MOVEMENT_SYSTEM_ANALYSIS.md` (574 lines)
+
+**Commit:** `5a5304db - docs(playerbot): Discover incomplete Phase 2 movement migration`
+
+---
+
 ## Pending Tasks ⏳
 
-_No additional analysis tasks pending - ready to proceed with implementation_
+_Awaiting decision on completing Phase 2 migration (Option A recommended)_
 
 ---
 
@@ -304,7 +343,8 @@ _No additional analysis tasks pending - ready to proceed with implementation_
 | GroupCoordinators | 2 duplicate | 1 | 1 | ✅ 100% |
 | Vendor skeleton files | 2 | 0 | 0 | ✅ 100% (skeletons removed) |
 | Vendor/NPC systems | 6 files | 4 files | 4 | ✅ Cleaned (removed 2 skeletons) |
-| Movement systems | 7 | 7 | 3 | ⏳ 0% |
+| Movement systems | 7 fragmented | 7 (1 unused) | 2-3 | 🔴 Incomplete migration discovered! |
+| Movement lines | 7,597 | 7,597 | ~2,344 | ⏳ 0% (69% savings possible) |
 | Event buses | 58 | 58 | Template-based | ⏳ 0% |
 
 ### Lines of Code
@@ -348,11 +388,15 @@ _No additional analysis tasks pending - ready to proceed with implementation_
 | **Week 4: Rename Files** | 20 hours | 4 hours | ✅ Early completion (80% faster) |
 | **Week 1.5-2: GroupCoordinator** | 60 hours | 10 hours | ✅ Early completion (83% faster) |
 | **Week 3: Vendor/NPC Cleanup** | 40 hours | 6 hours | ✅ Early completion (85% faster) |
-| **Phase 2-4** | 10+ weeks | 0 hours | 📅 Planned |
+| **Phase 2: Movement Analysis** | 40 hours | 2 hours | ✅ Analysis complete (95% faster) |
+| **Phase 2: Movement Implementation** | 120 hours | 0 hours | ⏳ Awaiting decision |
+| **Phase 3-4** | 8+ weeks | 0 hours | 📅 Planned |
 
-**Total Time Invested:** 22 hours
-**Total Time Saved:** 138 hours (86% efficiency gain)
-**Percentage of Total Plan:** ~1.6% (22 / 1,400 hours)
+**Total Time Invested:** 24 hours
+**Total Time Saved:** 142 hours (86% efficiency gain)
+**Percentage of Total Plan:** ~1.7% (24 / 1,400 hours)
+
+**Major Discovery:** Phase 2 incomplete migration found (UnifiedMovementCoordinator created but unused)
 
 ---
 
