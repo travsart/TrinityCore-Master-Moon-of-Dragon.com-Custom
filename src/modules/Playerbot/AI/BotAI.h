@@ -47,6 +47,7 @@ class AuctionManager;
 class GroupCoordinator; // Advanced/GroupCoordinator
 class DeathRecoveryManager;
 class MovementArbiter;
+class UnifiedMovementCoordinator; // Phase 2: Unified Movement System (completing incomplete migration)
 class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
@@ -319,6 +320,13 @@ public:
 
     MovementArbiter* GetMovementArbiter() { return _movementArbiter.get(); }
     MovementArbiter const* GetMovementArbiter() const { return _movementArbiter.get(); }
+
+    // ========================================================================
+    // UNIFIED MOVEMENT COORDINATOR - Phase 2 Migration (NEW primary system)
+    // ========================================================================
+
+    UnifiedMovementCoordinator* GetUnifiedMovementCoordinator() { return _unifiedMovementCoordinator.get(); }
+    UnifiedMovementCoordinator const* GetUnifiedMovementCoordinator() const { return _unifiedMovementCoordinator.get(); }
 
     /**
      * Request movement via the Movement Arbiter
@@ -771,8 +779,12 @@ protected:
     // Death recovery system
     std::unique_ptr<DeathRecoveryManager> _deathRecoveryManager;
 
-    // Movement arbiter - Enterprise movement request arbitration
+    // Movement arbiter - Enterprise movement request arbitration (LEGACY - being migrated)
     std::unique_ptr<MovementArbiter> _movementArbiter;
+
+    // Unified Movement Coordinator - Phase 2 Migration (NEW primary system)
+    // Consolidates: MovementArbiter, CombatMovementStrategy, GroupFormationManager, MovementIntegration
+    std::unique_ptr<UnifiedMovementCoordinator> _unifiedMovementCoordinator;
 
     // Combat state manager - Automatic combat state synchronization via DAMAGE_TAKEN events
     std::unique_ptr<CombatStateManager> _combatStateManager;
