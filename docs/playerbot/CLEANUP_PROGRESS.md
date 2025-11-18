@@ -170,42 +170,61 @@ Create unified GroupCoordinator with subsystems:
 
 ## In Progress 🔄
 
-_No tasks currently in progress_
+### Week 3: Consolidate Vendor/NPC Interaction
+
+**Status:** 🔄 ANALYSIS COMPLETE - Ready for Implementation
+**Effort Estimate:** 40 hours
+**Actual Time (Analysis):** 4 hours
+**Risk:** LOW
+**Date:** 2025-11-18
+
+**Progress:**
+- ✅ Analyzed all 6 vendor/NPC interaction files
+- ✅ Identified duplicate VendorInteraction classes (569 lines)
+- ✅ Documented consolidation architecture
+- ✅ Created VENDOR_NPC_CONSOLIDATION_ANALYSIS.md (459 lines)
+- ⏳ Need to implement consolidation
+- ⏳ Need to test integration
+
+**Key Findings:**
+- **2 complete duplicate VendorInteraction classes** (Social/ vs Interaction/Vendors/)
+- **Social/VendorInteraction.h is most advanced** (route optimization, reputation handling, strategy system)
+- **Interaction/Vendors/VendorInteraction.h is simpler duplicate** (will remove)
+- **3 overlapping purchase managers** (VendorPurchaseManager, VendorInteractionManager, both VendorInteraction classes)
+- **InteractionManager (Core) is underutilized** (has TODOs for many features)
+
+**Consolidation Architecture:**
+```
+Interaction/Core/InteractionManager (MAIN HUB)
+  ├── Priority queue for all interactions
+  └─> Game/NPCInteractionManager (HIGH-LEVEL COORDINATOR)
+      ├── Quest givers, Trainers, Service NPCs
+      └─> Interaction/VendorInteractionManager (CONSOLIDATED)
+          ├── Moved from Social/VendorInteraction.h
+          ├── VendorAnalysis, BuyingStrategy, SellingStrategy
+          └─> Game/VendorPurchaseManager (CORE PURCHASE LOGIC)
+              └── Purchase execution, validation, error handling
+```
+
+**Files to Keep:**
+- ✅ `Interaction/Core/InteractionManager.h` (MAIN HUB)
+- ✅ `Social/VendorInteraction.h` (MOVE to Interaction/, rename to VendorInteractionManager)
+- ✅ `Game/NPCInteractionManager.h` (High-level coordinator)
+- ✅ `Game/VendorPurchaseManager.h` (Core purchase logic)
+
+**Files to Remove:**
+- ❌ `Interaction/Vendors/VendorInteraction.h` (330 lines - complete duplicate)
+- ❌ `Interaction/VendorInteractionManager.h` (~200 lines - merge into consolidated)
+
+**Expected Savings:** ~530 lines of duplicate code removed
+
+**Analysis Document:** `docs/playerbot/VENDOR_NPC_CONSOLIDATION_ANALYSIS.md`
 
 ---
 
 ## Pending Tasks ⏳
 
-### Week 3: Consolidate Vendor/NPC Interaction
-
-**Status:** ⏳ PENDING
-**Effort Estimate:** 40 hours
-**Risk:** LOW
-
-**Plan:**
-1. Choose `Interaction/Core/InteractionManager` as central hub
-2. Merge vendor logic from 6 scattered locations
-3. Create unified hierarchy:
-   ```
-   InteractionManager (CORE)
-     ├─ VendorInteractionManager
-     ├─ NPCInteractionManager
-     ├─ FlightMasterManager
-     └─ QuestGiverManager
-   ```
-
-4. Remove duplicate `Social/VendorInteraction.h`
-5. Update all vendor interaction calls
-
-**Files to Consolidate:**
-- `Game/VendorPurchaseManager` (keep)
-- `Interaction/Core/InteractionManager` (keep - MAIN)
-- `Interaction/VendorInteractionManager` (merge)
-- `Social/VendorInteraction.h` (remove - duplicate)
-- `Interaction/Vendors/VendorInteraction.h` (merge)
-- `Game/NPCInteractionManager` (merge)
-
-**Expected Savings:** ~200 lines duplicate code removed
+_No additional analysis tasks pending - ready to proceed with implementation_
 
 ---
 
@@ -310,12 +329,13 @@ _No tasks currently in progress_
 | **Week 1: Foundation** | 40 hours | 2 hours | ✅ Early completion (95% faster) |
 | **Week 4: Rename Files** | 20 hours | 4 hours | ✅ Early completion (80% faster) |
 | **Week 1.5-2: GroupCoordinator** | 60 hours | 10 hours | ✅ Early completion (83% faster) |
-| **Week 3: Vendor/NPC** | 40 hours | 0 hours | ⏳ Not started |
+| **Week 3: Vendor/NPC Analysis** | 10 hours | 4 hours | ✅ Analysis complete (60% faster) |
+| **Week 3: Vendor/NPC Implementation** | 30 hours | 0 hours | ⏳ Ready to start |
 | **Phase 2-4** | 10+ weeks | 0 hours | 📅 Planned |
 
-**Total Time Invested:** 16 hours
-**Total Time Saved:** 104 hours (87% efficiency gain)
-**Percentage of Total Plan:** ~1% (16 / 1,400 hours)
+**Total Time Invested:** 20 hours
+**Total Time Saved:** 106 hours (84% efficiency gain)
+**Percentage of Total Plan:** ~1.4% (20 / 1,400 hours)
 
 ---
 
