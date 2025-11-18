@@ -153,6 +153,12 @@ GameSystemsManager::~GameSystemsManager()
         _mountManager.reset();
     }
 
+    if (_battlePetManager)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying BattlePetManager");
+        _battlePetManager.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -271,6 +277,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _bankingManager = std::make_unique<BankingManager>(_bot);
     _equipmentManager = std::make_unique<EquipmentManager>(_bot);
     _mountManager = std::make_unique<MountManager>(_bot);
+    _battlePetManager = std::make_unique<BattlePetManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -389,6 +396,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _mountManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ MountManager initialized - mount automation and collection tracking active");
+        }
+
+        if (_battlePetManager)
+        {
+            _battlePetManager->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ BattlePetManager initialized - battle pet automation and collection active");
         }
 
         if (_groupCoordinator)
@@ -633,6 +646,12 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     if (_mountManager)
         _mountManager->Update(diff);
+
+    // ========================================================================
+    // BATTLE PET AUTOMATION - Update every frame for battle pet AI
+    // ========================================================================
+    if (_battlePetManager)
+        _battlePetManager->Update(diff);
 
     // ========================================================================
     // PROFESSION AUTOMATION - Check every 15 seconds

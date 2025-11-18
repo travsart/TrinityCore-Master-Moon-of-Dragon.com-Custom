@@ -901,14 +901,9 @@ inline void RegisterPlayerbotServices()
         );
         TC_LOG_INFO("playerbot.di", "  - Registered IPlayerbotCharacterDBInterface");
 
-        // Register BattlePetManager (Phase 62)
-        container.RegisterInstance<Playerbot::IBattlePetManager>(
-            std::shared_ptr<Playerbot::IBattlePetManager>(
-                Playerbot::BattlePetManager::instance(),
-                [](Playerbot::IBattlePetManager*) {} // No-op deleter (singleton)
-            )
-        );
-        TC_LOG_INFO("playerbot.di", "  - Registered IBattlePetManager");
+        // NOTE: BattlePetManager is now per-bot (Phase 6.3)
+        // No longer registered as singleton - owned by GameSystemsManager
+        // Access via: botAI->GetGameSystems()->GetBattlePetManager()
 
         // Register ArenaAI (Phase 63)
         container.RegisterInstance<Playerbot::IArenaAI>(
