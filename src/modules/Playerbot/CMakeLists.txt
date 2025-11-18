@@ -361,7 +361,6 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
 
     # Group Event System - Event-Driven Architecture for Group Coordination
-    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h
@@ -390,43 +389,33 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/ParseInstancePacket_Typed.cpp
 
     # Phase 4: Complete Event Bus System (All 11 Buses)
-    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.h
@@ -966,7 +955,6 @@ source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.h
@@ -1000,70 +988,60 @@ source_group("Movement" FILES
 )
 
 source_group("Resource" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ResourceEvents.h
 )
 
 source_group("Social" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
 )
 
 source_group("Auction" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
 )
 
 source_group("NPC" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/NPC/NPCEvents.h
 )
 
 source_group("Instance" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Instance/InstanceEvents.h
 )
 
 source_group("Combat" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Combat/CombatEvents.h
 )
 
 source_group("Cooldown" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cooldown/CooldownEvents.h
 )
 
 source_group("Aura" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Aura/AuraEvents.h
 )
 
 source_group("Loot" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Loot/LootEvents.h
 )
 
 source_group("Quest" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Quest/QuestEvents.h
