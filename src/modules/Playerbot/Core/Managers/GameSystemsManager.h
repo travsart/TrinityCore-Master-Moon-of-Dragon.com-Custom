@@ -25,6 +25,7 @@
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Professions/ProfessionManager.h"
+#include "Professions/GatheringMaterialsBridge.h"
 #include "Economy/AuctionManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
@@ -50,7 +51,7 @@ class BotAI;
  * @brief Concrete implementation of IGameSystemsManager facade
  *
  * **Ownership:**
- * - Owns all 18 manager instances via std::unique_ptr (including ProfessionManager)
+ * - Owns all 19 manager instances via std::unique_ptr (including bridges)
  * - Owned by BotAI via std::unique_ptr<IGameSystemsManager>
  * - Returns raw pointers (non-owning) to external callers
  *
@@ -67,6 +68,9 @@ class BotAI;
  * **Phase 1B Integration (2025-11-18):**
  * ProfessionManager converted from global singleton to per-bot instance (18th manager),
  * eliminating singleton anti-pattern and aligning with Phase 6 per-bot architecture.
+ *
+ * **Phase 4.1 Integration (2025-11-18):**
+ * GatheringMaterialsBridge converted from singleton to per-bot instance (19th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -125,7 +129,7 @@ public:
 
 private:
     // ========================================================================
-    // MANAGER INSTANCES - All 18 managers owned by facade
+    // MANAGER INSTANCES - All 19 managers owned by facade
     // ========================================================================
 
     // Core game systems
@@ -133,6 +137,7 @@ private:
     std::unique_ptr<TradeManager> _tradeManager;
     std::unique_ptr<GatheringManager> _gatheringManager;
     std::unique_ptr<ProfessionManager> _professionManager;
+    std::unique_ptr<GatheringMaterialsBridge> _gatheringMaterialsBridge;
     std::unique_ptr<AuctionManager> _auctionManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 

@@ -111,6 +111,12 @@ GameSystemsManager::~GameSystemsManager()
         _professionManager.reset();
     }
 
+    if (_gatheringMaterialsBridge)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying GatheringMaterialsBridge");
+        _gatheringMaterialsBridge.reset();
+    }
+
     if (_auctionManager)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionManager");
@@ -221,6 +227,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _tradeManager = std::make_unique<TradeManager>(_bot, _botAI);
     _gatheringManager = std::make_unique<GatheringManager>(_bot, _botAI);
     _professionManager = std::make_unique<ProfessionManager>(_bot);
+    _gatheringMaterialsBridge = std::make_unique<GatheringMaterialsBridge>(_bot);
     _auctionManager = std::make_unique<AuctionManager>(_bot, _botAI);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
@@ -298,6 +305,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _gatheringManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ GatheringManager initialized via IManagerBase");
+        }
+
+        if (_gatheringMaterialsBridge)
+        {
+            _gatheringMaterialsBridge->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ GatheringMaterialsBridge initialized - gathering-crafting coordination active");
         }
 
         if (_auctionManager)
@@ -505,7 +518,8 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
         _gatheringManager->Update(diff);
 
     // Gathering materials bridge coordinates gathering with crafting needs
-    GatheringMaterialsBridge::instance()->Update(_bot, diff);
+    if (_gatheringMaterialsBridge)
+        _gatheringMaterialsBridge->Update(diff);
 
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
