@@ -20,11 +20,16 @@
  * - Coordinates with ProfessionManager for crafting
  * - Works with GatheringAutomation for material collection
  * - Uses FarmingCoordinator for stockpile management
+ * - Subscribes to ProfessionEventBus for event-driven reactivity (Phase 2)
  *
  * Design Pattern: Bridge Pattern
  * - Decouples profession logic from auction logic
  * - All auction operations delegated to existing AuctionHouse class
  * - This class only manages profession-auction coordination
+ *
+ * Event Integration (Phase 2 - 2025-11-18):
+ * - CRAFTING_COMPLETED → List crafted items for sale on AH
+ * - ITEM_BANKED → Update inventory tracking and stockpile management
  */
 
 #pragma once
@@ -327,6 +332,16 @@ public:
 private:
     ProfessionAuctionBridge();
     ~ProfessionAuctionBridge() = default;
+
+    // ============================================================================
+    // EVENT HANDLING (Phase 2)
+    // ============================================================================
+
+    /**
+     * @brief Handle profession events from ProfessionEventBus
+     * Reacts to CRAFTING_COMPLETED, ITEM_BANKED
+     */
+    void HandleProfessionEvent(struct ProfessionEvent const& event);
 
     // ============================================================================
     // INITIALIZATION HELPERS

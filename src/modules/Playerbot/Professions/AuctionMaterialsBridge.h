@@ -20,11 +20,16 @@
  * - Uses ProfessionAuctionBridge for auction market prices
  * - Uses ProfessionManager to determine crafting value
  * - Coordinates with GatheringManager for gathering feasibility
+ * - Subscribes to ProfessionEventBus for event-driven reactivity (Phase 2)
  *
  * Design Pattern: Bridge + Strategy Pattern
  * - Bridges auction and gathering systems with intelligent decision-making
  * - Strategy pattern for different economic models (time-value, opportunity cost)
  * - All decisions based on configurable economic parameters
+ *
+ * Event Integration (Phase 2 - 2025-11-18):
+ * - MATERIALS_NEEDED → Analyze AH prices and recommend buy vs gather
+ * - MATERIAL_PURCHASED → Track spending and update economic metrics
  */
 
 #pragma once
@@ -464,6 +469,16 @@ public:
 private:
     AuctionMaterialsBridge();
     ~AuctionMaterialsBridge() = default;
+
+    // ========================================================================
+    // EVENT HANDLING (Phase 2)
+    // ========================================================================
+
+    /**
+     * @brief Handle profession events from ProfessionEventBus
+     * Reacts to MATERIALS_NEEDED, MATERIAL_PURCHASED
+     */
+    void HandleProfessionEvent(struct ProfessionEvent const& event);
 
     // ========================================================================
     // INITIALIZATION HELPERS

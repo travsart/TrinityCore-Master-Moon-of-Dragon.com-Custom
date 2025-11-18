@@ -9,6 +9,8 @@
 
 #include "ProfessionAuctionBridge.h"
 #include "ProfessionManager.h"
+#include "ProfessionEventBus.h"
+#include "ProfessionEvents.h"
 #include "../Social/AuctionHouse.h"
 #include "Player.h"
 #include "Item.h"
@@ -47,7 +49,16 @@ void ProfessionAuctionBridge::Initialize()
 
     LoadDefaultStockpileConfigs();
 
-    TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Initialized (bridge to existing AuctionHouse)");
+    // Subscribe to ProfessionEventBus for event-driven reactivity (Phase 2)
+    ProfessionEventBus::instance()->SubscribeCallback(
+        [this](ProfessionEvent const& event) { HandleProfessionEvent(event); },
+        {
+            ProfessionEventType::CRAFTING_COMPLETED,
+            ProfessionEventType::ITEM_BANKED
+        }
+    );
+
+    TC_LOG_INFO("playerbots", "ProfessionAuctionBridge: Initialized (bridge to existing AuctionHouse), subscribed to 2 event types");
 }
 
 void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
@@ -825,6 +836,82 @@ bool ProfessionAuctionBridge::CanAccessAuctionHouse(::Player* player) const
         player->GetName(), zoneId);
 
     return true; // Allow for automation purposes
+}
+
+// ============================================================================
+// EVENT HANDLING (Phase 2)
+// ============================================================================
+
+void ProfessionAuctionBridge::HandleProfessionEvent(ProfessionEvent const& event)
+{
+    switch (event.type)
+    {
+        case ProfessionEventType::CRAFTING_COMPLETED:
+        {
+            // When crafting completes, consider listing crafted items for sale on AH
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "ProfessionAuctionBridge: CRAFTING_COMPLETED event - Item {} x{} crafted from recipe {}",
+                event.itemId, event.quantity, event.recipeId);
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Check if player is enabled for profession-auction automation
+            if (!IsEnabled(player))
+                return;
+
+            // Sell crafted items automatically
+            if (SellCraftedItem(player, event.itemId, event.quantity))
+            {
+                TC_LOG_INFO("playerbots",
+                    "ProfessionAuctionBridge: Listed crafted item {} x{} for sale on AH",
+                    event.itemId, event.quantity);
+
+                // Update statistics
+                uint32 playerGuid = event.playerGuid.GetCounter();
+                _globalStatistics.itemsListedForSale += event.quantity;
+                _playerStatistics[playerGuid].itemsListedForSale += event.quantity;
+            }
+            break;
+        }
+
+        case ProfessionEventType::ITEM_BANKED:
+        {
+            // When items are banked, update inventory tracking and stockpile management
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "ProfessionAuctionBridge: ITEM_BANKED event - Item {} x{} banked",
+                event.itemId, event.quantity);
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Update material stockpile tracking
+            uint32 playerGuid = event.playerGuid.GetCounter();
+
+            std::lock_guard lock(_mutex);
+
+            // Check if this is a profession material we track
+            if (IsProfessionMaterial(event.itemId))
+            {
+                // Recalculate sellable materials now that inventory changed
+                TC_LOG_DEBUG("playerbots",
+                    "ProfessionAuctionBridge: Profession material {} x{} banked, recalculating sellable materials",
+                    event.itemId, event.quantity);
+
+                // Future enhancement: Trigger sellable materials recalculation
+                // This would analyze current stockpiles vs configured thresholds
+            }
+            break;
+        }
+
+        default:
+            // Ignore other event types
+            break;
+    }
 }
 
 } // namespace Playerbot

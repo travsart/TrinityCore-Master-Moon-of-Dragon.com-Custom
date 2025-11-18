@@ -11,6 +11,8 @@
 #include "GatheringMaterialsBridge.h"
 #include "ProfessionAuctionBridge.h"
 #include "ProfessionManager.h"
+#include "ProfessionEventBus.h"
+#include "ProfessionEvents.h"
 #include "../Professions/GatheringManager.h"
 #include "ObjectMgr.h"
 #include "ItemTemplate.h"
@@ -48,7 +50,16 @@ void AuctionMaterialsBridge::Initialize()
     LoadVendorMaterials();
     InitializeDefaultEconomicParameters();
 
-    TC_LOG_INFO("playerbot", "AuctionMaterialsBridge::Initialize - Smart material sourcing system initialized");
+    // Subscribe to ProfessionEventBus for event-driven reactivity (Phase 2)
+    ProfessionEventBus::instance()->SubscribeCallback(
+        [this](ProfessionEvent const& event) { HandleProfessionEvent(event); },
+        {
+            ProfessionEventType::MATERIALS_NEEDED,
+            ProfessionEventType::MATERIAL_PURCHASED
+        }
+    );
+
+    TC_LOG_INFO("playerbot", "AuctionMaterialsBridge::Initialize - Smart material sourcing system initialized, subscribed to 2 event types");
 }
 
 void AuctionMaterialsBridge::Update(::Player* player, uint32 diff)
@@ -1150,6 +1161,96 @@ GatheringMaterialsBridge* AuctionMaterialsBridge::GetGatheringBridge() const
 ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge() const
 {
     return ProfessionAuctionBridge::instance();
+}
+
+// ============================================================================
+// EVENT HANDLING (Phase 2)
+// ============================================================================
+
+void AuctionMaterialsBridge::HandleProfessionEvent(ProfessionEvent const& event)
+{
+    switch (event.type)
+    {
+        case ProfessionEventType::MATERIALS_NEEDED:
+        {
+            // When materials are needed, analyze AH prices and recommend buy vs gather
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "AuctionMaterialsBridge: MATERIALS_NEEDED event - Item {} x{} needed for profession {}",
+                event.itemId, event.quantity, static_cast<uint32>(event.profession));
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Analyze best sourcing method for this material
+            MaterialSourcingDecision decision = GetBestMaterialSource(player, event.itemId, event.quantity);
+
+            // Log recommendation
+            TC_LOG_INFO("playerbots",
+                "AuctionMaterialsBridge: Material sourcing analysis for {} x{}: {}",
+                event.itemId, event.quantity, decision.rationale);
+
+            // Update statistics based on recommendation
+            uint32 playerGuid = event.playerGuid.GetCounter();
+            switch (decision.recommendedMethod)
+            {
+                case MaterialAcquisitionMethod::GATHER:
+                    _globalStatistics.decisionsGather++;
+                    _playerStatistics[playerGuid].decisionsGather++;
+                    break;
+                case MaterialAcquisitionMethod::BUY_AUCTION:
+                    _globalStatistics.decisionsBuy++;
+                    _playerStatistics[playerGuid].decisionsBuy++;
+                    break;
+                case MaterialAcquisitionMethod::CRAFT:
+                    _globalStatistics.decisionsCraft++;
+                    _playerStatistics[playerGuid].decisionsCraft++;
+                    break;
+                case MaterialAcquisitionMethod::VENDOR:
+                    _globalStatistics.decisionsVendor++;
+                    _playerStatistics[playerGuid].decisionsVendor++;
+                    break;
+                case MaterialAcquisitionMethod::HYBRID_GATHER_BUY:
+                    _globalStatistics.decisionsHybrid++;
+                    _playerStatistics[playerGuid].decisionsHybrid++;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        }
+
+        case ProfessionEventType::MATERIAL_PURCHASED:
+        {
+            // When materials are purchased, track spending and update economic metrics
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "AuctionMaterialsBridge: MATERIAL_PURCHASED event - Item {} x{} for {} gold",
+                event.itemId, event.quantity, event.goldAmount);
+
+            // Update economic tracking
+            uint32 playerGuid = event.playerGuid.GetCounter();
+
+            std::lock_guard lock(_mutex);
+
+            // Update bot's economic profile
+            auto profileIt = _economicProfiles.find(playerGuid);
+            if (profileIt != _economicProfiles.end())
+            {
+                profileIt->second.totalGoldSpentOnMaterials += event.goldAmount;
+                profileIt->second.totalMaterialsBought += event.quantity;
+            }
+
+            TC_LOG_DEBUG("playerbots",
+                "AuctionMaterialsBridge: Tracked {} gold spent on {} x{} for player {}",
+                event.goldAmount, event.itemId, event.quantity, playerGuid);
+            break;
+        }
+
+        default:
+            // Ignore other event types
+            break;
+    }
 }
 
 } // namespace Playerbot

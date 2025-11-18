@@ -19,11 +19,17 @@
  * - Uses ProfessionManager to determine crafting needs
  * - Uses GatheringManager for resource harvesting
  * - Coordinates with ProfessionAuctionBridge for material sourcing decisions
+ * - Subscribes to ProfessionEventBus for event-driven reactivity (Phase 2)
  *
  * Design Pattern: Bridge Pattern
  * - Decouples gathering logic from crafting logic
  * - All gathering operations delegated to GatheringManager
  * - This class only manages gathering-crafting coordination
+ *
+ * Event Integration (Phase 2 - 2025-11-18):
+ * - MATERIALS_NEEDED → Trigger gathering session for needed materials
+ * - MATERIAL_GATHERED → Update fulfillment tracking and check completion
+ * - CRAFTING_COMPLETED → Recalculate material needs after crafting
  */
 
 #pragma once
@@ -279,6 +285,16 @@ public:
 private:
     GatheringMaterialsBridge();
     ~GatheringMaterialsBridge() = default;
+
+    // ========================================================================
+    // EVENT HANDLING (Phase 2)
+    // ========================================================================
+
+    /**
+     * @brief Handle profession events from ProfessionEventBus
+     * Reacts to MATERIALS_NEEDED, MATERIAL_GATHERED, CRAFTING_COMPLETED
+     */
+    void HandleProfessionEvent(struct ProfessionEvent const& event);
 
     // ========================================================================
     // INITIALIZATION HELPERS

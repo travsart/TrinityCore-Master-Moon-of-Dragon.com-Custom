@@ -9,6 +9,8 @@
 
 #include "GatheringMaterialsBridge.h"
 #include "ProfessionManager.h"
+#include "ProfessionEventBus.h"
+#include "ProfessionEvents.h"
 #include "GatheringManager.h"
 #include "Player.h"
 #include "Log.h"
@@ -41,7 +43,17 @@ void GatheringMaterialsBridge::Initialize()
     LoadNodeMaterialMappings();
     InitializeGatheringProfessionMaterials();
 
-    TC_LOG_INFO("playerbots", "GatheringMaterialsBridge: Initialized with {} material-node mappings",
+    // Subscribe to ProfessionEventBus for event-driven reactivity (Phase 2)
+    ProfessionEventBus::instance()->SubscribeCallback(
+        [this](ProfessionEvent const& event) { HandleProfessionEvent(event); },
+        {
+            ProfessionEventType::MATERIALS_NEEDED,
+            ProfessionEventType::MATERIAL_GATHERED,
+            ProfessionEventType::CRAFTING_COMPLETED
+        }
+    );
+
+    TC_LOG_INFO("playerbots", "GatheringMaterialsBridge: Initialized with {} material-node mappings, subscribed to 3 event types",
         _materialToNodeType.size());
 }
 
@@ -692,6 +704,99 @@ void GatheringMaterialsBridge::CompleteGatheringSession(uint32 sessionId, bool s
     // Remove from active sessions
     _playerActiveSessions.erase(playerGuid);
     _activeSessions.erase(sessionId);
+}
+
+// ============================================================================
+// EVENT HANDLING (Phase 2)
+// ============================================================================
+
+void GatheringMaterialsBridge::HandleProfessionEvent(ProfessionEvent const& event)
+{
+    switch (event.type)
+    {
+        case ProfessionEventType::MATERIALS_NEEDED:
+        {
+            // When materials are needed for crafting, trigger gathering session
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "GatheringMaterialsBridge: MATERIALS_NEEDED event - Item {} x{} needed for profession {}",
+                event.itemId, event.quantity, static_cast<uint32>(event.profession));
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Check if this material can be gathered (vs bought from AH)
+            GatheringNodeType nodeType = GetNodeTypeForMaterial(event.itemId);
+            if (nodeType == GatheringNodeType::NONE)
+            {
+                TC_LOG_DEBUG("playerbot.events.profession",
+                    "GatheringMaterialsBridge: Item {} cannot be gathered, skipping",
+                    event.itemId);
+                return;
+            }
+
+            // Trigger gathering session for needed material
+            if (StartGatheringForMaterial(player, event.itemId, event.quantity))
+            {
+                TC_LOG_INFO("playerbots",
+                    "GatheringMaterialsBridge: Started gathering session for {} x{} (needed for {})",
+                    event.itemId, event.quantity, static_cast<uint32>(event.profession));
+            }
+            break;
+        }
+
+        case ProfessionEventType::MATERIAL_GATHERED:
+        {
+            // When materials are gathered, update fulfillment tracking
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "GatheringMaterialsBridge: MATERIAL_GATHERED event - Item {} x{} gathered",
+                event.itemId, event.quantity);
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Update material tracking and check if gathering session is complete
+            OnMaterialGathered(player, event.itemId, event.quantity);
+
+            // Update statistics
+            uint32 playerGuid = event.playerGuid.GetCounter();
+            _globalStatistics.materialsGatheredForCrafting += event.quantity;
+            _playerStatistics[playerGuid].materialsGatheredForCrafting += event.quantity;
+
+            TC_LOG_DEBUG("playerbots",
+                "GatheringMaterialsBridge: Tracked {} x{} gathered for crafting",
+                event.itemId, event.quantity);
+            break;
+        }
+
+        case ProfessionEventType::CRAFTING_COMPLETED:
+        {
+            // When crafting completes, recalculate material needs for next craft
+            TC_LOG_DEBUG("playerbot.events.profession",
+                "GatheringMaterialsBridge: CRAFTING_COMPLETED event - Recipe {} completed, recalculating needs",
+                event.recipeId);
+
+            // Get player from guid
+            ::Player* player = ObjectAccessor::FindPlayer(event.playerGuid);
+            if (!player)
+                return;
+
+            // Recalculate material requirements after crafting consumed materials
+            UpdateMaterialRequirements(player);
+
+            TC_LOG_DEBUG("playerbots",
+                "GatheringMaterialsBridge: Material requirements updated after crafting recipe {}",
+                event.recipeId);
+            break;
+        }
+
+        default:
+            // Ignore other event types
+            break;
+    }
 }
 
 } // namespace Playerbot
