@@ -424,15 +424,15 @@ public:
     // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
     // ========================================================================
 
-    Events::EventDispatcher* GetEventDispatcher() { return _eventDispatcher.get(); }
-    Events::EventDispatcher const* GetEventDispatcher() const { return _eventDispatcher.get(); }
+    Events::EventDispatcher* GetEventDispatcher() { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
+    Events::EventDispatcher const* GetEventDispatcher() const { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
 
     // ========================================================================
     // PHASE 7.1: MANAGER REGISTRY - Manager lifecycle management
     // ========================================================================
 
-    ManagerRegistry* GetManagerRegistry() { return _managerRegistry.get(); }
-    ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
+    ManagerRegistry* GetManagerRegistry() { return _gameSystems ? _gameSystems->GetManagerRegistry() : nullptr; }
+    ManagerRegistry const* GetManagerRegistry() const { return _gameSystems ? _gameSystems->GetManagerRegistry() : nullptr; }
 
     // ========================================================================
     // PHASE 5E: DECISION FUSION SYSTEM - Unified decision arbitration
