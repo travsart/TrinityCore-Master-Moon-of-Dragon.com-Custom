@@ -221,6 +221,20 @@ private:
         void HandleLootNinja(Group* group, uint32 suspectedPlayer);
 
     private:
+        // Helper methods for group loot coordination
+        void HandleMasterLoot(Group* group, LootItem const& item);
+        void HandleGroupLoot(Group* group, LootItem const& item);
+
+        struct BotRollEvaluation {
+            Player* bot;
+            LootRollType rollType;
+            uint32 rollValue;
+            float upgradeValue;
+            LootPriority priority;
+        };
+
+        Player* DetermineGroupLootWinner(std::vector<BotRollEvaluation>& rolls);
+
         struct LootRoll
         {
             uint32 rollId;
