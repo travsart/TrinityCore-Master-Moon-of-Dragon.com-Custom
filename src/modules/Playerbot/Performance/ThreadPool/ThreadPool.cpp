@@ -564,6 +564,11 @@ void WorkerThread::InitializeDiagnostics()
 // ThreadPool Implementation
 // ============================================================================
 
+ThreadPool::ThreadPool()
+    : ThreadPool(Configuration())
+{
+}
+
 ThreadPool::ThreadPool(Configuration config)
     : _config(config)
 {
