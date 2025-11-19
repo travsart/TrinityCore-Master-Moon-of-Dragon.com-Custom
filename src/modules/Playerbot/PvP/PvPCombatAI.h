@@ -20,11 +20,10 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include "Core/DI/Interfaces/IPvPCombatAI.h"
 
 namespace Playerbot
 {
-    // Interface
-    #include "Core/DI/Interfaces/IPvPCombatAI.h"
 
 
 /**

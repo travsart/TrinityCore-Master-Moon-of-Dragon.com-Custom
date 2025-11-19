@@ -200,7 +200,7 @@ class TC_GAME_API DPSCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
-    GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::MELEE_DPS; } // Handles both melee and ranged
+    GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::DPS_MELEE; } // Handles both melee and ranged
 
     /**
      * @brief Get focus target for DPS

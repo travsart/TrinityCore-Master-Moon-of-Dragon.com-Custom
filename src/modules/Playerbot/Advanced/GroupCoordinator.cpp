@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "Group.h"
 #include "GroupMgr.h"
+#include "../Group/GroupEvents.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Log.h"
@@ -520,6 +521,7 @@ namespace Advanced
 
             // Determine role (simplified)
             Classes memberClass = static_cast<Classes>(member->GetClass());
+            if (memberClass == CLASS_WARRIOR || memberClass == CLASS_PALADIN ||
                 memberClass == CLASS_DEATH_KNIGHT)
                 comp.tanks++;
             else if (memberClass == CLASS_PRIEST || memberClass == CLASS_SHAMAN ||

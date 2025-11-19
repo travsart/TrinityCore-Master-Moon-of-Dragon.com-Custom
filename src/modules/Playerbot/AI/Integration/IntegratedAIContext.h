@@ -30,7 +30,12 @@ namespace Playerbot
 {
 
 class BotAI;
-class TacticalCoordinator;
+
+// Forward declarations from Advanced namespace
+namespace Advanced
+{
+    class TacticalCoordinator;
+}
 
 // Forward declarations from Coordination namespace
 namespace Coordination
@@ -83,7 +88,7 @@ public:
     /**
      * @brief Get tactical coordinator (for combat coordination)
      */
-    TacticalCoordinator* GetTacticalCoordinator() const;
+    Advanced::TacticalCoordinator* GetTacticalCoordinator() const;
 
     /**
      * @brief Get raid orchestrator
@@ -145,7 +150,7 @@ private:
     mutable SharedBlackboard* _cachedGroupBlackboard = nullptr;
     mutable SharedBlackboard* _cachedRaidBlackboard = nullptr;
     mutable SharedBlackboard* _cachedZoneBlackboard = nullptr;
-    mutable TacticalCoordinator* _cachedTacticalCoordinator = nullptr;
+    mutable Advanced::TacticalCoordinator* _cachedTacticalCoordinator = nullptr;
     mutable Coordination::RaidOrchestrator* _cachedRaidOrchestrator = nullptr;
     mutable Coordination::ZoneOrchestrator* _cachedZoneOrchestrator = nullptr;
 };

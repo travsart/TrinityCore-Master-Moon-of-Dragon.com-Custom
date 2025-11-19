@@ -102,7 +102,8 @@ bool TankCoordinator::NeedsTankSwap(ObjectGuid mainTankGuid) const
 
 void TankCoordinator::UpdateMainTank(GroupCoordinator* group)
 {
-    ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
+    // TODO: Redesign - GroupCoordinator is per-bot, need different approach to query group roles
+    ::std::vector<ObjectGuid> tanks; // Stub for now
 
     if (tanks.empty())
     {
@@ -331,8 +332,12 @@ void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, ::std::string 
 
 void HealerCoordinator::UpdateHealingAssignments(GroupCoordinator* group)
 {
-    ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
-    ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
+    // TODO: Redesign - GroupCoordinator is per-bot
+    // ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
+    ::std::vector<ObjectGuid> healers; // Stub for now
+    // TODO: Redesign - GroupCoordinator is per-bot
+    // ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
+    ::std::vector<ObjectGuid> tanks; // Stub for now
 
     if (healers.empty())
         return;
@@ -414,10 +419,12 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 {
     // Rotate major healing cooldowns among healers
     // Examples: Tranquility, Aura Mastery, Divine Hymn, Revival
-    if (!group->IsInCombat())
-        return;
+    // TODO: Redesign - GroupCoordinator is per-bot, need different approach
+    // if (!group->IsInCombat())
+    //     return;
 
-    uint32 combatDuration = group->GetCombatDuration();
+    // uint32 combatDuration = group->GetCombatDuration();
+    uint32 combatDuration = 0; // Stub for now
 
     // Use cooldowns at specific combat milestones
     if (combatDuration > 30000 && combatDuration < 35000) // 30-35s into combat
@@ -443,7 +450,9 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 
 void HealerCoordinator::UpdateManaManagement(GroupCoordinator* group)
 {
-    ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
+    // TODO: Redesign - GroupCoordinator is per-bot
+    // ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
+    ::std::vector<ObjectGuid> healers; // Stub for now
 
     float totalMana = 0.0f;
     float currentMana = 0.0f;
@@ -607,7 +616,7 @@ bool DPSCoordinator::InBurstWindow() const
 void DPSCoordinator::UpdateFocusTarget(GroupCoordinator* group)
 {
     // Use group's focus target
-    ObjectGuid groupFocus = group->GetFocusTarget();
+    ObjectGuid groupFocus = ObjectGuid::Empty // TODO: Redesign - GetFocusTarget not available;
 
     if (groupFocus != _focusTarget)
     {
@@ -629,8 +638,12 @@ void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
     );
 
     // Rebuild rotation from current DPS
-    ::std::vector<ObjectGuid> meleeDPS = group->GetBotsByRole(GroupRole::MELEE_DPS);
-    ::std::vector<ObjectGuid> rangedDPS = group->GetBotsByRole(GroupRole::RANGED_DPS);
+    // TODO: Redesign - GroupCoordinator is per-bot
+    // ::std::vector<ObjectGuid> meleeDPS = group->GetBotsByRole(GroupRole::MELEE_DPS);
+    ::std::vector<ObjectGuid> meleeDPS; // Stub for now
+    // TODO: Redesign - GroupCoordinator is per-bot
+    // ::std::vector<ObjectGuid> rangedDPS = group->GetBotsByRole(GroupRole::RANGED_DPS);
+    ::std::vector<ObjectGuid> rangedDPS; // Stub for now
 
     ::std::vector<ObjectGuid> allDPS;
     allDPS.insert(allDPS.end(), meleeDPS.begin(), meleeDPS.end());
