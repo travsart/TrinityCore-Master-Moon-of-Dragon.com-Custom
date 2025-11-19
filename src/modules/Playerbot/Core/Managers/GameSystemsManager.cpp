@@ -315,6 +315,9 @@ void GameSystemsManager::Initialize(Player* bot)
     _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);
     _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);
     _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);
+    _botPriorityManager = std::make_unique<BotPriorityManager>(_bot);
+    _botWorldSessionMgr = std::make_unique<BotWorldSessionMgr>(_bot);
+    _botLifecycleManager = std::make_unique<BotLifecycleManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system

@@ -42,6 +42,9 @@
 #include "Group/RoleAssignment.h"
 #include "Group/LFGGroupCoordinator.h"
 #include "Advanced/InstanceCoordination.h"
+#include "Core/Managers/BotPriorityManager.h"
+#include "Core/Managers/BotWorldSessionMgr.h"
+#include "Lifecycle/BotLifecycleManager.h"
 #include "Group/LFGBotSelector.h"
 #include "Group/LFGBotManager.h"
 #include "Quest/QuestTurnIn.h"
@@ -187,6 +190,9 @@ public:
     LFGBotSelector* GetLFGBotSelector() const { return _lfgBotSelector.get(); }
     LFGGroupCoordinator* GetLFGGroupCoordinator() const { return _lfgGroupCoordinator.get(); }
     InstanceCoordination* GetInstanceCoordination() const { return _instanceCoordination.get(); }
+    BotPriorityManager* GetBotPriorityManager() const { return _botPriorityManager.get(); }
+    BotWorldSessionMgr* GetBotWorldSessionMgr() const { return _botWorldSessionMgr.get(); }
+    BotLifecycleManager* GetBotLifecycleManager() const { return _botLifecycleManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -245,6 +251,9 @@ private:
     std::unique_ptr<LFGBotSelector> _lfgBotSelector;
     std::unique_ptr<LFGGroupCoordinator> _lfgGroupCoordinator;
     std::unique_ptr<InstanceCoordination> _instanceCoordination;
+    std::unique_ptr<BotPriorityManager> _botPriorityManager;
+    std::unique_ptr<BotWorldSessionMgr> _botWorldSessionMgr;
+    std::unique_ptr<BotLifecycleManager> _botLifecycleManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
