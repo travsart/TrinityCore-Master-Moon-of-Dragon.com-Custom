@@ -68,7 +68,8 @@ enum class LockOrder : uint32
 
     // Layer 5: Bot AI
     // AI decision-making and behavior execution
-    BOT_AI_STATE = 4000,
+    BOT_AI = 4000,
+    BOT_AI_STATE = 4050,
     BEHAVIOR_MANAGER = 4100,
     ACTION_PRIORITY = 4200,
 
