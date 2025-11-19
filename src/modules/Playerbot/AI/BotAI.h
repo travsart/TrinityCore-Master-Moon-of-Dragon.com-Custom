@@ -24,6 +24,7 @@
 #include "Blackboard/SharedBlackboard.h"
 #include "Core/Events/IEventHandler.h"
 #include "Core/Managers/IGameSystemsManager.h"
+#include "Advanced/GroupCoordinator.h"
 #include <memory>
 #include <vector>
 #include <string>
