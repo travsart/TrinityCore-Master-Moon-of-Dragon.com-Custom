@@ -317,7 +317,7 @@ set(PLAYERBOT_SOURCES
     # Paladin Refactored Specializations (Template-based)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/HolyPaladin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/ProtectionPaladin.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/RetributionSpecialization.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Paladins/RetributionPaladin.h
 
     # Priest AI - Template-based architecture (Option A: Full Migration)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/ClassAI/Priests/PriestAI.cpp
