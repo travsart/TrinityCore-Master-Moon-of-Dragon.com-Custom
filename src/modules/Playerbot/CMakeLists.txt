@@ -600,8 +600,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Database/BotStatePersistence.h
 
     # Script integration
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.h
 
     # Social Systems - WoW 11.2 Economy Integration
     # Phase 2.4: Replaced by TradeManager and AuctionManager (BehaviorManager pattern)
@@ -1152,8 +1152,8 @@ source_group("Adapters" FILES
 )
 
 source_group("Scripts" FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotWorldScript.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotWorldScript.h
 )
 
 source_group("Social" FILES
