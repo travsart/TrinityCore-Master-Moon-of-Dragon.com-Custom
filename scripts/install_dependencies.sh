@@ -49,11 +49,67 @@ if [ "$TBB_OK" = false ] || [ "$PHMAP_OK" = false ]; then
 fi
 
 # ============================================================================
-# STEP 2: Set up Boost 1.83.0
+# STEP 2: Set up MySQL 9 Connector
 # ============================================================================
 
 echo ""
-echo "Step 2: Checking Boost 1.83.0..."
+echo "Step 2: Checking MySQL 9 connector..."
+
+MYSQL_DIR="/home/user/mysql-9.0.1"
+MYSQL_INCLUDE_DIR="${MYSQL_DIR}/include"
+MYSQL_LIBRARY="${MYSQL_DIR}/lib/libmysqlclient.a"
+
+if [ -f "${MYSQL_LIBRARY}" ]; then
+  echo "✅ MySQL connector already installed"
+  export MYSQL_INCLUDE_DIR="${MYSQL_INCLUDE_DIR}"
+  export MYSQL_LIBRARY="${MYSQL_LIBRARY}"
+  echo "export MYSQL_INCLUDE_DIR=${MYSQL_INCLUDE_DIR}" >> "${CLAUDE_ENV_FILE}"
+  echo "export MYSQL_LIBRARY=${MYSQL_LIBRARY}" >> "${CLAUDE_ENV_FILE}"
+else
+  echo "📦 Setting up MySQL 9 connector from source..."
+  cd /home/user
+
+  # Download MySQL 9.0.1 source
+  if [ ! -d "mysql-9.0.1" ]; then
+    echo "Downloading MySQL 9.0.1..."
+    git clone --depth 1 --branch mysql-9.0.1 https://github.com/mysql/mysql-server.git mysql-9.0.1
+  fi
+
+  cd mysql-9.0.1
+  mkdir -p build-client
+  cd build-client
+
+  echo "Configuring MySQL client library (minimal build)..."
+  cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DWITHOUT_SERVER=ON \
+    -DWITH_UNIT_TESTS=OFF \
+    -DENABLED_LOCAL_INFILE=ON \
+    -DCMAKE_INSTALL_PREFIX="${MYSQL_DIR}" \
+    -DDOWNLOAD_BOOST=ON \
+    -DWITH_BOOST=/home/user/mysql-boost
+
+  echo "Building MySQL client library (this may take 10-15 minutes)..."
+  cmake --build . --target mysqlclient -j4
+
+  # Install to local directory
+  echo "Installing MySQL client library..."
+  cmake --install . --component Development
+
+  export MYSQL_INCLUDE_DIR="${MYSQL_INCLUDE_DIR}"
+  export MYSQL_LIBRARY="${MYSQL_LIBRARY}"
+  echo "export MYSQL_INCLUDE_DIR=${MYSQL_INCLUDE_DIR}" >> "${CLAUDE_ENV_FILE}"
+  echo "export MYSQL_LIBRARY=${MYSQL_LIBRARY}" >> "${CLAUDE_ENV_FILE}"
+
+  echo "✅ MySQL connector setup complete!"
+fi
+
+# ============================================================================
+# STEP 3: Set up Boost 1.83.0
+# ============================================================================
+
+echo ""
+echo "Step 3: Checking Boost 1.83.0..."
 
 # Check if Boost is already set up
 if [ -d "/home/user/boost_1_83_0" ] && [ -f "/home/user/boost_1_83_0/stage/lib/libboost_filesystem.a" ]; then
@@ -65,6 +121,7 @@ if [ -d "/home/user/boost_1_83_0" ] && [ -f "/home/user/boost_1_83_0/stage/lib/l
   echo "✅ All dependencies ready!"
   echo "   - TBB: Vendored (git submodule)"
   echo "   - phmap: Vendored (git submodule)"
+  echo "   - MySQL: ${MYSQL_DIR}"
   echo "   - Boost: /home/user/boost_1_83_0"
   echo ""
   echo "Ready to build TrinityCore PlayerBot module!"
@@ -130,8 +187,11 @@ echo "export BOOST_ROOT=/home/user/boost_1_83_0" >> "${CLAUDE_ENV_FILE}"
 echo "Dependency Summary:"
 echo "   - TBB: ${TBB_DIR} (vendored)"
 echo "   - phmap: ${PHMAP_DIR} (vendored)"
+echo "   - MySQL: ${MYSQL_DIR} (built from source)"
 echo "   - Boost: /home/user/boost_1_83_0 (built from source)"
 echo "   - BOOST_ROOT=/home/user/boost_1_83_0"
+echo "   - MYSQL_INCLUDE_DIR=${MYSQL_INCLUDE_DIR}"
+echo "   - MYSQL_LIBRARY=${MYSQL_LIBRARY}"
 echo ""
 echo "🚀 Ready to build TrinityCore PlayerBot module!"
 
