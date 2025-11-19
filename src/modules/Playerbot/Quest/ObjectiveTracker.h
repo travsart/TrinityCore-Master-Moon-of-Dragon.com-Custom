@@ -188,7 +188,6 @@ public:
 
 private:
     Player* _bot;
-    ~ObjectiveTracker() = default;
 
     // Tracking data storage
     std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives

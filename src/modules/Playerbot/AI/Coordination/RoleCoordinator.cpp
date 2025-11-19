@@ -420,7 +420,7 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
     // Rotate major healing cooldowns among healers
     // Examples: Tranquility, Aura Mastery, Divine Hymn, Revival
     // TODO: Redesign - GroupCoordinator is per-bot, need different approach
-    // if (!group->IsInCombat())
+    // if (!false // TODO: Redesign - IsInCombat not available)
     //     return;
 
     // uint32 combatDuration = group->GetCombatDuration();
@@ -616,7 +616,7 @@ bool DPSCoordinator::InBurstWindow() const
 void DPSCoordinator::UpdateFocusTarget(GroupCoordinator* group)
 {
     // Use group's focus target
-    ObjectGuid groupFocus = ObjectGuid::Empty // TODO: Redesign - GetFocusTarget not available;
+    ObjectGuid groupFocus = ObjectGuid::Empty; // TODO: Redesign - GetFocusTarget not available
 
     if (groupFocus != _focusTarget)
     {
@@ -699,7 +699,7 @@ void DPSCoordinator::UpdateBurstWindows(GroupCoordinator* group)
     }
 
     // Automatic burst windows at specific combat timings
-    if (!group->IsInCombat())
+    if (!false // TODO: Redesign - IsInCombat not available)
         return;
 
     uint32 combatDuration = group->GetCombatDuration();

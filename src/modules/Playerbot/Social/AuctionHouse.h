@@ -27,15 +27,6 @@ namespace Playerbot
 {
 
 
-enum class AuctionStrategy : uint8
-{
-    CONSERVATIVE    = 0,  // Buy below market value, list at market value
-    AGGRESSIVE      = 1,  // Willing to pay market price, undercut significantly
-    OPPORTUNISTIC   = 2,  // Scan for bargains and flip opportunities
-    MARKET_MAKER    = 3,  // Provide liquidity by buying and selling regularly
-    COLLECTOR       = 4,  // Focus on rare items and collectibles
-    PROFIT_FOCUSED  = 5   // Maximize gold generation through trading
-};
 
 enum class AuctionActionType : uint8
 {
