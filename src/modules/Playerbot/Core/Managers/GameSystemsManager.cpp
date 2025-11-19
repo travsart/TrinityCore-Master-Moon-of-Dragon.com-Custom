@@ -171,6 +171,12 @@ GameSystemsManager::~GameSystemsManager()
         _pvpCombatAI.reset();
     }
 
+    if (_auctionHouse)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying AuctionHouse");
+        _auctionHouse.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -292,6 +298,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _battlePetManager = std::make_unique<BattlePetManager>(_bot);
     _arenaAI = std::make_unique<ArenaAI>(_bot);
     _pvpCombatAI = std::make_unique<PvPCombatAI>(_bot);
+    _auctionHouse = std::make_unique<AuctionHouse>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system

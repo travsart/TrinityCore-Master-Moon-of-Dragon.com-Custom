@@ -36,6 +36,7 @@
 #include "Companion/BattlePetManager.h"
 #include "PvP/ArenaAI.h"
 #include "PvP/PvPCombatAI.h"
+#include "Social/AuctionHouse.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -153,6 +154,7 @@ public:
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
     PvPCombatAI* GetPvPCombatAI() const { return _pvpCombatAI.get(); }
+    AuctionHouse* GetAuctionHouse() const { return _auctionHouse.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -194,6 +196,7 @@ private:
     std::unique_ptr<BattlePetManager> _battlePetManager;
     std::unique_ptr<ArenaAI> _arenaAI;
     std::unique_ptr<PvPCombatAI> _pvpCombatAI;
+    std::unique_ptr<AuctionHouse> _auctionHouse;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
