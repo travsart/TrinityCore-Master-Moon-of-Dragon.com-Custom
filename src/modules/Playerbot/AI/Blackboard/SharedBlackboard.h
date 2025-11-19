@@ -27,6 +27,7 @@
 #include <shared_mutex>
 #include <functional>
 #include <vector>
+#include <memory>
 
 namespace Playerbot
 {

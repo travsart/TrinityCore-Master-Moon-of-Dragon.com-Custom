@@ -30,6 +30,9 @@ namespace Playerbot
 namespace Coordination
 {
 
+// Import GroupRole enum from Advanced namespace
+using Advanced::GroupCoordinator;
+
 /**
  * @brief Base class for role-specific coordination
  * Each role (Tank, Healer, DPS) has unique coordination needs
@@ -49,7 +52,7 @@ public:
     /**
      * @brief Get role type
      */
-    virtual GroupRole GetRole() const = 0;
+    virtual GroupCoordinator::GroupRole GetRole() const = 0;
 
 protected:
     uint32 _lastUpdateTime = 0;
