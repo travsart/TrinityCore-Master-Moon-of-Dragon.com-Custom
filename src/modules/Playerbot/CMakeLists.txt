@@ -192,7 +192,7 @@ set(PLAYERBOT_SOURCES
     # Event flow now: TrinityCore ScriptMgr → PlayerbotEventScripts → EventDispatcher → Managers
 
     # Phase 4.1: Script System Integration - Non-Invasive Event Hooks
-    ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/PlayerbotEventScripts.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/PlayerbotEventScripts.cpp
 
 
     # AI Trigger System
