@@ -822,6 +822,9 @@ protected:
     // Benefits: Testability, maintainability, reduced coupling (73 → ~10 deps)
     std::unique_ptr<IGameSystemsManager> _gameSystems;
 
+    // Behavior priority management
+    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
+
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;
 

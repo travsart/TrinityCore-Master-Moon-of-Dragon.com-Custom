@@ -7,6 +7,7 @@
 
 #include "Define.h"
 #include "Opcodes.h"
+#include <atomic>
 #include <unordered_set>
 
 namespace Playerbot {

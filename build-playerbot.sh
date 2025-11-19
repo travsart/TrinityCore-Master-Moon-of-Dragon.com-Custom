@@ -143,6 +143,9 @@ cd "${BUILD_DIR}"
 # Only build what's necessary for PlayerBot module compilation
 echo_info "Running CMake configuration..."
 
+# Export Boost location for CMake
+export BOOST_ROOT=/home/user/boost_1_83_0
+
 cmake "${SOURCE_DIR}" \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_CXX_STANDARD=20 \

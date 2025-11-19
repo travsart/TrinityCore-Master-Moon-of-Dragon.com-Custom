@@ -40,7 +40,7 @@
 #include "Social/TradeSystem.h"
 #include "Quest/QuestValidation.h"
 #include "Group/RoleAssignment.h"
-#include "Group/LFGGroupCoordinator.h"
+#include "LFG/LFGGroupCoordinator.h"
 #include "Advanced/InstanceCoordination.h"
 #include "Core/Managers/BotPriorityManager.h"
 #include "Core/Managers/BotWorldSessionMgr.h"
