@@ -23,6 +23,7 @@
 #include <any>
 #include <string>
 #include <unordered_map>
+#include <mutex>
 #include <shared_mutex>
 #include <functional>
 #include <vector>

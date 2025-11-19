@@ -44,7 +44,7 @@ public:
      * @param group Group coordinator
      * @param diff Time since last update
      */
-    virtual void Update(GroupCoordinator* group, uint32 diff) = 0;
+    virtual void Update(Advanced::GroupCoordinator* group, uint32 diff) = 0;
 
     /**
      * @brief Get role type

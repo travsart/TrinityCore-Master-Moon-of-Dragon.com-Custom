@@ -29,8 +29,8 @@
 #include <algorithm>
 
 namespace Playerbot
-namespace Advanced
 {
+namespace Advanced
 {
     // Configuration constants
     static constexpr uint32 GROUP_UPDATE_INTERVAL = 1000;  // 1 second
