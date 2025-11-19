@@ -293,7 +293,7 @@ float CombatSpecializationBase::GetOptimalRange(::Unit* target)
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
 
-            return MELEE_RANGE;
+            return BOT_MELEE_RANGE;
 
         case CombatRole::RANGED_DPS:
         case CombatRole::HEALER:
@@ -815,7 +815,7 @@ float CombatSpecializationBase::GetDistance(::Unit* target) const
 
 bool CombatSpecializationBase::IsInMeleeRange(::Unit* target) const
 {
-    return GetDistance(target) <= MELEE_RANGE;
+    return GetDistance(target) <= BOT_MELEE_RANGE;
 }
 
 bool CombatSpecializationBase::IsInCastRange(::Unit* target, uint32 spellId) const
