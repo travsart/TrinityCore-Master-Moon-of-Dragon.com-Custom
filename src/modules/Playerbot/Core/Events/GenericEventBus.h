@@ -67,7 +67,7 @@ class BotAI;
  * ```cpp
  * struct MyEvent
  * {
- *     enum class EventType : uint8 { /* ... */ MAX_EVENT };
+ *     enum class EventType : uint8 { MAX_EVENT };
  *     enum class Priority : uint8 { CRITICAL, HIGH, MEDIUM, LOW, BATCH };
  *
  *     EventType type;
