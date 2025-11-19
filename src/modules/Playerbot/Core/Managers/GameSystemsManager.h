@@ -41,7 +41,7 @@
 #include "Quest/QuestValidation.h"
 #include "Group/RoleAssignment.h"
 #include "LFG/LFGGroupCoordinator.h"
-#include "Advanced/InstanceCoordination.h"
+#include "Dungeon/InstanceCoordination.h"
 #include "Core/Managers/BotPriorityManager.h"
 #include "Core/Managers/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleManager.h"

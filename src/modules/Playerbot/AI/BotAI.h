@@ -188,6 +188,22 @@ public:
     virtual void OnCombatEnd();
 
     // ========================================================================
+    // SPELL CASTING - Virtual interface for class-specific implementations
+    // ========================================================================
+
+    /**
+     * @brief Cast a spell on a target
+     *
+     * Base implementation returns SPELL_FAILED_NOT_READY.
+     * ClassAI overrides this to provide class-specific spell casting logic.
+     *
+     * @param spellId The spell ID to cast
+     * @param target The target unit (nullptr for self-cast)
+     * @return SpellCastResult indicating success or failure reason
+     */
+    virtual ::SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr);
+
+    // ========================================================================
     // STRATEGY MANAGEMENT - Core behavior system
     // ========================================================================
 

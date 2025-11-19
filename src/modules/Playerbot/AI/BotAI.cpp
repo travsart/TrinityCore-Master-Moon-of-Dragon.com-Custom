@@ -935,6 +935,13 @@ void BotAI::OnCombatEnd()
     // through the OnCombatUpdate() method
 }
 
+::SpellCastResult BotAI::CastSpell(uint32 spellId, ::Unit* target)
+{
+    // Base implementation - ClassAI overrides with actual spell casting logic
+    // This is just a fallback for non-ClassAI bots
+    return SPELL_FAILED_NOT_READY;
+}
+
 void BotAI::OnDeath()
 {
     SetAIState(BotAIState::DEAD);
