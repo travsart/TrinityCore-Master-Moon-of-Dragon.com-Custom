@@ -37,6 +37,11 @@
 #include "PvP/ArenaAI.h"
 #include "PvP/PvPCombatAI.h"
 #include "Social/AuctionHouse.h"
+#include "Social/TradeSystem.h"
+#include "Social/LootDistribution.h"
+#include "Social/GuildIntegration.h"
+#include "Social/GuildEventCoordinator.h"
+#include "Social/GuildBankManager.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -155,6 +160,11 @@ public:
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
     PvPCombatAI* GetPvPCombatAI() const { return _pvpCombatAI.get(); }
     AuctionHouse* GetAuctionHouse() const { return _auctionHouse.get(); }
+    GuildBankManager* GetGuildBankManager() const { return _guildBankManager.get(); }
+    GuildEventCoordinator* GetGuildEventCoordinator() const { return _guildEventCoordinator.get(); }
+    GuildIntegration* GetGuildIntegration() const { return _guildIntegration.get(); }
+    LootDistribution* GetLootDistribution() const { return _lootDistribution.get(); }
+    TradeSystem* GetTradeSystem() const { return _tradeSystem.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -197,6 +207,11 @@ private:
     std::unique_ptr<ArenaAI> _arenaAI;
     std::unique_ptr<PvPCombatAI> _pvpCombatAI;
     std::unique_ptr<AuctionHouse> _auctionHouse;
+    std::unique_ptr<GuildBankManager> _guildBankManager;
+    std::unique_ptr<GuildEventCoordinator> _guildEventCoordinator;
+    std::unique_ptr<GuildIntegration> _guildIntegration;
+    std::unique_ptr<LootDistribution> _lootDistribution;
+    std::unique_ptr<TradeSystem> _tradeSystem;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems

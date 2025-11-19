@@ -299,6 +299,11 @@ void GameSystemsManager::Initialize(Player* bot)
     _arenaAI = std::make_unique<ArenaAI>(_bot);
     _pvpCombatAI = std::make_unique<PvPCombatAI>(_bot);
     _auctionHouse = std::make_unique<AuctionHouse>(_bot);
+    _guildBankManager = std::make_unique<GuildBankManager>(_bot);
+    _guildEventCoordinator = std::make_unique<GuildEventCoordinator>(_bot);
+    _guildIntegration = std::make_unique<GuildIntegration>(_bot);
+    _lootDistribution = std::make_unique<LootDistribution>(_bot);
+    _tradeSystem = std::make_unique<TradeSystem>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
