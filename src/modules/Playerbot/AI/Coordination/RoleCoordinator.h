@@ -18,7 +18,7 @@
 #ifndef TRINITYCORE_ROLE_COORDINATOR_H
 #define TRINITYCORE_ROLE_COORDINATOR_H
 
-#include "GroupCoordinator.h"
+#include "../../Advanced/GroupCoordinator.h"
 #include "Define.h"
 #include "ObjectGuid.h"
 #include <vector>

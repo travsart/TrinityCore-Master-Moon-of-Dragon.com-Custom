@@ -16,7 +16,7 @@
  */
 
 #include "RoleCoordinator.h"
-#include "GroupCoordinator.h"
+#include "../../Advanced/GroupCoordinator.h"
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"

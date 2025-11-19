@@ -159,7 +159,7 @@ public:
 
     // Use interface types
     using ItemComparisonResult = IEquipmentManager::ItemComparisonResult;
-    using EquipmentMetrics = IEquipmentManager::EquipmentMetrics;
+    // EquipmentMetrics is now in Playerbot namespace scope, no using directive needed
 
     // ============================================================================
     // IEquipmentManager interface implementation
