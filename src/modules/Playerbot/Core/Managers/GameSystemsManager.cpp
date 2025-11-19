@@ -310,6 +310,11 @@ void GameSystemsManager::Initialize(Player* bot)
     _questPickup = std::make_unique<QuestPickup>(_bot);
     _questTurnIn = std::make_unique<QuestTurnIn>(_bot);
     _questValidation = std::make_unique<QuestValidation>(_bot);
+    _roleAssignment = std::make_unique<RoleAssignment>(_bot);
+    _lfgBotManager = std::make_unique<LFGBotManager>(_bot);
+    _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);
+    _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);
+    _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system

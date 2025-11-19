@@ -39,6 +39,11 @@
 #include "Social/AuctionHouse.h"
 #include "Social/TradeSystem.h"
 #include "Quest/QuestValidation.h"
+#include "Group/RoleAssignment.h"
+#include "Group/LFGGroupCoordinator.h"
+#include "Advanced/InstanceCoordination.h"
+#include "Group/LFGBotSelector.h"
+#include "Group/LFGBotManager.h"
 #include "Quest/QuestTurnIn.h"
 #include "Quest/QuestPickup.h"
 #include "Quest/QuestCompletion.h"
@@ -177,6 +182,11 @@ public:
     QuestPickup* GetQuestPickup() const { return _questPickup.get(); }
     QuestTurnIn* GetQuestTurnIn() const { return _questTurnIn.get(); }
     QuestValidation* GetQuestValidation() const { return _questValidation.get(); }
+    RoleAssignment* GetRoleAssignment() const { return _roleAssignment.get(); }
+    LFGBotManager* GetLFGBotManager() const { return _lfgBotManager.get(); }
+    LFGBotSelector* GetLFGBotSelector() const { return _lfgBotSelector.get(); }
+    LFGGroupCoordinator* GetLFGGroupCoordinator() const { return _lfgGroupCoordinator.get(); }
+    InstanceCoordination* GetInstanceCoordination() const { return _instanceCoordination.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -230,6 +240,11 @@ private:
     std::unique_ptr<QuestPickup> _questPickup;
     std::unique_ptr<QuestTurnIn> _questTurnIn;
     std::unique_ptr<QuestValidation> _questValidation;
+    std::unique_ptr<RoleAssignment> _roleAssignment;
+    std::unique_ptr<LFGBotManager> _lfgBotManager;
+    std::unique_ptr<LFGBotSelector> _lfgBotSelector;
+    std::unique_ptr<LFGGroupCoordinator> _lfgGroupCoordinator;
+    std::unique_ptr<InstanceCoordination> _instanceCoordination;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
