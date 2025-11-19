@@ -417,14 +417,14 @@ public:
 
     struct Statistics
     {
-        ::std::atomic<uint64_t> totalCommands{0};
-        ::std::atomic<uint64_t> successfulCommands{0};
-        ::std::atomic<uint64_t> failedCommands{0};
-        ::std::atomic<uint64_t> naturalLanguageCommands{0};
-        ::std::atomic<uint64_t> directCommands{0};
-        ::std::atomic<uint64_t> permissionDenied{0};
-        ::std::atomic<uint64_t> invalidSyntax{0};
-        ::std::atomic<uint64_t> rateLimited{0};
+        ::std::atomic<uint64_t> totalCommands;
+        ::std::atomic<uint64_t> successfulCommands;
+        ::std::atomic<uint64_t> failedCommands;
+        ::std::atomic<uint64_t> naturalLanguageCommands;
+        ::std::atomic<uint64_t> directCommands;
+        ::std::atomic<uint64_t> permissionDenied;
+        ::std::atomic<uint64_t> invalidSyntax;
+        ::std::atomic<uint64_t> rateLimited;
     };
 
     /**

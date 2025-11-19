@@ -195,12 +195,23 @@ if(NOT USE_STANDARD_BOOST_SEARCH)
         set(Boost_FOUND TRUE)
 
         # Use optimized library selection for multi-config generators
-        set(Boost_LIBRARIES
-            optimized ${Boost_THREAD_LIBRARY_RELEASE} debug ${Boost_THREAD_LIBRARY_DEBUG}
-            optimized ${Boost_FILESYSTEM_LIBRARY_RELEASE} debug ${Boost_FILESYSTEM_LIBRARY_DEBUG}
-            optimized ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE} debug ${Boost_PROGRAM_OPTIONS_LIBRARY_DEBUG}
-            optimized ${Boost_REGEX_LIBRARY_RELEASE} debug ${Boost_REGEX_LIBRARY_DEBUG}
-            optimized ${Boost_LOCALE_LIBRARY_RELEASE} debug ${Boost_LOCALE_LIBRARY_DEBUG})
+        # Use Debug libraries if available, otherwise fall back to Release for Debug builds
+        if(Boost_THREAD_LIBRARY_DEBUG)
+            set(Boost_LIBRARIES
+                optimized ${Boost_THREAD_LIBRARY_RELEASE} debug ${Boost_THREAD_LIBRARY_DEBUG}
+                optimized ${Boost_FILESYSTEM_LIBRARY_RELEASE} debug ${Boost_FILESYSTEM_LIBRARY_DEBUG}
+                optimized ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE} debug ${Boost_PROGRAM_OPTIONS_LIBRARY_DEBUG}
+                optimized ${Boost_REGEX_LIBRARY_RELEASE} debug ${Boost_REGEX_LIBRARY_DEBUG}
+                optimized ${Boost_LOCALE_LIBRARY_RELEASE} debug ${Boost_LOCALE_LIBRARY_DEBUG})
+        else()
+            # No Debug libraries found, use Release for both configurations
+            set(Boost_LIBRARIES
+                ${Boost_THREAD_LIBRARY_RELEASE}
+                ${Boost_FILESYSTEM_LIBRARY_RELEASE}
+                ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE}
+                ${Boost_REGEX_LIBRARY_RELEASE}
+                ${Boost_LOCALE_LIBRARY_RELEASE})
+        endif()
 
         message(STATUS "✅ Custom Boost found at: ${Boost_INCLUDE_DIRS}")
         message(STATUS "✅ Boost Release libraries found: ${Boost_THREAD_LIBRARY_RELEASE};${Boost_FILESYSTEM_LIBRARY_RELEASE};${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE};${Boost_REGEX_LIBRARY_RELEASE};${Boost_LOCALE_LIBRARY_RELEASE}")

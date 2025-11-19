@@ -275,13 +275,13 @@ public:
      */
     struct RelayStatistics
     {
-        ::std::atomic<uint64_t> totalPacketsRelayed{0};
-        ::std::atomic<uint64_t> totalPacketsFiltered{0};
-        ::std::atomic<uint64_t> totalRelayErrors{0};
-        ::std::atomic<uint64_t> combatLogPackets{0};
-        ::std::atomic<uint64_t> chatPackets{0};
-        ::std::atomic<uint64_t> partyUpdatePackets{0};
-        ::std::atomic<uint64_t> emotePackets{0};
+        ::std::atomic<uint64_t> totalPacketsRelayed;
+        ::std::atomic<uint64_t> totalPacketsFiltered;
+        ::std::atomic<uint64_t> totalRelayErrors;
+        ::std::atomic<uint64_t> combatLogPackets;
+        ::std::atomic<uint64_t> chatPackets;
+        ::std::atomic<uint64_t> partyUpdatePackets;
+        ::std::atomic<uint64_t> emotePackets;
     };
 
     /**
