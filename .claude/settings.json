@@ -2,24 +2,21 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": {},
-        "hooks": [
-          {
-            "type": "command",
-            "description": "Display project status and current phase",
-            "command": "echo '=== TrinityCore Playerbot - German Windows Environment ===' && echo 'Branch: playerbot-dev' && echo 'Current: Phase 7A complete (2,470 errors)' && echo 'Compiler: MSVC 14.44 (Visual Studio 2022 Enterprise)' && echo 'Target: worldserver (RelWithDebInfo)' && echo 'Language: German (error messages in German)' && echo '' && echo 'Mission: Fix compilation errors until worldserver.exe builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
-          },
-          {
-            "type": "command",
-            "description": "Check git branch and status",
-            "command": "git branch --show-current && git log --oneline -1 && git status --short"
-          },
-          {
-            "type": "command",
-            "description": "Read project configuration",
-            "command": "cat .claude/project.json"
-          }
-        ]
+        "description": "Install and configure dependencies (TBB, phmap, MySQL, Boost)",
+        "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/install_dependencies.sh",
+        "timeout": 1800000
+      },
+      {
+        "description": "Display project status and current phase",
+        "command": "echo '=== TrinityCore Playerbot - Iterative Compilation Environment ===' && echo 'Branch: '$(git branch --show-current) && echo 'Latest commit: '$(git log --oneline -1) && echo '' && echo 'Mission: Fix compilation errors until PlayerBot module builds with 0 errors' && echo 'Workflow: analyze → fix → build → commit → repeat' && echo ''"
+      },
+      {
+        "description": "Check git branch and status",
+        "command": "git branch --show-current && git log --oneline -1 && git status --short"
+      },
+      {
+        "description": "Read project configuration",
+        "command": "cat .claude/project.json"
       }
     ]
   },

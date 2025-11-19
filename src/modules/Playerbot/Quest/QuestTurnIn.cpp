@@ -37,11 +37,11 @@ namespace Playerbot
 /**
  * @brief Singleton instance implementation
  */
-QuestTurnIn* QuestTurnIn::instance()
-{
-    static QuestTurnIn instance;
-    return &instance;
+QuestTurnIn::QuestTurnIn(Player* bot) : _bot(bot) {
+    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestTurnIn: null bot!");
 }
+
+QuestTurnIn::~QuestTurnIn() {}
 
 /**
  * @brief Constructor
@@ -97,8 +97,6 @@ void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
     if (!bot || !questId)
         return;
 
-    ::std::lock_guard lock(_turnInMutex);
-
     // Initialize turn-in data
     InitializeTurnInData(bot, questId);
 
@@ -106,7 +104,7 @@ void QuestTurnIn::ProcessQuestTurnIn(Player* bot, uint32 questId)
     if (it == _botTurnInQueues.end())
         return;
 
-    auto turnInIt = ::std::find_if(it->second.begin(), it->second.end(),
+    auto turnInIt = std::find_if(it->second.begin(), it->second.end(),
         [questId](const QuestTurnInData& data) { return data.questId == questId; });
 
     if (turnInIt == it->second.end())
@@ -130,7 +128,7 @@ void QuestTurnIn::ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch)
         batch.questIds.size(), bot->GetName().c_str());
 
     // Optimize route for batch turn-in
-    ::std::vector<uint32> optimizedOrder = batch.questIds;
+    std::vector<uint32> optimizedOrder = batch.questIds;
     OptimizeTravelRoute(bot, optimizedOrder);
 
     // Process each quest in optimized order
@@ -155,8 +153,6 @@ void QuestTurnIn::ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayM
     if (!bot || !questId)
         return;
 
-    ::std::lock_guard lock(_batchMutex);
-
     // Add to scheduled turn-ins
     _scheduledTurnIns.push({ bot->GetGUID().GetCounter(), questId });
 
@@ -169,9 +165,9 @@ void QuestTurnIn::ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayM
  * @param bot Bot player
  * @return Vector of completed quest IDs
  */
-::std::vector<uint32> QuestTurnIn::GetCompletedQuests(Player* bot)
+std::vector<uint32> QuestTurnIn::GetCompletedQuests(Player* bot)
 {
-    ::std::vector<uint32> completedQuests;
+    std::vector<uint32> completedQuests;
 
     if (!bot)
         return completedQuests;
@@ -225,7 +221,7 @@ void QuestTurnIn::MonitorQuestCompletion(Player* bot)
     if (!bot)
         return;
 
-    ::std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
     for (uint32 questId : completedQuests)
     {
         HandleQuestCompletion(bot, questId);
@@ -255,12 +251,11 @@ void QuestTurnIn::HandleQuestCompletion(Player* bot, uint32 questId)
 
         case TurnInStrategy::BATCH_TURNIN:
         {
-            ::std::lock_guard lock(_turnInMutex);
             auto& queue = _botTurnInQueues[bot->GetGUID().GetCounter()];
             // Check if we have enough for batch
-    if (queue.size() >= BATCH_TURNIN_THRESHOLD)
+            if (queue.size() >= BATCH_TURNIN_THRESHOLD)
             {
-                ::std::vector<uint32> batchQuests;
+                std::vector<uint32> batchQuests;
                 for (const auto& data : queue)
                     batchQuests.push_back(data.questId);
 
@@ -301,7 +296,7 @@ void QuestTurnIn::PlanOptimalTurnInRoute(Player* bot)
     if (!bot)
         return;
 
-    ::std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
     if (completedQuests.empty())
         return;
 
@@ -317,7 +312,7 @@ void QuestTurnIn::PlanOptimalTurnInRoute(Player* bot)
  * @param questIds Quest IDs to batch
  * @return Turn-in batch
  */
-TurnInBatch QuestTurnIn::CreateTurnInBatch(Player* bot, const ::std::vector<uint32>& questIds)
+TurnInBatch QuestTurnIn::CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds)
 {
     TurnInBatch batch(bot->GetGUID().GetCounter());
     batch.questIds = questIds;
@@ -383,7 +378,7 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
     Creature* questEnder = nullptr;
     float minDistance = MAX_TURNIN_DISTANCE;
 
-    ::std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
+    std::vector<DoubleBufferedSpatialGrid::CreatureSnapshot> nearbyCreatures =
         spatialGrid->QueryNearbyCreatures(bot->GetPosition(), MAX_TURNIN_DISTANCE);
     ObjectGuid questEnderGuid;
     for (auto const& snapshot : nearbyCreatures)
@@ -405,7 +400,6 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
         questEnder = ObjectAccessor::GetCreature(*bot, questEnderGuid);
     if (questEnder)
     {
-        ::std::lock_guard lock(_turnInMutex);
         _questToTurnInNpc[questId] = questEnder->GetGUID().GetCounter();
         _questGiverLocations[questEnder->GetGUID().GetCounter()] = questEnder->GetPosition();
 
@@ -424,8 +418,6 @@ bool QuestTurnIn::FindQuestTurnInNpc(Player* bot, uint32 questId)
  */
 Position QuestTurnIn::GetQuestTurnInLocation(uint32 questId)
 {
-    ::std::lock_guard lock(_turnInMutex);
-
     auto it = _questToTurnInNpc.find(questId);
     if (it != _questToTurnInNpc.end())
     {
@@ -447,8 +439,6 @@ bool QuestTurnIn::NavigateToQuestGiver(Player* bot, uint32 questGiverGuid)
 {
     if (!bot || !questGiverGuid)
         return false;
-
-    ::std::lock_guard lock(_turnInMutex);
 
     auto it = _questGiverLocations.find(questGiverGuid);
     if (it == _questGiverLocations.end())
@@ -530,7 +520,7 @@ void QuestTurnIn::AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot)
  * @param strategy Reward selection strategy
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectOptimalReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
+uint32 QuestTurnIn::SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
 {
     if (!bot || rewards.empty())
         return 0;
@@ -565,18 +555,18 @@ uint32 QuestTurnIn::SelectOptimalReward(const ::std::vector<QuestRewardItem>& re
  * @param rewards Available rewards
  * @param bot Bot player
  */
-void QuestTurnIn::EvaluateItemUpgrades(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+void QuestTurnIn::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (!bot)
         return;
-    for (auto& reward : const_cast<::std::vector<QuestRewardItem>&>(rewards))
+    for (auto& reward : const_cast<std::vector<QuestRewardItem>&>(rewards))
     {
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(reward.itemId);
         if (!itemTemplate)
             continue;
 
         // Check if item is equippable
-    if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON || itemTemplate->GetClass() == ITEM_CLASS_ARMOR)
+        if (itemTemplate->GetClass() == ITEM_CLASS_WEAPON || itemTemplate->GetClass() == ITEM_CLASS_ARMOR)
         {
             // Get currently equipped item in same slot
             Item* currentItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, itemTemplate->GetInventoryType());
@@ -648,7 +638,7 @@ void QuestTurnIn::CoordinateGroupTurnIns(Group* group)
     TC_LOG_DEBUG("playerbot", "QuestTurnIn::CoordinateGroupTurnIns - Coordinating turn-ins for group %u",
         group->GetGUID().GetCounter());
 
-    ::std::unordered_map<uint32, ::std::vector<Player*>> questCompletions;
+    std::unordered_map<uint32, std::vector<Player*>> questCompletions;
 
     // Gather quest completion status from all members
     for (GroupReference const& itr : group->GetMembers())
@@ -657,7 +647,7 @@ void QuestTurnIn::CoordinateGroupTurnIns(Group* group)
         if (!member || !member->IsAlive())
             continue;
 
-        ::std::vector<uint32> completedQuests = GetCompletedQuests(member);
+        std::vector<uint32> completedQuests = GetCompletedQuests(member);
         for (uint32 questId : completedQuests)
         {
             questCompletions[questId].push_back(member);
@@ -672,7 +662,7 @@ void QuestTurnIn::CoordinateGroupTurnIns(Group* group)
             SynchronizeGroupRewardSelection(group, questId);
 
             // Turn in together
-    for (Player* member : members)
+            for (Player* member : members)
             {
                 ScheduleQuestTurnIn(member, questId);
             }
@@ -774,13 +764,11 @@ void QuestTurnIn::HandleTurnInDialog(Player* bot, uint32 questId)
     if (!bot || !questId)
         return;
 
-    ::std::lock_guard lock(_turnInMutex);
-
     auto it = _botTurnInQueues.find(bot->GetGUID().GetCounter());
     if (it == _botTurnInQueues.end())
         return;
 
-    auto turnInIt = ::std::find_if(it->second.begin(), it->second.end(),
+    auto turnInIt = std::find_if(it->second.begin(), it->second.end(),
         [questId](const QuestTurnInData& data) { return data.questId == questId; });
 
     if (turnInIt == it->second.end())
@@ -869,7 +857,6 @@ void QuestTurnIn::AutoAcceptFollowUpQuests(Player* bot, uint32 completedQuestId)
  */
 void QuestTurnIn::SetTurnInStrategy(uint32 botGuid, TurnInStrategy strategy)
 {
-    ::std::lock_guard lock(_turnInMutex);
     _botTurnInStrategies[botGuid] = strategy;
 }
 
@@ -880,8 +867,6 @@ void QuestTurnIn::SetTurnInStrategy(uint32 botGuid, TurnInStrategy strategy)
  */
 TurnInStrategy QuestTurnIn::GetTurnInStrategy(uint32 botGuid)
 {
-    ::std::lock_guard lock(_turnInMutex);
-
     auto it = _botTurnInStrategies.find(botGuid);
     if (it != _botTurnInStrategies.end())
         return it->second;
@@ -896,7 +881,6 @@ TurnInStrategy QuestTurnIn::GetTurnInStrategy(uint32 botGuid)
  */
 void QuestTurnIn::SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy)
 {
-    ::std::lock_guard lock(_turnInMutex);
     _botRewardStrategies[botGuid] = strategy;
 }
 
@@ -907,8 +891,6 @@ void QuestTurnIn::SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStra
  */
 RewardSelectionStrategy QuestTurnIn::GetRewardSelectionStrategy(uint32 botGuid)
 {
-    ::std::lock_guard lock(_turnInMutex);
-
     auto it = _botRewardStrategies.find(botGuid);
     if (it != _botRewardStrategies.end())
         return it->second;
@@ -922,7 +904,7 @@ RewardSelectionStrategy QuestTurnIn::GetRewardSelectionStrategy(uint32 botGuid)
  * @param questId Quest ID
  * @param error Error message
  */
-void QuestTurnIn::HandleTurnInError(Player* bot, uint32 questId, const ::std::string& error)
+void QuestTurnIn::HandleTurnInError(Player* bot, uint32 questId, const std::string& error)
 {
     if (!bot)
         return;
@@ -1013,8 +995,6 @@ void QuestTurnIn::Update(uint32 diff)
  */
 void QuestTurnIn::ProcessScheduledTurnIns()
 {
-    ::std::lock_guard lock(_batchMutex);
-
     uint32 processed = 0;
     while (!_scheduledTurnIns.empty() && processed < MAX_SCHEDULED_TURNINS)
     {
@@ -1037,14 +1017,12 @@ void QuestTurnIn::ProcessScheduledTurnIns()
  */
 void QuestTurnIn::CleanupCompletedTurnIns()
 {
-    ::std::lock_guard lock(_turnInMutex);
-
     uint32 currentTime = GameTime::GetGameTimeMS();
     // Clean up old turn-in data
     for (auto& [botGuid, turnIns] : _botTurnInQueues)
     {
         turnIns.erase(
-            ::std::remove_if(turnIns.begin(), turnIns.end(),
+            std::remove_if(turnIns.begin(), turnIns.end(),
                 [currentTime](const QuestTurnInData& data)
                 {
                     return data.isCompleted && (currentTime - data.scheduledTurnInTime) > 300000; // 5 minutes
@@ -1059,45 +1037,22 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
-    ::std::lock_guard lock(_turnInMutex);
-
-    IQuestTurnIn::TurnInMetricsSnapshot snapshot{};
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
-    {
-        const auto& metrics = it->second;
-        snapshot.questsTurnedIn = metrics.questsTurnedIn.load();
-        snapshot.turnInAttempts = metrics.turnInAttempts.load();
-        snapshot.successfulTurnIns = metrics.successfulTurnIns.load();
-        snapshot.failedTurnIns = metrics.failedTurnIns.load();
-        snapshot.averageTurnInTime = metrics.averageTurnInTime.load();
-        snapshot.turnInSuccessRate = metrics.turnInSuccessRate.load();
-        snapshot.totalTravelDistance = metrics.totalTravelDistance.load();
-        snapshot.rewardsSelected = metrics.rewardsSelected.load();
-        snapshot.rewardSelectionAccuracy = metrics.rewardSelectionAccuracy.load();
-    }
-    return snapshot;
+        return it->second.CreateSnapshot();
+
+    return TurnInMetrics().CreateSnapshot();
 }
 
 /**
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
+QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
-    IQuestTurnIn::TurnInMetricsSnapshot snapshot{};
-    snapshot.questsTurnedIn = _globalMetrics.questsTurnedIn.load();
-    snapshot.turnInAttempts = _globalMetrics.turnInAttempts.load();
-    snapshot.successfulTurnIns = _globalMetrics.successfulTurnIns.load();
-    snapshot.failedTurnIns = _globalMetrics.failedTurnIns.load();
-    snapshot.averageTurnInTime = _globalMetrics.averageTurnInTime.load();
-    snapshot.turnInSuccessRate = _globalMetrics.turnInSuccessRate.load();
-    snapshot.totalTravelDistance = _globalMetrics.totalTravelDistance.load();
-    snapshot.rewardsSelected = _globalMetrics.rewardsSelected.load();
-    snapshot.rewardSelectionAccuracy = _globalMetrics.rewardSelectionAccuracy.load();
-    return snapshot;
+    return _globalMetrics.CreateSnapshot();
 }
 
 /**
@@ -1109,8 +1064,6 @@ void QuestTurnIn::InitializeTurnInData(Player* bot, uint32 questId)
 {
     if (!bot || !questId)
         return;
-
-    ::std::lock_guard lock(_turnInMutex);
 
     QuestTurnInData turnInData(questId, bot->GetGUID().GetCounter(), 0);
     turnInData.isCompleted = false;
@@ -1218,7 +1171,7 @@ void QuestTurnIn::ProcessQuestTurnInResponse(Player* bot, uint32 questId, bool w
  * @param bot Bot player
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectHighestValueReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+uint32 QuestTurnIn::SelectHighestValueReward(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (rewards.empty())
         return 0;
@@ -1244,7 +1197,7 @@ uint32 QuestTurnIn::SelectHighestValueReward(const ::std::vector<QuestRewardItem
  * @param bot Bot player
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectBestUpgradeReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+uint32 QuestTurnIn::SelectBestUpgradeReward(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (rewards.empty())
         return 0;
@@ -1274,7 +1227,7 @@ uint32 QuestTurnIn::SelectBestUpgradeReward(const ::std::vector<QuestRewardItem>
  * @param bot Bot player
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectHighestVendorValueReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+uint32 QuestTurnIn::SelectHighestVendorValueReward(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (rewards.empty())
         return 0;
@@ -1300,7 +1253,7 @@ uint32 QuestTurnIn::SelectHighestVendorValueReward(const ::std::vector<QuestRewa
  * @param bot Bot player
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectStatPriorityReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+uint32 QuestTurnIn::SelectStatPriorityReward(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (!bot || rewards.empty())
         return 0;
@@ -1318,7 +1271,7 @@ uint32 QuestTurnIn::SelectStatPriorityReward(const ::std::vector<QuestRewardItem
  * @param bot Bot player
  * @return Index of selected reward
  */
-uint32 QuestTurnIn::SelectClassAppropriateReward(const ::std::vector<QuestRewardItem>& rewards, Player* bot)
+uint32 QuestTurnIn::SelectClassAppropriateReward(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (rewards.empty())
         return 0;
@@ -1369,21 +1322,21 @@ float QuestTurnIn::CalculateTravelTime(Player* bot, const Position& destination)
  * @param bot Bot player
  * @param questGiverGuids Quest giver GUIDs (modified to be in optimal order)
  */
-void QuestTurnIn::OptimizeTravelRoute(Player* bot, ::std::vector<uint32>& questGiverGuids)
+void QuestTurnIn::OptimizeTravelRoute(Player* bot, std::vector<uint32>& questGiverGuids)
 {
     if (!bot || questGiverGuids.size() <= 1)
         return;
 
     // Simple nearest-neighbor optimization
-    ::std::vector<uint32> optimized;
-    ::std::vector<bool> visited(questGiverGuids.size(), false);
+    std::vector<uint32> optimized;
+    std::vector<bool> visited(questGiverGuids.size(), false);
 
     // Start from current position
     Position currentPos = bot->GetPosition();
 
     while (optimized.size() < questGiverGuids.size())
     {
-        float minDistance = ::std::numeric_limits<float>::max();
+        float minDistance = std::numeric_limits<float>::max();
         size_t nearestIndex = 0;
 
         for (size_t i = 0; i < questGiverGuids.size(); ++i)
@@ -1420,7 +1373,7 @@ void QuestTurnIn::OptimizeTravelRoute(Player* bot, ::std::vector<uint32>& questG
  * @param questId Quest ID
  * @param error Error message
  */
-void QuestTurnIn::LogTurnInError(Player* bot, uint32 questId, const ::std::string& error)
+void QuestTurnIn::LogTurnInError(Player* bot, uint32 questId, const std::string& error)
 {
     TC_LOG_ERROR("playerbot", "QuestTurnIn::LogTurnInError - Bot %s failed to turn in quest %u: %s",
         bot ? bot->GetName().c_str() : "unknown", questId, error.c_str());
@@ -1455,13 +1408,11 @@ void QuestTurnIn::HandleInvalidQuestState(Player* bot, uint32 questId)
     TC_LOG_ERROR("playerbot", "QuestTurnIn::HandleInvalidQuestState - Invalid state for quest %u", questId);
 
     // Remove quest from turn-in queue
-    ::std::lock_guard lock(_turnInMutex);
-
     auto it = _botTurnInQueues.find(bot->GetGUID().GetCounter());
     if (it != _botTurnInQueues.end())
     {
         it->second.erase(
-            ::std::remove_if(it->second.begin(), it->second.end(),
+            std::remove_if(it->second.begin(), it->second.end(),
                 [questId](const QuestTurnInData& data) { return data.questId == questId; }),
             it->second.end()
         );

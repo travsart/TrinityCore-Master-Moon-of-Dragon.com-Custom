@@ -22,7 +22,7 @@
 #include "Log.h"
 #include "World.h"
 #include "DBCEnums.h"
-#include "../../Movement/Arbiter/MovementArbiter.h"
+#include "../../Movement/UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
@@ -129,7 +129,7 @@ void TankPositioning::HandleThreatPositioning(Player* tank, Unit* target)
         Position newPos = CalculateFrontalPosition(target, _config.optimalDistance);
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(tank->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,  // Priority 170 - HIGH tier
@@ -756,7 +756,7 @@ void HealerPositioning::CoordinateHealerPositioning(const ::std::vector<Player*>
     {
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(healers[i]->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,  // Priority 170 - HIGH tier
@@ -959,7 +959,7 @@ void DPSPositioning::DistributeMeleePositions(const ::std::vector<Player*>& mele
         Position pos = RotateAroundTarget(target, angle, _config.meleeOptimalDistance);
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(meleeDPS[i]->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,
@@ -1035,7 +1035,7 @@ void DPSPositioning::SpreadRangedPositions(const ::std::vector<Player*>& rangedD
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(rangedDPS[i]->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,
@@ -1095,7 +1095,7 @@ void DPSPositioning::AvoidFrontalCleaves(Player* dps, Unit* target, float cleave
 
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,
@@ -1134,7 +1134,7 @@ void DPSPositioning::AvoidTailSwipe(Player* dps, Unit* target, float swipeAngle)
         Position flankPos = CalculateFlankPosition(target, angleToTarget > targetRear);
         // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(dps->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,
@@ -1785,7 +1785,7 @@ void RoleBasedCombatPositioning::RespondToEmergency(Player* bot, const Position&
     // Move to safe position immediately
     // PHASE 6B: Use Movement Arbiter with ROLE_POSITIONING priority (170)
         BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
-        if (botAI && botAI->GetMovementArbiter())
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
             bool accepted = botAI->RequestPointMovement(
                 PlayerBotMovementPriority::ROLE_POSITIONING,

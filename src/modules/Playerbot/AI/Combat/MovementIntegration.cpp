@@ -5,8 +5,10 @@
  */
 
 #include "MovementIntegration.h"
+#include "PositionManager.h"  // Enterprise-grade positioning algorithms
 #include "Player.h"
 #include "Unit.h"
+#include "Group.h"  // For healer group member queries
 #include "MotionMaster.h"
 #include "Log.h"
 #include <algorithm>
@@ -15,14 +17,16 @@
 namespace Playerbot
 {
 
-// REMOVED: Static constant definitions (now #define in header)
-// See MovementIntegration.h for MOVEMENT_MELEE_RANGE, MOVEMENT_RANGED_OPTIMAL, MOVEMENT_MOVEMENT_KITING_DISTANCE
-
-MovementIntegration::MovementIntegration(::Player* bot)
+MovementIntegration::MovementIntegration(Player* bot, PositionManager* positionManager)
     : _bot(bot)
+    , _positionManager(positionManager)
     , _lastUpdate(0)
     , _currentSituation(static_cast<CombatSituation>(0))
 {
+    if (!_positionManager)
+    {
+        TC_LOG_ERROR("playerbot", "MovementIntegration: PositionManager is null for bot {}", bot ? bot->GetName() : "unknown");
+    }
 }
 
 void MovementIntegration::Update(uint32 diff, CombatSituation situation)
@@ -33,7 +37,7 @@ void MovementIntegration::Update(uint32 diff, CombatSituation situation)
     _lastUpdate += diff;
     _currentSituation = situation;
 
-    if (_lastUpdate < MOVEMENT_UPDATE_INTERVAL)
+    if (_lastUpdate < UPDATE_INTERVAL)
         return;
 
     _lastUpdate = 0;
@@ -141,10 +145,10 @@ Position MovementIntegration::GetTargetPosition()
     return Position();
 }
 
-float MovementIntegration::GetOptimalRange(::Unit* target)
+float MovementIntegration::GetOptimalRange(Unit* target)
 {
     if (!_bot || !target)
-        return MOVEMENT_MELEE_RANGE;
+        return MELEE_RANGE;
 
     CombatRole role = GetCombatRole();
 
@@ -152,16 +156,16 @@ float MovementIntegration::GetOptimalRange(::Unit* target)
     {
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
-            return MOVEMENT_MELEE_RANGE;
+            return MELEE_RANGE;
 
         case CombatRole::HEALER:
             return 30.0f;  // Healing range
 
         case CombatRole::RANGED_DPS:
-            return MOVEMENT_RANGED_OPTIMAL;
+            return RANGED_OPTIMAL;
 
         default:
-            return MOVEMENT_MELEE_RANGE;
+            return MELEE_RANGE;
     }
 }
 
@@ -190,6 +194,7 @@ void MovementIntegration::MoveToPosition(const Position& pos, bool urgent)
 
 void MovementIntegration::RegisterDangerZone(const Position& center, float radius, uint32 duration, float dangerLevel)
 {
+    // Keep local _dangerZones for backward compatibility with GetDangerZones() queries
     DangerZone zone;
     zone.center = center;
     zone.radius = radius;
@@ -198,18 +203,39 @@ void MovementIntegration::RegisterDangerZone(const Position& center, float radiu
 
     _dangerZones.push_back(zone);
 
-    TC_LOG_DEBUG("playerbot", "MovementIntegration: Registered danger zone at ({}, {}) radius {} danger {}",
+    // Also register with PositionManager for integrated position validation
+    if (_positionManager)
+    {
+        AoEZone aoeZone;
+        aoeZone.center = center;
+        aoeZone.radius = radius;
+        aoeZone.spellId = 0;  // Generic danger zone (not spell-specific)
+        aoeZone.startTime = GameTime::GetGameTimeMS();
+        aoeZone.duration = duration;
+        aoeZone.damageRating = dangerLevel;
+        aoeZone.isActive = true;
+
+        _positionManager->RegisterAoEZone(aoeZone);
+    }
+
+    TC_LOG_DEBUG("playerbot", "MovementIntegration: Registered danger zone at ({}, {}) radius {} danger {} (synced to PositionManager)",
         center.GetPositionX(), center.GetPositionY(), radius, dangerLevel);
 }
 
 void MovementIntegration::ClearDangerZones()
 {
     _dangerZones.clear();
+
+    // Also clear PositionManager's AoE zones for consistency
+    if (_positionManager)
+    {
+        _positionManager->ClearExpiredZones(GameTime::GetGameTimeMS());
+    }
 }
 
-::std::vector<DangerZone> MovementIntegration::GetDangerZones() const
+std::vector<DangerZone> MovementIntegration::GetDangerZones() const
 {
-    ::std::vector<DangerZone> active;
+    std::vector<DangerZone> active;
 
     for (const auto& zone : _dangerZones)
     {
@@ -230,7 +256,7 @@ float MovementIntegration::GetDangerLevel(const Position& pos) const
             continue;
 
         if (zone.IsInDanger(pos))
-            maxDanger = ::std::max(maxDanger, zone.dangerLevel);
+            maxDanger = std::max(maxDanger, zone.dangerLevel);
     }
 
     return maxDanger;
@@ -238,30 +264,20 @@ float MovementIntegration::GetDangerLevel(const Position& pos) const
 
 Position MovementIntegration::FindNearestSafePosition(const Position& from, float minDistance)
 {
-    // Try 8 directions
-    const float angles[] = { 0.0f, 45.0f, 90.0f, 135.0f, 180.0f, 225.0f, 270.0f, 315.0f };
-    const float distances[] = { 5.0f, 10.0f, 15.0f, 20.0f };
+    if (!_positionManager)
+        return from;
 
-    for (float distance : distances)
-    {
-        for (float angle : angles)
-        {
-            float radians = angle * M_PI / 180.0f;
-            float x = from.GetPositionX() + distance * ::std::cos(radians);
-            float y = from.GetPositionY() + distance * ::std::sin(radians);
-
-            Position test(x, y, from.GetPositionZ());
-
-            if (IsPositionSafe(test))
-                return test;
-        }
-    }
-
-    // No safe position found, return original
-    return from;
+    // Use PositionManager's FindSafePosition with comprehensive validation
+    // - Walkable terrain check
+    // - Line of sight validation
+    // - Obstacle avoidance
+    // - AoE zone threat levels
+    // - Movement cost analysis
+    // - Escape route assessment
+    return _positionManager->FindSafePosition(from, minDistance);
 }
 
-bool MovementIntegration::ShouldKite(::Unit* target)
+bool MovementIntegration::ShouldKite(Unit* target)
 {
     if (!_bot || !target)
         return false;
@@ -279,22 +295,20 @@ bool MovementIntegration::ShouldKite(::Unit* target)
     float distance = _bot->GetDistance(target);
 
     // Kite if target is too close
-    return distance < MOVEMENT_KITING_DISTANCE;
+    return distance < KITING_DISTANCE;
 }
 
-Position MovementIntegration::GetKitingPosition(::Unit* target)
+Position MovementIntegration::GetKitingPosition(Unit* target)
 {
-    if (!_bot || !target)
+    if (!_bot || !target || !_positionManager)
         return Position();
 
-    // Move away from target
-    float angle = target->GetAngle(_bot);
-    float distance = MOVEMENT_KITING_DISTANCE + 5.0f;  // Kite to safe distance
-
-    float x = target->GetPositionX() + distance * ::std::cos(angle);
-    float y = target->GetPositionY() + distance * ::std::sin(angle);
-
-    return Position(x, y, _bot->GetPositionZ());
+    // Use PositionManager's FindKitingPosition with threat escape logic
+    // - Maintains optimal kiting distance (15 yards default)
+    // - Validates position safety
+    // - Checks for obstacles and escape routes
+    // - Considers current distance to avoid unnecessary movement
+    return _positionManager->FindKitingPosition(target, KITING_DISTANCE);
 }
 
 // Private helper functions
@@ -302,10 +316,16 @@ Position MovementIntegration::GetKitingPosition(::Unit* target)
 void MovementIntegration::UpdateDangerZones()
 {
     _dangerZones.erase(
-        ::std::remove_if(_dangerZones.begin(), _dangerZones.end(),
+        std::remove_if(_dangerZones.begin(), _dangerZones.end(),
             [](const DangerZone& zone) { return zone.IsExpired(); }),
         _dangerZones.end()
     );
+
+    // Also update PositionManager's AoE zones
+    if (_positionManager)
+    {
+        _positionManager->UpdateAoEZones(GameTime::GetGameTimeMS());
+    }
 }
 
 MovementCommand MovementIntegration::EvaluatePositioning()
@@ -339,7 +359,7 @@ MovementCommand MovementIntegration::CheckRange()
     if (!_bot)
         return command;
 
-    ::Unit* target = _bot->GetVictim();
+    Unit* target = _bot->GetVictim();
     if (!target)
         return command;
 
@@ -353,8 +373,8 @@ MovementCommand MovementIntegration::CheckRange()
         float angle = _bot->GetAngle(target);
         float moveDistance = currentDistance - optimalRange;
 
-        float x = _bot->GetPositionX() + moveDistance * ::std::cos(angle);
-        float y = _bot->GetPositionY() + moveDistance * ::std::sin(angle);
+        float x = _bot->GetPositionX() + moveDistance * std::cos(angle);
+        float y = _bot->GetPositionY() + moveDistance * std::sin(angle);
 
         command.destination = Position(x, y, _bot->GetPositionZ());
         command.urgency = MovementUrgency::HIGH;
@@ -411,7 +431,7 @@ MovementCommand MovementIntegration::CheckLineOfSight()
     if (!_bot)
         return command;
 
-    ::Unit* target = _bot->GetVictim();
+    Unit* target = _bot->GetVictim();
     if (!target)
         return command;
 
@@ -423,8 +443,8 @@ MovementCommand MovementIntegration::CheckLineOfSight()
         float angle = _bot->GetAngle(target);
         float distance = 10.0f;
 
-        float x = _bot->GetPositionX() + distance * ::std::cos(angle);
-        float y = _bot->GetPositionY() + distance * ::std::sin(angle);
+        float x = _bot->GetPositionX() + distance * std::cos(angle);
+        float y = _bot->GetPositionY() + distance * std::sin(angle);
 
         command.destination = Position(x, y, _bot->GetPositionZ());
         command.urgency = MovementUrgency::HIGH;
@@ -438,22 +458,46 @@ MovementCommand MovementIntegration::CheckLineOfSight()
 
 Position MovementIntegration::CalculateRolePosition()
 {
-    if (!_bot)
+    if (!_bot || !_positionManager)
         return Position();
 
-    ::Unit* target = _bot->GetVictim();
+    Unit* target = _bot->GetVictim();
     if (!target)
         return *_bot;  // No target, stay in place
 
+    // Use PositionManager's enterprise-grade positioning algorithms
     CombatRole role = GetCombatRole();
-    float optimalRange = GetOptimalRange(target);
 
-    // Calculate position at optimal range
-    float angle = target->GetAngle(_bot);
-    float x = target->GetPositionX() + optimalRange * ::std::cos(angle);
-    float y = target->GetPositionY() + optimalRange * ::std::sin(angle);
+    switch (role)
+    {
+        case CombatRole::TANK:
+            // Tank positioning with frontal cone avoidance and alternative angle fallbacks
+            return _positionManager->FindTankPosition(target);
 
-    return Position(x, y, _bot->GetPositionZ());
+        case CombatRole::HEALER:
+        {
+            // Healer positioning with spatial grid optimization for ally visibility
+            std::vector<Player*> groupMembers;
+            if (Group* group = _bot->GetGroup())
+            {
+                for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+                {
+                    if (Player* member = itr->GetSource())
+                        groupMembers.push_back(member);
+                }
+            }
+            return _positionManager->FindHealerPosition(groupMembers);
+        }
+
+        case CombatRole::RANGED_DPS:
+            // Ranged DPS positioning with optimal range calculation
+            return _positionManager->FindDpsPosition(target, PositionType::RANGED_DPS);
+
+        case CombatRole::MELEE_DPS:
+        default:
+            // Melee DPS positioning with prefer-behind logic
+            return _positionManager->FindDpsPosition(target, PositionType::MELEE_COMBAT);
+    }
 }
 
 MovementIntegration::CombatRole MovementIntegration::GetCombatRole() const
@@ -463,7 +507,7 @@ MovementIntegration::CombatRole MovementIntegration::GetCombatRole() const
 
     // Simple heuristic based on class
     // TODO: Proper role detection from spec/talents
-    switch (_bot->GetClass())
+    switch (_bot->getClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

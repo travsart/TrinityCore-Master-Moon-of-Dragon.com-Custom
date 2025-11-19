@@ -53,7 +53,7 @@ struct GuildBankItem
     GuildBankItemType itemType;
     uint32 estimatedValue;
     uint32 lastUpdated;
-    ::std::string depositorName;
+    std::string depositorName;
     bool isReserved;
     uint32 reservedFor;
 
@@ -71,60 +71,63 @@ struct GuildBankItem
 class TC_GAME_API GuildBankManager final : public IGuildBankManager
 {
 public:
-    static GuildBankManager* instance();
+    explicit GuildBankManager(Player* bot);
+    ~GuildBankManager();
+    GuildBankManager(GuildBankManager const&) = delete;
+    GuildBankManager& operator=(GuildBankManager const&) = delete;
 
     // Core guild bank operations using TrinityCore's Guild system
-    bool DepositItem(Player* player, uint32 itemGuid, uint32 tabId, uint32 stackCount) override;
-    bool WithdrawItem(Player* player, uint32 tabId, uint32 slotId, uint32 stackCount) override;
-    bool MoveItem(Player* player, uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot) override;
-    bool CanAccessGuildBank(Player* player, uint32 tabId) override;
+    bool DepositItem(uint32 itemGuid, uint32 tabId, uint32 stackCount) override;
+    bool WithdrawItem(uint32 tabId, uint32 slotId, uint32 stackCount) override;
+    bool MoveItem(uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot) override;
+    bool CanAccessGuildBank(uint32 tabId) override;
 
     // Intelligent bank management
-    void AutoOrganizeGuildBank(Player* player) override;
-    void OptimizeItemPlacement(Player* player) override;
-    void AnalyzeGuildBankContents(Player* player) override;
-    void PlanBankReorganization(Player* player);
+    void AutoOrganizeGuildBank() override;
+    void OptimizeItemPlacement() override;
+    void AnalyzeGuildBankContents() override;
+    void PlanBankReorganization();
 
     // Automated deposit strategies
-    void AutoDepositItems(Player* player) override;
-    void DepositExcessConsumables(Player* player) override;
-    void DepositCraftingMaterials(Player* player) override;
-    void DepositValuableItems(Player* player);
-    void DepositDuplicateEquipment(Player* player);
+    void AutoDepositItems() override;
+    void DepositExcessConsumables() override;
+    void DepositCraftingMaterials() override;
+    void DepositValuableItems();
+    void DepositDuplicateEquipment();
 
     // Automated withdrawal strategies
-    void AutoWithdrawNeededItems(Player* player) override;
-    void WithdrawConsumables(Player* player) override;
-    void WithdrawCraftingMaterials(Player* player) override;
-    void WithdrawRepairItems(Player* player);
-    void WithdrawRequestedItems(Player* player);
+    void AutoWithdrawNeededItems() override;
+    void WithdrawConsumables() override;
+    void WithdrawCraftingMaterials() override;
+    void WithdrawRepairItems();
+    void WithdrawRequestedItems();
 
     // Bank organization and optimization
     struct BankOrganizationPlan
     {
-        ::std::unordered_map<uint32, GuildBankItemType> tabAssignments; // tabId -> item type
-        ::std::vector<::std::pair<uint32, uint32>> itemMoves; // (fromSlot, toSlot) pairs
-        ::std::vector<uint32> itemsToDeposit;
-        ::std::vector<uint32> itemsToWithdraw;
+        std::unordered_map<uint32, GuildBankItemType> tabAssignments; // tabId -> item type
+        std::vector<std::pair<uint32, uint32>> itemMoves; // (fromSlot, toSlot) pairs
+        std::vector<uint32> itemsToDeposit;
+        std::vector<uint32> itemsToWithdraw;
         uint32 estimatedTime;
         float organizationScore;
 
         BankOrganizationPlan() : estimatedTime(0), organizationScore(0.0f) {}
     };
 
-    BankOrganizationPlan CreateOrganizationPlan(Player* player);
-    void ExecuteOrganizationPlan(Player* player, const BankOrganizationPlan& plan);
+    BankOrganizationPlan CreateOrganizationPlan();
+    void ExecuteOrganizationPlan(const BankOrganizationPlan& plan);
     float CalculateOrganizationScore(Guild* guild);
 
     // Bank monitoring and analysis
     struct BankAnalysis
     {
         uint32 guildId;
-        ::std::unordered_map<GuildBankItemType, uint32> itemCounts;
-        ::std::unordered_map<GuildBankItemType, uint32> totalValues;
-        ::std::vector<GuildBankItem> mostValuableItems;
-        ::std::vector<GuildBankItem> duplicateItems;
-        ::std::vector<GuildBankItem> expiredItems;
+        std::unordered_map<GuildBankItemType, uint32> itemCounts;
+        std::unordered_map<GuildBankItemType, uint32> totalValues;
+        std::vector<GuildBankItem> mostValuableItems;
+        std::vector<GuildBankItem> duplicateItems;
+        std::vector<GuildBankItem> expiredItems;
         float utilizationRate;
         float organizationLevel;
         uint32 lastAnalysisTime;
@@ -133,30 +136,30 @@ public:
             , organizationLevel(0.5f), lastAnalysisTime(GameTime::GetGameTimeMS()) {}
     };
 
-    BankAnalysis AnalyzeGuildBank(Player* player);
+    BankAnalysis AnalyzeGuildBank();
     void UpdateBankAnalysis(uint32 guildId);
-    ::std::vector<uint32> IdentifyDuplicateItems(Guild* guild);
-    ::std::vector<uint32> IdentifyUnusedItems(Guild* guild);
+    std::vector<uint32> IdentifyDuplicateItems(Guild* guild);
+    std::vector<uint32> IdentifyUnusedItems(Guild* guild);
 
     // Bank permissions and access control
-    bool HasDepositRights(Player* player, uint32 tabId);
-    bool HasWithdrawRights(Player* player, uint32 tabId);
-    uint32 GetDailyWithdrawLimit(Player* player, uint32 tabId);
-    uint32 GetRemainingWithdraws(Player* player, uint32 tabId);
-    void TrackBankUsage(Player* player, BankOperation operation);
+    bool HasDepositRights(uint32 tabId);
+    bool HasWithdrawRights(uint32 tabId);
+    uint32 GetDailyWithdrawLimit(uint32 tabId);
+    uint32 GetRemainingWithdraws(uint32 tabId);
+    void TrackBankUsage(BankOperation operation);
 
     // Item categorization and intelligence
     GuildBankItemType DetermineItemCategory(uint32 itemId);
     uint32 EstimateItemValue(uint32 itemId, uint32 stackCount = 1);
     bool IsItemNeededByGuild(Guild* guild, uint32 itemId);
-    ::std::vector<uint32> GetSimilarItems(uint32 itemId);
-    bool ShouldItemBeInGuildBank(Player* player, uint32 itemId);
+    std::vector<uint32> GetSimilarItems(uint32 itemId);
+    bool ShouldItemBeInGuildBank(uint32 itemId);
 
     // Bank space optimization
-    void OptimizeBankSpace(Player* player);
-    ::std::vector<uint32> IdentifyLowValueItems(Guild* guild);
-    void ConsolidateStacks(Player* player, uint32 tabId);
-    void RemoveExpiredItems(Player* player);
+    void OptimizeBankSpace();
+    std::vector<uint32> IdentifyLowValueItems(Guild* guild);
+    void ConsolidateStacks(uint32 tabId);
+    void RemoveExpiredItems();
     uint32 CalculateAvailableSpace(Guild* guild, uint32 tabId);
 
     // Member interaction with bank
@@ -164,8 +167,8 @@ public:
     {
         uint32 playerGuid;
         uint32 guildId;
-        ::std::unordered_map<GuildBankItemType, uint32> depositPreferences;
-        ::std::unordered_map<GuildBankItemType, uint32> withdrawFrequency;
+        std::unordered_map<GuildBankItemType, uint32> depositPreferences;
+        std::unordered_map<GuildBankItemType, uint32> withdrawFrequency;
         uint32 totalDeposits;
         uint32 totalWithdrawals;
         uint32 lastBankAccess;
@@ -177,29 +180,29 @@ public:
             , contributionScore(0.5f), trustLevel(0.8f) {}
     };
 
-    MemberBankProfile GetMemberBankProfile(uint32 playerGuid);
-    void UpdateMemberBankProfile(uint32 playerGuid, BankOperation operation, uint32 itemId);
-    ::std::vector<uint32> GetTopContributors(uint32 guildId);
-    ::std::vector<uint32> GetFrequentUsers(uint32 guildId);
+    MemberBankProfile GetMemberBankProfile();
+    void UpdateMemberBankProfile(BankOperation operation, uint32 itemId);
+    std::vector<uint32> GetTopContributors(uint32 guildId);
+    std::vector<uint32> GetFrequentUsers(uint32 guildId);
 
     // Automated bank maintenance
-    void PerformBankMaintenance(Player* player);
-    void CleanupBankTabs(Player* player);
+    void PerformBankMaintenance();
+    void CleanupBankTabs();
     void UpdateItemPrices(Guild* guild);
-    void ArchiveOldItems(Player* player);
-    void GenerateBankReport(Player* player);
+    void ArchiveOldItems();
+    void GenerateBankReport();
 
     // Performance monitoring
     struct BankMetrics
     {
-        ::std::atomic<uint32> totalDeposits{0};
-        ::std::atomic<uint32> totalWithdrawals{0};
-        ::std::atomic<uint32> itemsMoved{0};
-        ::std::atomic<uint32> organizationActions{0};
-        ::std::atomic<uint32> totalBankValue{0};
-        ::std::atomic<float> utilizationRate{0.7f};
-        ::std::atomic<float> organizationScore{0.8f};
-        ::std::atomic<float> memberSatisfaction{0.85f};
+        std::atomic<uint32> totalDeposits{0};
+        std::atomic<uint32> totalWithdrawals{0};
+        std::atomic<uint32> itemsMoved{0};
+        std::atomic<uint32> organizationActions{0};
+        std::atomic<uint32> totalBankValue{0};
+        std::atomic<float> utilizationRate{0.7f};
+        std::atomic<float> organizationScore{0.8f};
+        std::atomic<float> memberSatisfaction{0.85f};
 
         void Reset() {
             totalDeposits = 0; totalWithdrawals = 0; itemsMoved = 0;
@@ -212,7 +215,7 @@ public:
     BankMetrics GetGlobalBankMetrics();
 
     // Configuration and policies
-    void SetBankPolicy(uint32 guildId, GuildBankItemType itemType, const ::std::string& policy);
+    void SetBankPolicy(uint32 guildId, GuildBankItemType itemType, const std::string& policy);
     void SetAutoOrganizationEnabled(uint32 guildId, bool enabled);
     void SetItemCategoryTab(uint32 guildId, GuildBankItemType itemType, uint32 tabId);
     void ConfigureBankAccess(uint32 guildId, uint32 rankId, uint32 tabId, bool canDeposit, bool canWithdraw);
@@ -224,26 +227,26 @@ public:
     void CleanupBankData();
 
 private:
-    GuildBankManager();
+    Player* _bot;
     ~GuildBankManager() = default;
 
     // Core bank data
-    ::std::unordered_map<uint32, BankAnalysis> _guildBankAnalysis; // guildId -> analysis
-    ::std::unordered_map<uint32, MemberBankProfile> _memberProfiles; // playerGuid -> profile
-    ::std::unordered_map<uint32, BankMetrics> _guildMetrics; // guildId -> metrics
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _bankMutex;
+    std::unordered_map<uint32, BankAnalysis> _guildBankAnalysis; // guildId -> analysis
+    std::unordered_map<uint32, MemberBankProfile> _memberProfiles; // playerGuid -> profile
+    std::unordered_map<uint32, BankMetrics> _guildMetrics; // guildId -> metrics
+    
 
     // Item categorization system
-    ::std::unordered_map<uint32, GuildBankItemType> _itemCategories; // itemId -> category
-    ::std::unordered_map<GuildBankItemType, ::std::vector<uint32>> _categoryItems; // category -> itemIds
-    ::std::unordered_map<uint32, uint32> _itemValues; // itemId -> estimated value
+    std::unordered_map<uint32, GuildBankItemType> _itemCategories; // itemId -> category
+    std::unordered_map<GuildBankItemType, std::vector<uint32>> _categoryItems; // category -> itemIds
+    std::unordered_map<uint32, uint32> _itemValues; // itemId -> estimated value
 
     // Bank organization data
     struct BankConfiguration
     {
         uint32 guildId;
-        ::std::unordered_map<uint32, GuildBankItemType> tabPurposes; // tabId -> item type
-        ::std::unordered_map<GuildBankItemType, ::std::string> categoryPolicies;
+        std::unordered_map<uint32, GuildBankItemType> tabPurposes; // tabId -> item type
+        std::unordered_map<GuildBankItemType, std::string> categoryPolicies;
         bool autoOrganizationEnabled;
         uint32 organizationFrequency;
         uint32 lastOrganization;
@@ -252,7 +255,7 @@ private:
             , organizationFrequency(86400000), lastOrganization(GameTime::GetGameTimeMS()) {}
     };
 
-    ::std::unordered_map<uint32, BankConfiguration> _guildConfigurations; // guildId -> config
+    std::unordered_map<uint32, BankConfiguration> _guildConfigurations; // guildId -> config
 
     // Performance tracking
     BankMetrics _globalMetrics;
@@ -260,13 +263,13 @@ private:
     // Helper functions
     void InitializeItemCategories();
     void LoadGuildBankData(uint32 guildId);
-    bool ValidateBankOperation(Player* player, BankOperation operation, uint32 tabId);
-    void LogBankTransaction(uint32 playerGuid, BankOperation operation, uint32 itemId, uint32 tabId);
+    bool ValidateBankOperation(BankOperation operation, uint32 tabId);
+    void LogBankTransaction(BankOperation operation, uint32 itemId, uint32 tabId);
 
     // Organization algorithms
-    void CalculateOptimalTabLayout(Guild* guild, ::std::unordered_map<uint32, GuildBankItemType>& layout);
-    ::std::vector<::std::pair<uint32, uint32>> PlanItemMoves(Guild* guild, const BankOrganizationPlan& plan);
-    void ExecuteItemMove(Player* player, uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot);
+    void CalculateOptimalTabLayout(Guild* guild, std::unordered_map<uint32, GuildBankItemType>& layout);
+    std::vector<std::pair<uint32, uint32>> PlanItemMoves(Guild* guild, const BankOrganizationPlan& plan);
+    void ExecuteItemMove(uint32 fromTab, uint32 fromSlot, uint32 toTab, uint32 toSlot);
     float EvaluateOrganizationEfficiency(Guild* guild);
 
     // Item analysis
@@ -276,9 +279,9 @@ private:
     bool IsItemRedundant(Guild* guild, uint32 itemId);
 
     // Access control validation
-    bool ValidateTabAccess(Player* player, uint32 tabId, BankOperation operation);
-    void UpdateUsageLimits(Player* player, BankOperation operation, uint32 tabId);
-    void EnforceWithdrawLimits(Player* player, uint32 tabId, uint32 requestedAmount);
+    bool ValidateTabAccess(uint32 tabId, BankOperation operation);
+    void UpdateUsageLimits(BankOperation operation, uint32 tabId);
+    void EnforceWithdrawLimits(uint32 tabId, uint32 requestedAmount);
 
     // Performance optimization
     void CacheBankData(uint32 guildId);

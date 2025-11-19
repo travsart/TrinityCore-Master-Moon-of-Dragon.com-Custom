@@ -12,7 +12,6 @@
 #include <vector>
 #include <unordered_set>
 #include "GameTime.h"
-#include "Combat/CombatStateAnalyzer.h"
 
 class Player;
 class Unit;
@@ -20,12 +19,8 @@ class GameObject;
 
 namespace Playerbot
 {
-
-    // Movement Integration Constants
-    #define MOVEMENT_UPDATE_INTERVAL 200    // 200ms (5 FPS)
-    #define MOVEMENT_MELEE_RANGE 5.0f
-    #define MOVEMENT_RANGED_OPTIMAL 35.0f
-    #define MOVEMENT_KITING_DISTANCE 15.0f
+    enum class CombatSituation : uint8;
+    class PositionManager;  // Forward declaration for positioning integration
 
     /**
      * @enum MovementUrgency
@@ -146,15 +141,15 @@ namespace Playerbot
      * @endcode
      *
      * **Expected Impact**:
-     * -  40% fewer deaths from avoidable damage
-     * -  Better DPS uptime (stay in range)
-     * -  Improved healing effectiveness (positioning)
-     * -  Group coordination (formations)
+     * - ✅ 40% fewer deaths from avoidable damage
+     * - ✅ Better DPS uptime (stay in range)
+     * - ✅ Improved healing effectiveness (positioning)
+     * - ✅ Group coordination (formations)
      */
     class TC_GAME_API MovementIntegration
     {
     public:
-        explicit MovementIntegration(::Player* bot);
+        explicit MovementIntegration(Player* bot, PositionManager* positionManager);
         ~MovementIntegration() = default;
 
         /**
@@ -261,7 +256,7 @@ namespace Playerbot
          * - Abilities (max spell range)
          * - Safety (kiting distance)
          */
-        float GetOptimalRange(::Unit* target);
+        float GetOptimalRange(Unit* target);
 
         /**
          * @brief Execute movement to position
@@ -299,7 +294,7 @@ namespace Playerbot
          *
          * @return Vector of current dangers
          */
-        ::std::vector<DangerZone> GetDangerZones() const;
+        std::vector<DangerZone> GetDangerZones() const;
 
         /**
          * @brief Check if position is in any danger zone
@@ -326,7 +321,7 @@ namespace Playerbot
          *
          * For: Hunters, mages, warlocks vs melee
          */
-        bool ShouldKite(::Unit* target);
+        bool ShouldKite(Unit* target);
 
         /**
          * @brief Get kiting position
@@ -334,14 +329,20 @@ namespace Playerbot
          * @param target Enemy to kite from
          * @return Position that maintains optimal kiting distance
          */
-        Position GetKitingPosition(::Unit* target);
+        Position GetKitingPosition(Unit* target);
 
     private:
-        ::Player* _bot;
-        ::std::vector<DangerZone> _dangerZones;
+        Player* _bot;
+        PositionManager* _positionManager;  // Injected dependency for positioning calculations
+        std::vector<DangerZone> _dangerZones;
         MovementCommand _currentCommand;
         uint32 _lastUpdate;
         CombatSituation _currentSituation;
+
+        static constexpr uint32 UPDATE_INTERVAL = 200;  // 200ms (5 FPS)
+        static constexpr float MELEE_RANGE = 5.0f;
+        static constexpr float RANGED_OPTIMAL = 35.0f;
+        static constexpr float KITING_DISTANCE = 15.0f;
 
         /**
          * @brief Update danger zones (remove expired)

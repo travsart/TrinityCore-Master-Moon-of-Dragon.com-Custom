@@ -92,7 +92,7 @@ struct StatPriority
 {
     uint8 classId;
     uint8 specId;
-    ::std::vector<::std::pair<StatType, float>> statWeights; // stat -> weight (0.0-1.0)
+    std::vector<std::pair<StatType, float>> statWeights; // stat -> weight (0.0-1.0)
 
     StatPriority() : classId(0), specId(0) {}
     StatPriority(uint8 cls, uint8 spec) : classId(cls), specId(spec) {}
@@ -109,17 +109,57 @@ struct StatPriority
 };
 
 /**
+ * @brief Item comparison result
+ */
+struct ItemComparisonResult
+{
+    bool isUpgrade = false;
+    float scoreDifference = 0.0f;
+    float currentItemScore = 0.0f;
+    float newItemScore = 0.0f;
+    uint32 currentItemLevel = 0;
+    uint32 newItemLevel = 0;
+    std::string upgradeReason;
+
+    ItemComparisonResult() = default;
+};
+
+/**
  * @brief Complete equipment manager for all bot equipment operations
+ *
+ * **Phase 6.1: Singleton → Per-Bot Instance Pattern**
+ *
+ * DESIGN PRINCIPLE: Per-bot instance owned by GameSystemsManager
+ * - Each bot has its own EquipmentManager instance
+ * - No mutex locking (per-bot isolation)
+ * - Direct member access (no map lookups)
+ * - Integrates with stat priority system via facade
+ * - Coordinates auto-equip, junk detection, and consumable management
+ *
+ * **Ownership:**
+ * - Owned by GameSystemsManager via std::unique_ptr
+ * - Constructed per-bot with Player* reference
+ * - Destroyed with bot cleanup
  *
  * Implements IEquipmentManager for dependency injection compatibility.
  */
 class TC_GAME_API EquipmentManager final : public IEquipmentManager
 {
 public:
-    static EquipmentManager* instance();
+    /**
+     * @brief Construct equipment manager for bot
+     * @param bot The bot player this manager serves
+     */
+    explicit EquipmentManager(Player* bot);
+
+    /**
+     * @brief Destructor - cleanup per-bot resources
+     */
+    ~EquipmentManager();
 
     // Use interface types
     using ItemComparisonResult = IEquipmentManager::ItemComparisonResult;
+    using EquipmentMetrics = IEquipmentManager::EquipmentMetrics;
 
     // ============================================================================
     // IEquipmentManager interface implementation
@@ -129,52 +169,51 @@ public:
      * Scan all inventory items and auto-equip better gear
      * This is the main entry point called by TradeAutomation
      */
-    void AutoEquipBestGear(::Player* player) override;
+    void AutoEquipBestGear() override;
 
     /**
      * Compare two items for the same equipment slot
-     * Returns true if newItem is better than currentItem for this player
+     * Returns true if newItem is better than currentItem for this bot
      */
-    ItemComparisonResult CompareItems(::Player* player, ::Item* currentItem, ::Item* newItem) override;
+    ItemComparisonResult CompareItems(::Item* currentItem, ::Item* newItem) override;
 
     /**
      * Calculate item score based on class/spec stat priorities
      */
-    float CalculateItemScore(::Player* player, ::Item* item) override;
+    float CalculateItemScore(::Item* item) override;
 
     /**
      * Determine if item is an upgrade for any equipment slot
      */
-    bool IsItemUpgrade(::Player* player, ::Item* item) override;
+    bool IsItemUpgrade(::Item* item) override;
 
     /**
      * Calculate item score for an ItemTemplate (quest rewards, vendor items, etc.)
      * Uses class/spec stat priorities to evaluate items before they exist
-     * @param player Player to evaluate for
      * @param itemTemplate Item template to evaluate
      * @return Weighted score based on stat priorities
      */
-    float CalculateItemTemplateScore(::Player* player, ItemTemplate const* itemTemplate) override;
+    float CalculateItemTemplateScore(ItemTemplate const* itemTemplate) override;
 
     // ============================================================================
     // JUNK IDENTIFICATION
     // ============================================================================
 
     /**
-     * Identify all junk items in player's inventory
+     * Identify all junk items in bot's inventory
      * Returns item GUIDs that should be sold to vendor
      */
-    ::std::vector<ObjectGuid> IdentifyJunkItems(::Player* player) override;
+    std::vector<ObjectGuid> IdentifyJunkItems() override;
 
     /**
      * Check if specific item is junk (grey quality, low ilvl, wrong stats)
      */
-    bool IsJunkItem(::Player* player, ::Item* item) override;
+    bool IsJunkItem(::Item* item) override;
 
     /**
      * Check if item should NEVER be sold (quest items, valuables, set items)
      */
-    bool IsProtectedItem(::Player* player, ::Item* item) override;
+    bool IsProtectedItem(::Item* item) override;
 
     /**
      * Evaluate if BoE item is valuable enough for AH vs vendor selling
@@ -186,50 +225,45 @@ public:
     // ============================================================================
 
     /**
-     * Get list of consumables this player needs to restock
+     * Get list of consumables this bot needs to restock
      * Returns itemId -> quantity needed
      */
-    ::std::unordered_map<uint32, uint32> GetConsumableNeeds(::Player* player) override;
+    std::unordered_map<uint32, uint32> GetConsumableNeeds() override;
 
     /**
-     * Check if player has sufficient consumables for their class
+     * Check if bot has sufficient consumables for their class
      */
-    bool NeedsConsumableRestocking(::Player* player) override;
+    bool NeedsConsumableRestocking() override;
 
     /**
      * Get class-specific consumable requirements (food, potions, reagents)
      */
-    ::std::vector<uint32> GetClassConsumables(uint8 classId);
+    std::vector<uint32> GetClassConsumables(uint8 classId);
 
     /**
      * Check current consumable quantities
      */
-    uint32 GetConsumableCount(::Player* player, uint32 itemId);
+    uint32 GetConsumableCount(uint32 itemId);
 
     // ============================================================================
     // STAT PRIORITY SYSTEM
     // ============================================================================
 
     /**
-     * Get stat priority configuration for player's current class/spec
+     * Get stat priority configuration for bot's current class/spec
      */
-    StatPriority const& GetStatPriority(::Player* player);
+    StatPriority const& GetStatPriority();
 
     /**
      * Get stat priority configuration by class/spec ID directly
      * Used by BotGearFactory for cache building without Player objects
      */
-    StatPriority const& GetStatPriorityByClassSpec(uint8 classId, uint32 specId);
+    static StatPriority const& GetStatPriorityByClassSpec(uint8 classId, uint32 specId);
 
     /**
-     * Initialize all class/spec stat priorities (called on startup)
+     * Update stat priorities when bot changes spec
      */
-    void InitializeStatPriorities();
-
-    /**
-     * Update stat priorities when player changes spec
-     */
-    void UpdatePlayerStatPriority(::Player* player);
+    void UpdateStatPriority();
 
     // ============================================================================
     // ITEM CATEGORIZATION
@@ -241,9 +275,9 @@ public:
     ItemCategory GetItemCategory(::Item* item);
 
     /**
-     * Check if item can be equipped by this player (class/level restrictions)
+     * Check if item can be equipped by this bot (class/level restrictions)
      */
-    bool CanPlayerEquipItem(::Player* player, ItemTemplate const* itemTemplate);
+    bool CanEquipItem(ItemTemplate const* itemTemplate);
 
     /**
      * Get equipment slot for this item (EQUIPMENT_SLOT_HEAD, etc.)
@@ -262,7 +296,7 @@ public:
     /**
      * Count equipped set pieces for set bonus calculation
      */
-    uint32 GetEquippedSetPieceCount(::Player* player, uint32 setId);
+    uint32 GetEquippedSetPieceCount(uint32 setId);
 
     /**
      * Evaluate weapon DPS (important for melee classes)
@@ -292,97 +326,117 @@ public:
         float minUpgradeThreshold = 5.0f; // Minimum % improvement to equip
         uint32 minItemLevelToKeep = 1;    // Sell items below this ilvl
         bool keepValuableBoE = true;
-        ::std::unordered_set<uint32> neverSellItems; // Item IDs to always keep
+        std::unordered_set<uint32> neverSellItems; // Item IDs to always keep
 
         EquipmentAutomationProfile() = default;
     };
 
-    void SetAutomationProfile(uint32 playerGuid, EquipmentAutomationProfile const& profile);
-    EquipmentAutomationProfile GetAutomationProfile(uint32 playerGuid);
+    void SetAutomationProfile(EquipmentAutomationProfile const& profile);
+    EquipmentAutomationProfile const& GetAutomationProfile() const;
 
     // ============================================================================
     // METRICS AND MONITORING
     // ============================================================================
 
-    // Use base class's EquipmentMetrics definition (IEquipmentManager::EquipmentMetrics)
-    // Note: Removed duplicate atomic-based definition to fix C2555 covariant return type error
-    // Thread safety is provided by _mutex, not atomics
+    struct EquipmentMetrics
+    {
+        std::atomic<uint32> itemsEquipped{0};
+        std::atomic<uint32> upgradesFound{0};
+        std::atomic<uint32> junkItemsSold{0};
+        std::atomic<uint32> totalGoldFromJunk{0};
+        std::atomic<float> averageItemScore{0.0f};
 
-    IEquipmentManager::EquipmentMetrics const& GetPlayerMetrics(uint32 playerGuid) override;
-    IEquipmentManager::EquipmentMetrics const& GetGlobalMetrics() override;
+        void Reset()
+        {
+            itemsEquipped = 0;
+            upgradesFound = 0;
+            junkItemsSold = 0;
+            totalGoldFromJunk = 0;
+            averageItemScore = 0.0f;
+        }
+    };
+
+    EquipmentMetrics const& GetMetrics() override;
+    EquipmentMetrics const& GetGlobalMetrics() override;
 
 private:
-    EquipmentManager();
-    ~EquipmentManager() = default;
+    // Non-copyable
+    EquipmentManager(EquipmentManager const&) = delete;
+    EquipmentManager& operator=(EquipmentManager const&) = delete;
+
+    // ============================================================================
+    // PER-BOT INSTANCE DATA
+    // ============================================================================
+
+    Player* _bot;                               // Bot reference (non-owning)
+    EquipmentAutomationProfile _profile;        // Automation profile for this bot
+    EquipmentMetrics _metrics;                  // Metrics for this bot
+
+    // ============================================================================
+    // SHARED STATIC DATA
+    // ============================================================================
 
     // Stat priority database (classId + specId -> StatPriority)
-    ::std::unordered_map<uint16, StatPriority> _statPriorities; // key = (classId << 8) | specId
+    // Shared across all bots, initialized once
+    static std::unordered_map<uint16, StatPriority> _statPriorities; // key = (classId << 8) | specId
+    static bool _statPrioritiesInitialized;
 
-    // Player automation profiles
-    ::std::unordered_map<uint32, EquipmentAutomationProfile> _playerProfiles;
-
-    // Metrics tracking
-    ::std::unordered_map<uint32, IEquipmentManager::EquipmentMetrics> _playerMetrics;
-    IEquipmentManager::EquipmentMetrics _globalMetrics;
-
-    // FIX #23: CRITICAL - Change to recursive_mutex to prevent deadlock
-    // AutoEquipBestGear() calls GetAutomationProfile() while holding lock
-    // std::recursive_mutex does NOT support recursive locking → "resource deadlock would occur"
-    // std::recursive_mutex allows same thread to acquire lock multiple times
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
+    // Global metrics across all bots
+    static EquipmentMetrics _globalMetrics;
 
     // ============================================================================
     // STAT PRIORITY INITIALIZATION (ALL 13 CLASSES)
     // ============================================================================
 
-    void InitializeWarriorPriorities();
-    void InitializePaladinPriorities();
-    void InitializeHunterPriorities();
-    void InitializeRoguePriorities();
-    void InitializePriestPriorities();
-    void InitializeShamanPriorities();
-    void InitializeMagePriorities();
-    void InitializeWarlockPriorities();
-    void InitializeDruidPriorities();
-    void InitializeDeathKnightPriorities();
-    void InitializeMonkPriorities();
-    void InitializeDemonHunterPriorities();
-    void InitializeEvokerPriorities();
+    static void InitializeStatPriorities();  // Load shared stat priorities once
+    static void InitializeWarriorPriorities();
+    static void InitializePaladinPriorities();
+    static void InitializeHunterPriorities();
+    static void InitializeRoguePriorities();
+    static void InitializePriestPriorities();
+    static void InitializeShamanPriorities();
+    static void InitializeMagePriorities();
+    static void InitializeWarlockPriorities();
+    static void InitializeDruidPriorities();
+    static void InitializeDeathKnightPriorities();
+    static void InitializeMonkPriorities();
+    static void InitializeDemonHunterPriorities();
+    static void InitializeEvokerPriorities();
 
     // ============================================================================
     // HELPER METHODS
     // ============================================================================
 
     // Item score calculation helpers
-    float CalculateWeaponScore(::Player* player, ::Item* weapon);
-    float CalculateArmorScore(::Player* player, ::Item* armor);
-    float CalculateAccessoryScore(::Player* player, ::Item* accessory);
+    float CalculateWeaponScore(::Item* weapon);
+    float CalculateArmorScore(::Item* armor);
+    float CalculateAccessoryScore(::Item* accessory);
 
     // Item analysis helpers
-    bool IsOutdatedGear(::Player* player, ::Item* item);
-    bool HasWrongPrimaryStats(::Player* player, ::Item* item);
-    bool IsLowerQualityThanEquipped(::Player* player, ::Item* item);
+    bool IsOutdatedGear(::Item* item);
+    bool HasWrongPrimaryStats(::Item* item);
+    bool IsLowerQualityThanEquipped(::Item* item);
 
     // Equipment slot helpers
-    ::Item* GetEquippedItemInSlot(::Player* player, uint8 slot);
-    bool CanEquipInSlot(::Player* player, ::Item* item, uint8 slot);
-    void EquipItemInSlot(::Player* player, ::Item* item, uint8 slot);
+    ::Item* GetEquippedItemInSlot(uint8 slot);
+    bool CanEquipInSlot(::Item* item, uint8 slot);
+    void EquipItemInSlot(::Item* item, uint8 slot);
 
     // Consumable helpers
-    uint32 GetRecommendedFoodLevel(::Player* player);
-    uint32 GetRecommendedPotionLevel(::Player* player);
-    ::std::vector<uint32> GetClassReagents(uint8 classId);
+    uint32 GetRecommendedFoodLevel();
+    uint32 GetRecommendedPotionLevel();
+    std::vector<uint32> GetClassReagents(uint8 classId);
 
     // Stat extraction from ItemTemplate (TrinityCore 11.2 API)
-    int32 ExtractStatValue(ItemTemplate const* proto, StatType stat);
-    float CalculateTotalStats(ItemTemplate const* proto, ::std::vector<::std::pair<StatType, float>> const& weights);
+    static int32 ExtractStatValue(ItemTemplate const* proto, StatType stat);
+    static float CalculateTotalStats(ItemTemplate const* proto, std::vector<std::pair<StatType, float>> const& weights);
 
     // Metrics updates
-    void UpdateMetrics(uint32 playerGuid, bool wasEquipped, bool wasUpgrade, uint32 goldValue = 0);
+    void UpdateMetrics(bool wasEquipped, bool wasUpgrade, uint32 goldValue = 0);
 
     // Utility
-    uint16 MakeStatPriorityKey(uint8 classId, uint8 specId) const { return (static_cast<uint16>(classId) << 8) | specId; }
-    void LogEquipmentDecision(::Player* player, ::std::string const& action, ::std::string const& reason);
+    static uint16 MakeStatPriorityKey(uint8 classId, uint8 specId) { return (static_cast<uint16>(classId) << 8) | specId; }
+    void LogEquipmentDecision(std::string const& action, std::string const& reason);
 };
 
 } // namespace Playerbot
