@@ -19,12 +19,9 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include "Core/DI/Interfaces/IArenaAI.h"
 #include <atomic>
 
-namespace Playerbot
-{
-    // Interface
-    #include "Core/DI/Interfaces/IArenaAI.h"
 
 
 /**

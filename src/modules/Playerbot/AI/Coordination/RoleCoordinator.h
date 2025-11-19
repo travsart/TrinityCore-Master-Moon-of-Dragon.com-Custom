@@ -52,7 +52,7 @@ public:
     /**
      * @brief Get role type
      */
-    virtual GroupCoordinator::GroupRole GetRole() const = 0;
+    virtual GroupCoordinator::GroupCoordinator::GroupRole GetRole() const = 0;
 
 protected:
     uint32 _lastUpdateTime = 0;
@@ -73,7 +73,7 @@ class TC_GAME_API TankCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
-    GroupRole GetRole() const override { return GroupRole::TANK; }
+    GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::TANK; }
 
     /**
      * @brief Get main tank GUID
@@ -131,7 +131,7 @@ class TC_GAME_API HealerCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
-    GroupRole GetRole() const override { return GroupRole::HEALER; }
+    GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::HEALER; }
 
     /**
      * @brief Get healer assigned to tank
@@ -200,7 +200,7 @@ class TC_GAME_API DPSCoordinator : public RoleCoordinator
 {
 public:
     void Update(GroupCoordinator* group, uint32 diff) override;
-    GroupRole GetRole() const override { return GroupRole::MELEE_DPS; } // Handles both melee and ranged
+    GroupCoordinator::GroupRole GetRole() const override { return GroupCoordinator::GroupRole::MELEE_DPS; } // Handles both melee and ranged
 
     /**
      * @brief Get focus target for DPS
