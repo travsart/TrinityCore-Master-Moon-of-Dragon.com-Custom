@@ -2,9 +2,9 @@
   "hooks": {
     "SessionStart": [
       {
-        "description": "Install and configure dependencies (TBB, phmap, Boost)",
+        "description": "Install and configure dependencies (TBB, phmap, MySQL, Boost)",
         "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/install_dependencies.sh",
-        "timeout": 900000
+        "timeout": 1800000
       },
       {
         "description": "Display project status and current phase",
