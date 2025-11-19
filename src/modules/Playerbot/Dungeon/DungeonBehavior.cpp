@@ -8,6 +8,7 @@
  */
 
 #include "DungeonBehavior.h"
+#include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "InstanceCoordination.h"
 #include "EncounterStrategy.h"
 #include "../Group/GroupFormation.h"
@@ -97,7 +98,10 @@ bool DungeonBehavior::EnterDungeon(Group* group, uint32 dungeonId)
     // Initialize instance coordination
     if (group->GetInstanceScript())
     {
-        InstanceCoordination::instance()->InitializeInstanceCoordination(group, group->GetInstanceScript()->instance);
+        // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->InitializeInstanceCoordination(group, group->GetInstanceScript()->instance);
+        TC_LOG_WARN("playerbot.dungeon", "InitializeInstanceCoordination called but InstanceCoordination is now per-bot - needs refactoring");
     }
 
     TC_LOG_INFO("module.playerbot", "Group {} entered dungeon: {} (ID: {})",
@@ -220,7 +224,10 @@ void DungeonBehavior::UpdateDungeonProgress(Group* group)
     }
 
     // Update instance coordination
-    InstanceCoordination::instance()->UpdateInstanceCoordination(group, 1000);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->UpdateInstanceCoordination(group, 1000);
+        TC_LOG_WARN("playerbot.dungeon", "UpdateInstanceCoordination called but InstanceCoordination is now per-bot - needs refactoring");
 }
 
 void DungeonBehavior::HandleDungeonCompletion(Group* group)
@@ -256,7 +263,10 @@ void DungeonBehavior::HandleDungeonCompletion(Group* group)
         completionTime / 60000, state.wipeCount);
 
     // Notify instance coordination
-    InstanceCoordination::instance()->HandleInstanceCompletion(group);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->HandleInstanceCompletion(group);
+        TC_LOG_WARN("playerbot.dungeon", "HandleInstanceCompletion called but InstanceCoordination is now per-bot - needs refactoring");
 
     LogDungeonEvent(group->GetGUID().GetCounter(), "DUNGEON_COMPLETED",
         Trinity::StringFormat("Dungeon: {}, Time: {}ms, Wipes: {}",
@@ -286,7 +296,10 @@ void DungeonBehavior::HandleDungeonWipe(Group* group)
         group->GetGUID().GetCounter(), state.wipeCount);
 
     // Notify instance coordination
-    InstanceCoordination::instance()->HandleInstanceFailure(group);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->HandleInstanceFailure(group);
+        TC_LOG_WARN("playerbot.dungeon", "HandleInstanceFailure called but InstanceCoordination is now per-bot - needs refactoring");
 
     // If too many wipes on same encounter, adapt strategy
     if (state.wipeCount >= MAX_ENCOUNTER_RETRIES)
@@ -328,7 +341,10 @@ void DungeonBehavior::StartEncounter(Group* group, uint32 encounterId)
         group->GetGUID().GetCounter(), encounter.encounterName, encounterId);
 
     // Prepare group for encounter
-    InstanceCoordination::instance()->PrepareForEncounter(group, encounterId);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->PrepareForEncounter(group, encounterId);
+        TC_LOG_WARN("playerbot.dungeon", "PrepareForEncounter called but InstanceCoordination is now per-bot - needs refactoring");
 
     // Execute encounter strategy
     EncounterStrategy::instance()->ExecuteEncounterStrategy(group, encounterId);
@@ -350,7 +366,10 @@ void DungeonBehavior::UpdateEncounter(Group* group, uint32 encounterId)
     EncounterStrategy::instance()->UpdateEncounterExecution(group, encounterId, 1000);
 
     // Monitor encounter progress
-    InstanceCoordination::instance()->MonitorEncounterProgress(group, encounterId);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->MonitorEncounterProgress(group, encounterId);
+        TC_LOG_WARN("playerbot.dungeon", "MonitorEncounterProgress called but InstanceCoordination is now per-bot - needs refactoring");
 
     // Handle enrage timer if present
     if (encounter.hasEnrageTimer)
@@ -425,7 +444,10 @@ void DungeonBehavior::HandleEncounterWipe(Group* group, uint32 encounterId)
     HandleDungeonWipe(group);
 
     // Recover encounter mechanics
-    InstanceCoordination::instance()->HandleEncounterRecovery(group, encounterId);
+    // TODO: InstanceCoordination is now per-bot, but this is a group-level operation
+        // Need to refactor to iterate group members or use group leader's bot
+        // Original call: InstanceCoordination::instance()->HandleEncounterRecovery(group, encounterId);
+        TC_LOG_WARN("playerbot.dungeon", "HandleEncounterRecovery called but InstanceCoordination is now per-bot - needs refactoring");
 
     LogDungeonEvent(group->GetGUID().GetCounter(), "ENCOUNTER_WIPE", encounter.encounterName);
 }

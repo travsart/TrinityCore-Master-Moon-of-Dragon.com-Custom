@@ -15,6 +15,7 @@
 #include "../Core/BotAI.h"
 #include "../Core/BotSession.h"
 #include "../Core/Managers/GameSystemsManager.h"
+#include "../Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "Player.h"
 #include "Item.h"
 #include "Bag.h"
@@ -32,7 +33,8 @@ namespace Playerbot
 // STATIC MEMBER INITIALIZATION
 // ============================================================================
 
-AuctionHouse* ProfessionAuctionBridge::_auctionHouse = nullptr;
+// NOTE: AuctionHouse is now per-bot (Phase 7), access via GetGameSystems(_bot)->GetAuctionHouse()
+// Removed: AuctionHouse* ProfessionAuctionBridge::_auctionHouse = nullptr;
 ProfessionAuctionStatistics ProfessionAuctionBridge::_globalStatistics;
 bool ProfessionAuctionBridge::_sharedDataInitialized = false;
 
@@ -70,8 +72,10 @@ void ProfessionAuctionBridge::Initialize()
     // Load shared data once (thread-safe via static initialization)
     if (!_sharedDataInitialized)
     {
-        // Get reference to existing AuctionHouse singleton
-        _auctionHouse = AuctionHouse::instance();
+        // NOTE: AuctionHouse is now per-bot (Phase 7), removed static storage
+        // Access via: GetGameSystems(_bot)->GetAuctionHouse() in per-instance methods
+        // TODO: Review if any AuctionHouse methods need to be called during initialization
+        // Removed: _auctionHouse = AuctionHouse::instance();
         LoadDefaultStockpileConfigs();
         _sharedDataInitialized = true;
         TC_LOG_INFO("playerbot", "ProfessionAuctionBridge::Initialize - Loaded shared data (stockpile configs)");

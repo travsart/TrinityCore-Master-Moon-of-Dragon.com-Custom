@@ -259,9 +259,17 @@ public:
     // ========================================================================
     // GAME SYSTEM MANAGERS - Quest, profession, trade management (Phase 6: Delegation)
     // ========================================================================
-    // These getters delegate to the IGameSystemsManager facade for backward compatibility.
     // All managers are owned by _gameSystems facade, not BotAI directly.
 
+    /**
+     * @brief Get the GameSystemsManager facade (Phase 6/7)
+     * Provides direct access to the facade that owns all 48 per-bot managers.
+     * @return Pointer to game systems manager, or nullptr if not initialized
+     */
+    IGameSystemsManager* GetGameSystems() { return _gameSystems.get(); }
+    IGameSystemsManager const* GetGameSystems() const { return _gameSystems.get(); }
+
+    // Legacy individual getters for backward compatibility
     QuestManager* GetQuestManager() { return _gameSystems ? _gameSystems->GetQuestManager() : nullptr; }
     QuestManager const* GetQuestManager() const { return _gameSystems ? _gameSystems->GetQuestManager() : nullptr; }
 

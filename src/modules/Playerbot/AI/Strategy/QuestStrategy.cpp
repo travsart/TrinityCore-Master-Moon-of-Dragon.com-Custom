@@ -8,6 +8,7 @@
  */
 
 #include "QuestStrategy.h"
+#include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "../BotAI.h"
 #include "Player.h"
 #include "Group.h"
@@ -180,7 +181,7 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastObjectiveUpdate > 2000) // Every 2 seconds
     {
-        ObjectiveTracker::instance()->UpdateBotTracking(bot, diff);
+        (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->UpdateBotTracking(diff) : (void)0);
         _lastObjectiveUpdate = currentTime;
     }
 
@@ -224,7 +225,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} starting objective processing", bot->GetName());
 
     // Get highest priority objective from ObjectiveTracker
-    ObjectiveTracker::ObjectivePriority priority = ObjectiveTracker::instance()->GetHighestPriorityObjective(bot);
+    ObjectiveTracker::ObjectivePriority priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - priority.questId={}, priority.objectiveIndex={}",
                  bot->GetName(), priority.questId, priority.objectiveIndex);
@@ -268,11 +269,11 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                 // Create objective data using constructor (questId, index, type, targetId, requiredCount)
                 QuestObjectiveData objData(questId, i, objType, objective.ObjectID, objective.Amount);
 
-                ObjectiveTracker::instance()->StartTrackingObjective(bot, objData);
+                (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->StartTrackingObjective(objData) : (void)0);
             }
         }
         // Try again after initialization
-        priority = ObjectiveTracker::instance()->GetHighestPriorityObjective(bot);
+        priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
         TC_LOG_ERROR("module.playerbot.quest", "🔄 ProcessQuestObjectives: Bot {} after initialization - priority.questId={}, priority.objectiveIndex={}",
                      bot->GetName(), priority.questId, priority.objectiveIndex);
 
@@ -308,8 +309,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         }
     }
     // Get objective state
-    ObjectiveTracker::ObjectiveState objective = ObjectiveTracker::instance()->GetObjectiveState(
-        bot, priority.questId, priority.objectiveIndex);
+    ObjectiveTracker::ObjectiveState objective = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetObjectiveState( priority.questId, priority.objectiveIndex) : ObjectiveTracker::ObjectiveState());
 
     // Cache current objective info
     _currentQuestId = objective.questId;
@@ -863,7 +863,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveS
     uint32 targetObjectId = questObjective.ObjectID;
 
     // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
-    std::vector<uint32> objects = ObjectiveTracker::instance()->ScanForGameObjects(bot, targetObjectId, 200.0f);
+    std::vector<uint32> objects = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->ScanForGameObjects( targetObjectId, 200.0f) : std::vector<uint32>());
 
     TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
                  targetObjectId, objects.size());
@@ -1208,7 +1208,7 @@ ObjectiveTracker::ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai
         return ObjectiveTracker::ObjectivePriority(0, 0);
 
     Player* bot = ai->GetBot();
-    return ObjectiveTracker::instance()->GetHighestPriorityObjective(bot);
+    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
 }
 
 bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
@@ -1307,7 +1307,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
                                       static_cast<QuestObjectiveType>(questObjective.Type),
                                       questObjective.ObjectID, questObjective.Amount);
 
-            Position newPos = ObjectiveTracker::instance()->FindObjectiveTargetLocation(bot, objData);
+            Position newPos = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->FindObjectiveTargetLocation(objData) : Position());
             // Check if we got a valid position
             if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
             {

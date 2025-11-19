@@ -8,6 +8,7 @@
  */
 
 #include "QuestCompletion.h"
+#include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "World.h"
@@ -224,8 +225,9 @@ void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
     TC_LOG_DEBUG("playerbot", "QuestCompletion::CompleteQuest - Bot %s completed quest %u",
         bot->GetName().c_str(), questId);
 
-    // Schedule turn-in through QuestTurnIn system
-    QuestTurnIn::instance()->ScheduleQuestTurnIn(bot, questId);
+    // Schedule turn-in through QuestTurnIn system (per-bot)
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(questId);
 }
 
 /**
@@ -239,8 +241,10 @@ bool QuestCompletion::TurnInQuest(uint32 questId, Player* bot)
     if (!bot || !questId)
         return false;
 
-    // Delegate to QuestTurnIn system
-    return QuestTurnIn::instance()->TurnInQuest(questId, bot);
+    // Delegate to QuestTurnIn system (per-bot)
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestTurnIn()->TurnInQuest(questId);
+    return false;
 }
 
 /**

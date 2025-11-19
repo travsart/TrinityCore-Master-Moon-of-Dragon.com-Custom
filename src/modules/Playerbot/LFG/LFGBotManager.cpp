@@ -16,6 +16,7 @@
  */
 
 #include "LFGBotManager.h"
+#include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "LFGBotSelector.h"
 #include "LFGRoleDetector.h"
 #include "LFGGroupCoordinator.h"
@@ -424,7 +425,10 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     // Queue tanks
     if ((neededRoles & lfg::PLAYER_ROLE_TANK) && tanksNeeded > 0)
     {
-        std::vector<Player*> tanks = LFGBotSelector::instance()->FindTanks(minLevel, maxLevel, tanksNeeded);
+        std::vector<Player*> tanks = /* TODO: LFGBotSelector is now per-bot, but FindTanks is a system-wide query
+           Need to refactor: possibly make these static methods or use a global selector
+           Original call: LFGBotSelector::instance()->FindTanks(minLevel, maxLevel, tanksNeeded) */
+        std::vector<Player*>() /* Temporarily disabled */;
         for (Player* tank : tanks)
         {
             if (QueueBot(tank, lfg::PLAYER_ROLE_TANK, dungeons))
@@ -438,7 +442,10 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     // Queue healers
     if ((neededRoles & lfg::PLAYER_ROLE_HEALER) && healersNeeded > 0)
     {
-        std::vector<Player*> healers = LFGBotSelector::instance()->FindHealers(minLevel, maxLevel, healersNeeded);
+        std::vector<Player*> healers = /* TODO: LFGBotSelector is now per-bot, but FindHealers is a system-wide query
+           Need to refactor: possibly make these static methods or use a global selector
+           Original call: LFGBotSelector::instance()->FindHealers(minLevel, maxLevel, healersNeeded) */
+        std::vector<Player*>() /* Temporarily disabled */;
         for (Player* healer : healers)
         {
             if (QueueBot(healer, lfg::PLAYER_ROLE_HEALER, dungeons))
@@ -452,7 +459,10 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
     // Queue DPS
     if ((neededRoles & lfg::PLAYER_ROLE_DAMAGE) && dpsNeeded > 0)
     {
-        std::vector<Player*> dps = LFGBotSelector::instance()->FindDPS(minLevel, maxLevel, dpsNeeded);
+        std::vector<Player*> dps = /* TODO: LFGBotSelector is now per-bot, but FindDPS is a system-wide query
+           Need to refactor: possibly make these static methods or use a global selector
+           Original call: LFGBotSelector::instance()->FindDPS(minLevel, maxLevel, dpsNeeded) */
+        std::vector<Player*>() /* Temporarily disabled */;
         for (Player* dpsPlayer : dps)
         {
             if (QueueBot(dpsPlayer, lfg::PLAYER_ROLE_DAMAGE, dungeons))

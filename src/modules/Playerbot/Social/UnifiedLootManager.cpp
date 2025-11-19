@@ -8,6 +8,7 @@
  */
 
 #include "UnifiedLootManager.h"
+#include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "LootDistribution.h"
 #include "Log.h"
 #include <sstream>
@@ -204,7 +205,10 @@ void UnifiedLootManager::CoordinationModule::MaximizeLootFairness(Group* group, 
 
 void UnifiedLootManager::DistributionModule::DistributeLoot(Group* group, LootItem const& item)
 {
-    LootDistribution::instance()->DistributeLoot(group, item);
+    // TODO: LootDistribution is now per-bot, but this is a group-level operation
+    // Need to refactor to iterate group members or use group leader's bot
+    // For now, this method requires architectural redesign
+    TC_LOG_WARN("playerbot.loot", "DistributeLoot called but LootDistribution is now per-bot - needs refactoring");
     _itemsDistributed++;
 }
 
@@ -212,59 +216,65 @@ void UnifiedLootManager::DistributionModule::HandleLootRoll(Player* player, uint
 {
     std::lock_guard<decltype(_rollMutex)> lock(_rollMutex);
 
-    LootDistribution::instance()->HandleLootRoll(player, rollId, rollType);
+    (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->HandleLootRoll(rollId, rollType) : decltype(GetGameSystems(player)->GetLootDistribution()->HandleLootRoll(rollId, rollType))());
     _rollsProcessed++;
 }
 
 LootRollType UnifiedLootManager::DistributionModule::DetermineLootDecision(
     Player* player, LootItem const& item, LootDecisionStrategy strategy)
 {
-    return LootDistribution::instance()->DetermineLootDecision(player, item, strategy);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item, strategy) : decltype(GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item, strategy))());
 }
 
 LootPriority UnifiedLootManager::DistributionModule::CalculateLootPriority(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->CalculateLootPriority(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->CalculateLootPriority(item) : decltype(GetGameSystems(player)->GetLootDistribution()->CalculateLootPriority(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollNeed(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->ShouldRollNeed(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ShouldRollNeed(item) : decltype(GetGameSystems(player)->GetLootDistribution()->ShouldRollNeed(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollGreed(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->ShouldRollGreed(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ShouldRollGreed(item) : decltype(GetGameSystems(player)->GetLootDistribution()->ShouldRollGreed(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForClass(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForClass(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->IsItemForClass(item) : decltype(GetGameSystems(player)->GetLootDistribution()->IsItemForClass(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForMainSpec(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForMainSpec(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->IsItemForMainSpec(item) : decltype(GetGameSystems(player)->GetLootDistribution()->IsItemForMainSpec(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForOffSpec(Player* player, LootItem const& item)
 {
-    return LootDistribution::instance()->IsItemForOffSpec(player, item);
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->IsItemForOffSpec(item) : decltype(GetGameSystems(player)->GetLootDistribution()->IsItemForOffSpec(item))());
 }
 
 void UnifiedLootManager::DistributionModule::ExecuteLootDistribution(Group* group, uint32 rollId)
 {
-    LootDistribution::instance()->ExecuteLootDistribution(group, rollId);
+    // TODO: LootDistribution is now per-bot, but this is a group-level operation
+    // Need to refactor to iterate group members or use group leader's bot
+    TC_LOG_WARN("playerbot.loot", "ExecuteLootDistribution called but LootDistribution is now per-bot - needs refactoring");
 }
 
 void UnifiedLootManager::DistributionModule::ResolveRollTies(Group* group, uint32 rollId)
 {
-    LootDistribution::instance()->ResolveRollTies(group, rollId);
+    // TODO: LootDistribution is now per-bot, but this is a group-level operation
+    // Need to refactor to iterate group members or use group leader's bot
+    TC_LOG_WARN("playerbot.loot", "ResolveRollTies called but LootDistribution is now per-bot - needs refactoring");
 }
 
 void UnifiedLootManager::DistributionModule::HandleLootNinja(Group* group, uint32 suspectedPlayer)
 {
-    LootDistribution::instance()->HandleLootNinja(group, suspectedPlayer);
+    // TODO: LootDistribution is now per-bot, but this is a group-level operation
+    // Need to refactor to iterate group members or use group leader's bot
+    TC_LOG_WARN("playerbot.loot", "HandleLootNinja called but LootDistribution is now per-bot - needs refactoring");
 }
 
 // ============================================================================
