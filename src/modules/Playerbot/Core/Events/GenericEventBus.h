@@ -15,6 +15,7 @@
 #include "ObjectGuid.h"
 #include "Log.h"
 #include "IEventHandler.h"
+#include "AI/BotAI.h"
 #include <queue>
 #include <vector>
 #include <unordered_map>
@@ -27,9 +28,6 @@
 
 namespace Playerbot
 {
-
-// Forward declaration
-class BotAI;
 
 /**
  * @brief Generic EventBus template for type-safe, high-performance event publishing/subscription
