@@ -64,6 +64,7 @@ class CombatStateManager;
 class TargetScanner;
 class GroupInvitationHandler;
 class ManagerRegistry;
+class HybridAIController;
 
 namespace Advanced
 {
