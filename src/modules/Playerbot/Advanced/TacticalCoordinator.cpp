@@ -28,6 +28,8 @@
 
 namespace Playerbot
 {
+namespace Advanced
+{
 
 // ============================================================================
 // CONSTRUCTOR & DESTRUCTOR
@@ -731,4 +733,5 @@ ObjectGuid TacticalCoordinator::FindBestDispeller(ObjectGuid targetGuid) const
     return ObjectGuid::Empty;
 }
 
+} // namespace Advanced
 } // namespace Playerbot
