@@ -200,7 +200,7 @@ public:
     /**
      * Update profession auction automation (called periodically)
      */
-    void Update(uint32 diff) override;
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Enable/disable profession auction automation
