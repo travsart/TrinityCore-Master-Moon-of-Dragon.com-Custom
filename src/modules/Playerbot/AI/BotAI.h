@@ -326,7 +326,7 @@ public:
      * @brief Get Hybrid AI Controller (Phase 2 Week 3 / Phase 6: Facade Delegation)
      * @return Pointer to controller, or nullptr if not initialized
      */
-    class HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
+    bot::ai::HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
 
     /**
      * @brief Get Shared Blackboard (Phase 4)
