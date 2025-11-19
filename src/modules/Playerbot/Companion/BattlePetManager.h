@@ -341,31 +341,6 @@ public:
     // METRICS
     // ============================================================================
 
-    struct PetMetrics
-    {
-        std::atomic<uint32> petsCollected{0};
-        std::atomic<uint32> battlesWon{0};
-        std::atomic<uint32> battlesLost{0};
-        std::atomic<uint32> raresCaptured{0};
-        std::atomic<uint32> petsLeveled{0};
-        std::atomic<uint32> totalXPGained{0};
-
-        void Reset()
-        {
-            petsCollected = 0;
-            battlesWon = 0;
-            battlesLost = 0;
-            raresCaptured = 0;
-            petsLeveled = 0;
-            totalXPGained = 0;
-        }
-
-        float GetWinRate() const
-        {
-            uint32 total = battlesWon.load() + battlesLost.load();
-            return total > 0 ? (float)battlesWon.load() / total : 0.0f;
-        }
-    };
 
     PetMetrics const& GetMetrics() const override;
     PetMetrics const& GetGlobalMetrics() const override;

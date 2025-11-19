@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <atomic>
 
 // Forward declarations
 class Player;
@@ -28,6 +29,35 @@ enum class PetQuality : uint8;
 enum class PetFamily : uint8;
 
 /**
+ * @brief Battle pet metrics (moved to namespace scope to avoid conflicts)
+ */
+struct PetMetrics
+{
+    std::atomic<uint32> petsCollected{0};
+    std::atomic<uint32> battlesWon{0};
+    std::atomic<uint32> battlesLost{0};
+    std::atomic<uint32> raresCaptured{0};
+    std::atomic<uint32> petsLeveled{0};
+    std::atomic<uint32> totalXPGained{0};
+
+    void Reset()
+    {
+        petsCollected = 0;
+        battlesWon = 0;
+        battlesLost = 0;
+        raresCaptured = 0;
+        petsLeveled = 0;
+        totalXPGained = 0;
+    }
+
+    float GetWinRate() const
+    {
+        uint32 total = battlesWon + battlesLost;
+        return total > 0 ? (float)battlesWon / total : 0.0f;
+    }
+};
+
+/**
  * @brief Interface for battle pet automation system
  *
  * Provides complete battle pet management including collection, battle AI,
@@ -36,22 +66,6 @@ enum class PetFamily : uint8;
 class TC_GAME_API IBattlePetManager
 {
 public:
-    struct PetMetrics
-    {
-        uint32 petsCollected;
-        uint32 battlesWon;
-        uint32 battlesLost;
-        uint32 raresCaptured;
-        uint32 petsLeveled;
-        uint32 totalXPGained;
-
-        float GetWinRate() const
-        {
-            uint32 total = battlesWon + battlesLost;
-            return total > 0 ? (float)battlesWon / total : 0.0f;
-        }
-    };
-
     virtual ~IBattlePetManager() = default;
 
     // Core pet management
