@@ -24,6 +24,7 @@
 #include "Blackboard/SharedBlackboard.h"
 #include "Core/Events/IEventHandler.h"
 #include "Core/Managers/IGameSystemsManager.h"
+#include "Advanced/GroupCoordinator.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -53,7 +54,9 @@ class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
 // Phase 3: Tactical Coordination forward declarations
-class TacticalCoordinator;
+namespace Advanced {
+    class TacticalCoordinator;
+}
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -290,12 +293,12 @@ public:
      * Combat-focused coordination separate from Advanced/GroupCoordinator
      * @return Pointer to tactical coordinator, or nullptr if not in group
      */
-    TacticalCoordinator* GetTacticalCoordinator()
+    Advanced::TacticalCoordinator* GetTacticalCoordinator()
     {
         auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
         return gc ? gc->GetTacticalCoordinator() : nullptr;
     }
-    TacticalCoordinator const* GetTacticalCoordinator() const
+    Advanced::TacticalCoordinator const* GetTacticalCoordinator() const
     {
         auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
         return gc ? gc->GetTacticalCoordinator() : nullptr;
@@ -323,7 +326,7 @@ public:
      * @brief Get Hybrid AI Controller (Phase 2 Week 3 / Phase 6: Facade Delegation)
      * @return Pointer to controller, or nullptr if not initialized
      */
-    class HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
+    bot::ai::HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
 
     /**
      * @brief Get Shared Blackboard (Phase 4)
@@ -421,15 +424,15 @@ public:
     // PHASE 7.1: EVENT DISPATCHER - Centralized event routing
     // ========================================================================
 
-    Events::EventDispatcher* GetEventDispatcher() { return _eventDispatcher.get(); }
-    Events::EventDispatcher const* GetEventDispatcher() const { return _eventDispatcher.get(); }
+    Events::EventDispatcher* GetEventDispatcher() { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
+    Events::EventDispatcher const* GetEventDispatcher() const { return _gameSystems ? _gameSystems->GetEventDispatcher() : nullptr; }
 
     // ========================================================================
     // PHASE 7.1: MANAGER REGISTRY - Manager lifecycle management
     // ========================================================================
 
-    ManagerRegistry* GetManagerRegistry() { return _managerRegistry.get(); }
-    ManagerRegistry const* GetManagerRegistry() const { return _managerRegistry.get(); }
+    ManagerRegistry* GetManagerRegistry() { return _gameSystems ? _gameSystems->GetManagerRegistry() : nullptr; }
+    ManagerRegistry const* GetManagerRegistry() const { return _gameSystems ? _gameSystems->GetManagerRegistry() : nullptr; }
 
     // ========================================================================
     // PHASE 5E: DECISION FUSION SYSTEM - Unified decision arbitration
@@ -455,8 +458,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _decisionFusion.get(); }
-    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _decisionFusion.get(); }
+    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _gameSystems ? _gameSystems->GetDecisionFusion() : nullptr; }
+    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _gameSystems ? _gameSystems->GetDecisionFusion() : nullptr; }
 
     /**
      * @brief Get Action Priority Queue for spell priority management
@@ -481,8 +484,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _actionPriorityQueue.get(); }
-    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _actionPriorityQueue.get(); }
+    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _gameSystems ? _gameSystems->GetActionPriorityQueue() : nullptr; }
+    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _gameSystems ? _gameSystems->GetActionPriorityQueue() : nullptr; }
 
     /**
      * @brief Get Behavior Tree for hierarchical combat flow
@@ -505,8 +508,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::BehaviorTree* GetBehaviorTree() { return _behaviorTree.get(); }
-    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _behaviorTree.get(); }
+    bot::ai::BehaviorTree* GetBehaviorTree() { return _gameSystems ? _gameSystems->GetBehaviorTree() : nullptr; }
+    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _gameSystems ? _gameSystems->GetBehaviorTree() : nullptr; }
 
     // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
@@ -821,6 +824,9 @@ protected:
     // Now unified: Single facade owns all managers, provides delegation getters
     // Benefits: Testability, maintainability, reduced coupling (73 → ~10 deps)
     std::unique_ptr<IGameSystemsManager> _gameSystems;
+
+    // Behavior priority management
+    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
     // Performance tracking
     mutable PerformanceMetrics _performanceMetrics;

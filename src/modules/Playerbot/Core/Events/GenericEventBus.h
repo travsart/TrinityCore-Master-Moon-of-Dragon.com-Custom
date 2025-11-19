@@ -67,7 +67,7 @@ class BotAI;
  * ```cpp
  * struct MyEvent
  * {
- *     enum class EventType : uint8 { /* ... */ MAX_EVENT };
+ *     enum class EventType : uint8 { MAX_EVENT };
  *     enum class Priority : uint8 { CRITICAL, HIGH, MEDIUM, LOW, BATCH };
  *
  *     EventType type;
@@ -501,7 +501,7 @@ public:
             return static_cast<float>(totalProcessingTimeMicroseconds.load()) / processed;
         }
 
-        uint64 GetUptime Seconds() const
+        uint64 GetUptimeSeconds() const
         {
             auto now = std::chrono::steady_clock::now();
             return std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();

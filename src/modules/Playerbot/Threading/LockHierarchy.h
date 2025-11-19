@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <mutex>
 #include <shared_mutex>
 #include <vector>
@@ -45,6 +46,7 @@ enum class LockOrder : uint32
     LOG_SYSTEM = 100,
     CONFIG_MANAGER = 200,
     METRICS_COLLECTOR = 300,
+    EVENT_BUS = 400,
 
     // Layer 2: Core data structures
     // Read-mostly data structures with minimal dependencies

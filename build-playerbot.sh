@@ -143,6 +143,9 @@ cd "${BUILD_DIR}"
 # Only build what's necessary for PlayerBot module compilation
 echo_info "Running CMake configuration..."
 
+# Export Boost location for CMake
+export BOOST_ROOT=/home/user/boost_1_83_0
+
 cmake "${SOURCE_DIR}" \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_CXX_STANDARD=20 \
@@ -153,6 +156,8 @@ cmake "${SOURCE_DIR}" \
     -DSCRIPTS=static \
     -DWITH_WARNINGS=1 \
     -DWITH_COREDEBUG=0 \
+    -DMYSQL_INCLUDE_DIR=/home/user/mysql-9.0.1/include \
+    -DMYSQL_LIBRARY=/home/user/mysql-9.0.1/lib/libmysqlclient.a \
     2>&1 | tee cmake-config.log
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then

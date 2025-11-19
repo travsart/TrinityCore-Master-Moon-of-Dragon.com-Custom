@@ -172,6 +172,32 @@ struct ProfessionAutomationProfile
  * 1. Created by GameSystemsManager when bot spawns
  * 2. Destroyed when bot despawns (RAII via unique_ptr)
  */
+
+/**
+ * @brief Profession statistics tracking
+ */
+struct ProfessionMetrics
+{
+    ::std::atomic<uint32> professionsLearned;
+    ::std::atomic<uint32> recipesLearned;
+    ::std::atomic<uint32> itemsCrafted;
+    ::std::atomic<uint32> resourcesGathered;
+    ::std::atomic<uint32> skillPointsGained;
+    ::std::atomic<uint32> goldSpentOnMaterials;
+    ::std::atomic<uint32> goldEarnedFromCrafts;
+
+    void Reset()
+    {
+        professionsLearned = 0;
+        recipesLearned = 0;
+        itemsCrafted = 0;
+        resourcesGathered = 0;
+        skillPointsGained = 0;
+        goldSpentOnMaterials = 0;
+        goldEarnedFromCrafts = 0;
+    }
+};
+
 class TC_GAME_API ProfessionManager final : public IProfessionManager
 {
 public:
@@ -359,28 +385,6 @@ public:
     // ============================================================================
     // METRICS
     // ============================================================================
-
-    struct ProfessionMetrics
-    {
-        std::atomic<uint32> professionsLearned{0};
-        std::atomic<uint32> recipesLearned{0};
-        std::atomic<uint32> itemsCrafted{0};
-        std::atomic<uint32> resourcesGathered{0};
-        std::atomic<uint32> skillPointsGained{0};
-        std::atomic<uint32> goldSpentOnMaterials{0};
-        std::atomic<uint32> goldEarnedFromCrafts{0};
-
-        void Reset()
-        {
-            professionsLearned = 0;
-            recipesLearned = 0;
-            itemsCrafted = 0;
-            resourcesGathered = 0;
-            skillPointsGained = 0;
-            goldSpentOnMaterials = 0;
-            goldEarnedFromCrafts = 0;
-        }
-    };
 
     ProfessionMetrics const& GetMetrics() const override;
     ProfessionMetrics const& GetGlobalMetrics() const override;

@@ -36,7 +36,7 @@
 #include "Player.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
-#include "../Core/BehaviorManager.h"
+#include "../AI/BehaviorManager.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -248,9 +248,9 @@ public:
     // LIFECYCLE (BehaviorManager override)
     // ========================================================================
 
-    void OnInitialize() override;
-    void OnUpdate(::Player* player, uint32 diff) override;
-    void OnShutdown() override;
+    bool Initialize() override;
+    void Update(uint32 diff) override;
+    void Shutdown() override;
 
     // ========================================================================
     // CORE BANKING OPERATIONS

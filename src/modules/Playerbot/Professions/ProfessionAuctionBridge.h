@@ -200,19 +200,19 @@ public:
     /**
      * Update profession auction automation (called periodically)
      */
-    void Update(uint32 diff) override;
+    void Update(::Player* player, uint32 diff) override;
 
     /**
      * Enable/disable profession auction automation
      */
-    void SetEnabled(bool enabled) override;
-    bool IsEnabled() const override;
+    void SetEnabled(::Player* player, bool enabled) override;
+    bool IsEnabled(::Player* player) const override;
 
     /**
      * Set/get auction profile for this bot
      */
-    void SetAuctionProfile(ProfessionAuctionProfile const& profile) override;
-    ProfessionAuctionProfile GetAuctionProfile() const override;
+    void SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile) override;
+    ProfessionAuctionProfile GetAuctionProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // MATERIAL AUCTION AUTOMATION
@@ -222,24 +222,24 @@ public:
      * Scan inventory for excess materials and list on auction house
      * Uses existing AuctionHouse::CreateAuction internally
      */
-    void SellExcessMaterials() override;
+    void SellExcessMaterials(::Player* player) override;
 
     /**
      * Check if material should be sold based on stockpile config
      */
-    bool ShouldSellMaterial(uint32 itemId, uint32 currentCount) const override;
+    bool ShouldSellMaterial(::Player* player, uint32 itemId, uint32 currentCount) const override;
 
     /**
      * List material on auction house
      * Delegates to AuctionHouse::CreateAuction
      */
-    bool ListMaterialOnAuction(uint32 itemGuid, MaterialStockpileConfig const& config) override;
+    bool ListMaterialOnAuction(::Player* player, uint32 itemGuid, MaterialStockpileConfig const& config) override;
 
     /**
      * Get optimal price for material based on market analysis
      * Uses AuctionHouse::CalculateOptimalListingPrice
      */
-    uint32 GetOptimalMaterialPrice(uint32 itemId, uint32 stackSize) const override;
+    uint32 GetOptimalMaterialPrice(::Player* player, uint32 itemId, uint32 stackSize) const override;
 
     // ============================================================================
     // CRAFTED ITEM AUCTION AUTOMATION
@@ -249,24 +249,24 @@ public:
      * Scan inventory for crafted items and list profitable ones
      * Uses existing AuctionHouse::CreateAuction internally
      */
-    void SellCraftedItems() override;
+    void SellCraftedItems(::Player* player) override;
 
     /**
      * Check if crafted item should be sold based on profit margin
      */
-    bool ShouldSellCraftedItem(uint32 itemId, uint32 materialCost) const override;
+    bool ShouldSellCraftedItem(::Player* player, uint32 itemId, uint32 materialCost) const override;
 
     /**
      * List crafted item on auction house
      * Delegates to AuctionHouse::CreateAuction
      */
-    bool ListCraftedItemOnAuction(uint32 itemGuid, CraftedItemAuctionConfig const& config) override;
+    bool ListCraftedItemOnAuction(::Player* player, uint32 itemGuid, CraftedItemAuctionConfig const& config) override;
 
     /**
      * Calculate profit margin for crafted item
      * = (sale_price - material_cost) / material_cost
      */
-    float CalculateProfitMargin(uint32 itemId, uint32 marketPrice, uint32 materialCost) const override;
+    float CalculateProfitMargin(::Player* player, uint32 itemId, uint32 marketPrice, uint32 materialCost) const override;
 
     // ============================================================================
     // MATERIAL PURCHASING AUTOMATION
@@ -276,25 +276,25 @@ public:
      * Buy materials from auction house for profession leveling
      * Uses existing AuctionHouse::BuyoutAuction internally
      */
-    void BuyMaterialsForLeveling(ProfessionType profession) override;
+    void BuyMaterialsForLeveling(::Player* player, ProfessionType profession) override;
 
     /**
      * Get materials needed for next profession skill-up
      * Queries ProfessionManager for optimal leveling recipe
      */
-    std::vector<std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(ProfessionType profession) const override;
+    ::std::vector<::std::pair<uint32, uint32>> GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const override;
 
     /**
      * Check if material is available on auction house at good price
      * Uses AuctionHouse::GetMarketPrice and IsPriceBelowMarket
      */
-    bool IsMaterialAvailableForPurchase(uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const override;
+    bool IsMaterialAvailableForPurchase(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const override;
 
     /**
      * Purchase specific material from auction house
      * Delegates to AuctionHouse::BuyoutAuction
      */
-    bool PurchaseMaterial(uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) override;
+    bool PurchaseMaterial(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) override;
 
     // ============================================================================
     // STOCKPILE MANAGEMENT
@@ -303,22 +303,22 @@ public:
     /**
      * Configure material stockpile target
      */
-    void SetMaterialStockpile(uint32 itemId, MaterialStockpileConfig const& config) override;
+    void SetMaterialStockpile(uint32 playerGuid, uint32 itemId, MaterialStockpileConfig const& config) override;
 
     /**
      * Configure crafted item auction behavior
      */
-    void SetCraftedItemAuction(uint32 itemId, CraftedItemAuctionConfig const& config) override;
+    void SetCraftedItemAuction(uint32 playerGuid, uint32 itemId, CraftedItemAuctionConfig const& config) override;
 
     /**
      * Get current stockpile status for material
      */
-    uint32 GetCurrentStockpile(uint32 itemId) const override;
+    uint32 GetCurrentStockpile(::Player* player, uint32 itemId) const override;
 
     /**
      * Check if stockpile target is met
      */
-    bool IsStockpileTargetMet(uint32 itemId) const override;
+    bool IsStockpileTargetMet(::Player* player, uint32 itemId) const override;
 
     // ============================================================================
     // INTEGRATION WITH EXISTING AUCTION HOUSE
@@ -334,19 +334,19 @@ public:
      * Synchronize with auction house session
      * Called when auction house operations are in progress
      */
-    void SynchronizeWithAuctionHouse() override;
+    void SynchronizeWithAuctionHouse(::Player* player) override;
 
     // ============================================================================
     // STATISTICS
     // ============================================================================
 
-    ProfessionAuctionStatistics const& GetStatistics() const override;
-    static ProfessionAuctionStatistics const& GetGlobalStatistics();
+    ProfessionAuctionStatistics const& GetPlayerStatistics(uint32 playerGuid) const override;
+    ProfessionAuctionStatistics const& GetGlobalStatistics() const override;
 
     /**
      * Reset statistics for this bot
      */
-    void ResetStatistics() override;
+    void ResetStatistics(uint32 playerGuid) override;
 
 private:
 

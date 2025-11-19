@@ -392,11 +392,7 @@ public:
         // CRITICAL FIX: Minimum 4 workers to prevent deadlock when main thread waits for futures
         // Even on 2-core systems, we need enough workers to prevent blocking issues
         // With future.get() blocking pattern, insufficient workers = deadlock
-        uint32 numThreads = []() -> uint32 {
-            uint32 hwCores = ::std::thread::hardware_concurrency();
-            uint32 threads = (hwCores > 6) ? (hwCores - 2) : ::std::max(4u, hwCores);
-            return ::std::max(4u, threads);  // Absolute minimum of 4
-        }();
+        uint32 numThreads = 4;  // Will be adjusted in constructor based on hardware_concurrency()
         uint32 maxQueueSize = 10000;
         bool enableWorkStealing = true;
         bool enableCpuAffinity = false; // Disabled by default (requires admin on Windows)
@@ -486,7 +482,7 @@ private:
     ::std::atomic<bool> _diagnosticsEnabled{true};
 
 public:
-    explicit ThreadPool(Configuration config = {});
+    explicit ThreadPool(Configuration config = Configuration());
     ~ThreadPool();
 
     /**
