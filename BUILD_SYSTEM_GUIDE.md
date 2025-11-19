@@ -222,19 +222,24 @@ MISSING INCLUDE FILES (8 errors)
 - ✅ `libreadline-dev`
 - ✅ `libmysqlclient-dev` (if available)
 
-**PlayerBot Enterprise Dependencies** (automatically initialized):
+**PlayerBot Enterprise Dependencies** (automatically initialized via SessionStart hook):
 - 🔄 **Intel TBB** (Threading Building Blocks) - Vendored via git submodule
 - 🔄 **phmap** (Parallel Hashmap) - Vendored via git submodule
+- 🔄 **MySQL 9.0.1** (Client Library) - Built from source (~10-15 min first session)
+- 🔄 **Boost 1.83.0** (Required libraries) - Built from source (~5-10 min first session)
 
-> **Note**: TBB and phmap are **CRITICAL** dependencies. The build script will automatically initialize them from git submodules if not found (zero installation required).
+> **Note**: All dependencies are **automatically set up** when you start a Claude Code Web session via the SessionStart hook. On first session, this takes ~17-28 minutes. Subsequent sessions validate in < 10 seconds.
 
 ### Automatic Dependency Initialization:
 
-On first run, the build script will:
-1. Check for TBB and phmap in vendored locations
-2. If not found, automatically run `git submodule update --init --recursive`
-3. Download and initialize both dependencies (~50-100MB)
-4. Proceed with build (zero manual installation required)
+On first session start, the SessionStart hook will:
+1. **TBB & phmap**: Initialize from git submodules (~2-3 min, ~50-100MB)
+2. **MySQL 9**: Download and build client library from source (~10-15 min, ~500MB)
+3. **Boost 1.83.0**: Download and build required libraries from source (~5-10 min, ~300MB)
+4. Export environment variables (MYSQL_INCLUDE_DIR, MYSQL_LIBRARY, BOOST_ROOT)
+5. Persist variables for all subsequent bash commands in the session
+
+**Subsequent sessions**: Dependencies are validated instantly (< 10 seconds)
 
 **First-time run example**:
 ```bash
