@@ -248,7 +248,7 @@ public:
      * @brief Get hybrid AI controller
      * @return Non-owning pointer to HybridAIController (owned by facade)
      */
-    virtual bot::ai::HybridAIController* GetHybridAI() const = 0;
+    virtual HybridAIController* GetHybridAI() const = 0;
 
     /**
      * @brief Get behavior priority manager

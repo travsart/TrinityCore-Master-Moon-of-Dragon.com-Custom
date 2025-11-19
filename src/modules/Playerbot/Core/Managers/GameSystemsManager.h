@@ -210,7 +210,7 @@ public:
     // Helper systems
     TargetScanner* GetTargetScanner() const override { return _targetScanner.get(); }
     GroupInvitationHandler* GetGroupInvitationHandler() const override { return _groupInvitationHandler.get(); }
-    bot::ai::HybridAIController* GetHybridAI() const override { return _hybridAI.get(); }
+    HybridAIController* GetHybridAI() const override { return _hybridAI.get(); }
     bot::ai::BehaviorPriorityManager* GetPriorityManager() const override { return _priorityManager.get(); }
 
 private:
