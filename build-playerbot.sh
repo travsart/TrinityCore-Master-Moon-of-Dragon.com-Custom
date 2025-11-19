@@ -153,6 +153,8 @@ cmake "${SOURCE_DIR}" \
     -DSCRIPTS=static \
     -DWITH_WARNINGS=1 \
     -DWITH_COREDEBUG=0 \
+    -DMYSQL_INCLUDE_DIR=/home/user/mysql-9.0.1/include \
+    -DMYSQL_LIBRARY=/home/user/mysql-9.0.1/lib/libmysqlclient.a \
     2>&1 | tee cmake-config.log
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
