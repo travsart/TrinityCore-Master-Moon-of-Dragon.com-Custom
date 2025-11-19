@@ -110,6 +110,19 @@ struct PetBattleAutomationProfile
 };
 
 /**
+ * @brief Battle pet ability information
+ */
+struct AbilityInfo
+{
+    uint32 abilityId;
+    std::string name;
+    PetFamily family;
+    uint32 damage;
+    uint32 cooldown;
+    bool isMultiTurn;
+};
+
+/**
  * @brief Battle Pet Manager - Complete battle pet automation for bots
  *
  * **Phase 6.3: Per-Bot Instance Pattern (26th Manager)**
@@ -411,17 +424,6 @@ private:
     static std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
     static PetMetrics _globalMetrics;
     static bool _databaseInitialized;
-
-    // Ability info structure
-    struct AbilityInfo
-    {
-        uint32 abilityId;
-        std::string name;
-        PetFamily family;
-        uint32 damage;
-        uint32 cooldown;
-        bool isMultiTurn;
-    };
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds
