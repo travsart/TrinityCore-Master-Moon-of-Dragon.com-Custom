@@ -14,7 +14,7 @@
 #include "Player.h"
 #include "Guild.h"
 #include "Group.h"
-#include "Calendar.h"
+#include "CalendarMgr.h"
 #include "../Core/DI/Interfaces/IGuildEventCoordinator.h"
 #include <unordered_map>
 #include <vector>

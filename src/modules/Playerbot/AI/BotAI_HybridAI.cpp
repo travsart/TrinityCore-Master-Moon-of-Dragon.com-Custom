@@ -16,7 +16,7 @@
  */
 
 #include "BotAI.h"
-#include "Decision/HybridAIController.h"
+#include "HybridAIController.h"
 #include "Log.h"
 
 namespace Playerbot

@@ -64,10 +64,10 @@
 #include "Group/GroupInvitationHandler.h"
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
-#include "Decision/DecisionFusionSystem.h"
-#include "Decision/ActionPriorityQueue.h"
-#include "Decision/BehaviorTree.h"
-#include "Decision/HybridAIController.h"
+#include "AI/Decision/DecisionFusionSystem.h"
+#include "AI/Decision/ActionPriorityQueue.h"
+#include "AI/Decision/BehaviorTree.h"
+#include "AI/HybridAIController.h"
 #include "BehaviorPriorityManager.h"
 
 namespace Playerbot
