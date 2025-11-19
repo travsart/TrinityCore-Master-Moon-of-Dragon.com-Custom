@@ -508,8 +508,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::BehaviorTree* GetBehaviorTree() { return _behaviorTree.get(); }
-    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _behaviorTree.get(); }
+    bot::ai::BehaviorTree* GetBehaviorTree() { return _gameSystems ? _gameSystems->GetBehaviorTree() : nullptr; }
+    bot::ai::BehaviorTree const* GetBehaviorTree() const { return _gameSystems ? _gameSystems->GetBehaviorTree() : nullptr; }
 
     // ========================================================================
     // PHASE 4: EVENT HANDLERS - Event-driven behavior system
