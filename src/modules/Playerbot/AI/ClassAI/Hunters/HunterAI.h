@@ -11,6 +11,7 @@
 #define TRINITY_HUNTERPLAYERAI_H
 
 #include "../ClassAI.h"
+#include "../../Combat/CombatBehaviorIntegration.h"
 #include "Position.h"
 #include "ObjectGuid.h"
 #include "PetDefines.h"
@@ -25,9 +26,6 @@ class Pet;
 
 namespace Playerbot
 {
-
-// Forward declarations
-class CombatBehaviorIntegration;
 
 enum class HunterSpec : uint8
 {
