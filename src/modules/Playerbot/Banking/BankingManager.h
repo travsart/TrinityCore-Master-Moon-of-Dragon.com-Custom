@@ -249,8 +249,8 @@ public:
     // ========================================================================
 
     bool Initialize() override;
-    void OnUpdate(::Player* player, uint32 diff) override;
-    void OnShutdown() override;
+    void Update(uint32 diff) override;
+    void Shutdown() override;
 
     // ========================================================================
     // CORE BANKING OPERATIONS

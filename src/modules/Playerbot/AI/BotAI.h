@@ -484,8 +484,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _actionPriorityQueue.get(); }
-    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _actionPriorityQueue.get(); }
+    bot::ai::ActionPriorityQueue* GetActionPriorityQueue() { return _gameSystems ? _gameSystems->GetActionPriorityQueue() : nullptr; }
+    bot::ai::ActionPriorityQueue const* GetActionPriorityQueue() const { return _gameSystems ? _gameSystems->GetActionPriorityQueue() : nullptr; }
 
     /**
      * @brief Get Behavior Tree for hierarchical combat flow
