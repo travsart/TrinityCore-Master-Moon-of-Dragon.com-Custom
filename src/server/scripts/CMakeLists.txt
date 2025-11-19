@@ -88,7 +88,7 @@ foreach(GRAPH_KEY ${GRAPH_KEYS})
   message("    |")
 endforeach()
 
-GroupSources(${CMAKE_CURRENT_SOURCE_DIR})
+# GroupSources(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(scripts STATIC)
 
@@ -142,7 +142,12 @@ foreach(SCRIPT_MODULE ${SCRIPT_MODULE_LIST})
       # Add the module name to STATIC_SCRIPT_MODULES
       list(APPEND STATIC_SCRIPT_MODULES ${SCRIPT_MODULE})
       # Add the module content to the whole static module
-      CollectAndAddSourceFiles(scripts ${SCRIPT_MODULE_PATH})
+      file(GLOB_RECURSE SCRIPT_MODULE_SOURCES
+    ${SCRIPT_MODULE_PATH}/*.cpp
+    ${SCRIPT_MODULE_PATH}/*.c
+)
+
+target_sources(scripts PRIVATE ${SCRIPT_MODULE_SOURCES})
     endif()
   elseif(${SCRIPT_MODULE_VARIABLE} STREQUAL "dynamic")
     # Generate an own dynamic module which is loadable on runtime
