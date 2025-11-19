@@ -27,6 +27,35 @@ struct PvPCombatProfile;
 enum class PvPCombatState : uint8;
 enum class CCType : uint8;
 
+// PvP metrics (namespace scope to avoid covariant return type conflicts)
+struct PvPMetrics
+{
+    std::atomic<uint32> killsSecured{0};
+    std::atomic<uint32> deaths{0};
+    std::atomic<uint32> ccChainsExecuted{0};
+    std::atomic<uint32> interruptsLanded{0};
+    std::atomic<uint32> defensivesUsed{0};
+    std::atomic<uint32> burstsExecuted{0};
+    std::atomic<uint32> peelsPerformed{0};
+
+    void Reset()
+    {
+        killsSecured = 0;
+        deaths = 0;
+        ccChainsExecuted = 0;
+        interruptsLanded = 0;
+        defensivesUsed = 0;
+        burstsExecuted = 0;
+        peelsPerformed = 0;
+    }
+
+    float GetKDRatio() const
+    {
+        uint32 d = deaths.load();
+        return d > 0 ? static_cast<float>(killsSecured.load()) / d : static_cast<float>(killsSecured.load());
+    }
+};
+
 /**
  * @brief Interface for PvP combat AI automation
  *
@@ -37,21 +66,6 @@ enum class CCType : uint8;
 class TC_GAME_API IPvPCombatAI
 {
 public:
-    struct PvPMetrics
-    {
-        uint32 killsSecured;
-        uint32 deaths;
-        uint32 ccChainsExecuted;
-        uint32 interruptsLanded;
-        uint32 defensivesUsed;
-        uint32 burstsExecuted;
-        uint32 peelsPerformed;
-
-        float GetKDRatio() const
-        {
-            return deaths > 0 ? static_cast<float>(killsSecured) / deaths : static_cast<float>(killsSecured);
-        }
-    };
 
     virtual ~IPvPCombatAI() = default;
 
