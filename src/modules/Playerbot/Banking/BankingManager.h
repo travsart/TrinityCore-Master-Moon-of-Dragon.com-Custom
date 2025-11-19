@@ -248,7 +248,7 @@ public:
     // LIFECYCLE (BehaviorManager override)
     // ========================================================================
 
-    void OnInitialize() override;
+    bool Initialize() override;
     void OnUpdate(::Player* player, uint32 diff) override;
     void OnShutdown() override;
 

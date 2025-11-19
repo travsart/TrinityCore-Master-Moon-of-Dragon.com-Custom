@@ -458,8 +458,8 @@ public:
      * }
      * @endcode
      */
-    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _decisionFusion.get(); }
-    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _decisionFusion.get(); }
+    bot::ai::DecisionFusionSystem* GetDecisionFusion() { return _gameSystems ? _gameSystems->GetDecisionFusion() : nullptr; }
+    bot::ai::DecisionFusionSystem const* GetDecisionFusion() const { return _gameSystems ? _gameSystems->GetDecisionFusion() : nullptr; }
 
     /**
      * @brief Get Action Priority Queue for spell priority management
