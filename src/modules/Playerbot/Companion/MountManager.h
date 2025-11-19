@@ -39,7 +39,7 @@ enum class MountType : uint8
 /**
  * @brief Mount speed categories
  */
-enum class MountSpeed : uint8
+enum class MountSpeed : uint16
 {
     SLOW = 60,           // 60% ground speed
     NORMAL = 100,        // 100% ground speed
