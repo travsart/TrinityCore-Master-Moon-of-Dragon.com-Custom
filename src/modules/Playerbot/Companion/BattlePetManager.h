@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBattlePetManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,8 +23,6 @@
 
 namespace Playerbot
 {
-    // Interface
-    #include "Core/DI/Interfaces/IBattlePetManager.h"
 
 
 /**
