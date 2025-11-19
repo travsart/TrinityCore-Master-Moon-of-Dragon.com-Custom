@@ -26,6 +26,8 @@ enum Difficulty : uint8;
 
 namespace Playerbot
 {
+namespace Advanced
+{
     class BotAI;
     class TacticalCoordinator;
 
@@ -354,6 +356,7 @@ namespace Playerbot
         float m_cpuUsage;
     };
 
+} // namespace Advanced
 } // namespace Playerbot
 
 #endif // TRINITYCORE_BOT_GROUP_COORDINATOR_H

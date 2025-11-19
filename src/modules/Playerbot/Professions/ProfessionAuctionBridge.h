@@ -205,8 +205,8 @@ public:
     /**
      * Enable/disable profession auction automation
      */
-    void SetEnabled(bool enabled) override;
-    bool IsEnabled() const override;
+    void SetEnabled(::Player* player, bool enabled) override;
+    bool IsEnabled(::Player* player) const override;
 
     /**
      * Set/get auction profile for this bot
