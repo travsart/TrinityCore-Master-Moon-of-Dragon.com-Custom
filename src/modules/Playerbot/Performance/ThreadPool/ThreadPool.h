@@ -486,7 +486,7 @@ private:
     ::std::atomic<bool> _diagnosticsEnabled{true};
 
 public:
-    explicit ThreadPool(Configuration config = {});
+    explicit ThreadPool(Configuration config = Configuration());
     ~ThreadPool();
 
     /**

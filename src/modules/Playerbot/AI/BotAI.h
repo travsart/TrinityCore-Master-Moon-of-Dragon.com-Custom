@@ -54,7 +54,9 @@ class CombatStateManager;
 enum class PlayerBotMovementPriority : uint8;
 
 // Phase 3: Tactical Coordination forward declarations
-class TacticalCoordinator;
+namespace Advanced {
+    class TacticalCoordinator;
+}
 
 // Phase 4: Event structure forward declarations
 struct GroupEvent;
@@ -291,12 +293,12 @@ public:
      * Combat-focused coordination separate from Advanced/GroupCoordinator
      * @return Pointer to tactical coordinator, or nullptr if not in group
      */
-    TacticalCoordinator* GetTacticalCoordinator()
+    Advanced::TacticalCoordinator* GetTacticalCoordinator()
     {
         auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
         return gc ? gc->GetTacticalCoordinator() : nullptr;
     }
-    TacticalCoordinator const* GetTacticalCoordinator() const
+    Advanced::TacticalCoordinator const* GetTacticalCoordinator() const
     {
         auto gc = _gameSystems ? _gameSystems->GetGroupCoordinator() : nullptr;
         return gc ? gc->GetTacticalCoordinator() : nullptr;

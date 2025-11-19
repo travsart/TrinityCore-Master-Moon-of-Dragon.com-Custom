@@ -211,8 +211,8 @@ public:
     /**
      * Set/get auction profile for this bot
      */
-    void SetAuctionProfile(ProfessionAuctionProfile const& profile) override;
-    ProfessionAuctionProfile GetAuctionProfile() const override;
+    void SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile) override;
+    ProfessionAuctionProfile GetAuctionProfile(uint32 playerGuid) const override;
 
     // ============================================================================
     // MATERIAL AUCTION AUTOMATION
