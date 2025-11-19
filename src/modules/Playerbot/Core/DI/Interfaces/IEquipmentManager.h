@@ -34,6 +34,27 @@ namespace Playerbot
     enum class ItemCategory : uint8;
 
 /**
+ * @brief Equipment metrics (moved to namespace scope to avoid duplicate definitions)
+ */
+struct EquipmentMetrics
+{
+    std::atomic<uint32> itemsEquipped{0};
+    std::atomic<uint32> upgradesFound{0};
+    std::atomic<uint32> junkItemsSold{0};
+    std::atomic<uint32> totalGoldFromJunk{0};
+    std::atomic<float> averageItemScore{0.0f};
+
+    void Reset()
+    {
+        itemsEquipped = 0;
+        upgradesFound = 0;
+        junkItemsSold = 0;
+        totalGoldFromJunk = 0;
+        averageItemScore = 0.0f;
+    }
+};
+
+/**
  * @brief Interface for Equipment Management (Phase 6.1 - Per-Bot Pattern)
  *
  * Abstracts equipment evaluation, comparison, and auto-equip functionality
@@ -78,18 +99,6 @@ public:
         uint32 currentItemLevel = 0;
         uint32 newItemLevel = 0;
         std::string upgradeReason;
-    };
-
-    /**
-     * @brief Equipment metrics
-     */
-    struct EquipmentMetrics
-    {
-        uint32 itemsEquipped = 0;
-        uint32 upgradesFound = 0;
-        uint32 junkItemsSold = 0;
-        uint32 totalGoldFromJunk = 0;
-        float averageItemScore = 0.0f;
     };
 
     virtual ~IEquipmentManager() = default;

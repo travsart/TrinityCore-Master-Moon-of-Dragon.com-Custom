@@ -338,24 +338,6 @@ public:
     // METRICS AND MONITORING
     // ============================================================================
 
-    struct EquipmentMetrics
-    {
-        std::atomic<uint32> itemsEquipped{0};
-        std::atomic<uint32> upgradesFound{0};
-        std::atomic<uint32> junkItemsSold{0};
-        std::atomic<uint32> totalGoldFromJunk{0};
-        std::atomic<float> averageItemScore{0.0f};
-
-        void Reset()
-        {
-            itemsEquipped = 0;
-            upgradesFound = 0;
-            junkItemsSold = 0;
-            totalGoldFromJunk = 0;
-            averageItemScore = 0.0f;
-        }
-    };
-
     EquipmentMetrics const& GetMetrics() override;
     EquipmentMetrics const& GetGlobalMetrics() override;
 

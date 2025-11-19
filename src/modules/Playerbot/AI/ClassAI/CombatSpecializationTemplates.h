@@ -146,7 +146,7 @@ public:
         , _lastResourceUpdate(0)
         , _globalCooldownEnd(0)
         , _performanceMetrics{}
-        , _movementIntegration(botPtr)      // Phase 5D: Movement AI
+        , _movementIntegration(botPtr, nullptr)      // Phase 5D: Movement AI
 
         , _targetManager(botPtr)
         // Phase 5D: Target selection
