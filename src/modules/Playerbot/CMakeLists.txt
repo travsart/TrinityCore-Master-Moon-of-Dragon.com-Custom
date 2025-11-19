@@ -120,8 +120,8 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/HybridAIController.h
 
     # Hierarchical Group Coordination System (Phase 3)
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupCoordinator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RoleCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Coordination/RaidOrchestrator.cpp
