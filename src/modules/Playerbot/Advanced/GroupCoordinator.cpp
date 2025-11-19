@@ -29,6 +29,8 @@
 #include <algorithm>
 
 namespace Playerbot
+namespace Advanced
+{
 {
     // Configuration constants
     static constexpr uint32 GROUP_UPDATE_INTERVAL = 1000;  // 1 second
@@ -1287,4 +1289,5 @@ namespace Playerbot
             m_bot->GetName().c_str(), cooldownName.c_str(), durationMs);
     }
 
+} // namespace Advanced
 } // namespace Playerbot
