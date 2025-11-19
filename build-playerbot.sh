@@ -47,12 +47,73 @@ echo_info "Checking required libraries..."
 check_library "libboost"
 check_library "libssl-dev"
 check_library "libreadline-dev"
-check_library "libmysqlclient-dev"
+
+# MySQL is checked by TrinityCore's own FindMySQL - may use vendored version
+if ! dpkg -l | grep -q "^ii.*libmysqlclient-dev"; then
+    echo_warning "⚠️  libmysqlclient-dev not found (TrinityCore may use vendored MySQL)"
+fi
 
 if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
     echo_error "Missing dependencies: ${MISSING_DEPS[*]}"
     echo_info "Install with: sudo apt-get install ${MISSING_DEPS[*]}"
     exit 1
+fi
+
+# Check for Intel TBB and phmap (CRITICAL for PlayerBot)
+echo_info "Checking PlayerBot enterprise dependencies (TBB, phmap)..."
+
+# Check vendored dependencies (git submodules)
+TBB_DIR="${SOURCE_DIR}/src/modules/Playerbot/deps/tbb"
+PHMAP_DIR="${SOURCE_DIR}/src/modules/Playerbot/deps/phmap"
+
+TBB_VENDORED=false
+PHMAP_VENDORED=false
+
+if [ -f "${TBB_DIR}/include/tbb/version.h" ]; then
+    echo_success "✅ TBB found (vendored from git submodule)"
+    TBB_VENDORED=true
+fi
+
+if [ -f "${PHMAP_DIR}/parallel_hashmap/phmap.h" ]; then
+    echo_success "✅ phmap found (vendored from git submodule)"
+    PHMAP_VENDORED=true
+fi
+
+# If vendored deps not found, check system packages
+if [ "$TBB_VENDORED" = false ]; then
+    if dpkg -l | grep -q "^ii.*libtbb-dev"; then
+        echo_success "✅ TBB found (system package)"
+    else
+        echo_warning "⚠️  TBB not found - will initialize git submodules"
+    fi
+fi
+
+if [ "$PHMAP_VENDORED" = false ]; then
+    # phmap is header-only, usually not packaged
+    echo_warning "⚠️  phmap not found - will initialize git submodules"
+fi
+
+# Initialize git submodules if needed
+if [ "$TBB_VENDORED" = false ] || [ "$PHMAP_VENDORED" = false ]; then
+    echo_info "Initializing PlayerBot vendored dependencies (TBB, phmap)..."
+    echo_info "Running: git submodule update --init --recursive src/modules/Playerbot/deps/"
+
+    if git submodule update --init --recursive src/modules/Playerbot/deps/; then
+        echo_success "✅ Git submodules initialized successfully!"
+        echo_success "✅ TBB and phmap are now available (zero system installation required)"
+    else
+        echo_error "Failed to initialize git submodules"
+        echo_info ""
+        echo_info "Manual fix options:"
+        echo_info "  1. Initialize submodules manually:"
+        echo_info "     git submodule update --init --recursive"
+        echo_info ""
+        echo_info "  2. Install system packages:"
+        echo_info "     sudo apt-get install libtbb-dev"
+        echo_info "     git clone https://github.com/greg7mdp/parallel-hashmap.git /tmp/phmap"
+        echo_info "     sudo cp -r /tmp/phmap/parallel_hashmap /usr/local/include/"
+        exit 1
+    fi
 fi
 
 echo_success "All dependencies found!"
@@ -89,7 +150,7 @@ cmake "${SOURCE_DIR}" \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DBUILD_PLAYERBOT=1 \
     -DTOOLS=0 \
-    -DSCRIPTS=1 \
+    -DSCRIPTS=static \
     -DWITH_WARNINGS=1 \
     -DWITH_COREDEBUG=0 \
     2>&1 | tee cmake-config.log

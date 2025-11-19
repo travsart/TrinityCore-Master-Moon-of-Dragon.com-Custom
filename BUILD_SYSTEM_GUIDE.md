@@ -208,22 +208,53 @@ MISSING INCLUDE FILES (8 errors)
 
 ## 📦 Dependencies
 
-### Required packages (already installed in Claude Code Web):
+### Required packages:
 
+**Build Tools** (already installed in Claude Code Web):
 - ✅ `cmake` (3.28.3+)
-- ✅ `g++` (13.3.0+)
+- ✅ `g++` (13.3.0+) - C++20 support
 - ✅ `make`
 - ✅ `ninja` (optional, faster builds)
-- ✅ `libboost-dev`
-- ✅ `libssl-dev`
+
+**System Libraries** (already installed in Claude Code Web):
+- ✅ `libboost-dev` (1.83.0)
+- ✅ `libssl-dev` (OpenSSL 3.0)
 - ✅ `libreadline-dev`
 - ✅ `libmysqlclient-dev` (if available)
+
+**PlayerBot Enterprise Dependencies** (automatically initialized):
+- 🔄 **Intel TBB** (Threading Building Blocks) - Vendored via git submodule
+- 🔄 **phmap** (Parallel Hashmap) - Vendored via git submodule
+
+> **Note**: TBB and phmap are **CRITICAL** dependencies. The build script will automatically initialize them from git submodules if not found (zero installation required).
+
+### Automatic Dependency Initialization:
+
+On first run, the build script will:
+1. Check for TBB and phmap in vendored locations
+2. If not found, automatically run `git submodule update --init --recursive`
+3. Download and initialize both dependencies (~50-100MB)
+4. Proceed with build (zero manual installation required)
+
+**First-time run example**:
+```bash
+./build-playerbot.sh
+
+# Output:
+# [INFO] Checking PlayerBot enterprise dependencies (TBB, phmap)...
+# [WARNING] ⚠️  TBB not found - will initialize git submodules
+# [WARNING] ⚠️  phmap not found - will initialize git submodules
+# [INFO] Initializing PlayerBot vendored dependencies (TBB, phmap)...
+# [SUCCESS] ✅ Git submodules initialized successfully!
+# [SUCCESS] ✅ TBB and phmap are now available (zero system installation required)
+```
 
 ### Check dependencies:
 
 ```bash
 ./build-playerbot.sh
-# Will fail fast if dependencies are missing with clear error message
+# Will check all dependencies and initialize git submodules if needed
+# Fails fast with clear error messages if critical dependencies are missing
 ```
 
 ---
