@@ -87,6 +87,7 @@ namespace Events
 }
 
 class ManagerRegistry;
+class HybridAIController;
 
 // Phase 5E: Decision Fusion System forward declarations
 namespace bot { namespace ai {
@@ -342,7 +343,7 @@ public:
      * @brief Get Hybrid AI Controller (Phase 2 Week 3 / Phase 6: Facade Delegation)
      * @return Pointer to controller, or nullptr if not initialized
      */
-    bot::ai::HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
+    HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
 
     /**
      * @brief Get Shared Blackboard (Phase 4)
