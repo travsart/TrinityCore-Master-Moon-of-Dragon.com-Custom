@@ -17,6 +17,7 @@
 
 #include "IntegratedAIContext.h"
 #include "AI/BotAI.h"
+#include "../../Advanced/TacticalCoordinator.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"

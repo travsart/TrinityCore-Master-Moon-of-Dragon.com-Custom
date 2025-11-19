@@ -12,6 +12,7 @@
 #include "Define.h"
 #include <vector>
 #include <cstdint>
+#include <atomic>
 
 // Forward declarations
 class Player;
