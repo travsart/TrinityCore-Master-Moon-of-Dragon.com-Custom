@@ -38,6 +38,12 @@
 #include "PvP/PvPCombatAI.h"
 #include "Social/AuctionHouse.h"
 #include "Social/TradeSystem.h"
+#include "Quest/QuestValidation.h"
+#include "Quest/QuestTurnIn.h"
+#include "Quest/QuestPickup.h"
+#include "Quest/QuestCompletion.h"
+#include "Quest/ObjectiveTracker.h"
+#include "Quest/DynamicQuestSystem.h"
 #include "Social/LootDistribution.h"
 #include "Social/GuildIntegration.h"
 #include "Social/GuildEventCoordinator.h"
@@ -165,6 +171,12 @@ public:
     GuildIntegration* GetGuildIntegration() const { return _guildIntegration.get(); }
     LootDistribution* GetLootDistribution() const { return _lootDistribution.get(); }
     TradeSystem* GetTradeSystem() const { return _tradeSystem.get(); }
+    DynamicQuestSystem* GetDynamicQuestSystem() const { return _dynamicQuestSystem.get(); }
+    ObjectiveTracker* GetObjectiveTracker() const { return _objectiveTracker.get(); }
+    QuestCompletion* GetQuestCompletion() const { return _questCompletion.get(); }
+    QuestPickup* GetQuestPickup() const { return _questPickup.get(); }
+    QuestTurnIn* GetQuestTurnIn() const { return _questTurnIn.get(); }
+    QuestValidation* GetQuestValidation() const { return _questValidation.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -212,6 +224,12 @@ private:
     std::unique_ptr<GuildIntegration> _guildIntegration;
     std::unique_ptr<LootDistribution> _lootDistribution;
     std::unique_ptr<TradeSystem> _tradeSystem;
+    std::unique_ptr<DynamicQuestSystem> _dynamicQuestSystem;
+    std::unique_ptr<ObjectiveTracker> _objectiveTracker;
+    std::unique_ptr<QuestCompletion> _questCompletion;
+    std::unique_ptr<QuestPickup> _questPickup;
+    std::unique_ptr<QuestTurnIn> _questTurnIn;
+    std::unique_ptr<QuestValidation> _questValidation;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems

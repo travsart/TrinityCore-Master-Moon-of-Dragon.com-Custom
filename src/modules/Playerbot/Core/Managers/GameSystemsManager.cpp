@@ -304,6 +304,12 @@ void GameSystemsManager::Initialize(Player* bot)
     _guildIntegration = std::make_unique<GuildIntegration>(_bot);
     _lootDistribution = std::make_unique<LootDistribution>(_bot);
     _tradeSystem = std::make_unique<TradeSystem>(_bot);
+    _dynamicQuestSystem = std::make_unique<DynamicQuestSystem>(_bot);
+    _objectiveTracker = std::make_unique<ObjectiveTracker>(_bot);
+    _questCompletion = std::make_unique<QuestCompletion>(_bot);
+    _questPickup = std::make_unique<QuestPickup>(_bot);
+    _questTurnIn = std::make_unique<QuestTurnIn>(_bot);
+    _questValidation = std::make_unique<QuestValidation>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
