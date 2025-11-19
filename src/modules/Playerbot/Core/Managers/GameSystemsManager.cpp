@@ -165,6 +165,12 @@ GameSystemsManager::~GameSystemsManager()
         _arenaAI.reset();
     }
 
+    if (_pvpCombatAI)
+    {
+        TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying PvPCombatAI");
+        _pvpCombatAI.reset();
+    }
+
     if (_farmingCoordinator)
     {
         TC_LOG_DEBUG("module.playerbot", "GameSystemsManager: Destroying FarmingCoordinator");
@@ -285,6 +291,7 @@ void GameSystemsManager::Initialize(Player* bot)
     _mountManager = std::make_unique<MountManager>(_bot);
     _battlePetManager = std::make_unique<BattlePetManager>(_bot);
     _arenaAI = std::make_unique<ArenaAI>(_bot);
+    _pvpCombatAI = std::make_unique<PvPCombatAI>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
     // Death recovery system
@@ -415,6 +422,12 @@ void GameSystemsManager::Initialize(Player* bot)
         {
             _arenaAI->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ ArenaAI initialized - arena PvP automation active");
+        }
+
+        if (_pvpCombatAI)
+        {
+            _pvpCombatAI->Initialize();
+            TC_LOG_INFO("module.playerbot.managers", "✅ PvPCombatAI initialized - PvP combat automation active");
         }
 
         if (_groupCoordinator)
@@ -671,6 +684,12 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
     // ========================================================================
     if (_arenaAI)
         _arenaAI->Update(diff);
+
+    // ========================================================================
+    // PVP COMBAT AI - Update for PvP combat automation (100ms throttle)
+    // ========================================================================
+    if (_pvpCombatAI)
+        _pvpCombatAI->Update(diff);
 
     // ========================================================================
     // PROFESSION AUTOMATION - Check every 15 seconds

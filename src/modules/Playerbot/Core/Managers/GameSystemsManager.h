@@ -35,6 +35,7 @@
 #include "Companion/MountManager.h"
 #include "Companion/BattlePetManager.h"
 #include "PvP/ArenaAI.h"
+#include "PvP/PvPCombatAI.h"
 #include "Advanced/GroupCoordinator.h"
 #include "Lifecycle/DeathRecoveryManager.h"
 #include "Movement/UnifiedMovementCoordinator.h"
@@ -101,8 +102,11 @@ class BotAI;
  * **Phase 6.3 Integration (2025-11-18):**
  * BattlePetManager converted from singleton to per-bot instance (26th manager)
  *
- * **Phase 7.1 Integration (2025-11-18):**
+ * **Phase 7.1.1 Integration (2025-11-18):**
  * ArenaAI converted from singleton to per-bot instance (27th manager)
+ *
+ * **Phase 7.1.2 Integration (2025-11-18):**
+ * PvPCombatAI converted from singleton to per-bot instance (28th manager)
  */
 class TC_GAME_API GameSystemsManager final : public IGameSystemsManager
 {
@@ -148,6 +152,7 @@ public:
     MountManager* GetMountManager() const { return _mountManager.get(); }
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
+    PvPCombatAI* GetPvPCombatAI() const { return _pvpCombatAI.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
     UnifiedMovementCoordinator* GetMovementCoordinator() const override { return _unifiedMovementCoordinator.get(); }
@@ -188,6 +193,7 @@ private:
     std::unique_ptr<MountManager> _mountManager;
     std::unique_ptr<BattlePetManager> _battlePetManager;
     std::unique_ptr<ArenaAI> _arenaAI;
+    std::unique_ptr<PvPCombatAI> _pvpCombatAI;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 
     // Lifecycle systems
