@@ -126,7 +126,7 @@ public:
      * @param dungeonId LFG dungeon ID
      * @return true if teleportation was successful
      */
-    bool TeleportPlayerToDungeon(Player* player, uint32 dungeonId) override;
+    bool TeleportPlayerToDungeon(Player* player, uint32 dungeonId);
 
     /**
      * Teleport entire group to dungeon
