@@ -212,7 +212,7 @@ public:
     TargetScanner* GetTargetScanner() const override { return _targetScanner.get(); }
     GroupInvitationHandler* GetGroupInvitationHandler() const override { return _groupInvitationHandler.get(); }
     HybridAIController* GetHybridAI() const override { return _hybridAI.get(); }
-    bot::ai::BehaviorPriorityManager* GetPriorityManager() const override { return _priorityManager.get(); }
+    BehaviorPriorityManager* GetPriorityManager() const override { return _priorityManager.get(); }
 
 private:
     // ========================================================================
@@ -281,7 +281,7 @@ private:
     std::unique_ptr<HybridAIController> _hybridAI;  // Note: HybridAIController is in Playerbot::, not Playerbot::bot::ai::
 
     // Behavior management
-    std::unique_ptr<bot::ai::BehaviorPriorityManager> _priorityManager;
+    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
     // ========================================================================
     // INTERNAL STATE
