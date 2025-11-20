@@ -278,7 +278,7 @@ private:
     std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
     std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
     std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
-    std::unique_ptr<bot::ai::HybridAIController> _hybridAI;
+    std::unique_ptr<HybridAIController> _hybridAI;  // Note: HybridAIController is in Playerbot::, not Playerbot::bot::ai::
 
     // Behavior management
     std::unique_ptr<bot::ai::BehaviorPriorityManager> _priorityManager;
