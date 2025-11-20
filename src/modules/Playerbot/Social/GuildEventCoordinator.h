@@ -263,7 +263,6 @@ public:
 
 private:
     Player* _bot;
-    ~GuildEventCoordinator() = default;
 
     // Core event data
     std::unordered_map<uint32, GuildEvent> _guildEvents; // eventId -> event

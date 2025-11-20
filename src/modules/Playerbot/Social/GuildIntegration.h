@@ -125,58 +125,7 @@ public:
     void MaintainGuildFriendships() override;
     void HandleGuildConflicts() override;
 
-    // Performance monitoring
-    struct GuildMetrics
-    {
-        std::atomic<uint32> guildInteractions{0};
-        std::atomic<uint32> chatMessages{0};
-        std::atomic<uint32> bankTransactions{0};
-        std::atomic<uint32> eventsParticipated{0};
-        std::atomic<uint32> helpfulActions{0};
-        std::atomic<float> averageParticipationScore{0.7f};
-        std::atomic<float> socialIntegrationScore{0.8f};
-        std::atomic<float> contributionRating{0.75f};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        // Default constructor
-        GuildMetrics() = default;
-
-        // Copy constructor for atomic members
-        GuildMetrics(const GuildMetrics& other) :
-            guildInteractions(other.guildInteractions.load()),
-            chatMessages(other.chatMessages.load()),
-            bankTransactions(other.bankTransactions.load()),
-            eventsParticipated(other.eventsParticipated.load()),
-            helpfulActions(other.helpfulActions.load()),
-            averageParticipationScore(other.averageParticipationScore.load()),
-            socialIntegrationScore(other.socialIntegrationScore.load()),
-            contributionRating(other.contributionRating.load()),
-            lastUpdate(other.lastUpdate) {}
-
-        // Assignment operator for atomic members
-        GuildMetrics& operator=(const GuildMetrics& other) {
-            if (this != &other) {
-                guildInteractions.store(other.guildInteractions.load());
-                chatMessages.store(other.chatMessages.load());
-                bankTransactions.store(other.bankTransactions.load());
-                eventsParticipated.store(other.eventsParticipated.load());
-                helpfulActions.store(other.helpfulActions.load());
-                averageParticipationScore.store(other.averageParticipationScore.load());
-                socialIntegrationScore.store(other.socialIntegrationScore.load());
-                contributionRating.store(other.contributionRating.load());
-                lastUpdate = other.lastUpdate;
-            }
-            return *this;
-        }
-
-        void Reset() {
-            guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
-            eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
-            socialIntegrationScore = 0.8f; contributionRating = 0.75f;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-    };
-
+    // Performance monitoring (GuildMetrics struct defined in IGuildIntegration.h)
     GuildMetrics GetPlayerGuildMetrics() override;
     GuildMetrics GetGuildBotMetrics(uint32 guildId) override;
 
