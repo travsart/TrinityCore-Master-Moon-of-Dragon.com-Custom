@@ -275,7 +275,6 @@ public:
 
 private:
     Player* _bot;
-    ~DynamicQuestSystem() = default;
 
     // Core data structures
     std::unordered_map<uint32, QuestMetadata> _questMetadata;
