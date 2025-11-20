@@ -679,7 +679,7 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
 
     // Banking manager handles personal banking automation (gold/items)
     if (_bankingManager)
-        _bankingManager->OnUpdate(_bot, diff);
+        _bankingManager->Update(diff);
 
     // Farming coordinator handles profession skill leveling automation
     if (_farmingCoordinator)
