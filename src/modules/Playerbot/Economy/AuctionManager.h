@@ -8,6 +8,7 @@
 #include "DatabaseEnv.h"
 #include "Duration.h"
 #include "Util.h"
+#include "Core/DI/Interfaces/IAuctionHouse.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -20,16 +21,7 @@ class AuctionHouseObject;
 
 namespace Playerbot
 {
-    // Auction strategy types for bot behavior
-    enum class AuctionStrategy : uint8
-    {
-        CONSERVATIVE = 0,      // Undercut by 1% - safe, slow profits
-        AGGRESSIVE = 1,        // Undercut by 5-10% - faster sales
-        PREMIUM = 2,           // List at market average - wait for buyers
-        QUICK_SALE = 3,        // Undercut by 20% - immediate sales
-        MARKET_MAKER = 4,      // Buy low, sell high - active trading
-        SMART_PRICING = 5      // AI-driven pricing based on trends
-    };
+    // AuctionStrategy enum defined in Core/DI/Interfaces/IAuctionHouse.h
 
     // Market condition assessment
     enum class MarketCondition : uint8

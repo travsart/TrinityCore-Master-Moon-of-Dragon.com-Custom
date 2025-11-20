@@ -249,7 +249,6 @@ public:
 
 private:
     Player* _bot;
-    ~RoleAssignment() = default;
 
     // Core data storage
     std::unordered_map<uint32, PlayerRoleProfile> _playerProfiles; // playerGuid -> profile

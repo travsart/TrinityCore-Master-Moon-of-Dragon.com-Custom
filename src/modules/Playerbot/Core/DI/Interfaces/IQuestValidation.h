@@ -14,6 +14,7 @@
 #include "Position.h"
 #include <vector>
 #include <unordered_map>
+#include <atomic>
 
 class Player;
 
@@ -24,7 +25,56 @@ namespace Playerbot
 enum class QuestEligibility : uint8;
 struct ValidationResult;
 struct ValidationContext;
-struct ValidationMetrics;
+
+// ValidationMetrics definition (needs full definition for return by value)
+struct ValidationMetrics
+{
+    std::atomic<uint32> totalValidations{0};
+    std::atomic<uint32> passedValidations{0};
+    std::atomic<uint32> failedValidations{0};
+    std::atomic<uint32> cacheHits{0};
+    std::atomic<uint32> cacheMisses{0};
+    std::atomic<float> averageValidationTime{5.0f};
+    std::atomic<float> validationSuccessRate{0.85f};
+
+    // Default constructor
+    ValidationMetrics() = default;
+
+    // Copy constructor for atomic members
+    ValidationMetrics(const ValidationMetrics& other) :
+        totalValidations(other.totalValidations.load()),
+        passedValidations(other.passedValidations.load()),
+        failedValidations(other.failedValidations.load()),
+        cacheHits(other.cacheHits.load()),
+        cacheMisses(other.cacheMisses.load()),
+        averageValidationTime(other.averageValidationTime.load()),
+        validationSuccessRate(other.validationSuccessRate.load()) {}
+
+    // Assignment operator for atomic members
+    ValidationMetrics& operator=(const ValidationMetrics& other) {
+        if (this != &other) {
+            totalValidations.store(other.totalValidations.load());
+            passedValidations.store(other.passedValidations.load());
+            failedValidations.store(other.failedValidations.load());
+            cacheHits.store(other.cacheHits.load());
+            cacheMisses.store(other.cacheMisses.load());
+            averageValidationTime.store(other.averageValidationTime.load());
+            validationSuccessRate.store(other.validationSuccessRate.load());
+        }
+        return *this;
+    }
+
+    void Reset() {
+        totalValidations = 0; passedValidations = 0; failedValidations = 0;
+        cacheHits = 0; cacheMisses = 0; averageValidationTime = 5.0f;
+        validationSuccessRate = 0.85f;
+    }
+
+    float GetCacheHitRate() const {
+        uint32 total = cacheHits.load() + cacheMisses.load();
+        return total > 0 ? (float)cacheHits.load() / total : 0.0f;
+    }
+};
 
 class TC_GAME_API IQuestValidation
 {

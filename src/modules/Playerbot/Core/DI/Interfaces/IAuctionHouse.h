@@ -13,6 +13,10 @@
 #include "Player.h"
 #include <vector>
 #include <string>
+#include <queue>
+#include <utility>
+#include <atomic>
+#include <unordered_set>
 
 class Player;
 class AuctionHouseObject;
@@ -21,12 +25,68 @@ namespace Playerbot
 {
 
 // Forward declarations
-enum class AuctionStrategy : uint8;
-enum class AuctionActionType : uint8;
 struct AuctionItem;
 struct AuctionSearchQuery;
-struct AuctionProfile;
-struct AuctionMetrics;
+
+// Auction strategy types for bot behavior (full definition needed for return by value)
+enum class AuctionStrategy : uint8
+{
+    CONSERVATIVE = 0,      // Undercut by 1% - safe, slow profits
+    AGGRESSIVE = 1,        // Undercut by 5-10% - faster sales
+    PREMIUM = 2,           // List at market average - wait for buyers
+    QUICK_SALE = 3,        // Undercut by 20% - immediate sales
+    MARKET_MAKER = 4,      // Buy low, sell high - active trading
+    SMART_PRICING = 5,     // AI-driven pricing based on trends
+    OPPORTUNISTIC = 6      // Look for bargains and flip opportunities
+};
+
+enum class AuctionActionType : uint8
+{
+    BUY_ITEM        = 0,
+    SELL_ITEM       = 1,
+    CANCEL_AUCTION  = 2,
+    UPDATE_BID      = 3,
+    SEARCH_MARKET   = 4,
+    ANALYZE_PRICES  = 5
+};
+
+// AuctionMetrics definition (needs full definition for return by value)
+struct AuctionMetrics
+{
+    std::atomic<uint32> auctionsCreated{0};
+    std::atomic<uint32> auctionsSold{0};
+    std::atomic<uint32> auctionsCancelled{0};
+    std::atomic<uint32> itemsPurchased{0};
+    std::atomic<uint32> bargainsFound{0};
+    std::atomic<uint32> totalGoldSpent{0};
+    std::atomic<uint32> totalGoldEarned{0};
+    std::atomic<uint32> marketScans{0};
+    std::atomic<float> averageProfitMargin{0.0f};
+
+    void Reset()
+    {
+        auctionsCreated = 0;
+        auctionsSold = 0;
+        auctionsCancelled = 0;
+        itemsPurchased = 0;
+        bargainsFound = 0;
+        totalGoldSpent = 0;
+        totalGoldEarned = 0;
+        marketScans = 0;
+        averageProfitMargin = 0.0f;
+    }
+
+    int32 GetNetProfit() const
+    {
+        return static_cast<int32>(totalGoldEarned.load()) - static_cast<int32>(totalGoldSpent.load());
+    }
+
+    float GetROI() const
+    {
+        uint32 spent = totalGoldSpent.load();
+        return spent > 0 ? static_cast<float>(totalGoldEarned.load()) / spent : 0.0f;
+    }
+};
 
 // AuctionSession definition (needs full definition for return by value)
 struct AuctionSession
@@ -49,6 +109,31 @@ struct AuctionSession
     AuctionSession(uint32 id, uint32 pGuid, AuctionActionType action = static_cast<AuctionActionType>(0))
         : sessionId(id), playerGuid(pGuid), actionType(action), sessionStartTime(0)
         , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
+};
+
+// AuctionProfile definition (needs full definition for return by value)
+struct AuctionProfile
+{
+    AuctionStrategy primaryStrategy;
+    AuctionStrategy secondaryStrategy;
+    uint32 maxBiddingBudget;
+    uint32 maxListingBudget;
+    float bargainThreshold; // Buy if price is below this % of market value
+    float profitMargin; // Minimum profit margin for flipping
+    std::vector<uint32> preferredItemTypes;
+    std::vector<uint32> avoidedItemTypes;
+    std::unordered_set<uint32> watchList; // Items to monitor
+    std::unordered_set<uint32> blackList; // Never buy these items
+    bool autoRelist; // Automatically relist unsold items
+    bool autoBuyConsumables;
+    bool autoSellJunk;
+    uint32 maxAuctionsActive;
+
+    AuctionProfile() : primaryStrategy(AuctionStrategy::CONSERVATIVE)
+        , secondaryStrategy(AuctionStrategy::OPPORTUNISTIC), maxBiddingBudget(10000)
+        , maxListingBudget(5000), bargainThreshold(0.7f), profitMargin(0.2f)
+        , autoRelist(true), autoBuyConsumables(false), autoSellJunk(true)
+        , maxAuctionsActive(10) {}
 };
 
 class TC_GAME_API IAuctionHouse
