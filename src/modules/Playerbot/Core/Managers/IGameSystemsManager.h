@@ -54,6 +54,7 @@ namespace Playerbot
 
 // Forward declarations for all manager types
 class QuestManager;
+class ObjectiveTracker;
 class TradeManager;
 class GatheringManager;
 class ProfessionManager;
@@ -142,6 +143,12 @@ public:
      * @return Non-owning pointer to QuestManager (owned by facade)
      */
     virtual QuestManager* GetQuestManager() const = 0;
+
+    /**
+     * @brief Get objective tracker for quest progress
+     * @return Non-owning pointer to ObjectiveTracker (owned by facade)
+     */
+    virtual ObjectiveTracker* GetObjectiveTracker() const = 0;
 
     /**
      * @brief Get trade management system
