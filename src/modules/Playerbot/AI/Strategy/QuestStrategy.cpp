@@ -181,7 +181,7 @@ void QuestStrategy::UpdateBehavior(BotAI* ai, uint32 diff)
     uint32 currentTime = GameTime::GetGameTimeMS();
     if (currentTime - _lastObjectiveUpdate > 2000) // Every 2 seconds
     {
-        (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->UpdateBotTracking(diff) : (void)0);
+        (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->UpdateBotTracking(bot, diff) : (void)0);
         _lastObjectiveUpdate = currentTime;
     }
 
