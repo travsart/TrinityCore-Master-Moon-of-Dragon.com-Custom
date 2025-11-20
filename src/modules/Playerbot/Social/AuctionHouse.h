@@ -145,8 +145,8 @@ public:
             , maxAuctionsActive(10) {}
     };
 
-    void SetAuctionProfile(const AuctionProfile& profile) override;
-    AuctionProfile GetAuctionProfile() override;
+    void SetAuctionProfile(const AuctionProfile& profile);
+    AuctionProfile GetAuctionProfile() const;
 
     // Auction monitoring and automation
     struct AuctionSession
