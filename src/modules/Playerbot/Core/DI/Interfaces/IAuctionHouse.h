@@ -25,8 +25,36 @@ namespace Playerbot
 {
 
 // Forward declarations
-struct AuctionItem;
 struct AuctionSearchQuery;
+
+// AuctionItem definition (needs full definition for use in std::vector)
+// Moved from AuctionHouse.h to interface for proper dependency management
+struct AuctionItem
+{
+    uint32 auctionId;
+    uint32 itemId;
+    uint32 itemGuid;
+    uint32 stackCount;
+    uint32 currentBid;
+    uint32 buyoutPrice;
+    uint32 timeLeft;
+    uint32 sellerGuid;
+    std::string sellerName;
+    uint32 quality;
+    uint32 itemLevel;
+    bool hasEnchants;
+    bool hasSockets;
+    float marketValue;
+    float pricePerItem;
+    bool isBargain;
+    uint32 lastSeen;
+
+    AuctionItem() : auctionId(0), itemId(0), itemGuid(0), stackCount(1)
+        , currentBid(0), buyoutPrice(0), timeLeft(0), sellerGuid(0)
+        , quality(0), itemLevel(0), hasEnchants(false), hasSockets(false)
+        , marketValue(0.0f), pricePerItem(0.0f), isBargain(false)
+        , lastSeen(0) {}  // Changed from GameTime::GetGameTimeMS() to 0 to avoid dependency
+};
 
 // Auction strategy types for bot behavior (full definition needed for return by value)
 enum class AuctionStrategy : uint8
