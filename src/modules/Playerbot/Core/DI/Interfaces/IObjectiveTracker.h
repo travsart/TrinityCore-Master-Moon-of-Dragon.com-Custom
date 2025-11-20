@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <atomic>
+#include <chrono>
 
 class Player;
 class Group;
@@ -23,7 +25,6 @@ namespace Playerbot
 
 // Forward declarations
 struct QuestObjectiveData;
-struct ObjectiveAnalytics;
 enum class ObjectiveStatus : uint8;
 
 // ObjectivePriority definition (needs full definition for return by value)
@@ -72,6 +73,27 @@ struct ObjectiveState
         , lastUpdateTime(0), timeStarted(0), estimatedTimeRemaining(0)
         , completionVelocity(0.0f), isOptimized(false), failureCount(0)
         , isStuck(false), stuckTime(0) {}
+};
+
+// ObjectiveAnalytics definition (needs full definition for return by reference)
+struct ObjectiveAnalytics
+{
+    std::atomic<uint32> objectivesStarted{0};
+    std::atomic<uint32> objectivesCompleted{0};
+    std::atomic<uint32> objectivesFailed{0};
+    std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
+    std::atomic<float> averageSuccessRate{0.9f};
+    std::atomic<float> targetDetectionAccuracy{0.85f};
+    std::atomic<uint32> targetsFound{0};
+    std::atomic<uint32> targetsMissed{0};
+    std::chrono::steady_clock::time_point lastAnalyticsUpdate;
+
+    void Reset() {
+        objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
+        averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
+        targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;
+        lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    }
 };
 
 /**

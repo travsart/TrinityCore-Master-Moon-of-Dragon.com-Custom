@@ -92,27 +92,7 @@ public:
     void SynchronizeObjectiveProgress(Group* group, uint32 questId) override;
     void HandleObjectiveConflicts(Group* group, uint32 questId, uint32 objectiveIndex) override;
 
-    // Performance analytics
-    struct ObjectiveAnalytics
-    {
-        std::atomic<uint32> objectivesStarted{0};
-        std::atomic<uint32> objectivesCompleted{0};
-        std::atomic<uint32> objectivesFailed{0};
-        std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
-        std::atomic<float> averageSuccessRate{0.9f};
-        std::atomic<float> targetDetectionAccuracy{0.85f};
-        std::atomic<uint32> targetsFound{0};
-        std::atomic<uint32> targetsMissed{0};
-        std::chrono::steady_clock::time_point lastAnalyticsUpdate;
-
-        void Reset() {
-            objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
-            averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
-            targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;
-            lastAnalyticsUpdate = std::chrono::steady_clock::now();
-        }
-    };
-
+    // Performance analytics (ObjectiveAnalytics defined in IObjectiveTracker.h interface)
     const ObjectiveAnalytics& GetBotObjectiveAnalytics(uint32 botGuid) override;
     const ObjectiveAnalytics& GetGlobalObjectiveAnalytics() override;
 
