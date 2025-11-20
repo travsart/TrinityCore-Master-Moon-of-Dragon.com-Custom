@@ -262,7 +262,6 @@ public:
 
 private:
     Player* _bot;
-    ~QuestTurnIn() = default;
 
     // Core data structures
     std::unordered_map<uint32, std::vector<QuestTurnInData>> _botTurnInQueues; // botGuid -> turnIns
