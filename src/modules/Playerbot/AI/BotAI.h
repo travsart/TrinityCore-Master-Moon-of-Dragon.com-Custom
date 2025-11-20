@@ -266,6 +266,8 @@ public:
     void SetTarget(ObjectGuid guid) { _currentTarget = guid; }
     ObjectGuid GetTarget() const { return _currentTarget; }
     ::Unit* GetTargetUnit() const;
+    TargetScanner* GetTargetScanner() { return _gameSystems ? _gameSystems->GetTargetScanner() : nullptr; }
+    TargetScanner const* GetTargetScanner() const { return _gameSystems ? _gameSystems->GetTargetScanner() : nullptr; }
 
     // ========================================================================
     // MOVEMENT CONTROL - Strategy-driven movement

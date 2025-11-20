@@ -12,6 +12,7 @@
 
 #include "BotAI.h"
 #include "Core/Managers/GameSystemsManager.h"
+#include "Advanced/TacticalCoordinator.h"
 #include "Strategy/Strategy.h"
 #include "Strategy/GroupCombatStrategy.h"
 #include "Strategy/SoloCombatStrategy.h"
@@ -122,9 +123,8 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             else
             {
                 // Player is offline - need to check logout time from database
-                playerGuidToCheck = member->GetGUID();TC_LOG_INFO("playerbot", "Bot {} group validation: Found offline player {} - will check logout time",return;
-                            }
-                            _bot->GetName(), member->GetName());
+                playerGuidToCheck = member->GetGUID();
+                TC_LOG_INFO("playerbot", "Bot {} group validation: Found offline player {} - will check logout time", _bot->GetName(), member->GetName());
                 break;
             }
         }// If we found an offline player, check their logout time via database query
@@ -332,7 +332,9 @@ void BotAI::UpdateAI(uint32 diff)
             {
                 // Check if member is being destroyed or logging out
                 if (!member->IsInWorld())
-                    continue;WorldSession* session = member->GetSession();
+                    continue;
+
+                WorldSession* session = member->GetSession();
                 if (!session)
                     continue;
 
@@ -399,11 +401,12 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         OnCombatUpdate(diff);
     }// ========================================================================
     // PHASE 4: GROUP INVITATION PROCESSING - Critical for joining groups
-    // ========================================================================// Process pending group invitations
+    // ========================================================================
+    // Process pending group invitations
     // CRITICAL: Must run every frame to accept invitations promptly
-    if (_groupInvitationHandler)
+    if (auto* groupInvitationHandler = GetGroupInvitationHandler())
     {
-        _groupInvitationHandler->Update(diff);
+        groupInvitationHandler->Update(diff);
     }
 
     }  // End of if (!isInDeathRecovery) block - normal AI skipped when dead
@@ -478,10 +481,10 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
                     _bot->GetName());
 
         // PHASE 0 - Quick Win #3: Dispatch GROUP_JOINED event
-        if (_eventDispatcher)
+        if (auto* eventDispatcher = GetEventDispatcher())
         {
             Events::BotEvent evt(StateMachine::EventType::GROUP_JOINED, _bot->GetGUID());
-            _eventDispatcher->Dispatch(std::move(evt));
+            eventDispatcher->Dispatch(std::move(evt));
             TC_LOG_INFO("playerbot", "📢 GROUP_JOINED event dispatched for bot {} (reboot detection)", _bot->GetName());
         }
 
@@ -489,12 +492,15 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
     }// FIX #2: Handle bot leaving group
     else if (_wasInGroup && !isInGroup)
     {
-        TC_LOG_INFO("playerbot", "Bot {} left group, calling OnGroupLeft()",_bot->GetName());
+        TC_LOG_INFO("playerbot", "Bot {} left group, calling OnGroupLeft()", _bot->GetName());
 
         // PHASE 0 - Quick Win #3: Dispatch GROUP_LEFT event for instant cleanup
-        if (_eventDispatcher)
-        {Events::BotEvent evt(StateMachine::EventType::GROUP_LEFT, _bot->GetGUID());
-            _eventDispatcher->Dispatch(std::move(evt));TC_LOG_INFO("playerbot", "📢 GROUP_LEFT event dispatched for bot {}", _bot->GetName());}
+        if (auto* eventDispatcher = GetEventDispatcher())
+        {
+            Events::BotEvent evt(StateMachine::EventType::GROUP_LEFT, _bot->GetGUID());
+            eventDispatcher->Dispatch(std::move(evt));
+            TC_LOG_INFO("playerbot", "📢 GROUP_LEFT event dispatched for bot {}", _bot->GetName());
+        }
 
         OnGroupLeft();
     }
@@ -692,10 +698,11 @@ void BotAI::UpdateCombatState(uint32 diff){
 
         // Find initial target
         // FIX #19: Use ObjectCache instead of ObjectAccessor to avoid TrinityCore deadlock
-        ::Unit* target = _objectCache.GetTarget();if (!target)
+        ::Unit* target = _objectCache.GetTarget();
+        if (!target)
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
-                return nullptr;
+                return;
             }
         if (target)
         {
@@ -825,59 +832,71 @@ void BotAI::UpdateSoloBehaviors(uint32 diff)
     // AUTONOMOUS TARGET SCANNING - Find enemies when solo
     // ========================================================================
 
-    // For solo bots (not in a group), actively scan for nearby enemiesif (!_bot->GetGroup() && _targetScanner)
+    // For solo bots (not in a group), actively scan for nearby enemies
+    if (!_bot->GetGroup())
     {
-        // Check if it's time to scan (throttled for performance)
-        if (_targetScanner->ShouldScan(currentTime))
+        if (auto* targetScanner = GetTargetScanner())
         {
-            _targetScanner->UpdateScanTime(currentTime);
-
-            // Clean up blacklist
-            _targetScanner->UpdateBlacklist(currentTime);// ENTERPRISE-GRADE THREAD-SAFE TARGET RESOLUTION
-            // Find best target to engage (returns GUID, thread-safe)
-            ObjectGuid bestTargetGuid = _targetScanner->FindBestTarget();
-
-            // DEADLOCK FIX: Validate and set target using spatial grid snapshots (lock-free, thread-safe)
-            // DO NOT use ObjectAccessor::GetUnit() from worker thread!
-
-            if (!bestTargetGuid.IsEmpty())
+            // Check if it's time to scan (throttled for performance)
+            if (targetScanner->ShouldScan(currentTime))
             {
-                // Get spatial grid for lock-free snapshot queries
-                auto spatialGrid = sSpatialGridManager.GetGrid(_bot->GetMapId());if (spatialGrid)
+                targetScanner->UpdateScanTime(currentTime);
+
+                // Clean up blacklist
+                targetScanner->UpdateBlacklist(currentTime);
+
+                // ENTERPRISE-GRADE THREAD-SAFE TARGET RESOLUTION
+                // Find best target to engage (returns GUID, thread-safe)
+                ObjectGuid bestTargetGuid = targetScanner->FindBestTarget();
+
+                // DEADLOCK FIX: Validate and set target using spatial grid snapshots (lock-free, thread-safe)
+                // DO NOT use ObjectAccessor::GetUnit() from worker thread!
+
+                if (!bestTargetGuid.IsEmpty())
                 {
-                    // Query nearby creature snapshots (lock-free read from atomic buffer)
-                    auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(_bot->GetPosition(), 60.0f);// Find the snapshot matching our target GUID
-                    for (auto const& snapshot : creatureSnapshots)
+                    // Get spatial grid for lock-free snapshot queries
+                    auto spatialGrid = sSpatialGridManager.GetGrid(_bot->GetMapId());
+                    if (spatialGrid)
                     {
-                        if (snapshot.guid == bestTargetGuid)
+                        // Query nearby creature snapshots (lock-free read from atomic buffer)
+                        auto creatureSnapshots = spatialGrid->QueryNearbyCreatures(_bot->GetPosition(), 60.0f);
+
+                        // Find the snapshot matching our target GUID
+                        for (auto const& snapshot : creatureSnapshots)
                         {
-                            // Snapshot found - validate using snapshot data (no Map access needed)
-                            // 1. Check if creature is alive (!isDead flag)
-                            // 2. Check if creature is attackable (isHostile flag)
-                            // 3. Check distance is within engage range (60.0f)
-
-                            float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distanceif (!snapshot.isDead &&
-                                snapshot.isHostile &&
-                                distance <= 60.0f)
+                            if (snapshot.guid == bestTargetGuid)
                             {
-                                // Target is valid based on snapshot data
-                                // SetTarget() is thread-safe (just sets a GUID)
-                                _bot->SetTarget(bestTargetGuid);
+                                // Snapshot found - validate using snapshot data (no Map access needed)
+                                // 1. Check if creature is alive (!isDead flag)
+                                // 2. Check if creature is attackable (isHostile flag)
+                                // 3. Check distance is within engage range (60.0f)
 
-                                TC_LOG_DEBUG("playerbot.solo",
-                                    "Solo bot {} selected target Entry {} (level {}) via spatial grid snapshot - combat will engage naturally",
-                                    _bot->GetName(), snapshot.entry, snapshot.level);
+                                float distance = std::sqrt(_bot->GetExactDistSq(snapshot.position)); // Calculate once from squared distance
+                                if (!snapshot.isDead &&
+                                    snapshot.isHostile &&
+                                    distance <= 60.0f)
+                                {
+                                    // Target is valid based on snapshot data
+                                    // SetTarget() is thread-safe (just sets a GUID)
+                                    _bot->SetTarget(bestTargetGuid);
 
-                                // Combat will initiate naturally:
-                                // - Bot has target set → ClassAI will cast spells/attack
-                                // - CombatMovementStrategy will handle positioning
-                                // - Threat will be established when damage lands
-                                // NO NEED for explicit Attack() or SetInCombatWith() calls from worker thread
+                                    TC_LOG_DEBUG("playerbot.solo",
+                                        "Solo bot {} selected target Entry {} (level {}) via spatial grid snapshot - combat will engage naturally",
+                                        _bot->GetName(), snapshot.entry, snapshot.level);
+
+                                    // Combat will initiate naturally:
+                                    // - Bot has target set → ClassAI will cast spells/attack
+                                    // - CombatMovementStrategy will handle positioning
+                                    // - Threat will be established when damage lands
+                                    // NO NEED for explicit Attack() or SetInCombatWith() calls from worker thread
+                                }
+                                break;
                             }
-                            break;}
+                        }
                     }
                 }
-            }}
+            }
+        }
     }
 
     // ========================================================================
@@ -906,17 +925,21 @@ void BotAI::OnCombatStart(::Unit* target)
 
 void BotAI::OnCombatEnd()
 {
-    _currentTarget = ObjectGuid::Empty;TC_LOG_DEBUG("playerbot", "Bot {} leaving combat", _bot->GetName());
+    _currentTarget = ObjectGuid::Empty;
+    TC_LOG_DEBUG("playerbot", "Bot {} leaving combat", _bot->GetName());
 
-    // FIX #4: Resume following after combat ends (if in group)if (_bot->GetGroup())
-    {TC_LOG_INFO("playerbot", "Bot {} combat ended, resuming follow behavior", _bot->GetName());
+    // FIX #4: Resume following after combat ends (if in group)
+    if (_bot->GetGroup())
+    {
+        TC_LOG_INFO("playerbot", "Bot {} combat ended, resuming follow behavior", _bot->GetName());
         SetAIState(BotAIState::FOLLOWING);
 
         // Clear ONLY non-follow movement types to allow follow strategy to take over
         // Don't clear if already following, as that would cause stuttering
-        MotionMaster* mm = _bot->GetMotionMaster();if (mm)
+        MotionMaster* mm = _bot->GetMotionMaster();
+        if (mm)
         {
-            MovementGeneratorType currentType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+            ::MovementGeneratorType currentType = mm->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
             if (currentType != FOLLOW_MOTION_TYPE && currentType != IDLE_MOTION_TYPE)
             {
                 TC_LOG_ERROR("playerbot", "🧹 OnCombatEnd: Clearing {} motion type for bot {} to allow follow",
@@ -952,8 +975,10 @@ void BotAI::OnDeath()
         _actionQueue.pop();
 
     // Initiate death recovery process
-    if (_deathRecoveryManager)
-        _deathRecoveryManager->OnDeath();TC_LOG_DEBUG("playerbots.ai", "Bot {} died, AI state reset, death recovery initiated", _bot->GetName());
+    if (auto* deathRecoveryManager = GetDeathRecoveryManager())
+        deathRecoveryManager->OnDeath();
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} died, AI state reset, death recovery initiated", _bot->GetName());
 }
 
 void BotAI::OnRespawn()
@@ -962,8 +987,10 @@ void BotAI::OnRespawn()
     Reset();
 
     // Complete death recovery process
-    if (_deathRecoveryManager)
-        _deathRecoveryManager->OnResurrection();TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset, death recovery completed", _bot->GetName());
+    if (auto* deathRecoveryManager = GetDeathRecoveryManager())
+        deathRecoveryManager->OnResurrection();
+
+    TC_LOG_DEBUG("playerbots.ai", "Bot {} respawned, AI reset, death recovery completed", _bot->GetName());
 }
 
 void BotAI::Reset()
@@ -988,8 +1015,12 @@ void BotAI::OnGroupJoined(Group* group)
 {
     // Get group from bot if not provided (handles login scenario)
     if (!group && _bot)
-        group = _bot->GetGroup();TC_LOG_INFO("module.playerbot.ai", "🚨 OnGroupJoined called for bot {}, provided group={}, bot's group={}",
-                _bot ? _bot->GetName() : "NULL", (void*)group, _bot ? (void*)_bot->GetGroup() : nullptr);if (!group)
+        group = _bot->GetGroup();
+
+    TC_LOG_INFO("module.playerbot.ai", "🚨 OnGroupJoined called for bot {}, provided group={}, bot's group={}",
+                _bot ? _bot->GetName() : "NULL", (void*)group, _bot ? (void*)_bot->GetGroup() : nullptr);
+
+    if (!group)
     {
         TC_LOG_INFO("module.playerbot.ai", "❌ OnGroupJoined: No group available for bot {}",
                     _bot ? _bot->GetName() : "NULL");
@@ -1153,13 +1184,11 @@ void BotAI::OnGroupLeft()
             strategy->OnDeactivate(this);
     }
 
-    // Phase 3: Cleanup Tactical Group Coordinator
-    if (_tacticalCoordinator)
-    {
-        TC_LOG_INFO("playerbot.coordination", "🔴 Tactical Coordinator destroyed for bot {}",
-            _bot->GetName());
-        _tacticalCoordinator.reset();
-    }
+    // Phase 3: TacticalCoordinator cleanup
+    // NOTE: TacticalCoordinator is now owned by GroupCoordinator (in GameSystemsManager),
+    // so we don't need to manually reset it here. GroupCoordinator handles its lifecycle.
+    TC_LOG_INFO("playerbot.coordination", "🔴 Bot {} left group, TacticalCoordinator cleanup handled by GroupCoordinator",
+        _bot->GetName());
 
     // Activate all solo strategies when leaving a group
     // These are the same strategies activated in UpdateAI() for solo bots
@@ -1420,8 +1449,8 @@ bool BotAI::ExecuteAction(std::string const& name, ActionContext const& context)
         case ActionResult::FAILED:
             TC_LOG_DEBUG("bot.ai.action", "Action {} failed for bot {}", name, _bot->GetName());
             return false;
-        case ActionResult::INTERRUPTED:
-            TC_LOG_DEBUG("bot.ai.action", "Action {} interrupted for bot {}", name, _bot->GetName());
+        case ActionResult::CANCELLED:
+            TC_LOG_DEBUG("bot.ai.action", "Action {} cancelled for bot {}", name, _bot->GetName());
             return false;
         case ActionResult::IN_PROGRESS:
             // Queue action for continued execution
@@ -1462,10 +1491,10 @@ uint32 BotAI::GetActionPriority(std::string const& actionName) const
     // Get priority from action
     // Actions have internal priority based on their type and context
     // Combat actions are high priority, movement actions are lower
-    uint32 basePriority = action->GetBasePriority();
+    uint32 basePriority = action->GetPriority();
 
     // Adjust priority based on current bot state
-    if (_inCombat && dynamic_cast<CombatAction*>(action.get()))
+    if (IsInCombat() && dynamic_cast<CombatAction*>(action.get()))
     {
         basePriority += 50; // Boost combat action priority during combat
     }
@@ -1716,7 +1745,8 @@ bool BotAI::RequestFollowMovement(
     std::string const& reason,
     std::string const& sourceSystem)
 {
-    if (!_unifiedMovementCoordinator)
+    auto* movementCoord = GetUnifiedMovementCoordinator();
+    if (!movementCoord)
         return false;
 
     MovementRequest req = MovementRequest::MakeFollowMovement(
@@ -1728,13 +1758,13 @@ bool BotAI::RequestFollowMovement(
         reason,
         sourceSystem);
 
-    return _unifiedMovementCoordinator->RequestMovement(req);
+    return movementCoord->RequestMovement(req);
 }
 
 void BotAI::StopAllMovement()
 {
-    if (_unifiedMovementCoordinator)
-        _unifiedMovementCoordinator->StopMovement();
+    if (auto* movementCoord = GetUnifiedMovementCoordinator())
+        movementCoord->StopMovement();
 }
 
 // NOTE: BotAIFactory implementation is in BotAIFactory.cpp
