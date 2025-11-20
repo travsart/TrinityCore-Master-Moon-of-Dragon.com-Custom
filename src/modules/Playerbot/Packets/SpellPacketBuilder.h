@@ -196,8 +196,13 @@ public:
     static BuildResult BuildCastSpellPacket(
         Player* caster,
         uint32 spellId,
-        Unit* target = nullptr,
-        BuildOptions const& options = BuildOptions());
+        Unit* target = nullptr);
+
+    static BuildResult BuildCastSpellPacket(
+        Player* caster,
+        uint32 spellId,
+        Unit* target,
+        BuildOptions const& options);
 
     /**
      * @brief Build CMSG_CAST_SPELL packet with GameObject target (quest items, interactions)

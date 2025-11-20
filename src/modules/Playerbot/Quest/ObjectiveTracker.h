@@ -27,31 +27,7 @@
 namespace Playerbot
 {
 
-// ObjectiveState struct (namespace scope to match interface)
-struct ObjectiveState
-{
-    uint32 questId;
-    uint32 objectiveIndex;
-    ObjectiveStatus status;
-    uint32 currentProgress;
-    uint32 requiredProgress;
-    uint32 lastUpdateTime;
-    uint32 timeStarted;
-    uint32 estimatedTimeRemaining;
-    float completionVelocity;
-    std::vector<uint32> targetIds;
-    Position lastKnownPosition;
-    bool isOptimized;
-    uint32 failureCount;
-    bool isStuck;
-    uint32 stuckTime;
-
-    ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
-        , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
-        , lastUpdateTime(GameTime::GetGameTimeMS()), timeStarted(GameTime::GetGameTimeMS()), estimatedTimeRemaining(0)
-        , completionVelocity(0.0f), isOptimized(false), failureCount(0)
-        , isStuck(false), stuckTime(0) {}
-};
+// ObjectiveState is defined in IObjectiveTracker.h interface
 
 /**
  * @brief Advanced objective tracking system for quest completion monitoring

@@ -13,6 +13,7 @@
 #include "Position.h"
 #include <string>
 #include <vector>
+#include <cstdint>
 
 class Player;
 class Group;
@@ -22,10 +23,40 @@ namespace Playerbot
 
 // Forward declarations
 struct QuestObjectiveData;
-struct ObjectiveState;
 struct ObjectivePriority;
 struct ObjectiveAnalytics;
 enum class ObjectiveStatus : uint8;
+
+// ObjectiveState definition (needs full definition for return by value)
+struct ObjectiveState
+{
+    uint32 questId;
+    uint32 objectiveIndex;
+    ObjectiveStatus status;
+    uint32 currentProgress;
+    uint32 requiredProgress;
+    uint32 lastUpdateTime;
+    uint32 timeStarted;
+    uint32 estimatedTimeRemaining;
+    float completionVelocity;
+    std::vector<uint32> targetIds;
+    Position lastKnownPosition;
+    bool isOptimized;
+    uint32 failureCount;
+    bool isStuck;
+    uint32 stuckTime;
+
+    ObjectiveState() : questId(0), objectiveIndex(0), status(ObjectiveStatus::NOT_STARTED)
+        , currentProgress(0), requiredProgress(1), lastUpdateTime(0), timeStarted(0)
+        , estimatedTimeRemaining(0), completionVelocity(0.0f), isOptimized(false)
+        , failureCount(0), isStuck(false), stuckTime(0) {}
+
+    ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
+        , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
+        , lastUpdateTime(0), timeStarted(0), estimatedTimeRemaining(0)
+        , completionVelocity(0.0f), isOptimized(false), failureCount(0)
+        , isStuck(false), stuckTime(0) {}
+};
 
 /**
  * @brief Interface for quest objective tracking and monitoring

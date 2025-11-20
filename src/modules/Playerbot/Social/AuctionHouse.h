@@ -148,26 +148,7 @@ public:
     void SetAuctionProfile(const AuctionProfile& profile);
     AuctionProfile GetAuctionProfile() const;
 
-    // Auction monitoring and automation
-    struct AuctionSession
-    {
-        uint32 sessionId;
-        uint32 playerGuid;
-        AuctionActionType actionType;
-        std::vector<AuctionItem> searchResults;
-        std::vector<uint32> targetAuctions;
-        std::queue<std::pair<AuctionActionType, uint32>> actionQueue;
-        uint32 sessionStartTime;
-        uint32 budgetUsed;
-        uint32 itemsSold;
-        uint32 itemsBought;
-        bool isActive;
-
-        AuctionSession(uint32 id, uint32 pGuid) : sessionId(id), playerGuid(pGuid)
-            , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(GameTime::GetGameTimeMS())
-            , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
-    };
-
+    // Auction monitoring and automation (AuctionSession defined in IAuctionHouse.h interface)
     uint32 StartAuctionSession(AuctionActionType primaryAction) override;
     void UpdateAuctionSession(uint32 sessionId) override;
     void CompleteAuctionSession(uint32 sessionId) override;

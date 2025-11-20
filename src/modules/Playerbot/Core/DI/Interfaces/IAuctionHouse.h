@@ -26,8 +26,30 @@ enum class AuctionActionType : uint8;
 struct AuctionItem;
 struct AuctionSearchQuery;
 struct AuctionProfile;
-struct AuctionSession;
 struct AuctionMetrics;
+
+// AuctionSession definition (needs full definition for return by value)
+struct AuctionSession
+{
+    uint32 sessionId;
+    uint32 playerGuid;
+    AuctionActionType actionType;
+    std::vector<AuctionItem> searchResults;
+    std::vector<uint32> targetAuctions;
+    std::queue<std::pair<AuctionActionType, uint32>> actionQueue;
+    uint32 sessionStartTime;
+    uint32 budgetUsed;
+    uint32 itemsSold;
+    uint32 itemsBought;
+    bool isActive;
+
+    AuctionSession() : sessionId(0), playerGuid(0), actionType(static_cast<AuctionActionType>(0))
+        , sessionStartTime(0), budgetUsed(0), itemsSold(0), itemsBought(0), isActive(false) {}
+
+    AuctionSession(uint32 id, uint32 pGuid, AuctionActionType action = static_cast<AuctionActionType>(0))
+        : sessionId(id), playerGuid(pGuid), actionType(action), sessionStartTime(0)
+        , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
+};
 
 class TC_GAME_API IAuctionHouse
 {
