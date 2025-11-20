@@ -26,7 +26,7 @@
 
 // Manager implementations (for unique_ptr destruction)
 // #include "Social/LootDistribution.h"  // REMOVED: Causes redefinition error, forward declaration in header is sufficient
-#include "BehaviorPriorityManager.h"  // For unique_ptr<bot::ai::BehaviorPriorityManager> destruction
+#include "AI/BehaviorPriorityManager.h"  // For unique_ptr<bot::ai::BehaviorPriorityManager> destruction
 
 #include <set>
 
