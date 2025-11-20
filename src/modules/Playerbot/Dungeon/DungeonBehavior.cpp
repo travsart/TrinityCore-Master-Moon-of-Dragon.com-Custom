@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <cmath>
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
-#include "../Movement/UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../AI/BotAI.h"
 #include "UnitAI.h"

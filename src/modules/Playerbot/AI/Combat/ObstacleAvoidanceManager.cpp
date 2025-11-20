@@ -22,7 +22,7 @@
 #include "SpellInfo.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5B: Thread-safe helpers
-#include "../../Movement/UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementRequest.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"

@@ -25,7 +25,7 @@
 #include "MotionMaster.h"
 #include "../../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // Thread-safe spatial queries
-#include "../../Movement/UnifiedMovementCoordinator.h"
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "UnitAI.h"
 #include <unordered_map>  // For distance map in PrioritizeLootTargets

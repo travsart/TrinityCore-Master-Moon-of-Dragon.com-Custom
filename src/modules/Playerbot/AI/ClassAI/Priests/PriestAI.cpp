@@ -22,7 +22,7 @@
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include <algorithm>
 #include "../../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
-#include "../../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../../BotAI.h"
 #include "UnitAI.h"
