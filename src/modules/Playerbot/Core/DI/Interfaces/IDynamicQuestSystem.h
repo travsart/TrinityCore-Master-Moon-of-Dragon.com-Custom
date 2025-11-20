@@ -26,7 +26,7 @@ namespace Playerbot
 // Forward declarations
 enum class QuestPriority : uint8;
 enum class QuestType : uint8;
-enum class QuestSelectionStrategy : uint8; // Full definition in IUnifiedQuestManager.h
+// QuestSelectionStrategy enum defined in IUnifiedQuestManager.h (included below to avoid circular dependency issues)
 
 struct QuestMetadata;
 struct QuestProgress;

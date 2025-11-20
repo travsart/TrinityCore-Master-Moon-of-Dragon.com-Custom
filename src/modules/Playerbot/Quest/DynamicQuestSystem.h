@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "Position.h"
+#include "../Core/DI/Interfaces/IUnifiedQuestManager.h"  // For QuestSelectionStrategy enum
 #include "../Core/DI/Interfaces/IDynamicQuestSystem.h"
 #include <unordered_map>
 #include <unordered_set>
