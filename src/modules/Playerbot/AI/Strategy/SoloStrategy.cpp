@@ -15,6 +15,7 @@
 #include "Social/TradeManager.h"
 #include "Professions/GatheringManager.h"
 #include "Economy/AuctionManager.h"
+#include "Core/DI/Interfaces/IAuctionHouse.h"  // For AuctionItem definition
 
 namespace Playerbot
 {
