@@ -10,13 +10,13 @@
 #pragma once
 
 #include "Define.h"
+#include "../AI/BotAI.h"  // Full definition needed for dynamic_cast
 
 class Player;
 
 namespace Playerbot
 {
 
-class BotAI;
 class IGameSystemsManager;
 
 /**
