@@ -667,7 +667,7 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
 
     // Profession auction bridge handles selling materials/crafts and buying materials for leveling
     if (_professionAuctionBridge)
-        _professionAuctionBridge->Update(diff);
+        _professionAuctionBridge->Update(_bot, diff);
 
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)

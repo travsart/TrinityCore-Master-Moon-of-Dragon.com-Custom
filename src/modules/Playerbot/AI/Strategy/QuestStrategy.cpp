@@ -270,7 +270,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
                 // Create objective data using constructor (questId, index, type, targetId, requiredCount)
                 QuestObjectiveData objData(questId, i, objType, objective.ObjectID, objective.Amount);
 
-                (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->StartTrackingObjective(objData) : (void)0);
+                (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->StartTrackingObjective(bot, objData) : (void)0);
             }
         }
         // Try again after initialization
