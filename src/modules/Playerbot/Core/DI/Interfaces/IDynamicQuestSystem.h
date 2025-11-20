@@ -14,6 +14,8 @@
 #include "Position.h"
 #include <vector>
 #include <unordered_map>
+#include <atomic>
+#include <chrono>
 
 class Player;
 class Group;
@@ -28,8 +30,81 @@ enum class QuestStrategy : uint8; // Full definition in IUnifiedQuestManager.h
 
 struct QuestMetadata;
 struct QuestProgress;
-struct QuestReward;
-struct QuestMetrics;
+
+// QuestMetrics definition (needs full definition for return by value)
+struct QuestMetrics
+{
+    std::atomic<uint32> questsStarted{0};
+    std::atomic<uint32> questsCompleted{0};
+    std::atomic<uint32> questsAbandoned{0};
+    std::atomic<uint32> questsFailed{0};
+    std::atomic<float> averageCompletionTime{1200.0f}; // 20 minutes
+    std::atomic<float> successRate{0.85f};
+    std::atomic<float> efficiencyRating{1.0f};
+    std::atomic<uint32> experienceGained{0};
+    std::atomic<uint32> goldEarned{0};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    // Default constructor
+    QuestMetrics() : lastUpdate(std::chrono::steady_clock::now()) {}
+
+    void Reset() {
+        questsStarted = 0; questsCompleted = 0; questsAbandoned = 0; questsFailed = 0;
+        averageCompletionTime = 1200.0f; successRate = 0.85f; efficiencyRating = 1.0f;
+        experienceGained = 0; goldEarned = 0;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetCompletionRate() const {
+        uint32 started = questsStarted.load();
+        uint32 completed = questsCompleted.load();
+        return started > 0 ? (float)completed / started : 0.0f;
+    }
+
+    // Copy constructor for atomic members
+    QuestMetrics(const QuestMetrics& other)
+        : questsStarted(other.questsStarted.load()),
+          questsCompleted(other.questsCompleted.load()),
+          questsAbandoned(other.questsAbandoned.load()),
+          questsFailed(other.questsFailed.load()),
+          averageCompletionTime(other.averageCompletionTime.load()),
+          successRate(other.successRate.load()),
+          efficiencyRating(other.efficiencyRating.load()),
+          experienceGained(other.experienceGained.load()),
+          goldEarned(other.goldEarned.load()),
+          lastUpdate(other.lastUpdate) {}
+
+    // Assignment operator for atomic members
+    QuestMetrics& operator=(const QuestMetrics& other) {
+        if (this != &other) {
+            questsStarted = other.questsStarted.load();
+            questsCompleted = other.questsCompleted.load();
+            questsAbandoned = other.questsAbandoned.load();
+            questsFailed = other.questsFailed.load();
+            averageCompletionTime = other.averageCompletionTime.load();
+            successRate = other.successRate.load();
+            efficiencyRating = other.efficiencyRating.load();
+            experienceGained = other.experienceGained.load();
+            goldEarned = other.goldEarned.load();
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
+};
+
+// QuestReward definition (needs full definition for return by value)
+struct QuestReward
+{
+    uint32 experience;
+    uint32 gold;
+    std::vector<uint32> items;
+    std::vector<std::pair<uint32, uint32>> reputation; // factionId, amount
+    uint32 talentPoints;
+    float gearScore;
+    float rewardValue;
+
+    QuestReward() : experience(0), gold(0), talentPoints(0), gearScore(0.0f), rewardValue(0.0f) {}
+};
 
 class TC_GAME_API IDynamicQuestSystem
 {

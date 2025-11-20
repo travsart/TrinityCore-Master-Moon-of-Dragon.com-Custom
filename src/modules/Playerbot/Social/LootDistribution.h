@@ -7,6 +7,9 @@
  * option) any later version.
  */
 
+#ifndef PLAYERBOT_LOOT_DISTRIBUTION_H
+#define PLAYERBOT_LOOT_DISTRIBUTION_H
+
 #pragma once
 
 #include "Define.h"
@@ -408,3 +411,5 @@ private:
 };
 
 } // namespace Playerbot
+
+#endif // PLAYERBOT_LOOT_DISTRIBUTION_H

@@ -52,7 +52,7 @@
 #include "Quest/QuestCompletion.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Quest/DynamicQuestSystem.h"
-#include "Social/LootDistribution.h"
+// #include "Social/LootDistribution.h"  // TEMPORARILY DISABLED TO DEBUG REDEFINITION ERROR
 #include "Social/GuildIntegration.h"
 #include "Social/GuildEventCoordinator.h"
 #include "Social/GuildBankManager.h"
@@ -73,8 +73,9 @@
 namespace Playerbot
 {
 
-// Forward declaration
+// Forward declarations
 class BotAI;
+class LootDistribution;
 
 /**
  * @brief Concrete implementation of IGameSystemsManager facade

@@ -27,53 +27,13 @@
 namespace Playerbot
 {
 
-enum class GuildActivityType : uint8
-{
-    CHAT_PARTICIPATION      = 0,
-    GUILD_BANK_INTERACTION  = 1,
-    GUILD_EVENT_ATTENDANCE  = 2,
-    OFFICER_DUTIES          = 3,
-    RECRUITMENT_ASSISTANCE  = 4,
-    GUILD_REPAIR_USAGE      = 5,
-    ACHIEVEMENT_CONTRIBUTION= 6,
-    SOCIAL_INTERACTION      = 7
-};
-
-enum class GuildChatStyle : uint8
-{
-    MINIMAL         = 0,  // Rare, essential responses only
-    MODERATE        = 1,  // Regular participation
-    ACTIVE          = 2,  // Frequent communication
-    SOCIAL          = 3,  // Chatty and friendly
-    PROFESSIONAL    = 4,  // Focused on guild business
-    HELPFUL         = 5   // Offers assistance frequently
-};
-
-enum class GuildRole : uint8
-{
-    MEMBER          = 0,
-    VETERAN         = 1,
-    OFFICER         = 2,
-    LEADER          = 3,
-    BANKER          = 4,
-    RECRUITER       = 5,
-    EVENT_ORGANIZER = 6
-};
-
-struct GuildChatMessage
-{
-    uint32 senderId;
-    std::string senderName;
-    std::string content;
-    ChatMsg chatType;
-    uint32 timestamp;
-    bool requiresResponse;
-    std::vector<std::string> keywords;
-    float relevanceScore;
-
-    GuildChatMessage() : senderId(0), chatType(CHAT_MSG_GUILD), timestamp(GameTime::GetGameTimeMS())
-        , requiresResponse(false), relevanceScore(0.0f) {}
-};
+// Enums and structs defined in IGuildIntegration.h interface:
+// - enum class GuildActivityType
+// - enum class GuildChatStyle
+// - enum class GuildRole
+// - struct GuildChatMessage
+// - struct GuildProfile
+// - struct GuildParticipation
 
 /**
  * @brief Comprehensive guild integration system for automated guild participation
@@ -114,57 +74,11 @@ public:
     void ManageGuildCalendar() override;
     void OrganizeGuildRuns() override;
 
-    // Advanced guild features
-    struct GuildProfile
-    {
-        GuildChatStyle chatStyle;
-        GuildRole preferredRole;
-        std::vector<GuildActivityType> activeActivities;
-        float participationLevel; // 0.0 = minimal, 1.0 = maximum
-        float helpfulnessLevel;
-        float leadershipAmbition;
-        std::vector<std::string> expertise; // Areas of knowledge
-        std::vector<std::string> interests; // Topics of interest
-        std::unordered_set<uint32> friendlyMembers;
-        std::unordered_set<std::string> chatTriggers;
-        uint32 dailyActivityQuota;
-        bool autoAcceptGuildInvites;
-
-        GuildProfile() : chatStyle(GuildChatStyle::MODERATE), preferredRole(GuildRole::MEMBER)
-            , participationLevel(0.7f), helpfulnessLevel(0.8f), leadershipAmbition(0.3f)
-            , dailyActivityQuota(10), autoAcceptGuildInvites(true) {}
-    };
-
+    // Advanced guild features (GuildProfile struct defined in IGuildIntegration.h)
     void SetGuildProfile(const GuildProfile& profile) override;
     GuildProfile GetGuildProfile() override;
 
-    // Guild participation tracking
-    struct GuildParticipation
-    {
-        uint32 playerGuid;
-        uint32 guildId;
-        std::vector<GuildChatMessage> recentMessages;
-        std::unordered_map<GuildActivityType, uint32> activityCounts;
-        uint32 totalChatMessages;
-        uint32 helpfulResponses;
-        uint32 eventsAttended;
-        float socialScore;
-        float contributionScore;
-        uint32 lastActivity;
-        uint32 joinDate;
-
-        // Default constructor for std::unordered_map compatibility
-        GuildParticipation() : playerGuid(0), guildId(0)
-            , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
-            , joinDate(GameTime::GetGameTimeMS()) {}
-
-        GuildParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
-            , totalChatMessages(0), helpfulResponses(0), eventsAttended(0)
-            , socialScore(0.5f), contributionScore(0.5f), lastActivity(GameTime::GetGameTimeMS())
-            , joinDate(GameTime::GetGameTimeMS()) {}
-    };
-
+    // Guild participation tracking (GuildParticipation struct defined in IGuildIntegration.h)
     GuildParticipation GetGuildParticipation() override;
     void UpdateGuildParticipation(GuildActivityType activityType) override;
 
@@ -305,7 +219,6 @@ public:
 
 private:
     Player* _bot;
-    ~GuildIntegration() = default;
 
     // Core guild data
     struct PlayerState {
