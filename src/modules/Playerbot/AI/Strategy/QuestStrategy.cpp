@@ -310,7 +310,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
         }
     }
     // Get objective state
-    ObjectiveTracker::ObjectiveState objective = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetObjectiveState( priority.questId, priority.objectiveIndex) : ObjectiveTracker::ObjectiveState());
+    ObjectiveState objective = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetObjectiveState( priority.questId, priority.objectiveIndex) : ObjectiveState());
 
     // Cache current objective info
     _currentQuestId = objective.questId;
