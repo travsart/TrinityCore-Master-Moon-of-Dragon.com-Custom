@@ -26,7 +26,7 @@ namespace Playerbot
 // Forward declarations
 enum class QuestPriority : uint8;
 enum class QuestType : uint8;
-enum class QuestStrategy : uint8; // Full definition in IUnifiedQuestManager.h
+enum class QuestSelectionStrategy : uint8; // Full definition in IUnifiedQuestManager.h
 
 struct QuestMetadata;
 struct QuestProgress;
@@ -113,7 +113,7 @@ public:
 
     // Quest discovery and assignment
     virtual ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
-    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy) = 0;
+    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy) = 0;
     virtual bool AssignQuestToBot(uint32 questId, Player* bot) = 0;
     virtual void AutoAssignQuests(Player* bot, uint32 maxQuests) = 0;
 
@@ -168,8 +168,8 @@ public:
     virtual QuestMetrics GetGlobalQuestMetrics() = 0;
 
     // Configuration and settings
-    virtual void SetQuestStrategy(uint32 botGuid, QuestStrategy strategy) = 0;
-    virtual QuestStrategy GetQuestStrategy(uint32 botGuid) = 0;
+    virtual void SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy) = 0;
+    virtual QuestSelectionStrategy GetQuestStrategy(uint32 botGuid) = 0;
     virtual void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests) = 0;
     virtual void EnableQuestGrouping(uint32 botGuid, bool enable) = 0;
 

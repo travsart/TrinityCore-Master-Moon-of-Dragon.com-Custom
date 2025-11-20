@@ -38,7 +38,7 @@ enum class QuestPriority : uint8;
 enum class QuestType : uint8;
 
 // Full definition needed for default parameter usage
-enum class QuestStrategy : uint8
+enum class QuestSelectionStrategy : uint8
 {
     SOLO_FOCUSED        = 0,  // Complete quests independently
     GROUP_PREFERRED     = 1,  // Try to group for efficiency
@@ -391,7 +391,7 @@ public:
      * @brief Quest discovery and assignment
      */
     virtual ::std::vector<uint32> DiscoverAvailableQuests(Player* bot) = 0;
-    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) = 0;
+    virtual ::std::vector<uint32> GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy = QuestSelectionStrategy::LEVEL_PROGRESSION) = 0;
     virtual bool AssignQuestToBot(uint32 questId, Player* bot) = 0;
     virtual void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) = 0;
 
@@ -460,8 +460,8 @@ public:
     /**
      * @brief Configuration and settings (dynamic)
      */
-    virtual void SetQuestStrategy(uint32 botGuid, QuestStrategy strategy) = 0;
-    virtual QuestStrategy GetQuestStrategy(uint32 botGuid) = 0;
+    virtual void SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy) = 0;
+    virtual QuestSelectionStrategy GetQuestStrategy(uint32 botGuid) = 0;
     virtual void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests) = 0;
     virtual void EnableQuestGrouping(uint32 botGuid, bool enable) = 0;
 

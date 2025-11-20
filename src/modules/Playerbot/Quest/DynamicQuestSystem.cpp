@@ -75,7 +75,7 @@ std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
     return availableQuests;
 }
 
-std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy)
 {
     std::vector<uint32> recommendedQuests;
 
@@ -87,25 +87,25 @@ std::vector<uint32> DynamicQuestSystem::GetRecommendedQuests(Player* bot, QuestS
     // Apply strategy-specific filtering and sorting
     switch (strategy)
     {
-        case QuestStrategy::SOLO_FOCUSED:
+        case QuestSelectionStrategy::SOLO_FOCUSED:
             ExecuteSoloStrategy(bot);
             break;
-        case QuestStrategy::GROUP_PREFERRED:
+        case QuestSelectionStrategy::GROUP_PREFERRED:
             ExecuteGroupStrategy(bot);
             break;
-        case QuestStrategy::ZONE_OPTIMIZATION:
+        case QuestSelectionStrategy::ZONE_OPTIMIZATION:
             ExecuteZoneStrategy(bot);
             break;
-        case QuestStrategy::LEVEL_PROGRESSION:
+        case QuestSelectionStrategy::LEVEL_PROGRESSION:
             ExecuteLevelStrategy(bot);
             break;
-        case QuestStrategy::GEAR_PROGRESSION:
+        case QuestSelectionStrategy::GEAR_PROGRESSION:
             ExecuteGearStrategy(bot);
             break;
-        case QuestStrategy::STORY_PROGRESSION:
+        case QuestSelectionStrategy::STORY_PROGRESSION:
             ExecuteStoryStrategy(bot);
             break;
-        case QuestStrategy::REPUTATION_FOCUSED:
+        case QuestSelectionStrategy::REPUTATION_FOCUSED:
             ExecuteReputationStrategy(bot);
             break;
         default:
@@ -177,7 +177,7 @@ void DynamicQuestSystem::AutoAssignQuests(Player* bot, uint32 maxQuests)
         return;
 
     uint32 botGuid = bot->GetGUID().GetCounter();
-    QuestStrategy strategy = GetQuestStrategy(botGuid);
+    QuestSelectionStrategy strategy = GetQuestStrategy(botGuid);
 
     // Get current quest count
     uint32 currentQuests = 0;
@@ -813,18 +813,18 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
     return globalMetrics;
 }
 
-void DynamicQuestSystem::SetQuestStrategy(uint32 botGuid, QuestStrategy strategy)
+void DynamicQuestSystem::SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy)
 {
     _botStrategies[botGuid] = strategy;
 }
 
-QuestStrategy DynamicQuestSystem::GetQuestStrategy(uint32 botGuid)
+QuestSelectionStrategy DynamicQuestSystem::GetQuestStrategy(uint32 botGuid)
 {
     auto it = _botStrategies.find(botGuid);
     if (it != _botStrategies.end())
         return it->second;
 
-    return QuestStrategy::LEVEL_PROGRESSION;
+    return QuestSelectionStrategy::LEVEL_PROGRESSION;
 }
 
 void DynamicQuestSystem::SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests)

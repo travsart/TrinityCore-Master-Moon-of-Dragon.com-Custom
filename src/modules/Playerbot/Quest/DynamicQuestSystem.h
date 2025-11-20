@@ -55,17 +55,7 @@ enum class QuestType : uint8
     PVP             = 9   // Player vs Player objectives
 };
 
-enum class QuestStrategy : uint8
-{
-    SOLO_FOCUSED        = 0,  // Complete quests independently
-    GROUP_PREFERRED     = 1,  // Try to group for efficiency
-    ZONE_OPTIMIZATION   = 2,  // Complete all quests in current zone
-    LEVEL_PROGRESSION   = 3,  // Focus on experience gain
-    GEAR_PROGRESSION    = 4,  // Focus on equipment upgrades
-    STORY_PROGRESSION   = 5,  // Follow main storylines
-    REPUTATION_FOCUSED  = 6,  // Build faction reputation
-    PROFESSION_FOCUSED  = 7   // Complete profession quests
-};
+// QuestSelectionStrategy enum defined in IUnifiedQuestManager.h interface
 
 struct QuestMetadata
 {
@@ -135,7 +125,7 @@ public:
 
     // Quest discovery and assignment
     std::vector<uint32> DiscoverAvailableQuests(Player* bot) override;
-    std::vector<uint32> GetRecommendedQuests(Player* bot, QuestStrategy strategy = QuestStrategy::LEVEL_PROGRESSION) override;
+    std::vector<uint32> GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy = QuestSelectionStrategy::LEVEL_PROGRESSION) override;
     bool AssignQuestToBot(uint32 questId, Player* bot) override;
     void AutoAssignQuests(Player* bot, uint32 maxQuests = 10) override;
 
@@ -190,8 +180,8 @@ public:
     QuestMetrics GetGlobalQuestMetrics() override;
 
     // Configuration and settings
-    void SetQuestStrategy(uint32 botGuid, QuestStrategy strategy) override;
-    QuestStrategy GetQuestStrategy(uint32 botGuid) override;
+    void SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy) override;
+    QuestSelectionStrategy GetQuestStrategy(uint32 botGuid) override;
     void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests) override;
     void EnableQuestGrouping(uint32 botGuid, bool enable) override;
 
@@ -206,7 +196,7 @@ private:
     // Core data structures
     std::unordered_map<uint32, QuestMetadata> _questMetadata;
     std::unordered_map<uint32, std::vector<QuestProgress>> _botQuestProgress; // botGuid -> quests
-    std::unordered_map<uint32, QuestStrategy> _botStrategies;
+    std::unordered_map<uint32, QuestSelectionStrategy> _botStrategies;
     std::unordered_map<uint32, QuestMetrics> _botMetrics;
     
 

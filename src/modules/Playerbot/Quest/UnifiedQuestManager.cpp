@@ -986,7 +986,7 @@ std::vector<uint32> UnifiedQuestManager::DynamicModule::DiscoverAvailableQuests(
     return {};
 }
 
-std::vector<uint32> UnifiedQuestManager::DynamicModule::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+std::vector<uint32> UnifiedQuestManager::DynamicModule::GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
         return systems->GetDynamicQuestSystem()->GetRecommendedQuests(strategy);
@@ -1204,13 +1204,13 @@ bool UnifiedQuestManager::DynamicModule::IsQuestWorthwhile(uint32 questId, Playe
     return {};
 }
 
-void UnifiedQuestManager::DynamicModule::SetQuestStrategy(uint32 botGuid, QuestStrategy strategy)
+void UnifiedQuestManager::DynamicModule::SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
         systems->GetDynamicQuestSystem()->SetQuestStrategy(botGuid, strategy);
 }
 
-QuestStrategy UnifiedQuestManager::DynamicModule::GetQuestStrategy(uint32 botGuid)
+QuestSelectionStrategy UnifiedQuestManager::DynamicModule::GetQuestStrategy(uint32 botGuid)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
         return systems->GetDynamicQuestSystem()->GetQuestStrategy(botGuid);
@@ -1664,7 +1664,7 @@ void UnifiedQuestManager::ValidateTurnInState(Player* bot, uint32 questId)
 std::vector<uint32> UnifiedQuestManager::DiscoverAvailableQuests(Player* bot)
 { return _dynamic->DiscoverAvailableQuests(bot); }
 
-std::vector<uint32> UnifiedQuestManager::GetRecommendedQuests(Player* bot, QuestStrategy strategy)
+std::vector<uint32> UnifiedQuestManager::GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy)
 { return _dynamic->GetRecommendedQuests(bot, strategy); }
 
 bool UnifiedQuestManager::AssignQuestToBot(uint32 questId, Player* bot)
@@ -1763,10 +1763,10 @@ float UnifiedQuestManager::CalculateQuestValue(uint32 questId, Player* bot)
 bool UnifiedQuestManager::IsQuestWorthwhile(uint32 questId, Player* bot)
 { return _dynamic->IsQuestWorthwhile(questId, bot); }
 
-void UnifiedQuestManager::SetQuestStrategy(uint32 botGuid, QuestStrategy strategy)
+void UnifiedQuestManager::SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy)
 { _dynamic->SetQuestStrategy(botGuid, strategy); }
 
-QuestStrategy UnifiedQuestManager::GetQuestStrategy(uint32 botGuid)
+QuestSelectionStrategy UnifiedQuestManager::GetQuestStrategy(uint32 botGuid)
 { return _dynamic->GetQuestStrategy(botGuid); }
 
 void UnifiedQuestManager::SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests)
@@ -1790,7 +1790,7 @@ void UnifiedQuestManager::ProcessCompleteQuestFlow(Player* bot)
     auto validQuests = _validation->FilterValidQuests(availableQuests, bot);
 
     // 2. Assignment and prioritization
-    auto recommendedQuests = _dynamic->GetRecommendedQuests(bot, QuestStrategy::LEVEL_PROGRESSION);
+    auto recommendedQuests = _dynamic->GetRecommendedQuests(bot, QuestSelectionStrategy::LEVEL_PROGRESSION);
 
     // 3. Execution and tracking
     _completion->UpdateQuestProgress(bot);
