@@ -425,7 +425,7 @@ void GameSystemsManager::Initialize(Player* bot)
 
         if (_bankingManager)
         {
-            _bankingManager->OnInitialize();
+            _bankingManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ BankingManager initialized - personal banking automation active");
         }
 
