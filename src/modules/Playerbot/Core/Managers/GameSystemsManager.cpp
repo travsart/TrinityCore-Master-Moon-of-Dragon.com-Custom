@@ -22,7 +22,7 @@
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
-#include "Spatial/BlackboardManager.h"
+// #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
 
 #include <set>
 

@@ -699,10 +699,13 @@ void DPSCoordinator::UpdateBurstWindows(GroupCoordinator* group)
     }
 
     // Automatic burst windows at specific combat timings
-    if (!false // TODO: Redesign - IsInCombat not available)
-        return;
+    // TODO: Redesign - IsInCombat not available
+    // if (!group->IsInCombat())
+    //     return;
 
-    uint32 combatDuration = group->GetCombatDuration();
+    // TODO: Redesign - GetCombatDuration not available
+    // uint32 combatDuration = group->GetCombatDuration();
+    uint32 combatDuration = 0;
 
     // Initial burst (0-10s)
     if (combatDuration > 0 && combatDuration < 2000 && !_inBurstWindow)
