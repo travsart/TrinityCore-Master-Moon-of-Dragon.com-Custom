@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "Position.h"
+#include "GameTime.h"
 #include <string>
 #include <vector>
 
@@ -23,8 +24,29 @@ namespace Playerbot
 {
 
 // Forward declarations for nested types
-struct InstanceProgress;
 struct CoordinationMetrics;
+
+// InstanceProgress definition (needs full definition for return by value)
+struct InstanceProgress
+{
+    uint32 groupId;
+    uint32 instanceId;
+    uint32 mapId;
+    uint32 startTime;
+    uint32 currentCheckpoint;
+    ::std::vector<uint32> completedEncounters;
+    ::std::vector<uint32> clearedTrashGroups;
+    ::std::vector<uint32> collectedLoot;
+    float progressPercentage;
+    uint32 estimatedCompletionTime;
+    bool isOnTrack;
+    ::std::vector<::std::string> progressNotes;
+
+    InstanceProgress(uint32 gId, uint32 iId, uint32 mId) : groupId(gId), instanceId(iId)
+        , mapId(mId), startTime(GameTime::GetGameTimeMS()), currentCheckpoint(0)
+        , progressPercentage(0.0f), estimatedCompletionTime(2700000) // 45 minutes
+        , isOnTrack(true) {}
+};
 
 /**
  * @brief Interface for advanced instance coordination and group management

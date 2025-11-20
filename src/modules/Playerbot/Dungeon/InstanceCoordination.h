@@ -75,28 +75,7 @@ public:
     void ManageLootPriorities(Group* group) override;
     void ResolveeLootConflicts(Group* group, uint32 itemId) override;
 
-    // Progress tracking and optimization
-    struct InstanceProgress
-    {
-        uint32 groupId;
-        uint32 instanceId;
-        uint32 mapId;
-        uint32 startTime;
-        uint32 currentCheckpoint;
-        ::std::vector<uint32> completedEncounters;
-        ::std::vector<uint32> clearedTrashGroups;
-        ::std::vector<uint32> collectedLoot;
-        float progressPercentage;
-        uint32 estimatedCompletionTime;
-        bool isOnTrack;
-        ::std::vector<::std::string> progressNotes;
-
-        InstanceProgress(uint32 gId, uint32 iId, uint32 mId) : groupId(gId), instanceId(iId)
-            , mapId(mId), startTime(GameTime::GetGameTimeMS()), currentCheckpoint(0)
-            , progressPercentage(0.0f), estimatedCompletionTime(2700000) // 45 minutes
-            , isOnTrack(true) {}
-    };
-
+    // Progress tracking and optimization (InstanceProgress defined in IInstanceCoordination.h interface)
     InstanceProgress GetInstanceProgress(uint32 groupId) override;
     void UpdateInstanceProgress(Group* group) override;
     void AnalyzeProgressEfficiency(Group* group) override;
