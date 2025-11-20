@@ -9,6 +9,7 @@
 
 #include "QuestStrategy.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
+#include "Core/DI/Interfaces/IObjectiveTracker.h"  // ObjectivePriority
 #include "../BotAI.h"
 #include "Player.h"
 #include "Group.h"
@@ -225,7 +226,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     TC_LOG_ERROR("module.playerbot.quest", "📍 ProcessQuestObjectives: Bot {} starting objective processing", bot->GetName());
 
     // Get highest priority objective from ObjectiveTracker
-    ObjectiveTracker::ObjectivePriority priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
+    ObjectivePriority priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectivePriority{});
 
     TC_LOG_ERROR("module.playerbot.quest", "🎯 ProcessQuestObjectives: Bot {} - priority.questId={}, priority.objectiveIndex={}",
                  bot->GetName(), priority.questId, priority.objectiveIndex);
@@ -273,7 +274,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
             }
         }
         // Try again after initialization
-        priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
+        priority = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectivePriority());
         TC_LOG_ERROR("module.playerbot.quest", "🔄 ProcessQuestObjectives: Bot {} after initialization - priority.questId={}, priority.objectiveIndex={}",
                      bot->GetName(), priority.questId, priority.objectiveIndex);
 
@@ -1202,13 +1203,13 @@ void QuestStrategy::TurnInQuest(BotAI* ai, uint32 questId)
     // Navigation is in progress - next UpdateBehavior() cycle will check for NPC in range
 }
 
-ObjectiveTracker::ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
+ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
 {
     if (!ai || !ai->GetBot())
-        return ObjectiveTracker::ObjectivePriority(0, 0);
+        return ObjectivePriority(0, 0);
 
     Player* bot = ai->GetBot();
-    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectiveTracker::ObjectivePriority());
+    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective() : ObjectivePriority());
 }
 
 bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
@@ -1216,7 +1217,7 @@ bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
     if (!ai || !ai->GetBot())
         return false;
 
-    ObjectiveTracker::ObjectivePriority priority = GetCurrentObjective(ai);
+    ObjectivePriority priority = GetCurrentObjective(ai);
     return priority.questId != 0;
 }
 
