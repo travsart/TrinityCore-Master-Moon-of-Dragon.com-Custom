@@ -352,7 +352,6 @@ public:
 
 private:
     Player* _bot;
-    ~BotLifecycleManager();
 
     // Bot storage
     std::unordered_map<ObjectGuid, std::shared_ptr<BotLifecycle>> _botLifecycles;
@@ -373,10 +372,6 @@ private:
 
     // Broadcast state change event
     void BroadcastStateChange(ObjectGuid botGuid, BotLifecycleState oldState, BotLifecycleState newState);
-
-    // Singleton
-    BotLifecycleManager(BotLifecycleManager const&) = delete;
-    BotLifecycleManager& operator=(BotLifecycleManager const&) = delete;
 };
 
 // Convenience accessor
