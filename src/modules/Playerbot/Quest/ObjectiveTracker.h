@@ -38,9 +38,7 @@ namespace Playerbot
 class TC_GAME_API ObjectiveTracker final : public IObjectiveTracker
 {
 public:
-    // Forward declarations
-    struct ObjectiveState;
-    struct ObjectivePriority;
+    // Forward declarations (ObjectiveState and ObjectivePriority defined in IObjectiveTracker.h interface)
 
     explicit ObjectiveTracker(Player* bot);
     ~ObjectiveTracker();
@@ -71,23 +69,7 @@ public:
     void UpdateObjectiveState(Player* bot, const ObjectiveState& state) override;
     std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
 
-    // Intelligent objective prioritization
-    struct ObjectivePriority
-    {
-        uint32 questId;
-        uint32 objectiveIndex;
-        float priorityScore;
-        float urgencyFactor;
-        float difficultyFactor;
-        float efficiencyFactor;
-        float proximityFactor;
-        std::string reasoning;
-
-        ObjectivePriority(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
-            , priorityScore(5.0f), urgencyFactor(1.0f), difficultyFactor(1.0f)
-            , efficiencyFactor(1.0f), proximityFactor(1.0f) {}
-    };
-
+    // Intelligent objective prioritization (ObjectivePriority defined in IObjectiveTracker.h interface)
     std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
     ObjectivePriority GetHighestPriorityObjective(Player* bot) override;
     void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities) override;

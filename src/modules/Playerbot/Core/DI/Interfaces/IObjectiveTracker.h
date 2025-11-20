@@ -23,9 +23,25 @@ namespace Playerbot
 
 // Forward declarations
 struct QuestObjectiveData;
-struct ObjectivePriority;
 struct ObjectiveAnalytics;
 enum class ObjectiveStatus : uint8;
+
+// ObjectivePriority definition (needs full definition for return by value)
+struct ObjectivePriority
+{
+    uint32 questId;
+    uint32 objectiveIndex;
+    float priorityScore;
+    float urgencyFactor;
+    float difficultyFactor;
+    float efficiencyFactor;
+    float proximityFactor;
+    std::string reasoning;
+
+    ObjectivePriority(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
+        , priorityScore(5.0f), urgencyFactor(1.0f), difficultyFactor(1.0f)
+        , efficiencyFactor(1.0f), proximityFactor(1.0f) {}
+};
 
 // ObjectiveState definition (needs full definition for return by value)
 struct ObjectiveState
