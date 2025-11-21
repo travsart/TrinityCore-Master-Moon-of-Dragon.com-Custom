@@ -247,7 +247,7 @@ uint32 ProfessionAuctionBridge::GetOptimalMaterialPrice(::Player* player, uint32
         return 0;
 
     // Delegate to existing AuctionHouse price calculation
-    return _auctionHouse->CalculateOptimalListingPrice(_bot, itemId, stackSize);
+    return _auctionHouse->CalculateOptimalListingPrice(itemId, stackSize);
 }
 
 // ============================================================================

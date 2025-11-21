@@ -278,8 +278,8 @@ void UnifiedQuestManager::CompletionModule::CoordinateGroupQuestCompletion(Group
 
 void UnifiedQuestManager::CompletionModule::ShareObjectiveProgress(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->ShareObjectiveProgress(group, questId);
+    // Static wrapper without bot context - cannot delegate
+    // TODO: This needs bot parameter or should be redesigned
 }
 
 void UnifiedQuestManager::CompletionModule::SynchronizeGroupObjectives(Group* group, uint32 questId)
