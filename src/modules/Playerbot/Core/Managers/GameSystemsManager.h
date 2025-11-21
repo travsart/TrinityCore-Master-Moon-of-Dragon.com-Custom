@@ -169,7 +169,7 @@ public:
     FarmingCoordinator* GetFarmingCoordinator() const { return _farmingCoordinator.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     BankingManager* GetBankingManager() const { return _bankingManager.get(); }
-    EquipmentManager* GetEquipmentManager() const { return _equipmentManager.get(); }
+    EquipmentManager* GetEquipmentManager() const override { return _equipmentManager.get(); }
     MountManager* GetMountManager() const { return _mountManager.get(); }
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
