@@ -186,7 +186,7 @@ void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
         MaterialStockpileConfig const& config = configIt->second;
 
         // Check if should sell
-        if (ShouldSellMaterial(itemInfo.itemId, itemInfo.stackCount))
+        if (ShouldSellMaterial(player, itemInfo.itemId, itemInfo.stackCount))
         {
             ListMaterialOnAuction(itemInfo.itemGuid, config);
         }
