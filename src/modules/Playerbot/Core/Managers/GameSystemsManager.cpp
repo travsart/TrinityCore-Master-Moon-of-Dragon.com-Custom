@@ -513,9 +513,8 @@ void GameSystemsManager::Shutdown()
 void GameSystemsManager::InitializeHybridAI()
 {
     // Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
-    // This will be implemented when HybridAIController is available
-    // For now, create empty instance
-    _hybridAI = std::make_unique<HybridAIController>();
+    // Pass BotAI pointer to HybridAIController
+    _hybridAI = std::make_unique<HybridAIController>(_botAI);
 
     TC_LOG_INFO("module.playerbot", "🤖 HYBRID AI CONTROLLER: {} - Hybrid decision system ready",
         _bot ? _bot->GetName() : "Unknown");
