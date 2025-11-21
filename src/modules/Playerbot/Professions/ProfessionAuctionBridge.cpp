@@ -492,7 +492,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
         }
 
         // Buyout the auction
-        if (_auctionHouse->BuyoutAuction(_bot, auction.auctionId))
+        if (_auctionHouse->BuyoutAuction(auction.auctionId))
         {
             totalBought += buyAmount;
             totalGoldSpent += cost;
