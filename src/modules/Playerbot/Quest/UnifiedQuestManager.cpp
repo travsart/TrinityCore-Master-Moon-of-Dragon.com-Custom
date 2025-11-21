@@ -258,8 +258,8 @@ bool UnifiedQuestManager::CompletionModule::FindObjectiveTarget(Player* bot, Que
 
 std::vector<Position> UnifiedQuestManager::CompletionModule::GetObjectiveLocations(const QuestObjectiveData& objective)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->GetObjectiveLocations(objective);
+    // Static wrapper without bot context - return empty
+    // TODO: This needs bot parameter or should be removed if not used
     return {};
 }
 

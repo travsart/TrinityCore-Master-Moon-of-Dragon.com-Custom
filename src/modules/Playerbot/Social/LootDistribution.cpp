@@ -1118,9 +1118,9 @@ bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group)
     return tracker.fairnessScore < FAIRNESS_ADJUSTMENT_THRESHOLD;
 }
 
-void LootDistribution::UpdateLootMetrics(uint32 playerGuid, const LootRoll& roll, bool wasWinner)
+void LootDistribution::UpdateLootMetrics(const LootRoll& roll, bool wasWinner)
 {
-    auto& metrics = _playerMetrics[playerGuid];
+    auto& metrics = _playerMetrics[_bot->GetGUID().GetCounter()];
 
     if (wasWinner)
     {
