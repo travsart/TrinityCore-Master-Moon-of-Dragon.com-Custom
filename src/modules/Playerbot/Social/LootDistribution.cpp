@@ -195,7 +195,7 @@ LootRollType LootDistribution::DetermineLootDecision(const LootItem& item)
         return LootRollType::PASS;
 
     // Get player's loot profile
-    PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
+    PlayerLootProfile profile = GetPlayerLootProfile();
 
     // Execute the player's strategy
     return ExecuteStrategy(_bot, item, profile.strategy);

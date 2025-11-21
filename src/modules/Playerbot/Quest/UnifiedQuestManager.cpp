@@ -51,7 +51,7 @@ bool UnifiedQuestManager::PickupModule::PickupQuest(uint32 questId, Player* bot,
 {
     _questsPickedUp++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->PickupQuest(questId, questGiverGuid);
+        return systems->GetQuestPickup()->PickupQuest(questId, bot, questGiverGuid);
     return {};
 }
 

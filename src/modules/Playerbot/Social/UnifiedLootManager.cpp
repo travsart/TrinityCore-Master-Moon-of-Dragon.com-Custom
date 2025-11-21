@@ -258,7 +258,7 @@ void UnifiedLootManager::DistributionModule::HandleLootRoll(Player* player, uint
 {
     std::lock_guard<decltype(_rollMutex)> lock(_rollMutex);
 
-    (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->HandleLootRoll(rollId, rollType) : decltype(GetGameSystems(player)->GetLootDistribution()->HandleLootRoll(rollId, rollType))());
+    (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ProcessPlayerLootDecision(rollId, rollType) : decltype(GetGameSystems(player)->GetLootDistribution()->ProcessPlayerLootDecision(rollId, rollType))());
     _rollsProcessed++;
 }
 
