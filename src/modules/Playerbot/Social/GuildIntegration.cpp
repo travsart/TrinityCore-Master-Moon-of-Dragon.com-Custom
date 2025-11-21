@@ -347,7 +347,7 @@ void GuildIntegration::WithdrawNeededItems()
 
 void GuildIntegration::OrganizeGuildBank()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Banker role: organize and manage guild bank efficiently

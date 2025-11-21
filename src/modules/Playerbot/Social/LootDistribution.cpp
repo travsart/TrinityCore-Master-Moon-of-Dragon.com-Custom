@@ -896,7 +896,7 @@ float LootDistribution::CalculateItemScore( Item* item)
     float score = 0.0f;
 
     // Base score from item level
-    score += item->GetItemLevel(player) * 10.0f;
+    score += item->GetItemLevel(_bot) * 10.0f;
 
     // Add score for relevant stats
     // This would require detailed stat analysis

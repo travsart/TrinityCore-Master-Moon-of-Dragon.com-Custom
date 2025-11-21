@@ -33,7 +33,7 @@ namespace Playerbot
 // STATIC MEMBERS
 // ============================================================================
 
-ProfessionManager::ProfessionMetrics ProfessionManager::_globalMetrics;
+ProfessionMetrics ProfessionManager::_globalMetrics;
 
 // ============================================================================
 // CONSTRUCTOR / DESTRUCTOR

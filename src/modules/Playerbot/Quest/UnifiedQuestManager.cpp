@@ -240,7 +240,7 @@ void UnifiedQuestManager::CompletionModule::HandleEmoteObjective(Player* bot, Qu
 void UnifiedQuestManager::CompletionModule::HandleEscortObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleEscortObjective(objective);
+        systems->GetQuestCompletion()->HandleEscortObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::NavigateToObjective(Player* bot, const QuestObjectiveData& objective)
