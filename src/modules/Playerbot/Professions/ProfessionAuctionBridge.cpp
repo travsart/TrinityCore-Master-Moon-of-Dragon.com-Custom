@@ -303,7 +303,7 @@ bool ProfessionAuctionBridge::ShouldSellCraftedItem(::Player* player, uint32 ite
         return false;
 
     // Calculate profit margin
-    float profitMargin = CalculateProfitMargin(itemId, marketPrice, materialCost);
+    float profitMargin = CalculateProfitMargin(player, itemId, marketPrice, materialCost);
 
     // Sell if profit margin exceeds minimum
     uint32 minProfitCopper = config.minProfitMargin;
@@ -345,7 +345,7 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
     return success;
 }
 
-float ProfessionAuctionBridge::CalculateProfitMargin(uint32 itemId, uint32 marketPrice, uint32 materialCost) const
+float ProfessionAuctionBridge::CalculateProfitMargin(::Player* player, uint32 itemId, uint32 marketPrice, uint32 materialCost) const
 {
     if (materialCost == 0)
         return 0.0f;
