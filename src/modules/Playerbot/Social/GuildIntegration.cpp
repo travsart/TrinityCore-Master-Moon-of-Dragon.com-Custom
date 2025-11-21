@@ -59,9 +59,9 @@ void GuildIntegration::ProcessGuildInteraction()
     ParticipateInGuildActivities();
 }
 
-void GuildIntegration::HandleGuildChat( const GuildChatMessage& message)
+void GuildIntegration::HandleGuildChat(const GuildChatMessage& message)
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Store message in chat history

@@ -198,7 +198,7 @@ bool UnifiedQuestManager::CompletionModule::IsObjectiveComplete(const QuestObjec
 void UnifiedQuestManager::CompletionModule::HandleKillObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleKillObjective(objective);
+        systems->GetQuestCompletion()->HandleKillObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleCollectObjective(Player* bot, QuestObjectiveData& objective)

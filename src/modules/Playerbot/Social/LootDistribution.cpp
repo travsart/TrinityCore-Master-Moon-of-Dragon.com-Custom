@@ -803,19 +803,19 @@ LootRollType LootDistribution::ExecuteStrategy( const LootItem& item, LootDecisi
     switch (strategy)
     {
         case LootDecisionStrategy::NEED_BEFORE_GREED:
-            ExecuteNeedBeforeGreedStrategy(player, item, decision);
+            ExecuteNeedBeforeGreedStrategy(item, decision);
             break;
         case LootDecisionStrategy::CLASS_PRIORITY:
-            ExecuteClassPriorityStrategy(player, item, decision);
+            ExecuteClassPriorityStrategy(item, decision);
             break;
         case LootDecisionStrategy::UPGRADE_PRIORITY:
-            ExecuteUpgradePriorityStrategy(player, item, decision);
+            ExecuteUpgradePriorityStrategy(item, decision);
             break;
         case LootDecisionStrategy::FAIR_DISTRIBUTION:
-            ExecuteFairDistributionStrategy(player, item, decision);
+            ExecuteFairDistributionStrategy(item, decision);
             break;
         case LootDecisionStrategy::MAINSPEC_PRIORITY:
-            ExecuteMainSpecPriorityStrategy(player, item, decision);
+            ExecuteMainSpecPriorityStrategy(item, decision);
             break;
         case LootDecisionStrategy::RANDOM_ROLLS:
             // Random decision
