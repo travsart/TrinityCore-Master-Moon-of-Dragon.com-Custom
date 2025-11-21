@@ -73,13 +73,13 @@ void GuildIntegration::HandleGuildChat(const GuildChatMessage& message)
         tracker.chatHistory.pop();
 
     // Decide whether to respond
-    if (ShouldRespondToMessage(player, message))
+    if (ShouldRespondToMessage(message))
     {
-        RespondToGuildChat(player, message);
+        RespondToGuildChat(message);
     }
 
     // Update participation metrics
-    UpdateGuildParticipation(playerGuid, GuildActivityType::CHAT_PARTICIPATION);
+    UpdateGuildParticipation(GuildActivityType::CHAT_PARTICIPATION);
 }
 
 void GuildIntegration::ParticipateInGuildActivities()

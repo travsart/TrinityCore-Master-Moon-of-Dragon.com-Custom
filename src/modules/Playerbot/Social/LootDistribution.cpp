@@ -835,7 +835,7 @@ LootRollType LootDistribution::ExecuteStrategy( const LootItem& item, LootDecisi
         case LootDecisionStrategy::CONSERVATIVE:
             // Only roll on significant upgrades
             {
-                LootPriority priority = AnalyzeItemPriority(player, item);
+                LootPriority priority = AnalyzeItemPriority(item);
                 if (priority == LootPriority::CRITICAL_UPGRADE)
                     decision = LootRollType::NEED;
                 else

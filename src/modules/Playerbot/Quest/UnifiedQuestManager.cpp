@@ -204,7 +204,7 @@ void UnifiedQuestManager::CompletionModule::HandleKillObjective(Player* bot, Que
 void UnifiedQuestManager::CompletionModule::HandleCollectObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleCollectObjective(objective);
+        systems->GetQuestCompletion()->HandleCollectObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective)
