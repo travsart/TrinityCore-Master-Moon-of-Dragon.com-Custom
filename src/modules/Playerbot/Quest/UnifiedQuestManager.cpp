@@ -303,7 +303,7 @@ void UnifiedQuestManager::CompletionModule::OptimizeQuestCompletionOrder(Player*
 void UnifiedQuestManager::CompletionModule::OptimizeObjectiveSequence(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->OptimizeObjectiveSequence(questId);
+        systems->GetQuestCompletion()->OptimizeObjectiveSequence(bot, questId);
 }
 
 void UnifiedQuestManager::CompletionModule::FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds)

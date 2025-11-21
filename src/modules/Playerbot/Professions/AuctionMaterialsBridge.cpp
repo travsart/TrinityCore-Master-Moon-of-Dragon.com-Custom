@@ -664,7 +664,7 @@ bool AuctionMaterialsBridge::IsMaterialAvailableOnAH(
 
     uint32 maxPricePerUnit = UINT32_MAX;
 
-    return auctionBridge->IsMaterialAvailableForPurchase(itemId, quantity, maxPricePerUnit);
+    return auctionBridge->IsMaterialAvailableForPurchase(_bot, itemId, quantity, maxPricePerUnit);
 }
 
 uint32 AuctionMaterialsBridge::GetAuctionPrice(

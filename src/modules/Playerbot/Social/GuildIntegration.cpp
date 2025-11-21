@@ -439,8 +439,9 @@ GuildParticipation GuildIntegration::GetGuildParticipation()
     return GuildParticipation(playerGuid, 0); // Return default participation
 }
 
-void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType)
+void GuildIntegration::UpdateGuildParticipation(GuildActivityType activityType)
 {
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto& participation = _playerParticipation[playerGuid];
     participation.activityCounts[activityType]++;
     participation.lastActivity = GameTime::GetGameTimeMS();

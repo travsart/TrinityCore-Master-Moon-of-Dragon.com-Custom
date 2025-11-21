@@ -562,7 +562,7 @@ AuctionHouse* ProfessionAuctionBridge::GetAuctionHouse() const
     return _auctionHouse;
 }
 
-void ProfessionAuctionBridge::SynchronizeWithAuctionHouse()
+void ProfessionAuctionBridge::SynchronizeWithAuctionHouse(::Player* player)
 {
     // Synchronization logic with existing auction house
     // In full implementation, check active auctions, update statistics, etc.
