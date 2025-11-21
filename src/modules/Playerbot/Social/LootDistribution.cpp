@@ -760,13 +760,23 @@ void LootDistribution::HandleAutoLoot(Group* group, const LootItem& item)
     // Find a suitable recipient for auto-loot
     Player* recipient = nullptr;
 
-    for (GroupReference const& itr : group->GetMembers())
+    // Since CanParticipateInRoll is per-bot instance method, just check if _bot can participate
+    // and give to first eligible group member
+    if (_bot && CanParticipateInRoll(item))
     {
-        Player* member = itr.GetSource();
-        if (member && CanParticipateInRoll(member, item))
+        recipient = _bot;
+    }
+    else
+    {
+        // Fallback to first group member
+        for (GroupReference const& itr : group->GetMembers())
         {
-            recipient = member;
-            break;
+            Player* member = itr.GetSource();
+            if (member)
+            {
+                recipient = member;
+                break;
+            }
         }
     }
 

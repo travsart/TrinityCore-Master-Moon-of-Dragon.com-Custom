@@ -190,9 +190,9 @@ void UnifiedQuestManager::CompletionModule::UpdateObjectiveProgress(Player* bot,
 bool UnifiedQuestManager::CompletionModule::IsObjectiveComplete(const QuestObjectiveData& objective)
 {
     _objectivesCompleted++;
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->IsObjectiveComplete(objective);
-    return {};
+    // Note: This wrapper doesn't have bot context - objective should contain player info
+    // TODO: Review if this method needs Player* parameter
+    return false; // Placeholder - needs proper implementation
 }
 
 void UnifiedQuestManager::CompletionModule::HandleKillObjective(Player* bot, QuestObjectiveData& objective)

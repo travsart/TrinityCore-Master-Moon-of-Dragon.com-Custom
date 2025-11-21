@@ -971,9 +971,9 @@ std::string UnifiedLootManager::GetLootStatistics() const
     oss << "Active Sessions: " << "(statistics unavailable)" << "\n";
 
     oss << "\n--- Distribution Module ---\n";
-    // Note: _rollsProcessed is private
+    // Note: _rollsProcessed/_itemsDistributed are private
     oss << "Rolls Processed: " << "(statistics unavailable)" << "\n";
-    oss << "Items Distributed: " << _distribution->_itemsDistributed.load() << "\n";
+    oss << "Items Distributed: " << "(statistics unavailable)" << "\n";
 
     return oss.str();
 }

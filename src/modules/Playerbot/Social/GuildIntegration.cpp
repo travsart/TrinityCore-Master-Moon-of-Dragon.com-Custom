@@ -54,9 +54,9 @@ void GuildIntegration::ProcessGuildInteraction()
     UpdateGuildParticipation(GuildActivityType::SOCIAL_INTERACTION);
 
     // Handle guild-specific interactions
-    AutomateGuildChatParticipation(_bot);
-    AutomateGuildBankInteractions(_bot);
-    ParticipateInGuildActivities(_bot);
+    AutomateGuildChatParticipation();
+    AutomateGuildBankInteractions();
+    ParticipateInGuildActivities();
 }
 
 void GuildIntegration::HandleGuildChat( const GuildChatMessage& message)
