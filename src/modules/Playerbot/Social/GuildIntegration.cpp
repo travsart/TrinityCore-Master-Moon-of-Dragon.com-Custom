@@ -84,10 +84,10 @@ void GuildIntegration::HandleGuildChat(const GuildChatMessage& message)
 
 void GuildIntegration::ParticipateInGuildActivities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
     // Participate in various guild activities based on profile
     for (GuildActivityType activity : profile.activeActivities)
     {
@@ -95,7 +95,7 @@ void GuildIntegration::ParticipateInGuildActivities()
         {
             case GuildActivityType::GUILD_BANK_INTERACTION:
                 if (rand() % 100 < 10) // 10% chance per update
-                    AutomateGuildBankInteractions(player);
+                    AutomateGuildBankInteractions();
                 break;
 
             case GuildActivityType::GUILD_EVENT_ATTENDANCE:
@@ -104,7 +104,7 @@ void GuildIntegration::ParticipateInGuildActivities()
 
             case GuildActivityType::OFFICER_DUTIES:
                 if (profile.preferredRole == GuildRole::OFFICER || profile.preferredRole == GuildRole::LEADER)
-                    SupportGuildLeadership(player);
+                    SupportGuildLeadership();
                 break;
 
             case GuildActivityType::RECRUITMENT_ASSISTANCE:
