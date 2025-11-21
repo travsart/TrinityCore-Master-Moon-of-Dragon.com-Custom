@@ -474,14 +474,14 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
     // For now, hardcode common materials
 
     // Herbs
-    _materialToNodeType[2447] = GatheringNodeType::HERB;    // Peacebloom
-    _materialToNodeType[765] = GatheringNodeType::HERB;     // Silverleaf
-    _materialToNodeType[2449] = GatheringNodeType::HERB;    // Earthroot
+    _materialToNodeType[2447] = GatheringNodeType::HERB_NODE;    // Peacebloom
+    _materialToNodeType[765] = GatheringNodeType::HERB_NODE;     // Silverleaf
+    _materialToNodeType[2449] = GatheringNodeType::HERB_NODE;    // Earthroot
 
     // Ores
-    _materialToNodeType[2770] = GatheringNodeType::MINERAL; // Copper Ore
-    _materialToNodeType[2771] = GatheringNodeType::MINERAL; // Tin Ore
-    _materialToNodeType[2772] = GatheringNodeType::MINERAL; // Iron Ore
+    _materialToNodeType[2770] = GatheringNodeType::MINING_VEIN; // Copper Ore
+    _materialToNodeType[2771] = GatheringNodeType::MINING_VEIN; // Tin Ore
+    _materialToNodeType[2772] = GatheringNodeType::MINING_VEIN; // Iron Ore
 
     TC_LOG_DEBUG("playerbots", "GatheringMaterialsBridge: Loaded {} material-node mappings",
         _materialToNodeType.size());
@@ -511,9 +511,9 @@ GatheringNodeType GatheringMaterialsBridge::GetNodeTypeForMaterial(uint32 itemId
         switch (recipe->profession)
         {
             case ProfessionType::HERBALISM:
-                return GatheringNodeType::HERB;
+                return GatheringNodeType::HERB_NODE;
             case ProfessionType::MINING:
-                return GatheringNodeType::MINERAL;
+                return GatheringNodeType::MINING_VEIN;
             case ProfessionType::SKINNING:
                 return GatheringNodeType::NONE;  // Skinning doesn't use nodes
             default:

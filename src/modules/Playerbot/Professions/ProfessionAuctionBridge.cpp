@@ -130,7 +130,7 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
     }
 }
 
-void ProfessionAuctionBridge::SetEnabled(bool enabled)
+void ProfessionAuctionBridge::SetEnabled(::Player* player, bool enabled)
 {
     if (!_bot)
         return;
