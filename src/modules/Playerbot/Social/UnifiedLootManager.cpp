@@ -9,6 +9,7 @@
 
 #include "UnifiedLootManager.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
+#include "Core/Managers/GameSystemsManager.h"  // Complete type for IGameSystemsManager
 #include "LootDistribution.h"
 #include "Log.h"
 #include "ObjectAccessor.h"

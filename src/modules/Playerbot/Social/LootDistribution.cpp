@@ -84,8 +84,9 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
 
         // Fallback to ObjectAccessor for full validation
         Player* member = ObjectAccessor::FindConnectedPlayer(slot.guid);
-        if (member && CanParticipateInRoll(member, item))
+        if (member)
         {
+            // Add member to eligible players for this roll
             roll.eligiblePlayers.insert(member->GetGUID().GetCounter());
         }
     }

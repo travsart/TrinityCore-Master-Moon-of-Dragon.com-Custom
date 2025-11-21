@@ -9,6 +9,7 @@
 
 #include "UnifiedQuestManager.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
+#include "Core/Managers/GameSystemsManager.h"  // Complete type for IGameSystemsManager
 #include "Log.h"
 #include "Timer.h"
 #include <sstream>

@@ -51,12 +51,12 @@ void GuildIntegration::ProcessGuildInteraction()
     }
 
     // Update player participation
-    UpdateGuildParticipation(playerGuid, GuildActivityType::SOCIAL_INTERACTION);
+    UpdateGuildParticipation(_bot->GetGUID(), GuildActivityType::SOCIAL_INTERACTION);
 
     // Handle guild-specific interactions
-    AutomateGuildChatParticipation(player);
-    AutomateGuildBankInteractions(player);
-    ParticipateInGuildActivities(player);
+    AutomateGuildChatParticipation(_bot);
+    AutomateGuildBankInteractions(_bot);
+    ParticipateInGuildActivities(_bot);
 }
 
 void GuildIntegration::HandleGuildChat( const GuildChatMessage& message)
