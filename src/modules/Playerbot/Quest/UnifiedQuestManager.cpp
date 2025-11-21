@@ -165,7 +165,7 @@ void UnifiedQuestManager::CompletionModule::CompleteQuest(uint32 questId, Player
 bool UnifiedQuestManager::CompletionModule::TurnInQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->TurnInQuest(questId);
+        return systems->GetQuestCompletion()->TurnInQuest(questId, bot);
     return {};
 }
 

@@ -626,13 +626,21 @@ LootMetrics LootDistribution::GetGlobalLootMetrics()
     return _globalMetrics;
 }
 
-void LootDistribution::SetPlayerLootStrategy(uint32 playerGuid, LootDecisionStrategy strategy)
+void LootDistribution::SetPlayerLootStrategy(LootDecisionStrategy strategy)
 {
+    if (!_bot)
+        return;
+
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     _playerLootProfiles[playerGuid].strategy = strategy;
 }
 
-LootDecisionStrategy LootDistribution::GetPlayerLootStrategy(uint32 playerGuid)
+LootDecisionStrategy LootDistribution::GetPlayerLootStrategy()
 {
+    if (!_bot)
+        return LootDecisionStrategy::NEED_BEFORE_GREED;
+
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second.strategy;
