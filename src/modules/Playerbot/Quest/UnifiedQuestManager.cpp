@@ -246,7 +246,7 @@ void UnifiedQuestManager::CompletionModule::HandleEscortObjective(Player* bot, Q
 void UnifiedQuestManager::CompletionModule::NavigateToObjective(Player* bot, const QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->NavigateToObjective(objective);
+        systems->GetQuestCompletion()->NavigateToObjective(bot, objective);
 }
 
 bool UnifiedQuestManager::CompletionModule::FindObjectiveTarget(Player* bot, QuestObjectiveData& objective)

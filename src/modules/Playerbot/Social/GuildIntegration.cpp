@@ -359,7 +359,7 @@ void GuildIntegration::OrganizeGuildBank()
 
 void GuildIntegration::ManageGuildBankPermissions()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Officer/Leader role: manage bank access permissions
@@ -370,7 +370,7 @@ void GuildIntegration::ManageGuildBankPermissions()
 
 void GuildIntegration::CoordinateGuildEvents()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Event organizer role: plan and coordinate guild activities
@@ -382,7 +382,7 @@ void GuildIntegration::CoordinateGuildEvents()
 
 void GuildIntegration::ScheduleGuildActivities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Schedule various guild activities
@@ -394,7 +394,7 @@ void GuildIntegration::ScheduleGuildActivities()
 
 void GuildIntegration::ManageGuildCalendar()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Manage guild calendar events
@@ -406,7 +406,7 @@ void GuildIntegration::ManageGuildCalendar()
 
 void GuildIntegration::OrganizeGuildRuns()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Organize guild dungeon/raid runs
@@ -466,7 +466,7 @@ void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivity
 
 void GuildIntegration::AssistWithRecruitment()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Help with guild recruitment
@@ -478,7 +478,7 @@ void GuildIntegration::AssistWithRecruitment()
 
 void GuildIntegration::EvaluateRecruitmentCandidates()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Evaluate potential guild recruits
@@ -489,7 +489,7 @@ void GuildIntegration::EvaluateRecruitmentCandidates()
 
 void GuildIntegration::WelcomeNewGuildMembers()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Welcome new guild members
@@ -501,7 +501,7 @@ void GuildIntegration::WelcomeNewGuildMembers()
 
 void GuildIntegration::MentorJuniorMembers()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Mentor newer or lower-level guild members
@@ -513,7 +513,7 @@ void GuildIntegration::MentorJuniorMembers()
 
 void GuildIntegration::SupportGuildLeadership()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Support guild leadership activities
@@ -525,7 +525,7 @@ void GuildIntegration::SupportGuildLeadership()
 
 void GuildIntegration::HandleOfficerDuties()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Handle officer-specific duties
@@ -537,7 +537,7 @@ void GuildIntegration::HandleOfficerDuties()
 
 void GuildIntegration::AssistWithGuildManagement()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Assist with general guild management
@@ -549,7 +549,7 @@ void GuildIntegration::AssistWithGuildManagement()
 
 void GuildIntegration::ProvideMemberFeedback()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Provide feedback to guild members
@@ -695,7 +695,7 @@ void GuildIntegration::LearnFromGuildConversations()
 
 void GuildIntegration::ContributeToGuildAchievements()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Actively work towards guild achievements
@@ -717,7 +717,7 @@ void GuildIntegration::CoordinateAchievementEfforts(Guild* guild)
 
 void GuildIntegration::TrackAchievementProgress()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Track progress towards guild achievements
@@ -728,7 +728,7 @@ void GuildIntegration::TrackAchievementProgress()
 
 void GuildIntegration::CelebrateGuildAchievements()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Celebrate completed guild achievements
@@ -1004,7 +1004,7 @@ bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
 
 void GuildIntegration::SendGuildChatMessage( const std::string& message)
 {
-    if (!player || !_bot->GetGuild() || message.empty())
+    if (!_bot || !_bot->GetGuild() || message.empty())
         return;
 
     // Send message to guild chat using proper TrinityCore API

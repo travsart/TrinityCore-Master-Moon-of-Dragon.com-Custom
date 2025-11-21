@@ -749,12 +749,12 @@ ProfessionAutomationProfile ProfessionManager::GetAutomationProfile() const
 // METRICS
 // ============================================================================
 
-ProfessionManager::ProfessionMetrics const& ProfessionManager::GetMetrics() const
+ProfessionMetrics const& ProfessionManager::GetMetrics() const
 {
     return _metrics;
 }
 
-ProfessionManager::ProfessionMetrics const& ProfessionManager::GetGlobalMetrics() const
+ProfessionMetrics const& ProfessionManager::GetGlobalMetrics() const
 {
     return _globalMetrics;
 }
