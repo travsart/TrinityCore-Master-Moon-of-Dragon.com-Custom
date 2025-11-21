@@ -278,7 +278,7 @@ void GameSystemsManager::Initialize(Player* bot)
     // ========================================================================
 
     // Priority-based behavior manager
-    _priorityManager = std::make_unique<bot::ai::BehaviorPriorityManager>(_botAI);
+    _priorityManager = std::make_unique<BehaviorPriorityManager>(_botAI);
 
     // Group management
     _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
