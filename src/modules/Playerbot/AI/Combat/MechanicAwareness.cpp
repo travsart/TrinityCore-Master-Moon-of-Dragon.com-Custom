@@ -1050,8 +1050,9 @@ float MechanicAwareness::EstimateSpellDamage(uint32 spellId, Unit* caster, Unit*
 bool MechanicAwareness::RequiresPositioning(uint32 spellId)
 {
     MechanicType type = GetSpellMechanicType(spellId);
-    return (type & (MechanicType::FRONTAL_CLEAVE | MechanicType::TAIL_SWIPE |
-                   MechanicType::POSITIONAL | MechanicType::AOE_DAMAGE)) != MechanicType::NONE;
+    using T = std::underlying_type_t<MechanicType>;
+    return (static_cast<T>(type) & (static_cast<T>(MechanicType::FRONTAL_CLEAVE) | static_cast<T>(MechanicType::TAIL_SWIPE) |
+                   static_cast<T>(MechanicType::POSITIONAL) | static_cast<T>(MechanicType::AOE_DAMAGE))) != 0;
 }
 
 MechanicType MechanicAwareness::GetSpellMechanicType(uint32 spellId)
