@@ -281,7 +281,7 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
         // Check if should sell
         if (ShouldSellCraftedItem(player, itemInfo.itemId, materialCost))
         {
-            ListCraftedItemOnAuction(itemInfo.itemGuid, config);
+            ListCraftedItemOnAuction(player, itemInfo.itemGuid, config);
         }
     }
 }
@@ -312,7 +312,7 @@ bool ProfessionAuctionBridge::ShouldSellCraftedItem(::Player* player, uint32 ite
     return actualProfitCopper >= minProfitCopper;
 }
 
-bool ProfessionAuctionBridge::ListCraftedItemOnAuction(uint32 itemGuid, CraftedItemAuctionConfig const& config)
+bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 itemGuid, CraftedItemAuctionConfig const& config)
 {
     if (!_bot || !_auctionHouse)
         return false;
