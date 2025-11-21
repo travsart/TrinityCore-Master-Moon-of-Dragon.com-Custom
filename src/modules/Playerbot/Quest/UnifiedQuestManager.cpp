@@ -266,7 +266,7 @@ std::vector<Position> UnifiedQuestManager::CompletionModule::GetObjectiveLocatio
 Position UnifiedQuestManager::CompletionModule::GetOptimalObjectivePosition(Player* bot, const QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->GetOptimalObjectivePosition(objective);
+        return systems->GetQuestCompletion()->GetOptimalObjectivePosition(bot, objective);
     return {};
 }
 

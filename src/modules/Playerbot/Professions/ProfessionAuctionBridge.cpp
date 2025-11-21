@@ -12,8 +12,8 @@
 #include "ProfessionEventBus.h"
 #include "ProfessionEvents.h"
 #include "../Social/AuctionHouse.h"
-#include "../Core/BotAI.h"
-#include "../Core/BotSession.h"
+#include "../AI/BotAI.h"
+#include "../Session/BotSession.h"
 #include "../Core/Managers/GameSystemsManager.h"
 #include "../Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "Player.h"

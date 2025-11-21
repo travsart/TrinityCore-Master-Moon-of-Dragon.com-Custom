@@ -420,9 +420,9 @@ void GuildIntegration::SetGuildProfile(const GuildProfile& profile)
     _playerProfiles[_bot->GetGUID().GetCounter()] = profile;
 }
 
-GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
+GuildProfile GuildIntegration::GetGuildProfile()
 {
-    auto it = _playerProfiles.find(playerGuid);
+    auto it = _playerProfiles.find(_bot->GetGUID().GetCounter());
     if (it != _playerProfiles.end())
         return it->second;
 
