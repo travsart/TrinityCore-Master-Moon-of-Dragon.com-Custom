@@ -168,7 +168,7 @@ ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playe
 // MATERIAL AUCTION AUTOMATION
 // ============================================================================
 
-void ProfessionAuctionBridge::SellExcessMaterials()
+void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
 {
     if (!_bot || !_auctionHouse || !CanAccessAuctionHouse())
         return;
@@ -254,7 +254,7 @@ uint32 ProfessionAuctionBridge::GetOptimalMaterialPrice(uint32 itemId, uint32 st
 // CRAFTED ITEM AUCTION AUTOMATION
 // ============================================================================
 
-void ProfessionAuctionBridge::SellCraftedItems()
+void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
 {
     if (!_bot || !_auctionHouse || !CanAccessAuctionHouse())
         return;
