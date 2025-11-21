@@ -66,6 +66,7 @@ class TargetScanner;
 class GroupInvitationHandler;
 class ManagerRegistry;
 class HybridAIController;
+class BehaviorPriorityManager;
 
 namespace Advanced
 {
@@ -83,7 +84,6 @@ namespace bot::ai
     class ActionPriorityQueue;
     class BehaviorTree;
     class HybridAIController;
-    class BehaviorPriorityManager;
 }
 
 /**
