@@ -25,8 +25,8 @@
 // #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
 
 // Manager implementations (for unique_ptr destruction)
-// #include "Social/LootDistribution.h"  // REMOVED: Causes redefinition error, forward declaration in header is sufficient
-#include "AI/BehaviorPriorityManager.h"  // For unique_ptr<bot::ai::BehaviorPriorityManager> destruction
+#include "Social/LootDistribution.h"  // Required for unique_ptr<LootDistribution> construction
+#include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction
 
 #include <set>
 
