@@ -906,7 +906,7 @@ float LootDistribution::CalculateItemScore( Item* item)
 
 float LootDistribution::CalculateUpgradeValue( const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return 0.0f;
 
     // Get current item in the same slot
