@@ -195,7 +195,7 @@ private:
         uint64_t totalPolls{0};
         uint64_t eventsDetected{0};
         uint64_t averagePollTimeUs{0};
-        ::std::chrono::steady_clock::time_point startTime;
+        ::std::chrono::steady_clock::time_point startTime{::std::chrono::steady_clock::now()};
 
         void Reset();
         ::std::string ToString() const;

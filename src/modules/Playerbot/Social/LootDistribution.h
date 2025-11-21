@@ -327,7 +327,6 @@ public:
 
 private:
     Player* _bot;
-    ~LootDistribution() = default;
 
     // Core data structures
     std::unordered_map<uint32, LootRoll> _activeLootRolls; // rollId -> roll data
