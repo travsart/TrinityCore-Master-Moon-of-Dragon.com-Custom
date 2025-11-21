@@ -1308,7 +1308,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& ob
                                       static_cast<QuestObjectiveType>(questObjective.Type),
                                       questObjective.ObjectID, questObjective.Amount);
 
-            Position newPos = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->FindObjectiveTargetLocation(objData) : Position());
+            Position newPos = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->FindObjectiveTargetLocation(bot, objData) : Position());
             // Check if we got a valid position
             if (newPos.GetExactDist2d(0.0f, 0.0f) > 0.1f)
             {
