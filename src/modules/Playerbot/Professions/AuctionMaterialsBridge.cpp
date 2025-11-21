@@ -678,7 +678,7 @@ uint32 AuctionMaterialsBridge::GetAuctionPrice(
     if (!auctionBridge)
         return 0;
 
-    return auctionBridge->GetOptimalMaterialPrice(itemId, quantity);
+    return auctionBridge->GetOptimalMaterialPrice(_bot, itemId, quantity);
 }
 
 uint32 AuctionMaterialsBridge::EstimateAuctionPurchaseTime()

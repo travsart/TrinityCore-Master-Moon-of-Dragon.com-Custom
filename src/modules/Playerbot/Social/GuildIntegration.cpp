@@ -563,11 +563,11 @@ void GuildIntegration::ProvideMemberFeedback()
 
 std::string GuildIntegration::GenerateGuildChatResponse( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return "";
 
     // Analyze message content and generate appropriate response
-    float relevance = CalculateMessageRelevance(player, message);
+    float relevance = CalculateMessageRelevance(_bot, message);
     if (relevance < 0.3f) // Not relevant enough to respond
         return "";
 

@@ -309,7 +309,7 @@ void UnifiedQuestManager::CompletionModule::OptimizeObjectiveSequence(Player* bo
 void UnifiedQuestManager::CompletionModule::FindEfficientCompletionPath(Player* bot, const std::vector<uint32>& questIds)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->FindEfficientCompletionPath(questIds);
+        systems->GetQuestCompletion()->FindEfficientCompletionPath(bot, questIds);
 }
 
 void UnifiedQuestManager::CompletionModule::MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives)
