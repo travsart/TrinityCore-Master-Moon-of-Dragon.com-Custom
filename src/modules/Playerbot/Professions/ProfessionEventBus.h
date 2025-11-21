@@ -187,7 +187,7 @@ public:
      */
     uint32 GetSubscriberCount(ProfessionEventType type) const
     {
-        return EventBus<ProfessionEvent>::instance()->GetSubscriberCountForType(type);
+        return EventBus<ProfessionEvent>::instance()->GetSubscriberCount(type);
     }
 
     /**
