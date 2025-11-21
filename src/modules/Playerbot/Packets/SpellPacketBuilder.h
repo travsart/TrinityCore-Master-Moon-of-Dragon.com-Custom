@@ -326,7 +326,7 @@ public:
         Player* caster,
         uint32 spellId,
         Unit* target = nullptr,
-        BuildOptions const& options);
+        BuildOptions const& options = BuildOptions());
 
 private:
     // Internal validation methods (comprehensive, no shortcuts)

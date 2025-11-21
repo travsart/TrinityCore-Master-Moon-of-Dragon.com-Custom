@@ -1789,15 +1789,16 @@ uint32 HunterAI::GetOptimalAspect() const
     if (_bot->IsInCombat())
     {
         // Low on focus? Use Viper
-    if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
-
+        if (GetFocusPercent() < 30.0f && _bot->HasSpell(ASPECT_OF_THE_VIPER))
             return ASPECT_OF_THE_VIPER;
 
-        // Normal combat aspect        return _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
+        // Normal combat aspect
+        return _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
     }
     else
     {
-        // Out of combat movement        return _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
+        // Out of combat movement
+        return _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
     }
 }
 

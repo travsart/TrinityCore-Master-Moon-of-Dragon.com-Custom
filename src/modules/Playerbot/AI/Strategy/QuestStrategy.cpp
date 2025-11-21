@@ -413,7 +413,7 @@ void QuestStrategy::ProcessQuestObjectives(BotAI* ai)
     }
 }
 
-void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
     {

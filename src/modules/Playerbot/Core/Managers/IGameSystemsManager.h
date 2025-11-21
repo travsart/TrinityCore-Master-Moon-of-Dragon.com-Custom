@@ -262,7 +262,7 @@ public:
      * @brief Get behavior priority manager
      * @return Non-owning pointer to BehaviorPriorityManager (owned by facade)
      */
-    virtual bot::ai::BehaviorPriorityManager* GetPriorityManager() const = 0;
+    virtual BehaviorPriorityManager* GetPriorityManager() const = 0;
 };
 
 } // namespace Playerbot
