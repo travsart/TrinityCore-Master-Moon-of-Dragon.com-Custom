@@ -324,7 +324,7 @@ void GuildIntegration::DepositItemsToGuildBank()
 
 void GuildIntegration::WithdrawNeededItems()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Identify items needed by the player

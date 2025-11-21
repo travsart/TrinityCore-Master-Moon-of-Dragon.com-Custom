@@ -234,7 +234,7 @@ void UnifiedQuestManager::CompletionModule::HandleSpellCastObjective(Player* bot
 void UnifiedQuestManager::CompletionModule::HandleEmoteObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleEmoteObjective(objective);
+        systems->GetQuestCompletion()->HandleEmoteObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleEscortObjective(Player* bot, QuestObjectiveData& objective)
