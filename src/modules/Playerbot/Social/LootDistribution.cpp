@@ -35,11 +35,6 @@ LootDistribution::LootDistribution(Player* bot) : _bot(bot) {
 
 LootDistribution::~LootDistribution() {}
 
-LootDistribution::LootDistribution()
-{
-    _globalMetrics.Reset();
-}
-
 void LootDistribution::HandleGroupLoot(Group* group, Loot* loot)
 {
     if (!group || !loot)

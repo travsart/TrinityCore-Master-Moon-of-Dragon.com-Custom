@@ -33,12 +33,6 @@ GuildIntegration::GuildIntegration(Player* bot) : _bot(bot) {
 
 GuildIntegration::~GuildIntegration() {}
 
-GuildIntegration::GuildIntegration()
-{
-    _globalMetrics.Reset();
-    InitializeChatTemplates();
-}
-
 void GuildIntegration::ProcessGuildInteraction()
 {
     if (!player)

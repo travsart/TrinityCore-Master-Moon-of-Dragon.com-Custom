@@ -599,7 +599,7 @@ void BotAI::OnSocialEvent(SocialEvent const& event)
             break;
 
         case SocialEventType::TRADE_STATUS_CHANGED:
-            if (_tradeManager)
+            if (GetGameSystems()->GetTradeManager())
             {
                 // Delegate to TradeManager
                 TC_LOG_TRACE("playerbot.events.social", "Bot {}: Trade status changed",
