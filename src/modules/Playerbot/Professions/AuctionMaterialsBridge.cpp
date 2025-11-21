@@ -1083,10 +1083,10 @@ GatheringMaterialsBridge* AuctionMaterialsBridge::GetGatheringBridge()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetGatheringMaterialsBridge();
+    return session->GetAI()->GetGameSystems()->GetGatheringMaterialsBridge();
 }
 
 ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
@@ -1095,10 +1095,10 @@ ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionAuctionBridge();
+    return session->GetAI()->GetGameSystems()->GetProfessionAuctionBridge();
 }
 
 ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()
@@ -1107,10 +1107,10 @@ ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
 // ============================================================================

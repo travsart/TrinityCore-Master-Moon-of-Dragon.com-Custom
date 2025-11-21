@@ -171,10 +171,10 @@ void GatheringMaterialsBridge::UpdateMaterialRequirements()
 
     // Get ProfessionManager via GameSystemsManager facade
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return;
 
@@ -387,10 +387,10 @@ GatheringManager* GatheringMaterialsBridge::GetGatheringManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetGatheringManager();
+    return session->GetAI()->GetGameSystems()->GetGatheringManager();
 }
 
 void GatheringMaterialsBridge::SynchronizeWithGatheringManager()
@@ -532,10 +532,10 @@ std::vector<RecipeInfo> GatheringMaterialsBridge::GetRecipesThatUseMaterial(uint
         return recipes;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return recipes;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return recipes;
 
@@ -572,10 +572,10 @@ bool GatheringMaterialsBridge::PlayerKnowsRecipesUsingMaterial(uint32 itemId)
     std::vector<RecipeInfo> recipes = GetRecipesThatUseMaterial(itemId);
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return false;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return false;
 

@@ -93,9 +93,9 @@ void ProfessionAuctionBridge::Initialize()
     TC_LOG_DEBUG("playerbot", "ProfessionAuctionBridge: Initialized for bot '{}', subscribed to 2 event types", _bot->GetName());
 }
 
-void ProfessionAuctionBridge::Update(uint32 diff)
+void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
 {
-    if (!_bot || !IsEnabled())
+    if (!_bot || !IsEnabled(player))
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
@@ -867,10 +867,10 @@ ProfessionManager* ProfessionAuctionBridge::GetProfessionManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
 // ============================================================================
