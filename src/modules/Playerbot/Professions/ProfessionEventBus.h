@@ -169,7 +169,7 @@ public:
      */
     uint64 GetTotalEventsPublished() const
     {
-        return EventBus<ProfessionEvent>::instance()->GetTotalEventsProcessed();
+        return EventBus<ProfessionEvent>::instance()->GetTotalEventsPublished();
     }
 
     /**
@@ -178,7 +178,7 @@ public:
      */
     uint64 GetEventCount(ProfessionEventType type) const
     {
-        return EventBus<ProfessionEvent>::instance()->GetEventTypeCount(type);
+        return EventBus<ProfessionEvent>::instance()->GetEventCount(type);
     }
 
     /**

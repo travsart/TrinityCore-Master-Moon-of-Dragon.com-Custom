@@ -324,8 +324,10 @@ void GameSystemsManager::Initialize(Player* bot)
     // _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);  // ERROR: Cannot instantiate singleton
     // Note: LFGGroupCoordinator is also a global singleton, accessed via sLFGGroupCoordinator macro
     // _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);  // ERROR: Cannot instantiate singleton
-    _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);
-    _botPriorityManager = std::make_unique<BotPriorityManager>(_bot);
+    // Note: InstanceCoordination is also a global singleton
+    // _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: BotPriorityManager is also a global singleton, accessed via sBotPriorityMgr macro
+    // _botPriorityManager = std::make_unique<BotPriorityManager>(_bot);  // ERROR: Cannot instantiate singleton
     _botWorldSessionMgr = std::make_unique<BotWorldSessionMgr>(_bot);
     _botLifecycleManager = std::make_unique<BotLifecycleManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);

@@ -1287,9 +1287,9 @@ bool LeaderFollowBehavior::StartMovement(Player* bot, const Position& destinatio
 
         // CRITICAL FIX: Only issue MoveFollow if NOT already following
         // Re-issuing every frame causes speed-up and blinking issues
-        MovementGeneratorType currentType = motionMaster->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
+        auto currentType = motionMaster->GetCurrentMovementGeneratorType(MOTION_SLOT_ACTIVE);
 
-        if (currentType != FOLLOW_MOTION_TYPE)
+        if (currentType != ::FOLLOW_MOTION_TYPE)
         {
             // If there's leftover combat movement (CHASE/POINT), clear it first
     if (currentType == CHASE_MOTION_TYPE || currentType == POINT_MOTION_TYPE)
