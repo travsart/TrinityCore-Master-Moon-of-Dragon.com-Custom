@@ -845,14 +845,14 @@ LootRollType LootDistribution::ExecuteStrategy( const LootItem& item, LootDecisi
     }
 
     // Apply strategy modifiers
-    ApplyStrategyModifiers(player, item, decision);
+    ApplyStrategyModifiers(item, decision);
 
     return decision;
 }
 
 void LootDistribution::ApplyStrategyModifiers( const LootItem& item, LootRollType& decision)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     Group* group = _bot->GetGroup();

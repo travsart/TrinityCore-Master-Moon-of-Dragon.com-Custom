@@ -210,13 +210,13 @@ void UnifiedQuestManager::CompletionModule::HandleCollectObjective(Player* bot, 
 void UnifiedQuestManager::CompletionModule::HandleTalkToNpcObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleTalkToNpcObjective(objective);
+        systems->GetQuestCompletion()->HandleTalkToNpcObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleLocationObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleLocationObjective(objective);
+        systems->GetQuestCompletion()->HandleLocationObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective)

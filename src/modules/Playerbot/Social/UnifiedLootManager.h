@@ -253,6 +253,11 @@ private:
             std::unordered_map<uint32, uint32> rollValues;
             bool isComplete;
 
+            // Default constructor for map usage
+            LootRoll()
+                : rollId(0), itemId(0), lootSlot(0), groupId(0), isComplete(false)
+            {}
+
             LootRoll(uint32 id) : rollId(id), itemId(0), lootSlot(0), groupId(0), isComplete(false) {}
         };
 
