@@ -245,7 +245,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     NPCEvent event = NPCEvent::PetitionListReceived(
         bot->GetGUID(),
         packet.Owner,  // Use owner as NPC GUID
-        packet.PetitionID
+        { static_cast<uint32>(packet.PetitionID) }  // Wrap single petition ID in vector
     );
 
     NPCEventBus::instance()->PublishEvent(event);

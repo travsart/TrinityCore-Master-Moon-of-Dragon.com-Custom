@@ -463,7 +463,7 @@ void BotAI::OnQuestEvent(QuestEvent const& event)
         return;
 
     // Delegate all quest events to QuestManager
-    if (_questManager)
+    if (GetGameSystems()->GetQuestManager())
     {
         // QuestManager will handle quest acceptance, completion, and progress tracking
         TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest event {} for quest {}",

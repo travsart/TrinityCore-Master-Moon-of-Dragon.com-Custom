@@ -637,11 +637,10 @@ Position PositionManager::FindDpsPosition(Unit* target, PositionType type)
     switch (type)
     {
         case PositionType::MELEE_COMBAT:
-        case PositionType::MELEE_DPS:
+        case PositionType::FLANKING:  // Flanking positioning for melee DPS (behind target)
             return FindMeleePosition(target, true); // Prefer behind for DPS
 
-        case PositionType::RANGED_DPS:
-        case PositionType::RANGED_CASTER:
+        case PositionType::RANGED_DPS:  // Handles both ranged DPS and casters
             return FindRangedPosition(target, 25.0f); // Standard ranged distance
 
         default:
