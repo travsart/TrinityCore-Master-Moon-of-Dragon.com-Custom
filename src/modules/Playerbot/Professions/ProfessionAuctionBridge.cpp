@@ -424,7 +424,7 @@ std::vector<std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMateria
     return profMgr->GetMissingMaterials(*recipe);
 }
 
-bool ProfessionAuctionBridge::IsMaterialAvailableForPurchase(uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const
+bool ProfessionAuctionBridge::IsMaterialAvailableForPurchase(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit) const
 {
     if (!_bot || !_auctionHouse)
         return false;
