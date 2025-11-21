@@ -1111,7 +1111,7 @@ void LootDistribution::NotifyRollResult(const LootRoll& roll)
 
 bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group)
 {
-    if (!group || !player)
+    if (!group || !_bot)
         return false;
 
     LootFairnessTracker tracker = GetGroupLootFairness(group->GetGUID().GetCounter());
