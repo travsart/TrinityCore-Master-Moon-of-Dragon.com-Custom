@@ -578,7 +578,7 @@ std::string GuildIntegration::GenerateGuildChatResponse( const GuildChatMessage&
     std::string response = SelectResponseTemplate("general");
 
     // Personalize the response
-    response = PersonalizeResponse(_bot, response);
+    response = PersonalizeResponse(response);
 
     return response;
 }

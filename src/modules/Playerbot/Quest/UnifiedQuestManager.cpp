@@ -327,7 +327,7 @@ void UnifiedQuestManager::CompletionModule::DetectStuckState(Player* bot, uint32
 void UnifiedQuestManager::CompletionModule::HandleStuckObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleStuckObjective(objective);
+        systems->GetQuestCompletion()->HandleStuckObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::RecoverFromStuckState(Player* bot, uint32 questId)

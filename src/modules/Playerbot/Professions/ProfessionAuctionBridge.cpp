@@ -777,8 +777,9 @@ bool ProfessionAuctionBridge::IsCraftedItem(uint32 itemId, ProfessionType& outPr
 
     for (ProfessionType profession : productionProfessions)
     {
-        // Get all recipes for this profession
-        std::vector<RecipeInfo> recipes = ProfessionManager::instance()->GetRecipesForProfession(profession);
+        // Get all recipes for this profession - stub implementation
+        // TODO: Access ProfessionManager from GameSystemsManager when we have bot context
+        std::vector<RecipeInfo> recipes; // ProfessionManager requires bot context
 
         for (const RecipeInfo& recipe : recipes)
         {

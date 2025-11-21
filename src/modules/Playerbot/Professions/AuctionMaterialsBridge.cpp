@@ -1099,7 +1099,8 @@ ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
     if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetAI()->GetGameSystems()->GetProfessionAuctionBridge();
+    GameSystemsManager* systems = static_cast<GameSystemsManager*>(session->GetAI()->GetGameSystems());
+    return systems ? systems->GetProfessionAuctionBridge() : nullptr;
 }
 
 ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()
