@@ -622,7 +622,7 @@ void BotAI::OnAuctionEvent(AuctionEvent const& event)
         return;
 
     // Delegate all auction events to AuctionManager
-    if (_auctionManager)
+    if (GetGameSystems()->GetAuctionManager())
     {
         TC_LOG_TRACE("playerbot.events.auction", "Bot {}: Auction event type {}",
             _bot->GetName(), static_cast<uint32>(event.type));

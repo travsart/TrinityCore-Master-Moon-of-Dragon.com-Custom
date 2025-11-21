@@ -35,7 +35,7 @@ GuildIntegration::~GuildIntegration() {}
 
 void GuildIntegration::ProcessGuildInteraction()
 {
-    if (!player)
+    if (!_bot)
         return;
 
     Guild* guild = _bot->GetGuild();

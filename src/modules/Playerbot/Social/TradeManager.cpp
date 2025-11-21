@@ -1634,7 +1634,7 @@ namespace Playerbot
         return player->CanUseItem(item) == EQUIP_ERR_OK;
     }
 
-    void TradeManager::BuildLootDistributionPlan(LootDistribution& distribution)
+    void TradeManager::BuildLootDistributionPlan(GroupLootInfo& distribution)
     {
         if (!GetBot())
 
