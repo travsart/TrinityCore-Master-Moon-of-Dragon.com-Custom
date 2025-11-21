@@ -874,7 +874,7 @@ void LootDistribution::ConsiderGroupComposition(Group* group, const LootItem& it
 
 float LootDistribution::CalculateItemScore( const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return 0.0f;
 
     float score = 0.0f;

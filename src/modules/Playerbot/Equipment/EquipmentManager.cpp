@@ -1448,12 +1448,12 @@ EquipmentManager::EquipmentAutomationProfile const& EquipmentManager::GetAutomat
 // METRICS
 // ============================================================================
 
-EquipmentManager::EquipmentMetrics const& EquipmentManager::GetMetrics()
+EquipmentMetrics const& EquipmentManager::GetMetrics()
 {
     return _metrics;
 }
 
-EquipmentManager::EquipmentMetrics const& EquipmentManager::GetGlobalMetrics()
+EquipmentMetrics const& EquipmentManager::GetGlobalMetrics()
 {
     return _globalMetrics;
 }

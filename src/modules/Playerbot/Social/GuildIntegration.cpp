@@ -302,7 +302,7 @@ void GuildIntegration::DepositItemsToGuildBank()
             {
                 if (Item* item = pBag->GetItemByPos(slot))
                 {
-                    if (ShouldDepositItem(player, item->GetEntry()))
+                    if (ShouldDepositItem(item->GetEntry()))
                     {
                         itemsToDeposit.push_back(item);
                     }
