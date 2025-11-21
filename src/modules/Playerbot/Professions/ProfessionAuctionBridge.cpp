@@ -188,7 +188,7 @@ void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
         // Check if should sell
         if (ShouldSellMaterial(player, itemInfo.itemId, itemInfo.stackCount))
         {
-            ListMaterialOnAuction(itemInfo.itemGuid, config);
+            ListMaterialOnAuction(player, itemInfo.itemGuid, config);
         }
     }
 }
@@ -208,7 +208,7 @@ bool ProfessionAuctionBridge::ShouldSellMaterial(::Player* player, uint32 itemId
     return currentCount > config.maxStackSize;
 }
 
-bool ProfessionAuctionBridge::ListMaterialOnAuction(uint32 itemGuid, MaterialStockpileConfig const& config)
+bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 itemGuid, MaterialStockpileConfig const& config)
 {
     if (!_bot || !_auctionHouse)
         return false;
@@ -361,7 +361,7 @@ float ProfessionAuctionBridge::CalculateProfitMargin(uint32 itemId, uint32 marke
 // MATERIAL PURCHASING AUTOMATION
 // ============================================================================
 
-void ProfessionAuctionBridge::BuyMaterialsForLeveling(ProfessionType profession)
+void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, ProfessionType profession)
 {
     if (!_bot || !_auctionHouse || !CanAccessAuctionHouse())
         return;
