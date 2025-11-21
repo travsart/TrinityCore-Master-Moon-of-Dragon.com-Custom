@@ -198,7 +198,7 @@ LootRollType LootDistribution::DetermineLootDecision(const LootItem& item)
     PlayerLootProfile profile = GetPlayerLootProfile();
 
     // Execute the player's strategy
-    return ExecuteStrategy(_bot, item, profile.strategy);
+    return ExecuteStrategy(item, profile.strategy);
 }
 
 LootPriority LootDistribution::AnalyzeItemPriority(const LootItem& item)
@@ -292,7 +292,7 @@ bool LootDistribution::ShouldPlayerGreedItem(const LootItem& item)
     if (!_bot)
         return false;
 
-    PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
+    PlayerLootProfile profile = GetPlayerLootProfile();
     // Check greed threshold
     if (item.vendorValue < profile.greedThreshold * 10000) // Convert threshold to copper
         return false;
@@ -307,7 +307,7 @@ bool LootDistribution::ShouldPlayerPassItem(const LootItem& item)
         return true;
 
     // Pass if item is blacklisted
-    PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
+    PlayerLootProfile profile = GetPlayerLootProfile();
     if (profile.blacklistedItems.find(item.itemId) != profile.blacklistedItems.end())
         return true;
 

@@ -265,7 +265,8 @@ void UnifiedLootManager::DistributionModule::HandleLootRoll(Player* player, uint
 LootRollType UnifiedLootManager::DistributionModule::DetermineLootDecision(
     Player* player, LootItem const& item, LootDecisionStrategy strategy)
 {
-    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item, strategy) : decltype(GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item, strategy))());
+    // Strategy parameter is ignored - each bot uses its own profile strategy
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item) : decltype(GetGameSystems(player)->GetLootDistribution()->DetermineLootDecision(item))());
 }
 
 LootPriority UnifiedLootManager::DistributionModule::CalculateLootPriority(Player* player, LootItem const& item)

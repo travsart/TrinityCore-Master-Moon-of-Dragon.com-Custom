@@ -58,14 +58,14 @@ bool UnifiedQuestManager::PickupModule::PickupQuest(uint32 questId, Player* bot,
 bool UnifiedQuestManager::PickupModule::PickupQuestFromGiver(Player* bot, uint32 questGiverGuid, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->PickupQuestFromGiver(questGiverGuid, questId);
+        return systems->GetQuestPickup()->PickupQuestFromGiver(bot, questGiverGuid, questId);
     return {};
 }
 
 void UnifiedQuestManager::PickupModule::PickupAvailableQuests(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestPickup()->PickupAvailableQuests();
+        systems->GetQuestPickup()->PickupAvailableQuests(bot);
 }
 
 void UnifiedQuestManager::PickupModule::PickupQuestsInArea(Player* bot, float radius)
