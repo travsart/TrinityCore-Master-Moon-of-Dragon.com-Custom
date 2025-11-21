@@ -178,7 +178,7 @@ void UnifiedQuestManager::CompletionModule::TrackQuestObjectives(Player* bot)
 void UnifiedQuestManager::CompletionModule::ExecuteObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->ExecuteObjective(objective);
+        systems->GetQuestCompletion()->ExecuteObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::UpdateObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex)

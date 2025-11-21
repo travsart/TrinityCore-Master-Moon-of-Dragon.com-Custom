@@ -51,7 +51,7 @@ void GuildIntegration::ProcessGuildInteraction()
     }
 
     // Update player participation
-    UpdateGuildParticipation(_bot->GetGUID(), GuildActivityType::SOCIAL_INTERACTION);
+    UpdateGuildParticipation(GuildActivityType::SOCIAL_INTERACTION);
 
     // Handle guild-specific interactions
     AutomateGuildChatParticipation(_bot);

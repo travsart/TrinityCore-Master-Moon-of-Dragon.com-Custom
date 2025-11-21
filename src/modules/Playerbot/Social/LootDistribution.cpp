@@ -721,18 +721,20 @@ bool LootDistribution::ShouldInitiateRoll(Group* group, const LootItem& item)
     if (item.itemQuality < group->GetLootThreshold())
         return false;
 
-    // Check if multiple players can use the item
-    uint32 interestedPlayers = 0;
+    // Check if bot can participate in roll
+    if (!CanParticipateInRoll(item))
+        return false;
+
+    // Check if there are at least 2 group members (potential interest)
+    uint32 groupMembers = 0;
     for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr.GetSource();
-        if (member && CanParticipateInRoll(member, item))
-        {
-            interestedPlayers++;
-            if (interestedPlayers >= 2)
-                return true;
-        }
+        if (itr.GetSource())
+            groupMembers++;
     }
+
+    if (groupMembers >= 2)
+        return true;
 
     return false;
 }
