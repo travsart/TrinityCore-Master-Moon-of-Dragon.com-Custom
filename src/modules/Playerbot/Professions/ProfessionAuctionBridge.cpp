@@ -806,9 +806,11 @@ bool ProfessionAuctionBridge::CanAccessAuctionHouse() const
     // 2. Or have recently interacted with auction house
 
     // Check if bot is in a rest area (cities have rest areas)
-    if (_bot->HasRestFlag(REST_FLAG_IN_CITY))
+    // TODO: Implement proper rest area check via RestMgr
+    // For now, assume bot has access if alive
+    if (_bot->IsAlive())
     {
-        TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Bot {} has access (in city)",
+        TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: Bot {} has auction access",
             _bot->GetName());
         return true;
     }
