@@ -475,7 +475,7 @@ void BotAI::OnQuestEvent(QuestEvent const& event)
 
 void BotAI::ProcessQuestProgress(QuestEvent const& event)
 {
-    if (!_bot || !_questManager)
+    if (!_bot || !GetGameSystems()->GetQuestManager())
         return;
 
     switch (event.type)
