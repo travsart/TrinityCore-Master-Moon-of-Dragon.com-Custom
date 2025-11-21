@@ -109,11 +109,11 @@ void GuildIntegration::ParticipateInGuildActivities()
 
             case GuildActivityType::RECRUITMENT_ASSISTANCE:
                 if (profile.preferredRole == GuildRole::RECRUITER || rand() % 100 < 5)
-                    AssistWithRecruitment(player);
+                    AssistWithRecruitment();
                 break;
 
             case GuildActivityType::ACHIEVEMENT_CONTRIBUTION:
-                ContributeToGuildAchievements(player);
+                ContributeToGuildAchievements();
                 break;
 
             default:
@@ -124,28 +124,28 @@ void GuildIntegration::ParticipateInGuildActivities()
 
 void GuildIntegration::ManageGuildResponsibilities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Handle role-specific responsibilities
     switch (profile.preferredRole)
     {
         case GuildRole::OFFICER:
         case GuildRole::LEADER:
-            HandleOfficerDuties(player);
+            HandleOfficerDuties();
             break;
 
         case GuildRole::BANKER:
-            OrganizeGuildBank(player);
+            OrganizeGuildBank();
             break;
 
         case GuildRole::RECRUITER:
-            EvaluateRecruitmentCandidates(player);
+            EvaluateRecruitmentCandidates();
             break;
 
         case GuildRole::EVENT_ORGANIZER:
-            CoordinateGuildEvents(player);
+            CoordinateGuildEvents();
             break;
 
         default:
@@ -156,12 +156,12 @@ void GuildIntegration::ManageGuildResponsibilities()
 
 void GuildIntegration::AutomateGuildChatParticipation()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
 
-    if (!IsAppropriateTimeToChat(player))
+    if (!IsAppropriateTimeToChat())
         return;
 
     // Check if we should initiate conversation
@@ -179,49 +179,49 @@ void GuildIntegration::AutomateGuildChatParticipation()
 
         if (action <= 30)
         {
-            InitiateGuildConversation(player);
+            InitiateGuildConversation();
         }
         else if (action <= 60)
         {
             // Share information about something relevant
-            ShareGuildInformation(player, "general");
+            ShareGuildInformation("general");
         }
         else if (action <= 80 && profile.helpfulnessLevel > 0.7f)
         {
             // Offer help or assistance
-            OfferGuildAssistance(player, "");
+            OfferGuildAssistance("");
         }
     }
 }
 
 void GuildIntegration::RespondToGuildChat( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return;
 
-    std::string response = GenerateGuildChatResponse(player, message);
+    std::string response = GenerateGuildChatResponse(message);
     if (!response.empty())
     {
-        SendGuildChatMessage(player, response);
-        UpdateGuildParticipation(_bot->GetGUID().GetCounter(), GuildActivityType::CHAT_PARTICIPATION);
+        SendGuildChatMessage(response);
+        UpdateGuildParticipation(GuildActivityType::CHAT_PARTICIPATION);
     }
 }
 
 void GuildIntegration::InitiateGuildConversation()
 {
-    if (!player)
+    if (!_bot)
         return;
 
-    std::string message = GenerateConversationStarter(player);
+    std::string message = GenerateConversationStarter();
     if (!message.empty())
     {
-        SendGuildChatMessage(player, message);
+        SendGuildChatMessage(message);
     }
 }
 
 void GuildIntegration::ShareGuildInformation( const std::string& topic)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // Generate informative messages based on topic
@@ -271,23 +271,23 @@ void GuildIntegration::AutomateGuildBankInteractions()
     // This would require checking proximity to guild bank NPCs
 
     // Decide what to do with guild bank
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
     if (rand() % 100 < 30) // 30% chance to deposit
     {
-        DepositItemsToGuildBank(player);
+        DepositItemsToGuildBank();
     }
     else if (rand() % 100 < 20) // 20% chance to withdraw
     {
-        WithdrawNeededItems(player);
+        WithdrawNeededItems();
     }
 
     state.lastGuildBankInteraction = currentTime;
-    UpdateGuildParticipation(playerGuid, GuildActivityType::GUILD_BANK_INTERACTION);
+    UpdateGuildParticipation(GuildActivityType::GUILD_BANK_INTERACTION);
 }
 
 void GuildIntegration::DepositItemsToGuildBank()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Find items suitable for guild bank deposit
