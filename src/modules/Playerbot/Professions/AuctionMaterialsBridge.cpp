@@ -846,7 +846,7 @@ bool AuctionMaterialsBridge::AcquireMaterial(
         {
             ProfessionAuctionBridge* auctionBridge = GetAuctionBridge();
             if (auctionBridge)
-                return auctionBridge->PurchaseMaterial(decision.itemId, decision.quantityNeeded, UINT32_MAX);
+                return auctionBridge->PurchaseMaterial(_bot, decision.itemId, decision.quantityNeeded, UINT32_MAX);
             break;
         }
 

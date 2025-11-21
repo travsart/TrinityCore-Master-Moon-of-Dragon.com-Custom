@@ -572,7 +572,7 @@ void ProfessionAuctionBridge::SynchronizeWithAuctionHouse(::Player* player)
 // STATISTICS
 // ============================================================================
 
-ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetGlobalStatistics()
+ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetGlobalStatistics() const
 {
     return _globalStatistics;
 }

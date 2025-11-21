@@ -315,7 +315,7 @@ void UnifiedQuestManager::CompletionModule::FindEfficientCompletionPath(Player* 
 void UnifiedQuestManager::CompletionModule::MinimizeTravelTime(Player* bot, const std::vector<QuestObjectiveData>& objectives)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->MinimizeTravelTime(objectives);
+        systems->GetQuestCompletion()->MinimizeTravelTime(bot, objectives);
 }
 
 void UnifiedQuestManager::CompletionModule::DetectStuckState(Player* bot, uint32 questId)
