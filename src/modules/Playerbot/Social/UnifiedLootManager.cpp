@@ -271,7 +271,7 @@ LootRollType UnifiedLootManager::DistributionModule::DetermineLootDecision(
 
 LootPriority UnifiedLootManager::DistributionModule::CalculateLootPriority(Player* player, LootItem const& item)
 {
-    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->CalculateLootPriority(item) : decltype(GetGameSystems(player)->GetLootDistribution()->CalculateLootPriority(item))());
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->AnalyzeItemPriority(item) : decltype(GetGameSystems(player)->GetLootDistribution()->AnalyzeItemPriority(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollNeed(Player* player, LootItem const& item)

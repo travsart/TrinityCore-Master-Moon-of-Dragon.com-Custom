@@ -71,7 +71,7 @@ void UnifiedQuestManager::PickupModule::PickupAvailableQuests(Player* bot)
 void UnifiedQuestManager::PickupModule::PickupQuestsInArea(Player* bot, float radius)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestPickup()->PickupQuestsInArea(radius);
+        systems->GetQuestPickup()->PickupQuestsInArea(bot, radius);
 }
 
 std::vector<uint32> UnifiedQuestManager::PickupModule::DiscoverNearbyQuests(Player* bot, float scanRadius)

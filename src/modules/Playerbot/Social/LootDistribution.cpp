@@ -210,7 +210,7 @@ LootPriority LootDistribution::AnalyzeItemPriority(const LootItem& item)
     if (IsItemUpgrade(item))
     {
         // Determine upgrade significance
-        float upgradeValue = CalculateUpgradeValue(_bot, item);
+        float upgradeValue = CalculateUpgradeValue(item);
 
         if (upgradeValue > 0.3f)
             return LootPriority::CRITICAL_UPGRADE;
@@ -223,7 +223,7 @@ LootPriority LootDistribution::AnalyzeItemPriority(const LootItem& item)
     }
 
     // Check if useful for off-spec
-    if (IsItemUsefulForOffSpec(_bot, item))
+    if (IsItemUsefulForOffSpec(item))
         return LootPriority::OFF_SPEC_UPGRADE;
 
     // Check vendor value
