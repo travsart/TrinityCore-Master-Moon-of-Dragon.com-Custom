@@ -522,7 +522,7 @@ bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, 
 // STOCKPILE MANAGEMENT
 // ============================================================================
 
-void ProfessionAuctionBridge::SetMaterialStockpile(uint32 itemId, MaterialStockpileConfig const& config)
+void ProfessionAuctionBridge::SetMaterialStockpile(::Player* player, uint32 itemId, MaterialStockpileConfig const& config)
 {
     _profile.materialConfigs[itemId] = config;
 }
