@@ -527,7 +527,7 @@ void ProfessionAuctionBridge::SetMaterialStockpile(uint32 playerGuid, uint32 ite
     _profile.materialConfigs[itemId] = config;
 }
 
-void ProfessionAuctionBridge::SetCraftedItemAuction(uint32 itemId, CraftedItemAuctionConfig const& config)
+void ProfessionAuctionBridge::SetCraftedItemAuction(uint32 playerGuid, uint32 itemId, CraftedItemAuctionConfig const& config)
 {
     _profile.craftedItemConfigs[itemId] = config;
 }
