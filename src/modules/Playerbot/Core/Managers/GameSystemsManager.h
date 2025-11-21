@@ -52,7 +52,8 @@
 #include "Quest/QuestCompletion.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Quest/DynamicQuestSystem.h"
-// #include "Social/LootDistribution.h"  // TEMPORARILY DISABLED TO DEBUG REDEFINITION ERROR
+// LootDistribution.h NOT included here - forward declaration at line 78 is sufficient
+// Full include is in GameSystemsManager.cpp (required for unique_ptr construction)
 #include "Social/GuildIntegration.h"
 #include "Social/GuildEventCoordinator.h"
 #include "Social/GuildBankManager.h"
