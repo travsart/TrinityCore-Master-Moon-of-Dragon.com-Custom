@@ -367,7 +367,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
         return;
 
     // Get needed materials from ProfessionManager
-    auto neededMaterials = GetNeededMaterialsForLeveling(profession);
+    auto neededMaterials = GetNeededMaterialsForLeveling(player, profession);
 
     if (neededMaterials.empty())
         return;

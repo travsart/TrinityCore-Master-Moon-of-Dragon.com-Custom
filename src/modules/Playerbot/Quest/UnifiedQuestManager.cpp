@@ -284,8 +284,8 @@ void UnifiedQuestManager::CompletionModule::ShareObjectiveProgress(Group* group,
 
 void UnifiedQuestManager::CompletionModule::SynchronizeGroupObjectives(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->SynchronizeGroupObjectives(group, questId);
+    // Static wrapper without bot context - cannot delegate
+    // TODO: This needs bot parameter or should be redesigned
 }
 
 void UnifiedQuestManager::CompletionModule::HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex)
