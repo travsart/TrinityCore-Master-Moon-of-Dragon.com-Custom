@@ -524,23 +524,23 @@ void LootDistribution::ExecuteFairDistributionStrategy( const LootItem& item, Lo
     }
     else
     {
-        ExecuteNeedBeforeGreedStrategy(player, item, decision);
+        ExecuteNeedBeforeGreedStrategy(item, decision);
     }
 }
 
-void LootDistribution::ExecuteMainSpecPriorityStrategy( const LootItem& item, LootRollType& decision)
+void LootDistribution::ExecuteMainSpecPriorityStrategy(const LootItem& item, LootRollType& decision)
 {
-    PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
-    if (IsItemForMainSpec(player, item))
+    PlayerLootProfile profile = GetPlayerLootProfile();
+    if (IsItemForMainSpec(item))
     {
-        if (IsItemUpgrade(player, item))
+        if (IsItemUpgrade(item))
             decision = LootRollType::NEED;
-        else if (ShouldPlayerGreedItem(player, item))
+        else if (ShouldPlayerGreedItem(item))
             decision = LootRollType::GREED;
         else
             decision = LootRollType::PASS;
     }
-    else if (profile.greedOffSpec && IsItemUsefulForOffSpec(player, item))
+    else if (profile.greedOffSpec && IsItemUsefulForOffSpec(item))
     {
         decision = LootRollType::GREED;
     }

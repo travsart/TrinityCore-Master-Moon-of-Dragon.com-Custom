@@ -561,9 +561,9 @@ void UnifiedLootManager::DistributionModule::ExecuteLootDistribution(Group* grou
 
     LootRoll& roll = it->second;
 
-    if (roll.isCompleted)
+    if (roll.isComplete)
     {
-        TC_LOG_DEBUG("playerbot.loot", "Roll {} already completed, winner: {}", rollId, roll.winnerGuid);
+        TC_LOG_DEBUG("playerbot.loot", "Roll {} already completed", rollId);
         // TODO: Award item to winner via game's loot system
         // Player* winner = ObjectAccessor::FindPlayer(ObjectGuid(HighGuid::Player, roll.winnerGuid));
         // if (winner) { /* Award item */ }
@@ -639,12 +639,12 @@ void UnifiedLootManager::DistributionModule::ResolveRollTies(Group* group, uint3
             return a.second > b.second;
         });
 
-    // Update roll with winner
-    roll.winnerGuid = rerolls[0].first;
-    roll.isCompleted = true;
+    // Mark roll as complete
+    uint32 winnerGuid = rerolls[0].first;
+    roll.isComplete = true;
 
     TC_LOG_INFO("playerbot.loot", "Tie resolved: Player {} won with re-roll {}",
-        roll.winnerGuid, rerolls[0].second);
+        winnerGuid, rerolls[0].second);
 }
 
 void UnifiedLootManager::DistributionModule::HandleLootNinja(Group* group, uint32 suspectedPlayer)

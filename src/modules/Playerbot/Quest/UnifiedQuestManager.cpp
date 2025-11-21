@@ -145,7 +145,7 @@ bool UnifiedQuestManager::PickupModule::ShouldAcceptQuest(uint32 questId, Player
 bool UnifiedQuestManager::CompletionModule::StartQuestCompletion(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->StartQuestCompletion(questId);
+        return systems->GetQuestCompletion()->StartQuestCompletion(questId, bot);
     return {};
 }
 
