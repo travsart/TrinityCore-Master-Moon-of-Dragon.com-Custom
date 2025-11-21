@@ -12,6 +12,7 @@
 #include "Define.h"
 #include "ObjectGuid.h"
 #include "Lifecycle/SpawnRequest.h"
+#include <atomic>
 #include <memory>
 #include <functional>
 

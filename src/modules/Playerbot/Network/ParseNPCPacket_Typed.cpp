@@ -125,17 +125,25 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
     if (!bot)
         return;
 
-    // Extract spell IDs from trainer list
-    ::std::vector<uint32> spells;
+    // Extract spell data from trainer list
+    ::std::vector<Playerbot::TrainerSpell> spells;
     spells.reserve(packet.Spells.size());
     for (auto const& spell : packet.Spells)
-        spells.push_back(spell.SpellID);
+    {
+        Playerbot::TrainerSpell ts;
+        ts.spellId = spell.SpellID;
+        ts.reqLevel = spell.ReqLevel;
+        ts.reqSkill = spell.ReqSkillLine;
+        ts.cost = spell.MoneyCost;
+        spells.push_back(ts);
+    }
 
     NPCEvent event = NPCEvent::TrainerListReceived(
         bot->GetGUID(),
         packet.TrainerGUID,
         packet.TrainerID,
-        ::std::move(spells)
+        ::std::move(spells),
+        packet.Greeting
     );
 
     NPCEventBus::instance()->PublishEvent(event);
