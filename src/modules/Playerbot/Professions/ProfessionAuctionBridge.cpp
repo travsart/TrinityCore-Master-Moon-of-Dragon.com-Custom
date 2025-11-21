@@ -404,7 +404,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
     }
 }
 
-std::vector<std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMaterialsForLeveling(ProfessionType profession) const
+std::vector<std::pair<uint32, uint32>> ProfessionAuctionBridge::GetNeededMaterialsForLeveling(::Player* player, ProfessionType profession) const
 {
     std::vector<std::pair<uint32, uint32>> materials;
 
