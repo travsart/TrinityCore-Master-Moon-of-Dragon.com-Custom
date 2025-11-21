@@ -834,9 +834,9 @@ void EquipmentManager::AutoEquipBestGear()
     }
 }
 
-ItemComparisonResult EquipmentManager::CompareItems(::Item* currentItem, ::Item* newItem)
+IEquipmentManager::ItemComparisonResult EquipmentManager::CompareItems(::Item* currentItem, ::Item* newItem)
 {
-    ItemComparisonResult result;
+    IEquipmentManager::ItemComparisonResult result;
 
     if (!_bot || !newItem)
         return result;

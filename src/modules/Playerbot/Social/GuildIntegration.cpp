@@ -261,7 +261,7 @@ void GuildIntegration::AutomateGuildBankInteractions()
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
-    auto& state = _playerStates[playerGuid];
+    auto& state = _playerStates[_bot->GetGUID().GetCounter()];
 
     // Check cooldown
     if (currentTime - state.lastGuildBankInteraction < GUILD_BANK_CHECK_INTERVAL)

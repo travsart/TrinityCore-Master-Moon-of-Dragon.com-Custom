@@ -858,13 +858,13 @@ void LootDistribution::ApplyStrategyModifiers( const LootItem& item, LootRollTyp
     Group* group = _bot->GetGroup();
     if (group)
     {
-        ConsiderGroupComposition(group, player, item, decision);
+        ConsiderGroupComposition(group, item, decision);
     }
 }
 
-void LootDistribution::ConsiderGroupComposition(Group* group, Player* player, const LootItem& item, LootRollType& decision)
+void LootDistribution::ConsiderGroupComposition(Group* group, const LootItem& item, LootRollType& decision)
 {
-    if (!group || !player)
+    if (!group || !_bot)
         return;
 
     // Analyze group composition and adjust decision accordingly

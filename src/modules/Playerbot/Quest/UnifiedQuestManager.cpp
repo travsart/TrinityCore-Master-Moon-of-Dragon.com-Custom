@@ -222,7 +222,7 @@ void UnifiedQuestManager::CompletionModule::HandleLocationObjective(Player* bot,
 void UnifiedQuestManager::CompletionModule::HandleGameObjectObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleGameObjectObjective(objective);
+        systems->GetQuestCompletion()->HandleGameObjectObjective(bot, objective);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleSpellCastObjective(Player* bot, QuestObjectiveData& objective)
