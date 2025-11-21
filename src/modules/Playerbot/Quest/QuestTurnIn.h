@@ -232,8 +232,8 @@ public:
         }
     };
 
-    TurnInMetrics::Snapshot GetBotTurnInMetrics(uint32 botGuid) override;
-    TurnInMetrics::Snapshot GetGlobalTurnInMetrics() override;
+    TurnInMetricsSnapshot GetBotTurnInMetrics(uint32 botGuid) override;
+    TurnInMetricsSnapshot GetGlobalTurnInMetrics() override;
 
     // Quest chain management
     void HandleQuestChainProgression(Player* bot, uint32 completedQuestId) override;
@@ -262,7 +262,6 @@ public:
 
 private:
     Player* _bot;
-    ~QuestTurnIn() = default;
 
     // Core data structures
     std::unordered_map<uint32, std::vector<QuestTurnInData>> _botTurnInQueues; // botGuid -> turnIns

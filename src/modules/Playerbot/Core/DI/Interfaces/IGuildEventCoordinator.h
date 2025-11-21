@@ -14,17 +14,136 @@
 #include "Group.h"
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <utility>
+#include <atomic>
+#include <chrono>
+#include "GameTime.h"
 
 namespace Playerbot
 {
 
+// Enum definitions (needs full definition for struct members)
+enum class GuildEventType : uint8
+{
+    RAID_DUNGEON        = 0,
+    PVP_BATTLEGROUND    = 1,
+    PVP_ARENA           = 2,
+    GUILD_MEETING       = 3,
+    SOCIAL_GATHERING    = 4,
+    ACHIEVEMENT_RUN     = 5,
+    LEVELING_GROUP      = 6,
+    CRAFTING_SESSION    = 7,
+    CONTEST_COMPETITION = 8,
+    OFFICER_MEETING     = 9
+};
+
+enum class EventStatus : uint8
+{
+    PLANNING        = 0,
+    RECRUITING      = 1,
+    CONFIRMED       = 2,
+    IN_PROGRESS     = 3,
+    COMPLETED       = 4,
+    CANCELLED       = 5,
+    POSTPONED       = 6
+};
+
+// Event coordination profile
+struct EventCoordinationProfile
+{
+    bool enableEventPlanning;
+    bool enableEventParticipation;
+    bool enableEventLeadership;
+    std::vector<GuildEventType> preferredEventTypes;
+    std::vector<GuildEventType> availableLeadershipTypes;
+    float planningProactiveness; // How often to propose events
+    float participationRate; // Likelihood to join events
+    std::vector<std::pair<uint32, uint32>> availabilityWindows; // startTime, endTime pairs
+    uint32 maxEventsPerWeek;
+    bool autoAcceptInvitations;
+
+    EventCoordinationProfile() : enableEventPlanning(true), enableEventParticipation(true)
+        , enableEventLeadership(false), planningProactiveness(0.3f)
+        , participationRate(0.8f), maxEventsPerWeek(7), autoAcceptInvitations(false) {}
+};
+
+// Event participation tracking
+struct EventParticipation
+{
+    uint32 playerGuid;
+    uint32 guildId;
+    std::vector<uint32> organizedEvents;
+    std::vector<uint32> participatedEvents;
+    std::unordered_map<GuildEventType, uint32> eventTypePreferences;
+    uint32 totalEventsCreated;
+    uint32 totalEventsAttended;
+    float organizationRating;
+    float participationRating;
+    uint32 lastEventActivity;
+
+    EventParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
+        , totalEventsCreated(0), totalEventsAttended(0), organizationRating(0.5f)
+        , participationRating(0.7f), lastEventActivity(GameTime::GetGameTimeMS()) {}
+};
+
+// Event metrics tracking
+struct EventMetrics
+{
+    std::atomic<uint32> eventsCreated{0};
+    std::atomic<uint32> eventsCompleted{0};
+    std::atomic<uint32> eventsCancelled{0};
+    std::atomic<uint32> totalParticipants{0};
+    std::atomic<float> averageAttendance{0.75f};
+    std::atomic<float> organizationEfficiency{0.8f};
+    std::atomic<float> memberSatisfaction{0.85f};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    // Default constructor
+    EventMetrics() = default;
+
+    // Copy constructor for atomic members
+    EventMetrics(const EventMetrics& other) :
+        eventsCreated(other.eventsCreated.load()),
+        eventsCompleted(other.eventsCompleted.load()),
+        eventsCancelled(other.eventsCancelled.load()),
+        totalParticipants(other.totalParticipants.load()),
+        averageAttendance(other.averageAttendance.load()),
+        organizationEfficiency(other.organizationEfficiency.load()),
+        memberSatisfaction(other.memberSatisfaction.load()),
+        lastUpdate(other.lastUpdate) {}
+
+    // Assignment operator for atomic members
+    EventMetrics& operator=(const EventMetrics& other) {
+        if (this != &other) {
+            eventsCreated.store(other.eventsCreated.load());
+            eventsCompleted.store(other.eventsCompleted.load());
+            eventsCancelled.store(other.eventsCancelled.load());
+            totalParticipants.store(other.totalParticipants.load());
+            averageAttendance.store(other.averageAttendance.load());
+            organizationEfficiency.store(other.organizationEfficiency.load());
+            memberSatisfaction.store(other.memberSatisfaction.load());
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
+
+    void Reset() {
+        eventsCreated = 0; eventsCompleted = 0; eventsCancelled = 0;
+        totalParticipants = 0; averageAttendance = 0.75f;
+        organizationEfficiency = 0.8f; memberSatisfaction = 0.85f;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetCompletionRate() const {
+        uint32 created = eventsCreated.load();
+        uint32 completed = eventsCompleted.load();
+        return created > 0 ? (float)completed / created : 0.0f;
+    }
+};
+
 // Forward declarations
 struct GuildEvent;
-enum class GuildEventType : uint8;
-enum class EventStatus : uint8;
-struct EventCoordinationProfile;
-struct EventParticipation;
-struct EventMetrics;
 
 class TC_GAME_API IGuildEventCoordinator
 {

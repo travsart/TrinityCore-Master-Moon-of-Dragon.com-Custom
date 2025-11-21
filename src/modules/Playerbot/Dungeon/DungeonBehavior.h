@@ -218,34 +218,7 @@ public:
     void HandleNeedGreedPass(Group* group, uint32 itemId, Player* player) override;
     void OptimizeLootDistribution(Group* group) override;
 
-    // Performance monitoring and adaptation
-    struct DungeonMetrics
-    {
-        ::std::atomic<uint32> dungeonsCompleted{0};
-        ::std::atomic<uint32> dungeonsAttempted{0};
-        ::std::atomic<uint32> encountersCompleted{0};
-        ::std::atomic<uint32> encounterWipes{0};
-        ::std::atomic<float> averageCompletionTime{2700000.0f}; // 45 minutes
-        ::std::atomic<float> successRate{0.85f};
-        ::std::atomic<float> encounterSuccessRate{0.9f};
-        ::std::atomic<uint32> totalDamageDealt{0};
-        ::std::atomic<uint32> totalHealingDone{0};
-        ::std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset() {
-            dungeonsCompleted = 0; dungeonsAttempted = 0; encountersCompleted = 0;
-            encounterWipes = 0; averageCompletionTime = 2700000.0f; successRate = 0.85f;
-            encounterSuccessRate = 0.9f; totalDamageDealt = 0; totalHealingDone = 0;
-            lastUpdate = ::std::chrono::steady_clock::now();
-        }
-
-        float GetCompletionRate() const {
-            uint32 attempted = dungeonsAttempted.load();
-            uint32 completed = dungeonsCompleted.load();
-            return attempted > 0 ? (float)completed / attempted : 0.0f;
-        }
-    };
-
+    // Performance monitoring and adaptation (DungeonMetrics defined in IDungeonBehavior.h interface)
     DungeonMetrics GetGroupDungeonMetrics(uint32 groupId) override;
     DungeonMetrics GetGlobalDungeonMetrics() override;
 

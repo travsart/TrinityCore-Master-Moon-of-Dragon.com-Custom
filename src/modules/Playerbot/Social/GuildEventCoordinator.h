@@ -14,7 +14,7 @@
 #include "Player.h"
 #include "Guild.h"
 #include "Group.h"
-#include "Calendar.h"
+#include "CalendarMgr.h"
 #include "../Core/DI/Interfaces/IGuildEventCoordinator.h"
 #include <unordered_map>
 #include <vector>
@@ -26,30 +26,10 @@
 namespace Playerbot
 {
 
-enum class GuildEventType : uint8
-{
-    RAID_DUNGEON        = 0,
-    PVP_BATTLEGROUND    = 1,
-    PVP_ARENA           = 2,
-    GUILD_MEETING       = 3,
-    SOCIAL_GATHERING    = 4,
-    ACHIEVEMENT_RUN     = 5,
-    LEVELING_GROUP      = 6,
-    CRAFTING_SESSION    = 7,
-    CONTEST_COMPETITION = 8,
-    OFFICER_MEETING     = 9
-};
-
-enum class EventStatus : uint8
-{
-    PLANNING        = 0,
-    RECRUITING      = 1,
-    CONFIRMED       = 2,
-    IN_PROGRESS     = 3,
-    COMPLETED       = 4,
-    CANCELLED       = 5,
-    POSTPONED       = 6
-};
+// Enums and structs defined in IGuildEventCoordinator.h interface:
+// - enum class GuildEventType
+// - enum class EventStatus
+// - struct EventCoordinationProfile
 
 enum class EventPriority : uint8
 {
@@ -128,47 +108,11 @@ public:
     void MonitorEventProgress(uint32 eventId) override;
     void HandleEventCompletion(uint32 eventId) override;
 
-    // Advanced event features
-    struct EventCoordinationProfile
-    {
-        bool enableEventPlanning;
-        bool enableEventParticipation;
-        bool enableEventLeadership;
-        std::vector<GuildEventType> preferredEventTypes;
-        std::vector<GuildEventType> availableLeadershipTypes;
-        float planningProactiveness; // How often to propose events
-        float participationRate; // Likelihood to join events
-        std::vector<std::pair<uint32, uint32>> availabilityWindows; // startTime, endTime pairs
-        uint32 maxEventsPerWeek;
-        bool autoAcceptInvitations;
-
-        EventCoordinationProfile() : enableEventPlanning(true), enableEventParticipation(true)
-            , enableEventLeadership(false), planningProactiveness(0.3f)
-            , participationRate(0.8f), maxEventsPerWeek(7), autoAcceptInvitations(false) {}
-    };
-
+    // Advanced event features (EventCoordinationProfile struct defined in IGuildEventCoordinator.h)
     void SetEventProfile(const EventCoordinationProfile& profile) override;
     EventCoordinationProfile GetEventProfile() override;
 
-    // Event analytics and tracking
-    struct EventParticipation
-    {
-        uint32 playerGuid;
-        uint32 guildId;
-        std::vector<uint32> organizedEvents;
-        std::vector<uint32> participatedEvents;
-        std::unordered_map<GuildEventType, uint32> eventTypePreferences;
-        uint32 totalEventsCreated;
-        uint32 totalEventsAttended;
-        float organizationRating;
-        float participationRating;
-        uint32 lastEventActivity;
-
-        EventParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
-            , totalEventsCreated(0), totalEventsAttended(0), organizationRating(0.5f)
-            , participationRating(0.7f), lastEventActivity(GameTime::GetGameTimeMS()) {}
-    };
-
+    // Event analytics and tracking (EventParticipation struct defined in IGuildEventCoordinator.h)
     EventParticipation GetEventParticipation() override;
     void UpdateEventParticipation(uint32 eventId, bool wasOrganizer);
 
@@ -202,32 +146,7 @@ public:
     void ManageEventPriorities(uint32 guildId);
     void RescheduleConflictingEvents();
 
-    // Performance monitoring
-    struct EventMetrics
-    {
-        std::atomic<uint32> eventsCreated{0};
-        std::atomic<uint32> eventsCompleted{0};
-        std::atomic<uint32> eventsCancelled{0};
-        std::atomic<uint32> totalParticipants{0};
-        std::atomic<float> averageAttendance{0.75f};
-        std::atomic<float> organizationEfficiency{0.8f};
-        std::atomic<float> memberSatisfaction{0.85f};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset() {
-            eventsCreated = 0; eventsCompleted = 0; eventsCancelled = 0;
-            totalParticipants = 0; averageAttendance = 0.75f;
-            organizationEfficiency = 0.8f; memberSatisfaction = 0.85f;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetCompletionRate() const {
-            uint32 created = eventsCreated.load();
-            uint32 completed = eventsCompleted.load();
-            return created > 0 ? (float)completed / created : 0.0f;
-        }
-    };
-
+    // Performance monitoring (EventMetrics struct defined in IGuildEventCoordinator.h)
     EventMetrics GetGuildEventMetrics(uint32 guildId) override;
     EventMetrics GetPlayerEventMetrics() override;
 
@@ -263,7 +182,6 @@ public:
 
 private:
     Player* _bot;
-    ~GuildEventCoordinator() = default;
 
     // Core event data
     std::unordered_map<uint32, GuildEvent> _guildEvents; // eventId -> event

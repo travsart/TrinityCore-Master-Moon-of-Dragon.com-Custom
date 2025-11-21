@@ -72,8 +72,8 @@ namespace Playerbot
             isQuestItem(false), isSoulbound(false), quality(ITEM_QUALITY_POOR) {}
     };
 
-    // Trade session data
-    struct TradeSession
+    // Trade session data (renamed to avoid conflict with TradeSystem::TradeSession)
+    struct TradeManagerSession
     {
         ObjectGuid traderGuid;              // Trading partner GUID
         TradeState state;                   // Current state
@@ -88,7 +88,7 @@ namespace Playerbot
         bool traderAccepted;                // They accepted
         TradeSecurity securityLevel;        // Security level for this trade
 
-        TradeSession() : state(TradeState::IDLE), offeredGold(0), receivedGold(0),
+        TradeManagerSession() : state(TradeState::IDLE), offeredGold(0), receivedGold(0),
             updateCount(0), isAccepted(false), traderAccepted(false),
             securityLevel(TradeSecurity::STANDARD) {}
 
@@ -218,7 +218,7 @@ namespace Playerbot
         bool IsTrading() const { return m_currentSession.state != TradeState::IDLE; }
         TradeState GetTradeState() const { return m_currentSession.state; }
         ObjectGuid GetTradingPartner() const { return m_currentSession.traderGuid; }
-        TradeSession const& GetCurrentSession() const { return m_currentSession; }
+        TradeManagerSession const& GetCurrentSession() const { return m_currentSession; }
 
         // Statistics
         TradeStatistics const& GetStatistics() const { return m_statistics; }
@@ -283,7 +283,7 @@ namespace Playerbot
         ::std::atomic<bool> _needsSupplies{false};
 
         // Current trade session
-        TradeSession m_currentSession;                         // Active trade data
+        TradeManagerSession m_currentSession;                         // Active trade data
         ::std::unordered_map<ObjectGuid, TradeRequest> m_pendingRequests;    // Pending trade requests
 
         // Configuration

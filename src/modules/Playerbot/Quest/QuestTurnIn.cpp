@@ -1037,22 +1037,46 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
-        return it->second.CreateSnapshot();
+    {
+        auto snapshot = it->second.CreateSnapshot();
+        TurnInMetricsSnapshot result;
+        result.questsTurnedIn = snapshot.questsTurnedIn;
+        result.turnInAttempts = snapshot.turnInAttempts;
+        result.successfulTurnIns = snapshot.successfulTurnIns;
+        result.failedTurnIns = snapshot.failedTurnIns;
+        result.averageTurnInTime = snapshot.averageTurnInTime;
+        result.turnInSuccessRate = snapshot.turnInSuccessRate;
+        result.totalTravelDistance = snapshot.totalTravelDistance;
+        result.rewardsSelected = snapshot.rewardsSelected;
+        result.rewardSelectionAccuracy = snapshot.rewardSelectionAccuracy;
+        return result;
+    }
 
-    return TurnInMetrics().CreateSnapshot();
+    return TurnInMetricsSnapshot();
 }
 
 /**
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-QuestTurnIn::TurnInMetrics::Snapshot QuestTurnIn::GetGlobalTurnInMetrics()
+TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
-    return _globalMetrics.CreateSnapshot();
+    auto snapshot = _globalMetrics.CreateSnapshot();
+    TurnInMetricsSnapshot result;
+    result.questsTurnedIn = snapshot.questsTurnedIn;
+    result.turnInAttempts = snapshot.turnInAttempts;
+    result.successfulTurnIns = snapshot.successfulTurnIns;
+    result.failedTurnIns = snapshot.failedTurnIns;
+    result.averageTurnInTime = snapshot.averageTurnInTime;
+    result.turnInSuccessRate = snapshot.turnInSuccessRate;
+    result.totalTravelDistance = snapshot.totalTravelDistance;
+    result.rewardsSelected = snapshot.rewardsSelected;
+    result.rewardSelectionAccuracy = snapshot.rewardSelectionAccuracy;
+    return result;
 }
 
 /**

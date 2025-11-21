@@ -13,6 +13,9 @@
 #include "Position.h"
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <atomic>
+#include <chrono>
 
 class Player;
 class Group;
@@ -22,10 +25,76 @@ namespace Playerbot
 
 // Forward declarations
 struct QuestObjectiveData;
-struct ObjectiveState;
-struct ObjectivePriority;
-struct ObjectiveAnalytics;
 enum class ObjectiveStatus : uint8;
+
+// ObjectivePriority definition (needs full definition for return by value)
+struct ObjectivePriority
+{
+    uint32 questId;
+    uint32 objectiveIndex;
+    float priorityScore;
+    float urgencyFactor;
+    float difficultyFactor;
+    float efficiencyFactor;
+    float proximityFactor;
+    std::string reasoning;
+
+    ObjectivePriority(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
+        , priorityScore(5.0f), urgencyFactor(1.0f), difficultyFactor(1.0f)
+        , efficiencyFactor(1.0f), proximityFactor(1.0f) {}
+};
+
+// ObjectiveState definition (needs full definition for return by value)
+struct ObjectiveState
+{
+    uint32 questId;
+    uint32 objectiveIndex;
+    ObjectiveStatus status;
+    uint32 currentProgress;
+    uint32 requiredProgress;
+    uint32 lastUpdateTime;
+    uint32 timeStarted;
+    uint32 estimatedTimeRemaining;
+    float completionVelocity;
+    std::vector<uint32> targetIds;
+    Position lastKnownPosition;
+    bool isOptimized;
+    uint32 failureCount;
+    bool isStuck;
+    uint32 stuckTime;
+
+    ObjectiveState() : questId(0), objectiveIndex(0), status(ObjectiveStatus::NOT_STARTED)
+        , currentProgress(0), requiredProgress(1), lastUpdateTime(0), timeStarted(0)
+        , estimatedTimeRemaining(0), completionVelocity(0.0f), isOptimized(false)
+        , failureCount(0), isStuck(false), stuckTime(0) {}
+
+    ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
+        , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
+        , lastUpdateTime(0), timeStarted(0), estimatedTimeRemaining(0)
+        , completionVelocity(0.0f), isOptimized(false), failureCount(0)
+        , isStuck(false), stuckTime(0) {}
+};
+
+// ObjectiveAnalytics definition (needs full definition for return by reference)
+struct ObjectiveAnalytics
+{
+    std::atomic<uint32> objectivesStarted{0};
+    std::atomic<uint32> objectivesCompleted{0};
+    std::atomic<uint32> objectivesFailed{0};
+    std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
+    std::atomic<float> averageSuccessRate{0.9f};
+    std::atomic<float> targetDetectionAccuracy{0.85f};
+    std::atomic<uint32> targetsFound{0};
+    std::atomic<uint32> targetsMissed{0};
+    std::chrono::steady_clock::time_point lastAnalyticsUpdate;
+
+    void Reset() {
+        objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
+        averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
+        targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;
+        lastAnalyticsUpdate = std::chrono::steady_clock::now();
+    }
+};
 
 /**
  * @brief Interface for quest objective tracking and monitoring

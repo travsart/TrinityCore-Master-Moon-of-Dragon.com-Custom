@@ -41,18 +41,18 @@
 #include "Quest/QuestValidation.h"
 #include "Group/RoleAssignment.h"
 #include "LFG/LFGGroupCoordinator.h"
-#include "Advanced/InstanceCoordination.h"
-#include "Core/Managers/BotPriorityManager.h"
-#include "Core/Managers/BotWorldSessionMgr.h"
+#include "Dungeon/InstanceCoordination.h"
+#include "Session/BotPriorityManager.h"
+#include "Session/BotWorldSessionMgr.h"
 #include "Lifecycle/BotLifecycleManager.h"
-#include "Group/LFGBotSelector.h"
-#include "Group/LFGBotManager.h"
+#include "LFG/LFGBotSelector.h"
+#include "LFG/LFGBotManager.h"
 #include "Quest/QuestTurnIn.h"
 #include "Quest/QuestPickup.h"
 #include "Quest/QuestCompletion.h"
 #include "Quest/ObjectiveTracker.h"
 #include "Quest/DynamicQuestSystem.h"
-#include "Social/LootDistribution.h"
+// #include "Social/LootDistribution.h"  // TEMPORARILY DISABLED TO DEBUG REDEFINITION ERROR
 #include "Social/GuildIntegration.h"
 #include "Social/GuildEventCoordinator.h"
 #include "Social/GuildBankManager.h"
@@ -64,17 +64,18 @@
 #include "Group/GroupInvitationHandler.h"
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Managers/ManagerRegistry.h"
-#include "Decision/DecisionFusionSystem.h"
-#include "Decision/ActionPriorityQueue.h"
-#include "Decision/BehaviorTree.h"
-#include "Decision/HybridAIController.h"
+#include "AI/Decision/DecisionFusionSystem.h"
+#include "AI/Decision/ActionPriorityQueue.h"
+#include "AI/Decision/BehaviorTree.h"
+#include "AI/HybridAIController.h"
 #include "BehaviorPriorityManager.h"
 
 namespace Playerbot
 {
 
-// Forward declaration
+// Forward declarations
 class BotAI;
+class LootDistribution;
 
 /**
  * @brief Concrete implementation of IGameSystemsManager facade
@@ -168,7 +169,7 @@ public:
     FarmingCoordinator* GetFarmingCoordinator() const { return _farmingCoordinator.get(); }
     AuctionManager* GetAuctionManager() const override { return _auctionManager.get(); }
     BankingManager* GetBankingManager() const { return _bankingManager.get(); }
-    EquipmentManager* GetEquipmentManager() const { return _equipmentManager.get(); }
+    EquipmentManager* GetEquipmentManager() const override { return _equipmentManager.get(); }
     MountManager* GetMountManager() const { return _mountManager.get(); }
     BattlePetManager* GetBattlePetManager() const { return _battlePetManager.get(); }
     ArenaAI* GetArenaAI() const { return _arenaAI.get(); }
@@ -210,8 +211,8 @@ public:
     // Helper systems
     TargetScanner* GetTargetScanner() const override { return _targetScanner.get(); }
     GroupInvitationHandler* GetGroupInvitationHandler() const override { return _groupInvitationHandler.get(); }
-    bot::ai::HybridAIController* GetHybridAI() const override { return _hybridAI.get(); }
-    bot::ai::BehaviorPriorityManager* GetPriorityManager() const override { return _priorityManager.get(); }
+    HybridAIController* GetHybridAI() const override { return _hybridAI.get(); }
+    BehaviorPriorityManager* GetPriorityManager() const override { return _priorityManager.get(); }
 
 private:
     // ========================================================================
@@ -277,10 +278,10 @@ private:
     std::unique_ptr<bot::ai::DecisionFusionSystem> _decisionFusion;
     std::unique_ptr<bot::ai::ActionPriorityQueue> _actionPriorityQueue;
     std::unique_ptr<bot::ai::BehaviorTree> _behaviorTree;
-    std::unique_ptr<bot::ai::HybridAIController> _hybridAI;
+    std::unique_ptr<HybridAIController> _hybridAI;  // Note: HybridAIController is in Playerbot::, not Playerbot::bot::ai::
 
     // Behavior management
-    std::unique_ptr<bot::ai::BehaviorPriorityManager> _priorityManager;
+    std::unique_ptr<BehaviorPriorityManager> _priorityManager;
 
     // ========================================================================
     // INTERNAL STATE

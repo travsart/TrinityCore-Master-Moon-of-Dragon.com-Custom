@@ -62,6 +62,8 @@ class Group;
 
 namespace Playerbot
 {
+namespace Advanced
+{
 
 class BotAI;
 
@@ -633,6 +635,7 @@ private:
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI> m_mutex;
 };
 
+} // namespace Advanced
 } // namespace Playerbot
 
 #endif // TRINITYCORE_TACTICAL_COORDINATOR_H

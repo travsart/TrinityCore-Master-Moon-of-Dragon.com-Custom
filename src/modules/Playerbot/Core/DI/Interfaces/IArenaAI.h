@@ -12,6 +12,7 @@
 #include "Define.h"
 #include <vector>
 #include <cstdint>
+#include <atomic>
 
 // Forward declarations
 class Player;
@@ -27,6 +28,43 @@ struct ArenaProfile;
 enum class ArenaStrategy : uint8;
 enum class TeamComposition : uint8;
 
+// Arena metrics structure (namespace scope to avoid covariant return type conflicts)
+struct ArenaMetrics
+{
+    std::atomic<uint32> matchesWon{0};
+    std::atomic<uint32> matchesLost{0};
+    std::atomic<uint32> kills{0};
+    std::atomic<uint32> deaths{0};
+    std::atomic<uint32> pillarKites{0};
+    std::atomic<uint32> successfulBursts{0};
+    std::atomic<uint32> coordCCs{0};
+    std::atomic<uint32> rating{1500};
+
+    void Reset()
+    {
+        matchesWon = 0;
+        matchesLost = 0;
+        kills = 0;
+        deaths = 0;
+        pillarKites = 0;
+        successfulBursts = 0;
+        coordCCs = 0;
+        rating = 1500;
+    }
+
+    float GetWinRate() const
+    {
+        uint32 total = matchesWon.load() + matchesLost.load();
+        return total > 0 ? static_cast<float>(matchesWon.load()) / total : 0.0f;
+    }
+
+    float GetKDRatio() const
+    {
+        uint32 d = deaths.load();
+        return d > 0 ? static_cast<float>(kills.load()) / d : static_cast<float>(kills.load());
+    }
+};
+
 /**
  * @brief Interface for arena AI automation
  *
@@ -37,28 +75,6 @@ enum class TeamComposition : uint8;
 class TC_GAME_API IArenaAI
 {
 public:
-    struct ArenaMetrics
-    {
-        uint32 matchesWon;
-        uint32 matchesLost;
-        uint32 kills;
-        uint32 deaths;
-        uint32 pillarKites;
-        uint32 successfulBursts;
-        uint32 coordCCs;
-        uint32 rating;
-
-        float GetWinRate() const
-        {
-            uint32 total = matchesWon + matchesLost;
-            return total > 0 ? static_cast<float>(matchesWon) / total : 0.0f;
-        }
-
-        float GetKDRatio() const
-        {
-            return deaths > 0 ? static_cast<float>(kills) / deaths : static_cast<float>(kills);
-        }
-    };
 
     virtual ~IArenaAI() = default;
 

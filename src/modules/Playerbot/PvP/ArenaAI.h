@@ -19,13 +19,11 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include "Core/DI/Interfaces/IArenaAI.h"
 #include <atomic>
 
 namespace Playerbot
 {
-    // Interface
-    #include "Core/DI/Interfaces/IArenaAI.h"
-
 
 /**
  * @brief Arena bracket types
@@ -366,42 +364,6 @@ public:
     // METRICS
     // ============================================================================
 
-    struct ArenaMetrics
-    {
-        std::atomic<uint32> matchesWon{0};
-        std::atomic<uint32> matchesLost{0};
-        std::atomic<uint32> kills{0};
-        std::atomic<uint32> deaths{0};
-        std::atomic<uint32> pillarKites{0};
-        std::atomic<uint32> successfulBursts{0};
-        std::atomic<uint32> coordCCs{0};
-        std::atomic<uint32> rating{1500}; // Starting rating
-
-        void Reset()
-        {
-            matchesWon = 0;
-            matchesLost = 0;
-            kills = 0;
-            deaths = 0;
-            pillarKites = 0;
-            successfulBursts = 0;
-            coordCCs = 0;
-            rating = 1500;
-        }
-
-        float GetWinRate() const
-        {
-            uint32 total = matchesWon.load() + matchesLost.load();
-            return total > 0 ? static_cast<float>(matchesWon.load()) / total : 0.0f;
-        }
-
-        float GetKDRatio() const
-        {
-            uint32 d = deaths.load();
-            return d > 0 ? static_cast<float>(kills.load()) / d : static_cast<float>(kills.load());
-        }
-    };
-
     ArenaMetrics const& GetMetrics() const override;
     ArenaMetrics const& GetGlobalMetrics() const override;
 
@@ -472,7 +434,7 @@ private:
     std::unordered_map<uint32, ObjectGuid> _focusTargets;
 
     // Pillar database (mapId -> pillars)
-    std::unordered_map<uint32, std::vector<ArenaPillar>> _arenaP illars;
+    std::unordered_map<uint32, std::vector<ArenaPillar>> _arenaPillars;
 
     // Burst coordination (playerGuid -> burst ready)
     std::unordered_map<uint32, bool> _burstReady;

@@ -34,7 +34,7 @@
 #include "Opcodes.h"  // For CMSG_RECLAIM_CORPSE
 
 // PHASE 3 MIGRATION: Movement Arbiter Integration
-#include "Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "Movement/Arbiter/MovementRequest.h"
 #include "Movement/Arbiter/MovementPriorityMapper.h"
 

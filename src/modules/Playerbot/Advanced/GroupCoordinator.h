@@ -26,6 +26,9 @@ enum Difficulty : uint8;
 
 namespace Playerbot
 {
+    // Forward declare GroupEvent from Playerbot namespace
+    struct GroupEvent;
+
 namespace Advanced
 {
     class BotAI;

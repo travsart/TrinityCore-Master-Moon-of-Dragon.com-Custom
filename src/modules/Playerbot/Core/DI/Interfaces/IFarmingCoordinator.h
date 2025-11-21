@@ -20,7 +20,7 @@ namespace Playerbot
 
 // Forward declarations
 enum class FarmingSessionType : uint8;
-enum class ProfessionType : uint8;
+enum class ProfessionType : uint16;
 struct FarmingZoneInfo;
 struct FarmingSession;
 struct FarmingCoordinatorProfile;

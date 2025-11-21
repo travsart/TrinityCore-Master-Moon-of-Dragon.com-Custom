@@ -7,6 +7,9 @@
  * option) any later version.
  */
 
+#ifndef PLAYERBOT_LOOT_DISTRIBUTION_H
+#define PLAYERBOT_LOOT_DISTRIBUTION_H
+
 #pragma once
 
 #include "Define.h"
@@ -324,7 +327,6 @@ public:
 
 private:
     Player* _bot;
-    ~LootDistribution() = default;
 
     // Core data structures
     std::unordered_map<uint32, LootRoll> _activeLootRolls; // rollId -> roll data
@@ -408,3 +410,5 @@ private:
 };
 
 } // namespace Playerbot
+
+#endif // PLAYERBOT_LOOT_DISTRIBUTION_H

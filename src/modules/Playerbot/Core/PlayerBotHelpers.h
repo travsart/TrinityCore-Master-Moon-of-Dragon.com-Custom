@@ -37,47 +37,23 @@ class IGameSystemsManager;
  *     botAI->GetGameSystems()->GetQuestManager()->DoSomething();
  * }
  */
-inline BotAI* GetBotAI(Player* player)
-{
-    if (!player)
-        return nullptr;
-
-    return dynamic_cast<BotAI*>(player->GetAI());
-}
+BotAI* GetBotAI(Player* player);
 
 /**
  * @brief Helper function to safely get GameSystemsManager from a Player
  *
- * This is a convenience helper that combines GetBotAI() with GetGameSystems().
- * Returns nullptr if the player is not a valid bot or has no game systems.
+ * This is a convenience wrapper that combines GetBotAI + GetGameSystems.
+ * Returns nullptr if player is not a valid bot.
  *
  * @param player The player to get GameSystemsManager from
- * @return IGameSystemsManager* if player is a valid bot with game systems, nullptr otherwise
+ * @return IGameSystemsManager* if player is a valid bot, nullptr otherwise
  *
  * @example
- * if (IGameSystemsManager* systems = GetGameSystems(player))
+ * if (auto* gameSystems = GetGameSystems(player))
  * {
- *     systems->GetQuestManager()->DoSomething();
+ *     gameSystems->GetQuestManager()->AcceptQuest(questId);
  * }
  */
-inline IGameSystemsManager* GetGameSystems(Player* player);
-
-} // namespace Playerbot
-
-// Include BotAI.h here to resolve the inline implementation
-// This must come AFTER the forward declarations to avoid circular dependencies
-#include "AI/BotAI.h"
-
-namespace Playerbot
-{
-
-inline IGameSystemsManager* GetGameSystems(Player* player)
-{
-    BotAI* botAI = GetBotAI(player);
-    if (!botAI)
-        return nullptr;
-
-    return botAI->GetGameSystems();
-}
+IGameSystemsManager* GetGameSystems(Player* player);
 
 } // namespace Playerbot

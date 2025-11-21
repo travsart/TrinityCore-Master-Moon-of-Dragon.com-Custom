@@ -18,7 +18,7 @@
 #ifndef TRINITYCORE_RAID_ORCHESTRATOR_H
 #define TRINITYCORE_RAID_ORCHESTRATOR_H
 
-#include "GroupCoordinator.h"
+#include "../../Advanced/GroupCoordinator.h"
 #include "RoleCoordinator.h"
 #include "Define.h"
 #include "ObjectGuid.h"

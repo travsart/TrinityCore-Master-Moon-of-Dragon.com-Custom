@@ -27,7 +27,7 @@
 #include <numeric>
 #include "../../Spatial/SpatialGridManager.h"
 #include "../../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5F: Thread-safe queries
-#include "../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriority.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
@@ -293,7 +293,7 @@ float CombatSpecializationBase::GetOptimalRange(::Unit* target)
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
 
-            return MELEE_RANGE;
+            return BOT_MELEE_RANGE;
 
         case CombatRole::RANGED_DPS:
         case CombatRole::HEALER:
@@ -815,7 +815,7 @@ float CombatSpecializationBase::GetDistance(::Unit* target) const
 
 bool CombatSpecializationBase::IsInMeleeRange(::Unit* target) const
 {
-    return GetDistance(target) <= MELEE_RANGE;
+    return GetDistance(target) <= BOT_MELEE_RANGE;
 }
 
 bool CombatSpecializationBase::IsInCastRange(::Unit* target, uint32 spellId) const

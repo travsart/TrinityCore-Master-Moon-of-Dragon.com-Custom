@@ -209,82 +209,7 @@ public:
     void OptimizeQuestPickupRoute(Player* bot, const std::vector<uint32>& questGivers);
     bool ShouldMoveToNextZone(Player* bot);
 
-    // Quest pickup performance monitoring
-    struct QuestPickupMetrics
-    {
-        std::atomic<uint32> questsPickedUp{0};
-        std::atomic<uint32> questsRejected{0};
-        std::atomic<uint32> pickupAttempts{0};
-        std::atomic<uint32> successfulPickups{0};
-        std::atomic<float> averagePickupTime{5000.0f};
-        std::atomic<float> questPickupEfficiency{0.8f};
-        std::atomic<uint32> questGiversVisited{0};
-        std::atomic<uint32> movementDistance{0};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        QuestPickupMetrics() = default;
-
-        // Copy constructor needed since std::atomic is not copyable
-        QuestPickupMetrics(const QuestPickupMetrics& other) noexcept
-            : questsPickedUp(other.questsPickedUp.load())
-            , questsRejected(other.questsRejected.load())
-            , pickupAttempts(other.pickupAttempts.load())
-            , successfulPickups(other.successfulPickups.load())
-            , averagePickupTime(other.averagePickupTime.load())
-            , questPickupEfficiency(other.questPickupEfficiency.load())
-            , questGiversVisited(other.questGiversVisited.load())
-            , movementDistance(other.movementDistance.load())
-            , lastUpdate(other.lastUpdate)
-        {
-        }
-
-        // Move constructor
-        QuestPickupMetrics(QuestPickupMetrics&& other) noexcept
-            : questsPickedUp(other.questsPickedUp.load())
-            , questsRejected(other.questsRejected.load())
-            , pickupAttempts(other.pickupAttempts.load())
-            , successfulPickups(other.successfulPickups.load())
-            , averagePickupTime(other.averagePickupTime.load())
-            , questPickupEfficiency(other.questPickupEfficiency.load())
-            , questGiversVisited(other.questGiversVisited.load())
-            , movementDistance(other.movementDistance.load())
-            , lastUpdate(std::move(other.lastUpdate))
-        {
-        }
-
-        // Copy assignment operator
-        QuestPickupMetrics& operator=(const QuestPickupMetrics& other) noexcept
-        {
-            if (this != &other)
-            {
-                questsPickedUp = other.questsPickedUp.load();
-                questsRejected = other.questsRejected.load();
-                pickupAttempts = other.pickupAttempts.load();
-                successfulPickups = other.successfulPickups.load();
-                averagePickupTime = other.averagePickupTime.load();
-                questPickupEfficiency = other.questPickupEfficiency.load();
-                questGiversVisited = other.questGiversVisited.load();
-                movementDistance = other.movementDistance.load();
-                lastUpdate = other.lastUpdate;
-            }
-            return *this;
-        }
-
-        void Reset() {
-            questsPickedUp = 0; questsRejected = 0; pickupAttempts = 0;
-            successfulPickups = 0; averagePickupTime = 5000.0f;
-            questPickupEfficiency = 0.8f; questGiversVisited = 0;
-            movementDistance = 0;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        float GetSuccessRate() const {
-            uint32 attempts = pickupAttempts.load();
-            uint32 successful = successfulPickups.load();
-            return attempts > 0 ? (float)successful / attempts : 0.0f;
-        }
-    };
-
+    // Quest pickup performance monitoring (QuestPickupMetrics defined in IQuestPickup.h interface)
     QuestPickupMetrics GetBotPickupMetrics(uint32 botGuid) override;
     QuestPickupMetrics GetGlobalPickupMetrics() override;
 
@@ -329,7 +254,6 @@ public:
 
 private:
     Player* _bot;
-    ~QuestPickup() = default;
 
     // Core data structures
     std::unordered_map<uint32, std::vector<QuestPickupRequest>> _botPickupQueues; // botGuid -> requests

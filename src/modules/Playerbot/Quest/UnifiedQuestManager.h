@@ -236,7 +236,7 @@ public:
     // ========================================================================
 
     ::std::vector<uint32> DiscoverAvailableQuests(::Player* bot) override;
-    ::std::vector<uint32> GetRecommendedQuests(::Player* bot, QuestStrategy strategy) override;
+    ::std::vector<uint32> GetRecommendedQuests(::Player* bot, QuestSelectionStrategy strategy) override;
     bool AssignQuestToBot(uint32 questId, ::Player* bot) override;
     void AutoAssignQuests(::Player* bot, uint32 maxQuests = 10) override;
     QuestPriority CalculateQuestPriority(uint32 questId, ::Player* bot) override;
@@ -269,8 +269,8 @@ public:
     QuestReward AnalyzeQuestReward(uint32 questId, ::Player* bot) override;
     float CalculateQuestValue(uint32 questId, ::Player* bot) override;
     bool IsQuestWorthwhile(uint32 questId, ::Player* bot) override;
-    void SetQuestStrategy(uint32 botGuid, QuestStrategy strategy) override;
-    QuestStrategy GetQuestStrategy(uint32 botGuid) override;
+    void SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy) override;
+    QuestSelectionStrategy GetQuestStrategy(uint32 botGuid) override;
     void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests) override;
     void EnableQuestGrouping(uint32 botGuid, bool enable) override;
 
@@ -499,7 +499,7 @@ private:
     public:
         // Delegates to DynamicQuestSystem singleton
         ::std::vector<uint32> DiscoverAvailableQuests(::Player* bot);
-        ::std::vector<uint32> GetRecommendedQuests(::Player* bot, QuestStrategy strategy);
+        ::std::vector<uint32> GetRecommendedQuests(::Player* bot, QuestSelectionStrategy strategy);
         bool AssignQuestToBot(uint32 questId, ::Player* bot);
         void AutoAssignQuests(::Player* bot, uint32 maxQuests);
         QuestPriority CalculateQuestPriority(uint32 questId, ::Player* bot);
@@ -532,8 +532,8 @@ private:
         QuestReward AnalyzeQuestReward(uint32 questId, ::Player* bot);
         float CalculateQuestValue(uint32 questId, ::Player* bot);
         bool IsQuestWorthwhile(uint32 questId, ::Player* bot);
-        void SetQuestStrategy(uint32 botGuid, QuestStrategy strategy);
-        QuestStrategy GetQuestStrategy(uint32 botGuid);
+        void SetQuestStrategy(uint32 botGuid, QuestSelectionStrategy strategy);
+        QuestSelectionStrategy GetQuestStrategy(uint32 botGuid);
         void SetMaxConcurrentQuests(uint32 botGuid, uint32 maxQuests);
         void EnableQuestGrouping(uint32 botGuid, bool enable);
         QuestMetrics GetBotQuestMetrics(uint32 botGuid);

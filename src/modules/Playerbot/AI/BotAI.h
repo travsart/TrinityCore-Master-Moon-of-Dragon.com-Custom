@@ -87,6 +87,7 @@ namespace Events
 }
 
 class ManagerRegistry;
+class HybridAIController;
 
 // Phase 5E: Decision Fusion System forward declarations
 namespace bot { namespace ai {
@@ -188,6 +189,22 @@ public:
     virtual void OnCombatEnd();
 
     // ========================================================================
+    // SPELL CASTING - Virtual interface for class-specific implementations
+    // ========================================================================
+
+    /**
+     * @brief Cast a spell on a target
+     *
+     * Base implementation returns SPELL_FAILED_NOT_READY.
+     * ClassAI overrides this to provide class-specific spell casting logic.
+     *
+     * @param spellId The spell ID to cast
+     * @param target The target unit (nullptr for self-cast)
+     * @return SpellCastResult indicating success or failure reason
+     */
+    virtual ::SpellCastResult CastSpell(uint32 spellId, ::Unit* target = nullptr);
+
+    // ========================================================================
     // STRATEGY MANAGEMENT - Core behavior system
     // ========================================================================
 
@@ -249,6 +266,8 @@ public:
     void SetTarget(ObjectGuid guid) { _currentTarget = guid; }
     ObjectGuid GetTarget() const { return _currentTarget; }
     ::Unit* GetTargetUnit() const;
+    TargetScanner* GetTargetScanner() { return _gameSystems ? _gameSystems->GetTargetScanner() : nullptr; }
+    TargetScanner const* GetTargetScanner() const { return _gameSystems ? _gameSystems->GetTargetScanner() : nullptr; }
 
     // ========================================================================
     // MOVEMENT CONTROL - Strategy-driven movement
@@ -326,7 +345,7 @@ public:
      * @brief Get Hybrid AI Controller (Phase 2 Week 3 / Phase 6: Facade Delegation)
      * @return Pointer to controller, or nullptr if not initialized
      */
-    bot::ai::HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
+    HybridAIController* GetHybridAI() const { return _gameSystems ? _gameSystems->GetHybridAI() : nullptr; }
 
     /**
      * @brief Get Shared Blackboard (Phase 4)

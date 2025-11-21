@@ -22,7 +22,11 @@
 #include "Professions/GatheringMaterialsBridge.h"
 #include "Professions/ProfessionAuctionBridge.h"
 #include "Professions/AuctionMaterialsBridge.h"
-#include "Spatial/BlackboardManager.h"
+// #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
+
+// Manager implementations (for unique_ptr destruction)
+#include "Social/LootDistribution.h"  // Required for unique_ptr<LootDistribution> construction
+#include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction
 
 #include <set>
 
@@ -274,7 +278,7 @@ void GameSystemsManager::Initialize(Player* bot)
     // ========================================================================
 
     // Priority-based behavior manager
-    _priorityManager = std::make_unique<bot::ai::BehaviorPriorityManager>(_botAI);
+    _priorityManager = std::make_unique<BehaviorPriorityManager>(_botAI);
 
     // Group management
     _groupInvitationHandler = std::make_unique<GroupInvitationHandler>(_bot);
@@ -422,7 +426,7 @@ void GameSystemsManager::Initialize(Player* bot)
 
         if (_bankingManager)
         {
-            _bankingManager->OnInitialize();
+            _bankingManager->Initialize();
             TC_LOG_INFO("module.playerbot.managers", "✅ BankingManager initialized - personal banking automation active");
         }
 
@@ -502,7 +506,7 @@ void GameSystemsManager::InitializeHybridAI()
     // Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
     // This will be implemented when HybridAIController is available
     // For now, create empty instance
-    _hybridAI = std::make_unique<bot::ai::HybridAIController>();
+    _hybridAI = std::make_unique<HybridAIController>();
 
     TC_LOG_INFO("module.playerbot", "🤖 HYBRID AI CONTROLLER: {} - Hybrid decision system ready",
         _bot ? _bot->GetName() : "Unknown");
@@ -664,7 +668,7 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
 
     // Profession auction bridge handles selling materials/crafts and buying materials for leveling
     if (_professionAuctionBridge)
-        _professionAuctionBridge->Update(diff);
+        _professionAuctionBridge->Update(_bot, diff);
 
     // Auction manager handles auction house buying, selling, and market scanning
     if (_auctionManager)
@@ -676,7 +680,7 @@ void GameSystemsManager::UpdateManagers(uint32 diff)
 
     // Banking manager handles personal banking automation (gold/items)
     if (_bankingManager)
-        _bankingManager->OnUpdate(_bot, diff);
+        _bankingManager->Update(diff);
 
     // Farming coordinator handles profession skill leveling automation
     if (_farmingCoordinator)

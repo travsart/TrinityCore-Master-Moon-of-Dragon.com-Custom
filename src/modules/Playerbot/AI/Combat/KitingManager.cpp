@@ -20,7 +20,7 @@
 #include "CellImpl.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
-#include "../../Movement/UnifiedMovementCoordinator.h  // Phase 2: Unified movement system"
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"

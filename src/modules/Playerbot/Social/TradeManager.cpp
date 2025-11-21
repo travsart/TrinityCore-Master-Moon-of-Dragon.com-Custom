@@ -33,8 +33,8 @@
 
 namespace Playerbot
 {
-    // TradeSession implementation
-    void TradeSession::Reset()
+    // TradeManagerSession implementation
+    void TradeManagerSession::Reset()
     {
         traderGuid.Clear();
         state = TradeState::IDLE;
@@ -47,7 +47,7 @@ namespace Playerbot
         traderAccepted = false;
     }
 
-    uint64 TradeSession::GetTotalOfferedValue() const
+    uint64 TradeManagerSession::GetTotalOfferedValue() const
     {
         uint64 totalValue = offeredGold;
         for (auto const& slot : offeredItems)
@@ -56,7 +56,7 @@ namespace Playerbot
         return totalValue;
     }
 
-    uint64 TradeSession::GetTotalReceivedValue() const
+    uint64 TradeManagerSession::GetTotalReceivedValue() const
     {
         uint64 totalValue = receivedGold;
         for (auto const& slot : receivedItems)
@@ -65,7 +65,7 @@ namespace Playerbot
         return totalValue;
     }
 
-    bool TradeSession::IsBalanced(float tolerance) const
+    bool TradeManagerSession::IsBalanced(float tolerance) const
     {
         uint64 offeredValue = GetTotalOfferedValue();
         uint64 receivedValue = GetTotalReceivedValue();

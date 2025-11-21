@@ -93,7 +93,7 @@ public:
      * @param playerRole The role(s) the player selected (PLAYER_ROLE_TANK/HEALER/DAMAGE)
      * @param dungeons Set of dungeon IDs the player queued for
      */
-    void OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::LfgDungeonSet const& dungeons) override;
+    void OnPlayerJoinQueue(Player* player, uint8 playerRole, lfg::LfgDungeonSet const& dungeons);
 
     /**
      * @brief Called when a player (human or bot) leaves the LFG queue

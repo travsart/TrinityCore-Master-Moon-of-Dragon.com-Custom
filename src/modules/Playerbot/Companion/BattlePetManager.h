@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "ObjectGuid.h"
+#include "Core/DI/Interfaces/IBattlePetManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,8 +23,6 @@
 
 namespace Playerbot
 {
-    // Interface
-    #include "Core/DI/Interfaces/IBattlePetManager.h"
 
 
 /**
@@ -108,6 +107,19 @@ struct PetBattleAutomationProfile
     uint32 minHealthPercent = 30;      // Min health % before healing
 
     PetBattleAutomationProfile() = default;
+};
+
+/**
+ * @brief Battle pet ability information
+ */
+struct AbilityInfo
+{
+    uint32 abilityId;
+    std::string name;
+    PetFamily family;
+    uint32 damage;
+    uint32 cooldown;
+    bool isMultiTurn;
 };
 
 /**
@@ -329,31 +341,6 @@ public:
     // METRICS
     // ============================================================================
 
-    struct PetMetrics
-    {
-        std::atomic<uint32> petsCollected{0};
-        std::atomic<uint32> battlesWon{0};
-        std::atomic<uint32> battlesLost{0};
-        std::atomic<uint32> raresCaptured{0};
-        std::atomic<uint32> petsLeveled{0};
-        std::atomic<uint32> totalXPGained{0};
-
-        void Reset()
-        {
-            petsCollected = 0;
-            battlesWon = 0;
-            battlesLost = 0;
-            raresCaptured = 0;
-            petsLeveled = 0;
-            totalXPGained = 0;
-        }
-
-        float GetWinRate() const
-        {
-            uint32 total = battlesWon.load() + battlesLost.load();
-            return total > 0 ? (float)battlesWon.load() / total : 0.0f;
-        }
-    };
 
     PetMetrics const& GetMetrics() const override;
     PetMetrics const& GetGlobalMetrics() const override;
@@ -412,17 +399,6 @@ private:
     static std::unordered_map<uint32, AbilityInfo> _abilityDatabase;
     static PetMetrics _globalMetrics;
     static bool _databaseInitialized;
-
-    // Ability info structure
-    struct AbilityInfo
-    {
-        uint32 abilityId;
-        std::string name;
-        PetFamily family;
-        uint32 damage;
-        uint32 cooldown;
-        bool isMultiTurn;
-    };
 
     // Update intervals
     static constexpr uint32 PET_UPDATE_INTERVAL = 5000;  // 5 seconds

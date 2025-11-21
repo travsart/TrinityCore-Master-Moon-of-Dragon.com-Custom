@@ -20,11 +20,10 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include "Core/DI/Interfaces/IPvPCombatAI.h"
 
 namespace Playerbot
 {
-    // Interface
-    #include "Core/DI/Interfaces/IPvPCombatAI.h"
 
 
 /**
@@ -331,34 +330,6 @@ public:
     // ============================================================================
     // METRICS
     // ============================================================================
-
-    struct PvPMetrics
-    {
-        std::atomic<uint32> killsSecured{0};
-        std::atomic<uint32> deaths{0};
-        std::atomic<uint32> ccChainsExecuted{0};
-        std::atomic<uint32> interruptsLanded{0};
-        std::atomic<uint32> defensivesUsed{0};
-        std::atomic<uint32> burstsExecuted{0};
-        std::atomic<uint32> peelsPerformed{0};
-
-        void Reset()
-        {
-            killsSecured = 0;
-            deaths = 0;
-            ccChainsExecuted = 0;
-            interruptsLanded = 0;
-            defensivesUsed = 0;
-            burstsExecuted = 0;
-            peelsPerformed = 0;
-        }
-
-        float GetKDRatio() const
-        {
-            uint32 d = deaths.load();
-            return d > 0 ? static_cast<float>(killsSecured.load()) / d : static_cast<float>(killsSecured.load());
-        }
-    };
 
     PvPMetrics const& GetMetrics() const override;
     PvPMetrics const& GetGlobalMetrics() const override;

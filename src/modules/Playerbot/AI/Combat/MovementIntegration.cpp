@@ -148,7 +148,7 @@ Position MovementIntegration::GetTargetPosition()
 float MovementIntegration::GetOptimalRange(Unit* target)
 {
     if (!_bot || !target)
-        return MELEE_RANGE;
+        return BOT_MELEE_RANGE;
 
     CombatRole role = GetCombatRole();
 
@@ -156,7 +156,7 @@ float MovementIntegration::GetOptimalRange(Unit* target)
     {
         case CombatRole::TANK:
         case CombatRole::MELEE_DPS:
-            return MELEE_RANGE;
+            return BOT_MELEE_RANGE;
 
         case CombatRole::HEALER:
             return 30.0f;  // Healing range
@@ -165,7 +165,7 @@ float MovementIntegration::GetOptimalRange(Unit* target)
             return RANGED_OPTIMAL;
 
         default:
-            return MELEE_RANGE;
+            return BOT_MELEE_RANGE;
     }
 }
 

@@ -65,13 +65,16 @@ RaidOrchestrator::RaidOrchestrator(Group* raid)
 
         if (hasMembers)
         {
-            auto coordinator = ::std::make_unique<GroupCoordinator>(_raid);
-            _groupCoordinators.push_back(::std::move(coordinator));
+            // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
+            // Each bot has its own GroupCoordinator via GameSystemsManager
+            // auto coordinator = ::std::make_unique<GroupCoordinator>(_raid);
+            // _groupCoordinators.push_back(::std::move(coordinator));
         }
     }
 
-    TC_LOG_DEBUG("playerbot.coordination", "RaidOrchestrator created with {} subgroups",
-        _groupCoordinators.size());
+    // TODO: Redesign - GroupCoordinator tracking
+    // TC_LOG_DEBUG("playerbot.coordination", "RaidOrchestrator created with {} subgroups",
+    //     _groupCoordinators.size());
 }
 
 void RaidOrchestrator::Update(uint32 diff)
@@ -96,10 +99,11 @@ void RaidOrchestrator::Update(uint32 diff)
 
 GroupCoordinator* RaidOrchestrator::GetGroupCoordinator(uint32 groupIndex)
 {
-    if (groupIndex >= _groupCoordinators.size())
-        return nullptr;
-
-    return _groupCoordinators[groupIndex].get();
+    // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
+    // if (groupIndex >= _groupCoordinators.size())
+    //     return nullptr;
+    // return _groupCoordinators[groupIndex].get();
+    return nullptr;
 }
 
 void RaidOrchestrator::IssueDirective(RaidDirective const& directive)
@@ -257,10 +261,11 @@ uint32 RaidOrchestrator::GetCombatDuration() const
 
 void RaidOrchestrator::UpdateGroupCoordinators(uint32 diff)
 {
-    for (auto& coordinator : _groupCoordinators)
-    {
-        coordinator->Update(diff);
-    }
+    // TODO: Redesign - GroupCoordinator is now per-bot, not per-group
+    // for (auto& coordinator : _groupCoordinators)
+    // {
+    //     coordinator->Update(diff);
+    // }
 }
 
 void RaidOrchestrator::UpdateRoleCoordinators(uint32 diff)

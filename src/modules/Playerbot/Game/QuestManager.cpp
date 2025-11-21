@@ -48,13 +48,13 @@ namespace Playerbot
     static constexpr uint32 MAX_IGNORED_QUESTS = 50;              // Maximum ignored quests
     static constexpr uint32 MAX_RECENTLY_COMPLETED = 20;          // Track last 20 completions
 
-    // QuestSelectionStrategy implementation
-    QuestSelectionStrategy::QuestSelectionStrategy(enum QuestSelectionStrategy::Strategy strategy)
+    // QuestStrategy implementation
+    QuestSelectionAI::QuestSelectionAI(enum QuestSelectionAI::Strategy strategy)
         : m_strategy(strategy)
     {
     }
 
-    float QuestSelectionStrategy::EvaluateQuest(Quest const* quest, Player* bot) const
+    float QuestSelectionAI::EvaluateQuest(Quest const* quest, Player* bot) const
     {
         if (!quest || !bot)
             return 0.0f;
@@ -63,20 +63,20 @@ namespace Playerbot
 
         switch (m_strategy)
         {
-            case QuestSelectionStrategy::Strategy::SIMPLE:
+            case QuestSelectionAI::Strategy::SIMPLE:
                 // Basic scoring - just level and XP
                 score = 50.0f;
                 if (bot->GetQuestLevel(quest) == bot->GetLevel())
                     score += 50.0f;
                 break;
 
-            case QuestSelectionStrategy::Strategy::OPTIMAL:
+            case QuestSelectionAI::Strategy::OPTIMAL:
                 // Complex scoring considering all factors
                 score = 100.0f;
                 // Implementation handled by QuestManager::EvaluateQuestPriority
                 break;
 
-            case QuestSelectionStrategy::Strategy::GROUP:
+            case QuestSelectionAI::Strategy::GROUP:
                 // Prioritize group quests (has suggested players > 1)
     if (quest->GetSuggestedPlayers() > 1)
                     score = 100.0f;
@@ -84,12 +84,12 @@ namespace Playerbot
                     score = 50.0f;
                 break;
 
-            case QuestSelectionStrategy::Strategy::COMPLETIONIST:
+            case QuestSelectionAI::Strategy::COMPLETIONIST:
                 // Accept all quests in zone
                 score = 75.0f;
                 break;
 
-            case QuestSelectionStrategy::Strategy::SPEED_LEVELING:
+            case QuestSelectionAI::Strategy::SPEED_LEVELING:
                 // Focus on XP efficiency
                 score = bot->GetQuestXPReward(quest) / 100.0f;
                 break;
@@ -98,7 +98,7 @@ namespace Playerbot
         return score;
     }
 
-    ::std::vector<uint32> QuestSelectionStrategy::SelectQuestPath(::std::vector<uint32> const& available, Player* bot) const
+    ::std::vector<uint32> QuestSelectionAI::SelectQuestPath(::std::vector<uint32> const& available, Player* bot) const
     {
         ::std::vector<::std::pair<uint32, float>> scoredQuests;
 
@@ -216,7 +216,7 @@ namespace Playerbot
         , m_maxTravelDistance(1000)
         , m_minQuestLevel(0.75f)  // 75% of bot level
         , m_maxQuestLevel(1.10f)  // 110% of bot level
-        , m_strategy(::std::make_unique<QuestSelectionStrategy>(QuestSelectionStrategy::Strategy::OPTIMAL))
+        , m_strategy(::std::make_unique<QuestSelectionAI>(QuestSelectionAI::Strategy::OPTIMAL))
         , m_cache(::std::make_unique<QuestCache>())
     {
     }

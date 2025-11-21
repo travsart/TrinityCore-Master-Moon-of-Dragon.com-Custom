@@ -17,6 +17,7 @@
 
 #include "IntegratedAIContext.h"
 #include "AI/BotAI.h"
+#include "../../Advanced/TacticalCoordinator.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
@@ -63,7 +64,7 @@ SharedBlackboard* IntegratedAIContext::GetZoneBlackboard() const
     return _cachedZoneBlackboard;
 }
 
-TacticalCoordinator* IntegratedAIContext::GetTacticalCoordinator() const
+Advanced::TacticalCoordinator* IntegratedAIContext::GetTacticalCoordinator() const
 {
     if (!_cachedTacticalCoordinator && _bot)
     {
@@ -229,7 +230,7 @@ BTStatus BTCheckGroupFocusTarget::TickWithContext(IntegratedAIContext& context)
 
 BTStatus BTFollowGroupStrategy::TickWithContext(IntegratedAIContext& context)
 {
-    TacticalCoordinator* coordinator = context.GetTacticalCoordinator();
+    Advanced::TacticalCoordinator* coordinator = context.GetTacticalCoordinator();
     if (!coordinator)
         return BTStatus::FAILURE;
 

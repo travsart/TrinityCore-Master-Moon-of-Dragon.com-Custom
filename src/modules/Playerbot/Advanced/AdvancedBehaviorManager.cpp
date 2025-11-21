@@ -27,7 +27,7 @@
 #include "../AI/BotAI.h"
 #include "../Spatial/SpatialGridManager.h"  // Lock-free spatial grid for deadlock fix
 #include "../Spatial/SpatialGridQueryHelpers.h"  // PHASE 5C: Thread-safe helpers
-#include "../Movement/UnifiedMovementCoordinator.h"  // Phase 2: Unified movement system
+#include "Movement/UnifiedMovementCoordinator.h"
 #include "../Movement/Arbiter/MovementPriorityMapper.h"
 #include "UnitAI.h"
 #include <algorithm>

@@ -305,20 +305,7 @@ public:
     void StopAll(bool immediate = false) override;
 
     // === Statistics ===
-
-    struct GlobalStats
-    {
-        uint32 totalBots = 0;
-        uint32 activeBots = 0;
-        uint32 idleBots = 0;
-        uint32 combatBots = 0;
-        uint32 questingBots = 0;
-        uint32 offlineBots = 0;
-
-        float avgAiUpdateTime = 0.0f;
-        size_t totalMemoryUsage = 0;
-        uint32 totalActionsPerSecond = 0;
-    };
+    // GlobalStats defined in IBotLifecycleManager.h interface
 
     /**
      * Get global statistics
@@ -352,7 +339,6 @@ public:
 
 private:
     Player* _bot;
-    ~BotLifecycleManager();
 
     // Bot storage
     std::unordered_map<ObjectGuid, std::shared_ptr<BotLifecycle>> _botLifecycles;
@@ -373,10 +359,6 @@ private:
 
     // Broadcast state change event
     void BroadcastStateChange(ObjectGuid botGuid, BotLifecycleState oldState, BotLifecycleState newState);
-
-    // Singleton
-    BotLifecycleManager(BotLifecycleManager const&) = delete;
-    BotLifecycleManager& operator=(BotLifecycleManager const&) = delete;
 };
 
 // Convenience accessor

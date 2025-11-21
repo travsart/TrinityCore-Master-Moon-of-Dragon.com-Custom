@@ -13,7 +13,7 @@
 
 class Player;
 class Unit;
-enum DispelType : uint8;
+enum DispelType;
 
 namespace Playerbot {
 namespace bot { namespace ai {

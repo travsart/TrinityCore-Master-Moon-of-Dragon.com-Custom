@@ -34,7 +34,7 @@ namespace Playerbot
 {
     // Forward declarations
     class BotAI;
-    class QuestSelectionStrategy;
+    class QuestSelectionAI;
     class QuestCache;
     struct QuestEvaluation;
 
@@ -279,7 +279,7 @@ namespace Playerbot
         Statistics m_stats;
 
         // Quest strategy handler
-        ::std::unique_ptr<QuestSelectionStrategy> m_strategy;
+        ::std::unique_ptr<QuestSelectionAI> m_strategy;
 
         // Quest cache for performance
         ::std::unique_ptr<QuestCache> m_cache;
@@ -288,7 +288,7 @@ namespace Playerbot
     /**
      * QuestStrategy - Strategic quest selection AI
      */
-    class QuestSelectionStrategy
+    class QuestSelectionAI
     {
     public:
         enum class Strategy
@@ -300,7 +300,7 @@ namespace Playerbot
             SPEED_LEVELING  // Fastest leveling path
         };
 
-        explicit QuestSelectionStrategy(Strategy strategy = Strategy::OPTIMAL);
+        explicit QuestSelectionAI(Strategy strategy = Strategy::OPTIMAL);
 
         float EvaluateQuest(Quest const* quest, Player* bot) const;
         ::std::vector<uint32> SelectQuestPath(::std::vector<uint32> const& available, Player* bot) const;

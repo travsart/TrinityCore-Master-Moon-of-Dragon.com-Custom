@@ -13,9 +13,11 @@
 #include "Player.h"
 #include "Group.h"
 #include "GroupMgr.h"
+#include "../Group/GroupEvents.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Log.h"
+#include "GameTime.h"
 #include "Item.h"
 #include "ItemTemplate.h"
 #include "Creature.h"
@@ -29,6 +31,8 @@
 #include <algorithm>
 
 namespace Playerbot
+{
+namespace Advanced
 {
     // Configuration constants
     static constexpr uint32 GROUP_UPDATE_INTERVAL = 1000;  // 1 second
@@ -517,6 +521,7 @@ namespace Playerbot
 
             // Determine role (simplified)
             Classes memberClass = static_cast<Classes>(member->GetClass());
+            if (memberClass == CLASS_WARRIOR || memberClass == CLASS_PALADIN ||
                 memberClass == CLASS_DEATH_KNIGHT)
                 comp.tanks++;
             else if (memberClass == CLASS_PRIEST || memberClass == CLASS_SHAMAN ||
@@ -1287,4 +1292,5 @@ namespace Playerbot
             m_bot->GetName().c_str(), cooldownName.c_str(), durationMs);
     }
 
+} // namespace Advanced
 } // namespace Playerbot

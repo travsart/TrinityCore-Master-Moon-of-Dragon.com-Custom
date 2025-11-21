@@ -256,8 +256,8 @@ public:
         }
     };
 
-    QuestCompletionMetrics::Snapshot GetBotCompletionMetrics(uint32 botGuid) override;
-    QuestCompletionMetrics::Snapshot GetGlobalCompletionMetrics() override;
+    QuestCompletionMetricsSnapshot GetBotCompletionMetrics(uint32 botGuid) override;
+    QuestCompletionMetricsSnapshot GetGlobalCompletionMetrics() override;
 
     // Quest data analysis
     std::vector<uint32> GetActiveQuests(Player* bot) override;
@@ -291,7 +291,6 @@ public:
 
 private:
     Player* _bot;
-    ~QuestCompletion() = default;
 
     // Core data structures
     std::unordered_map<uint32, std::vector<QuestProgressData>> _botQuestProgress; // botGuid -> quests

@@ -26,53 +26,8 @@
 namespace Playerbot
 {
 
-
-enum class AuctionStrategy : uint8
-{
-    CONSERVATIVE    = 0,  // Buy below market value, list at market value
-    AGGRESSIVE      = 1,  // Willing to pay market price, undercut significantly
-    OPPORTUNISTIC   = 2,  // Scan for bargains and flip opportunities
-    MARKET_MAKER    = 3,  // Provide liquidity by buying and selling regularly
-    COLLECTOR       = 4,  // Focus on rare items and collectibles
-    PROFIT_FOCUSED  = 5   // Maximize gold generation through trading
-};
-
-enum class AuctionActionType : uint8
-{
-    BUY_ITEM        = 0,
-    SELL_ITEM       = 1,
-    CANCEL_AUCTION  = 2,
-    UPDATE_BID      = 3,
-    SEARCH_MARKET   = 4,
-    ANALYZE_PRICES  = 5
-};
-
-struct AuctionItem
-{
-    uint32 auctionId;
-    uint32 itemId;
-    uint32 itemGuid;
-    uint32 stackCount;
-    uint32 currentBid;
-    uint32 buyoutPrice;
-    uint32 timeLeft;
-    uint32 sellerGuid;
-    std::string sellerName;
-    uint32 quality;
-    uint32 itemLevel;
-    bool hasEnchants;
-    bool hasSockets;
-    float marketValue;
-    float pricePerItem;
-    bool isBargain;
-    uint32 lastSeen;
-
-    AuctionItem() : auctionId(0), itemId(0), itemGuid(0), stackCount(1)
-        , currentBid(0), buyoutPrice(0), timeLeft(0), sellerGuid(0)
-        , quality(0), itemLevel(0), hasEnchants(false), hasSockets(false)
-        , marketValue(0.0f), pricePerItem(0.0f), isBargain(false)
-        , lastSeen(GameTime::GetGameTimeMS()) {}
-};
+// AuctionActionType enum defined in IAuctionHouse.h interface
+// AuctionItem struct defined in IAuctionHouse.h interface (moved for proper dependency management)
 
 struct AuctionSearchQuery
 {
@@ -129,54 +84,11 @@ public:
     bool IsPriceBelowMarket(uint32 itemId, uint32 price, float threshold = 0.8f) override;
     void UpdateMarketData() override;
 
-    // Advanced auction features
-    struct AuctionProfile
-    {
-        AuctionStrategy primaryStrategy;
-        AuctionStrategy secondaryStrategy;
-        uint32 maxBiddingBudget;
-        uint32 maxListingBudget;
-        float bargainThreshold; // Buy if price is below this % of market value
-        float profitMargin; // Minimum profit margin for flipping
-        std::vector<uint32> preferredItemTypes;
-        std::vector<uint32> avoidedItemTypes;
-        std::unordered_set<uint32> watchList; // Items to monitor
-        std::unordered_set<uint32> blackList; // Never buy these items
-        bool autoRelist; // Automatically relist unsold items
-        bool autoBuyConsumables;
-        bool autoSellJunk;
-        uint32 maxAuctionsActive;
-
-        AuctionProfile() : primaryStrategy(AuctionStrategy::CONSERVATIVE)
-            , secondaryStrategy(AuctionStrategy::OPPORTUNISTIC), maxBiddingBudget(10000)
-            , maxListingBudget(5000), bargainThreshold(0.7f), profitMargin(0.2f)
-            , autoRelist(true), autoBuyConsumables(false), autoSellJunk(true)
-            , maxAuctionsActive(10) {}
-    };
-
-    void SetAuctionProfile(const AuctionProfile& profile) override;
+    // Advanced auction features (AuctionProfile defined in IAuctionHouse.h interface)
+    void SetAuctionProfile(const AuctionProfile& profile);
     AuctionProfile GetAuctionProfile() override;
 
-    // Auction monitoring and automation
-    struct AuctionSession
-    {
-        uint32 sessionId;
-        uint32 playerGuid;
-        AuctionActionType actionType;
-        std::vector<AuctionItem> searchResults;
-        std::vector<uint32> targetAuctions;
-        std::queue<std::pair<AuctionActionType, uint32>> actionQueue;
-        uint32 sessionStartTime;
-        uint32 budgetUsed;
-        uint32 itemsSold;
-        uint32 itemsBought;
-        bool isActive;
-
-        AuctionSession(uint32 id, uint32 pGuid) : sessionId(id), playerGuid(pGuid)
-            , actionType(AuctionActionType::SEARCH_MARKET), sessionStartTime(GameTime::GetGameTimeMS())
-            , budgetUsed(0), itemsSold(0), itemsBought(0), isActive(true) {}
-    };
-
+    // Auction monitoring and automation (AuctionSession defined in IAuctionHouse.h interface)
     uint32 StartAuctionSession(AuctionActionType primaryAction) override;
     void UpdateAuctionSession(uint32 sessionId) override;
     void CompleteAuctionSession(uint32 sessionId) override;
@@ -208,41 +120,7 @@ public:
     float GetCompetitorUndercutRate(uint32 sellerGuid) override;
     void TrackCompetitorBehavior(uint32 sellerGuid, const AuctionItem& auction) override;
 
-    // Performance monitoring
-    struct AuctionMetrics
-    {
-        std::atomic<uint32> auctionsCreated{0};
-        std::atomic<uint32> auctionsWon{0};
-        std::atomic<uint32> auctionsLost{0};
-        std::atomic<uint32> itemsSold{0};
-        std::atomic<uint32> itemsBought{0};
-        std::atomic<uint32> totalGoldSpent{0};
-        std::atomic<uint32> totalGoldEarned{0};
-        std::atomic<float> averageProfitMargin{0.2f};
-        std::atomic<float> successRate{0.8f};
-        std::atomic<uint32> marketScans{0};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        void Reset() {
-            auctionsCreated = 0; auctionsWon = 0; auctionsLost = 0;
-            itemsSold = 0; itemsBought = 0; totalGoldSpent = 0;
-            totalGoldEarned = 0; averageProfitMargin = 0.2f; successRate = 0.8f;
-            marketScans = 0; lastUpdate = std::chrono::steady_clock::now();
-        }
-
-        uint32 GetNetProfit() const {
-            uint32 earned = totalGoldEarned.load();
-            uint32 spent = totalGoldSpent.load();
-            return earned > spent ? earned - spent : 0;
-        }
-
-        float GetWinRate() const {
-            uint32 won = auctionsWon.load();
-            uint32 total = won + auctionsLost.load();
-            return total > 0 ? (float)won / total : 0.0f;
-        }
-    };
-
+    // Performance monitoring (AuctionMetrics defined in IAuctionHouse.h interface)
     AuctionMetrics GetAuctionMetrics() override;
     AuctionMetrics GetGlobalAuctionMetrics() override;
 

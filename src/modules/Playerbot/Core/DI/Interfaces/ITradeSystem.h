@@ -13,6 +13,8 @@
 #include "Player.h"
 #include "Position.h"
 #include <vector>
+#include <atomic>
+#include <chrono>
 
 namespace Playerbot
 {
@@ -22,7 +24,34 @@ enum class TradeDecision : uint8;
 struct VendorInfo;
 struct TradeSession;
 struct TradeConfiguration;
-struct TradeMetrics;
+
+// TradeMetrics definition (needs full definition for return by value)
+struct TradeMetrics
+{
+    std::atomic<uint32> tradesInitiated{0};
+    std::atomic<uint32> tradesCompleted{0};
+    std::atomic<uint32> tradesCancelled{0};
+    std::atomic<uint32> vendorTransactions{0};
+    std::atomic<uint32> repairTransactions{0};
+    std::atomic<float> averageTradeValue{1000.0f};
+    std::atomic<float> tradeSuccessRate{0.8f};
+    std::atomic<uint32> totalGoldTraded{0};
+    std::atomic<uint32> totalItemsTraded{0};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    void Reset() {
+        tradesInitiated = 0; tradesCompleted = 0; tradesCancelled = 0;
+        vendorTransactions = 0; repairTransactions = 0; averageTradeValue = 1000.0f;
+        tradeSuccessRate = 0.8f; totalGoldTraded = 0; totalItemsTraded = 0;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+
+    float GetCompletionRate() const {
+        uint32 initiated = tradesInitiated.load();
+        uint32 completed = tradesCompleted.load();
+        return initiated > 0 ? (float)completed / initiated : 0.0f;
+    }
+};
 
 class TC_GAME_API ITradeSystem
 {

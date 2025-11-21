@@ -54,16 +54,20 @@ namespace Playerbot
 
 // Forward declarations for all manager types
 class QuestManager;
+class ObjectiveTracker;
 class TradeManager;
 class GatheringManager;
 class ProfessionManager;
 class AuctionManager;
+class EquipmentManager;
 class DeathRecoveryManager;
 class UnifiedMovementCoordinator;
 class CombatStateManager;
 class TargetScanner;
 class GroupInvitationHandler;
 class ManagerRegistry;
+class HybridAIController;
+class BehaviorPriorityManager;
 
 namespace Advanced
 {
@@ -81,7 +85,6 @@ namespace bot::ai
     class ActionPriorityQueue;
     class BehaviorTree;
     class HybridAIController;
-    class BehaviorPriorityManager;
 }
 
 /**
@@ -143,6 +146,12 @@ public:
     virtual QuestManager* GetQuestManager() const = 0;
 
     /**
+     * @brief Get objective tracker for quest progress
+     * @return Non-owning pointer to ObjectiveTracker (owned by facade)
+     */
+    virtual ObjectiveTracker* GetObjectiveTracker() const = 0;
+
+    /**
      * @brief Get trade management system
      * @return Non-owning pointer to TradeManager (owned by facade)
      */
@@ -165,6 +174,12 @@ public:
      * @return Non-owning pointer to AuctionManager (owned by facade)
      */
     virtual AuctionManager* GetAuctionManager() const = 0;
+
+    /**
+     * @brief Get equipment management system
+     * @return Non-owning pointer to EquipmentManager (owned by facade)
+     */
+    virtual EquipmentManager* GetEquipmentManager() const = 0;
 
     /**
      * @brief Get group coordination system
@@ -248,13 +263,13 @@ public:
      * @brief Get hybrid AI controller
      * @return Non-owning pointer to HybridAIController (owned by facade)
      */
-    virtual bot::ai::HybridAIController* GetHybridAI() const = 0;
+    virtual HybridAIController* GetHybridAI() const = 0;
 
     /**
      * @brief Get behavior priority manager
      * @return Non-owning pointer to BehaviorPriorityManager (owned by facade)
      */
-    virtual bot::ai::BehaviorPriorityManager* GetPriorityManager() const = 0;
+    virtual BehaviorPriorityManager* GetPriorityManager() const = 0;
 };
 
 } // namespace Playerbot

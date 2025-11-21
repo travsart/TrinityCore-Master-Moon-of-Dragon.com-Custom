@@ -15,7 +15,7 @@ namespace Playerbot
 
 struct MountInfo;
 struct MountAutomationProfile;
-enum class MountSpeed : uint8;
+enum class MountSpeed : uint16;
 
 /**
  * @brief Interface for mount management system

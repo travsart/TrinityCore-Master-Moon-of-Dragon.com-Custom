@@ -15,6 +15,7 @@
 #include "ObjectGuid.h"
 #include "Log.h"
 #include "IEventHandler.h"
+#include "AI/BotAI.h"
 #include <queue>
 #include <vector>
 #include <unordered_map>
@@ -27,9 +28,6 @@
 
 namespace Playerbot
 {
-
-// Forward declaration
-class BotAI;
 
 /**
  * @brief Generic EventBus template for type-safe, high-performance event publishing/subscription
@@ -754,7 +752,7 @@ private:
 
     // Priority queue for events (highest priority first)
     std::priority_queue<TEvent> _eventQueue;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _queueMutex;
+    mutable OrderedRecursiveMutex<LockOrder::EVENT_BUS> _queueMutex;
 
     // BotAI Subscriptions: botGuid -> set of subscribed event types
     std::unordered_map<ObjectGuid, std::unordered_set<EventType>> _subscriptions;
@@ -762,16 +760,16 @@ private:
     // Subscriber pointers: botGuid -> BotAI* (for event dispatch)
     std::unordered_map<ObjectGuid, BotAI*> _subscriberPointers;
 
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _subscriptionMutex;
+    mutable OrderedRecursiveMutex<LockOrder::EVENT_BUS> _subscriptionMutex;
 
     // Callback Subscriptions: subscriptionId -> CallbackSubscription
     std::unordered_map<uint32, CallbackSubscription> _callbackSubscriptions;
     uint32 _nextCallbackId{1};
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _callbackMutex;
+    mutable OrderedRecursiveMutex<LockOrder::EVENT_BUS> _callbackMutex;
 
     // Event counts per type (for statistics)
     mutable std::unordered_map<EventType, uint64> _eventCounts;
-    mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::EVENT_BUS> _eventCountMutex;
+    mutable OrderedRecursiveMutex<LockOrder::EVENT_BUS> _eventCountMutex;
 
     // Configuration
     uint32 _maxQueueSize{10000};

@@ -196,8 +196,13 @@ public:
     static BuildResult BuildCastSpellPacket(
         Player* caster,
         uint32 spellId,
-        Unit* target = nullptr,
-        BuildOptions const& options = BuildOptions());
+        Unit* target = nullptr);
+
+    static BuildResult BuildCastSpellPacket(
+        Player* caster,
+        uint32 spellId,
+        Unit* target,
+        BuildOptions const& options);
 
     /**
      * @brief Build CMSG_CAST_SPELL packet with GameObject target (quest items, interactions)
@@ -220,7 +225,7 @@ public:
         Player* caster,
         uint32 spellId,
         GameObject* target,
-        BuildOptions const& options = BuildOptions());
+        BuildOptions const& options);
 
     /**
      * @brief Build CMSG_CAST_SPELL packet with position target (ground-targeted spells)
@@ -241,7 +246,7 @@ public:
         Player* caster,
         uint32 spellId,
         Position const& position,
-        BuildOptions const& options = BuildOptions());
+        BuildOptions const& options);
 
     /**
      * @brief Build CMSG_CANCEL_CAST packet (interrupt current cast)
@@ -320,8 +325,8 @@ public:
     static BuildResult ValidateSpellCast(
         Player* caster,
         uint32 spellId,
-        Unit* target = nullptr,
-        BuildOptions const& options = BuildOptions());
+        Unit* target,
+        BuildOptions const& options);
 
 private:
     // Internal validation methods (comprehensive, no shortcuts)

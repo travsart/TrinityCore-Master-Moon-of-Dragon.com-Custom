@@ -27,6 +27,8 @@
 namespace Playerbot
 {
 
+// ObjectiveState is defined in IObjectiveTracker.h interface
+
 /**
  * @brief Advanced objective tracking system for quest completion monitoring
  *
@@ -36,9 +38,7 @@ namespace Playerbot
 class TC_GAME_API ObjectiveTracker final : public IObjectiveTracker
 {
 public:
-    // Forward declarations
-    struct ObjectiveState;
-    struct ObjectivePriority;
+    // Forward declarations (ObjectiveState and ObjectivePriority defined in IObjectiveTracker.h interface)
 
     explicit ObjectiveTracker(Player* bot);
     ~ObjectiveTracker();
@@ -50,7 +50,7 @@ public:
     void StopTrackingObjective(Player* bot, uint32 questId, uint32 objectiveIndex) override;
     void UpdateObjectiveTracking(Player* bot, uint32 diff) override;
     void RefreshObjectiveStates(Player* bot) override;
-    void RefreshObjectiveState(Player* bot, ObjectiveState& state) override;
+    void RefreshObjectiveState(Player* bot, ObjectiveState& state);
 
     // Progress monitoring
     void MonitorObjectiveProgress(Player* bot, uint32 questId, uint32 objectiveIndex) override;
@@ -64,53 +64,12 @@ public:
     std::vector<uint32> ScanForCollectibles(Player* bot, uint32 itemId, float radius = 50.0f) override;
     std::vector<uint32> ScanForGameObjects(Player* bot, uint32 objectId, float radius = 50.0f) override;
 
-    // Objective state management
-    struct ObjectiveState
-    {
-        uint32 questId;
-        uint32 objectiveIndex;
-        ObjectiveStatus status;
-        uint32 currentProgress;
-        uint32 requiredProgress;
-        uint32 lastUpdateTime;
-        uint32 timeStarted;
-        uint32 estimatedTimeRemaining;
-        float completionVelocity;
-        std::vector<uint32> targetIds;
-        Position lastKnownPosition;
-        bool isOptimized;
-        uint32 failureCount;
-        bool isStuck;
-        uint32 stuckTime;
-
-        ObjectiveState(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
-            , status(ObjectiveStatus::NOT_STARTED), currentProgress(0), requiredProgress(1)
-            , lastUpdateTime(GameTime::GetGameTimeMS()), timeStarted(GameTime::GetGameTimeMS()), estimatedTimeRemaining(0)
-            , completionVelocity(0.0f), isOptimized(false), failureCount(0)
-            , isStuck(false), stuckTime(0) {}
-    };
-
+    // Objective state management (ObjectiveState moved to namespace scope above)
     ObjectiveState GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex) override;
     void UpdateObjectiveState(Player* bot, const ObjectiveState& state) override;
     std::vector<ObjectiveState> GetActiveObjectives(Player* bot) override;
 
-    // Intelligent objective prioritization
-    struct ObjectivePriority
-    {
-        uint32 questId;
-        uint32 objectiveIndex;
-        float priorityScore;
-        float urgencyFactor;
-        float difficultyFactor;
-        float efficiencyFactor;
-        float proximityFactor;
-        std::string reasoning;
-
-        ObjectivePriority(uint32 qId, uint32 index) : questId(qId), objectiveIndex(index)
-            , priorityScore(5.0f), urgencyFactor(1.0f), difficultyFactor(1.0f)
-            , efficiencyFactor(1.0f), proximityFactor(1.0f) {}
-    };
-
+    // Intelligent objective prioritization (ObjectivePriority defined in IObjectiveTracker.h interface)
     std::vector<ObjectivePriority> CalculateObjectivePriorities(Player* bot) override;
     ObjectivePriority GetHighestPriorityObjective(Player* bot) override;
     void OptimizeObjectiveSequence(Player* bot, std::vector<ObjectivePriority>& priorities) override;
@@ -133,27 +92,7 @@ public:
     void SynchronizeObjectiveProgress(Group* group, uint32 questId) override;
     void HandleObjectiveConflicts(Group* group, uint32 questId, uint32 objectiveIndex) override;
 
-    // Performance analytics
-    struct ObjectiveAnalytics
-    {
-        std::atomic<uint32> objectivesStarted{0};
-        std::atomic<uint32> objectivesCompleted{0};
-        std::atomic<uint32> objectivesFailed{0};
-        std::atomic<float> averageCompletionTime{300000.0f}; // 5 minutes
-        std::atomic<float> averageSuccessRate{0.9f};
-        std::atomic<float> targetDetectionAccuracy{0.85f};
-        std::atomic<uint32> targetsFound{0};
-        std::atomic<uint32> targetsMissed{0};
-        std::chrono::steady_clock::time_point lastAnalyticsUpdate;
-
-        void Reset() {
-            objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
-            averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
-            targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;
-            lastAnalyticsUpdate = std::chrono::steady_clock::now();
-        }
-    };
-
+    // Performance analytics (ObjectiveAnalytics defined in IObjectiveTracker.h interface)
     const ObjectiveAnalytics& GetBotObjectiveAnalytics(uint32 botGuid) override;
     const ObjectiveAnalytics& GetGlobalObjectiveAnalytics() override;
 
@@ -188,7 +127,6 @@ public:
 
 private:
     Player* _bot;
-    ~ObjectiveTracker() = default;
 
     // Tracking data storage
     std::unordered_map<uint32, std::vector<ObjectiveState>> _botObjectiveStates; // botGuid -> objectives

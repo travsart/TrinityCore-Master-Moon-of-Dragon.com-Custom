@@ -228,7 +228,6 @@ public:
 
 private:
     Player* _bot;
-    ~GuildBankManager() = default;
 
     // Core bank data
     std::unordered_map<uint32, BankAnalysis> _guildBankAnalysis; // guildId -> analysis

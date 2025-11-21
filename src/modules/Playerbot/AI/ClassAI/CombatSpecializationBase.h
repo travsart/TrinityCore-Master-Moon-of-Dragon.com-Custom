@@ -216,7 +216,7 @@ protected:
     ::std::vector<Player*> GetGroupMembers() const;
 
     // Constants for common use
-    static constexpr float MELEE_RANGE = 5.0f;
+    static constexpr float BOT_MELEE_RANGE = 5.0f;
     static constexpr float RANGED_MIN_DISTANCE = 8.0f;
     static constexpr float RANGED_OPTIMAL_DISTANCE = 25.0f;
     static constexpr float MAX_SPELL_RANGE = 40.0f;
