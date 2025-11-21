@@ -110,7 +110,7 @@ namespace Playerbot
     };
 
     // Group loot distribution info
-    struct LootDistribution
+    struct GroupLootInfo
     {
         ::std::vector<Item*> items;
         ::std::unordered_map<ObjectGuid, uint32> playerPriorities;
@@ -118,7 +118,7 @@ namespace Playerbot
         bool useRoundRobin;
         bool considerSpec;
 
-        LootDistribution() : useRoundRobin(true), considerSpec(true) {}
+        GroupLootInfo() : useRoundRobin(true), considerSpec(true) {}
     };
 
     // Trade statistics tracking
@@ -256,7 +256,7 @@ namespace Playerbot
         Player* SelectBestRecipient(Item* item, ::std::vector<Player*> const& candidates) const;
         uint32 CalculateItemPriority(Item* item, Player* player) const;
         bool CanPlayerUseItem(Item* item, Player* player) const;
-        void BuildLootDistributionPlan(LootDistribution& distribution);
+        void BuildLootDistributionPlan(GroupLootInfo& distribution);
 
         // Security validations
         bool ValidateTradeDistance(Player* trader) const;
@@ -300,7 +300,7 @@ namespace Playerbot
         ::std::unordered_set<uint32> m_protectedItems;          // Items to never trade
 
         // Group loot distribution
-        ::std::unique_ptr<LootDistribution> m_currentDistribution;    // Active distribution
+        ::std::unique_ptr<GroupLootInfo> m_currentDistribution;    // Active distribution
         ::std::queue<::std::pair<Item*, ObjectGuid>> m_pendingTransfers;    // Pending item transfers
 
         // Performance tracking

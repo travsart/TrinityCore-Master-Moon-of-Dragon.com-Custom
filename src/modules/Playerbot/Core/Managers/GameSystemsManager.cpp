@@ -9,6 +9,10 @@
  * logic from BotAI.cpp, reducing god class complexity.
  */
 
+// IMPORTANT: LootDistribution.h MUST be included FIRST to avoid redefinition errors
+// This is included before GameSystemsManager.h to ensure it's the first definition seen
+#include "Social/LootDistribution.h"
+
 #include "GameSystemsManager.h"
 #include "AI/BotAI.h"
 #include "Player.h"
@@ -25,7 +29,6 @@
 // #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
 
 // Manager implementations (for unique_ptr destruction)
-#include "Social/LootDistribution.h"  // Required for unique_ptr<LootDistribution> construction
 #include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction
 
 #include <set>
@@ -315,7 +318,8 @@ void GameSystemsManager::Initialize(Player* bot)
     _questTurnIn = std::make_unique<QuestTurnIn>(_bot);
     _questValidation = std::make_unique<QuestValidation>(_bot);
     _roleAssignment = std::make_unique<RoleAssignment>(_bot);
-    _lfgBotManager = std::make_unique<LFGBotManager>(_bot);
+    // Note: LFGBotManager is a global singleton, accessed via sLFGBotManager macro
+    // _lfgBotManager = std::make_unique<LFGBotManager>(_bot);  // ERROR: Cannot instantiate singleton
     _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);
     _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);
     _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);

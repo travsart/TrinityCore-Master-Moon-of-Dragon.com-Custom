@@ -32,23 +32,30 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         return;
 
     // Extract gossip option IDs
-    ::std::vector<uint32> options;
-    options.reserve(packet.GossipOptions.size());
+    ::std::vector<Playerbot::GossipMenuItem> items;
+    items.reserve(packet.GossipOptions.size());
     for (auto const& option : packet.GossipOptions)
-        options.push_back(option.GossipOptionID);
+    {
+        Playerbot::GossipMenuItem item;
+        item.menuId = packet.GossipID;
+        item.optionIndex = option.OptionIndex;
+        item.text = option.Text;
+        item.icon = static_cast<uint32>(option.OptionIcon);
+        items.push_back(item);
+    }
 
     NPCEvent event = NPCEvent::GossipMenuReceived(
         bot->GetGUID(),
         packet.GossipGUID,
         packet.GossipID,
-        packet.RandomTextID.value_or(0),
-        ::std::move(options)
+        ::std::move(items),
+        ::std::to_string(packet.RandomTextID.value_or(0))
     );
 
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_MESSAGE (typed): npc={}, menu={}, options={}",
-        bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, options.size());
+        bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, items.size());
 }
 
 /**
