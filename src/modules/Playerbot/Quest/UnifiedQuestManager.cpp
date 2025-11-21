@@ -152,14 +152,14 @@ bool UnifiedQuestManager::CompletionModule::StartQuestCompletion(uint32 questId,
 void UnifiedQuestManager::CompletionModule::UpdateQuestProgress(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->UpdateQuestProgress();
+        systems->GetQuestCompletion()->UpdateQuestProgress(bot);
 }
 
 void UnifiedQuestManager::CompletionModule::CompleteQuest(uint32 questId, Player* bot)
 {
     _questsCompleted++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->CompleteQuest(questId);
+        systems->GetQuestCompletion()->CompleteQuest(questId, bot);
 }
 
 bool UnifiedQuestManager::CompletionModule::TurnInQuest(uint32 questId, Player* bot)

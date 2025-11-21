@@ -655,7 +655,8 @@ void UnifiedLootManager::DistributionModule::HandleLootNinja(Group* group, uint3
         return;
     }
 
-    Player* suspect = ObjectAccessor::FindPlayer(ObjectGuid(HighGuid::Player, suspectedPlayer));
+    ObjectGuid suspectGuid = ObjectGuid::Create<HighGuid::Player>(suspectedPlayer);
+    Player* suspect = ObjectAccessor::FindPlayer(suspectGuid);
     if (!suspect)
     {
         TC_LOG_WARN("playerbot.loot", "HandleLootNinja: Suspected player {} not found", suspectedPlayer);
@@ -686,8 +687,8 @@ void UnifiedLootManager::DistributionModule::HandleLootNinja(Group* group, uint3
             if (playerRollIt->second == LootRollType::NEED)
                 ++recentNeedRolls;
 
-            if (roll.winnerGuid == suspectedPlayer)
-                ++recentWins;
+            // Note: Winner tracking not implemented in simplified LootRoll struct
+            // TODO: Implement winner tracking if needed for ninja detection
         }
     }
 
