@@ -1209,7 +1209,7 @@ ObjectivePriority QuestStrategy::GetCurrentObjective(BotAI* ai) const
         return ObjectivePriority(0, 0);
 
     Player* bot = ai->GetBot();
-    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority());
+    return (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->GetHighestPriorityObjective(bot) : ObjectivePriority(0, 0));
 }
 
 bool QuestStrategy::HasActiveObjectives(BotAI* ai) const

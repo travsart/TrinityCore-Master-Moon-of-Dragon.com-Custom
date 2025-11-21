@@ -86,7 +86,7 @@ public:
 
     // Advanced auction features (AuctionProfile defined in IAuctionHouse.h interface)
     void SetAuctionProfile(const AuctionProfile& profile);
-    AuctionProfile GetAuctionProfile() const;
+    AuctionProfile GetAuctionProfile() override;
 
     // Auction monitoring and automation (AuctionSession defined in IAuctionHouse.h interface)
     uint32 StartAuctionSession(AuctionActionType primaryAction) override;
