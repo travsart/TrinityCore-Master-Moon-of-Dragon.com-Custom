@@ -65,6 +65,14 @@ struct InstanceEvent
     }
     std::string ToString() const;
 
+    // Operator< for priority queue (higher priority = lower value)
+    bool operator<(const InstanceEvent& other) const
+    {
+        if (priority != other.priority)
+            return static_cast<uint8>(priority) > static_cast<uint8>(other.priority);
+        return timestamp > other.timestamp;  // Earlier events first
+    }
+
     // Factory methods
     static InstanceEvent InstanceReset(ObjectGuid playerGuid, uint32 mapId);
     static InstanceEvent InstanceResetFailed(ObjectGuid playerGuid, uint32 mapId, uint32 errorCode);

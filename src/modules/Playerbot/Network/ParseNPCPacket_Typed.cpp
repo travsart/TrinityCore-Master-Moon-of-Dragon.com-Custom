@@ -38,9 +38,9 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
     {
         Playerbot::GossipMenuItem item;
         item.menuId = packet.GossipID;
-        item.optionIndex = option.OptionIndex;
+        item.optionIndex = option.OrderIndex;
         item.text = option.Text;
-        item.icon = static_cast<uint32>(option.OptionIcon);
+        item.icon = static_cast<uint32>(option.OptionNPC);
         items.push_back(item);
     }
 

@@ -67,6 +67,14 @@ struct AuctionEvent
         return std::chrono::steady_clock::now() >= expiryTime;
     }
     std::string ToString() const;
+
+    // Operator< for priority queue (higher priority = lower value)
+    bool operator<(const AuctionEvent& other) const
+    {
+        if (priority != other.priority)
+            return static_cast<uint8>(priority) > static_cast<uint8>(other.priority);
+        return timestamp > other.timestamp;  // Earlier events first
+    }
 };
 
 } // namespace Playerbot
