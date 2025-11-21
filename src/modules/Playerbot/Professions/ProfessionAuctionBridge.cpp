@@ -330,7 +330,7 @@ bool ProfessionAuctionBridge::ListCraftedItemOnAuction(::Player* player, uint32 
     uint32 bidPrice = static_cast<uint32>(listingPrice * 0.95f);
 
     // Delegate to existing AuctionHouse
-    bool success = _auctionHouse->CreateAuction(_bot, itemGuid, 1, // Single item
+    bool success = _auctionHouse->CreateAuction(itemGuid, 1, // Single item
         bidPrice, listingPrice, config.maxListingDuration);
 
     if (success)
