@@ -252,7 +252,7 @@ void UnifiedQuestManager::CompletionModule::NavigateToObjective(Player* bot, con
 bool UnifiedQuestManager::CompletionModule::FindObjectiveTarget(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestCompletion()->FindObjectiveTarget(objective);
+        return systems->GetQuestCompletion()->FindObjectiveTarget(bot, objective);
     return {};
 }
 

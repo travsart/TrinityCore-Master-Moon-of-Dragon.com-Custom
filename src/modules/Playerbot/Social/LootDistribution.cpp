@@ -915,8 +915,8 @@ float LootDistribution::CalculateUpgradeValue( const LootItem& item)
     if (!currentItem)
         return 1.0f; // Maximum upgrade if no item equipped
 
-    float currentScore = CalculateItemScore(player, currentItem);
-    float newScore = CalculateItemScore(player, item);
+    float currentScore = CalculateItemScore(currentItem);
+    float newScore = CalculateItemScore(item);
 
     if (currentScore <= 0.0f)
         return 1.0f;

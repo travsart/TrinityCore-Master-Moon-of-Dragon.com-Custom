@@ -415,7 +415,7 @@ void GuildIntegration::OrganizeGuildRuns()
     // Coordinate schedules
 }
 
-void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& profile)
+void GuildIntegration::SetGuildProfile(const GuildProfile& profile)
 {
     _playerProfiles[playerGuid] = profile;
 }
