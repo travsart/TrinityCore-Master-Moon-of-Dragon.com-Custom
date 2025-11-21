@@ -26,7 +26,7 @@ namespace Playerbot
 
 std::unordered_map<uint16, StatPriority> EquipmentManager::_statPriorities;
 bool EquipmentManager::_statPrioritiesInitialized = false;
-EquipmentManager::EquipmentMetrics EquipmentManager::_globalMetrics;
+EquipmentMetrics EquipmentManager::_globalMetrics;
 
 // ============================================================================
 // PER-BOT LIFECYCLE

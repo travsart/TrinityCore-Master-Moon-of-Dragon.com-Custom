@@ -257,7 +257,7 @@ void GuildIntegration::ShareGuildInformation( const std::string& topic)
 
 void GuildIntegration::AutomateGuildBankInteractions()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
