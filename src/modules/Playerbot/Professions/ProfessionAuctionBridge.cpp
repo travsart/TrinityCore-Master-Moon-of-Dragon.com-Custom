@@ -390,7 +390,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
             uint32 totalCost = maxPricePerUnit * quantity;
             if (totalCost <= budgetRemaining)
             {
-                if (PurchaseMaterial(itemId, quantity, maxPricePerUnit))
+                if (PurchaseMaterial(player, itemId, quantity, maxPricePerUnit))
                 {
                     budgetRemaining -= totalCost;
 
@@ -438,7 +438,7 @@ bool ProfessionAuctionBridge::IsMaterialAvailableForPurchase(::Player* player, u
     return _auctionHouse->IsPriceBelowMarket(itemId, maxPricePerUnit);
 }
 
-bool ProfessionAuctionBridge::PurchaseMaterial(uint32 itemId, uint32 quantity, uint32 maxPricePerUnit)
+bool ProfessionAuctionBridge::PurchaseMaterial(::Player* player, uint32 itemId, uint32 quantity, uint32 maxPricePerUnit)
 {
     if (!_bot || !_auctionHouse)
         return false;
