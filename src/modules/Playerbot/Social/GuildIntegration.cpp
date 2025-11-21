@@ -429,7 +429,7 @@ GuildProfile GuildIntegration::GetGuildProfile()
     return GuildProfile(); // Return default profile
 }
 
-GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
+GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
 {
     auto it = _playerParticipation.find(playerGuid);
     if (it != _playerParticipation.end())

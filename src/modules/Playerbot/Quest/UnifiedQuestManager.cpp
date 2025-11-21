@@ -272,8 +272,8 @@ Position UnifiedQuestManager::CompletionModule::GetOptimalObjectivePosition(Play
 
 void UnifiedQuestManager::CompletionModule::CoordinateGroupQuestCompletion(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->CoordinateGroupQuestCompletion(group, questId);
+    // Static wrapper without bot context - cannot delegate
+    // TODO: This needs bot parameter or should be redesigned
 }
 
 void UnifiedQuestManager::CompletionModule::ShareObjectiveProgress(Group* group, uint32 questId)
