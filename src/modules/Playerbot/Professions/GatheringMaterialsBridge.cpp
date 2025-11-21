@@ -364,8 +364,8 @@ uint32 GatheringMaterialsBridge::GetEstimatedYield(GatheringNode const& node)
         case GatheringNodeType::HERB_NODE:
         case GatheringNodeType::MINING_VEIN:
             return 2;  // Average 2 items per node
-        case GatheringNodeType::GAS_CLOUD:
-            return 3;  // Gas clouds give more
+        case GatheringNodeType::FISHING_POOL:
+            return 3;  // Fishing pools give more
         default:
             return 1;
     }

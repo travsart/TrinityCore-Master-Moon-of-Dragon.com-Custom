@@ -124,7 +124,7 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
             for (auto const& profInfo : professions)
             {
                 if (profInfo.currentSkill < profInfo.maxSkill)
-                    BuyMaterialsForLeveling(profInfo.profession);
+                    BuyMaterialsForLeveling(player, profInfo.profession);
             }
         }
     }
