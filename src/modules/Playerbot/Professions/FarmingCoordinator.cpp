@@ -11,7 +11,7 @@
 #include "ProfessionManager.h"
 #include "GatheringManager.h"
 #include "../Core/Managers/GameSystemsManager.h"
-#include "../Core/Sessions/BotSession.h"
+#include "../Session/BotSession.h"
 #include "../AI/BotAI.h"
 #include "Player.h"
 #include "Log.h"

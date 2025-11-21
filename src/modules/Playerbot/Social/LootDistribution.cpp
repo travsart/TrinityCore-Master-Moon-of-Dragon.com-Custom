@@ -1109,7 +1109,7 @@ void LootDistribution::NotifyRollResult(const LootRoll& roll)
                 roll.rollId, roll.winnerGuid, roll.itemId);
 }
 
-bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group, Player* player)
+bool LootDistribution::ShouldConsiderFairnessAdjustment(Group* group)
 {
     if (!group || !player)
         return false;
