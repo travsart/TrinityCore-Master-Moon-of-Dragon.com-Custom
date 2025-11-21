@@ -894,7 +894,7 @@ void ProfessionAuctionBridge::HandleProfessionEvent(ProfessionEvent const& event
                 event.itemId, event.quantity, event.recipeId);
 
             // Check if enabled for profession-auction automation
-            if (!IsEnabled())
+            if (!IsEnabled(_bot))
                 return;
 
             // Sell crafted items automatically (implementation would call SellCraftedItems)

@@ -44,7 +44,7 @@ bool BankingManager::_defaultRulesInitialized = false;
 // ============================================================================
 
 BankingManager::BankingManager(Player* bot)
-    : BehaviorManager("BankingManager")
+    : BehaviorManager(bot, static_cast<BotSession*>(bot->GetSession())->GetAI(), 1000, "BankingManager")
     , _bot(bot)
     , _lastBankAccessTime(0)
     , _currentlyBanking(false)
