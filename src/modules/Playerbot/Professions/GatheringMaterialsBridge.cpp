@@ -619,7 +619,7 @@ void GatheringMaterialsBridge::StartSession(uint32 itemId, uint32 quantity)
     _activeSession.nodeType = GetNodeTypeForMaterial(itemId);
     _activeSession.startTime = GameTime::GetGameTimeMS();
     _activeSession.isActive = true;
-    _activeSession.startPosition = *_bot->GetPosition();
+    _activeSession.startPosition = _bot->GetPosition();
 
     _statistics.gatheringSessionsStarted++;
     _globalStatistics.gatheringSessionsStarted++;
