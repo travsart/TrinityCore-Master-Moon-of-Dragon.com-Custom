@@ -159,7 +159,7 @@ void ProfessionAuctionBridge::SetAuctionProfile(uint32 playerGuid, ProfessionAuc
     _profile = profile;
 }
 
-ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile() const
+ProfessionAuctionProfile ProfessionAuctionBridge::GetAuctionProfile(uint32 playerGuid) const
 {
     return _profile;
 }
