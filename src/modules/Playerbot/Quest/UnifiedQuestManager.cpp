@@ -78,14 +78,14 @@ std::vector<uint32> UnifiedQuestManager::PickupModule::DiscoverNearbyQuests(Play
 {
     _questsDiscovered++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->DiscoverNearbyQuests(scanRadius);
+        return systems->GetQuestPickup()->DiscoverNearbyQuests(bot, scanRadius);
     return {};
 }
 
 std::vector<QuestGiverInfo> UnifiedQuestManager::PickupModule::ScanForQuestGivers(Player* bot, float scanRadius)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->ScanForQuestGivers(scanRadius);
+        return systems->GetQuestPickup()->ScanForQuestGivers(bot, scanRadius);
     return {};
 }
 

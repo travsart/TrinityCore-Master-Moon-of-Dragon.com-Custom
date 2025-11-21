@@ -276,12 +276,12 @@ LootPriority UnifiedLootManager::DistributionModule::CalculateLootPriority(Playe
 
 bool UnifiedLootManager::DistributionModule::ShouldRollNeed(Player* player, LootItem const& item)
 {
-    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ShouldRollNeed(item) : decltype(GetGameSystems(player)->GetLootDistribution()->ShouldRollNeed(item))());
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->CanPlayerNeedItem(item) : decltype(GetGameSystems(player)->GetLootDistribution()->CanPlayerNeedItem(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::ShouldRollGreed(Player* player, LootItem const& item)
 {
-    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ShouldRollGreed(item) : decltype(GetGameSystems(player)->GetLootDistribution()->ShouldRollGreed(item))());
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->ShouldPlayerGreedItem(item) : decltype(GetGameSystems(player)->GetLootDistribution()->ShouldPlayerGreedItem(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForClass(Player* player, LootItem const& item)

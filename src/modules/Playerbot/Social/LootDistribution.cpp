@@ -248,8 +248,8 @@ bool LootDistribution::IsItemUpgrade(const LootItem& item)
         return true; // No item equipped, so this is an upgrade
 
     // Compare item levels and stats
-    float currentScore = CalculateItemScore(_bot, equippedItem);
-    float newScore = CalculateItemScore(_bot, item);
+    float currentScore = CalculateItemScore(equippedItem);
+    float newScore = CalculateItemScore(item);
 
     return newScore > currentScore * (1.0f + UPGRADE_THRESHOLD);
 }
