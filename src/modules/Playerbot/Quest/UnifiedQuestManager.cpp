@@ -321,7 +321,7 @@ void UnifiedQuestManager::CompletionModule::MinimizeTravelTime(Player* bot, cons
 void UnifiedQuestManager::CompletionModule::DetectStuckState(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->DetectStuckState(questId);
+        systems->GetQuestCompletion()->DetectStuckState(bot, questId);
 }
 
 void UnifiedQuestManager::CompletionModule::HandleStuckObjective(Player* bot, QuestObjectiveData& objective)

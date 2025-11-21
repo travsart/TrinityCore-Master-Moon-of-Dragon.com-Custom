@@ -1086,7 +1086,8 @@ GatheringMaterialsBridge* AuctionMaterialsBridge::GetGatheringBridge()
     if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetAI()->GetGameSystems()->GetGatheringMaterialsBridge();
+    GameSystemsManager* systems = static_cast<GameSystemsManager*>(session->GetAI()->GetGameSystems());
+    return systems ? systems->GetGatheringMaterialsBridge() : nullptr;
 }
 
 ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()

@@ -577,7 +577,7 @@ ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetGlobalStatistics(
     return _globalStatistics;
 }
 
-void ProfessionAuctionBridge::ResetStatistics()
+void ProfessionAuctionBridge::ResetStatistics(uint32 playerGuid)
 {
     _statistics.Reset();
 }
