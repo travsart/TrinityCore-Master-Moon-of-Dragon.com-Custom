@@ -279,7 +279,7 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
         uint32 materialCost = CalculateMaterialCost(itemInfo.itemId);
 
         // Check if should sell
-        if (ShouldSellCraftedItem(itemInfo.itemId, materialCost))
+        if (ShouldSellCraftedItem(player, itemInfo.itemId, materialCost))
         {
             ListCraftedItemOnAuction(itemInfo.itemGuid, config);
         }
