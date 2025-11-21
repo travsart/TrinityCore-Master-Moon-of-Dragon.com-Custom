@@ -286,7 +286,7 @@ void ProfessionAuctionBridge::SellCraftedItems(::Player* player)
     }
 }
 
-bool ProfessionAuctionBridge::ShouldSellCraftedItem(uint32 itemId, uint32 materialCost) const
+bool ProfessionAuctionBridge::ShouldSellCraftedItem(::Player* player, uint32 itemId, uint32 materialCost) const
 {
     if (!_bot || !_auctionHouse)
         return false;
