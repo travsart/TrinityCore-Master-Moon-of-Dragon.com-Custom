@@ -226,7 +226,7 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
     uint32 buyoutPrice = config.preferBuyout ? marketPrice : 0;
 
     // Delegate to existing AuctionHouse
-    bool success = _auctionHouse->CreateAuction(_bot, itemGuid, config.auctionStackSize,
+    bool success = _auctionHouse->CreateAuction(itemGuid, config.auctionStackSize,
         bidPrice, buyoutPrice, DEFAULT_AUCTION_DURATION);
 
     if (success)
