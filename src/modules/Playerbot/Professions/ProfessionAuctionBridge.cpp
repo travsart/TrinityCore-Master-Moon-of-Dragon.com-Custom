@@ -540,7 +540,7 @@ uint32 ProfessionAuctionBridge::GetCurrentStockpile(::Player* player, uint32 ite
     return _bot->GetItemCount(itemId);
 }
 
-bool ProfessionAuctionBridge::IsStockpileTargetMet(uint32 itemId) const
+bool ProfessionAuctionBridge::IsStockpileTargetMet(::Player* player, uint32 itemId) const
 {
     if (!_bot)
         return false;
