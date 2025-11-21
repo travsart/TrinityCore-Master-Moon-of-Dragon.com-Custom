@@ -864,7 +864,7 @@ void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& object
     uint32 targetObjectId = questObjective.ObjectID;
 
     // Scan for target GameObject in 200-yard radius (same as FindQuestObject)
-    std::vector<uint32> objects = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->ScanForGameObjects( targetObjectId, 200.0f) : std::vector<uint32>());
+    std::vector<uint32> objects = (GetGameSystems(bot) ? GetGameSystems(bot)->GetObjectiveTracker()->ScanForGameObjects(bot, targetObjectId, 200.0f) : std::vector<uint32>());
 
     TC_LOG_ERROR("module.playerbot.quest", "🔍 UseQuestItemOnTarget: Scanning for GameObject {} - found {} objects",
                  targetObjectId, objects.size());

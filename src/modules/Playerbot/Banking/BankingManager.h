@@ -485,6 +485,11 @@ private:
      */
     class ProfessionManager* GetProfessionManager();
 
+protected:
+    // Override pure virtual from BehaviorManager
+    void OnUpdate(uint32 diff) override { Update(diff); }
+
+private:
     // ========================================================================
     // PER-BOT INSTANCE DATA
     // ========================================================================

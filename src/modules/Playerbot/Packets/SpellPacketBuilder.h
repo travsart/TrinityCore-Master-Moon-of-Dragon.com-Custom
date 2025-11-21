@@ -325,8 +325,8 @@ public:
     static BuildResult ValidateSpellCast(
         Player* caster,
         uint32 spellId,
-        Unit* target = nullptr,
-        BuildOptions const& options = BuildOptions());
+        Unit* target,
+        BuildOptions const& options);
 
 private:
     // Internal validation methods (comprehensive, no shortcuts)
