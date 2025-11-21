@@ -470,7 +470,7 @@ void QuestStrategy::NavigateToObjective(BotAI* ai, ObjectiveState const& objecti
                  bot->GetName(), moveResult ? "SUCCESS" : "FAILED");
 }
 
-void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
     {
@@ -714,7 +714,7 @@ void QuestStrategy::EngageQuestTargets(BotAI* ai, ObjectiveTracker::ObjectiveSta
                  bot->GetName(), target->GetName(), objective.questId);
 }
 
-void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
     {
@@ -793,7 +793,7 @@ void QuestStrategy::CollectQuestItems(BotAI* ai, ObjectiveTracker::ObjectiveStat
                  bot->GetName(), questObject->GetEntry());
 }
 
-void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
         return;
@@ -802,7 +802,7 @@ void QuestStrategy::ExploreQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState
     NavigateToObjective(ai, objective);
 }
 
-void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::UseQuestItemOnTarget(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
     {
@@ -1221,7 +1221,7 @@ bool QuestStrategy::HasActiveObjectives(BotAI* ai) const
     return priority.questId != 0;
 }
 
-bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveTracker::ObjectiveState const& objective) const
+bool QuestStrategy::ShouldEngageTarget(BotAI* ai, ::Unit* target, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot() || !target)
         return false;
@@ -1275,7 +1275,7 @@ bool QuestStrategy::MoveToQuestGiver(BotAI* ai, uint32 questId)
     return false;
 }
 
-Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot())
         return Position();
@@ -1331,7 +1331,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     return cachedPos;
 }
 
-::Unit* QuestStrategy::FindQuestTarget(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+::Unit* QuestStrategy::FindQuestTarget(BotAI* ai, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot())
         return nullptr;
@@ -1435,7 +1435,7 @@ Position QuestStrategy::GetObjectivePosition(BotAI* ai, ObjectiveTracker::Object
     return target;
 }
 
-GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot())
         return nullptr;
@@ -1502,7 +1502,7 @@ GameObject* QuestStrategy::FindQuestObject(BotAI* ai, ObjectiveTracker::Objectiv
     return gameObject;
 }
 
-::Item* QuestStrategy::FindQuestItem(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+::Item* QuestStrategy::FindQuestItem(BotAI* ai, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot())
         return nullptr;
@@ -2267,7 +2267,7 @@ bool QuestStrategy::CompleteQuestTurnIn(BotAI* ai, uint32 questId, ::Unit* quest
 // QUEST AREA WANDERING SYSTEM - Patrol while waiting for respawns
 // ========================================================================
 
-bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective) const
+bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveState const& objective) const
 {
     if (!ai || !ai->GetBot())
         return false;
@@ -2303,7 +2303,7 @@ bool QuestStrategy::ShouldWanderInQuestArea(BotAI* ai, ObjectiveTracker::Objecti
     return false;
 }
 
-void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveTracker::ObjectiveState const& objective)
+void QuestStrategy::InitializeQuestAreaWandering(BotAI* ai, ObjectiveState const& objective)
 {
     if (!ai || !ai->GetBot())
         return;
