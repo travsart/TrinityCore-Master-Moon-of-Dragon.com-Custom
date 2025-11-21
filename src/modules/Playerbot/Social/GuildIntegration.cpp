@@ -251,7 +251,7 @@ void GuildIntegration::ShareGuildInformation( const std::string& topic)
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(0, infoMessages.size() - 1);
 
-        SendGuildChatMessage(player, infoMessages[dis(gen)]);
+        SendGuildChatMessage(infoMessages[dis(gen)]);
     }
 }
 
