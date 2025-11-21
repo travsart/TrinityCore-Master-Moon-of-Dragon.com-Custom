@@ -1022,7 +1022,7 @@ void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
     // If specific assistance is provided, use it; otherwise use default messages
     if (!assistance.empty())
     {
-        SendGuildChatMessage(player, assistance);
+        SendGuildChatMessage( assistance);
         return;
     }
 
@@ -1037,7 +1037,7 @@ void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, helpMessages.size() - 1);
 
-    SendGuildChatMessage(player, helpMessages[dis(gen)]);
+    SendGuildChatMessage( helpMessages[dis(gen)]);
 }
 
 void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType activity, bool wasSuccessful)
