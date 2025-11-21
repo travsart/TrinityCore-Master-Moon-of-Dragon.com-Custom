@@ -92,49 +92,49 @@ std::vector<QuestGiverInfo> UnifiedQuestManager::PickupModule::ScanForQuestGiver
 std::vector<uint32> UnifiedQuestManager::PickupModule::GetAvailableQuestsFromGiver(uint32 questGiverGuid, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->GetAvailableQuestsFromGiver(questGiverGuid);
+        return systems->GetQuestPickup()->GetAvailableQuestsFromGiver(questGiverGuid, bot);
     return {};
 }
 
 QuestEligibility UnifiedQuestManager::PickupModule::CheckQuestEligibility(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->CheckQuestEligibility(questId);
+        return systems->GetQuestPickup()->CheckQuestEligibility(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::PickupModule::CanAcceptQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->CanAcceptQuest(questId);
+        return systems->GetQuestPickup()->CanAcceptQuest(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::PickupModule::MeetsQuestRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->MeetsQuestRequirements(questId);
+        return systems->GetQuestPickup()->MeetsQuestRequirements(questId, bot);
     return {};
 }
 
 std::vector<uint32> UnifiedQuestManager::PickupModule::FilterQuests(const std::vector<uint32>& questIds, Player* bot, const QuestPickupFilter& filter)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->FilterQuests(questIds, filter);
+        return systems->GetQuestPickup()->FilterQuests(questIds, bot, filter);
     return {};
 }
 
 std::vector<uint32> UnifiedQuestManager::PickupModule::PrioritizeQuests(const std::vector<uint32>& questIds, Player* bot, QuestAcceptanceStrategy strategy)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->PrioritizeQuests(questIds, strategy);
+        return systems->GetQuestPickup()->PrioritizeQuests(questIds, bot, strategy);
     return {};
 }
 
 bool UnifiedQuestManager::PickupModule::ShouldAcceptQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestPickup()->ShouldAcceptQuest(questId);
+        return systems->GetQuestPickup()->ShouldAcceptQuest(questId, bot);
     return {};
 }
 

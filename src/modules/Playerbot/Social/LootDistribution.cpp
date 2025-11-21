@@ -284,7 +284,7 @@ bool LootDistribution::CanPlayerNeedItem(const LootItem& item)
         return false;
 
     // Check if item is for main spec
-    return IsItemForMainSpec(_bot, item);
+    return IsItemForMainSpec(item);
 }
 
 bool LootDistribution::ShouldPlayerGreedItem(const LootItem& item)
@@ -401,7 +401,7 @@ void LootDistribution::DistributeLootToWinner(uint32 rollId, uint32 winnerGuid)
             winner->SendNewItem(item, 1, false, false, true);
 
             // Update metrics
-            UpdateLootMetrics(winnerGuid, roll, true);
+            UpdateLootMetrics(roll, true);
         }
     }
     else
@@ -436,13 +436,13 @@ void LootDistribution::HandleLootRollTimeout(uint32 rollId)
     _globalMetrics.rollTimeouts++;
 }
 
-void LootDistribution::ExecuteNeedBeforeGreedStrategy( const LootItem& item, LootRollType& decision)
+void LootDistribution::ExecuteNeedBeforeGreedStrategy(const LootItem& item, LootRollType& decision)
 {
-    if (CanPlayerNeedItem(player, item))
+    if (CanPlayerNeedItem(item))
     {
         decision = LootRollType::NEED;
     }
-    else if (ShouldPlayerGreedItem(player, item))
+    else if (ShouldPlayerGreedItem(item))
     {
         decision = LootRollType::GREED;
     }
@@ -452,12 +452,12 @@ void LootDistribution::ExecuteNeedBeforeGreedStrategy( const LootItem& item, Loo
     }
 }
 
-void LootDistribution::ExecuteClassPriorityStrategy( const LootItem& item, LootRollType& decision)
+void LootDistribution::ExecuteClassPriorityStrategy(const LootItem& item, LootRollType& decision)
 {
     // Prioritize items for appropriate classes
-    if (IsClassAppropriate(player, item))
+    if (IsClassAppropriate(item))
     {
-        if (IsItemUpgrade(player, item))
+        if (IsItemUpgrade(item))
             decision = LootRollType::NEED;
         else
             decision = LootRollType::GREED;
@@ -468,9 +468,9 @@ void LootDistribution::ExecuteClassPriorityStrategy( const LootItem& item, LootR
     }
 }
 
-void LootDistribution::ExecuteUpgradePriorityStrategy( const LootItem& item, LootRollType& decision)
+void LootDistribution::ExecuteUpgradePriorityStrategy(const LootItem& item, LootRollType& decision)
 {
-    LootPriority priority = AnalyzeItemPriority(player, item);
+    LootPriority priority = AnalyzeItemPriority(item);
     switch (priority)
     {
         case LootPriority::CRITICAL_UPGRADE:
@@ -482,7 +482,7 @@ void LootDistribution::ExecuteUpgradePriorityStrategy( const LootItem& item, Loo
             decision = LootRollType::GREED;
             break;
         case LootPriority::VENDOR_ITEM:
-            if (ShouldPlayerGreedItem(player, item))
+            if (ShouldPlayerGreedItem(item))
                 decision = LootRollType::GREED;
             else
                 decision = LootRollType::PASS;
@@ -499,19 +499,19 @@ void LootDistribution::ExecuteFairDistributionStrategy( const LootItem& item, Lo
     Group* group = _bot->GetGroup();
     if (!group)
     {
-        ExecuteNeedBeforeGreedStrategy(player, item, decision);
+        ExecuteNeedBeforeGreedStrategy(item, decision);
         return;
     }
 
     // Check if player has received items recently
-    bool shouldConsiderFairness = ShouldConsiderFairnessAdjustment(group, player);
+    bool shouldConsiderFairness = ShouldConsiderFairnessAdjustment(group);
 
     if (shouldConsiderFairness)
     {
         // Be more conservative with rolls
-        if (CanPlayerNeedItem(player, item))
+        if (CanPlayerNeedItem(item))
         {
-            LootPriority priority = AnalyzeItemPriority(player, item);
+            LootPriority priority = AnalyzeItemPriority(item);
             if (priority >= LootPriority::SIGNIFICANT_UPGRADE)
                 decision = LootRollType::NEED;
             else
@@ -930,9 +930,9 @@ bool LootDistribution::IsItemForMainSpec( const LootItem& item)
     }
 }
 
-bool LootDistribution::IsItemUsefulForOffSpec( const LootItem& item)
+bool LootDistribution::IsItemUsefulForOffSpec(const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Check if item could be useful for an alternative specialization

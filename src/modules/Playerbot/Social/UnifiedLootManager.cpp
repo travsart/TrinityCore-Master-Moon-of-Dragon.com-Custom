@@ -286,7 +286,7 @@ bool UnifiedLootManager::DistributionModule::ShouldRollGreed(Player* player, Loo
 
 bool UnifiedLootManager::DistributionModule::IsItemForClass(Player* player, LootItem const& item)
 {
-    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->IsItemForClass(item) : decltype(GetGameSystems(player)->GetLootDistribution()->IsItemForClass(item))());
+    return (GetGameSystems(player) ? GetGameSystems(player)->GetLootDistribution()->IsClassAppropriate(item) : decltype(GetGameSystems(player)->GetLootDistribution()->IsClassAppropriate(item))());
 }
 
 bool UnifiedLootManager::DistributionModule::IsItemForMainSpec(Player* player, LootItem const& item)
@@ -321,9 +321,9 @@ void UnifiedLootManager::DistributionModule::HandleMasterLoot(Group* group, Loot
     // Evaluate all bots in the group
     std::vector<BotRollEvaluation> evaluations;
 
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference const& ref : group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || !GetBotAI(member))
             continue; // Skip non-bots and human players
 
@@ -379,14 +379,17 @@ void UnifiedLootManager::DistributionModule::HandleGroupLoot(Group* group, LootI
 
     // Create a new loot roll session
     uint32 rollId = _nextRollId++;
-    LootRoll roll(rollId, item.itemId, item.lootSlot, group->GetGUID().GetCounter());
+    LootRoll roll(rollId);
+    roll.itemId = item.itemId;
+    roll.lootSlot = item.lootSlot;
+    roll.groupId = static_cast<uint32>(group->GetGUID().GetCounter());
 
     // Collect rolls from all bots in the group
     std::vector<BotRollEvaluation> evaluations;
 
-    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    for (GroupReference const& ref : group->GetMembers())
     {
-        Player* member = ref->GetSource();
+        Player* member = ref.GetSource();
         if (!member || !GetBotAI(member))
             continue; // Skip non-bots and human players
 
@@ -423,7 +426,6 @@ void UnifiedLootManager::DistributionModule::HandleGroupLoot(Group* group, LootI
         // Record in roll tracking
         roll.playerRolls[member->GetGUID().GetCounter()] = rollType;
         roll.rollValues[member->GetGUID().GetCounter()] = rollValue;
-        roll.eligiblePlayers.insert(member->GetGUID().GetCounter());
 
         TC_LOG_DEBUG("playerbot.loot", "Bot {} rolled {} (value: {}) for item {}",
             member->GetName(), static_cast<uint32>(rollType), rollValue, item.itemId);
@@ -442,12 +444,12 @@ void UnifiedLootManager::DistributionModule::HandleGroupLoot(Group* group, LootI
     Player* winner = DetermineGroupLootWinner(evaluations);
     if (winner)
     {
-        roll.winnerGuid = winner->GetGUID().GetCounter();
-        roll.isCompleted = true;
+        uint32 winnerGuid = winner->GetGUID().GetCounter();
+        roll.isComplete = true;
 
         TC_LOG_INFO("playerbot.loot", "Group loot: {} won item {} with roll type {}",
             winner->GetName(), item.itemId,
-            static_cast<uint32>(roll.playerRolls[roll.winnerGuid]));
+            static_cast<uint32>(roll.playerRolls[winnerGuid]));
 
         // TODO: Actually award the item via game's loot system
     }

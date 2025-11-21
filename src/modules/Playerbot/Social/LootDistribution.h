@@ -273,6 +273,9 @@ public:
     bool ShouldPlayerGreedItem(const LootItem& item) override;
     bool ShouldPlayerPassItem(const LootItem& item);
     bool CanPlayerDisenchantItem(const LootItem& item);
+    bool IsItemForMainSpec(const LootItem& item);
+    bool IsItemUsefulForOffSpec(const LootItem& item);
+    bool IsItemForOffSpec(const LootItem& item) { return IsItemUsefulForOffSpec(item); }
 
     // Roll processing and winner determination
     void ProcessLootRolls(uint32 rollId) override;
@@ -369,9 +372,7 @@ private:
     void HandleAutoLoot(Group* group, const LootItem& item);
     bool CanParticipateInRoll(const LootItem& item);
     float CalculateUpgradeValue(const LootItem& item);
-    bool IsItemUsefulForOffSpec(const LootItem& item);
     bool IsItemTypeUsefulForClass(uint8 playerClass, const ItemTemplate* itemTemplate);
-    bool IsItemForMainSpec(const LootItem& item);
     bool IsArmorUpgrade(const LootItem& item);
     bool IsWeaponUpgrade(const LootItem& item);
     bool IsAccessoryUpgrade(const LootItem& item);
