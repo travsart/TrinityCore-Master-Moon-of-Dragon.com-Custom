@@ -64,6 +64,7 @@ class GatheringManager;
 class ProfessionManager;
 class AuctionManager;
 class EquipmentManager;
+class LootDistribution;
 class DeathRecoveryManager;
 class UnifiedMovementCoordinator;
 class CombatStateManager;
@@ -184,6 +185,12 @@ public:
      * @return Non-owning pointer to TradeManager (owned by facade)
      */
     virtual TradeManager* GetTradeManager() const = 0;
+
+    /**
+     * @brief Get loot distribution system
+     * @return Non-owning pointer to LootDistribution (owned by facade)
+     */
+    virtual LootDistribution* GetLootDistribution() const = 0;
 
     /**
      * @brief Get gathering management system

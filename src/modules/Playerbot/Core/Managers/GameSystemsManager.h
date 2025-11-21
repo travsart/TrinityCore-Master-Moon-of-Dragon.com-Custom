@@ -179,7 +179,7 @@ public:
     GuildBankManager* GetGuildBankManager() const { return _guildBankManager.get(); }
     GuildEventCoordinator* GetGuildEventCoordinator() const { return _guildEventCoordinator.get(); }
     GuildIntegration* GetGuildIntegration() const { return _guildIntegration.get(); }
-    LootDistribution* GetLootDistribution() const { return _lootDistribution.get(); }
+    LootDistribution* GetLootDistribution() const override { return _lootDistribution.get(); }
     TradeSystem* GetTradeSystem() const { return _tradeSystem.get(); }
     DynamicQuestSystem* GetDynamicQuestSystem() const { return _dynamicQuestSystem.get(); }
     ObjectiveTracker* GetObjectiveTracker() const override { return _objectiveTracker.get(); }

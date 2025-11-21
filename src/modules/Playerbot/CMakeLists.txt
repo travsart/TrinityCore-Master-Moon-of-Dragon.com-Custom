@@ -1384,7 +1384,7 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/LFG
         ${CMAKE_CURRENT_SOURCE_DIR}/Packets
         ${CMAKE_SOURCE_DIR}/src/modules/Common
-        # ${MYSQL_INCLUDE_DIR}  # TODO: Fix MySQL detection
+        ${MYSQL_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
@@ -1409,7 +1409,7 @@ target_link_libraries(playerbot
         ${PLAYERBOT_LIBRARIES}
         playerbot-dependencies
         # MySQL libraries for database connection
-        # ${MYSQL_LIBRARY}  # TODO: Fix MySQL detection
+        ${MYSQL_LIBRARY}
 )
 
 # Platform-specific libraries for enterprise dependencies

@@ -121,9 +121,9 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         }
     }
 }
-void LootDistribution::ProcessPlayerLootDecision( uint32 rollId, LootRollType rollType)
+void LootDistribution::ProcessPlayerLootDecision(uint32 rollId, LootRollType rollType)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     auto rollIt = _activeLootRolls.find(rollId);
