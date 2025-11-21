@@ -193,7 +193,7 @@ void ProfessionAuctionBridge::SellExcessMaterials(::Player* player)
     }
 }
 
-bool ProfessionAuctionBridge::ShouldSellMaterial(uint32 itemId, uint32 currentCount) const
+bool ProfessionAuctionBridge::ShouldSellMaterial(::Player* player, uint32 itemId, uint32 currentCount) const
 {
     if (!_bot)
         return false;
