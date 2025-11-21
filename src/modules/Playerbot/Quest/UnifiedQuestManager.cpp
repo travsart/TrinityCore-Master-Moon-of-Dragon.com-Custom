@@ -172,7 +172,7 @@ bool UnifiedQuestManager::CompletionModule::TurnInQuest(uint32 questId, Player* 
 void UnifiedQuestManager::CompletionModule::TrackQuestObjectives(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->TrackQuestObjectives();
+        systems->GetQuestCompletion()->TrackQuestObjectives(bot);
 }
 
 void UnifiedQuestManager::CompletionModule::ExecuteObjective(Player* bot, QuestObjectiveData& objective)

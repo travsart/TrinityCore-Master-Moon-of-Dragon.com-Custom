@@ -648,13 +648,21 @@ LootDecisionStrategy LootDistribution::GetPlayerLootStrategy()
     return LootDecisionStrategy::NEED_BEFORE_GREED;
 }
 
-void LootDistribution::SetPlayerLootPreferences(uint32 playerGuid, const PlayerLootProfile& profile)
+void LootDistribution::SetPlayerLootPreferences(const PlayerLootProfile& profile)
 {
+    if (!_bot)
+        return;
+
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     _playerLootProfiles[playerGuid] = profile;
 }
 
-PlayerLootProfile LootDistribution::GetPlayerLootProfile(uint32 playerGuid)
+PlayerLootProfile LootDistribution::GetPlayerLootProfile()
 {
+    if (!_bot)
+        return PlayerLootProfile();
+
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto it = _playerLootProfiles.find(playerGuid);
     if (it != _playerLootProfiles.end())
         return it->second;
