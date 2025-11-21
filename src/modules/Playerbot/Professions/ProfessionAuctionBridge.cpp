@@ -109,8 +109,8 @@ void ProfessionAuctionBridge::Update(::Player* player, uint32 diff)
     // Sell excess materials
     if (_profile.autoSellEnabled && _profile.strategy != ProfessionAuctionStrategy::NONE)
     {
-        SellExcessMaterials();
-        SellCraftedItems();
+        SellExcessMaterials(player);
+        SellCraftedItems(player);
     }
 
     // Buy materials for leveling

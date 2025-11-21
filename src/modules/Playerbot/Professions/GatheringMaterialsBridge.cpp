@@ -361,8 +361,8 @@ uint32 GatheringMaterialsBridge::GetEstimatedYield(GatheringNode const& node)
     // This would need to query loot tables, but for now use defaults
     switch (node.nodeType)
     {
-        case GatheringNodeType::HERB:
-        case GatheringNodeType::MINERAL:
+        case GatheringNodeType::HERB_NODE:
+        case GatheringNodeType::MINING_VEIN:
             return 2;  // Average 2 items per node
         case GatheringNodeType::GAS_CLOUD:
             return 3;  // Gas clouds give more
