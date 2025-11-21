@@ -55,6 +55,10 @@ namespace Playerbot
 // Forward declarations for all manager types
 class QuestManager;
 class ObjectiveTracker;
+class QuestCompletion;
+class QuestPickup;
+class QuestTurnIn;
+class QuestValidation;
 class TradeManager;
 class GatheringManager;
 class ProfessionManager;
@@ -150,6 +154,30 @@ public:
      * @return Non-owning pointer to ObjectiveTracker (owned by facade)
      */
     virtual ObjectiveTracker* GetObjectiveTracker() const = 0;
+
+    /**
+     * @brief Get quest completion system
+     * @return Non-owning pointer to QuestCompletion (owned by facade)
+     */
+    virtual QuestCompletion* GetQuestCompletion() const = 0;
+
+    /**
+     * @brief Get quest pickup system
+     * @return Non-owning pointer to QuestPickup (owned by facade)
+     */
+    virtual QuestPickup* GetQuestPickup() const = 0;
+
+    /**
+     * @brief Get quest turn-in system
+     * @return Non-owning pointer to QuestTurnIn (owned by facade)
+     */
+    virtual QuestTurnIn* GetQuestTurnIn() const = 0;
+
+    /**
+     * @brief Get quest validation system
+     * @return Non-owning pointer to QuestValidation (owned by facade)
+     */
+    virtual QuestValidation* GetQuestValidation() const = 0;
 
     /**
      * @brief Get trade management system

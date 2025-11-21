@@ -116,8 +116,8 @@ void LootDistribution::InitiateLootRoll(Group* group, const LootItem& item)
         Player* member = ObjectAccessor::FindConnectedPlayer(guid);
         if (member && dynamic_cast<BotSession*>(member->GetSession()))
         {
-            LootRollType decision = DetermineLootDecision(member, item);
-            ProcessPlayerLootDecision(member, rollId, decision);
+            LootRollType decision = DetermineLootDecision(item);
+            ProcessPlayerLootDecision(rollId, decision);
         }
     }
 }
@@ -189,28 +189,28 @@ void LootDistribution::CompleteLootRoll(uint32 rollId)
     _globalMetrics.totalRollsCompleted++;
 }
 
-LootRollType LootDistribution::DetermineLootDecision( const LootItem& item)
+LootRollType LootDistribution::DetermineLootDecision(const LootItem& item)
 {
-    if (!player)
+    if (!_bot)
         return LootRollType::PASS;
 
     // Get player's loot profile
-    PlayerLootProfile profile = GetPlayerLootProfile(playerGuid);
+    PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
 
     // Execute the player's strategy
-    return ExecuteStrategy(player, item, profile.strategy);
+    return ExecuteStrategy(_bot, item, profile.strategy);
 }
 
-LootPriority LootDistribution::AnalyzeItemPriority( const LootItem& item)
+LootPriority LootDistribution::AnalyzeItemPriority(const LootItem& item)
 {
-    if (!player)
+    if (!_bot)
         return LootPriority::NOT_USEFUL;
 
     // Check if item is an upgrade
-    if (IsItemUpgrade(player, item))
+    if (IsItemUpgrade(item))
     {
         // Determine upgrade significance
-        float upgradeValue = CalculateUpgradeValue(player, item);
+        float upgradeValue = CalculateUpgradeValue(_bot, item);
 
         if (upgradeValue > 0.3f)
             return LootPriority::CRITICAL_UPGRADE;
@@ -223,7 +223,7 @@ LootPriority LootDistribution::AnalyzeItemPriority( const LootItem& item)
     }
 
     // Check if useful for off-spec
-    if (IsItemUsefulForOffSpec(player, item))
+    if (IsItemUsefulForOffSpec(_bot, item))
         return LootPriority::OFF_SPEC_UPGRADE;
 
     // Check vendor value
@@ -232,9 +232,9 @@ LootPriority LootDistribution::AnalyzeItemPriority( const LootItem& item)
     return LootPriority::NOT_USEFUL;
 }
 
-bool LootDistribution::IsItemUpgrade( const LootItem& item)
+bool LootDistribution::IsItemUpgrade(const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Check if item can be equipped by player
@@ -248,15 +248,15 @@ bool LootDistribution::IsItemUpgrade( const LootItem& item)
         return true; // No item equipped, so this is an upgrade
 
     // Compare item levels and stats
-    float currentScore = CalculateItemScore(player, equippedItem);
-    float newScore = CalculateItemScore(player, item);
+    float currentScore = CalculateItemScore(_bot, equippedItem);
+    float newScore = CalculateItemScore(_bot, item);
 
     return newScore > currentScore * (1.0f + UPGRADE_THRESHOLD);
 }
 
-bool LootDistribution::IsClassAppropriate( const LootItem& item)
+bool LootDistribution::IsClassAppropriate(const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Check class restrictions
@@ -270,26 +270,26 @@ bool LootDistribution::IsClassAppropriate( const LootItem& item)
     return IsItemTypeUsefulForClass(_bot->GetClass(), item.itemTemplate);
 }
 
-bool LootDistribution::CanPlayerNeedItem( const LootItem& item)
+bool LootDistribution::CanPlayerNeedItem(const LootItem& item)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Must be class appropriate
-    if (!IsClassAppropriate(player, item))
+    if (!IsClassAppropriate(item))
         return false;
 
     // Must be an upgrade for main spec
-    if (!IsItemUpgrade(player, item))
+    if (!IsItemUpgrade(item))
         return false;
 
     // Check if item is for main spec
-    return IsItemForMainSpec(player, item);
+    return IsItemForMainSpec(_bot, item);
 }
 
-bool LootDistribution::ShouldPlayerGreedItem( const LootItem& item)
+bool LootDistribution::ShouldPlayerGreedItem(const LootItem& item)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     PlayerLootProfile profile = GetPlayerLootProfile(_bot->GetGUID().GetCounter());
@@ -301,9 +301,9 @@ bool LootDistribution::ShouldPlayerGreedItem( const LootItem& item)
     return true;
 }
 
-bool LootDistribution::ShouldPlayerPassItem( const LootItem& item)
+bool LootDistribution::ShouldPlayerPassItem(const LootItem& item)
 {
-    if (!player)
+    if (!_bot)
         return true;
 
     // Pass if item is blacklisted
@@ -312,15 +312,15 @@ bool LootDistribution::ShouldPlayerPassItem( const LootItem& item)
         return true;
 
     // Pass if not useful and below greed threshold
-    if (!CanPlayerNeedItem(player, item) && !ShouldPlayerGreedItem(player, item))
+    if (!CanPlayerNeedItem(item) && !ShouldPlayerGreedItem(item))
         return true;
 
     return false;
 }
 
-bool LootDistribution::CanPlayerDisenchantItem( const LootItem& item)
+bool LootDistribution::CanPlayerDisenchantItem(const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Check if player has enchanting skill

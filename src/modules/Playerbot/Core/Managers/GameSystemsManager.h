@@ -182,11 +182,11 @@ public:
     LootDistribution* GetLootDistribution() const { return _lootDistribution.get(); }
     TradeSystem* GetTradeSystem() const { return _tradeSystem.get(); }
     DynamicQuestSystem* GetDynamicQuestSystem() const { return _dynamicQuestSystem.get(); }
-    ObjectiveTracker* GetObjectiveTracker() const { return _objectiveTracker.get(); }
-    QuestCompletion* GetQuestCompletion() const { return _questCompletion.get(); }
-    QuestPickup* GetQuestPickup() const { return _questPickup.get(); }
-    QuestTurnIn* GetQuestTurnIn() const { return _questTurnIn.get(); }
-    QuestValidation* GetQuestValidation() const { return _questValidation.get(); }
+    ObjectiveTracker* GetObjectiveTracker() const override { return _objectiveTracker.get(); }
+    QuestCompletion* GetQuestCompletion() const override { return _questCompletion.get(); }
+    QuestPickup* GetQuestPickup() const override { return _questPickup.get(); }
+    QuestTurnIn* GetQuestTurnIn() const override { return _questTurnIn.get(); }
+    QuestValidation* GetQuestValidation() const override { return _questValidation.get(); }
     RoleAssignment* GetRoleAssignment() const { return _roleAssignment.get(); }
     // Note: LFGBotManager is a global singleton, use sLFGBotManager macro instead
     // LFGBotManager* GetLFGBotManager() const { return _lfgBotManager.get(); }
