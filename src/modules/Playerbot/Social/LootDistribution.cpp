@@ -739,9 +739,9 @@ bool LootDistribution::ShouldInitiateRoll(Group* group, const LootItem& item)
     return false;
 }
 
-bool LootDistribution::CanParticipateInRoll( const LootItem& item)
+bool LootDistribution::CanParticipateInRoll(const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Player must be able to use the item
