@@ -188,12 +188,18 @@ public:
     QuestTurnIn* GetQuestTurnIn() const { return _questTurnIn.get(); }
     QuestValidation* GetQuestValidation() const { return _questValidation.get(); }
     RoleAssignment* GetRoleAssignment() const { return _roleAssignment.get(); }
-    LFGBotManager* GetLFGBotManager() const { return _lfgBotManager.get(); }
-    LFGBotSelector* GetLFGBotSelector() const { return _lfgBotSelector.get(); }
-    LFGGroupCoordinator* GetLFGGroupCoordinator() const { return _lfgGroupCoordinator.get(); }
-    InstanceCoordination* GetInstanceCoordination() const { return _instanceCoordination.get(); }
-    BotPriorityManager* GetBotPriorityManager() const { return _botPriorityManager.get(); }
-    BotWorldSessionMgr* GetBotWorldSessionMgr() const { return _botWorldSessionMgr.get(); }
+    // Note: LFGBotManager is a global singleton, use sLFGBotManager macro instead
+    // LFGBotManager* GetLFGBotManager() const { return _lfgBotManager.get(); }
+    // Note: LFGBotSelector is a global singleton, use sLFGBotSelector macro instead
+    // LFGBotSelector* GetLFGBotSelector() const { return _lfgBotSelector.get(); }
+    // Note: LFGGroupCoordinator is a global singleton, use sLFGGroupCoordinator macro instead
+    // LFGGroupCoordinator* GetLFGGroupCoordinator() const { return _lfgGroupCoordinator.get(); }
+    // Note: InstanceCoordination is a global singleton, use instance() instead
+    // InstanceCoordination* GetInstanceCoordination() const { return _instanceCoordination.get(); }
+    // Note: BotPriorityManager is a global singleton, use sBotPriorityMgr macro instead
+    // BotPriorityManager* GetBotPriorityManager() const { return _botPriorityManager.get(); }
+    // Note: BotWorldSessionMgr is a global singleton, use sBotWorldSessionMgr macro instead
+    // BotWorldSessionMgr* GetBotWorldSessionMgr() const { return _botWorldSessionMgr.get(); }
     BotLifecycleManager* GetBotLifecycleManager() const { return _botLifecycleManager.get(); }
     Advanced::GroupCoordinator* GetGroupCoordinator() const override { return _groupCoordinator.get(); }
     DeathRecoveryManager* GetDeathRecoveryManager() const override { return _deathRecoveryManager.get(); }
@@ -249,12 +255,13 @@ private:
     std::unique_ptr<QuestTurnIn> _questTurnIn;
     std::unique_ptr<QuestValidation> _questValidation;
     std::unique_ptr<RoleAssignment> _roleAssignment;
-    std::unique_ptr<LFGBotManager> _lfgBotManager;
-    std::unique_ptr<LFGBotSelector> _lfgBotSelector;
-    std::unique_ptr<LFGGroupCoordinator> _lfgGroupCoordinator;
-    std::unique_ptr<InstanceCoordination> _instanceCoordination;
-    std::unique_ptr<BotPriorityManager> _botPriorityManager;
-    std::unique_ptr<BotWorldSessionMgr> _botWorldSessionMgr;
+    // Note: These are global singletons - use their respective macros instead
+    // std::unique_ptr<LFGBotManager> _lfgBotManager;
+    // std::unique_ptr<LFGBotSelector> _lfgBotSelector;
+    // std::unique_ptr<LFGGroupCoordinator> _lfgGroupCoordinator;
+    // std::unique_ptr<InstanceCoordination> _instanceCoordination;
+    // std::unique_ptr<BotPriorityManager> _botPriorityManager;
+    // std::unique_ptr<BotWorldSessionMgr> _botWorldSessionMgr;
     std::unique_ptr<BotLifecycleManager> _botLifecycleManager;
     std::unique_ptr<Advanced::GroupCoordinator> _groupCoordinator;
 

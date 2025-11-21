@@ -166,7 +166,9 @@ void ParseTypedTrainerBuyFailed(WorldSession* session, WorldPackets::NPC::Traine
 
     NPCEvent event = NPCEvent::TrainerServiceResult(
         bot->GetGUID(),
-        packet.TrainerFailedReason
+        packet.TrainerGUID,
+        packet.TrainerFailedReason,
+        "" // Error message not provided in packet
     );
 
     NPCEventBus::instance()->PublishEvent(event);
