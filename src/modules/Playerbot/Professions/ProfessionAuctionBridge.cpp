@@ -154,7 +154,7 @@ bool ProfessionAuctionBridge::IsEnabled(::Player* player) const
     return _bot && _profile.autoSellEnabled;
 }
 
-void ProfessionAuctionBridge::SetAuctionProfile(ProfessionAuctionProfile const& profile)
+void ProfessionAuctionBridge::SetAuctionProfile(uint32 playerGuid, ProfessionAuctionProfile const& profile)
 {
     _profile = profile;
 }
