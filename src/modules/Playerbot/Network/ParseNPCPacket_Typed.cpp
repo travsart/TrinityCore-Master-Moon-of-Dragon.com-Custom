@@ -220,7 +220,7 @@ void ParseTypedPetitionShowList(WorldSession* session, WorldPackets::Petition::S
     NPCEvent event = NPCEvent::PetitionListReceived(
         bot->GetGUID(),
         packet.Unit,
-        0  // Petition entry not in show list packet
+        {} // Empty vector - petition entries not provided in show list packet
     );
 
     NPCEventBus::instance()->PublishEvent(event);

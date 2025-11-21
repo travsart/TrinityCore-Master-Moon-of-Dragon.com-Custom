@@ -116,8 +116,8 @@ void BotAI::OnGroupEvent(GroupEvent const& event)
             break;
 
         case GroupEventType::TARGET_ICON_CHANGED:
-            if (_groupCoordinator)
-                _groupCoordinator->OnTargetIconChanged(event);
+            if (GetGameSystems()->GetGroupCoordinator())
+                GetGameSystems()->GetGroupCoordinator()->OnTargetIconChanged(event);
             break;
 
         case GroupEventType::LEADER_CHANGED:
@@ -132,8 +132,8 @@ void BotAI::OnGroupEvent(GroupEvent const& event)
 
         case GroupEventType::MEMBER_JOINED:
         case GroupEventType::MEMBER_LEFT:
-            if (_groupCoordinator)
-                _groupCoordinator->OnGroupCompositionChanged(event);
+            if (GetGameSystems()->GetGroupCoordinator())
+                GetGameSystems()->GetGroupCoordinator()->OnGroupCompositionChanged(event);
             break;
 
         case GroupEventType::LOOT_METHOD_CHANGED:
