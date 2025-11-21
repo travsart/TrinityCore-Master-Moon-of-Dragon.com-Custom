@@ -385,7 +385,7 @@ void ProfessionAuctionBridge::BuyMaterialsForLeveling(::Player* player, Professi
         uint32 maxPricePerUnit = static_cast<uint32>(marketPrice * 1.1f);
 
         // Check if available at good price
-        if (IsMaterialAvailableForPurchase(itemId, quantity, maxPricePerUnit))
+        if (IsMaterialAvailableForPurchase(player, itemId, quantity, maxPricePerUnit))
         {
             uint32 totalCost = maxPricePerUnit * quantity;
             if (totalCost <= budgetRemaining)
