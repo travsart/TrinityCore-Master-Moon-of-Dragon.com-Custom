@@ -214,7 +214,7 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
         return false;
 
     // Get optimal price from AuctionHouse
-    uint32 marketPrice = GetOptimalMaterialPrice(config.itemId, config.auctionStackSize);
+    uint32 marketPrice = GetOptimalMaterialPrice(player, config.itemId, config.auctionStackSize);
     if (marketPrice == 0)
     {
         TC_LOG_DEBUG("playerbots", "ProfessionAuctionBridge: No market price found for item {}", config.itemId);
@@ -241,7 +241,7 @@ bool ProfessionAuctionBridge::ListMaterialOnAuction(::Player* player, uint32 ite
     return success;
 }
 
-uint32 ProfessionAuctionBridge::GetOptimalMaterialPrice(uint32 itemId, uint32 stackSize) const
+uint32 ProfessionAuctionBridge::GetOptimalMaterialPrice(::Player* player, uint32 itemId, uint32 stackSize) const
 {
     if (!_bot || !_auctionHouse)
         return 0;
