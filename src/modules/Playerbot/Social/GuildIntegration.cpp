@@ -336,7 +336,7 @@ void GuildIntegration::WithdrawNeededItems()
     // Execute withdrawals (simplified)
     for (uint32 itemId : neededItems)
     {
-        if (ShouldWithdrawItem(player, itemId))
+        if (ShouldWithdrawItem(itemId))
         {
             // In a real implementation, this would interact with the guild bank system
             TC_LOG_DEBUG("playerbot.guild", "Player {} withdrawing item {} from guild bank",

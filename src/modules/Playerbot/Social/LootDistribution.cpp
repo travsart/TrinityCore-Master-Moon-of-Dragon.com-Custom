@@ -890,7 +890,7 @@ float LootDistribution::CalculateItemScore( const LootItem& item)
 
 float LootDistribution::CalculateItemScore( Item* item)
 {
-    if (!player || !item)
+    if (!_bot || !item)
         return 0.0f;
 
     float score = 0.0f;
