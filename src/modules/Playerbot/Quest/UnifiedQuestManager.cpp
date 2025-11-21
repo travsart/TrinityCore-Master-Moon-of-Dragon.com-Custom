@@ -297,7 +297,7 @@ void UnifiedQuestManager::CompletionModule::HandleGroupObjectiveConflict(Group* 
 void UnifiedQuestManager::CompletionModule::OptimizeQuestCompletionOrder(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->OptimizeQuestCompletionOrder();
+        systems->GetQuestCompletion()->OptimizeQuestCompletionOrder(bot);
 }
 
 void UnifiedQuestManager::CompletionModule::OptimizeObjectiveSequence(Player* bot, uint32 questId)

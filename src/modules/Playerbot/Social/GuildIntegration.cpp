@@ -429,8 +429,9 @@ GuildProfile GuildIntegration::GetGuildProfile()
     return GuildProfile(); // Return default profile
 }
 
-GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
+GuildParticipation GuildIntegration::GetGuildParticipation()
 {
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto it = _playerParticipation.find(playerGuid);
     if (it != _playerParticipation.end())
         return it->second;

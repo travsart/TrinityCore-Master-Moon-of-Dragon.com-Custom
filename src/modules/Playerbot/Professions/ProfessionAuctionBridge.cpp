@@ -549,7 +549,7 @@ bool ProfessionAuctionBridge::IsStockpileTargetMet(::Player* player, uint32 item
     if (configIt == _profile.materialConfigs.end())
         return false;
 
-    uint32 currentCount = GetCurrentStockpile(itemId);
+    uint32 currentCount = GetCurrentStockpile(player, itemId);
     return currentCount >= configIt->second.minStackSize;
 }
 
