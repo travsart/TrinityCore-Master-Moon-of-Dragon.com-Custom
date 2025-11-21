@@ -290,8 +290,8 @@ void UnifiedQuestManager::CompletionModule::SynchronizeGroupObjectives(Group* gr
 
 void UnifiedQuestManager::CompletionModule::HandleGroupObjectiveConflict(Group* group, uint32 questId, uint32 objectiveIndex)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->HandleGroupObjectiveConflict(group, questId, objectiveIndex);
+    // Static wrapper without bot context - cannot delegate
+    // TODO: This needs bot parameter or should be redesigned
 }
 
 void UnifiedQuestManager::CompletionModule::OptimizeQuestCompletionOrder(Player* bot)

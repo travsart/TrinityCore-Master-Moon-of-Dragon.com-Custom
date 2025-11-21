@@ -532,7 +532,7 @@ void ProfessionAuctionBridge::SetCraftedItemAuction(uint32 playerGuid, uint32 it
     _profile.craftedItemConfigs[itemId] = config;
 }
 
-uint32 ProfessionAuctionBridge::GetCurrentStockpile(uint32 itemId) const
+uint32 ProfessionAuctionBridge::GetCurrentStockpile(uint32 playerGuid, uint32 itemId) const
 {
     if (!_bot)
         return 0;
