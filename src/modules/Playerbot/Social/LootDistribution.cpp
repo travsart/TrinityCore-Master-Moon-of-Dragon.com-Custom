@@ -926,7 +926,7 @@ float LootDistribution::CalculateUpgradeValue( const LootItem& item)
 
 bool LootDistribution::IsItemForMainSpec( const LootItem& item)
 {
-    if (!player || !item.itemTemplate)
+    if (!_bot || !item.itemTemplate)
         return false;
 
     // Simplified check based on item type and player spec

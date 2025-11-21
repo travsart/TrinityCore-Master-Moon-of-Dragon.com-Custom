@@ -417,7 +417,7 @@ void GuildIntegration::OrganizeGuildRuns()
 
 void GuildIntegration::SetGuildProfile(const GuildProfile& profile)
 {
-    _playerProfiles[playerGuid] = profile;
+    _playerProfiles[_bot->GetGUID().GetCounter()] = profile;
 }
 
 GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
