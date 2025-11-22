@@ -12,6 +12,7 @@
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Core/DI/Interfaces/IUnifiedQuestManager.h"
+#include "Core/DI/Interfaces/IQuestTurnIn.h"  // For TurnInMetricsSnapshot
 #include "QuestPickup.h"
 #include "QuestCompletion.h"
 #include "QuestValidation.h"
