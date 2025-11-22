@@ -751,7 +751,7 @@ bool UnifiedQuestManager::TurnInModule::FindQuestTurnInNpc(Player* bot, uint32 q
 
 Position UnifiedQuestManager::TurnInModule::GetQuestTurnInLocation(uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetQuestTurnInLocation(questId);
     return {};
 }

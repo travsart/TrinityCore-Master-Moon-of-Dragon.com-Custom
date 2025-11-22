@@ -284,7 +284,7 @@ void CombatBehaviorIntegration::GenerateRecommendations()
 
 void CombatBehaviorIntegration::PrioritizeActions()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    std::lock_guard<OrderedMutex<LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         // Sort actions by priority and score
     std::sort(_actionQueue.begin(), _actionQueue.end(),
         [this](const RecommendedAction& a, const RecommendedAction& b)
