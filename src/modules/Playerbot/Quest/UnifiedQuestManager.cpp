@@ -551,7 +551,7 @@ bool UnifiedQuestManager::ValidationModule::ValidateRaidQuestRequirements(uint32
 
 bool UnifiedQuestManager::ValidationModule::CanGroupMemberShareQuest(uint32 questId, Player* sharer, Player* receiver)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(sharer))
         return systems->GetQuestValidation()->CanGroupMemberShareQuest(questId, sharer, receiver);
     return {};
 }

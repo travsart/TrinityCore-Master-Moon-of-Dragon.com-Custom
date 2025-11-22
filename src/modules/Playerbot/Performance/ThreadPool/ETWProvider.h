@@ -60,6 +60,8 @@ enum class WaitType : uint32
     YIELD = 5
 };
 
+#ifdef _WIN32
+
 /**
  * @brief ETW Provider configuration
  */
@@ -76,8 +78,6 @@ struct ETWProviderConfig
     uint32 queueDepthSampleIntervalMs{100};  // Sample queue depth every 100ms
     uint32 taskExecutionSampleRate{10};      // Log every Nth task execution
 };
-
-#ifdef _WIN32
 
 /**
  * @brief ETW Event IDs
