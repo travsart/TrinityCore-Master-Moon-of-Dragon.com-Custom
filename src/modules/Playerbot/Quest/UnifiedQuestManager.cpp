@@ -1130,13 +1130,13 @@ void UnifiedQuestManager::DynamicModule::RetryFailedObjective(Player* bot, uint3
 void UnifiedQuestManager::DynamicModule::OptimizeQuestOrder(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->OptimizeQuestOrder();
+        systems->GetDynamicQuestSystem()->OptimizeQuestOrder(bot);
 }
 
 void UnifiedQuestManager::DynamicModule::TrackQuestChains(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->TrackQuestChains();
+        systems->GetDynamicQuestSystem()->TrackQuestChains(bot);
 }
 
 std::vector<uint32> UnifiedQuestManager::DynamicModule::GetQuestChain(uint32 questId)
@@ -1156,53 +1156,53 @@ uint32 UnifiedQuestManager::DynamicModule::GetNextQuestInChainDynamic(uint32 com
 void UnifiedQuestManager::DynamicModule::AdvanceQuestChain(Player* bot, uint32 completedQuestId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->AdvanceQuestChain(completedQuestId);
+        systems->GetDynamicQuestSystem()->AdvanceQuestChain(bot, completedQuestId);
 }
 
 void UnifiedQuestManager::DynamicModule::OptimizeZoneQuests(Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        systems->GetDynamicQuestSystem()->OptimizeZoneQuests();
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        systems->GetDynamicQuestSystem()->OptimizeZoneQuests(bot);
 }
 
 std::vector<uint32> UnifiedQuestManager::DynamicModule::GetZoneQuests(uint32 zoneId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetDynamicQuestSystem()->GetZoneQuests(zoneId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetDynamicQuestSystem()->GetZoneQuests(zoneId, bot);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::PlanZoneCompletion(Player* bot, uint32 zoneId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        systems->GetDynamicQuestSystem()->PlanZoneCompletion(zoneId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        systems->GetDynamicQuestSystem()->PlanZoneCompletion(bot, zoneId);
 }
 
 bool UnifiedQuestManager::DynamicModule::ShouldMoveToNewZone(Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetDynamicQuestSystem()->ShouldMoveToNewZone();
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetDynamicQuestSystem()->ShouldMoveToNewZone(bot);
     return {};
 }
 
 QuestReward UnifiedQuestManager::DynamicModule::AnalyzeQuestReward(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetDynamicQuestSystem()->AnalyzeQuestReward(questId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetDynamicQuestSystem()->AnalyzeQuestReward(questId, bot);
     return {};
 }
 
 float UnifiedQuestManager::DynamicModule::CalculateQuestValue(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetDynamicQuestSystem()->CalculateQuestValue(questId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetDynamicQuestSystem()->CalculateQuestValue(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::DynamicModule::IsQuestWorthwhile(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetDynamicQuestSystem()->IsQuestWorthwhile(questId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetDynamicQuestSystem()->IsQuestWorthwhile(questId, bot);
     return {};
 }
 
