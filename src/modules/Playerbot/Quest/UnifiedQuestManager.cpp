@@ -811,7 +811,7 @@ void UnifiedQuestManager::TurnInModule::SynchronizeGroupRewardSelection(Group* g
 
 void UnifiedQuestManager::TurnInModule::HandleGroupTurnInConflicts(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->HandleGroupTurnInConflicts(group, questId);
 }
 
