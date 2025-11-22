@@ -924,7 +924,7 @@ bool QuestValidation::ValidateQuestDifficulty(uint32 questId, Player* bot)
 
 // ========== Validation Caching and Optimization ==========
 
-QuestValidation::ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
+ValidationResult QuestValidation::GetCachedValidation(uint32 questId, uint32 botGuid)
 {
     uint64_t key = ((uint64_t)questId << 32) | botGuid;
     auto it = _validationCache.find(key);
