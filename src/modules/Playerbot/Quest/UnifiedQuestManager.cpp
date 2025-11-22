@@ -1020,7 +1020,7 @@ std::vector<uint32> UnifiedQuestManager::DynamicModule::SortQuestsByPriority(con
 {
     _questsOptimized++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->SortQuestsByPriority(bot, questIds);
+        return systems->GetDynamicQuestSystem()->SortQuestsByPriority(questIds, bot);
     return {};
 }
 
