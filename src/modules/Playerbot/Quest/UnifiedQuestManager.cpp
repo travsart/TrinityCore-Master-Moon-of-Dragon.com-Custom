@@ -339,7 +339,7 @@ void UnifiedQuestManager::CompletionModule::RecoverFromStuckState(Player* bot, u
 void UnifiedQuestManager::CompletionModule::SkipProblematicObjective(Player* bot, QuestObjectiveData& objective)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestCompletion()->SkipProblematicObjective(objective);
+        systems->GetQuestCompletion()->SkipProblematicObjective(bot, objective);
 }
 
 // ============================================================================

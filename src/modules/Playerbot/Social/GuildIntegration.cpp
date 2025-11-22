@@ -588,7 +588,7 @@ std::string GuildIntegration::GenerateConversationStarter()
     if (!_bot)
         return "";
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Select conversation starter based on profile and current context
     std::vector<std::string> starters;
 

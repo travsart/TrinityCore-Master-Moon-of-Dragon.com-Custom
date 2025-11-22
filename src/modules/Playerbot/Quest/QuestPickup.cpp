@@ -41,8 +41,9 @@ QuestPickup::QuestPickup(Player* bot) : _bot(bot) {
 QuestPickup::~QuestPickup() {}
 
 // Constructor
-QuestPickup::QuestPickup()
-    : _lastUpdate(std::chrono::steady_clock::now())
+QuestPickup::QuestPickup(Player* bot)
+    : _bot(bot)
+    , _lastUpdate(std::chrono::steady_clock::now())
 {
     InitializeQuestGiverDatabase();
 }
