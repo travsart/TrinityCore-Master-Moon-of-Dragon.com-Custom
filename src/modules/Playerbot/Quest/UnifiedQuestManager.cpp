@@ -558,7 +558,7 @@ bool UnifiedQuestManager::ValidationModule::CanGroupMemberShareQuest(uint32 ques
 
 bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContext& context)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(context.bot))
         return systems->GetQuestValidation()->ValidateWithContext(context);
     return {};
 }
