@@ -223,7 +223,7 @@ void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
 
     // Schedule turn-in through QuestTurnIn system (per-bot)
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(questId);
+        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(bot, questId);
 }
 
 /**

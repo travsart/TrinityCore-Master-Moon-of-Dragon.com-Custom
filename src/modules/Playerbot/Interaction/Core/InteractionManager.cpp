@@ -539,7 +539,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_vendorHandler->SellJunkItems(bot, vendor);
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // return m_vendorHandler->SellJunkItems(bot, vendor);
+        return InteractionResult::Failed;
     }
 
     InteractionResult InteractionManager::RepairAll(Player* bot, Creature* vendor)

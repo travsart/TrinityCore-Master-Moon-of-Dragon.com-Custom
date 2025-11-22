@@ -46,8 +46,11 @@ QuestTurnIn::~QuestTurnIn() {}
 /**
  * @brief Constructor
  */
-QuestTurnIn::QuestTurnIn()
+QuestTurnIn::QuestTurnIn(Player* bot)
+    : _bot(bot)
 {
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "QuestTurnIn: null bot!");
     _globalMetrics.Reset();
     LoadQuestGiverDatabase();
 }

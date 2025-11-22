@@ -681,7 +681,7 @@ void UnifiedQuestManager::TurnInModule::ProcessQuestTurnIn(Player* bot, uint32 q
 void UnifiedQuestManager::TurnInModule::ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ProcessBatchTurnIn(batch);
+        systems->GetQuestTurnIn()->ProcessBatchTurnIn(bot, batch);
 }
 
 void UnifiedQuestManager::TurnInModule::ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs)
