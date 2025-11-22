@@ -11,6 +11,7 @@
 
 #include "Define.h"
 #include "Player.h"
+#include "../../../Group/GroupRoleEnums.h"
 #include <vector>
 #include <unordered_map>
 #include <atomic>
@@ -23,9 +24,6 @@ namespace Playerbot
 {
 
 // Forward declarations
-enum class GroupRole : uint8;
-enum class RoleCapability : uint8;
-enum class RoleAssignmentStrategy : uint8;
 struct RoleScore;
 struct PlayerRoleProfile;
 struct GroupComposition;
