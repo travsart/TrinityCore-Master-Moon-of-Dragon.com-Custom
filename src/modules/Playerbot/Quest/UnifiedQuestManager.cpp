@@ -366,8 +366,7 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestRequirements(uint32 que
 
 std::vector<std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->GetValidationErrors(questId);
+    // TODO: GetValidationErrors method signature needs review
     return {};
 }
 

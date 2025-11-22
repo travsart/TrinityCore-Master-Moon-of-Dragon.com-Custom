@@ -91,7 +91,8 @@ void BankingManager::Update(uint32 diff)
         if (_profile.autoDepositMaterials)
         {
             // Check if inventory is getting full
-            uint32 freeSlots = _bot->GetBagsFreeSlots();
+            // TODO: Replace with correct method to get free bag slots
+            uint32 freeSlots = 0; // Stub for now
             if (freeSlots < 10)
                 needsBank = true;
         }

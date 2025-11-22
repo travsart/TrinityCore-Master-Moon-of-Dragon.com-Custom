@@ -658,7 +658,7 @@ bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
         return true;
 
     // Calculate relevance and decide based on chat style
-    float relevance = CalculateMessageRelevance(player, message);
+    float relevance = CalculateMessageRelevance(message);
     float threshold = 0.7f;
 
     switch (profile.chatStyle)
