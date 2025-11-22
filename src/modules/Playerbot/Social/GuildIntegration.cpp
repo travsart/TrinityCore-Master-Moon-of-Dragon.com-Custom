@@ -876,7 +876,7 @@ std::string GuildIntegration::PersonalizeResponse( const std::string& templateSt
     std::string response = templateStr;
 
     // Add player-specific touches based on guild profile
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Modify tone based on chat style
     switch (profile.chatStyle)
     {
@@ -904,7 +904,7 @@ float GuildIntegration::CalculateMessageRelevance( const GuildChatMessage& messa
     // Check for keywords that indicate relevance
     std::vector<std::string> keywords = ExtractKeywords(message.content);
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     for (const std::string& keyword : keywords)
     {
         // Check against player's interests and expertise

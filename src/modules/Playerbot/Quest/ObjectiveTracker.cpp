@@ -427,7 +427,7 @@ std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
     return activeObjectives;
 }
 
-std::vector<ObjectiveTracker::ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
+std::vector<ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Player* bot)
 {
     std::vector<ObjectivePriority> priorities;
 

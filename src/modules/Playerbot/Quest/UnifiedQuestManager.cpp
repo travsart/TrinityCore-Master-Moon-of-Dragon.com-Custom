@@ -458,9 +458,9 @@ bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Pla
 
 bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->HasInventorySpace(questId);
-    return {};
+    // TODO: QuestValidation does not have HasInventorySpace method
+    // Need to implement inventory space checking logic
+    return true; // Stub - always return true for now
 }
 
 std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(uint32 questId, Player* bot)
