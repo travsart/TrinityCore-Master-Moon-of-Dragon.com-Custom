@@ -739,7 +739,7 @@ void GuildIntegration::CelebrateGuildAchievements()
     // Boost guild morale
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
+GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
 {
     auto it = _playerMetrics.find(playerGuid);
     if (it != _playerMetrics.end())

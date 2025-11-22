@@ -32,19 +32,19 @@
 namespace Playerbot
 {
 
-DynamicQuestSystem::DynamicQuestSystem(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "DynamicQuestSystem: null bot!");
-}
-
-DynamicQuestSystem::~DynamicQuestSystem() {}
-
-DynamicQuestSystem::DynamicQuestSystem()
+DynamicQuestSystem::DynamicQuestSystem(Player* bot)
+    : _bot(bot)
 {
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "DynamicQuestSystem: null bot!");
+
     LoadQuestMetadata();
     AnalyzeQuestDependencies();
     BuildQuestChains();
     OptimizeQuestRoutes();
 }
+
+DynamicQuestSystem::~DynamicQuestSystem() {}
 
 std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
 {

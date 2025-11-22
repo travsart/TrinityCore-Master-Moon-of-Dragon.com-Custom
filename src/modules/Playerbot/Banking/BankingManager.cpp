@@ -22,6 +22,7 @@
 #include "ItemTemplate.h"
 #include "Player.h"
 #include "Item.h"
+#include "Bag.h"
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
