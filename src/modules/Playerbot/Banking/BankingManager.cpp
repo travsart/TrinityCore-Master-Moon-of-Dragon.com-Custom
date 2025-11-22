@@ -596,7 +596,7 @@ BankingPriority BankingManager::CalculateItemPriority(uint32 itemId)
         return BankingPriority::LOW;
 
     // Quest items - never bank
-    if (itemTemplate->StartQuest != 0 || itemTemplate->FoodType != 0)
+    if (itemTemplate->GetStartQuest() != 0 || itemTemplate->FoodType != 0)
         return BankingPriority::NEVER_BANK;
 
     // Profession materials - check if needed

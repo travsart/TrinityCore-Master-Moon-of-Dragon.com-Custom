@@ -380,35 +380,35 @@ bool UnifiedQuestManager::ValidationModule::ValidateLevelRequirements(uint32 que
 bool UnifiedQuestManager::ValidationModule::ValidateClassRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateClassRequirements(questId);
+        return systems->GetQuestValidation()->ValidateClassRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateRaceRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateRaceRequirements(questId);
+        return systems->GetQuestValidation()->ValidateRaceRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateSkillRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateSkillRequirements(questId);
+        return systems->GetQuestValidation()->ValidateSkillRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestPrerequisites(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestPrerequisites(questId);
+        return systems->GetQuestValidation()->ValidateQuestPrerequisites(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestChain(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestChain(questId);
+        return systems->GetQuestValidation()->ValidateQuestChain(questId, bot);
     return {};
 }
 
@@ -429,14 +429,14 @@ std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingPrerequisit
 bool UnifiedQuestManager::ValidationModule::ValidateReputationRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateReputationRequirements(questId);
+        return systems->GetQuestValidation()->ValidateReputationRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateFactionRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateFactionRequirements(questId);
+        return systems->GetQuestValidation()->ValidateFactionRequirements(questId, bot);
     return {};
 }
 
@@ -450,7 +450,7 @@ bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateItemRequirements(questId);
+        return systems->GetQuestValidation()->ValidateItemRequirements(questId, bot);
     return {};
 }
 
@@ -478,42 +478,42 @@ std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingQuestItems(
 bool UnifiedQuestManager::ValidationModule::ValidateQuestAvailability(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestAvailability(questId);
+        return systems->GetQuestValidation()->ValidateQuestAvailability(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateSeasonalAvailability(uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateSeasonalAvailability(questId);
+        return systems->GetQuestValidation()->ValidateSeasonalAvailability(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateDailyQuestLimits(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateDailyQuestLimits(questId);
+        return systems->GetQuestValidation()->ValidateDailyQuestLimits(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestTimer(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestTimer(questId);
+        return systems->GetQuestValidation()->ValidateQuestTimer(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateZoneRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateZoneRequirements(questId);
+        return systems->GetQuestValidation()->ValidateZoneRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateAreaRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateAreaRequirements(questId);
+        return systems->GetQuestValidation()->ValidateAreaRequirements(questId, bot);
     return {};
 }
 
@@ -534,21 +534,21 @@ bool UnifiedQuestManager::ValidationModule::CanQuestBeStartedAtLocation(uint32 q
 bool UnifiedQuestManager::ValidationModule::ValidateGroupRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateGroupRequirements(questId);
+        return systems->GetQuestValidation()->ValidateGroupRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidatePartyQuestRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidatePartyQuestRequirements(questId);
+        return systems->GetQuestValidation()->ValidatePartyQuestRequirements(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateRaidQuestRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateRaidQuestRequirements(questId);
+        return systems->GetQuestValidation()->ValidateRaidQuestRequirements(questId, bot);
     return {};
 }
 
@@ -569,21 +569,21 @@ bool UnifiedQuestManager::ValidationModule::ValidateWithContext(ValidationContex
 bool UnifiedQuestManager::ValidationModule::ValidateQuestObjectives(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestObjectives(questId);
+        return systems->GetQuestValidation()->ValidateQuestObjectives(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestRewards(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestRewards(questId);
+        return systems->GetQuestValidation()->ValidateQuestRewards(questId, bot);
     return {};
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateQuestDifficulty(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestDifficulty(questId);
+        return systems->GetQuestValidation()->ValidateQuestDifficulty(questId, bot);
     return {};
 }
 
