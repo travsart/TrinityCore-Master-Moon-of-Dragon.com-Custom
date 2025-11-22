@@ -974,7 +974,7 @@ void QuestValidation::CleanupExpiredCache()
 
 // ========== Batch Validation ==========
 
-std::unordered_map<uint32, QuestValidation::ValidationResult> QuestValidation::ValidateMultipleQuests(
+std::unordered_map<uint32, ValidationResult> QuestValidation::ValidateMultipleQuests(
     const std::vector<uint32>& questIds, Player* bot)
 {
     std::unordered_map<uint32, ValidationResult> results;

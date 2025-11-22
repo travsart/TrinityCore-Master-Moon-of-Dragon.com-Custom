@@ -157,7 +157,7 @@ void CombatBehaviorIntegration::UpdateManagers(uint32 diff)
 
 void CombatBehaviorIntegration::UpdatePriorities()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    std::lock_guard<OrderedMutex<LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         const CombatMetrics& metrics = _stateAnalyzer->GetCurrentMetrics();
 
     // Clear old actions
