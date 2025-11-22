@@ -805,7 +805,7 @@ void UnifiedQuestManager::TurnInModule::CoordinateGroupTurnIns(Group* group)
 
 void UnifiedQuestManager::TurnInModule::SynchronizeGroupRewardSelection(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->SynchronizeGroupRewardSelection(group, questId);
 }
 
