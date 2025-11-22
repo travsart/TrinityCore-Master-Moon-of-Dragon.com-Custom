@@ -878,8 +878,9 @@ namespace Playerbot
         if (!context || context->type != InteractionType::Vendor)
             return;
 
+        // TODO: VendorInteraction is incomplete type - need to implement
         // Pass to vendor handler
-        m_vendorHandler->HandleVendorList(bot, packet);
+        // m_vendorHandler->HandleVendorList(bot, packet);
     }
 
     void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& packet)

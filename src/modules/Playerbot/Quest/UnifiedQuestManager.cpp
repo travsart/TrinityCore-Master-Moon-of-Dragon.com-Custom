@@ -693,7 +693,7 @@ void UnifiedQuestManager::TurnInModule::ScheduleQuestTurnIn(Player* bot, uint32 
 std::vector<uint32> UnifiedQuestManager::TurnInModule::GetCompletedQuests(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->GetCompletedQuests();
+        return systems->GetQuestTurnIn()->GetCompletedQuests(bot);
     return {};
 }
 
