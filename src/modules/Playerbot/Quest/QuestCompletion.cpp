@@ -40,22 +40,17 @@ namespace Playerbot
 constexpr float QUEST_GIVER_INTERACTION_RANGE = 5.0f;
 
 /**
- * @brief Singleton instance implementation
- */
-QuestCompletion::QuestCompletion(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestCompletion: null bot!");
-}
-
-QuestCompletion::~QuestCompletion() {}
-
-/**
  * @brief Constructor
  */
 QuestCompletion::QuestCompletion(Player* bot)
     : _bot(bot)
 {
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "QuestCompletion: null bot!");
     _globalMetrics.Reset();
 }
+
+QuestCompletion::~QuestCompletion() {}
 
 /**
  * @brief Start tracking quest completion for a bot

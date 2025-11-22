@@ -675,7 +675,7 @@ bool UnifiedQuestManager::TurnInModule::TurnInQuestWithReward(uint32 questId, Pl
 void UnifiedQuestManager::TurnInModule::ProcessQuestTurnIn(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ProcessQuestTurnIn(questId);
+        systems->GetQuestTurnIn()->ProcessQuestTurnIn(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::ProcessBatchTurnIn(Player* bot, const TurnInBatch& batch)
