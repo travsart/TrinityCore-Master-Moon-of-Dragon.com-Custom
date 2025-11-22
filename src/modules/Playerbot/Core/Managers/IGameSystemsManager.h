@@ -59,6 +59,7 @@ class QuestCompletion;
 class QuestPickup;
 class QuestTurnIn;
 class QuestValidation;
+class DynamicQuestSystem;
 class TradeManager;
 class GatheringManager;
 class ProfessionManager;
@@ -173,6 +174,12 @@ public:
      * @return Non-owning pointer to QuestTurnIn (owned by facade)
      */
     virtual QuestTurnIn* GetQuestTurnIn() const = 0;
+
+    /**
+     * @brief Get dynamic quest system
+     * @return Non-owning pointer to DynamicQuestSystem (owned by facade)
+     */
+    virtual DynamicQuestSystem* GetDynamicQuestSystem() const = 0;
 
     /**
      * @brief Get quest validation system
