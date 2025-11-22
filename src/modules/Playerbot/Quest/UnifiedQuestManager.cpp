@@ -635,8 +635,8 @@ std::vector<uint32> UnifiedQuestManager::ValidationModule::GetEligibleQuests(Pla
 
 std::string UnifiedQuestManager::ValidationModule::GetDetailedValidationReport(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetQuestValidation()->GetDetailedValidationReport(questId);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestValidation()->GetDetailedValidationReport(questId, bot);
     return {};
 }
 

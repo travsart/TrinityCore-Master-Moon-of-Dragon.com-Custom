@@ -109,7 +109,7 @@ private:
     QueryMetrics _metrics;
 
 public:
-    explicit QueryOptimizer(Configuration config = Configuration{});
+    explicit QueryOptimizer(Configuration config);
     ~QueryOptimizer() = default;
 
     /**
