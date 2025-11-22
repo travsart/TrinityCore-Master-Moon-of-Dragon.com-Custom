@@ -628,8 +628,8 @@ std::vector<uint32> UnifiedQuestManager::ValidationModule::FilterValidQuests(con
 
 std::vector<uint32> UnifiedQuestManager::ValidationModule::GetEligibleQuests(Player* bot, const std::vector<uint32>& candidates)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetQuestValidation()->GetEligibleQuests(candidates);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestValidation()->GetEligibleQuests(bot, candidates);
     return {};
 }
 
