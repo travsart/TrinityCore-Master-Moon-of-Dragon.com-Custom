@@ -686,7 +686,7 @@ bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
 
 void GuildIntegration::LearnFromGuildConversations()
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // Learn from guild chat patterns

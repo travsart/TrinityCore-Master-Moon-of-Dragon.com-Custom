@@ -1215,7 +1215,7 @@ QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 }
 
 // Get global pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
+QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
 {
     return _globalMetrics;  // Copy constructor will be used
 }

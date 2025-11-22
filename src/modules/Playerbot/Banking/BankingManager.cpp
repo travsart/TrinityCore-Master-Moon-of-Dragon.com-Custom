@@ -625,7 +625,7 @@ bool BankingManager::ItemMatchesRule(uint32 itemId, BankingRule const& rule)
     // Item class match
     if (rule.itemClass != 0)
     {
-        if (itemTemplate->Class != rule.itemClass)
+        if (itemTemplate->GetClass() != rule.itemClass)
             return false;
 
         // Item subclass match (if specified)
