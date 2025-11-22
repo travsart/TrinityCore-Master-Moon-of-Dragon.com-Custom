@@ -707,7 +707,7 @@ bool UnifiedQuestManager::TurnInModule::IsQuestReadyForTurnIn(uint32 questId, Pl
 void UnifiedQuestManager::TurnInModule::MonitorQuestCompletion(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->MonitorQuestCompletion();
+        systems->GetQuestTurnIn()->MonitorQuestCompletion(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::HandleQuestCompletion(Player* bot, uint32 questId)

@@ -1059,10 +1059,10 @@ IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botG
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
+IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
     auto snapshot = _globalMetrics.CreateSnapshot();
-    TurnInMetricsSnapshot result;
+    IQuestTurnIn::TurnInMetricsSnapshot result;
     result.questsTurnedIn = snapshot.questsTurnedIn;
     result.turnInAttempts = snapshot.turnInAttempts;
     result.successfulTurnIns = snapshot.successfulTurnIns;

@@ -1460,11 +1460,23 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
 IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
-    if (it != _botMetrics.end())
-        return it->second.CreateSnapshot();
+    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
 
-    QuestCompletionMetrics defaultMetrics;
-    return defaultMetrics.CreateSnapshot();
+    if (it != _botMetrics.end())
+    {
+        auto snapshot = it->second.CreateSnapshot();
+        result.questsStarted = snapshot.questsStarted;
+        result.questsCompleted = snapshot.questsCompleted;
+        result.questsFailed = snapshot.questsFailed;
+        result.objectivesCompleted = snapshot.objectivesCompleted;
+        result.stuckInstances = snapshot.stuckInstances;
+        result.averageCompletionTime = snapshot.averageCompletionTime;
+        result.completionSuccessRate = snapshot.completionSuccessRate;
+        result.objectiveEfficiency = snapshot.objectiveEfficiency;
+        result.totalDistanceTraveled = snapshot.totalDistanceTraveled;
+    }
+
+    return result;
 }
 
 /**
@@ -1473,7 +1485,18 @@ IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompleti
  */
 IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
 {
-    return _globalMetrics.CreateSnapshot();
+    auto snapshot = _globalMetrics.CreateSnapshot();
+    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
+    result.questsStarted = snapshot.questsStarted;
+    result.questsCompleted = snapshot.questsCompleted;
+    result.questsFailed = snapshot.questsFailed;
+    result.objectivesCompleted = snapshot.objectivesCompleted;
+    result.stuckInstances = snapshot.stuckInstances;
+    result.averageCompletionTime = snapshot.averageCompletionTime;
+    result.completionSuccessRate = snapshot.completionSuccessRate;
+    result.objectiveEfficiency = snapshot.objectiveEfficiency;
+    result.totalDistanceTraveled = snapshot.totalDistanceTraveled;
+    return result;
 }
 
 /**
