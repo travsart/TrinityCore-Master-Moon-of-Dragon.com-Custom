@@ -11,7 +11,7 @@
 
 #include "Define.h"
 #include "Player.h"
-#include "../../../../Group/GroupRoleEnums.h"
+#include "../../../Group/GroupRoleEnums.h"
 #include <vector>
 #include <unordered_map>
 #include <atomic>
