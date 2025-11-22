@@ -1907,8 +1907,8 @@ void UnifiedQuestManager::Update(uint32 diff)
 
 void UnifiedQuestManager::UpdateBotTurnIns(Player* bot, uint32 diff)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        systems->GetQuestTurnIn()->UpdateBotTurnIns(diff);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        systems->GetQuestTurnIn()->UpdateBotTurnIns(bot, diff);
 }
 
 void UnifiedQuestManager::ProcessScheduledTurnIns()
