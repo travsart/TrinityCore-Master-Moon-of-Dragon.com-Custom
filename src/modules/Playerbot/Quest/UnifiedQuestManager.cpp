@@ -349,8 +349,9 @@ void UnifiedQuestManager::CompletionModule::SkipProblematicObjective(Player* bot
 bool UnifiedQuestManager::ValidationModule::ValidateQuest(uint32 questId, Player* bot)
 {
     _validationsPerformed++;
+    bool result = false;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestValidation()->ValidateQuest(questId);
+        result = systems->GetQuestValidation()->ValidateQuestAcceptance(questId, bot);
     if (result)
         _validationsPassed++;
     return result;

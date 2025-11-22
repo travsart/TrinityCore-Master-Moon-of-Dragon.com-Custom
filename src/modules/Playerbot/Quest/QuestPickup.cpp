@@ -33,13 +33,6 @@
 namespace Playerbot
 {
 
-// Singleton instance
-QuestPickup::QuestPickup(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestPickup: null bot!");
-}
-
-QuestPickup::~QuestPickup() {}
-
 // Constructor
 QuestPickup::QuestPickup(Player* bot)
     : _bot(bot)

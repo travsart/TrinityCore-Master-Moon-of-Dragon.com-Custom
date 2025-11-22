@@ -644,7 +644,7 @@ std::string GuildIntegration::GenerateConversationStarter()
 
 bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Don't respond to own messages
