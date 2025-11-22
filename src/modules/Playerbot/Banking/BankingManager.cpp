@@ -128,11 +128,7 @@ void BankingManager::Update(uint32 diff)
     _currentlyBanking = false;
 }
 
-void BankingManager::OnShutdown()
-{
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnShutdown - Shutting down for bot {}",
-        _bot ? _bot->GetName() : "null");
-}
+// OnShutdown removed - not in interface
 
 // ============================================================================
 // CORE BANKING OPERATIONS
