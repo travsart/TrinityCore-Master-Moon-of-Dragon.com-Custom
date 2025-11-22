@@ -604,9 +604,9 @@ BankingPriority BankingManager::CalculateItemPriority(uint32 itemId)
         return BankingPriority::LOW;  // Keep in inventory
 
     // Default priority based on quality
-    if (itemTemplate->Quality >= 4)  // Epic+
+    if (itemTemplate->GetQuality() >= 4)  // Epic+
         return BankingPriority::HIGH;
-    else if (itemTemplate->Quality >= 3)  // Rare
+    else if (itemTemplate->GetQuality() >= 3)  // Rare
         return BankingPriority::MEDIUM;
     else
         return BankingPriority::LOW;
@@ -633,7 +633,7 @@ bool BankingManager::ItemMatchesRule(uint32 itemId, BankingRule const& rule)
             return false;
 
         // Quality match (if specified)
-        if (rule.itemQuality != 0 && itemTemplate->Quality != rule.itemQuality)
+        if (rule.itemQuality != 0 && itemTemplate->GetQuality() != rule.itemQuality)
             return false;
 
         return true;
