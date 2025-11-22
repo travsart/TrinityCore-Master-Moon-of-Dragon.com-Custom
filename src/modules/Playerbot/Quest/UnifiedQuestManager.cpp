@@ -479,8 +479,9 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestAvailability(uint32 que
 
 bool UnifiedQuestManager::ValidationModule::ValidateSeasonalAvailability(uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateSeasonalAvailability(questId, bot);
+    // Note: This method doesn't have bot context, using nullptr for GetGameSystems
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
+        return systems->GetQuestValidation()->ValidateSeasonalAvailability(questId);
     return {};
 }
 

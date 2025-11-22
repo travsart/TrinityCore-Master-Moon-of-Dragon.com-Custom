@@ -1013,7 +1013,7 @@ void GuildIntegration::SendGuildChatMessage( const std::string& message)
     _bot->GetGuild()->BroadcastToGuild(_bot->GetSession(), false, message, LANG_UNIVERSAL);
 
     // Update metrics
-    UpdateGuildMetrics(_bot->GetGUID().GetCounter(), GuildActivityType::CHAT_PARTICIPATION, true);
+    UpdateGuildMetrics(GuildActivityType::CHAT_PARTICIPATION, true);
 }
 
 void GuildIntegration::OfferGuildAssistance( const std::string& assistance)

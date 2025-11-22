@@ -718,7 +718,7 @@ void ObjectiveTracker::HandleObjectiveConflicts(Group* group, uint32 questId, ui
     ResolveObjectiveConflicts(group, questId, objectiveIndex);
 }
 
-const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
+const ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botGuid)
 {
     auto it = _botAnalytics.find(botGuid);
     if (it != _botAnalytics.end())
