@@ -13,6 +13,7 @@
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
 #include "Group.h"
+#include "GroupRoleEnums.h"
 #include "../Core/DI/Interfaces/IRoleAssignment.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -27,38 +28,6 @@ class Group;
 
 namespace Playerbot
 {
-
-enum class GroupRole : uint8
-{
-    TANK        = 0,
-    HEALER      = 1,
-    MELEE_DPS   = 2,
-    RANGED_DPS  = 3,
-    SUPPORT     = 4,
-    UTILITY     = 5,
-    NONE        = 6
-};
-
-enum class RoleCapability : uint8
-{
-    PRIMARY     = 0,  // Main specialization role
-    SECONDARY   = 1,  // Off-spec capable
-    HYBRID      = 2,  // Dual-role capable (e.g., Paladin tank/heal)
-    EMERGENCY   = 3,  // Can fill role in emergency
-    INCAPABLE   = 4   // Cannot perform this role
-};
-
-enum class RoleAssignmentStrategy : uint8
-{
-    OPTIMAL         = 0,  // Best possible role distribution
-    BALANCED        = 1,  // Even distribution of capabilities
-    FLEXIBLE        = 2,  // Adapt to group needs
-    STRICT          = 3,  // Only assign primary roles
-    HYBRID_FRIENDLY = 4,  // Favor hybrid classes
-    DUNGEON_FOCUSED = 5,  // Optimize for dungeon content
-    RAID_FOCUSED    = 6,  // Optimize for raid content
-    PVP_FOCUSED     = 7   // Optimize for PvP content
-};
 
 struct RoleScore
 {
