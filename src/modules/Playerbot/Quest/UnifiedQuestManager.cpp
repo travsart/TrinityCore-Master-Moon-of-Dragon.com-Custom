@@ -516,7 +516,7 @@ bool UnifiedQuestManager::ValidationModule::ValidateAreaRequirements(uint32 ques
 bool UnifiedQuestManager::ValidationModule::IsInCorrectZone(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->IsInCorrectZone(questId);
+        return systems->GetQuestValidation()->IsInCorrectZone(questId, bot);
     return {};
 }
 

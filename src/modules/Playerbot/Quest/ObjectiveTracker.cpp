@@ -729,7 +729,7 @@ const ObjectiveAnalytics& ObjectiveTracker::GetBotObjectiveAnalytics(uint32 botG
     return _botAnalytics[botGuid];
 }
 
-const ObjectiveTracker::ObjectiveAnalytics& ObjectiveTracker::GetGlobalObjectiveAnalytics()
+const ObjectiveAnalytics& ObjectiveTracker::GetGlobalObjectiveAnalytics()
 {
     return _globalAnalytics;
 }

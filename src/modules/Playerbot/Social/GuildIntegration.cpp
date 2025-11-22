@@ -1042,9 +1042,9 @@ void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
     SendGuildChatMessage( helpMessages[dis(gen)]);
 }
 
-void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType activity, bool wasSuccessful)
+void GuildIntegration::UpdateGuildMetrics(GuildActivityType activity, bool wasSuccessful)
 {
-    auto& metrics = _playerMetrics[playerGuid];
+    auto& metrics = _playerMetrics[_bot->GetGUID().GetCounter()];
     metrics.guildInteractions++;
 
     if (wasSuccessful)
