@@ -17,6 +17,7 @@
 #include "Log.h"
 #include <chrono>
 #include <random>
+#include <cfloat>
 
 namespace Playerbot
 {

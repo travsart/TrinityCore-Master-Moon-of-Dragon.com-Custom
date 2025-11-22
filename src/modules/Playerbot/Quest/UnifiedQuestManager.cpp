@@ -614,15 +614,15 @@ void UnifiedQuestManager::ValidationModule::CleanupExpiredCache()
 std::unordered_map<uint32, ValidationResult> UnifiedQuestManager::ValidationModule::ValidateMultipleQuests(
     const std::vector<uint32>& questIds, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetQuestValidation()->ValidateMultipleQuests(questIds);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestValidation()->ValidateMultipleQuests(questIds, bot);
     return {};
 }
 
 std::vector<uint32> UnifiedQuestManager::ValidationModule::FilterValidQuests(const std::vector<uint32>& questIds, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        return systems->GetQuestValidation()->FilterValidQuests(questIds);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        return systems->GetQuestValidation()->FilterValidQuests(questIds, bot);
     return {};
 }
 
