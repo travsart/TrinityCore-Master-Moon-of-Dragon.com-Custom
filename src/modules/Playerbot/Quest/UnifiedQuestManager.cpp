@@ -1141,14 +1141,14 @@ void UnifiedQuestManager::DynamicModule::TrackQuestChains(Player* bot)
 
 std::vector<uint32> UnifiedQuestManager::DynamicModule::GetQuestChain(uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetDynamicQuestSystem()->GetQuestChain(questId);
     return {};
 }
 
 uint32 UnifiedQuestManager::DynamicModule::GetNextQuestInChainDynamic(uint32 completedQuestId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetDynamicQuestSystem()->GetNextQuestInChain(completedQuestId);
     return {};
 }
