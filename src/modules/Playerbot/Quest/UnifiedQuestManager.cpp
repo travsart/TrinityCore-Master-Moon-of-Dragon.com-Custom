@@ -739,13 +739,13 @@ void UnifiedQuestManager::TurnInModule::OptimizeTurnInSequence(Player* bot, std:
 void UnifiedQuestManager::TurnInModule::MinimizeTurnInTravel(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->MinimizeTurnInTravel();
+        systems->GetQuestTurnIn()->MinimizeTurnInTravel(bot);
 }
 
 bool UnifiedQuestManager::TurnInModule::FindQuestTurnInNpc(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->FindQuestTurnInNpc(questId);
+        return systems->GetQuestTurnIn()->FindQuestTurnInNpc(bot, questId);
     return {};
 }
 
@@ -759,41 +759,41 @@ Position UnifiedQuestManager::TurnInModule::GetQuestTurnInLocation(uint32 questI
 bool UnifiedQuestManager::TurnInModule::NavigateToQuestGiver(Player* bot, uint32 questGiverGuid)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->NavigateToQuestGiver(questGiverGuid);
+        return systems->GetQuestTurnIn()->NavigateToQuestGiver(bot, questGiverGuid);
     return {};
 }
 
 bool UnifiedQuestManager::TurnInModule::IsAtQuestGiver(Player* bot, uint32 questGiverGuid)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->IsAtQuestGiver(questGiverGuid);
+        return systems->GetQuestTurnIn()->IsAtQuestGiver(bot, questGiverGuid);
     return {};
 }
 
 void UnifiedQuestManager::TurnInModule::AnalyzeQuestRewards(QuestTurnInData& turnInData, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->AnalyzeQuestRewards(turnInData);
+        systems->GetQuestTurnIn()->AnalyzeQuestRewards(turnInData, bot);
 }
 
 uint32 UnifiedQuestManager::TurnInModule::SelectOptimalReward(const std::vector<QuestRewardItem>& rewards, Player* bot, RewardSelectionStrategy strategy)
 {
     _rewardsSelected++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->SelectOptimalReward(rewards, strategy);
+        return systems->GetQuestTurnIn()->SelectOptimalReward(rewards, bot, strategy);
     return {};
 }
 
 void UnifiedQuestManager::TurnInModule::EvaluateItemUpgrades(const std::vector<QuestRewardItem>& rewards, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->EvaluateItemUpgrades(rewards);
+        systems->GetQuestTurnIn()->EvaluateItemUpgrades(rewards, bot);
 }
 
 float UnifiedQuestManager::TurnInModule::CalculateItemValue(const QuestRewardItem& reward, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->CalculateItemValue(reward);
+        return systems->GetQuestTurnIn()->CalculateItemValue(reward, bot);
     return {};
 }
 
