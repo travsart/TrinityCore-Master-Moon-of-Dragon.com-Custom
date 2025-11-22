@@ -799,7 +799,7 @@ float UnifiedQuestManager::TurnInModule::CalculateItemValue(const QuestRewardIte
 
 void UnifiedQuestManager::TurnInModule::CoordinateGroupTurnIns(Group* group)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->CoordinateGroupTurnIns(group);
 }
 
