@@ -722,7 +722,7 @@ bool DynamicQuestSystem::ShouldMoveToNewZone(Player* bot)
     return valuableQuests < ZONE_OPTIMIZATION_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
+QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
 {
     QuestReward reward;
 

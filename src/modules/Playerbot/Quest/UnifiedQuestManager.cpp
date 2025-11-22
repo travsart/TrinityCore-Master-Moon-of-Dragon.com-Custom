@@ -410,7 +410,7 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestPrerequisites(uint32 qu
 bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->HasCompletedPrerequisites(questId);
+        return systems->GetQuestValidation()->HasCompletedPrerequisiteQuests(questId, bot);
     return {};
 }
 
