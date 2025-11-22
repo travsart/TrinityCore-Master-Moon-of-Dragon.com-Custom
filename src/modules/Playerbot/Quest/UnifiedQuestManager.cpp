@@ -1411,8 +1411,8 @@ bool UnifiedQuestManager::ValidateSkillRequirements(uint32 questId, Player* bot)
 bool UnifiedQuestManager::ValidateQuestPrerequisites(uint32 questId, Player* bot)
 { return _validation->ValidateQuestPrerequisites(questId, bot); }
 
-bool UnifiedQuestManager::ValidateQuestChainPosition(uint32 questId, Player* bot)
-{ return _validation->ValidateQuestChainPosition(questId, bot); }
+bool UnifiedQuestManager::ValidateQuestChain(uint32 questId, Player* bot)
+{ return _validation->ValidateQuestChain(questId, bot); }
 
 bool UnifiedQuestManager::HasCompletedPrerequisites(uint32 questId, Player* bot)
 { return _validation->HasCompletedPrerequisites(questId, bot); }
