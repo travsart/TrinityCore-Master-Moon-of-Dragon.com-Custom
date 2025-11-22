@@ -750,7 +750,7 @@ GuildMetrics GuildIntegration::GetPlayerGuildMetrics()
     return metrics;
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
+GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
 {
     GuildMetrics combinedMetrics;
     combinedMetrics.Reset();

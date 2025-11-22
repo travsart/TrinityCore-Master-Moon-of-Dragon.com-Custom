@@ -437,9 +437,9 @@ bool UnifiedQuestManager::ValidationModule::ValidateFactionRequirements(uint32 q
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId, Player* bot, uint32 factionId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->HasRequiredReputation(questId, factionId);
-    return {};
+    // TODO: QuestValidation does not have HasRequiredReputation method
+    // Need to implement reputation checking logic
+    return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)

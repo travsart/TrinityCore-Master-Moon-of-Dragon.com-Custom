@@ -37,11 +37,6 @@ ObjectiveTracker::ObjectiveTracker(Player* bot) : _bot(bot) {
 
 ObjectiveTracker::~ObjectiveTracker() {}
 
-ObjectiveTracker::ObjectiveTracker()
-{
-    _globalAnalytics.Reset();
-}
-
 void ObjectiveTracker::StartTrackingObjective(Player* bot, const QuestObjectiveData& objective)
 {
     if (!bot)
