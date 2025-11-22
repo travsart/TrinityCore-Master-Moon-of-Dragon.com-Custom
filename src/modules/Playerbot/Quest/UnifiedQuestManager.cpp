@@ -824,72 +824,72 @@ void UnifiedQuestManager::TurnInModule::ShareTurnInProgress(Group* group)
 void UnifiedQuestManager::TurnInModule::HandleQuestGiverDialog(Player* bot, uint32 questGiverGuid, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->HandleQuestGiverDialog(questGiverGuid, questId);
+        systems->GetQuestTurnIn()->HandleQuestGiverDialog(bot, questGiverGuid, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::SelectQuestReward(Player* bot, uint32 questId, uint32 rewardIndex)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->SelectQuestReward(questId, rewardIndex);
+        systems->GetQuestTurnIn()->SelectQuestReward(bot, questId, rewardIndex);
 }
 
 void UnifiedQuestManager::TurnInModule::ConfirmQuestTurnIn(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ConfirmQuestTurnIn(questId);
+        systems->GetQuestTurnIn()->ConfirmQuestTurnIn(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::HandleTurnInDialog(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->HandleTurnInDialog(questId);
+        systems->GetQuestTurnIn()->HandleTurnInDialog(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteImmediateTurnInStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteImmediateTurnInStrategy();
+        systems->GetQuestTurnIn()->ExecuteImmediateTurnInStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteBatchTurnInStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteBatchTurnInStrategy();
+        systems->GetQuestTurnIn()->ExecuteBatchTurnInStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteOptimalRoutingStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteOptimalRoutingStrategy();
+        systems->GetQuestTurnIn()->ExecuteOptimalRoutingStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteGroupCoordinationStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteGroupCoordinationStrategy();
+        systems->GetQuestTurnIn()->ExecuteGroupCoordinationStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteRewardOptimizationStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteRewardOptimizationStrategy();
+        systems->GetQuestTurnIn()->ExecuteRewardOptimizationStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::ExecuteChainContinuationStrategy(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ExecuteChainContinuationStrategy();
+        systems->GetQuestTurnIn()->ExecuteChainContinuationStrategy(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::HandleQuestChainProgression(Player* bot, uint32 completedQuestId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->HandleQuestChainProgression(completedQuestId);
+        systems->GetQuestTurnIn()->HandleQuestChainProgression(bot, completedQuestId);
 }
 
 uint32 UnifiedQuestManager::TurnInModule::GetNextQuestInChain(uint32 completedQuestId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetNextQuestInChain(completedQuestId);
     return {};
 }
@@ -897,44 +897,44 @@ uint32 UnifiedQuestManager::TurnInModule::GetNextQuestInChain(uint32 completedQu
 void UnifiedQuestManager::TurnInModule::AutoAcceptFollowUpQuests(Player* bot, uint32 completedQuestId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->AutoAcceptFollowUpQuests(completedQuestId);
+        systems->GetQuestTurnIn()->AutoAcceptFollowUpQuests(bot, completedQuestId);
 }
 
 void UnifiedQuestManager::TurnInModule::PrioritizeChainQuests(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->PrioritizeChainQuests();
+        systems->GetQuestTurnIn()->PrioritizeChainQuests(bot);
 }
 
 void UnifiedQuestManager::TurnInModule::SetTurnInStrategy(uint32 botGuid, TurnInStrategy strategy)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->SetTurnInStrategy(botGuid, strategy);
 }
 
 TurnInStrategy UnifiedQuestManager::TurnInModule::GetTurnInStrategy(uint32 botGuid)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetTurnInStrategy(botGuid);
     return {};
 }
 
 void UnifiedQuestManager::TurnInModule::SetRewardSelectionStrategy(uint32 botGuid, RewardSelectionStrategy strategy)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->SetRewardSelectionStrategy(botGuid, strategy);
 }
 
 RewardSelectionStrategy UnifiedQuestManager::TurnInModule::GetRewardSelectionStrategy(uint32 botGuid)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetRewardSelectionStrategy(botGuid);
     return {};
 }
 
 void UnifiedQuestManager::TurnInModule::SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->SetBatchTurnInThreshold(botGuid, threshold);
 }
 
