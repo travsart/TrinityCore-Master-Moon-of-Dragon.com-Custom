@@ -8,6 +8,7 @@
  */
 
 #include "UnifiedQuestManager.h"
+#include "QuestValidation.h"  // For complete ValidationContext type
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "Core/Managers/GameSystemsManager.h"  // Complete type for IGameSystemsManager
 #include "Log.h"
