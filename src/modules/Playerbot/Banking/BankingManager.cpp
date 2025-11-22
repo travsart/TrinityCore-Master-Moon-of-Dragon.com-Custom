@@ -62,29 +62,6 @@ BankingManager::~BankingManager()
 // LIFECYCLE (BehaviorManager override)
 // ============================================================================
 
-void BankingManager::OnInitialize()
-{
-    if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "BankingManager::OnInitialize - No bot reference!");
-        return;
-    }
-
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnInitialize - Initializing for bot {}", _bot->GetName());
-
-    // Initialize shared default rules (once)
-    if (!_defaultRulesInitialized)
-    {
-        LoadBankingRules();
-        _defaultRulesInitialized = true;
-    }
-
-    // Initialize per-bot rules
-    InitializeDefaultRules();
-
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnInitialize - Initialized for bot {}", _bot->GetName());
-}
-
 void BankingManager::OnUpdate(::Player* player, uint32 diff)
 {
     if (!_bot || !player || player != _bot)

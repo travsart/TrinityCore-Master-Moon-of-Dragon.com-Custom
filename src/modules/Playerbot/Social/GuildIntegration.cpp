@@ -585,7 +585,7 @@ std::string GuildIntegration::GenerateGuildChatResponse( const GuildChatMessage&
 
 std::string GuildIntegration::GenerateConversationStarter()
 {
-    if (!player)
+    if (!_bot)
         return "";
 
     GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
