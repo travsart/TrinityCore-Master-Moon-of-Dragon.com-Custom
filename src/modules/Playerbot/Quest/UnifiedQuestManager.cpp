@@ -373,8 +373,8 @@ std::vector<std::string> UnifiedQuestManager::ValidationModule::GetValidationErr
 bool UnifiedQuestManager::ValidationModule::ValidateLevelRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateLevelRequirements(questId);
-    return {};
+        return systems->GetQuestValidation()->ValidateLevelRequirements(questId, bot);
+    return false;
 }
 
 bool UnifiedQuestManager::ValidationModule::ValidateClassRequirements(uint32 questId, Player* bot)
