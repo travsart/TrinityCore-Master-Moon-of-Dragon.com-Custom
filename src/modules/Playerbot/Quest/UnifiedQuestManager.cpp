@@ -451,9 +451,9 @@ bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 ques
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->HasRequiredItems(questId);
-    return {};
+    // TODO: QuestValidation does not have HasRequiredItems method
+    // Need to implement item requirement checking logic
+    return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::HasInventorySpace(uint32 questId, Player* bot)

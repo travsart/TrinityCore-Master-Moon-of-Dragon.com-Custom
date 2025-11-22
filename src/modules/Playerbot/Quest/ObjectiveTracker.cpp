@@ -412,7 +412,7 @@ void ObjectiveTracker::UpdateObjectiveState(Player* bot, const ObjectiveState& s
     }
 }
 
-std::vector<ObjectiveTracker::ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
+std::vector<ObjectiveState> ObjectiveTracker::GetActiveObjectives(Player* bot)
 {
     std::vector<ObjectiveState> activeObjectives;
 

@@ -869,7 +869,7 @@ std::string GuildIntegration::SelectResponseTemplate(const std::string& category
 
 std::string GuildIntegration::PersonalizeResponse( const std::string& templateStr)
 {
-    if (!player)
+    if (!_bot)
         return templateStr;
 
     // Personalize the response based on player and context
@@ -896,7 +896,7 @@ std::string GuildIntegration::PersonalizeResponse( const std::string& templateSt
 
 float GuildIntegration::CalculateMessageRelevance( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return 0.0f;
 
     float relevance = 0.0f;
@@ -972,7 +972,7 @@ std::vector<std::string> GuildIntegration::ExtractKeywords(const std::string& me
 
 bool GuildIntegration::ShouldDepositItem( uint32 itemId)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Determine if item should be deposited to guild bank
@@ -994,7 +994,7 @@ bool GuildIntegration::ShouldDepositItem( uint32 itemId)
 
 bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Determine if player should withdraw item from guild bank
@@ -1018,7 +1018,7 @@ void GuildIntegration::SendGuildChatMessage( const std::string& message)
 
 void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // If specific assistance is provided, use it; otherwise use default messages
