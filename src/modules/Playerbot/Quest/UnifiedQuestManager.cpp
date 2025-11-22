@@ -700,7 +700,7 @@ std::vector<uint32> UnifiedQuestManager::TurnInModule::GetCompletedQuests(Player
 bool UnifiedQuestManager::TurnInModule::IsQuestReadyForTurnIn(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->IsQuestReadyForTurnIn(questId);
+        return systems->GetQuestTurnIn()->IsQuestReadyForTurnIn(questId, bot);
     return {};
 }
 

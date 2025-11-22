@@ -916,7 +916,11 @@ namespace Playerbot
         {
             case InteractionType::Vendor:
                 if (Creature* vendor = target->ToCreature())
-                    return m_vendorHandler->ProcessInteraction(bot, vendor);
+                {
+                    // TODO: VendorInteraction is incomplete type - need to implement
+                    // return m_vendorHandler->ProcessInteraction(bot, vendor);
+                    return InteractionResult::Failed;
+                }
                 break;
             case InteractionType::Trainer:
                 // TODO: Implement when TrainerInteraction is created
