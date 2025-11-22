@@ -687,7 +687,7 @@ void UnifiedQuestManager::TurnInModule::ProcessBatchTurnIn(Player* bot, const Tu
 void UnifiedQuestManager::TurnInModule::ScheduleQuestTurnIn(Player* bot, uint32 questId, uint32 delayMs)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(questId, delayMs);
+        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(bot, questId, delayMs);
 }
 
 std::vector<uint32> UnifiedQuestManager::TurnInModule::GetCompletedQuests(Player* bot)

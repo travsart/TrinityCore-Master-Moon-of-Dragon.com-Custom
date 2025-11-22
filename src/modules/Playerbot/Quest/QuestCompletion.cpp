@@ -239,7 +239,7 @@ bool QuestCompletion::TurnInQuest(uint32 questId, Player* bot)
 
     // Delegate to QuestTurnIn system (per-bot)
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->TurnInQuest(questId);
+        return systems->GetQuestTurnIn()->TurnInQuest(questId, bot);
     return false;
 }
 

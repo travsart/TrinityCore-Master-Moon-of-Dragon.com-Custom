@@ -559,7 +559,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_vendorHandler->RepairAllItems(bot, vendor);
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // return m_vendorHandler->RepairAllItems(bot, vendor);
+        return InteractionResult::Failed;
     }
 
     InteractionResult InteractionManager::LearnOptimalSpells(Player* bot, Creature* trainer)

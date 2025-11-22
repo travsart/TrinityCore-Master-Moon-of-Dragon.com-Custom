@@ -35,15 +35,6 @@ namespace Playerbot
 {
 
 /**
- * @brief Singleton instance implementation
- */
-QuestTurnIn::QuestTurnIn(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestTurnIn: null bot!");
-}
-
-QuestTurnIn::~QuestTurnIn() {}
-
-/**
  * @brief Constructor
  */
 QuestTurnIn::QuestTurnIn(Player* bot)
@@ -54,6 +45,8 @@ QuestTurnIn::QuestTurnIn(Player* bot)
     _globalMetrics.Reset();
     LoadQuestGiverDatabase();
 }
+
+QuestTurnIn::~QuestTurnIn() {}
 
 /**
  * @brief Turn in a quest for the bot
