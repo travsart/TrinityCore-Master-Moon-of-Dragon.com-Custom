@@ -465,7 +465,7 @@ std::vector<ObjectivePriority> ObjectiveTracker::CalculateObjectivePriorities(Pl
     return priorities;
 }
 
-ObjectiveTracker::ObjectivePriority ObjectiveTracker::GetHighestPriorityObjective(Player* bot)
+ObjectivePriority ObjectiveTracker::GetHighestPriorityObjective(Player* bot)
 {
     std::vector<ObjectivePriority> priorities = CalculateObjectivePriorities(bot);
 
