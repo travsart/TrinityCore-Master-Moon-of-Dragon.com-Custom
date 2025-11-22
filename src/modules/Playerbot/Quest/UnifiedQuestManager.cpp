@@ -713,7 +713,7 @@ void UnifiedQuestManager::TurnInModule::MonitorQuestCompletion(Player* bot)
 void UnifiedQuestManager::TurnInModule::HandleQuestCompletion(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->HandleQuestCompletion(questId);
+        systems->GetQuestTurnIn()->HandleQuestCompletion(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::PlanOptimalTurnInRoute(Player* bot)

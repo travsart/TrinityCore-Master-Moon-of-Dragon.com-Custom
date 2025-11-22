@@ -143,7 +143,8 @@ namespace Playerbot
     {
         m_gossipHandler.reset();
         m_validator.reset();
-        m_vendorHandler.reset();
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // m_vendorHandler.reset();
         // m_trainerHandler.reset();  // TODO: Uncomment when TrainerInteraction is created
         // m_innkeeperHandler.reset();  // TODO: Uncomment when InnkeeperInteraction is created
         // m_flightHandler.reset();  // TODO: Uncomment when FlightMasterInteraction is created
