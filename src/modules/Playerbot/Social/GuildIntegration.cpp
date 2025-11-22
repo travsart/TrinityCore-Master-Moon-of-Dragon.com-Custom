@@ -651,7 +651,7 @@ bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
     if (message.senderId == _bot->GetGUID().GetCounter())
         return false;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
 
     // Check if message requires response
     if (message.requiresResponse)

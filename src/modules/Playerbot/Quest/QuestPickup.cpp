@@ -1205,7 +1205,7 @@ bool QuestPickup::ShouldMoveToNextZone(Player* bot)
 }
 
 // Get bot pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
+QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())

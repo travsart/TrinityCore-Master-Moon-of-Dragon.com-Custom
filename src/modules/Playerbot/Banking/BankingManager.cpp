@@ -62,7 +62,7 @@ BankingManager::~BankingManager()
 // LIFECYCLE (BehaviorManager override)
 // ============================================================================
 
-void BankingManager::OnUpdate(uint32 diff)
+void BankingManager::Update(uint32 diff)
 {
     if (!_bot)
         return;

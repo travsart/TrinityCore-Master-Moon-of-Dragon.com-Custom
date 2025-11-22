@@ -360,8 +360,8 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuest(uint32 questId, Player
 bool UnifiedQuestManager::ValidationModule::ValidateQuestRequirements(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateQuestRequirements(questId);
-    return {};
+        return systems->GetQuestValidation()->ValidateLevelRequirements(questId, bot);
+    return false;
 }
 
 std::vector<std::string> UnifiedQuestManager::ValidationModule::GetValidationErrors(uint32 questId, Player* bot)
