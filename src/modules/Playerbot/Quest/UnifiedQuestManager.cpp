@@ -725,7 +725,7 @@ void UnifiedQuestManager::TurnInModule::PlanOptimalTurnInRoute(Player* bot)
 TurnInBatch UnifiedQuestManager::TurnInModule::CreateTurnInBatch(Player* bot, const std::vector<uint32>& questIds)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->CreateTurnInBatch(questIds);
+        return systems->GetQuestTurnIn()->CreateTurnInBatch(bot, questIds);
     return {};
 }
 
