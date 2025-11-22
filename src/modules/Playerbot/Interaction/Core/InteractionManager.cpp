@@ -106,7 +106,7 @@ namespace Playerbot
     {
         m_gossipHandler = ::std::make_unique<GossipHandler>();
         m_validator = ::std::make_unique<InteractionValidator>();
-        m_vendorHandler = ::std::make_unique<VendorInteraction>();
+        // m_vendorHandler = ::std::make_unique<VendorInteraction>();  // REMOVED: Skeleton with no implementation - use VendorInteractionManager instead
         // m_trainerHandler = std::make_unique<TrainerInteraction>();  // TODO: Create TrainerInteraction class
         // m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();  // TODO: Create InnkeeperInteraction class
         // m_flightHandler = std::make_unique<FlightMasterInteraction>();  // TODO: Create FlightMasterInteraction class

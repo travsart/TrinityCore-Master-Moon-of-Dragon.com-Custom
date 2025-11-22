@@ -642,8 +642,8 @@ std::string UnifiedQuestManager::ValidationModule::GetDetailedValidationReport(u
 
 void UnifiedQuestManager::ValidationModule::LogValidationFailure(uint32 questId, Player* bot, const std::string& reason)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
-        systems->GetQuestValidation()->LogValidationFailure(questId, reason);
+    if (IGameSystemsManager* systems = GetGameSystems(bot))
+        systems->GetQuestValidation()->LogValidationFailure(questId, bot, reason);
 }
 
 std::vector<std::string> UnifiedQuestManager::ValidationModule::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
