@@ -1027,7 +1027,7 @@ std::vector<uint32> UnifiedQuestManager::DynamicModule::SortQuestsByPriority(con
 bool UnifiedQuestManager::DynamicModule::ShouldAbandonQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->ShouldAbandonQuest(bot, questId);
+        return systems->GetDynamicQuestSystem()->ShouldAbandonQuest(questId, bot);
     return {};
 }
 
@@ -1058,26 +1058,26 @@ void UnifiedQuestManager::DynamicModule::HandleQuestCompletionDynamic(Player* bo
 
 bool UnifiedQuestManager::DynamicModule::FormQuestGroup(uint32 questId, Player* initiator)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(initiator))
         return systems->GetDynamicQuestSystem()->FormQuestGroup(questId, initiator);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::CoordinateGroupQuest(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetDynamicQuestSystem()->CoordinateGroupQuest(group, questId);
 }
 
 void UnifiedQuestManager::DynamicModule::ShareQuestProgress(Group* group, uint32 questId)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetDynamicQuestSystem()->ShareQuestProgress(group, questId);
 }
 
 bool UnifiedQuestManager::DynamicModule::CanShareQuest(uint32 questId, Player* from, Player* to)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(from))
         return systems->GetDynamicQuestSystem()->CanShareQuest(questId, from, to);
     return {};
 }
@@ -1085,46 +1085,46 @@ bool UnifiedQuestManager::DynamicModule::CanShareQuest(uint32 questId, Player* f
 Position UnifiedQuestManager::DynamicModule::GetNextQuestLocation(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->GetNextQuestLocation(questId);
+        return systems->GetDynamicQuestSystem()->GetNextQuestLocation(bot, questId);
     return {};
 }
 
 std::vector<Position> UnifiedQuestManager::DynamicModule::GenerateQuestPath(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->GenerateQuestPath(questId);
+        return systems->GetDynamicQuestSystem()->GenerateQuestPath(bot, questId);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::HandleQuestNavigation(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->HandleQuestNavigation(questId);
+        systems->GetDynamicQuestSystem()->HandleQuestNavigation(bot, questId);
 }
 
 bool UnifiedQuestManager::DynamicModule::IsQuestLocationReachable(Player* bot, const Position& location)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->IsQuestLocationReachable(location);
+        return systems->GetDynamicQuestSystem()->IsQuestLocationReachable(bot, location);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::AdaptQuestDifficulty(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->AdaptQuestDifficulty(questId);
+        systems->GetDynamicQuestSystem()->AdaptQuestDifficulty(questId, bot);
 }
 
 void UnifiedQuestManager::DynamicModule::HandleQuestStuckState(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->HandleQuestStuckState(questId);
+        systems->GetDynamicQuestSystem()->HandleQuestStuckState(bot, questId);
 }
 
 void UnifiedQuestManager::DynamicModule::RetryFailedObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->RetryFailedObjective(questId, objectiveIndex);
+        systems->GetDynamicQuestSystem()->RetryFailedObjective(bot, questId, objectiveIndex);
 }
 
 void UnifiedQuestManager::DynamicModule::OptimizeQuestOrder(Player* bot)
