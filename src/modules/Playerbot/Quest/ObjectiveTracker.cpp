@@ -372,7 +372,7 @@ std::vector<uint32> ObjectiveTracker::ScanForGameObjects(Player* bot, uint32 obj
     return targets;
 }
 
-ObjectiveTracker::ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex)
+ObjectiveState ObjectiveTracker::GetObjectiveState(Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (!bot)
         return ObjectiveState(0, 0);

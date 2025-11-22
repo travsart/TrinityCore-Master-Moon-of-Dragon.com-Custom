@@ -444,9 +444,9 @@ bool UnifiedQuestManager::ValidationModule::HasRequiredReputation(uint32 questId
 
 bool UnifiedQuestManager::ValidationModule::ValidateItemRequirements(uint32 questId, Player* bot)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->ValidateItemRequirements(questId, bot);
-    return {};
+    // TODO: QuestValidation does not have ValidateItemRequirements method
+    // Need to implement item requirement checking logic
+    return true; // Stub - always return true for now
 }
 
 bool UnifiedQuestManager::ValidationModule::HasRequiredItems(uint32 questId, Player* bot)

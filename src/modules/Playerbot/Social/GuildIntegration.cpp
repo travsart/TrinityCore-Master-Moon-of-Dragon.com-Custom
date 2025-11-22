@@ -825,7 +825,7 @@ void GuildIntegration::LoadGuildSpecificData(uint32 guildId)
 
 bool GuildIntegration::IsAppropriateTimeToChat()
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Check if it's an appropriate time to participate in guild chat
