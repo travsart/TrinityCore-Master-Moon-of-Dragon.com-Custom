@@ -522,7 +522,8 @@ bool UnifiedQuestManager::ValidationModule::IsInCorrectZone(uint32 questId, Play
 
 bool UnifiedQuestManager::ValidationModule::CanQuestBeStartedAtLocation(uint32 questId, const Position& location)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    // Note: This method doesn't have bot context, using nullptr for GetGameSystems
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestValidation()->CanQuestBeStartedAtLocation(questId, location);
     return {};
 }
