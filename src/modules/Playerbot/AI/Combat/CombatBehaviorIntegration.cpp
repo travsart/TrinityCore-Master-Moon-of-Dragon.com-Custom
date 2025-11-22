@@ -544,7 +544,7 @@ void CombatBehaviorIntegration::DeactivateStrategy(uint32 flags)
 
 RecommendedAction CombatBehaviorIntegration::GetNextAction()
 {
-    std::lock_guard<std::mutex> lock(_actionQueueMutex);
+    std::lock_guard<OrderedMutex<LockOrder::BOT_AI_STATE>> lock(_actionQueueMutex);
         if (_actionQueue.empty())
         return RecommendedAction();
 

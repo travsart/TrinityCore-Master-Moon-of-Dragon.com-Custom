@@ -817,7 +817,7 @@ void UnifiedQuestManager::TurnInModule::HandleGroupTurnInConflicts(Group* group,
 
 void UnifiedQuestManager::TurnInModule::ShareTurnInProgress(Group* group)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         systems->GetQuestTurnIn()->ShareTurnInProgress(group);
 }
 

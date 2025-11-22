@@ -739,8 +739,7 @@ namespace Playerbot
 
                 {
 
-                    handler->PSendSysMessage("
-                    # %s", entry.description.c_str());
+                    handler->PSendSysMessage("# %s", entry.description.c_str());
 
                 }
 
