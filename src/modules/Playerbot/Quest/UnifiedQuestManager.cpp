@@ -984,14 +984,14 @@ TurnInMetrics UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
 std::vector<uint32> UnifiedQuestManager::DynamicModule::DiscoverAvailableQuests(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->DiscoverAvailableQuests();
+        return systems->GetDynamicQuestSystem()->DiscoverAvailableQuests(bot);
     return {};
 }
 
 std::vector<uint32> UnifiedQuestManager::DynamicModule::GetRecommendedQuests(Player* bot, QuestSelectionStrategy strategy)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->GetRecommendedQuests(strategy);
+        return systems->GetDynamicQuestSystem()->GetRecommendedQuests(bot, strategy);
     return {};
 }
 
@@ -999,20 +999,20 @@ bool UnifiedQuestManager::DynamicModule::AssignQuestToBot(uint32 questId, Player
 {
     _questsAssigned++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->AssignQuestToBot(questId);
+        return systems->GetDynamicQuestSystem()->AssignQuestToBot(questId, bot);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::AutoAssignQuests(Player* bot, uint32 maxQuests)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->AutoAssignQuests(maxQuests);
+        systems->GetDynamicQuestSystem()->AutoAssignQuests(bot, maxQuests);
 }
 
 QuestPriority UnifiedQuestManager::DynamicModule::CalculateQuestPriority(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->CalculateQuestPriority(questId);
+        return systems->GetDynamicQuestSystem()->CalculateQuestPriority(questId, bot);
     return {};
 }
 
@@ -1020,40 +1020,40 @@ std::vector<uint32> UnifiedQuestManager::DynamicModule::SortQuestsByPriority(con
 {
     _questsOptimized++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->SortQuestsByPriority(questIds);
+        return systems->GetDynamicQuestSystem()->SortQuestsByPriority(bot, questIds);
     return {};
 }
 
 bool UnifiedQuestManager::DynamicModule::ShouldAbandonQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->ShouldAbandonQuest(questId);
+        return systems->GetDynamicQuestSystem()->ShouldAbandonQuest(bot, questId);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::UpdateQuestProgressDynamic(Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->UpdateQuestProgress();
+        systems->GetDynamicQuestSystem()->UpdateQuestProgress(bot);
 }
 
 void UnifiedQuestManager::DynamicModule::ExecuteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->ExecuteQuestObjective(questId, objectiveIndex);
+        systems->GetDynamicQuestSystem()->ExecuteQuestObjective(bot, questId, objectiveIndex);
 }
 
 bool UnifiedQuestManager::DynamicModule::CanCompleteQuestObjective(Player* bot, uint32 questId, uint32 objectiveIndex)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetDynamicQuestSystem()->CanCompleteQuestObjective(questId, objectiveIndex);
+        return systems->GetDynamicQuestSystem()->CanCompleteQuestObjective(bot, questId, objectiveIndex);
     return {};
 }
 
 void UnifiedQuestManager::DynamicModule::HandleQuestCompletionDynamic(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetDynamicQuestSystem()->HandleQuestCompletion(questId);
+        systems->GetDynamicQuestSystem()->HandleQuestCompletion(bot, questId);
 }
 
 bool UnifiedQuestManager::DynamicModule::FormQuestGroup(uint32 questId, Player* initiator)
