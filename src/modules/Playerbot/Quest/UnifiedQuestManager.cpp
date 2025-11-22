@@ -655,7 +655,7 @@ std::vector<std::string> UnifiedQuestManager::ValidationModule::GetRecommendatio
 
 ValidationMetrics UnifiedQuestManager::ValidationModule::GetValidationMetrics()
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestValidation()->GetValidationMetrics();
     return {};
 }
