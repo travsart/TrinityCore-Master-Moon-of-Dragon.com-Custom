@@ -649,7 +649,7 @@ void UnifiedQuestManager::ValidationModule::LogValidationFailure(uint32 questId,
 std::vector<std::string> UnifiedQuestManager::ValidationModule::GetRecommendationsForFailedQuest(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->GetRecommendationsForFailedQuest(questId);
+        return systems->GetQuestValidation()->GetRecommendationsForFailedQuest(questId, bot);
     return {};
 }
 
