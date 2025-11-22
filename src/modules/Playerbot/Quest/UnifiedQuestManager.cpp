@@ -417,7 +417,7 @@ bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 que
 std::vector<uint32> UnifiedQuestManager::ValidationModule::GetMissingPrerequisites(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestValidation()->GetMissingPrerequisites(questId);
+        return systems->GetQuestValidation()->GetMissingPrerequisites(questId, bot);
     return {};
 }
 

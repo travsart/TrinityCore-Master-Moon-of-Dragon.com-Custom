@@ -782,7 +782,7 @@ bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, Player* bot)
     return value >= MIN_QUEST_VALUE_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
+QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -793,7 +793,7 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 b
     return metrics;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
+QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 {
     QuestMetrics globalMetrics;
     globalMetrics.Reset();
