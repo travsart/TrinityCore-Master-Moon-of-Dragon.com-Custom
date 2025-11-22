@@ -405,10 +405,11 @@ bool UnifiedQuestManager::ValidationModule::ValidateQuestPrerequisites(uint32 qu
     return {};
 }
 
+bool UnifiedQuestManager::ValidationModule::ValidateQuestChainPosition(uint32 questId, Player* bot)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
         return systems->GetQuestValidation()->ValidateQuestChainPosition(questId, bot);
-    return {};
+    return false;
 }
 
 bool UnifiedQuestManager::ValidationModule::HasCompletedPrerequisites(uint32 questId, Player* bot)

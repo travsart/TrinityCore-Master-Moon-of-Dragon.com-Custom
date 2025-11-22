@@ -629,7 +629,7 @@ bool BankingManager::ItemMatchesRule(uint32 itemId, BankingRule const& rule)
             return false;
 
         // Item subclass match (if specified)
-        if (rule.itemSubClass != 0 && itemTemplate->SubClass != rule.itemSubClass)
+        if (rule.itemSubClass != 0 && itemTemplate->GetSubClass() != rule.itemSubClass)
             return false;
 
         // Quality match (if specified)
