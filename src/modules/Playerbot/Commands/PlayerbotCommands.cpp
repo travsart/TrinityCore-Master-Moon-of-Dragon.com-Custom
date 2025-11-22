@@ -25,6 +25,7 @@
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Unit.h"
+#include "UnitAI.h"
 #include "World.h"
 #include "WorldSession.h"
 #include "DB2Stores.h"

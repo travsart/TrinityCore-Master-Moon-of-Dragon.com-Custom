@@ -9,6 +9,7 @@
 
 #include "UnifiedQuestManager.h"
 #include "QuestValidation.h"  // For complete ValidationContext type
+#include "QuestTurnIn.h"  // For complete TurnInMetrics type
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "Core/Managers/GameSystemsManager.h"  // Complete type for IGameSystemsManager
 #include "Log.h"
@@ -941,37 +942,37 @@ void UnifiedQuestManager::TurnInModule::SetBatchTurnInThreshold(uint32 botGuid, 
 void UnifiedQuestManager::TurnInModule::HandleTurnInError(Player* bot, uint32 questId, const std::string& error)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->HandleTurnInError(questId, error);
+        systems->GetQuestTurnIn()->HandleTurnInError(bot, questId, error);
 }
 
 void UnifiedQuestManager::TurnInModule::RecoverFromTurnInFailure(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->RecoverFromTurnInFailure(questId);
+        systems->GetQuestTurnIn()->RecoverFromTurnInFailure(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::RetryFailedTurnIn(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->RetryFailedTurnIn(questId);
+        systems->GetQuestTurnIn()->RetryFailedTurnIn(bot, questId);
 }
 
 void UnifiedQuestManager::TurnInModule::ValidateTurnInState(Player* bot, uint32 questId)
 {
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ValidateTurnInState(questId);
+        systems->GetQuestTurnIn()->ValidateTurnInState(bot, questId);
 }
 
 TurnInMetrics UnifiedQuestManager::TurnInModule::GetBotTurnInMetrics(uint32 botGuid)
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetBotTurnInMetrics(botGuid);
     return {};
 }
 
 TurnInMetrics UnifiedQuestManager::TurnInModule::GetGlobalTurnInMetrics()
 {
-    if (IGameSystemsManager* systems = GetGameSystems(bot))
+    if (IGameSystemsManager* systems = GetGameSystems(nullptr))
         return systems->GetQuestTurnIn()->GetGlobalTurnInMetrics();
     return {};
 }
