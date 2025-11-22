@@ -522,7 +522,7 @@ namespace Playerbot
         }
 
         // Let vendor handler process the purchase
-        return m_vendorHandler->BuyItem(bot, vendor, itemId, count);
+        return // m_vendorHandler->BuyItem(bot, vendor, itemId, count);
     }
 
     InteractionResult InteractionManager::SellJunk(Player* bot, Creature* vendor)

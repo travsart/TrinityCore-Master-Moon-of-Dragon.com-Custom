@@ -51,7 +51,8 @@ QuestCompletion::~QuestCompletion() {}
 /**
  * @brief Constructor
  */
-QuestCompletion::QuestCompletion()
+QuestCompletion::QuestCompletion(Player* bot)
+    : _bot(bot)
 {
     _globalMetrics.Reset();
 }

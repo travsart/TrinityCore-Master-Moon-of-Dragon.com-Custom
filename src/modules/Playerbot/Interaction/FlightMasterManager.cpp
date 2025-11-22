@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "GameTime.h"
 #include <cmath>
 #include <algorithm>
 
