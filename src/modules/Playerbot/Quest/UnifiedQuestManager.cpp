@@ -668,7 +668,7 @@ bool UnifiedQuestManager::TurnInModule::TurnInQuestWithReward(uint32 questId, Pl
 {
     _questsTurnedIn++;
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->TurnInQuest(questId);
+        return systems->GetQuestTurnIn()->TurnInQuest(bot, questId);
     return {};
 }
 
