@@ -32,19 +32,19 @@
 namespace Playerbot
 {
 
-DynamicQuestSystem::DynamicQuestSystem(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "DynamicQuestSystem: null bot!");
-}
-
-DynamicQuestSystem::~DynamicQuestSystem() {}
-
-DynamicQuestSystem::DynamicQuestSystem()
+DynamicQuestSystem::DynamicQuestSystem(Player* bot)
+    : _bot(bot)
 {
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "DynamicQuestSystem: null bot!");
+
     LoadQuestMetadata();
     AnalyzeQuestDependencies();
     BuildQuestChains();
     OptimizeQuestRoutes();
 }
+
+DynamicQuestSystem::~DynamicQuestSystem() {}
 
 std::vector<uint32> DynamicQuestSystem::DiscoverAvailableQuests(Player* bot)
 {
@@ -722,7 +722,7 @@ bool DynamicQuestSystem::ShouldMoveToNewZone(Player* bot)
     return valuableQuests < ZONE_OPTIMIZATION_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
+QuestReward DynamicQuestSystem::AnalyzeQuestReward(uint32 questId, Player* bot)
 {
     QuestReward reward;
 
@@ -782,7 +782,7 @@ bool DynamicQuestSystem::IsQuestWorthwhile(uint32 questId, Player* bot)
     return value >= MIN_QUEST_VALUE_THRESHOLD;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
+QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -793,7 +793,7 @@ DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetBotQuestMetrics(uint32 b
     return metrics;
 }
 
-DynamicQuestSystem::QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
+QuestMetrics DynamicQuestSystem::GetGlobalQuestMetrics()
 {
     QuestMetrics globalMetrics;
     globalMetrics.Reset();

@@ -183,6 +183,14 @@ private:
             uint32 sessionTimeout;
             bool isActive;
 
+            // Default constructor for map usage
+            LootSession()
+                : sessionId(0), groupId(0)
+                , sessionStartTime(0)
+                , sessionTimeout(0)
+                , isActive(false)
+            {}
+
             LootSession(uint32 id, uint32 gId)
                 : sessionId(id), groupId(gId)
                 , sessionStartTime(GameTime::GetGameTimeMS())
@@ -244,6 +252,11 @@ private:
             std::unordered_map<uint32, LootRollType> playerRolls;
             std::unordered_map<uint32, uint32> rollValues;
             bool isComplete;
+
+            // Default constructor for map usage
+            LootRoll()
+                : rollId(0), itemId(0), lootSlot(0), groupId(0), isComplete(false)
+            {}
 
             LootRoll(uint32 id) : rollId(id), itemId(0), lootSlot(0), groupId(0), isComplete(false) {}
         };

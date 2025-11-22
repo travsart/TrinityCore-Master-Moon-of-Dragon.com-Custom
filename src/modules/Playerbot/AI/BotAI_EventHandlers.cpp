@@ -116,8 +116,8 @@ void BotAI::OnGroupEvent(GroupEvent const& event)
             break;
 
         case GroupEventType::TARGET_ICON_CHANGED:
-            if (_groupCoordinator)
-                _groupCoordinator->OnTargetIconChanged(event);
+            if (GetGameSystems()->GetGroupCoordinator())
+                GetGameSystems()->GetGroupCoordinator()->OnTargetIconChanged(event);
             break;
 
         case GroupEventType::LEADER_CHANGED:
@@ -132,8 +132,8 @@ void BotAI::OnGroupEvent(GroupEvent const& event)
 
         case GroupEventType::MEMBER_JOINED:
         case GroupEventType::MEMBER_LEFT:
-            if (_groupCoordinator)
-                _groupCoordinator->OnGroupCompositionChanged(event);
+            if (GetGameSystems()->GetGroupCoordinator())
+                GetGameSystems()->GetGroupCoordinator()->OnGroupCompositionChanged(event);
             break;
 
         case GroupEventType::LOOT_METHOD_CHANGED:
@@ -463,7 +463,7 @@ void BotAI::OnQuestEvent(QuestEvent const& event)
         return;
 
     // Delegate all quest events to QuestManager
-    if (_questManager)
+    if (GetGameSystems()->GetQuestManager())
     {
         // QuestManager will handle quest acceptance, completion, and progress tracking
         TC_LOG_TRACE("playerbot.events.quest", "Bot {}: Quest event {} for quest {}",
@@ -475,7 +475,7 @@ void BotAI::OnQuestEvent(QuestEvent const& event)
 
 void BotAI::ProcessQuestProgress(QuestEvent const& event)
 {
-    if (!_bot || !_questManager)
+    if (!_bot || !GetGameSystems()->GetQuestManager())
         return;
 
     switch (event.type)
@@ -599,7 +599,7 @@ void BotAI::OnSocialEvent(SocialEvent const& event)
             break;
 
         case SocialEventType::TRADE_STATUS_CHANGED:
-            if (_tradeManager)
+            if (GetGameSystems()->GetTradeManager())
             {
                 // Delegate to TradeManager
                 TC_LOG_TRACE("playerbot.events.social", "Bot {}: Trade status changed",
@@ -622,7 +622,7 @@ void BotAI::OnAuctionEvent(AuctionEvent const& event)
         return;
 
     // Delegate all auction events to AuctionManager
-    if (_auctionManager)
+    if (GetGameSystems()->GetAuctionManager())
     {
         TC_LOG_TRACE("playerbot.events.auction", "Bot {}: Auction event type {}",
             _bot->GetName(), static_cast<uint32>(event.type));

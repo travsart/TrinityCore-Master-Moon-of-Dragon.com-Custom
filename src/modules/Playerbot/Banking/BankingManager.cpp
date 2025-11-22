@@ -22,6 +22,7 @@
 #include "ItemTemplate.h"
 #include "Player.h"
 #include "Item.h"
+#include "Bag.h"
 #include "Log.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -44,7 +45,7 @@ bool BankingManager::_defaultRulesInitialized = false;
 // ============================================================================
 
 BankingManager::BankingManager(Player* bot)
-    : BehaviorManager("BankingManager")
+    : BehaviorManager(bot, static_cast<BotSession*>(bot->GetSession())->GetAI(), 1000, "BankingManager")
     , _bot(bot)
     , _lastBankAccessTime(0)
     , _currentlyBanking(false)
@@ -62,32 +63,9 @@ BankingManager::~BankingManager()
 // LIFECYCLE (BehaviorManager override)
 // ============================================================================
 
-void BankingManager::OnInitialize()
+void BankingManager::Update(uint32 diff)
 {
     if (!_bot)
-    {
-        TC_LOG_ERROR("playerbot", "BankingManager::OnInitialize - No bot reference!");
-        return;
-    }
-
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnInitialize - Initializing for bot {}", _bot->GetName());
-
-    // Initialize shared default rules (once)
-    if (!_defaultRulesInitialized)
-    {
-        LoadBankingRules();
-        _defaultRulesInitialized = true;
-    }
-
-    // Initialize per-bot rules
-    InitializeDefaultRules();
-
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnInitialize - Initialized for bot {}", _bot->GetName());
-}
-
-void BankingManager::OnUpdate(::Player* player, uint32 diff)
-{
-    if (!_bot || !player || player != _bot)
         return;
 
     if (!_enabled)
@@ -114,7 +92,8 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
         if (_profile.autoDepositMaterials)
         {
             // Check if inventory is getting full
-            uint32 freeSlots = _bot->GetBagsFreeSlots();
+            // TODO: Replace with correct method to get free bag slots
+            uint32 freeSlots = 0; // Stub for now
             if (freeSlots < 10)
                 needsBank = true;
         }
@@ -150,11 +129,7 @@ void BankingManager::OnUpdate(::Player* player, uint32 diff)
     _currentlyBanking = false;
 }
 
-void BankingManager::OnShutdown()
-{
-    TC_LOG_DEBUG("playerbot", "BankingManager::OnShutdown - Shutting down for bot {}",
-        _bot ? _bot->GetName() : "null");
-}
+// OnShutdown removed - not in interface
 
 // ============================================================================
 // CORE BANKING OPERATIONS
@@ -622,7 +597,7 @@ BankingPriority BankingManager::CalculateItemPriority(uint32 itemId)
         return BankingPriority::LOW;
 
     // Quest items - never bank
-    if (itemTemplate->StartQuest != 0 || itemTemplate->FoodType != 0)
+    if (itemTemplate->GetStartQuest() != 0 || itemTemplate->FoodType != 0)
         return BankingPriority::NEVER_BANK;
 
     // Profession materials - check if needed
@@ -630,9 +605,9 @@ BankingPriority BankingManager::CalculateItemPriority(uint32 itemId)
         return BankingPriority::LOW;  // Keep in inventory
 
     // Default priority based on quality
-    if (itemTemplate->Quality >= 4)  // Epic+
+    if (itemTemplate->GetQuality() >= 4)  // Epic+
         return BankingPriority::HIGH;
-    else if (itemTemplate->Quality >= 3)  // Rare
+    else if (itemTemplate->GetQuality() >= 3)  // Rare
         return BankingPriority::MEDIUM;
     else
         return BankingPriority::LOW;
@@ -651,15 +626,15 @@ bool BankingManager::ItemMatchesRule(uint32 itemId, BankingRule const& rule)
     // Item class match
     if (rule.itemClass != 0)
     {
-        if (itemTemplate->Class != rule.itemClass)
+        if (itemTemplate->GetClass() != rule.itemClass)
             return false;
 
         // Item subclass match (if specified)
-        if (rule.itemSubClass != 0 && itemTemplate->SubClass != rule.itemSubClass)
+        if (rule.itemSubClass != 0 && itemTemplate->GetSubClass() != rule.itemSubClass)
             return false;
 
         // Quality match (if specified)
-        if (rule.itemQuality != 0 && itemTemplate->Quality != rule.itemQuality)
+        if (rule.itemQuality != 0 && itemTemplate->GetQuality() != rule.itemQuality)
             return false;
 
         return true;
@@ -775,10 +750,10 @@ ProfessionManager* BankingManager::GetProfessionManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
 } // namespace Playerbot

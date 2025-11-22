@@ -345,7 +345,7 @@ namespace Playerbot
 
         // Path generation
         constexpr uint32 MAX_PATH_NODES                = 74;
-        constexpr uint32 SMOOTH_PATH_STEP_SIZE         = 2;
+        constexpr uint32 BOT_SMOOTH_PATH_STEPS         = 2;  // Renamed to avoid conflict with PathGenerator.h
         constexpr float PATH_OPTIMIZATION_ANGLE        = 15.0f; // degrees
         constexpr uint32 PATH_CACHE_SIZE               = 100;
         constexpr uint32 PATH_CACHE_DURATION           = 5000; // ms

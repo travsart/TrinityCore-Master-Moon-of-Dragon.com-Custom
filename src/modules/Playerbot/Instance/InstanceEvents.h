@@ -55,9 +55,23 @@ struct InstanceEvent
     std::string message;
     std::vector<uint32> bossStates;  // For raid info
     std::chrono::steady_clock::time_point timestamp;
+    std::chrono::steady_clock::time_point expiryTime;
+    InstanceEventPriority priority{InstanceEventPriority::MEDIUM};
 
     bool IsValid() const;
+    bool IsExpired() const
+    {
+        return std::chrono::steady_clock::now() >= expiryTime;
+    }
     std::string ToString() const;
+
+    // Operator< for priority queue (higher priority = lower value)
+    bool operator<(const InstanceEvent& other) const
+    {
+        if (priority != other.priority)
+            return static_cast<uint8>(priority) > static_cast<uint8>(other.priority);
+        return timestamp > other.timestamp;  // Earlier events first
+    }
 
     // Factory methods
     static InstanceEvent InstanceReset(ObjectGuid playerGuid, uint32 mapId);

@@ -434,7 +434,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
                 RegisterBotAssignment(playerGuid, tank->GetGUID(), lfg::PLAYER_ROLE_TANK, dungeons);
                 ++botsQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued tank bot {} (level {}) for human player {}",
-                    tank->GetName(), tank->getLevel(), humanPlayer->GetName());
+                    tank->GetName(), tank->GetLevel(), humanPlayer->GetName());
             }
         }
     }
@@ -451,7 +451,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
                 RegisterBotAssignment(playerGuid, healer->GetGUID(), lfg::PLAYER_ROLE_HEALER, dungeons);
                 ++botsQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued healer bot {} (level {}) for human player {}",
-                    healer->GetName(), healer->getLevel(), humanPlayer->GetName());
+                    healer->GetName(), healer->GetLevel(), humanPlayer->GetName());
             }
         }
     }
@@ -468,7 +468,7 @@ uint32 LFGBotManager::PopulateQueue(ObjectGuid playerGuid, uint8 neededRoles, lf
                 RegisterBotAssignment(playerGuid, dpsPlayer->GetGUID(), lfg::PLAYER_ROLE_DAMAGE, dungeons);
                 ++botsQueued;
                 TC_LOG_INFO("playerbot.lfg", "Queued DPS bot {} (level {}) for human player {}",
-                    dpsPlayer->GetName(), dpsPlayer->getLevel(), humanPlayer->GetName());
+                    dpsPlayer->GetName(), dpsPlayer->GetLevel(), humanPlayer->GetName());
             }
         }
     }

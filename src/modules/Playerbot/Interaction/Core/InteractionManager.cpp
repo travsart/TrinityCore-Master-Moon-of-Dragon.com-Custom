@@ -106,7 +106,7 @@ namespace Playerbot
     {
         m_gossipHandler = ::std::make_unique<GossipHandler>();
         m_validator = ::std::make_unique<InteractionValidator>();
-        m_vendorHandler = ::std::make_unique<VendorInteraction>();
+        // m_vendorHandler = ::std::make_unique<VendorInteraction>();  // REMOVED: Skeleton with no implementation - use VendorInteractionManager instead
         // m_trainerHandler = std::make_unique<TrainerInteraction>();  // TODO: Create TrainerInteraction class
         // m_innkeeperHandler = std::make_unique<InnkeeperInteraction>();  // TODO: Create InnkeeperInteraction class
         // m_flightHandler = std::make_unique<FlightMasterInteraction>();  // TODO: Create FlightMasterInteraction class
@@ -143,7 +143,8 @@ namespace Playerbot
     {
         m_gossipHandler.reset();
         m_validator.reset();
-        m_vendorHandler.reset();
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // m_vendorHandler.reset();
         // m_trainerHandler.reset();  // TODO: Uncomment when TrainerInteraction is created
         // m_innkeeperHandler.reset();  // TODO: Uncomment when InnkeeperInteraction is created
         // m_flightHandler.reset();  // TODO: Uncomment when FlightMasterInteraction is created
@@ -522,7 +523,9 @@ namespace Playerbot
         }
 
         // Let vendor handler process the purchase
-        return m_vendorHandler->BuyItem(bot, vendor, itemId, count);
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // return m_vendorHandler->BuyItem(bot, vendor, itemId, count);
+        return InteractionResult::Failed;
     }
 
     InteractionResult InteractionManager::SellJunk(Player* bot, Creature* vendor)
@@ -537,7 +540,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_vendorHandler->SellJunkItems(bot, vendor);
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // return m_vendorHandler->SellJunkItems(bot, vendor);
+        return InteractionResult::Failed;
     }
 
     InteractionResult InteractionManager::RepairAll(Player* bot, Creature* vendor)
@@ -555,7 +560,9 @@ namespace Playerbot
                 return startResult;
         }
 
-        return m_vendorHandler->RepairAllItems(bot, vendor);
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // return m_vendorHandler->RepairAllItems(bot, vendor);
+        return InteractionResult::Failed;
     }
 
     InteractionResult InteractionManager::LearnOptimalSpells(Player* bot, Creature* trainer)
@@ -872,8 +879,9 @@ namespace Playerbot
         if (!context || context->type != InteractionType::Vendor)
             return;
 
+        // TODO: VendorInteraction is incomplete type - need to implement
         // Pass to vendor handler
-        m_vendorHandler->HandleVendorList(bot, packet);
+        // m_vendorHandler->HandleVendorList(bot, packet);
     }
 
     void InteractionManager::HandleTrainerList(Player* bot, WorldPacket const& packet)
@@ -909,7 +917,11 @@ namespace Playerbot
         {
             case InteractionType::Vendor:
                 if (Creature* vendor = target->ToCreature())
-                    return m_vendorHandler->ProcessInteraction(bot, vendor);
+                {
+                    // TODO: VendorInteraction is incomplete type - need to implement
+                    // return m_vendorHandler->ProcessInteraction(bot, vendor);
+                    return InteractionResult::Failed;
+                }
                 break;
             case InteractionType::Trainer:
                 // TODO: Implement when TrainerInteraction is created

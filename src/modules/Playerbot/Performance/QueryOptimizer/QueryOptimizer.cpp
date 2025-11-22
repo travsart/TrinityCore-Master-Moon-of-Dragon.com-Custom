@@ -18,7 +18,7 @@ QueryOptimizer::QueryOptimizer(Configuration config)
 
 QueryOptimizer& QueryOptimizer::Instance()
 {
-    static QueryOptimizer instance;
+    static QueryOptimizer instance(Configuration{});
     return instance;
 }
 

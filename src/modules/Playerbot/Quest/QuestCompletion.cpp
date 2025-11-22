@@ -40,21 +40,17 @@ namespace Playerbot
 constexpr float QUEST_GIVER_INTERACTION_RANGE = 5.0f;
 
 /**
- * @brief Singleton instance implementation
+ * @brief Constructor
  */
-QuestCompletion::QuestCompletion(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestCompletion: null bot!");
+QuestCompletion::QuestCompletion(Player* bot)
+    : _bot(bot)
+{
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "QuestCompletion: null bot!");
+    _globalMetrics.Reset();
 }
 
 QuestCompletion::~QuestCompletion() {}
-
-/**
- * @brief Constructor
- */
-QuestCompletion::QuestCompletion()
-{
-    _globalMetrics.Reset();
-}
 
 /**
  * @brief Start tracking quest completion for a bot
@@ -227,7 +223,7 @@ void QuestCompletion::CompleteQuest(uint32 questId, Player* bot)
 
     // Schedule turn-in through QuestTurnIn system (per-bot)
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(questId);
+        systems->GetQuestTurnIn()->ScheduleQuestTurnIn(bot, questId);
 }
 
 /**
@@ -243,7 +239,7 @@ bool QuestCompletion::TurnInQuest(uint32 questId, Player* bot)
 
     // Delegate to QuestTurnIn system (per-bot)
     if (IGameSystemsManager* systems = GetGameSystems(bot))
-        return systems->GetQuestTurnIn()->TurnInQuest(questId);
+        return systems->GetQuestTurnIn()->TurnInQuest(questId, bot);
     return false;
 }
 
@@ -1461,23 +1457,46 @@ void QuestCompletion::RecoverFromStuckState(Player* bot, uint32 questId)
  * @param botGuid Bot GUID
  * @return Completion metrics
  */
-QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
+IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetBotCompletionMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
-    if (it != _botMetrics.end())
-        return it->second.CreateSnapshot();
+    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
 
-    QuestCompletionMetrics defaultMetrics;
-    return defaultMetrics.CreateSnapshot();
+    if (it != _botMetrics.end())
+    {
+        auto snapshot = it->second.CreateSnapshot();
+        result.questsStarted = snapshot.questsStarted;
+        result.questsCompleted = snapshot.questsCompleted;
+        result.questsFailed = snapshot.questsFailed;
+        result.objectivesCompleted = snapshot.objectivesCompleted;
+        result.stuckInstances = snapshot.stuckInstances;
+        result.averageCompletionTime = snapshot.averageCompletionTime;
+        result.completionSuccessRate = snapshot.completionSuccessRate;
+        result.objectiveEfficiency = snapshot.objectiveEfficiency;
+        result.totalDistanceTraveled = snapshot.totalDistanceTraveled;
+    }
+
+    return result;
 }
 
 /**
  * @brief Get global completion metrics
  * @return Global completion metrics
  */
-QuestCompletion::QuestCompletionMetrics::Snapshot QuestCompletion::GetGlobalCompletionMetrics()
+IQuestCompletion::QuestCompletionMetricsSnapshot QuestCompletion::GetGlobalCompletionMetrics()
 {
-    return _globalMetrics.CreateSnapshot();
+    auto snapshot = _globalMetrics.CreateSnapshot();
+    IQuestCompletion::QuestCompletionMetricsSnapshot result{};
+    result.questsStarted = snapshot.questsStarted;
+    result.questsCompleted = snapshot.questsCompleted;
+    result.questsFailed = snapshot.questsFailed;
+    result.objectivesCompleted = snapshot.objectivesCompleted;
+    result.stuckInstances = snapshot.stuckInstances;
+    result.averageCompletionTime = snapshot.averageCompletionTime;
+    result.completionSuccessRate = snapshot.completionSuccessRate;
+    result.objectiveEfficiency = snapshot.objectiveEfficiency;
+    result.totalDistanceTraveled = snapshot.totalDistanceTraveled;
+    return result;
 }
 
 /**

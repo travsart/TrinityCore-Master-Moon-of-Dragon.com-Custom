@@ -627,7 +627,8 @@ namespace Playerbot
         // Subsystems - specialized handlers
         ::std::unique_ptr<GossipHandler> m_gossipHandler;
         ::std::unique_ptr<InteractionValidator> m_validator;
-        ::std::unique_ptr<VendorInteraction> m_vendorHandler;
+        // TODO: VendorInteraction is incomplete type - need to implement
+        // ::std::unique_ptr<VendorInteraction> m_vendorHandler;
         // std::unique_ptr<TrainerInteraction> m_trainerHandler;  // TODO: Not implemented yet
         // std::unique_ptr<InnkeeperInteraction> m_innkeeperHandler;  // TODO: Not implemented yet
         // std::unique_ptr<FlightMasterInteraction> m_flightHandler;  // TODO: Not implemented yet

@@ -169,7 +169,7 @@ public:
      */
     uint64 GetTotalEventsPublished() const
     {
-        return EventBus<ProfessionEvent>::instance()->GetTotalEventsProcessed();
+        return EventBus<ProfessionEvent>::instance()->GetTotalEventsPublished();
     }
 
     /**
@@ -178,16 +178,17 @@ public:
      */
     uint64 GetEventCount(ProfessionEventType type) const
     {
-        return EventBus<ProfessionEvent>::instance()->GetEventTypeCount(type);
+        return EventBus<ProfessionEvent>::instance()->GetEventCount(type);
     }
 
     /**
      * @brief Get number of subscribers for specific event type
-     * @param type Event type to query
+     * @param type Event type to query (currently returns total - per-type filtering not implemented in base EventBus)
      */
-    uint32 GetSubscriberCount(ProfessionEventType type) const
+    uint32 GetSubscriberCount(ProfessionEventType /*type*/) const
     {
-        return EventBus<ProfessionEvent>::instance()->GetSubscriberCountForType(type);
+        // Note: EventBus doesn't support per-type subscriber counts, returning total
+        return EventBus<ProfessionEvent>::instance()->GetSubscriberCount();
     }
 
     /**

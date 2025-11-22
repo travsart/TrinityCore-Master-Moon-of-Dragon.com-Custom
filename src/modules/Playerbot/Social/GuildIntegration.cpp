@@ -33,15 +33,9 @@ GuildIntegration::GuildIntegration(Player* bot) : _bot(bot) {
 
 GuildIntegration::~GuildIntegration() {}
 
-GuildIntegration::GuildIntegration()
-{
-    _globalMetrics.Reset();
-    InitializeChatTemplates();
-}
-
 void GuildIntegration::ProcessGuildInteraction()
 {
-    if (!player)
+    if (!_bot)
         return;
 
     Guild* guild = _bot->GetGuild();
@@ -57,17 +51,17 @@ void GuildIntegration::ProcessGuildInteraction()
     }
 
     // Update player participation
-    UpdateGuildParticipation(playerGuid, GuildActivityType::SOCIAL_INTERACTION);
+    UpdateGuildParticipation(GuildActivityType::SOCIAL_INTERACTION);
 
     // Handle guild-specific interactions
-    AutomateGuildChatParticipation(player);
-    AutomateGuildBankInteractions(player);
-    ParticipateInGuildActivities(player);
+    AutomateGuildChatParticipation();
+    AutomateGuildBankInteractions();
+    ParticipateInGuildActivities();
 }
 
-void GuildIntegration::HandleGuildChat( const GuildChatMessage& message)
+void GuildIntegration::HandleGuildChat(const GuildChatMessage& message)
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Store message in chat history
@@ -79,21 +73,21 @@ void GuildIntegration::HandleGuildChat( const GuildChatMessage& message)
         tracker.chatHistory.pop();
 
     // Decide whether to respond
-    if (ShouldRespondToMessage(player, message))
+    if (ShouldRespondToMessage(message))
     {
-        RespondToGuildChat(player, message);
+        RespondToGuildChat(message);
     }
 
     // Update participation metrics
-    UpdateGuildParticipation(playerGuid, GuildActivityType::CHAT_PARTICIPATION);
+    UpdateGuildParticipation(GuildActivityType::CHAT_PARTICIPATION);
 }
 
 void GuildIntegration::ParticipateInGuildActivities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
     // Participate in various guild activities based on profile
     for (GuildActivityType activity : profile.activeActivities)
     {
@@ -101,7 +95,7 @@ void GuildIntegration::ParticipateInGuildActivities()
         {
             case GuildActivityType::GUILD_BANK_INTERACTION:
                 if (rand() % 100 < 10) // 10% chance per update
-                    AutomateGuildBankInteractions(player);
+                    AutomateGuildBankInteractions();
                 break;
 
             case GuildActivityType::GUILD_EVENT_ATTENDANCE:
@@ -110,16 +104,16 @@ void GuildIntegration::ParticipateInGuildActivities()
 
             case GuildActivityType::OFFICER_DUTIES:
                 if (profile.preferredRole == GuildRole::OFFICER || profile.preferredRole == GuildRole::LEADER)
-                    SupportGuildLeadership(player);
+                    SupportGuildLeadership();
                 break;
 
             case GuildActivityType::RECRUITMENT_ASSISTANCE:
                 if (profile.preferredRole == GuildRole::RECRUITER || rand() % 100 < 5)
-                    AssistWithRecruitment(player);
+                    AssistWithRecruitment();
                 break;
 
             case GuildActivityType::ACHIEVEMENT_CONTRIBUTION:
-                ContributeToGuildAchievements(player);
+                ContributeToGuildAchievements();
                 break;
 
             default:
@@ -130,28 +124,28 @@ void GuildIntegration::ParticipateInGuildActivities()
 
 void GuildIntegration::ManageGuildResponsibilities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Handle role-specific responsibilities
     switch (profile.preferredRole)
     {
         case GuildRole::OFFICER:
         case GuildRole::LEADER:
-            HandleOfficerDuties(player);
+            HandleOfficerDuties();
             break;
 
         case GuildRole::BANKER:
-            OrganizeGuildBank(player);
+            OrganizeGuildBank();
             break;
 
         case GuildRole::RECRUITER:
-            EvaluateRecruitmentCandidates(player);
+            EvaluateRecruitmentCandidates();
             break;
 
         case GuildRole::EVENT_ORGANIZER:
-            CoordinateGuildEvents(player);
+            CoordinateGuildEvents();
             break;
 
         default:
@@ -162,12 +156,12 @@ void GuildIntegration::ManageGuildResponsibilities()
 
 void GuildIntegration::AutomateGuildChatParticipation()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
 
-    if (!IsAppropriateTimeToChat(player))
+    if (!IsAppropriateTimeToChat())
         return;
 
     // Check if we should initiate conversation
@@ -185,49 +179,49 @@ void GuildIntegration::AutomateGuildChatParticipation()
 
         if (action <= 30)
         {
-            InitiateGuildConversation(player);
+            InitiateGuildConversation();
         }
         else if (action <= 60)
         {
             // Share information about something relevant
-            ShareGuildInformation(player, "general");
+            ShareGuildInformation("general");
         }
         else if (action <= 80 && profile.helpfulnessLevel > 0.7f)
         {
             // Offer help or assistance
-            OfferGuildAssistance(player, "");
+            OfferGuildAssistance("");
         }
     }
 }
 
 void GuildIntegration::RespondToGuildChat( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return;
 
-    std::string response = GenerateGuildChatResponse(player, message);
+    std::string response = GenerateGuildChatResponse(message);
     if (!response.empty())
     {
-        SendGuildChatMessage(player, response);
-        UpdateGuildParticipation(_bot->GetGUID().GetCounter(), GuildActivityType::CHAT_PARTICIPATION);
+        SendGuildChatMessage(response);
+        UpdateGuildParticipation(GuildActivityType::CHAT_PARTICIPATION);
     }
 }
 
 void GuildIntegration::InitiateGuildConversation()
 {
-    if (!player)
+    if (!_bot)
         return;
 
-    std::string message = GenerateConversationStarter(player);
+    std::string message = GenerateConversationStarter();
     if (!message.empty())
     {
-        SendGuildChatMessage(player, message);
+        SendGuildChatMessage(message);
     }
 }
 
 void GuildIntegration::ShareGuildInformation( const std::string& topic)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // Generate informative messages based on topic
@@ -257,17 +251,17 @@ void GuildIntegration::ShareGuildInformation( const std::string& topic)
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(0, infoMessages.size() - 1);
 
-        SendGuildChatMessage(player, infoMessages[dis(gen)]);
+        SendGuildChatMessage(infoMessages[dis(gen)]);
     }
 }
 
 void GuildIntegration::AutomateGuildBankInteractions()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     uint32 currentTime = GameTime::GetGameTimeMS();
-    auto& state = _playerStates[playerGuid];
+    auto& state = _playerStates[_bot->GetGUID().GetCounter()];
 
     // Check cooldown
     if (currentTime - state.lastGuildBankInteraction < GUILD_BANK_CHECK_INTERVAL)
@@ -277,23 +271,23 @@ void GuildIntegration::AutomateGuildBankInteractions()
     // This would require checking proximity to guild bank NPCs
 
     // Decide what to do with guild bank
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
     if (rand() % 100 < 30) // 30% chance to deposit
     {
-        DepositItemsToGuildBank(player);
+        DepositItemsToGuildBank();
     }
     else if (rand() % 100 < 20) // 20% chance to withdraw
     {
-        WithdrawNeededItems(player);
+        WithdrawNeededItems();
     }
 
     state.lastGuildBankInteraction = currentTime;
-    UpdateGuildParticipation(playerGuid, GuildActivityType::GUILD_BANK_INTERACTION);
+    UpdateGuildParticipation(GuildActivityType::GUILD_BANK_INTERACTION);
 }
 
 void GuildIntegration::DepositItemsToGuildBank()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Find items suitable for guild bank deposit
@@ -308,7 +302,7 @@ void GuildIntegration::DepositItemsToGuildBank()
             {
                 if (Item* item = pBag->GetItemByPos(slot))
                 {
-                    if (ShouldDepositItem(player, item->GetEntry()))
+                    if (ShouldDepositItem(item->GetEntry()))
                     {
                         itemsToDeposit.push_back(item);
                     }
@@ -330,7 +324,7 @@ void GuildIntegration::DepositItemsToGuildBank()
 
 void GuildIntegration::WithdrawNeededItems()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Identify items needed by the player
@@ -342,7 +336,7 @@ void GuildIntegration::WithdrawNeededItems()
     // Execute withdrawals (simplified)
     for (uint32 itemId : neededItems)
     {
-        if (ShouldWithdrawItem(player, itemId))
+        if (ShouldWithdrawItem(itemId))
         {
             // In a real implementation, this would interact with the guild bank system
             TC_LOG_DEBUG("playerbot.guild", "Player {} withdrawing item {} from guild bank",
@@ -353,7 +347,7 @@ void GuildIntegration::WithdrawNeededItems()
 
 void GuildIntegration::OrganizeGuildBank()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Banker role: organize and manage guild bank efficiently
@@ -365,7 +359,7 @@ void GuildIntegration::OrganizeGuildBank()
 
 void GuildIntegration::ManageGuildBankPermissions()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Officer/Leader role: manage bank access permissions
@@ -376,7 +370,7 @@ void GuildIntegration::ManageGuildBankPermissions()
 
 void GuildIntegration::CoordinateGuildEvents()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Event organizer role: plan and coordinate guild activities
@@ -388,7 +382,7 @@ void GuildIntegration::CoordinateGuildEvents()
 
 void GuildIntegration::ScheduleGuildActivities()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Schedule various guild activities
@@ -400,7 +394,7 @@ void GuildIntegration::ScheduleGuildActivities()
 
 void GuildIntegration::ManageGuildCalendar()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Manage guild calendar events
@@ -412,7 +406,7 @@ void GuildIntegration::ManageGuildCalendar()
 
 void GuildIntegration::OrganizeGuildRuns()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Organize guild dungeon/raid runs
@@ -421,22 +415,23 @@ void GuildIntegration::OrganizeGuildRuns()
     // Coordinate schedules
 }
 
-void GuildIntegration::SetGuildProfile(uint32 playerGuid, const GuildProfile& profile)
+void GuildIntegration::SetGuildProfile(const GuildProfile& profile)
 {
-    _playerProfiles[playerGuid] = profile;
+    _playerProfiles[_bot->GetGUID().GetCounter()] = profile;
 }
 
-GuildIntegration::GuildProfile GuildIntegration::GetGuildProfile(uint32 playerGuid)
+GuildProfile GuildIntegration::GetGuildProfile()
 {
-    auto it = _playerProfiles.find(playerGuid);
+    auto it = _playerProfiles.find(_bot->GetGUID().GetCounter());
     if (it != _playerProfiles.end())
         return it->second;
 
     return GuildProfile(); // Return default profile
 }
 
-GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uint32 playerGuid)
+GuildParticipation GuildIntegration::GetGuildParticipation()
 {
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto it = _playerParticipation.find(playerGuid);
     if (it != _playerParticipation.end())
         return it->second;
@@ -444,8 +439,9 @@ GuildIntegration::GuildParticipation GuildIntegration::GetGuildParticipation(uin
     return GuildParticipation(playerGuid, 0); // Return default participation
 }
 
-void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivityType activityType)
+void GuildIntegration::UpdateGuildParticipation(GuildActivityType activityType)
 {
+    uint32 playerGuid = _bot->GetGUID().GetCounter();
     auto& participation = _playerParticipation[playerGuid];
     participation.activityCounts[activityType]++;
     participation.lastActivity = GameTime::GetGameTimeMS();
@@ -472,7 +468,7 @@ void GuildIntegration::UpdateGuildParticipation(uint32 playerGuid, GuildActivity
 
 void GuildIntegration::AssistWithRecruitment()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Help with guild recruitment
@@ -484,7 +480,7 @@ void GuildIntegration::AssistWithRecruitment()
 
 void GuildIntegration::EvaluateRecruitmentCandidates()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Evaluate potential guild recruits
@@ -495,7 +491,7 @@ void GuildIntegration::EvaluateRecruitmentCandidates()
 
 void GuildIntegration::WelcomeNewGuildMembers()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Welcome new guild members
@@ -507,7 +503,7 @@ void GuildIntegration::WelcomeNewGuildMembers()
 
 void GuildIntegration::MentorJuniorMembers()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Mentor newer or lower-level guild members
@@ -519,7 +515,7 @@ void GuildIntegration::MentorJuniorMembers()
 
 void GuildIntegration::SupportGuildLeadership()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Support guild leadership activities
@@ -531,7 +527,7 @@ void GuildIntegration::SupportGuildLeadership()
 
 void GuildIntegration::HandleOfficerDuties()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Handle officer-specific duties
@@ -543,7 +539,7 @@ void GuildIntegration::HandleOfficerDuties()
 
 void GuildIntegration::AssistWithGuildManagement()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Assist with general guild management
@@ -555,7 +551,7 @@ void GuildIntegration::AssistWithGuildManagement()
 
 void GuildIntegration::ProvideMemberFeedback()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Provide feedback to guild members
@@ -567,11 +563,11 @@ void GuildIntegration::ProvideMemberFeedback()
 
 std::string GuildIntegration::GenerateGuildChatResponse( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return "";
 
     // Analyze message content and generate appropriate response
-    float relevance = CalculateMessageRelevance(player, message);
+    float relevance = CalculateMessageRelevance(message);
     if (relevance < 0.3f) // Not relevant enough to respond
         return "";
 
@@ -582,17 +578,17 @@ std::string GuildIntegration::GenerateGuildChatResponse( const GuildChatMessage&
     std::string response = SelectResponseTemplate("general");
 
     // Personalize the response
-    response = PersonalizeResponse(player, response);
+    response = PersonalizeResponse(response);
 
     return response;
 }
 
 std::string GuildIntegration::GenerateConversationStarter()
 {
-    if (!player)
+    if (!_bot)
         return "";
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Select conversation starter based on profile and current context
     std::vector<std::string> starters;
 
@@ -648,21 +644,21 @@ std::string GuildIntegration::GenerateConversationStarter()
 
 bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Don't respond to own messages
     if (message.senderId == _bot->GetGUID().GetCounter())
         return false;
 
-    GuildProfile profile = GetGuildProfile(playerGuid);
+    GuildProfile profile = GetGuildProfile();
 
     // Check if message requires response
     if (message.requiresResponse)
         return true;
 
     // Calculate relevance and decide based on chat style
-    float relevance = CalculateMessageRelevance(player, message);
+    float relevance = CalculateMessageRelevance(message);
     float threshold = 0.7f;
 
     switch (profile.chatStyle)
@@ -690,7 +686,7 @@ bool GuildIntegration::ShouldRespondToMessage( const GuildChatMessage& message)
 
 void GuildIntegration::LearnFromGuildConversations()
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // Learn from guild chat patterns
@@ -701,7 +697,7 @@ void GuildIntegration::LearnFromGuildConversations()
 
 void GuildIntegration::ContributeToGuildAchievements()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Actively work towards guild achievements
@@ -723,7 +719,7 @@ void GuildIntegration::CoordinateAchievementEfforts(Guild* guild)
 
 void GuildIntegration::TrackAchievementProgress()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Track progress towards guild achievements
@@ -734,7 +730,7 @@ void GuildIntegration::TrackAchievementProgress()
 
 void GuildIntegration::CelebrateGuildAchievements()
 {
-    if (!player || !_bot->GetGuild())
+    if (!_bot || !_bot->GetGuild())
         return;
 
     // Celebrate completed guild achievements
@@ -743,9 +739,9 @@ void GuildIntegration::CelebrateGuildAchievements()
     // Boost guild morale
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 playerGuid)
+GuildMetrics GuildIntegration::GetPlayerGuildMetrics()
 {
-    auto it = _playerMetrics.find(playerGuid);
+    auto it = _playerMetrics.find(_bot->GetGUID().GetCounter());
     if (it != _playerMetrics.end())
         return it->second;
 
@@ -754,7 +750,7 @@ GuildIntegration::GuildMetrics GuildIntegration::GetPlayerGuildMetrics(uint32 pl
     return metrics;
 }
 
-GuildIntegration::GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
+GuildMetrics GuildIntegration::GetGuildBotMetrics(uint32 guildId)
 {
     GuildMetrics combinedMetrics;
     combinedMetrics.Reset();
@@ -829,7 +825,7 @@ void GuildIntegration::LoadGuildSpecificData(uint32 guildId)
 
 bool GuildIntegration::IsAppropriateTimeToChat()
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Check if it's an appropriate time to participate in guild chat
@@ -873,14 +869,14 @@ std::string GuildIntegration::SelectResponseTemplate(const std::string& category
 
 std::string GuildIntegration::PersonalizeResponse( const std::string& templateStr)
 {
-    if (!player)
+    if (!_bot)
         return templateStr;
 
     // Personalize the response based on player and context
     std::string response = templateStr;
 
     // Add player-specific touches based on guild profile
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     // Modify tone based on chat style
     switch (profile.chatStyle)
     {
@@ -900,7 +896,7 @@ std::string GuildIntegration::PersonalizeResponse( const std::string& templateSt
 
 float GuildIntegration::CalculateMessageRelevance( const GuildChatMessage& message)
 {
-    if (!player)
+    if (!_bot)
         return 0.0f;
 
     float relevance = 0.0f;
@@ -908,7 +904,7 @@ float GuildIntegration::CalculateMessageRelevance( const GuildChatMessage& messa
     // Check for keywords that indicate relevance
     std::vector<std::string> keywords = ExtractKeywords(message.content);
 
-    GuildProfile profile = GetGuildProfile(_bot->GetGUID().GetCounter());
+    GuildProfile profile = GetGuildProfile();
     for (const std::string& keyword : keywords)
     {
         // Check against player's interests and expertise
@@ -976,7 +972,7 @@ std::vector<std::string> GuildIntegration::ExtractKeywords(const std::string& me
 
 bool GuildIntegration::ShouldDepositItem( uint32 itemId)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Determine if item should be deposited to guild bank
@@ -998,7 +994,7 @@ bool GuildIntegration::ShouldDepositItem( uint32 itemId)
 
 bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
 {
-    if (!player)
+    if (!_bot)
         return false;
 
     // Determine if player should withdraw item from guild bank
@@ -1010,25 +1006,25 @@ bool GuildIntegration::ShouldWithdrawItem( uint32 itemId)
 
 void GuildIntegration::SendGuildChatMessage( const std::string& message)
 {
-    if (!player || !_bot->GetGuild() || message.empty())
+    if (!_bot || !_bot->GetGuild() || message.empty())
         return;
 
     // Send message to guild chat using proper TrinityCore API
     _bot->GetGuild()->BroadcastToGuild(_bot->GetSession(), false, message, LANG_UNIVERSAL);
 
     // Update metrics
-    UpdateGuildMetrics(playerGuid, GuildActivityType::CHAT_PARTICIPATION, true);
+    UpdateGuildMetrics(GuildActivityType::CHAT_PARTICIPATION, true);
 }
 
 void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
 {
-    if (!player)
+    if (!_bot)
         return;
 
     // If specific assistance is provided, use it; otherwise use default messages
     if (!assistance.empty())
     {
-        SendGuildChatMessage(player, assistance);
+        SendGuildChatMessage( assistance);
         return;
     }
 
@@ -1043,12 +1039,12 @@ void GuildIntegration::OfferGuildAssistance( const std::string& assistance)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, helpMessages.size() - 1);
 
-    SendGuildChatMessage(player, helpMessages[dis(gen)]);
+    SendGuildChatMessage( helpMessages[dis(gen)]);
 }
 
-void GuildIntegration::UpdateGuildMetrics(uint32 playerGuid, GuildActivityType activity, bool wasSuccessful)
+void GuildIntegration::UpdateGuildMetrics(GuildActivityType activity, bool wasSuccessful)
 {
-    auto& metrics = _playerMetrics[playerGuid];
+    auto& metrics = _playerMetrics[_bot->GetGUID().GetCounter()];
     metrics.guildInteractions++;
 
     if (wasSuccessful)

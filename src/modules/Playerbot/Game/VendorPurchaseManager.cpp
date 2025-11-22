@@ -26,6 +26,8 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "Unit.h"
+#include "UnitAI.h"
 #include "AI/BotAI.h"
 #include "Core/Managers/GameSystemsManager.h"
 #include <algorithm>

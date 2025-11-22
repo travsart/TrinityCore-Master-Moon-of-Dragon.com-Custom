@@ -55,11 +55,17 @@ namespace Playerbot
 // Forward declarations for all manager types
 class QuestManager;
 class ObjectiveTracker;
+class QuestCompletion;
+class QuestPickup;
+class QuestTurnIn;
+class QuestValidation;
+class DynamicQuestSystem;
 class TradeManager;
 class GatheringManager;
 class ProfessionManager;
 class AuctionManager;
 class EquipmentManager;
+class LootDistribution;
 class DeathRecoveryManager;
 class UnifiedMovementCoordinator;
 class CombatStateManager;
@@ -152,10 +158,46 @@ public:
     virtual ObjectiveTracker* GetObjectiveTracker() const = 0;
 
     /**
+     * @brief Get quest completion system
+     * @return Non-owning pointer to QuestCompletion (owned by facade)
+     */
+    virtual QuestCompletion* GetQuestCompletion() const = 0;
+
+    /**
+     * @brief Get quest pickup system
+     * @return Non-owning pointer to QuestPickup (owned by facade)
+     */
+    virtual QuestPickup* GetQuestPickup() const = 0;
+
+    /**
+     * @brief Get quest turn-in system
+     * @return Non-owning pointer to QuestTurnIn (owned by facade)
+     */
+    virtual QuestTurnIn* GetQuestTurnIn() const = 0;
+
+    /**
+     * @brief Get dynamic quest system
+     * @return Non-owning pointer to DynamicQuestSystem (owned by facade)
+     */
+    virtual DynamicQuestSystem* GetDynamicQuestSystem() const = 0;
+
+    /**
+     * @brief Get quest validation system
+     * @return Non-owning pointer to QuestValidation (owned by facade)
+     */
+    virtual QuestValidation* GetQuestValidation() const = 0;
+
+    /**
      * @brief Get trade management system
      * @return Non-owning pointer to TradeManager (owned by facade)
      */
     virtual TradeManager* GetTradeManager() const = 0;
+
+    /**
+     * @brief Get loot distribution system
+     * @return Non-owning pointer to LootDistribution (owned by facade)
+     */
+    virtual LootDistribution* GetLootDistribution() const = 0;
 
     /**
      * @brief Get gathering management system

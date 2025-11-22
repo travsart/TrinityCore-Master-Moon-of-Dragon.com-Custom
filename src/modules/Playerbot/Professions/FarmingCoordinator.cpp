@@ -11,7 +11,7 @@
 #include "ProfessionManager.h"
 #include "GatheringManager.h"
 #include "../Core/Managers/GameSystemsManager.h"
-#include "../Core/Sessions/BotSession.h"
+#include "../Session/BotSession.h"
 #include "../AI/BotAI.h"
 #include "Player.h"
 #include "Log.h"
@@ -669,10 +669,10 @@ ProfessionManager* FarmingCoordinator::GetProfessionManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
 GatheringManager* FarmingCoordinator::GetGatheringManager()
@@ -681,10 +681,10 @@ GatheringManager* FarmingCoordinator::GetGatheringManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetGatheringManager();
+    return session->GetAI()->GetGameSystems()->GetGatheringManager();
 }
 
 } // namespace Playerbot

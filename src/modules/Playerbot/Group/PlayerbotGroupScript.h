@@ -195,10 +195,36 @@ private:
         uint64_t totalPolls{0};
         uint64_t eventsDetected{0};
         uint64_t averagePollTimeUs{0};
-        ::std::chrono::steady_clock::time_point startTime{::std::chrono::steady_clock::now()};
+        ::std::chrono::steady_clock::time_point startTime;  // Initialized in constructor
 
-        void Reset();
-        ::std::string ToString() const;
+        PollStatistics() : startTime(::std::chrono::steady_clock::now()) {}
+
+        void Reset()
+        {
+            totalPolls = 0;
+            eventsDetected = 0;
+            averagePollTimeUs = 0;
+            startTime = ::std::chrono::steady_clock::now();
+        }
+
+        ::std::string ToString() const
+        {
+            auto now = ::std::chrono::steady_clock::now();
+            auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime).count();
+
+            return fmt::format(
+                "PlayerbotGroupScript Poll Statistics:\n"
+                "  Total Polls: {}\n"
+                "  Events Detected: {}\n"
+                "  Average Poll Time: {} μs\n"
+                "  Polls Per Second: {:.2f}\n"
+                "  Uptime: {} seconds",
+                totalPolls,
+                eventsDetected,
+                averagePollTimeUs,
+                uptime > 0 ? static_cast<double>(totalPolls) / uptime : 0.0,
+                uptime);
+        }
     };
 
     static inline PollStatistics _pollStats;

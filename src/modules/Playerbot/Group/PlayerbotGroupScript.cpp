@@ -424,33 +424,7 @@ void PlayerbotGroupScript::InitializeGroupState(Group* group, GroupState& state)
 // STATISTICS
 // ========================================================================
 
-void PlayerbotGroupScript::PollStatistics::Reset()
-{
-    totalPolls = 0;
-    eventsDetected = 0;
-    averagePollTimeUs = 0;
-    startTime = ::std::chrono::steady_clock::now();
-}
-
-::std::string PlayerbotGroupScript::PollStatistics::ToString() const
-{
-    auto now = ::std::chrono::steady_clock::now();
-    auto uptime = ::std::chrono::duration_cast<::std::chrono::seconds>(now - startTime).count();
-
-    return fmt::format(
-        "PlayerbotGroupScript Poll Statistics:\n"
-        "  Total Polls: {}\n"
-        "  Events Detected: {}\n"
-        "  Average Poll Time: {} μs\n"
-        "  Polls Per Second: {:.2f}\n"
-        "  Uptime: {} seconds",
-        totalPolls,
-        eventsDetected,
-        averagePollTimeUs,
-        uptime > 0 ? static_cast<double>(totalPolls) / uptime : 0.0,
-        uptime
-    );
-}
+// PollStatistics methods now defined inline in header
 
 // ============================================================================
 // PLAYERBOTWORLDSCRIPT IMPLEMENTATION

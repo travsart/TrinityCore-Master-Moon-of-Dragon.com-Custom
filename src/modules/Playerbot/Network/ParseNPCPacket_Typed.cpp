@@ -32,23 +32,30 @@ void ParseTypedGossipMessage(WorldSession* session, WorldPackets::NPC::GossipMes
         return;
 
     // Extract gossip option IDs
-    ::std::vector<uint32> options;
-    options.reserve(packet.GossipOptions.size());
+    ::std::vector<Playerbot::GossipMenuItem> items;
+    items.reserve(packet.GossipOptions.size());
     for (auto const& option : packet.GossipOptions)
-        options.push_back(option.GossipOptionID);
+    {
+        Playerbot::GossipMenuItem item;
+        item.menuId = packet.GossipID;
+        item.optionIndex = option.OrderIndex;
+        item.text = option.Text;
+        item.icon = static_cast<uint32>(option.OptionNPC);
+        items.push_back(item);
+    }
 
     NPCEvent event = NPCEvent::GossipMenuReceived(
         bot->GetGUID(),
         packet.GossipGUID,
         packet.GossipID,
-        packet.RandomTextID.value_or(0),
-        ::std::move(options)
+        ::std::move(items),
+        ::std::to_string(packet.RandomTextID.value_or(0))
     );
 
     NPCEventBus::instance()->PublishEvent(event);
 
     TC_LOG_TRACE("playerbot.packets", "Bot {} received GOSSIP_MESSAGE (typed): npc={}, menu={}, options={}",
-        bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, options.size());
+        bot->GetName(), packet.GossipGUID.ToString(), packet.GossipID, items.size());
 }
 
 /**
@@ -118,17 +125,25 @@ void ParseTypedTrainerList(WorldSession* session, WorldPackets::NPC::TrainerList
     if (!bot)
         return;
 
-    // Extract spell IDs from trainer list
-    ::std::vector<uint32> spells;
+    // Extract spell data from trainer list
+    ::std::vector<Playerbot::TrainerSpell> spells;
     spells.reserve(packet.Spells.size());
     for (auto const& spell : packet.Spells)
-        spells.push_back(spell.SpellID);
+    {
+        Playerbot::TrainerSpell ts;
+        ts.spellId = spell.SpellID;
+        ts.reqLevel = spell.ReqLevel;
+        ts.reqSkill = spell.ReqSkillLine;
+        ts.cost = spell.MoneyCost;
+        spells.push_back(ts);
+    }
 
     NPCEvent event = NPCEvent::TrainerListReceived(
         bot->GetGUID(),
         packet.TrainerGUID,
         packet.TrainerID,
-        ::std::move(spells)
+        ::std::move(spells),
+        packet.Greeting
     );
 
     NPCEventBus::instance()->PublishEvent(event);
@@ -151,7 +166,9 @@ void ParseTypedTrainerBuyFailed(WorldSession* session, WorldPackets::NPC::Traine
 
     NPCEvent event = NPCEvent::TrainerServiceResult(
         bot->GetGUID(),
-        packet.TrainerFailedReason
+        packet.TrainerGUID,
+        packet.TrainerFailedReason,
+        "" // Error message not provided in packet
     );
 
     NPCEventBus::instance()->PublishEvent(event);
@@ -203,7 +220,7 @@ void ParseTypedPetitionShowList(WorldSession* session, WorldPackets::Petition::S
     NPCEvent event = NPCEvent::PetitionListReceived(
         bot->GetGUID(),
         packet.Unit,
-        0  // Petition entry not in show list packet
+        {} // Empty vector - petition entries not provided in show list packet
     );
 
     NPCEventBus::instance()->PublishEvent(event);
@@ -228,7 +245,7 @@ void ParseTypedPetitionShowSignatures(WorldSession* session, WorldPackets::Petit
     NPCEvent event = NPCEvent::PetitionListReceived(
         bot->GetGUID(),
         packet.Owner,  // Use owner as NPC GUID
-        packet.PetitionID
+        { static_cast<uint32>(packet.PetitionID) }  // Wrap single petition ID in vector
     );
 
     NPCEventBus::instance()->PublishEvent(event);

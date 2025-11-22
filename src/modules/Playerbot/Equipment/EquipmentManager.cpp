@@ -26,7 +26,7 @@ namespace Playerbot
 
 std::unordered_map<uint16, StatPriority> EquipmentManager::_statPriorities;
 bool EquipmentManager::_statPrioritiesInitialized = false;
-EquipmentManager::EquipmentMetrics EquipmentManager::_globalMetrics;
+EquipmentMetrics EquipmentManager::_globalMetrics;
 
 // ============================================================================
 // PER-BOT LIFECYCLE
@@ -834,9 +834,9 @@ void EquipmentManager::AutoEquipBestGear()
     }
 }
 
-ItemComparisonResult EquipmentManager::CompareItems(::Item* currentItem, ::Item* newItem)
+IEquipmentManager::ItemComparisonResult EquipmentManager::CompareItems(::Item* currentItem, ::Item* newItem)
 {
-    ItemComparisonResult result;
+    IEquipmentManager::ItemComparisonResult result;
 
     if (!_bot || !newItem)
         return result;
@@ -1448,12 +1448,12 @@ EquipmentManager::EquipmentAutomationProfile const& EquipmentManager::GetAutomat
 // METRICS
 // ============================================================================
 
-EquipmentManager::EquipmentMetrics const& EquipmentManager::GetMetrics()
+EquipmentMetrics const& EquipmentManager::GetMetrics()
 {
     return _metrics;
 }
 
-EquipmentManager::EquipmentMetrics const& EquipmentManager::GetGlobalMetrics()
+EquipmentMetrics const& EquipmentManager::GetGlobalMetrics()
 {
     return _globalMetrics;
 }

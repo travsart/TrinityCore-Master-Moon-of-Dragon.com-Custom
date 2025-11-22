@@ -26,6 +26,7 @@
 #include <numeric>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 #ifdef _WIN32
 #include <windows.h>

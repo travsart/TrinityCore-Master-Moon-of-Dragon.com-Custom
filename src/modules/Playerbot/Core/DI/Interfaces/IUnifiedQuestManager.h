@@ -62,10 +62,45 @@ struct QuestMetadata;
 struct QuestProgress;
 struct ValidationResult;
 struct ValidationMetrics;
-struct TurnInMetrics;
 struct QuestReward;
 struct QuestMetrics;
 struct EquipmentMetrics;
+
+// Forward declare IQuestTurnIn for conversion
+class IQuestTurnIn;
+
+// TurnInMetrics - defined here to avoid circular dependency with IQuestTurnIn
+struct TurnInMetrics
+{
+    uint32 questsTurnedIn{0};
+    uint32 turnInAttempts{0};
+    uint32 successfulTurnIns{0};
+    uint32 failedTurnIns{0};
+    float averageTurnInTime{0.0f};
+    float turnInSuccessRate{0.0f};
+    uint32 totalTravelDistance{0};
+    uint32 rewardsSelected{0};
+    float rewardSelectionAccuracy{0.0f};
+
+    float GetSuccessRate() const {
+        return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
+    }
+
+    // Conversion from IQuestTurnIn::TurnInMetricsSnapshot
+    TurnInMetrics() = default;
+    template<typename T>
+    TurnInMetrics(T const& snapshot) :
+        questsTurnedIn(snapshot.questsTurnedIn),
+        turnInAttempts(snapshot.turnInAttempts),
+        successfulTurnIns(snapshot.successfulTurnIns),
+        failedTurnIns(snapshot.failedTurnIns),
+        averageTurnInTime(snapshot.averageTurnInTime),
+        turnInSuccessRate(snapshot.turnInSuccessRate),
+        totalTravelDistance(snapshot.totalTravelDistance),
+        rewardsSelected(snapshot.rewardsSelected),
+        rewardSelectionAccuracy(snapshot.rewardSelectionAccuracy)
+    {}
+};
 
 /**
  * @brief Unified interface for all quest management operations

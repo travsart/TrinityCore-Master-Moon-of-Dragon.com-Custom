@@ -35,22 +35,18 @@ namespace Playerbot
 {
 
 /**
- * @brief Singleton instance implementation
- */
-QuestTurnIn::QuestTurnIn(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestTurnIn: null bot!");
-}
-
-QuestTurnIn::~QuestTurnIn() {}
-
-/**
  * @brief Constructor
  */
-QuestTurnIn::QuestTurnIn()
+QuestTurnIn::QuestTurnIn(Player* bot)
+    : _bot(bot)
 {
+    if (!_bot)
+        TC_LOG_ERROR("playerbot.quest", "QuestTurnIn: null bot!");
     _globalMetrics.Reset();
     LoadQuestGiverDatabase();
 }
+
+QuestTurnIn::~QuestTurnIn() {}
 
 /**
  * @brief Turn in a quest for the bot
@@ -1037,7 +1033,7 @@ void QuestTurnIn::CleanupCompletedTurnIns()
  * @param botGuid Bot GUID
  * @return Turn-in metrics snapshot
  */
-TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
+IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -1063,10 +1059,10 @@ TurnInMetricsSnapshot QuestTurnIn::GetBotTurnInMetrics(uint32 botGuid)
  * @brief Get global turn-in metrics
  * @return Global turn-in metrics snapshot
  */
-TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
+IQuestTurnIn::TurnInMetricsSnapshot QuestTurnIn::GetGlobalTurnInMetrics()
 {
     auto snapshot = _globalMetrics.CreateSnapshot();
-    TurnInMetricsSnapshot result;
+    IQuestTurnIn::TurnInMetricsSnapshot result;
     result.questsTurnedIn = snapshot.questsTurnedIn;
     result.turnInAttempts = snapshot.turnInAttempts;
     result.successfulTurnIns = snapshot.successfulTurnIns;

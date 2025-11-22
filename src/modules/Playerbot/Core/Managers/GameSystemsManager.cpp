@@ -9,6 +9,10 @@
  * logic from BotAI.cpp, reducing god class complexity.
  */
 
+// IMPORTANT: LootDistribution.h MUST be included FIRST to avoid redefinition errors
+// This is included before GameSystemsManager.h to ensure it's the first definition seen
+#include "Social/LootDistribution.h"
+
 #include "GameSystemsManager.h"
 #include "AI/BotAI.h"
 #include "Player.h"
@@ -25,7 +29,6 @@
 // #include "Spatial/BlackboardManager.h"  // TODO: File does not exist
 
 // Manager implementations (for unique_ptr destruction)
-#include "Social/LootDistribution.h"  // Required for unique_ptr<LootDistribution> construction
 #include "AI/BehaviorPriorityManager.h"  // For unique_ptr<BehaviorPriorityManager> destruction
 
 #include <set>
@@ -315,12 +318,18 @@ void GameSystemsManager::Initialize(Player* bot)
     _questTurnIn = std::make_unique<QuestTurnIn>(_bot);
     _questValidation = std::make_unique<QuestValidation>(_bot);
     _roleAssignment = std::make_unique<RoleAssignment>(_bot);
-    _lfgBotManager = std::make_unique<LFGBotManager>(_bot);
-    _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);
-    _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);
-    _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);
-    _botPriorityManager = std::make_unique<BotPriorityManager>(_bot);
-    _botWorldSessionMgr = std::make_unique<BotWorldSessionMgr>(_bot);
+    // Note: LFGBotManager is a global singleton, accessed via sLFGBotManager macro
+    // _lfgBotManager = std::make_unique<LFGBotManager>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: LFGBotSelector is also a global singleton
+    // _lfgBotSelector = std::make_unique<LFGBotSelector>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: LFGGroupCoordinator is also a global singleton, accessed via sLFGGroupCoordinator macro
+    // _lfgGroupCoordinator = std::make_unique<LFGGroupCoordinator>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: InstanceCoordination is also a global singleton
+    // _instanceCoordination = std::make_unique<InstanceCoordination>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: BotPriorityManager is also a global singleton, accessed via sBotPriorityMgr macro
+    // _botPriorityManager = std::make_unique<BotPriorityManager>(_bot);  // ERROR: Cannot instantiate singleton
+    // Note: BotWorldSessionMgr is also a global singleton, accessed via sBotWorldSessionMgr macro
+    // _botWorldSessionMgr = std::make_unique<BotWorldSessionMgr>(_bot);  // ERROR: Cannot instantiate singleton
     _botLifecycleManager = std::make_unique<BotLifecycleManager>(_bot);
     _groupCoordinator = std::make_unique<Advanced::GroupCoordinator>(_bot, _botAI);
 
@@ -504,9 +513,8 @@ void GameSystemsManager::Shutdown()
 void GameSystemsManager::InitializeHybridAI()
 {
     // Initialize Hybrid AI Decision System (Utility AI + Behavior Trees)
-    // This will be implemented when HybridAIController is available
-    // For now, create empty instance
-    _hybridAI = std::make_unique<HybridAIController>();
+    // Pass BotAI pointer to HybridAIController
+    _hybridAI = std::make_unique<HybridAIController>(_botAI);
 
     TC_LOG_INFO("module.playerbot", "🤖 HYBRID AI CONTROLLER: {} - Hybrid decision system ready",
         _bot ? _bot->GetName() : "Unknown");

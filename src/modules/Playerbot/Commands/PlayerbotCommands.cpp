@@ -24,6 +24,8 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "Unit.h"
+#include "UnitAI.h"
 #include "World.h"
 #include "WorldSession.h"
 #include "DB2Stores.h"
@@ -739,8 +741,7 @@ namespace Playerbot
 
                 {
 
-                    handler->PSendSysMessage("
-                    # %s", entry.description.c_str());
+                    handler->PSendSysMessage("# %s", entry.description.c_str());
 
                 }
 
@@ -943,11 +944,9 @@ namespace Playerbot
 
             oss << "  Average:  " << cpuTrend.GetAverage() << "%\n";
 
-            oss << "  Min:
-            " << cpuTrend.GetMin() << "%\n";
+            oss << "  Min: " << cpuTrend.GetMin() << "%\n";
 
-            oss << "  Max:
-            " << cpuTrend.GetMax() << "%\n";
+            oss << "  Max: " << cpuTrend.GetMax() << "%\n";
         }
         else
         {
@@ -964,11 +963,9 @@ namespace Playerbot
 
             oss << "  Average:  " << memoryTrend.GetAverage() << " MB\n";
 
-            oss << "  Min:
-            " << memoryTrend.GetMin() << " MB\n";
+            oss << "  Min: " << memoryTrend.GetMin() << " MB\n";
 
-            oss << "  Max:
-            " << memoryTrend.GetMax() << " MB\n";
+            oss << "  Max: " << memoryTrend.GetMax() << " MB\n";
         }
         else
         {
@@ -985,11 +982,9 @@ namespace Playerbot
 
             oss << "  Average:  " << static_cast<uint32>(botCountTrend.GetAverage()) << "\n";
 
-            oss << "  Min:
-            " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
+            oss << "  Min: " << static_cast<uint32>(botCountTrend.GetMin()) << "\n";
 
-            oss << "  Max:
-            " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
+            oss << "  Max: " << static_cast<uint32>(botCountTrend.GetMax()) << "\n";
         }
         else
         {
@@ -1006,11 +1001,9 @@ namespace Playerbot
 
             oss << "  Average:  " << queryTimeTrend.GetAverage() << " ms\n";
 
-            oss << "  Min:
-            " << queryTimeTrend.GetMin() << " ms\n";
+            oss << "  Min: " << queryTimeTrend.GetMin() << " ms\n";
 
-            oss << "  Max:
-            " << queryTimeTrend.GetMax() << " ms\n";
+            oss << "  Max: " << queryTimeTrend.GetMax() << " ms\n";
         }
         else
         {

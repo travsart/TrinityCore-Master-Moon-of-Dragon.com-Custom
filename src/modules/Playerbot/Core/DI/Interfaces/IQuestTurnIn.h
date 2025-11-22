@@ -26,7 +26,6 @@ enum class RewardSelectionStrategy : uint8;
 struct QuestRewardItem;
 struct QuestTurnInData;
 struct TurnInBatch;
-struct TurnInMetrics;
 
 class TC_GAME_API IQuestTurnIn
 {

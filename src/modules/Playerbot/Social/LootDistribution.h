@@ -12,6 +12,12 @@
 
 #pragma once
 
+// DEBUG: If you see this error twice, the header is being included multiple times despite guards
+#ifdef PLAYERBOT_LOOT_DISTRIBUTION_INCLUDED_MARKER
+#error "LootDistribution.h is being included multiple times - this should not happen with header guards!"
+#endif
+#define PLAYERBOT_LOOT_DISTRIBUTION_INCLUDED_MARKER
+
 #include "Define.h"
 #include "Threading/LockHierarchy.h"
 #include "Player.h"
@@ -176,6 +182,72 @@ struct PlayerLootProfile
     PlayerLootProfile& operator=(PlayerLootProfile&& other) = default;
 };
 
+// Loot fairness tracker - defined at namespace level for interface compatibility
+struct LootFairnessTracker
+{
+    std::unordered_map<uint32, uint32> playerLootCount; // playerGuid -> items received
+    std::unordered_map<uint32, uint32> playerLootValue; // playerGuid -> total value received
+    std::unordered_map<uint32, uint32> playerNeedRolls; // playerGuid -> need rolls won
+    std::unordered_map<uint32, uint32> playerGreedRolls; // playerGuid -> greed rolls won
+    uint32 totalItemsDistributed;
+    uint32 totalValueDistributed;
+    float fairnessScore; // 0.0 = unfair, 1.0 = perfectly fair
+
+    LootFairnessTracker() : totalItemsDistributed(0), totalValueDistributed(0), fairnessScore(1.0f) {}
+};
+
+// Loot metrics - defined at namespace level for interface compatibility
+struct LootMetrics
+{
+    std::atomic<uint32> totalRollsInitiated{0};
+    std::atomic<uint32> totalRollsCompleted{0};
+    std::atomic<uint32> needRollsWon{0};
+    std::atomic<uint32> greedRollsWon{0};
+    std::atomic<uint32> itemsPassed{0};
+    std::atomic<uint32> rollTimeouts{0};
+    std::atomic<float> averageRollTime{30000.0f}; // 30 seconds
+    std::atomic<float> decisionAccuracy{0.9f};
+    std::atomic<float> playerSatisfaction{0.8f};
+    std::chrono::steady_clock::time_point lastUpdate;
+
+    LootMetrics() = default;
+
+    LootMetrics(const LootMetrics& other) :
+        totalRollsInitiated(other.totalRollsInitiated.load()),
+        totalRollsCompleted(other.totalRollsCompleted.load()),
+        needRollsWon(other.needRollsWon.load()),
+        greedRollsWon(other.greedRollsWon.load()),
+        itemsPassed(other.itemsPassed.load()),
+        rollTimeouts(other.rollTimeouts.load()),
+        averageRollTime(other.averageRollTime.load()),
+        decisionAccuracy(other.decisionAccuracy.load()),
+        playerSatisfaction(other.playerSatisfaction.load()),
+        lastUpdate(other.lastUpdate) {}
+
+    LootMetrics& operator=(const LootMetrics& other) {
+        if (this != &other) {
+            totalRollsInitiated.store(other.totalRollsInitiated.load());
+            totalRollsCompleted.store(other.totalRollsCompleted.load());
+            needRollsWon.store(other.needRollsWon.load());
+            greedRollsWon.store(other.greedRollsWon.load());
+            itemsPassed.store(other.itemsPassed.load());
+            rollTimeouts.store(other.rollTimeouts.load());
+            averageRollTime.store(other.averageRollTime.load());
+            decisionAccuracy.store(other.decisionAccuracy.load());
+            playerSatisfaction.store(other.playerSatisfaction.load());
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
+
+    void Reset() {
+        totalRollsInitiated = 0; totalRollsCompleted = 0; needRollsWon = 0;
+        greedRollsWon = 0; itemsPassed = 0; rollTimeouts = 0;
+        averageRollTime = 30000.0f; decisionAccuracy = 0.9f; playerSatisfaction = 0.8f;
+        lastUpdate = std::chrono::steady_clock::now();
+    }
+};
+
 class TC_GAME_API LootDistribution final : public ILootDistribution
 {
 public:
@@ -201,6 +273,9 @@ public:
     bool ShouldPlayerGreedItem(const LootItem& item) override;
     bool ShouldPlayerPassItem(const LootItem& item);
     bool CanPlayerDisenchantItem(const LootItem& item);
+    bool IsItemForMainSpec(const LootItem& item);
+    bool IsItemUsefulForOffSpec(const LootItem& item);
+    bool IsItemForOffSpec(const LootItem& item) { return IsItemUsefulForOffSpec(item); }
 
     // Roll processing and winner determination
     void ProcessLootRolls(uint32 rollId) override;
@@ -221,76 +296,12 @@ public:
     void SetMasterLooter(Group* group, Player* masterLooter);
     void HandleMasterLootDistribution(Group* group, const LootItem& item, Player* recipient);
 
-    // Loot fairness and distribution tracking
-    struct LootFairnessTracker
-    {
-        std::unordered_map<uint32, uint32> playerLootCount; // playerGuid -> items received
-        std::unordered_map<uint32, uint32> playerLootValue; // playerGuid -> total value received
-        std::unordered_map<uint32, uint32> playerNeedRolls; // playerGuid -> need rolls won
-        std::unordered_map<uint32, uint32> playerGreedRolls; // playerGuid -> greed rolls won
-        uint32 totalItemsDistributed;
-        uint32 totalValueDistributed;
-        float fairnessScore; // 0.0 = unfair, 1.0 = perfectly fair
-
-        LootFairnessTracker() : totalItemsDistributed(0), totalValueDistributed(0), fairnessScore(1.0f) {}
-    };
-
+    // Loot fairness and distribution tracking (struct defined at namespace level above)
     LootFairnessTracker GetGroupLootFairness(uint32 groupId) override;
     void UpdateLootFairness(uint32 groupId, uint32 winnerGuid, const LootItem& item);
     float CalculateFairnessScore(const LootFairnessTracker& tracker);
 
-    // Performance monitoring
-    struct LootMetrics
-    {
-        std::atomic<uint32> totalRollsInitiated{0};
-        std::atomic<uint32> totalRollsCompleted{0};
-        std::atomic<uint32> needRollsWon{0};
-        std::atomic<uint32> greedRollsWon{0};
-        std::atomic<uint32> itemsPassed{0};
-        std::atomic<uint32> rollTimeouts{0};
-        std::atomic<float> averageRollTime{30000.0f}; // 30 seconds
-        std::atomic<float> decisionAccuracy{0.9f};
-        std::atomic<float> playerSatisfaction{0.8f};
-        std::chrono::steady_clock::time_point lastUpdate;
-
-        LootMetrics() = default;
-
-        LootMetrics(const LootMetrics& other) :
-            totalRollsInitiated(other.totalRollsInitiated.load()),
-            totalRollsCompleted(other.totalRollsCompleted.load()),
-            needRollsWon(other.needRollsWon.load()),
-            greedRollsWon(other.greedRollsWon.load()),
-            itemsPassed(other.itemsPassed.load()),
-            rollTimeouts(other.rollTimeouts.load()),
-            averageRollTime(other.averageRollTime.load()),
-            decisionAccuracy(other.decisionAccuracy.load()),
-            playerSatisfaction(other.playerSatisfaction.load()),
-            lastUpdate(other.lastUpdate) {}
-
-        LootMetrics& operator=(const LootMetrics& other) {
-            if (this != &other) {
-                totalRollsInitiated.store(other.totalRollsInitiated.load());
-                totalRollsCompleted.store(other.totalRollsCompleted.load());
-                needRollsWon.store(other.needRollsWon.load());
-                greedRollsWon.store(other.greedRollsWon.load());
-                itemsPassed.store(other.itemsPassed.load());
-                rollTimeouts.store(other.rollTimeouts.load());
-                averageRollTime.store(other.averageRollTime.load());
-                decisionAccuracy.store(other.decisionAccuracy.load());
-                playerSatisfaction.store(other.playerSatisfaction.load());
-                lastUpdate = other.lastUpdate;
-            }
-            return *this;
-        }
-
-        void Reset() {
-            totalRollsInitiated = 0; totalRollsCompleted = 0; needRollsWon = 0;
-            greedRollsWon = 0; itemsPassed = 0; rollTimeouts = 0;
-            averageRollTime = 30000.0f; decisionAccuracy = 0.9f; playerSatisfaction = 0.8f;
-            lastUpdate = std::chrono::steady_clock::now();
-        }
-    };
-
+    // Performance monitoring (struct defined at namespace level above)
     LootMetrics GetPlayerLootMetrics() override;
     LootMetrics GetGroupLootMetrics(uint32 groupId) override;
     LootMetrics GetGlobalLootMetrics() override;
@@ -361,9 +372,7 @@ private:
     void HandleAutoLoot(Group* group, const LootItem& item);
     bool CanParticipateInRoll(const LootItem& item);
     float CalculateUpgradeValue(const LootItem& item);
-    bool IsItemUsefulForOffSpec(const LootItem& item);
     bool IsItemTypeUsefulForClass(uint8 playerClass, const ItemTemplate* itemTemplate);
-    bool IsItemForMainSpec(const LootItem& item);
     bool IsArmorUpgrade(const LootItem& item);
     bool IsWeaponUpgrade(const LootItem& item);
     bool IsAccessoryUpgrade(const LootItem& item);

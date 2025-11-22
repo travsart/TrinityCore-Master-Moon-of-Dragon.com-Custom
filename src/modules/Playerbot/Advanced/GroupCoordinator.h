@@ -26,12 +26,14 @@ enum Difficulty : uint8;
 
 namespace Playerbot
 {
-    // Forward declare GroupEvent from Playerbot namespace
+    // Forward declare GroupEvent and BotAI from Playerbot namespace
     struct GroupEvent;
+    class BotAI;  // Forward declaration in Playerbot namespace
 
 namespace Advanced
 {
-    class BotAI;
+    // BotAI is in parent Playerbot namespace, not Advanced namespace
+    using Playerbot::BotAI;
     class TacticalCoordinator;
 
     /**

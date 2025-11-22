@@ -171,10 +171,10 @@ void GatheringMaterialsBridge::UpdateMaterialRequirements()
 
     // Get ProfessionManager via GameSystemsManager facade
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return;
 
@@ -361,11 +361,11 @@ uint32 GatheringMaterialsBridge::GetEstimatedYield(GatheringNode const& node)
     // This would need to query loot tables, but for now use defaults
     switch (node.nodeType)
     {
-        case GatheringNodeType::HERB:
-        case GatheringNodeType::MINERAL:
+        case GatheringNodeType::HERB_NODE:
+        case GatheringNodeType::MINING_VEIN:
             return 2;  // Average 2 items per node
-        case GatheringNodeType::GAS_CLOUD:
-            return 3;  // Gas clouds give more
+        case GatheringNodeType::FISHING_POOL:
+            return 3;  // Fishing pools give more
         default:
             return 1;
     }
@@ -387,10 +387,10 @@ GatheringManager* GatheringMaterialsBridge::GetGatheringManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetGatheringManager();
+    return session->GetAI()->GetGameSystems()->GetGatheringManager();
 }
 
 void GatheringMaterialsBridge::SynchronizeWithGatheringManager()
@@ -474,14 +474,14 @@ void GatheringMaterialsBridge::LoadNodeMaterialMappings()
     // For now, hardcode common materials
 
     // Herbs
-    _materialToNodeType[2447] = GatheringNodeType::HERB;    // Peacebloom
-    _materialToNodeType[765] = GatheringNodeType::HERB;     // Silverleaf
-    _materialToNodeType[2449] = GatheringNodeType::HERB;    // Earthroot
+    _materialToNodeType[2447] = GatheringNodeType::HERB_NODE;    // Peacebloom
+    _materialToNodeType[765] = GatheringNodeType::HERB_NODE;     // Silverleaf
+    _materialToNodeType[2449] = GatheringNodeType::HERB_NODE;    // Earthroot
 
     // Ores
-    _materialToNodeType[2770] = GatheringNodeType::MINERAL; // Copper Ore
-    _materialToNodeType[2771] = GatheringNodeType::MINERAL; // Tin Ore
-    _materialToNodeType[2772] = GatheringNodeType::MINERAL; // Iron Ore
+    _materialToNodeType[2770] = GatheringNodeType::MINING_VEIN; // Copper Ore
+    _materialToNodeType[2771] = GatheringNodeType::MINING_VEIN; // Tin Ore
+    _materialToNodeType[2772] = GatheringNodeType::MINING_VEIN; // Iron Ore
 
     TC_LOG_DEBUG("playerbots", "GatheringMaterialsBridge: Loaded {} material-node mappings",
         _materialToNodeType.size());
@@ -511,9 +511,9 @@ GatheringNodeType GatheringMaterialsBridge::GetNodeTypeForMaterial(uint32 itemId
         switch (recipe->profession)
         {
             case ProfessionType::HERBALISM:
-                return GatheringNodeType::HERB;
+                return GatheringNodeType::HERB_NODE;
             case ProfessionType::MINING:
-                return GatheringNodeType::MINERAL;
+                return GatheringNodeType::MINING_VEIN;
             case ProfessionType::SKINNING:
                 return GatheringNodeType::NONE;  // Skinning doesn't use nodes
             default:
@@ -532,10 +532,10 @@ std::vector<RecipeInfo> GatheringMaterialsBridge::GetRecipesThatUseMaterial(uint
         return recipes;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return recipes;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return recipes;
 
@@ -572,10 +572,10 @@ bool GatheringMaterialsBridge::PlayerKnowsRecipesUsingMaterial(uint32 itemId)
     std::vector<RecipeInfo> recipes = GetRecipesThatUseMaterial(itemId);
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return false;
 
-    ProfessionManager* profMgr = session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    ProfessionManager* profMgr = session->GetAI()->GetGameSystems()->GetProfessionManager();
     if (!profMgr)
         return false;
 
@@ -619,7 +619,7 @@ void GatheringMaterialsBridge::StartSession(uint32 itemId, uint32 quantity)
     _activeSession.nodeType = GetNodeTypeForMaterial(itemId);
     _activeSession.startTime = GameTime::GetGameTimeMS();
     _activeSession.isActive = true;
-    _activeSession.startPosition = *_bot->GetPosition();
+    _activeSession.startPosition = _bot->GetPosition();
 
     _statistics.gatheringSessionsStarted++;
     _globalStatistics.gatheringSessionsStarted++;

@@ -14,8 +14,8 @@
 #include "ProfessionEventBus.h"
 #include "ProfessionEvents.h"
 #include "../Professions/GatheringManager.h"
-#include "../Core/BotAI.h"
-#include "../Core/BotSession.h"
+#include "../AI/BotAI.h"
+#include "../Session/BotSession.h"
 #include "../Core/Managers/GameSystemsManager.h"
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
@@ -664,7 +664,7 @@ bool AuctionMaterialsBridge::IsMaterialAvailableOnAH(
 
     uint32 maxPricePerUnit = UINT32_MAX;
 
-    return auctionBridge->IsMaterialAvailableForPurchase(itemId, quantity, maxPricePerUnit);
+    return auctionBridge->IsMaterialAvailableForPurchase(_bot, itemId, quantity, maxPricePerUnit);
 }
 
 uint32 AuctionMaterialsBridge::GetAuctionPrice(
@@ -678,7 +678,7 @@ uint32 AuctionMaterialsBridge::GetAuctionPrice(
     if (!auctionBridge)
         return 0;
 
-    return auctionBridge->GetOptimalMaterialPrice(itemId, quantity);
+    return auctionBridge->GetOptimalMaterialPrice(_bot, itemId, quantity);
 }
 
 uint32 AuctionMaterialsBridge::EstimateAuctionPurchaseTime()
@@ -846,7 +846,7 @@ bool AuctionMaterialsBridge::AcquireMaterial(
         {
             ProfessionAuctionBridge* auctionBridge = GetAuctionBridge();
             if (auctionBridge)
-                return auctionBridge->PurchaseMaterial(decision.itemId, decision.quantityNeeded, UINT32_MAX);
+                return auctionBridge->PurchaseMaterial(_bot, decision.itemId, decision.quantityNeeded, UINT32_MAX);
             break;
         }
 
@@ -1083,10 +1083,11 @@ GatheringMaterialsBridge* AuctionMaterialsBridge::GetGatheringBridge()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetGatheringMaterialsBridge();
+    GameSystemsManager* systems = static_cast<GameSystemsManager*>(session->GetAI()->GetGameSystems());
+    return systems ? systems->GetGatheringMaterialsBridge() : nullptr;
 }
 
 ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
@@ -1095,10 +1096,11 @@ ProfessionAuctionBridge* AuctionMaterialsBridge::GetAuctionBridge()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionAuctionBridge();
+    GameSystemsManager* systems = static_cast<GameSystemsManager*>(session->GetAI()->GetGameSystems());
+    return systems ? systems->GetProfessionAuctionBridge() : nullptr;
 }
 
 ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()
@@ -1107,10 +1109,10 @@ ProfessionManager* AuctionMaterialsBridge::GetProfessionManager()
         return nullptr;
 
     BotSession* session = static_cast<BotSession*>(_bot->GetSession());
-    if (!session || !session->GetBotAI())
+    if (!session || !session->GetAI())
         return nullptr;
 
-    return session->GetBotAI()->GetGameSystems()->GetProfessionManager();
+    return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
 // ============================================================================

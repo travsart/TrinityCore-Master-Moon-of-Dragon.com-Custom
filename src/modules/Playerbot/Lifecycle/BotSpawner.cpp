@@ -626,6 +626,7 @@ bool BotSpawner::SpawnBotInternal(SpawnRequest const& request)
 
             // Continue with spawn process asynchronously
             ContinueSpawnWithCharacter(selectedGuid, request);
+            return true;  // Success path
         });
         return true; // Return immediately - async operation continues in callback
     }

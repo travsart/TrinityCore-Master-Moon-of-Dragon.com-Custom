@@ -797,7 +797,7 @@ namespace Playerbot
         }
 
         // Create distribution plan
-        m_currentDistribution = ::std::make_unique<LootDistribution>();
+        m_currentDistribution = ::std::make_unique<GroupLootInfo>();
         m_currentDistribution->items = items;
         m_currentDistribution->useRoundRobin = !useNeedGreed;
         m_currentDistribution->considerSpec = useNeedGreed;
@@ -1634,7 +1634,7 @@ namespace Playerbot
         return player->CanUseItem(item) == EQUIP_ERR_OK;
     }
 
-    void TradeManager::BuildLootDistributionPlan(LootDistribution& distribution)
+    void TradeManager::BuildLootDistributionPlan(GroupLootInfo& distribution)
     {
         if (!GetBot())
 

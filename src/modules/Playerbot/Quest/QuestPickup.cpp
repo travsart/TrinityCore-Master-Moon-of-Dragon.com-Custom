@@ -33,16 +33,10 @@
 namespace Playerbot
 {
 
-// Singleton instance
-QuestPickup::QuestPickup(Player* bot) : _bot(bot) {
-    if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestPickup: null bot!");
-}
-
-QuestPickup::~QuestPickup() {}
-
 // Constructor
-QuestPickup::QuestPickup()
-    : _lastUpdate(std::chrono::steady_clock::now())
+QuestPickup::QuestPickup(Player* bot)
+    : _bot(bot)
+    , _lastUpdate(std::chrono::steady_clock::now())
 {
     InitializeQuestGiverDatabase();
 }
@@ -1211,7 +1205,7 @@ bool QuestPickup::ShouldMoveToNextZone(Player* bot)
 }
 
 // Get bot pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
+QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 {
     auto it = _botMetrics.find(botGuid);
     if (it != _botMetrics.end())
@@ -1221,7 +1215,7 @@ QuestPickup::QuestPickupMetrics QuestPickup::GetBotPickupMetrics(uint32 botGuid)
 }
 
 // Get global pickup metrics
-QuestPickup::QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
+QuestPickupMetrics QuestPickup::GetGlobalPickupMetrics()
 {
     return _globalMetrics;  // Copy constructor will be used
 }
