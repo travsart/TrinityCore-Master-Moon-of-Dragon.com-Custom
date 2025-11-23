@@ -36,14 +36,14 @@ enum class RoleCapability : uint8
 
 enum class RoleAssignmentStrategy : uint8
 {
-    OPTIMAL         = 0,  // Best possible role distribution
-    BALANCED        = 1,  // Even distribution of capabilities
-    FLEXIBLE        = 2,  // Adapt to group needs
-    STRICT          = 3,  // Only assign primary roles
-    HYBRID_FRIENDLY = 4,  // Favor hybrid classes
-    DUNGEON_FOCUSED = 5,  // Optimize for dungeon content
-    RAID_FOCUSED    = 6,  // Optimize for raid content
-    PVP_FOCUSED     = 7   // Optimize for PvP content
+    OPTIMAL_ASSIGNMENT         = 0,  // Best possible role distribution
+    BALANCED_ASSIGNMENT        = 1,  // Even distribution of capabilities
+    FLEXIBLE_ASSIGNMENT        = 2,  // Adapt to group needs
+    STRICT_PRIMARY_ONLY        = 3,  // Only assign primary roles
+    HYBRID_CLASS_FRIENDLY      = 4,  // Favor hybrid classes
+    DUNGEON_CONTENT_FOCUSED    = 5,  // Optimize for dungeon content
+    RAID_CONTENT_FOCUSED       = 6,  // Optimize for raid content
+    PVP_CONTENT_FOCUSED        = 7   // Optimize for PvP content
 };
 
 } // namespace Playerbot

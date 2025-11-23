@@ -56,28 +56,28 @@ bool RoleAssignment::AssignRoles(Group* group, RoleAssignmentStrategy strategy)
     // Execute assignment strategy
     switch (strategy)
     {
-        case RoleAssignmentStrategy::OPTIMAL:
+        case RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT:
             ExecuteOptimalStrategy(group);
             break;
-        case RoleAssignmentStrategy::BALANCED:
+        case RoleAssignmentStrategy::BALANCED_ASSIGNMENT:
             ExecuteBalancedStrategy(group);
             break;
-        case RoleAssignmentStrategy::FLEXIBLE:
+        case RoleAssignmentStrategy::FLEXIBLE_ASSIGNMENT:
             ExecuteFlexibleStrategy(group);
             break;
-        case RoleAssignmentStrategy::STRICT:
+        case RoleAssignmentStrategy::STRICT_PRIMARY_ONLY:
             ExecuteStrictStrategy(group);
             break;
-        case RoleAssignmentStrategy::HYBRID_FRIENDLY:
+        case RoleAssignmentStrategy::HYBRID_CLASS_FRIENDLY:
             ExecuteHybridStrategy(group);
             break;
-        case RoleAssignmentStrategy::DUNGEON_FOCUSED:
+        case RoleAssignmentStrategy::DUNGEON_CONTENT_FOCUSED:
             ExecuteDungeonStrategy(group);
             break;
-        case RoleAssignmentStrategy::RAID_FOCUSED:
+        case RoleAssignmentStrategy::RAID_CONTENT_FOCUSED:
             ExecuteRaidStrategy(group);
             break;
-        case RoleAssignmentStrategy::PVP_FOCUSED:
+        case RoleAssignmentStrategy::PVP_CONTENT_FOCUSED:
             ExecutePvPStrategy(group);
             break;
         default:
@@ -521,7 +521,7 @@ void RoleAssignment::BuildPlayerProfile(PlayerRoleProfile& profile, Player* play
     profile.lastRoleUpdate = GameTime::GetGameTimeMS();
 
     // Set default preferences based on class
-    profile.preferredRole = DetermineOptimalRole(player, nullptr, RoleAssignmentStrategy::OPTIMAL);
+    profile.preferredRole = DetermineOptimalRole(player, nullptr, RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT);
     profile.isFlexible = true;
     profile.overallRating = 5.0f;
 
@@ -959,7 +959,7 @@ GroupRole RoleAssignment::DetermineOptimalRole( Group* group, RoleAssignmentStra
     // Apply strategy-specific filtering
     switch (strategy)
     {
-        case RoleAssignmentStrategy::STRICT:
+        case RoleAssignmentStrategy::STRICT_PRIMARY_ONLY:
             // Only consider primary roles
             for (const auto& score : scores)
             {
@@ -1028,7 +1028,7 @@ void RoleAssignment::ExecuteOptimalStrategy(Group* group)
     {
         if (Player* member = itr.GetSource())
         {
-            GroupRole optimalRole = DetermineOptimalRole(member, group, RoleAssignmentStrategy::OPTIMAL);
+            GroupRole optimalRole = DetermineOptimalRole(member, group, RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT);
             assignments.emplace_back(member, optimalRole);
         }
     }
