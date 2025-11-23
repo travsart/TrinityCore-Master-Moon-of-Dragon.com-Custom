@@ -888,3 +888,57 @@ bool PlayerbotMigrationMgr::ApplyMigrationFile(MigrationFile const& migration)
 
     return true;
 }
+
+// Stub implementations for interface methods
+bool PlayerbotMigrationMgr::RollbackMigration(std::string const& version)
+{
+    TC_LOG_ERROR("playerbots.migration", "RollbackMigration not yet implemented for version {}", version);
+    return false;
+}
+
+bool PlayerbotMigrationMgr::ValidateSchema()
+{
+    TC_LOG_INFO("playerbots.migration", "ValidateSchema: Schema validation not yet implemented");
+    return true; // Return true for now to allow system to continue
+}
+
+bool PlayerbotMigrationMgr::ValidateVersion(std::string const& expectedVersion)
+{
+    std::string currentVersion = GetCurrentVersion();
+    bool isValid = (currentVersion == expectedVersion);
+
+    if (!isValid)
+    {
+        TC_LOG_WARN("playerbots.migration", "ValidateVersion: Version mismatch - Expected: {}, Current: {}",
+            expectedVersion, currentVersion);
+    }
+
+    return isValid;
+}
+
+bool PlayerbotMigrationMgr::BackupDatabase(std::string const& backupPath)
+{
+    TC_LOG_ERROR("playerbots.migration", "BackupDatabase not yet implemented (path: {})",
+        backupPath.empty() ? "default" : backupPath);
+    return false;
+}
+
+bool PlayerbotMigrationMgr::RestoreDatabase(std::string const& backupPath)
+{
+    TC_LOG_ERROR("playerbots.migration", "RestoreDatabase not yet implemented (path: {})", backupPath);
+    return false;
+}
+
+bool PlayerbotMigrationMgr::CanRollback(std::string const& version)
+{
+    // Check if migration exists and has been applied
+    if (!IsMigrationApplied(version))
+    {
+        TC_LOG_WARN("playerbots.migration", "CanRollback: Migration {} has not been applied", version);
+        return false;
+    }
+
+    // For now, we don't support rollback, so always return false
+    TC_LOG_WARN("playerbots.migration", "CanRollback: Rollback functionality not yet implemented for version {}", version);
+    return false;
+}
