@@ -1385,13 +1385,13 @@ target_include_directories(playerbot
         ${CMAKE_CURRENT_SOURCE_DIR}/Packets
         ${CMAKE_SOURCE_DIR}/src/modules/Common
         ${MYSQL_INCLUDE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle
+        ${PLAYERBOT_INCLUDE_DIRS}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Account
         ${CMAKE_CURRENT_SOURCE_DIR}/Character
-        ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle
         ${CMAKE_CURRENT_SOURCE_DIR}/Scripts
         ${CMAKE_CURRENT_BINARY_DIR}
-        ${PLAYERBOT_INCLUDE_DIRS}
 )
 
 # Link against TrinityCore and enterprise dependencies
