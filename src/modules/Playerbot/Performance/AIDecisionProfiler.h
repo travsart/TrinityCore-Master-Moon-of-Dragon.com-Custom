@@ -64,7 +64,7 @@ enum class DecisionOutcome : uint8
     FAILURE         = 2,  // Decision failed to execute
     TIMEOUT         = 3,  // Decision timed out
     CANCELLED       = 4,  // Decision was cancelled
-    ERROR           = 5   // Error occurred during decision
+    ERROR_OUTCOME   = 5   // Error occurred during decision
 };
 
 // Individual AI decision record

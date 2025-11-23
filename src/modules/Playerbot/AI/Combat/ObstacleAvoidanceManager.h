@@ -72,7 +72,7 @@ enum class CollisionType : uint8
 {
     NONE = 0,
     IMMINENT = 1,           // Collision in <1 second
-    NEAR = 2,               // Collision in 1-3 seconds
+    NEAR_COLLISION = 2,     // Collision in 1-3 seconds
     DISTANT = 3,            // Collision in 3-5 seconds
     POTENTIAL = 4           // Potential future collision
 };

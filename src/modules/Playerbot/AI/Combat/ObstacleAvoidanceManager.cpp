@@ -411,7 +411,7 @@ CollisionPrediction ObstacleAvoidanceManager::PredictCollisionWithObstacle(const
             if (timeToCollision <= 1.0f)
                 prediction.collisionType = CollisionType::IMMINENT;
             else if (timeToCollision <= 3.0f)
-                prediction.collisionType = CollisionType::NEAR;
+                prediction.collisionType = CollisionType::NEAR_COLLISION;
             else
                 prediction.collisionType = CollisionType::DISTANT;
 

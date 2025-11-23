@@ -103,7 +103,7 @@ public:
     RoleAssignment& operator=(RoleAssignment const&) = delete;
 
     // Core role assignment
-    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL) override;
+    bool AssignRoles(Group* group, RoleAssignmentStrategy strategy = RoleAssignmentStrategy::OPTIMAL_ASSIGNMENT) override;
     bool AssignRole(GroupRole role, Group* group) override;
     bool SwapRoles(uint32 player1Guid, uint32 player2Guid, Group* group) override;
     void OptimizeRoleDistribution(Group* group) override;

@@ -211,7 +211,7 @@ public:
             case ThreatRole::HEALER:
             {
                 // Healer: Use Fade/threat reduction when targeted
-                auto threats = threatMgr->GetThreatTargetsByPriority(ThreatPriority::HIGH);
+                auto threats = threatMgr->GetThreatTargetsByPriority(ThreatPriority::HIGH_PRIORITY);
                 for (Unit* threat : threats)
                 {
                     if (threat->GetVictim() == bot)

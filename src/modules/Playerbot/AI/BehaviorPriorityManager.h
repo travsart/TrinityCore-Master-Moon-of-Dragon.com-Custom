@@ -42,7 +42,7 @@ class BotAI;
 enum class BehaviorPriority : uint8_t {
     // Critical states (non-operational)
     DEAD = 0,
-    ERROR = 5,
+    ERROR_PRIORITY = 5,
 
     // Operational priorities
     COMBAT = 100,        // Highest - exclusive control during combat

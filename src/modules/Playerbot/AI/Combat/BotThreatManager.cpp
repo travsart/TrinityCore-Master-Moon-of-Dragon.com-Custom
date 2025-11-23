@@ -284,7 +284,7 @@ ThreatAnalysis BotThreatManager::AnalyzeThreatSituation()
         analysis.totalThreat += threatTarget.aggregatedThreat;
         analysis.activeTargets++;
 
-        if (threatTarget.info.priority == ThreatPriority::CRITICAL)
+        if (threatTarget.info.priority == ThreatPriority::CRITICAL_PRIORITY)
         {
             analysis.criticalTargets++;
             analysis.emergencyResponse = true;
@@ -365,7 +365,7 @@ void BotThreatManager::SetTargetPriority(Unit* target, ThreatPriority priority)
 ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
 {
     if (!target)
-        return ThreatPriority::IGNORE;
+        return ThreatPriority::IGNORE_PRIORITY;
 
     ObjectGuid targetGuid = target->GetGUID();
     // No lock needed - threat data is per-bot instance data
@@ -374,7 +374,7 @@ ThreatPriority BotThreatManager::GetTargetPriority(Unit* target) const
     if (it != _threatMap.end())
         return it->second.priority;
 
-    return ThreatPriority::MODERATE;
+    return ThreatPriority::MODERATE_PRIORITY;
 }
 
 void BotThreatManager::UpdateTargetPriorities()
@@ -444,7 +444,7 @@ void BotThreatManager::UpdateRoleBasedThreat()
                 Unit* target = ObjectAccessor::GetUnit(*_bot, guid);
                 if (target && target->GetVictim() == _bot)
                 {
-                    info.priority = ThreatPriority::CRITICAL;
+                    info.priority = ThreatPriority::CRITICAL_PRIORITY;
                 }
             }
             break;
@@ -581,7 +581,7 @@ bool BotThreatManager::IsInThreatEmergency() const
 
 ::std::vector<Unit*> BotThreatManager::GetEmergencyTargets()
 {
-    return GetThreatTargetsByPriority(ThreatPriority::CRITICAL);
+    return GetThreatTargetsByPriority(ThreatPriority::CRITICAL_PRIORITY);
 }
 
 void BotThreatManager::HandleThreatEmergency()
@@ -744,7 +744,7 @@ void BotThreatManager::AnalyzeTargetThreat(Unit* target, ThreatTarget& threatTar
     threatTarget.averageThreatPercent = threatTarget.info.threatPercent;
     threatTarget.botsInCombat = target->IsInCombat() ? 1 : 0;
     threatTarget.requiresAttention =
-        (threatTarget.info.priority == ThreatPriority::CRITICAL) ||
+        (threatTarget.info.priority == ThreatPriority::CRITICAL_PRIORITY) ||
         (threatTarget.info.threatPercent > EMERGENCY_THREAT_THRESHOLD);
 }
 
@@ -754,24 +754,24 @@ void BotThreatManager::ClassifyThreatPriority(ThreatTarget& threatTarget)
     if (!target)
         return;
 
-    ThreatPriority priority = ThreatPriority::MODERATE;
+    ThreatPriority priority = ThreatPriority::MODERATE_PRIORITY;
 
     // Classify based on creature type and abilities
     if (target->GetVictim() == _bot)
-        priority = ThreatPriority::HIGH;
+        priority = ThreatPriority::HIGH_PRIORITY;
 
     if (target->HasUnitState(UNIT_STATE_CASTING))
-        priority = ThreatPriority::HIGH;
+        priority = ThreatPriority::HIGH_PRIORITY;
 
     if (target->GetHealthPct() < 20.0f)
-        priority = ThreatPriority::HIGH;
+        priority = ThreatPriority::HIGH_PRIORITY;
 
     // Emergency situations
     if (threatTarget.info.threatPercent > EMERGENCY_THREAT_THRESHOLD)
-        priority = ThreatPriority::CRITICAL;
+        priority = ThreatPriority::CRITICAL_PRIORITY;
 
     if (_bot->GetHealthPct() < 30.0f && target->GetVictim() == _bot)
-        priority = ThreatPriority::CRITICAL;
+        priority = ThreatPriority::CRITICAL_PRIORITY;
 
     threatTarget.info.priority = priority;
 }
@@ -936,19 +936,19 @@ float ThreatCalculator::CalculateSpellThreat(uint32 spellId, float modifier)
 ThreatPriority ThreatCalculator::DetermineThreatPriority(Unit* target)
 {
     if (!target)
-        return ThreatPriority::IGNORE;
+        return ThreatPriority::IGNORE_PRIORITY;
 
     // Base priority on creature type and abilities
     if (target->GetCreatureType() == CREATURE_TYPE_HUMANOID)
     {
         if (target->HasUnitState(UNIT_STATE_CASTING))
-            return ThreatPriority::HIGH;
+            return ThreatPriority::HIGH_PRIORITY;
     }
 
     if (target->GetHealthPct() < 20.0f)
-        return ThreatPriority::HIGH;
+        return ThreatPriority::HIGH_PRIORITY;
 
-    return ThreatPriority::MODERATE;
+    return ThreatPriority::MODERATE_PRIORITY;
 }
 
 float ThreatCalculator::GetClassThreatModifier(uint8 classId)
