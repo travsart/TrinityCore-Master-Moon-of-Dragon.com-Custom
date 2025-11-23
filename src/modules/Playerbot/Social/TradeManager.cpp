@@ -105,7 +105,7 @@ namespace Playerbot
     // TradeManager implementation
     TradeManager::TradeManager(Player* bot, BotAI* ai) :
         BehaviorManager(bot, ai, 5000, "TradeManager"),  // 5 second update interval
-        m_securityLevel(TradeSecurity::STANDARD),
+        m_securityLevel(TradeSecurity::SECURITY_STANDARD),
         m_autoAcceptGroup(true),
         m_autoAcceptGuild(false),
         m_autoAcceptWhitelist(true),
@@ -344,7 +344,7 @@ namespace Playerbot
             return false;
 
         // Validate trade before accepting
-    if (m_securityLevel >= TradeSecurity::BASIC)
+    if (m_securityLevel >= TradeSecurity::SECURITY_BASIC)
         {
 
             if (!ValidateTradeItems())
@@ -373,7 +373,7 @@ namespace Playerbot
             }
         }
         // Check for scam (skip for owner trades)
-    if (m_securityLevel >= TradeSecurity::STANDARD)
+    if (m_securityLevel >= TradeSecurity::SECURITY_STANDARD)
         {
             // Don't check scam for trades with owner
 
@@ -408,7 +408,7 @@ namespace Playerbot
         }
 
         // Check fairness
-    if (m_securityLevel >= TradeSecurity::STRICT)
+    if (m_securityLevel >= TradeSecurity::SECURITY_STRICT)
         {
 
             if (!EvaluateTradeFairness())
@@ -943,7 +943,7 @@ namespace Playerbot
         }
 
         // Check permissions based on security level
-    if (m_securityLevel >= TradeSecurity::BASIC)
+    if (m_securityLevel >= TradeSecurity::SECURITY_BASIC)
         {
             // Must be in same group or guild
 
@@ -975,7 +975,7 @@ namespace Playerbot
             return true;
 
         // Check whitelist requirement
-    if (m_securityLevel >= TradeSecurity::STRICT)
+    if (m_securityLevel >= TradeSecurity::SECURITY_STRICT)
         {
 
             if (!IsWhitelisted(target->GetGUID()))
@@ -1079,7 +1079,7 @@ namespace Playerbot
 
     bool TradeManager::EvaluateTradeFairness() const
     {
-        if (m_securityLevel == TradeSecurity::NONE)
+        if (m_securityLevel == TradeSecurity::SECURITY_NONE)
 
             return true;
 
@@ -1112,7 +1112,7 @@ namespace Playerbot
 
     bool TradeManager::IsTradeScam() const
     {
-        if (m_securityLevel < TradeSecurity::STANDARD)
+        if (m_securityLevel < TradeSecurity::SECURITY_STANDARD)
 
             return false;
 

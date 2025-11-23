@@ -50,10 +50,10 @@ namespace Playerbot
     // Trade security levels
     enum class TradeSecurity : uint8
     {
-        NONE            = 0,    // No security checks
-        BASIC           = 1,    // Basic ownership and group checks
-        STANDARD        = 2,    // Standard value comparison and whitelist
-        STRICT          = 3     // Strict mode with all validations
+        SECURITY_NONE     = 0,    // No security checks
+        SECURITY_BASIC    = 1,    // Basic ownership and group checks
+        SECURITY_STANDARD = 2,    // Standard value comparison and whitelist
+        SECURITY_STRICT   = 3     // Strict mode with all validations
     };
 
     // Trade item slot information
@@ -90,7 +90,7 @@ namespace Playerbot
 
         TradeManagerSession() : state(TradeState::IDLE), offeredGold(0), receivedGold(0),
             updateCount(0), isAccepted(false), traderAccepted(false),
-            securityLevel(TradeSecurity::STANDARD) {}
+            securityLevel(TradeSecurity::SECURITY_STANDARD) {}
 
         void Reset();
         uint64 GetTotalOfferedValue() const;
