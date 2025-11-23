@@ -31,11 +31,11 @@ namespace Playerbot
 // Threat priority levels
 enum class ThreatPriority : uint8
 {
-    CRITICAL = 0,    // Immediate threat response needed (healers under attack, etc.)
-    HIGH = 1,        // High priority threat target (casters, high-damage DPS)
-    MODERATE = 2,    // Normal threat management (standard DPS, melee)
-    LOW = 3,         // Low priority or controlled (CC'd targets, low threat)
-    IGNORE = 4       // Targets to ignore (friendly, neutral, etc.)
+    CRITICAL_PRIORITY = 0,    // Immediate threat response needed (healers under attack, etc.)
+    HIGH_PRIORITY = 1,        // High priority threat target (casters, high-damage DPS)
+    MODERATE_PRIORITY = 2,    // Normal threat management (standard DPS, melee)
+    LOW_PRIORITY = 3,         // Low priority or controlled (CC'd targets, low threat)
+    IGNORE_PRIORITY = 4       // Targets to ignore (friendly, neutral, etc.)
 };
 
 // Threat role assignments
@@ -81,14 +81,14 @@ struct ThreatInfo
     uint32 spellsInterrupted;
     uint32 abilitiesUsed;
 
-    ThreatInfo() : threatValue(0.0f), threatPercent(0.0f), priority(ThreatPriority::MODERATE),
+    ThreatInfo() : threatValue(0.0f), threatPercent(0.0f), priority(ThreatPriority::MODERATE_PRIORITY),
                    type(ThreatType::DAMAGE), lastUpdate(0), isActive(false), isInCombat(false),
                    distance(0.0f), damageDealt(0.0f), healingDone(0.0f), threatGenerated(0.0f),
                    threatReduced(0.0f), spellsInterrupted(0), abilitiesUsed(0) {}
 
     ThreatInfo(ObjectGuid target, ObjectGuid bot, float threat)
         : targetGuid(target), botGuid(bot), threatValue(threat), threatPercent(0.0f),
-          priority(ThreatPriority::MODERATE), type(ThreatType::DAMAGE), lastUpdate(GameTime::GetGameTimeMS()),
+          priority(ThreatPriority::MODERATE_PRIORITY), type(ThreatType::DAMAGE), lastUpdate(GameTime::GetGameTimeMS()),
           isActive(true), isInCombat(false), distance(0.0f), damageDealt(0.0f), healingDone(0.0f),
           threatGenerated(0.0f), threatReduced(0.0f), spellsInterrupted(0), abilitiesUsed(0) {}
 };
