@@ -1404,10 +1404,11 @@ target_link_libraries(playerbot
         common
         # Shared module libraries
         modules-common
-    PRIVATE
-        # Enterprise dependencies
-        ${PLAYERBOT_LIBRARIES}
+        # Enterprise dependencies (PUBLIC because BotSpawner.h uses TBB headers)
         playerbot-dependencies
+    PRIVATE
+        # Additional libraries
+        ${PLAYERBOT_LIBRARIES}
         # MySQL libraries for database connection
         ${MYSQL_LIBRARY}
 )
