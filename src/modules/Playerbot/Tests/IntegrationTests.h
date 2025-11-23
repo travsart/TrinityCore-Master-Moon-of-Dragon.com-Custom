@@ -55,7 +55,7 @@ enum class TestResult : uint8
     FAILED          = 2,
     SKIPPED         = 3,
     TIMEOUT         = 4,
-    ERROR           = 5
+    ERROR_RESULT    = 5
 };
 
 struct TestCase

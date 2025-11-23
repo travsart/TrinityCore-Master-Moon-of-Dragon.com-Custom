@@ -44,7 +44,7 @@ namespace Playerbot
         ACCEPTING       = 4,    // Accept button pressed, waiting for completion
         COMPLETED       = 5,    // Trade completed successfully
         CANCELLED       = 6,    // Trade was cancelled
-        ERROR           = 7     // Trade encountered an error
+        ERROR_STATE     = 7     // Trade encountered an error
     };
 
     // Trade security levels

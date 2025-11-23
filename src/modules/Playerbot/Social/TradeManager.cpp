@@ -1813,7 +1813,7 @@ namespace Playerbot
         m_statistics.failedTrades++;
 
         LogTradeAction("TRADE_ERROR", error);
-        SetTradeState(TradeState::ERROR);
+        SetTradeState(TradeState::ERROR_STATE);
 
         CancelTrade(error);
     }
