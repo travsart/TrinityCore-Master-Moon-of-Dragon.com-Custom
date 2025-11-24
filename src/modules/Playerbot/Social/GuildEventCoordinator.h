@@ -208,6 +208,8 @@ private:
         uint32 optimalEventDuration;
         float averageAttendanceRate;
 
+        GuildEventScheduler() : guildId(0), optimalEventDuration(7200000), averageAttendanceRate(0.75f) {}
+
         GuildEventScheduler(uint32 gId) : guildId(gId), optimalEventDuration(7200000)
             , averageAttendanceRate(0.75f) {}
     };

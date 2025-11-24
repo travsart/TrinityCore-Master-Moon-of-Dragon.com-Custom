@@ -1147,4 +1147,220 @@ std::vector<Position> FormationManager::CalculateRaidFormation(const Position& l
     return positions;
 }
 
+void FormationManager::CalculateMovementTargets()
+{
+    if (!_isLeader || !_leader || _members.empty())
+        return;
+
+    // Calculate target positions for each member based on current formation
+    Position leaderPos = _leader->GetPosition();
+    float orientation = _formationOrientation;
+
+    std::vector<Position> targetPositions;
+    switch (_currentFormation)
+    {
+        case FormationType::LINE:
+            targetPositions = CalculateLineFormation(leaderPos, orientation);
+            break;
+        case FormationType::WEDGE:
+            targetPositions = CalculateWedgeFormation(leaderPos, orientation);
+            break;
+        case FormationType::COLUMN:
+            targetPositions = CalculateColumnFormation(leaderPos, orientation);
+            break;
+        case FormationType::DIAMOND:
+            targetPositions = CalculateDiamondFormation(leaderPos, orientation);
+            break;
+        case FormationType::CIRCLE:
+            targetPositions = CalculateCircleFormation(leaderPos);
+            break;
+        case FormationType::SPREAD:
+        case FormationType::BOX:
+            targetPositions = CalculateBoxFormation(leaderPos, orientation);
+            break;
+        case FormationType::DUNGEON:
+            targetPositions = CalculateDungeonFormation(leaderPos, orientation);
+            break;
+        case FormationType::RAID:
+            targetPositions = CalculateRaidFormation(leaderPos, orientation);
+            break;
+        default:
+            return;
+    }
+
+    // Update member target positions
+    for (size_t i = 0; i < _members.size() && i < targetPositions.size(); ++i)
+    {
+        _members[i].targetPosition = targetPositions[i];
+    }
+}
+
+void FormationManager::IssueMovementCommands()
+{
+    if (!_bot || _members.empty())
+        return;
+
+    // Issue movement commands to members to reach their target positions
+    for (auto& member : _members)
+    {
+        if (!member.player || !member.player->IsInWorld())
+            continue;
+
+        // Check if member needs to move to target position
+        float distanceToTarget = member.player->GetExactDist(&member.targetPosition);
+        if (distanceToTarget > _formationSpacing * 0.5f)
+        {
+            // Member is too far from target position, issue movement command
+            member.player->GetMotionMaster()->MovePoint(0, member.targetPosition);
+            member.isMoving = true;
+            member.isInPosition = false;
+        }
+        else
+        {
+            member.isMoving = false;
+            member.isInPosition = true;
+        }
+    }
+}
+
+void FormationManager::AdjustForTerrain()
+{
+    if (!_bot || !_bot->IsInWorld())
+        return;
+
+    Map* map = _bot->GetMap();
+    if (!map)
+        return;
+
+    // Adjust member positions based on terrain height and obstacles
+    for (auto& member : _members)
+    {
+        if (!member.player || !member.player->IsInWorld())
+            continue;
+
+        // Get terrain height at target position
+        float targetZ = map->GetHeight(_bot->GetPhaseShift(),
+            member.targetPosition.GetPositionX(),
+            member.targetPosition.GetPositionY(),
+            member.targetPosition.GetPositionZ() + 2.0f,
+            true,
+            50.0f);
+
+        // Adjust Z coordinate to terrain height
+        if (targetZ > INVALID_HEIGHT)
+        {
+            member.targetPosition.m_positionZ = targetZ;
+        }
+
+        // Check for water and adjust if needed
+        if (map->IsInWater(_bot->GetPhaseShift(),
+            member.targetPosition.GetPositionX(),
+            member.targetPosition.GetPositionY(),
+            member.targetPosition.GetPositionZ()))
+        {
+            // If in water, try to find nearby land position
+            float landZ = map->GetHeight(_bot->GetPhaseShift(),
+                member.targetPosition.GetPositionX(),
+                member.targetPosition.GetPositionY(),
+                member.targetPosition.GetPositionZ() + 5.0f,
+                false);
+
+            if (landZ > INVALID_HEIGHT && landZ > member.targetPosition.GetPositionZ())
+            {
+                member.targetPosition.m_positionZ = landZ;
+            }
+        }
+    }
+}
+
+void FormationManager::AdjustForGroupSize()
+{
+    if (_members.empty())
+        return;
+
+    // Adjust formation spacing based on group size
+    uint32 memberCount = static_cast<uint32>(_members.size());
+
+    if (memberCount <= 2)
+    {
+        // Small group: tighter formation
+        _formationSpacing = DEFAULT_FORMATION_SPACING * 0.8f;
+    }
+    else if (memberCount <= 5)
+    {
+        // Normal dungeon group: standard spacing
+        _formationSpacing = DEFAULT_FORMATION_SPACING;
+    }
+    else if (memberCount <= 10)
+    {
+        // Large group: wider spacing
+        _formationSpacing = DEFAULT_FORMATION_SPACING * 1.2f;
+    }
+    else
+    {
+        // Raid group: much wider spacing
+        _formationSpacing = DEFAULT_FORMATION_SPACING * 1.5f;
+    }
+
+    // Adjust cohesion radius proportionally
+    _cohesionRadius = _formationSpacing * 3.0f;
+}
+
+void FormationManager::MaintainFormationDuringMovement()
+{
+    if (!_isLeader || !_leader || _members.empty())
+        return;
+
+    // Check if leader is moving
+    if (!_leader->isMoving())
+    {
+        _movementState = FormationMovementState::STATIONARY;
+        return;
+    }
+
+    _movementState = FormationMovementState::MOVING;
+
+    // Recalculate formation orientation based on leader's movement direction
+    float leaderOrientation = _leader->GetOrientation();
+    if (std::abs(_formationOrientation - leaderOrientation) > 0.1f)
+    {
+        _formationOrientation = leaderOrientation;
+        CalculateMovementTargets();
+    }
+
+    // Check formation integrity during movement
+    uint32 membersOutOfPosition = 0;
+    for (const auto& member : _members)
+    {
+        if (!member.player || !member.player->IsInWorld())
+            continue;
+
+        float distanceToLeader = member.player->GetExactDist(_leader);
+        if (distanceToLeader > _cohesionRadius)
+        {
+            ++membersOutOfPosition;
+        }
+    }
+
+    // If too many members are out of position, trigger reformation
+    float outOfPositionRatio = static_cast<float>(membersOutOfPosition) / static_cast<float>(_members.size());
+    if (outOfPositionRatio > _reformationThreshold)
+    {
+        _movementState = FormationMovementState::REFORMING;
+        _currentIntegrity = FormationIntegrity::BROKEN;
+        _lastReformation = GameTime::GetGameTimeMS();
+
+        // Issue new movement commands to bring members back
+        IssueMovementCommands();
+    }
+    else if (outOfPositionRatio > (_reformationThreshold * 0.5f))
+    {
+        _currentIntegrity = FormationIntegrity::ACCEPTABLE;
+    }
+    else
+    {
+        _currentIntegrity = FormationIntegrity::GOOD;
+    }
+}
+
 } // namespace Playerbot

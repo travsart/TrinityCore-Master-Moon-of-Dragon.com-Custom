@@ -1439,4 +1439,642 @@ void QuestTurnIn::HandleInvalidQuestState(Player* bot, uint32 questId)
     }
 }
 
+/**
+ * @brief Optimize turn-in sequence for efficient processing
+ * @param bot Bot player
+ * @param turnIns Vector of turn-in data to optimize
+ */
+void QuestTurnIn::OptimizeTurnInSequence(Player* bot, std::vector<QuestTurnInData>& turnIns)
+{
+    if (!bot || turnIns.empty())
+        return;
+
+    // Sort by priority (higher first), then by estimated travel time (lower first)
+    std::sort(turnIns.begin(), turnIns.end(),
+        [](const QuestTurnInData& a, const QuestTurnInData& b)
+        {
+            if (a.turnInPriority != b.turnInPriority)
+                return a.turnInPriority > b.turnInPriority;
+            return a.estimatedTravelTime < b.estimatedTravelTime;
+        });
+
+    // Group by quest giver location to minimize travel
+    std::unordered_map<uint32, std::vector<size_t>> questGiverGroups;
+    for (size_t i = 0; i < turnIns.size(); ++i)
+    {
+        questGiverGroups[turnIns[i].questGiverGuid].push_back(i);
+    }
+
+    // Reorder to process all quests from same NPC together
+    std::vector<QuestTurnInData> optimized;
+    std::vector<bool> processed(turnIns.size(), false);
+    Position currentPos = bot->GetPosition();
+
+    while (optimized.size() < turnIns.size())
+    {
+        float minDistance = std::numeric_limits<float>::max();
+        uint32 nearestGiver = 0;
+
+        // Find nearest unprocessed quest giver
+        for (const auto& [giverGuid, indices] : questGiverGroups)
+        {
+            if (processed[indices[0]])
+                continue;
+
+            auto locIt = _questGiverLocations.find(giverGuid);
+            if (locIt != _questGiverLocations.end())
+            {
+                float distance = currentPos.GetExactDist(&locIt->second);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    nearestGiver = giverGuid;
+                }
+            }
+        }
+
+        // Add all quests from nearest giver
+        if (nearestGiver != 0)
+        {
+            for (size_t idx : questGiverGroups[nearestGiver])
+            {
+                if (!processed[idx])
+                {
+                    optimized.push_back(turnIns[idx]);
+                    processed[idx] = true;
+                }
+            }
+
+            auto locIt = _questGiverLocations.find(nearestGiver);
+            if (locIt != _questGiverLocations.end())
+                currentPos = locIt->second;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Add any remaining unprocessed quests
+    for (size_t i = 0; i < turnIns.size(); ++i)
+    {
+        if (!processed[i])
+            optimized.push_back(turnIns[i]);
+    }
+
+    turnIns = optimized;
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::OptimizeTurnInSequence - Optimized %zu turn-ins for bot %s",
+        turnIns.size(), bot->GetName().c_str());
+}
+
+/**
+ * @brief Minimize travel distance for quest turn-ins
+ * @param bot Bot player
+ */
+void QuestTurnIn::MinimizeTurnInTravel(Player* bot)
+{
+    if (!bot)
+        return;
+
+    uint32 botGuid = bot->GetGUID().GetCounter();
+    auto it = _botTurnInQueues.find(botGuid);
+    if (it == _botTurnInQueues.end() || it->second.empty())
+        return;
+
+    // Optimize the turn-in sequence
+    OptimizeTurnInSequence(bot, it->second);
+
+    // Calculate total estimated travel distance
+    float totalDistance = 0.0f;
+    Position currentPos = bot->GetPosition();
+
+    for (const auto& turnInData : it->second)
+    {
+        auto locIt = _questGiverLocations.find(turnInData.questGiverGuid);
+        if (locIt != _questGiverLocations.end())
+        {
+            float distance = currentPos.GetExactDist(&locIt->second);
+            totalDistance += distance;
+            currentPos = locIt->second;
+        }
+    }
+
+    _botMetrics[botGuid].totalTravelDistance += static_cast<uint32>(totalDistance);
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::MinimizeTurnInTravel - Bot %s total travel distance: %.2f yards",
+        bot->GetName().c_str(), totalDistance);
+}
+
+/**
+ * @brief Handle conflicts when multiple group members want to turn in same quest
+ * @param group Group pointer
+ * @param questId Quest ID
+ */
+void QuestTurnIn::HandleGroupTurnInConflicts(Group* group, uint32 questId)
+{
+    if (!group || !questId)
+        return;
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return;
+
+    std::vector<Player*> membersWithQuest;
+
+    // Gather all group members who have this quest completed
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        Player* member = itr.GetSource();
+        if (!member || !member->IsAlive())
+            continue;
+
+        if (IsQuestReadyForTurnIn(questId, member))
+            membersWithQuest.push_back(member);
+    }
+
+    if (membersWithQuest.empty())
+        return;
+
+    // Strategy: Turn in sequentially to avoid NPC dialog conflicts
+    // Prioritize by role: tank > healer > dps, then by proximity to quest giver
+    Position questGiverPos = GetQuestTurnInLocation(questId);
+
+    std::sort(membersWithQuest.begin(), membersWithQuest.end(),
+        [&questGiverPos](Player* a, Player* b)
+        {
+            float distA = a->GetDistance(questGiverPos);
+            float distB = b->GetDistance(questGiverPos);
+            return distA < distB;
+        });
+
+    // Schedule turn-ins with delays to prevent conflicts
+    uint32 delay = 0;
+    for (Player* member : membersWithQuest)
+    {
+        ScheduleQuestTurnIn(member, questId, delay);
+        delay += 2000; // 2 second delay between group members
+    }
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::HandleGroupTurnInConflicts - Scheduled %zu group turn-ins for quest %u",
+        membersWithQuest.size(), questId);
+}
+
+/**
+ * @brief Share turn-in progress with group members
+ * @param group Group pointer
+ */
+void QuestTurnIn::ShareTurnInProgress(Group* group)
+{
+    if (!group)
+        return;
+
+    std::unordered_map<uint32, std::vector<Player*>> questProgress;
+
+    // Gather completion status from all members
+    for (GroupReference const& itr : group->GetMembers())
+    {
+        Player* member = itr.GetSource();
+        if (!member || !member->IsAlive())
+            continue;
+
+        std::vector<uint32> completedQuests = GetCompletedQuests(member);
+        for (uint32 questId : completedQuests)
+        {
+            questProgress[questId].push_back(member);
+        }
+    }
+
+    // Log shared progress
+    for (const auto& [questId, members] : questProgress)
+    {
+        if (members.size() > 1)
+        {
+            TC_LOG_DEBUG("playerbot", "QuestTurnIn::ShareTurnInProgress - %zu group members ready to turn in quest %u",
+                members.size(), questId);
+
+            // Coordinate group turn-in for shared quests
+            SynchronizeGroupRewardSelection(group, questId);
+        }
+    }
+}
+
+/**
+ * @brief Confirm quest turn-in before executing
+ * @param bot Bot player
+ * @param questId Quest ID
+ */
+void QuestTurnIn::ConfirmQuestTurnIn(Player* bot, uint32 questId)
+{
+    if (!bot || !questId)
+        return;
+
+    // Validate quest is still ready for turn-in
+    if (!IsQuestReadyForTurnIn(questId, bot))
+    {
+        TC_LOG_WARN("playerbot", "QuestTurnIn::ConfirmQuestTurnIn - Quest %u no longer ready for turn-in by bot %s",
+            questId, bot->GetName().c_str());
+        HandleTurnInError(bot, questId, "Quest validation failed during confirmation");
+        return;
+    }
+
+    // Verify quest giver is accessible
+    if (!FindQuestTurnInNpc(bot, questId))
+    {
+        TC_LOG_WARN("playerbot", "QuestTurnIn::ConfirmQuestTurnIn - Quest giver not found for quest %u",
+            questId);
+        HandleTurnInError(bot, questId, "Quest giver not accessible");
+        return;
+    }
+
+    // Confirm inventory space for rewards
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (quest)
+    {
+        for (uint8 i = 0; i < QUEST_REWARD_ITEM_COUNT; ++i)
+        {
+            if (quest->RewardItemId[i])
+            {
+                ItemPosCountVec dest;
+                InventoryResult result = bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest,
+                    quest->RewardItemId[i], quest->RewardItemCount[i]);
+                if (result != EQUIP_ERR_OK)
+                {
+                    TC_LOG_WARN("playerbot", "QuestTurnIn::ConfirmQuestTurnIn - Insufficient inventory space for quest %u",
+                        questId);
+                    HandleTurnInError(bot, questId, "Insufficient inventory space for rewards");
+                    return;
+                }
+            }
+        }
+    }
+
+    // All confirmations passed, proceed with turn-in
+    ProcessQuestTurnIn(bot, questId);
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ConfirmQuestTurnIn - Quest %u confirmed for turn-in by bot %s",
+        questId, bot->GetName().c_str());
+}
+
+/**
+ * @brief Execute immediate turn-in strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteImmediateTurnInStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteImmediateTurnInStrategy - Bot %s has %zu completed quests",
+        bot->GetName().c_str(), completedQuests.size());
+
+    for (uint32 questId : completedQuests)
+    {
+        TurnInQuest(questId, bot);
+    }
+
+    _globalMetrics.turnInAttempts += completedQuests.size();
+    _botMetrics[bot->GetGUID().GetCounter()].turnInAttempts += completedQuests.size();
+}
+
+/**
+ * @brief Execute batch turn-in strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteBatchTurnInStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+
+    if (completedQuests.empty())
+        return;
+
+    uint32 botGuid = bot->GetGUID().GetCounter();
+    uint32 threshold = BATCH_TURNIN_THRESHOLD;
+
+    // Check if bot has custom threshold
+    auto& queue = _botTurnInQueues[botGuid];
+
+    // Only process if we have enough quests for a batch
+    if (completedQuests.size() >= threshold)
+    {
+        TurnInBatch batch = CreateTurnInBatch(bot, completedQuests);
+        ProcessBatchTurnIn(bot, batch);
+
+        TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteBatchTurnInStrategy - Bot %s processing batch of %zu quests",
+            bot->GetName().c_str(), completedQuests.size());
+    }
+    else
+    {
+        // Not enough for batch, add to queue
+        for (uint32 questId : completedQuests)
+        {
+            InitializeTurnInData(bot, questId);
+        }
+
+        TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteBatchTurnInStrategy - Bot %s queuing %zu quests (need %u for batch)",
+            bot->GetName().c_str(), completedQuests.size(), threshold);
+    }
+}
+
+/**
+ * @brief Execute optimal routing strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteOptimalRoutingStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+
+    if (completedQuests.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteOptimalRoutingStrategy - Bot %s planning optimal route for %zu quests",
+        bot->GetName().c_str(), completedQuests.size());
+
+    // Create optimized batch
+    TurnInBatch batch = CreateTurnInBatch(bot, completedQuests);
+
+    // Optimize travel route
+    std::vector<uint32> questGiverGuids;
+    for (uint32 questId : completedQuests)
+    {
+        auto it = _questToTurnInNpc.find(questId);
+        if (it != _questToTurnInNpc.end())
+            questGiverGuids.push_back(it->second);
+    }
+
+    if (!questGiverGuids.empty())
+    {
+        OptimizeTravelRoute(bot, questGiverGuids);
+
+        // Reorder quests based on optimized route
+        std::vector<uint32> orderedQuests;
+        for (uint32 giverGuid : questGiverGuids)
+        {
+            for (uint32 questId : completedQuests)
+            {
+                if (_questToTurnInNpc[questId] == giverGuid)
+                    orderedQuests.push_back(questId);
+            }
+        }
+
+        batch.questIds = orderedQuests;
+    }
+
+    batch.isOptimized = true;
+    ProcessBatchTurnIn(bot, batch);
+}
+
+/**
+ * @brief Execute group coordination strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteGroupCoordinationStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    Group* group = bot->GetGroup();
+    if (!group)
+    {
+        // No group, fall back to immediate turn-in
+        ExecuteImmediateTurnInStrategy(bot);
+        return;
+    }
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteGroupCoordinationStrategy - Bot %s coordinating with group",
+        bot->GetName().c_str());
+
+    // Share progress with group
+    ShareTurnInProgress(group);
+
+    // Coordinate turn-ins
+    CoordinateGroupTurnIns(group);
+}
+
+/**
+ * @brief Execute reward optimization strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteRewardOptimizationStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+
+    if (completedQuests.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteRewardOptimizationStrategy - Bot %s analyzing rewards for %zu quests",
+        bot->GetName().c_str(), completedQuests.size());
+
+    uint32 botGuid = bot->GetGUID().GetCounter();
+    RewardSelectionStrategy strategy = GetRewardSelectionStrategy(botGuid);
+
+    // Analyze all quest rewards before turn-in
+    for (uint32 questId : completedQuests)
+    {
+        InitializeTurnInData(bot, questId);
+
+        auto it = _botTurnInQueues.find(botGuid);
+        if (it != _botTurnInQueues.end())
+        {
+            auto turnInIt = std::find_if(it->second.begin(), it->second.end(),
+                [questId](const QuestTurnInData& data) { return data.questId == questId; });
+
+            if (turnInIt != it->second.end())
+            {
+                AnalyzeQuestRewards(*turnInIt, bot);
+                turnInIt->selectedRewardIndex = SelectOptimalReward(turnInIt->availableRewards, bot, strategy);
+            }
+        }
+    }
+
+    // Turn in quests with pre-selected optimal rewards
+    for (uint32 questId : completedQuests)
+    {
+        TurnInQuest(questId, bot);
+    }
+}
+
+/**
+ * @brief Execute chain continuation strategy
+ * @param bot Bot player
+ */
+void QuestTurnIn::ExecuteChainContinuationStrategy(Player* bot)
+{
+    if (!bot)
+        return;
+
+    std::vector<uint32> completedQuests = GetCompletedQuests(bot);
+
+    if (completedQuests.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::ExecuteChainContinuationStrategy - Bot %s processing %zu completed quests",
+        bot->GetName().c_str(), completedQuests.size());
+
+    // Prioritize chain quests
+    PrioritizeChainQuests(bot);
+
+    // Sort quests by priority (chain quests first)
+    std::vector<std::pair<uint32, uint32>> questPriorities;
+    for (uint32 questId : completedQuests)
+    {
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+        uint32 priority = 100;
+
+        if (quest && quest->GetNextQuestInChain())
+        {
+            priority += CHAIN_QUEST_PRIORITY_BONUS;
+        }
+
+        questPriorities.push_back({questId, priority});
+    }
+
+    // Sort by priority (highest first)
+    std::sort(questPriorities.begin(), questPriorities.end(),
+        [](const std::pair<uint32, uint32>& a, const std::pair<uint32, uint32>& b)
+        {
+            return a.second > b.second;
+        });
+
+    // Turn in quests in priority order
+    for (const auto& [questId, priority] : questPriorities)
+    {
+        TurnInQuest(questId, bot);
+
+        // Handle chain progression immediately after turn-in
+        HandleQuestChainProgression(bot, questId);
+    }
+}
+
+/**
+ * @brief Prioritize chain quests for turn-in
+ * @param bot Bot player
+ */
+void QuestTurnIn::PrioritizeChainQuests(Player* bot)
+{
+    if (!bot)
+        return;
+
+    uint32 botGuid = bot->GetGUID().GetCounter();
+    auto it = _botTurnInQueues.find(botGuid);
+    if (it == _botTurnInQueues.end() || it->second.empty())
+        return;
+
+    // Update priority for chain quests
+    for (auto& turnInData : it->second)
+    {
+        Quest const* quest = sObjectMgr->GetQuestTemplate(turnInData.questId);
+        if (quest && quest->GetNextQuestInChain())
+        {
+            turnInData.turnInPriority += CHAIN_QUEST_PRIORITY_BONUS;
+            turnInData.turnInReason = "Chain quest progression";
+
+            TC_LOG_DEBUG("playerbot", "QuestTurnIn::PrioritizeChainQuests - Increased priority for chain quest %u to %u",
+                turnInData.questId, turnInData.turnInPriority);
+        }
+    }
+
+    // Re-sort queue by priority
+    std::sort(it->second.begin(), it->second.end(),
+        [](const QuestTurnInData& a, const QuestTurnInData& b)
+        {
+            return a.turnInPriority > b.turnInPriority;
+        });
+}
+
+/**
+ * @brief Set batch turn-in threshold for bot
+ * @param botGuid Bot GUID
+ * @param threshold Minimum number of quests for batch turn-in
+ */
+void QuestTurnIn::SetBatchTurnInThreshold(uint32 botGuid, uint32 threshold)
+{
+    if (threshold == 0)
+        threshold = 1;
+
+    // Store in batch data
+    auto& batch = _scheduledBatches[botGuid];
+    batch.batchPriority = threshold;
+
+    TC_LOG_DEBUG("playerbot", "QuestTurnIn::SetBatchTurnInThreshold - Set batch threshold to %u for bot %u",
+        threshold, botGuid);
+}
+
+/**
+ * @brief Update bot turn-in processing
+ * @param bot Bot player
+ * @param diff Time difference in milliseconds
+ */
+void QuestTurnIn::UpdateBotTurnIns(Player* bot, uint32 diff)
+{
+    if (!bot)
+        return;
+
+    uint32 botGuid = bot->GetGUID().GetCounter();
+
+    // Update metrics last update time
+    _botMetrics[botGuid].lastUpdate = std::chrono::steady_clock::now();
+
+    // Monitor quest completion
+    MonitorQuestCompletion(bot);
+
+    // Process queued turn-ins based on strategy
+    TurnInStrategy strategy = GetTurnInStrategy(botGuid);
+
+    auto it = _botTurnInQueues.find(botGuid);
+    if (it != _botTurnInQueues.end() && !it->second.empty())
+    {
+        switch (strategy)
+        {
+            case TurnInStrategy::IMMEDIATE_TURNIN:
+                ExecuteImmediateTurnInStrategy(bot);
+                break;
+
+            case TurnInStrategy::BATCH_TURNIN:
+                ExecuteBatchTurnInStrategy(bot);
+                break;
+
+            case TurnInStrategy::OPTIMAL_ROUTING:
+                ExecuteOptimalRoutingStrategy(bot);
+                break;
+
+            case TurnInStrategy::GROUP_COORDINATION:
+                ExecuteGroupCoordinationStrategy(bot);
+                break;
+
+            case TurnInStrategy::REWARD_OPTIMIZATION:
+                ExecuteRewardOptimizationStrategy(bot);
+                break;
+
+            case TurnInStrategy::CHAIN_CONTINUATION:
+                ExecuteChainContinuationStrategy(bot);
+                break;
+
+            default:
+                ExecuteImmediateTurnInStrategy(bot);
+                break;
+        }
+    }
+
+    // Update success rate metrics
+    uint32 attempts = _botMetrics[botGuid].turnInAttempts.load();
+    uint32 successful = _botMetrics[botGuid].successfulTurnIns.load();
+    if (attempts > 0)
+    {
+        float successRate = static_cast<float>(successful) / attempts;
+        _botMetrics[botGuid].turnInSuccessRate.store(successRate);
+    }
+}
+
 } // namespace Playerbot

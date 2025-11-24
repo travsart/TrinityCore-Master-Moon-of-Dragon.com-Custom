@@ -1132,4 +1132,57 @@ std::vector<std::string> QuestValidation::GetRecommendationsForFailedQuest(uint3
     return recommendations;
 }
 
+/**
+ * @brief Update validation system
+ * @param diff Time difference in milliseconds
+ */
+void QuestValidation::Update(uint32 diff)
+{
+    static uint32 cacheCleanupTimer = 0;
+    cacheCleanupTimer += diff;
+
+    // Periodically clean up expired cache entries
+    if (cacheCleanupTimer >= CACHE_CLEANUP_INTERVAL)
+    {
+        CleanupExpiredCache();
+        cacheCleanupTimer = 0;
+
+        TC_LOG_DEBUG("playerbot", "QuestValidation::Update - Cleaned up expired cache entries");
+    }
+
+    // Update validation success rate
+    uint32 totalValidations = _metrics.totalValidations.load();
+    uint32 passedValidations = _metrics.passedValidations.load();
+    if (totalValidations > 0)
+    {
+        float successRate = static_cast<float>(passedValidations) / totalValidations;
+        _metrics.validationSuccessRate.store(successRate);
+    }
+
+    // Limit cache size if it grows too large
+    if (_validationCache.size() > MAX_CACHE_SIZE)
+    {
+        TC_LOG_WARN("playerbot", "QuestValidation::Update - Cache size exceeded limit (%zu entries), cleaning up oldest entries",
+            _validationCache.size());
+
+        // Remove oldest entries (simple approach: clear half the cache)
+        size_t targetSize = MAX_CACHE_SIZE / 2;
+        auto it = _validationCache.begin();
+        size_t toRemove = _validationCache.size() - targetSize;
+
+        for (size_t i = 0; i < toRemove && it != _validationCache.end(); ++i)
+        {
+            it = _validationCache.erase(it);
+        }
+    }
+
+    // Log performance warnings if validation is slow
+    float avgTime = _metrics.averageValidationTime.load();
+    if (avgTime > VALIDATION_TIME_WARNING_THRESHOLD)
+    {
+        TC_LOG_WARN("playerbot", "QuestValidation::Update - Average validation time is high: %.2f ms (threshold: %.2f ms)",
+            avgTime, VALIDATION_TIME_WARNING_THRESHOLD);
+    }
+}
+
 } // namespace Playerbot
