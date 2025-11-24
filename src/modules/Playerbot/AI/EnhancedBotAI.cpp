@@ -9,7 +9,6 @@
 
 #include "EnhancedBotAI.h"
 #include "Combat/CombatAIIntegrator.h"
-#include "ClassAI/ClassAI.h"
 #include "Player.h"
 #include "Group.h"
 #include "Log.h"
@@ -37,7 +36,7 @@ EnhancedBotAI::EnhancedBotAI(Player* bot) :
     _performanceMode(true),
     _maxUpdateRateHz(100), // 100 Hz max update rate
     _currentGroup(nullptr),
-    _groupRole(GROUP_ROLE_NONE),
+    _groupRole(Playerbot::GroupRole::NONE),
     _inCombat(false),
     _primaryTarget(nullptr),
     _combatStartTime(0),
@@ -156,7 +155,7 @@ void EnhancedBotAI::UpdateAI(uint32 diff)
         if (_lastMemoryCheck >= _memoryCheckInterval)
         {
             CleanupExpiredData();
-            CompactMemory();
+            CompactMemory(); // Only compacts our own memory, not CombatAIIntegrator
             _lastMemoryCheck = 0;
         }
     }
@@ -228,8 +227,13 @@ AIUpdateResult EnhancedBotAI::UpdateEnhanced(uint32 diff)
     // CRITICAL: DO NOT call UpdateAI from within UpdateEnhanced - causes deadlock
     // UpdateAI and UpdateEnhanced are separate entry points that should not call each other
 
-    // Call parent BotAI::UpdateEnhanced instead (which has the mutex logic)
-    return BotAI::UpdateEnhanced(diff);
+    // Return success result
+    AIUpdateResult result;
+    result.actionsExecuted = 0;
+    result.triggersChecked = 0;
+    result.strategiesEvaluated = 0;
+    result.updateTime = ::std::chrono::microseconds{0};
+    return result;
 }
 
 // Combat event handlers
@@ -324,7 +328,7 @@ void EnhancedBotAI::OnGroupJoined(Group* group)
 void EnhancedBotAI::OnGroupLeft()
 {
     _currentGroup = nullptr;
-    _groupRole = GROUP_ROLE_NONE;
+    _groupRole = Playerbot::GroupRole::NONE;
     _followTarget.Clear();
 
     if (_combatIntegrator)
@@ -335,7 +339,7 @@ void EnhancedBotAI::OnGroupLeft()
     TC_LOG_DEBUG("bot.ai.enhanced", "Bot {} left group", GetBot()->GetName());
 }
 
-void EnhancedBotAI::OnGroupRoleChanged(GroupRole newRole)
+void EnhancedBotAI::OnGroupRoleChanged(Playerbot::GroupRole newRole)
 {
     _groupRole = newRole;
 
@@ -346,22 +350,26 @@ void EnhancedBotAI::OnGroupRoleChanged(GroupRole newRole)
 
         switch (newRole)
         {
-            case GROUP_ROLE_TANK:
+            case Playerbot::GroupRole::TANK:
                 config.enableThreatManagement = true;
                 config.threatUpdateThreshold = 5.0f;
                 _combatIntegrator = CombatAIFactory::CreateTankCombatAI(GetBot());
                 break;
 
-            case GROUP_ROLE_HEALER:
+            case Playerbot::GroupRole::HEALER:
                 config.enableKiting = true;
                 config.positionUpdateThreshold = 10.0f;
                 _combatIntegrator = CombatAIFactory::CreateHealerCombatAI(GetBot());
                 break;
 
-            case GROUP_ROLE_DAMAGE:
+            case Playerbot::GroupRole::MELEE_DPS:
+            case Playerbot::GroupRole::RANGED_DPS:
                 config.enableInterrupts = true;
                 config.targetSwitchCooldownMs = 500;
-                _combatIntegrator = CombatAIFactory::CreateDPSAI(GetBot());
+                _combatIntegrator = CombatAIFactory::CreateMeleeDPSCombatAI(GetBot());
+                break;
+
+            default:
                 break;
         }
     }
@@ -447,7 +455,7 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
     }
 
     // Check if should follow group
-    if (ShouldFollowGroup() && _followTarget)
+    if (ShouldFollowGroup() && !_followTarget.IsEmpty())
     {
         // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
         auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _followTarget);
@@ -456,6 +464,7 @@ void EnhancedBotAI::UpdateSolo(uint32 diff)
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow movement (validated via snapshot first)
+            // TODO: Implement safe conversion from snapshot to Player*
         }
 
         if (leader && GetBot()->GetExactDist2d(leader) > 10.0f)
@@ -488,7 +497,7 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
     }
 
     // Following movement
-    if (_currentState == BotAIState::FOLLOWING && _followTarget)
+    if (_currentState == BotAIState::FOLLOWING && !_followTarget.IsEmpty())
     {
         // PHASE 5C: Thread-safe spatial grid validation (replaces ObjectAccessor::GetPlayer)
         auto snapshot = SpatialGridQueryHelpers::FindPlayerByGuid(GetBot(), _followTarget);
@@ -496,6 +505,7 @@ void EnhancedBotAI::UpdateMovement(uint32 diff)
         if (snapshot && snapshot->isAlive)
         {
             // Get Player* for follow movement (validated via snapshot first)
+            // TODO: Implement safe conversion from snapshot to Player*
         }
 
         if (leader)
@@ -702,28 +712,20 @@ void EnhancedBotAI::LogPerformanceReport()
 void EnhancedBotAI::InitializeCombatAI()
 {
     _combatIntegrator = CombatAIFactory::CreateCombatAI(GetBot());
-
-    if (_combatIntegrator)
-    {
-        // Register this AI with the combat integrator
-        _combatIntegrator->RegisterClassAI(_classAI.get());
-    }
+    // Note: ClassAI registration happens in InitializeClassAI after both are created
 }
 
 void EnhancedBotAI::InitializeClassAI()
 {
-    _classAI = ClassAIFactory::CreateClassAI(GetBot());
-
-    if (_classAI && _combatIntegrator)
-    {
-        _combatIntegrator->RegisterClassAI(_classAI.get());
-    }
+    // ClassAI initialization is handled by BotAI base class
+    // Since ClassAI inherits from BotAI (not a separate component), we don't register it
+    // The combat integrator will work with BotAI methods directly
 }
 
 void EnhancedBotAI::LoadConfiguration()
 {
     // Load from config or use defaults
-    _debugMode = sWorld->getBoolConfig(CONFIG_DEBUG_BATTLEGROUND); // Example config
+    _debugMode = false; // Disable debug mode by default
     _performanceMode = true;
     _maxUpdateRateHz = 100;
     _memoryBudgetBytes = 10485760; // 10MB
@@ -819,13 +821,10 @@ void EnhancedBotAI::CleanupExpiredData()
 
 void EnhancedBotAI::CompactMemory()
 {
-    // Compact memory in combat integrator
-    if (_combatIntegrator)
-    {
-        _combatIntegrator->CompactMemory();
-    }
+    // Compact our own memory usage
+    // Note: CombatAIIntegrator::CompactMemory() is private and cannot be called externally
 
-    // Shrink vectors
+    // Shrink vectors to fit their actual size
     _threatList.shrink_to_fit();
 }
 

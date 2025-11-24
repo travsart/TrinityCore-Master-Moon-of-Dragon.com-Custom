@@ -69,6 +69,13 @@ struct SpellInterruptConfig
                             category(SpellCategory::DAMAGE_NUKE), alwaysInterrupt(false),
                             mythicPlusOnly(false), minMythicLevel(0), castTimeThreshold(0.0f),
                             requiresQuickResponse(false), schoolMask(0) {}
+
+    SpellInterruptConfig(uint32 id, ::std::string name, InterruptPriority priority, SpellCategory cat,
+                        bool always, bool mythicOnly, uint8 mythicLevel, float castTime,
+                        bool quickResponse, uint32 school, ::std::string note)
+        : spellId(id), spellName(name), basePriority(priority), category(cat),
+          alwaysInterrupt(always), mythicPlusOnly(mythicOnly), minMythicLevel(mythicLevel),
+          castTimeThreshold(castTime), requiresQuickResponse(quickResponse), schoolMask(school), notes(note) {}
 };
 
 class TC_GAME_API InterruptDatabase
@@ -120,6 +127,14 @@ struct ClassInterruptAbility
     uint32 resourceCost;
     bool offGCD;
     uint8 charges;
+
+    ClassInterruptAbility(uint32 id, ::std::string n, uint8 cls, uint32 spec,
+                         InterruptMethod m, float r, float cd, uint32 lockout, uint32 school,
+                         bool hero, uint32 heroId, Powers resType, uint32 resCost, bool gcd, uint8 chr)
+        : spellId(id), name(n), playerClass(cls), specialization(spec), method(m),
+          range(r), cooldown(cd), lockoutDuration(lockout), schoolMask(school),
+          isHeroTalent(hero), heroTalentId(heroId), resourceType(resType),
+          resourceCost(resCost), offGCD(gcd), charges(chr) {}
 };
 
 // WoW 11.2 Interrupt ability database

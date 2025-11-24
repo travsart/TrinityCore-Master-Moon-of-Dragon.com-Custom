@@ -14,6 +14,7 @@
 #include "Player.h"
 #include "Guild.h"
 #include "Item.h"
+#include "GameTime.h"
 #include "Core/DI/Interfaces/IGuildBankManager.h"
 #include <unordered_map>
 #include <vector>

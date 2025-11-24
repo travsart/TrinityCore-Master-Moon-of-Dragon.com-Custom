@@ -114,6 +114,21 @@ struct AuctionMetrics
         uint32 spent = totalGoldSpent.load();
         return spent > 0 ? static_cast<float>(totalGoldEarned.load()) / spent : 0.0f;
     }
+
+    // Custom copy constructor for atomic members
+    AuctionMetrics() = default;
+    AuctionMetrics(const AuctionMetrics& other)
+        : auctionsCreated(other.auctionsCreated.load()),
+          auctionsSold(other.auctionsSold.load()),
+          auctionsCancelled(other.auctionsCancelled.load()),
+          itemsPurchased(other.itemsPurchased.load()),
+          bargainsFound(other.bargainsFound.load()),
+          totalGoldSpent(other.totalGoldSpent.load()),
+          totalGoldEarned(other.totalGoldEarned.load()),
+          marketScans(other.marketScans.load()),
+          averageProfitMargin(other.averageProfitMargin.load())
+    {
+    }
 };
 
 // AuctionSession definition (needs full definition for return by value)

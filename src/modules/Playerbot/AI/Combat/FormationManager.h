@@ -281,6 +281,9 @@ private:
     bool IsPositionValidForFormation(const Position& pos);
     Position ClampPositionToFormation(const Position& pos);
 
+    // Initialization methods
+    void InitializeFormationConfigs();
+
     // Performance tracking
     void TrackPerformance(::std::chrono::microseconds duration, const ::std::string& operation);
 

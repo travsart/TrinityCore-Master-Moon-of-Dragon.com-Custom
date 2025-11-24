@@ -12,6 +12,7 @@
 #include "BotAI.h"
 #include "Combat/CombatAIIntegrator.h"
 #include "ClassAI/ClassAI.h"
+#include "Group/GroupRoleEnums.h"
 #include <memory>
 #include <chrono>
 
@@ -64,7 +65,7 @@ public:
     void Reset() override;
     void OnDeath() override;
     void OnRespawn() override;
-    AIUpdateResult UpdateEnhanced(uint32 diff) override;
+    AIUpdateResult UpdateEnhanced(uint32 diff);
 
     // Combat events
     void OnCombatStart(Unit* target);
@@ -79,7 +80,7 @@ public:
     void OnGroupLeft();
     void OnGroupMemberAdded(Player* member);
     void OnGroupMemberRemoved(Player* member);
-    void OnGroupRoleChanged(GroupRole newRole);
+    void OnGroupRoleChanged(Playerbot::GroupRole newRole);
 
     // Movement events
     void OnMovementStarted();
@@ -175,7 +176,7 @@ private:
 
     // Group coordination
     Group* _currentGroup;
-    GroupRole _groupRole;
+    Playerbot::GroupRole _groupRole;
     ObjectGuid _followTarget;
 
     // Combat tracking

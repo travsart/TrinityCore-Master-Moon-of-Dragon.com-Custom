@@ -15,10 +15,13 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "ObjectAccessor.h"
+#include "Movement/MotionMaster.h"
 #include "Movement/UnifiedMovementCoordinator.h"
 #include "../../Movement/Arbiter/MovementPriorityMapper.h"
 #include "../BotAI.h"
 #include "UnitAI.h"
+#include "DataStores/DBCEnums.h"
 #include <algorithm>
 #include <cmath>
 
@@ -27,7 +30,7 @@ namespace Playerbot
 
 FormationManager::FormationManager(Player* bot)
     : _bot(bot), _leader(nullptr), _isLeader(false), _inFormation(false),
-      _currentFormation(FormationType::NONE), _movementState(MovementState::STATIONARY),
+      _currentFormation(FormationType::NONE), _movementState(FormationMovementState::STATIONARY),
       _currentIntegrity(FormationIntegrity::PERFECT), _formationOrientation(0.0f),
       _isMovingToDestination(false), _updateInterval(DEFAULT_UPDATE_INTERVAL),
       _cohesionRadius(DEFAULT_COHESION_RADIUS), _formationSpacing(DEFAULT_FORMATION_SPACING),
@@ -121,7 +124,7 @@ bool FormationManager::LeaveFormation()
 
     _inFormation = false;
     _currentFormation = FormationType::NONE;
-    _movementState = MovementState::STATIONARY;
+    _movementState = FormationMovementState::STATIONARY;
     _members.clear();
     _leader = nullptr;
     _isLeader = false;
@@ -144,7 +147,7 @@ bool FormationManager::ChangeFormation(FormationType newFormation)
     auto startTime = ::std::chrono::steady_clock::now();
 
     _currentFormation = newFormation;
-    _movementState = MovementState::REFORMING;
+    _movementState = FormationMovementState::REFORMING;
 
     AssignFormationPositions();
     _metrics.formationChanges++;
@@ -180,7 +183,7 @@ void FormationManager::UpdateFormation(uint32 diff)
             MonitorFormationIntegrity();
             _lastIntegrityCheck = currentTime;
         }
-        if (_movementState == MovementState::MOVING)
+        if (_movementState == FormationMovementState::MOVING)
         {
             MaintainFormationDuringMovement();
         }
@@ -220,7 +223,7 @@ bool FormationManager::ExecuteFormationCommand(const FormationCommand& command)
 
         _movementState = command.movementState;
 
-        if (!command.targetPosition.IsEmpty())
+        if (command.targetPosition.GetPositionX() != 0.0f || command.targetPosition.GetPositionY() != 0.0f || command.targetPosition.GetPositionZ() != 0.0f)
         {
             _targetDestination = command.targetPosition;
             _isMovingToDestination = true;
@@ -250,7 +253,7 @@ bool FormationManager::MoveFormationToPosition(const Position& targetPos, float 
     FormationCommand command;
     command.targetPosition = targetPos;
     command.targetOrientation = orientation != 0.0f ? orientation : _formationOrientation;
-    command.movementState = MovementState::MOVING;
+    command.movementState = FormationMovementState::MOVING;
     command.maintainCohesion = true;
     command.reason = "Formation movement";
     return ExecuteFormationCommand(command);
@@ -462,7 +465,7 @@ void FormationManager::TransitionToCombatFormation(const ::std::vector<Unit*>& e
     if (combatFormation != _currentFormation)
     {
         ChangeFormation(combatFormation);
-        _movementState = MovementState::COMBAT;
+        _movementState = FormationMovementState::COMBAT;
     }
 }
 
@@ -689,7 +692,7 @@ void FormationManager::TriggerReformationIfNeeded()
         return;
 
     AssignFormationPositions();
-    _movementState = MovementState::REFORMING;
+    _movementState = FormationMovementState::REFORMING;
     _metrics.reformationEvents++;
 
     TC_LOG_DEBUG("playerbot.formation", "Formation {} triggered reformation due to poor integrity",
@@ -728,17 +731,17 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
         return FormationRole::SUPPORT;
 
     uint8 playerClass = player->GetClass();
-    uint32 spec = player->GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID);
+    ChrSpecialization spec = player->GetPrimarySpecialization();
 
     switch (playerClass)
     {
         case CLASS_WARRIOR:
-            return (spec == TALENT_SPEC_WARRIOR_PROTECTION) ? FormationRole::TANK : FormationRole::MELEE_DPS;
+            return (spec == ChrSpecialization::WarriorProtection) ? FormationRole::TANK : FormationRole::MELEE_DPS;
 
         case CLASS_PALADIN:
-            if (spec == TALENT_SPEC_PALADIN_PROTECTION)
+            if (spec == ChrSpecialization::PaladinProtection)
                 return FormationRole::TANK;
-            else if (spec == TALENT_SPEC_PALADIN_HOLY)
+            else if (spec == ChrSpecialization::PaladinHoly)
                 return FormationRole::HEALER;
             else
                 return FormationRole::MELEE_DPS;
@@ -749,41 +752,45 @@ FormationRole FormationManager::DeterminePlayerRole(Player* player)
             return FormationRole::RANGED_DPS;
 
         case CLASS_ROGUE:
-        case CLASS_DEATH_KNIGHT:
-        case CLASS_DEMON_HUNTER:
             return FormationRole::MELEE_DPS;
 
+        case CLASS_DEATH_KNIGHT:
+            return (spec == ChrSpecialization::DeathKnightBlood) ? FormationRole::TANK : FormationRole::MELEE_DPS;
+
+        case CLASS_DEMON_HUNTER:
+            return (spec == ChrSpecialization::DemonHunterVengeance) ? FormationRole::TANK : FormationRole::MELEE_DPS;
+
         case CLASS_PRIEST:
-            return (spec == TALENT_SPEC_PRIEST_SHADOW) ? FormationRole::RANGED_DPS : FormationRole::HEALER;
+            return (spec == ChrSpecialization::PriestShadow) ? FormationRole::RANGED_DPS : FormationRole::HEALER;
 
         case CLASS_SHAMAN:
-            if (spec == TALENT_SPEC_SHAMAN_RESTORATION)
+            if (spec == ChrSpecialization::ShamanRestoration)
                 return FormationRole::HEALER;
-            else if (spec == TALENT_SPEC_SHAMAN_ELEMENTAL)
+            else if (spec == ChrSpecialization::ShamanElemental)
                 return FormationRole::RANGED_DPS;
             else
                 return FormationRole::MELEE_DPS;
 
         case CLASS_DRUID:
-            if (spec == TALENT_SPEC_DRUID_BEAR)
+            if (spec == ChrSpecialization::DruidGuardian)
                 return FormationRole::TANK;
-            else if (spec == TALENT_SPEC_DRUID_RESTORATION)
+            else if (spec == ChrSpecialization::DruidRestoration)
                 return FormationRole::HEALER;
-            else if (spec == TALENT_SPEC_DRUID_BALANCE)
+            else if (spec == ChrSpecialization::DruidBalance)
                 return FormationRole::RANGED_DPS;
             else
                 return FormationRole::MELEE_DPS;
 
         case CLASS_MONK:
-            if (spec == TALENT_SPEC_MONK_BREWMASTER)
+            if (spec == ChrSpecialization::MonkBrewmaster)
                 return FormationRole::TANK;
-            else if (spec == TALENT_SPEC_MONK_MISTWEAVER)
+            else if (spec == ChrSpecialization::MonkMistweaver)
                 return FormationRole::HEALER;
             else
                 return FormationRole::MELEE_DPS;
 
         case CLASS_EVOKER:
-            return (spec == TALENT_SPEC_EVOKER_PRESERVATION) ? FormationRole::HEALER : FormationRole::RANGED_DPS;
+            return (spec == ChrSpecialization::EvokerPreservation) ? FormationRole::HEALER : FormationRole::RANGED_DPS;
 
         default:
             return FormationRole::SUPPORT;

@@ -16,6 +16,7 @@
 #include "Creature.h"
 #include "NPCHandler.h"
 #include "Position.h"
+#include "GameTime.h"
 #include "../Core/DI/Interfaces/ITradeSystem.h"
 #include <unordered_map>
 #include <unordered_set>

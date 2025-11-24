@@ -21,6 +21,9 @@
 #include "G3D/Vector3.h"
 #include "../../Spatial/SpatialGridManager.h"
 #include "ObjectAccessor.h"
+#include "PhaseShift.h"
+#include "SharedDefines.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {
@@ -162,7 +165,7 @@ LoSResult LineOfSightManager::CheckSpellLineOfSight(Unit* target, uint32 spellId
     context.validationFlags = LoSValidation::SPELL_LOS;
     context.spellId = spellId;
 
-    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE))
     {
         context.maxRange = spellInfo->GetMaxRange();
     }
@@ -483,48 +486,48 @@ LoSResult LineOfSightManager::PerformLineOfSightCheck(const LoSContext& context)
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::TERRAIN) && CheckTerrainBlocking(from, to))
+    if ((context.validationFlags & LoSValidation::TERRAIN) != LoSValidation::NONE && CheckTerrainBlocking(from, to))
     {
         result.blockedByTerrain = true;
         result.failureReason = "Blocked by terrain";
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::BUILDINGS) && CheckBuildingBlocking(from, to))
+    if ((context.validationFlags & LoSValidation::BUILDINGS) != LoSValidation::NONE && CheckBuildingBlocking(from, to))
     {
         result.blockedByBuilding = true;
         result.failureReason = "Blocked by building";
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::OBJECTS) && CheckObjectBlocking(from, to))
+    if ((context.validationFlags & LoSValidation::OBJECTS) != LoSValidation::NONE && CheckObjectBlocking(from, to))
     {
         result.blockedByObject = true;
         result.failureReason = "Blocked by object";
         return result;
     }
-    if ((context.validationFlags & LoSValidation::UNITS) && !context.ignoreUnits && CheckUnitBlocking(from, to, context.target))
+    if ((context.validationFlags & LoSValidation::UNITS) != LoSValidation::NONE && !context.ignoreUnits && CheckUnitBlocking(from, to, context.target))
     {
         result.blockedByUnit = true;
         result.failureReason = "Blocked by unit";
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::WATER) && CheckWaterBlocking(from, to))
+    if ((context.validationFlags & LoSValidation::WATER) != LoSValidation::NONE && CheckWaterBlocking(from, to))
     {
         result.blockedByWater = true;
         result.failureReason = "Blocked by water";
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::ANGLE_CHECK) && !IsAngleAcceptable(from, to, context.viewAngleTolerance))
+    if ((context.validationFlags & LoSValidation::ANGLE_CHECK) != LoSValidation::NONE && !IsAngleAcceptable(from, to, context.viewAngleTolerance))
     {
         result.blockedByAngle = true;
         result.failureReason = "Outside viewing angle";
         return result;
     }
 
-    if ((context.validationFlags & LoSValidation::SPELL_SPECIFIC) && context.spellId > 0)
+    if ((context.validationFlags & LoSValidation::SPELL_SPECIFIC) != LoSValidation::NONE && context.spellId > 0)
     {
         if (!CheckSpellSpecificRequirements(context.target, context.spellId))
         {
@@ -543,8 +546,9 @@ bool LineOfSightManager::CheckTerrainBlocking(const Position& from, const Positi
     if (!map)
         return true;
 
-    return !map->isInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,
-                                to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f);
+    return !map->isInLineOfSight(_bot->GetPhaseShift(), from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,
+                                to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f,
+                                LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
 }
 
 bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Position& to)
@@ -552,8 +556,8 @@ bool LineOfSightManager::CheckBuildingBlocking(const Position& from, const Posit
     Map* map = _bot->GetMap();
     if (!map)
         return false;
-    return !map->IsInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,
-                               to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f, LINEOFSIGHT_CHECK_VMAP);
+    return !map->isInLineOfSight(_bot->GetPhaseShift(), from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,
+                               to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f, LINEOFSIGHT_CHECK_VMAP, VMAP::ModelIgnoreFlags::Nothing);
 }
 
 bool LineOfSightManager::CheckObjectBlocking(const Position& from, const Position& to)
@@ -654,8 +658,8 @@ bool LineOfSightManager::CheckWaterBlocking(const Position& from, const Position
     if (!map)
         return false;
 
-    bool fromInWater = map->IsInWater(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ());
-    bool toInWater = map->IsInWater(to.GetPositionX(), to.GetPositionY(), to.GetPositionZ());
+    bool fromInWater = map->IsInWater(_bot->GetPhaseShift(), from.GetPositionX(), from.GetPositionY(), from.GetPositionZ());
+    bool toInWater = map->IsInWater(_bot->GetPhaseShift(), to.GetPositionX(), to.GetPositionY(), to.GetPositionZ());
 
     return fromInWater != toInWater;
 }
@@ -698,14 +702,16 @@ bool LineOfSightManager::CheckSpellSpecificRequirements(Unit* target, uint32 spe
     if (!target || !spellId)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 
-    if (spellInfo->HasAttribute(SPELL_ATTR2_NOT_NEED_FACING))
+    // Check if spell ignores line of sight
+    if (spellInfo->HasAttribute(SPELL_ATTR2_IGNORE_LINE_OF_SIGHT))
         return true;
 
-    if (spellInfo->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST))
+    // Check if AI doesn't need to face target
+    if (spellInfo->HasAttribute(SPELL_ATTR5_AI_DOESNT_FACE_TARGET))
         return true;
 
     float angle = _bot->GetRelativeAngle(target);
@@ -763,8 +769,11 @@ bool LoSUtils::HasLoS(const Position& from, const Position& to, Map* map)
     if (!map)
         return false;
 
-    return map->isInLineOfSight(from.GetPositionX(), from.GetPositionY(), from.GetPositionZ(),
-                              to.GetPositionX(), to.GetPositionY(), to.GetPositionZ());
+    // Use empty PhaseShift for static position checks
+    PhaseShift emptyPhaseShift;
+    return map->isInLineOfSight(emptyPhaseShift, from.GetPositionX(), from.GetPositionY(), from.GetPositionZ(),
+                              to.GetPositionX(), to.GetPositionY(), to.GetPositionZ(),
+                              LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
 }
 
 float LoSUtils::GetLoSDistance(Player* source, Unit* target)
@@ -780,7 +789,7 @@ bool LoSUtils::CanCastSpellAtTarget(Player* caster, Unit* target, uint32 spellId
     if (!caster || !target || !spellId)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
     if (!spellInfo)
         return false;
 

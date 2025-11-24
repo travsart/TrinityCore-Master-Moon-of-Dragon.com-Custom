@@ -173,6 +173,10 @@ private:
         float volatility;
         uint32 lastAnalysisTime;
 
+        MarketData() : itemId(0), averagePrice(0.0f), medianPrice(0.0f)
+            , totalVolume(0), activeListings(0), volatility(0.0f)
+            , lastAnalysisTime(0) {}
+
         MarketData(uint32 id) : itemId(id), averagePrice(0.0f), medianPrice(0.0f)
             , totalVolume(0), activeListings(0), volatility(0.0f)
             , lastAnalysisTime(GameTime::GetGameTimeMS()) {}
@@ -195,6 +199,10 @@ private:
         uint32 totalAuctions;
         uint32 successfulSales;
         uint32 lastActivity;
+
+        CompetitorProfile() : sellerGuid(0), averageUndercutRate(0.05f)
+            , aggressiveness(0.5f), totalAuctions(0), successfulSales(0)
+            , lastActivity(0) {}
 
         CompetitorProfile(uint32 guid) : sellerGuid(guid), averageUndercutRate(0.05f)
             , aggressiveness(0.5f), totalAuctions(0), successfulSales(0)
