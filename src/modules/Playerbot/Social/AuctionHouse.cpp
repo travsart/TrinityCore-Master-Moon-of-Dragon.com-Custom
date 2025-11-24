@@ -19,7 +19,7 @@ std::atomic<uint32> AuctionHouse::_nextSessionId{1};
 std::unordered_map<uint32, AuctionHouse::MarketData> AuctionHouse::_marketData;
 std::unordered_map<uint32, std::vector<AuctionItem>> AuctionHouse::_auctionCache;
 std::unordered_map<uint32, AuctionHouse::CompetitorProfile> AuctionHouse::_competitors;
-AuctionHouse::AuctionMetrics AuctionHouse::_globalMetrics;
+AuctionMetrics AuctionHouse::_globalMetrics;
 Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::TRADE_MANAGER> AuctionHouse::_marketMutex;
 
 // Constructor
@@ -116,7 +116,7 @@ bool AuctionHouse::PlaceAuctionBid(uint32 auctionId, uint32 bidAmount)
         return false;
     }
 
-    if (!_bot->HasEnoughMoney(bidAmount))
+    if (_bot->GetMoney() < bidAmount)
     {
         TC_LOG_DEBUG("playerbot.auction", "AuctionHouse: Bot {} lacks funds for bid (has: {}, needs: {})",
             _bot->GetName(), _bot->GetMoney(), bidAmount);
@@ -168,7 +168,7 @@ bool AuctionHouse::BuyoutAuction(uint32 auctionId)
         return false;
     }
 
-    if (!_bot->HasEnoughMoney(buyoutPrice))
+    if (_bot->GetMoney() < buyoutPrice)
     {
         HandleInsufficientFunds(buyoutPrice);
         return false;
@@ -219,7 +219,7 @@ bool AuctionHouse::CreateAuction(uint32 itemGuid, uint32 stackCount, uint32 bid,
     uint32 auctionTime = duration * MINUTE;
     uint64 deposit = AuctionHouseMgr::GetItemAuctionDeposit(_bot, item, Minutes(duration));
 
-    if (!_bot->HasEnoughMoney(deposit))
+    if (_bot->GetMoney() < deposit)
     {
         HandleInsufficientFunds(deposit);
         return false;
@@ -320,7 +320,7 @@ void AuctionHouse::ScanForBargains()
 
     for (const auto& auction : bargains)
     {
-        if (IsWorthBuying(auction) && _bot->HasEnoughMoney(auction.buyoutPrice))
+        if (IsWorthBuying(auction) && _bot->GetMoney() >= auction.buyoutPrice)
         {
             if (BuyoutAuction(auction.auctionId))
             {
@@ -371,7 +371,7 @@ void AuctionHouse::AutoBuyNeededItems()
 
         for (const auto& auction : auctions)
         {
-            if (IsWorthBuying(auction) && _bot->HasEnoughMoney(auction.buyoutPrice))
+            if (IsWorthBuying(auction) && _bot->GetMoney() >= auction.buyoutPrice)
             {
                 if (BuyoutAuction(auction.auctionId))
                     break;
@@ -729,7 +729,7 @@ bool AuctionHouse::IsWorthBuying(const AuctionItem& auction)
     if (_profile.blackList.find(auction.itemId) != _profile.blackList.end())
         return false;
 
-    if (!_bot || !_bot->HasEnoughMoney(auction.buyoutPrice))
+    if (!_bot || _bot->GetMoney() < auction.buyoutPrice)
         return false;
 
     float marketPrice = GetMarketPrice(auction.itemId, auction.stackCount);
@@ -848,7 +848,7 @@ void AuctionHouse::HandleConsumableAutomation()
 
         for (const auto& auction : auctions)
         {
-            if (IsWorthBuying(auction) && _bot->HasEnoughMoney(auction.buyoutPrice))
+            if (IsWorthBuying(auction) && _bot->GetMoney() >= auction.buyoutPrice)
             {
                 BuyoutAuction(auction.auctionId);
                 break;
@@ -1268,7 +1268,7 @@ void AuctionHouse::ExecuteConservativeStrategy(AuctionSession& session)
         if (session.budgetUsed >= _profile.maxBiddingBudget)
             break;
 
-        if (IsWorthBuying(auction) && _bot->HasEnoughMoney(auction.buyoutPrice))
+        if (IsWorthBuying(auction) && _bot->GetMoney() >= auction.buyoutPrice)
         {
             if (BuyoutAuction(auction.auctionId))
             {
@@ -1290,7 +1290,7 @@ void AuctionHouse::ExecuteAggressiveStrategy(AuctionSession& session)
         if (session.budgetUsed >= _profile.maxBiddingBudget)
             break;
 
-        if (_bot->HasEnoughMoney(auction.buyoutPrice))
+        if (_bot->GetMoney() >= auction.buyoutPrice)
         {
             if (BuyoutAuction(auction.auctionId))
             {
@@ -1315,7 +1315,7 @@ void AuctionHouse::ExecuteOpportunisticStrategy(AuctionSession& session)
         uint32 resellPrice = CalculateOptimalListingPrice(auction.itemId, auction.stackCount);
         float profitMargin = CalculatePotentialProfit(auction, resellPrice);
 
-        if (profitMargin >= _profile.profitMargin && _bot->HasEnoughMoney(auction.buyoutPrice))
+        if (profitMargin >= _profile.profitMargin && _bot->GetMoney() >= auction.buyoutPrice)
         {
             if (BuyoutAuction(auction.auctionId))
             {
@@ -1347,7 +1347,7 @@ void AuctionHouse::ExecuteCollectorStrategy(AuctionSession& session)
 
         for (const auto& auction : auctions)
         {
-            if (IsWorthBuying(auction) && _bot->HasEnoughMoney(auction.buyoutPrice))
+            if (IsWorthBuying(auction) && _bot->GetMoney() >= auction.buyoutPrice)
             {
                 if (BuyoutAuction(auction.auctionId))
                 {
@@ -1579,9 +1579,17 @@ std::vector<AuctionItem> AuctionHouse::FindFlipOpportunities()
         if (marketPrice <= 0.0f || auction->BuyoutOrUnitPrice == 0)
             continue;
 
+        // Create temporary AuctionItem for profit calculation
+        AuctionItem tempAuction;
+        tempAuction.auctionId = auction->Id;
+        tempAuction.itemId = itemId;
+        tempAuction.itemGuid = item->GetGUID().GetCounter();
+        tempAuction.stackCount = stackCount;
+        tempAuction.currentBid = auction->BidAmount;
+        tempAuction.buyoutPrice = auction->BuyoutOrUnitPrice;
+
         uint32 resellPrice = CalculateOptimalListingPrice(itemId, stackCount);
-        float profitMargin = CalculatePotentialProfit({auction->Id, itemId, item->GetGUID().GetCounter(),
-            stackCount, auction->BidAmount, auction->BuyoutOrUnitPrice}, resellPrice);
+        float profitMargin = CalculatePotentialProfit(tempAuction, resellPrice);
 
         if (profitMargin >= MIN_PROFIT_MARGIN)
         {

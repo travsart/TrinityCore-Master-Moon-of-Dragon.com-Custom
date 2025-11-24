@@ -416,6 +416,25 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Social/SocialEvents.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionHouse.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/AuctionHouse.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/MarketAnalysis.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildBankManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildBankManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildEventCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/GuildEventCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/LootDistribution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/UnifiedLootManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeManager_Events.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Social/TradeSystem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Auction/AuctionEvents.h
@@ -572,7 +591,22 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatAbilities.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/ThreatCoordinator.h
-# Phase 2 Day 14: Combat AI Integration    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
+
+    # Formation and Advanced Combat Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/FormationManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/FormationManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatStateAnalyzer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatStateAnalyzer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/LineOfSightManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/LineOfSightManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/InterruptDatabase.h
+
+    # Phase 2 Day 14: Combat AI Integration
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatAIIntegrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/EnhancedBotAI.h
 
     # Phase 2: Interface Definitions (header-only)
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces/IBotSpawner.h
@@ -702,6 +736,8 @@ set(PLAYERBOT_SOURCES
     # Advanced Features - Group/Raid, Social, Advanced Behaviors
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/TacticalCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/TacticalCoordinator.h
     # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
@@ -793,6 +829,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/AdaptiveBehaviorManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatBehaviorIntegration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatBehaviorIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CrowdControlManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CrowdControlManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/DefensiveManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/DefensiveManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MovementIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MovementIntegration.h
 
     # Phase 4: Advanced Combat Utilities (Enterprise-Grade Combat Coordination)
     # Implements missing combat coordination utilities for all 119 ClassAI implementations

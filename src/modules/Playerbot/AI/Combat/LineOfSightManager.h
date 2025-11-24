@@ -121,20 +121,26 @@ struct LoSCacheEntry
 // Optimized cache key structure (eliminates string allocations)
 struct LoSCacheKey
 {
-    uint64 sourceGuid;
-    uint64 targetGuid;
+    uint64 sourceGuidLow;
+    uint64 sourceGuidHigh;
+    uint64 targetGuidLow;
+    uint64 targetGuidHigh;
     uint8 checkType;
 
     LoSCacheKey(ObjectGuid source, ObjectGuid target, LoSCheckType type)
-        : sourceGuid(source.GetRawValue())
-        , targetGuid(target.GetRawValue())
+        : sourceGuidLow(source.GetRawValue(0))
+        , sourceGuidHigh(source.GetRawValue(1))
+        , targetGuidLow(target.GetRawValue(0))
+        , targetGuidHigh(target.GetRawValue(1))
         , checkType(static_cast<uint8>(type))
     {}
 
     bool operator==(const LoSCacheKey& other) const
     {
-        return sourceGuid == other.sourceGuid &&
-               targetGuid == other.targetGuid &&
+        return sourceGuidLow == other.sourceGuidLow &&
+               sourceGuidHigh == other.sourceGuidHigh &&
+               targetGuidLow == other.targetGuidLow &&
+               targetGuidHigh == other.targetGuidHigh &&
                checkType == other.checkType;
     }
 };
@@ -144,11 +150,15 @@ struct LoSCacheKeyHash
 {
     ::std::size_t operator()(const LoSCacheKey& key) const noexcept
     {
-        // FNV-1a hash algorithm for combining three values
+        // FNV-1a hash algorithm for combining five values
         ::std::size_t hash = 14695981039346656037ULL;
-        hash ^= key.sourceGuid;
+        hash ^= key.sourceGuidLow;
         hash *= 1099511628211ULL;
-        hash ^= key.targetGuid;
+        hash ^= key.sourceGuidHigh;
+        hash *= 1099511628211ULL;
+        hash ^= key.targetGuidLow;
+        hash *= 1099511628211ULL;
+        hash ^= key.targetGuidHigh;
         hash *= 1099511628211ULL;
         hash ^= key.checkType;
         hash *= 1099511628211ULL;

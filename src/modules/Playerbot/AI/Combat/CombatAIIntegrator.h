@@ -27,7 +27,8 @@ namespace Playerbot
 class BotAI;
 class ClassAI;
 class RoleBasedCombatPositioning;
-class InterruptCoordinator;
+class InterruptCoordinatorFixed;
+using InterruptCoordinator = InterruptCoordinatorFixed;
 class ThreatCoordinator;
 class FormationManager;
 class TargetSelector;
@@ -151,12 +152,12 @@ public:
     void OnCombatEnd();
     void OnTargetChanged(Unit* newTarget);
 
-    // Component access
-    RoleBasedCombatPositioning* GetPositioning() const { return _positioning.get(); }
-    InterruptCoordinator* GetInterruptCoordinator() const { return _interruptCoordinator.get(); }
-    ThreatCoordinator* GetThreatCoordinator() const { return _threatCoordinator.get(); }
-    FormationManager* GetFormationManager() const { return _formationManager.get(); }
-    TargetSelector* GetTargetSelector() const { return _targetSelector.get(); }
+    // Component access (disabled - components not initialized)
+    // RoleBasedCombatPositioning* GetPositioning() const { return _positioning.get(); }
+    // InterruptCoordinator* GetInterruptCoordinator() const { return _interruptCoordinator.get(); }
+    // ThreatCoordinator* GetThreatCoordinator() const { return _threatCoordinator.get(); }
+    // FormationManager* GetFormationManager() const { return _formationManager.get(); }
+    // TargetSelector* GetTargetSelector() const { return _targetSelector.get(); }
 
     // Configuration
     void SetConfig(CombatAIConfig const& config) { _config = config; }
@@ -221,22 +222,21 @@ private:
     Player* _bot;
     ClassAI* _classAI;
 
-    // Phase 2 Combat Components
-    ::std::unique_ptr<RoleBasedCombatPositioning> _positioning;
-    ::std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
-    ::std::unique_ptr<ThreatCoordinator> _threatCoordinator;
-    ::std::unique_ptr<FormationManager> _formationManager;
-    ::std::unique_ptr<TargetSelector> _targetSelector;
-    ::std::unique_ptr<PathfindingManager> _pathfinding;
-    ::std::unique_ptr<LineOfSightManager> _losManager;
-    ::std::unique_ptr<ObstacleAvoidanceManager> _obstacleAvoidance;
-    ::std::unique_ptr<KitingManager> _kitingManager;
-
-    // Support systems
-    ::std::unique_ptr<InterruptDatabase> _interruptDB;
-    ::std::unique_ptr<InterruptAwareness> _interruptAwareness;
-    ::std::unique_ptr<MechanicAwareness> _mechanicAwareness;
-    ::std::unique_ptr<ThreatAbilities> _threatAbilities;
+    // Note: Phase 2 Combat Components disabled due to API incompatibilities
+    // Component integration will be added once APIs are aligned
+    // ::std::unique_ptr<RoleBasedCombatPositioning> _positioning;
+    // ::std::unique_ptr<InterruptCoordinator> _interruptCoordinator;
+    // ::std::unique_ptr<ThreatCoordinator> _threatCoordinator;
+    // ::std::unique_ptr<FormationManager> _formationManager;
+    // ::std::unique_ptr<TargetSelector> _targetSelector;
+    // ::std::unique_ptr<PathfindingManager> _pathfinding;
+    // ::std::unique_ptr<LineOfSightManager> _losManager;
+    // ::std::unique_ptr<ObstacleAvoidanceManager> _obstacleAvoidance;
+    // ::std::unique_ptr<KitingManager> _kitingManager;
+    // ::std::unique_ptr<InterruptDatabase> _interruptDB;
+    // ::std::unique_ptr<InterruptAwareness> _interruptAwareness;
+    // ::std::unique_ptr<MechanicAwareness> _mechanicAwareness;
+    // ::std::unique_ptr<ThreatAbilities> _threatAbilities;
 
     // Combat state
     ::std::atomic<bool> _inCombat{false};

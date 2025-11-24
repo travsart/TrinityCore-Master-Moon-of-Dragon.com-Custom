@@ -9,6 +9,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "GameTime.h"
 
 namespace Playerbot
 {
@@ -310,10 +311,10 @@ namespace InterruptAbilities
                                false, 0, POWER_RUNIC_POWER, 0, false, 1});
             abilities.push_back({STRANGULATE, "Strangulate", CLASS_DEATH_KNIGHT, 0,
                                InterruptMethod::SILENCE, 30.0f, 120.0f, 5000, 0xFFFF,
-                               false, 0, POWER_RUNE, 1, false, 1});
+                               false, 0, POWER_RUNES, 1, false, 1});
             abilities.push_back({ASPHYXIATE, "Asphyxiate", CLASS_DEATH_KNIGHT, 0,
                                InterruptMethod::STUN, 20.0f, 120.0f, 5000, 0,
-                               false, 0, POWER_RUNE, 1, false, 1});
+                               false, 0, POWER_RUNES, 1, false, 1});
             break;
 
         case CLASS_DEMON_HUNTER:

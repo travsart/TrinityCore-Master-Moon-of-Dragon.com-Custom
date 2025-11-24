@@ -7,10 +7,13 @@
 #include "TargetManager.h"
 #include "Player.h"
 #include "Unit.h"
+#include "Creature.h"
 #include "ThreatManager.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
 #include "Log.h"
+#include "GameTime.h"
+#include "ObjectAccessor.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -202,8 +205,11 @@ TMTargetPriority TargetManager::ClassifyTarget(Unit* target)
         return TMTargetPriority::HIGH;
 
     // Elite/boss = high
-    if (target->IsElite())
-        return TMTargetPriority::HIGH;
+    if (Creature* creature = target->ToCreature())
+    {
+        if (creature->IsElite())
+            return TMTargetPriority::HIGH;
+    }
 
     // Tank = low
     // TODO: Detect tank role properly
@@ -227,14 +233,13 @@ bool TargetManager::IsHighPriorityTarget(Unit* target)
 
     // Get all enemies from threat list
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
-    for (HostileReference* ref : threatList)
+    for (ThreatReference const* ref : threatMgr.GetUnsortedThreatList())
     {
         if (!ref)
             continue;
 
-        Unit* enemy = ref->GetOwner();
+        Unit* enemy = ref->GetVictim();
         if (enemy && !enemy->isDead() && _bot->IsValidAttackTarget(enemy))
             targets.push_back(enemy);
     }
