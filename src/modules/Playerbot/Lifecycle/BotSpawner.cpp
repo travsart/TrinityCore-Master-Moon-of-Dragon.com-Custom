@@ -1308,6 +1308,50 @@ uint32 BotSpawner::GetActiveBotCount(uint32 zoneId) const
     return _botsByZone.find(it, zoneId) ? it->second.size() : 0;
 }
 
+uint32 BotSpawner::GetActiveBotCount(uint32 mapId, bool useMapId) const
+{
+    if (!useMapId)
+        return GetActiveBotCount(mapId); // Fall back to zone-based count
+
+    // Count bots on a specific map
+    uint32 count = 0;
+    tbb::concurrent_hash_map<uint32, ZonePopulation>::const_accessor it;
+    for (auto iter = _zonePopulations.begin(); iter != _zonePopulations.end(); ++iter)
+    {
+        if (iter->second.mapId == mapId)
+            count += GetActiveBotCount(iter->first);
+    }
+    return count;
+}
+
+bool BotSpawner::IsBotActive(ObjectGuid guid) const
+{
+    tbb::concurrent_hash_map<ObjectGuid, uint32>::const_accessor it;
+    return _activeBots.find(it, guid);
+}
+
+::std::vector<ObjectGuid> BotSpawner::GetActiveBotsInZone(uint32 zoneId) const
+{
+    tbb::concurrent_hash_map<uint32, ::std::vector<ObjectGuid>>::const_accessor it;
+    if (_botsByZone.find(it, zoneId))
+        return it->second;
+    return {};
+}
+
+::std::vector<ZonePopulation> BotSpawner::GetAllZonePopulations() const
+{
+    ::std::vector<ZonePopulation> result;
+    result.reserve(_zonePopulations.size());
+
+    tbb::concurrent_hash_map<uint32, ZonePopulation>::const_accessor it;
+    for (auto iter = _zonePopulations.begin(); iter != _zonePopulations.end(); ++iter)
+    {
+        result.push_back(iter->second);
+    }
+    return result;
+}
+
+
 bool BotSpawner::CanSpawnMore() const
 {
     return GetActiveBotCount() < _config.maxBotsTotal;
