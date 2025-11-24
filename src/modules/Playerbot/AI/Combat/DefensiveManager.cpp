@@ -9,6 +9,8 @@
 #include "SpellAuras.h"
 #include "ThreatManager.h"
 #include "Log.h"
+#include "Creature.h"
+#include "GameTime.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -227,12 +229,11 @@ float DefensiveManager::EstimateIncomingDamage() const
 
     // Multiply by enemy count
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
     uint32 enemyCount = 0;
-    for (HostileReference* ref : threatList)
+    for (ThreatReference const* ref : threatMgr.GetUnsortedThreatList())
     {
-        if (ref && ref->GetOwner() && !ref->GetOwner()->isDead())
+        if (ref && ref->GetVictim() && !ref->GetVictim()->isDead())
             ++enemyCount;
     }
 

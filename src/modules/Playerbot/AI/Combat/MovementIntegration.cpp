@@ -370,7 +370,7 @@ MovementCommand MovementIntegration::CheckRange()
     if (currentDistance > optimalRange + 5.0f)
     {
         // Move closer
-        float angle = _bot->GetAngle(target);
+        float angle = _bot->GetAbsoluteAngle(target);
         float moveDistance = currentDistance - optimalRange;
 
         float x = _bot->GetPositionX() + moveDistance * std::cos(angle);
@@ -440,7 +440,7 @@ MovementCommand MovementIntegration::CheckLineOfSight()
     {
         // Need to move to get LoS
         // Simple: move towards target
-        float angle = _bot->GetAngle(target);
+        float angle = _bot->GetAbsoluteAngle(target);
         float distance = 10.0f;
 
         float x = _bot->GetPositionX() + distance * std::cos(angle);
@@ -480,9 +480,9 @@ Position MovementIntegration::CalculateRolePosition()
             std::vector<Player*> groupMembers;
             if (Group* group = _bot->GetGroup())
             {
-                for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+                for (GroupReference const& itr : group->GetMembers())
                 {
-                    if (Player* member = itr->GetSource())
+                    if (Player* member = itr.GetSource())
                         groupMembers.push_back(member);
                 }
             }
@@ -507,7 +507,7 @@ MovementIntegration::CombatRole MovementIntegration::GetCombatRole() const
 
     // Simple heuristic based on class
     // TODO: Proper role detection from spec/talents
-    switch (_bot->getClass())
+    switch (_bot->GetClass())
     {
         case CLASS_WARRIOR:
         case CLASS_PALADIN:

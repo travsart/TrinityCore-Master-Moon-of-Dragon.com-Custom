@@ -702,6 +702,8 @@ set(PLAYERBOT_SOURCES
     # Advanced Features - Group/Raid, Social, Advanced Behaviors
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/GroupCoordinator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/TacticalCoordinator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/TacticalCoordinator.h
     # Advanced/EconomyManager REMOVED - Duplicate of Economy/AuctionManager (production system)
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Advanced/SocialManager.h
@@ -793,6 +795,14 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/AdaptiveBehaviorManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatBehaviorIntegration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CombatBehaviorIntegration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/TargetManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CrowdControlManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/CrowdControlManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/DefensiveManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/DefensiveManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MovementIntegration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Combat/MovementIntegration.h
 
     # Phase 4: Advanced Combat Utilities (Enterprise-Grade Combat Coordination)
     # Implements missing combat coordination utilities for all 119 ClassAI implementations

@@ -11,7 +11,11 @@
 #include "ThreatManager.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
+#include "SpellHistory.h"
+#include "SpellMgr.h"
 #include "Log.h"
+#include "Creature.h"
+#include "GameTime.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -274,14 +278,13 @@ bool CrowdControlManager::ShouldBreakCC(Unit* target) const
         return enemies;
 
     ThreatManager& threatMgr = _bot->GetThreatManager();
-    ::std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
 
-    for (HostileReference* ref : threatList)
+    for (ThreatReference const* ref : threatMgr.GetUnsortedThreatList())
     {
         if (!ref)
             continue;
 
-        Unit* enemy = ref->GetOwner();
+        Unit* enemy = ref->GetVictim();
         if (enemy && !enemy->isDead())
             enemies.push_back(enemy);
     }
@@ -298,13 +301,13 @@ bool CrowdControlManager::IsImmune(Unit* target, CrowdControlType type) const
     switch (type)
     {
         case CrowdControlType::STUN:
-            return target->IsImmunedToSpellEffect(SPELL_EFFECT_ATTACK_ME);  // Placeholder
+            return target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY);
         case CrowdControlType::INCAPACITATE:
-            return target->HasAuraType(SPELL_AURA_MOD_MECHANIC_IMMUNITY);
+            return target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY);
         case CrowdControlType::DISORIENT:
-            return target->HasAuraType(SPELL_AURA_MOD_FEAR);
+            return target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY);
         case CrowdControlType::ROOT:
-            return target->HasAuraType(SPELL_AURA_MOD_ROOT_IMMUNITY);
+            return target->HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY);
         case CrowdControlType::SILENCE:
             return target->HasAuraType(SPELL_AURA_MOD_SILENCE);
         default:
@@ -335,8 +338,11 @@ float CrowdControlManager::CalculateCCPriority(Unit* target) const
         priority += 15.0f;
 
     // Elite bonus
-    if (target->IsElite())
-        priority += 10.0f;
+    if (Creature* creature = target->ToCreature())
+    {
+        if (creature->IsElite())
+            priority += 10.0f;
+    }
 
     // Distance penalty (prefer nearby targets)
     float distance = _bot->GetDistance(target);
@@ -385,8 +391,12 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         return false;
 
     // Check power cost
-    if (_bot->GetPower(_bot->GetPowerType()) < spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask()))
-        return false;
+    std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(_bot, spellInfo->GetSchoolMask());
+    for (SpellPowerCost const& cost : costs)
+    {
+        if (_bot->GetPower(cost.Power) < cost.Amount)
+            return false;
+    }
 
     // Check range
     float range = spellInfo->GetMaxRange(false);
@@ -404,8 +414,8 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
 
         // Check spell mechanic/effect to determine which creature types it works on
         // Polymorph-like spells: work on beasts, humanoids, critters
-    if (spellInfo->GetMechanic() == MECHANIC_POLYMORPH ||
-            spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_CONFUSE))
+        if (spellInfo->Mechanic == MECHANIC_POLYMORPH ||
+            spellInfo->HasAura(SPELL_AURA_MOD_CONFUSE))
         {
             if (creatureType != CREATURE_TYPE_BEAST &&
                 creatureType != CREATURE_TYPE_HUMANOID &&
@@ -416,7 +426,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Banish: works on demons and elementals
-    if (spellInfo->GetMechanic() == MECHANIC_BANISH)
+        if (spellInfo->Mechanic == MECHANIC_BANISH)
         {
             if (creatureType != CREATURE_TYPE_DEMON &&
                 creatureType != CREATURE_TYPE_ELEMENTAL)
@@ -426,8 +436,8 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Shackle: works on undead
-    if (spellInfo->GetMechanic() == MECHANIC_SHACKLE ||
-            spellInfo->HasEffect(SPELL_EFFECT_APPLY_AURA, SPELL_AURA_MOD_SHAPESHIFT))
+        if (spellInfo->Mechanic == MECHANIC_SHACKLE ||
+            spellInfo->HasAura(SPELL_AURA_MOD_SHAPESHIFT))
         {
             if (creatureType != CREATURE_TYPE_UNDEAD)
             {
@@ -436,7 +446,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
         }
 
         // Fear: works on humanoids and beasts (generally)
-    if (spellInfo->GetMechanic() == MECHANIC_FEAR)
+        if (spellInfo->Mechanic == MECHANIC_FEAR)
         {
             if (creatureType == CREATURE_TYPE_MECHANICAL ||
                 creatureType == CREATURE_TYPE_UNDEAD ||
@@ -448,7 +458,7 @@ bool CrowdControlManager::IsSpellSuitableForTarget(uint32 spellId, Unit* target)
     }
 
     // Check if target is immune to CC
-    if (target->IsImmunedToSpell(spellInfo))
+    if (target->IsImmunedToSpell(spellInfo, _bot))
         return false;
 
     return true;
