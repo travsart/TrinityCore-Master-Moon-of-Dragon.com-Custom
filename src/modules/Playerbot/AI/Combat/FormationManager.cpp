@@ -1363,4 +1363,141 @@ void FormationManager::MaintainFormationDuringMovement()
     }
 }
 
+void FormationManager::ActivateEmergencyScatter()
+{
+    if (!_isLeader || !_leader || _members.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot.formation", "FormationManager::ActivateEmergencyScatter: Activating emergency scatter for leader {}",
+                 _leader->GetName());
+
+    // Set scatter mode
+    _formationType = FormationType::SPREAD;
+    _emergencyScatter = true;
+    _lastEmergencyScatter = GameTime::GetGameTimeMS();
+
+    // Calculate scatter positions in all directions from leader
+    Position leaderPos = _leader->GetPosition();
+    float scatterDistance = _formationSpacing * 3.0f; // Scatter far from center
+
+    for (size_t i = 0; i < _members.size(); ++i)
+    {
+        if (!_members[i].player)
+            continue;
+
+        // Calculate angle based on member index to spread evenly
+        float angle = (2.0f * M_PI * i) / _members.size();
+        float x = leaderPos.GetPositionX() + scatterDistance * std::cos(angle);
+        float y = leaderPos.GetPositionY() + scatterDistance * std::sin(angle);
+        float z = leaderPos.GetPositionZ();
+
+        // Adjust for terrain
+        Map* map = _leader->GetMap();
+        if (map)
+        {
+            float groundZ = map->GetHeight(_leader->GetPhaseShift(), x, y, z + 2.0f);
+            if (groundZ > INVALID_HEIGHT)
+                z = groundZ;
+        }
+
+        _members[i].targetPosition = Position(x, y, z);
+        _members[i].player->GetMotionMaster()->MovePoint(0, _members[i].targetPosition);
+        _members[i].isMoving = true;
+        _members[i].isInPosition = false;
+    }
+
+    _currentIntegrity = FormationIntegrity::BROKEN;
+}
+
+void FormationManager::DeactivateEmergencyScatter()
+{
+    if (!_isLeader || !_leader)
+        return;
+
+    TC_LOG_DEBUG("playerbot.formation", "FormationManager::DeactivateEmergencyScatter: Deactivating emergency scatter for leader {}",
+                 _leader->GetName());
+
+    _emergencyScatter = false;
+
+    // Reform to previous formation type
+    CalculateMovementTargets();
+    IssueMovementCommands();
+}
+
+void FormationManager::HandleEmergencyRegroup()
+{
+    if (!_isLeader || !_leader || _members.empty())
+        return;
+
+    TC_LOG_DEBUG("playerbot.formation", "FormationManager::HandleEmergencyRegroup: Emergency regroup for leader {}",
+                 _leader->GetName());
+
+    // Deactivate scatter if active
+    if (_emergencyScatter)
+        DeactivateEmergencyScatter();
+
+    // Set tight formation
+    float originalSpacing = _formationSpacing;
+    _formationSpacing = _baseSpacing * 0.5f; // Tighter formation for regroup
+
+    // Use column formation for easy regrouping
+    FormationType originalType = _currentFormationType;
+    _currentFormationType = FormationType::COLUMN;
+
+    // Calculate tight positions around leader
+    CalculateMovementTargets();
+
+    // Issue urgent movement commands
+    for (auto& member : _members)
+    {
+        if (!member.player || !member.player->IsAlive())
+            continue;
+
+        member.player->GetMotionMaster()->Clear();
+        member.player->GetMotionMaster()->MovePoint(0, member.targetPosition, true, {}, 7.0f); // Run speed
+        member.isMoving = true;
+        member.isInPosition = false;
+    }
+
+    // Restore original settings after movement
+    _formationSpacing = originalSpacing;
+    _currentFormationType = originalType;
+    _lastReformation = GameTime::GetGameTimeMS();
+    _currentIntegrity = FormationIntegrity::BROKEN;
+}
+
+void FormationManager::HandleMemberDisconnection(Player* disconnectedMember)
+{
+    if (!disconnectedMember)
+        return;
+
+    TC_LOG_DEBUG("playerbot.formation", "FormationManager::HandleMemberDisconnection: Removing {} from formation",
+                 disconnectedMember->GetName());
+
+    // Find and remove the member
+    auto it = std::find_if(_members.begin(), _members.end(),
+        [disconnectedMember](const FormationMember& member) {
+            return member.player == disconnectedMember;
+        });
+
+    if (it != _members.end())
+    {
+        _members.erase(it);
+
+        // Adjust formation for new group size
+        if (!_members.empty())
+        {
+            AdjustForGroupSize();
+            CalculateMovementTargets();
+            IssueMovementCommands();
+        }
+        else
+        {
+            // No members left, clear formation
+            _formationType = FormationType::NONE;
+            _currentIntegrity = FormationIntegrity::BROKEN;
+        }
+    }
+}
+
 } // namespace Playerbot
