@@ -277,103 +277,164 @@ void BotSpawnerAdapter::SetConfig(SpawnConfig const& config)
 }
 
 // === ZONE/MAP MANAGEMENT METHODS ===
+// These delegate to BotSpawner singleton which has full implementations
 
 void BotSpawnerAdapter::DespawnAllBots()
 {
-    // TODO: BotSpawnOrchestrator::DespawnAllBots() not implemented
-    TC_LOG_WARN("module.playerbot.adapter", "BotSpawnerAdapter::DespawnAllBots() - Not implemented");
+    if (!_enabled)
+        return;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+    {
+        spawner->DespawnAllBots();
+        TC_LOG_INFO("module.playerbot.adapter", "BotSpawnerAdapter::DespawnAllBots() - Delegated to BotSpawner");
+    }
 }
 
 void BotSpawnerAdapter::UpdateZonePopulation(uint32 zoneId, uint32 mapId)
 {
-    // TODO: BotSpawnOrchestrator::UpdateZonePopulation() not implemented
-    (void)zoneId; (void)mapId; // Suppress unused parameter warnings
+    if (!_enabled)
+        return;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        spawner->UpdateZonePopulation(zoneId, mapId);
 }
 
 void BotSpawnerAdapter::UpdateZonePopulationSafe(uint32 zoneId, uint32 mapId)
 {
-    // TODO: BotSpawnOrchestrator::UpdateZonePopulationSafe() not implemented
-    (void)zoneId; (void)mapId;
+    if (!_enabled)
+        return;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        spawner->UpdateZonePopulationSafe(zoneId, mapId);
 }
 
 ZonePopulation BotSpawnerAdapter::GetZonePopulation(uint32 zoneId) const
 {
-    // TODO: BotSpawnOrchestrator::GetZonePopulation() not implemented
-    (void)zoneId;
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->GetZonePopulation(zoneId);
     return ZonePopulation{};
 }
 
 ::std::vector<ZonePopulation> BotSpawnerAdapter::GetAllZonePopulations() const
 {
-    // TODO: BotSpawnOrchestrator::GetAllZonePopulations() not implemented
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->GetAllZonePopulations();
     return {};
 }
 
 // === BOT QUERY METHODS ===
+// These delegate to BotSpawner singleton which has full implementations
 
 bool BotSpawnerAdapter::IsBotActive(ObjectGuid guid) const
 {
-    // TODO: BotSpawnOrchestrator::IsBotActive() not implemented
-    (void)guid;
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->IsBotActive(guid);
     return false;
 }
 
 uint32 BotSpawnerAdapter::GetActiveBotCount(uint32 mapId, bool useMapId) const
 {
-    // TODO: BotSpawnOrchestrator::GetActiveBotCount() signature mismatch or not implemented
-    (void)mapId; (void)useMapId;
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->GetActiveBotCount(mapId, useMapId);
     return 0;
 }
 
 ::std::vector<ObjectGuid> BotSpawnerAdapter::GetActiveBotsInZone(uint32 zoneId) const
 {
-    // TODO: BotSpawnOrchestrator::GetActiveBotsInZone() not implemented
-    (void)zoneId;
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->GetActiveBotsInZone(zoneId);
     return {};
 }
 
 bool BotSpawnerAdapter::CanSpawnOnMap(uint32 mapId) const
 {
-    // TODO: BotSpawnOrchestrator::CanSpawnOnMap() not implemented
-    (void)mapId;
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        return spawner->CanSpawnOnMap(mapId);
     return false;
 }
 
 // === ADVANCED SPAWNING METHODS ===
+// These delegate to BotSpawner singleton which has full implementations
 
 bool BotSpawnerAdapter::CreateAndSpawnBot(uint32 masterAccountId, uint8 classId, uint8 race, uint8 gender, ::std::string const& name, ObjectGuid& outCharacterGuid)
 {
-    // TODO: BotSpawnOrchestrator::CreateAndSpawnBot() not implemented
-    (void)masterAccountId; (void)classId; (void)race; (void)gender; (void)name; (void)outCharacterGuid;
+    if (!_enabled)
+        return false;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+    {
+        bool result = spawner->CreateAndSpawnBot(masterAccountId, classId, race, gender, name, outCharacterGuid);
+        if (result)
+        {
+            TC_LOG_INFO("module.playerbot.adapter",
+                "BotSpawnerAdapter::CreateAndSpawnBot() - Successfully created bot '{}' (GUID: {})",
+                name, outCharacterGuid.ToString());
+        }
+        return result;
+    }
     return false;
 }
 
 // === STATISTICS METHODS ===
+// These delegate to BotSpawner singleton which has full implementations
 
 SpawnStats const& BotSpawnerAdapter::GetStats() const
 {
-    // TODO: BotSpawnOrchestrator::GetStats() not implemented
-    // Return cached stats without syncing from orchestrator
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+    {
+        // Sync from BotSpawner's stats
+        _spawnStats = spawner->GetStats();
+    }
     return _spawnStats;
 }
 
 void BotSpawnerAdapter::ResetStats()
 {
-    // TODO: BotSpawnOrchestrator::ResetStats() not implemented
-    // Reset local stats only
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        spawner->ResetStats();
+
+    // Also reset adapter's local copy
     _spawnStats = SpawnStats{};
+    TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter::ResetStats() - Statistics reset");
 }
 
 // === PLAYER INTERACTION METHODS ===
+// These delegate to BotSpawner singleton which has full implementations
 
 void BotSpawnerAdapter::OnPlayerLogin()
 {
-    // TODO: BotSpawnOrchestrator::OnPlayerLogin() not implemented
+    if (!_enabled)
+        return;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+    {
+        spawner->OnPlayerLogin();
+        TC_LOG_DEBUG("module.playerbot.adapter", "BotSpawnerAdapter::OnPlayerLogin() - Delegated to BotSpawner");
+    }
 }
 
 void BotSpawnerAdapter::CheckAndSpawnForPlayers()
 {
-    // TODO: BotSpawnOrchestrator::CheckAndSpawnForPlayers() not implemented
+    if (!_enabled)
+        return;
+
+    BotSpawner* spawner = BotSpawner::instance();
+    if (spawner)
+        spawner->CheckAndSpawnForPlayers();
 }
 
 // =====================================================
