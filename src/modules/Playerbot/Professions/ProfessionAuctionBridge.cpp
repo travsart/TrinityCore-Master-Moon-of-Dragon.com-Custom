@@ -34,7 +34,8 @@ namespace Playerbot
 // ============================================================================
 
 // NOTE: AuctionHouse is now per-bot (Phase 7), access via GetGameSystems(_bot)->GetAuctionHouse()
-// Removed: AuctionHouse* ProfessionAuctionBridge::_auctionHouse = nullptr;
+// Temporary: Re-enabled for linker compatibility until full refactoring is complete
+AuctionHouse* ProfessionAuctionBridge::_auctionHouse = nullptr;
 ProfessionAuctionStatistics ProfessionAuctionBridge::_globalStatistics;
 bool ProfessionAuctionBridge::_sharedDataInitialized = false;
 
@@ -929,6 +930,20 @@ void ProfessionAuctionBridge::HandleProfessionEvent(ProfessionEvent const& event
             // Ignore other event types
             break;
     }
+}
+
+ProfessionAuctionStatistics const& ProfessionAuctionBridge::GetPlayerStatistics(uint32 playerGuid) const
+{
+    // Since this is now per-bot instance, return the bot's statistics
+    // The playerGuid parameter is for interface compatibility but we use _bot's stats
+    if (!_bot)
+    {
+        TC_LOG_ERROR("playerbot.professionauction", "ProfessionAuctionBridge::GetPlayerStatistics: null bot!");
+        return _globalStatistics; // Return global stats as fallback
+    }
+
+    // Return bot's local statistics
+    return _statistics;
 }
 
 } // namespace Playerbot

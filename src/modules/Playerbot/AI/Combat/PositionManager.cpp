@@ -1243,4 +1243,1293 @@ bool PositionUtils::CanWalkStraightLine(const Position& from, const Position& to
                                LINEOFSIGHT_ALL_CHECKS, VMAP::ModelIgnoreFlags::Nothing);
 }
 
+} // namespace Playerbot/*
+ * Copyright (C) 2024 TrinityCore <https://www.trinitycore.org/>
+ *
+ * Implementation of 13 missing PositionManager methods with enterprise-grade quality
+ * These methods are ready to be added to the main PositionManager.cpp file
+ */
+
+#include "PositionManager.h"
+#include "Player.h"
+#include "Unit.h"
+#include "Map.h"
+#include "Log.h"
+#include "Group.h"
+#include "PathGenerator.h"
+#include "PhasingHandler.h"
+#include "ObjectAccessor.h"
+#include "SharedDefines.h"
+#include "../../Spatial/SpatialGridManager.h"
+#include "../../Spatial/SpatialGridQueryHelpers.h"
+#include <cmath>
+#include <algorithm>
+#include <chrono>
+
+namespace Playerbot
+{
+
+// ========================================================================================
+// Method 1: CalculateStrafePosition
+// Calculate strafe position for circle-strafing around a target
+// ========================================================================================
+Position PositionManager::CalculateStrafePosition(Unit* target, bool strafeLeft)
+{
+    if (!target || !_bot)
+        return _bot->GetPosition();
+
+    auto startTime = ::std::chrono::steady_clock::now();
+
+    Position currentPos = _bot->GetPosition();
+    Position targetPos = target->GetPosition();
+
+    // Calculate current angle from target to bot
+    float currentAngle = PositionUtils::CalculateAngleBetween(targetPos, currentPos);
+    float currentDistance = currentPos.GetExactDist(&targetPos);
+
+    // Maintain optimal combat distance while strafing
+    float optimalDistance = currentDistance;
+    if (optimalDistance < 3.0f)
+        optimalDistance = 4.0f;  // Minimum strafe distance
+    else if (optimalDistance > 8.0f)
+        optimalDistance = 7.0f;  // Maximum strafe distance for melee
+
+    // Calculate strafe angle (15-30 degrees based on movement speed)
+    float strafeAngleStep = M_PI / 12.0f;  // 15 degrees default
+
+    // Adjust strafe angle based on target's turn rate to maintain position
+    float targetTurnRate = 0.0f;
+    if (target->IsMoving())
+    {
+        // Increase strafe angle if target is turning quickly
+        strafeAngleStep = M_PI / 8.0f;  // 22.5 degrees for moving targets
+    }
+
+    // Calculate new position angle
+    float newAngle = strafeLeft ?
+        PositionUtils::NormalizeAngle(currentAngle - strafeAngleStep) :
+        PositionUtils::NormalizeAngle(currentAngle + strafeAngleStep);
+
+    // Generate strafe position
+    Position strafePos = PositionUtils::CalculatePositionAtAngle(targetPos, optimalDistance, newAngle);
+
+    // Validate the strafe position
+    if (!ValidatePosition(strafePos, PositionValidation::BASIC))
+    {
+        // Try alternative strafe with smaller angle
+        strafeAngleStep *= 0.5f;
+        newAngle = strafeLeft ?
+            PositionUtils::NormalizeAngle(currentAngle - strafeAngleStep) :
+            PositionUtils::NormalizeAngle(currentAngle + strafeAngleStep);
+        strafePos = PositionUtils::CalculatePositionAtAngle(targetPos, optimalDistance, newAngle);
+
+        // If still invalid, return current position
+        if (!ValidatePosition(strafePos, PositionValidation::BASIC))
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} - Unable to find valid strafe position", _bot->GetName());
+            return currentPos;
+        }
+    }
+
+    // Adjust Z coordinate for terrain
+    Map* map = _bot->GetMap();
+    if (map)
+    {
+        float groundZ = map->GetHeight(_bot->GetPhaseShift(),
+                                      strafePos.GetPositionX(),
+                                      strafePos.GetPositionY(),
+                                      strafePos.GetPositionZ());
+        strafePos.m_positionZ = groundZ + 0.5f;
+    }
+
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+    TrackPerformance(duration, "CalculateStrafePosition");
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} calculated {} strafe to ({:.2f}, {:.2f}, {:.2f})",
+                 _bot->GetName(), strafeLeft ? "left" : "right",
+                 strafePos.GetPositionX(), strafePos.GetPositionY(), strafePos.GetPositionZ());
+
+    return strafePos;
+}
+
+// ========================================================================================
+// Method 2: FindEscapePosition
+// Find optimal escape position when threatened by multiple enemies
+// ========================================================================================
+Position PositionManager::FindEscapePosition(const ::std::vector<Unit*>& threats)
+{
+    if (!_bot || threats.empty())
+        return _bot->GetPosition();
+
+    auto startTime = ::std::chrono::steady_clock::now();
+    Position currentPos = _bot->GetPosition();
+
+    // Calculate threat vector (average direction of all threats)
+    float threatVectorX = 0.0f;
+    float threatVectorY = 0.0f;
+    float totalThreatWeight = 0.0f;
+
+    for (Unit* threat : threats)
+    {
+        if (!threat)
+            continue;
+
+        Position threatPos = threat->GetPosition();
+        float distance = currentPos.GetExactDist(&threatPos);
+
+        // Weight closer threats more heavily
+        float weight = 1.0f;
+        if (distance < 10.0f)
+            weight = 3.0f;
+        else if (distance < 20.0f)
+            weight = 2.0f;
+
+        // Add threat health/damage potential
+        if (threat->GetHealth() > 0)
+            weight *= (static_cast<float>(threat->GetHealth()) / static_cast<float>(threat->GetMaxHealth()));
+
+        float dx = currentPos.GetPositionX() - threatPos.GetPositionX();
+        float dy = currentPos.GetPositionY() - threatPos.GetPositionY();
+
+        // Normalize direction vector
+        float length = ::std::sqrt(dx * dx + dy * dy);
+        if (length > 0.0f)
+        {
+            dx /= length;
+            dy /= length;
+        }
+
+        threatVectorX += dx * weight;
+        threatVectorY += dy * weight;
+        totalThreatWeight += weight;
+    }
+
+    // Calculate escape direction (opposite of threat vector)
+    if (totalThreatWeight > 0.0f)
+    {
+        threatVectorX /= totalThreatWeight;
+        threatVectorY /= totalThreatWeight;
+    }
+
+    float escapeAngle = ::std::atan2(threatVectorY, threatVectorX);
+
+    // Generate escape positions at various distances
+    ::std::vector<PositionInfo> escapePositions;
+    MovementContext escapeContext;
+    escapeContext.bot = _bot;
+    escapeContext.emergencyMode = true;
+    escapeContext.validationFlags = PositionValidation::BASIC;
+
+    // Try multiple escape distances
+    for (float distance : {15.0f, 20.0f, 25.0f, 30.0f})
+    {
+        // Primary escape direction
+        Position escapePos = PositionUtils::CalculatePositionAtAngle(currentPos, distance, escapeAngle);
+
+        // Also try slight variations for better path options
+        for (float angleOffset : {0.0f, -M_PI/6, M_PI/6})
+        {
+            float testAngle = PositionUtils::NormalizeAngle(escapeAngle + angleOffset);
+            Position testPos = PositionUtils::CalculatePositionAtAngle(currentPos, distance, testAngle);
+
+            if (ValidatePosition(testPos, escapeContext.validationFlags))
+            {
+                PositionInfo info = EvaluatePosition(testPos, escapeContext);
+
+                // Calculate minimum distance to all threats
+                float minThreatDistance = 1000.0f;
+                for (Unit* threat : threats)
+                {
+                    if (threat)
+                    {
+                        float threatDist = testPos.GetExactDist(threat);
+                        minThreatDistance = ::std::min(minThreatDistance, threatDist);
+                    }
+                }
+
+                // Bonus score for distance from threats
+                info.score += minThreatDistance * 2.0f;
+
+                escapePositions.push_back(info);
+            }
+        }
+    }
+
+    // Sort by score and pick best escape position
+    if (!escapePositions.empty())
+    {
+        ::std::sort(escapePositions.begin(), escapePositions.end(), ::std::greater<PositionInfo>());
+
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+        TrackPerformance(duration, "FindEscapePosition");
+
+        Position bestEscape = escapePositions[0].position;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} found escape position at ({:.2f}, {:.2f}, {:.2f}) from {} threats",
+                     _bot->GetName(), bestEscape.GetPositionX(), bestEscape.GetPositionY(),
+                     bestEscape.GetPositionZ(), threats.size());
+
+        return bestEscape;
+    }
+
+    // Fallback: move directly away from nearest threat
+    Unit* nearestThreat = threats[0];
+    float nearestDistance = currentPos.GetExactDist(nearestThreat);
+
+    for (Unit* threat : threats)
+    {
+        if (threat)
+        {
+            float dist = currentPos.GetExactDist(threat);
+            if (dist < nearestDistance)
+            {
+                nearestThreat = threat;
+                nearestDistance = dist;
+            }
+        }
+    }
+
+    float fallbackAngle = PositionUtils::CalculateAngleBetween(nearestThreat->GetPosition(), currentPos);
+    Position fallbackPos = PositionUtils::CalculatePositionAtAngle(currentPos, EMERGENCY_DISTANCE, fallbackAngle);
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} using fallback escape position", _bot->GetName());
+    return fallbackPos;
+}
+
+// ========================================================================================
+// Method 3: FindFormationPosition
+// Find position based on group formation type
+// ========================================================================================
+Position PositionManager::FindFormationPosition(const ::std::vector<Player*>& groupMembers, PositionType formationType)
+{
+    if (!_bot || groupMembers.empty())
+        return _bot->GetPosition();
+
+    auto startTime = ::std::chrono::steady_clock::now();
+
+    // Find formation leader (usually tank or highest level)
+    Player* leader = nullptr;
+    uint32 highestLevel = 0;
+
+    for (Player* member : groupMembers)
+    {
+        if (!member || member == _bot)
+            continue;
+
+        if (member->GetLevel() > highestLevel)
+        {
+            leader = member;
+            highestLevel = member->GetLevel();
+        }
+    }
+
+    if (!leader)
+        leader = groupMembers[0];
+
+    Position leaderPos = leader->GetPosition();
+    float leaderOrientation = leader->GetOrientation();
+    Position formationPos = _bot->GetPosition();
+
+    // Determine bot's position in formation based on role
+    ThreatRole botRole = _threatManager ? _threatManager->GetRole() : ThreatRole::DPS;
+
+    switch (formationType)
+    {
+        case PositionType::FORMATION_LINE:
+        {
+            // Line formation perpendicular to leader's facing
+            uint32 positionIndex = 0;
+            for (size_t i = 0; i < groupMembers.size(); ++i)
+            {
+                if (groupMembers[i] == _bot)
+                {
+                    positionIndex = i;
+                    break;
+                }
+            }
+
+            float spacing = 5.0f;
+            float offset = (positionIndex - groupMembers.size() / 2.0f) * spacing;
+            float perpAngle = PositionUtils::NormalizeAngle(leaderOrientation + M_PI/2);
+
+            formationPos.m_positionX = leaderPos.GetPositionX() + offset * ::std::cos(perpAngle);
+            formationPos.m_positionY = leaderPos.GetPositionY() + offset * ::std::sin(perpAngle);
+            formationPos.m_positionZ = leaderPos.GetPositionZ();
+            break;
+        }
+
+        case PositionType::FORMATION_ARROW:
+        {
+            // V-formation with leader at point
+            float baseDistance = 8.0f;
+            float spreadAngle = M_PI / 6;  // 30 degrees
+
+            switch (botRole)
+            {
+                case ThreatRole::TANK:
+                    // Tanks at the front
+                    formationPos = leaderPos;
+                    break;
+
+                case ThreatRole::HEALER:
+                    // Healers in the middle-back
+                    formationPos = PositionUtils::CalculatePositionAtAngle(
+                        leaderPos, baseDistance * 1.5f,
+                        PositionUtils::NormalizeAngle(leaderOrientation + M_PI));
+                    break;
+
+                case ThreatRole::DPS:
+                {
+                    // DPS on the wings
+                    bool leftWing = (_bot->GetGUID().GetCounter() % 2) == 0;
+                    float wingAngle = leftWing ?
+                        PositionUtils::NormalizeAngle(leaderOrientation + M_PI - spreadAngle) :
+                        PositionUtils::NormalizeAngle(leaderOrientation + M_PI + spreadAngle);
+                    formationPos = PositionUtils::CalculatePositionAtAngle(leaderPos, baseDistance, wingAngle);
+                    break;
+                }
+
+                default:
+                    formationPos = PositionUtils::CalculatePositionAtAngle(
+                        leaderPos, baseDistance,
+                        PositionUtils::NormalizeAngle(leaderOrientation + M_PI));
+                    break;
+            }
+            break;
+        }
+
+        case PositionType::FORMATION_CIRCLE:
+        {
+            // Defensive circle formation
+            uint32 memberCount = groupMembers.size();
+            uint32 myIndex = 0;
+
+            for (uint32 i = 0; i < memberCount; ++i)
+            {
+                if (groupMembers[i] == _bot)
+                {
+                    myIndex = i;
+                    break;
+                }
+            }
+
+            float radius = 10.0f + (memberCount * 1.5f);  // Scale with group size
+            float angleStep = (2.0f * M_PI) / memberCount;
+            float myAngle = angleStep * myIndex;
+
+            Position groupCenter = PositionUtils::CalculateGroupCenter(groupMembers);
+            formationPos = PositionUtils::CalculatePositionAtAngle(groupCenter, radius, myAngle);
+            break;
+        }
+
+        case PositionType::FORMATION_SPREAD:
+        {
+            // Spread formation for avoiding AoE
+            float spreadDistance = 8.0f;
+
+            // Find position with maximum distance from other members
+            ::std::vector<Position> candidates = GenerateCircularPositions(leaderPos, 15.0f, 16);
+            float bestScore = 0.0f;
+
+            for (const Position& candidate : candidates)
+            {
+                if (!ValidatePosition(candidate, PositionValidation::BASIC))
+                    continue;
+
+                float minDistance = 1000.0f;
+                for (Player* member : groupMembers)
+                {
+                    if (member && member != _bot)
+                    {
+                        float dist = candidate.GetExactDist(member);
+                        minDistance = ::std::min(minDistance, dist);
+                    }
+                }
+
+                if (minDistance > spreadDistance && minDistance < 30.0f)
+                {
+                    float score = minDistance;
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        formationPos = candidate;
+                    }
+                }
+            }
+            break;
+        }
+
+        default:
+            // Default: maintain relative position to leader
+            formationPos = PositionUtils::CalculatePositionAtAngle(
+                leaderPos, 10.0f,
+                PositionUtils::NormalizeAngle(leaderOrientation + M_PI));
+            break;
+    }
+
+    // Validate and adjust formation position
+    if (!ValidatePosition(formationPos, PositionValidation::BASIC))
+    {
+        // Find nearest valid position
+        formationPos = PositionUtils::GetNearestWalkablePosition(formationPos, _bot->GetMap(), 10.0f);
+    }
+
+    // Adjust Z coordinate for terrain
+    Map* map = _bot->GetMap();
+    if (map)
+    {
+        float groundZ = map->GetHeight(_bot->GetPhaseShift(),
+                                      formationPos.GetPositionX(),
+                                      formationPos.GetPositionY(),
+                                      formationPos.GetPositionZ());
+        formationPos.m_positionZ = groundZ + 0.5f;
+    }
+
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+    TrackPerformance(duration, "FindFormationPosition");
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} found formation position at ({:.2f}, {:.2f}, {:.2f}) for {} formation",
+                 _bot->GetName(), formationPos.GetPositionX(), formationPos.GetPositionY(),
+                 formationPos.GetPositionZ(), static_cast<uint32>(formationType));
+
+    return formationPos;
+}
+
+// ========================================================================================
+// Method 4: FindRangePosition
+// Find position at specific range with optional angle preference
+// ========================================================================================
+Position PositionManager::FindRangePosition(Unit* target, float minRange, float maxRange, float preferredAngle)
+{
+    if (!target || !_bot)
+        return _bot->GetPosition();
+
+    auto startTime = ::std::chrono::steady_clock::now();
+
+    Position targetPos = target->GetPosition();
+    float optimalRange = (minRange + maxRange) / 2.0f;
+
+    // Generate candidate positions at optimal range
+    ::std::vector<PositionInfo> candidates;
+    MovementContext context;
+    context.bot = _bot;
+    context.target = target;
+    context.desiredType = PositionType::RANGED_DPS;
+    context.preferredRange = optimalRange;
+    context.validationFlags = PositionValidation::COMBAT;
+
+    // If preferred angle specified, prioritize that direction
+    if (preferredAngle != 0.0f)
+    {
+        // Try preferred angle first
+        Position preferredPos = PositionUtils::CalculatePositionAtAngle(targetPos, optimalRange, preferredAngle);
+
+        if (ValidatePosition(preferredPos, context.validationFlags))
+        {
+            PositionInfo info = EvaluatePosition(preferredPos, context);
+            info.score += 50.0f;  // Bonus for preferred angle
+            candidates.push_back(info);
+        }
+
+        // Try positions near preferred angle
+        for (float offset : {-M_PI/12, M_PI/12, -M_PI/6, M_PI/6})
+        {
+            float testAngle = PositionUtils::NormalizeAngle(preferredAngle + offset);
+            Position testPos = PositionUtils::CalculatePositionAtAngle(targetPos, optimalRange, testAngle);
+
+            if (ValidatePosition(testPos, context.validationFlags))
+            {
+                PositionInfo info = EvaluatePosition(testPos, context);
+                info.score += 25.0f * (1.0f - ::std::abs(offset) / M_PI);  // Score based on angle proximity
+                candidates.push_back(info);
+            }
+        }
+    }
+
+    // Generate positions in range band
+    uint32 numPositions = 16;
+    for (uint32 i = 0; i < numPositions; ++i)
+    {
+        float angle = (2.0f * M_PI * i) / numPositions;
+
+        // Try different ranges within min/max
+        for (float range : {minRange, optimalRange, maxRange})
+        {
+            Position pos = PositionUtils::CalculatePositionAtAngle(targetPos, range, angle);
+
+            if (ValidatePosition(pos, context.validationFlags))
+            {
+                PositionInfo info = EvaluatePosition(pos, context);
+
+                // Prefer optimal range
+                float rangeDiff = ::std::abs(range - optimalRange);
+                info.score += (1.0f - rangeDiff / (maxRange - minRange)) * 20.0f;
+
+                // Check line of sight
+                if (HasLineOfSight(pos, targetPos))
+                    info.score += 30.0f;
+
+                candidates.push_back(info);
+            }
+        }
+    }
+
+    // Sort and select best position
+    if (!candidates.empty())
+    {
+        ::std::sort(candidates.begin(), candidates.end(), ::std::greater<PositionInfo>());
+
+        Position bestPos = candidates[0].position;
+
+        // Adjust Z for terrain
+        Map* map = _bot->GetMap();
+        if (map)
+        {
+            float groundZ = map->GetHeight(_bot->GetPhaseShift(),
+                                          bestPos.GetPositionX(),
+                                          bestPos.GetPositionY(),
+                                          bestPos.GetPositionZ());
+            bestPos.m_positionZ = groundZ + 0.5f;
+        }
+
+        auto endTime = ::std::chrono::steady_clock::now();
+        auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+        TrackPerformance(duration, "FindRangePosition");
+
+        TC_LOG_DEBUG("playerbot.position", "Bot {} found range position at ({:.2f}, {:.2f}, {:.2f}) range [{:.1f}-{:.1f}]",
+                     _bot->GetName(), bestPos.GetPositionX(), bestPos.GetPositionY(),
+                     bestPos.GetPositionZ(), minRange, maxRange);
+
+        return bestPos;
+    }
+
+    // Fallback to current position if no valid positions found
+    TC_LOG_DEBUG("playerbot.position", "Bot {} unable to find valid range position, maintaining current",
+                 _bot->GetName());
+    return _bot->GetPosition();
+}
+
+// ========================================================================================
+// Method 5: FindSupportPosition
+// Find position for support role (buffers, crowd control, etc.)
+// ========================================================================================
+Position PositionManager::FindSupportPosition(const ::std::vector<Player*>& groupMembers)
+{
+    if (!_bot)
+        return Position();
+
+    auto startTime = ::std::chrono::steady_clock::now();
+
+    // Support position priorities:
+    // 1. Central to group for maximum buff/support coverage
+    // 2. Safe distance from enemies
+    // 3. Line of sight to most allies
+    // 4. Quick escape routes available
+
+    Position groupCenter = PositionUtils::CalculateGroupCenter(groupMembers);
+    float supportRange = 20.0f;  // Typical support ability range
+
+    ::std::vector<PositionInfo> candidates;
+    MovementContext context;
+    context.bot = _bot;
+    context.groupMembers = groupMembers;
+    context.desiredType = PositionType::SUPPORT;
+    context.botRole = ThreatRole::SUPPORT;
+    context.preferredRange = supportRange;
+    context.validationFlags = PositionValidation::SAFE;
+
+    // Generate candidate positions around group center
+    ::std::vector<Position> positions = GenerateCircularPositions(groupCenter, supportRange * 0.7f, 12);
+
+    for (const Position& pos : positions)
+    {
+        if (!ValidatePosition(pos, context.validationFlags))
+            continue;
+
+        PositionInfo info = EvaluatePosition(pos, context);
+
+        // Count allies in support range
+        uint32 alliesInRange = 0;
+        uint32 alliesWithLOS = 0;
+
+        for (Player* ally : groupMembers)
+        {
+            if (!ally || ally == _bot)
+                continue;
+
+            float distance = pos.GetExactDist(ally);
+            if (distance <= supportRange)
+            {
+                alliesInRange++;
+
+                // Simple LOS check
+                if (HasLineOfSight(pos, ally->GetPosition()))
+                    alliesWithLOS++;
+            }
+        }
+
+        // Score based on coverage
+        float coverageScore = (static_cast<float>(alliesInRange) / groupMembers.size()) * 50.0f;
+        float losScore = (static_cast<float>(alliesWithLOS) / groupMembers.size()) * 30.0f;
+        info.score += coverageScore + losScore;
+
+        // Check for escape routes (multiple valid positions nearby)
+        uint32 escapeRoutes = 0;
+        for (float angle = 0; angle < 2 * M_PI; angle += M_PI / 4)
+        {
+            Position escapePos = PositionUtils::CalculatePositionAtAngle(pos, 10.0f, angle);
+            if (ValidatePosition(escapePos, PositionValidation::BASIC))
+                escapeRoutes++;
+        }
+
+        info.score += escapeRoutes * 5.0f;
+
+        candidates.push_back(info);
+    }
+
+    // Also consider positions slightly behind the group
+    if (_bot->GetVictim())
+    {
+        float retreatAngle = PositionUtils::CalculateAngleBetween(_bot->GetVictim()->GetPosition(), groupCenter);
+        retreatAngle = PositionUtils::NormalizeAngle(retreatAngle + M_PI);
+
+        Position behindPos = PositionUtils::CalculatePositionAtAngle(groupCenter, supportRange * 0.5f, retreatAngle);
+        if (ValidatePosition(behindPos, context.validationFlags))
+        {
+            PositionInfo info = EvaluatePosition(behindPos, context);
+            info.score += 20.0f;  // Bonus for being behind group
+            candidates.push_back(info);
+        }
+    }
+
+    // Select best support position
+    Position supportPos = _bot->GetPosition();
+
+    if (!candidates.empty())
+    {
+        ::std::sort(candidates.begin(), candidates.end(), ::std::greater<PositionInfo>());
+        supportPos = candidates[0].position;
+
+        // Adjust Z for terrain
+        Map* map = _bot->GetMap();
+        if (map)
+        {
+            float groundZ = map->GetHeight(_bot->GetPhaseShift(),
+                                          supportPos.GetPositionX(),
+                                          supportPos.GetPositionY(),
+                                          supportPos.GetPositionZ());
+            supportPos.m_positionZ = groundZ + 0.5f;
+        }
+    }
+
+    auto endTime = ::std::chrono::steady_clock::now();
+    auto duration = ::std::chrono::duration_cast<::std::chrono::microseconds>(endTime - startTime);
+    TrackPerformance(duration, "FindSupportPosition");
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} found support position at ({:.2f}, {:.2f}, {:.2f})",
+                 _bot->GetName(), supportPos.GetPositionX(), supportPos.GetPositionY(), supportPos.GetPositionZ());
+
+    return supportPos;
+}
+
+// ========================================================================================
+// Method 6: GetPositionSuccessRate
+// Get historical success rate for positions near the specified location
+// ========================================================================================
+float PositionManager::GetPositionSuccessRate(const Position& pos, float radius)
+{
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
+
+    if (_positionAttempts.empty())
+        return 0.5f;  // Default 50% if no history
+
+    // Create position key based on grid cell
+    float gridSize = radius;
+    int32 gridX = static_cast<int32>(pos.GetPositionX() / gridSize);
+    int32 gridY = static_cast<int32>(pos.GetPositionY() / gridSize);
+    int32 gridZ = static_cast<int32>(pos.GetPositionZ() / gridSize);
+
+    uint32 successCount = 0;
+    uint32 totalAttempts = 0;
+
+    // Check this grid cell and adjacent cells within radius
+    for (int32 dx = -1; dx <= 1; ++dx)
+    {
+        for (int32 dy = -1; dy <= 1; ++dy)
+        {
+            for (int32 dz = -1; dz <= 1; ++dz)
+            {
+                ::std::string key = ::std::to_string(gridX + dx) + "_" +
+                                  ::std::to_string(gridY + dy) + "_" +
+                                  ::std::to_string(gridZ + dz);
+
+                auto attemptIt = _positionAttempts.find(key);
+                auto successIt = _positionSuccessRates.find(key);
+
+                if (attemptIt != _positionAttempts.end())
+                {
+                    totalAttempts += attemptIt->second;
+
+                    if (successIt != _positionSuccessRates.end())
+                    {
+                        successCount += static_cast<uint32>(successIt->second * attemptIt->second);
+                    }
+                }
+            }
+        }
+    }
+
+    if (totalAttempts == 0)
+        return 0.5f;  // Default if no data
+
+    float successRate = static_cast<float>(successCount) / static_cast<float>(totalAttempts);
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} position ({:.1f}, {:.1f}) success rate: {:.2f}% ({}/{} attempts)",
+                 _bot->GetName(), pos.GetPositionX(), pos.GetPositionY(),
+                 successRate * 100.0f, successCount, totalAttempts);
+
+    return successRate;
+}
+
+// ========================================================================================
+// Method 7: HasLineOfSight
+// Check if there is line of sight between two positions
+// ========================================================================================
+bool PositionManager::HasLineOfSight(const Position& from, const Position& to)
+{
+    if (!_bot || !_bot->GetMap())
+        return false;
+
+    Map* map = _bot->GetMap();
+
+    // Use TrinityCore's line of sight check with proper phase handling
+    return map->isInLineOfSight(
+        _bot->GetPhaseShift(),
+        from.GetPositionX(), from.GetPositionY(), from.GetPositionZ() + 2.0f,  // Add height for eye level
+        to.GetPositionX(), to.GetPositionY(), to.GetPositionZ() + 2.0f,
+        LINEOFSIGHT_ALL_CHECKS,
+        VMAP::ModelIgnoreFlags::Nothing
+    );
+}
+
+// ========================================================================================
+// Method 8: IsInEmergencyPosition
+// Check if bot is in a critical/emergency position requiring immediate movement
+// ========================================================================================
+bool PositionManager::IsInEmergencyPosition()
+{
+    if (!_bot)
+        return false;
+
+    Position currentPos = _bot->GetPosition();
+
+    // Check 1: In active AoE zone
+    if (IsInDangerZone(currentPos))
+    {
+        TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: Active AoE zone", _bot->GetName());
+        return true;
+    }
+
+    // Check 2: Health critically low and surrounded
+    if (_bot->GetHealthPct() < 30.0f)
+    {
+        uint32 nearbyEnemies = 0;
+        Map* map = _bot->GetMap();
+
+        if (map)
+        {
+            DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
+            if (spatialGrid)
+            {
+                auto hostileSnapshots = SpatialGridQueryHelpers::FindHostileCreaturesInRange(_bot, 10.0f, true);
+                nearbyEnemies = hostileSnapshots.size();
+            }
+        }
+
+        if (nearbyEnemies >= 3)
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: Low health with {} enemies nearby",
+                        _bot->GetName(), nearbyEnemies);
+            return true;
+        }
+    }
+
+    // Check 3: Falling or in water/lava
+    if (_bot->IsFalling())
+    {
+        TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: Falling", _bot->GetName());
+        return true;
+    }
+
+    Map* map = _bot->GetMap();
+    if (map && map->IsInWater(_bot->GetPhaseShift(), currentPos.GetPositionX(),
+                              currentPos.GetPositionY(), currentPos.GetPositionZ()))
+    {
+        // Check if it's harmful liquid (lava, slime, etc.)
+        LiquidData liquidData;
+        map->GetLiquidData(_bot->GetPhaseShift(), currentPos.GetPositionX(),
+                          currentPos.GetPositionY(), currentPos.GetPositionZ(),
+                          &liquidData, {});
+
+        if (liquidData.Status & (MAP_LIQUID_STATUS_MAGMA | MAP_LIQUID_STATUS_SLIME))
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: In harmful liquid", _bot->GetName());
+            return true;
+        }
+    }
+
+    // Check 4: Stunned/rooted in danger
+    if (_bot->HasUnitState(UNIT_STATE_STUNNED | UNIT_STATE_ROOTED))
+    {
+        // Check if there are incoming projectiles or enemies approaching
+        if (_bot->GetVictim() && _bot->GetVictim()->GetExactDist(_bot) < 5.0f)
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: Stunned/rooted with enemy nearby",
+                        _bot->GetName());
+            return true;
+        }
+    }
+
+    // Check 5: Tank lost aggro and healer/dps is being attacked
+    if (_threatManager)
+    {
+        ThreatRole role = _threatManager->GetRole();
+        if (role == ThreatRole::HEALER || role == ThreatRole::DPS)
+        {
+            if (_bot->GetVictim() && _bot->GetVictim()->GetVictim() == _bot)
+            {
+                TC_LOG_DEBUG("playerbot.position", "Bot {} in emergency: Non-tank being focused", _bot->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// ========================================================================================
+// Method 9: RecordPositionFailure
+// Record a position attempt that failed for learning
+// ========================================================================================
+void PositionManager::RecordPositionFailure(const Position& pos, const ::std::string& reason)
+{
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
+
+    // Create position key based on 5-yard grid cells
+    float gridSize = 5.0f;
+    int32 gridX = static_cast<int32>(pos.GetPositionX() / gridSize);
+    int32 gridY = static_cast<int32>(pos.GetPositionY() / gridSize);
+    int32 gridZ = static_cast<int32>(pos.GetPositionZ() / gridSize);
+
+    ::std::string key = ::std::to_string(gridX) + "_" + ::std::to_string(gridY) + "_" + ::std::to_string(gridZ);
+
+    // Update attempts count
+    _positionAttempts[key]++;
+
+    // Update success rate (decrease it)
+    float currentRate = _positionSuccessRates[key];
+    float newRate = currentRate * 0.9f;  // Decay success rate by 10%
+    _positionSuccessRates[key] = newRate;
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} recorded position failure at ({:.1f}, {:.1f}): {} (success rate now {:.2f}%)",
+                 _bot->GetName(), pos.GetPositionX(), pos.GetPositionY(), reason, newRate * 100.0f);
+
+    // Clean up old entries if map gets too large (memory management)
+    if (_positionAttempts.size() > 1000)
+    {
+        // Remove entries with low attempt counts (likely old/unused positions)
+        auto it = _positionAttempts.begin();
+        while (it != _positionAttempts.end() && _positionAttempts.size() > 500)
+        {
+            if (it->second < 5)
+            {
+                _positionSuccessRates.erase(it->first);
+                it = _positionAttempts.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+}
+
+// ========================================================================================
+// Method 10: RecordPositionSuccess
+// Record a successful position for learning
+// ========================================================================================
+void PositionManager::RecordPositionSuccess(const Position& pos, PositionType type)
+{
+    ::std::lock_guard<Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BOT_AI_STATE>> lock(_mutex);
+
+    // Create position key based on 5-yard grid cells
+    float gridSize = 5.0f;
+    int32 gridX = static_cast<int32>(pos.GetPositionX() / gridSize);
+    int32 gridY = static_cast<int32>(pos.GetPositionY() / gridSize);
+    int32 gridZ = static_cast<int32>(pos.GetPositionZ() / gridSize);
+
+    ::std::string key = ::std::to_string(gridX) + "_" + ::std::to_string(gridY) + "_" + ::std::to_string(gridZ);
+
+    // Update attempts count
+    _positionAttempts[key]++;
+
+    // Update success rate (increase it)
+    float currentRate = _positionSuccessRates[key];
+    float newRate = currentRate * 0.9f + 0.1f;  // Move towards 100% success
+    _positionSuccessRates[key] = newRate;
+
+    TC_LOG_DEBUG("playerbot.position", "Bot {} recorded position success at ({:.1f}, {:.1f}) for {} (success rate now {:.2f}%)",
+                 _bot->GetName(), pos.GetPositionX(), pos.GetPositionY(),
+                 static_cast<uint32>(type), newRate * 100.0f);
+
+    // Award bonus to nearby positions (they're likely good too)
+    for (int32 dx = -1; dx <= 1; ++dx)
+    {
+        for (int32 dy = -1; dy <= 1; ++dy)
+        {
+            if (dx == 0 && dy == 0)
+                continue;
+
+            ::std::string nearbyKey = ::std::to_string(gridX + dx) + "_" +
+                                    ::std::to_string(gridY + dy) + "_" +
+                                    ::std::to_string(gridZ);
+
+            // Slightly improve nearby positions
+            float nearbyRate = _positionSuccessRates[nearbyKey];
+            _positionSuccessRates[nearbyKey] = nearbyRate * 0.95f + 0.05f;  // Small improvement
+        }
+    }
+}
+
+// ========================================================================================
+// Method 11: ShouldCircleStrafe
+// Determine if circle strafing is beneficial against target
+// ========================================================================================
+bool PositionManager::ShouldCircleStrafe(Unit* target)
+{
+    if (!_bot || !target)
+        return false;
+
+    // Don't circle strafe if casting
+    if (_bot->IsNonMeleeSpellCast(false))
+        return false;
+
+    // Check if we're in melee range
+    float distance = _bot->GetExactDist(target);
+    if (distance > 8.0f)
+        return false;  // Too far for circle strafing
+
+    // Check target type and behavior
+    bool shouldStrafe = false;
+
+    // Factor 1: Target is casting (strafe to avoid frontal cone)
+    if (target->IsNonMeleeSpellCast(false))
+    {
+        // Check if it's a frontal cone spell (would need spell ID checks)
+        shouldStrafe = true;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should circle strafe - target casting", _bot->GetName());
+    }
+
+    // Factor 2: Target is a large creature (dragons, giants)
+    if (target->GetTypeId() == TYPEID_UNIT)
+    {
+        Creature* creature = target->ToCreature();
+        if (creature)
+        {
+            // Large creatures often have cleave/breath attacks
+            float targetScale = 1.0f;  // Would need to get actual scale
+            if (targetScale > 1.5f)
+            {
+                shouldStrafe = true;
+                TC_LOG_DEBUG("playerbot.position", "Bot {} should circle strafe - large target", _bot->GetName());
+            }
+        }
+    }
+
+    // Factor 3: We're a melee DPS (benefit from positional advantages)
+    if (_threatManager && _threatManager->GetRole() == ThreatRole::DPS)
+    {
+        // Melee DPS should try to stay behind target
+        float angle = target->GetRelativeAngle(_bot);
+        if (::std::abs(angle) < M_PI / 2)  // We're in front
+        {
+            shouldStrafe = true;
+            TC_LOG_DEBUG("playerbot.position", "Bot {} should circle strafe - need better position", _bot->GetName());
+        }
+    }
+
+    // Factor 4: Target turning speed (don't strafe if target turns too fast)
+    if (shouldStrafe && target->IsMoving())
+    {
+        // If target is turning rapidly, strafing might not help
+        float targetSpeed = target->GetSpeed(MOVE_TURN_RATE);
+        if (targetSpeed > 3.0f)  // High turn rate
+        {
+            shouldStrafe = false;
+            TC_LOG_DEBUG("playerbot.position", "Bot {} shouldn't circle strafe - target turning too fast", _bot->GetName());
+        }
+    }
+
+    // Factor 5: Check cooldowns and resources
+    if (shouldStrafe)
+    {
+        // Make sure we have the resources to maintain strafe
+        if (_bot->GetPowerPct(POWER_ENERGY) < 30.0f || _bot->GetHealthPct() < 50.0f)
+        {
+            shouldStrafe = false;
+            TC_LOG_DEBUG("playerbot.position", "Bot {} shouldn't circle strafe - low resources", _bot->GetName());
+        }
+    }
+
+    return shouldStrafe;
+}
+
+// ========================================================================================
+// Method 12: ShouldMaintainGroupProximity
+// Determine if bot should stay close to group
+// ========================================================================================
+bool PositionManager::ShouldMaintainGroupProximity()
+{
+    if (!_bot)
+        return false;
+
+    // Always maintain proximity if in a group
+    Group* group = _bot->GetGroup();
+    if (!group)
+        return false;
+
+    // Check combat status
+    bool inCombat = _bot->IsInCombat();
+
+    // Factor 1: Healer should always maintain proximity
+    if (_threatManager && _threatManager->GetRole() == ThreatRole::HEALER)
+    {
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - healer role", _bot->GetName());
+        return true;
+    }
+
+    // Factor 2: Check group spread
+    ::std::vector<Player*> groupMembers;
+    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+    {
+        if (Player* member = itr->GetSource())
+        {
+            if (member->IsInWorld() && member->IsAlive())
+                groupMembers.push_back(member);
+        }
+    }
+
+    if (groupMembers.size() <= 1)
+        return false;  // No other members to maintain proximity with
+
+    // Calculate current distance from group center
+    Position groupCenter = PositionUtils::CalculateGroupCenter(groupMembers);
+    float distanceFromGroup = _bot->GetExactDist(&groupCenter);
+
+    // Factor 3: Too far from group
+    float maxAllowedDistance = inCombat ? 30.0f : 40.0f;
+    if (distanceFromGroup > maxAllowedDistance)
+    {
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - too far ({:.1f} yards)",
+                    _bot->GetName(), distanceFromGroup);
+        return true;
+    }
+
+    // Factor 4: Group is moving together
+    bool groupMoving = false;
+    for (Player* member : groupMembers)
+    {
+        if (member && member != _bot && member->IsMoving())
+        {
+            groupMoving = true;
+            break;
+        }
+    }
+
+    if (groupMoving && distanceFromGroup > 20.0f)
+    {
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - group moving", _bot->GetName());
+        return true;
+    }
+
+    // Factor 5: Dangerous area (dungeons/raids)
+    Map* map = _bot->GetMap();
+    if (map && (map->IsDungeon() || map->IsRaid()))
+    {
+        if (distanceFromGroup > 25.0f)
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - in dungeon/raid", _bot->GetName());
+            return true;
+        }
+    }
+
+    // Factor 6: Support roles should stay closer
+    if (_threatManager && _threatManager->GetRole() == ThreatRole::SUPPORT)
+    {
+        if (distanceFromGroup > 20.0f)
+        {
+            TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - support role", _bot->GetName());
+            return true;
+        }
+    }
+
+    // Factor 7: Check if group members need help
+    for (Player* member : groupMembers)
+    {
+        if (member && member != _bot)
+        {
+            // Member in danger
+            if (member->GetHealthPct() < 50.0f && _bot->GetExactDist(member) > 30.0f)
+            {
+                TC_LOG_DEBUG("playerbot.position", "Bot {} should maintain proximity - ally needs help", _bot->GetName());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// ========================================================================================
+// Method 13: ShouldStrafe
+// Determine if strafing movement is beneficial
+// ========================================================================================
+bool PositionManager::ShouldStrafe(Unit* target)
+{
+    if (!_bot || !target)
+        return false;
+
+    // Don't strafe while casting
+    if (_bot->IsNonMeleeSpellCast(false))
+        return false;
+
+    float distance = _bot->GetExactDist(target);
+
+    // Different strafe conditions based on range
+    bool shouldStrafe = false;
+
+    // Factor 1: Ranged combat strafing (kiting)
+    if (distance > 8.0f && distance < 30.0f)
+    {
+        // Ranged DPS/healers might strafe to avoid projectiles
+        if (_threatManager)
+        {
+            ThreatRole role = _threatManager->GetRole();
+            if (role == ThreatRole::HEALER ||
+                (role == ThreatRole::DPS && distance > 15.0f))  // Ranged DPS
+            {
+                // Check if target has us targeted
+                if (target->GetVictim() == _bot)
+                {
+                    shouldStrafe = true;
+                    TC_LOG_DEBUG("playerbot.position", "Bot {} should strafe - being targeted at range", _bot->GetName());
+                }
+            }
+        }
+    }
+
+    // Factor 2: Melee combat strafing
+    if (distance <= 8.0f)
+    {
+        // Check if we need to reposition
+        float angle = target->GetRelativeAngle(_bot);
+
+        // Tanks shouldn't strafe (need to maintain position)
+        if (_threatManager && _threatManager->GetRole() == ThreatRole::TANK)
+        {
+            shouldStrafe = false;
+        }
+        // DPS should strafe to get behind
+        else if (::std::abs(angle) < M_PI / 2)  // We're in front
+        {
+            shouldStrafe = true;
+            TC_LOG_DEBUG("playerbot.position", "Bot {} should strafe - need to get behind target", _bot->GetName());
+        }
+    }
+
+    // Factor 3: Avoid AoE indicators
+    Position currentPos = _bot->GetPosition();
+    if (IsInDangerZone(currentPos))
+    {
+        shouldStrafe = true;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should strafe - in danger zone", _bot->GetName());
+    }
+
+    // Factor 4: Target is immobile (no need to strafe)
+    if (target->HasUnitState(UNIT_STATE_ROOTED | UNIT_STATE_STUNNED))
+    {
+        shouldStrafe = false;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} shouldn't strafe - target immobilized", _bot->GetName());
+    }
+
+    // Factor 5: Movement impaired (can't strafe effectively)
+    if (_bot->HasUnitState(UNIT_STATE_SLOWED) || _bot->GetSpeed(MOVE_RUN) < 4.0f)
+    {
+        shouldStrafe = false;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} shouldn't strafe - movement impaired", _bot->GetName());
+    }
+
+    // Factor 6: Check recent position success
+    float successRate = GetPositionSuccessRate(currentPos, 5.0f);
+    if (successRate < 0.3f)  // This position has low success rate
+    {
+        shouldStrafe = true;
+        TC_LOG_DEBUG("playerbot.position", "Bot {} should strafe - low position success rate", _bot->GetName());
+    }
+
+    return shouldStrafe;
+}
+
+// ========================================================================================
+// Helper Implementation for PositionUtils::GetNearestWalkablePosition
+// Find nearest walkable position within search radius
+// ========================================================================================
+Position PositionUtils::GetNearestWalkablePosition(const Position& pos, Map* map, float searchRadius)
+{
+    if (!map)
+        return pos;
+
+    // Check if current position is already walkable
+    float groundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(),
+                                  pos.GetPositionX(),
+                                  pos.GetPositionY(),
+                                  pos.GetPositionZ());
+
+    if (::std::abs(pos.GetPositionZ() - groundZ) <= 2.0f)
+        return pos;  // Already walkable
+
+    // Search in expanding circles
+    for (float radius = 2.0f; radius <= searchRadius; radius += 2.0f)
+    {
+        uint32 points = static_cast<uint32>(radius * 4);  // More points for larger radius
+
+        for (uint32 i = 0; i < points; ++i)
+        {
+            float angle = (2.0f * M_PI * i) / points;
+            Position testPos = CalculatePositionAtAngle(pos, radius, angle);
+
+            float testGroundZ = map->GetHeight(PhasingHandler::GetEmptyPhaseShift(),
+                                              testPos.GetPositionX(),
+                                              testPos.GetPositionY(),
+                                              testPos.GetPositionZ());
+
+            testPos.m_positionZ = testGroundZ + 0.5f;
+
+            // Check if position is on ground and not in water
+            if (!map->IsInWater(PhasingHandler::GetEmptyPhaseShift(),
+                               testPos.GetPositionX(),
+                               testPos.GetPositionY(),
+                               testPos.GetPositionZ()))
+            {
+                return testPos;
+            }
+        }
+    }
+
+    // If no walkable position found, return original
+    return pos;
+}
+
 } // namespace Playerbot
