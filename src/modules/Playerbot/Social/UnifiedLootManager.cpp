@@ -16,7 +16,12 @@
 #include "Random.h"
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 #include "GameTime.h"
+#include "ItemTemplate.h"
+#include "Item.h"
+#include "Player.h"
+#include "SharedDefines.h"
 
 // Note: LootAnalysis and LootCoordination were stub headers with no implementations.
 // They have been removed during consolidation. Real implementations needed here.
@@ -53,53 +58,446 @@ UnifiedLootManager::~UnifiedLootManager()
 
 float UnifiedLootManager::AnalysisModule::CalculateItemValue(Player* player, LootItem const& item)
 {
-    // TODO: Implement item value calculation
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
+    if (!player || !item.itemTemplate)
+    {
+        _itemsAnalyzed++;
+        return 0.0f;
+    }
+
+    ItemTemplate const* proto = item.itemTemplate;
+    float value = 0.0f;
+
+    // Base value from item level (normalized to 0-100 scale)
+    // Max item level in TWW ~639, so divide by ~6.4 for rough scaling
+    uint32 itemLevel = item.itemLevel > 0 ? item.itemLevel : proto->GetBaseItemLevel();
+    value += static_cast<float>(itemLevel) / 6.4f;
+
+    // Quality multiplier (0=poor, 1=common, 2=uncommon, 3=rare, 4=epic, 5=legendary)
+    uint32 quality = item.itemQuality > 0 ? item.itemQuality : proto->GetQuality();
+    float qualityMultiplier = 1.0f;
+    switch (quality)
+    {
+        case ITEM_QUALITY_POOR:      qualityMultiplier = 0.1f; break;
+        case ITEM_QUALITY_NORMAL:    qualityMultiplier = 0.3f; break;
+        case ITEM_QUALITY_UNCOMMON:  qualityMultiplier = 0.6f; break;
+        case ITEM_QUALITY_RARE:      qualityMultiplier = 0.85f; break;
+        case ITEM_QUALITY_EPIC:      qualityMultiplier = 1.0f; break;
+        case ITEM_QUALITY_LEGENDARY: qualityMultiplier = 1.15f; break;
+        case ITEM_QUALITY_ARTIFACT:  qualityMultiplier = 1.2f; break;
+        default:                     qualityMultiplier = 0.5f; break;
+    }
+    value *= qualityMultiplier;
+
+    // Add value from stats using player's stat weights
+    std::vector<std::pair<uint32, float>> priorities = GetStatPriorities(player);
+    std::unordered_map<uint32, float> weightMap;
+    for (auto const& [statType, weight] : priorities)
+        weightMap[statType] = weight;
+
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    {
+        int32 statType = proto->GetStatModifierBonusStat(i);
+        int32 statValue = proto->GetStatPercentEditor(i);
+        if (statType >= 0 && statValue != 0)
+        {
+            float weight = 1.0f;
+            auto it = weightMap.find(static_cast<uint32>(statType));
+            if (it != weightMap.end())
+                weight = it->second;
+            value += std::abs(statValue) * weight * 0.1f;
+        }
+    }
+
+    // Armor value for armor items
+    if (proto->IsArmor())
+    {
+        uint32 armor = proto->GetArmor(itemLevel);
+        value += armor * 0.01f;
+    }
+
+    // DPS value for weapons
+    if (proto->IsWeapon())
+    {
+        float dps = proto->GetDPS(itemLevel);
+        value += dps * 0.5f;
+    }
+
+    // Cap at 100
+    value = std::min(value, 100.0f);
+
     _itemsAnalyzed++;
-    return 0.0f;  // Placeholder - needs real implementation
+    return value;
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateUpgradeValue(Player* player, LootItem const& item)
 {
-    // TODO: Implement upgrade value calculation
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    _upgradesDetected++;
-    return 0.0f;  // Placeholder - needs real implementation
+    if (!player || !item.itemTemplate)
+    {
+        _upgradesDetected++;
+        return 0.0f;
+    }
+
+    ItemTemplate const* proto = item.itemTemplate;
+    InventoryType invType = proto->GetInventoryType();
+
+    // Find current equipped item for this slot
+    uint8 slot = 0;
+    switch (invType)
+    {
+        case INVTYPE_HEAD:          slot = EQUIPMENT_SLOT_HEAD; break;
+        case INVTYPE_NECK:          slot = EQUIPMENT_SLOT_NECK; break;
+        case INVTYPE_SHOULDERS:     slot = EQUIPMENT_SLOT_SHOULDERS; break;
+        case INVTYPE_BODY:          slot = EQUIPMENT_SLOT_BODY; break;
+        case INVTYPE_CHEST:
+        case INVTYPE_ROBE:          slot = EQUIPMENT_SLOT_CHEST; break;
+        case INVTYPE_WAIST:         slot = EQUIPMENT_SLOT_WAIST; break;
+        case INVTYPE_LEGS:          slot = EQUIPMENT_SLOT_LEGS; break;
+        case INVTYPE_FEET:          slot = EQUIPMENT_SLOT_FEET; break;
+        case INVTYPE_WRISTS:        slot = EQUIPMENT_SLOT_WRISTS; break;
+        case INVTYPE_HANDS:         slot = EQUIPMENT_SLOT_HANDS; break;
+        case INVTYPE_FINGER:        slot = EQUIPMENT_SLOT_FINGER1; break;
+        case INVTYPE_TRINKET:       slot = EQUIPMENT_SLOT_TRINKET1; break;
+        case INVTYPE_CLOAK:         slot = EQUIPMENT_SLOT_BACK; break;
+        case INVTYPE_WEAPON:
+        case INVTYPE_2HWEAPON:
+        case INVTYPE_WEAPONMAINHAND: slot = EQUIPMENT_SLOT_MAINHAND; break;
+        case INVTYPE_WEAPONOFFHAND:
+        case INVTYPE_SHIELD:
+        case INVTYPE_HOLDABLE:      slot = EQUIPMENT_SLOT_OFFHAND; break;
+        case INVTYPE_RANGED:
+        case INVTYPE_THROWN:
+        case INVTYPE_RANGEDRIGHT:   slot = EQUIPMENT_SLOT_MAINHAND; break;
+        default:
+            _upgradesDetected++;
+            return 0.0f; // Not equippable
+    }
+
+    Item const* currentItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+
+    // If nothing equipped, any item is an upgrade
+    if (!currentItem)
+    {
+        _upgradesDetected++;
+        return 100.0f; // Max upgrade value - empty slot
+    }
+
+    // Compare item scores
+    float newScore = CalculateItemScore(player, item);
+
+    // Create a temporary LootItem for current item
+    LootItem currentLootItem;
+    currentLootItem.itemId = currentItem->GetEntry();
+    currentLootItem.itemTemplate = currentItem->GetTemplate();
+    currentLootItem.itemLevel = currentItem->GetItemLevel(player);
+    currentLootItem.itemQuality = currentItem->GetQuality();
+
+    float currentScore = CalculateItemScore(player, currentLootItem);
+
+    // Calculate percentage improvement
+    float upgradePercent = 0.0f;
+    if (currentScore > 0.0f)
+        upgradePercent = ((newScore - currentScore) / currentScore) * 100.0f;
+    else if (newScore > 0.0f)
+        upgradePercent = 100.0f;
+
+    if (upgradePercent > 0.0f)
+        _upgradesDetected++;
+
+    return upgradePercent;
 }
 
 bool UnifiedLootManager::AnalysisModule::IsSignificantUpgrade(Player* player, LootItem const& item)
 {
-    // TODO: Implement upgrade significance check
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    return false;  // Placeholder - needs real implementation
+    // A significant upgrade is defined as >5% improvement
+    float upgradeValue = CalculateUpgradeValue(player, item);
+    return upgradeValue > 5.0f;
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateStatWeight(Player* player, uint32 statType)
 {
-    // TODO: Implement stat weight calculation
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    return 0.0f;  // Placeholder - needs real implementation
+    if (!player)
+        return 1.0f;
+
+    // Get class and spec for stat weight determination
+    uint8 playerClass = player->GetClass();
+    uint32 spec = static_cast<uint32>(player->GetPrimarySpecialization());
+
+    // WoW 11.x (The War Within) stat priorities by role
+    // These are approximate weights - 1.0 = baseline, higher = more valuable
+    // Based on common theorycrafting priorities
+
+    // Determine role from spec
+    bool isTank = false;
+    bool isHealer = false;
+    bool isMelee = false;
+    bool isCaster = false;
+
+    // Map spec ID to role (simplified - TWW spec IDs)
+    switch (playerClass)
+    {
+        case CLASS_WARRIOR:
+            isTank = (spec == 73); // Protection
+            isMelee = !isTank;
+            break;
+        case CLASS_PALADIN:
+            isTank = (spec == 66);  // Protection
+            isHealer = (spec == 65); // Holy
+            isMelee = !isTank && !isHealer;
+            break;
+        case CLASS_HUNTER:
+            isMelee = (spec == 255); // Survival
+            isCaster = !isMelee; // BM/MM are more ranged
+            break;
+        case CLASS_ROGUE:
+            isMelee = true;
+            break;
+        case CLASS_PRIEST:
+            isHealer = (spec == 256 || spec == 257); // Discipline/Holy
+            isCaster = !isHealer; // Shadow
+            break;
+        case CLASS_DEATH_KNIGHT:
+            isTank = (spec == 250); // Blood
+            isMelee = !isTank;
+            break;
+        case CLASS_SHAMAN:
+            isHealer = (spec == 264); // Restoration
+            isMelee = (spec == 263); // Enhancement
+            isCaster = !isHealer && !isMelee; // Elemental
+            break;
+        case CLASS_MAGE:
+            isCaster = true;
+            break;
+        case CLASS_WARLOCK:
+            isCaster = true;
+            break;
+        case CLASS_MONK:
+            isTank = (spec == 268); // Brewmaster
+            isHealer = (spec == 270); // Mistweaver
+            isMelee = !isTank && !isHealer; // Windwalker
+            break;
+        case CLASS_DRUID:
+            isTank = (spec == 104); // Guardian
+            isHealer = (spec == 105); // Restoration
+            isMelee = (spec == 103); // Feral
+            isCaster = (spec == 102); // Balance
+            break;
+        case CLASS_DEMON_HUNTER:
+            isTank = (spec == 581); // Vengeance
+            isMelee = !isTank; // Havoc
+            break;
+        case CLASS_EVOKER:
+            isHealer = (spec == 1468); // Preservation
+            isCaster = !isHealer; // Devastation/Augmentation
+            break;
+        default:
+            isMelee = true; // Default to melee DPS
+            break;
+    }
+
+    // Primary stats (class-specific)
+    switch (statType)
+    {
+        // Primary stats
+        case ITEM_MOD_AGILITY:
+            if (playerClass == CLASS_ROGUE || playerClass == CLASS_HUNTER ||
+                playerClass == CLASS_MONK || playerClass == CLASS_DEMON_HUNTER ||
+                (playerClass == CLASS_DRUID && (spec == 103 || spec == 104)) ||
+                (playerClass == CLASS_SHAMAN && spec == 263))
+                return 1.5f;
+            return 0.0f;
+
+        case ITEM_MOD_STRENGTH:
+            if (playerClass == CLASS_WARRIOR || playerClass == CLASS_DEATH_KNIGHT ||
+                (playerClass == CLASS_PALADIN && spec != 65))
+                return 1.5f;
+            return 0.0f;
+
+        case ITEM_MOD_INTELLECT:
+            if (isHealer || isCaster ||
+                (playerClass == CLASS_PALADIN && spec == 65) ||
+                (playerClass == CLASS_SHAMAN && (spec == 262 || spec == 264)) ||
+                (playerClass == CLASS_DRUID && (spec == 102 || spec == 105)) ||
+                (playerClass == CLASS_MONK && spec == 270) ||
+                playerClass == CLASS_MAGE || playerClass == CLASS_WARLOCK ||
+                playerClass == CLASS_PRIEST || playerClass == CLASS_EVOKER)
+                return 1.5f;
+            return 0.0f;
+
+        case ITEM_MOD_STAMINA:
+            if (isTank) return 1.3f;
+            return 0.8f;
+
+        // Secondary stats
+        case ITEM_MOD_CRIT_RATING:
+            if (isTank) return 0.8f;
+            if (isHealer) return 1.0f;
+            return 1.2f; // DPS love crit
+
+        case ITEM_MOD_HASTE_RATING:
+            if (isHealer) return 1.3f; // Healers often prioritize haste
+            if (isCaster) return 1.2f;
+            return 1.1f;
+
+        case ITEM_MOD_MASTERY_RATING:
+            if (isTank) return 1.2f; // Tanks often value mastery
+            return 1.0f;
+
+        case ITEM_MOD_VERSATILITY:
+            if (isTank) return 1.4f; // Tanks love versatility
+            if (isHealer) return 1.1f;
+            return 0.9f; // Usually lower priority for DPS
+
+        // Tertiary/special stats
+        case ITEM_MOD_DODGE_RATING:
+        case ITEM_MOD_PARRY_RATING:
+        case ITEM_MOD_BLOCK_RATING:
+            if (isTank) return 1.3f;
+            return 0.0f; // Useless for non-tanks
+
+        case ITEM_MOD_HIT_RATING:
+        case ITEM_MOD_EXPERTISE_RATING:
+            return 0.0f; // Deprecated stats in modern WoW
+
+        case ITEM_MOD_SPELL_POWER:
+            if (isHealer || isCaster) return 1.3f;
+            return 0.0f;
+
+        case ITEM_MOD_ATTACK_POWER:
+            if (isMelee && !isTank) return 1.2f;
+            return 0.0f;
+
+        default:
+            return 1.0f;
+    }
 }
 
 float UnifiedLootManager::AnalysisModule::CompareItems(Player* player, LootItem const& newItem, Item const* currentItem)
 {
-    // TODO: Implement item comparison
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    return 0.0f;  // Placeholder - needs real implementation
+    if (!player || !newItem.itemTemplate)
+        return 0.0f;
+
+    if (!currentItem)
+        return 100.0f; // New item is infinitely better than nothing
+
+    // Calculate scores for both items
+    float newScore = CalculateItemScore(player, newItem);
+
+    // Create temporary LootItem for current item
+    LootItem currentLootItem;
+    currentLootItem.itemId = currentItem->GetEntry();
+    currentLootItem.itemTemplate = currentItem->GetTemplate();
+    currentLootItem.itemLevel = currentItem->GetItemLevel(player);
+    currentLootItem.itemQuality = currentItem->GetQuality();
+
+    float currentScore = CalculateItemScore(player, currentLootItem);
+
+    // Return difference (positive = new is better, negative = current is better)
+    return newScore - currentScore;
 }
 
 float UnifiedLootManager::AnalysisModule::CalculateItemScore(Player* player, LootItem const& item)
 {
-    // TODO: Implement item scoring
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    return 0.0f;  // Placeholder - needs real implementation
+    if (!player || !item.itemTemplate)
+        return 0.0f;
+
+    ItemTemplate const* proto = item.itemTemplate;
+    float score = 0.0f;
+
+    // Base score from item level (heavily weighted)
+    uint32 itemLevel = item.itemLevel > 0 ? item.itemLevel : proto->GetBaseItemLevel();
+    score += static_cast<float>(itemLevel) * 1.5f;
+
+    // Quality bonus
+    uint32 quality = item.itemQuality > 0 ? item.itemQuality : proto->GetQuality();
+    switch (quality)
+    {
+        case ITEM_QUALITY_POOR:      score += 0.0f; break;
+        case ITEM_QUALITY_NORMAL:    score += 5.0f; break;
+        case ITEM_QUALITY_UNCOMMON:  score += 15.0f; break;
+        case ITEM_QUALITY_RARE:      score += 30.0f; break;
+        case ITEM_QUALITY_EPIC:      score += 50.0f; break;
+        case ITEM_QUALITY_LEGENDARY: score += 75.0f; break;
+        case ITEM_QUALITY_ARTIFACT:  score += 100.0f; break;
+        default: break;
+    }
+
+    // Calculate weighted stat contribution
+    for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+    {
+        int32 statType = proto->GetStatModifierBonusStat(i);
+        int32 statValue = proto->GetStatPercentEditor(i);
+        if (statType >= 0 && statValue != 0)
+        {
+            float weight = CalculateStatWeight(player, static_cast<uint32>(statType));
+            score += std::abs(statValue) * weight;
+        }
+    }
+
+    // Armor contribution for armor items
+    if (proto->IsArmor())
+    {
+        uint32 armor = proto->GetArmor(itemLevel);
+        // Normalize armor - plate has ~4000+ at high ilvl, cloth ~1000
+        score += armor * 0.02f;
+    }
+
+    // Weapon DPS contribution
+    if (proto->IsWeapon())
+    {
+        float dps = proto->GetDPS(itemLevel);
+        score += dps * 2.0f; // Weapon DPS is very important
+    }
+
+    return score;
 }
 
 std::vector<std::pair<uint32, float>> UnifiedLootManager::AnalysisModule::GetStatPriorities(Player* player)
 {
-    // TODO: Implement stat priority calculation
-    // LootAnalysis was a stub interface with no implementation - removed during consolidation
-    return {};  // Placeholder - needs real implementation
+    std::vector<std::pair<uint32, float>> priorities;
+
+    if (!player)
+    {
+        // Return generic priorities
+        priorities.push_back({ITEM_MOD_STAMINA, 1.0f});
+        priorities.push_back({ITEM_MOD_CRIT_RATING, 1.0f});
+        priorities.push_back({ITEM_MOD_HASTE_RATING, 1.0f});
+        priorities.push_back({ITEM_MOD_MASTERY_RATING, 1.0f});
+        priorities.push_back({ITEM_MOD_VERSATILITY, 1.0f});
+        return priorities;
+    }
+
+    // Build priority list using CalculateStatWeight for each relevant stat
+    std::vector<uint32> relevantStats = {
+        ITEM_MOD_AGILITY,
+        ITEM_MOD_STRENGTH,
+        ITEM_MOD_INTELLECT,
+        ITEM_MOD_STAMINA,
+        ITEM_MOD_CRIT_RATING,
+        ITEM_MOD_HASTE_RATING,
+        ITEM_MOD_MASTERY_RATING,
+        ITEM_MOD_VERSATILITY,
+        ITEM_MOD_DODGE_RATING,
+        ITEM_MOD_PARRY_RATING,
+        ITEM_MOD_BLOCK_RATING,
+        ITEM_MOD_SPELL_POWER,
+        ITEM_MOD_ATTACK_POWER
+    };
+
+    for (uint32 stat : relevantStats)
+    {
+        float weight = CalculateStatWeight(player, stat);
+        if (weight > 0.0f)
+            priorities.push_back({stat, weight});
+    }
+
+    // Sort by weight (descending)
+    std::sort(priorities.begin(), priorities.end(),
+        [](std::pair<uint32, float> const& a, std::pair<uint32, float> const& b)
+        {
+            return a.second > b.second;
+        });
+
+    return priorities;
 }
 
 // ============================================================================
