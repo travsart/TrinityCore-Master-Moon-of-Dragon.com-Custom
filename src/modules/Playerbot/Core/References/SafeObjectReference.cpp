@@ -59,20 +59,24 @@ template class SafeObjectReference<WorldObject>;
  */
 class SafeReferenceMetrics {
 public:
-    static SafeReferenceMetrics& Instance() {
+    static SafeReferenceMetrics& Instance()
+    {
         static SafeReferenceMetrics instance;
         return instance;
     }
 
-    void RecordCacheHit() {
+    void RecordCacheHit()
+    {
         m_totalCacheHits.fetch_add(1, ::std::memory_order_relaxed);
     }
 
-    void RecordCacheMiss() {
+    void RecordCacheMiss()
+    {
         m_totalCacheMisses.fetch_add(1, ::std::memory_order_relaxed);
     }
 
-    void RecordObjectDeleted(ObjectGuid guid) {
+    void RecordObjectDeleted(ObjectGuid guid)
+    {
         m_deletedObjects.fetch_add(1, ::std::memory_order_relaxed);
 
         TC_LOG_TRACE("module.playerbot.reference",
@@ -80,7 +84,8 @@ public:
             guid.ToString(), m_deletedObjects.load());
     }
 
-    float GetGlobalCacheHitRate() const {
+    float GetGlobalCacheHitRate() const
+    {
         uint64 hits = m_totalCacheHits.load(::std::memory_order_relaxed);
         uint64 misses = m_totalCacheMisses.load(::std::memory_order_relaxed);
         uint64 total = hits + misses;
@@ -89,15 +94,18 @@ public:
         return static_cast<float>(hits) / static_cast<float>(total);
     }
 
-    uint64 GetTotalAccesses() const {
+    uint64 GetTotalAccesses() const
+    {
         return m_totalCacheHits.load() + m_totalCacheMisses.load();
     }
 
-    uint64 GetDeletedObjectCount() const {
+    uint64 GetDeletedObjectCount() const
+    {
         return m_deletedObjects.load(::std::memory_order_relaxed);
     }
 
-    void LogPerformanceReport() const {
+    void LogPerformanceReport() const
+    {
         TC_LOG_INFO("module.playerbot.reference",
             "SafeObjectReference Performance Report:");
         TC_LOG_INFO("module.playerbot.reference",
@@ -112,7 +120,8 @@ public:
             "  Deleted Objects: {}", m_deletedObjects.load());
     }
 
-    void ResetMetrics() {
+    void ResetMetrics()
+    {
         m_totalCacheHits.store(0);
         m_totalCacheMisses.store(0);
         m_deletedObjects.store(0);
@@ -138,7 +147,8 @@ private:
  */
 class DanglingReferenceDetector {
 public:
-    static void RegisterReference(ObjectGuid guid, void* reference) {
+    static void RegisterReference(ObjectGuid guid, void* reference)
+    {
 #ifdef _DEBUG
         ::std::lock_guard lock(s_mutex);
         s_references[guid].insert(reference);
@@ -149,13 +159,15 @@ public:
 #endif
     }
 
-    static void UnregisterReference(ObjectGuid guid, void* reference) {
+    static void UnregisterReference(ObjectGuid guid, void* reference)
+    {
 #ifdef _DEBUG
         ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
         if (it != s_references.end()) {
             it->second.erase(reference);
-            if (it->second.empty()) {
+            if (it->second.empty())
+            {
                 s_references.erase(it);
             }
         }
@@ -166,7 +178,8 @@ public:
 #endif
     }
 
-    static void CheckForDanglingReferences(ObjectGuid guid) {
+    static void CheckForDanglingReferences(ObjectGuid guid)
+    {
 #ifdef _DEBUG
         ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
@@ -182,7 +195,8 @@ public:
 #endif
     }
 
-    static size_t GetReferenceCount(ObjectGuid guid) {
+    static size_t GetReferenceCount(ObjectGuid guid)
+    {
 #ifdef _DEBUG
         ::std::lock_guard lock(s_mutex);
         auto it = s_references.find(guid);
@@ -218,7 +232,8 @@ private:
  */
 class SafeReferenceUnitTests {
 public:
-    static void RunAllTests() {
+    static void RunAllTests()
+    {
         TC_LOG_INFO("module.playerbot.reference.test",
             "Running SafeObjectReference unit tests...");
 
@@ -234,14 +249,16 @@ public:
     }
 
 private:
-    static void TestEmptyReference() {
+    static void TestEmptyReference()
+    {
         SafePlayerReference ref;
         ASSERT(ref.IsEmpty(), "New reference should be empty");
         ASSERT(!ref.IsValid(), "Empty reference should not be valid");
         ASSERT(ref.Get() == nullptr, "Empty reference should return nullptr");
     }
 
-    static void TestSetAndGet() {
+    static void TestSetAndGet()
+    {
         // This test requires a valid Player object, which we don't have
         // during unit testing. In a real environment, this would be tested
         // with mock objects or during integration testing.
@@ -249,14 +266,16 @@ private:
             "TestSetAndGet: Skipped (requires runtime objects)");
     }
 
-    static void TestCacheExpiration() {
+    static void TestCacheExpiration()
+    {
         // This test would require time manipulation which we can't do
         // in unit tests. This is tested during integration testing.
         TC_LOG_TRACE("module.playerbot.reference.test",
             "TestCacheExpiration: Skipped (requires time manipulation)");
     }
 
-    static void TestMoveSemantics() {
+    static void TestMoveSemantics()
+    {
         SafePlayerReference ref1;
         ref1.SetGuid(ObjectGuid::Create<HighGuid::Player>(12345));
 
@@ -267,7 +286,8 @@ private:
             "Moved-to reference should have correct GUID");
     }
 
-    static void TestCopySemantics() {
+    static void TestCopySemantics()
+    {
         SafePlayerReference ref1;
         ref1.SetGuid(ObjectGuid::Create<HighGuid::Player>(12345));
 
@@ -278,7 +298,8 @@ private:
             "Copied references should have same GUID");
     }
 
-    static void TestPerformanceMetrics() {
+    static void TestPerformanceMetrics()
+    {
         SafePlayerReference ref;
         ASSERT(ref.GetAccessCount() == 0, "New reference should have 0 accesses");
         ASSERT(ref.GetCacheHitRate() == 0.0f, "New reference should have 0% hit rate");
@@ -296,7 +317,8 @@ private:
 
 // Register unit tests to run on module initialization
 struct SafeReferenceTestRunner {
-    SafeReferenceTestRunner() {
+    SafeReferenceTestRunner()
+    {
         SafeReferenceUnitTests::RunAllTests();
     }
 };

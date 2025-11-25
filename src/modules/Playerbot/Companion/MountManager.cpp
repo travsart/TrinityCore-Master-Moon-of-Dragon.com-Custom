@@ -8,6 +8,7 @@
  */
 
 #include "MountManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
@@ -273,7 +274,7 @@ MountInfo const* MountManager::GetFlyingMount() const
     // Find fastest flying mount player knows
     MountInfo const* bestMount = nullptr;
 
-    for (uint32 spellId : playerMountsItr->second)
+    for (uint32 spellId : _knownMounts)
     {
         auto mountItr = _mountDatabase.find(spellId);
         if (mountItr == _mountDatabase.end())
@@ -314,7 +315,7 @@ MountInfo const* MountManager::GetGroundMount() const
     {
         for (uint32 preferredSpellId : _profile.preferredMounts)
         {
-            if (playerMountsItr->second.find(preferredSpellId) != playerMountsItr->second.end())
+            if (_knownMounts.find(preferredSpellId) != _knownMounts.end())
             {
                 auto mountItr = _mountDatabase.find(preferredSpellId);
                 if (mountItr != _mountDatabase.end())
@@ -329,8 +330,9 @@ MountInfo const* MountManager::GetGroundMount() const
 
     // Find fastest ground mount
     MountInfo const* bestMount = nullptr;
+    MountSpeed maxSpeed = GetMaxMountSpeed();
 
-    for (uint32 spellId : playerMountsItr->second)
+    for (uint32 spellId : _knownMounts)
     {
         auto mountItr = _mountDatabase.find(spellId);
         if (mountItr == _mountDatabase.end())
@@ -364,7 +366,7 @@ MountInfo const* MountManager::GetAquaticMount() const
     if (_knownMounts.empty())
         return nullptr;
 
-    for (uint32 spellId : playerMountsItr->second)
+    for (uint32 spellId : _knownMounts)
     {
         auto mountItr = _mountDatabase.find(spellId);
         if (mountItr == _mountDatabase.end())
@@ -392,6 +394,7 @@ MountInfo const* MountManager::GetDragonridingMount() const
     if (_knownMounts.empty())
         return nullptr;
 
+    for (uint32 spellId : _knownMounts)
     {
         auto mountItr = _mountDatabase.find(spellId);
         if (mountItr == _mountDatabase.end())
@@ -462,6 +465,105 @@ std::vector<MountInfo> MountManager::GetPlayerMounts() const
     }
 
     return mounts;
+}
+
+bool MountManager::KnowsMount(uint32 spellId) const
+{
+    if (!_bot)
+        return false;
+
+    // Check if mount is in known mounts collection
+    if (_knownMounts.find(spellId) != _knownMounts.end())
+        return true;
+
+    // Also check if player has the spell
+    return _bot->HasSpell(spellId);
+}
+
+bool MountManager::LearnMount(uint32 spellId)
+{
+    if (!_bot)
+        return false;
+
+    // Check if mount exists in database
+    auto mountItr = _mountDatabase.find(spellId);
+    if (mountItr == _mountDatabase.end())
+    {
+        TC_LOG_ERROR("playerbot.mount", "MountManager::LearnMount - Mount spell {} not found in database", spellId);
+        return false;
+    }
+
+    // Check if player already knows this mount
+    if (KnowsMount(spellId))
+        return true;
+
+    // Learn the mount spell
+    _bot->LearnSpell(spellId, false);
+    _knownMounts.insert(spellId);
+
+    // Update metrics
+    _metrics.mountsLearned++;
+    _globalMetrics.mountsLearned++;
+
+    TC_LOG_INFO("playerbot.mount", "MountManager::LearnMount - Player {} learned mount {} ({})",
+        _bot->GetName(), mountItr->second.name, spellId);
+
+    return true;
+}
+
+uint32 MountManager::GetMountCount() const
+{
+    if (!_bot)
+        return 0;
+
+    return static_cast<uint32>(_knownMounts.size());
+}
+
+bool MountManager::CanUseMount(MountInfo const& mount) const
+{
+    if (!_bot)
+        return false;
+
+    // Check level requirement
+    if (_bot->GetLevel() < mount.requiredLevel)
+        return false;
+
+    // Check riding skill requirement
+    uint32 ridingSkill = GetRidingSkill();
+    if (ridingSkill < mount.requiredSkill)
+        return false;
+
+    // Check zone restrictions
+    if (!mount.zoneRestrictions.empty())
+    {
+        uint32 currentZone = GetCurrentZoneId();
+        bool inRestrictedZone = false;
+        for (uint32 restrictedZone : mount.zoneRestrictions)
+        {
+            if (currentZone == restrictedZone)
+            {
+                inRestrictedZone = true;
+                break;
+            }
+        }
+        if (inRestrictedZone)
+            return false;
+    }
+
+    // Check if flying mount in no-fly zone
+    if (mount.isFlyingMount && IsInNoFlyZone())
+    {
+        // Flying mounts can still be used as ground mounts in no-fly zones
+        // unless the profile says otherwise
+        if (!_profile.useGroundMountIndoors)
+            return false;
+    }
+
+    // Check if dragonriding mount in non-dragonriding zone
+    if (mount.isDragonridingMount && !CanUseDragonriding())
+        return false;
+
+    return true;
 }
 
 // ============================================================================
@@ -568,7 +670,7 @@ uint32 MountManager::GetAvailablePassengerSeats() const
     // Count passengers
     for (auto const& [seatId, seat] : vehicle->Seats)
     {
-        if (seat.Passenger)
+        if (!seat.IsEmpty())
             occupiedSeats++;
     }
 
@@ -577,22 +679,22 @@ uint32 MountManager::GetAvailablePassengerSeats() const
 
 bool MountManager::AddPassenger(::Player* passenger)
 {
-    if (!mountedPlayer || !passenger)
+    if (!_bot || !passenger)
         return false;
 
-    if (!IsMounted(mountedPlayer))
+    if (!IsMounted())
         return false;
 
-    Vehicle* vehicle = mountedPlayer->GetVehicleKit();
+    Vehicle* vehicle = _bot->GetVehicleKit();
     if (!vehicle)
         return false;
 
     // Find empty seat
     for (auto const& [seatId, seat] : vehicle->Seats)
     {
-        if (!seat.Passenger)
+        if (seat.IsEmpty())
         {
-            passenger->EnterVehicle(vehicle, seatId);
+            passenger->EnterVehicle(vehicle->GetBase(), seatId);
             return true;
         }
     }
@@ -836,8 +938,13 @@ bool MountManager::IsInNoFlyZone() const
     if (!map)
         return true;
 
-    // Check if flying is disabled in this map
-    return !map->IsFlyingAllowed();
+    // Check if in arena or battleground (no flying allowed)
+    if (map->IsBattlegroundOrArena())
+        return true;
+
+    // Check if player has flying capability (uses existing TrinityCore API)
+    // This indirectly checks zone restrictions via flying auras
+    return !_bot->CanFly();
 }
 
 bool MountManager::IsInDragonridingZone() const
@@ -932,7 +1039,7 @@ bool MountManager::IsInInstance() const
     if (!map)
         return false;
 
-    return map->IsDungeon() || map->IsRaid() || map->IsBattleground() || map->IsArena();
+    return map->IsDungeon() || map->IsRaid() || map->IsBattleground() || map->IsBattleArena();
 }
 
 } // namespace Playerbot

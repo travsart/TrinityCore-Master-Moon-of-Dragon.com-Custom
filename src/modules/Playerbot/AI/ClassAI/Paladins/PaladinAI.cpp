@@ -26,7 +26,8 @@
 namespace Playerbot
 {
 
-PaladinAI::PaladinAI(Player* bot) : ClassAI(bot){
+PaladinAI::PaladinAI(Player* bot) : ClassAI(bot)
+{
     _lastBlessingTime = 0;
     _lastAuraChange = 0;
     _lastConsecration = 0;
@@ -240,14 +241,16 @@ bool PaladinAI::CanUseAbility(uint32 spellId)
 
     return true;}
 
-void PaladinAI::OnCombatStart(::Unit* target){
+void PaladinAI::OnCombatStart(::Unit* target)
+{
     _paladinMetrics.combatStartTime = ::std::chrono::steady_clock::now();
 
     TC_LOG_DEBUG("module.playerbot.ai", "PaladinAI {} entering combat with {}",
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();    _combatTime = 0;
+    _currentTarget = target->GetGUID();
+    _combatTime = 0;
 }
 
 void PaladinAI::OnCombatEnd()
@@ -564,7 +567,8 @@ void PaladinAI::UseOffensiveCooldowns()
     }
 
     // Execution Sentence on primary target
-    Unit* target = GetBot()->GetSelectedUnit();    if (target && CanUseAbility(EXECUTION_SENTENCE))
+    Unit* target = GetBot()->GetSelectedUnit();
+    if (target && CanUseAbility(EXECUTION_SENTENCE))
     {
         if (CastSpell(EXECUTION_SENTENCE, target))
         {
@@ -1030,7 +1034,8 @@ bool PaladinAI::IsAllyInDanger() const
     return false;
 }
 
-bool PaladinAI::ShouldUseLayOnHands() const{
+bool PaladinAI::ShouldUseLayOnHands() const
+{
     if (!GetBot())        return false;    // Use on self if critical
     if (GetBot()->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)        return true;
 
@@ -1038,7 +1043,8 @@ bool PaladinAI::ShouldUseLayOnHands() const{
     Group* group = GetBot()->GetGroup();
     if (group)
     {
-        for (GroupReference const& itr : group->GetMembers())        {
+        for (GroupReference const& itr : group->GetMembers())
+        {
             Player* member = itr.GetSource();
             // TODO: Check if member is tank
     if (member && member != GetBot() && member->GetHealthPct() < LAY_ON_HANDS_THRESHOLD)
@@ -1066,7 +1072,8 @@ Position PaladinAI::CalculateOptimalMeleePosition(::Unit* target)
     return Position(x, y, z, angle);
 }
 
-bool PaladinAI::IsValidTarget(::Unit* target){
+bool PaladinAI::IsValidTarget(::Unit* target)
+{
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 

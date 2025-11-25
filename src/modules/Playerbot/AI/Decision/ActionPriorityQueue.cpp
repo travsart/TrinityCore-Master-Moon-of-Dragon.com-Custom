@@ -5,6 +5,9 @@
  */
 
 #include "ActionPriorityQueue.h"
+#include "GameTime.h"
+#include "SpellHistory.h"
+#include "Map.h"
 #include "DecisionFusionSystem.h"
 #include "Player.h"
 #include "Unit.h"
@@ -247,7 +250,8 @@ DecisionVote ActionPriorityQueue::GetVote(Player* bot, Unit* target, CombatConte
     }
 
     // Sort by priority (highest first)
-    ::std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b) {
+    ::std::sort(scores.begin(), scores.end(), [](const SpellScore& a, const SpellScore& b)
+    {
         return a.priority > b.priority;
     });
 
@@ -287,7 +291,7 @@ bool ActionPriorityQueue::IsOnCooldown(Player* bot, uint32 spellId) const
         return true;
 
     // Check global cooldown
-    if (bot->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
+    if (bot->GetSpellHistory()->GetRemainingGlobalCooldown(spellInfo) > Milliseconds::zero())
         return true;
 
     return false;
@@ -323,7 +327,7 @@ bool ActionPriorityQueue::IsValidTarget(Player* bot, Unit* target, uint32 spellI
         return false;
 
     // Self-cast spells
-    if (spellInfo->HasAttribute(SPELL_ATTR0_ABILITY))
+    if (spellInfo->HasAttribute(SPELL_ATTR0_IS_ABILITY))
     {
         if (!target)
             target = bot; // Default to self
@@ -333,7 +337,7 @@ bool ActionPriorityQueue::IsValidTarget(Player* bot, Unit* target, uint32 spellI
         return false;
 
     // Check if target is valid
-    if (!target->IsAlive() && !spellInfo->HasAttribute(SPELL_ATTR2_CAN_TARGET_DEAD))
+    if (!target->IsAlive() && !spellInfo->HasAttribute(SPELL_ATTR2_ALLOW_DEAD_TARGET))
         return false;
 
     // Check range

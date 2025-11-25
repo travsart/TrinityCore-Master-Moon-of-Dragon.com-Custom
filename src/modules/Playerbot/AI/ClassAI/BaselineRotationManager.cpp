@@ -50,7 +50,8 @@ bool BaselineRotationManager::ShouldUseBaselineRotation(Player* bot)
         return false;
 
     // Use baseline rotation for levels 1-9
-    uint8 level = bot->GetLevel();    if (level < 10)
+    uint8 level = bot->GetLevel();
+    if (level < 10)
         return true;
 
     // Also use if bot is level 10+ but hasn't chosen a specialization
@@ -86,7 +87,8 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
     }
 
     // Get baseline abilities for bot's class - FIX: use GetClass() not getClass()
-    auto abilities = GetBaselineAbilities(bot->GetClass());    if (!abilities || abilities->empty())
+    auto abilities = GetBaselineAbilities(bot->GetClass());
+    if (!abilities || abilities->empty())
     {
         // No spells available - rely on auto-attack (already initiated above)
         return true; // Return true because auto-attack is active
@@ -94,12 +96,14 @@ bool BaselineRotationManager::ExecuteBaselineRotation(Player* bot, ::Unit* targe
 
     // Sort abilities by priority (higher priority first)
     ::std::vector<BaselineAbility> sorted = *abilities;
-    ::std::sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) {
+    ::std::sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b)
+    {
         return a.priority > b.priority;
     });
 
     // Try to cast highest priority available ability
-    for (auto const& ability : sorted)    {
+    for (auto const& ability : sorted)
+    {
         if (TryCastAbility(bot, target, ability))
 
             return true;
@@ -186,7 +190,8 @@ void BaselineRotationManager::ApplyBaselineBuffs(Player* bot)
     }
 }
 
-bool BaselineRotationManager::HandleAutoSpecialization(Player* bot){
+bool BaselineRotationManager::HandleAutoSpecialization(Player* bot)
+{
     if (!bot)
         return false;
 
@@ -196,7 +201,8 @@ bool BaselineRotationManager::HandleAutoSpecialization(Player* bot){
 
     // Check if already has specialization
     // FIX: Use GetActiveTalentGroup() instead of GetUInt32Value(PLAYER_FIELD_CURRENT_SPEC_ID)
-    uint8 activeGroup = bot->GetActiveTalentGroup();    if (activeGroup != 0)
+    uint8 activeGroup = bot->GetActiveTalentGroup();
+    if (activeGroup != 0)
         return false; // Already has spec
 
     // Select optimal specialization
@@ -246,7 +252,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         return false;
 
     // Check cooldown
-    auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];    auto cdIt = botCooldowns.find(ability.spellId);
+    auto& botCooldowns = _cooldowns[bot->GetGUID().GetCounter()];
+    auto cdIt = botCooldowns.find(ability.spellId);
     if (cdIt != botCooldowns.end() && cdIt->second > GameTime::GetGameTimeMS())        return false; // On cooldown
 
     // MIGRATION COMPLETE (2025-10-30):
@@ -255,7 +262,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
     // AFTER: SpellPacketBuilder::BuildCastSpellPacket(...) // SAFE - queues to main thread
 
     // Get spell info for validation
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());    if (!spellInfo)
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability.spellId, bot->GetMap()->GetDifficultyID());
+    if (!spellInfo)
     {
         TC_LOG_TRACE("playerbot.baseline.packets",
 
@@ -289,7 +297,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         // Packet successfully queued to main thread
 
         // Optimistic cooldown recording (packet will be processed)
-        botCooldowns[ability.spellId] = GameTime::GetGameTimeMS() + ability.cooldown;        TC_LOG_DEBUG("playerbot.baseline.packets",
+        botCooldowns[ability.spellId] = GameTime::GetGameTimeMS() + ability.cooldown;
+        TC_LOG_DEBUG("playerbot.baseline.packets",
 
                      "Bot {} queued CMSG_CAST_SPELL for baseline spell {} (target: {})",
 
@@ -313,7 +322,8 @@ bool BaselineRotationManager::TryCastAbility(Player* bot, ::Unit* target, Baseli
         return false;
     }}
 
-bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const{
+bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, BaselineAbility const& ability) const
+{
     if (!bot || !target)
         return false;
 
@@ -370,7 +380,8 @@ bool BaselineRotationManager::CanUseAbility(Player* bot, ::Unit* target, Baselin
     return true;
 }
 
-uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const{
+uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const
+{
     if (!bot)
         return 0;
 
@@ -381,7 +392,8 @@ uint32 BaselineRotationManager::SelectOptimalSpecialization(Player* bot) const{
     // - Stat distribution
 
     // FIX: use GetClass() not getClass()
-    uint8 classId = bot->GetClass();    switch (classId)
+    uint8 classId = bot->GetClass();
+    switch (classId)
     {
         case CLASS_WARRIOR:
 
@@ -459,7 +471,8 @@ void BaselineRotationManager::InitializeWarriorBaseline()
 bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, BaselineRotationManager& manager)
 {
     // Charge if not in melee range (using squared distance for comparison)
-    float distSq = bot->GetExactDistSq(target);    if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
+    float distSq = bot->GetExactDistSq(target);
+    if (distSq > (8.0f * 8.0f) && distSq < (25.0f * 25.0f)) // 64.0f and 625.0f
     {
         // FIX: Use HasSpell check correctly
     if (bot->HasSpell(CHARGE))
@@ -508,7 +521,8 @@ bool WarriorBaselineRotation::ExecuteRotation(Player* bot, ::Unit* target, Basel
     return false;
 }
 
-void WarriorBaselineRotation::ApplyBuffs(Player* bot){
+void WarriorBaselineRotation::ApplyBuffs(Player* bot)
+{
     // Battle Shout
     if (bot->HasSpell(BATTLE_SHOUT) && !bot->HasAura(BATTLE_SHOUT))
     {

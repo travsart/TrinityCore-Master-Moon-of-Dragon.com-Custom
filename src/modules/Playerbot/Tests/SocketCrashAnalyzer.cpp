@@ -57,7 +57,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(99999);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
@@ -81,9 +82,11 @@ private:
             botSession->CloseSocket(); // This should be safe due to override
             TC_LOG_INFO("test.playerbot", " CloseSocket() call completed without crash");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 1 Exception: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 1 Unknown exception");
         }
 
@@ -100,7 +103,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(99998);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
@@ -140,9 +144,11 @@ private:
             bool result3 = botSession->Update(100, filter);
             TC_LOG_INFO("test.playerbot", "Timeout condition update result: {}", result3);
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 2 Exception: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 2 Unknown exception");
         }
 
@@ -162,7 +168,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(99997);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
@@ -171,7 +178,8 @@ private:
             bool isBot = botSession->IsBot();
             TC_LOG_INFO("test.playerbot", "IsBot() during construction: {}", isBot);
 
-            if (!isBot) {
+            if (!isBot)
+            {
                 TC_LOG_ERROR("test.playerbot", " CRITICAL: IsBot() returns false - guards will NOT work!");
                 TC_LOG_ERROR("test.playerbot", " This explains why socket crashes still occur");
             }
@@ -182,7 +190,8 @@ private:
 
             // Create another session to test consistency
             auto botSession2 = BotSession::Create(99996);
-            if (botSession2) {
+            if (botSession2)
+            {
                 bool isBot2 = botSession2->IsBot();
                 TC_LOG_INFO("test.playerbot", "Second session IsBot(): {}", isBot2);
 
@@ -191,9 +200,11 @@ private:
                 }
             }
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 3 Exception: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 3 Unknown exception");
         }
 
@@ -218,7 +229,8 @@ private:
 
             {
                 auto botSession = BotSession::Create(99995);
-                if (!botSession) {
+                if (!botSession)
+                {
                     TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                     return;
                 }
@@ -244,7 +256,8 @@ private:
 
             for (int i = 0; i < 5; ++i) {
                 auto tempSession = BotSession::Create(99990 + i);
-                if (tempSession) {
+                if (tempSession)
+                {
                     tempSession->IsBot(); // Basic operation
                     // Automatic destruction when tempSession goes out of scope
                 }
@@ -252,9 +265,11 @@ private:
 
             TC_LOG_INFO("test.playerbot", " Rapid cycles completed without crash");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 4 Exception: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 4 Unknown exception");
         }
 
@@ -271,7 +286,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(99994);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
@@ -300,9 +316,11 @@ private:
 
             TC_LOG_INFO("test.playerbot", " All atomic operations completed safely");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 5 Exception: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 5 Unknown exception");
         }
 
@@ -319,7 +337,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(99993);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession for testing");
                 return;
             }
@@ -361,10 +380,12 @@ private:
 
             TC_LOG_INFO("test.playerbot", " Unguarded path analysis completed");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 6 Exception: {}", e.what());
             TC_LOG_ERROR("test.playerbot", " This exception might indicate an unguarded code path!");
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " SCENARIO 6 Unknown exception - possible unguarded path!");
         }
 

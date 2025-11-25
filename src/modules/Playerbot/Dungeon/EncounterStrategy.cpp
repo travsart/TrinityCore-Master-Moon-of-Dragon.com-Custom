@@ -8,6 +8,8 @@
  */
 
 #include "EncounterStrategy.h"
+#include "SpellHistory.h"
+#include "GameTime.h"
 #include "DungeonBehavior.h"
 #include "Player.h"
 #include "Group.h"

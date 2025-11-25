@@ -407,7 +407,8 @@ namespace Playerbot
             TC_LOG_DEBUG("playerbot", "AuctionManager::CancelAuction - Bot {} does not own auction {}",
                 bot->GetName(), auctionId);
             return false;
-        }CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();// Cancel auction (no deposit refund on manual cancel)
+        }
+        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();// Cancel auction (no deposit refund on manual cancel)
         ah->RemoveAuction(trans, auction);
 
         CharacterDatabase.CommitTransaction(trans);
@@ -441,7 +442,8 @@ namespace Playerbot
         }
     }
 
-    bool AuctionManager::PlaceBid(Player* bot, uint32 auctionId, uint64 bidAmount){
+    bool AuctionManager::PlaceBid(Player* bot, uint32 auctionId, uint64 bidAmount)
+    {
         if (!ValidateBidPlacement(bot, auctionId, bidAmount))
             return false;
 
@@ -548,7 +550,8 @@ namespace Playerbot
         return true;
     }
 
-    bool AuctionManager::ExecuteFlipOpportunity(Player* bot, const FlipOpportunity& opportunity){
+    bool AuctionManager::ExecuteFlipOpportunity(Player* bot, const FlipOpportunity& opportunity)
+    {
         if (!_marketMakerEnabled)
             return false;
 
@@ -691,7 +694,8 @@ namespace Playerbot
         return proto->GetSellPrice() * item->GetCount();
     }
 
-    void AuctionManager::RegisterBotAuction(Player* bot, uint32 auctionId, const BotAuctionData& data){
+    void AuctionManager::RegisterBotAuction(Player* bot, uint32 auctionId, const BotAuctionData& data)
+    {
         ::std::lock_guard lock(_mutex);
         _botAuctions[bot->GetGUID()].push_back(data);
     }
@@ -808,7 +812,8 @@ namespace Playerbot
         stats.TotalGoldSpent += bidAmount; // Reserve the gold
     }
 
-    AuctionHouseObject* AuctionManager::GetAuctionHouse(Player* bot, uint32 auctionHouseId){
+    AuctionHouseObject* AuctionManager::GetAuctionHouse(Player* bot, uint32 auctionHouseId)
+    {
         if (!bot)
             return nullptr;
 
@@ -826,7 +831,8 @@ namespace Playerbot
         return !throttle.Throttled;
     }
 
-    uint32 AuctionManager::GetAuctionHouseIdForBot(Player* bot){
+    uint32 AuctionManager::GetAuctionHouseIdForBot(Player* bot)
+    {
         if (!bot)
             return 0;
 

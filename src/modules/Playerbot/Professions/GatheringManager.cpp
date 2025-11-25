@@ -8,6 +8,7 @@
  */
 
 #include "GatheringManager.h"
+#include "GameTime.h"
 #include "AI/BotAI.h"
 #include "Player.h"
 #include "GameObject.h"

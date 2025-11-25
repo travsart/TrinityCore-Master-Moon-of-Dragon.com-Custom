@@ -19,7 +19,8 @@ namespace Playerbot {
 
 void BotCustomizationGenerator::Initialize()
 {
-    if (_initialized) {
+    if (_initialized)
+    {
         return;
     }
 
@@ -29,12 +30,14 @@ void BotCustomizationGenerator::Initialize()
     uint32 totalOptions = 0;
 
     // Load customization options for all valid race/gender combinations
-    for (ChrRacesEntry const* raceEntry : sChrRacesStore) {
+    for (ChrRacesEntry const* raceEntry : sChrRacesStore)
+    {
         if (!raceEntry) continue;
 
         for (uint8 gender = GENDER_MALE; gender <= GENDER_FEMALE; ++gender) {
             // Verify this race/gender combination has a valid model
-    if (sDB2Manager.GetChrModel(raceEntry->ID, gender)) {
+    if (sDB2Manager.GetChrModel(raceEntry->ID, gender))
+    {
                 LoadCustomizationOptions(raceEntry->ID, gender);
                 ++totalCombinations;
 
@@ -56,7 +59,8 @@ void BotCustomizationGenerator::Initialize()
 ::std::array<WorldPackets::Character::ChrCustomizationChoice, 250>
 BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
 {
-    if (!_initialized) {
+    if (!_initialized)
+    {
         Initialize();
     }
 
@@ -74,7 +78,8 @@ BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
     }
 
     // Generate customizations from cached options
-    for (CustomizationOption const& option : cacheItr->second) {
+    for (CustomizationOption const& option : cacheItr->second)
+    {
         if (customizationCount >= 250) {
             TC_LOG_WARN("module.playerbot.character",
                 "Reached maximum customization limit (250) for race {} gender {}", race, gender);
@@ -83,10 +88,12 @@ BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
 
         uint32 choiceId = 0;
 
-        if (!option.availableChoices.empty()) {
+        if (!option.availableChoices.empty())
+        {
             // Select random choice from available options
             choiceId = GetRandomChoice(option.availableChoices);
-        } else if (option.isRequired) {
+        } else if (option.isRequired)
+        {
             // Use default choice for required options
             choiceId = option.defaultChoice;
             TC_LOG_WARN("module.playerbot.character",
@@ -104,7 +111,8 @@ BotCustomizationGenerator::GenerateCustomizations(uint8 race, uint8 gender)
     }
 
     // Validate generated customizations
-    if (!ValidateCustomizations(race, gender, customizations)) {
+    if (!ValidateCustomizations(race, gender, customizations))
+    {
         TC_LOG_ERROR("module.playerbot.character",
             "Generated customizations failed validation for race {} gender {}. Using minimal customizations.",
             race, gender);
@@ -127,7 +135,8 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
 
     // Get the character model for this race/gender
     ChrModelEntry const* chrModel = sDB2Manager.GetChrModel(race, gender);
-    if (!chrModel) {
+    if (!chrModel)
+    {
         TC_LOG_ERROR("module.playerbot.character",
             "No character model found for race {} gender {}", race, gender);
         return;
@@ -137,7 +146,8 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
 
     // Use DB2Manager to get customization options for this race/gender
     if (auto const* optionVector = sDB2Manager.GetCustomiztionOptions(race, gender)) {
-        for (ChrCustomizationOptionEntry const* optionEntry : *optionVector) {
+        for (ChrCustomizationOptionEntry const* optionEntry : *optionVector)
+        {
             if (!optionEntry) continue;
 
             CustomizationOption option;
@@ -146,7 +156,8 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
             option.isRequired = IsRequiredOption(optionEntry->ID);
             option.defaultChoice = GetDefaultChoice(optionEntry->ID);
 
-            if (!option.availableChoices.empty() || option.isRequired) {
+            if (!option.availableChoices.empty() || option.isRequired)
+            {
                 options.push_back(option);
                 ++optionCount;
             }
@@ -165,8 +176,10 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
 
     // Use DB2Manager to get customization choices
     if (auto const* choiceVector = sDB2Manager.GetCustomiztionChoices(optionId)) {
-        for (ChrCustomizationChoiceEntry const* choice : *choiceVector) {
-            if (choice) {
+        for (ChrCustomizationChoiceEntry const* choice : *choiceVector)
+        {
+            if (choice)
+            {
                 choices.push_back(choice->ID);
             }
         }
@@ -177,7 +190,8 @@ void BotCustomizationGenerator::LoadCustomizationOptions(uint8 race, uint8 gende
 
 uint32 BotCustomizationGenerator::GetRandomChoice(::std::vector<uint32> const& choices)
 {
-    if (choices.empty()) {
+    if (choices.empty())
+    {
         return 0;
     }
 
@@ -205,7 +219,8 @@ uint32 BotCustomizationGenerator::GetDefaultChoice(uint32 optionId)
 {
     // Get the first available choice as default
     ::std::vector<uint32> choices = GetValidChoicesForOption(optionId);
-    if (!choices.empty()) {
+    if (!choices.empty())
+    {
         return choices[0];
     }
 
@@ -218,14 +233,16 @@ bool BotCustomizationGenerator::ValidateCustomizations(uint8 race, uint8 gender,
 {
     // Basic validation - ensure we have some customizations
     bool hasCustomizations = false;
-    for (auto const& customization : customizations) {
+    for (auto const& customization : customizations)
+    {
         if (customization.ChrCustomizationOptionID != 0) {
             hasCustomizations = true;
             break;
         }
     }
 
-    if (!hasCustomizations) {
+    if (!hasCustomizations)
+    {
         TC_LOG_WARN("module.playerbot.character",
             "No customizations generated for race {} gender {}", race, gender);
         // Allow empty customizations - TrinityCore will use defaults

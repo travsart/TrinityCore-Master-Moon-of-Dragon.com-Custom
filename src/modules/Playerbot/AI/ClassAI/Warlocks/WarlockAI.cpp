@@ -8,6 +8,7 @@
  */
 
 #include "WarlockAI.h"
+#include "GameTime.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
 #include "SpellMgr.h"
@@ -233,7 +234,8 @@ void WarlockAI::UpdateRotation(::Unit* target)
     // Priority 2: Defensives - Unending Resolve, Dark Pact, Soul Leech
     if (behaviors && behaviors->NeedsDefensive())
     {
-        if (HandleDefensives())        {
+        if (HandleDefensives())
+        {
 
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} using defensive abilities", bot->GetName());
 
@@ -256,7 +258,8 @@ void WarlockAI::UpdateRotation(::Unit* target)
     }
 
 // Priority 4: Pet Management - Summon, heal, command
-    if (HandlePetManagement())    {
+    if (HandlePetManagement())
+    {
         TC_LOG_DEBUG("playerbot.warlock", "Warlock {} managing pet", bot->GetName());
         return;
     }
@@ -308,7 +311,8 @@ void WarlockAI::UpdateRotation(::Unit* target)
     // Priority 7: AoE Decisions - Seed of Corruption, Rain of Fire, Cataclysm
     if (behaviors && behaviors->ShouldAOE())
     {
-        if (HandleAoERotation(target))        {
+        if (HandleAoERotation(target))
+        {
 
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} executing AoE rotation", bot->GetName());
 
@@ -319,7 +323,8 @@ void WarlockAI::UpdateRotation(::Unit* target)
     // Priority 8: Offensive Cooldowns - Dark Soul, Summon Infernal/Doomguard
     if (behaviors && behaviors->ShouldUseCooldowns())
     {
-        if (HandleOffensiveCooldowns(target))        {
+        if (HandleOffensiveCooldowns(target))
+        {
 
             TC_LOG_DEBUG("playerbot.warlock", "Warlock {} using offensive cooldowns", bot->GetName());
         }
@@ -366,7 +371,8 @@ bool WarlockAI::HandleInterrupt(Unit* target)
     }
 
     // Shadowfury - stun interrupt
-    if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))    {
+    if (bot->HasSpell(SHADOWFURY) && !bot->GetSpellHistory()->HasCooldown(SHADOWFURY))
+    {
         float distance = ::std::sqrt(bot->GetExactDistSq(target)); // Calculate once from squared distance
     if (distance <= 30.0f)
         {
@@ -416,7 +422,8 @@ bool WarlockAI::HandleDefensives()
 // Low health - use moderate defensives
     if (healthPct < 40.0f)
     {        // Shadow Ward/Nether Ward
-    if (bot->HasSpell(NETHER_WARD) && !bot->GetSpellHistory()->HasCooldown(NETHER_WARD))        {
+    if (bot->HasSpell(NETHER_WARD) && !bot->GetSpellHistory()->HasCooldown(NETHER_WARD))
+    {
 
             bot->CastSpell(CastSpellTargetArg(bot), NETHER_WARD);
 
@@ -492,7 +499,8 @@ bool WarlockAI::HandlePetManagement()
     if (_petHealthPercent.load() < 50)
     {
         // Health Funnel
-    if (bot->HasSpell(HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))        {
+    if (bot->HasSpell(HEALTH_FUNNEL) && !bot->GetSpellHistory()->HasCooldown(HEALTH_FUNNEL))
+    {
 
             bot->CastSpell(CastSpellTargetArg(pet), HEALTH_FUNNEL);
             return true;
@@ -645,7 +653,8 @@ bool WarlockAI::HandleCrowdControl(Unit* target)
     }
 
     // Curse of Exhaustion - slow for kiting
-    if (bot->HasSpell(CURSE_OF_EXHAUSTION) && !target->HasAura(CURSE_OF_EXHAUSTION))    {
+    if (bot->HasSpell(CURSE_OF_EXHAUSTION) && !target->HasAura(CURSE_OF_EXHAUSTION))
+    {
         bot->CastSpell(CastSpellTargetArg(target), CURSE_OF_EXHAUSTION);
         return true;
     }    return false;
@@ -665,7 +674,8 @@ bool WarlockAI::HandleAoERotation(Unit* target)
 
     uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());        // Seed of Corruption for Affliction (265) or when many enemies
     if (static_cast<uint32>(spec) == 265 || nearbyEnemies >= 4)    {
-        if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))        {
+        if (bot->HasSpell(SEED_OF_CORRUPTION) && !target->HasAura(SEED_OF_CORRUPTION))
+        {
 
             bot->CastSpell(CastSpellTargetArg(target), SEED_OF_CORRUPTION);
 
@@ -757,7 +767,8 @@ bool WarlockAI::HandleOffensiveCooldowns(Unit* target)
         }
     }    else if (static_cast<uint32>(spec) == 267) // Destruction
   
-    {        if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))        {
+    {        if (bot->HasSpell(DARK_SOUL_INSTABILITY) && !bot->GetSpellHistory()->HasCooldown(DARK_SOUL_INSTABILITY))
+    {
 
             bot->CastSpell(CastSpellTargetArg(bot), DARK_SOUL_INSTABILITY);
 
@@ -1236,7 +1247,8 @@ void WarlockAI::UpdateCombatMetrics()
     if (bot && bot->GetVictim())
     {
         Unit* target = bot->GetVictim();
-        int dotCount = 0;        int totalDots = 3; // Typical number of DoTs
+        int dotCount = 0;
+        int totalDots = 3; // Typical number of DoTs
     if (target->HasAura(CORRUPTION)) dotCount++;
         if (target->HasAura(CURSE_OF_AGONY)) dotCount++;
         if (target->HasAura(UNSTABLE_AFFLICTION)) dotCount++;
@@ -1244,7 +1256,8 @@ void WarlockAI::UpdateCombatMetrics()
 
         _warlockMetrics.dotUptime = (static_cast<float>(dotCount) / totalDots) * 100.0f;
     }
-}// Required virtual function implementations
+}
+// Required virtual function implementations
 void WarlockAI::UpdateBuffs()
 {
     // Use baseline buffs for low-level bots
@@ -1752,7 +1765,8 @@ void WarlockAI::OptimizeSoulShardUsage()
 
                      _currentSoulShards.load());
     }
-}void WarlockAI::HandleAoESituations()
+}
+void WarlockAI::HandleAoESituations()
 {
     Player* bot = GetBot();
     if (!bot || !bot->IsInCombat())

@@ -154,7 +154,8 @@ private:
  * @brief RAII helper to trigger DebugBreak on scope exit
  *
  * Usage:
- *   if (criticalCondition) {
+ *   if (criticalCondition)
+ {
  *       ScopedDebugBreak breakpoint("Critical condition detected");
  *       // ... cleanup code ...
  *       // DebugBreak() called on scope exit

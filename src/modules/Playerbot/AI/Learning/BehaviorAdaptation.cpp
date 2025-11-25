@@ -8,6 +8,7 @@
  */
 
 #include "BehaviorAdaptation.h"
+#include "SpellHistory.h"
 #include "AI/BotAI.h"
 #include "Player.h"
 #include "Unit.h"

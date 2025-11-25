@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Core/StateMachine/BotStateTypes.h"
+#include "GameTime.h"
 #include "Core/StateMachine/StateTransitions.h"
 #include "Core/StateMachine/BotStateMachine.h"
 #include "Core/StateMachine/BotInitStateMachine.h"
@@ -68,7 +69,8 @@ using namespace testing;
  */
 class MockPlayer : public Player {
 public:
-    MockPlayer() : Player(nullptr), m_isInWorld(false), m_group(nullptr), m_botAI(nullptr) {
+    MockPlayer() : Player(nullptr), m_isInWorld(false), m_group(nullptr), m_botAI(nullptr)
+    {
         // Initialize mock
     }
 
@@ -104,7 +106,8 @@ public:
 
     std::vector<Player*>& GetMembers() { return m_members; }
     void AddMember(Player* player) { m_members.push_back(player); }
-    void RemoveMember(Player* player) {
+    void RemoveMember(Player* player)
+    {
         m_members.erase(std::remove(m_members.begin(), m_members.end(), player), m_members.end());
     }
 
@@ -128,12 +131,14 @@ public:
     int groupJoinedCallCount{0};
     int groupLeftCallCount{0};
 
-    void OnGroupJoined(Group* group) override {
+    void OnGroupJoined(Group* group) override
+    {
         BotAI::OnGroupJoined(group);
         groupJoinedCallCount++;
     }
 
-    void OnGroupLeft() override {
+    void OnGroupLeft() override
+    {
         BotAI::OnGroupLeft();
         groupLeftCallCount++;
     }
@@ -150,12 +155,14 @@ class PerformanceTimer {
 public:
     PerformanceTimer() : m_start(std::chrono::high_resolution_clock::now()) {}
 
-    double ElapsedMicroseconds() const {
+    double ElapsedMicroseconds() const
+    {
         auto end = std::chrono::high_resolution_clock::now();
         return std::chrono::duration<double, std::micro>(end - m_start).count();
     }
 
-    double ElapsedMilliseconds() const {
+    double ElapsedMilliseconds() const
+    {
         return ElapsedMicroseconds() / 1000.0;
     }
 
@@ -169,7 +176,8 @@ private:
 
 class Phase1StateMachineTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Create mock bot
         mockBot = std::make_unique<MockPlayer>();
 
@@ -181,7 +189,8 @@ protected:
         ON_CALL(*mockBot, GetName()).WillByDefault(ReturnRef(botName));
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         mockBot.reset();
         mockGroup.reset();
         mockBotAI.reset();
@@ -197,7 +206,8 @@ protected:
 // CATEGORY 1: BotStateTypes Tests (10 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, EnumValues_AllStatesUnique) {
+TEST_F(Phase1StateMachineTest, EnumValues_AllStatesUnique)
+{
     // Verify all BotInitState values are unique
     std::set<int> values;
     values.insert(static_cast<int>(BotInitState::CREATED));
@@ -211,7 +221,8 @@ TEST_F(Phase1StateMachineTest, EnumValues_AllStatesUnique) {
     EXPECT_EQ(7u, values.size()) << "All BotInitState values must be unique";
 }
 
-TEST_F(Phase1StateMachineTest, ToString_AllStatesHaveNames) {
+TEST_F(Phase1StateMachineTest, ToString_AllStatesHaveNames)
+{
     // Verify ToString() works for all states
     EXPECT_STREQ("CREATED", ToString(BotInitState::CREATED).data());
     EXPECT_STREQ("LOADING_CHARACTER", ToString(BotInitState::LOADING_CHARACTER).data());
@@ -222,7 +233,8 @@ TEST_F(Phase1StateMachineTest, ToString_AllStatesHaveNames) {
     EXPECT_STREQ("FAILED", ToString(BotInitState::FAILED).data());
 }
 
-TEST_F(Phase1StateMachineTest, StateFlags_BitwiseOperations) {
+TEST_F(Phase1StateMachineTest, StateFlags_BitwiseOperations)
+{
     // Test bitwise flag operations
     StateFlags flags = StateFlags::INITIALIZING | StateFlags::SAFE_TO_UPDATE;
 
@@ -236,7 +248,8 @@ TEST_F(Phase1StateMachineTest, StateFlags_BitwiseOperations) {
     EXPECT_TRUE((flags & StateFlags::SAFE_TO_UPDATE) != StateFlags::NONE);
 }
 
-TEST_F(Phase1StateMachineTest, StateFlags_ToString) {
+TEST_F(Phase1StateMachineTest, StateFlags_ToString)
+{
     // Test StateFlags to string conversion
     EXPECT_STREQ("NONE", ToString(StateFlags::NONE).data());
     EXPECT_STREQ("INITIALIZING", ToString(StateFlags::INITIALIZING).data());
@@ -244,7 +257,8 @@ TEST_F(Phase1StateMachineTest, StateFlags_ToString) {
     EXPECT_STREQ("ERROR_STATE", ToString(StateFlags::ERROR_STATE).data());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateInfo_Atomics) {
+TEST_F(Phase1StateMachineTest, InitStateInfo_Atomics)
+{
     // Test atomic operations on InitStateInfo
     InitStateInfo info;
 
@@ -262,7 +276,8 @@ TEST_F(Phase1StateMachineTest, InitStateInfo_Atomics) {
     EXPECT_EQ(1u, info.transitionCount.load());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateInfo_IsTerminal) {
+TEST_F(Phase1StateMachineTest, InitStateInfo_IsTerminal)
+{
     InitStateInfo info;
 
     // Non-terminal states
@@ -282,7 +297,8 @@ TEST_F(Phase1StateMachineTest, InitStateInfo_IsTerminal) {
     EXPECT_TRUE(info.IsFailed());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateInfo_TimeTracking) {
+TEST_F(Phase1StateMachineTest, InitStateInfo_TimeTracking)
+{
     InitStateInfo info;
     uint32 startTime = GameTime::GetGameTimeMS();
 
@@ -298,7 +314,8 @@ TEST_F(Phase1StateMachineTest, InitStateInfo_TimeTracking) {
     EXPECT_LT(timeInState, 200u) << "Should not have spent more than 200ms";
 }
 
-TEST_F(Phase1StateMachineTest, EventType_ToString) {
+TEST_F(Phase1StateMachineTest, EventType_ToString)
+{
     // Test event type string conversion
     EXPECT_STREQ("BOT_CREATED", ToString(EventType::BOT_CREATED).data());
     EXPECT_STREQ("BOT_ADDED_TO_WORLD", ToString(EventType::BOT_ADDED_TO_WORLD).data());
@@ -307,14 +324,16 @@ TEST_F(Phase1StateMachineTest, EventType_ToString) {
     EXPECT_STREQ("COMBAT_STARTED", ToString(EventType::COMBAT_STARTED).data());
 }
 
-TEST_F(Phase1StateMachineTest, TransitionResult_ToString) {
+TEST_F(Phase1StateMachineTest, TransitionResult_ToString)
+{
     // Test transition result string conversion
     EXPECT_STREQ("SUCCESS", ToString(StateTransitionResult::SUCCESS).data());
     EXPECT_STREQ("INVALID_FROM_STATE", ToString(StateTransitionResult::INVALID_FROM_STATE).data());
     EXPECT_STREQ("PRECONDITION_FAILED", ToString(StateTransitionResult::PRECONDITION_FAILED).data());
 }
 
-TEST_F(Phase1StateMachineTest, TransitionValidation_ImplicitBool) {
+TEST_F(Phase1StateMachineTest, TransitionValidation_ImplicitBool)
+{
     // Test TransitionValidation implicit bool conversion
     TransitionValidation success{StateTransitionResult::SUCCESS, "OK"};
     TransitionValidation failure{StateTransitionResult::INVALID_FROM_STATE, "Invalid"};
@@ -330,7 +349,8 @@ TEST_F(Phase1StateMachineTest, TransitionValidation_ImplicitBool) {
 // CATEGORY 2: StateTransitions Tests (15 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, Transitions_ValidSequence) {
+TEST_F(Phase1StateMachineTest, Transitions_ValidSequence)
+{
     // Test all valid transitions in INIT_STATE_TRANSITIONS
     // CREATED → LOADING_CHARACTER
     auto rule1 = StateTransitionValidator::FindTransitionRule(
@@ -370,7 +390,8 @@ TEST_F(Phase1StateMachineTest, Transitions_ValidSequence) {
     ASSERT_NE(nullptr, rule5);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_InvalidTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_InvalidTransition)
+{
     // Test that invalid transitions are rejected
     auto rule = StateTransitionValidator::FindTransitionRule(
         BotInitState::CREATED,
@@ -380,7 +401,8 @@ TEST_F(Phase1StateMachineTest, Transitions_InvalidTransition) {
     EXPECT_EQ(nullptr, rule) << "Direct CREATED → READY should not be allowed";
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_ErrorTransitions) {
+TEST_F(Phase1StateMachineTest, Transitions_ErrorTransitions)
+{
     // Verify all states can transition to FAILED
     std::vector<BotInitState> states = {
         BotInitState::CREATED,
@@ -391,14 +413,16 @@ TEST_F(Phase1StateMachineTest, Transitions_ErrorTransitions) {
         BotInitState::READY
     };
 
-    for (auto state : states) {
+    for (auto state : states)
+    {
         auto rule = StateTransitionValidator::FindTransitionRule(state, BotInitState::FAILED);
         ASSERT_NE(nullptr, rule) << "State " << ToString(state) << " should be able to transition to FAILED";
         EXPECT_EQ(PRIORITY_CRITICAL, rule->priority);
     }
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_PriorityOrdering) {
+TEST_F(Phase1StateMachineTest, Transitions_PriorityOrdering)
+{
     // Verify priority values are correct
     auto criticalRule = StateTransitionValidator::FindTransitionRule(
         BotInitState::READY,
@@ -415,7 +439,8 @@ TEST_F(Phase1StateMachineTest, Transitions_PriorityOrdering) {
     EXPECT_EQ(PRIORITY_NORMAL, normalRule->priority);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_PreconditionCheck) {
+TEST_F(Phase1StateMachineTest, Transitions_PreconditionCheck)
+{
     // Create mock state machine for precondition testing
     BotStateMachine sm(mockBot.get(), BotInitState::LOADING_CHARACTER);
 
@@ -440,7 +465,8 @@ TEST_F(Phase1StateMachineTest, Transitions_PreconditionCheck) {
     EXPECT_EQ(StateTransitionResult::SUCCESS, validation.result);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_GetValidTransitions) {
+TEST_F(Phase1StateMachineTest, Transitions_GetValidTransitions)
+{
     // Test GetValidTransitions()
     auto validFromCreated = StateTransitionValidator::GetValidTransitions(BotInitState::CREATED);
 
@@ -450,7 +476,8 @@ TEST_F(Phase1StateMachineTest, Transitions_GetValidTransitions) {
         BotInitState::LOADING_CHARACTER) != validFromCreated.end());
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_CanForceTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_CanForceTransition)
+{
     // Test CanForceTransition()
     EXPECT_TRUE(StateTransitionValidator::CanForceTransition(
         BotInitState::CREATED,
@@ -463,7 +490,8 @@ TEST_F(Phase1StateMachineTest, Transitions_CanForceTransition) {
     )) << "Normal transitions should not be forceable";
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_RetryTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_RetryTransition)
+{
     // Test FAILED → LOADING_CHARACTER retry
     auto retryRule = StateTransitionValidator::FindTransitionRule(
         BotInitState::FAILED,
@@ -475,7 +503,8 @@ TEST_F(Phase1StateMachineTest, Transitions_RetryTransition) {
     EXPECT_EQ(PRIORITY_LOW, retryRule->priority);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_FullResetTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_FullResetTransition)
+{
     // Test FAILED → CREATED (full reset)
     auto resetRule = StateTransitionValidator::FindTransitionRule(
         BotInitState::FAILED,
@@ -486,7 +515,8 @@ TEST_F(Phase1StateMachineTest, Transitions_FullResetTransition) {
     EXPECT_TRUE(resetRule->allowForce);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_SoftResetTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_SoftResetTransition)
+{
     // Test READY → IN_WORLD (soft reset)
     auto softResetRule = StateTransitionValidator::FindTransitionRule(
         BotInitState::READY,
@@ -497,7 +527,8 @@ TEST_F(Phase1StateMachineTest, Transitions_SoftResetTransition) {
     EXPECT_TRUE(softResetRule->allowForce);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_TimeoutTransition) {
+TEST_F(Phase1StateMachineTest, Transitions_TimeoutTransition)
+{
     // Test LOADING_CHARACTER → FAILED (timeout)
     auto timeoutRule = StateTransitionValidator::FindTransitionRule(
         BotInitState::LOADING_CHARACTER,
@@ -508,7 +539,8 @@ TEST_F(Phase1StateMachineTest, Transitions_TimeoutTransition) {
     EXPECT_NE(nullptr, timeoutRule->precondition) << "Timeout should have precondition";
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_GetFailureReason) {
+TEST_F(Phase1StateMachineTest, Transitions_GetFailureReason)
+{
     // Test GetFailureReason()
     std::string reason = StateTransitionValidator::GetFailureReason(
         StateTransitionResult::PRECONDITION_FAILED,
@@ -519,7 +551,8 @@ TEST_F(Phase1StateMachineTest, Transitions_GetFailureReason) {
     EXPECT_FALSE(reason.empty()) << "Failure reason should be provided";
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_PolicyModes) {
+TEST_F(Phase1StateMachineTest, Transitions_PolicyModes)
+{
     // Test transition policies
     StateTransitionValidator::SetTransitionPolicy(TransitionPolicy::STRICT);
     EXPECT_EQ(TransitionPolicy::STRICT, StateTransitionValidator::GetTransitionPolicy());
@@ -531,7 +564,8 @@ TEST_F(Phase1StateMachineTest, Transitions_PolicyModes) {
     StateTransitionValidator::SetTransitionPolicy(TransitionPolicy::STRICT);
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_EventTriggered) {
+TEST_F(Phase1StateMachineTest, Transitions_EventTriggered)
+{
     // Test event-triggered transitions
     auto rule = StateTransitionValidator::FindTransitionRule(
         BotInitState::CREATED,
@@ -543,9 +577,11 @@ TEST_F(Phase1StateMachineTest, Transitions_EventTriggered) {
     EXPECT_EQ(EventType::BOT_CREATED, rule->triggerEvent.value());
 }
 
-TEST_F(Phase1StateMachineTest, Transitions_AllRulesValid) {
+TEST_F(Phase1StateMachineTest, Transitions_AllRulesValid)
+{
     // Verify all rules in INIT_STATE_TRANSITIONS have valid data
-    for (const auto& rule : INIT_STATE_TRANSITIONS) {
+    for (const auto& rule : INIT_STATE_TRANSITIONS)
+    {
         EXPECT_FALSE(rule.description.empty()) << "Rule description should not be empty";
         EXPECT_GE(rule.priority, PRIORITY_IDLE);
         EXPECT_LE(rule.priority, PRIORITY_CRITICAL);
@@ -556,7 +592,8 @@ TEST_F(Phase1StateMachineTest, Transitions_AllRulesValid) {
 // CATEGORY 3: BotStateMachine Tests (20 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, StateMachine_Construction) {
+TEST_F(Phase1StateMachineTest, StateMachine_Construction)
+{
     // Create state machine
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
@@ -565,7 +602,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_Construction) {
     EXPECT_EQ(TransitionPolicy::STRICT, sm.GetPolicy());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_BasicTransition) {
+TEST_F(Phase1StateMachineTest, StateMachine_BasicTransition)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Transition CREATED → LOADING_CHARACTER
@@ -576,7 +614,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_BasicTransition) {
     EXPECT_EQ(BotInitState::CREATED, sm.GetPreviousState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_InvalidTransition) {
+TEST_F(Phase1StateMachineTest, StateMachine_InvalidTransition)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Try invalid transition CREATED → READY
@@ -586,7 +625,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_InvalidTransition) {
     EXPECT_EQ(BotInitState::CREATED, sm.GetCurrentState()) << "State should not change on failed transition";
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_PreconditionFailed) {
+TEST_F(Phase1StateMachineTest, StateMachine_PreconditionFailed)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::LOADING_CHARACTER);
 
     // Bot not in world - precondition fails
@@ -598,7 +638,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_PreconditionFailed) {
     EXPECT_EQ(BotInitState::LOADING_CHARACTER, sm.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_ThreadSafety) {
+TEST_F(Phase1StateMachineTest, StateMachine_ThreadSafety)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     std::atomic<int> successfulReads{0};
@@ -624,7 +665,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_ThreadSafety) {
     sm.TransitionTo(BotInitState::LOADING_CHARACTER, "Concurrent transition");
 
     // Join all threads
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
         thread.join();
     }
 
@@ -632,7 +674,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_ThreadSafety) {
     EXPECT_EQ(0, failedReads.load()) << "No invalid states should be observed";
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_TransitionHistory) {
+TEST_F(Phase1StateMachineTest, StateMachine_TransitionHistory)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Perform 15 transitions
@@ -655,7 +698,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_TransitionHistory) {
     EXPECT_EQ(BotInitState::CREATED, lastTransition->toState);
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_ForceTransition) {
+TEST_F(Phase1StateMachineTest, StateMachine_ForceTransition)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Force transition to FAILED (bypasses validation)
@@ -665,7 +709,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_ForceTransition) {
     EXPECT_EQ(BotInitState::FAILED, sm.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_Reset) {
+TEST_F(Phase1StateMachineTest, StateMachine_Reset)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::READY);
 
     // Reset to initial state
@@ -675,7 +720,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_Reset) {
     EXPECT_EQ(BotInitState::CREATED, sm.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_StateFlags) {
+TEST_F(Phase1StateMachineTest, StateMachine_StateFlags)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Set flags
@@ -692,14 +738,16 @@ TEST_F(Phase1StateMachineTest, StateMachine_StateFlags) {
     EXPECT_FALSE(sm.HasFlags(StateFlags::INITIALIZING));
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_IsInState) {
+TEST_F(Phase1StateMachineTest, StateMachine_IsInState)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::LOADING_CHARACTER);
 
     EXPECT_TRUE(sm.IsInState(BotInitState::LOADING_CHARACTER));
     EXPECT_FALSE(sm.IsInState(BotInitState::CREATED));
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_IsInAnyState) {
+TEST_F(Phase1StateMachineTest, StateMachine_IsInAnyState)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::IN_WORLD);
 
     std::vector<BotInitState> states = {
@@ -714,7 +762,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_IsInAnyState) {
     EXPECT_FALSE(sm.IsInAnyState(states));
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_GetTimeInCurrentState) {
+TEST_F(Phase1StateMachineTest, StateMachine_GetTimeInCurrentState)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Transition and wait
@@ -727,7 +776,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_GetTimeInCurrentState) {
     EXPECT_LT(timeInState, 200u) << "Should not have been in state for more than 200ms";
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_GetTransitionCount) {
+TEST_F(Phase1StateMachineTest, StateMachine_GetTransitionCount)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     EXPECT_EQ(0u, sm.GetTransitionCount());
@@ -739,7 +789,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_GetTransitionCount) {
     EXPECT_EQ(2u, sm.GetTransitionCount());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_PolicyChange) {
+TEST_F(Phase1StateMachineTest, StateMachine_PolicyChange)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     sm.SetPolicy(TransitionPolicy::RELAXED);
@@ -749,7 +800,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_PolicyChange) {
     EXPECT_EQ(TransitionPolicy::DEBUGGING, sm.GetPolicy());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_LoggingControl) {
+TEST_F(Phase1StateMachineTest, StateMachine_LoggingControl)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     EXPECT_TRUE(sm.IsLoggingEnabled()) << "Logging should be enabled by default";
@@ -761,7 +813,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_LoggingControl) {
     EXPECT_TRUE(sm.IsLoggingEnabled());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_RetryCount) {
+TEST_F(Phase1StateMachineTest, StateMachine_RetryCount)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::FAILED);
 
     EXPECT_EQ(0u, sm.GetRetryCount());
@@ -771,14 +824,16 @@ TEST_F(Phase1StateMachineTest, StateMachine_RetryCount) {
     // Note: Retry count is managed by BotInitStateMachine, not base class
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_DumpState) {
+TEST_F(Phase1StateMachineTest, StateMachine_DumpState)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::IN_WORLD);
 
     // This should not crash
     EXPECT_NO_THROW(sm.DumpState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_TransitionOnEvent) {
+TEST_F(Phase1StateMachineTest, StateMachine_TransitionOnEvent)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Transition triggered by event
@@ -792,7 +847,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_TransitionOnEvent) {
     EXPECT_EQ(BotInitState::LOADING_CHARACTER, sm.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_PerformanceMetrics) {
+TEST_F(Phase1StateMachineTest, StateMachine_PerformanceMetrics)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Measure 1000 state queries
@@ -819,7 +875,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_PerformanceMetrics) {
     EXPECT_LT(transitionTime, 10.0) << "Average transition time should be < 0.01ms";
 }
 
-TEST_F(Phase1StateMachineTest, StateMachine_ConcurrentTransitions) {
+TEST_F(Phase1StateMachineTest, StateMachine_ConcurrentTransitions)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     std::atomic<int> successCount{0};
@@ -838,7 +895,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_ConcurrentTransitions) {
         });
     }
 
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
         thread.join();
     }
 
@@ -851,7 +909,8 @@ TEST_F(Phase1StateMachineTest, StateMachine_ConcurrentTransitions) {
 // CATEGORY 4: BotInitStateMachine Tests (25 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_Construction) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_Construction)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     EXPECT_EQ(BotInitState::CREATED, initSM.GetCurrentState());
@@ -860,7 +919,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_Construction) {
     EXPECT_EQ(0.0f, initSM.GetProgress());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_Start) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_Start)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     bool started = initSM.Start();
@@ -873,7 +933,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_Start) {
     EXPECT_FALSE(startedAgain);
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_FullInitSequence) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_FullInitSequence)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Start initialization
@@ -885,7 +946,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_FullInitSequence) {
 
     // Update until ready
     int updateCount = 0;
-    while (!initSM.IsReady() && updateCount < 100) {
+    while (!initSM.IsReady() && updateCount < 100)
+    {
         initSM.Update(16); // Simulate 60 FPS
         updateCount++;
     }
@@ -895,7 +957,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_FullInitSequence) {
     EXPECT_EQ(1.0f, initSM.GetProgress());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_BotInGroupAtLogin) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_BotInGroupAtLogin)
+{
     // THIS IS THE TEST FOR ISSUE #1 FIX
     BotInitStateMachine initSM(mockBot.get());
 
@@ -916,7 +979,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_BotInGroupAtLogin) {
     initSM.Start();
 
     int updateCount = 0;
-    while (!initSM.IsReady() && updateCount < 100) {
+    while (!initSM.IsReady() && updateCount < 100)
+    {
         initSM.Update(16);
         updateCount++;
     }
@@ -930,7 +994,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_BotInGroupAtLogin) {
     EXPECT_EQ(1, mockBotAI->groupJoinedCallCount) << "OnGroupJoined should be called once";
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_BotNotInGroupAtLogin) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_BotNotInGroupAtLogin)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot NOT in group
@@ -946,7 +1011,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_BotNotInGroupAtLogin) {
     initSM.Start();
 
     int updateCount = 0;
-    while (!initSM.IsReady() && updateCount < 100) {
+    while (!initSM.IsReady() && updateCount < 100)
+    {
         initSM.Update(16);
         updateCount++;
     }
@@ -957,7 +1023,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_BotNotInGroupAtLogin) {
     EXPECT_EQ(0, mockBotAI->groupJoinedCallCount) << "OnGroupJoined should not be called";
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_InitializationTimeout) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_InitializationTimeout)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot never becomes IsInWorld()
@@ -975,7 +1042,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_InitializationTimeout) {
     EXPECT_EQ(BotInitState::FAILED, initSM.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_RetryAfterFailure) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_RetryAfterFailure)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Force failure
@@ -992,7 +1060,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_RetryAfterFailure) {
     EXPECT_EQ(BotInitState::LOADING_CHARACTER, initSM.GetCurrentState());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_ProgressTracking) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_ProgressTracking)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     initSM.Start();
@@ -1003,11 +1072,13 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_ProgressTracking) {
     mockBot->SetInWorld(true);
 
     float lastProgress = 0.0f;
-    while (!initSM.IsReady()) {
+    while (!initSM.IsReady())
+    {
         initSM.Update(16);
         float currentProgress = initSM.GetProgress();
 
-        if (currentProgress > lastProgress) {
+        if (currentProgress > lastProgress)
+        {
             lastProgress = currentProgress;
         }
 
@@ -1016,12 +1087,14 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_ProgressTracking) {
         }
     }
 
-    if (initSM.IsReady()) {
+    if (initSM.IsReady())
+    {
         EXPECT_EQ(1.0f, initSM.GetProgress());
     }
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_IsBotInWorld) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_IsBotInWorld)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     EXPECT_FALSE(initSM.IsBotInWorld());
@@ -1029,14 +1102,16 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_IsBotInWorld) {
     initSM.Start();
     mockBot->SetInWorld(true);
 
-    while (!initSM.IsBotInWorld() && !initSM.HasFailed()) {
+    while (!initSM.IsBotInWorld() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.IsBotInWorld());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_HasCheckedGroup) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_HasCheckedGroup)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     EXPECT_FALSE(initSM.HasCheckedGroup());
@@ -1044,14 +1119,16 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_HasCheckedGroup) {
     initSM.Start();
     mockBot->SetInWorld(true);
 
-    while (!initSM.HasCheckedGroup() && !initSM.HasFailed()) {
+    while (!initSM.HasCheckedGroup() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.HasCheckedGroup());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_HasActivatedStrategies) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_HasActivatedStrategies)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     EXPECT_FALSE(initSM.HasActivatedStrategies());
@@ -1062,14 +1139,16 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_HasActivatedStrategies) {
     mockBotAI->SetInitialized(true);
     mockBot->SetBotAI(mockBotAI.get());
 
-    while (!initSM.HasActivatedStrategies() && !initSM.HasFailed()) {
+    while (!initSM.HasActivatedStrategies() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.HasActivatedStrategies());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_GetInitializationTime) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_GetInitializationTime)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     initSM.Start();
@@ -1078,7 +1157,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GetInitializationTime) {
     mockBotAI->SetInitialized(true);
     mockBot->SetBotAI(mockBotAI.get());
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -1089,7 +1169,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GetInitializationTime) {
     EXPECT_LT(initTime, 10000u) << "Should initialize in under 10 seconds";
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_MultipleRetries) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_MultipleRetries)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Fail and retry 3 times
@@ -1104,7 +1185,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_MultipleRetries) {
     EXPECT_GE(initSM.GetRetryCount(), 3u);
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_StateTimeouts) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_StateTimeouts)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot gets stuck in LOADING_CHARACTER
@@ -1120,7 +1202,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_StateTimeouts) {
     // (Implementation may transition to FAILED or retry)
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_ConcurrentUpdates) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_ConcurrentUpdates)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     initSM.Start();
@@ -1130,7 +1213,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_ConcurrentUpdates) {
 
     // Thread 1: Update loop
     std::thread updateThread([&initSM, &ready]() {
-        while (!ready.load()) {
+        while (!ready.load())
+        {
             initSM.Update(16);
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -1153,7 +1237,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_ConcurrentUpdates) {
 
 // Additional BotInitStateMachine tests (15-25)
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_GroupJoinDuringInit) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_GroupJoinDuringInit)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot starts solo
@@ -1171,7 +1256,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GroupJoinDuringInit) {
     mockBotAI->SetInitialized(true);
     mockBot->SetBotAI(mockBotAI.get());
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1179,7 +1265,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GroupJoinDuringInit) {
     EXPECT_TRUE(initSM.WasInGroupAtLogin());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_GroupLeavesDuringInit) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_GroupLeavesDuringInit)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot starts in group
@@ -1202,7 +1289,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GroupLeavesDuringInit) {
     mockBotAI->SetInitialized(true);
     mockBot->SetBotAI(mockBotAI.get());
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1210,7 +1298,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_GroupLeavesDuringInit) {
     EXPECT_TRUE(initSM.IsReady());
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_DeadBotInitialization) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_DeadBotInitialization)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot is dead
@@ -1227,7 +1316,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_DeadBotInitialization) {
     // But precondition for CHECKING_GROUP requires IsAlive()
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_RapidStartStop) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_RapidStartStop)
+{
     // Test rapid start/stop cycles
     for (int i = 0; i < 100; i++) {
         BotInitStateMachine initSM(mockBot.get());
@@ -1239,7 +1329,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_RapidStartStop) {
     SUCCEED();
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_TransitionCallbacks) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_TransitionCallbacks)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Track state transitions via GetTransitionHistory()
@@ -1249,7 +1340,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_TransitionCallbacks) {
     int transitionCount = 0;
     BotInitState lastState = initSM.GetCurrentState();
 
-    while (!initSM.IsReady() && !initSM.HasFailed() && transitionCount < 10) {
+    while (!initSM.IsReady() && !initSM.HasFailed() && transitionCount < 10)
+    {
         initSM.Update(16);
 
         BotInitState currentState = initSM.GetCurrentState();
@@ -1262,7 +1354,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_TransitionCallbacks) {
     EXPECT_GE(transitionCount, 3) << "Should have at least 3 state transitions";
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_ErrorRecovery) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_ErrorRecovery)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Cause an error
@@ -1284,14 +1377,16 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_ErrorRecovery) {
 
     initSM.Retry();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.IsReady()) << "Should recover after retry";
 }
 
-TEST_F(Phase1StateMachineTest, InitStateMachine_Performance) {
+TEST_F(Phase1StateMachineTest, InitStateMachine_Performance)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     mockBot->SetInWorld(true);
@@ -1303,7 +1398,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_Performance) {
 
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1316,7 +1412,8 @@ TEST_F(Phase1StateMachineTest, InitStateMachine_Performance) {
 // CATEGORY 5: SafeObjectReference Tests (20 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, SafeReference_BasicSetGet) {
+TEST_F(Phase1StateMachineTest, SafeReference_BasicSetGet)
+{
     SafePlayerReference ref;
 
     // Set reference
@@ -1330,7 +1427,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_BasicSetGet) {
     EXPECT_TRUE(ref.IsValid());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_NullHandling) {
+TEST_F(Phase1StateMachineTest, SafeReference_NullHandling)
+{
     SafePlayerReference ref;
 
     // Set to nullptr
@@ -1341,7 +1439,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_NullHandling) {
     EXPECT_FALSE(ref.IsValid());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_ObjectDestroyed) {
+TEST_F(Phase1StateMachineTest, SafeReference_ObjectDestroyed)
+{
     // THIS IS THE TEST FOR ISSUE #4 FIX
     SafePlayerReference ref;
 
@@ -1361,7 +1460,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ObjectDestroyed) {
     EXPECT_FALSE(ref.IsValid());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_CacheExpiration) {
+TEST_F(Phase1StateMachineTest, SafeReference_CacheExpiration)
+{
     SafePlayerReference ref;
 
     ref.Set(mockBot.get());
@@ -1383,7 +1483,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_CacheExpiration) {
     EXPECT_TRUE(ref.IsCacheValid());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_CacheHitRate) {
+TEST_F(Phase1StateMachineTest, SafeReference_CacheHitRate)
+{
     SafePlayerReference ref;
 
     ref.Set(mockBot.get());
@@ -1400,7 +1501,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_CacheHitRate) {
     EXPECT_EQ(100u, ref.GetAccessCount());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_ThreadSafety) {
+TEST_F(Phase1StateMachineTest, SafeReference_ThreadSafety)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -1413,7 +1515,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ThreadSafety) {
         threads.emplace_back([&ref, &nullCount, &validCount]() {
             for (int j = 0; j < 1000; j++) {
                 Player* p = ref.Get();
-                if (p) {
+                if (p)
+                {
                     validCount++;
                 } else {
                     nullCount++;
@@ -1422,7 +1525,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ThreadSafety) {
         });
     }
 
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
         thread.join();
     }
 
@@ -1431,7 +1535,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ThreadSafety) {
     EXPECT_EQ(0, nullCount.load());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheHit) {
+TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheHit)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -1451,7 +1556,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheHit) {
     EXPECT_LT(avgTime, 0.001) << "Cache hit should be < 0.001ms";
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheMiss) {
+TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheMiss)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -1469,7 +1575,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_PerformanceCacheMiss) {
     EXPECT_LT(avgTime, 0.01) << "Cache miss should be < 0.01ms";
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_SetGuid) {
+TEST_F(Phase1StateMachineTest, SafeReference_SetGuid)
+{
     SafePlayerReference ref;
 
     ObjectGuid guid = mockBot->GetGUID();
@@ -1479,7 +1586,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_SetGuid) {
     EXPECT_FALSE(ref.IsEmpty());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_Clear) {
+TEST_F(Phase1StateMachineTest, SafeReference_Clear)
+{
     SafePlayerReference ref;
 
     ref.Set(mockBot.get());
@@ -1492,7 +1600,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_Clear) {
     EXPECT_TRUE(ref.GetGuid().IsEmpty());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_InvalidateCache) {
+TEST_F(Phase1StateMachineTest, SafeReference_InvalidateCache)
+{
     SafePlayerReference ref;
 
     ref.Set(mockBot.get());
@@ -1507,7 +1616,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_InvalidateCache) {
     EXPECT_TRUE(ref.IsCacheValid());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_CopyConstructor) {
+TEST_F(Phase1StateMachineTest, SafeReference_CopyConstructor)
+{
     SafePlayerReference ref1;
     ref1.Set(mockBot.get());
 
@@ -1517,7 +1627,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_CopyConstructor) {
     EXPECT_EQ(mockBot.get(), ref2.Get());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_MoveConstructor) {
+TEST_F(Phase1StateMachineTest, SafeReference_MoveConstructor)
+{
     SafePlayerReference ref1;
     ref1.Set(mockBot.get());
 
@@ -1527,7 +1638,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_MoveConstructor) {
     EXPECT_TRUE(ref1.IsEmpty()); // ref1 should be empty after move
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_CopyAssignment) {
+TEST_F(Phase1StateMachineTest, SafeReference_CopyAssignment)
+{
     SafePlayerReference ref1;
     ref1.Set(mockBot.get());
 
@@ -1538,7 +1650,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_CopyAssignment) {
     EXPECT_EQ(mockBot.get(), ref2.Get());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_MoveAssignment) {
+TEST_F(Phase1StateMachineTest, SafeReference_MoveAssignment)
+{
     SafePlayerReference ref1;
     ref1.Set(mockBot.get());
 
@@ -1549,7 +1662,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_MoveAssignment) {
     EXPECT_TRUE(ref1.IsEmpty());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_BoolConversion) {
+TEST_F(Phase1StateMachineTest, SafeReference_BoolConversion)
+{
     SafePlayerReference ref;
 
     EXPECT_FALSE(ref);
@@ -1559,7 +1673,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_BoolConversion) {
     EXPECT_TRUE(ref);
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_EqualityOperators) {
+TEST_F(Phase1StateMachineTest, SafeReference_EqualityOperators)
+{
     SafePlayerReference ref1;
     SafePlayerReference ref2;
 
@@ -1575,7 +1690,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_EqualityOperators) {
     EXPECT_TRUE(ref1 != ref2);
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_ToString) {
+TEST_F(Phase1StateMachineTest, SafeReference_ToString)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -1586,7 +1702,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ToString) {
     EXPECT_NE(str.find("guid="), std::string::npos);
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_ResetMetrics) {
+TEST_F(Phase1StateMachineTest, SafeReference_ResetMetrics)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -1603,7 +1720,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_ResetMetrics) {
     EXPECT_EQ(0.0f, ref.GetCacheHitRate());
 }
 
-TEST_F(Phase1StateMachineTest, SafeReference_BatchValidation) {
+TEST_F(Phase1StateMachineTest, SafeReference_BatchValidation)
+{
     std::vector<SafePlayerReference> refs;
 
     // Create 10 references
@@ -1617,7 +1735,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_BatchValidation) {
     auto validPtrs = ValidateReferences(refs);
 
     EXPECT_EQ(10u, validPtrs.size());
-    for (auto* ptr : validPtrs) {
+    for (auto* ptr : validPtrs)
+    {
         EXPECT_EQ(mockBot.get(), ptr);
     }
 }
@@ -1626,7 +1745,8 @@ TEST_F(Phase1StateMachineTest, SafeReference_BatchValidation) {
 // CATEGORY 6: Integration Tests (15 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, Integration_BotLoginWithoutGroup) {
+TEST_F(Phase1StateMachineTest, Integration_BotLoginWithoutGroup)
+{
     // Simulate full bot login without group
     BotInitStateMachine initSM(mockBot.get());
 
@@ -1640,7 +1760,8 @@ TEST_F(Phase1StateMachineTest, Integration_BotLoginWithoutGroup) {
     // Start login sequence
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1649,7 +1770,8 @@ TEST_F(Phase1StateMachineTest, Integration_BotLoginWithoutGroup) {
     EXPECT_EQ(0, mockBotAI->groupJoinedCallCount);
 }
 
-TEST_F(Phase1StateMachineTest, Integration_BotLoginWithGroup) {
+TEST_F(Phase1StateMachineTest, Integration_BotLoginWithGroup)
+{
     // THIS IS THE INTEGRATION TEST FOR ISSUE #1 FIX
     BotInitStateMachine initSM(mockBot.get());
 
@@ -1665,7 +1787,8 @@ TEST_F(Phase1StateMachineTest, Integration_BotLoginWithGroup) {
 
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1675,7 +1798,8 @@ TEST_F(Phase1StateMachineTest, Integration_BotLoginWithGroup) {
     EXPECT_EQ(1, mockBotAI->groupJoinedCallCount);
 }
 
-TEST_F(Phase1StateMachineTest, Integration_LeaderLogoutWhileFollowing) {
+TEST_F(Phase1StateMachineTest, Integration_LeaderLogoutWhileFollowing)
+{
     // THIS IS THE INTEGRATION TEST FOR ISSUE #4 FIX
     SafePlayerReference leaderRef;
 
@@ -1700,7 +1824,8 @@ TEST_F(Phase1StateMachineTest, Integration_LeaderLogoutWhileFollowing) {
     EXPECT_FALSE(leaderRef.IsValid());
 }
 
-TEST_F(Phase1StateMachineTest, Integration_ServerRestartWithGroup) {
+TEST_F(Phase1StateMachineTest, Integration_ServerRestartWithGroup)
+{
     // Simulate server restart with bot in group
 
     // Step 1: Bot in group in database
@@ -1718,7 +1843,8 @@ TEST_F(Phase1StateMachineTest, Integration_ServerRestartWithGroup) {
     BotInitStateMachine initSM(mockBot.get());
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1728,7 +1854,8 @@ TEST_F(Phase1StateMachineTest, Integration_ServerRestartWithGroup) {
     EXPECT_EQ(1, mockBotAI->groupJoinedCallCount);
 }
 
-TEST_F(Phase1StateMachineTest, Integration_Performance5000Bots) {
+TEST_F(Phase1StateMachineTest, Integration_Performance5000Bots)
+{
     // Create 5000 bot state machines (lightweight test)
     std::vector<std::unique_ptr<BotStateMachine>> stateMachines;
 
@@ -1744,7 +1871,8 @@ TEST_F(Phase1StateMachineTest, Integration_Performance5000Bots) {
     // Update all simultaneously
     timer = PerformanceTimer();
 
-    for (auto& sm : stateMachines) {
+    for (auto& sm : stateMachines)
+    {
         sm->TransitionTo(BotInitState::LOADING_CHARACTER, "Test");
     }
 
@@ -1759,7 +1887,8 @@ TEST_F(Phase1StateMachineTest, Integration_Performance5000Bots) {
     EXPECT_LT(totalMemory, 5000000u) << "5000 state machines should use < 5MB";
 }
 
-TEST_F(Phase1StateMachineTest, Integration_BotRespawn) {
+TEST_F(Phase1StateMachineTest, Integration_BotRespawn)
+{
     // Bot dies, respawns, re-initializes
     BotInitStateMachine initSM(mockBot.get());
 
@@ -1771,7 +1900,8 @@ TEST_F(Phase1StateMachineTest, Integration_BotRespawn) {
 
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -1787,14 +1917,16 @@ TEST_F(Phase1StateMachineTest, Integration_BotRespawn) {
     initSM.Reset();
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.IsReady());
 }
 
-TEST_F(Phase1StateMachineTest, Integration_BotTeleport) {
+TEST_F(Phase1StateMachineTest, Integration_BotTeleport)
+{
     // Bot teleports, state machine handles gracefully
     BotInitStateMachine initSM(mockBot.get());
 
@@ -1822,14 +1954,16 @@ TEST_F(Phase1StateMachineTest, Integration_BotTeleport) {
     mockBot->SetInWorld(true);
 
     // Complete initialization
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     // Should handle gracefully
 }
 
-TEST_F(Phase1StateMachineTest, Integration_ConcurrentBotLogins) {
+TEST_F(Phase1StateMachineTest, Integration_ConcurrentBotLogins)
+{
     // 100 bots login simultaneously
     std::vector<std::unique_ptr<MockPlayer>> bots;
     std::vector<std::unique_ptr<BotInitStateMachine>> stateMachines;
@@ -1851,12 +1985,15 @@ TEST_F(Phase1StateMachineTest, Integration_ConcurrentBotLogins) {
     int maxIterations = 1000;
     int iteration = 0;
 
-    while (!allReady && iteration < maxIterations) {
+    while (!allReady && iteration < maxIterations)
+    {
         allReady = true;
 
-        for (auto& sm : stateMachines) {
+        for (auto& sm : stateMachines)
+        {
             sm->Update(16);
-            if (!sm->IsReady() && !sm->HasFailed()) {
+            if (!sm->IsReady() && !sm->HasFailed())
+            {
                 allReady = false;
             }
         }
@@ -1866,8 +2003,10 @@ TEST_F(Phase1StateMachineTest, Integration_ConcurrentBotLogins) {
 
     // Verify all completed
     int readyCount = 0;
-    for (auto& sm : stateMachines) {
-        if (sm->IsReady()) {
+    for (auto& sm : stateMachines)
+    {
+        if (sm->IsReady())
+        {
             readyCount++;
         }
     }
@@ -1875,7 +2014,8 @@ TEST_F(Phase1StateMachineTest, Integration_ConcurrentBotLogins) {
     EXPECT_EQ(100, readyCount) << "All 100 bots should reach READY state";
 }
 
-TEST_F(Phase1StateMachineTest, Integration_GroupDisbandDuringInit) {
+TEST_F(Phase1StateMachineTest, Integration_GroupDisbandDuringInit)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Bot in group
@@ -1899,14 +2039,16 @@ TEST_F(Phase1StateMachineTest, Integration_GroupDisbandDuringInit) {
     mockBot->SetBotAI(mockBotAI.get());
 
     // Complete initialization
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.IsReady());
 }
 
-TEST_F(Phase1StateMachineTest, Integration_SafeReferenceInStateMachine) {
+TEST_F(Phase1StateMachineTest, Integration_SafeReferenceInStateMachine)
+{
     // Use SafeObjectReference within state machine
     SafePlayerReference leaderRef;
 
@@ -1928,7 +2070,8 @@ TEST_F(Phase1StateMachineTest, Integration_SafeReferenceInStateMachine) {
     initSM.Start();
 
     // Leader reference should remain valid during init
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         EXPECT_TRUE(leaderRef.IsValid());
         initSM.Update(16);
     }
@@ -1936,7 +2079,8 @@ TEST_F(Phase1StateMachineTest, Integration_SafeReferenceInStateMachine) {
     EXPECT_TRUE(initSM.IsReady());
 }
 
-TEST_F(Phase1StateMachineTest, Integration_MultipleStateTransitions) {
+TEST_F(Phase1StateMachineTest, Integration_MultipleStateTransitions)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     // Perform complex transition sequence
@@ -1959,7 +2103,8 @@ TEST_F(Phase1StateMachineTest, Integration_MultipleStateTransitions) {
     EXPECT_GE(history.size(), 1u);
 }
 
-TEST_F(Phase1StateMachineTest, Integration_ErrorPropagation) {
+TEST_F(Phase1StateMachineTest, Integration_ErrorPropagation)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Cause error at each stage
@@ -1982,7 +2127,8 @@ TEST_F(Phase1StateMachineTest, Integration_ErrorPropagation) {
     }
 }
 
-TEST_F(Phase1StateMachineTest, Integration_StateRecovery) {
+TEST_F(Phase1StateMachineTest, Integration_StateRecovery)
+{
     BotInitStateMachine initSM(mockBot.get());
 
     // Start
@@ -2002,14 +2148,16 @@ TEST_F(Phase1StateMachineTest, Integration_StateRecovery) {
     // Retry
     initSM.Retry();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
     EXPECT_TRUE(initSM.IsReady());
 }
 
-TEST_F(Phase1StateMachineTest, Integration_CompleteLifecycle) {
+TEST_F(Phase1StateMachineTest, Integration_CompleteLifecycle)
+{
     // Full bot lifecycle: create → login → group → combat → logout
     BotInitStateMachine initSM(mockBot.get());
 
@@ -2021,7 +2169,8 @@ TEST_F(Phase1StateMachineTest, Integration_CompleteLifecycle) {
 
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -2044,7 +2193,8 @@ TEST_F(Phase1StateMachineTest, Integration_CompleteLifecycle) {
 // CATEGORY 7: Performance Validation Tests (10 tests)
 // ============================================================================
 
-TEST_F(Phase1StateMachineTest, Performance_StateQueryLatency) {
+TEST_F(Phase1StateMachineTest, Performance_StateQueryLatency)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::READY);
 
     PerformanceTimer timer;
@@ -2061,7 +2211,8 @@ TEST_F(Phase1StateMachineTest, Performance_StateQueryLatency) {
     std::cout << "State query latency: " << avgTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_TransitionLatency) {
+TEST_F(Phase1StateMachineTest, Performance_TransitionLatency)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     std::vector<double> transitionTimes;
@@ -2086,7 +2237,8 @@ TEST_F(Phase1StateMachineTest, Performance_TransitionLatency) {
     std::cout << "Transition latency: " << avgTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheHit) {
+TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheHit)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -2107,7 +2259,8 @@ TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheHit) {
     std::cout << "SafeReference cache hit latency: " << avgTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheMiss) {
+TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheMiss)
+{
     SafePlayerReference ref;
     ref.Set(mockBot.get());
 
@@ -2130,7 +2283,8 @@ TEST_F(Phase1StateMachineTest, Performance_SafeReferenceCacheMiss) {
     std::cout << "SafeReference cache miss latency: " << avgTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_MemoryFootprint) {
+TEST_F(Phase1StateMachineTest, Performance_MemoryFootprint)
+{
     // Verify memory sizes
     size_t stateMachineSize = sizeof(BotStateMachine);
     size_t initStateMachineSize = sizeof(BotInitStateMachine);
@@ -2145,7 +2299,8 @@ TEST_F(Phase1StateMachineTest, Performance_MemoryFootprint) {
     std::cout << "SafeObjectReference size: " << safeRefSize << " bytes" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_ConcurrentAccess) {
+TEST_F(Phase1StateMachineTest, Performance_ConcurrentAccess)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::READY);
 
     std::atomic<uint64_t> totalAccesses{0};
@@ -2164,7 +2319,8 @@ TEST_F(Phase1StateMachineTest, Performance_ConcurrentAccess) {
         });
     }
 
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
         thread.join();
     }
 
@@ -2176,7 +2332,8 @@ TEST_F(Phase1StateMachineTest, Performance_ConcurrentAccess) {
     std::cout << "Concurrent access (100k queries): " << totalTime << " ms" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_InitializationTime) {
+TEST_F(Phase1StateMachineTest, Performance_InitializationTime)
+{
     mockBot->SetInWorld(true);
     mockBotAI = std::make_unique<MockBotAI>(mockBot.get());
     mockBotAI->SetInitialized(true);
@@ -2187,7 +2344,8 @@ TEST_F(Phase1StateMachineTest, Performance_InitializationTime) {
     BotInitStateMachine initSM(mockBot.get());
     initSM.Start();
 
-    while (!initSM.IsReady() && !initSM.HasFailed()) {
+    while (!initSM.IsReady() && !initSM.HasFailed())
+    {
         initSM.Update(16);
     }
 
@@ -2199,7 +2357,8 @@ TEST_F(Phase1StateMachineTest, Performance_InitializationTime) {
     std::cout << "Bot initialization time: " << totalTime << " ms" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_5000BotsSimulation) {
+TEST_F(Phase1StateMachineTest, Performance_5000BotsSimulation)
+{
     std::vector<std::unique_ptr<BotStateMachine>> bots;
 
     PerformanceTimer timer;
@@ -2214,7 +2373,8 @@ TEST_F(Phase1StateMachineTest, Performance_5000BotsSimulation) {
     // Update all bots (simulate frame update)
     timer = PerformanceTimer();
 
-    for (auto& bot : bots) {
+    for (auto& bot : bots)
+    {
         volatile BotInitState state = bot->GetCurrentState();
         (void)state;
     }
@@ -2228,7 +2388,8 @@ TEST_F(Phase1StateMachineTest, Performance_5000BotsSimulation) {
     std::cout << "Per-bot update: " << updateTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_TransitionHistory) {
+TEST_F(Phase1StateMachineTest, Performance_TransitionHistory)
+{
     BotStateMachine sm(mockBot.get(), BotInitState::CREATED);
 
     PerformanceTimer timer;
@@ -2258,7 +2419,8 @@ TEST_F(Phase1StateMachineTest, Performance_TransitionHistory) {
     std::cout << "Get history: " << historyTime << " µs" << std::endl;
 }
 
-TEST_F(Phase1StateMachineTest, Performance_FullReport) {
+TEST_F(Phase1StateMachineTest, Performance_FullReport)
+{
     // Generate comprehensive performance report
     std::cout << "\n========================================" << std::endl;
     std::cout << "PHASE 1 TEST SUITE RESULTS" << std::endl;
@@ -2296,7 +2458,8 @@ TEST_F(Phase1StateMachineTest, Performance_FullReport) {
 // MAIN
 // ============================================================================
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

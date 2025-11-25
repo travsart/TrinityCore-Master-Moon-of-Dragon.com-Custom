@@ -45,7 +45,8 @@ protected:
         TC_LOG_INFO("test.playerbot", "Setting up BotSessionIntegrationTest");
 
         // Ensure sWorld is available for tests
-    if (!sWorld) {
+    if (!sWorld)
+    {
             GTEST_SKIP() << "sWorld not initialized - integration test requires full server context";
             return;
         }
@@ -64,16 +65,19 @@ protected:
     {
         try {
             auto session = BotSession::Create(accountId);
-            if (session) {
+            if (session)
+            {
                 testSessions.push_back(session);
             }
             return session;
         }
-        catch (std::exception const& e) {
+        catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", "Exception creating test bot session: {}", e.what());
             return nullptr;
         }
-        catch (...) {
+        catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", "Unknown exception creating test bot session");
             return nullptr;
         }
@@ -254,7 +258,8 @@ TEST_F(BotSessionIntegrationTest, MinimalCrashReproduction)
         class CrashTriggerFilter : public PacketFilter {
         public:
             bool Process(WorldPacket* packet) override { return true; }
-            bool ProcessUnsafe() override {
+            bool ProcessUnsafe() override
+            {
                 // Return true to trigger the unsafe code path that leads to socket access
                 return true;
             }
@@ -307,7 +312,8 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
                         bool result = botSession->Update(10, filter);
                         if (result) successCount++;
                     }
-                    catch (...) {
+                    catch (...)
+                    {
                         // Count as failure
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -316,7 +322,8 @@ TEST_F(BotSessionIntegrationTest, ThreadSafetyValidation)
         }
 
         // Wait for all threads to complete
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
             thread.join();
         }
 
@@ -348,7 +355,8 @@ TEST_F(BotSessionIntegrationTest, MemoryCorruptionDetection)
         // Create multiple sessions rapidly
     for (int i = 0; i < 10; ++i) {
             auto session = CreateTestBotSession(12345 + i);
-            if (session) {
+            if (session)
+            {
                 sessions.push_back(session);
 
                 // Quick validation that memory is intact
@@ -363,8 +371,10 @@ TEST_F(BotSessionIntegrationTest, MemoryCorruptionDetection)
             bool ProcessUnsafe() override { return true; }
         } filter;
 
-        for (auto& session : sessions) {
-            if (session && session->IsActive()) {
+        for (auto& session : sessions)
+        {
+            if (session && session->IsActive())
+            {
                 bool result = session->Update(50, filter);
                 EXPECT_TRUE(result) << "Session should remain stable during stress test";
             }

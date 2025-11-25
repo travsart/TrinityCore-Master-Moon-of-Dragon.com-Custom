@@ -8,6 +8,7 @@
  */
 
 #include "DungeonBehavior.h"
+#include "GameTime.h"
 #include "Core/PlayerBotHelpers.h"  // GetBotAI, GetGameSystems
 #include "InstanceCoordination.h"
 #include "EncounterStrategy.h"

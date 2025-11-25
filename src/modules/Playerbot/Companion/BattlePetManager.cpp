@@ -8,6 +8,7 @@
  */
 
 #include "BattlePetManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Log.h"
 #include "Map.h"
@@ -60,8 +61,8 @@ BattlePetManager::~BattlePetManager()
 // Static member initialization
 std::unordered_map<uint32, BattlePetInfo> BattlePetManager::_petDatabase;
 std::unordered_map<uint32, std::vector<Position>> BattlePetManager::_rarePetSpawns;
-std::unordered_map<uint32, BattlePetManager::AbilityInfo> BattlePetManager::_abilityDatabase;
-BattlePetManager::PetMetrics BattlePetManager::_globalMetrics;
+std::unordered_map<uint32, AbilityInfo> BattlePetManager::_abilityDatabase;
+PetMetrics BattlePetManager::_globalMetrics;
 bool BattlePetManager::_databaseInitialized = false;
 
 
@@ -188,19 +189,19 @@ void BattlePetManager::Update(uint32 diff)
 
     // Auto-level pets if enabled
     if (profile.autoLevel)
-        AutoLevelPets(player);
+        AutoLevelPets();
 
     // Track rare pet spawns if enabled
     if (profile.collectRares)
-        TrackRarePetSpawns(player);
+        TrackRarePetSpawns();
 
     // Heal pets if needed
     if (profile.healBetweenBattles)
     {
         for (auto const& [speciesId, petInfo] : _petInstances)
         {
-            if (NeedsHealing(player, speciesId))
-                HealPet(player, speciesId);
+            if (NeedsHealing(speciesId))
+                HealPet(speciesId);
         }
     }
 }
@@ -249,9 +250,9 @@ bool BattlePetManager::CapturePet(uint32 speciesId, PetQuality quality)
 
     // Check if player already owns pet (if avoid duplicates enabled)
     PetBattleAutomationProfile profile = GetAutomationProfile();
-    if (profile.avoidDuplicates && OwnsPet(player, speciesId))
+    if (profile.avoidDuplicates && OwnsPet(speciesId))
     {
-        TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) already owns pet {}, skipping capture", _bot->GetGUID().GetCounter(), speciesId);
+        TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} already owns pet {}, skipping capture", _bot->GetGUID().GetCounter(), speciesId);
         return false;
     }
 
@@ -283,7 +284,7 @@ bool BattlePetManager::ReleasePet(uint32 speciesId)
         return false;
 
     // No lock needed - battle pet data is per-bot instance data
-    if (!OwnsPet(player, speciesId))
+    if (!OwnsPet(speciesId))
         return false;
 
     // Remove from collection
@@ -317,14 +318,14 @@ bool BattlePetManager::StartPetBattle(uint32 targetNpcId)
         return false;
 
     // Validate player has pets
-    if (GetPetCount(player) == 0)
+    if (GetPetCount() == 0)
     {
         TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) has no pets for battle", _bot->GetGUID().GetCounter());
         return false;
     }
 
     // Get active team
-    PetTeam activeTeam = GetActiveTeam(player);
+    PetTeam activeTeam = GetActiveTeam();
     if (activeTeam.petSpeciesIds.empty())
     {
         TC_LOG_DEBUG("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) has no active pet team", _bot->GetGUID().GetCounter());
@@ -345,7 +346,7 @@ bool BattlePetManager::ExecuteBattleTurn()
         return false;
 
     // Select best ability
-    uint32 abilityId = SelectBestAbility(player);
+    uint32 abilityId = SelectBestAbility();
     if (abilityId == 0)
     {
         TC_LOG_DEBUG("playerbot", "BattlePetManager: No valid ability found for bot {} (_bot->GetGUID().GetCounter())", _bot->GetGUID().GetCounter());
@@ -353,7 +354,7 @@ bool BattlePetManager::ExecuteBattleTurn()
     }
 
     // Use ability
-    return UseAbility(player, abilityId);
+    return UseAbility(abilityId);
 }
 
 uint32 BattlePetManager::SelectBestAbility() const
@@ -368,7 +369,7 @@ uint32 BattlePetManager::SelectBestAbility() const
         return 0; // Let player choose manually
 
     // Get current active pet (stub - full implementation queries battle state)
-    PetTeam activeTeam = GetActiveTeam(player);
+    PetTeam activeTeam = GetActiveTeam();
     if (activeTeam.petSpeciesIds.empty())
         return 0;
 
@@ -388,7 +389,7 @@ uint32 BattlePetManager::SelectBestAbility() const
 
     for (uint32 abilityId : activePet.abilities)
     {
-        uint32 score = CalculateAbilityScore(player, abilityId, opponentFamily);
+        uint32 score = CalculateAbilityScore(abilityId, opponentFamily);
         if (score > bestScore)
         {
             bestScore = score;
@@ -462,7 +463,7 @@ void BattlePetManager::AutoLevelPets()
     if (!_bot)
         return;
 
-    std::vector<BattlePetInfo> petsNeedingLevel = GetPetsNeedingLevel(player);
+    std::vector<BattlePetInfo> petsNeedingLevel = GetPetsNeedingLevel();
     if (petsNeedingLevel.empty())
         return;
 
@@ -526,7 +527,7 @@ void BattlePetManager::AwardPetXP(uint32 speciesId, uint32 xp)
     while (petInfo.xp >= xpRequired && petInfo.level < 25)
     {
         petInfo.xp -= xpRequired;
-        LevelUpPet(player, speciesId);
+        LevelUpPet(speciesId);
         xpRequired = GetXPRequiredForLevel(petInfo.level);
     }
 
@@ -572,17 +573,17 @@ bool BattlePetManager::LevelUpPet(uint32 speciesId)
 // TEAM COMPOSITION
 // ============================================================================
 
-bool BattlePetManager::CreatePetTeam(::Player* player, std::string const& teamName,
+bool BattlePetManager::CreatePetTeam(std::string const& teamName,
     std::vector<uint32> const& petSpeciesIds)
 {
-    if (!player || petSpeciesIds.empty() || petSpeciesIds.size() > 3)
+    if (!_bot || petSpeciesIds.empty() || petSpeciesIds.size() > 3)
         return false;
 
     // No lock needed - battle pet data is per-bot instance data
     // Validate player owns all pets
     for (uint32 speciesId : petSpeciesIds)
     {
-        if (!OwnsPet(player, speciesId))
+        if (!OwnsPet(speciesId))
         {
             TC_LOG_ERROR("playerbot", "BattlePetManager: bot {} (_bot->GetGUID().GetCounter()) does not own pet {}", _bot->GetGUID().GetCounter(), speciesId);
             return false;
@@ -660,8 +661,7 @@ PetTeam BattlePetManager::GetActiveTeam() const
     return PetTeam();
 }
 
-std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(::Player* player,
-    PetFamily opponentFamily) const
+std::vector<uint32> BattlePetManager::OptimizeTeamForOpponent(PetFamily opponentFamily) const
 {
     if (!_bot)
         return {};
@@ -788,7 +788,7 @@ void BattlePetManager::TrackRarePetSpawns()
     if (!_bot)
         return;
 
-    std::vector<uint32> rarePetsInZone = GetRarePetsInZone(player);
+    std::vector<uint32> rarePetsInZone = GetRarePetsInZone();
     if (rarePetsInZone.empty())
         return;
 
@@ -855,7 +855,7 @@ bool BattlePetManager::NavigateToRarePet(uint32 speciesId)
 // AUTOMATION PROFILES
 // ============================================================================
 
-    PetBattleAutomationProfile const& profile)
+void BattlePetManager::SetAutomationProfile(PetBattleAutomationProfile const& profile)
 {
     // No lock needed - battle pet data is per-bot instance data
     _profile = profile;
@@ -875,7 +875,7 @@ PetBattleAutomationProfile BattlePetManager::GetAutomationProfile() const
 // METRICS
 // ============================================================================
 
-BattlePetManager::PetMetrics const& BattlePetManager::GetMetrics() const
+PetMetrics const& BattlePetManager::GetMetrics() const
 {
     // No lock needed - battle pet data is per-bot instance data
 
@@ -888,7 +888,7 @@ BattlePetManager::PetMetrics const& BattlePetManager::GetMetrics() const
     return _metrics;
 }
 
-BattlePetManager::PetMetrics const& BattlePetManager::GetGlobalMetrics() const
+PetMetrics const& BattlePetManager::GetGlobalMetrics() const
 {
     return _globalMetrics;
 }
@@ -897,7 +897,7 @@ BattlePetManager::PetMetrics const& BattlePetManager::GetGlobalMetrics() const
 // BATTLE AI HELPERS
 // ============================================================================
 
-uint32 BattlePetManager::CalculateAbilityScore(::Player* player, uint32 abilityId,
+uint32 BattlePetManager::CalculateAbilityScore(uint32 abilityId,
     PetFamily opponentFamily) const
 {
     if (!_abilityDatabase.count(abilityId))

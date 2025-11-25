@@ -8,6 +8,7 @@
  */
 
 #include "SoloStrategy.h"
+#include "GameTime.h"
 #include "BotAI.h"
 #include "Player.h"
 #include "Log.h"

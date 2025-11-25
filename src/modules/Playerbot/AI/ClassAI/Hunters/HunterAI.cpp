@@ -8,6 +8,7 @@
  */
 
 #include "HunterAI.h"
+#include "GameTime.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "BeastMasteryHunter.h"
 #include "MarksmanshipHunter.h"
@@ -224,7 +225,8 @@ bool HunterAI::HandleInterrupts(::Unit* target)
 bool HunterAI::HandleDefensives(::Unit* target)
 {
     if (!_combatBehaviors)
-        return false;    if (_combatBehaviors->NeedsDefensive())
+        return false;
+        if (_combatBehaviors->NeedsDefensive())
     {
         float healthPct = GetBot()->GetHealthPct();
         uint32 now = GameTime::GetGameTimeMS();
@@ -354,7 +356,8 @@ bool HunterAI::HandleDefensives(::Unit* target)
 bool HunterAI::HandlePositioning(::Unit* target)
 {
     if (!_combatBehaviors || !target)
-        return false;    if (_combatBehaviors->NeedsRepositioning())
+        return false;
+        if (_combatBehaviors->NeedsRepositioning())
     {
         float distance = GetDistanceToTarget(target);
 
@@ -679,7 +682,8 @@ bool HunterAI::HandleCrowdControl(::Unit* target)
     return false;
 }
 
-bool HunterAI::HandleAoEDecisions(::Unit* target){
+bool HunterAI::HandleAoEDecisions(::Unit* target)
+{
     if (!_combatBehaviors || !target)
         return false;
 
@@ -785,7 +789,8 @@ bool HunterAI::HandleAoEDecisions(::Unit* target){
     return false;
 }
 
-bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
+bool HunterAI::HandleOffensiveCooldowns(::Unit* target)
+{
     if (!_combatBehaviors || !target)
         return false;
 
@@ -912,7 +917,8 @@ bool HunterAI::HandleOffensiveCooldowns(::Unit* target){
     }    return false;
 }
 
-void HunterAI::ExecuteNormalRotation(::Unit* target){
+void HunterAI::ExecuteNormalRotation(::Unit* target)
+{
     if (!target)
         return;
 
@@ -1000,7 +1006,8 @@ bool HunterAI::CanUseAbility(uint32 spellId)
 void HunterAI::OnCombatStart(::Unit* target)
 {
     _inCombat = true;
-    _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;    _combatTime = 0;
+    _currentTarget = target ? target->GetGUID() : ObjectGuid::Empty;
+    _combatTime = 0;
 
     // Reset combat metrics
     _combatMetrics.Reset();
@@ -1024,7 +1031,8 @@ void HunterAI::OnCombatStart(::Unit* target)
     ClassAI::OnCombatStart(target);
 }
 
-void HunterAI::OnCombatEnd(){
+void HunterAI::OnCombatEnd()
+{
     _inCombat = false;
     _currentTarget = ObjectGuid::Empty;
     _combatTime = 0;
@@ -1039,14 +1047,17 @@ void HunterAI::OnCombatEnd(){
     // Clear trap tracking    _frozenTargets.clear();
     _activeTrapType = 0;
 
-    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} left combat", GetBot()->GetName());    ClassAI::OnCombatEnd();
-}bool HunterAI::HasEnoughResource(uint32 spellId)
+    TC_LOG_DEBUG("module.playerbot.ai", "Hunter {} left combat", GetBot()->GetName());
+    ClassAI::OnCombatEnd();
+}
+bool HunterAI::HasEnoughResource(uint32 spellId)
 {
     if (!_bot)
         return false;
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());    if (!spellInfo)
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+    if (!spellInfo)
         return false;
 
     // Check focus cost
@@ -1070,7 +1081,8 @@ void HunterAI::ConsumeResource(uint32 spellId)
         return;
 
     // Get spell info
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());    if (!spellInfo)
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _bot->GetMap()->GetDifficultyID());
+    if (!spellInfo)
         return;
 
     // Track focus consumption
@@ -1097,10 +1109,12 @@ Position HunterAI::GetOptimalPosition(::Unit* target)
         return _combatBehaviors->GetOptimalPosition();
 
     // Fallback to preferred range
-    float angle = _bot->GetAbsoluteAngle(target);    float distance = OPTIMAL_RANGE_PREFERRED;
+    float angle = _bot->GetAbsoluteAngle(target);
+    float distance = OPTIMAL_RANGE_PREFERRED;
 
     Position pos;
-    pos.m_positionX = target->GetPositionX() - distance * cos(angle);    pos.m_positionY = target->GetPositionY() - distance * sin(angle);    pos.m_positionZ = target->GetPositionZ();
+    pos.m_positionX = target->GetPositionX() - distance * cos(angle);
+    pos.m_positionY = target->GetPositionY() - distance * sin(angle);    pos.m_positionZ = target->GetPositionZ();
         pos.SetOrientation(target->GetOrientation());
 
     return pos;
@@ -1199,7 +1213,8 @@ void HunterAI::CommandPetAttack(::Unit* target)
     if (!target || !HasActivePet())
         return;
 
-    Pet* pet = GetPet();    if (pet)
+    Pet* pet = GetPet();
+    if (pet)
     {
         pet->AI()->AttackStart(target);
         _lastPetCommand = GameTime::GetGameTimeMS();
@@ -1235,9 +1250,12 @@ bool HunterAI::IsPetInCombat() const
 
 float HunterAI::GetPetHealthPercent() const
 {
-    Pet* pet = GetPet();    return pet ? pet->GetHealthPct() : 0.0f;
-}void HunterAI::HealPet()
-{    if (!_bot->HasSpell(MEND_PET) || !CanUseAbility(MEND_PET))        return;    Pet* pet = GetPet();
+    Pet* pet = GetPet();
+    return pet ? pet->GetHealthPct() : 0.0f;
+}
+void HunterAI::HealPet()
+{    if (!_bot->HasSpell(MEND_PET) || !CanUseAbility(MEND_PET))        return;
+Pet* pet = GetPet();
     if (pet && pet->IsAlive())
     {        _bot->CastSpell(CastSpellTargetArg(pet), MEND_PET);
     }
@@ -1281,7 +1299,8 @@ bool HunterAI::ShouldPlaceExplosiveTrap() const
 
     // Place explosive trap when multiple enemies nearby
     return GetNearbyEnemyCount(10.0f) >= 3;
-}bool HunterAI::ShouldPlaceSnakeTrap() const
+}
+bool HunterAI::ShouldPlaceSnakeTrap() const
 {
     if (!CanPlaceTrap())
         return false;
@@ -1309,7 +1328,8 @@ uint32 HunterAI::GetBestTrapForSituation() const
     if (ShouldPlaceSnakeTrap())
         return SNAKE_TRAP;
     return FREEZING_TRAP; // Default
-}// Range management implementation
+}
+// Range management implementation
 bool HunterAI::IsInOptimalRange(::Unit* target) const
 {
     if (!target)
@@ -1327,7 +1347,8 @@ bool HunterAI::IsInDeadZone(::Unit* target) const
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, DEAD_ZONE_MAX);
         Trinity::UnitLastSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, target, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return false;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1380,7 +1401,8 @@ bool HunterAI::NeedsToKite(::Unit* target) const
     return target->GetExactDistSq(_bot) < kiteSq && IsTargetDangerous(target);
 }
 
-void HunterAI::MaintainRange(::Unit* target){
+void HunterAI::MaintainRange(::Unit* target)
+{
     if (!target)
         return;
 
@@ -1392,7 +1414,8 @@ void HunterAI::MaintainRange(::Unit* target){
         Position pos = GetOptimalPosition(target);
 
         // PHASE 6C: Use Movement Arbiter with ROLE_POSITIONING priority (170)
-        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());        if (botAI && botAI->GetUnifiedMovementCoordinator())
+        BotAI* botAI = dynamic_cast<BotAI*>(_bot->GetAI());
+        if (botAI && botAI->GetUnifiedMovementCoordinator())
         {
 
             botAI->RequestPointMovement(
@@ -1762,7 +1785,8 @@ uint32 HunterAI::GetCurrentAspect()
 
 void HunterAI::SwitchToCombatAspect()
 {
-    uint32 combatAspect = _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;    if (!HasAura(combatAspect) && _bot->HasSpell(combatAspect))
+    uint32 combatAspect = _bot->HasSpell(ASPECT_OF_THE_DRAGONHAWK) ? ASPECT_OF_THE_DRAGONHAWK : ASPECT_OF_THE_HAWK;
+    if (!HasAura(combatAspect) && _bot->HasSpell(combatAspect))
     {
         CastSpell(combatAspect);
         _lastAspectSwitch = GameTime::GetGameTimeMS();
@@ -1771,7 +1795,8 @@ void HunterAI::SwitchToCombatAspect()
 
 void HunterAI::SwitchToMovementAspect()
 {
-    uint32 moveAspect = _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;    if (!HasAura(moveAspect) && _bot->HasSpell(moveAspect))
+    uint32 moveAspect = _bot->HasSpell(ASPECT_OF_THE_CHEETAH) ? ASPECT_OF_THE_CHEETAH : ASPECT_OF_THE_PACK;
+    if (!HasAura(moveAspect) && _bot->HasSpell(moveAspect))
     {
         CastSpell(moveAspect);
         _lastAspectSwitch = GameTime::GetGameTimeMS();
@@ -1828,7 +1853,8 @@ bool HunterAI::CanInterruptTarget(::Unit* target) const
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, 30.0f);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return nullptr;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1892,7 +1918,8 @@ uint32 HunterAI::GetNearbyEnemyCount(float range) const
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1992,7 +2019,8 @@ Player* HunterAI::GetMainTank()
 {    if (!_bot->GetGroup())
         return nullptr;
 
-    Group* group = _bot->GetGroup();    Player* tank = nullptr;
+    Group* group = _bot->GetGroup();
+    Player* tank = nullptr;
 
     // Find tank by looking for warriors/paladins/death knights with tank specs
     // In TrinityCore, we check class + role based on talents/gear

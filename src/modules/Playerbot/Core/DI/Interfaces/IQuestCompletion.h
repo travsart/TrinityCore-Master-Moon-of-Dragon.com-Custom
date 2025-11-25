@@ -96,7 +96,8 @@ public:
         float objectiveEfficiency;
         uint32 totalDistanceTraveled;
 
-        float GetCompletionRate() const {
+        float GetCompletionRate() const
+        {
             return questsStarted > 0 ? (float)questsCompleted / questsStarted : 0.0f;
         }
     };

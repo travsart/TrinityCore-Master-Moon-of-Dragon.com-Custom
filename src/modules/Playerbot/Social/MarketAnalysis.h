@@ -131,14 +131,16 @@ struct AnalysisMetrics
     ::std::atomic<uint32> marketUpdates{0};
     ::std::chrono::steady_clock::time_point lastUpdate;
 
-    void Reset() {
+    void Reset()
+    {
         predictionsGenerated = 0; accuratePredictions = 0;
         opportunitiesIdentified = 0; profitableOpportunities = 0;
         averageAccuracy = 0.7f; averageProfitability = 0.15f;
         marketUpdates = 0; lastUpdate = ::std::chrono::steady_clock::now();
     }
 
-    float GetPredictionAccuracy() const {
+    float GetPredictionAccuracy() const
+    {
         uint32 total = predictionsGenerated.load();
         uint32 accurate = accuratePredictions.load();
         return total > 0 ? (float)accurate / total : 0.0f;

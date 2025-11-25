@@ -90,7 +90,8 @@ void BotCharacterDistribution::LoadRaceClassDistribution()
     m_classCache.clear();
 
     TC_LOG_INFO("server.loading", "Checking sPlayerbotDatabase pointer: {}", (void*)sPlayerbotDatabase);
-    if (!sPlayerbotDatabase) {
+    if (!sPlayerbotDatabase)
+    {
         TC_LOG_ERROR("server.loading", "sPlayerbotDatabase is NULL!");
         return;
     }

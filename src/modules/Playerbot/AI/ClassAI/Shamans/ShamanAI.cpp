@@ -808,7 +808,8 @@ bool ShamanAI::HandlePurgeDispel(::Unit* target)
     // Purge enemy buffs
     if (target->IsHostileTo(GetBot()))
     {
-        if (CanUseAbility(SPELL_PURGE))        {
+        if (CanUseAbility(SPELL_PURGE))
+        {
             // Check if target has purgeable buffs
 
             bool hasPurgeableBuff = false;
@@ -2264,7 +2265,8 @@ bool ShamanAI::IsInMeleeRange(::Unit* target) const
     return target && GetBot()->GetDistance(target) <= OPTIMAL_MELEE_RANGE;
 }
 
-bool ShamanAI::HasFlameShockOnTarget(::Unit* target) const{
+bool ShamanAI::HasFlameShockOnTarget(::Unit* target) const
+{
     if (!target)
         return false;
 
@@ -2954,7 +2956,8 @@ Position ShamanAI::GetOptimalPosition(::Unit* target)
     float optimalRange = GetOptimalRange(target);
     float angle = GetBot()->GetAbsoluteAngle(target);
     float x = target->GetPositionX() - optimalRange * ::std::cos(angle);
-    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
+    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);
+    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float ShamanAI::GetOptimalRange(::Unit* target)

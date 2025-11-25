@@ -47,7 +47,8 @@ namespace Playerbot
  * @code
  * auto accountMgr = Services::Container().Resolve<IBotAccountMgr>();
  * uint32 accountId = accountMgr->AcquireAccount();
- * if (accountId > 0) {
+ * if (accountId > 0)
+ {
  *     // Use account for bot
  * }
  * @endcode

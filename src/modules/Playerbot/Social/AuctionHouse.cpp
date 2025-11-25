@@ -8,6 +8,7 @@
  */
 
 #include "AuctionHouse.h"
+#include "GameTime.h"
 #include <algorithm>
 #include <cmath>
 

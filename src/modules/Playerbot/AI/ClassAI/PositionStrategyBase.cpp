@@ -8,6 +8,7 @@
  */
 
 #include "PositionStrategyBase.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Map.h"
@@ -51,7 +52,8 @@ PositionStrategyBase::PositionStrategyBase(Map* map)
 }
 
 // Core position calculation with intelligent caching
-Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange){
+Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange)
+{
     if (!bot || !target)
         return bot ? bot->GetPosition() : Position();
 
@@ -222,7 +224,8 @@ Position PositionStrategyBase::CalculateOptimalPosition(Player* bot, Unit* targe
 }
 
 // Position validation with comprehensive checks
-bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) const{
+bool PositionStrategyBase::ValidatePosition(const Position& pos, Player* bot) const
+{
     if (!bot || !_map)
         return false;
 
@@ -281,7 +284,8 @@ float PositionStrategyBase::EvaluatePositionScore(const Position& pos, Player* b
     float x = pos.GetPositionX() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
     float y = pos.GetPositionY() + (GRID_SIZE * GRID_CELL_SIZE / 2.0f);
 
-    uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);    uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
+    uint32 gridX = static_cast<uint32>(x / GRID_CELL_SIZE);
+    uint32 gridY = static_cast<uint32>(y / GRID_CELL_SIZE);
 
     // Clamp to grid bounds
     gridX = ::std::min(gridX, GRID_SIZE - 1);
@@ -319,7 +323,8 @@ void PositionStrategyBase::UnregisterPosition(Player* bot)
 
     ::std::lock_guard lock(_positionMutex);
 
-    uint64 guid = bot->GetGUID().GetRawValue();    auto it = _botPositions.find(guid);
+    uint64 guid = bot->GetGUID().GetRawValue();
+    auto it = _botPositions.find(guid);
     if (it != _botPositions.end())
     {
         auto grid = WorldToGrid(it->second);
@@ -644,7 +649,8 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
     for (size_t i = 0; i < bots.size(); ++i)
     {
         int32 offset = static_cast<int32>(i) - halfCount;
-        float x = target->GetPositionX() + cos(perpAngle) * offset * spacing;        float y = target->GetPositionY() + sin(perpAngle) * offset * spacing;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(perpAngle) * offset * spacing;
+        float y = target->GetPositionY() + sin(perpAngle) * offset * spacing;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
         positions.emplace_back(x, y, z, angle);
     }
 
@@ -666,10 +672,12 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 
     for (size_t i = 0; i < bots.size(); ++i)    {
         float angle = i * angleStep;
-        float x = target->GetPositionX() + cos(angle) * radius;        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(angle) * radius;
+        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
 
         // Face the target
-        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);        positions.emplace_back(x, y, z, facing);
+        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);
+        positions.emplace_back(x, y, z, facing);
     }
 
     return positions;
@@ -678,7 +686,8 @@ void PositionStrategyBase::UpdateDangerZones(uint32 diff)
 // Collision detection
 bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Player* excludeBot) const
 {
-    ::std::lock_guard lock(_positionMutex);    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
+    ::std::lock_guard lock(_positionMutex);
+    uint64 excludeGuid = excludeBot ? excludeBot->GetGUID().GetRawValue() : 0;
     if (!excludeBot)
     {
         return;
@@ -696,7 +705,8 @@ bool PositionStrategyBase::CheckCollisionWithOtherBots(const Position& pos, Play
     }
 
     return false;
-}// Score calculation helpers
+}
+// Score calculation helpers
 float PositionStrategyBase::CalculateDistanceScore(const Position& pos, Unit* target, float optimalRange) const
 {
     float distance = pos.GetExactDist(target);
@@ -773,7 +783,8 @@ float PositionStrategyBase::CalculateGroupCohesionScore(const Position& pos, Pla
 {
     ::std::lock_guard lock(_cacheMutex);
 
-    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    auto it = _cache.entries.find(key);
+    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
+    auto it = _cache.entries.find(key);
 
     if (it != _cache.entries.end())
     {
@@ -792,7 +803,8 @@ void PositionStrategyBase::CachePosition(Player* bot, Unit* target, const Positi
 {
     ::std::lock_guard lock(_cacheMutex);
 
-    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();    CachedPosition cached;
+    uint64 key = (bot->GetGUID().GetRawValue() << 32) | target->GetGUID().GetRawValue();
+    CachedPosition cached;
     cached.position = pos;
     cached.calculatedTime = GameTime::GetGameTimeMS();
     cached.score = score;
@@ -941,7 +953,8 @@ float PositionStrategyBase::CalculatePathLength(const ::std::vector<Position>& p
     }
 
     return totalLength;
-}Position PositionStrategyBase::FindAlternativePosition(
+}
+Position PositionStrategyBase::FindAlternativePosition(
     const Position& original,
     Player* bot,
     const ::std::unordered_set<::std::pair<uint32, uint32>, boost::hash<::std::pair<uint32, uint32>>>& occupiedCells)
@@ -1069,7 +1082,8 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
     if (bots.empty() || !target)
         return positions;
 
-    float baseAngle = target->GetOrientation();    uint32 rows = static_cast<uint32>(::std::sqrt(bots.size())) + 1;
+    float baseAngle = target->GetOrientation();
+    uint32 rows = static_cast<uint32>(::std::sqrt(bots.size())) + 1;
     float rowSpacing = 5.0f;
     float angleRad = angle * M_PI / 180.0f;
 
@@ -1116,10 +1130,12 @@ void PositionStrategyBase::UpdateFormationPositions(::std::vector<Player*> bots,
         float angle = i * goldenAngle;
         float radius = minSpacing * ::std::sqrt(i + 1);
 
-        float x = target->GetPositionX() + cos(angle) * radius;        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
+        float x = target->GetPositionX() + cos(angle) * radius;
+        float y = target->GetPositionY() + sin(angle) * radius;        float z = target->GetPositionZ();        _map->GetHeight(bots[i]->GetPhaseShift(), x, y, z);
 
         // Face the target
-        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);        positions.emplace_back(x, y, z, facing);
+        float facing = atan2(target->GetPositionY() - y, target->GetPositionX() - x);
+        positions.emplace_back(x, y, z, facing);
     }
 
     return positions;
@@ -1164,7 +1180,8 @@ bool PositionStrategyBase::CheckCollisionWithObjects(const Position& pos, float 
 
 // Specialized strategy implementations
 
-Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange){
+Position MeleePositionStrategy::CalculateOptimalPosition(Player* bot, Unit* target, float preferredRange)
+{
     if (!bot || !target)
         return bot ? bot->GetPosition() : Position();
 
@@ -1200,7 +1217,8 @@ Position MeleePositionStrategy::GetBackstabPosition(Unit* target) const
 
 Position MeleePositionStrategy::GetFlankPosition(Unit* target, bool leftSide) const
 {
-    float angle = target->GetOrientation() + (leftSide ? M_PI / 2.0f : -M_PI / 2.0f);    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
+    float angle = target->GetOrientation() + (leftSide ? M_PI / 2.0f : -M_PI / 2.0f);
+    float x = target->GetPositionX() + cos(angle) * GetOptimalMeleeRange();    float y = target->GetPositionY() + sin(angle) * GetOptimalMeleeRange();    float z = target->GetPositionZ();    _map->GetHeight(nullptr, x, y, z);
     return Position(x, y, z, angle + (leftSide ? -M_PI / 2.0f : M_PI / 2.0f));
 }
 

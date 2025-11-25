@@ -91,6 +91,8 @@ struct BotPerformanceMetrics
     uint32 itemsUsed = 0;            // Total items used
     uint32 questsCompleted = 0;      // Quests completed
     uint32 mobsKilled = 0;           // Mobs killed
+    uint32 successfulEncounters = 0; // Combat encounters won
+    uint32 failedEncounters = 0;     // Combat encounters lost (deaths)
 
     // Network metrics
     uint32 packetsReceived = 0;      // Packets received

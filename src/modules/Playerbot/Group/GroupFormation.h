@@ -138,7 +138,8 @@ public:
         ::std::atomic<uint32> terrainCollisions{0};
         ::std::chrono::steady_clock::time_point lastUpdate;
 
-        void Reset() {
+        void Reset()
+        {
             averageDeviation = 0.0f; formationStability = 1.0f; movementEfficiency = 1.0f;
             positionAdjustments = 0; formationBreaks = 0; terrainCollisions = 0;
             lastUpdate = ::std::chrono::steady_clock::now();

@@ -110,14 +110,16 @@ struct ManaHolyPowerResource
     uint32 maxHolyPower{5};
 
     bool available{true};
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
             mana -= manaCost;
             return true;
         }
         return false;
     }
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -131,8 +133,10 @@ struct ManaHolyPowerResource
     }
 
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);        }
         holyPower = 0;
@@ -173,7 +177,8 @@ public:
 
     void EnableBeaconOfFaith() { _hasBeaconOfFaith = true; }
 
-    bool NeedsBeaconRefresh(Player* bot, Unit* target) const    {
+    bool NeedsBeaconRefresh(Player* bot, Unit* target) const
+    {
         if (!target || !bot)
             return false;
 
@@ -235,7 +240,8 @@ public:
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();        if (!bot)
+        Player* bot = this->GetBot();
+        if (!bot)
             return;
 
         // Maintain Devotion Aura
@@ -550,7 +556,8 @@ private:
         // Simplified tank detection - check if player is currently tanking
         // A more robust implementation would check spec, but talent API is deprecated
         if (Unit* victim = player->GetVictim())
-            return victim->GetVictim() == player;        return false;
+            return victim->GetVictim() == player;
+            return false;
     }
 
     void GenerateHolyPower(uint32 amount)

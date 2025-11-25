@@ -527,7 +527,8 @@ private:
             return;
         }    }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
+    {
         uint32 maelstromStacks = _maelstromWeaponTracker.GetStacks();
 
         // Feral Spirit for AoE burst

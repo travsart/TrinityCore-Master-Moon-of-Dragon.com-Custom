@@ -63,7 +63,8 @@ namespace Playerbot::References {
  *
  * // Later:
  * Player* leader = leaderRef.Get(); // Safe - returns nullptr if deleted
- * if (leader) {
+ * if (leader)
+ {
  *     // Use leader safely
  * }
  * @endcode
@@ -179,8 +180,10 @@ public:
      *
      * Performance: <0.001ms cache hit, <0.01ms cache miss
      */
-    T* Get() const {
-        if (m_guid.IsEmpty()) {
+    T* Get() const
+    {
+        if (m_guid.IsEmpty())
+        {
             return nullptr;
         }
 
@@ -188,7 +191,8 @@ public:
         uint32 now = GameTime::GetGameTimeMS();
 
         // Check cache validity
-        if (m_cachedObject && (now - m_lastCheckTime) < CACHE_DURATION_MS) {
+        if (m_cachedObject && (now - m_lastCheckTime) < CACHE_DURATION_MS)
+        {
             m_cacheHits.fetch_add(1, ::std::memory_order_relaxed);
             return m_cachedObject;
         }
@@ -198,7 +202,8 @@ public:
         m_cachedObject = FetchObjectFromAccessor();
         m_lastCheckTime = now;
 
-        if (!m_cachedObject) {
+        if (!m_cachedObject)
+        {
             TC_LOG_TRACE("module.playerbot.reference",
                 "SafeObjectReference: Object {} no longer exists",
                 m_guid.ToString());
@@ -211,8 +216,10 @@ public:
      * @brief Set the referenced object
      * @param object Object to reference (may be null)
      */
-    void Set(T* object) {
-        if (object) {
+    void Set(T* object)
+    {
+        if (object)
+        {
             m_guid = object->GetGUID();
             m_cachedObject = object;
             m_lastCheckTime = GameTime::GetGameTimeMS();
@@ -225,7 +232,8 @@ public:
      * @brief Set by GUID (doesn't fetch immediately)
      * @param guid GUID to reference
      */
-    void SetGuid(ObjectGuid guid) {
+    void SetGuid(ObjectGuid guid)
+    {
         m_guid = guid;
         m_cachedObject = nullptr;
         m_lastCheckTime = 0;
@@ -234,7 +242,8 @@ public:
     /**
      * @brief Clear the reference
      */
-    void Clear() {
+    void Clear()
+    {
         m_guid = ObjectGuid::Empty;
         m_cachedObject = nullptr;
         m_lastCheckTime = 0;
@@ -243,7 +252,8 @@ public:
     /**
      * @brief Force cache refresh on next Get()
      */
-    void InvalidateCache() {
+    void InvalidateCache()
+    {
         m_cachedObject = nullptr;
         m_lastCheckTime = 0;
     }
@@ -256,7 +266,8 @@ public:
      * @brief Check if reference is valid (object exists)
      * @return true if Get() would return non-null
      */
-    bool IsValid() const {
+    bool IsValid() const
+    {
         return Get() != nullptr;
     }
 
@@ -264,7 +275,8 @@ public:
      * @brief Check if reference is empty (no GUID set)
      * @return true if no object referenced
      */
-    bool IsEmpty() const {
+    bool IsEmpty() const
+    {
         return m_guid.IsEmpty();
     }
 
@@ -272,7 +284,8 @@ public:
      * @brief Get the GUID
      * @return ObjectGuid being referenced
      */
-    ObjectGuid GetGuid() const {
+    ObjectGuid GetGuid() const
+    {
         return m_guid;
     }
 
@@ -280,7 +293,8 @@ public:
      * @brief Check if cache is currently valid
      * @return true if cached pointer is fresh
      */
-    bool IsCacheValid() const {
+    bool IsCacheValid() const
+    {
         return m_cachedObject && (GameTime::GetGameTimeMS() - m_lastCheckTime) < CACHE_DURATION_MS;
     }
 
@@ -292,7 +306,8 @@ public:
      * @brief Dereference operator
      * @return Reference to object (UNSAFE if null - check IsValid() first!)
      */
-    T& operator*() const {
+    T& operator*() const
+    {
         T* obj = Get();
         ASSERT(obj != nullptr, "Dereferencing null SafeObjectReference");
         return *obj;
@@ -302,7 +317,8 @@ public:
      * @brief Arrow operator
      * @return Pointer to object (UNSAFE if null - check IsValid() first!)
      */
-    T* operator->() const {
+    T* operator->() const
+    {
         T* obj = Get();
         ASSERT(obj != nullptr, "Dereferencing null SafeObjectReference");
         return obj;
@@ -312,7 +328,8 @@ public:
      * @brief Bool conversion
      * @return true if reference is valid
      */
-    explicit operator bool() const {
+    explicit operator bool() const
+    {
         return IsValid();
     }
 
@@ -335,7 +352,8 @@ public:
      * @brief Get cache hit rate
      * @return Percentage of cache hits (0.0 - 1.0)
      */
-    float GetCacheHitRate() const {
+    float GetCacheHitRate() const
+    {
         uint64 total = m_accessCount.load(::std::memory_order_relaxed);
         if (total == 0) return 0.0f;
 
@@ -347,14 +365,16 @@ public:
      * @brief Get total access count
      * @return Number of times Get() was called
      */
-    uint64 GetAccessCount() const {
+    uint64 GetAccessCount() const
+    {
         return m_accessCount.load(::std::memory_order_relaxed);
     }
 
     /**
      * @brief Reset performance metrics
      */
-    void ResetMetrics() {
+    void ResetMetrics()
+    {
         m_accessCount.store(0, ::std::memory_order_relaxed);
         m_cacheHits.store(0, ::std::memory_order_relaxed);
         m_cacheMisses.store(0, ::std::memory_order_relaxed);
@@ -368,7 +388,8 @@ public:
      * @brief Get debug string representation
      * @return String with GUID and cache status
      */
-    ::std::string ToString() const {
+    ::std::string ToString() const
+    {
         ::std::stringstream ss;
         ss << "SafeObjectReference<" << typeid(T).name() << ">[";
         ss << "guid=" << m_guid.ToString();
@@ -399,9 +420,11 @@ private:
      * @brief Fetch object from ObjectAccessor based on type
      * @return Pointer to object or nullptr if not found
      */
-    T* FetchObjectFromAccessor() const {
+    T* FetchObjectFromAccessor() const
+    {
         // Handle Player specially as it needs different accessor
-        if constexpr (::std::is_same_v<T, Player>) {
+        if constexpr (::std::is_same_v<T, Player>)
+        {
             return ObjectAccessor::FindPlayer(m_guid);
         }
         // For other types, use the HashMapHolder::Find
@@ -432,11 +455,13 @@ using SafeWorldObjectReference = SafeObjectReference<WorldObject>;
  * @return Vector of valid pointers
  */
 template<typename T>
-::std::vector<T*> ValidateReferences(const ::std::vector<SafeObjectReference<T>>& refs) {
+::std::vector<T*> ValidateReferences(const ::std::vector<SafeObjectReference<T>>& refs)
+{
     ::std::vector<T*> valid;
     valid.reserve(refs.size());
 
-    for (const auto& ref : refs) {
+    for (const auto& ref : refs)
+    {
         if (T* obj = ref.Get()) {
             valid.push_back(obj);
         }
@@ -452,7 +477,8 @@ template<typename T>
  * @return Number of invalid references removed
  */
 template<typename T>
-size_t CleanupInvalidReferences(::std::vector<SafeObjectReference<T>>& refs) {
+size_t CleanupInvalidReferences(::std::vector<SafeObjectReference<T>>& refs)
+{
     auto initialSize = refs.size();
 
     refs.erase(
@@ -472,8 +498,10 @@ size_t CleanupInvalidReferences(::std::vector<SafeObjectReference<T>>& refs) {
  * @param refs Vector of references to refresh
  */
 template<typename T>
-void InvalidateAllCaches(::std::vector<SafeObjectReference<T>>& refs) {
-    for (auto& ref : refs) {
+void InvalidateAllCaches(::std::vector<SafeObjectReference<T>>& refs)
+{
+    for (auto& ref : refs)
+    {
         ref.InvalidateCache();
     }
 }

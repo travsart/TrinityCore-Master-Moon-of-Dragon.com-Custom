@@ -263,7 +263,8 @@ public:
 
     void UpdateRotation(::Unit* target) override
     {
-        Player* bot = this->GetBot();        if (!target || !bot)
+        Player* bot = this->GetBot();
+        if (!target || !bot)
 
             return;
 
@@ -572,7 +573,8 @@ private:
 
             return false;
 
-        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);        if (manaPercent < 20 && (GameTime::GetGameTimeMS() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
+        uint32 manaPercent = bot->GetPower(POWER_MANA) * 100 / bot->GetMaxPower(POWER_MANA);
+        if (manaPercent < 20 && (GameTime::GetGameTimeMS() - _lastSymbolOfHopeTime) >= 180000) // 3 min CD
         {
 
             if (bot->HasSpell(HOLY_SYMBOL_OF_HOPE))
@@ -744,7 +746,8 @@ private:
     {
         // Circle of Healing (instant AoE)
         uint32 injuredCount = 0;
-        for (Unit* member : group)        {
+        for (Unit* member : group)
+        {
 
             if (member && member->GetHealthPct() < 85.0f)
 
@@ -1127,7 +1130,8 @@ private:
 
                                     if (m->IsAlive() && m->GetHealthPct() < 25.0f && this->IsTankRole(m) &&
 
-                                        this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m)) {
+                                        this->CanCastSpell(HOLY_GUARDIAN_SPIRIT, m))
+                                        {
 
                                         this->CastSpell(HOLY_GUARDIAN_SPIRIT, m);
 
@@ -1151,7 +1155,8 @@ private:
 
                                     if (m->IsAlive() && m->GetHealthPct() < 50.0f &&
 
-                                        this->CanCastSpell(HOLY_FLASH_HEAL, m)) {
+                                        this->CanCastSpell(HOLY_FLASH_HEAL, m))
+                                        {
 
                                         this->CastSpell(HOLY_FLASH_HEAL, m);
 
@@ -1176,7 +1181,8 @@ private:
 
                         bot::ai::Action("Prayer of Mending", [this](Player* bot, Unit*) {
 
-                            if (!this->_pomTracker.HasActivePomOnAnyTarget()) {
+                            if (!this->_pomTracker.HasActivePomOnAnyTarget())
+                            {
 
                                 Group* g = bot->GetGroup();
 
@@ -1188,7 +1194,8 @@ private:
 
                                         if (m->IsAlive() && m->GetHealthPct() < 95.0f &&
 
-                                            this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m)) {
+                                            this->CanCastSpell(HOLY_PRAYER_OF_MENDING, m))
+                                            {
 
                                             this->CastSpell(HOLY_PRAYER_OF_MENDING, m);
 
@@ -1218,7 +1225,8 @@ private:
 
                                         this->_renewTracker.NeedsRenewRefresh(m->GetGUID()) &&
 
-                                        this->CanCastSpell(HOLY_RENEW, m)) {
+                                        this->CanCastSpell(HOLY_RENEW, m))
+                                        {
 
                                         this->CastSpell(HOLY_RENEW, m);
 
@@ -1251,7 +1259,8 @@ private:
 
                                 if (m->IsAlive() && m->GetHealthPct() < 80.0f &&
 
-                                    this->CanCastSpell(HOLY_HEAL, m)) {
+                                    this->CanCastSpell(HOLY_HEAL, m))
+                                    {
 
                                     this->CastSpell(HOLY_HEAL, m);
 

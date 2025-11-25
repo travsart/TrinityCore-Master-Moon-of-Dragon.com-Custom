@@ -193,4 +193,63 @@ void BotAIFactory::InitializeDefaultTriggers(BotAI* ai)
     TC_LOG_DEBUG("module.playerbot.ai", "Initialized default triggers for bot");
 }
 
+
+void BotAIFactory::RegisterAICreator(::std::string const& type,
+                                     ::std::function<::std::unique_ptr<BotAI>(Player*)> creator)
+{
+    if (type.empty() || !creator)
+    {
+        TC_LOG_ERROR("module.playerbot.ai", "BotAIFactory::RegisterAICreator: Invalid type or creator");
+        return;
+    }
+
+    auto result = _creators.emplace(type, ::std::move(creator));
+    if (result.second)
+    {
+        TC_LOG_INFO("module.playerbot.ai", "Registered AI creator for type: {}", type);
+    }
+    else
+    {
+        TC_LOG_WARN("module.playerbot.ai", "AI creator for type '{}' already registered, replacing", type);
+        _creators[type] = ::std::move(creator);
+    }
+}
+
+void BotAIFactory::InitializeDefaultValues(BotAI* ai)
+{
+    if (!ai)
+        return;
+
+    // Initialize default AI configuration values
+    // This sets up reasonable defaults for bot behavior
+
+    // Initialize default strategies based on class
+    if (Player* bot = ai->GetBot())
+    {
+        InitializeDefaultStrategies(ai);
+        InitializeClassStrategies(ai, bot->GetClass(), static_cast<uint8>(bot->GetPrimarySpecialization()));
+    }
+
+    TC_LOG_DEBUG("module.playerbot.ai", "Initialized default values for bot AI");
+}
+
+void BotAIFactory::InitializeDefaultStrategies(BotAI* ai)
+{
+    if (!ai)
+        return;
+
+    // Set up generic strategies applicable to all bots
+    // Combat, movement, targeting defaults
+    TC_LOG_DEBUG("module.playerbot.ai", "Initialized default strategies for bot");
+}
+
+void BotAIFactory::InitializeClassStrategies(BotAI* ai, uint8 classId, uint8 spec)
+{
+    if (!ai)
+        return;
+
+    // Set up class-specific strategies based on class and specialization
+    TC_LOG_DEBUG("module.playerbot.ai", "Initialized class strategies for class {} spec {}", classId, spec);
+}
+
 } // namespace Playerbot

@@ -135,7 +135,8 @@ public:
     // CORE ROTATION - Only Arms-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -260,7 +261,8 @@ protected:
         if (!HasRendDebuff(target) && this->_resource >= 10 && this->CanUseAbility(SPELL_REND))
         {
             this->CastSpell(SPELL_REND, target);
-            _rendTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000;            return;
+            _rendTracking[target->GetGUID()] = GameTime::GetGameTimeMS() + 21000;
+            return;
         }
 
         // Priority 9: Heroic Strike as rage dump
@@ -437,7 +439,8 @@ protected:
         return target && (target->GetHealthPct() <= 20.0f || _suddenDeathProc);
     }
 
-    bool ShouldUseColossusSmash(::Unit* target) const    {
+    bool ShouldUseColossusSmash(::Unit* target) const
+    {
         // Use on cooldown for damage window
         return !_colossusSmashActive && target;
     }
@@ -459,7 +462,8 @@ protected:
         if (!target)
             return false;
 
-        auto it = _rendTracking.find(target->GetGUID());        return it != _rendTracking.end() && it->second > GameTime::GetGameTimeMS();
+        auto it = _rendTracking.find(target->GetGUID());
+        return it != _rendTracking.end() && it->second > GameTime::GetGameTimeMS();
     }
 
     bool HasTacticalMastery() const
@@ -538,7 +542,8 @@ private:
             // Emergency spells
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target)
+                {
                     return target && target->GetHealthPct() < 20.0f;
                 }},
                 "Target HP < 20% (Execute range)");
@@ -560,7 +565,8 @@ private:
             // Medium priority
             queue->RegisterSpell(SPELL_WHIRLWIND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_AOE);
             queue->AddCondition(SPELL_WHIRLWIND,
-                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit*) {
+                ::std::function<bool(Player*, Unit*)>{[this](Player* bot, Unit*)
+                {
                     // Capture 'this' for member access if needed
                     return bot->getAttackers().size() >= 3;
                 }},
@@ -568,7 +574,8 @@ private:
 
             queue->RegisterSpell(SPELL_REND, SpellPriority::MEDIUM, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_REND,
-                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target)
+                {
                     return target && !target->HasAura(SPELL_REND);
                 }},
                 "Rend not active on target");
@@ -604,7 +611,8 @@ private:
                             }
                             return NodeStatus::FAILURE;
                         }),
-                        bot::ai::Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Mortal Strike (Execute Phase)", [this](Player* bot, Unit* target)
+                        {
                             if (this->CanCastSpell(SPELL_MORTAL_STRIKE, target))
                             {
                                 this->CastSpell(SPELL_MORTAL_STRIKE, target);
@@ -692,7 +700,8 @@ private:
 
                     // Filler spells
                     Selector("Filler", {
-                        bot::ai::Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target) {
+                        bot::ai::Action("Cast Whirlwind (AoE)", [this](Player* bot, Unit* target)
+                        {
                             if (bot->getAttackers().size() >= 3 && this->CanCastSpell(SPELL_WHIRLWIND, target))
                             {
                                 this->CastSpell(SPELL_WHIRLWIND, target);

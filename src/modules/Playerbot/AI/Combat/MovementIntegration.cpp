@@ -5,6 +5,7 @@
  */
 
 #include "MovementIntegration.h"
+#include "GameTime.h"
 #include "PositionManager.h"  // Enterprise-grade positioning algorithms
 #include "Player.h"
 #include "Unit.h"

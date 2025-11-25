@@ -26,7 +26,8 @@
 namespace Playerbot
 {
 
-QuestValidation::QuestValidation(Player* bot) : _bot(bot) {
+QuestValidation::QuestValidation(Player* bot) : _bot(bot)
+{
     if (!_bot) TC_LOG_ERROR("playerbot.quest", "QuestValidation: null bot!");
 }
 

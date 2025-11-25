@@ -8,6 +8,7 @@
  */
 
 #include "InstanceCoordination.h"
+#include "GameTime.h"
 #include "DungeonBehavior.h"
 #include "EncounterStrategy.h"
 #include "../Group/GroupFormation.h"

@@ -84,6 +84,23 @@ set(PLAYERBOT_SOURCES
 
     # AI system (AI Framework implementation)
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
+    # Phase 5: AI Decision Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/DecisionFusionSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/DecisionFusionSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/ActionPriorityQueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/ActionPriorityQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/BehaviorTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/BehaviorTree.h
+    # AI Common - Scoring and Utility Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Common/ActionScoringEngine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Common/ActionScoringEngine.h
+    # AI Services - Combat Support Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/ThreatAssistant.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/ThreatAssistant.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/HealingTargetSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/HealingTargetSelector.h
+
+
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI_HybridAI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
@@ -166,6 +183,10 @@ set(PLAYERBOT_SOURCES
     # Core Integration Hooks
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHooks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHooks.h
+    # Core Helper Functions - GetBotAI, GetGameSystems
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHelpers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/PlayerBotHelpers.h
+
 
     # Phase 7.1: Manager System Architecture - Observer-Manager Integration Layer
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Managers/IManagerBase.h
@@ -364,6 +385,7 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
 
     # Group Event System - Event-Driven Architecture for Group Coordination
@@ -376,6 +398,13 @@ set(PLAYERBOT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/PlayerbotGroupScript.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupStateMachine.h
+
+    
+    # Phase 2: PvP AI Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/ArenaAI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PvP/PvPCombatAI.h
 
     # Network Packet Sniffer - Centralized Event Detection System
     ${CMAKE_CURRENT_SOURCE_DIR}/Network/PlayerbotPacketSniffer.cpp
@@ -477,12 +506,14 @@ set(PLAYERBOT_SOURCES
 
     # Phase 2: Companion Systems - Mount and Battle Pet Management
     # TODO: Re-enable when API compatibility is fixed (see PlayerbotWorldScript.cpp)
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/MountManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Companion/BattlePetManager.h
 
     # Phase 2: Bot Lifecycle Management System
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotCharacterCreator.cpp
@@ -905,6 +936,23 @@ source_group("Database" FILES
 
 source_group("AI" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.cpp
+    # Phase 5: AI Decision Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/DecisionFusionSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/DecisionFusionSystem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/ActionPriorityQueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/ActionPriorityQueue.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/BehaviorTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Decision/BehaviorTree.h
+    # AI Common - Scoring and Utility Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Common/ActionScoringEngine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Common/ActionScoringEngine.h
+    # AI Services - Combat Support Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/ThreatAssistant.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/ThreatAssistant.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/HealingTargetSelector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AI/Services/HealingTargetSelector.h
+
+
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BotAIFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AI/BehaviorManager.cpp
@@ -1005,6 +1053,7 @@ source_group("Group" FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupInvitationHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleDefinitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/RoleAssignment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEventBus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Group/GroupEvents.cpp
@@ -1124,6 +1173,8 @@ source_group("Character" FILES
 # )
 
 source_group("Lifecycle" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotSpawner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Lifecycle/BotLifecycleMgr.cpp

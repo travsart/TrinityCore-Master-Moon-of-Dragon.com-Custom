@@ -53,7 +53,8 @@ namespace Playerbot
      * ConfigManager* mgr = ConfigManager::instance();
      *
      * // Set configuration value
-     * if (mgr->SetValue("MaxActiveBots", 200)) {
+     * if (mgr->SetValue("MaxActiveBots", 200))
+     {
      *     // Successfully set
      * }
      *

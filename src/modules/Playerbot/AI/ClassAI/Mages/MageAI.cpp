@@ -13,7 +13,8 @@
 namespace Playerbot
 {
 
-MageAI::MageAI(Player* bot) : ClassAI(bot){
+MageAI::MageAI(Player* bot) : ClassAI(bot)
+{
     TC_LOG_DEBUG("module.playerbot.ai", "MageAI created for player {}", bot->GetName());
 }
 
@@ -113,10 +114,12 @@ void MageAI::UpdateCooldowns(uint32 diff)
 {
     // Base cooldown management handled by ClassAI
     ClassAI::UpdateCooldowns(diff);
-}bool MageAI::CanUseAbility(uint32 spellId)
+}
+bool MageAI::CanUseAbility(uint32 spellId)
 {
     if (!_bot)
-        return false;    if (!_bot->HasSpell(spellId))
+        return false;
+        if (!_bot->HasSpell(spellId))
         return false;
 
     // Delegate to base ClassAI implementation for spell readiness and resource checks

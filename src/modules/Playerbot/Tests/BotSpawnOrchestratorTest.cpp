@@ -215,7 +215,8 @@ TEST_F(BotSpawnOrchestratorTest, SpawnMultipleBotsSuccessfully)
     // Expect character selector to handle batch processing
     EXPECT_CALL(*mockCharacterSelector, ProcessBatchSelection(::testing::_, ::testing::_))
         .WillOnce(::testing::Invoke([](::std::vector<SpawnRequest> const& reqs,
-                                     ::std::function<void(::std::vector<ObjectGuid>)> callback) {
+                                     ::std::function<void(::std::vector<ObjectGuid>)> callback)
+                                     {
             // Simulate successful character selection for all requests
             ::std::vector<ObjectGuid> characters;
             for (size_t i = 0; i < reqs.size(); ++i)

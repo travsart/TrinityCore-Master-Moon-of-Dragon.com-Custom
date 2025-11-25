@@ -75,17 +75,20 @@ public:
     void ApplyEbonMight(ObjectGuid guid) { _ebonMightTargets[guid] = GameTime::GetGameTimeMS() + 10000; }
     void ApplyPrescience(ObjectGuid guid) { _prescienceTargets[guid] = GameTime::GetGameTimeMS() + 18000; }
 
-    bool HasEbonMight(ObjectGuid guid) const {
+    bool HasEbonMight(ObjectGuid guid) const
+    {
         auto it = _ebonMightTargets.find(guid);
         return it != _ebonMightTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
-    bool HasPrescience(ObjectGuid guid) const {
+    bool HasPrescience(ObjectGuid guid) const
+    {
         auto it = _prescienceTargets.find(guid);
         return it != _prescienceTargets.end() && GameTime::GetGameTimeMS() < it->second;
     }
 
-    void Update() {
+    void Update()
+    {
         uint32 now = GameTime::GetGameTimeMS();
         for (auto it = _ebonMightTargets.begin(); it != _ebonMightTargets.end();)
             it = (now >= it->second) ? _ebonMightTargets.erase(it) : ++it;
@@ -139,7 +142,8 @@ public:
         }
 
         // Priority 5: Generate essence
-        if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
+        if (this->_resource.essence < 4 && this->CanCastSpell(AZURE_STRIKE_AUG, target))
+        {
             this->CastSpell(AZURE_STRIKE_AUG, target);
             this->_resource.essence = ::std::min<uint32>(this->_resource.essence + 2, this->_resource.maxEssence);
         }
@@ -153,9 +157,12 @@ protected:
         if (this->_resource.essence < 1) return false;
 
         ::std::vector<Unit*> allies = GetGroupDPS();
-        for (Unit* ally : allies) {
-            if (ally && !_buffTracker.HasEbonMight(ally->GetGUID())) {
-                if (this->CanCastSpell(EBON_MIGHT, ally)) {
+        for (Unit* ally : allies)
+        {
+            if (ally && !_buffTracker.HasEbonMight(ally->GetGUID()))
+            {
+                if (this->CanCastSpell(EBON_MIGHT, ally))
+                {
                     this->CastSpell(EBON_MIGHT, ally);
                     this->_resource.Consume(1);
                     _buffTracker.ApplyEbonMight(ally->GetGUID());
@@ -171,9 +178,12 @@ protected:
         if (this->_resource.essence < 1) return false;
 
         ::std::vector<Unit*> allies = GetGroupDPS();
-        for (Unit* ally : allies) {
-            if (ally && !_buffTracker.HasPrescience(ally->GetGUID())) {
-                if (this->CanCastSpell(PRESCIENCE, ally)) {
+        for (Unit* ally : allies)
+        {
+            if (ally && !_buffTracker.HasPrescience(ally->GetGUID()))
+            {
+                if (this->CanCastSpell(PRESCIENCE, ally))
+                {
                     this->CastSpell(PRESCIENCE, ally);
                     this->_resource.Consume(1);
                     _buffTracker.ApplyPrescience(ally->GetGUID());
@@ -193,7 +203,8 @@ protected:
         Group* group = bot->GetGroup();
         if (!group) return dps;
 
-        for (GroupReference const& ref : group->GetMembers()) {
+        for (GroupReference const& ref : group->GetMembers())
+        {
             if (Player* member = ref.GetSource()) {
                 if (member->IsAlive() && bot->IsInMap(member) && !IsTankOrHealer(member))
                     dps.push_back(member);
@@ -286,7 +297,8 @@ protected:
                     Condition("3+ essence", [this](Player*, Unit*) { return this->_resource.essence >= 3; }),
                     bot::ai::Action("Cast Breath of Eons", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
-                        if (target && this->CanCastSpell(BREATH_OF_EONS, target)) {
+                        if (target && this->CanCastSpell(BREATH_OF_EONS, target))
+                        {
                             this->CastSpell(BREATH_OF_EONS, target);
                             this->_resource.Consume(3);
                             return NodeStatus::SUCCESS;
@@ -299,7 +311,8 @@ protected:
                     Condition("< 4 essence", [this](Player*, Unit*) { return this->_resource.essence < 4; }),
                     bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
-                        if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target)) {
+                        if (target && this->CanCastSpell(AZURE_STRIKE_AUG, target))
+                        {
                             this->CastSpell(AZURE_STRIKE_AUG, target);
                             this->_resource.essence = ::std::min<uint32>(this->_resource.essence + 2, this->_resource.maxEssence);
                             return NodeStatus::SUCCESS;

@@ -98,12 +98,14 @@ struct SpawnStats
         return *this;
     }
 
-    float GetAverageSpawnTime() const {
+    float GetAverageSpawnTime() const
+    {
         uint32 attempts = spawnAttempts.load();
         return attempts > 0 ? static_cast<float>(totalSpawnTime.load()) / attempts / 1000.0f : 0.0f; // ms
     }
 
-    float GetSuccessRate() const {
+    float GetSuccessRate() const
+    {
         uint32 attempts = spawnAttempts.load();
         uint32 failures = failedSpawns.load();
         return attempts > 0 ? static_cast<float>(attempts - failures) / attempts * 100.0f : 0.0f;

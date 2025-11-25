@@ -14,6 +14,7 @@
  */
 
 #include "GatheringMaterialsBridge.h"
+#include "GameTime.h"
 #include "ProfessionManager.h"
 #include "ProfessionDatabase.h"
 #include "ProfessionEventBus.h"

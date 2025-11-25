@@ -67,7 +67,8 @@ namespace Playerbot
         uint32 connectionPoolSize = 0;          // Connection pool size
         uint64 cacheHits = 0;                   // Database cache hits
         uint64 cacheMisses = 0;                 // Database cache misses
-        uint32 cacheHitRate() const {
+        uint32 cacheHitRate() const
+        {
             uint64 total = cacheHits + cacheMisses;
             return total > 0 ? static_cast<uint32>((cacheHits * 100) / total) : 0;
         }

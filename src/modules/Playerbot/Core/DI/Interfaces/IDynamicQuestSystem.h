@@ -48,14 +48,16 @@ struct QuestMetrics
     // Default constructor
     QuestMetrics() : lastUpdate(std::chrono::steady_clock::now()) {}
 
-    void Reset() {
+    void Reset()
+    {
         questsStarted = 0; questsCompleted = 0; questsAbandoned = 0; questsFailed = 0;
         averageCompletionTime = 1200.0f; successRate = 0.85f; efficiencyRating = 1.0f;
         experienceGained = 0; goldEarned = 0;
         lastUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetCompletionRate() const {
+    float GetCompletionRate() const
+    {
         uint32 started = questsStarted.load();
         uint32 completed = questsCompleted.load();
         return started > 0 ? (float)completed / started : 0.0f;

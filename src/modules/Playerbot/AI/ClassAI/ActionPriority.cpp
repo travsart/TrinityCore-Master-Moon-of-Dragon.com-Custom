@@ -324,7 +324,8 @@ float ActionPriorityHelper::CalculateDamageScore(::Unit* target, uint32 spellId)
     return score;
 }
 
-float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId){
+float ActionPriorityHelper::CalculateBuffScore(::Unit* target, uint32 spellId)
+{
     if (!target)
         return 0.0f;
 

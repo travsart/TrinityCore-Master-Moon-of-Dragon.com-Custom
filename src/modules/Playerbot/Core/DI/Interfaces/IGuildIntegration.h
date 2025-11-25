@@ -168,7 +168,8 @@ struct GuildMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         guildInteractions = 0; chatMessages = 0; bankTransactions = 0;
         eventsParticipated = 0; helpfulActions = 0; averageParticipationScore = 0.7f;
         socialIntegrationScore = 0.8f; contributionRating = 0.75f;

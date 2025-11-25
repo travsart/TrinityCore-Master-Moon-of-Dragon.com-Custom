@@ -143,7 +143,8 @@ private:
         ::std::atomic<float> survivabilityScore{0.0f};
         ::std::chrono::steady_clock::time_point combatStartTime;
         ::std::chrono::steady_clock::time_point lastMetricsUpdate;
-        void Reset() {
+        void Reset()
+        {
             totalAbilitiesUsed = 0; successfulStanceChanges = 0; rageDumpInstances = 0;
             averageRageEfficiency = 0.0f; stanceOptimizationScore = 0.0f; survivabilityScore = 0.0f;
             combatStartTime = ::std::chrono::steady_clock::now();

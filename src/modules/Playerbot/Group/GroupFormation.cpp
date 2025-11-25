@@ -8,6 +8,7 @@
  */
 
 #include "GroupFormation.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Log.h"
 #include "ObjectAccessor.h"

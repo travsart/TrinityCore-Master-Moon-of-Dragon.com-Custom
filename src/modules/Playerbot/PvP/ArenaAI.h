@@ -380,6 +380,24 @@ public:
     ArenaAI& operator=(ArenaAI const&) = delete;
 
 private:
+    // Bot reference (owned externally)
+    Player* _bot;
+
+    // Static shared data across all bot instances
+    static std::unordered_map<uint32, std::vector<ArenaPillar>> _arenaMapPillars;
+    static ArenaMetrics _globalMetrics;
+    static bool _initialized;
+
+    // Per-instance state
+    uint32 _lastUpdateTime{0};
+    ObjectGuid _focusTarget;
+    ArenaMatchState _matchState;
+    ArenaProfile _profile;
+    ArenaMetrics _metrics;
+    TeamComposition _teamComposition{TeamComposition::DOUBLE_DPS_HEALER};
+    TeamComposition _enemyComposition{TeamComposition::DOUBLE_DPS_HEALER};
+    bool _burstReady{false};
+
 
     // ============================================================================
     // HELPER FUNCTIONS
@@ -436,12 +454,8 @@ private:
     // Pillar database (mapId -> pillars)
     std::unordered_map<uint32, std::vector<ArenaPillar>> _arenaPillars;
 
-    // Burst coordination (playerGuid -> burst ready)
-    std::unordered_map<uint32, bool> _burstReady;
-
     // Metrics
     std::unordered_map<uint32, ArenaMetrics> _playerMetrics;
-    ArenaMetrics _globalMetrics;
 
     mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::BEHAVIOR_MANAGER> _mutex;
 

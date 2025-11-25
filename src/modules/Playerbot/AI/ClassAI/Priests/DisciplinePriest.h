@@ -512,7 +512,8 @@ private:
 
     bool HandleAtonementMaintenance(const ::std::vector<Unit*>& group)
     {
-        Player* bot = this->GetBot();        if (!bot)
+        Player* bot = this->GetBot();
+        if (!bot)
 
             return false;
 
@@ -620,12 +621,14 @@ private:
     }
 
     bool HandleDirectHealing(const ::std::vector<Unit*>& group)
-    {        Player* bot = this->GetBot();        if (!bot)
+    {        Player* bot = this->GetBot();
+    if (!bot)
 
             return false;
 
         // Shadow Mend for emergency direct healing
-        for (Unit* member : group)        {
+        for (Unit* member : group)
+        {
 
             if (member && member->GetHealthPct() < 50.0f)
 
@@ -696,7 +699,8 @@ private:
         return false;
     }
 
-    bool HandleShielding(const ::std::vector<Unit*>& group)    {
+    bool HandleShielding(const ::std::vector<Unit*>& group)
+    {
         // During Rapture, spam shields on everyone
         if (_raptureActive)
         {
@@ -726,7 +730,8 @@ private:
         }
 
         // Normal shielding for tanks and injured allies
-        for (Unit* member : group)        {
+        for (Unit* member : group)
+        {
 
             if (member && (IsTankRole(member) || member->GetHealthPct() < 75.0f))
 
@@ -758,7 +763,8 @@ private:
         return false;
     }    bool HandleSelfHealing()
     {
-        Player* bot = this->GetBot();        if (!bot)
+        Player* bot = this->GetBot();
+        if (!bot)
 
             return false;
 
@@ -816,7 +822,8 @@ private:
 
     void ExecuteAtonementDamageRotation(::Unit* target)
     {
-        Player* bot = this->GetBot();        if (!bot || !target)
+        Player* bot = this->GetBot();
+        if (!bot || !target)
 
             return;
 

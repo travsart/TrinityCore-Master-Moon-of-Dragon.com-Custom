@@ -210,7 +210,8 @@ public:
         std::atomic<float> organizationScore{0.8f};
         std::atomic<float> memberSatisfaction{0.85f};
 
-        void Reset() {
+        void Reset()
+        {
             totalDeposits = 0; totalWithdrawals = 0; itemsMoved = 0;
             organizationActions = 0; totalBankValue = 0; utilizationRate = 0.7f;
             organizationScore = 0.8f; memberSatisfaction = 0.85f;

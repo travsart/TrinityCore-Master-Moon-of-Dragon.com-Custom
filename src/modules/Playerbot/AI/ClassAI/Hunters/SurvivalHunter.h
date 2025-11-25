@@ -357,7 +357,8 @@ private:
 
             return false;
 
-        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 60.0f;
+        Pet* pet = _bot->GetPet();
+        return pet && pet->GetHealthPct() < 60.0f;
     }
 
     void MendPet()
@@ -367,7 +368,8 @@ private:
 
             return;
 
-        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
+        Pet* pet = _bot->GetPet();
+        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET_SURV))
         {
 
             _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET_SURV);
@@ -442,7 +444,8 @@ public:
     // CORE ROTATION - Survival specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
@@ -818,7 +821,8 @@ private:
         }
     }
 
-    bool ShouldUseCoordinatedAssault(Unit* target) const    {
+    bool ShouldUseCoordinatedAssault(Unit* target) const
+    {
         if (!target)
 
             return false;
@@ -928,11 +932,13 @@ private:
     void UpdateRangeManagement() { /* Survival fights in melee */ }
     bool IsInDeadZone(::Unit* /*target*/) const { return false; /* No dead zone for melee */ }
     bool ShouldKite(::Unit* target) const { return target && GetBot()->GetHealthPct() < 30.0f; }
-    Position GetKitePosition(::Unit* target) const {
+    Position GetKitePosition(::Unit* target) const
+    {
         if (!target) return Position();
         // Get position 15 yards away from target
         float angle = target->GetRelativeAngle(GetBot());
-        float x = target->GetPositionX() + 15.0f * ::std::cos(angle);        float y = target->GetPositionY() + 15.0f * ::std::sin(angle);        return Position(x, y, target->GetPositionZ());
+        float x = target->GetPositionX() + 15.0f * ::std::cos(angle);
+        float y = target->GetPositionY() + 15.0f * ::std::sin(angle);        return Position(x, y, target->GetPositionZ());
     }
     void HandleDeadZone(::Unit* /*target*/) { /* No dead zone for melee spec */ }
 
@@ -942,7 +948,8 @@ private:
     void ApplyTracking(uint32 /*trackingSpell*/) { /* Applied by AI */ }
 
     // Pet command interface - delegated to pet manager
-    void CommandPetAttack(::Unit* target) {
+    void CommandPetAttack(::Unit* target)
+    {
         if (target) _petManager.EnsurePetActive(target);
     }
     void CommandPetFollow() { /* Handled by pet AI */ }

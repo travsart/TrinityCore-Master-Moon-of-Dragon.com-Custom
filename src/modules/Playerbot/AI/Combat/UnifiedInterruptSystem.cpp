@@ -16,6 +16,7 @@
  */
 
 #include "UnifiedInterruptSystem.h"
+#include "GameTime.h"
 #include "BotAI.h"
 #include "Player.h"
 #include "Group.h"
@@ -362,7 +363,8 @@ void UnifiedInterruptSystem::OnEnemyCastComplete(ObjectGuid casterGuid, uint32 s
     }
 
     // Sort by priority and remaining time
-    ::std::sort(targets.begin(), targets.end(), [](UnifiedInterruptTarget const& a, UnifiedInterruptTarget const& b) {
+    ::std::sort(targets.begin(), targets.end(), [](UnifiedInterruptTarget const& a, UnifiedInterruptTarget const& b)
+    {
         if (a.priority != b.priority)
             return a.priority > b.priority;
         return a.remainingCastTime < b.remainingCastTime;
@@ -577,7 +579,8 @@ void UnifiedInterruptSystem::CoordinateGroupInterrupts(Group* group)
     }
 
     // Sort by priority
-    ::std::sort(activeCasts.begin(), activeCasts.end(), [](CastingSpellInfo const& a, CastingSpellInfo const& b) {
+    ::std::sort(activeCasts.begin(), activeCasts.end(), [](CastingSpellInfo const& a, CastingSpellInfo const& b)
+    {
         if (a.priority != b.priority)
             return a.priority > b.priority;
         return a.castStartTime < b.castStartTime;

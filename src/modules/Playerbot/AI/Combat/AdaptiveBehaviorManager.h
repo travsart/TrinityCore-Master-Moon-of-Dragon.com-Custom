@@ -43,7 +43,7 @@ namespace Playerbot
     };
 
     // Behavior priority levels
-    enum class BehaviorPriority : uint8
+    enum class AdaptiveBehaviorPriority : uint8
     {
         LOW             = 0,
         NORMAL          = 1,
@@ -82,7 +82,7 @@ namespace Playerbot
     struct BehaviorProfile
     {
         ::std::string name;                                                      // Profile name for logging
-        BehaviorPriority priority;                                             // Priority level
+        AdaptiveBehaviorPriority priority;                                             // Priority level
         ::std::function<bool(const CombatMetrics&, CombatSituation)> condition; // Activation condition
         ::std::function<void(::Player*, uint32)> applyFunction;                 // Apply behavior changes
         uint32 strategyFlags;                                                  // Strategy flags to activate
@@ -93,7 +93,7 @@ namespace Playerbot
         uint32 activeTime;                                                     // Time this profile has been active
         bool isActive;                                                         // Currently active
 
-        BehaviorProfile() : priority(BehaviorPriority::NORMAL), strategyFlags(STRATEGY_NONE),
+        BehaviorProfile() : priority(AdaptiveBehaviorPriority::NORMAL), strategyFlags(STRATEGY_NONE),
                            minDuration(1000), maxDuration(30000), cooldown(0),
                            lastActivated(0), activeTime(0), isActive(false) {}
     };

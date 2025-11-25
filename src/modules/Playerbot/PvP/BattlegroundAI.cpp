@@ -8,6 +8,7 @@
  */
 
 #include "BattlegroundAI.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Battleground.h"
 #include "BattlegroundMgr.h"

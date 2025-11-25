@@ -8,6 +8,7 @@
  */
 
 #include "AdaptiveBehaviorManager.h"
+#include "GameTime.h"
 #include "../Decision/DecisionFusionSystem.h"
 #include "../Common/ActionScoringEngine.h"
 #include "Player.h"
@@ -61,7 +62,7 @@ void AdaptiveBehaviorManager::CreateEmergencyTankProfile()
 {
     BehaviorProfile profile;
     profile.name = "EmergencyTank";
-    profile.priority = BehaviorPriority::EMERGENCY;
+    profile.priority = AdaptiveBehaviorPriority::EMERGENCY;
     profile.strategyFlags = STRATEGY_EMERGENCY_TANK | STRATEGY_DEFENSIVE | STRATEGY_USE_COOLDOWNS;
     profile.minDuration = 5000;
     profile.maxDuration = 30000;
@@ -85,7 +86,7 @@ void AdaptiveBehaviorManager::CreateAOEProfile()
 {
     BehaviorProfile profile;
     profile.name = "AOEMode";
-    profile.priority = BehaviorPriority::HIGH;
+    profile.priority = AdaptiveBehaviorPriority::HIGH;
     profile.strategyFlags = STRATEGY_AOE_FOCUS | STRATEGY_AGGRESSIVE;
     profile.minDuration = 3000;
     profile.maxDuration = 20000;
@@ -109,7 +110,7 @@ void AdaptiveBehaviorManager::CreateSurvivalProfile()
 {
     BehaviorProfile profile;
     profile.name = "Survival";
-    profile.priority = BehaviorPriority::CRITICAL;
+    profile.priority = AdaptiveBehaviorPriority::CRITICAL;
     profile.strategyFlags = STRATEGY_SURVIVAL | STRATEGY_DEFENSIVE | STRATEGY_USE_CONSUMABLES | STRATEGY_USE_COOLDOWNS;
     profile.minDuration = 5000;
     profile.maxDuration = 15000;
@@ -134,7 +135,7 @@ void AdaptiveBehaviorManager::CreateBurstProfile()
 {
     BehaviorProfile profile;
     profile.name = "BurstPhase";
-    profile.priority = BehaviorPriority::HIGH;
+    profile.priority = AdaptiveBehaviorPriority::HIGH;
     profile.strategyFlags = STRATEGY_BURST_DAMAGE | STRATEGY_AGGRESSIVE | STRATEGY_USE_COOLDOWNS | STRATEGY_USE_CONSUMABLES;
     profile.minDuration = 10000;
     profile.maxDuration = 30000;
@@ -157,7 +158,7 @@ void AdaptiveBehaviorManager::CreateResourceConservationProfile()
 {
     BehaviorProfile profile;
     profile.name = "ResourceConservation";
-    profile.priority = BehaviorPriority::NORMAL;
+    profile.priority = AdaptiveBehaviorPriority::NORMAL;
     profile.strategyFlags = STRATEGY_CONSERVE_MANA | STRATEGY_SAVE_COOLDOWNS;
     profile.minDuration = 10000;
     profile.maxDuration = 60000;
@@ -233,7 +234,7 @@ void AdaptiveBehaviorManager::UpdateBehavior(const CombatMetrics& metrics, Comba
 void AdaptiveBehaviorManager::UpdateProfiles(uint32 diff, const CombatMetrics& metrics, CombatSituation situation)
 {
     BehaviorProfile* highestPriorityProfile = nullptr;
-    BehaviorPriority highestPriority = BehaviorPriority::LOW;
+    AdaptiveBehaviorPriority highestPriority = AdaptiveBehaviorPriority::LOW;
 
     for (BehaviorProfile& profile : _profiles)
     {
@@ -690,13 +691,13 @@ void AdaptiveBehaviorManager::AdjustBehaviorWeights()
         float successRate = GetDecisionSuccessRate(profile.name);
 
         // Adjust priority based on success rate
-    if (successRate > 80.0f && profile.priority < BehaviorPriority::CRITICAL)
+    if (successRate > 80.0f && profile.priority < AdaptiveBehaviorPriority::CRITICAL)
         {
-            profile.priority = static_cast<BehaviorPriority>(static_cast<uint8>(profile.priority) + 1);
+            profile.priority = static_cast<AdaptiveBehaviorPriority>(static_cast<uint8>(profile.priority) + 1);
         }
-        else if (successRate < 40.0f && profile.priority > BehaviorPriority::LOW)
+        else if (successRate < 40.0f && profile.priority > AdaptiveBehaviorPriority::LOW)
         {
-            profile.priority = static_cast<BehaviorPriority>(static_cast<uint8>(profile.priority) - 1);
+            profile.priority = static_cast<AdaptiveBehaviorPriority>(static_cast<uint8>(profile.priority) - 1);
         }
     }
 }

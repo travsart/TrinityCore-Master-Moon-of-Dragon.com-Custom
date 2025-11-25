@@ -206,7 +206,8 @@ void DemonHunterAI::HandleDefensives()
     if (!_bot)
         return;
 
-    float healthPct = _bot->GetHealthPct();    uint32 currentTime = GameTime::GetGameTimeMS();
+    float healthPct = _bot->GetHealthPct();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Netherwalk - Emergency immunity
     if (healthPct < HEALTH_EMERGENCY_THRESHOLD && CanUseAbility(NETHERWALK))
@@ -241,7 +242,8 @@ void DemonHunterAI::HandleDefensives()
     {
         if (CastSpell(DARKNESS))
         {
-            RecordAbilityUsage(DARKNESS);            _dhMetrics.defensivesUsed++;
+            RecordAbilityUsage(DARKNESS);
+            _dhMetrics.defensivesUsed++;
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Darkness",                         _bot->GetName());
             return;
         }
@@ -263,7 +265,8 @@ void DemonHunterAI::HandleDefensives()
         }
 
         // Fiery Brand - Damage reduction on target
-        Unit* target = _bot->GetSelectedUnit();        if (target && healthPct < 60.0f && CanUseAbility(FIERY_BRAND))
+        Unit* target = _bot->GetSelectedUnit();
+        if (target && healthPct < 60.0f && CanUseAbility(FIERY_BRAND))
         {
             if (CastSpell(FIERY_BRAND, target))
             {
@@ -344,7 +347,8 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
             {
                 RecordAbilityUsage(bladeDanceSpell);
                 TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} using {} for AoE",
-                             _bot->GetName(), bladeDanceSpell == DEATH_SWEEP ? "Death Sweep" : "Blade Dance");                return;
+                             _bot->GetName(), bladeDanceSpell == DEATH_SWEEP ? "Death Sweep" : "Blade Dance");
+                             return;
             }
         }
     }
@@ -356,7 +360,8 @@ void DemonHunterAI::HandleAoEDecisions(::Unit* target)
         {
             RecordAbilityUsage(FEL_BARRAGE);
             TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} activated Fel Barrage",
-                         _bot->GetName());            return;
+                         _bot->GetName());
+                         return;
         }
     }
 
@@ -460,7 +465,8 @@ void DemonHunterAI::HandleResourceGeneration(::Unit* target)
                 {
                     RecordAbilityUsage(chaosStrike);
                     TC_LOG_DEBUG("module.playerbot.ai", "DemonHunter {} dumping fury with {}",
-                                 _bot->GetName(), chaosStrike == ANNIHILATION ? "Annihilation" : "Chaos Strike");                    return;
+                                 _bot->GetName(), chaosStrike == ANNIHILATION ? "Annihilation" : "Chaos Strike");
+                                 return;
                 }
             }
         }
@@ -799,7 +805,8 @@ bool DemonHunterAI::HasEnoughResource(uint32 spellId)
                 return true;
         }
     }
-}void DemonHunterAI::ConsumeResource(uint32 spellId)
+}
+void DemonHunterAI::ConsumeResource(uint32 spellId)
 {
     RecordAbilityUsage(spellId);
 
@@ -839,7 +846,8 @@ bool DemonHunterAI::ShouldUseMetamorphosis()
         return true;
 
     // Use for burst damage on high-health targets
-    Unit* target = _bot->GetSelectedUnit();    if (target && target->GetHealthPct() > 80.0f)
+    Unit* target = _bot->GetSelectedUnit();
+    if (target && target->GetHealthPct() > 80.0f)
         return true;
 
     // Use during AoE situations
@@ -875,7 +883,8 @@ void DemonHunterAI::SpendPain(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentPain = _bot->GetPower(POWER_PAIN);    _bot->SetPower(POWER_PAIN, ::std::max(0, currentPain - static_cast<int32>(amount)));
+    int32 currentPain = _bot->GetPower(POWER_PAIN);
+    _bot->SetPower(POWER_PAIN, ::std::max(0, currentPain - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GeneratePain(uint32 amount)
@@ -883,7 +892,8 @@ void DemonHunterAI::GeneratePain(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentPain = _bot->GetPower(POWER_PAIN);    int32 maxPain = _bot->GetMaxPower(POWER_PAIN);
+    int32 currentPain = _bot->GetPower(POWER_PAIN);
+    int32 maxPain = _bot->GetMaxPower(POWER_PAIN);
     _bot->SetPower(POWER_PAIN, ::std::min(maxPain, currentPain + static_cast<int32>(amount)));
 }
 
@@ -896,7 +906,8 @@ void DemonHunterAI::SpendFury(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentFury = _bot->GetPower(POWER_FURY);    _bot->SetPower(POWER_FURY, ::std::max(0, currentFury - static_cast<int32>(amount)));
+    int32 currentFury = _bot->GetPower(POWER_FURY);
+    _bot->SetPower(POWER_FURY, ::std::max(0, currentFury - static_cast<int32>(amount)));
 }
 
 void DemonHunterAI::GenerateFury(uint32 amount)
@@ -904,7 +915,8 @@ void DemonHunterAI::GenerateFury(uint32 amount)
     if (!_bot)
         return;
 
-    int32 currentFury = _bot->GetPower(POWER_FURY);    int32 maxFury = _bot->GetMaxPower(POWER_FURY);
+    int32 currentFury = _bot->GetPower(POWER_FURY);
+    int32 maxFury = _bot->GetMaxPower(POWER_FURY);
     _bot->SetPower(POWER_FURY, ::std::min(maxFury, currentFury + static_cast<int32>(amount)));
 }
 
@@ -966,7 +978,8 @@ void DemonHunterAI::UpdateHavocRotation(::Unit* target)
     // Blade Dance for AoE
     if (fury >= 35 && GetNearbyEnemyCount(8.0f) >= 2)
     {
-        CastBladeDance(target);        return;
+        CastBladeDance(target);
+        return;
     }
 
     // Chaos Strike as main spender
@@ -1043,7 +1056,8 @@ void DemonHunterAI::CastChaosStrike(::Unit* target)
     if (!target)
         return;
 
-    uint32 ability = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;    if (CanUseAbility(ability))
+    uint32 ability = _bot->HasAura(METAMORPHOSIS_HAVOC) ? ANNIHILATION : CHAOS_STRIKE;
+    if (CanUseAbility(ability))
     {
         CastSpell(ability, target);
         ConsumeResource(ability);
@@ -1052,7 +1066,8 @@ void DemonHunterAI::CastChaosStrike(::Unit* target)
 
 void DemonHunterAI::CastBladeDance(::Unit* target)
 {
-    uint32 ability = _bot->HasAura(METAMORPHOSIS_HAVOC) ? DEATH_SWEEP : BLADE_DANCE;    if (CanUseAbility(ability))
+    uint32 ability = _bot->HasAura(METAMORPHOSIS_HAVOC) ? DEATH_SWEEP : BLADE_DANCE;
+    if (CanUseAbility(ability))
     {
         CastSpell(ability);
         ConsumeResource(ability);
@@ -1096,7 +1111,8 @@ void DemonHunterAI::CastShear(::Unit* target)
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targetList, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return targets;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);
@@ -1146,7 +1162,8 @@ uint32 DemonHunterAI::GetNearbyEnemyCount(float range) const
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(_bot, _bot, range);
     Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(_bot, targets, u_check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return 0;
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);

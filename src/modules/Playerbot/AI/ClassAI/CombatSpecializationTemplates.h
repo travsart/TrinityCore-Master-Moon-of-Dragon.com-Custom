@@ -285,7 +285,8 @@ protected:
         ClassAI::OnCombatStart(target);
 
         _combatStartTime = GameTime::GetGameTimeMS();
-        _currentTarget = target;        _consecutiveFailedCasts = 0;
+        _currentTarget = target;
+        _consecutiveFailedCasts = 0;
 
         // Reset performance metrics for this combat
         _performanceMetrics.combatStartTime = ::std::chrono::steady_clock::now();
@@ -392,14 +393,16 @@ protected:
      *
      * Example usage in rotation:
      * @code
-     * void UpdateRotation(::Unit* target) override {
+     * void UpdateRotation(::Unit* target) override
+     {
      *     CombatSituation situation{};
      *     situation.enemyCount = GetEnemiesInRange(10.0f);
      *     situation.inMelee = GetBot()->GetDistance(target) <= 5.0f;
      *
      *     GetMovementIntegration().Update(diff, situation);
      *
-     *     if (GetMovementIntegration().NeedsEmergencyMovement()) {
+     *     if (GetMovementIntegration().NeedsEmergencyMovement())
+     {
      *         Position safePos = GetMovementIntegration().GetOptimalPosition();
      *         MoveTo(safePos);
      *     }
@@ -415,7 +418,8 @@ protected:
      * Example usage:
      * @code
      * ::Unit* target = GetTargetManager().SelectBestTarget();
-     * if (target && ShouldSwitchTarget(target)) {
+     * if (target && ShouldSwitchTarget(target))
+     {
      *     SetTarget(target->GetGUID());
      * }
      * @endcode
@@ -430,7 +434,8 @@ protected:
      * @code
      * if (enemyCount >= 3) {
      *     ::Unit* ccTarget = GetCrowdControlManager().GetBestCCTarget();
-     *     if (ccTarget && !GetCrowdControlManager().HasDiminishingReturns(ccTarget, MECHANIC_POLYMORPH)) {
+     *     if (ccTarget && !GetCrowdControlManager().HasDiminishingReturns(ccTarget, MECHANIC_POLYMORPH))
+     {
      *         CastSpell(ccTarget, POLYMORPH);
      *         GetCrowdControlManager().ApplyCrowdControl(ccTarget, MECHANIC_POLYMORPH, 8000);
      *     }
@@ -620,7 +625,8 @@ protected:
         Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, bot, range);
         Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(bot, targets, u_check);
         // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitAllObjects
-        Map* map = bot->GetMap();        if (map)
+        Map* map = bot->GetMap();
+        if (map)
         {
 
             auto* spatialGrid = Playerbot::SpatialGridManager::Instance().GetGrid(map);
@@ -723,7 +729,8 @@ protected:
 template<typename ResourceType>    requires ValidResource<ResourceType>
 class MeleeDpsSpecialization : public CombatSpecializationTemplate<ResourceType>
 {
-public:    explicit MeleeDpsSpecialization(Player* bot)        : CombatSpecializationTemplate<ResourceType>(bot)    {
+public:    explicit MeleeDpsSpecialization(Player* bot)        : CombatSpecializationTemplate<ResourceType>(bot)
+{
     }
 
     float GetOptimalRange(::Unit* target) override final
@@ -1053,7 +1060,8 @@ protected:
      *
      * Example usage in tank spec:
      * @code
-     * void UpdateRotation(::Unit* target) override {
+     * void UpdateRotation(::Unit* target) override
+     {
      *     // Create combat metrics
      *     CombatMetrics metrics{};
      *     metrics.damageTaken = CalculateRecentDamage();
@@ -1116,7 +1124,8 @@ protected:
      *
      * Call this in your tank spec constructor to register your defensives:
      * @code
-     * ProtectionWarriorRefactored(Player* bot) : TankSpecialization(bot) {
+     * ProtectionWarriorRefactored(Player* bot) : TankSpecialization(bot)
+     {
      *     // Register warrior defensives
      *     GetDefensiveManager().RegisterDefensive(DefensiveCooldown(
      *         SHIELD_WALL, 0.4f, 8000, 240000, DefensivePriority::HIGH));

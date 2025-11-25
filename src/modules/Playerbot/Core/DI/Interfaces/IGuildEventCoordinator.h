@@ -131,14 +131,16 @@ struct EventMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         eventsCreated = 0; eventsCompleted = 0; eventsCancelled = 0;
         totalParticipants = 0; averageAttendance = 0.75f;
         organizationEfficiency = 0.8f; memberSatisfaction = 0.85f;
         lastUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetCompletionRate() const {
+    float GetCompletionRate() const
+    {
         uint32 created = eventsCreated.load();
         uint32 completed = eventsCompleted.load();
         return created > 0 ? (float)completed / created : 0.0f;

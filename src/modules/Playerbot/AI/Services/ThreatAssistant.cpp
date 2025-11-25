@@ -5,6 +5,8 @@
  */
 
 #include "ThreatAssistant.h"
+#include "GameTime.h"
+#include "Creature.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Group.h"
@@ -104,7 +106,7 @@ bool ThreatAssistant::ExecuteTaunt(Player* tank, Unit* target, uint32 tauntSpell
         return false;
 
     // Cast taunt spell
-    ::SpellCastResult result = tank->CastSpell(tauntSpellId, false, target);
+    ::SpellCastResult result = tank->CastSpell(target, tauntSpellId, false);
 
     if (result == SPELL_CAST_OK)
     {
@@ -245,14 +247,14 @@ std::vector<Unit*> ThreatAssistant::GetCombatEnemies(Player* tank, float range)
     {
         // Solo: get tank's combat enemies
         ThreatManager& threatMgr = tank->GetThreatManager();
-        std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
+        auto const& threatList = threatMgr.GetSortedThreatList();
 
-        for (HostileReference* ref : threatList)
+        for (auto const* ref : threatList)
         {
             if (!ref)
                 continue;
 
-            Unit* enemy = ref->GetOwner();
+            Unit* enemy = ref->GetVictim();
             if (enemy && tank->GetDistance(enemy) <= range)
                 enemies.push_back(enemy);
         }
@@ -270,14 +272,14 @@ std::vector<Unit*> ThreatAssistant::GetCombatEnemies(Player* tank, float range)
             continue;
 
         ThreatManager& threatMgr = member->GetThreatManager();
-        std::list<HostileReference*> const& threatList = threatMgr.GetThreatList();
+        auto const& threatList = threatMgr.GetSortedThreatList();
 
-        for (HostileReference* hostileRef : threatList)
+        for (auto const* hostileRef : threatList)
         {
             if (!hostileRef)
                 continue;
 
-            Unit* enemy = hostileRef->GetOwner();
+            Unit* enemy = hostileRef->GetVictim();
             if (enemy && tank->GetDistance(enemy) <= range)
                 uniqueEnemies.insert(enemy);
         }
@@ -330,10 +332,10 @@ float ThreatAssistant::CalculateDangerRating(Unit* target)
     float danger = 5.0f;  // Base danger
 
     // Elite/boss bonus
-    if (target->IsElite())
+    if (target->ToCreature() && target->ToCreature()->IsElite())
         danger += 2.0f;
 
-    if (target->isWorldBoss())
+    if (target->ToCreature() && target->ToCreature()->isWorldBoss())
         danger = 10.0f;
 
     // Caster bonus (ranged attacks, spells)

@@ -94,12 +94,14 @@ private:
         ChiManagementSystem(const ChiManagementSystem&) = delete;
         ChiManagementSystem& operator=(const ChiManagementSystem&) = delete;
 
-        void GenerateChi(uint32 amount) {
+        void GenerateChi(uint32 amount)
+        {
             uint32 oldChi = current.load();
             uint32 newChi = ::std::min(oldChi + amount, maximum.load());
             current.store(newChi);
             generated.store(generated.load() + amount);
-            if (oldChi + amount > maximum.load()) {
+            if (oldChi + amount > maximum.load())
+            {
                 wastedChi.store(wastedChi.load() + (oldChi + amount - maximum.load()));
             }
             lastGeneration.store(GameTime::GetGameTimeMS());
@@ -108,7 +110,8 @@ private:
                 generationHistory.pop();
         }
 
-        bool ConsumeChi(uint32 amount) {
+        bool ConsumeChi(uint32 amount)
+        {
             if (current.load() >= amount) {
                 current.store(current.load() - amount);
                 consumed.store(consumed.load() + amount);
@@ -117,13 +120,15 @@ private:
             return false;
         }
 
-        float CalculateEfficiency() const {
+        float CalculateEfficiency() const
+        {
             uint32 gen = generated.load();
             if (gen == 0) return 1.0f;
             return 1.0f - (static_cast<float>(wastedChi.load()) / gen);
         }
 
-        void Reset() {
+        void Reset()
+        {
             current.store(0); generated.store(0); consumed.store(0);
             wastedChi.store(0); efficiency.store(1.0f);
             while (!generationHistory.empty())
@@ -146,7 +151,8 @@ private:
         EnergyManagementSystem(const EnergyManagementSystem&) = delete;
         EnergyManagementSystem& operator=(const EnergyManagementSystem&) = delete;
 
-        void SpendEnergy(uint32 amount) {
+        void SpendEnergy(uint32 amount)
+        {
             if (current.load() >= amount) {
                 current.store(current.load() - amount);
                 totalSpent.store(totalSpent.load() + amount);
@@ -156,7 +162,8 @@ private:
             }
         }
 
-        void RegenerateEnergy(uint32 diff) {
+        void RegenerateEnergy(uint32 diff)
+        {
             float regen = (regenRate * diff) / 1000.0f;
             uint32 oldEnergy = current.load();
             uint32 newEnergy = ::std::min(static_cast<uint32>(oldEnergy + regen), maximum.load());
@@ -165,11 +172,13 @@ private:
             lastRegen.store(GameTime::GetGameTimeMS());
         }
 
-        float GetEnergyPercent() const {
+        float GetEnergyPercent() const
+        {
             return maximum > 0 ? (static_cast<float>(current) / maximum) : 0.0f;
         }
 
-        void Reset() {
+        void Reset()
+        {
             current.store(maximum.load()); totalSpent.store(0); totalRegen.store(0);
             efficiency.store(1.0f);
             while (!spendingHistory.empty())
@@ -200,7 +209,8 @@ private:
             HEAVY = 3
         };
 
-        StaggerLevel GetStaggerLevel(float maxHealth) const {
+        StaggerLevel GetStaggerLevel(float maxHealth) const
+        {
             float ratio = currentStagger.load() / maxHealth;
             if (ratio >= 0.6f) return HEAVY;
             if (ratio >= 0.3f) return MODERATE;
@@ -208,7 +218,8 @@ private:
             return NONE;
         }
 
-        void AddStagger(uint32 damage) {
+        void AddStagger(uint32 damage)
+        {
             currentStagger.store(currentStagger.load() + damage);
             totalAbsorbed.store(totalAbsorbed.load() + damage);
             staggerHistory.push({damage, GameTime::GetGameTimeMS()});
@@ -216,14 +227,17 @@ private:
                 staggerHistory.pop();
         }
 
-        void PurifyStagger(float percent) {
+        void PurifyStagger(float percent)
+        {
             uint32 purified = static_cast<uint32>(currentStagger.load() * percent);
             currentStagger.store(currentStagger.load() - purified);
             totalPurified.store(totalPurified.load() + purified);
         }
 
-        void UpdateStaggerTracking(StaggerLevel level, uint32 diff) {
-            switch(level) {
+        void UpdateStaggerTracking(StaggerLevel level, uint32 diff)
+        {
+            switch(level)
+            {
                 case HEAVY: heavyStaggerTime.store(heavyStaggerTime.load() + diff); break;
                 case MODERATE: moderateStaggerTime.store(moderateStaggerTime.load() + diff); break;
                 case LIGHT: lightStaggerTime.store(lightStaggerTime.load() + diff); break;
@@ -231,13 +245,15 @@ private:
             }
         }
 
-        float CalculateMitigationEfficiency() const {
+        float CalculateMitigationEfficiency() const
+        {
             uint32 absorbed = totalAbsorbed.load();
             if (absorbed == 0) return 0.0f;
             return static_cast<float>(totalPurified.load()) / absorbed;
         }
 
-        void Reset() {
+        void Reset()
+        {
             currentStagger.store(0); totalAbsorbed.store(0); totalPurified.store(0);
             heavyStaggerTime.store(0); moderateStaggerTime.store(0); lightStaggerTime.store(0);
             mitigationRatio.store(0.0f);
@@ -259,7 +275,8 @@ private:
         FormManagementSystem(const FormManagementSystem&) = delete;
         FormManagementSystem& operator=(const FormManagementSystem&) = delete;
 
-        void ChangeForm(MartialForm newForm) {
+        void ChangeForm(MartialForm newForm)
+        {
             if (currentForm.load() != newForm) {
                 currentForm.store(newForm);
                 lastFormChange.store(GameTime::GetGameTimeMS());
@@ -267,7 +284,8 @@ private:
             }
         }
 
-        void UpdateFormDuration(uint32 diff) {
+        void UpdateFormDuration(uint32 diff)
+        {
             MartialForm current = currentForm.load();
             if (current != MartialForm::NONE) {
                 uint8 index = static_cast<uint8>(current);
@@ -275,10 +293,12 @@ private:
             }
         }
 
-        MartialForm GetOptimalForm(::Unit* target, bool isTank, bool isDPS, bool isHealer) {
+        MartialForm GetOptimalForm(::Unit* target, bool isTank, bool isDPS, bool isHealer)
+        {
             if (isTank) return MartialForm::OX_FORM;
             if (isHealer) return MartialForm::SERPENT_FORM;
-            if (isDPS) {
+            if (isDPS)
+            {
                 // Dynamic form selection based on situation
                 if (target && target->GetHealthPct() < 35.0f)
                     return MartialForm::TIGER_FORM; // Execute phase
@@ -287,7 +307,8 @@ private:
             return MartialForm::TIGER_FORM;
         }
 
-        void Reset() {
+        void Reset()
+        {
             currentForm.store(MartialForm::NONE);
             formChanges.store(0);
             for (auto& duration : formDuration) duration.store(0);
@@ -328,12 +349,15 @@ private:
         ComboStrikeTracker(const ComboStrikeTracker&) = delete;
         ComboStrikeTracker& operator=(const ComboStrikeTracker&) = delete;
 
-        bool WillBreakCombo(uint32 spellId) const {
+        bool WillBreakCombo(uint32 spellId) const
+        {
             return lastAbility.load() == spellId;
         }
 
-        void RecordAbility(uint32 spellId) {
-            if (!WillBreakCombo(spellId)) {
+        void RecordAbility(uint32 spellId)
+        {
+            if (!WillBreakCombo(spellId))
+            {
                 uint32 newComboCount = comboCount.load() + 1;
                 comboCount.store(newComboCount);
                 comboDamageBonus.store(1.0f + (newComboCount * 0.02f)); // 2% per combo
@@ -348,7 +372,8 @@ private:
                 abilityHistory.pop();
         }
 
-        void Reset() {
+        void Reset()
+        {
             lastAbility.store(0); comboCount.store(0); comboDamageBonus.store(1.0f);
             perfectCombos.store(0);
             while (!abilityHistory.empty())
@@ -371,7 +396,8 @@ private:
             bool hasEnvelopingMist;
             uint32 timestamp;
 
-            bool operator<(const HealTarget& other) const {
+            bool operator<(const HealTarget& other) const
+            {
                 if (priority != other.priority) return priority < other.priority;
                 return healthPercent > other.healthPercent;
             }
@@ -383,10 +409,12 @@ private:
         ::std::atomic<float> healingEfficiency{1.0f};
         ::std::atomic<bool> fistweavingMode{false};
 
-        void UpdateHealingTargets(const ::std::vector<::Unit*>& allies) {
+        void UpdateHealingTargets(const ::std::vector<::Unit*>& allies)
+        {
             while (!healQueue.empty()) healQueue.pop();
 
-            for (auto* ally : allies) {
+            for (auto* ally : allies)
+            {
                 if (!ally || ally->isDead()) continue;
 
                 HealTarget target;
@@ -402,7 +430,8 @@ private:
             }
         }
 
-        uint32 CalculatePriority(::Unit* target) {
+        uint32 CalculatePriority(::Unit* target)
+        {
             uint32 priority = 100;
             float healthPct = target->GetHealthPct();
 
@@ -474,23 +503,27 @@ private:
             return priority;
         }
 
-        ::Unit* GetNextHealTarget() {
+        ::Unit* GetNextHealTarget()
+        {
             if (healQueue.empty()) return nullptr;
             HealTarget top = healQueue.top();
             healQueue.pop();
             return top.target;
         }
 
-        void RecordHealing(uint32 amount, uint32 overheal) {
+        void RecordHealing(uint32 amount, uint32 overheal)
+        {
             totalHealing.store(totalHealing.load() + amount);
             overhealingDone.store(overhealingDone.load() + overheal);
             uint32 currentTotal = totalHealing.load();
-            if (currentTotal > 0) {
+            if (currentTotal > 0)
+            {
                 healingEfficiency.store(1.0f - (static_cast<float>(overhealingDone.load()) / currentTotal));
             }
         }
 
-        void Reset() {
+        void Reset()
+        {
             while (!healQueue.empty()) healQueue.pop();
             totalHealing.store(0); overhealingDone.store(0);
             healingEfficiency.store(1.0f); fistweavingMode.store(false);
@@ -612,7 +645,8 @@ private:
         MonkMetrics(const MonkMetrics&) = delete;
         MonkMetrics& operator=(const MonkMetrics&) = delete;
 
-        void Reset() {
+        void Reset()
+        {
             totalAbilitiesUsed.store(0); successfulCombos.store(0);
             chiWasted.store(0); energyWasted.store(0);
             averageChiEfficiency.store(0.0f); averageEnergyEfficiency.store(0.0f);

@@ -174,7 +174,8 @@ public:
         ::std::atomic<float> averageHealthScore{1.0f};
         ::std::atomic<uint32> averageValidationTime{0};
 
-        void Reset() {
+        void Reset()
+        {
             totalValidations = 0; successfulValidations = 0; failedValidations = 0;
             issuesDetected = 0; issuesResolved = 0; averageHealthScore = 1.0f;
             averageValidationTime = 0;

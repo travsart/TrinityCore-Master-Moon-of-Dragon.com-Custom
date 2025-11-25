@@ -16,6 +16,7 @@
  */
 
 #include "catch2/catch_test_macros.hpp"
+#include "GameTime.h"
 #include "AI/Coordination/ZoneOrchestrator.h"
 
 using namespace Playerbot;

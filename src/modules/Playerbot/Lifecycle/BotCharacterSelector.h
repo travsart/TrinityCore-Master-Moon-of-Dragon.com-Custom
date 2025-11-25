@@ -81,7 +81,8 @@ public:
         ::std::atomic<uint32> charactersCreated{0};
         ::std::atomic<uint64> avgSelectionTimeUs{0};
 
-        float GetCacheHitRate() const {
+        float GetCacheHitRate() const
+        {
             uint32 total = cacheHits.load() + cacheMisses.load();
             return total > 0 ? static_cast<float>(cacheHits.load()) / total * 100.0f : 0.0f;
         }

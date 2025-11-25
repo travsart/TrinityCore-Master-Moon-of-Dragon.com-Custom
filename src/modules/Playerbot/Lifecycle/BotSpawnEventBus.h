@@ -120,7 +120,8 @@ struct InternalEventStats
     InternalEventStats(InternalEventStats const&) = delete;
     InternalEventStats& operator=(InternalEventStats const&) = delete;
 
-    float GetAverageProcessingTimeUs() const {
+    float GetAverageProcessingTimeUs() const
+    {
         uint64 processed = eventsProcessed.load();
         return processed > 0 ? static_cast<float>(totalProcessingTimeUs.load()) / processed : 0.0f;
     }

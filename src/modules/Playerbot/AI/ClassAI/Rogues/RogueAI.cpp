@@ -8,6 +8,7 @@
  */
 
 #include "RogueAI.h"
+#include "GameTime.h"
 #include "../BaselineRotationManager.h"
 #include "AssassinationRogue.h"
 #include "OutlawRogue.h"
@@ -271,7 +272,8 @@ RogueAI::RogueAI(Player* bot) :
     // Initialize performance tracking
     _metrics = new RogueMetrics();
     _combatMetrics = new RogueCombatMetrics();
-    _positioning = new RogueCombatPositioning(bot);    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
+    _positioning = new RogueCombatPositioning(bot);
+    TC_LOG_DEBUG("playerbot", "RogueAI initialized for {}", bot->GetName());
 }
 
 void RogueAI::InitializeCombatSystems()
@@ -776,7 +778,8 @@ void RogueAI::ExecuteRogueBasicRotation(Unit* target)
     }
 }
 
-void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success){
+void RogueAI::RecordInterruptAttempt(Unit* target, uint32 spellId, bool success)
+{
     if (success)
     {
         TC_LOG_DEBUG("module.playerbot.ai", "Rogue {} successfully interrupted {} with spell {}",

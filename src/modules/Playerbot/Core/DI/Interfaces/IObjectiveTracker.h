@@ -88,7 +88,8 @@ struct ObjectiveAnalytics
     std::atomic<uint32> targetsMissed{0};
     std::chrono::steady_clock::time_point lastAnalyticsUpdate;
 
-    void Reset() {
+    void Reset()
+    {
         objectivesStarted = 0; objectivesCompleted = 0; objectivesFailed = 0;
         averageCompletionTime = 300000.0f; averageSuccessRate = 0.9f;
         targetDetectionAccuracy = 0.85f; targetsFound = 0; targetsMissed = 0;

@@ -339,7 +339,8 @@ protected:
         });
 
         // Apply DoTs to targets
-        for (Unit* target : targets)        {
+        for (Unit* target : targets)
+        {
 
             if (GetMissingDotCount(target) > 0)
 
@@ -388,7 +389,8 @@ protected:
     uint32 GetMissingDotCount(Unit* target) const
     {
         uint32 missingCount = 0;
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
+        if (it == this->_activeDots.end())
         {
 
             return _maxDotsPerTarget; // No DoTs applied
@@ -412,7 +414,8 @@ protected:
 
     void RefreshExpiringDoTs(Unit* target)
     {
-        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());        if (it == this->_activeDots.end())
+        auto it = this->_activeDots.find(target->GetGUID().GetRawValue());
+        if (it == this->_activeDots.end())
 
             return;
 
@@ -656,7 +659,8 @@ public:
     {
         Snapshot snap;
         snap.spellId = spellId;
-        snap.targetGuid = target->GetGUID().GetCounter();        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+        snap.targetGuid = target->GetGUID().GetCounter();
+        snap.spellPower = caster->GetTotalAttackPowerValue(BASE_ATTACK);
         snap.critChance = caster->GetUnitCriticalChanceAgainst(BASE_ATTACK, target);
         snap.haste = caster->GetRatingBonusValue(CR_HASTE_MELEE);
         snap.timestamp = GameTime::GetGameTimeMS();
@@ -682,7 +686,8 @@ public:
     }
 
 private:
-    uint64 GetKey(uint32 spellId, Unit* target) const    {
+    uint64 GetKey(uint32 spellId, Unit* target) const
+    {
         return (static_cast<uint64>(spellId) << 32) | target->GetGUID().GetCounter();
     }
 

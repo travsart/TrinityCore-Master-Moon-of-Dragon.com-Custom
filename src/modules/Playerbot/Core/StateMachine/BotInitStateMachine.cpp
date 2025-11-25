@@ -16,6 +16,7 @@
  */
 
 #include "BotInitStateMachine.h"
+#include "GameTime.h"
 #include "BotAI.h"
 #include "Group.h"
 #include "World.h"

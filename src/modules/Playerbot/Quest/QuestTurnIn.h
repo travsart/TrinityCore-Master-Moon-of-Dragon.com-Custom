@@ -187,14 +187,16 @@ public:
         TurnInMetrics(TurnInMetrics const&) = delete;
         TurnInMetrics& operator=(TurnInMetrics const&) = delete;
 
-        void Reset() {
+        void Reset()
+        {
             questsTurnedIn = 0; turnInAttempts = 0; successfulTurnIns = 0;
             failedTurnIns = 0; averageTurnInTime = 15000.0f; turnInSuccessRate = 0.95f;
             totalTravelDistance = 0; rewardsSelected = 0; rewardSelectionAccuracy = 0.85f;
             lastUpdate = std::chrono::steady_clock::now();
         }
 
-        float GetSuccessRate() const {
+        float GetSuccessRate() const
+        {
             uint32 attempts = turnInAttempts.load();
             uint32 successful = successfulTurnIns.load();
             return attempts > 0 ? (float)successful / attempts : 0.0f;
@@ -213,13 +215,15 @@ public:
             float rewardSelectionAccuracy;
             std::chrono::steady_clock::time_point lastUpdate;
 
-            float GetSuccessRate() const {
+            float GetSuccessRate() const
+            {
                 return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
             }
         };
 
         // Create a snapshot of current metrics
-        Snapshot CreateSnapshot() const {
+        Snapshot CreateSnapshot() const
+        {
             Snapshot snapshot;
             snapshot.questsTurnedIn = questsTurnedIn.load();
             snapshot.turnInAttempts = turnInAttempts.load();

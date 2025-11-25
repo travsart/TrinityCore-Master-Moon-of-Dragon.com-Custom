@@ -174,7 +174,8 @@ public:
         ::std::atomic<uint32> failedEncounters{0};
         ::std::chrono::steady_clock::time_point lastUpdate;
 
-        void Reset() {
+        void Reset()
+        {
             commandsIssued = 0; commandsExecuted = 0; responseTime = 0.0f;
             formationCompliance = 1.0f; targetSwitchEfficiency = 1.0f;
             combatCoordination = 1.0f; successfulEncounters = 0; failedEncounters = 0;
@@ -243,13 +244,15 @@ private:
         ::std::queue<uint32> cooldownQueue;
         mutable Playerbot::OrderedRecursiveMutex<Playerbot::LockOrder::GROUP_MANAGER> cooldownMutex;
 
-        bool IsSpellOnCooldown(uint32 spellId) const {
+        bool IsSpellOnCooldown(uint32 spellId) const
+        {
             ::std::lock_guard lock(cooldownMutex);
             auto it = spellCooldowns.find(spellId);
             return it != spellCooldowns.end() && it->second > GameTime::GetGameTimeMS();
         }
 
-        void SetSpellCooldown(uint32 spellId, uint32 duration) {
+        void SetSpellCooldown(uint32 spellId, uint32 duration)
+        {
             ::std::lock_guard lock(cooldownMutex);
             spellCooldowns[spellId] = GameTime::GetGameTimeMS() + duration;
         }

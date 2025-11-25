@@ -43,7 +43,8 @@ struct RoleScore
         , gearScore(0.0f), experienceScore(0.5f), availabilityScore(1.0f)
         , synergy(0.5f), totalScore(0.0f) {}
 
-    void CalculateTotalScore() {
+    void CalculateTotalScore()
+    {
         totalScore = (effectiveness * 0.4f) + (gearScore * 0.25f) +
                     (experienceScore * 0.15f) + (availabilityScore * 0.1f) +
                     (synergy * 0.1f);
@@ -65,6 +66,12 @@ struct PlayerRoleProfile
     bool isFlexible;
     float overallRating;
 
+    // Default constructor required for std::pair/std::unordered_map usage
+    PlayerRoleProfile()
+        : playerGuid(0), playerClass(0), playerSpec(0), playerLevel(0)
+        , preferredRole(GroupRole::NONE), assignedRole(GroupRole::NONE)
+        , lastRoleUpdate(0), isFlexible(true), overallRating(5.0f) {}
+
     PlayerRoleProfile(uint32 guid, uint8 cls, uint8 spec, uint32 level)
         : playerGuid(guid), playerClass(cls), playerSpec(spec), playerLevel(level)
         , preferredRole(GroupRole::NONE), assignedRole(GroupRole::NONE)
@@ -84,7 +91,8 @@ struct GroupComposition
     uint32 totalMembers;
 
     GroupComposition() : compositionScore(0.0f), isValid(false)
-        , hasMainTank(false), hasMainHealer(false), dpsCount(0), totalMembers(0) {
+        , hasMainTank(false), hasMainHealer(false), dpsCount(0), totalMembers(0)
+        {
         // Initialize role requirements for standard 5-man group
         roleRequirements[GroupRole::TANK] = 1;
         roleRequirements[GroupRole::HEALER] = 1;

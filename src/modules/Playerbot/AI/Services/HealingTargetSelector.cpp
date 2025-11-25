@@ -5,6 +5,7 @@
  */
 
 #include "HealingTargetSelector.h"
+#include "Spell.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"
@@ -346,9 +347,9 @@ bool HealingTargetSelector::HasIncomingHeals(Player* target)
         return false;
 
     // Iterate through group members to find healing spells being cast on target
-    for (GroupReference* itr : *group)
+    for (GroupReference const& itr : group->GetMembers())
     {
-        Player* member = itr->GetSource();
+        Player* member = itr.GetSource();
         if (!member || member == target)
             continue;
 

@@ -8,6 +8,7 @@
  */
 
 #include "WarriorAI.h"
+#include "GameTime.h"
 #include "ArmsWarrior.h"
 #include "FuryWarrior.h"
 #include "ProtectionWarrior.h"
@@ -25,7 +26,8 @@
 namespace Playerbot
 {
 
-WarriorAI::WarriorAI(Player* bot) : ClassAI(bot){
+WarriorAI::WarriorAI(Player* bot) : ClassAI(bot)
+{
     _lastStanceChange = 0;
     _lastBattleShout = 0;
     _lastCommandingShout = 0;
@@ -411,7 +413,8 @@ Position WarriorAI::CalculateOptimalChargePosition(::Unit* target)
     return GetBot()->GetPosition();
 }
 
-void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
+void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target)
+{
     if (!target || !GetBot())
         return;
 
@@ -429,7 +432,8 @@ void WarriorAI::ExecuteBasicWarriorRotation(::Unit* target){
     }
 
     // Apply Rend for bleed damage
-    if (CanUseAbility(REND))    {
+    if (CanUseAbility(REND))
+    {
         if (!target->HasAura(REND, GetBot()->GetGUID()))
         {
             if (CastSpell(REND, target))
@@ -624,7 +628,8 @@ uint32 WarriorAI::GetNearbyEnemyCount(float range) const
     return count;
 }
 
-bool WarriorAI::IsValidTarget(::Unit* target){
+bool WarriorAI::IsValidTarget(::Unit* target)
+{
     return target && target->IsAlive() && GetBot()->IsValidAttackTarget(target);
 }
 
@@ -632,6 +637,40 @@ bool WarriorAI::IsValidTarget(::Unit* target){
 {
     // Find best charge target
     return GetBestAttackTarget();
+}
+
+
+// ============================================================================
+// ARMS WARRIOR REFACTORED IMPLEMENTATIONS
+// ============================================================================
+// These implementations are required by ArmsWarriorRefactored class
+// declared in ArmsWarrior.h - the class uses template-based architecture
+
+void ArmsWarriorRefactored::InitializeDebuffTracking()
+{
+    // Initialize the debuff tracking maps for Deep Wounds and Rend
+    // These track which targets have active debuffs and their expiration times
+    _deepWoundsTracking.clear();
+    _rendTracking.clear();
+
+    TC_LOG_DEBUG("module.playerbot.warrior", "ArmsWarriorRefactored: Debuff tracking initialized");
+}
+
+void ArmsWarriorRefactored::InitializeArmsRotation()
+{
+    // Initialize the Arms-specific rotation systems including:
+    // - Action Priority Queue integration (Phase 5)
+    // - Behavior Tree integration (Phase 5)
+    // - Cooldown tracking for core abilities
+
+    // Initialize cooldowns for Arms abilities
+    // Note: CooldownManager uses Register() for individual cooldowns, no Initialize() needed
+
+    // Setup Phase 5 ActionPriorityQueue and BehaviorTree integration
+    SetupActionPriorityQueue();
+
+    TC_LOG_DEBUG("module.playerbot.warrior", "ArmsWarriorRefactored: Arms rotation initialized with {} enemies tracking capacity",
+                 _deepWoundsTracking.max_size());
 }
 
 } // namespace Playerbot

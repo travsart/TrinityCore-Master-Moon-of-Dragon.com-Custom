@@ -16,6 +16,7 @@
  */
 
 #include "HybridAIController.h"
+#include "GameTime.h"
 #include "AI/BotAI.h"
 #include "Utility/UtilityContextBuilder.h"
 #include "Utility/Evaluators/CombatEvaluators.h"

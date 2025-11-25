@@ -8,6 +8,7 @@
  */
 
 #include "BotThreatManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Creature.h"

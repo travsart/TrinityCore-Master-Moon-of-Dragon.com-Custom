@@ -7,6 +7,7 @@
  */
 
 #include "GatheringManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"

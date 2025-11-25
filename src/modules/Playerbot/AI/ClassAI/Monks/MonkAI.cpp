@@ -8,6 +8,7 @@
  */
 
 #include "MonkAI.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "SpellMgr.h"
 #include "Log.h"
@@ -24,7 +25,8 @@
 namespace Playerbot
 {
 
-MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER){
+MonkAI::MonkAI(Player* bot) : ClassAI(bot), _currentSpec(MonkSpec::WINDWALKER)
+{
     TC_LOG_DEBUG("playerbots", "MonkAI initialized for player {}", bot->GetName());
 }
 

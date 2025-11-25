@@ -427,7 +427,8 @@ private:
             // Dark Ascension (alternative to Void Eruption)
             if (bot->HasSpell(SHADOW_DARK_ASCENSION) && (GameTime::GetGameTimeMS() - _lastDarkAscensionTime) >= 60000)            {
                 if (this->CanCastSpell(SHADOW_DARK_ASCENSION, bot))
-                {                    this->CastSpell(SHADOW_DARK_ASCENSION, bot);                    _darkAscensionActive = true;
+                {                    this->CastSpell(SHADOW_DARK_ASCENSION, bot);
+                _darkAscensionActive = true;
                     _darkAscensionEndTime = GameTime::GetGameTimeMS() + 15000;
                     _lastDarkAscensionTime = GameTime::GetGameTimeMS();
                     _insanityTracker.SpendInsanity(50);
@@ -436,13 +437,16 @@ private:
 
             // Void Eruption (enter Voidform)
             if (this->CanCastSpell(SHADOW_VOID_ERUPTION, target))
-            {                this->CastSpell(SHADOW_VOID_ERUPTION, target);                _voidformTracker.ActivateVoidform();
+            {                this->CastSpell(SHADOW_VOID_ERUPTION, target);
+            _voidformTracker.ActivateVoidform();
                 _insanityTracker.Reset(); // Void Eruption consumes all Insanity
                 return;
             }
         }        // Maintain DoTs        if (!_dotTracker.HasVampiricTouch(target->GetGUID()) ||            _dotTracker.NeedsVampiricTouchRefresh(target->GetGUID()))
-        {            if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))            {
-                this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+        {            if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
+        {
+                this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
+                _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                 _insanityTracker.GenerateInsanity(5);
                 return;
             }
@@ -453,7 +457,8 @@ private:
         {
             if (this->CanCastSpell(SHADOW_SHADOW_WORD_PAIN, target))
             {
-                this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);                _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
+                this->CastSpell(SHADOW_SHADOW_WORD_PAIN, target);
+                _dotTracker.ApplyShadowWordPain(target->GetGUID(), 16000);
                 _insanityTracker.GenerateInsanity(4);
                 return;
             }
@@ -516,7 +521,8 @@ private:
         if (bot->HasSpell(SHADOW_VOID_TORRENT) && (GameTime::GetGameTimeMS() - _lastVoidTorrentTime) >= 30000)
         
         {
-            if (this->CanCastSpell(SHADOW_VOID_TORRENT, target))            {
+            if (this->CanCastSpell(SHADOW_VOID_TORRENT, target))
+            {
                 this->CastSpell(SHADOW_VOID_TORRENT, target);
                 _lastVoidTorrentTime = GameTime::GetGameTimeMS();
                 _insanityTracker.GenerateInsanity(15);
@@ -584,7 +590,8 @@ private:
             {
                 if (this->CanCastSpell(SHADOW_VAMPIRIC_TOUCH, target))
                 {
-                    this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);                    _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
+                    this->CastSpell(SHADOW_VAMPIRIC_TOUCH, target);
+                    _dotTracker.ApplyVampiricTouch(target->GetGUID(), 21000);
                     _insanityTracker.GenerateInsanity(5);
                     return;
                 }

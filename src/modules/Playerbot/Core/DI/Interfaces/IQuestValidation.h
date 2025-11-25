@@ -64,13 +64,15 @@ struct ValidationMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         totalValidations = 0; passedValidations = 0; failedValidations = 0;
         cacheHits = 0; cacheMisses = 0; averageValidationTime = 5.0f;
         validationSuccessRate = 0.85f;
     }
 
-    float GetCacheHitRate() const {
+    float GetCacheHitRate() const
+    {
         uint32 total = cacheHits.load() + cacheMisses.load();
         return total > 0 ? (float)cacheHits.load() / total : 0.0f;
     }

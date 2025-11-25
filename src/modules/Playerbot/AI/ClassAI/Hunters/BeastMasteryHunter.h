@@ -211,7 +211,8 @@ public:
 
             return false;
 
-        Pet* pet = _bot->GetPet();        return pet && pet->GetHealthPct() < 70.0f;
+        Pet* pet = _bot->GetPet();
+        return pet && pet->GetHealthPct() < 70.0f;
     }
 
     void MendPet()
@@ -225,7 +226,8 @@ public:
 
             return;
 
-        Pet* pet = _bot->GetPet();        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
+        Pet* pet = _bot->GetPet();
+        if (pet && pet->IsAlive() && !_bot->HasAura(SPELL_MEND_PET))
         {
 
             _bot->CastSpell(CastSpellTargetArg(pet), SPELL_MEND_PET);
@@ -257,7 +259,8 @@ public:
 
     uint32 GetPetFrenzyStacks() const { return _petFrenzyStacks; }
 
-    void EnsurePetActive(Unit* target)    {
+    void EnsurePetActive(Unit* target)
+    {
         if (!HasActivePet())
         {
 
@@ -330,7 +333,8 @@ public:
     // CORE ROTATION - Beast Mastery specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
@@ -648,7 +652,8 @@ private:
         return _barbedShotCharges > 0 || _wildCallProc;
     }
 
-    bool ShouldUseBestialWrath(Unit* target) const    {
+    bool ShouldUseBestialWrath(Unit* target) const
+    {
         if (!target)
 
             return false;

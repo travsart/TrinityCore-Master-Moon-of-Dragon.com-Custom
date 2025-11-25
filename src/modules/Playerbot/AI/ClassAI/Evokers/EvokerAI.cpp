@@ -141,7 +141,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
     // Priority 2: Defensives - Obsidian Scales, Renewing Blaze
     if (behaviors && behaviors->NeedsDefensive())
     {
-        float healthPct = _bot->GetHealthPct();        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
+        float healthPct = _bot->GetHealthPct();
+        if (healthPct < 30.0f && CanUseAbility(OBSIDIAN_SCALES))
         {
             if (CastSpell(OBSIDIAN_SCALES, _bot))
             {
@@ -153,7 +154,8 @@ void EvokerAI::UpdateRotation(::Unit* target)
 
         if (healthPct < 50.0f && CanUseAbility(RENEWING_BLAZE))
         {
-            if (CastSpell(RENEWING_BLAZE, _bot))            {
+            if (CastSpell(RENEWING_BLAZE, _bot))
+            {
                 TC_LOG_DEBUG("module.playerbot.ai", "Evoker {} used Renewing Blaze at {}% health",
                              _bot->GetName(), healthPct);
                 return;
@@ -460,8 +462,10 @@ void EvokerAI::OnCombatEnd()
         ProcessEchoHealing();
 }
 
-bool EvokerAI::HasEnoughResource(uint32 spellId){
-    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());    if (!spellInfo)
+bool EvokerAI::HasEnoughResource(uint32 spellId)
+{
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId, GetBot()->GetMap()->GetDifficultyID());
+    if (!spellInfo)
         return false;
 
     // Most evoker abilities require essence
@@ -533,7 +537,8 @@ Position EvokerAI::GetOptimalPosition(::Unit* target)
 
     if (distance > optimalRange || distance < optimalRange * 0.8f)
     {
-        pos = target->GetPosition();        pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);        pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);    }
+        pos = target->GetPosition();
+        pos.m_positionX += optimalRange * cos(target->GetOrientation() + M_PI);        pos.m_positionY += optimalRange * sin(target->GetOrientation() + M_PI);    }
 
     return pos;
 }
@@ -774,7 +779,8 @@ void EvokerAI::CreateEcho(::Unit* target, uint32 healAmount, uint32 numHeals)
     _activeEchoes.emplace_back(target, numHeals, healAmount);
 }
 
-void EvokerAI::ProcessEchoHealing(){
+void EvokerAI::ProcessEchoHealing()
+{
     for (auto& echo : _activeEchoes)
     {        if (echo.ShouldHeal() && echo.target)
         {
@@ -790,7 +796,8 @@ void EvokerAI::RemoveExpiredEchoes()
     _activeEchoes.erase(
         ::std::remove_if(_activeEchoes.begin(), _activeEchoes.end(),            [](const Echo& echo) { return echo.remainingHeals == 0 || !echo.target; }),
         _activeEchoes.end());
-}uint32 EvokerAI::GetActiveEchoCount()
+}
+uint32 EvokerAI::GetActiveEchoCount()
 {
     return static_cast<uint32>(_activeEchoes.size());
 }
@@ -909,7 +916,8 @@ bool EvokerAI::CanShiftAspect()
     Trinity::AnyUnitInObjectRangeCheck check(_bot, EMPOWERED_SPELL_RANGE);
     Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(_bot, nearbyEnemies, check);
     // DEADLOCK FIX: Use lock-free spatial grid instead of Cell::VisitGridObjects
-    Map* map = _bot->GetMap();    if (!map)
+    Map* map = _bot->GetMap();
+    if (!map)
         return {};
 
     DoubleBufferedSpatialGrid* spatialGrid = sSpatialGridManager.GetGrid(map);

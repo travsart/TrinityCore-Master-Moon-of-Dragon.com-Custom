@@ -39,7 +39,8 @@ public:
         ::std::any val = Get(ai);
         try {
             return ::std::any_cast<T>(val);
-        } catch (::std::bad_any_cast const&) {
+        } catch (::std::bad_any_cast const&)
+        {
             return T{};
         }
     }
@@ -71,7 +72,8 @@ public:
         try {
             T typedValue = ::std::any_cast<T>(value);
             SetTypedValue(ai, typedValue);
-        } catch (::std::bad_any_cast const&) {
+        } catch (::std::bad_any_cast const&)
+        {
             // Ignore invalid type casts
         }
     }

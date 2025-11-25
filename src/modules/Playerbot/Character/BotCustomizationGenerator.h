@@ -71,7 +71,8 @@ private:
     /**
      * @brief Get cache key for race/gender combination
      */
-    static uint64 GetCacheKey(uint8 race, uint8 gender) {
+    static uint64 GetCacheKey(uint8 race, uint8 gender)
+    {
         return (uint64(race) << 8) | uint64(gender);
     }
 

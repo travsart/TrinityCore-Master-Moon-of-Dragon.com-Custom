@@ -70,14 +70,16 @@ public:
         ::std::atomic<uint32> poolHits{0};
         ::std::atomic<uint32> poolMisses{0};
 
-        float GetHitRate() const {
+        float GetHitRate() const
+        {
             uint32 hits = poolHits.load();
             uint32 misses = poolMisses.load();
             uint32 total = hits + misses;
             return total > 0 ? static_cast<float>(hits) / total * 100.0f : 0.0f;
         }
 
-        float GetReuseRate() const {
+        float GetReuseRate() const
+        {
             uint32 reused = sessionsReused.load();
             uint32 created = sessionsCreated.load();
             uint32 total = reused + created;

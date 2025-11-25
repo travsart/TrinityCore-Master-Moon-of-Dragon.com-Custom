@@ -8,6 +8,7 @@
  */
 
 #include "FarmingCoordinator.h"
+#include "GameTime.h"
 #include "ProfessionManager.h"
 #include "GatheringManager.h"
 #include "../Core/Managers/GameSystemsManager.h"

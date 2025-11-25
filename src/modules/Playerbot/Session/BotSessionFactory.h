@@ -85,7 +85,8 @@ public:
         FactoryStats(FactoryStats const&) = delete;
         FactoryStats& operator=(FactoryStats const&) = delete;
 
-        float GetSuccessRate() const {
+        float GetSuccessRate() const
+        {
             uint32 total = sessionsCreated.load() + creationFailures.load();
             return total > 0 ? static_cast<float>(sessionsCreated.load()) / total * 100.0f : 100.0f;
         }

@@ -198,7 +198,8 @@ public:
         uint32 invalidations = 0;
         uint32 validationFailures = 0;  // Objects that failed IsInWorld() check
 
-        float GetHitRate() const {
+        float GetHitRate() const
+        {
             uint32 total = cacheHits + cacheMisses;
             return total > 0 ? (float)cacheHits / total : 0.0f;
         }

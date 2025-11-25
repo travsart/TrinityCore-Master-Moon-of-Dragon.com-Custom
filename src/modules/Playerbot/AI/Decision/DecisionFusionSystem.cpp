@@ -5,6 +5,9 @@
  */
 
 #include "DecisionFusionSystem.h"
+#include "GameTime.h"
+#include "SpellHistory.h"
+#include "../BehaviorPriorityManager.h"
 #include "BotAI.h"
 #include "BehaviorPriorityManager.h"
 #include "ActionPriorityQueue.h"
@@ -13,6 +16,7 @@
 #include "Combat/AdaptiveBehaviorManager.h"
 #include "Player.h"
 #include "Group.h"
+#include "ObjectAccessor.h"
 #include "Unit.h"
 #include "Log.h"
 #include "Config.h"
@@ -79,7 +83,7 @@ void DecisionFusionSystem::NormalizeWeights()
     }
 }
 
-::std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(BotAI* ai, CombatContext context)
+::std::vector<DecisionVote> DecisionFusionSystem::CollectVotes(::Playerbot::BotAI* ai, CombatContext context)
 {
     ::std::vector<DecisionVote> votes;
     votes.reserve(static_cast<size_t>(DecisionSource::MAX));
@@ -114,30 +118,26 @@ void DecisionFusionSystem::NormalizeWeights()
         switch (activePriority)
         {
 
-            case BehaviorPriority::COMBAT:
-            urgency = 1.0f; break;
-
-            case BehaviorPriority::FLEEING:   urgency = 0.95f; break;
-
-            case BehaviorPriority::CASTING:   urgency = 0.7f; break;
-
-            case BehaviorPriority::FOLLOW:
-            urgency = 0.5f; break;
-
-            case BehaviorPriority::MOVEMENT:  urgency = 0.4f; break;
-
-            case BehaviorPriority::GATHERING: urgency = 0.3f; break;
-
-            case BehaviorPriority::TRADING:   urgency = 0.2f; break;
-
-            case BehaviorPriority::SOCIAL:
-            urgency = 0.1f; break;
-
-            case BehaviorPriority::SOLO:
-            urgency = 0.1f; break;
-
+            case ::Playerbot::BehaviorPriority::COMBAT:
+                urgency = 1.0f; break;
+            case ::Playerbot::BehaviorPriority::FLEEING:
+                urgency = 0.95f; break;
+            case ::Playerbot::BehaviorPriority::CASTING:
+                urgency = 0.7f; break;
+            case ::Playerbot::BehaviorPriority::FOLLOW:
+                urgency = 0.5f; break;
+            case ::Playerbot::BehaviorPriority::MOVEMENT:
+                urgency = 0.4f; break;
+            case ::Playerbot::BehaviorPriority::GATHERING:
+                urgency = 0.3f; break;
+            case ::Playerbot::BehaviorPriority::TRADING:
+                urgency = 0.2f; break;
+            case ::Playerbot::BehaviorPriority::SOCIAL:
+                urgency = 0.1f; break;
+            case ::Playerbot::BehaviorPriority::SOLO:
+                urgency = 0.1f; break;
             default:
-            urgency = 0.0f; break;
+                urgency = 0.0f; break;
         }
 
         if (urgency > 0.0f)
@@ -173,7 +173,7 @@ void DecisionFusionSystem::NormalizeWeights()
     // ========================================================================
     if (auto priorityQueue = ai->GetActionPriorityQueue())
     {
-        DecisionVote vote = priorityQueue->GetVote(bot, ai->GetCurrentTarget(), context);
+        DecisionVote vote = priorityQueue->GetVote(bot, ai->GetTargetUnit(), context);
         if (vote.actionId != 0)
         {
 
@@ -192,10 +192,10 @@ void DecisionFusionSystem::NormalizeWeights()
     if (auto behaviorTree = ai->GetBehaviorTree())
     {
         // Tick the behavior tree to execute current frame
-        behaviorTree->Tick(bot, ai->GetCurrentTarget());
+        behaviorTree->Tick(bot, ai->GetTargetUnit());
 
         // Get vote from tree if it has a recommendation
-        DecisionVote vote = behaviorTree->GetVote(bot, ai->GetCurrentTarget(), context);
+        DecisionVote vote = behaviorTree->GetVote(bot, ai->GetTargetUnit(), context);
         if (vote.actionId != 0)
         {
 
@@ -233,97 +233,62 @@ void DecisionFusionSystem::NormalizeWeights()
     if (auto priorityQueue = ai->GetActionPriorityQueue())
     {
         // Get all available spells from ActionPriorityQueue
-        ::std::vector<uint32> candidateSpells = priorityQueue->GetPrioritizedSpells(bot, ai->GetCurrentTarget(), context);
+        ::std::vector<uint32> candidateSpells = priorityQueue->GetPrioritizedSpells(bot, ai->GetTargetUnit(), context);
 
         if (!candidateSpells.empty() && candidateSpells.size() <= 50) // Limit to top 50 for performance
         {
             // Determine bot role for scoring
-
             BotRole role = DetermineBotRole(bot);
 
             // Create scoring engine for current context and role
-
             ActionScoringEngine scorer(role, context);
 
             // Score all candidate spells using utility-based evaluation
-
             auto scores = scorer.ScoreActions(candidateSpells,
-
-                [&](ScoringCategory category, uint32 spellId) -> float
-
+                [this, bot, ai, &context](ScoringCategory category, uint32 spellId) -> float
                 {
                     // Category evaluator: returns 0.0-1.0 value for each category
-
-                    return EvaluateScoringCategory(category, bot, ai->GetCurrentTarget(), spellId, context);
-
+                    return EvaluateScoringCategory(category, bot, ai->GetTargetUnit(), spellId, context);
                 });
 
             // Get best action from scored list
-
             uint32 bestAction = scorer.GetBestAction(scores);
 
-
             if (bestAction != 0)
-
             {
                 // Find the score details for the best action
-
                 auto it = ::std::find_if(scores.begin(), scores.end(),
-
                     [bestAction](const ActionScore& s) { return s.actionId == bestAction; });
 
-
                 if (it != scores.end())
-
                 {
                     // Create vote with utility-based confidence
                     // Normalize total score to 0-1 confidence (typical scores: 0-500)
-
                     float confidence = ::std::min(it->totalScore / 500.0f, 1.0f);
 
                     // Urgency based on survival and group protection scores
-
                     float survivalScore = it->GetCategoryScore(ScoringCategory::SURVIVAL);
-
                     float protectionScore = it->GetCategoryScore(ScoringCategory::GROUP_PROTECTION);
-
                     float urgency = ::std::min((survivalScore + protectionScore) / 2.0f, 1.0f);
 
-
                     DecisionVote vote(
-
                         DecisionSource::WEIGHTING_SYSTEM,
-
                         bestAction,
-
-                        ai->GetCurrentTarget(),
-
+                        ai->GetTargetUnit(),
                         confidence,
-
                         urgency,
-
                         "ActionScoring: Utility-based selection (score: " + ::std::to_string(static_cast<int>(it->totalScore)) + ")"
-
                     );
-
 
                     votes.push_back(vote);
 
-
                     if (_debugLogging)
-
                     {
-
                         TC_LOG_DEBUG("playerbot", "ActionScoring: Selected spell {} with score {:.1f}",
-
                             bestAction, it->totalScore);
-
                         LogVote(vote, vote.CalculateWeightedScore(_systemWeights[static_cast<size_t>(DecisionSource::WEIGHTING_SYSTEM)]));
-
                     }
-
                 }
-
             }
         }
     }
@@ -580,7 +545,7 @@ BotRole DecisionFusionSystem::DetermineBotRole(Player* bot) const
 
     // Get player's class and spec
     Classes playerClass = static_cast<Classes>(bot->GetClass());
-    uint32 spec = bot->GetPrimarySpecialization());
+    uint32 spec = static_cast<uint32>(bot->GetPrimarySpecialization());
 
     // Determine role based on class and spec
     switch (playerClass)
@@ -692,11 +657,11 @@ float DecisionFusionSystem::EvaluateScoringCategory(
                 uint32 totalMembers = 0;
 
 
-                for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+                for (Group::MemberSlot const& slot : group->GetMemberSlots())
 
                 {
 
-                    if (Player* member = ref->GetSource())
+                    if (Player* member = ObjectAccessor::FindPlayer(slot.guid))
 
                     {
 
@@ -827,9 +792,8 @@ float DecisionFusionSystem::EvaluateScoringCategory(
 
             {
 
-                case CombatContext::RAID_MYTHIC:
-
                 case CombatContext::RAID_HEROIC:
+                case CombatContext::RAID_NORMAL:
 
                     return 0.8f; // High strategic importance in raids
 

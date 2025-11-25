@@ -58,13 +58,15 @@ struct CoordinationMetrics
     ::std::atomic<uint32> formationBreaks{0};
     ::std::atomic<uint32> communicationEvents{0};
 
-    void Reset() {
+    void Reset()
+    {
         coordinationEvents = 0; successfulCoordinations = 0; coordinationFailures = 0;
         averageResponseTime = 2000.0f; groupSynchronization = 0.9f;
         movementEfficiency = 0.85f; formationBreaks = 0; communicationEvents = 0;
     }
 
-    float GetCoordinationSuccessRate() const {
+    float GetCoordinationSuccessRate() const
+    {
         uint32 total = coordinationEvents.load();
         uint32 successful = successfulCoordinations.load();
         return total > 0 ? (float)successful / total : 0.0f;

@@ -131,7 +131,8 @@ void BotWorldSessionMgr::Shutdown()
             try {
                 TC_LOG_INFO("module.playerbot.session", "?? Logging out bot: {}", player->GetName());
             }
-            catch (...) {
+            catch (...)
+            {
                 TC_LOG_INFO("module.playerbot.session", "?? Logging out bot (name unavailable - use-after-free protection)");
             }
             session->LogoutPlayer(true);
@@ -276,7 +277,8 @@ void BotWorldSessionMgr::RemovePlayerBot(ObjectGuid playerGuid)
             try {
                 TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal: {}", session->GetPlayer()->GetName());
             }
-            catch (...) {
+            catch (...)
+            {
                 TC_LOG_INFO("module.playerbot.session", "?? Queuing bot for removal (name unavailable)");
             }
         }

@@ -596,7 +596,8 @@ protected:
         return false;
     }
 
-    bool HandleSoothingMist(const ::std::vector<Unit*>& group)    {
+    bool HandleSoothingMist(const ::std::vector<Unit*>& group)
+    {
         // If not channeling, start on lowest target
         if (!_soothingMistTracker.IsChanneling())
         {
@@ -792,7 +793,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
                     if (m && m->GetHealthPct() < 65.0f && !m->HasAura(ENVELOPING_MIST))
 
@@ -918,7 +920,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
                     if (m && (m->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE) ||
 
@@ -960,7 +963,8 @@ private:
 
                             bot::ai::Action("Cast Revival", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REVIVAL, bot)) {
+                                if (this->CanCastSpell(REVIVAL, bot))
+                                {
 
                                     this->CastSpell(REVIVAL, bot);
 
@@ -990,9 +994,11 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 30.0f && this->CanCastSpell(LIFE_COCOON, m)) {
+                                    if (m && m->GetHealthPct() < 30.0f && this->CanCastSpell(LIFE_COCOON, m))
+                                    {
 
                                         this->CastSpell(LIFE_COCOON, m);
 
@@ -1040,7 +1046,8 @@ private:
 
                             bot::ai::Action("Cast Yu'lon", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(INVOKE_YULON, bot)) {
+                                if (this->CanCastSpell(INVOKE_YULON, bot))
+                                {
 
                                     this->CastSpell(INVOKE_YULON, bot);
 
@@ -1078,7 +1085,8 @@ private:
 
                                 Unit* healTarget = this->SelectHealingTarget(this->GetGroupMembers());
 
-                                if (healTarget && this->CanCastSpell(ESSENCE_FONT, healTarget)) {
+                                if (healTarget && this->CanCastSpell(ESSENCE_FONT, healTarget))
+                                {
 
                                     this->CastSpell(ESSENCE_FONT, healTarget);
 
@@ -1120,7 +1128,8 @@ private:
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
-                                if (target && this->CanCastSpell(RENEWING_MIST, target)) {
+                                if (target && this->CanCastSpell(RENEWING_MIST, target))
+                                {
 
                                     this->CastSpell(RENEWING_MIST, target);
 
@@ -1148,11 +1157,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 65.0f && !m->HasAura(ENVELOPING_MIST)) {
+                                    if (m && m->GetHealthPct() < 65.0f && !m->HasAura(ENVELOPING_MIST))
+                                    {
 
-                                        if (this->CanCastSpell(ENVELOPING_MIST, m)) {
+                                        if (this->CanCastSpell(ENVELOPING_MIST, m))
+                                        {
 
                                             this->CastSpell(ENVELOPING_MIST, m);
 
@@ -1202,7 +1214,8 @@ private:
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
-                                if (target && this->CanCastSpell(VIVIFY, target)) {
+                                if (target && this->CanCastSpell(VIVIFY, target))
+                                {
 
                                     this->CastSpell(VIVIFY, target);
 
@@ -1228,7 +1241,8 @@ private:
 
                                 Unit* target = this->SelectHealingTarget(this->GetGroupMembers());
 
-                                if (target && this->CanCastSpell(SOOTHING_MIST, target)) {
+                                if (target && this->CanCastSpell(SOOTHING_MIST, target))
+                                {
 
                                     this->CastSpell(SOOTHING_MIST, target);
 

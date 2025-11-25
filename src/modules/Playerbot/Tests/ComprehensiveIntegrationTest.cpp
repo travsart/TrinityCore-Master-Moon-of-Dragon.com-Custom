@@ -34,6 +34,7 @@
  */
 
 #include "catch2/catch_test_macros.hpp"
+#include "GameTime.h"
 #include "AI/BehaviorTree/BehaviorTree.h"
 #include "AI/BehaviorTree/BehaviorTreeFactory.h"
 #include "AI/HybridAIController.h"

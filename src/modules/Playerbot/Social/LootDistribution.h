@@ -240,7 +240,8 @@ struct LootMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         totalRollsInitiated = 0; totalRollsCompleted = 0; needRollsWon = 0;
         greedRollsWon = 0; itemsPassed = 0; rollTimeouts = 0;
         averageRollTime = 30000.0f; decisionAccuracy = 0.9f; playerSatisfaction = 0.8f;

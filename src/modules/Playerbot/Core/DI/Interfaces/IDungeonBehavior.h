@@ -45,14 +45,16 @@ struct DungeonMetrics
     ::std::atomic<uint32> totalHealingDone{0};
     ::std::chrono::steady_clock::time_point lastUpdate;
 
-    void Reset() {
+    void Reset()
+    {
         dungeonsCompleted = 0; dungeonsAttempted = 0; encountersCompleted = 0;
         encounterWipes = 0; averageCompletionTime = 2700000.0f; successRate = 0.85f;
         encounterSuccessRate = 0.9f; totalDamageDealt = 0; totalHealingDone = 0;
         lastUpdate = ::std::chrono::steady_clock::now();
     }
 
-    float GetCompletionRate() const {
+    float GetCompletionRate() const
+    {
         uint32 attempted = dungeonsAttempted.load();
         uint32 completed = dungeonsCompleted.load();
         return attempted > 0 ? (float)completed / attempted : 0.0f;

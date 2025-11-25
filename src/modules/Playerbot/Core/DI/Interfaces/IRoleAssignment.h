@@ -39,18 +39,51 @@ struct RolePerformance
     std::atomic<float> averageEffectiveness{0.5f};
     std::chrono::steady_clock::time_point lastPerformanceUpdate;
 
-    void Reset() {
+    // Default constructor
+    RolePerformance() = default;
+
+    // Copy constructor (explicit due to atomic members)
+    RolePerformance(const RolePerformance& other)
+        : assignmentsAccepted(other.assignmentsAccepted.load())
+        , assignmentsDeclined(other.assignmentsDeclined.load())
+        , performanceRating(other.performanceRating.load())
+        , successfulEncounters(other.successfulEncounters.load())
+        , failedEncounters(other.failedEncounters.load())
+        , averageEffectiveness(other.averageEffectiveness.load())
+        , lastPerformanceUpdate(other.lastPerformanceUpdate)
+    {}
+
+    // Copy assignment operator (explicit due to atomic members)
+    RolePerformance& operator=(const RolePerformance& other)
+    {
+        if (this != &other)
+        {
+            assignmentsAccepted.store(other.assignmentsAccepted.load());
+            assignmentsDeclined.store(other.assignmentsDeclined.load());
+            performanceRating.store(other.performanceRating.load());
+            successfulEncounters.store(other.successfulEncounters.load());
+            failedEncounters.store(other.failedEncounters.load());
+            averageEffectiveness.store(other.averageEffectiveness.load());
+            lastPerformanceUpdate = other.lastPerformanceUpdate;
+        }
+        return *this;
+    }
+
+    void Reset()
+    {
         assignmentsAccepted = 0; assignmentsDeclined = 0; performanceRating = 5.0f;
         successfulEncounters = 0; failedEncounters = 0; averageEffectiveness = 0.5f;
         lastPerformanceUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetAcceptanceRate() const {
+    float GetAcceptanceRate() const
+    {
         uint32 total = assignmentsAccepted.load() + assignmentsDeclined.load();
         return total > 0 ? (float)assignmentsAccepted.load() / total : 1.0f;
     }
 
-    float GetSuccessRate() const {
+    float GetSuccessRate() const
+    {
         uint32 total = successfulEncounters.load() + failedEncounters.load();
         return total > 0 ? (float)successfulEncounters.load() / total : 0.5f;
     }
@@ -67,13 +100,45 @@ struct RoleStatistics
     std::atomic<float> roleDistributionEfficiency{0.8f};
     std::chrono::steady_clock::time_point lastStatsUpdate;
 
-    void Reset() {
+    // Default constructor
+    RoleStatistics() = default;
+
+    // Copy constructor (explicit due to atomic members)
+    RoleStatistics(const RoleStatistics& other)
+        : totalAssignments(other.totalAssignments.load())
+        , successfulAssignments(other.successfulAssignments.load())
+        , roleConflicts(other.roleConflicts.load())
+        , emergencyFills(other.emergencyFills.load())
+        , averageCompositionScore(other.averageCompositionScore.load())
+        , roleDistributionEfficiency(other.roleDistributionEfficiency.load())
+        , lastStatsUpdate(other.lastStatsUpdate)
+    {}
+
+    // Copy assignment operator (explicit due to atomic members)
+    RoleStatistics& operator=(const RoleStatistics& other)
+    {
+        if (this != &other)
+        {
+            totalAssignments.store(other.totalAssignments.load());
+            successfulAssignments.store(other.successfulAssignments.load());
+            roleConflicts.store(other.roleConflicts.load());
+            emergencyFills.store(other.emergencyFills.load());
+            averageCompositionScore.store(other.averageCompositionScore.load());
+            roleDistributionEfficiency.store(other.roleDistributionEfficiency.load());
+            lastStatsUpdate = other.lastStatsUpdate;
+        }
+        return *this;
+    }
+
+    void Reset()
+    {
         totalAssignments = 0; successfulAssignments = 0; roleConflicts = 0;
         emergencyFills = 0; averageCompositionScore = 5.0f; roleDistributionEfficiency = 0.8f;
         lastStatsUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetSuccessRate() const {
+    float GetSuccessRate() const
+    {
         uint32 total = totalAssignments.load();
         uint32 successful = successfulAssignments.load();
         return total > 0 ? (float)successful / total : 0.0f;

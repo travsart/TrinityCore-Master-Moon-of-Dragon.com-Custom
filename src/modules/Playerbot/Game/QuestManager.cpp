@@ -8,6 +8,7 @@
  */
 
 #include "QuestManager.h"
+#include "GameTime.h"
 #include "BotAI.h"
 #include "Player.h"
 #include "Creature.h"

@@ -258,7 +258,8 @@ public:
      * Example evaluator:
      * @code
      * [this](ScoringCategory cat) -> float {
-     *     switch (cat) {
+     *     switch (cat)
+     {
      *         case ScoringCategory::SURVIVAL:
 
      *

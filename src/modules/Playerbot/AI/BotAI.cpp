@@ -11,6 +11,7 @@
  */
 
 #include "BotAI.h"
+#include "GameTime.h"
 #include "Core/Managers/GameSystemsManager.h"
 #include "Advanced/TacticalCoordinator.h"
 #include "Strategy/Strategy.h"
@@ -127,7 +128,8 @@ BotAI::BotAI(Player* bot) : _bot(bot)
                 TC_LOG_INFO("playerbot", "Bot {} group validation: Found offline player {} - will check logout time", _bot->GetName(), member->GetName());
                 break;
             }
-        }// If we found an offline player, check their logout time via database query
+        }
+        // If we found an offline player, check their logout time via database query
         if (!hasValidPlayer && !playerGuidToCheck.IsEmpty())
         {
             // Query the characters database for logout_time
@@ -165,7 +167,8 @@ BotAI::BotAI(Player* bot) : _bot(bot)
             _bot->RemoveFromGroup();
             _aiState = BotAIState::SOLO; // Explicitly set to SOLO
         }
-    }TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetGUID().ToString());
+    }
+    TC_LOG_DEBUG("playerbots.ai", "BotAI created for bot {}", _bot->GetGUID().ToString());
 }
 
 BotAI::~BotAI()
@@ -349,7 +352,8 @@ void BotAI::UpdateAI(uint32 diff)
                 // Catch any exceptions during member access (e.g., destroyed objects)
 TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _bot->GetName());
                 continue;}
-        }_objectCache.SetGroupLeader(leader);
+        }
+        _objectCache.SetGroupLeader(leader);
         _objectCache.SetGroupMembers(members);// Follow target is usually the leader (only if leader is online)
         if (leader)
             _objectCache.SetFollowTarget(leader);
@@ -358,7 +362,8 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         _objectCache.SetGroupLeader(nullptr);
         _objectCache.SetGroupMembers({});
         _objectCache.SetFollowTarget(nullptr);
-    }// ========================================================================// PHASE 1: CORE BEHAVIORS - Always run every frame
+    }
+    // ========================================================================// PHASE 1: CORE BEHAVIORS - Always run every frame
     // ========================================================================
 
     // Update internal values and caches
@@ -399,7 +404,8 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         // ClassAI handles rotation, cooldowns, targeting
         // But NOT movement - that's already handled by strategies
         OnCombatUpdate(diff);
-    }// ========================================================================
+    }
+    // ========================================================================
     // PHASE 4: GROUP INVITATION PROCESSING - Critical for joining groups
     // ========================================================================
     // Process pending group invitations
@@ -489,7 +495,8 @@ TC_LOG_ERROR("playerbot", "Exception while accessing group member for bot {}", _
         }
 
         OnGroupJoined(_bot->GetGroup());
-    }// FIX #2: Handle bot leaving group
+    }
+    // FIX #2: Handle bot leaving group
     else if (_wasInGroup && !isInGroup)
     {
         TC_LOG_INFO("playerbot", "Bot {} left group, calling OnGroupLeft()", _bot->GetName());
@@ -629,10 +636,12 @@ void BotAI::UpdateStrategies(uint32 diff)
         {
             if (shouldLogStrategy)TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateFollowBehavior for bot {}", _bot->GetName());
             followBehavior->UpdateFollowBehavior(this, diff);
-        }else
+        }
+        else
         {
             // Other strategies can use their normal update
-            if (shouldLogStrategy){
+            if (shouldLogStrategy)
+            {
                 TC_LOG_ERROR("module.playerbot", "🚀 CALLING UpdateBehavior for bot {} strategy '{}'",_bot->GetName(), selectedStrategy->GetName());
             }
             selectedStrategy->UpdateBehavior(this, diff);
@@ -675,7 +684,8 @@ void BotAI::UpdateMovement(uint32 diff)
 // ============================================================================
 // COMBAT STATE MANAGEMENT// ============================================================================
 
-void BotAI::UpdateCombatState(uint32 diff){
+void BotAI::UpdateCombatState(uint32 diff)
+{
     bool wasInCombat = IsInCombat();
     bool isInCombat = _bot && _bot->IsInCombat();// DIAGNOSTIC: Log combat state every 2 seconds
     static uint32 lastCombatStateLog = 0;
@@ -715,7 +725,8 @@ void BotAI::UpdateCombatState(uint32 diff){
             {
                 TC_LOG_ERROR("playerbot.nullcheck", "Null pointer: target in method GetName");
                 return;
-            }TC_LOG_ERROR("module.playerbot", "🎯 Target from GetVictim(): {}", target ? target->GetName() : "null");
+            }
+            TC_LOG_ERROR("module.playerbot", "🎯 Target from GetVictim(): {}", target ? target->GetName() : "null");
         }
 
         if (target)
@@ -1212,7 +1223,8 @@ void BotAI::HandleGroupChange()
     {
         OnGroupLeft();
     }
-}// ============================================================================
+}
+// ============================================================================
 // STRATEGY MANAGEMENT
 // ============================================================================
 
@@ -1227,7 +1239,8 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
     _strategies[name] = std::move(strategy);
 
     // Auto-register with priority manager based on strategy name
-    if (_priorityManager){
+    if (_priorityManager)
+    {
         BehaviorPriority priority = BehaviorPriority::SOLO; // Default
         bool exclusive = false;
 
@@ -1246,12 +1259,14 @@ void BotAI::AddStrategy(std::unique_ptr<Strategy> strategy)
         }
         else if (name.find("cast") != std::string::npos)
         {priority = BehaviorPriority::CASTING;
-        }else if (name == "quest")
+        }
+        else if (name == "quest")
         {
             // Quest strategy gets FOLLOW priority (50) to ensure it runs for solo bots
             // This allows quests to take priority over gathering/trading/social
             priority = BehaviorPriority::FOLLOW;
-        }else if (name == "loot")
+        }
+        else if (name == "loot")
         {// Loot strategy gets MOVEMENT priority (45) - slightly lower than quest
             priority = BehaviorPriority::MOVEMENT;
         }

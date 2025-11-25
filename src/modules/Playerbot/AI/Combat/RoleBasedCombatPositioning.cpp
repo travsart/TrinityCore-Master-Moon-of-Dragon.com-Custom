@@ -8,6 +8,7 @@
  */
 
 #include "BotThreatManager.h"
+#include "GameTime.h"
 #include "RoleBasedCombatPositioning.h"
 #include "../ClassAI/PositionStrategyBase.h"
 #include "Player.h"

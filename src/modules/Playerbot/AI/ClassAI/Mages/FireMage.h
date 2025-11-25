@@ -536,7 +536,8 @@ private:
                         Sequence("Cast Combustion", {
                             Condition("Not active", [this](Player*, Unit*) { return !this->_combustionActive; }),
                             bot::ai::Action("Combustion", [this](Player* bot, Unit*) -> NodeStatus {
-                                if (this->CanCastSpell(FIRE_COMBUSTION, bot)) {
+                                if (this->CanCastSpell(FIRE_COMBUSTION, bot))
+                                {
                                     this->CastSpell(FIRE_COMBUSTION, bot);
                                     this->_combustionActive = true;
                                     this->_combustionEndTime = GameTime::GetGameTimeMS() + 10000;
@@ -550,7 +551,8 @@ private:
                 Sequence("Hot Streak", {
                     Condition("Has proc", [this](Player*, Unit* target) { return target && this->_hotStreakTracker.IsHotStreakActive(); }),
                     bot::ai::Action("Pyroblast", [this](Player*, Unit* target) -> NodeStatus {
-                        if (this->CanCastSpell(FIRE_PYROBLAST, target)) {
+                        if (this->CanCastSpell(FIRE_PYROBLAST, target))
+                        {
                             this->CastSpell(FIRE_PYROBLAST, target);
                             this->_hotStreakTracker.ConsumeHotStreak();
                             return NodeStatus::SUCCESS;
@@ -561,7 +563,8 @@ private:
                 Sequence("Fire Blast", {
                     Condition("Has charge", [this](Player*, Unit* target) { return target && this->_fireBlastTracker.HasCharge(); }),
                     bot::ai::Action("Fire Blast", [this](Player*, Unit* target) -> NodeStatus {
-                        if (this->_fireBlastTracker.HasCharge()) {
+                        if (this->_fireBlastTracker.HasCharge())
+                        {
                             this->CastSpell(FIRE_FIREBLAST, target);
                             this->_fireBlastTracker.ConsumeCharge();
                             return NodeStatus::SUCCESS;
@@ -572,7 +575,8 @@ private:
                 Sequence("Fireball", {
                     Condition("Has target", [this](Player*, Unit* target) { return target; }),
                     bot::ai::Action("Fireball", [this](Player*, Unit* target) -> NodeStatus {
-                        if (this->CanCastSpell(FIRE_FIREBALL, target)) {
+                        if (this->CanCastSpell(FIRE_FIREBALL, target))
+                        {
                             this->CastSpell(FIRE_FIREBALL, target);
                             return NodeStatus::SUCCESS;
                         }

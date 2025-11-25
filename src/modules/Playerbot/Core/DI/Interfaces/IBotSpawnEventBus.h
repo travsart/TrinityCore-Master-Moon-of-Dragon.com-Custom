@@ -44,7 +44,8 @@ public:
         uint64 totalProcessingTimeUs;
         uint32 queuedEvents;
 
-        float GetAverageProcessingTimeUs() const {
+        float GetAverageProcessingTimeUs() const
+        {
             return eventsProcessed > 0 ? static_cast<float>(totalProcessingTimeUs) / eventsProcessed : 0.0f;
         }
     };

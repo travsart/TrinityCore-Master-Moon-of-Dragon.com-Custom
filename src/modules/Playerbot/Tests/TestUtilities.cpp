@@ -8,6 +8,7 @@
  */
 
 #include "TestUtilities.h"
+#include "GameTime.h"
 #include "Log.h"
 #include <random>
 #include <thread>

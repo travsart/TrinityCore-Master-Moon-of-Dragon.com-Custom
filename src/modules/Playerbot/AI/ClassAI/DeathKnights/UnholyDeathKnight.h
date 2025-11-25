@@ -115,21 +115,25 @@ struct UnholyRuneRunicPowerResource
     uint32 maxRunicPower{100};
 
     bool available{true};
-    bool Consume(uint32 runesCost) {
+    bool Consume(uint32 runesCost)
+    {
         uint32 totalRunes = bloodRunes + frostRunes + unholyRunes;
         if (totalRunes >= runesCost) {
             uint32 remaining = runesCost;
-            if (bloodRunes > 0) {
+            if (bloodRunes > 0)
+            {
                 uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
-            if (remaining > 0 && frostRunes > 0) {
+            if (remaining > 0 && frostRunes > 0)
+            {
                 uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
-            if (remaining > 0 && unholyRunes > 0) {
+            if (remaining > 0 && unholyRunes > 0)
+            {
                 uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
@@ -138,7 +142,8 @@ struct UnholyRuneRunicPowerResource
         }
         return false;
     }
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -152,7 +157,8 @@ struct UnholyRuneRunicPowerResource
     }
 
 
-    void Initialize(Player* bot) {
+    void Initialize(Player* bot)
+    {
         bloodRunes = 2;
         frostRunes = 2;
         unholyRunes = 2;
@@ -200,7 +206,8 @@ public:
 
         // Sync with actual aura
         if (Aura* aura = target->GetAura(FESTERING_WOUND))
-            _trackedTargets[guid] = aura->GetStackAmount();        else
+            _trackedTargets[guid] = aura->GetStackAmount();
+            else
             _trackedTargets.erase(guid);
     }
 
@@ -300,7 +307,8 @@ public:
         InitializeUnholyMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -336,7 +344,8 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 rp = this->_resource.runicPower;
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
         uint32 wounds = _woundTracker.GetWoundCount(targetGuid);        // Priority 1: Apply/maintain Virulent Plague
         if (!target->HasAura(VIRULENT_PLAGUE) && this->CanCastSpell(OUTBREAK, target))
@@ -416,7 +425,8 @@ protected:
         }
     }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
+    {
         uint32 rp = this->_resource.runicPower;
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
@@ -463,7 +473,8 @@ protected:
 
     void HandleCooldowns(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 wounds = _woundTracker.GetWoundCount(targetGuid);
         uint32 totalRunes = this->_resource.bloodRunes + this->_resource.frostRunes + this->_resource.unholyRunes;
 
         // Apocalypse (burst wounds + summon ghouls)
@@ -628,7 +639,8 @@ private:
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
-        if (queue) {
+        if (queue)
+        {
             queue->RegisterSpell(UNHOLY_ANTIMAGIC_SHELL, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
             queue->AddCondition(UNHOLY_ANTIMAGIC_SHELL, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
 
@@ -649,7 +661,8 @@ private:
         }
 
         auto* tree = ai->GetBehaviorTree();
-        if (tree) {
+        if (tree)
+        {
             auto root = Selector("Unholy DK", {
                 Sequence("Burst", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
                     bot::ai::Action("Army/Apocalypse", [this](Player* bot, Unit*) { Unit* t = bot->GetVictim(); if (t && this->CanCastSpell(UNHOLY_ARMY_OF_DEAD, bot)) { this->CastSpell(UNHOLY_ARMY_OF_DEAD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),

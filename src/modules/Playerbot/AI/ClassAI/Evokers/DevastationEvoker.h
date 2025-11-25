@@ -90,7 +90,8 @@ struct DevastationEssence
     uint32 maxEssence{5};
     bool available{true};
 
-    bool Consume(uint32 cost) {
+    bool Consume(uint32 cost)
+    {
         if (essence >= cost) {
             essence -= cost;
             return true;
@@ -98,7 +99,8 @@ struct DevastationEssence
         return false;
     }
 
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Passive essence regeneration every 5 seconds
         available = true;
     }
@@ -106,8 +108,10 @@ struct DevastationEssence
     [[nodiscard]] uint32 GetAvailable() const { return essence; }
     [[nodiscard]] uint32 GetMax() const { return maxEssence; }
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             essence = 0;
             maxEssence = 5; // Devastation has 5 max essence
         }
@@ -613,7 +617,8 @@ protected:
                                 return bot->GetHealthPct() < 40.0f;
                             }),
                             bot::ai::Action("Cast Obsidian Scales", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(OBSIDIAN_SCALES, bot)) {
+                                if (this->CanCastSpell(OBSIDIAN_SCALES, bot))
+                                {
                                     this->CastSpell(OBSIDIAN_SCALES, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -622,7 +627,8 @@ protected:
                         }),
                         Sequence("Renewing Blaze", {
                             bot::ai::Action("Cast Renewing Blaze", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(RENEWING_BLAZE, bot)) {
+                                if (this->CanCastSpell(RENEWING_BLAZE, bot))
+                                {
                                     this->CastSpell(RENEWING_BLAZE, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -646,7 +652,8 @@ protected:
                                 return !this->_dragonrageTracker.IsActive();
                             }),
                             bot::ai::Action("Cast Dragonrage", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(DRAGONRAGE, bot)) {
+                                if (this->CanCastSpell(DRAGONRAGE, bot))
+                                {
                                     this->CastSpell(DRAGONRAGE, bot);
                                     this->_dragonrageTracker.Activate();
                                     return NodeStatus::SUCCESS;
@@ -669,7 +676,8 @@ protected:
                         Sequence("Shattering Star", {
                             bot::ai::Action("Cast Shattering Star", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(SHATTERING_STAR, target)) {
+                                if (target && this->CanCastSpell(SHATTERING_STAR, target))
+                                {
                                     this->CastSpell(SHATTERING_STAR, target);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -682,7 +690,8 @@ protected:
                             }),
                             bot::ai::Action("Cast Eternity's Surge", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(ETERNITY_SURGE, target)) {
+                                if (target && this->CanCastSpell(ETERNITY_SURGE, target))
+                                {
                                     this->StartEmpoweredSpell(ETERNITY_SURGE, EmpowerLevel::RANK_3, target);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -695,7 +704,8 @@ protected:
                             }),
                             bot::ai::Action("Cast Disintegrate", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(DISINTEGRATE, target)) {
+                                if (target && this->CanCastSpell(DISINTEGRATE, target))
+                                {
                                     this->CastSpell(DISINTEGRATE, target);
                                     this->ConsumeEssence(3);
                                     return NodeStatus::SUCCESS;
@@ -718,7 +728,8 @@ protected:
                         Sequence("Azure Strike", {
                             bot::ai::Action("Cast Azure Strike", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(AZURE_STRIKE, target)) {
+                                if (target && this->CanCastSpell(AZURE_STRIKE, target))
+                                {
                                     this->CastSpell(AZURE_STRIKE, target);
                                     this->GenerateEssence(2);
                                     return NodeStatus::SUCCESS;
@@ -729,7 +740,8 @@ protected:
                         Sequence("Living Flame", {
                             bot::ai::Action("Cast Living Flame", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(LIVING_FLAME, target)) {
+                                if (target && this->CanCastSpell(LIVING_FLAME, target))
+                                {
                                     this->CastSpell(LIVING_FLAME, target);
                                     this->GenerateEssence(1);
                                     return NodeStatus::SUCCESS;

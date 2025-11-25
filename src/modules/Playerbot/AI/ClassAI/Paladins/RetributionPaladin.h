@@ -86,7 +86,8 @@ public:
     // CORE ROTATION - Only Retribution-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsHostileTo(this->GetBot()))
             return;
 

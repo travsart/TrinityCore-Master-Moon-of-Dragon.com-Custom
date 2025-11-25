@@ -109,22 +109,26 @@ struct RuneRunicPowerResource
     uint32 maxRunicPower{125};
     bool available{true};
 
-    bool Consume(uint32 runesCost) {
+    bool Consume(uint32 runesCost)
+    {
         uint32 totalRunes = bloodRunes + frostRunes + unholyRunes;
         if (totalRunes >= runesCost) {
             // Consume runes in order: Blood -> Frost -> Unholy
             uint32 remaining = runesCost;
-            if (bloodRunes > 0) {
+            if (bloodRunes > 0)
+            {
                 uint32 toConsume = ::std::min(bloodRunes, remaining);
                 bloodRunes -= toConsume;
                 remaining -= toConsume;
             }
-            if (remaining > 0 && frostRunes > 0) {
+            if (remaining > 0 && frostRunes > 0)
+            {
                 uint32 toConsume = ::std::min(frostRunes, remaining);
                 frostRunes -= toConsume;
                 remaining -= toConsume;
             }
-            if (remaining > 0 && unholyRunes > 0) {
+            if (remaining > 0 && unholyRunes > 0)
+            {
                 uint32 toConsume = ::std::min(unholyRunes, remaining);
                 unholyRunes -= toConsume;
                 remaining -= toConsume;
@@ -135,14 +139,16 @@ struct RuneRunicPowerResource
         return false;
     }
 
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Runes regenerate over time (10 seconds per rune in WoW)
         // This is a simplified implementation
         static uint32 regenTimer = 0;
         regenTimer += diff;
         if (regenTimer >= 10000) { // 10 seconds
             uint32 totalRunes = bloodRunes + frostRunes + unholyRunes;
-            if (totalRunes < 6) {
+            if (totalRunes < 6)
+            {
                 // Regenerate one rune
                 if (bloodRunes < 2) bloodRunes++;
                 else if (frostRunes < 2) frostRunes++;
@@ -161,7 +167,8 @@ struct RuneRunicPowerResource
         return 6; // Max 6 runes (2 blood + 2 frost + 2 unholy)
     }
 
-    void Initialize(Player* bot) {
+    void Initialize(Player* bot)
+    {
         bloodRunes = 2;
         frostRunes = 2;
         unholyRunes = 2;
@@ -246,7 +253,8 @@ public:
         InitializeBloodMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -582,7 +590,8 @@ private:
         if (!ai) return;
 
         auto* queue = ai->GetActionPriorityQueue();
-        if (queue) {
+        if (queue)
+        {
             queue->RegisterSpell(VAMPIRIC_BLOOD, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
             queue->AddCondition(VAMPIRIC_BLOOD, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
 
@@ -600,7 +609,8 @@ private:
         }
 
         auto* tree = ai->GetBehaviorTree();
-        if (tree) {
+        if (tree)
+        {
             auto root = Selector("Blood DK Tank", {
                 Sequence("Emergency", { Condition("HP < 40%", [](Player* bot, Unit* target) { return bot && bot->GetHealthPct() < 40.0f; }),
                     bot::ai::Action("Vampiric Blood", [this](Player* bot, Unit*) { if (this->CanCastSpell(VAMPIRIC_BLOOD, bot)) { this->CastSpell(VAMPIRIC_BLOOD, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),

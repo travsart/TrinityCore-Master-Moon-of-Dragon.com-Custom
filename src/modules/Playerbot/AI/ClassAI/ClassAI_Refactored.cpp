@@ -11,6 +11,7 @@
  */
 
 #include "ClassAI.h"
+#include "GameTime.h"
 #include "ActionPriority.h"
 #include "CooldownManager.h"
 #include "ResourceManager.h"
@@ -43,7 +44,8 @@ ClassAI::ClassAI(Player* bot) : BotAI(bot),
     // Initialize component managers for class-specific mechanics
     _actionQueue = ::std::make_unique<ActionPriorityQueue>();
     _cooldownManager = ::std::make_unique<CooldownManager>();
-    _resourceManager = ::std::make_unique<ResourceManager>(bot);    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
+    _resourceManager = ::std::make_unique<ResourceManager>(bot);
+    TC_LOG_DEBUG("playerbot.classai", "ClassAI created for bot {}",
                  bot ? bot->GetName() : "null");
 }
 
@@ -103,11 +105,13 @@ void ClassAI::OnCombatUpdate(uint32 diff)
 // COMBAT STATE MANAGEMENT
 // ============================================================================
 
-void ClassAI::OnCombatStart(::Unit* target){
+void ClassAI::OnCombatStart(::Unit* target)
+{
     // Called by BotAI when entering combat
     _inCombat = true;
     _combatTime = 0;
-    _currentCombatTarget = target;    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
+    _currentCombatTarget = target;
+    TC_LOG_DEBUG("playerbot.classai", "Bot {} entering combat with {}",
                  GetBot()->GetName(), target ? target->GetName() : "unknown");
 
     // Let BotAI handle base combat start logic

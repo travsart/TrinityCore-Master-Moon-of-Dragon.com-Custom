@@ -76,14 +76,16 @@ struct TradeMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         tradesInitiated = 0; tradesCompleted = 0; tradesCancelled = 0;
         vendorTransactions = 0; repairTransactions = 0; averageTradeValue = 1000.0f;
         tradeSuccessRate = 0.8f; totalGoldTraded = 0; totalItemsTraded = 0;
         lastUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetCompletionRate() const {
+    float GetCompletionRate() const
+    {
         uint32 initiated = tradesInitiated.load();
         uint32 completed = tradesCompleted.load();
         return initiated > 0 ? (float)completed / initiated : 0.0f;

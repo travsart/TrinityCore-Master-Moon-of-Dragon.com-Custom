@@ -89,7 +89,8 @@ public:
     // CORE ROTATION - Only Protection-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
@@ -244,7 +245,8 @@ protected:
     // TANK-SPECIFIC OVERRIDES
     // ========================================================================
 
-    bool ShouldUseTaunt(::Unit* target)    {
+    bool ShouldUseTaunt(::Unit* target)
+    {
         // Use unified ThreatAssistant service (Phase 5C integration)
         // Eliminates duplicated taunt logic
         return !bot::ai::ThreatAssistant::IsTargetOnTank(this->GetBot(), target);
@@ -420,7 +422,8 @@ protected:
     {
         Player* bot = this->GetBot();
 
-        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasShieldEquipped = offHand &&
+        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        _hasShieldEquipped = offHand &&
 
                            offHand->GetTemplate() &&
 
@@ -480,7 +483,8 @@ protected:
 
             return false;
 
-        auto it = _sunderStacks.find(target->GetGUID());        return it != _sunderStacks.end() && it->second >= 5;
+        auto it = _sunderStacks.find(target->GetGUID());
+        return it != _sunderStacks.end() && it->second >= 5;
     }
 
     bool ShouldUseAvatar() const

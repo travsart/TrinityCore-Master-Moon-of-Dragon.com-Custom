@@ -112,7 +112,8 @@ struct ManaSoulShardResourceDestro
 
     bool available{true};
 
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
             mana -= manaCost;
             return true;
@@ -120,8 +121,10 @@ struct ManaSoulShardResourceDestro
         return false;
     }
 
-    void Regenerate(uint32 diff) {
-        if (mana < maxMana) {
+    void Regenerate(uint32 diff)
+    {
+        if (mana < maxMana)
+        {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
             mana = ::std::min(mana + regenAmount, maxMana);
         }
@@ -131,8 +134,10 @@ struct ManaSoulShardResourceDestro
     [[nodiscard]] uint32 GetAvailable() const { return mana; }
     [[nodiscard]] uint32 GetMax() const { return maxMana; }
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
@@ -310,7 +315,8 @@ public:
 
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 
         // Priority 1: Use Summon Infernal (major CD)
@@ -406,7 +412,8 @@ public:
 
     void ExecuteCleaveRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 shards = this->_resource.soulShards;
 
         // Priority 1: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
@@ -463,7 +470,8 @@ public:
         }
     }
 
-    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)    {
+    void ExecuteAoERotation(::Unit* target, uint32 enemyCount)
+    {
         uint32 shards = this->_resource.soulShards;
 
         // Priority 1: Summon Infernal
@@ -500,7 +508,8 @@ public:
         // Priority 5: Havoc on secondary target
         if (!_havocTracker.IsActive() && this->CanCastSpell(HAVOC, target))
         {
-            this->CastSpell(HAVOC, target);            _havocTracker.ApplyHavoc(target->GetGUID());
+            this->CastSpell(HAVOC, target);
+            _havocTracker.ApplyHavoc(target->GetGUID());
             return;
         }
 
@@ -583,7 +592,8 @@ private:
         if (this->GetBot())
         {
             if (Aura* aura = this->GetBot()->GetAura(BACKDRAFT_BUFF))
-                _backdraftStacks = aura->GetStackAmount();            else
+                _backdraftStacks = aura->GetStackAmount();
+                else
                 _backdraftStacks = 0;
         }
 

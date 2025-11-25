@@ -59,7 +59,8 @@ namespace StateMachine
  * initSM->Update(diff); // Advances through states
  *
  * // Check if ready
- * if (initSM->IsReady()) {
+ * if (initSM->IsReady())
+ {
  *     // Bot fully initialized, can process commands
  * }
  * @endcode

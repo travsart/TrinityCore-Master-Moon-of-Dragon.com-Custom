@@ -35,6 +35,7 @@
 #include <cmath>
 
 #include "BotSpawner.h"
+#include "GameTime.h"
 #include "DatabaseEnv.h"
 #include "CharacterDatabase.h"
 #include "BotSessionMgr.h"
@@ -456,7 +457,8 @@ CharacterDatabasePreparedStatement* BotSpawner::GetSafePreparedStatement(Charact
 
     // Use PlayerbotCharacterDBInterface for safe statement access with sync/async routing
     CharacterDatabasePreparedStatement* stmt = sPlayerbotCharDB->GetPreparedStatement(statementId);
-    if (!stmt) {
+    if (!stmt)
+    {
         TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafePreparedStatement: Failed to get prepared statement {} (index: {})",
                      statementName, static_cast<uint32>(statementId));
         return nullptr;
@@ -474,7 +476,8 @@ LoginDatabasePreparedStatement* BotSpawner::GetSafeLoginPreparedStatement(LoginD
     }
 
     LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(statementId);
-    if (!stmt) {
+    if (!stmt)
+    {
         TC_LOG_ERROR("module.playerbot.spawner", "BotSpawner::GetSafeLoginPreparedStatement: Failed to get prepared statement {} (index: {})",
                      statementName, static_cast<uint32>(statementId));
         return nullptr;
@@ -951,7 +954,8 @@ void BotSpawner::GetAvailableCharactersAsync(uint32 accountId, SpawnRequest cons
 {
     // FULLY ASYNC DATABASE QUERY for 5000 bot scalability - no blocking - use safe statement access to prevent memory corruption
     CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHARS_BY_ACCOUNT_ID, "CHAR_SEL_CHARS_BY_ACCOUNT_ID");
-    if (!stmt) {
+    if (!stmt)
+    {
         callback(::std::vector<ObjectGuid>());
         return;
     }
@@ -1127,7 +1131,8 @@ uint32 BotSpawner::GetAccountIdFromCharacter(ObjectGuid characterGuid) const
         // Query the account ID from the characters table using CHAR_SEL_CHAR_PINFO - use safe statement access to prevent memory corruption
         // This query returns: totaltime, level, money, account, race, class, map, zone, gender, health, playerFlags
         CharacterDatabasePreparedStatement* stmt = GetSafePreparedStatement(CHAR_SEL_CHAR_PINFO, "CHAR_SEL_CHAR_PINFO");
-        if (!stmt) {
+        if (!stmt)
+        {
             return 0;
         }
         stmt->setUInt64(0, characterGuid.GetCounter());
@@ -1724,7 +1729,8 @@ ObjectGuid BotSpawner::CreateBotCharacter(uint32 accountId)
         // Update character count for account - with safe statement access to prevent memory corruption
         TC_LOG_TRACE("module.playerbot.spawner", "Updating character count for account {}", accountId);
         LoginDatabasePreparedStatement* charCountStmt = GetSafeLoginPreparedStatement(LOGIN_REP_REALM_CHARACTERS, "LOGIN_REP_REALM_CHARACTERS");
-        if (!charCountStmt) {
+        if (!charCountStmt)
+        {
             return ObjectGuid::Empty;
         }
         charCountStmt->setUInt32(0, 1); // Increment by 1

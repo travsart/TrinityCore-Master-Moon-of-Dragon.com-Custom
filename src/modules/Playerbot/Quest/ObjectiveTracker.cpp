@@ -31,7 +31,8 @@
 namespace Playerbot
 {
 
-ObjectiveTracker::ObjectiveTracker(Player* bot) : _bot(bot) {
+ObjectiveTracker::ObjectiveTracker(Player* bot) : _bot(bot)
+{
     if (!_bot) TC_LOG_ERROR("playerbot.quest", "ObjectiveTracker: null bot!");
 }
 

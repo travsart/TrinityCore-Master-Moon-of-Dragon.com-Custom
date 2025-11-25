@@ -151,7 +151,8 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
         uint32 executionTime = fields[3].GetUInt32();
 
         // Skip empty or invalid migration records
-    if (version.empty()) {
+    if (version.empty())
+    {
             TC_LOG_WARN("playerbots.migration", "Skipping empty migration version");
             continue;
         }
@@ -170,7 +171,8 @@ bool PlayerbotMigrationMgr::LoadMigrationsFromDatabase()
     }
     while (result->NextRow());
 
-    std::sort(_appliedMigrations.begin(), _appliedMigrations.end(), [this](std::string const& a, std::string const& b) {
+    std::sort(_appliedMigrations.begin(), _appliedMigrations.end(), [this](std::string const& a, std::string const& b)
+    {
         return CompareVersions(a, b) < 0;
     });
 
@@ -527,7 +529,8 @@ int PlayerbotMigrationMgr::CompareVersions(std::string const& version1, std::str
         if (v1 > v2) return 1;
         return 0;
     }
-    catch (std::exception const& e) {
+    catch (std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.migration", "Error in CompareVersions: v1='{}', v2='{}', exception: {}", version1, version2, e.what());
         // Fallback to string comparison if numeric conversion fails
         return version1.compare(version2);
@@ -810,7 +813,8 @@ std::vector<PlayerbotMigrationMgr::MigrationFile> PlayerbotMigrationMgr::Discove
         }
 
         // Sort by version number for proper order
-        std::sort(migrations.begin(), migrations.end(), [this](MigrationFile const& a, MigrationFile const& b) {
+        std::sort(migrations.begin(), migrations.end(), [this](MigrationFile const& a, MigrationFile const& b)
+        {
             return CompareVersions(a.version, b.version) < 0;
         });
 

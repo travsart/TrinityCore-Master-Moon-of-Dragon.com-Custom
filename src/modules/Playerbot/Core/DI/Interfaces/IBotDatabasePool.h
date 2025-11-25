@@ -51,7 +51,8 @@ namespace Playerbot
  * @code
  * auto dbPool = Services::Container().Resolve<IBotDatabasePool>();
  * dbPool->ExecuteAsync(stmt, [](PreparedQueryResult result) {
- *     if (result) {
+ *     if (result)
+ {
  *         // Process result
  *     }
  * });

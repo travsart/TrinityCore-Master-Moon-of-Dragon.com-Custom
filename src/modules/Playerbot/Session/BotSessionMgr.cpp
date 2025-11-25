@@ -16,7 +16,8 @@ namespace Playerbot {
 bool BotSessionMgr::Initialize()
 {
 
-    if (_initialized.load()) {
+    if (_initialized.load())
+    {
         return true;
     }
 
@@ -30,7 +31,8 @@ bool BotSessionMgr::Initialize()
 
 void BotSessionMgr::Shutdown()
 {
-    if (!_initialized.load()) {
+    if (!_initialized.load())
+    {
         return;
     }
 
@@ -47,7 +49,8 @@ void BotSessionMgr::Shutdown()
 BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
 {
 
-    if (!_enabled.load() || !_initialized.load()) {
+    if (!_enabled.load() || !_initialized.load())
+    {
         return nullptr;
     }
 
@@ -72,7 +75,8 @@ BotSession* BotSessionMgr::CreateSession(uint32 bnetAccountId)
 
 
         return sessionPtr;
-    } catch (::std::exception const& e) {
+    } catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.session",
             "Exception during session creation for account {}: {}", bnetAccountId, e.what());
         return nullptr;
@@ -154,7 +158,8 @@ BotSession* BotSessionMgr::GetSession(uint32 bnetAccountId) const
 
 void BotSessionMgr::UpdateAllSessions(uint32 diff)
 {
-    if (!_enabled.load() || !_initialized.load()) {
+    if (!_enabled.load() || !_initialized.load())
+    {
         return;
     }
 
@@ -167,7 +172,8 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
         BotSession* session = *it;
 
         // Comprehensive null pointer checks
-    if (!session) {
+    if (!session)
+    {
             TC_LOG_ERROR("module.playerbot.session", "Found null session in _activeSessions, removing");
             it = _activeSessions.erase(it);
             continue;
@@ -175,7 +181,8 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
 
         // Additional safety: verify session is still valid
         try {
-            if (!session->IsActive()) {
+            if (!session->IsActive())
+            {
                 ++it;
                 continue;
             }
@@ -196,20 +203,23 @@ void BotSessionMgr::UpdateAllSessions(uint32 diff)
 
                 TC_LOG_INFO("module.playerbot.session", " Session update completed for account {}",
                             session->GetAccountId());
-            } catch (::std::exception const& e) {
+            } catch (::std::exception const& e)
+            {
                 TC_LOG_ERROR("module.playerbot.session", "Exception in session update for account {}: {}",
                             session->GetAccountId(), e.what());
             }
 
             ++it;
         }
-        catch (::std::exception const& e) {
+        catch (::std::exception const& e)
+        {
             TC_LOG_ERROR("module.playerbot.session",
                 "Exception during BotSession update for session {}: {}",
                 session ? "valid" : "null", e.what());
             ++it;
         }
-        catch (...) {
+        catch (...)
+        {
             TC_LOG_ERROR("module.playerbot.session",
                 "Unknown exception during BotSession update for session {}",
                 session ? "valid" : "null");
@@ -236,7 +246,8 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
     // Iterate through all active sessions
     for (BotSession* session : _activeSessions)
     {
-        if (!session) {
+        if (!session)
+        {
             continue;
         }
 
@@ -284,13 +295,15 @@ void BotSessionMgr::TriggerCharacterLoginForAllSessions()
         {
             // MEMORY SAFETY: Protect against use-after-free when accessing Player name
             Player* player = session->GetPlayer();
-            if (player) {
+            if (player)
+            {
                 try {
                     TC_LOG_INFO("module.playerbot.session",
                         " Session for account {} already has player {}",
                         session->GetAccountId(), player->GetName().c_str());
                 }
-                catch (...) {
+                catch (...)
+                {
                     TC_LOG_WARN("module.playerbot.session",
                         " Session for account {} already has player (name unavailable - use-after-free protection)",
                         session->GetAccountId());

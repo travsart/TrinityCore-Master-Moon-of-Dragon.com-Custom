@@ -112,14 +112,16 @@ struct ManaAstralPowerResource
     uint32 maxAstralPower{100};
 
     bool available{true};
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
             mana -= manaCost;
             return true;
         }
         return false;
     }
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -133,8 +135,10 @@ struct ManaAstralPowerResource
     }
 
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);        }
         astralPower = 0;
@@ -307,7 +311,8 @@ public:
         InitializeBalanceMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -345,7 +350,8 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 ap = this->_resource.astralPower;
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 ap = this->_resource.astralPower;
 
         // Priority 1: Use Shooting Stars proc (free Starsurge)
         if (_shootingStarsProc && this->CanCastSpell(STARSURGE, target))

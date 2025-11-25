@@ -363,7 +363,8 @@ public:
         // COMMENTED OUT:             {FERAL_BRUTAL_SLASH, 8000, 3}
         // COMMENTED OUT:         });
 
-        this->_resource.Initialize(bot);        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
+        this->_resource.Initialize(bot);
+        TC_LOG_DEBUG("playerbot", "FeralDruidRefactored initialized for {}", bot->GetName());
 
         // Phase 5: Initialize decision systems
         InitializeFeralMechanics();

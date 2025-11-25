@@ -124,7 +124,8 @@ struct ManaHolyPowerResource
 
     bool available{true};
 
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
 
             mana -= manaCost;
@@ -134,7 +135,8 @@ struct ManaHolyPowerResource
         return false;
     }
 
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -147,8 +149,10 @@ struct ManaHolyPowerResource
         return 100; // Simplified for ComplexResource concept
     }
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
 
             maxMana = bot->GetMaxPower(POWER_MANA);
 
@@ -248,7 +252,8 @@ public:
         TC_LOG_DEBUG("playerbot", "ProtectionPaladinRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
@@ -288,7 +293,8 @@ public:
     }
 
     // OnTauntRequired - uses unified ThreatAssistant service (Phase 5C integration)
-    void TauntTarget(::Unit* target) override    {
+    void TauntTarget(::Unit* target) override
+    {
         // Use ThreatAssistant to determine best taunt target and execute
         Unit* tauntTarget = target ? target : bot::ai::ThreatAssistant::GetTauntTarget(this->GetBot());
         if (tauntTarget && this->CanCastSpell(HAND_OF_RECKONING, tauntTarget))

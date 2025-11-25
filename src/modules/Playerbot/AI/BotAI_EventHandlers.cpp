@@ -22,6 +22,7 @@
  */
 
 #include "BotAI.h"
+#include "GameTime.h"
 #include "Group/GroupEventBus.h"
 #include "Combat/CombatEventBus.h"
 #include "Cooldown/CooldownEventBus.h"

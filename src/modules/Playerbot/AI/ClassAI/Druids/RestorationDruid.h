@@ -223,7 +223,8 @@ public:
     void UseSwiftmend()
     {
         _lastSwiftmendTime = GameTime::GetGameTimeMS();
-    }private:
+    }
+    private:
     uint32 _lastSwiftmendTime;
 };
 
@@ -485,7 +486,8 @@ private:
         }
 
         // Ironbark on tank taking heavy damage
-        for (Unit* member : group)        {
+        for (Unit* member : group)
+        {
 
             if (member && member->GetHealthPct() < 50.0f && IsTank(member))
 
@@ -621,7 +623,8 @@ private:
             return false;
 
         // Use Swiftmend on injured ally with a HoT
-        for (Unit* member : group)        {
+        for (Unit* member : group)
+        {
 
             if (member && member->GetHealthPct() < 70.0f)
 
@@ -751,7 +754,8 @@ private:
 
             return members;
 
-        Group* group = bot->GetGroup();        if (!group)
+        Group* group = bot->GetGroup();
+        if (!group)
 
             return members;
 
@@ -941,9 +945,11 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
-                    if (m && m->GetHealthPct() < 70.0f) {
+                    if (m && m->GetHealthPct() < 70.0f)
+                    {
 
                         auto guid = m->GetGUID();
 
@@ -1097,7 +1103,8 @@ private:
 
                             bot::ai::Action("Cast Tranquility", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(RESTO_TRANQUILITY, bot)) {
+                                if (this->CanCastSpell(RESTO_TRANQUILITY, bot))
+                                {
 
                                     this->CastSpell(RESTO_TRANQUILITY, bot);
 
@@ -1119,15 +1126,19 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 30.0f) {
+                                    if (m && m->GetHealthPct() < 30.0f)
+                                    {
 
-                                        if (this->CanCastSpell(RESTO_NATURES_SWIFTNESS, bot)) {
+                                        if (this->CanCastSpell(RESTO_NATURES_SWIFTNESS, bot))
+                                        {
 
                                             this->CastSpell(RESTO_NATURES_SWIFTNESS, bot);
 
-                                            if (this->CanCastSpell(RESTO_REGROWTH, m)) {
+                                            if (this->CanCastSpell(RESTO_REGROWTH, m))
+                                            {
 
                                                 this->CastSpell(RESTO_REGROWTH, m);
 
@@ -1179,7 +1190,8 @@ private:
 
                             bot::ai::Action("Cast Incarnation", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot)) {
+                                if (this->CanCastSpell(RESTO_INCARNATION_TREE, bot))
+                                {
 
                                     this->CastSpell(RESTO_INCARNATION_TREE, bot);
 
@@ -1203,11 +1215,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 50.0f && this->IsTank(m)) {
+                                    if (m && m->GetHealthPct() < 50.0f && this->IsTank(m))
+                                    {
 
-                                        if (this->CanCastSpell(RESTO_IRONBARK, m)) {
+                                        if (this->CanCastSpell(RESTO_IRONBARK, m))
+                                        {
 
                                             this->CastSpell(RESTO_IRONBARK, m);
 
@@ -1243,9 +1258,11 @@ private:
 
                                 Unit* tank = this->GetMainTank(group);
 
-                                if (tank && this->_hotTracker.NeedsLifebloomRefresh(tank->GetGUID())) {
+                                if (tank && this->_hotTracker.NeedsLifebloomRefresh(tank->GetGUID()))
+                                {
 
-                                    if (this->CanCastSpell(RESTO_LIFEBLOOM, tank)) {
+                                    if (this->CanCastSpell(RESTO_LIFEBLOOM, tank))
+                                    {
 
                                         this->CastSpell(RESTO_LIFEBLOOM, tank);
 
@@ -1287,11 +1304,13 @@ private:
 
                                 Unit* target = this->GetGroupMemberNeedingHealing(group, 85.0f);
 
-                                if (target && this->CanCastSpell(RESTO_WILD_GROWTH, target)) {
+                                if (target && this->CanCastSpell(RESTO_WILD_GROWTH, target))
+                                {
 
                                     this->CastSpell(RESTO_WILD_GROWTH, target);
 
-                                    for (auto* m : group) {
+                                    for (auto* m : group)
+                                    {
 
                                         if (m) this->_hotTracker.ApplyWildGrowth(m->GetGUID(), 7000);
 
@@ -1319,11 +1338,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 95.0f && !this->_hotTracker.HasRejuvenation(m->GetGUID())) {
+                                    if (m && m->GetHealthPct() < 95.0f && !this->_hotTracker.HasRejuvenation(m->GetGUID()))
+                                    {
 
-                                        if (this->CanCastSpell(RESTO_REJUVENATION, m)) {
+                                        if (this->CanCastSpell(RESTO_REJUVENATION, m))
+                                        {
 
                                             this->CastSpell(RESTO_REJUVENATION, m);
 
@@ -1365,15 +1387,19 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 70.0f) {
+                                    if (m && m->GetHealthPct() < 70.0f)
+                                    {
 
                                         auto guid = m->GetGUID();
 
-                                        if (this->_hotTracker.HasRejuvenation(guid) || this->_hotTracker.HasWildGrowth(guid)) {
+                                        if (this->_hotTracker.HasRejuvenation(guid) || this->_hotTracker.HasWildGrowth(guid))
+                                        {
 
-                                            if (this->CanCastSpell(RESTO_SWIFTMEND, m)) {
+                                            if (this->CanCastSpell(RESTO_SWIFTMEND, m))
+                                            {
 
                                                 this->CastSpell(RESTO_SWIFTMEND, m);
 
@@ -1401,11 +1427,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 80.0f) {
+                                    if (m && m->GetHealthPct() < 80.0f)
+                                    {
 
-                                        if (this->CanCastSpell(RESTO_REGROWTH, m)) {
+                                        if (this->CanCastSpell(RESTO_REGROWTH, m))
+                                        {
 
                                             this->CastSpell(RESTO_REGROWTH, m);
 
@@ -1444,9 +1473,11 @@ private:
                     bot::ai::Action("Cast Moonfire", [this](Player* bot, Unit* target) {
                         if (!target) target = this->FindNearbyEnemy();
 
-                        if (target && !target->HasAura(RESTO_MOONFIRE)) {
+                        if (target && !target->HasAura(RESTO_MOONFIRE))
+                        {
 
-                            if (this->CanCastSpell(RESTO_MOONFIRE, target)) {
+                            if (this->CanCastSpell(RESTO_MOONFIRE, target))
+                            {
 
                                 this->CastSpell(RESTO_MOONFIRE, target);
 

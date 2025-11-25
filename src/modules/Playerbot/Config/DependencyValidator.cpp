@@ -42,36 +42,42 @@ bool DependencyValidator::ValidateAllDependencies()
     bool success = true;
 
     // Validate Intel TBB
-    if (!ValidateTBB()) {
+    if (!ValidateTBB())
+    {
         TC_LOG_ERROR("module.playerbot.dependencies", " Intel TBB validation failed");
         success = false;
     }
 
     // Validate Parallel Hashmap
-    if (!ValidatePhmap()) {
+    if (!ValidatePhmap())
+    {
         TC_LOG_ERROR("module.playerbot.dependencies", " Parallel Hashmap validation failed");
         success = false;
     }
 
     // Validate Boost
-    if (!ValidateBoost()) {
+    if (!ValidateBoost())
+    {
         TC_LOG_ERROR("module.playerbot.dependencies", " Boost validation failed");
         success = false;
     }
 
     // Validate MySQL
-    if (!ValidateMySQL()) {
+    if (!ValidateMySQL())
+    {
         TC_LOG_ERROR("module.playerbot.dependencies", " MySQL validation failed");
         success = false;
     }
 
     // Validate system requirements
-    if (!ValidateSystemRequirements()) {
+    if (!ValidateSystemRequirements())
+    {
         TC_LOG_WARN("module.playerbot.dependencies", "  System requirements validation failed");
         // Don't fail build, but warn about potential performance issues
     }
 
-    if (success) {
+    if (success)
+    {
         TC_LOG_INFO("module.playerbot.dependencies", " All enterprise dependencies validated successfully");
         TC_LOG_INFO("module.playerbot.dependencies", " Playerbot ready for high-performance operations");
     } else {
@@ -95,7 +101,8 @@ bool DependencyValidator::ValidateTBB()
         }
 
         // Test TBB concurrency functionality
-    if (!TestTBBConcurrency()) {
+    if (!TestTBBConcurrency())
+    {
             TC_LOG_ERROR("module.playerbot.dependencies", "Intel TBB concurrency test failed");
             return false;
         }
@@ -104,7 +111,8 @@ bool DependencyValidator::ValidateTBB()
             " Intel TBB {}.{} validated with concurrency tests", major, minor);
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Intel TBB validation exception: {}", e.what());
         return false;
@@ -141,7 +149,8 @@ bool DependencyValidator::TestTBBConcurrency()
         ::std::atomic<int> consumed{0};
         arena.execute([&]() {
             int value;
-            while (queue.try_pop(value)) {
+            while (queue.try_pop(value))
+            {
                 consumed.fetch_add(1);
             }
         });
@@ -177,7 +186,8 @@ bool DependencyValidator::TestTBBConcurrency()
 
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies", "TBB concurrency test exception: {}", e.what());
         return false;
     }
@@ -187,7 +197,8 @@ bool DependencyValidator::TestTBBConcurrency()
 bool DependencyValidator::ValidatePhmap()
 {
     try {
-        if (!TestPhmapPerformance()) {
+        if (!TestPhmapPerformance())
+        {
             TC_LOG_ERROR("module.playerbot.dependencies", "Parallel hashmap performance test failed");
             return false;
         }
@@ -196,7 +207,8 @@ bool DependencyValidator::ValidatePhmap()
             " Parallel Hashmap validated with performance tests");
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Parallel Hashmap validation exception: {}", e.what());
         return false;
@@ -223,7 +235,8 @@ bool DependencyValidator::TestPhmapPerformance()
 
         // Test concurrent access
         ::std::atomic<uint32> found_count{0};
-        tbb::parallel_for(uint32(0), TEST_SIZE, [&](uint32 i) {
+        tbb::parallel_for(uint32(0), TEST_SIZE, [&](uint32 i)
+        {
             auto it = test_map.find(i);
             if (it != test_map.end() && it->second == "test_value_" + ::std::to_string(i)) {
                 found_count.fetch_add(1);
@@ -249,7 +262,8 @@ bool DependencyValidator::TestPhmapPerformance()
 
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Parallel hashmap performance test exception: {}", e.what());
         return false;
@@ -271,7 +285,8 @@ bool DependencyValidator::ValidateBoost()
         }
 
         // Test Boost components
-    if (!TestBoostComponents()) {
+    if (!TestBoostComponents())
+    {
             TC_LOG_ERROR("module.playerbot.dependencies", "Boost components test failed");
             return false;
         }
@@ -280,7 +295,8 @@ bool DependencyValidator::ValidateBoost()
             " Boost {}.{}.{} validated with component tests", major, minor, patch);
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Boost validation exception: {}", e.what());
         return false;
@@ -308,7 +324,8 @@ bool DependencyValidator::TestBoostComponents()
 
         for (int i = 0; i < 1000; ++i) {
             auto* obj = pool.malloc();
-            if (!obj) {
+            if (!obj)
+            {
                 TC_LOG_ERROR("module.playerbot.dependencies",
                     "Boost object_pool allocation failed at iteration {}", i);
                 return false;
@@ -318,7 +335,8 @@ bool DependencyValidator::TestBoostComponents()
         }
 
         // Clean up
-    for (auto* obj : objects) {
+    for (auto* obj : objects)
+    {
             obj->~vector();
             pool.free(obj);
         }
@@ -330,7 +348,8 @@ bool DependencyValidator::TestBoostComponents()
         // Producer thread
         ::std::thread producer([&]() {
             for (int i = 0; i < QUEUE_TEST_SIZE; ++i) {
-                while (!queue.push(i)) {
+                while (!queue.push(i))
+                {
                     ::std::this_thread::yield();
                 }
             }
@@ -340,8 +359,10 @@ bool DependencyValidator::TestBoostComponents()
         ::std::atomic<int> consumed{0};
         ::std::thread consumer([&]() {
             int value;
-            while (consumed.load() < QUEUE_TEST_SIZE) {
-                if (queue.pop(value)) {
+            while (consumed.load() < QUEUE_TEST_SIZE)
+            {
+                if (queue.pop(value))
+                {
                     consumed.fetch_add(1);
                 }
                 ::std::this_thread::yield();
@@ -368,14 +389,16 @@ bool DependencyValidator::TestBoostComponents()
 
         ctx.run();
 
-        if (!timer_executed) {
+        if (!timer_executed)
+        {
             TC_LOG_ERROR("module.playerbot.dependencies", "Boost asio timer test failed");
             return false;
         }
 
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "Boost components test exception: {}", e.what());
         return false;
@@ -387,7 +410,8 @@ bool DependencyValidator::ValidateMySQL()
     try {
         // Check MySQL client library version
         const char* version = mysql_get_client_info();
-        if (!version) {
+        if (!version)
+        {
             TC_LOG_ERROR("module.playerbot.dependencies",
                 "MySQL client library not available");
             return false;
@@ -415,7 +439,8 @@ bool DependencyValidator::ValidateMySQL()
         }
 
         // Test basic MySQL functionality (connection test would require credentials)
-    if (!TestMySQLConnectivity()) {
+    if (!TestMySQLConnectivity())
+    {
             TC_LOG_WARN("module.playerbot.dependencies",
                 "MySQL connectivity test skipped (no test database configured)");
         }
@@ -424,7 +449,8 @@ bool DependencyValidator::ValidateMySQL()
             " MySQL {}.{}.{} client library validated", major, minor, patch);
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "MySQL validation exception: {}", e.what());
         return false;
@@ -442,7 +468,8 @@ bool DependencyValidator::TestMySQLConnectivity()
 
         // Create connection handle
         MYSQL* mysql = mysql_init(nullptr);
-        if (!mysql) {
+        if (!mysql)
+        {
             TC_LOG_ERROR("module.playerbot.dependencies", "MySQL handle creation failed");
             mysql_library_end();
             return false;
@@ -456,7 +483,8 @@ bool DependencyValidator::TestMySQLConnectivity()
         TC_LOG_DEBUG("module.playerbot.dependencies", "MySQL connectivity test passed (basic handle creation)");
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_ERROR("module.playerbot.dependencies",
             "MySQL connectivity test exception: {}", e.what());
         return false;
@@ -467,17 +495,20 @@ bool DependencyValidator::ValidateSystemRequirements()
 {
     bool success = true;
 
-    if (!CheckMemoryRequirements()) {
+    if (!CheckMemoryRequirements())
+    {
         TC_LOG_WARN("module.playerbot.dependencies", "System memory requirements not met");
         success = false;
     }
 
-    if (!CheckCPURequirements()) {
+    if (!CheckCPURequirements())
+    {
         TC_LOG_WARN("module.playerbot.dependencies", "System CPU requirements not met");
         success = false;
     }
 
-    if (!CheckDiskRequirements()) {
+    if (!CheckDiskRequirements())
+    {
         TC_LOG_WARN("module.playerbot.dependencies", "System disk requirements not met");
         success = false;
     }
@@ -494,7 +525,8 @@ bool DependencyValidator::CheckMemoryRequirements()
         constexpr size_t TEST_SIZE = 1024 * 1024 * 100; // 100MB
         auto buffer = ::std::make_unique<char[]>(TEST_SIZE);
 
-        if (!buffer) {
+        if (!buffer)
+        {
             TC_LOG_WARN("module.playerbot.dependencies", "Failed to allocate 100MB test buffer");
             return false;
         }
@@ -507,7 +539,8 @@ bool DependencyValidator::CheckMemoryRequirements()
         TC_LOG_DEBUG("module.playerbot.dependencies", "Memory requirements check passed");
         return true;
     }
-    catch (::std::exception const& e) {
+    catch (::std::exception const& e)
+    {
         TC_LOG_WARN("module.playerbot.dependencies", "Memory requirements check failed: {}", e.what());
         return false;
     }
@@ -518,7 +551,8 @@ bool DependencyValidator::CheckCPURequirements()
     // Verify we have at least 2 hardware threads for parallel operations
     unsigned int hardware_threads = ::std::thread::hardware_concurrency();
 
-    if (hardware_threads < 2) {
+    if (hardware_threads < 2)
+    {
         TC_LOG_WARN("module.playerbot.dependencies",
             "Only {} hardware threads detected, minimum 2 recommended", hardware_threads);
         return false;
@@ -586,7 +620,8 @@ void DependencyValidator::LogDependencyReport()
     TC_LOG_INFO("module.playerbot.dependencies", "{}+{}+{}+{}",
         ::std::string(20, '-'), ::std::string(15, '-'), ::std::string(10, '-'), ::std::string(30, '-'));
 
-    for (auto const& dep : dependencies) {
+    for (auto const& dep : dependencies)
+    {
         TC_LOG_INFO("module.playerbot.dependencies",
             "{:<20} | {:<15} | {:<10} | {}",
             dep.name, dep.version, dep.status, dep.errorMessage);

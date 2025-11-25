@@ -8,6 +8,7 @@
  */
 
 #include "DruidAI.h"
+#include "GameTime.h"
 #include "BalanceDruid.h"
 #include "FeralDruid.h"
 #include "GuardianDruid.h"
@@ -210,7 +211,8 @@ bool DruidAI::HandleDefensives()
     if (!bot)
         return false;
 
-    float healthPercent = bot->GetHealthPct();    uint32 currentTime = GameTime::GetGameTimeMS();
+    float healthPercent = bot->GetHealthPct();
+    uint32 currentTime = GameTime::GetGameTimeMS();
 
     // Survival Instincts - critical health
     if (healthPercent < 30.0f &&
@@ -1315,7 +1317,8 @@ bool DruidAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void DruidAI::OnCombatStart(::Unit* target){
+void DruidAI::OnCombatStart(::Unit* target)
+{
     if (!target || !GetBot())
         return;
 
@@ -1324,7 +1327,8 @@ void DruidAI::OnCombatStart(::Unit* target){
                  GetBot()->GetName(), target->GetName());
 
     _inCombat = true;
-    _currentTarget = target->GetGUID();    _combatTime = 0;
+    _currentTarget = target->GetGUID();
+    _combatTime = 0;
 
     // Update resources
     UpdateResources();
@@ -1523,13 +1527,15 @@ bool DruidAI::ShiftToForm(DruidForm form)
             return true;
         }
     }    return false;
-}DruidAI::DruidForm DruidAI::GetCurrentForm() const
+}
+DruidAI::DruidForm DruidAI::GetCurrentForm() const
 {    return _currentForm;
 }
 
 bool DruidAI::CanShiftToForm(DruidForm form) const
 {
-    Player* bot = GetBot();    if (!bot)
+    Player* bot = GetBot();
+    if (!bot)
         return false;
 
     switch (form)

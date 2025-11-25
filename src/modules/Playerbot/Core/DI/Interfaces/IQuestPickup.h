@@ -90,7 +90,8 @@ struct QuestPickupMetrics
         return *this;
     }
 
-    void Reset() {
+    void Reset()
+    {
         questsPickedUp = 0; questsRejected = 0; pickupAttempts = 0;
         successfulPickups = 0; averagePickupTime = 5000.0f;
         questPickupEfficiency = 0.8f; questGiversVisited = 0;
@@ -98,7 +99,8 @@ struct QuestPickupMetrics
         lastUpdate = std::chrono::steady_clock::now();
     }
 
-    float GetSuccessRate() const {
+    float GetSuccessRate() const
+    {
         uint32 attempts = pickupAttempts.load();
         uint32 successful = successfulPickups.load();
         return attempts > 0 ? (float)successful / attempts : 0.0f;

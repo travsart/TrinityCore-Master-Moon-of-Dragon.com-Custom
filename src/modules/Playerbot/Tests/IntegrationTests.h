@@ -288,7 +288,8 @@ private:
         ::std::atomic<float> averageExecutionTime{0.0f};
         ::std::chrono::steady_clock::time_point lastUpdate;
 
-        void Reset() {
+        void Reset()
+        {
             testsExecuted = 0; testsPassed = 0; testsFailed = 0;
             totalExecutionTime = 0; averageExecutionTime = 0.0f;
             lastUpdate = ::std::chrono::steady_clock::now();

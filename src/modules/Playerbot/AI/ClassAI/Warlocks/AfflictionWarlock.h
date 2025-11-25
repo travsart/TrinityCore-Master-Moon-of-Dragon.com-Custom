@@ -115,7 +115,8 @@ struct ManaSoulShardResource
     uint32 maxSoulShards{5};
     bool available{true};
 
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
             mana -= manaCost;
             return true;
@@ -123,10 +124,12 @@ struct ManaSoulShardResource
         return false;
     }
 
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Mana regenerates naturally over time
         // This is a simplified implementation
-        if (mana < maxMana) {
+        if (mana < maxMana)
+        {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
             mana = ::std::min(mana + regenAmount, maxMana);
         }
@@ -136,8 +139,10 @@ struct ManaSoulShardResource
     [[nodiscard]] uint32 GetAvailable() const { return mana; }
     [[nodiscard]] uint32 GetMax() const { return maxMana; }
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
@@ -316,7 +321,8 @@ public:
 protected:
     void ExecuteSingleTargetRotation(::Unit* target)
     {
-        ObjectGuid targetGuid = target->GetGUID();        uint32 shards = this->_resource.soulShards;
+        ObjectGuid targetGuid = target->GetGUID();
+        uint32 shards = this->_resource.soulShards;
         float targetHpPct = target->GetHealthPct();
 
         // Priority 1: Use Darkglare when all DoTs are up

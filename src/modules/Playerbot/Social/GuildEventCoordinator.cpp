@@ -2279,7 +2279,8 @@ void GuildEventCoordinator::ManageEventPriorities(uint32 guildId)
     auto& events = _guildActiveEvents[guildId];
 
     // Sort events by priority and time
-    std::sort(events.begin(), events.end(), [this](uint32 a, uint32 b) {
+    std::sort(events.begin(), events.end(), [this](uint32 a, uint32 b)
+    {
         auto itA = _guildEvents.find(a);
         auto itB = _guildEvents.find(b);
 

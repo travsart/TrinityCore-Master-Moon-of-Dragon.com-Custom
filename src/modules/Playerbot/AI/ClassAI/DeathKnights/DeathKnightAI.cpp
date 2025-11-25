@@ -8,6 +8,7 @@
  */
 
 #include "RuneManager.h"
+#include "GameTime.h"
 #include "DeathKnightAI.h"
 #include "../../Combat/CombatBehaviorIntegration.h"
 #include "Player.h"
@@ -418,7 +419,8 @@ DeathKnightAI::DeathKnightAI(Player* bot) :
     _combatMetrics = ::std::make_unique<DeathKnightCombatMetrics>();
     _runeManager = ::std::make_unique<RuneManager>(bot);
     _diseaseManager = ::std::make_unique<DiseaseManager>(bot);
-    _positioning = ::std::make_unique<DeathKnightCombatPositioning>(bot);    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
+    _positioning = ::std::make_unique<DeathKnightCombatPositioning>(bot);
+    TC_LOG_DEBUG("playerbot", "DeathKnightAI initialized for {} with specialization {}",
 
                  bot->GetName(), static_cast<uint32>(_detectedSpec));
 }

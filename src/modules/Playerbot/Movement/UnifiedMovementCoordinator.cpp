@@ -8,6 +8,7 @@
  */
 
 #include "UnifiedMovementCoordinator.h"
+#include "GameTime.h"
 #include "../AI/Combat/BotThreatManager.h"
 #include "Log.h"
 #include "Timer.h"

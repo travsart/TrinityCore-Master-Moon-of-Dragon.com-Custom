@@ -81,13 +81,16 @@ enum class TargetValidation : uint32
 };
 
 // Enable bitwise operations for TargetValidation enum
-inline TargetValidation operator|(TargetValidation a, TargetValidation b) {
+inline TargetValidation operator|(TargetValidation a, TargetValidation b)
+{
     return static_cast<TargetValidation>(static_cast<uint32>(a) | static_cast<uint32>(b));
 }
-inline TargetValidation operator&(TargetValidation a, TargetValidation b) {
+inline TargetValidation operator&(TargetValidation a, TargetValidation b)
+{
     return static_cast<TargetValidation>(static_cast<uint32>(a) & static_cast<uint32>(b));
 }
-inline bool HasFlag(TargetValidation a) {
+inline bool HasFlag(TargetValidation a)
+{
     return static_cast<uint32>(a) != 0;
 }
 

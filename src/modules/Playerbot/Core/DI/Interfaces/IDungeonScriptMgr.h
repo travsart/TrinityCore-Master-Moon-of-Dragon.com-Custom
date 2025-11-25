@@ -48,7 +48,8 @@ namespace Playerbot
  * @code
  * auto scriptMgr = Services::Container().Resolve<IDungeonScriptMgr>();
  * DungeonScript* script = scriptMgr->GetScriptForMap(mapId);
- * if (script) {
+ * if (script)
+ {
  *     script->HandleBossMechanic(player, boss);
  * }
  * @endcode

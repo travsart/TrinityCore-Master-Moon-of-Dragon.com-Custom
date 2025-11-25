@@ -93,7 +93,8 @@ public:
 
         // Sync with actual Arcane Charges buff
         if (Aura* aura = bot->GetAura(36032)) // Arcane Charges buff ID
-            _charges = aura->GetStackAmount();        else
+            _charges = aura->GetStackAmount();
+            else
             _charges = 0;
     }
 
@@ -139,7 +140,8 @@ public:
         if (Aura* aura = bot->GetAura(263725)) // Clearcasting buff ID
         {
             _clearcastingActive = true;
-            _clearcastingStacks = aura->GetStackAmount();            _clearcastingEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+            _clearcastingStacks = aura->GetStackAmount();
+            _clearcastingEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _clearcastingActive = false;
@@ -199,13 +201,15 @@ public:
         uint32 enemyCount = this->GetEnemiesInRange(40.0f);
 
         if (enemyCount >= 3)
-            ExecuteAoERotation(target, enemyCount);        else
+            ExecuteAoERotation(target, enemyCount);
+            else
             ExecuteSingleTargetRotation(target);
     }
 
     void UpdateBuffs() override
     {
-        Player* bot = this->GetBot();        if (!bot)
+        Player* bot = this->GetBot();
+        if (!bot)
             return;
 
         // Arcane Intellect buff
@@ -260,7 +264,8 @@ public:
 private:
     
 
-    void UpdateArcaneState()    {
+    void UpdateArcaneState()
+    {
         Player* bot = this->GetBot();
         if (!bot)
             return;
@@ -618,7 +623,8 @@ private:
                     Selector("Spend or Build", {
                         // Spend at 4 charges or low mana
                         Sequence("Spend Charges", {
-                            Condition("4 charges OR (2+ charges and low mana)", [this](Player* bot, Unit*) {
+                            Condition("4 charges OR (2+ charges and low mana)", [this](Player* bot, Unit*)
+                            {
                                 return this->_chargeTracker.GetCharges() >= 4 ||
                                        (this->_chargeTracker.GetCharges() >= 2 &&
                                         bot->GetPowerPct(POWER_MANA) < 30);

@@ -1743,4 +1743,10 @@ void QuestPickup::HandleGroupQuestConflict(Group* group, uint32 questId)
     TC_LOG_DEBUG("playerbot.quest", "Handling group quest conflict, quest {}", questId);
 }
 
+
+QuestPickup::~QuestPickup()
+{
+    // Cleanup any pending quest pickup operations
+}
+
 } // namespace Playerbot

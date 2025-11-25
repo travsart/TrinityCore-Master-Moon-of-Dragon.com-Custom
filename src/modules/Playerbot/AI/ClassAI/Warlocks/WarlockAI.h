@@ -130,7 +130,8 @@ private:
         ::std::atomic<float> dotUptime{0.0f};
         ::std::chrono::steady_clock::time_point combatStartTime;
         ::std::chrono::steady_clock::time_point lastUpdate;
-        void Reset() {
+        void Reset()
+        {
             manaSpent = 0; damageDealt = 0; dotDamage = 0; petDamage = 0;
             soulShardsUsed = 0; lifeTapsCast = 0; spellsCast = 0;
             manaEfficiency = 0.0f; petUptime = 0.0f; dotUptime = 0.0f;

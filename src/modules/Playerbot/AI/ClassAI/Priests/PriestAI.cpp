@@ -169,7 +169,8 @@ bool PriestAI::CanUseAbility(uint32 spellId)
     return true;
 }
 
-void PriestAI::OnCombatStart(::Unit* target){
+void PriestAI::OnCombatStart(::Unit* target)
+{
     if (!GetBot() || !target)
         return;
 
@@ -262,7 +263,8 @@ void PriestAI::ConsumeResource(uint32 spellId)
     }
 }
 
-Position PriestAI::GetOptimalPosition(::Unit* target){
+Position PriestAI::GetOptimalPosition(::Unit* target)
+{
     if (!GetBot() || !target)
         return Position();
 
@@ -273,7 +275,8 @@ Position PriestAI::GetOptimalPosition(::Unit* target){
     // Position behind and to the side for safety
     angle += M_PI / 4; // 45 degrees offset
 
-    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
+    float x = target->GetPositionX() - optimalRange * ::std::cos(angle);
+    float y = target->GetPositionY() - optimalRange * ::std::sin(angle);    float z = target->GetPositionZ();    return Position(x, y, z);
 }
 
 float PriestAI::GetOptimalRange(::Unit* target)
@@ -551,7 +554,8 @@ bool PriestAI::HandleTargetSwitchPriority(::Unit*& target)
     ::Unit* priorityTarget = behaviors->GetPriorityTarget();
     if (priorityTarget && priorityTarget != target)
     {
-        target = priorityTarget;        TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
+        target = priorityTarget;
+        TC_LOG_DEBUG("module.playerbot.ai", "Priest {} switching to priority target {}",
 
                      GetBot()->GetName(), target->GetName());
         return true;
@@ -816,7 +820,8 @@ void PriestAI::CastFearWard()
     {
         _lastFearWard = GameTime::GetGameTimeMS();
     }
-}void PriestAI::CastDesperatePrayer()
+}
+void PriestAI::CastDesperatePrayer()
 {
     if (!GetBot() || !this->IsSpellReady(DESPERATE_PRAYER))
         return;
@@ -1009,7 +1014,8 @@ bool PriestAI::IsTank(::Unit* unit)
         return false;
 
     if (Player* player = unit->ToPlayer())    {
-        uint8 playerClass = player->GetClass();        return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN || playerClass == CLASS_DEATH_KNIGHT);
+        uint8 playerClass = player->GetClass();
+        return (playerClass == CLASS_WARRIOR || playerClass == CLASS_PALADIN || playerClass == CLASS_DEATH_KNIGHT);
     }
 
     return false;
@@ -1022,7 +1028,8 @@ bool PriestAI::IsHealer(::Unit* unit)
 
     if (Player* player = unit->ToPlayer())
     {
-        uint8 playerClass = player->GetClass();        return (playerClass == CLASS_PRIEST || playerClass == CLASS_DRUID ||
+        uint8 playerClass = player->GetClass();
+        return (playerClass == CLASS_PRIEST || playerClass == CLASS_DRUID ||
 
                 playerClass == CLASS_SHAMAN || playerClass == CLASS_PALADIN);
     }

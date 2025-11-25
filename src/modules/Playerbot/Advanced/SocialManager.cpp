@@ -790,7 +790,8 @@ bool SocialManager::HasPositiveReputation(ObjectGuid playerGuid) const
     for (auto const& pair : m_reputations)
         reps.push_back(pair.second);
 
-    ::std::sort(reps.begin(), reps.end(), [](SocialReputation const& a, SocialReputation const& b) {
+    ::std::sort(reps.begin(), reps.end(), [](SocialReputation const& a, SocialReputation const& b)
+    {
         return a.reputation > b.reputation;
     });
 

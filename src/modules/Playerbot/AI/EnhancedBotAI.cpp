@@ -8,6 +8,7 @@
  */
 
 #include "EnhancedBotAI.h"
+#include "GameTime.h"
 #include "Combat/CombatAIIntegrator.h"
 #include "Player.h"
 #include "Group.h"

@@ -220,7 +220,8 @@ public:
     {
         // Initialize energy/combo resources
         this->_resource.maxEnergy = 100;
-        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;        this->_resource.energy = this->_resource.maxEnergy;
+        this->_resource.maxComboPoints = bot->HasSpell(DEEPER_STRATAGEM_SUB) ? 6 : 5;
+        this->_resource.energy = this->_resource.maxEnergy;
         this->_resource.comboPoints = 0;
 
         // Phase 5 Integration: Initialize decision systems
@@ -229,7 +230,8 @@ public:
         TC_LOG_DEBUG("playerbot", "SubtletyRogueRefactored initialized for {}", bot->GetName());
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -240,7 +242,8 @@ public:
         _inStealth = this->GetBot()->HasAuraType(SPELL_AURA_MOD_STEALTH) || _shadowDanceTracker.IsActive();
 
         // Main rotation
-        uint32 enemyCount = this->GetEnemiesInRange(10.0f);        if (enemyCount >= 3)
+        uint32 enemyCount = this->GetEnemiesInRange(10.0f);
+        if (enemyCount >= 3)
         {
             ExecuteAoERotation(target, enemyCount);
         }
@@ -505,7 +508,8 @@ private:
         return GetBot()->isInBack(target);
     }
 
-    bool HasRupture(::Unit* target) const    {
+    bool HasRupture(::Unit* target) const
+    {
         // Simplified - check if target has Rupture aura
         return target && target->HasAura(RogueAI::RUPTURE, this->GetBot()->GetGUID());
     }

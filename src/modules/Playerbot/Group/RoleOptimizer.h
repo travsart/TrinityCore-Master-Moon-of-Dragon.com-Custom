@@ -242,7 +242,8 @@ private:
         ::std::atomic<float> averageScoreImprovement{0.2f};
         ::std::atomic<uint32> constraintViolations{0};
 
-        void Reset() {
+        void Reset()
+        {
             totalOptimizations = 0; successfulOptimizations = 0;
             averageOptimizationTime = 500.0f; averageScoreImprovement = 0.2f;
             constraintViolations = 0;

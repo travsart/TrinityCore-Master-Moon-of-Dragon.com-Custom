@@ -8,6 +8,7 @@
  */
 
 #include "GroupCoordination.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Group.h"
 #include "Unit.h"

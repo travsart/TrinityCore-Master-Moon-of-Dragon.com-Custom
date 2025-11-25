@@ -107,14 +107,16 @@ struct EnergyChiResource
     uint32 maxChi{6};
 
     bool available{true};
-    bool Consume(uint32 energyCost) {
+    bool Consume(uint32 energyCost)
+    {
         if (energy >= energyCost) {
             energy -= energyCost;
             return true;
         }
         return false;
     }
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -128,8 +130,10 @@ struct EnergyChiResource
     }
 
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
             energy = bot->GetPower(POWER_ENERGY);        }
         chi = 0;
@@ -703,7 +707,8 @@ private:
                                 return bot->GetHealthPct() < 20.0f;
                             }),
                             bot::ai::Action("Cast Zen Meditation", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(ZEN_MEDITATION, bot)) {
+                                if (this->CanCastSpell(ZEN_MEDITATION, bot))
+                                {
                                     this->CastSpell(ZEN_MEDITATION, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -712,7 +717,8 @@ private:
                         }),
                         Sequence("Fortifying Brew", {
                             bot::ai::Action("Cast Fortifying Brew", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(FORTIFYING_BREW_BREW, bot)) {
+                                if (this->CanCastSpell(FORTIFYING_BREW_BREW, bot))
+                                {
                                     this->CastSpell(FORTIFYING_BREW_BREW, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -730,7 +736,8 @@ private:
                                 return this->_staggerTracker.ShouldPurify();
                             }),
                             bot::ai::Action("Cast Purifying Brew", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(PURIFYING_BREW, bot)) {
+                                if (this->CanCastSpell(PURIFYING_BREW, bot))
+                                {
                                     this->CastSpell(PURIFYING_BREW, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -742,7 +749,8 @@ private:
                                 return bot && bot->GetHealthPct() < 60.0f;
                             }),
                             bot::ai::Action("Cast Celestial Brew", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(CELESTIAL_BREW, bot)) {
+                                if (this->CanCastSpell(CELESTIAL_BREW, bot))
+                                {
                                     this->CastSpell(CELESTIAL_BREW, bot);
                                     return NodeStatus::SUCCESS;
                                 }
@@ -754,7 +762,8 @@ private:
                                 return !this->_ironskinBrewActive || this->GetIronskinTimeRemaining() < 3000;
                             }),
                             bot::ai::Action("Cast Ironskin Brew", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(IRONSKIN_BREW, bot)) {
+                                if (this->CanCastSpell(IRONSKIN_BREW, bot))
+                                {
                                     this->CastSpell(IRONSKIN_BREW, bot);
                                     this->_ironskinBrewActive = true;
                                     this->_ironskinEndTime = GameTime::GetGameTimeMS() + 7000;
@@ -779,7 +788,8 @@ private:
                     }),
                     bot::ai::Action("Cast Blackout Kick", [this](Player* bot, Unit*) {
                         Unit* target = bot->GetVictim();
-                        if (target && this->CanCastSpell(BLACKOUT_KICK_BREW, target)) {
+                        if (target && this->CanCastSpell(BLACKOUT_KICK_BREW, target))
+                        {
                             this->CastSpell(BLACKOUT_KICK_BREW, target);
                             this->_shuffleTracker.ApplyShuffle();
                             this->ConsumeChi(1);
@@ -804,7 +814,8 @@ private:
                             }),
                             bot::ai::Action("Cast Keg Smash", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(KEG_SMASH, target)) {
+                                if (target && this->CanCastSpell(KEG_SMASH, target))
+                                {
                                     this->CastSpell(KEG_SMASH, target);
                                     this->_lastKegSmashTime = GameTime::GetGameTimeMS();
                                     this->GenerateChi(2);
@@ -819,7 +830,8 @@ private:
                             }),
                             bot::ai::Action("Cast Tiger Palm", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(TIGER_PALM_BREW, target)) {
+                                if (target && this->CanCastSpell(TIGER_PALM_BREW, target))
+                                {
                                     this->CastSpell(TIGER_PALM_BREW, target);
                                     this->GenerateChi(2);
                                     return NodeStatus::SUCCESS;
@@ -832,7 +844,8 @@ private:
                                 return bot && this->_resource.energy >= 15 && bot->GetHealthPct() < 90.0f;
                             }),
                             bot::ai::Action("Cast Expel Harm", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(EXPEL_HARM_BREW, bot)) {
+                                if (this->CanCastSpell(EXPEL_HARM_BREW, bot))
+                                {
                                     this->CastSpell(EXPEL_HARM_BREW, bot);
                                     this->GenerateChi(1);
                                     return NodeStatus::SUCCESS;
@@ -858,7 +871,8 @@ private:
                             }),
                             bot::ai::Action("Cast BoF", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(BREATH_OF_FIRE, target)) {
+                                if (target && this->CanCastSpell(BREATH_OF_FIRE, target))
+                                {
                                     this->CastSpell(BREATH_OF_FIRE, target);
                                     this->ConsumeChi(2);
                                     return NodeStatus::SUCCESS;
@@ -871,7 +885,8 @@ private:
                                 return this->GetEnemiesInRange(8.0f) >= 3;
                             }),
                             bot::ai::Action("Cast SCK", [this](Player* bot, Unit*) {
-                                if (this->CanCastSpell(SPINNING_CRANE_KICK_BREW, bot)) {
+                                if (this->CanCastSpell(SPINNING_CRANE_KICK_BREW, bot))
+                                {
                                     this->CastSpell(SPINNING_CRANE_KICK_BREW, bot);
                                     this->ConsumeChi(2);
                                     return NodeStatus::SUCCESS;
@@ -882,7 +897,8 @@ private:
                         Sequence("Rising Sun Kick", {
                             bot::ai::Action("Cast RSK", [this](Player* bot, Unit*) {
                                 Unit* target = bot->GetVictim();
-                                if (target && this->CanCastSpell(RISING_SUN_KICK_BREW, target)) {
+                                if (target && this->CanCastSpell(RISING_SUN_KICK_BREW, target))
+                                {
                                     this->CastSpell(RISING_SUN_KICK_BREW, target);
                                     this->ConsumeChi(2);
                                     return NodeStatus::SUCCESS;

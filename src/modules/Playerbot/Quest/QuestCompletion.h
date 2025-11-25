@@ -202,7 +202,8 @@ public:
         std::atomic<uint32> totalDistanceTraveled{0};
         std::chrono::steady_clock::time_point lastUpdate;
 
-        void Reset() {
+        void Reset()
+        {
             questsStarted = 0; questsCompleted = 0; questsFailed = 0;
             objectivesCompleted = 0; stuckInstances = 0; averageCompletionTime = 1200000.0f;
             completionSuccessRate = 0.85f; objectiveEfficiency = 0.9f;
@@ -210,7 +211,8 @@ public:
             lastUpdate = std::chrono::steady_clock::now();
         }
 
-        float GetCompletionRate() const {
+        float GetCompletionRate() const
+        {
             uint32 started = questsStarted.load();
             uint32 completed = questsCompleted.load();
             return started > 0 ? (float)completed / started : 0.0f;
@@ -234,13 +236,15 @@ public:
             uint32 totalDistanceTraveled;
             std::chrono::steady_clock::time_point lastUpdate;
 
-            float GetCompletionRate() const {
+            float GetCompletionRate() const
+            {
                 return questsStarted > 0 ? (float)questsCompleted / questsStarted : 0.0f;
             }
         };
 
         // Create a snapshot of current metrics
-        Snapshot CreateSnapshot() const {
+        Snapshot CreateSnapshot() const
+        {
             Snapshot snapshot;
             snapshot.questsStarted = questsStarted.load();
             snapshot.questsCompleted = questsCompleted.load();

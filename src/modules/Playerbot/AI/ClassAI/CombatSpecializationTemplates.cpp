@@ -366,7 +366,8 @@ public:
         }
     }
 
-    static void MigrateSpecialization(Player* bot, ClassAI* oldSpec, ClassAI* newSpec)    {
+    static void MigrateSpecialization(Player* bot, ClassAI* oldSpec, ClassAI* newSpec)
+    {
         // Copy relevant state from old to new
         // This allows hot-swapping during runtime
 

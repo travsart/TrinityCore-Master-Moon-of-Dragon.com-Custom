@@ -377,7 +377,8 @@ namespace Playerbot
 
             Player* leader = nullptr;
             Group* group = bot->GetGroup();
-            if (group) {
+            if (group)
+            {
                 ObjectGuid leaderGuid = group->GetLeaderGUID();
                 leader = ObjectAccessor::FindPlayer(leaderGuid);
             }

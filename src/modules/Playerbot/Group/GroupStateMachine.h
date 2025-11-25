@@ -488,7 +488,8 @@ private:
  * Example:
  * ```cpp
  * GroupStateGuard guard(stateMachine, GroupState::ACTIVE);
- * if (!guard.IsValid()) {
+ * if (!guard.IsValid())
+ {
  *     TC_LOG_ERROR("Bot is not in ACTIVE state!");
  *     return false;
  * }

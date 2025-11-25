@@ -15,10 +15,14 @@
 #include <functional>
 #include <memory>
 
-class BotAI;
 class Unit;
+class Player;
 
 namespace Playerbot {
+
+// Forward declaration of BotAI in correct namespace
+class BotAI;
+
 namespace bot { namespace ai {
 
 enum class CombatContext : uint8;
@@ -194,7 +198,7 @@ public:
      *
      * @note This method queries each decision system and collects their recommendations
      */
-    ::std::vector<DecisionVote> CollectVotes(BotAI* ai, CombatContext context);
+    ::std::vector<DecisionVote> CollectVotes(::Playerbot::BotAI* ai, CombatContext context);
 
     /**
      * @brief Fuse votes using weighted consensus

@@ -985,7 +985,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
                     if (m && this->IsTankRole(m) && !this->_earthShieldTracker.HasEarthShield(m->GetGUID()))
 
@@ -1004,7 +1005,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
                     if (m && m->GetHealthPct() < 90.0f && this->_riptideTracker.NeedsRiptideRefresh(m->GetGUID()))
 
@@ -1024,7 +1026,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* anchor : group) {
+                for (auto* anchor : group)
+                {
 
                     if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
 
@@ -1053,7 +1056,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* anchor : group) {
+                for (auto* anchor : group)
+                {
 
                     if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
 
@@ -1176,7 +1180,8 @@ private:
 
                 auto group = this->GetGroupMembers();
 
-                for (auto* m : group) {
+                for (auto* m : group)
+                {
 
                     if (m && (m->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE) ||
 
@@ -1218,7 +1223,8 @@ private:
 
                             bot::ai::Action("Cast HTT", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot)) {
+                                if (this->CanCastSpell(REST_HEALING_TIDE_TOTEM, bot))
+                                {
 
                                     this->CastSpell(REST_HEALING_TIDE_TOTEM, bot);
 
@@ -1256,7 +1262,8 @@ private:
 
                             bot::ai::Action("Cast APT", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot)) {
+                                if (this->CanCastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot))
+                                {
 
                                     this->CastSpell(REST_ANCESTRAL_PROTECTION_TOTEM, bot);
 
@@ -1304,7 +1311,8 @@ private:
 
                             bot::ai::Action("Cast Ascendance", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REST_ASCENDANCE, bot)) {
+                                if (this->CanCastSpell(REST_ASCENDANCE, bot))
+                                {
 
                                     this->CastSpell(REST_ASCENDANCE, bot);
 
@@ -1328,7 +1336,8 @@ private:
 
                             bot::ai::Action("Cast SLT", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot)) {
+                                if (this->CanCastSpell(REST_SPIRIT_LINK_TOTEM, bot))
+                                {
 
                                     this->CastSpell(REST_SPIRIT_LINK_TOTEM, bot);
 
@@ -1354,7 +1363,8 @@ private:
 
                             bot::ai::Action("Cast EWT", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot)) {
+                                if (this->CanCastSpell(REST_EARTHEN_WALL_TOTEM, bot))
+                                {
 
                                     this->CastSpell(REST_EARTHEN_WALL_TOTEM, bot);
 
@@ -1386,11 +1396,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && this->IsTankRole(m) && !this->_earthShieldTracker.HasEarthShield(m->GetGUID())) {
+                                    if (m && this->IsTankRole(m) && !this->_earthShieldTracker.HasEarthShield(m->GetGUID()))
+                                    {
 
-                                        if (this->CanCastSpell(REST_EARTH_SHIELD, m)) {
+                                        if (this->CanCastSpell(REST_EARTH_SHIELD, m))
+                                        {
 
                                             this->CastSpell(REST_EARTH_SHIELD, m);
 
@@ -1416,11 +1429,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 90.0f && this->_riptideTracker.NeedsRiptideRefresh(m->GetGUID())) {
+                                    if (m && m->GetHealthPct() < 90.0f && this->_riptideTracker.NeedsRiptideRefresh(m->GetGUID()))
+                                    {
 
-                                        if (this->CanCastSpell(REST_RIPTIDE, m)) {
+                                        if (this->CanCastSpell(REST_RIPTIDE, m))
+                                        {
 
                                             this->CastSpell(REST_RIPTIDE, m);
 
@@ -1468,7 +1484,8 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* anchor : group) {
+                                for (auto* anchor : group)
+                                {
 
                                     if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
 
@@ -1492,7 +1509,8 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* anchor : group) {
+                                for (auto* anchor : group)
+                                {
 
                                     if (!anchor || anchor->GetHealthPct() >= 80.0f) continue;
 
@@ -1526,11 +1544,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 75.0f) {
+                                    if (m && m->GetHealthPct() < 75.0f)
+                                    {
 
-                                        if (this->CanCastSpell(REST_CHAIN_HEAL, m)) {
+                                        if (this->CanCastSpell(REST_CHAIN_HEAL, m))
+                                        {
 
                                             this->CastSpell(REST_CHAIN_HEAL, m);
 
@@ -1574,11 +1595,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 50.0f) {
+                                    if (m && m->GetHealthPct() < 50.0f)
+                                    {
 
-                                        if (this->CanCastSpell(REST_HEALING_SURGE, m)) {
+                                        if (this->CanCastSpell(REST_HEALING_SURGE, m))
+                                        {
 
                                             this->CastSpell(REST_HEALING_SURGE, m);
 
@@ -1602,11 +1626,14 @@ private:
 
                                 auto group = this->GetGroupMembers();
 
-                                for (auto* m : group) {
+                                for (auto* m : group)
+                                {
 
-                                    if (m && m->GetHealthPct() < 80.0f) {
+                                    if (m && m->GetHealthPct() < 80.0f)
+                                    {
 
-                                        if (this->CanCastSpell(REST_HEALING_WAVE, m)) {
+                                        if (this->CanCastSpell(REST_HEALING_WAVE, m))
+                                        {
 
                                             this->CastSpell(REST_HEALING_WAVE, m);
 

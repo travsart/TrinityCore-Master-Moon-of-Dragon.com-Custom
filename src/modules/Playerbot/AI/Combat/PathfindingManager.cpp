@@ -8,6 +8,7 @@
  */
 
 #include "PathfindingManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Map.h"

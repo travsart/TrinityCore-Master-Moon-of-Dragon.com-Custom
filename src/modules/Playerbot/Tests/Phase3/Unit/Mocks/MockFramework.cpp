@@ -37,7 +37,8 @@ MockUnit::MockUnit()
     // Default mock implementations
     ON_CALL(*this, GetHealth()).WillByDefault(::testing::Return(m_health));
     ON_CALL(*this, GetMaxHealth()).WillByDefault(::testing::Return(m_maxHealth));
-    ON_CALL(*this, GetHealthPct()).WillByDefault(::testing::Invoke([this]() {
+    ON_CALL(*this, GetHealthPct()).WillByDefault(::testing::Invoke([this]()
+    {
         return (static_cast<float>(m_health) / static_cast<float>(m_maxHealth)) * 100.0f;
     }));
     ON_CALL(*this, IsAlive()).WillByDefault(::testing::Return(m_health > 0));
@@ -46,17 +47,20 @@ MockUnit::MockUnit()
     ON_CALL(*this, GetPosition()).WillByDefault(::testing::Return(m_position));
     ON_CALL(*this, GetGUID()).WillByDefault(::testing::Return(m_guid));
 
-    ON_CALL(*this, GetPower(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power) {
+    ON_CALL(*this, GetPower(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power)
+    {
         auto it = m_power.find(power);
         return (it != m_power.end()) ? it->second : 0u;
     }));
 
-    ON_CALL(*this, GetMaxPower(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power) {
+    ON_CALL(*this, GetMaxPower(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power)
+    {
         auto it = m_maxPower.find(power);
         return (it != m_maxPower.end()) ? it->second : 0u;
     }));
 
-    ON_CALL(*this, GetPowerPct(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power) {
+    ON_CALL(*this, GetPowerPct(::testing::_)).WillByDefault(::testing::Invoke([this](MockPowers power)
+    {
         auto powerIt = m_power.find(power);
         auto maxPowerIt = m_maxPower.find(power);
         if (powerIt != m_power.end() && maxPowerIt != m_maxPower.end() && maxPowerIt->second > 0)
@@ -84,7 +88,8 @@ MockPlayer::MockPlayer()
     ON_CALL(*this, IsInGroup()).WillByDefault(::testing::Return(m_group != nullptr));
     ON_CALL(*this, GetGroup()).WillByDefault(::testing::Return(m_group));
 
-    ON_CALL(*this, HasSpell(::testing::_)).WillByDefault(::testing::Invoke([this](uint32 spellId) {
+    ON_CALL(*this, HasSpell(::testing::_)).WillByDefault(::testing::Invoke([this](uint32 spellId)
+    {
         return m_spells.find(spellId) != m_spells.end();
     }));
 }
@@ -138,7 +143,8 @@ MockGroup::MockGroup()
     // Note: m_guid and m_leaderGuid use default initialization
     ON_CALL(*this, GetGUID()).WillByDefault(::testing::Return(m_guid));
     ON_CALL(*this, GetLeaderGUID()).WillByDefault(::testing::Return(m_leaderGuid));
-    ON_CALL(*this, GetMembersCount()).WillByDefault(::testing::Invoke([this]() {
+    ON_CALL(*this, GetMembersCount()).WillByDefault(::testing::Invoke([this]()
+    {
         return static_cast<uint32>(m_members.size());
     }));
 }

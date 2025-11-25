@@ -82,7 +82,8 @@ struct TurnInMetrics
     uint32 rewardsSelected{0};
     float rewardSelectionAccuracy{0.0f};
 
-    float GetSuccessRate() const {
+    float GetSuccessRate() const
+    {
         return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
     }
 

@@ -756,12 +756,12 @@ ProfessionManager* BankingManager::GetProfessionManager()
     return session->GetAI()->GetGameSystems()->GetProfessionManager();
 }
 
-void BankingManager::Initialize()
+bool BankingManager::Initialize()
 {
     if (!_bot)
     {
         TC_LOG_ERROR("playerbot", "BankingManager::Initialize: null bot!");
-        return;
+        return false;
     }
 
     TC_LOG_DEBUG("playerbot", "BankingManager::Initialize: Initializing for bot {}", _bot->GetName());
@@ -781,12 +781,9 @@ void BankingManager::Initialize()
     _lastBankAccessTime = 0;
     _enabled = true;
 
-    // Clear pending actions
-    _pendingDeposits.clear();
-    _pendingWithdrawals.clear();
+    TC_LOG_DEBUG("playerbot", "BankingManager::Initialize: Initialized for bot {}", _bot->GetName());
 
-    TC_LOG_DEBUG("playerbot", "BankingManager::Initialize: Initialized with {} rules for bot {}",
-                 _rules.size(), _bot->GetName());
+    return true;
 }
 
 void BankingManager::Shutdown()
@@ -806,13 +803,6 @@ void BankingManager::Shutdown()
         TC_LOG_DEBUG("playerbot", "BankingManager::Shutdown: Cancelled ongoing banking operation for {}",
                      _bot->GetName());
     }
-
-    // Clear all pending operations
-    _pendingDeposits.clear();
-    _pendingWithdrawals.clear();
-
-    // Clear rules (bot-specific only, not default rules)
-    _rules.clear();
 
     // Disable manager
     _enabled = false;

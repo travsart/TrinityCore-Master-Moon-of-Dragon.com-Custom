@@ -98,7 +98,8 @@ public:
 
         if (Aura* aura = bot->GetAura(44544)) // Fingers of Frost buff ID
         {
-            _fofStacks = aura->GetStackAmount();            _fofEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
+            _fofStacks = aura->GetStackAmount();
+            _fofEndTime = GameTime::GetGameTimeMS() + aura->GetDuration();        }
         else
         {
             _fofStacks = 0;
@@ -291,7 +292,8 @@ public:
 private:
     
 
-    void UpdateFrostState()    {
+    void UpdateFrostState()
+    {
         Player* bot = this->GetBot();
         // Resource (mana) is managed by the base template class automatically
         _fofTracker.Update(bot);

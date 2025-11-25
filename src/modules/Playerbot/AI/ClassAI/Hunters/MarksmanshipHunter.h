@@ -299,7 +299,8 @@ public:
     // CORE ROTATION - Marksmanship specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;

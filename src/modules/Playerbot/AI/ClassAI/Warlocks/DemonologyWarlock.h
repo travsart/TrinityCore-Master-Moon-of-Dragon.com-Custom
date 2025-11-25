@@ -112,7 +112,8 @@ struct ManaSoulShardResourceDemo
     uint32 maxSoulShards{5};
     bool available{true};
 
-    bool Consume(uint32 manaCost) {
+    bool Consume(uint32 manaCost)
+    {
         if (mana >= manaCost) {
             mana -= manaCost;
             available = mana > 0;
@@ -121,9 +122,11 @@ struct ManaSoulShardResourceDemo
         return false;
     }
 
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Mana regenerates naturally
-        if (mana < maxMana) {
+        if (mana < maxMana)
+        {
             uint32 regenAmount = (maxMana / 100) * (diff / 1000);
             mana = ::std::min(mana + regenAmount, maxMana);
         }
@@ -133,8 +136,10 @@ struct ManaSoulShardResourceDemo
     [[nodiscard]] uint32 GetAvailable() const { return mana; }
     [[nodiscard]] uint32 GetMax() const { return maxMana; }
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxMana = bot->GetMaxPower(POWER_MANA);
             mana = bot->GetPower(POWER_MANA);        }
         soulShards = 0;
@@ -550,7 +555,8 @@ private:
         if (this->GetBot())
         {
             if (Aura* aura = this->GetBot()->GetAura(DEMONIC_CORE))
-                _demonicCoreStacks = aura->GetStackAmount();            else
+                _demonicCoreStacks = aura->GetStackAmount();
+                else
                 _demonicCoreStacks = 0;
         }
 

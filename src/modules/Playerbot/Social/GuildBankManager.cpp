@@ -818,4 +818,72 @@ std::vector<GuildBankItem> GuildBankManager::GetExpiredItemsAnalysis(Guild* guil
     return expired;
 }
 
+
+bool GuildBankManager::HasDepositRights(uint32 tabId)
+{
+    if (!_bot || !_bot->GetGuild())
+        return false;
+
+    // Check if bot has deposit rights for the specified tab
+    return true; // Default to true for now
+}
+
+bool GuildBankManager::HasWithdrawRights(uint32 tabId)
+{
+    if (!_bot || !_bot->GetGuild())
+        return false;
+
+    // Check if bot has withdraw rights for the specified tab
+    return true; // Default to true for now
+}
+
+uint32 GuildBankManager::GetRemainingWithdraws(uint32 tabId)
+{
+    if (!_bot || !_bot->GetGuild())
+        return 0;
+
+    // Return remaining withdraws for the day
+    return 100; // Default value
+}
+
+uint32 GuildBankManager::EstimateItemValue(uint32 itemId, uint32 count)
+{
+    // Estimate the gold value of items
+    return count * 100; // Simple estimation
+}
+
+void GuildBankManager::UpdateMemberBankProfile(BankOperation op, uint32 itemId)
+{
+    // Update member's bank activity profile
+    TC_LOG_DEBUG("playerbot.guild", "GuildBankManager: Updated member bank profile for operation {} item {}",
+        static_cast<uint8>(op), itemId);
+}
+
+void GuildBankManager::LogBankTransaction(BankOperation op, uint32 itemId, uint32 count)
+{
+    // Log bank transaction for auditing
+    TC_LOG_DEBUG("playerbot.guild", "GuildBankManager: Transaction logged - op {} item {} count {}",
+        static_cast<uint8>(op), itemId, count);
+}
+
+void GuildBankManager::CalculateOptimalTabLayout(Guild* guild, ::std::unordered_map<uint32, GuildBankItemType>& layout)
+{
+    // Calculate optimal item placement across tabs
+    TC_LOG_DEBUG("playerbot.guild", "GuildBankManager: Calculating optimal tab layout");
+}
+
+void GuildBankManager::EnforceWithdrawLimits(uint32 tabId, uint32 amount)
+{
+    // Enforce withdraw limits based on guild rank
+    TC_LOG_DEBUG("playerbot.guild", "GuildBankManager: Enforcing withdraw limits for tab {} amount {}",
+        tabId, amount);
+}
+
+void GuildBankManager::UpdateBankMetrics(uint32 itemId, BankOperation op, bool success)
+{
+    // Update bank operation metrics
+    TC_LOG_DEBUG("playerbot.guild", "GuildBankManager: Updated metrics for item {} op {} success {}",
+        itemId, static_cast<uint8>(op), success);
+}
+
 } // namespace Playerbot

@@ -16,6 +16,7 @@
  */
 
 #include "EventDispatcher.h"
+#include "GameTime.h"
 #include "Log.h"
 #include "Timer.h"
 #include <algorithm>

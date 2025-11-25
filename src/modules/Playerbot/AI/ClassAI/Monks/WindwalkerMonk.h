@@ -103,14 +103,16 @@ struct EnergyChiResourceWindwalker
     uint32 maxChi{6};
 
     bool available{true};
-    bool Consume(uint32 energyCost) {
+    bool Consume(uint32 energyCost)
+    {
         if (energy >= energyCost) {
             energy -= energyCost;
             return true;
         }
         return false;
     }
-    void Regenerate(uint32 diff) {
+    void Regenerate(uint32 diff)
+    {
         // Resource regeneration logic (simplified)
         available = true;
     }
@@ -124,8 +126,10 @@ struct EnergyChiResourceWindwalker
     }
 
 
-    void Initialize(Player* bot) {
-        if (bot) {
+    void Initialize(Player* bot)
+    {
+        if (bot)
+        {
             maxEnergy = bot->GetMaxPower(POWER_ENERGY);
             energy = bot->GetPower(POWER_ENERGY);        }
         chi = 0;
@@ -249,7 +253,8 @@ public:
         InitializeWindwalkerMechanics();
     }
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -547,7 +552,8 @@ private:
         // REMOVED: using namespace BehaviorTreeBuilder; (not needed)
 
         auto* queue = this->GetActionPriorityQueue();
-        if (queue) {
+        if (queue)
+        {
             queue->RegisterSpell(TOUCH_OF_KARMA, SpellPriority::EMERGENCY, SpellCategory::DEFENSIVE);
             queue->AddCondition(TOUCH_OF_KARMA, [](Player* bot, Unit*) { return bot && bot->GetHealthPct() < 40.0f; }, "HP < 40%");
 
@@ -568,7 +574,8 @@ private:
         }
 
         auto* tree = this->GetBehaviorTree();
-        if (tree) {
+        if (tree)
+        {
             auto root = Selector("Windwalker Monk", {
                 Sequence("Burst", { Condition("Has target", [this](Player* bot, Unit*) { return bot && bot->GetVictim(); }),
                     bot::ai::Action("SEF", [this](Player* bot, Unit*) { if (this->CanCastSpell(STORM_EARTH_AND_FIRE, bot)) { this->CastSpell(STORM_EARTH_AND_FIRE, bot); return NodeStatus::SUCCESS; } return NodeStatus::FAILURE; }) }),

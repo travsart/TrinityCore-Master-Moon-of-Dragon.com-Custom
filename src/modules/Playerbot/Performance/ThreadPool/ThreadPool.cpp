@@ -531,7 +531,8 @@ void WorkerThread::Sleep()
 
     // Wait with timeout, check multiple conditions for wake-up
     // CRITICAL FIX: Check _sleeping flag in predicate (cleared by Wake())
-    _wakeCv.wait_for(lock, _pool->GetConfiguration().workerSleepTime, [this]() {
+    _wakeCv.wait_for(lock, _pool->GetConfiguration().workerSleepTime, [this]()
+    {
         // Wake conditions:
         // 1. _sleeping cleared by Wake() (new work submitted)
         // 2. Thread shutdown requested

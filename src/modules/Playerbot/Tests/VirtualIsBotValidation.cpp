@@ -51,7 +51,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(77777);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
@@ -66,10 +67,12 @@ private:
             TC_LOG_INFO("test.playerbot", "Polymorphic WorldSession::IsBot() = {}", polymorphicResult);
 
             // CRITICAL VALIDATION
-    if (directResult && polymorphicResult) {
+    if (directResult && polymorphicResult)
+    {
                 TC_LOG_INFO("test.playerbot", " VIRTUAL IsBot() FIX SUCCESSFUL");
                 TC_LOG_INFO("test.playerbot", " Both direct and polymorphic calls return true");
-            } else if (directResult && !polymorphicResult) {
+            } else if (directResult && !polymorphicResult)
+            {
                 TC_LOG_ERROR("test.playerbot", " VIRTUAL FUNCTION NOT WORKING");
                 TC_LOG_ERROR("test.playerbot", " Polymorphic call failed - IsBot() is not virtual");
             } else {
@@ -77,9 +80,11 @@ private:
                 TC_LOG_ERROR("test.playerbot", " Direct: {}, Polymorphic: {}", directResult, polymorphicResult);
             }
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " Exception in polymorphic test: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " Unknown exception in polymorphic test");
         }
 
@@ -96,7 +101,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(77776);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
@@ -107,7 +113,8 @@ private:
             WorldSession* sessionPtr = botSession.get();
             bool isBotViaPtr = sessionPtr->IsBot();
 
-            if (isBotViaPtr) {
+            if (isBotViaPtr)
+            {
                 TC_LOG_INFO("test.playerbot", " Socket guards should now be effective");
 
                 // Test conditions that previously caused crashes
@@ -118,7 +125,8 @@ private:
                 TC_LOG_INFO("test.playerbot", "IsConnectionIdle() through pointer: {}", idle);
 
                 // Both should be safe now
-    if (!disconnected && !idle) {
+    if (!disconnected && !idle)
+    {
                     TC_LOG_INFO("test.playerbot", " Socket guard methods working correctly");
                 } else {
                     TC_LOG_WARN("test.playerbot", " Unexpected results from socket guard methods");
@@ -128,9 +136,11 @@ private:
                 TC_LOG_ERROR("test.playerbot", " IsBot() still returns false - fix not working");
             }
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " Exception in socket guard test: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " Unknown exception in socket guard test");
         }
 
@@ -147,7 +157,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(77775);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
@@ -156,7 +167,8 @@ private:
             class CrashTestFilter : public PacketFilter {
             public:
                 bool Process(WorldPacket* packet) override { return true; }
-                bool ProcessUnsafe() override {
+                bool ProcessUnsafe() override
+                {
                     // Return true to trigger the unsafe code path that accesses sockets
                     // This is where the original crash occurred
                     return true;
@@ -172,7 +184,8 @@ private:
             // With our fix, it should now be safe
             bool updateResult = botSession->Update(100, crashTestFilter);
 
-            if (updateResult) {
+            if (updateResult)
+            {
                 TC_LOG_INFO("test.playerbot", " UPDATE LOOP CRASH FIXED");
                 TC_LOG_INFO("test.playerbot", " No ACCESS_VIOLATION in socket operations");
             } else {
@@ -184,7 +197,8 @@ private:
 
             for (int i = 0; i < 10; ++i) {
                 bool result = botSession->Update(50, crashTestFilter);
-                if (!result) {
+                if (!result)
+                {
                     TC_LOG_WARN("test.playerbot", " Update failed on iteration {}", i);
                     break;
                 }
@@ -192,10 +206,12 @@ private:
 
             TC_LOG_INFO("test.playerbot", " Repeated Update() calls completed");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " Exception in update loop test: {}", e.what());
             TC_LOG_ERROR("test.playerbot", " This might indicate the fix is incomplete");
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " ACCESS_VIOLATION in update loop test");
             TC_LOG_ERROR("test.playerbot", " The fix has not resolved the crash");
         }
@@ -213,7 +229,8 @@ private:
 
         try {
             auto botSession = BotSession::Create(77774);
-            if (!botSession) {
+            if (!botSession)
+            {
                 TC_LOG_ERROR("test.playerbot", " Failed to create BotSession");
                 return;
             }
@@ -234,10 +251,12 @@ private:
                         totalCalls++;
                         try {
                             bool isBot = sessionPtr->IsBot();
-                            if (isBot) {
+                            if (isBot)
+                            {
                                 successCount++;
                             }
-                        } catch (...) {
+                        } catch (...)
+                        {
                             // Exception counted as failure
                         }
                         std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -246,7 +265,8 @@ private:
             }
 
             // Wait for completion
-    for (auto& thread : threads) {
+    for (auto& thread : threads)
+    {
                 thread.join();
             }
 
@@ -261,9 +281,11 @@ private:
                 TC_LOG_WARN("test.playerbot", " Some concurrent calls failed: {}/{}", successful, total);
             }
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " Exception in concurrent test: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " Unknown exception in concurrent test");
         }
 
@@ -285,12 +307,14 @@ private:
     for (int i = 0; i < 5; ++i) {
                 {
                     auto botSession = BotSession::Create(77770 + i);
-                    if (botSession) {
+                    if (botSession)
+                    {
                         // Verify IsBot() works
                         WorldSession* ptr = botSession.get();
                         bool isBot = ptr->IsBot();
 
-                        if (isBot) {
+                        if (isBot)
+                        {
                             TC_LOG_DEBUG("test.playerbot", "Session {} IsBot() = true", i);
                         } else {
                             TC_LOG_WARN("test.playerbot", "Session {} IsBot() = false", i);
@@ -313,9 +337,11 @@ private:
 
             TC_LOG_INFO("test.playerbot", " All sessions destroyed without crashes");
 
-        } catch (std::exception const& e) {
+        } catch (std::exception const& e)
+        {
             TC_LOG_ERROR("test.playerbot", " Exception in destructor test: {}", e.what());
-        } catch (...) {
+        } catch (...)
+        {
             TC_LOG_ERROR("test.playerbot", " Unknown exception in destructor test");
         }
 

@@ -152,7 +152,8 @@ public:
         return GetStacks(guid) > 0;
     }
 
-    void Update(Unit* target)    {
+    void Update(Unit* target)
+    {
         if (!target)
 
             return;
@@ -390,7 +391,8 @@ private:
 
     void MaintainBearForm()
     {
-        Player* bot = this->GetBot();        if (!bot->HasAura(GUARDIAN_BEAR_FORM))
+        Player* bot = this->GetBot();
+        if (!bot->HasAura(GUARDIAN_BEAR_FORM))
         {
 
             if (this->CanCastSpell(GUARDIAN_BEAR_FORM, bot))
@@ -445,7 +447,8 @@ private:
 
     void ExecuteSingleTargetThreatRotation(::Unit* target)
     {
-        Player* bot = this->GetBot();        ObjectGuid targetGuid = target->GetGUID();        // Berserk/Incarnation (major cooldown - increased damage and rage gen)
+        Player* bot = this->GetBot();
+        ObjectGuid targetGuid = target->GetGUID();        // Berserk/Incarnation (major cooldown - increased damage and rage gen)
         if (this->_resource < 50 && CanUseMajorCooldown())
         {
 

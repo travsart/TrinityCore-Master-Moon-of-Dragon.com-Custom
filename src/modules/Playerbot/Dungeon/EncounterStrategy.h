@@ -210,7 +210,8 @@ public:
         ::std::atomic<float> mechanicSuccessRate{0.9f};
         ::std::atomic<uint32> adaptationsPerformed{0};
 
-        void Reset() {
+        void Reset()
+        {
             strategiesExecuted = 0; strategiesSuccessful = 0; mechanicsHandled = 0;
             mechanicsSuccessful = 0; averageExecutionTime = 300000.0f;
             strategySuccessRate = 0.85f; mechanicSuccessRate = 0.9f;

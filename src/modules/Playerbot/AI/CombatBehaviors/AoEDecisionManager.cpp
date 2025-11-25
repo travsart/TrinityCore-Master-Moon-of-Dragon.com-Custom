@@ -8,6 +8,7 @@
  */
 
 #include "AoEDecisionManager.h"
+#include "GameTime.h"
 #include "AI/BotAI.h"
 #include "Player.h"
 #include "Unit.h"
@@ -42,11 +43,13 @@ namespace
         BOT_ROLE_DPS = 2
     };
 
-    BotRole GetPlayerRole(Player const* player) {
+    BotRole GetPlayerRole(Player const* player)
+    {
         if (!player) return BOT_ROLE_DPS;
         Classes cls = static_cast<Classes>(player->GetClass());
         uint8 spec = 0; // Simplified for now - spec detection would need talent system integration
-    switch (cls) {
+    switch (cls)
+    {
             case CLASS_WARRIOR: return (spec == 2) ? BOT_ROLE_TANK : BOT_ROLE_DPS;
             case CLASS_PALADIN:
                 if (spec == 1) return BOT_ROLE_HEALER;

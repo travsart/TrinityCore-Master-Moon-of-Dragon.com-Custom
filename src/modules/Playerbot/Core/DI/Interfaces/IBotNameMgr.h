@@ -40,7 +40,8 @@
  * @code
  * auto nameMgr = Services::Container().Resolve<IBotNameMgr>();
  * std::string name = nameMgr->AllocateName(GENDER_MALE, characterGuid);
- * if (!name.empty()) {
+ * if (!name.empty())
+ {
  *     // Name allocated successfully
  * }
  * @endcode

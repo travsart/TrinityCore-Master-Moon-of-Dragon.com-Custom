@@ -8,6 +8,7 @@
  */
 
 #include "DungeonScript.h"
+#include "SpellHistory.h"
 #include "EncounterStrategy.h"
 #include "Log.h"
 #include "ObjectAccessor.h"

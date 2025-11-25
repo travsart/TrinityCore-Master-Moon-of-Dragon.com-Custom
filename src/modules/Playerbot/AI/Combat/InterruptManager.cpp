@@ -8,6 +8,7 @@
  */
 
 #include "InterruptManager.h"
+#include "GameTime.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Spell.h"

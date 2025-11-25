@@ -8,6 +8,7 @@
  */
 
 #include "AuctionMaterialsBridge.h"
+#include "GameTime.h"
 #include "GatheringMaterialsBridge.h"
 #include "ProfessionAuctionBridge.h"
 #include "ProfessionManager.h"

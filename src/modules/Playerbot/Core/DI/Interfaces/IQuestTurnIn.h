@@ -95,7 +95,8 @@ public:
         uint32 rewardsSelected;
         float rewardSelectionAccuracy;
 
-        float GetSuccessRate() const {
+        float GetSuccessRate() const
+        {
             return turnInAttempts > 0 ? (float)successfulTurnIns / turnInAttempts : 0.0f;
         }
     };

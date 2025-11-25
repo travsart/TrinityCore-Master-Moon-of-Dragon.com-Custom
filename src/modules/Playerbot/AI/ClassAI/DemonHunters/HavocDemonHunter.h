@@ -332,7 +332,8 @@ public:
     // CORE ROTATION - Havoc specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
 
             return;
@@ -426,7 +427,8 @@ public:
         }
     }
 
-    Position GetOptimalPosition(::Unit* target)    {
+    Position GetOptimalPosition(::Unit* target)
+    {
         // Havoc prefers to be behind target for Chaos Strike crit bonus
         if (target)
         {
@@ -744,7 +746,8 @@ private:
 
     bool ShouldUseMetamorphosis()
     {
-        ::Unit* target = this->GetBot()->GetVictim();        if (!target)
+        ::Unit* target = this->GetBot()->GetVictim();
+        if (!target)
 
             return false;
 
@@ -819,7 +822,8 @@ private:
 
         // Position at optimal angle
         Position pos;
-        pos.m_positionX = target->GetPositionX() - cos(bestAngle) * 5.0f;        pos.m_positionY = target->GetPositionY() - sin(bestAngle) * 5.0f;        pos.m_positionZ = target->GetPositionZ();        pos.SetOrientation(bestAngle);        return pos;
+        pos.m_positionX = target->GetPositionX() - cos(bestAngle) * 5.0f;
+        pos.m_positionY = target->GetPositionY() - sin(bestAngle) * 5.0f;        pos.m_positionZ = target->GetPositionZ();        pos.SetOrientation(bestAngle);        return pos;
     }
 
     bool BuildMomentum(Unit* target)
@@ -1212,7 +1216,8 @@ private:
 
                             bot::ai::Action("Cast Blur", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_BLUR, bot)) {
+                                if (this->CanCastSpell(SPELL_BLUR, bot))
+                                {
 
                                     this->CastSpell(SPELL_BLUR, bot);
 
@@ -1236,7 +1241,8 @@ private:
 
                             bot::ai::Action("Cast Darkness", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_DARKNESS, bot)) {
+                                if (this->CanCastSpell(SPELL_DARKNESS, bot))
+                                {
 
                                     this->CastSpell(SPELL_DARKNESS, bot);
 
@@ -1282,7 +1288,8 @@ private:
 
                             bot::ai::Action("Cast Metamorphosis", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot)) {
+                                if (this->CanCastSpell(SPELL_METAMORPHOSIS, bot))
+                                {
 
                                     this->CastSpell(SPELL_METAMORPHOSIS, bot);
 
@@ -1318,7 +1325,8 @@ private:
 
                                 Unit* victim = bot->GetVictim();
 
-                                if (victim && this->CanCastSpell(SPELL_FEL_BARRAGE, victim)) {
+                                if (victim && this->CanCastSpell(SPELL_FEL_BARRAGE, victim))
+                                {
 
                                     this->CastSpell(SPELL_FEL_BARRAGE, victim);
 
@@ -1376,7 +1384,8 @@ private:
 
                                 Unit* victim = bot->GetVictim();
 
-                                if (victim && this->CanCastSpell(SPELL_EYE_BEAM, victim)) {
+                                if (victim && this->CanCastSpell(SPELL_EYE_BEAM, victim))
+                                {
 
                                     this->CastSpell(SPELL_EYE_BEAM, victim);
 
@@ -1420,7 +1429,8 @@ private:
 
                             bot::ai::Action("Cast Death Sweep", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot)) {
+                                if (this->CanCastSpell(SPELL_DEATH_SWEEP, bot))
+                                {
 
                                     this->CastSpell(SPELL_DEATH_SWEEP, bot);
 
@@ -1460,7 +1470,8 @@ private:
 
                             bot::ai::Action("Cast Blade Dance", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_BLADE_DANCE, bot)) {
+                                if (this->CanCastSpell(SPELL_BLADE_DANCE, bot))
+                                {
 
                                     this->CastSpell(SPELL_BLADE_DANCE, bot);
 
@@ -1488,7 +1499,8 @@ private:
 
                             bot::ai::Action("Cast Immolation Aura", [this](Player* bot, Unit*) {
 
-                                if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot)) {
+                                if (this->CanCastSpell(SPELL_IMMOLATION_AURA, bot))
+                                {
 
                                     this->CastSpell(SPELL_IMMOLATION_AURA, bot);
 
@@ -1542,7 +1554,8 @@ private:
 
                                         Unit* victim = bot->GetVictim();
 
-                                        if (victim && this->CanCastSpell(SPELL_FEL_RUSH, victim)) {
+                                        if (victim && this->CanCastSpell(SPELL_FEL_RUSH, victim))
+                                        {
 
                                             this->CastSpell(SPELL_FEL_RUSH, victim);
 
@@ -1578,7 +1591,8 @@ private:
 
                                     bot::ai::Action("Cast Vengeful Retreat", [this](Player* bot, Unit*) {
 
-                                        if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot)) {
+                                        if (this->CanCastSpell(SPELL_VENGEFUL_RETREAT, bot))
+                                        {
 
                                             this->CastSpell(SPELL_VENGEFUL_RETREAT, bot);
 
@@ -1632,7 +1646,8 @@ private:
 
                                 Unit* victim = bot->GetVictim();
 
-                                if (victim && this->CanCastSpell(SPELL_ANNIHILATION, victim)) {
+                                if (victim && this->CanCastSpell(SPELL_ANNIHILATION, victim))
+                                {
 
                                     this->CastSpell(SPELL_ANNIHILATION, victim);
 
@@ -1674,7 +1689,8 @@ private:
 
                                 Unit* victim = bot->GetVictim();
 
-                                if (victim && this->CanCastSpell(SPELL_CHAOS_STRIKE, victim)) {
+                                if (victim && this->CanCastSpell(SPELL_CHAOS_STRIKE, victim))
+                                {
 
                                     this->CastSpell(SPELL_CHAOS_STRIKE, victim);
 
@@ -1720,7 +1736,8 @@ private:
 
                         Unit* victim = bot->GetVictim();
 
-                        if (victim && this->CanCastSpell(SPELL_DEMONS_BITE, victim)) {
+                        if (victim && this->CanCastSpell(SPELL_DEMONS_BITE, victim))
+                        {
 
                             this->CastSpell(SPELL_DEMONS_BITE, victim);
 

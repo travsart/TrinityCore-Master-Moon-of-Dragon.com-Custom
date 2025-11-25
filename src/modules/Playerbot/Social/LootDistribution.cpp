@@ -29,7 +29,8 @@
 namespace Playerbot
 {
 
-LootDistribution::LootDistribution(Player* bot) : _bot(bot) {
+LootDistribution::LootDistribution(Player* bot) : _bot(bot)
+{
     if (!_bot) TC_LOG_ERROR("playerbot", "LootDistribution: null bot!");
 }
 
@@ -1201,6 +1202,36 @@ void LootDistribution::ValidateLootStates()
     // Validate that loot system state is consistent
     // Clean up any orphaned data
     // Detect and handle any inconsistencies
+}
+
+
+void LootDistribution::SetGroupLootMethod(Group* group, LootMethod method)
+{
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "LootDistribution: Setting loot method to {} for group",
+        static_cast<uint8>(method));
+
+    // Would set the group's loot method through Group API
+}
+
+void LootDistribution::SetGroupLootThreshold(Group* group, ItemQualities threshold)
+{
+    if (!group)
+        return;
+
+    TC_LOG_DEBUG("playerbot.loot", "LootDistribution: Setting loot threshold to {} for group",
+        static_cast<uint8>(threshold));
+
+    // Would set the group's loot threshold through Group API
+}
+
+void LootDistribution::HandleLootConflicts(uint32 itemId)
+{
+    TC_LOG_DEBUG("playerbot.loot", "LootDistribution: Handling loot conflicts for item {}", itemId);
+
+    // Resolve any loot distribution conflicts for the specified item
 }
 
 } // namespace Playerbot

@@ -175,7 +175,8 @@ private:
         ::std::atomic<float> interruptSuccessRate{0.0f};
         ::std::chrono::steady_clock::time_point combatStartTime;
         ::std::chrono::steady_clock::time_point lastMetricsUpdate;
-        void Reset() {
+        void Reset()
+        {
             totalDamage = 0; totalHealing = 0; totalManaSpent = 0;
             averageCastTime = 0.0f; criticalHitRate = 0.0f; interruptSuccessRate = 0.0f;
             combatStartTime = ::std::chrono::steady_clock::now();

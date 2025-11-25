@@ -86,7 +86,8 @@ public:
     // CORE ROTATION - Only Fury-specific logic
     // ========================================================================
 
-    void UpdateRotation(::Unit* target) override    {
+    void UpdateRotation(::Unit* target) override
+    {
         if (!target || !target->IsAlive() || !target->IsHostileTo(this->GetBot()))
             return;
 
@@ -286,7 +287,8 @@ protected:
         Player* bot = this->GetBot();
 
         // Check if bot has weapons in both hands
-        Item* mainHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasDualWield = mainHand && offHand &&
+        Item* mainHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        Item* offHand = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);        _hasDualWield = mainHand && offHand &&
                        offHand->GetTemplate() &&
                        offHand->GetTemplate()->GetClass() == ITEM_CLASS_WEAPON;
     }
@@ -431,7 +433,8 @@ private:
 
             queue->RegisterSpell(SPELL_EXECUTE, SpellPriority::EMERGENCY, SpellCategory::DAMAGE_SINGLE);
             queue->AddCondition(SPELL_EXECUTE,
-                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target)
+                {
                     return target && target->GetHealthPct() < 20.0f;
                 }},
                 "Target HP < 20% (Execute range)");
@@ -439,7 +442,8 @@ private:
             // Critical cooldowns
             queue->RegisterSpell(SPELL_RECKLESSNESS, SpellPriority::CRITICAL, SpellCategory::OFFENSIVE);
             queue->AddCondition(SPELL_RECKLESSNESS,
-                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target) {
+                ::std::function<bool(Player*, Unit*)>{[](Player* bot, Unit* target)
+                {
                     // Use on bosses or high HP targets
                     return target && (target->GetMaxHealth() > 500000 || target->GetCreatureType() == CREATURE_TYPE_HUMANOID);
                 }},
