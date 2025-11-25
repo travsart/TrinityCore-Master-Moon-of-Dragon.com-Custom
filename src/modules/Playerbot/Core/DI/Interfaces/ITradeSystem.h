@@ -39,6 +39,43 @@ struct TradeMetrics
     std::atomic<uint32> totalItemsTraded{0};
     std::chrono::steady_clock::time_point lastUpdate;
 
+    // Default constructor
+    TradeMetrics() = default;
+
+    // Copy constructor - loads atomic values
+    TradeMetrics(const TradeMetrics& other)
+        : tradesInitiated(other.tradesInitiated.load())
+        , tradesCompleted(other.tradesCompleted.load())
+        , tradesCancelled(other.tradesCancelled.load())
+        , vendorTransactions(other.vendorTransactions.load())
+        , repairTransactions(other.repairTransactions.load())
+        , averageTradeValue(other.averageTradeValue.load())
+        , tradeSuccessRate(other.tradeSuccessRate.load())
+        , totalGoldTraded(other.totalGoldTraded.load())
+        , totalItemsTraded(other.totalItemsTraded.load())
+        , lastUpdate(other.lastUpdate)
+    {
+    }
+
+    // Copy assignment operator - loads atomic values
+    TradeMetrics& operator=(const TradeMetrics& other)
+    {
+        if (this != &other)
+        {
+            tradesInitiated.store(other.tradesInitiated.load());
+            tradesCompleted.store(other.tradesCompleted.load());
+            tradesCancelled.store(other.tradesCancelled.load());
+            vendorTransactions.store(other.vendorTransactions.load());
+            repairTransactions.store(other.repairTransactions.load());
+            averageTradeValue.store(other.averageTradeValue.load());
+            tradeSuccessRate.store(other.tradeSuccessRate.load());
+            totalGoldTraded.store(other.totalGoldTraded.load());
+            totalItemsTraded.store(other.totalItemsTraded.load());
+            lastUpdate = other.lastUpdate;
+        }
+        return *this;
+    }
+
     void Reset() {
         tradesInitiated = 0; tradesCompleted = 0; tradesCancelled = 0;
         vendorTransactions = 0; repairTransactions = 0; averageTradeValue = 1000.0f;

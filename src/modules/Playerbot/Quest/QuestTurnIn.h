@@ -103,6 +103,9 @@ struct TurnInBatch
     uint32 scheduledTime;
     bool isOptimized;
 
+    TurnInBatch() : botGuid(0), totalTravelTime(0)
+        , batchPriority(100), scheduledTime(0), isOptimized(false) {}
+
     TurnInBatch(uint32 bGuid) : botGuid(bGuid), totalTravelTime(0)
         , batchPriority(100), scheduledTime(0), isOptimized(false) {}
 };

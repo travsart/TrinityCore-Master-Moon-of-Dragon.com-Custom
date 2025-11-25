@@ -82,6 +82,9 @@ struct EventParticipation
     float participationRating;
     uint32 lastEventActivity;
 
+    EventParticipation() : playerGuid(0), guildId(0), totalEventsCreated(0), totalEventsAttended(0)
+        , organizationRating(0.5f), participationRating(0.7f), lastEventActivity(GameTime::GetGameTimeMS()) {}
+
     EventParticipation(uint32 pGuid, uint32 gId) : playerGuid(pGuid), guildId(gId)
         , totalEventsCreated(0), totalEventsAttended(0), organizationRating(0.5f)
         , participationRating(0.7f), lastEventActivity(GameTime::GetGameTimeMS()) {}

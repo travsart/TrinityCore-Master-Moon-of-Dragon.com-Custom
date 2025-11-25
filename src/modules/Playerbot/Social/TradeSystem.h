@@ -85,6 +85,11 @@ struct VendorInfo
     float discountRate;
     uint32 lastInteractionTime;
 
+    VendorInfo() : creatureId(0), creatureGuid(0), vendorName(""), vendorType(VendorType::GENERAL_GOODS)
+        , zoneId(0), areaId(0), isRepairVendor(false), isInnkeeper(false)
+        , isFlightMaster(false), factionId(0), discountRate(0.0f)
+        , lastInteractionTime(0) {}
+
     VendorInfo(uint32 id, uint32 guid, const std::string& name, VendorType type)
         : creatureId(id), creatureGuid(guid), vendorName(name), vendorType(type)
         , zoneId(0), areaId(0), isRepairVendor(false), isInnkeeper(false)
@@ -108,6 +113,10 @@ struct TradeSession
     uint32 sessionTimeout;
     bool isActive;
     std::string tradeReason;
+
+    TradeSession() : sessionId(0), initiatorGuid(0), targetGuid(0), tradeType(TradeType::PLAYER_TO_PLAYER)
+        , initiatorGold(0), targetGold(0), initiatorAccepted(false), targetAccepted(false)
+        , sessionStartTime(0), sessionTimeout(0), isActive(false) {}
 
     TradeSession(uint32 id, uint32 init, uint32 target, TradeType type)
         : sessionId(id), initiatorGuid(init), targetGuid(target), tradeType(type)
