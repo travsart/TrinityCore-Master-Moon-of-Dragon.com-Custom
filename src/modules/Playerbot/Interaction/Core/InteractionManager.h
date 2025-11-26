@@ -49,11 +49,12 @@ namespace Playerbot
     // class QuestDialogHandler;  // Legacy - not implemented yet
     class InteractionValidator;
     class VendorInteraction;
-    // class TrainerInteraction;  // TODO: Not implemented yet
-    // class InnkeeperInteraction;  // TODO: Not implemented yet
-    // class FlightMasterInteraction;  // TODO: Not implemented yet
-    // class BankInteraction;  // TODO: Not implemented yet
-    // class MailboxInteraction;  // TODO: Not implemented yet
+    // NOTE: The following interaction managers are FULLY IMPLEMENTED as separate files:
+    // - TrainerInteractionManager    (Interaction/TrainerInteractionManager.cpp - 735 lines)
+    // - InnkeeperInteractionManager  (Interaction/InnkeeperInteractionManager.cpp - 687 lines)
+    // - FlightMasterManager          (Interaction/FlightMasterManager.cpp - 674 lines)
+    // - BankInteractionManager       (Interaction/BankInteractionManager.cpp - 1004 lines)
+    // - MailInteractionManager       (Interaction/MailInteractionManager.cpp - 827 lines)
 
     /**
      * @enum NPCType
@@ -627,13 +628,15 @@ namespace Playerbot
         // Subsystems - specialized handlers
         ::std::unique_ptr<GossipHandler> m_gossipHandler;
         ::std::unique_ptr<InteractionValidator> m_validator;
-        // TODO: VendorInteraction is incomplete type - need to implement
+        // NOTE: VendorInteraction is incomplete type - design decision to use separate manager files instead
         // ::std::unique_ptr<VendorInteraction> m_vendorHandler;
-        // std::unique_ptr<TrainerInteraction> m_trainerHandler;  // TODO: Not implemented yet
-        // std::unique_ptr<InnkeeperInteraction> m_innkeeperHandler;  // TODO: Not implemented yet
-        // std::unique_ptr<FlightMasterInteraction> m_flightHandler;  // TODO: Not implemented yet
-        // std::unique_ptr<BankInteraction> m_bankHandler;  // TODO: Not implemented yet
-        // std::unique_ptr<MailboxInteraction> m_mailHandler;  // TODO: Not implemented yet
+        //
+        // The following interaction managers are FULLY IMPLEMENTED as separate files with TrinityCore API integration:
+        // - TrainerInteractionManager    (Interaction/TrainerInteractionManager.cpp) - Full trainer/profession spell learning
+        // - InnkeeperInteractionManager  (Interaction/InnkeeperInteractionManager.cpp) - Hearthstone binding, rested state
+        // - FlightMasterManager          (Interaction/FlightMasterManager.cpp) - TaxiPathGraph integration
+        // - BankInteractionManager       (Interaction/BankInteractionManager.cpp) - Bank deposit/withdraw operations
+        // - MailInteractionManager       (Interaction/MailInteractionManager.cpp) - Mail send/receive/COD handling
 
         // Legacy subsystems (for backward compatibility) - commented out until implemented
         // std::unique_ptr<VendorDatabase> m_vendorDB;
