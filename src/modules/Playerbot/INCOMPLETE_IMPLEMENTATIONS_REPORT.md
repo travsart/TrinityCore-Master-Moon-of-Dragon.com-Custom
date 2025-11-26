@@ -83,15 +83,27 @@ Full implementations:
 
 **Note:** The TODO comments in `InteractionManager.h` are outdated - all handlers are fully implemented.
 
-### 2.2 BattlePetManager - Partial Stubs
+### 2.2 BattlePetManager - FULLY IMPLEMENTED
 **File:** `Companion/BattlePetManager.cpp`
-**Impact:** MEDIUM - Battle pet system has some stub methods
-**Note:** Core functionality works, some DBC/DB2 integration methods are stubs
+**Status:** COMPLETE - 1732 lines with full battle pet system
+**Implementation Details:**
+- Full pet database loading from DB + fallback hardcoded pets (lines 96-313)
+- Full ability database with 60+ abilities across 10 pet families (lines 315-480)
+- Rare pet spawn locations with actual world coordinates (lines 482-572)
+- Complete pet battle AI with type effectiveness calculations (lines 1462-1526)
+- Team composition optimization, leveling system, healing system
+- WoW-accurate type effectiveness chart
 
-### 2.3 MountManager - Partial Stubs
+### 2.3 MountManager - FULLY IMPLEMENTED
 **File:** `Companion/MountManager.cpp`
-**Impact:** MEDIUM - Mount selection has some stub methods
-**Note:** Mount summoning works, some query methods return defaults
+**Status:** COMPLETE - 2541 lines with comprehensive mount system
+**Implementation Details:**
+- Complete mount database covering all expansions (Vanilla through War Within)
+- All mount types: Ground, Flying, Aquatic, Dragonriding
+- Zone detection: No-fly zones, dragonriding zones, aquatic zones
+- Multi-passenger mount support with Vehicle API integration
+- Riding skill management with TrinityCore spell IDs
+- Mount selection logic by type, speed, and zone restrictions
 
 ### 2.4 RoleCoordinator - Functional
 **File:** `AI/Coordination/RoleCoordinator.cpp`
