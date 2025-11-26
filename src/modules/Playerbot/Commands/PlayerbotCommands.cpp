@@ -20,6 +20,9 @@
 #include "AI/BotAI.h"
 #include "Config/ConfigManager.h"
 #include "Monitoring/BotMonitor.h"
+#include "Lifecycle/BotSpawner.h"
+#include "Lifecycle/BotCharacterCreator.h"
+#include "Session/BotSessionMgr.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -31,6 +34,7 @@
 #include "DB2Stores.h"
 #include "CharacterCache.h"
 #include "Group.h"
+#include "Log.h"
 #include <sstream>
 #include <iomanip>
 
@@ -161,6 +165,7 @@ namespace Playerbot
         // Default to player's race/class if not specified
         uint8 botRace = race ? *race : player->GetRace();
         uint8 botClass = classId ? *classId : player->GetClass();
+
         // Validate race/class combination
         if (!ValidateRaceClass(botRace, botClass, handler))
 
@@ -175,17 +180,80 @@ namespace Playerbot
             return false;
         }
 
-        // TODO: Actually create bot character in database
-        // This would involve:
-        // 1. Creating character data in `characters` table
-        // 2. Creating world session for bot
-        // 3. Spawning bot in world at player's location
-        // 4. Adding bot to player's group
+        // Get player's account ID for bot ownership
+        uint32 accountId = player->GetSession()->GetAccountId();
 
-        handler->PSendSysMessage("Bot '%s' created successfully (Race: %u, Class: %u).",
+        // Random gender selection for bot
+        uint8 gender = urand(0, 1); // 0 = male, 1 = female
 
+        // Step 1: Create bot character in database using BotCharacterCreator
+        ObjectGuid botGuid;
+        std::string errorMsg;
+        BotCharacterCreator::CreateResult result = BotCharacterCreator::CreateBotCharacter(
+            accountId, botRace, botClass, gender, name, botGuid, errorMsg);
+
+        if (result != BotCharacterCreator::CreateResult::SUCCESS)
+        {
+            handler->PSendSysMessage("Failed to create bot character: %s (%s)",
+                                    BotCharacterCreator::ResultToString(result), errorMsg.c_str());
+            TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: Character creation failed for '{}': {} - {}",
+                        name, BotCharacterCreator::ResultToString(result), errorMsg);
+            return false;
+        }
+
+        TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Created character '{}' (GUID: {})",
+                   name, botGuid.ToString());
+
+        // Step 2: Create bot session and spawn in world
+        ObjectGuid spawnedGuid;
+        if (!sBotSpawner->CreateAndSpawnBot(accountId, botClass, botRace, gender, name, spawnedGuid))
+        {
+            handler->PSendSysMessage("Bot character created but failed to spawn in world.");
+            TC_LOG_ERROR("playerbot", "HandleBotSpawnCommand: Spawn failed for character '{}'", name);
+            return false;
+        }
+
+        // Step 3: Teleport bot to player's location
+        Player* bot = ObjectAccessor::FindPlayer(spawnedGuid);
+        if (bot)
+        {
+            bot->TeleportTo(player->GetMapId(), player->GetPositionX(), player->GetPositionY(),
+                           player->GetPositionZ(), player->GetOrientation());
+
+            // Step 4: Invite bot to player's group
+            Group* group = player->GetGroup();
+            if (!group)
+            {
+                // Create new group with player as leader
+                group = new Group;
+                if (group->Create(player))
+                {
+                    group->AddMember(bot);
+                    handler->PSendSysMessage("Bot '%s' created and added to new group.", name.c_str());
+                }
+                else
+                {
+                    delete group;
+                    handler->PSendSysMessage("Bot '%s' created but failed to create group.", name.c_str());
+                }
+            }
+            else
+            {
+                // Add bot to existing group
+                group->AddMember(bot);
+                handler->PSendSysMessage("Bot '%s' created and added to your group.", name.c_str());
+            }
+        }
+        else
+        {
+            handler->PSendSysMessage("Bot '%s' created but not yet visible in world.", name.c_str());
+        }
+
+        handler->PSendSysMessage("Bot '%s' spawned successfully (Race: %u, Class: %u).",
                                 name.c_str(), botRace, botClass);
-        handler->PSendSysMessage("Note: Full bot spawning implementation requires BotManager integration.");
+
+        TC_LOG_INFO("playerbot", "HandleBotSpawnCommand: Bot '{}' successfully spawned for player '{}'",
+                   name, player->GetName());
 
         return true;
     }
@@ -211,15 +279,49 @@ namespace Playerbot
             return false;
         }
 
-        // TODO: Actually delete bot
-        // This would involve:
-        // 1. Removing bot from world
-        // 2. Cleaning up bot session
-        // 3. Deleting bot data from database
-        // 4. Removing from group if grouped
+        // Check if this is a bot session (has BotAI)
+        BotAI* botAI = dynamic_cast<BotAI*>(bot->GetAI());
+        if (!botAI)
+        {
+            handler->PSendSysMessage("'%s' is not a bot (no BotAI). Cannot delete real players.", name.c_str());
+            TC_LOG_WARN("playerbot", "HandleBotDeleteCommand: Attempted to delete non-bot player '{}'", name);
+            return false;
+        }
 
-        handler->PSendSysMessage("Bot '%s' deleted successfully.", name.c_str());
-        handler->PSendSysMessage("Note: Full bot deletion implementation requires BotManager integration.");
+        ObjectGuid botGuid = bot->GetGUID();
+        uint32 accountId = session->GetAccountId();
+
+        TC_LOG_INFO("playerbot", "HandleBotDeleteCommand: Deleting bot '{}' (GUID: {}, AccountId: {})",
+                   name, botGuid.ToString(), accountId);
+
+        // Step 1: Remove bot from group if grouped
+        if (Group* group = bot->GetGroup())
+        {
+            group->RemoveMember(botGuid);
+            TC_LOG_DEBUG("playerbot", "HandleBotDeleteCommand: Removed bot '{}' from group", name);
+        }
+
+        // Step 2: Despawn bot from world using BotSpawner
+        // Use explicit std::string to ensure correct overload (bool DespawnBot(ObjectGuid, std::string const&))
+        bool despawnSuccess = sBotSpawner->DespawnBot(botGuid, ::std::string("Manual deletion via .bot delete command"));
+        if (!despawnSuccess)
+        {
+            TC_LOG_WARN("playerbot", "HandleBotDeleteCommand: BotSpawner despawn failed for '{}', attempting fallback", name);
+            // Fallback: force the bot GUID-based despawn
+            sBotSpawner->DespawnBot(botGuid, true);
+        }
+
+        // Step 3: Release the bot session
+        sBotSessionMgr->ReleaseSession(accountId);
+
+        // Step 4: Log the deletion (character data remains in database for potential restoration)
+        // Note: We don't delete character data from database to allow for recovery
+        // A separate ".bot purge <name>" command could permanently delete if needed
+
+        handler->PSendSysMessage("Bot '%s' has been removed from the world.", name.c_str());
+        handler->PSendSysMessage("Character data preserved in database. Use .bot spawn %s to respawn.", name.c_str());
+
+        TC_LOG_INFO("playerbot", "HandleBotDeleteCommand: Bot '{}' successfully deleted", name);
 
         return true;
     }
@@ -848,24 +950,78 @@ namespace Playerbot
     std::string PlayerbotCommandScript::FormatBotStats()
     {
         std::ostringstream oss;
+        oss << std::fixed << std::setprecision(2);
 
-        // TODO: Integrate with actual performance metrics
-        // For now, provide placeholder statistics
+        // Get statistics from BotSpawner
+        SpawnStats const& spawnStats = sBotSpawner->GetStats();
+        uint32 activeBots = spawnStats.currentlyActive.load();
+        uint32 peakBots = spawnStats.peakConcurrent.load();
+        uint32 totalSpawned = spawnStats.totalSpawned.load();
+        uint32 totalDespawned = spawnStats.totalDespawned.load();
+        uint32 failedSpawns = spawnStats.failedSpawns.load();
+        float avgSpawnTime = spawnStats.GetAverageSpawnTime();
+        float successRate = spawnStats.GetSuccessRate();
 
-        oss << "Total Active Bots: 0\n";
-        oss << "Average CPU per Bot: 0.05%\n";
-        oss << "Average Memory per Bot: 8.2 MB\n";
-        oss << "Total Memory Usage: 0 MB\n";
-        oss << "Bots in Combat: 0\n";
-        oss << "Bots Questing: 0\n";
-        oss << "Bots Idle: 0\n";
+        // Bot counts
+        oss << "=== Bot Population ===\n";
+        oss << "  Active Bots:      " << activeBots << "\n";
+        oss << "  Peak Concurrent:  " << peakBots << "\n";
+        oss << "  Total Spawned:    " << totalSpawned << "\n";
+        oss << "  Total Despawned:  " << totalDespawned << "\n";
         oss << "\n";
-        oss << "Performance:\n";
-        oss << "  Average Update Time: 5.2 ms\n";
-        oss << "  Peak Update Time: 12.8 ms\n";
-        oss << "  Database Queries/sec: 125\n";
+
+        // Spawning statistics
+        oss << "=== Spawning Statistics ===\n";
+        oss << "  Spawn Success Rate:  " << successRate << "%\n";
+        oss << "  Failed Spawns:       " << failedSpawns << "\n";
+        oss << "  Avg Spawn Time:      " << avgSpawnTime << " ms\n";
         oss << "\n";
-        oss << "Note: Statistics require integration with PerformanceTestFramework.";
+
+        // Get performance data from BotMonitor if available
+        BotMonitor* monitor = sBotMonitor;
+        if (monitor)
+        {
+            oss << "=== Performance Metrics ===\n";
+
+            TrendData cpuTrend = monitor->GetCpuTrend();
+            TrendData memoryTrend = monitor->GetMemoryTrend();
+            TrendData queryTimeTrend = monitor->GetQueryTimeTrend();
+
+            if (!cpuTrend.values.empty())
+            {
+                oss << "  CPU Usage:           " << cpuTrend.GetAverage() << "% (avg)\n";
+                oss << "  CPU Peak:            " << cpuTrend.GetMax() << "%\n";
+            }
+
+            if (!memoryTrend.values.empty())
+            {
+                oss << "  Memory Usage:        " << memoryTrend.GetAverage() << " MB (avg)\n";
+                oss << "  Memory Peak:         " << memoryTrend.GetMax() << " MB\n";
+            }
+
+            if (!queryTimeTrend.values.empty())
+            {
+                oss << "  DB Query Time:       " << queryTimeTrend.GetAverage() << " ms (avg)\n";
+            }
+
+            // Calculate per-bot overhead
+            if (activeBots > 0 && !memoryTrend.values.empty())
+            {
+                float memPerBot = memoryTrend.GetAverage() / activeBots;
+                oss << "\n=== Per-Bot Overhead ===\n";
+                oss << "  Avg Memory/Bot:      " << memPerBot << " MB\n";
+
+                if (!cpuTrend.values.empty())
+                {
+                    float cpuPerBot = cpuTrend.GetAverage() / activeBots;
+                    oss << "  Avg CPU/Bot:         " << cpuPerBot << "%\n";
+                }
+            }
+        }
+        else
+        {
+            oss << "[BotMonitor not available]\n";
+        }
 
         return oss.str();
     }

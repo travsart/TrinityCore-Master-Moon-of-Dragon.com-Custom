@@ -360,6 +360,7 @@ private:
     bool LearnTalent(Player* bot, uint32 talentEntry);
     bool LearnHeroTalent(Player* bot, uint32 heroTalentEntry);
     void LogTalentApplication(Player* bot, uint8 specId, uint32 talentCount);
+    uint32 CalculateTalentPointsForLevel(uint32 level) const;
 
     // ====================================================================
     // DATA STORAGE

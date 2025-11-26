@@ -335,6 +335,16 @@ public:
     void OnEnemyCastComplete(ObjectGuid casterGuid, uint32 spellId) override;
 
     // =====================================================================
+    // ACTIVE CASTS TRACKING
+    // =====================================================================
+
+    /**
+     * @brief Get all active (non-interrupted) casts being tracked
+     * @return Vector of active casting spell info
+     */
+    ::std::vector<CastingSpellInfo> GetActiveCasts() const;
+
+    // =====================================================================
     // SPELL DATABASE ACCESS
     // =====================================================================
 

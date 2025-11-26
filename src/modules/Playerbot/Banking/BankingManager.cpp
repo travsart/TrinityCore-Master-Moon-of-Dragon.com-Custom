@@ -27,6 +27,10 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "GameTime.h"
+#include "Creature.h"
+#include "Map.h"
+#include "Unit.h"
+#include "MotionMaster.h"
 #include <algorithm>
 
 namespace Playerbot
@@ -91,9 +95,29 @@ void BankingManager::Update(uint32 diff)
 
         if (_profile.autoDepositMaterials)
         {
-            // Check if inventory is getting full
-            // TODO: Replace with correct method to get free bag slots
-            uint32 freeSlots = 0; // Stub for now
+            // Count free bag slots in player's inventory
+            uint32 freeSlots = 0;
+
+            // Count free slots in backpack (main inventory)
+            for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+            {
+                if (!_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                    ++freeSlots;
+            }
+
+            // Count free slots in equipped bags
+            for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+            {
+                if (Bag* pBag = _bot->GetBagByPos(bag))
+                {
+                    for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
+                    {
+                        if (!pBag->GetItemByPos(slot))
+                            ++freeSlots;
+                    }
+                }
+            }
+
             if (freeSlots < 10)
                 needsBank = true;
         }
@@ -183,12 +207,22 @@ bool BankingManager::DepositGold(uint32 amount)
     if (amount == 0)
         return false;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API when available
-    // For now, just move gold from inventory to bank
+    // In WoW, the player's bank doesn't actually store gold separately from inventory
+    // Gold is simply player money. The "bank gold" concept is handled via a custom
+    // tracking system for bots. We store the "banked gold" amount in the bot profile.
+    // For actual banking functionality, we simply log the transaction and track it.
+    //
+    // Note: Real WoW banks just store items, not gold. Guild banks store gold.
+    // For bot economy simulation, we track gold "deposited" conceptually.
+    //
+    // If you want actual gold removal from inventory (simulating deposit):
+    // _bot->ModifyMoney(-static_cast<int64>(amount));
+    //
+    // For now, we just track the transaction for statistics without actually
+    // moving gold (since bank gold isn't a real WoW concept for players).
 
-    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} deposited {} gold",
-        _bot->GetName(), amount / 10000);
+    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} recorded gold deposit of {} copper ({} gold)",
+        _bot->GetName(), amount, amount / 10000);
 
     // Record transaction
     BankingTransaction transaction;
@@ -212,11 +246,15 @@ bool BankingManager::WithdrawGold(uint32 amount)
     if (!_bot || amount == 0)
         return false;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API when available
+    // In WoW, player banks don't store gold - only items. Gold is tracked as player money.
+    // For bot economy simulation, we conceptually track "banked gold" but actual gold
+    // is stored in player money. See DepositGold() comments for full explanation.
+    //
+    // If implementing actual gold withdrawal (simulating withdrawal):
+    // _bot->ModifyMoney(static_cast<int64>(amount));
 
-    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} withdrew {} gold",
-        _bot->GetName(), amount / 10000);
+    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} recorded gold withdrawal of {} copper ({} gold)",
+        _bot->GetName(), amount, amount / 10000);
 
     // Record transaction
     BankingTransaction transaction;
@@ -276,10 +314,89 @@ bool BankingManager::DepositItem(uint32 itemGuid, uint32 quantity)
     if (!_bot)
         return false;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API
+    // Find the item in player's inventory by GUID counter
+    Item* itemToDeposit = nullptr;
+    uint16 srcPos = 0;
 
-    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} deposited item {}",
+    // Search backpack
+    for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    {
+        Item* item = _bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (item && item->GetGUID().GetCounter() == itemGuid)
+        {
+            itemToDeposit = item;
+            srcPos = (INVENTORY_SLOT_BAG_0 << 8) | i;
+            break;
+        }
+    }
+
+    // Search bags if not found in backpack
+    if (!itemToDeposit)
+    {
+        for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+        {
+            if (Bag* pBag = _bot->GetBagByPos(bag))
+            {
+                for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
+                {
+                    Item* item = pBag->GetItemByPos(slot);
+                    if (item && item->GetGUID().GetCounter() == itemGuid)
+                    {
+                        itemToDeposit = item;
+                        srcPos = (bag << 8) | slot;
+                        break;
+                    }
+                }
+            }
+            if (itemToDeposit)
+                break;
+        }
+    }
+
+    if (!itemToDeposit)
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} failed to deposit item {} - not found",
+            _bot->GetName(), itemGuid);
+        return false;
+    }
+
+    // Find a free bank slot to deposit into
+    // First try the main bank slots (character bank tabs)
+    uint16 dstPos = 0;
+    bool foundBankSlot = false;
+    uint8 numBankTabs = _bot->GetCharacterBankTabCount();
+
+    // Iterate through bank bags
+    for (uint8 bankBagIdx = 0; bankBagIdx < numBankTabs && bankBagIdx < (BANK_SLOT_BAG_END - BANK_SLOT_BAG_START); ++bankBagIdx)
+    {
+        uint8 bankSlot = BANK_SLOT_BAG_START + bankBagIdx;
+        if (Bag* bankBag = _bot->GetBagByPos(bankSlot))
+        {
+            for (uint32 slot = 0; slot < bankBag->GetBagSize(); ++slot)
+            {
+                if (!bankBag->GetItemByPos(slot))
+                {
+                    dstPos = (bankSlot << 8) | slot;
+                    foundBankSlot = true;
+                    break;
+                }
+            }
+            if (foundBankSlot)
+                break;
+        }
+    }
+
+    if (!foundBankSlot)
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} failed to deposit item {} - no bank space",
+            _bot->GetName(), itemGuid);
+        return false;
+    }
+
+    // Perform the swap from inventory to bank using TrinityCore's SwapItem
+    _bot->SwapItem(srcPos, dstPos);
+
+    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} deposited item {} to bank",
         _bot->GetName(), itemGuid);
 
     // Record transaction
@@ -305,26 +422,116 @@ bool BankingManager::WithdrawItem(uint32 itemId, uint32 quantity)
     if (!_bot)
         return false;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API
+    // Find the item in player's bank by item ID
+    Item* itemToWithdraw = nullptr;
+    uint16 srcPos = 0;
+    uint32 totalWithdrawn = 0;
 
-    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} withdrew item {} x{}",
-        _bot->GetName(), itemId, quantity);
+    // Get number of unlocked bank tabs
+    uint8 numBankTabs = _bot->GetCharacterBankTabCount();
+
+    // Search through bank bags for the item
+    for (uint8 bankBagIdx = 0; bankBagIdx < numBankTabs && bankBagIdx < (BANK_SLOT_BAG_END - BANK_SLOT_BAG_START); ++bankBagIdx)
+    {
+        uint8 bankSlot = BANK_SLOT_BAG_START + bankBagIdx;
+        Bag* bankBag = _bot->GetBagByPos(bankSlot);
+        if (!bankBag)
+            continue;
+
+        for (uint32 slot = 0; slot < bankBag->GetBagSize(); ++slot)
+        {
+            Item* item = bankBag->GetItemByPos(slot);
+            if (!item || item->GetEntry() != itemId)
+                continue;
+
+            // Found matching item in bank
+            itemToWithdraw = item;
+            srcPos = (bankSlot << 8) | slot;
+
+            // Find a free inventory slot to place the item
+            uint16 dstPos = 0;
+            bool foundInvSlot = false;
+
+            // First try backpack
+            for (uint8 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+            {
+                if (!_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                {
+                    dstPos = (INVENTORY_SLOT_BAG_0 << 8) | i;
+                    foundInvSlot = true;
+                    break;
+                }
+            }
+
+            // Try equipped bags if backpack is full
+            if (!foundInvSlot)
+            {
+                for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+                {
+                    Bag* invBag = _bot->GetBagByPos(bag);
+                    if (!invBag)
+                        continue;
+
+                    for (uint32 invSlot = 0; invSlot < invBag->GetBagSize(); ++invSlot)
+                    {
+                        if (!invBag->GetItemByPos(invSlot))
+                        {
+                            dstPos = (bag << 8) | invSlot;
+                            foundInvSlot = true;
+                            break;
+                        }
+                    }
+                    if (foundInvSlot)
+                        break;
+                }
+            }
+
+            if (!foundInvSlot)
+            {
+                TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} failed to withdraw item {} - no inventory space",
+                    _bot->GetName(), itemId);
+                return totalWithdrawn > 0;
+            }
+
+            // Perform the swap from bank to inventory
+            _bot->SwapItem(srcPos, dstPos);
+
+            uint32 itemCount = item->GetCount();
+            totalWithdrawn += itemCount;
+
+            TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} withdrew {} x{} from bank",
+                _bot->GetName(), itemId, itemCount);
+
+            // Check if we have enough
+            if (totalWithdrawn >= quantity)
+                break;
+        }
+
+        if (totalWithdrawn >= quantity)
+            break;
+    }
+
+    if (totalWithdrawn == 0)
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} failed to withdraw item {} - not found in bank",
+            _bot->GetName(), itemId);
+        return false;
+    }
 
     // Record transaction
     BankingTransaction transaction;
     transaction.type = BankingTransaction::Type::WITHDRAW_ITEM;
     transaction.timestamp = GameTime::GetGameTimeMS();
     transaction.itemId = itemId;
-    transaction.quantity = quantity;
+    transaction.quantity = totalWithdrawn;
     transaction.reason = "Auto-withdraw item";
     RecordTransaction(transaction);
 
     // Update statistics
     _statistics.totalWithdrawals++;
-    _statistics.itemsWithdrawn += quantity;
+    _statistics.itemsWithdrawn += totalWithdrawn;
     _globalStatistics.totalWithdrawals++;
-    _globalStatistics.itemsWithdrawn += quantity;
+    _globalStatistics.itemsWithdrawn += totalWithdrawn;
 
     return true;
 }
@@ -408,12 +615,38 @@ BankSpaceInfo BankingManager::GetBankSpaceInfo()
     if (!_bot)
         return info;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API to get real data
+    // Get number of unlocked bank tabs
+    uint8 numBankTabs = _bot->GetCharacterBankTabCount();
 
-    info.totalSlots = 28;  // Default bank size
-    info.usedSlots = 0;    // TODO: Count actual used slots
-    info.freeSlots = info.totalSlots - info.usedSlots;
+    // Count total slots and used slots across all bank bags
+    uint32 totalSlots = 0;
+    uint32 usedSlots = 0;
+
+    for (uint8 bankBagIdx = 0; bankBagIdx < numBankTabs && bankBagIdx < (BANK_SLOT_BAG_END - BANK_SLOT_BAG_START); ++bankBagIdx)
+    {
+        uint8 bankSlot = BANK_SLOT_BAG_START + bankBagIdx;
+        Bag* bankBag = _bot->GetBagByPos(bankSlot);
+        if (!bankBag)
+            continue;
+
+        uint32 bagSize = bankBag->GetBagSize();
+        totalSlots += bagSize;
+
+        for (uint32 slot = 0; slot < bagSize; ++slot)
+        {
+            if (bankBag->GetItemByPos(slot))
+                ++usedSlots;
+        }
+    }
+
+    // Default bank size if no bank tabs unlocked (base character bank)
+    // WoW standard bank has 28 base slots + additional bags
+    if (totalSlots == 0)
+        totalSlots = 28;  // Base bank slots
+
+    info.totalSlots = totalSlots;
+    info.usedSlots = usedSlots;
+    info.freeSlots = totalSlots - usedSlots;
 
     return info;
 }
@@ -429,10 +662,28 @@ uint32 BankingManager::GetItemCountInBank(uint32 itemId)
     if (!_bot)
         return 0;
 
-    // Use TrinityCore bank API
-    // TODO: Integrate with actual bank API
+    uint32 totalCount = 0;
 
-    return 0;
+    // Get number of unlocked bank tabs
+    uint8 numBankTabs = _bot->GetCharacterBankTabCount();
+
+    // Search through all bank bags for the item
+    for (uint8 bankBagIdx = 0; bankBagIdx < numBankTabs && bankBagIdx < (BANK_SLOT_BAG_END - BANK_SLOT_BAG_START); ++bankBagIdx)
+    {
+        uint8 bankSlot = BANK_SLOT_BAG_START + bankBagIdx;
+        Bag* bankBag = _bot->GetBagByPos(bankSlot);
+        if (!bankBag)
+            continue;
+
+        for (uint32 slot = 0; slot < bankBag->GetBagSize(); ++slot)
+        {
+            Item* item = bankBag->GetItemByPos(slot);
+            if (item && item->GetEntry() == itemId)
+                totalCount += item->GetCount();
+        }
+    }
+
+    return totalCount;
 }
 
 bool BankingManager::IsItemInBank(uint32 itemId)
@@ -445,10 +696,101 @@ void BankingManager::OptimizeBankSpace()
     if (!_bot)
         return;
 
-    // TODO: Implement bank space optimization
-    // - Consolidate stacks
-    // - Remove junk items
-    // - Reorganize by item type
+    // Get number of unlocked bank tabs
+    uint8 numBankTabs = _bot->GetCharacterBankTabCount();
+
+    // Build a map of stackable items and their locations
+    struct StackInfo
+    {
+        uint32 itemId;
+        uint8 bagSlot;
+        uint32 slotInBag;
+        uint32 count;
+        uint32 maxStack;
+    };
+
+    std::vector<StackInfo> stackableItems;
+
+    // First pass: collect all stackable items
+    for (uint8 bankBagIdx = 0; bankBagIdx < numBankTabs && bankBagIdx < (BANK_SLOT_BAG_END - BANK_SLOT_BAG_START); ++bankBagIdx)
+    {
+        uint8 bankSlot = BANK_SLOT_BAG_START + bankBagIdx;
+        Bag* bankBag = _bot->GetBagByPos(bankSlot);
+        if (!bankBag)
+            continue;
+
+        for (uint32 slot = 0; slot < bankBag->GetBagSize(); ++slot)
+        {
+            Item* item = bankBag->GetItemByPos(slot);
+            if (!item)
+                continue;
+
+            ItemTemplate const* itemTemplate = item->GetTemplate();
+            if (!itemTemplate || itemTemplate->GetMaxStackSize() <= 1)
+                continue;
+
+            // Item is stackable and not at max stack
+            if (item->GetCount() < itemTemplate->GetMaxStackSize())
+            {
+                StackInfo info;
+                info.itemId = item->GetEntry();
+                info.bagSlot = bankSlot;
+                info.slotInBag = slot;
+                info.count = item->GetCount();
+                info.maxStack = itemTemplate->GetMaxStackSize();
+                stackableItems.push_back(info);
+            }
+        }
+    }
+
+    // Second pass: consolidate stacks of the same item
+    for (size_t i = 0; i < stackableItems.size(); ++i)
+    {
+        StackInfo& src = stackableItems[i];
+        if (src.count == 0)  // Already merged
+            continue;
+
+        for (size_t j = i + 1; j < stackableItems.size(); ++j)
+        {
+            StackInfo& dst = stackableItems[j];
+            if (dst.count == 0 || src.itemId != dst.itemId)
+                continue;
+
+            // Try to merge src into dst
+            uint32 spaceInDst = dst.maxStack - dst.count;
+            if (spaceInDst == 0)
+                continue;
+
+            uint32 toMove = std::min(src.count, spaceInDst);
+
+            // Get the actual items
+            Bag* srcBag = _bot->GetBagByPos(src.bagSlot);
+            Bag* dstBag = _bot->GetBagByPos(dst.bagSlot);
+            if (!srcBag || !dstBag)
+                continue;
+
+            Item* srcItem = srcBag->GetItemByPos(src.slotInBag);
+            Item* dstItem = dstBag->GetItemByPos(dst.slotInBag);
+            if (!srcItem || !dstItem)
+                continue;
+
+            // Perform the stack combination using SwapItem
+            // SwapItem handles stack combining automatically
+            uint16 srcPos = (src.bagSlot << 8) | src.slotInBag;
+            uint16 dstPos = (dst.bagSlot << 8) | dst.slotInBag;
+            _bot->SwapItem(srcPos, dstPos);
+
+            // Update tracking
+            dst.count += toMove;
+            src.count -= toMove;
+
+            if (src.count == 0)
+                break;  // Source item is exhausted
+        }
+    }
+
+    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} optimized bank space, consolidated {} stackable item types",
+        _bot->GetName(), stackableItems.size());
 }
 
 // ============================================================================
@@ -469,10 +811,65 @@ float BankingManager::GetDistanceToNearestBanker()
     if (!_bot)
         return 999999.0f;
 
-    // TODO: Find nearest banker NPC and calculate distance
-    // For now return a large distance
+    Map* map = _bot->GetMap();
+    if (!map)
+        return 999999.0f;
 
-    return 999999.0f;
+    float closestDist = 999999.0f;
+
+    // Search for bankers using UNIT_NPC_FLAG_BANKER
+    // Use FindNearestCreatureWithOptions or iterate nearby creatures
+    // Search radius of 100 yards initially
+    float searchRadius = 100.0f;
+
+    // Try to find a banker nearby using cell-based search
+    // TrinityCore provides various ways to find creatures:
+    // - ObjectAccessor::GetCreature() if we know GUID
+    // - Map::GetCreatureBySpawnId() if we know spawn ID
+    // - Cell-based iteration for nearby creatures
+
+    // For performance, use a simple distance check against known banker positions
+    // First, check if there's a banker in nearby cells
+    Creature* nearestBanker = nullptr;
+
+    // TODO: Trinity::NearestCreatureEntryWithLiveStateInObjectRangeCheck and
+    // Trinity::CreatureLastSearcher APIs need proper usage research
+    // For now, use a simpler approach by iterating nearby creatures
+
+    // Find nearest banker by iterating nearby creatures manually
+    // TrinityCore 11.x: Use simple creature search approach
+    float minDist = searchRadius;
+
+    // Check map for creatures within range - using TrinityCore spawn id store
+    Map* botMap = _bot->GetMap();
+    if (botMap)
+    {
+        // Use TrinityCore's creature spawn store to find bankers
+        for (auto const& [spawnId, creature] : botMap->GetCreatureBySpawnIdStore())
+        {
+            if (creature && creature->IsAlive() &&
+                creature->IsWithinDistInMap(_bot, searchRadius) &&
+                creature->HasNpcFlag(NPCFlags(UNIT_NPC_FLAG_BANKER)))
+            {
+                float dist = _bot->GetDistance(creature);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    nearestBanker = creature;
+                }
+            }
+        }
+    }
+
+    if (nearestBanker)
+    {
+        closestDist = _bot->GetDistance(nearestBanker);
+    }
+
+    // Store the nearest banker for TravelToNearestBanker
+    _cachedNearestBanker = nearestBanker;
+
+    return closestDist;
 }
 
 bool BankingManager::TravelToNearestBanker()
@@ -480,8 +877,42 @@ bool BankingManager::TravelToNearestBanker()
     if (!_bot)
         return false;
 
-    // TODO: Trigger bot movement to nearest banker
-    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} traveling to banker", _bot->GetName());
+    // Get distance to update cached banker
+    float distance = GetDistanceToNearestBanker();
+
+    if (!_cachedNearestBanker || distance >= 999999.0f)
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} cannot find banker to travel to", _bot->GetName());
+        return false;
+    }
+
+    // Get banker position
+    Position const& bankerPos = _cachedNearestBanker->GetPosition();
+
+    // Use the bot's movement system to travel to the banker
+    // The BotAI should have a movement manager we can use
+    BotSession* session = static_cast<BotSession*>(_bot->GetSession());
+    if (!session || !session->GetAI())
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} has no AI for movement", _bot->GetName());
+        return false;
+    }
+
+    // Set movement target to banker position
+    // The AI will handle pathfinding and movement
+    // Note: MotionMaster is forward-declared in Unit.h, need to include it
+    if (auto* motionMaster = _bot->GetMotionMaster())
+    {
+        motionMaster->MovePoint(0, bankerPos);
+    }
+    else
+    {
+        TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} has no MotionMaster", _bot->GetName());
+        return false;
+    }
+
+    TC_LOG_DEBUG("playerbot", "BankingManager: Bot {} traveling to banker at ({}, {}, {})",
+        _bot->GetName(), bankerPos.GetPositionX(), bankerPos.GetPositionY(), bankerPos.GetPositionZ());
 
     _statistics.bankTrips++;
     _globalStatistics.bankTrips++;
@@ -714,8 +1145,52 @@ std::vector<BankingManager::WithdrawRequest> BankingManager::GetWithdrawRequests
     if (!profMgr)
         return requests;
 
-    // TODO: Query ProfessionManager for needed materials
-    // For now return empty
+    // Query ProfessionManager for needed materials for leveling
+    // Check each profession the bot has and get materials needed for optimal leveling recipe
+    std::vector<ProfessionSkillInfo> botProfessions = profMgr->GetPlayerProfessions();
+
+    for (auto const& professionInfo : botProfessions)
+    {
+        if (professionInfo.profession == ProfessionType::NONE)
+            continue;
+
+        // Skip gathering professions - they don't need materials
+        ProfessionCategory category = profMgr->GetProfessionCategory(professionInfo.profession);
+        if (category == ProfessionCategory::GATHERING)
+            continue;
+
+        // Get the optimal leveling recipe for this profession
+        RecipeInfo const* optimalRecipe = profMgr->GetOptimalLevelingRecipe(professionInfo.profession);
+        if (!optimalRecipe)
+            continue;
+
+        // Check if we're missing materials for this recipe
+        if (profMgr->HasMaterialsForRecipe(*optimalRecipe))
+            continue;
+
+        // Get missing materials
+        auto missingMaterials = profMgr->GetMissingMaterials(*optimalRecipe);
+
+        for (auto const& material : missingMaterials)
+        {
+            uint32 itemId = material.first;
+            uint32 neededQty = material.second;
+
+            // Check if we have any of this item in the bank
+            uint32 bankCount = GetItemCountInBank(itemId);
+            if (bankCount == 0)
+                continue;
+
+            // Create withdraw request for what we have in bank (up to needed amount)
+            uint32 withdrawQty = std::min(bankCount, neededQty);
+
+            WithdrawRequest request;
+            request.itemId = itemId;
+            request.quantity = withdrawQty;
+            request.reason = "Crafting material for profession leveling";
+            requests.push_back(request);
+        }
+    }
 
     return requests;
 }
@@ -730,8 +1205,46 @@ bool BankingManager::IsNeededForProfessions(uint32 itemId)
     if (!profMgr)
         return false;
 
-    // TODO: Check with ProfessionManager if item is needed
-    return false;
+    // Check if item is needed for any of the bot's professions
+    // by examining the crafting recipes that require this material
+    std::vector<ProfessionSkillInfo> botProfessions = profMgr->GetPlayerProfessions();
+
+    for (auto const& professionInfo : botProfessions)
+    {
+        if (professionInfo.profession == ProfessionType::NONE)
+            continue;
+
+        // Skip gathering professions - they don't use materials
+        ProfessionCategory category = profMgr->GetProfessionCategory(professionInfo.profession);
+        if (category == ProfessionCategory::GATHERING)
+            continue;
+
+        // Get all craftable recipes for this profession
+        std::vector<RecipeInfo> craftableRecipes = profMgr->GetCraftableRecipes(professionInfo.profession);
+
+        // Check if any recipe uses this item as a reagent
+        for (auto const& recipe : craftableRecipes)
+        {
+            for (auto const& reagent : recipe.reagents)
+            {
+                if (reagent.itemId == itemId)
+                    return true;  // Item is needed for this recipe
+            }
+        }
+
+        // Also check the optimal leveling recipe
+        RecipeInfo const* optimalRecipe = profMgr->GetOptimalLevelingRecipe(professionInfo.profession);
+        if (optimalRecipe)
+        {
+            for (auto const& reagent : optimalRecipe->reagents)
+            {
+                if (reagent.itemId == itemId)
+                    return true;
+            }
+        }
+    }
+
+    return false;  // Item not needed for any profession
 }
 
 uint32 BankingManager::GetMaterialPriorityFromProfessions(uint32 itemId)
@@ -740,8 +1253,73 @@ uint32 BankingManager::GetMaterialPriorityFromProfessions(uint32 itemId)
     if (!profMgr)
         return 0;
 
-    // TODO: Get material priority from ProfessionManager
-    return 0;
+    // Get material priority from ProfessionManager
+    // Priority is based on:
+    // 1. Whether item is needed for current optimal leveling recipe (highest priority = 100)
+    // 2. Whether item is needed for any craftable recipe (medium priority = 50)
+    // 3. Whether item is a profession material at all (low priority = 25)
+    // 0 = not a profession material
+
+    uint32 maxPriority = 0;
+    std::vector<ProfessionSkillInfo> botProfessions = profMgr->GetPlayerProfessions();
+
+    for (auto const& professionInfo : botProfessions)
+    {
+        if (professionInfo.profession == ProfessionType::NONE)
+            continue;
+
+        // Skip gathering professions - they produce materials, don't consume them
+        ProfessionCategory category = profMgr->GetProfessionCategory(professionInfo.profession);
+        if (category == ProfessionCategory::GATHERING)
+            continue;
+
+        // Check if needed for optimal leveling recipe (highest priority)
+        RecipeInfo const* optimalRecipe = profMgr->GetOptimalLevelingRecipe(professionInfo.profession);
+        if (optimalRecipe)
+        {
+            for (auto const& reagent : optimalRecipe->reagents)
+            {
+                if (reagent.itemId == itemId)
+                {
+                    // Needed for current optimal leveling - highest priority
+                    return 100;  // Maximum priority
+                }
+            }
+        }
+
+        // Check if needed for any craftable recipe (medium priority)
+        std::vector<RecipeInfo> craftableRecipes = profMgr->GetCraftableRecipes(professionInfo.profession);
+        for (auto const& recipe : craftableRecipes)
+        {
+            for (auto const& reagent : recipe.reagents)
+            {
+                if (reagent.itemId == itemId)
+                {
+                    // Calculate priority based on recipe skill-up chance
+                    float skillUpChance = profMgr->GetSkillUpChance(recipe);
+                    uint32 recipePriority = 25 + static_cast<uint32>(skillUpChance * 50);  // 25-75 range
+                    maxPriority = std::max(maxPriority, recipePriority);
+                }
+            }
+        }
+
+        // Also check all recipes for this profession (not just craftable)
+        // to determine if it's a profession material at all
+        std::vector<RecipeInfo> allRecipes = profMgr->GetRecipesForProfession(professionInfo.profession);
+        for (auto const& recipe : allRecipes)
+        {
+            for (auto const& reagent : recipe.reagents)
+            {
+                if (reagent.itemId == itemId && maxPriority == 0)
+                {
+                    // It's a profession material, but not currently needed
+                    maxPriority = 25;  // Base priority for profession materials
+                }
+            }
+        }
+    }
+
+    return maxPriority;
 }
 
 ProfessionManager* BankingManager::GetProfessionManager()

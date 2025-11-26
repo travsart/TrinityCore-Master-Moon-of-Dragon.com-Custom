@@ -17,17 +17,271 @@
 
 #include "RoleCoordinator.h"
 #include "../../Advanced/GroupCoordinator.h"
+#include "../../Session/BotSessionMgr.h"
+#include "../../Session/BotWorldSessionMgr.h"
 #include "Group.h"
 #include "Player.h"
 #include "Unit.h"
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "GameTime.h"
+#include "LFG.h"
 
 namespace Playerbot
 {
 namespace Coordination
 {
+
+// ============================================================================
+// Helper Functions for Group-Wide Role Queries
+// ============================================================================
+
+/**
+ * @brief Get all group members with a specific role
+ * @param group The per-bot GroupCoordinator
+ * @param role The role to filter by
+ * @return Vector of player GUIDs with the specified role
+ *
+ * This uses TrinityCore's Group API to iterate all members and checks each
+ * member's role via their BotAI/GroupCoordinator. Works for both bots and human players.
+ */
+static ::std::vector<ObjectGuid> GetGroupMembersByRole(GroupCoordinator* group, GroupCoordinator::GroupRole role)
+{
+    ::std::vector<ObjectGuid> result;
+
+    if (!group)
+        return result;
+
+    // Get the TrinityCore Group object
+    Group* trinityGroup = group->GetGroup();
+    if (!trinityGroup)
+        return result;
+
+    // Iterate all group members using TrinityCore 11.x API
+    Group::MemberSlotList const& memberSlots = trinityGroup->GetMemberSlots();
+    for (auto const& slot : memberSlots)
+    {
+        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+        if (!member || !member->IsAlive())
+            continue;
+
+        // Determine member's role
+        GroupCoordinator::GroupRole memberRole = GroupCoordinator::GroupRole::UNDEFINED;
+
+        // Check if this is a bot and get its GroupCoordinator
+        // Note: Player::IsBot() doesn't exist, use BotSessionMgr instead
+        // Use session manager to check if this player is a bot
+        Player* botPlayer = sBotWorldSessionMgr->GetPlayerBot(member->GetGUID());
+        if (botPlayer)
+        {
+            // This is a bot, get its assigned role from GroupCoordinator
+            // TODO: BotSession::GetBotAI() method needs implementation
+            // For now, use the LFG role assignment as fallback
+            uint8 lfgRoles = trinityGroup->GetLfgRoles(member->GetGUID());
+            if (lfgRoles & lfg::PLAYER_ROLE_TANK)
+                memberRole = GroupCoordinator::GroupRole::TANK;
+            else if (lfgRoles & lfg::PLAYER_ROLE_HEALER)
+                memberRole = GroupCoordinator::GroupRole::HEALER;
+            else if (lfgRoles & lfg::PLAYER_ROLE_DAMAGE)
+            {
+                // Distinguish melee vs ranged based on class/spec
+                switch (member->GetClass())
+                {
+                    case CLASS_WARRIOR:
+                    case CLASS_PALADIN:
+                    case CLASS_ROGUE:
+                    case CLASS_DEATH_KNIGHT:
+                    case CLASS_MONK:
+                    case CLASS_DEMON_HUNTER:
+                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                        break;
+                    case CLASS_HUNTER:
+                    case CLASS_MAGE:
+                    case CLASS_WARLOCK:
+                    case CLASS_EVOKER:
+                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                        break;
+                    case CLASS_PRIEST:
+                    case CLASS_SHAMAN:
+                    case CLASS_DRUID:
+                        // Could be either - check spec
+                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                        break;
+                    default:
+                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                        break;
+                }
+            }
+        }
+        else
+        {
+            // Human player - determine role from specialization/group role assignment
+            // Check TrinityCore's LFG role assignment
+            uint8 lfgRoles = trinityGroup->GetLfgRoles(member->GetGUID());
+            if (lfgRoles & lfg::PLAYER_ROLE_TANK)
+                memberRole = GroupCoordinator::GroupRole::TANK;
+            else if (lfgRoles & lfg::PLAYER_ROLE_HEALER)
+                memberRole = GroupCoordinator::GroupRole::HEALER;
+            else if (lfgRoles & lfg::PLAYER_ROLE_DAMAGE)
+            {
+                // Distinguish melee vs ranged based on class/spec
+                switch (member->GetClass())
+                {
+                    case CLASS_WARRIOR:
+                    case CLASS_PALADIN:
+                    case CLASS_ROGUE:
+                    case CLASS_DEATH_KNIGHT:
+                    case CLASS_MONK:
+                    case CLASS_DEMON_HUNTER:
+                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                        break;
+                    case CLASS_HUNTER:
+                    case CLASS_MAGE:
+                    case CLASS_WARLOCK:
+                    case CLASS_EVOKER:
+                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                        break;
+                    case CLASS_PRIEST:
+                    case CLASS_SHAMAN:
+                    case CLASS_DRUID:
+                        // Could be either - check spec
+                        memberRole = GroupCoordinator::GroupRole::DPS_RANGED;
+                        break;
+                    default:
+                        memberRole = GroupCoordinator::GroupRole::DPS_MELEE;
+                        break;
+                }
+            }
+        }
+
+        // Check if role matches (handle DPS_MELEE/DPS_RANGED interchangeably when looking for DPS)
+        bool roleMatches = (memberRole == role);
+        if (!roleMatches && (role == GroupCoordinator::GroupRole::DPS_MELEE || role == GroupCoordinator::GroupRole::DPS_RANGED))
+        {
+            // When looking for DPS, accept both melee and ranged
+            roleMatches = (memberRole == GroupCoordinator::GroupRole::DPS_MELEE ||
+                           memberRole == GroupCoordinator::GroupRole::DPS_RANGED);
+        }
+
+        if (roleMatches)
+        {
+            result.push_back(member->GetGUID());
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Check if the group is currently in combat
+ * @param group The per-bot GroupCoordinator
+ * @return True if any group member is in combat
+ */
+static bool IsGroupInCombat(GroupCoordinator* group)
+{
+    if (!group)
+        return false;
+
+    Group* trinityGroup = group->GetGroup();
+    if (!trinityGroup)
+        return false;
+
+    Group::MemberSlotList const& memberSlots = trinityGroup->GetMemberSlots();
+    for (auto const& slot : memberSlots)
+    {
+        Player* member = ObjectAccessor::FindPlayer(slot.guid);
+        if (member && member->IsInCombat())
+            return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief Get the group's focus target (from raid icons or main tank's target)
+ * @param group The per-bot GroupCoordinator
+ * @return GUID of the focus target, or empty if none
+ */
+static ObjectGuid GetGroupFocusTarget(GroupCoordinator* group)
+{
+    if (!group)
+        return ObjectGuid::Empty;
+
+    Group* trinityGroup = group->GetGroup();
+    if (!trinityGroup)
+        return ObjectGuid::Empty;
+
+    // TODO: Group::GetTargetIcon() method needs to be researched or implemented
+    // For now, skip raid target marker checking and use tank's target directly
+    // Check for skull (8) raid target marker - primary kill target
+    // ObjectGuid skullTarget = trinityGroup->GetTargetIcon(7); // Index is 0-7, skull is 7
+    // if (!skullTarget.IsEmpty())
+    //     return skullTarget;
+
+    // Check for cross (X) marker - secondary kill target
+    // ObjectGuid crossTarget = trinityGroup->GetTargetIcon(6);
+    // if (!crossTarget.IsEmpty())
+    //     return crossTarget;
+
+    // Fall back to main tank's target
+    ::std::vector<ObjectGuid> tanks = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::TANK);
+    if (!tanks.empty())
+    {
+        Player* mainTank = ObjectAccessor::FindPlayer(tanks[0]);
+        if (mainTank && mainTank->IsInCombat())
+        {
+            Unit* target = mainTank->GetSelectedUnit();
+            if (target && target->IsAlive() && target->IsHostileTo(mainTank))
+                return target->GetGUID();
+        }
+    }
+
+    return ObjectGuid::Empty;
+}
+
+/**
+ * @brief Get combat duration for the group (time since first member entered combat)
+ * @param group The per-bot GroupCoordinator
+ * @return Combat duration in milliseconds, or 0 if not in combat
+ */
+static uint32 GetGroupCombatDuration(GroupCoordinator* group)
+{
+    // This would require tracking combat start time per group
+    // For now, estimate based on whether we're in combat
+    // A proper implementation would store combat start timestamp
+
+    static ::std::unordered_map<uint64, uint32> s_combatStartTimes;
+
+    if (!group)
+        return 0;
+
+    Group* trinityGroup = group->GetGroup();
+    if (!trinityGroup)
+        return 0;
+
+    uint64 groupId = trinityGroup->GetGUID().GetCounter();
+    uint32 now = GameTime::GetGameTimeMS();
+
+    bool inCombat = IsGroupInCombat(group);
+
+    if (inCombat)
+    {
+        // Track combat start time
+        auto it = s_combatStartTimes.find(groupId);
+        if (it == s_combatStartTimes.end())
+        {
+            s_combatStartTimes[groupId] = now;
+            return 0;
+        }
+        return now - it->second;
+    }
+    else
+    {
+        // Clear combat start time when out of combat
+        s_combatStartTimes.erase(groupId);
+        return 0;
+    }
+}
 
 // ============================================================================
 // TankCoordinator
@@ -102,8 +356,8 @@ bool TankCoordinator::NeedsTankSwap(ObjectGuid mainTankGuid) const
 
 void TankCoordinator::UpdateMainTank(GroupCoordinator* group)
 {
-    // TODO: Redesign - GroupCoordinator is per-bot, need different approach to query group roles
-    ::std::vector<ObjectGuid> tanks; // Stub for now
+    // Use helper function to get all tanks in the group via TrinityCore Group API
+    ::std::vector<ObjectGuid> tanks = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::TANK);
 
     if (tanks.empty())
     {
@@ -332,12 +586,9 @@ void HealerCoordinator::UseHealingCooldown(ObjectGuid healerGuid, ::std::string 
 
 void HealerCoordinator::UpdateHealingAssignments(GroupCoordinator* group)
 {
-    // TODO: Redesign - GroupCoordinator is per-bot
-    // ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
-    ::std::vector<ObjectGuid> healers; // Stub for now
-    // TODO: Redesign - GroupCoordinator is per-bot
-    // ::std::vector<ObjectGuid> tanks = group->GetBotsByRole(GroupRole::TANK);
-    ::std::vector<ObjectGuid> tanks; // Stub for now
+    // Use helper functions to get healers and tanks via TrinityCore Group API
+    ::std::vector<ObjectGuid> healers = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::HEALER);
+    ::std::vector<ObjectGuid> tanks = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::TANK);
 
     if (healers.empty())
         return;
@@ -419,12 +670,13 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 {
     // Rotate major healing cooldowns among healers
     // Examples: Tranquility, Aura Mastery, Divine Hymn, Revival
-    // TODO: Redesign - GroupCoordinator is per-bot, need different approach
-    // if (!false // TODO: Redesign - IsInCombat not available)
-    //     return;
 
-    // uint32 combatDuration = group->GetCombatDuration();
-    uint32 combatDuration = 0; // Stub for now
+    // Check if group is in combat using helper function
+    if (!IsGroupInCombat(group))
+        return;
+
+    // Get combat duration using helper function
+    uint32 combatDuration = GetGroupCombatDuration(group);
 
     // Use cooldowns at specific combat milestones
     if (combatDuration > 30000 && combatDuration < 35000) // 30-35s into combat
@@ -450,9 +702,8 @@ void HealerCoordinator::UpdateCooldownRotation(GroupCoordinator* group)
 
 void HealerCoordinator::UpdateManaManagement(GroupCoordinator* group)
 {
-    // TODO: Redesign - GroupCoordinator is per-bot
-    // ::std::vector<ObjectGuid> healers = group->GetBotsByRole(GroupRole::HEALER);
-    ::std::vector<ObjectGuid> healers; // Stub for now
+    // Get all healers in the group via TrinityCore Group API
+    ::std::vector<ObjectGuid> healers = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::HEALER);
 
     float totalMana = 0.0f;
     float currentMana = 0.0f;
@@ -615,8 +866,8 @@ bool DPSCoordinator::InBurstWindow() const
 
 void DPSCoordinator::UpdateFocusTarget(GroupCoordinator* group)
 {
-    // Use group's focus target
-    ObjectGuid groupFocus = ObjectGuid::Empty; // TODO: Redesign - GetFocusTarget not available
+    // Use group's focus target via helper function that checks raid markers and tank's target
+    ObjectGuid groupFocus = GetGroupFocusTarget(group);
 
     if (groupFocus != _focusTarget)
     {
@@ -637,13 +888,9 @@ void DPSCoordinator::UpdateInterruptRotation(GroupCoordinator* group)
         _interruptRotation.end()
     );
 
-    // Rebuild rotation from current DPS
-    // TODO: Redesign - GroupCoordinator is per-bot
-    // ::std::vector<ObjectGuid> meleeDPS = group->GetBotsByRole(GroupRole::MELEE_DPS);
-    ::std::vector<ObjectGuid> meleeDPS; // Stub for now
-    // TODO: Redesign - GroupCoordinator is per-bot
-    // ::std::vector<ObjectGuid> rangedDPS = group->GetBotsByRole(GroupRole::RANGED_DPS);
-    ::std::vector<ObjectGuid> rangedDPS; // Stub for now
+    // Rebuild rotation from current DPS via TrinityCore Group API
+    ::std::vector<ObjectGuid> meleeDPS = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::DPS_MELEE);
+    ::std::vector<ObjectGuid> rangedDPS = GetGroupMembersByRole(group, GroupCoordinator::GroupRole::DPS_RANGED);
 
     ::std::vector<ObjectGuid> allDPS;
     allDPS.insert(allDPS.end(), meleeDPS.begin(), meleeDPS.end());
@@ -699,13 +946,12 @@ void DPSCoordinator::UpdateBurstWindows(GroupCoordinator* group)
     }
 
     // Automatic burst windows at specific combat timings
-    // TODO: Redesign - IsInCombat not available
-    // if (!group->IsInCombat())
-    //     return;
+    // Check group combat status using helper function
+    if (!IsGroupInCombat(group))
+        return;
 
-    // TODO: Redesign - GetCombatDuration not available
-    // uint32 combatDuration = group->GetCombatDuration();
-    uint32 combatDuration = 0;
+    // Get combat duration using helper function
+    uint32 combatDuration = GetGroupCombatDuration(group);
 
     // Initial burst (0-10s)
     if (combatDuration > 0 && combatDuration < 2000 && !_inBurstWindow)

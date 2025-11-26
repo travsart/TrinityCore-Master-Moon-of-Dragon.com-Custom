@@ -501,6 +501,7 @@ private:
     uint32 _lastBankAccessTime{0};                  // Last bank access timestamp
     bool _currentlyBanking{false};                  // Is bot currently banking
     bool _enabled{true};                            // Banking automation enabled
+    Creature* _cachedNearestBanker{nullptr};        // Cached nearest banker for TravelToNearestBanker
 
     // ========================================================================
     // SHARED STATIC DATA

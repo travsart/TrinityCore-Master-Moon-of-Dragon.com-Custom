@@ -13,7 +13,7 @@
 #include <atomic>
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/concurrent_vector.h>
-#include <folly/concurrency/ConcurrentHashMap.h>
+#include <tbb/concurrent_queue.h>
 #include "../Threading/ThreadingPolicy.h"
 
 class BotSession;
@@ -129,7 +129,7 @@ private:
     void CleanupExpiredSessions();
 
     // Lock-free concurrent data structures
-    using SessionMap = folly::ConcurrentHashMap<ObjectGuid, BotSessionInfo>;
+    using SessionMap = tbb::concurrent_hash_map<ObjectGuid, BotSessionInfo>;
     using LoadingSet = tbb::concurrent_hash_map<ObjectGuid, ::std::chrono::steady_clock::time_point>;
     using DisconnectQueue = tbb::concurrent_vector<ObjectGuid>;
 
